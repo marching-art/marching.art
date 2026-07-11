@@ -1,8 +1,8 @@
 {
   "meta": {
     "generatedFrom": "functions/src/helpers/podium/venueGazetteer.json",
-    "venues": 516,
-    "keys": 932
+    "venues": 517,
+    "keys": 934
   },
   "venues": [
     {
@@ -2576,6 +2576,11 @@
       "region": "IL"
     },
     {
+      "venueId": "ypsilanti-mi",
+      "city": "Ypsilanti",
+      "region": "MI"
+    },
+    {
       "venueId": "yukon-ok",
       "city": "Yukon",
       "region": "OK"
@@ -3518,6 +3523,8 @@
     "woodstock, il": "woodstock-il",
     "yukon, oklahoma": "yukon-ok",
     "yukon, ok": "yukon-ok",
-    "zionsville, in": "zionsville-in"
+    "zionsville, in": "zionsville-in",
+    "ypsilanti, michigan": "ypsilanti-mi",
+    "ypsilanti, mi": "ypsilanti-mi"
   }
 }

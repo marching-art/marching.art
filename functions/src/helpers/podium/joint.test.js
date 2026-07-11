@@ -68,6 +68,72 @@ describe("geography gate", () => {
   });
 });
 
+describe("computeOverlaps (ranked windows)", () => {
+  // Fake store: the only thing the engine reads from it is isShowDayFor, which
+  // also drives corpsVenueOnDay's location resolution. Controlling it makes the
+  // windows deterministic without a season doc.
+  const fakeStore = (showDaysByUid) => ({
+    isShowDayFor: (_state, uid, day) => (showDaysByUid[uid] || new Set()).has(day),
+  });
+  const ctx = (over = {}) => ({
+    competitionDay: 1,
+    scheduleLocations: {},
+    easternAssignments: null,
+    storeModule: fakeStore(over.showDays || {}),
+    cfg: balance,
+    ...over,
+  });
+  // No show days → each corps sits at its hometown all fortnight.
+  const corps = (location, jointHistory = []) => ({ location, jointHistory });
+
+  test("nearby corps: every open day is a free window, hosted at the partner's city+stadium", () => {
+    const me = corps("Canton, Ohio");
+    const them = corps("Akron, Ohio");
+    const windows = joint.computeOverlaps(me, them, "me", "them", ctx());
+    assert.ok(windows.length > 0, "should surface open-day windows");
+    assert.ok(windows.every((w) => w.isFree && w.travelTier === null), "all within a day trip → free");
+    assert.equal(windows[0].city, "Akron, OH", "partner's city hosts");
+    assert.equal(windows[0].stadium, "Summa Field at InfoCision Stadium", "stadium shown when on file");
+    assert.equal(windows[0].ensembleBonusPct, 25, "first pairing = full bonus");
+  });
+
+  test("distant corps: windows carry the proposer's travel tier, stamina and coin", () => {
+    const windows = joint.computeOverlaps(
+      corps("Canton, Ohio"), corps("Dallas, Texas"), "me", "them", ctx()
+    );
+    assert.ok(windows.length > 0);
+    assert.ok(windows.every((w) => !w.isFree && w.travelTier), "cross-country → priced");
+    assert.ok(windows[0].coinCost > 0 && windows[0].staminaCost > 0, "proposer pays the gap");
+    assert.equal(windows[0].stadium, "Cotton Bowl Stadium", "Dallas venue on file");
+  });
+
+  test("open days only: a show day for either corps is excluded", () => {
+    const windows = joint.computeOverlaps(
+      corps("Canton, Ohio"), corps("Akron, Ohio"), "me", "them",
+      ctx({ showDays: { me: new Set([3]), them: new Set([5]) } })
+    );
+    const days = windows.map((w) => w.day);
+    assert.ok(!days.includes(3), "my show day is not a joint day");
+    assert.ok(!days.includes(5), "their show day is not a joint day");
+  });
+
+  test("weekly cap: a week either corps already spent yields no windows", () => {
+    // A joint already banked in week 1 removes days 2-7 from the results.
+    const me = corps("Canton, Ohio", [{ day: 3, partnerUid: "x", week: 1 }]);
+    const windows = joint.computeOverlaps(me, corps("Akron, Ohio"), "me", "them", ctx());
+    assert.ok(windows.every((w) => w.week !== 1), "no windows in the spent week");
+    assert.ok(windows.some((w) => w.week === 2), "later weeks still open");
+  });
+
+  test("two-week horizon, capped at the season end", () => {
+    const windows = joint.computeOverlaps(
+      corps("Canton, Ohio"), corps("Akron, Ohio"), "me", "them",
+      ctx({ competitionDay: 40 })
+    );
+    assert.ok(windows.every((w) => w.day > 40 && w.day <= 49), "clamped to day 49");
+  });
+});
+
 describe("scrimmage report", () => {
   const makeState = (name, challengeLevel) => {
     const state = engine.createSeasonState(

@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "purpose": "Real stadium/venue names for Podium Class host cities, keyed by gazetteer venueId. Joint rehearsals and route legs show 'City, ST · Stadium' when a venue is on file and fall back to city-only otherwise (design §5.12). Curated marquee-first (the four majors plus well-known DCI regional sites); grows over time. Every name is a real venue in the named city — never fabricated. Keys must match a venueId in venueGazetteer.json.",
+    "count": 31
+  },
+  "stadiums": {
+    "ypsilanti-mi": "Rynearson Stadium",
+    "dallas-tx": "Cotton Bowl Stadium",
+    "atlanta-ga": "Mercedes-Benz Stadium",
+    "allentown-pa": "J. Birney Crum Stadium",
+    "indianapolis-in": "Lucas Oil Stadium",
+    "san-antonio-tx": "Alamodome",
+    "stanford-ca": "Stanford Stadium",
+    "pasadena-ca": "Rose Bowl",
+    "massillon-oh": "Paul Brown Tiger Stadium",
+    "canton-oh": "Tom Benson Hall of Fame Stadium",
+    "orlando-fl": "Camping World Stadium",
+    "foxborough-ma": "Gillette Stadium",
+    "annapolis-md": "Navy-Marine Corps Memorial Stadium",
+    "whitewater-wi": "Perkins Stadium",
+    "murfreesboro-tn": "Floyd Stadium",
+    "salem-va": "Salem Stadium",
+    "dekalb-il": "Huskie Stadium",
+    "muncie-in": "Scheumann Stadium",
+    "akron-oh": "Summa Field at InfoCision Stadium",
+    "bowling-green-oh": "Doyt Perry Stadium",
+    "toledo-oh": "Glass Bowl",
+    "chattanooga-tn": "Finley Stadium",
+    "louisville-ky": "L&N Federal Credit Union Stadium",
+    "hillsboro-or": "Hillsboro Stadium",
+    "ogden-ut": "Stewart Stadium",
+    "salt-lake-city-ut": "Rice-Eccles Stadium",
+    "bloomington-in": "Memorial Stadium",
+    "denton-tx": "Apogee Stadium",
+    "san-jose-ca": "CEFCU Stadium",
+    "clovis-ca": "Lamonica Stadium",
+    "michigan-city-in": "Ames Field"
+  }
+}

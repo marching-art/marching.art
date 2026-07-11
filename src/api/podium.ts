@@ -43,12 +43,17 @@ export interface PodiumRouteLeg {
   day: number;
   eventName: string | null;
   city: string;
+  stadium?: string | null;
   tier: string | null;
   miles: number | null;
   coinCost: number;
   staminaCost: number;
   heat: number;
   isMajor: boolean;
+  // Set on a joint-rehearsal leg (design §5.12).
+  isJoint?: boolean;
+  partnerCorpsName?: string | null;
+  ensembleBonusPct?: number;
 }
 
 // Next-season payroll warning (design §5.6): when a corps' aged staff payroll
@@ -181,6 +186,11 @@ export interface JointProposal {
   fromCorpsName: string | null;
   toCorpsName: string | null;
   day: number;
+  // Informed-consent snapshot stamped at propose time (design §5.12).
+  city?: string | null;
+  stadium?: string | null;
+  proposerTravelTier?: string | null;
+  milesApart?: number | null;
   status: string;
 }
 
@@ -200,15 +210,61 @@ export interface JointRehearsalsResponse {
     bonusMult: number;
     travelTier: string | null;
     city: string | null;
+    stadium?: string | null;
   } | null;
-  scrimmage: {
-    day: number;
-    partnerCorpsName: string | null;
-    mine: JointScrimmageSide;
-    theirs: JointScrimmageSide;
-  } | null;
+  scrimmage: JointScrimmage | null;
+  headToHead: Record<string, JointHeadToHead>;
   history: Array<{ day: number; partnerUid: string; week: number }>;
-  roster: Array<{ uid: string; corpsName: string | null }>;
+  roster: Array<{ uid: string; corpsName: string | null; city?: string | null }>;
+}
+
+// The Tale of the Tape: a scored head-to-head from the joint, with where it
+// happened and the outcome from this corps' perspective (design §5.12).
+export interface JointScrimmage {
+  day: number;
+  partnerUid?: string;
+  partnerCorpsName: string | null;
+  city?: string | null;
+  stadium?: string | null;
+  outcome?: 'win' | 'loss' | 'tie';
+  mine: JointScrimmageSide;
+  theirs: JointScrimmageSide;
+}
+
+// Season-long record vs one partner — the profile's rivalry log.
+export interface JointHeadToHead {
+  partnerCorpsName: string | null;
+  wins: number;
+  losses: number;
+  ties: number;
+  joints: number;
+  last?: { day: number; myTotal: number; theirTotal: number; outcome: 'win' | 'loss' | 'tie' };
+}
+
+// One ranked overlap window: a day both corps sit idle on tour, priced with its
+// host city/stadium and the proposer's travel burden (design §5.12 redesign).
+export interface JointOverlapWindow {
+  day: number;
+  week: number;
+  hostVenueId: string | null;
+  city: string | null;
+  stadium: string | null;
+  milesApart: number | null;
+  travelTier: string | null;
+  isFree: boolean;
+  staminaCost: number;
+  coinCost: number;
+  ensembleBonusPct: number;
+  priorPairs: number;
+}
+
+export interface JointOverlapsResponse {
+  success: boolean;
+  windows: JointOverlapWindow[];
+  partnerCorpsName: string | null;
+  // Why the window list is empty: one upcoming joint per corps at a time.
+  alreadyBooked: boolean;
+  partnerBooked: boolean;
 }
 
 // Fan Favorite (decision 30): two-level cosmetic ballot — prelims at each
@@ -238,6 +294,10 @@ export const castFanFavoriteVote = createCallable<
   { corpsUid: string },
   { success: boolean; stage: string; vote: string }
 >('castFanFavoriteVote');
+
+export const getJointOverlaps = createCallable<{ toUid: string }, JointOverlapsResponse>(
+  'getJointOverlaps'
+);
 
 export const proposeJointRehearsal = createCallable<
   { toUid: string; day: number },

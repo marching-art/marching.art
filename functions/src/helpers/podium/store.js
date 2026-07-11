@@ -283,6 +283,22 @@ async function loadScheduleShowsByDay(db, seasonData) {
   return byDay;
 }
 
+/**
+ * {day -> location string} for the season schedule — the preload joint
+ * rehearsals use to resolve each corps' tour position on a given day
+ * (helpers/podium/joint.corpsVenueOnDay). Mirrors loadScheduleShowsByDay but
+ * keeps the first non-empty location seen per day.
+ */
+async function loadScheduleLocations(db, seasonData) {
+  const byDay = await loadScheduleShowsByDay(db, seasonData);
+  const locations = {};
+  for (const [day, shows] of Object.entries(byDay)) {
+    const withLocation = shows.find((s) => s.location);
+    if (withLocation) locations[day] = withLocation.location;
+  }
+  return locations;
+}
+
 /** All auto-attended competition days for a corps (majors + championships). */
 function autoDaysFor(uid, seasonUid, { division, easternAssignments } = {}) {
   return [
@@ -429,6 +445,7 @@ module.exports = {
   easternNightFor,
   loadEasternAssignments,
   loadScheduleShowsByDay,
+  loadScheduleLocations,
   autoDaysFor,
   isShowDayFor,
   selectedDaysOf,

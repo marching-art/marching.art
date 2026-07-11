@@ -5,12 +5,13 @@
       "dciDotOrgLocations.json (2013-2026)"
     ],
     "distinctRawLocations": 688,
-    "entries": 686,
+    "entries": 687,
     "resolution": {
       "exact": 630,
       "fuzzy": 38,
       "centroid": 0,
       "manual": 18,
+      "seed": 1,
       "unresolved": 0
     },
     "geodata": "GeoNames cities1000 via all-the-cities (CC-BY 4.0)",
@@ -8936,6 +8937,17 @@
       "rawVariants": [
         "Zionsville, IN"
       ]
+    },
+    "ypsilanti, michigan": {
+      "venueId": "ypsilanti-mi",
+      "city": "Ypsilanti",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.2411,
+      "lng": -83.613,
+      "source": "seed",
+      "eventCount": 0,
+      "rawVariants": []
     }
   }
 }

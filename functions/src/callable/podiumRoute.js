@@ -37,10 +37,15 @@ const MAJOR_ROUTE_LABELS = {
  */
 async function buildRoutePreview(db, seasonData, state, uid, competitionDay, easternAssignments) {
   const division = divisions.normalizeDivision(state.division);
+  // An accepted joint rehearsal is a real leg on the tour (design §5.12), so
+  // fold its day into the route alongside the shows.
+  const joint = state.jointRehearsal || null;
+  const jointDay = joint && joint.day > Math.max(0, competitionDay) ? joint.day : null;
   const upcoming = [
     ...new Set([
       ...store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
       ...store.selectedDaysOf(state),
+      ...(jointDay ? [jointDay] : []),
     ]),
   ]
     .filter((day) => day > Math.max(0, competitionDay) && day <= 49)
@@ -64,6 +69,34 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
   const legs = [];
   let cursor = state.lastVenue || venues.venueFor(state.location) || null;
   for (const day of upcoming) {
+    // Joint-rehearsal day: a rehearsal leg, not a show. The partner's city
+    // hosts; the proposer's copy carries the frozen travel tier (the acceptor's
+    // is null → free), and both get the Full Ensemble bonus (design §5.12).
+    if (day === jointDay) {
+      const venue = joint.city ? venues.venueFor(joint.city) : null;
+      const tierCfg = joint.travelTier
+        ? store.balance.travel.tiers.find((t) => t.key === joint.travelTier)
+        : null;
+      const move = venues.travelLeg(cursor, venue, store.balance);
+      legs.push({
+        day,
+        eventName: null,
+        city: venue ? `${venue.city}, ${venue.region}` : joint.city || "TBA",
+        stadium: venue ? venues.stadiumFor(venue.venueId) : null,
+        label: `Joint rehearsal · ${joint.partnerCorpsName || "corps"}`,
+        isJoint: true,
+        partnerCorpsName: joint.partnerCorpsName || null,
+        ensembleBonusPct: Math.round(((joint.bonusMult || 1) - 1) * 100),
+        tier: joint.travelTier || null,
+        miles: move ? move.miles : null,
+        coinCost: tierCfg ? tierCfg.coinCost : 0,
+        staminaCost: tierCfg ? tierCfg.staminaCost : 0,
+        heat: 0,
+        isMajor: false,
+      });
+      if (venue) cursor = venue;
+      continue;
+    }
     const isMajor = Boolean(venues.MAJOR_VENUES[day]);
     // Route to the CHOSEN show's location on a self-pick day so consecutive
     // picks chain leg-to-leg through their actual venues; majors have fixed
@@ -76,6 +109,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
       day,
       eventName: pick?.eventName || null,
       city: venue ? `${venue.city}, ${venue.region}` : "TBA",
+      stadium: venue ? venues.stadiumFor(venue.venueId) : null,
       label: store.championshipEventFor(day) || MAJOR_ROUTE_LABELS[day] || null,
       tier: leg ? leg.tier : null,
       miles: leg ? leg.miles : null,

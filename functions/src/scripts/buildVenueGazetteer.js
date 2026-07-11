@@ -155,6 +155,16 @@ const MANUAL_OVERRIDES = {
   "white lake, mi": ["white-lake-mi", "White Lake", "MI", 42.652, -83.4966],
 };
 
+// Curated real DCI venues that never appear in the historical location archive
+// (so the resolver never sees them) but should still be selectable — a
+// director's hometown, or a city carried in the stadiums table. Injected on
+// every build when the key isn't already present, keyed by normalized location
+// with the same [venueId, city, region, lat, lng] shape as MANUAL_OVERRIDES.
+const SEED_VENUES = {
+  // Rynearson Stadium (Eastern Michigan) — a real DCI regional site.
+  "ypsilanti, michigan": ["ypsilanti-mi", "Ypsilanti", "MI", 42.2411, -83.613],
+};
+
 /** Fold accents and periods so "Montréal" matches "montreal" and "St. Louis" matches "st louis". */
 function foldAccents(s) {
   return s.normalize("NFD").replace(/\p{M}/gu, "").replace(/[.]/g, "").replace(/\s+/g, " ").trim();
@@ -421,7 +431,7 @@ async function main() {
   console.log(`Distinct normalized keys: ${variantsByKey.size}`);
 
   const gazetteer = {};
-  const stats = { exact: 0, fuzzy: 0, centroid: 0, manual: 0, unresolved: 0 };
+  const stats = { exact: 0, fuzzy: 0, centroid: 0, manual: 0, seed: 0, unresolved: 0 };
   const usedOverrides = new Set();
 
   for (const [key, { rawVariants, eventCount }] of [...variantsByKey.entries()].sort()) {
@@ -502,6 +512,17 @@ async function main() {
       rawVariants,
     };
     stats[source]++;
+  }
+
+  // Inject curated seed venues that the historical archive never carries.
+  for (const [key, seed] of Object.entries(SEED_VENUES)) {
+    if (gazetteer[key]) continue;
+    const [venueId, city, region, lat, lng] = seed;
+    gazetteer[key] = {
+      venueId, city, region, country: "US", lat, lng,
+      source: "seed", eventCount: 0, rawVariants: [],
+    };
+    stats.seed++;
   }
 
   // Surface any override whose key no longer appears in the data (a source fix

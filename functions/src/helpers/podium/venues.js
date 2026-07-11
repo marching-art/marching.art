@@ -9,6 +9,7 @@
  */
 
 const gazetteer = require("./venueGazetteer.json");
+const stadiums = require("./stadiums.json");
 
 /**
  * Canonical form of a raw location string — the gazetteer key.
@@ -48,6 +49,17 @@ for (const venue of Object.values(gazetteer.venues)) {
 function venueFor(locationString) {
   const key = normalizeKey(locationString);
   return gazetteer.venues[key] || canonicalIndex[key] || null;
+}
+
+/**
+ * The real stadium name for a venue, or null when none is on file (design
+ * §5.12). Keyed by venueId against the curated stadiums table — callers show
+ * "City, ST · Stadium" when this returns a name and city-only otherwise.
+ * @param {string|null} venueId
+ * @returns {string|null}
+ */
+function stadiumFor(venueId) {
+  return (venueId && stadiums.stadiums[venueId]) || null;
 }
 
 /** Great-circle distance in miles. */
@@ -125,6 +137,7 @@ const MAJOR_VENUES = {
 module.exports = {
   normalizeKey,
   venueFor,
+  stadiumFor,
   haversineMiles,
   travelTierFor,
   travelLeg,

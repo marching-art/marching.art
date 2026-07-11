@@ -9,6 +9,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const store = require("../helpers/podium/store");
 const joint = require("../helpers/podium/joint");
+const venues = require("../helpers/podium/venues");
 const { podiumContext } = require("./podium");
 
 // ---------------------------------------------------------------------------
@@ -49,6 +50,70 @@ function assertJointCapacity(state, day, label) {
   }
 }
 
+/**
+ * Ranked overlap windows for a proposer→partner pair (design §5.12, redesign):
+ * the days over the next two weeks where both corps sit idle on the tour, each
+ * priced with its host city/stadium and the proposer's travel burden. This is
+ * what Step 2 of the flow renders — the director picks a window instead of
+ * guessing a day. Read-only; the actual booking still goes through
+ * proposeJointRehearsal → respondJointRehearsal.
+ */
+exports.getJointOverlaps = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  const { toUid } = request.data || {};
+  if (typeof toUid !== "string" || !toUid || toUid === uid) {
+    throw new HttpsError("invalid-argument", "Pick another director's corps.");
+  }
+
+  const [mySnapshot, theirSnapshot] = await Promise.all([
+    store.stateRef(db, uid).get(),
+    store.stateRef(db, toUid).get(),
+  ]);
+  if (!mySnapshot.exists || mySnapshot.data().seasonUid !== seasonData.seasonUid) {
+    throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+  }
+  if (!theirSnapshot.exists || theirSnapshot.data().seasonUid !== seasonData.seasonUid) {
+    throw new HttpsError("failed-precondition", "That corps is not active this season.");
+  }
+  const myState = mySnapshot.data();
+  const theirState = theirSnapshot.data();
+
+  // One upcoming joint at a time (either side) — surface WHY there are no
+  // windows so the client can explain it instead of showing an empty list.
+  const alreadyBooked = Boolean(myState.jointRehearsal && myState.jointRehearsal.day > competitionDay);
+  const partnerBooked = Boolean(
+    theirState.jointRehearsal && theirState.jointRehearsal.day > competitionDay
+  );
+  if (alreadyBooked || partnerBooked) {
+    return {
+      success: true,
+      windows: [],
+      partnerCorpsName: theirState.corpsName || null,
+      alreadyBooked,
+      partnerBooked,
+    };
+  }
+
+  const [scheduleLocations, easternAssignments] = await Promise.all([
+    store.loadScheduleLocations(db, seasonData),
+    store.loadEasternAssignments(db, seasonData.seasonUid),
+  ]);
+  const windows = joint.computeOverlaps(myState, theirState, uid, toUid, {
+    competitionDay,
+    scheduleLocations,
+    easternAssignments,
+    storeModule: store,
+    cfg: store.balance,
+  });
+  return {
+    success: true,
+    windows,
+    partnerCorpsName: theirState.corpsName || null,
+    alreadyBooked: false,
+    partnerBooked: false,
+  };
+});
+
 exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
   const { toUid, day } = request.data || {};
@@ -82,6 +147,19 @@ exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
     throw new HttpsError("already-exists", "There is already a pending proposal with this corps.");
   }
 
+  // Preview the geography now so BOTH directors see where the joint lands and
+  // who bears the travel before anyone commits (design §5.12). The invitee's
+  // city hosts; the proposer covers any gap. Recomputed authoritatively at
+  // acceptance — this is the informed-consent snapshot.
+  const [scheduleLocations, easternAssignments] = await Promise.all([
+    store.loadScheduleLocations(db, seasonData),
+    store.loadEasternAssignments(db, seasonData.seasonUid),
+  ]);
+  const myVenue = joint.corpsVenueOnDay(myState, uid, day, scheduleLocations, store, easternAssignments);
+  const theirVenue = joint.corpsVenueOnDay(theirState, toUid, day, scheduleLocations, store, easternAssignments);
+  const host = theirVenue || myVenue || null;
+  const gate = joint.geographyGate(myVenue, theirVenue, store.balance);
+
   const proposalRef = joint.proposalsCollection(db, seasonData.seasonUid).doc();
   await proposalRef.set({
     fromUid: uid,
@@ -90,6 +168,11 @@ exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
     fromCorpsName: myState.corpsName || null,
     toCorpsName: theirState.corpsName || null,
     day,
+    // Informed-consent snapshot for the inbox.
+    city: host ? `${host.city}, ${host.region}` : null,
+    stadium: host ? venues.stadiumFor(host.venueId) : null,
+    proposerTravelTier: gate.travelTier,
+    milesApart: gate.miles,
     status: "pending",
     seasonUid: seasonData.seasonUid,
     createdAt: new Date().toISOString(),
@@ -130,8 +213,7 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
   // Geography (design §5.12): free within the day-trip tier of both corps'
   // tour positions on that day; beyond it the PROPOSER pays the normal
   // travel cost of the gap (charged by the processor on the joint day).
-  const { loadScheduleLocations } = require("../helpers/podium/processor");
-  const scheduleLocations = await loadScheduleLocations(db, seasonData);
+  const scheduleLocations = await store.loadScheduleLocations(db, seasonData);
 
   const fromRef = store.stateRef(db, proposal.fromUid);
   const toRef = store.stateRef(db, uid);
@@ -166,11 +248,13 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
         ? `${venueFrom.city}, ${venueFrom.region}`
         : null;
 
+    const host = venueTo || venueFrom || null;
     const week = joint.weekOf(proposal.day);
     const entryBase = {
       day: proposal.day,
       bonusMult,
       city: hostCity,
+      stadium: host ? venues.stadiumFor(host.venueId) : null,
       proposalId,
     };
     transaction.set(
@@ -252,10 +336,15 @@ exports.getJointRehearsals = onCall({ cors: true }, async (request) => {
     outgoing: live(outgoingSnapshot.docs),
     upcoming: state && state.jointRehearsal ? state.jointRehearsal : null,
     scrimmage: state && state.scrimmage ? state.scrimmage : null,
+    headToHead: state && state.headToHead ? state.headToHead : {},
     history: state ? state.jointHistory || [] : [],
     roster: rosterSnapshot.docs
       .filter((d) => d.id !== uid)
-      .map((d) => ({ uid: d.id, corpsName: d.data().corpsName || null })),
+      .map((d) => ({
+        uid: d.id,
+        corpsName: d.data().corpsName || null,
+        city: d.data().location || null,
+      })),
   };
 });
 

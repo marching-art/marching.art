@@ -1,104 +1,182 @@
-// JointRehearsalPanel — the human handshake (Phase 7.1, design §5.12).
-// Propose a shared rehearsal day to another Podium corps; accepting freezes
-// the Full Ensemble bonus (repeat pairings decay) and books the scrimmage
-// report: a PRIVATE caption-by-caption head-to-head — the only scouting
-// outside a shared floor. The assistant director never accepts for you.
+// JointRehearsalPanel — the human handshake (design §5.12, redesigned).
+// Pick a rival and the system maps both tours and ranks the real overlap
+// windows (open days for both corps) with their host city/stadium, distance,
+// and the proposer's travel burden. The invitee decides with that burden in
+// full view. Once booked it lives in the route; once scored it pays off as a
+// Tale of the Tape with a season head-to-head record. The assistant director
+// never accepts for you.
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Handshake, Loader2, ChevronDown, ChevronUp, MapPin, Flag } from 'lucide-react';
-import { getJointRehearsals, proposeJointRehearsal, respondJointRehearsal } from '../../api/podium';
+import {
+  Handshake, Loader2, ChevronDown, ChevronUp, MapPin, Search, X, Trophy, Copy, Check,
+} from 'lucide-react';
+import {
+  getJointRehearsals,
+  getJointOverlaps,
+  proposeJointRehearsal,
+  respondJointRehearsal,
+} from '../../api/podium';
 import { PODIUM_CAPTIONS, CAPTION_LABELS } from './podiumConstants';
 
-// A season runs 49 days — seven weeks of seven. Championship Week is Days
-// 45–49; the "one joint per week" rule maps cleanly onto these rows.
-const SEASON_DAYS = 49;
-const DAYS_PER_WEEK = 7;
-const CHAMPIONSHIP_START = 45;
+// Travel-tier keys → human labels (mirror balanceConfig.travel.tiers).
+const TIER_LABELS = {
+  local: 'Local',
+  dayTrip: 'Day Trip',
+  overnightHaul: 'Overnight Haul',
+  longHaul: 'Long Haul',
+  crossCountry: 'Cross-Country',
+};
 
-// Visual day picker — replaces guessing a day number. Selectable days are
-// tomorrow (competitionDay + 1) through the finals; past days dim out, show
-// days carry a gold marker, and each row is a tour week so the weekly cap
-// reads at a glance.
-function DayCalendar({ competitionDay, showDays, value, onChange }) {
-  const weeks = [];
-  for (let w = 0; w < SEASON_DAYS / DAYS_PER_WEEK; w += 1) {
-    weeks.push(Array.from({ length: DAYS_PER_WEEK }, (_, i) => w * DAYS_PER_WEEK + i + 1));
-  }
+const cityLine = (city, stadium) =>
+  stadium ? `${city} · ${stadium}` : city || 'TBA';
+
+// One ranked overlap window — day, host city/stadium, distance, fit, cost.
+function WindowCard({ win, selected, onSelect }) {
+  const fitColor = win.isFree ? 'text-green-400' : 'text-amber-400';
   return (
-    <div className="space-y-1">
-      {weeks.map((days, i) => {
-        const isChampWeek = days[days.length - 1] >= CHAMPIONSHIP_START;
-        return (
-          <div key={i} className="flex items-center gap-2">
-            <span
-              className={`w-7 shrink-0 text-[8px] font-bold uppercase tracking-wider text-right ${
-                isChampWeek ? 'text-[#c9a227]' : 'text-gray-600'
-              }`}
-            >
-              {isChampWeek ? 'Wk7' : `Wk${i + 1}`}
-            </span>
-            <div className="grid grid-cols-7 gap-1 flex-1">
-              {days.map((day) => {
-                const past = day <= competitionDay;
-                const isToday = day === competitionDay;
-                const show = showDays.get(day);
-                const selected = value === day;
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    disabled={past}
-                    onClick={() => onChange(day)}
-                    title={show || (isToday ? 'Today' : undefined)}
-                    className={`relative flex items-center justify-center h-7 rounded-none border text-[10px] tabular-nums transition-colors press-feedback ${
-                      selected
-                        ? 'border-[#0057B8] bg-[#0057B8] text-white font-bold'
-                        : past
-                          ? 'border-transparent text-gray-700 cursor-not-allowed'
-                          : isToday
-                            ? 'border-gray-500 text-gray-400'
-                            : show
-                              ? 'border-[#c9a227]/40 text-[#c9a227] hover:border-[#c9a227] hover:text-white'
-                              : 'border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white'
-                    }`}
-                  >
-                    {day}
-                    {show && !selected && (
-                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#c9a227]" />
-                    )}
-                  </button>
-                );
-              })}
+    <button
+      type="button"
+      onClick={() => onSelect(win.day)}
+      className={`w-full text-left grid grid-cols-[46px_1fr_auto] gap-3 items-center px-3 py-2.5 rounded-none border transition-colors press-feedback ${
+        selected
+          ? 'border-[#0057B8] bg-[#0057B8]/10'
+          : 'border-[#333] bg-[#141414] hover:border-[#555]'
+      }`}
+    >
+      <div className="text-center">
+        <div className="text-lg font-bold tabular-nums leading-none">{win.day}</div>
+        <div className="text-[8px] font-mono uppercase text-gray-600 tracking-wider">
+          Wk {win.week}
+        </div>
+      </div>
+      <div className="min-w-0">
+        <div className="text-[12px] font-bold text-white truncate">{win.city || 'TBA'}</div>
+        {win.stadium && (
+          <div className="text-[10px] font-mono text-[#c9a227] truncate">{win.stadium}</div>
+        )}
+        <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1 text-[9px] font-mono text-gray-500">
+          {win.milesApart != null && <span>{win.milesApart} mi apart</span>}
+          <span className={fitColor}>
+            {win.isFree ? 'fits route — free' : `detour · ${TIER_LABELS[win.travelTier] || win.travelTier}`}
+          </span>
+        </div>
+      </div>
+      <div className="text-right space-y-1">
+        <div className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-amber-400'}`}>
+          {win.isFree
+            ? 'Free'
+            : `−${win.coinCost} CC · −${win.staminaCost}`}
+        </div>
+        <div className="text-[8px] font-mono uppercase tracking-wider text-[#c9a227] border border-[#8c7220] rounded-none px-1.5 py-0.5 inline-block">
+          Ens +{win.ensembleBonusPct}%
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// The invitee's informed-accept card: their burden (none — proposer covers the
+// gap) vs. their gain (bonus + the private scrimmage).
+function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
+  const tier = proposal.proposerTravelTier;
+  return (
+    <div className="border border-[#333] rounded-none overflow-hidden">
+      <div className="px-3 py-2 bg-[#222] flex items-center justify-between">
+        <span className="text-[11px] text-gray-300 min-w-0 truncate">
+          <span className="font-bold text-white">{proposal.fromCorpsName}</span> wants a joint
+          rehearsal
+        </span>
+        <span className="text-[9px] font-mono text-gray-600 uppercase shrink-0">Day {proposal.day}</span>
+      </div>
+      <div className="px-3 py-2.5 space-y-2.5">
+        <div className="text-[11px] text-gray-300 flex items-center gap-1.5">
+          <MapPin className="w-3 h-3 text-[#c9a227] shrink-0" />
+          <span className="truncate">{cityLine(proposal.city, proposal.stadium)}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-px bg-[#333] border border-[#333]">
+          <div className="bg-[#161616] px-2.5 py-2">
+            <div className="text-[8px] font-mono uppercase tracking-wider text-gray-600 mb-1">
+              Your burden
+            </div>
+            <div className="text-[13px] font-bold text-green-400">No travel</div>
+            <div className="text-[9px] text-gray-600 mt-0.5">
+              {tier
+                ? `${proposal.fromCorpsName} covers the ${TIER_LABELS[tier] || tier} leg.`
+                : 'You are already together on tour.'}
             </div>
           </div>
-        );
-      })}
-      <div className="flex items-center gap-3 pl-9 pt-0.5 text-[8px] uppercase tracking-wider text-gray-600">
-        <span className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#c9a227]" /> Show day
-        </span>
-        <span className="flex items-center gap-1">
-          <Flag className="w-2.5 h-2.5 text-[#c9a227]" /> Championship
-        </span>
+          <div className="bg-[#161616] px-2.5 py-2">
+            <div className="text-[8px] font-mono uppercase tracking-wider text-gray-600 mb-1">
+              Your gain
+            </div>
+            <div className="text-[13px] font-bold text-[#c9a227]">Ensemble +25%</div>
+            <div className="text-[9px] text-gray-600 mt-0.5">+ morale &amp; the scrimmage report.</div>
+          </div>
+        </div>
+        {blocked && (
+          <p className="text-[9px] font-mono text-amber-400/80">
+            You already have a joint booked — resolve it before accepting another.
+          </p>
+        )}
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            disabled={busy}
+            onClick={onDecline}
+            className="px-2.5 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-300 rounded-none press-feedback disabled:opacity-50"
+          >
+            Decline
+          </button>
+          <button
+            disabled={busy || blocked}
+            onClick={onAccept}
+            className="px-3 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-none press-feedback disabled:opacity-50 disabled:bg-[#333] disabled:text-gray-600"
+          >
+            Accept — book Day {proposal.day}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-const ScrimmageSheet = ({ scrimmage }) => {
+// The Tale of the Tape — the scored head-to-head, winner-highlighted, with a
+// Discord-friendly copy. Private; never published.
+function TaleOfTheTape({ scrimmage }) {
+  const [copied, setCopied] = useState(false);
   if (!scrimmage) return null;
-  const diff = (mine, theirs) => {
-    const d = (mine || 0) - (theirs || 0);
-    return { d, cls: d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-500' };
+
+  const diff = (mine, theirs) => (mine || 0) - (theirs || 0);
+  const totalDiff = diff(scrimmage.mine?.total, scrimmage.theirs?.total);
+
+  const copyText = async () => {
+    const rows = PODIUM_CAPTIONS.map((c) => {
+      const m = scrimmage.mine?.captions?.[c];
+      const t = scrimmage.theirs?.captions?.[c];
+      return `${c.padEnd(4)} ${(m ?? 0).toFixed(2).padStart(6)}  ${(t ?? 0).toFixed(2).padStart(6)}`;
+    }).join('\n');
+    const text =
+      `Tale of the Tape — Day ${scrimmage.day}${scrimmage.city ? ` · ${scrimmage.city}` : ''}\n` +
+      `You vs ${scrimmage.partnerCorpsName || 'Them'}\n${rows}\n` +
+      `TOT  ${(scrimmage.mine?.total ?? 0).toFixed(3).padStart(6)}  ${(scrimmage.theirs?.total ?? 0).toFixed(3).padStart(6)}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable — no-op */
+    }
   };
-  const total = diff(scrimmage.mine?.total, scrimmage.theirs?.total);
+
   return (
     <div className="border border-[#333] rounded-none overflow-hidden">
-      <div className="bg-[#222] px-3 py-2 flex items-center justify-between">
-        <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#c9a227]">
-          Scrimmage Report · Day {scrimmage.day}
-        </span>
-        <span className="text-[9px] text-gray-600 uppercase">Private — never published</span>
+      <div className="px-3 py-2 text-center border-b border-[#333] bg-gradient-to-b from-[#c9a227]/10 to-transparent">
+        <div className="text-[8px] font-mono uppercase tracking-[0.3em] text-[#c9a227]">
+          Tale of the Tape
+        </div>
+        <div className="text-[9px] font-mono text-gray-500 mt-1">
+          Day {scrimmage.day}
+          {scrimmage.city ? ` · ${cityLine(scrimmage.city, scrimmage.stadium)}` : ''} · private
+        </div>
       </div>
       <div className="px-3 py-2">
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-0.5 text-[10px] tabular-nums">
@@ -111,15 +189,18 @@ const ScrimmageSheet = ({ scrimmage }) => {
           {PODIUM_CAPTIONS.map((caption) => {
             const mine = scrimmage.mine?.captions?.[caption];
             const theirs = scrimmage.theirs?.captions?.[caption];
-            const { d, cls } = diff(mine, theirs);
+            const d = diff(mine, theirs);
+            const win = d > 0;
             return (
               <React.Fragment key={caption}>
                 <span className="text-gray-400" title={CAPTION_LABELS[caption]}>
                   {caption}
                 </span>
-                <span className="text-white text-right">{mine?.toFixed(2) ?? '—'}</span>
+                <span className={`text-right ${win ? 'text-green-400 font-bold' : 'text-white'}`}>
+                  {mine?.toFixed(2) ?? '—'}
+                </span>
                 <span className="text-gray-300 text-right">{theirs?.toFixed(2) ?? '—'}</span>
-                <span className={`${cls} text-right`}>
+                <span className={`text-right ${d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-600'}`}>
                   {d > 0 ? '+' : ''}
                   {d.toFixed(2)}
                 </span>
@@ -133,25 +214,77 @@ const ScrimmageSheet = ({ scrimmage }) => {
           <span className="text-gray-300 font-bold text-right border-t border-[#333] pt-1">
             {scrimmage.theirs?.total?.toFixed(3) ?? '—'}
           </span>
-          <span className={`${total.cls} font-bold text-right border-t border-[#333] pt-1`}>
-            {total.d > 0 ? '+' : ''}
-            {total.d.toFixed(3)}
+          <span
+            className={`font-bold text-right border-t border-[#333] pt-1 ${
+              totalDiff > 0 ? 'text-green-400' : totalDiff < 0 ? 'text-red-400' : 'text-gray-600'
+            }`}
+          >
+            {totalDiff > 0 ? '+' : ''}
+            {totalDiff.toFixed(3)}
           </span>
         </div>
       </div>
+      <div className="px-3 py-2 border-t border-[#333] bg-[#0f0f0f] flex items-center justify-between">
+        <span className="text-[10px] font-mono text-gray-500">
+          {totalDiff > 0 ? 'You took it' : totalDiff < 0 ? 'They took it' : 'Dead heat'}
+        </span>
+        <button
+          onClick={copyText}
+          className="flex items-center gap-1.5 px-2 py-1 text-[9px] font-bold uppercase tracking-wider border border-[#333] text-gray-300 rounded-none press-feedback"
+        >
+          {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+          {copied ? 'Copied' : 'Copy for Discord'}
+        </button>
+      </div>
     </div>
   );
-};
+}
 
-export default function JointRehearsalPanel({ podium }) {
-  const competitionDay = podium.data?.competitionDay ?? 0;
+// Season head-to-head record — the profile-facing "who's been rehearsing with
+// whom" log, rendered compactly in-panel.
+function HeadToHead({ headToHead }) {
+  const rows = Object.entries(headToHead || {});
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-1">
+      <div className="text-[9px] font-mono uppercase tracking-wider text-gray-600">
+        Head-to-head · this season
+      </div>
+      <div className="border border-[#333] rounded-none divide-y divide-[#222]">
+        {rows.map(([uid, rec]) => {
+          const lead = rec.wins - rec.losses;
+          const cls = lead > 0 ? 'text-green-400' : lead < 0 ? 'text-red-400' : 'text-gray-400';
+          return (
+            <div key={uid} className="flex items-center justify-between px-2.5 py-1.5">
+              <span className="text-[11px] text-gray-300 truncate flex items-center gap-1.5">
+                <Trophy className="w-3 h-3 text-gray-600 shrink-0" />
+                {rec.partnerCorpsName || 'Unknown corps'}
+              </span>
+              <span className="flex items-center gap-2.5 shrink-0">
+                <span className="text-[9px] font-mono text-gray-600">{rec.joints} joint{rec.joints === 1 ? '' : 's'}</span>
+                <span className={`text-[11px] font-mono font-bold tabular-nums ${cls}`}>
+                  {rec.wins}–{rec.losses}
+                  {rec.ties ? `–${rec.ties}` : ''}
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function JointRehearsalPanel() {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [toUid, setToUid] = useState('');
-  const [day, setDay] = useState('');
+  // Overlap search result + the day the director selected from it.
+  const [overlaps, setOverlaps] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null);
 
   const reload = useCallback(async () => {
     try {
@@ -174,37 +307,49 @@ export default function JointRehearsalPanel({ podium }) {
       await fn();
       if (successMessage) setNotice(successMessage);
       await reload();
+      return true;
     } catch (err) {
       setError(err?.message || 'Request failed.');
+      return false;
     } finally {
       setBusy(false);
     }
   };
 
-  const propose = (e) => {
-    e.preventDefault();
-    act(
-      () => proposeJointRehearsal({ toUid, day: Number(day) }),
+  const findOverlaps = async () => {
+    if (!toUid) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    setSelectedDay(null);
+    try {
+      const result = await getJointOverlaps({ toUid });
+      setOverlaps(result.data);
+    } catch (err) {
+      setError(err?.message || 'Could not map the tours.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelOverlaps = () => {
+    setOverlaps(null);
+    setSelectedDay(null);
+    setToUid('');
+    setError(null);
+  };
+
+  const propose = async () => {
+    if (!toUid || !selectedDay) return;
+    const ok = await act(
+      () => proposeJointRehearsal({ toUid, day: selectedDay }),
       'Proposal sent — they have until that morning to accept.'
-    ).then(() => {
-      setToUid('');
-      setDay('');
-    });
+    );
+    if (ok) cancelOverlaps();
   };
 
   const upcoming = data?.upcoming;
-  const scrimmage = data?.scrimmage;
-  const incomingCount = data?.incoming?.length || 0;
-
-  // Mark scheduled shows on the calendar from the tour route.
-  const showDays = new Map();
-  (podium.data?.routePreview || []).forEach((leg) => {
-    if (leg?.day && leg.label) {
-      showDays.set(leg.day, leg.city ? `${leg.label} · ${leg.city}` : leg.label);
-    }
-  });
-
-  const selectedShow = day ? showDays.get(Number(day)) : null;
+  const incoming = data?.incoming || [];
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
@@ -214,9 +359,9 @@ export default function JointRehearsalPanel({ podium }) {
       >
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <Handshake className="w-3 h-3" /> Joint Rehearsals
-          {incomingCount > 0 && (
+          {incoming.length > 0 && (
             <span className="px-1.5 py-0.5 bg-[#c9a227] text-black rounded-none text-[9px]">
-              {incomingCount}
+              {incoming.length}
             </span>
           )}
         </span>
@@ -230,10 +375,10 @@ export default function JointRehearsalPanel({ podium }) {
       {open && (
         <>
           <p className="text-[10px] text-gray-500 leading-relaxed">
-            Share a rehearsal day with another corps: Full Ensemble sharpens (+25%, decaying for
-            repeat partners), morale lifts, and both directors get a private caption-by-caption
-            scrimmage report — the only scouting outside a shared floor. One per week; within a day
-            trip of each other on tour, or the proposer pays the travel.
+            Pick a rival and the system maps both tours, then ranks the open days you could share —
+            each with its host city, distance, and stamina cost. Full Ensemble sharpens (+25%,
+            decaying for repeat partners), morale lifts, and both directors get a private scrimmage
+            report. One per week; the proposer covers any travel.
           </p>
 
           {!data && !error && (
@@ -244,132 +389,165 @@ export default function JointRehearsalPanel({ podium }) {
 
           {/* Upcoming accepted joint */}
           {upcoming && (
-            <div className="px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227] flex items-center gap-2">
-              <Handshake className="w-3.5 h-3.5 flex-shrink-0" />
+            <div className="px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227] flex items-start gap-2">
+              <Handshake className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
               <span>
                 Day {upcoming.day}: joint rehearsal with{' '}
                 <span className="font-bold">{upcoming.partnerCorpsName}</span>
                 {upcoming.city && (
                   <span className="text-[#c9a227]/70">
                     {' '}
-                    <MapPin className="w-2.5 h-2.5 inline" /> {upcoming.city}
+                    <MapPin className="w-2.5 h-2.5 inline" /> {cityLine(upcoming.city, upcoming.stadium)}
                   </span>
                 )}
                 {upcoming.travelTier && (
-                  <span className="text-amber-400"> · you cover the {upcoming.travelTier} leg</span>
+                  <span className="text-amber-400">
+                    {' '}
+                    · you cover the {TIER_LABELS[upcoming.travelTier] || upcoming.travelTier} leg
+                  </span>
                 )}
               </span>
             </div>
           )}
 
-          {/* Incoming proposals */}
-          {(data?.incoming || []).map((proposal) => (
-            <div
+          {/* Incoming proposals — informed accept */}
+          {incoming.map((proposal) => (
+            <IncomingCard
               key={proposal.id}
-              className="flex items-center justify-between gap-2 px-3 py-2 border border-[#333] rounded-none"
-            >
-              <span className="text-[11px] text-gray-300 min-w-0 truncate">
-                <span className="font-bold text-white">{proposal.fromCorpsName}</span> proposes Day{' '}
-                {proposal.day}
-              </span>
-              <span className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  disabled={busy}
-                  onClick={() =>
-                    act(
-                      () => respondJointRehearsal({ proposalId: proposal.id, accept: true }),
-                      'Joint rehearsal booked.'
-                    )
-                  }
-                  className="px-2 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-none press-feedback disabled:opacity-50"
-                >
-                  Accept
-                </button>
-                <button
-                  disabled={busy}
-                  onClick={() =>
-                    act(() => respondJointRehearsal({ proposalId: proposal.id, accept: false }))
-                  }
-                  className="px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-300 rounded-none press-feedback disabled:opacity-50"
-                >
-                  Decline
-                </button>
-              </span>
-            </div>
+              proposal={proposal}
+              busy={busy}
+              blocked={Boolean(upcoming)}
+              onAccept={() =>
+                act(
+                  () => respondJointRehearsal({ proposalId: proposal.id, accept: true }),
+                  'Joint rehearsal booked — it is on your route now.'
+                )
+              }
+              onDecline={() =>
+                act(() => respondJointRehearsal({ proposalId: proposal.id, accept: false }))
+              }
+            />
           ))}
 
           {/* Outgoing pending */}
           {(data?.outgoing || []).map((proposal) => (
             <div key={proposal.id} className="px-3 py-1.5 text-[10px] text-gray-500">
               Awaiting <span className="text-gray-300">{proposal.toCorpsName}</span> for Day{' '}
-              {proposal.day} — expires unanswered that morning.
+              {proposal.day}
+              {proposal.city ? ` · ${proposal.city}` : ''} — expires unanswered that morning.
             </div>
           ))}
 
-          {/* Propose form — pick a partner, then a day off the calendar */}
+          {/* Propose flow — partner select → find overlaps → ranked windows */}
           {data && !upcoming && (
-            <form
-              onSubmit={propose}
-              className="space-y-3 border border-[#333] rounded-none p-3 bg-[#161616]"
-            >
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
-                  Partner corps
-                </label>
-                <select
-                  value={toUid}
-                  onChange={(e) => setToUid(e.target.value)}
-                  required
-                  className="w-full bg-[#0f0f0f] border border-[#333] rounded-none px-2 py-1.5 text-xs text-white focus:border-[#0057B8] focus:outline-none"
-                >
-                  <option value="">Propose to…</option>
-                  {(data.roster || []).map((corps) => (
-                    <option key={corps.uid} value={corps.uid}>
-                      {corps.corpsName || corps.uid}
-                      {corps.city ? ` · ${corps.city}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
-                  Choose a day
-                </label>
-                <DayCalendar
-                  competitionDay={competitionDay}
-                  showDays={showDays}
-                  value={day ? Number(day) : null}
-                  onChange={(d) => setDay(d)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between gap-2 pt-0.5 border-t border-[#2a2a2a]">
-                <span className="text-[10px] text-gray-500 min-w-0 truncate">
-                  {day ? (
-                    <>
-                      <span className="text-gray-300 font-bold">Day {day}</span>
-                      {selectedShow && (
-                        <span className="text-[#c9a227]"> · same day as {selectedShow}</span>
+            <div className="space-y-3 border border-[#333] rounded-none p-3 bg-[#161616]">
+              {!overlaps ? (
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                    Scout a corps
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={toUid}
+                      onChange={(e) => setToUid(e.target.value)}
+                      className="flex-1 bg-[#0f0f0f] border border-[#333] rounded-none px-2 py-1.5 text-xs text-white focus:border-[#0057B8] focus:outline-none"
+                    >
+                      <option value="">Choose a corps…</option>
+                      {(data.roster || []).map((corps) => (
+                        <option key={corps.uid} value={corps.uid}>
+                          {corps.corpsName || corps.uid}
+                          {corps.city ? ` · ${corps.city}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={busy || !toUid}
+                      onClick={findOverlaps}
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-gray-600 press-feedback"
+                    >
+                      {busy ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Search className="w-3 h-3" />
                       )}
-                    </>
+                      Find overlaps
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-white">
+                      Overlaps with {overlaps.partnerCorpsName || 'corps'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={cancelOverlaps}
+                      className="flex items-center gap-1 text-[9px] font-mono uppercase text-gray-500 hover:text-gray-300 press-feedback"
+                    >
+                      <X className="w-3 h-3" /> Cancel
+                    </button>
+                  </div>
+
+                  {overlaps.windows.length === 0 ? (
+                    <p className="text-[10px] text-gray-500 py-2">
+                      {overlaps.alreadyBooked
+                        ? 'You already have a joint booked — one per corps at a time.'
+                        : overlaps.partnerBooked
+                          ? `${overlaps.partnerCorpsName || 'That corps'} already has a joint booked.`
+                          : 'No shared open days in the next two weeks. Your tours never sit idle on the same day — try another partner.'}
+                    </p>
                   ) : (
-                    'Select a partner and a day to propose.'
+                    <>
+                      <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                        {overlaps.windows.map((win) => (
+                          <WindowCard
+                            key={win.day}
+                            win={win}
+                            selected={selectedDay === win.day}
+                            onSelect={setSelectedDay}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-[9px] font-mono text-gray-600">
+                        Stadium shown when on file — otherwise the city stands alone.
+                      </p>
+                      <div className="flex items-center justify-end gap-2 pt-0.5 border-t border-[#2a2a2a]">
+                        <button
+                          type="button"
+                          onClick={cancelOverlaps}
+                          className="px-2.5 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider border border-[#333] text-gray-400 press-feedback"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy || !selectedDay}
+                          onClick={propose}
+                          className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-gray-600 press-feedback"
+                        >
+                          {busy ? (
+                            <Loader2 className="w-3 h-3 animate-spin inline" />
+                          ) : selectedDay ? (
+                            `Propose Day ${selectedDay}`
+                          ) : (
+                            'Pick a day'
+                          )}
+                        </button>
+                      </div>
+                    </>
                   )}
-                </span>
-                <button
-                  type="submit"
-                  disabled={busy || !toUid || !day}
-                  className="shrink-0 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-gray-600 press-feedback"
-                >
-                  {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Propose'}
-                </button>
-              </div>
-            </form>
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Latest scrimmage report */}
-          <ScrimmageSheet scrimmage={scrimmage} />
+          {/* Latest Tale of the Tape */}
+          <TaleOfTheTape scrimmage={data?.scrimmage} />
+
+          {/* Season head-to-head record */}
+          <HeadToHead headToHead={data?.headToHead} />
 
           {error && <div className="text-[11px] text-red-400">{error}</div>}
           {notice && <div className="text-[11px] text-green-400">{notice}</div>}

@@ -51,6 +51,7 @@ const {
   acknowledgePodiumStaffOutlook,
 } = require("./src/callable/podiumStaff");
 const {
+  getJointOverlaps,
   proposeJointRehearsal,
   respondJointRehearsal,
   getJointRehearsals,
@@ -297,6 +298,7 @@ module.exports = {
   hostEvent,
   getPodiumState,
   getPodiumRegistrationPreview,
+  getJointOverlaps,
   proposeJointRehearsal,
   respondJointRehearsal,
   getJointRehearsals,
