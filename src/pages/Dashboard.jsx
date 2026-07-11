@@ -49,6 +49,10 @@ const RenameDuplicateCorpsModal = lazyWithRetry(
 // Podium Class Zone C (flag-gated director sim — registration, rehearsal
 // planner, caption progress). Lazy: fantasy-only players never load it.
 const PodiumZone = lazyWithRetry(() => import('../components/Podium/PodiumZone'), 'PodiumZone');
+const PodiumJourneyPanel = lazyWithRetry(
+  () => import('../components/Podium/PodiumJourneyPanel'),
+  'PodiumJourneyPanel'
+);
 const StreakModal = lazyWithRetry(() => import('../components/modals/StreakModal'), 'StreakModal');
 const CorpsCoinModal = lazyWithRetry(
   () => import('../components/modals/CorpsCoinModal'),
@@ -422,12 +426,20 @@ const Dashboard = () => {
 
                 {/* First Season Journey - server-rewarded quest line for new
                     directors; hides itself once all steps are claimed */}
-                <JourneyPanel
-                  profile={profile}
-                  resultCount={recentResults.length}
-                  onEditLineup={() => openCaptionSelection()}
-                  onSetConcept={() => setShowConceptModal(true)}
-                />
+                {isPodiumSelected ? (
+                  /* Podium Rookie Journey — the director-sim equivalent quest
+                     line, kept in the right column like the fantasy journey */
+                  <Suspense fallback={null}>
+                    <PodiumJourneyPanel />
+                  </Suspense>
+                ) : (
+                  <JourneyPanel
+                    profile={profile}
+                    resultCount={recentResults.length}
+                    onEditLineup={() => openCaptionSelection()}
+                    onSetConcept={() => setShowConceptModal(true)}
+                  />
+                )}
               </div>
 
               {/* ZONE C — MY CORPS (2/3): the strategic work — build, tune,
