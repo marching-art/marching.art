@@ -113,7 +113,7 @@ const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }
     <div className="min-w-0">
       <div className="flex items-baseline gap-1.5 min-w-0">
         <span
-          className={`text-sm font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+          className={`text-[11px] font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
         >
           {name}
         </span>
@@ -571,7 +571,7 @@ const SoundSportMedalList = ({ shows }) => {
                       size="xs"
                     />
                     <div className="min-w-0">
-                      <span className="font-bold text-white text-sm block truncate">
+                      <span className="font-bold text-white text-[11px] block truncate">
                         {result.corps || result.corpsName}
                       </span>
                       {result.displayName &&
