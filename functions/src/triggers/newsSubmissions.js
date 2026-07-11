@@ -5,19 +5,43 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { brevoApiKey } = require("../helpers/emailService");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
+const {
+  AUTO_PUBLISH_THRESHOLD,
+  computeNextAutoPublishAt,
+  resolveAuthorCredit,
+  publishSubmission,
+} = require("../helpers/newsSubmissionsShared");
 
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
+
+const DATA_NAMESPACE = () => process.env.DATA_NAMESPACE || "marching-art";
+
+/** Firestore path to a user's profile data doc. */
+function profileDataRef(db, uid) {
+  return db
+    .collection("artifacts")
+    .doc(DATA_NAMESPACE())
+    .collection("users")
+    .doc(uid)
+    .collection("profile")
+    .doc("data");
+}
 
 // =============================================================================
 // USER NEWS SUBMISSIONS
 // =============================================================================
 
 /**
- * Submit a news article for admin approval
- * Any authenticated user can submit articles
+ * Submit a news article for admin approval.
+ *
+ * Any authenticated user can submit. Authors who have had at least
+ * AUTO_PUBLISH_THRESHOLD articles approved by an admin are "trusted": their new
+ * submissions skip the manual queue and are scheduled to publish automatically
+ * at 2 PM Eastern (handled by the autoPublishScheduledSubmissions job).
  */
 exports.submitNewsForApproval = onCall(
   {
@@ -59,18 +83,13 @@ exports.submitNewsForApproval = onCall(
     }
 
     try {
-      // Get user profile for author info
-      const userDoc = await db
-        .collection("artifacts")
-        .doc(process.env.DATA_NAMESPACE || "marching-art")
-        .collection("users")
-        .doc(request.auth.uid)
-        .collection("profile")
-        .doc("data")
-        .get();
+      // Resolve author credit (name, username, location) and their approved count.
+      const credit = await resolveAuthorCredit(db, request.auth.uid);
 
-      const userData = userDoc.exists ? userDoc.data() : {};
-      const authorName = userData.displayName || userData.username || "Anonymous";
+      // Trusted authors (3+ admin approvals) get their articles auto-published
+      // at the next 2 PM Eastern rather than waiting in the admin queue.
+      const isTrustedAuthor = credit.approvedCount >= AUTO_PUBLISH_THRESHOLD;
+      const scheduledPublishAt = isTrustedAuthor ? computeNextAutoPublishAt() : null;
 
       // Create the submission
       const submission = {
@@ -79,10 +98,15 @@ exports.submitNewsForApproval = onCall(
         fullStory: fullStory.trim(),
         category,
         imageUrl: imageUrl?.trim() || null,
-        status: "pending", // pending, approved, rejected
+        status: isTrustedAuthor ? "scheduled" : "pending", // pending | scheduled | approved | rejected
         authorUid: request.auth.uid,
-        authorName,
+        authorName: credit.authorName,
+        authorUsername: credit.authorUsername,
+        authorLocation: credit.authorLocation,
         authorEmail: request.auth.token.email || null,
+        // Auto-publish scheduling (only for trusted authors)
+        autoPublish: isTrustedAuthor,
+        scheduledPublishAt,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -93,6 +117,7 @@ exports.submitNewsForApproval = onCall(
         submissionId: docRef.id,
         authorUid: request.auth.uid,
         headline: headline.substring(0, 50),
+        autoPublish: isTrustedAuthor,
       });
 
       // Notify admins. Wrapped so an email failure never breaks the user's submission.
@@ -112,11 +137,16 @@ exports.submitNewsForApproval = onCall(
 
       return {
         success: true,
-        message: "Article submitted for review. An admin will review it shortly.",
+        message: isTrustedAuthor
+          ? "Article scheduled — as a trusted author it will publish automatically at 2 PM Eastern."
+          : "Article submitted for review. An admin will review it shortly.",
         submissionId: docRef.id,
+        autoPublish: isTrustedAuthor,
+        scheduledPublishAt: scheduledPublishAt ? scheduledPublishAt.toISOString() : null,
       };
     } catch (error) {
       logger.error("Error submitting news article:", error);
+      if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", "Failed to submit article. Please try again.");
     }
   }
@@ -154,6 +184,7 @@ exports.listPendingSubmissions = onCall(
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || null,
         updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || null,
+        scheduledPublishAt: doc.data().scheduledPublishAt?.toDate?.()?.toISOString() || null,
       }));
 
       return {
@@ -169,8 +200,13 @@ exports.listPendingSubmissions = onCall(
 );
 
 /**
- * Approve an article submission and publish it
- * Admin can choose to use submitted image, generate AI image, or publish without image
+ * Approve an article submission and publish it.
+ *
+ * Publishing generates a Fantasy Daily-style header image (article #5 prompt)
+ * and stamps full author credit onto the article. Each admin approval also
+ * advances the author's approved-article count; once it reaches
+ * AUTO_PUBLISH_THRESHOLD their future submissions auto-publish.
+ *
  * imageOption: 'submitted' | 'generate' | 'none'
  */
 exports.approveSubmission = onCall(
@@ -206,176 +242,44 @@ exports.approveSubmission = onCall(
         throw new HttpsError("failed-precondition", "This submission has already been approved");
       }
 
-      // Get current season info
-      const seasonDoc = await db.doc("game-settings/season").get();
-      const seasonData = seasonDoc.exists ? seasonDoc.data() : {};
-      const seasonId = seasonData.seasonUid || "current_season";
-      const currentDay = seasonData.currentDay || 1;
-
-      let finalImageUrl = null;
-
-      // Determine image handling based on imageOption or legacy generateImage flag
-      // imageOption takes precedence if provided
+      // Determine image handling based on imageOption or legacy generateImage flag.
+      // imageOption takes precedence if provided.
       let effectiveOption = imageOption;
       if (!effectiveOption) {
-        // Legacy support: convert boolean generateImage to imageOption
         if (generateImage === true) {
           effectiveOption = submission.imageUrl ? "submitted" : "generate";
         } else if (generateImage === false) {
           effectiveOption = "none";
         } else {
-          // Default: use submitted image if available, otherwise generate
           effectiveOption = submission.imageUrl ? "submitted" : "generate";
         }
       }
 
-      if (effectiveOption === "submitted" && submission.imageUrl) {
-        // Use the submitted image
-        finalImageUrl = submission.imageUrl;
-        logger.info("Using submitted image:", { submissionId, imageUrl: finalImageUrl });
-      } else if (effectiveOption === "generate") {
-        // Generate a new AI image
-        logger.info("Generating AI image for approved article:", { submissionId });
-
-        const {
-          generateImageWithImagen,
-          buildArticleImagePrompt,
-          buildCorpsSpotlightImagePrompt,
-          buildAnalyticsImagePrompt,
-          buildFantasyLeagueImagePrompt,
-          buildFantasyPerformersImagePrompt,
-          DCI_UNIFORMS,
-        } = require("../helpers/newsGeneration");
-        const { uploadFromUrl } = require("../helpers/mediaService");
-
-        // Try to extract a corps name from the headline/summary for specialized prompts
-        const knownCorps = Object.keys(DCI_UNIFORMS);
-        const contentToSearch = `${submission.headline} ${submission.summary}`.toLowerCase();
-        const extractedCorps = knownCorps.find(corps =>
-          contentToSearch.includes(corps.toLowerCase())
-        );
-        const currentYear = new Date().getFullYear();
-
-        // Build a contextual prompt based on article content
-        // Use specialized prompt builders when possible for better image quality
-        let imagePrompt;
-
-        if (submission.category === "dci" && extractedCorps) {
-          // Use corps spotlight prompt for DCI articles about specific corps
-          imagePrompt = buildCorpsSpotlightImagePrompt(
-            extractedCorps,
-            currentYear,
-            null // showTitle
-          );
-          logger.info("Using specialized corps spotlight prompt:", { extractedCorps });
-        } else if (submission.category === "analysis" && extractedCorps) {
-          // Use analytics prompt for analysis articles about specific corps
-          imagePrompt = buildAnalyticsImagePrompt(
-            extractedCorps,
-            currentYear,
-            "performance analysis",
-            null // showTitle
-          );
-          logger.info("Using specialized analytics prompt:", { extractedCorps });
-        } else if (submission.category === "fantasy") {
-          // Use fantasy league prompt for fantasy articles
-          if (extractedCorps) {
-            imagePrompt = buildFantasyPerformersImagePrompt(
-              extractedCorps,
-              "Championship celebration",
-              null, // location
-              null  // uniformDesign
-            );
-            logger.info("Using specialized fantasy performers prompt:", { extractedCorps });
-          } else {
-            imagePrompt = buildFantasyLeagueImagePrompt();
-            logger.info("Using specialized fantasy league prompt");
-          }
-        } else {
-          // Fallback to generic prompt builder
-          imagePrompt = buildArticleImagePrompt(
-            submission.category,
-            submission.headline,
-            submission.summary
-          );
-          logger.info("Using generic article prompt:", { category: submission.category });
-        }
-
-        // Generate the image
-        const imageData = await generateImageWithImagen(imagePrompt);
-
-        if (imageData) {
-          // Upload to Cloudinary
-          const uploadResult = await uploadFromUrl(imageData, {
-            folder: "marching-art/user-articles",
-            publicId: `article_${submissionId}`,
-            category: submission.category,
-            headline: submission.headline,
-          });
-
-          if (uploadResult.success) {
-            finalImageUrl = uploadResult.url;
-            logger.info("Image generated and uploaded:", { url: finalImageUrl });
-          }
-        }
-      }
-
-      // Publish into the day's "articles" subcollection so the article surfaces
-      // in the news feed. getRecentNews/getNewsFeedHttp read via a collection-group
-      // query on `articles` (news_hub/{seasonId}/days/day_{n}/articles/{type}); a
-      // document parked in a separate `community` subcollection is never queried,
-      // which is why approved submissions previously vanished. The composite id the
-      // feed derives (`{seasonId}_day_{n}_community_{submissionId}`) also round-trips
-      // through resolveArticleById so the article's shared URL resolves.
-      const articleType = `community_${submissionId}`;
-      const articlePath = `news_hub/${seasonId}/days/day_${currentDay}/articles/${articleType}`;
-
-      const publishedArticle = {
-        type: articleType,
+      const { articlePath, imageUrl: finalImageUrl } = await publishSubmission(db, {
+        submissionRef,
+        submission,
         submissionId,
-        reportDay: currentDay,
-        // Order the feed by publish time so a freshly approved article lands at the
-        // top rather than being buried at its original (possibly days-old) submission date.
-        createdAt: new Date(),
-        submittedAt: submission.createdAt,
-        publishedAt: new Date(),
-        updatedAt: new Date(),
-
-        // Article content
-        headline: submission.headline,
-        summary: submission.summary,
-        narrative: submission.fullStory,
-        category: submission.category,
-
-        // Image
-        imageUrl: finalImageUrl,
-        imageIsPlaceholder: !finalImageUrl,
-
-        // Author info
-        authorUid: submission.authorUid,
-        authorName: submission.authorName,
-
-        // Metadata
-        metadata: {
-          source: "community_submission",
-          approvedBy: request.auth.uid,
-          approvedAt: new Date(),
-        },
-
-        isPublished: true,
-      };
-
-      await db.doc(articlePath).set(publishedArticle);
-
-      // Update submission status
-      await submissionRef.update({
-        status: "approved",
-        publishedAt: new Date(),
-        updatedAt: new Date(),
         approvedBy: request.auth.uid,
-        publishedImageUrl: finalImageUrl,
-        publishedPath: articlePath,
+        imageOption: effectiveOption,
+        autoPublished: false,
       });
+
+      // Credit the author with an admin approval. Once they cross the threshold,
+      // their future submissions auto-publish. Wrapped so a counter failure
+      // never fails an otherwise-successful publish.
+      try {
+        await profileDataRef(db, submission.authorUid).set(
+          {
+            articleStats: {
+              approvedCount: FieldValue.increment(1),
+              lastApprovedAt: new Date(),
+            },
+          },
+          { merge: true }
+        );
+      } catch (counterErr) {
+        logger.warn("Failed to increment author approved count:", counterErr.message);
+      }
 
       logger.info("Article approved and published:", {
         submissionId,
@@ -425,12 +329,14 @@ exports.rejectSubmission = onCall(
 
       const submission = submissionDoc.data();
 
-      if (submission.status !== "pending") {
+      // Allow rejecting both queued (pending) and auto-scheduled submissions.
+      if (submission.status !== "pending" && submission.status !== "scheduled") {
         throw new HttpsError("failed-precondition", "This submission has already been processed");
       }
 
       await submissionRef.update({
         status: "rejected",
+        autoPublish: false,
         rejectionReason: reason || "Does not meet our content guidelines",
         rejectedBy: request.auth.uid,
         updatedAt: new Date(),

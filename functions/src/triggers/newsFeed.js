@@ -274,6 +274,11 @@ exports.getRecentNews = onCall(
           fantasyImpact: data.fantasyImpact || null,
           fantasyMetrics: data.fantasyMetrics || null,
           trendingCorps: data.trendingCorps || null,
+          // Author credit (community submissions) — powers the byline + profile link
+          authorUid: data.authorUid || null,
+          authorName: data.authorName || null,
+          authorUsername: data.authorUsername || null,
+          authorLocation: data.authorLocation || null,
           // Timestamps
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
@@ -498,6 +503,10 @@ exports.getNewsFeedHttp = onRequest(
           fantasyImpact: data.fantasyImpact || null,
           fantasyMetrics: data.fantasyMetrics || null,
           trendingCorps: data.trendingCorps || null,
+          authorUid: data.authorUid || null,
+          authorName: data.authorName || null,
+          authorUsername: data.authorUsername || null,
+          authorLocation: data.authorLocation || null,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
         });
