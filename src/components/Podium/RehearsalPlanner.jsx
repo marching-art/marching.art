@@ -81,7 +81,9 @@ export default function RehearsalPlanner({ podium }) {
   return (
     <div
       className={`bg-[#1a1a1a] border rounded-none p-4 space-y-4 ${
-        isShowDay ? 'border-[#c9a227] shadow-[0_0_0_1px_#c9a227] ring-1 ring-[#c9a227]/40' : 'border-[#333]'
+        isShowDay
+          ? 'border-[#c9a227] shadow-[0_0_0_1px_#c9a227] ring-1 ring-[#c9a227]/40'
+          : 'border-[#333]'
       }`}
     >
       {/* Show day is the payoff — make it unmissable. Banner sits above the
