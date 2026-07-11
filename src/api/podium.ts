@@ -211,6 +211,32 @@ export interface JointRehearsalsResponse {
   roster: Array<{ uid: string; corpsName: string | null }>;
 }
 
+// One ranked overlap window: a day both corps sit idle on tour, priced with its
+// host city/stadium and the proposer's travel burden (design §5.12 redesign).
+export interface JointOverlapWindow {
+  day: number;
+  week: number;
+  hostVenueId: string | null;
+  city: string | null;
+  stadium: string | null;
+  milesApart: number | null;
+  travelTier: string | null;
+  isFree: boolean;
+  staminaCost: number;
+  coinCost: number;
+  ensembleBonusPct: number;
+  priorPairs: number;
+}
+
+export interface JointOverlapsResponse {
+  success: boolean;
+  windows: JointOverlapWindow[];
+  partnerCorpsName: string | null;
+  // Why the window list is empty: one upcoming joint per corps at a time.
+  alreadyBooked: boolean;
+  partnerBooked: boolean;
+}
+
 // Fan Favorite (decision 30): two-level cosmetic ballot — prelims at each
 // major, finals in championship week. Any signed-in user votes.
 export interface FanFavoriteCandidate {
@@ -238,6 +264,10 @@ export const castFanFavoriteVote = createCallable<
   { corpsUid: string },
   { success: boolean; stage: string; vote: string }
 >('castFanFavoriteVote');
+
+export const getJointOverlaps = createCallable<{ toUid: string }, JointOverlapsResponse>(
+  'getJointOverlaps'
+);
 
 export const proposeJointRehearsal = createCallable<
   { toUid: string; day: number },

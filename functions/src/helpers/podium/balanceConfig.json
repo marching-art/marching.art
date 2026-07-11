@@ -287,7 +287,7 @@
     "moraleBonus": 6,
     "maxPerWeek": 1,
     "maxFreeDistanceTier": "dayTrip",
-    "proposalMaxAheadDays": 7
+    "proposalMaxAheadDays": 14
   },
   "hostedEvents": {
     "venueTiers": {

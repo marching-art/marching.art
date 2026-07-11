@@ -49,6 +49,70 @@ function assertJointCapacity(state, day, label) {
   }
 }
 
+/**
+ * Ranked overlap windows for a proposer→partner pair (design §5.12, redesign):
+ * the days over the next two weeks where both corps sit idle on the tour, each
+ * priced with its host city/stadium and the proposer's travel burden. This is
+ * what Step 2 of the flow renders — the director picks a window instead of
+ * guessing a day. Read-only; the actual booking still goes through
+ * proposeJointRehearsal → respondJointRehearsal.
+ */
+exports.getJointOverlaps = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  const { toUid } = request.data || {};
+  if (typeof toUid !== "string" || !toUid || toUid === uid) {
+    throw new HttpsError("invalid-argument", "Pick another director's corps.");
+  }
+
+  const [mySnapshot, theirSnapshot] = await Promise.all([
+    store.stateRef(db, uid).get(),
+    store.stateRef(db, toUid).get(),
+  ]);
+  if (!mySnapshot.exists || mySnapshot.data().seasonUid !== seasonData.seasonUid) {
+    throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+  }
+  if (!theirSnapshot.exists || theirSnapshot.data().seasonUid !== seasonData.seasonUid) {
+    throw new HttpsError("failed-precondition", "That corps is not active this season.");
+  }
+  const myState = mySnapshot.data();
+  const theirState = theirSnapshot.data();
+
+  // One upcoming joint at a time (either side) — surface WHY there are no
+  // windows so the client can explain it instead of showing an empty list.
+  const alreadyBooked = Boolean(myState.jointRehearsal && myState.jointRehearsal.day > competitionDay);
+  const partnerBooked = Boolean(
+    theirState.jointRehearsal && theirState.jointRehearsal.day > competitionDay
+  );
+  if (alreadyBooked || partnerBooked) {
+    return {
+      success: true,
+      windows: [],
+      partnerCorpsName: theirState.corpsName || null,
+      alreadyBooked,
+      partnerBooked,
+    };
+  }
+
+  const [scheduleLocations, easternAssignments] = await Promise.all([
+    store.loadScheduleLocations(db, seasonData),
+    store.loadEasternAssignments(db, seasonData.seasonUid),
+  ]);
+  const windows = joint.computeOverlaps(myState, theirState, uid, toUid, {
+    competitionDay,
+    scheduleLocations,
+    easternAssignments,
+    storeModule: store,
+    cfg: store.balance,
+  });
+  return {
+    success: true,
+    windows,
+    partnerCorpsName: theirState.corpsName || null,
+    alreadyBooked: false,
+    partnerBooked: false,
+  };
+});
+
 exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
   const { toUid, day } = request.data || {};

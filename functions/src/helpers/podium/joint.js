@@ -62,9 +62,9 @@ function ensembleBonusFor(priorPairCount, cfg) {
  * strictly before that day, else hometown (design §5.12 "current location").
  * `scheduleLocations` is the processor's {day -> location} preload.
  */
-function corpsVenueOnDay(state, uid, competitionDay, scheduleLocations, storeModule) {
+function corpsVenueOnDay(state, uid, competitionDay, scheduleLocations, storeModule, easternAssignments) {
   for (let day = Math.min(competitionDay - 1, 49); day >= 1; day--) {
-    if (!storeModule.isShowDayFor(state, uid, day)) continue;
+    if (!storeModule.isShowDayFor(state, uid, day, easternAssignments)) continue;
     const major = venues.MAJOR_VENUES[day];
     if (major) return major;
     const location = scheduleLocations[day];
@@ -72,6 +72,80 @@ function corpsVenueOnDay(state, uid, competitionDay, scheduleLocations, storeMod
     if (venue) return venue;
   }
   return venues.venueFor(state.location) || null;
+}
+
+/**
+ * Ranked joint-rehearsal overlap windows for a proposer→partner pair (design
+ * §5.12, redesign). Scans the next `proposalMaxAheadDays` for days that are
+ * open REHEARSAL days for BOTH corps (a joint fills the quiet days), prices the
+ * proposer's travel to close the gap (the proposer covers it — the partner's
+ * city hosts), and ranks best-fit first: free windows, then least distance,
+ * then soonest. Pure — the callable supplies the schedule + eastern preloads.
+ *
+ * @returns {Array<{day:number, week:number, hostVenueId:string|null,
+ *   city:string|null, stadium:string|null, milesApart:number|null,
+ *   travelTier:string|null, isFree:boolean, staminaCost:number,
+ *   coinCost:number, ensembleBonusPct:number, priorPairs:number}>}
+ */
+function computeOverlaps(myState, theirState, myUid, theirUid, ctx) {
+  const { competitionDay, scheduleLocations, easternAssignments, storeModule, cfg } = ctx;
+  const maxPerWeek = cfg.joint.maxPerWeek;
+  const lastDay = Math.min(49, competitionDay + cfg.joint.proposalMaxAheadDays);
+  const priorPairs = pairCountWith(myState, theirUid);
+  const ensembleBonusPct = Math.round((ensembleBonusFor(priorPairs, cfg) - 1) * 100);
+  const windows = [];
+
+  for (let day = competitionDay + 1; day <= lastDay; day++) {
+    // Both corps must be OPEN — a shared rehearsal day, never a show day.
+    if (storeModule.isShowDayFor(myState, myUid, day, easternAssignments)) continue;
+    if (storeModule.isShowDayFor(theirState, theirUid, day, easternAssignments)) continue;
+    // Weekly cap: neither corps can have already banked that week's joint.
+    const week = weekOf(day);
+    if (jointsUsedInWeek(myState, week) >= maxPerWeek) continue;
+    if (jointsUsedInWeek(theirState, week) >= maxPerWeek) continue;
+
+    const myVenue = corpsVenueOnDay(
+      myState, myUid, day, scheduleLocations, storeModule, easternAssignments
+    );
+    const theirVenue = corpsVenueOnDay(
+      theirState, theirUid, day, scheduleLocations, storeModule, easternAssignments
+    );
+    // The partner's city hosts; the proposer closes any gap (the burden rule).
+    const host = theirVenue || myVenue || null;
+    const gate = geographyGate(myVenue, theirVenue, cfg);
+    let travelTier = null;
+    let staminaCost = 0;
+    let coinCost = 0;
+    if (gate.travelTier) {
+      const tierCfg = cfg.travel.tiers.find((t) => t.key === gate.travelTier);
+      travelTier = gate.travelTier;
+      staminaCost = tierCfg ? tierCfg.staminaCost : 0;
+      coinCost = tierCfg ? tierCfg.coinCost : 0;
+    }
+    windows.push({
+      day,
+      week,
+      hostVenueId: host ? host.venueId : null,
+      city: host ? `${host.city}, ${host.region}` : null,
+      stadium: host ? venues.stadiumFor(host.venueId) : null,
+      milesApart: gate.miles,
+      travelTier,
+      isFree: !travelTier,
+      staminaCost,
+      coinCost,
+      ensembleBonusPct,
+      priorPairs,
+    });
+  }
+
+  // Best fit first: free windows, then least distance, then soonest day.
+  windows.sort(
+    (a, b) =>
+      Number(b.isFree) - Number(a.isFree) ||
+      (a.milesApart ?? Infinity) - (b.milesApart ?? Infinity) ||
+      a.day - b.day
+  );
+  return windows;
 }
 
 /**
@@ -123,5 +197,6 @@ module.exports = {
   ensembleBonusFor,
   corpsVenueOnDay,
   geographyGate,
+  computeOverlaps,
   scrimmageReport,
 };
