@@ -37,6 +37,7 @@ export interface PodiumBlockResult {
 
 export interface PodiumRouteLeg {
   day: number;
+  eventName: string | null;
   city: string;
   tier: string | null;
   miles: number | null;

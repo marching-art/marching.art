@@ -10,7 +10,6 @@ import PodiumRegistration from './PodiumRegistration';
 import RehearsalPlanner from './RehearsalPlanner';
 import PodiumCaptionPanel from './PodiumCaptionPanel';
 import PodiumTrajectoryCard from './PodiumTrajectoryCard';
-import PodiumShowPicker from './PodiumShowPicker';
 import CorpsConditionPanel from './CorpsConditionPanel';
 import PodiumStaffPanel from './PodiumStaffPanel';
 import JointRehearsalPanel from './JointRehearsalPanel';
@@ -48,7 +47,6 @@ export default function PodiumZone() {
       <CorpsConditionPanel podium={podium} />
       <PodiumStaffPanel podium={podium} />
       <JointRehearsalPanel podium={podium} />
-      <PodiumShowPicker podium={podium} />
     </div>
   );
 }
