@@ -52,13 +52,13 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 
 - **Vercel**: Production hosting with automatic deployments
 - **GitHub**: Version control and CI/CD
-- **Node 20**: Runtime environment
+- **Node 22**: Runtime environment
 
 ## 📦 Installation
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - npm or yarn
 - Firebase project setup
 
