@@ -156,7 +156,10 @@ function validateShowDays(
     if (autoDays.includes(day) || store.EASTERN_DAYS.includes(day)) {
       throw new HttpsError("invalid-argument", `Day ${day} is auto-attended (major/championship) and not selectable.`);
     }
-    if (day <= currentCompetitionDay) {
+    // Strictly-before only: the current competition day's show is still open
+    // (it scores at the 2 AM ET run the next day, when currentCompetitionDay
+    // advances), matching the fantasy show-registration deadline.
+    if (day < currentCompetitionDay) {
       throw new HttpsError("invalid-argument", `Day ${day} has already passed.`);
     }
   }

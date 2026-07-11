@@ -98,6 +98,14 @@ describe("validateShowDays", () => {
     assert.throws(() => validateShowDays(2, [3], uid, seasonUid, 0)); // day 3 is week 1
   });
 
+  test("the current competition day is still selectable (locks at the next score run)", () => {
+    // day === currentCompetitionDay must be allowed — parity with the fantasy
+    // registration deadline, which stays open through the show's own day.
+    assert.deepEqual(validateShowDays(2, [10], uid, seasonUid, 10), [10]);
+    // strictly-earlier days remain rejected
+    assert.throws(() => validateShowDays(2, [9], uid, seasonUid, 10));
+  });
+
   test("dedupes and sorts", () => {
     assert.deepEqual(validateShowDays(1, [6, 3, 6], uid, seasonUid, 0), [3, 6]);
   });
