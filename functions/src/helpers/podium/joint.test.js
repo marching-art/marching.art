@@ -36,6 +36,15 @@ describe("joint caps and decay", () => {
     assert.equal(joint.jointsUsedInWeek({}, 1), 0);
   });
 
+  test("pendingJoints tolerates the legacy single slot and the multi-week array", () => {
+    assert.deepEqual(joint.pendingJoints({}), []);
+    assert.deepEqual(joint.pendingJoints({ jointRehearsal: { day: 12 } }), [{ day: 12 }]);
+    const many = { jointRehearsals: [{ day: 12 }, { day: 20 }] };
+    assert.equal(joint.pendingJoints(many).length, 2);
+    // The array wins when both are present (post-migration writes null the slot).
+    assert.deepEqual(joint.pendingJoints({ jointRehearsal: { day: 3 }, jointRehearsals: [] }), []);
+  });
+
   test("repeat pairings decay: full bonus, half, then none", () => {
     assert.equal(joint.ensembleBonusFor(0, balance), 1.25);
     assert.equal(joint.ensembleBonusFor(1, balance), 1.125);

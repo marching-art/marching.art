@@ -203,7 +203,9 @@ export interface JointRehearsalsResponse {
   success: boolean;
   incoming: JointProposal[];
   outgoing: JointProposal[];
-  upcoming: {
+  // Every upcoming joint the corps holds — one per week across the season, not
+  // a single slot (design §5.12).
+  upcoming: Array<{
     day: number;
     partnerUid: string;
     partnerCorpsName: string | null;
@@ -211,7 +213,7 @@ export interface JointRehearsalsResponse {
     travelTier: string | null;
     city: string | null;
     stadium?: string | null;
-  } | null;
+  }>;
   scrimmage: JointScrimmage | null;
   headToHead: Record<string, JointHeadToHead>;
   history: Array<{ day: number; partnerUid: string; week: number }>;
@@ -262,9 +264,6 @@ export interface JointOverlapsResponse {
   success: boolean;
   windows: JointOverlapWindow[];
   partnerCorpsName: string | null;
-  // Why the window list is empty: one upcoming joint per corps at a time.
-  alreadyBooked: boolean;
-  partnerBooked: boolean;
 }
 
 // Fan Favorite (decision 30): two-level cosmetic ballot — prelims at each

@@ -115,7 +115,7 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
         </div>
         {blocked && (
           <p className="text-[9px] font-mono text-amber-400/80">
-            You already have a joint booked — resolve it before accepting another.
+            Week {Math.ceil(proposal.day / 7)} already has a joint — that week is full.
           </p>
         )}
         <div className="flex items-center justify-end gap-1.5">
@@ -348,8 +348,15 @@ export default function JointRehearsalPanel() {
     if (ok) cancelOverlaps();
   };
 
-  const upcoming = data?.upcoming;
+  const upcoming = data?.upcoming || [];
   const incoming = data?.incoming || [];
+  // Weeks already spent (a joint booked or scrimmaged) — those weeks are
+  // unavailable; every other week of the season stays open.
+  const weekOf = (d) => (d < 1 ? 0 : Math.ceil(d / 7));
+  const usedWeeks = new Set([
+    ...upcoming.map((j) => weekOf(j.day)),
+    ...(data?.history || []).map((h) => h.week ?? weekOf(h.day)),
+  ]);
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
@@ -387,28 +394,31 @@ export default function JointRehearsalPanel() {
             </div>
           )}
 
-          {/* Upcoming accepted joint */}
-          {upcoming && (
-            <div className="px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227] flex items-start gap-2">
+          {/* Upcoming accepted joints — one per booked week */}
+          {upcoming.map((joint) => (
+            <div
+              key={joint.day}
+              className="px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227] flex items-start gap-2"
+            >
               <Handshake className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
               <span>
-                Day {upcoming.day}: joint rehearsal with{' '}
-                <span className="font-bold">{upcoming.partnerCorpsName}</span>
-                {upcoming.city && (
+                Day {joint.day} (Wk {weekOf(joint.day)}): joint rehearsal with{' '}
+                <span className="font-bold">{joint.partnerCorpsName}</span>
+                {joint.city && (
                   <span className="text-[#c9a227]/70">
                     {' '}
-                    <MapPin className="w-2.5 h-2.5 inline" /> {cityLine(upcoming.city, upcoming.stadium)}
+                    <MapPin className="w-2.5 h-2.5 inline" /> {cityLine(joint.city, joint.stadium)}
                   </span>
                 )}
-                {upcoming.travelTier && (
+                {joint.travelTier && (
                   <span className="text-amber-400">
                     {' '}
-                    · you cover the {TIER_LABELS[upcoming.travelTier] || upcoming.travelTier} leg
+                    · you cover the {TIER_LABELS[joint.travelTier] || joint.travelTier} leg
                   </span>
                 )}
               </span>
             </div>
-          )}
+          ))}
 
           {/* Incoming proposals — informed accept */}
           {incoming.map((proposal) => (
@@ -416,7 +426,7 @@ export default function JointRehearsalPanel() {
               key={proposal.id}
               proposal={proposal}
               busy={busy}
-              blocked={Boolean(upcoming)}
+              blocked={usedWeeks.has(weekOf(proposal.day))}
               onAccept={() =>
                 act(
                   () => respondJointRehearsal({ proposalId: proposal.id, accept: true }),
@@ -438,8 +448,9 @@ export default function JointRehearsalPanel() {
             </div>
           ))}
 
-          {/* Propose flow — partner select → find overlaps → ranked windows */}
-          {data && !upcoming && (
+          {/* Propose flow — partner select → find overlaps → ranked windows.
+              Available even with joints booked; only booked weeks are excluded. */}
+          {data && (
             <div className="space-y-3 border border-[#333] rounded-none p-3 bg-[#161616]">
               {!overlaps ? (
                 <div className="space-y-2">
@@ -492,11 +503,8 @@ export default function JointRehearsalPanel() {
 
                   {overlaps.windows.length === 0 ? (
                     <p className="text-[10px] text-gray-500 py-2">
-                      {overlaps.alreadyBooked
-                        ? 'You already have a joint booked — one per corps at a time.'
-                        : overlaps.partnerBooked
-                          ? `${overlaps.partnerCorpsName || 'That corps'} already has a joint booked.`
-                          : 'No shared open days in the next two weeks. Your tours never sit idle on the same day — try another partner.'}
+                      No shared open week in the next two weeks — your tours never sit idle on the
+                      same day, or the overlapping weeks are already booked. Try another partner.
                     </p>
                   ) : (
                     <>

@@ -33,14 +33,10 @@ function validateJointDay(day, competitionDay) {
   }
 }
 
-/** Throws unless this corps can still take a joint on `day`. */
+// Throws unless this corps can still take a joint on `day`. The only limit is
+// the weekly cap — a corps can hold several upcoming joints across DIFFERENT
+// weeks; a booked week is unavailable, the rest of the season is not.
 function assertJointCapacity(state, day, label) {
-  if (state.jointRehearsal && state.jointRehearsal.day > 0) {
-    throw new HttpsError(
-      "failed-precondition",
-      `${label} already has a joint rehearsal scheduled (day ${state.jointRehearsal.day}).`
-    );
-  }
   const week = joint.weekOf(day);
   if (joint.jointsUsedInWeek(state, week) >= store.balance.joint.maxPerWeek) {
     throw new HttpsError(
@@ -78,22 +74,9 @@ exports.getJointOverlaps = onCall({ cors: true }, async (request) => {
   const myState = mySnapshot.data();
   const theirState = theirSnapshot.data();
 
-  // One upcoming joint at a time (either side) — surface WHY there are no
-  // windows so the client can explain it instead of showing an empty list.
-  const alreadyBooked = Boolean(myState.jointRehearsal && myState.jointRehearsal.day > competitionDay);
-  const partnerBooked = Boolean(
-    theirState.jointRehearsal && theirState.jointRehearsal.day > competitionDay
-  );
-  if (alreadyBooked || partnerBooked) {
-    return {
-      success: true,
-      windows: [],
-      partnerCorpsName: theirState.corpsName || null,
-      alreadyBooked,
-      partnerBooked,
-    };
-  }
-
+  // Weeks either corps already spent are excluded inside computeOverlaps (via
+  // the weekly cap), so an empty list just means no shared open week remains —
+  // never a blanket lockout.
   const [scheduleLocations, easternAssignments] = await Promise.all([
     store.loadScheduleLocations(db, seasonData),
     store.loadEasternAssignments(db, seasonData.seasonUid),
@@ -109,8 +92,6 @@ exports.getJointOverlaps = onCall({ cors: true }, async (request) => {
     success: true,
     windows,
     partnerCorpsName: theirState.corpsName || null,
-    alreadyBooked: false,
-    partnerBooked: false,
   };
 });
 
@@ -260,13 +241,19 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
     transaction.set(
       fromRef,
       {
-        jointRehearsal: {
-          ...entryBase,
-          partnerUid: uid,
-          partnerCorpsName: toState.corpsName || null,
-          // The proposer closes the geography gap on their own dime.
-          travelTier: gate.travelTier,
-        },
+        // Append to the pending list (deduping the day); the proposer closes
+        // the geography gap on their own dime. `jointRehearsal: null` migrates
+        // off the legacy single slot.
+        jointRehearsals: [
+          ...joint.pendingJoints(fromState).filter((j) => j.day !== proposal.day),
+          {
+            ...entryBase,
+            partnerUid: uid,
+            partnerCorpsName: toState.corpsName || null,
+            travelTier: gate.travelTier,
+          },
+        ],
+        jointRehearsal: null,
         jointHistory: [
           ...(fromState.jointHistory || []).slice(-19),
           { day: proposal.day, partnerUid: uid, week },
@@ -277,12 +264,16 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
     transaction.set(
       toRef,
       {
-        jointRehearsal: {
-          ...entryBase,
-          partnerUid: proposal.fromUid,
-          partnerCorpsName: fromState.corpsName || null,
-          travelTier: null,
-        },
+        jointRehearsals: [
+          ...joint.pendingJoints(toState).filter((j) => j.day !== proposal.day),
+          {
+            ...entryBase,
+            partnerUid: proposal.fromUid,
+            partnerCorpsName: fromState.corpsName || null,
+            travelTier: null,
+          },
+        ],
+        jointRehearsal: null,
         jointHistory: [
           ...(toState.jointHistory || []).slice(-19),
           { day: proposal.day, partnerUid: proposal.fromUid, week },
@@ -334,7 +325,9 @@ exports.getJointRehearsals = onCall({ cors: true }, async (request) => {
     success: true,
     incoming: live(incomingSnapshot.docs),
     outgoing: live(outgoingSnapshot.docs),
-    upcoming: state && state.jointRehearsal ? state.jointRehearsal : null,
+    upcoming: state
+      ? joint.pendingJoints(state).filter((j) => j.day > competitionDay).sort((a, b) => a.day - b.day)
+      : [],
     scrimmage: state && state.scrimmage ? state.scrimmage : null,
     headToHead: state && state.headToHead ? state.headToHead : {},
     history: state ? state.jointHistory || [] : [],

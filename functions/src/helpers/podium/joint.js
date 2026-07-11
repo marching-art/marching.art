@@ -47,6 +47,20 @@ function pairCountWith(state, partnerUid) {
 }
 
 /**
+ * A corps' not-yet-processed joint rehearsals. The season allows one per week
+ * (the weekly cap, enforced via jointHistory), so a corps can carry SEVERAL
+ * upcoming joints in different weeks at once — the feature only locks a week,
+ * never the whole calendar. Tolerates the legacy single `jointRehearsal` slot
+ * so saves written before the multi-joint change still resolve.
+ * @returns {Array<object>}
+ */
+function pendingJoints(state) {
+  if (Array.isArray(state.jointRehearsals)) return state.jointRehearsals;
+  if (state.jointRehearsal && state.jointRehearsal.day) return [state.jointRehearsal];
+  return [];
+}
+
+/**
  * The Full Ensemble bonus multiplier for the Nth pairing (0-indexed prior
  * count). 1st: full bonus; 2nd: half; 3rd+: none (the scrimmage report
  * always works).
@@ -194,6 +208,7 @@ module.exports = {
   weekOf,
   jointsUsedInWeek,
   pairCountWith,
+  pendingJoints,
   ensembleBonusFor,
   corpsVenueOnDay,
   geographyGate,

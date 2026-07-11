@@ -7,6 +7,7 @@
 const { onCall } = require("firebase-functions/v2/https");
 const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
+const jointHelper = require("../helpers/podium/joint");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
 const staffMarket = require("../helpers/podium/staffMarket");
@@ -37,15 +38,17 @@ const MAJOR_ROUTE_LABELS = {
  */
 async function buildRoutePreview(db, seasonData, state, uid, competitionDay, easternAssignments) {
   const division = divisions.normalizeDivision(state.division);
-  // An accepted joint rehearsal is a real leg on the tour (design §5.12), so
-  // fold its day into the route alongside the shows.
-  const joint = state.jointRehearsal || null;
-  const jointDay = joint && joint.day > Math.max(0, competitionDay) ? joint.day : null;
+  // Accepted joint rehearsals are real legs on the tour (design §5.12), so fold
+  // each upcoming joint day into the route alongside the shows.
+  const jointByDay = {};
+  for (const j of jointHelper.pendingJoints(state)) {
+    if (j.day > Math.max(0, competitionDay)) jointByDay[j.day] = j;
+  }
   const upcoming = [
     ...new Set([
       ...store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
       ...store.selectedDaysOf(state),
-      ...(jointDay ? [jointDay] : []),
+      ...Object.keys(jointByDay).map(Number),
     ]),
   ]
     .filter((day) => day > Math.max(0, competitionDay) && day <= 49)
@@ -72,7 +75,8 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
     // Joint-rehearsal day: a rehearsal leg, not a show. The partner's city
     // hosts; the proposer's copy carries the frozen travel tier (the acceptor's
     // is null → free), and both get the Full Ensemble bonus (design §5.12).
-    if (day === jointDay) {
+    const joint = jointByDay[day];
+    if (joint) {
       const venue = joint.city ? venues.venueFor(joint.city) : null;
       const tierCfg = joint.travelTier
         ? store.balance.travel.tiers.find((t) => t.key === joint.travelTier)
