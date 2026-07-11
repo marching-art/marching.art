@@ -355,7 +355,7 @@ const Scores = () => {
             <>
               {/* LATEST RECAPS TAB */}
               {activeTab === 'latest' && (
-                <div>
+                <div className="p-3 md:p-4 space-y-3">
                   {/* Eastern Classic combined standings — appears once both
                       nights (days 41-42) have processed (§5.11) */}
                   <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
@@ -381,33 +381,43 @@ const Scores = () => {
 
               {/* WORLD CLASS TAB */}
               {activeTab === 'world' && (
-                <ClassStandingsGrid
-                  standings={worldStandings}
-                  className="World Class"
-                  userCorpsName={userCorpsName}
-                />
+                <div className="p-3 md:p-4">
+                  <ClassStandingsGrid
+                    standings={worldStandings}
+                    className="World Class"
+                    userCorpsName={userCorpsName}
+                  />
+                </div>
               )}
 
               {/* OPEN CLASS TAB */}
               {activeTab === 'open' && (
-                <ClassStandingsGrid
-                  standings={openStandings}
-                  className="Open Class"
-                  userCorpsName={userCorpsName}
-                />
+                <div className="p-3 md:p-4">
+                  <ClassStandingsGrid
+                    standings={openStandings}
+                    className="Open Class"
+                    userCorpsName={userCorpsName}
+                  />
+                </div>
               )}
 
               {/* CLASS A TAB */}
               {activeTab === 'aclass' && (
-                <ClassStandingsGrid
-                  standings={aClassStandings}
-                  className="A Class"
-                  userCorpsName={userCorpsName}
-                />
+                <div className="p-3 md:p-4">
+                  <ClassStandingsGrid
+                    standings={aClassStandings}
+                    className="A Class"
+                    userCorpsName={userCorpsName}
+                  />
+                </div>
               )}
 
               {/* SOUNDSPORT TAB */}
-              {activeTab === 'soundsport' && <SoundSportMedalList shows={unfilteredShows} />}
+              {activeTab === 'soundsport' && (
+                <div className="p-3 md:p-4">
+                  <SoundSportMedalList shows={unfilteredShows} />
+                </div>
+              )}
 
               {/* PODIUM CLASS TAB — full-caption recap sheets (flag-gated) */}
               {activeTab === 'podium' && (
@@ -550,57 +560,68 @@ const Scores = () => {
                     <>
                       {/* Recaps View */}
                       {archiveViewTab === 'latest' && (
-                        <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
+                        <div className="p-3 md:p-4 space-y-3">
+                          <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
+                          {recapShows.length > 0 ? (
+                            recapShows.map((show, idx) => (
+                              <RecapDataGrid
+                                key={idx}
+                                scores={show.scores}
+                                eventName={show.eventName}
+                                location={show.location}
+                                date={show.date}
+                                userCorpsName={userCorpsName}
+                              />
+                            ))
+                          ) : (
+                            <div className="p-8 text-center">
+                              <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                              <p className="text-gray-500 text-sm">
+                                No recaps found for this season
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       )}
-                      {archiveViewTab === 'latest' &&
-                        (recapShows.length > 0 ? (
-                          recapShows.map((show, idx) => (
-                            <RecapDataGrid
-                              key={idx}
-                              scores={show.scores}
-                              eventName={show.eventName}
-                              location={show.location}
-                              date={show.date}
-                              userCorpsName={userCorpsName}
-                            />
-                          ))
-                        ) : (
-                          <div className="p-8 text-center">
-                            <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                            <p className="text-gray-500 text-sm">No recaps found for this season</p>
-                          </div>
-                        ))}
 
                       {/* World Class View */}
                       {archiveViewTab === 'world' && (
-                        <ClassStandingsGrid
-                          standings={worldStandings}
-                          className="World Class"
-                          userCorpsName={userCorpsName}
-                        />
+                        <div className="p-3 md:p-4">
+                          <ClassStandingsGrid
+                            standings={worldStandings}
+                            className="World Class"
+                            userCorpsName={userCorpsName}
+                          />
+                        </div>
                       )}
 
                       {/* Open Class View */}
                       {archiveViewTab === 'open' && (
-                        <ClassStandingsGrid
-                          standings={openStandings}
-                          className="Open Class"
-                          userCorpsName={userCorpsName}
-                        />
+                        <div className="p-3 md:p-4">
+                          <ClassStandingsGrid
+                            standings={openStandings}
+                            className="Open Class"
+                            userCorpsName={userCorpsName}
+                          />
+                        </div>
                       )}
 
                       {/* Class A View */}
                       {archiveViewTab === 'aclass' && (
-                        <ClassStandingsGrid
-                          standings={aClassStandings}
-                          className="A Class"
-                          userCorpsName={userCorpsName}
-                        />
+                        <div className="p-3 md:p-4">
+                          <ClassStandingsGrid
+                            standings={aClassStandings}
+                            className="A Class"
+                            userCorpsName={userCorpsName}
+                          />
+                        </div>
                       )}
 
                       {/* SoundSport View */}
                       {archiveViewTab === 'soundsport' && (
-                        <SoundSportMedalList shows={unfilteredShows} />
+                        <div className="p-3 md:p-4">
+                          <SoundSportMedalList shows={unfilteredShows} />
+                        </div>
                       )}
 
                       {/* Podium View — recap sheets persist in podium-recaps
@@ -681,7 +702,7 @@ const Scores = () => {
             </div>
 
             {/* Modal Content - Uses same RecapDataGrid */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto p-3 md:p-4">
               <RecapDataGrid
                 scores={selectedShow.scores}
                 eventName={selectedShow.eventName}

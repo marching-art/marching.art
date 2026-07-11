@@ -517,6 +517,28 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       }
       recapShows.push(group);
     }
+    // Credit the director on every recap row (username preferred, mirroring the
+    // fantasy `displayName` shape) so the Scores sheet can name + link them.
+    // One batched getAll over the show-day corps — never a read per row, and
+    // never fails the night.
+    const recapUids = [...new Set(recapShows.flatMap((show) => show.results.map((r) => r.uid)))];
+    if (recapUids.length > 0) {
+      try {
+        const profileSnaps = await db.getAll(...recapUids.map((uid) => store.profileRef(db, uid)));
+        const nameByUid = {};
+        profileSnaps.forEach((snap, i) => {
+          const data = snap.exists ? snap.data() : null;
+          nameByUid[recapUids[i]] = (data && (data.username || data.displayName)) || null;
+        });
+        for (const show of recapShows) {
+          for (const entry of show.results) {
+            entry.displayName = nameByUid[entry.uid] || null;
+          }
+        }
+      } catch (error) {
+        logger.warn(`[podium] director-name enrichment skipped: ${error.message}`);
+      }
+    }
     if (recapShows.length > 0 || jointFeed.length > 0) {
       await store.recapDayRef(db, seasonUid, competitionDay).set({
         seasonUid,
