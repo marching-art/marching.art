@@ -96,8 +96,14 @@ export default function PodiumStaffPanel({ podium }) {
     }
   };
 
-  const hiredCount = Object.keys(roster).length;
-  const openSpecialties = Object.keys(SPECIALTY_LABELS).filter((s) => !roster[s]);
+  const specialties = Object.keys(SPECIALTY_LABELS);
+  const hiredCount = specialties.filter((s) => roster[s]).length;
+  const openSpecialties = specialties.filter((s) => !roster[s]);
+
+  const optionsFor = (specialty) =>
+    (catalog || [])
+      .filter((o) => o.specialty === specialty)
+      .sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier));
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-3">
@@ -108,144 +114,167 @@ export default function PodiumStaffPanel({ podium }) {
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <Users className="w-3 h-3" /> Staff ({hiredCount}/10)
         </span>
-        {open ? (
-          <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
-        ) : (
-          <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-        )}
+        <span className="flex items-center gap-2 text-[9px] uppercase tracking-wider text-gray-600">
+          {!open && (
+            <span className="hidden sm:inline">
+              {hiredCount === 10 ? 'roster full' : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
+            </span>
+          )}
+          {open ? (
+            <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+          )}
+        </span>
       </button>
 
-      {/* Roster (always visible when staffed; actions appear when open) */}
-      {hiredCount > 0 && (
-        <div className="space-y-1">
-          {Object.entries(roster).map(([specialty, member]) => (
-            <div
-              key={specialty}
-              title={`${TIER_LABELS[member.tier] || member.tier} · year ${(member.careerSeasons || 0) + 1} · ${resumeSummary(member)}`}
-              className="flex items-center gap-2 text-[10px] tabular-nums"
+      {/* Contract length — applies to every hire below */}
+      {open && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
+            Contract
+          </span>
+          {CONTRACT_LENGTHS.map((seasons) => (
+            <button
+              key={seasons}
+              onClick={() => setContractSeasons(seasons)}
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border press-feedback ${
+                contractSeasons === seasons
+                  ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
+                  : 'border-[#333] text-gray-500 hover:text-white'
+              }`}
             >
-              <span className="text-gray-500 w-28 shrink-0 truncate">
-                {SPECIALTY_LABELS[specialty] || specialty}:
-              </span>
-              <span className={`font-bold ${TIER_STYLES[member.tier] || 'text-white'}`}>
-                {TIER_LABELS[member.tier] || member.tier}
-              </span>
-              <span className="text-gray-600">
-                yr {(member.careerSeasons || 0) + 1}
-                {member.contract &&
-                  ` · ${member.contract.remaining}/${member.contract.seasons} locked`}
-                {member.retrain && ' · retraining'}
-              </span>
-              {open && (
-                <span className="ml-auto flex items-center gap-1">
-                  <button
-                    disabled={busy !== null}
-                    onClick={() =>
-                      setRetraining((v) => (v === member.id ? null : member.id))
-                    }
-                    title="Retrain into a new specialty (reduced boost this season)"
-                    className="text-gray-500 hover:text-white press-feedback"
-                  >
-                    <GraduationCap className="w-3 h-3" />
-                  </button>
-                  <button
-                    disabled={busy !== null}
-                    onClick={() =>
-                      act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
-                    }
-                    title="Release this staffer — frees the seat, ends their tenure (no refund)"
-                    className="text-gray-500 hover:text-red-400 press-feedback"
-                  >
-                    {busy === `release_${specialty}` ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <UserMinus className="w-3 h-3" />
-                    )}
-                  </button>
-                </span>
-              )}
-            </div>
+              {seasons} season{seasons > 1 ? 's' : ''}
+            </button>
           ))}
-          {retraining && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-[9px] uppercase font-bold text-gray-600">Retrain to:</span>
-              {openSpecialties.map((specialty) => (
-                <button
-                  key={specialty}
-                  disabled={busy !== null}
-                  onClick={() =>
-                    act(`retrain_${specialty}`, async () => {
-                      await retrainPodiumStaff({ staffId: retraining, toSpecialty: specialty });
-                      setRetraining(null);
-                    })
-                  }
-                  className="text-[9px] px-1.5 py-0.5 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] press-feedback"
-                >
-                  {SPECIALTY_LABELS[specialty]}
-                </button>
-              ))}
-            </div>
-          )}
+          <span className="text-[9px] text-gray-600 basis-full sm:basis-auto sm:flex-1">
+            Longer contracts lock the salary against the raises tenure brings — retain a staffer and
+            they grow from Apprentice toward Legend.
+          </span>
         </div>
       )}
 
-      {open && (
-        <div className="space-y-3">
-          {/* Contract length */}
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
-              Contract
-            </span>
-            {CONTRACT_LENGTHS.map((seasons) => (
-              <button
-                key={seasons}
-                onClick={() => setContractSeasons(seasons)}
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border press-feedback ${
-                  contractSeasons === seasons
-                    ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
-                    : 'border-[#333] text-gray-500 hover:text-white'
-                }`}
-              >
-                {seasons} season{seasons > 1 ? 's' : ''}
-              </button>
-            ))}
-            <span className="text-[9px] text-gray-600">
-              Longer contracts lock the salary against the raises tenure brings — retain a staffer
-              and they grow from Apprentice toward Legend.
-            </span>
-          </div>
+      {open && !catalog && !error && (
+        <div className="text-[9px] uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
+          <Loader2 className="w-3 h-3 animate-spin" /> Loading catalog…
+        </div>
+      )}
+      {open && catalog && catalog.length === 0 && !error && (
+        <div className="text-[11px] text-gray-500 py-1">
+          No staff catalog available right now. If this persists, the staff service may still be
+          deploying — try again shortly.
+        </div>
+      )}
 
-          {!catalog && !error && (
-            <div className="flex justify-center py-4">
-              <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
-            </div>
-          )}
-          {catalog && catalog.length === 0 && !error && (
-            <div className="text-[11px] text-gray-500 py-2">
-              No staff catalog available right now. If this persists, the staff service may still be
-              deploying — try again shortly.
-            </div>
-          )}
-          {catalog &&
-            Object.keys(SPECIALTY_LABELS).map((specialty) => {
-              const options = catalog
-                .filter((o) => o.specialty === specialty)
-                .sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier));
-              if (options.length === 0) return null;
-              const seatFilled = Boolean(roster[specialty]);
-              return (
-                <div key={specialty}>
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-gray-600 mb-1">
-                    {SPECIALTY_LABELS[specialty]}
-                    {seatFilled && <span className="text-green-500"> · seat filled</span>}
+      {/* Seat grid — one card per specialty; fills the panel width and doubles
+          as the roster (collapsed) and the hiring board (open). */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-2">
+        {specialties.map((specialty) => {
+          const member = roster[specialty];
+          const filled = Boolean(member);
+          const options = optionsFor(specialty);
+          return (
+            <div
+              key={specialty}
+              className={`rounded-sm border p-2.5 flex flex-col gap-1.5 ${
+                filled ? 'border-[#333] bg-[#161616]' : 'border-dashed border-[#2a2a2a] bg-[#141414]'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 truncate">
+                  {SPECIALTY_LABELS[specialty] || specialty}
+                </span>
+                {filled ? (
+                  <span className={`text-[10px] font-bold shrink-0 ${TIER_STYLES[member.tier] || 'text-white'}`}>
+                    {TIER_LABELS[member.tier] || member.tier}
+                  </span>
+                ) : (
+                  <span className="text-[9px] uppercase tracking-wider text-gray-700 shrink-0">
+                    Vacant
+                  </span>
+                )}
+              </div>
+
+              {filled ? (
+                <>
+                  <div
+                    className="flex items-center justify-between gap-2 text-[10px] tabular-nums text-gray-600"
+                    title={resumeSummary(member)}
+                  >
+                    <span>
+                      yr {(member.careerSeasons || 0) + 1}
+                      {member.contract &&
+                        ` · ${member.contract.remaining}/${member.contract.seasons} locked`}
+                      {member.retrain && ' · retraining'}
+                    </span>
+                    {open && (
+                      <span className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          disabled={busy !== null}
+                          onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
+                          title="Retrain into a new specialty (reduced boost this season)"
+                          className={`press-feedback ${
+                            retraining === member.id ? 'text-[#4d9fff]' : 'text-gray-500 hover:text-white'
+                          }`}
+                        >
+                          <GraduationCap className="w-3 h-3" />
+                        </button>
+                        <button
+                          disabled={busy !== null}
+                          onClick={() =>
+                            act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
+                          }
+                          title="Release this staffer — frees the seat, ends their tenure (no refund)"
+                          className="text-gray-500 hover:text-red-400 press-feedback"
+                        >
+                          {busy === `release_${specialty}` ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <UserMinus className="w-3 h-3" />
+                          )}
+                        </button>
+                      </span>
+                    )}
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  {open && retraining === member.id && (
+                    <div className="flex flex-wrap items-center gap-1 pt-0.5 border-t border-[#2a2a2a]">
+                      <span className="text-[9px] uppercase font-bold text-gray-600 w-full">
+                        Retrain to:
+                      </span>
+                      {openSpecialties.length === 0 ? (
+                        <span className="text-[9px] text-gray-600">No open seats to move into.</span>
+                      ) : (
+                        openSpecialties.map((target) => (
+                          <button
+                            key={target}
+                            disabled={busy !== null}
+                            onClick={() =>
+                              act(`retrain_${target}`, async () => {
+                                await retrainPodiumStaff({
+                                  staffId: retraining,
+                                  toSpecialty: target,
+                                });
+                                setRetraining(null);
+                              })
+                            }
+                            className="text-[9px] px-1.5 py-0.5 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] press-feedback"
+                          >
+                            {SPECIALTY_LABELS[target]}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : open ? (
+                options.length > 0 ? (
+                  <div className="flex flex-col gap-1">
                     {options.map((option) => {
                       const key = `hire_${specialty}_${option.tier}`;
                       return (
                         <button
                           key={option.tier}
-                          disabled={busy !== null || seatFilled}
+                          disabled={busy !== null}
                           onClick={() =>
                             act(key, () =>
                               hirePodiumStaff({
@@ -256,22 +285,17 @@ export default function PodiumStaffPanel({ podium }) {
                             )
                           }
                           title={`${TIER_LABELS[option.tier]} ${SPECIALTY_LABELS[specialty]} · +${Math.round(option.boost * 100)}% rehearsal yield · ${option.salary}/season`}
-                          className={`text-[10px] px-2 py-1 rounded-sm border tabular-nums press-feedback ${
-                            seatFilled
-                              ? 'border-[#242424] text-gray-600'
-                              : 'border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white'
-                          }`}
+                          className="flex items-center justify-between gap-2 text-[10px] px-2 py-1 rounded-sm border border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white tabular-nums press-feedback"
                         >
                           {busy === key ? (
-                            <Loader2 className="w-3 h-3 animate-spin inline" />
+                            <Loader2 className="w-3 h-3 animate-spin mx-auto" />
                           ) : (
                             <>
                               <span className={`font-bold ${TIER_STYLES[option.tier]}`}>
                                 {TIER_LABELS[option.tier]}
                               </span>
                               <span className="text-gray-600">
-                                {' '}
-                                · +{Math.round(option.boost * 100)}% · {option.salary}/season
+                                +{Math.round(option.boost * 100)}% · {option.salary}/season
                               </span>
                             </>
                           )}
@@ -279,11 +303,18 @@ export default function PodiumStaffPanel({ podium }) {
                       );
                     })}
                   </div>
-                </div>
-              );
-            })}
-        </div>
-      )}
+                ) : (
+                  catalog && (
+                    <span className="text-[9px] text-gray-700">No candidates listed.</span>
+                  )
+                )
+              ) : (
+                <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {error && <div className="text-[11px] text-red-400">{error}</div>}
     </div>
