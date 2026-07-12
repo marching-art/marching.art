@@ -16,6 +16,18 @@ import {
 } from 'lucide-react';
 import { CLASS_LABELS, getSoundSportRating } from './constants';
 import { getConceptTitle, describeConceptStyle } from '../../../utils/showConcept';
+import JargonTooltip from '../../JargonTooltip';
+
+// Map the canonical corps-class keys to their JargonTooltip definition keys so
+// the class label on the scorecard explains itself to newcomers. `soundSport`
+// (camelCase key) maps to the lowercase `soundsport` definition; the rest match
+// their definition keys directly.
+const CLASS_JARGON_KEYS = {
+  worldClass: 'worldClass',
+  openClass: 'openClass',
+  aClass: 'aClass',
+  soundSport: 'soundsport',
+};
 
 // Blue Ribbon icon for Best in Show awards
 const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
@@ -137,7 +149,13 @@ const SeasonScorecard = memo(
             <div className="flex-1 min-w-0">
               <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted">
-                {CLASS_LABELS[corpsClass] || corpsClass}
+                {CLASS_JARGON_KEYS[corpsClass] ? (
+                  <JargonTooltip termKey={CLASS_JARGON_KEYS[corpsClass]}>
+                    {CLASS_LABELS[corpsClass] || corpsClass}
+                  </JargonTooltip>
+                ) : (
+                  CLASS_LABELS[corpsClass] || corpsClass
+                )}
               </p>
             </div>
             {showMenu && (
