@@ -169,7 +169,72 @@ flattening them — it means using the *same vocabulary* to express each job.
 
 ---
 
-## 4. Ten-step implementation plan
+## 4. How we guarantee completeness (Definition of Done)
+
+The last redesign was labeled "✅ completed" and wasn't — because "done" was a
+human assertion with no machine-checkable meaning. Diligence didn't fail; the
+absence of a *definition of done* did. This time, "unified" is an objective,
+CI-enforced state, and "everything" is an enumerated set. The guarantee comes
+from measurement and enforcement, not from trying harder.
+
+**1. Census baseline, captured before any edit.** A script counts every
+violation class across `src/`. These are the numbers we drive to their floor.
+Indicative current baseline (the census script produces the authoritative
+figures):
+
+| Invariant | Rule | Baseline | Target |
+| --- | --- | --- | --- |
+| Raw hex color literals | no `bg-[#…]` / `text-[#…]` / `border-[#…]` / bare `#hex` in className | ~1,977 | **0** |
+| Non-token neutrals | no `gray-###` / `slate-###` / opaque `#333` | (census) | **0** |
+| Rounded corners | no `rounded-*` except `rounded-none` | ~965 | **0** |
+| Off-role gold | `gold` / `yellow` / `amber` only inside allowlisted brand & reward components | ~658 | **enumerated allowlist** |
+| Banned styling | no `bg-gradient*` / `backdrop-blur*` / `shadow-*` outside the modal/menu allowlist | ~84 | **allowlist only** |
+| Orphaned display font | no `font-display` unless the face is actually loaded | 89 files | **0 / resolved** |
+
+"Complete" = every counter at its floor. This converts "did we get
+everything?" from a judgment call into arithmetic.
+
+**2. The invariants *are* the spec, executable.** Each row above becomes a lint
+rule (ESLint `no-restricted-syntax` + a class-scanner, or stylelint). They
+don't describe unification — they define it, and on failure they name the exact
+file and line. There is no version of "looks done" that disagrees with them.
+
+**3. A ratchet, introduced early — right after the token layer, not at the
+end.** The rules land first in **warn + baseline** mode: the current count is
+frozen as a ceiling and CI **fails any change that raises it**. Every batch can
+only move the number down. When a counter reaches its floor, its rule flips to
+**hard error**, permanently. This makes backsliding impossible and completion
+monotonic: you cannot merge your way back into the old state, and you cannot
+stall in a half-migrated limbo without it showing as a non-zero number.
+
+**4. The whole surface is enumerated up front.** "Everything" is an explicit
+list — every route and every component directory — not "the app." The
+mechanical invariants are global by construction (they scan all files). The
+*judgment* work (per-surface emphasis, gold reassignment) can't be grepped, so
+each enumerated surface gets a checklist row and an explicit sign-off against
+the spec. A surface is done only when it passes the automated invariants **and**
+its checklist row is signed.
+
+**5. Propagation is structural, so completeness is held, not re-earned.** Once
+components read from tokens, future unification is a token edit, not a 179-file
+sweep. The de-hex is a one-time cost; afterward the token layer plus the
+hard-error lint hold the line by construction. We pay for "everything" once.
+
+**The one cultural rule:** no surface, PR, or session may be called "done"
+while any invariant sits above its floor. The word "completed" is reserved for
+green CI. That single rule is what the last effort lacked.
+
+**Scope honesty.** The mechanical sweep touches ~179 files and will span
+several PRs (batched by directory for reviewability) — possibly more than one
+session. The ratchet is what makes that safe: at any moment there is an exact
+remaining count, every merge only decreases it, and the system can never be
+*falsely* declared finished. Whether it takes one sitting or five, it
+converges — and "piecemeal" becomes impossible, because partial state is always
+visible and always shrinking.
+
+---
+
+## 5. Ten-step implementation plan
 
 Ordered by dependency: ratify → anchor → tokenize → propagate → enforce. Each
 step is shippable on its own and leaves the app in a better, coherent state.
@@ -243,17 +308,19 @@ reduced-motion behavior) so transitions feel like one hand made them. *Erases
 the last obvious Stadium-HUD-era residue.*
 
 ### Step 10 — Lock it in with guardrails
-Add an ESLint rule / CI check that **fails on raw hex color classes and on gold
-used outside brand/reward contexts**, publish the primitives and tokens as a
-living reference (Storybook or a `/styleguide` page), and write the short
-contributor guide ("use tokens; gold is brand-only; here's the type scale").
-Close with a verification pass: WCAG AA contrast across tokens, and a visual
-sweep of the top surfaces in light and dark. *Prevents the drift from
-re-accumulating — without this, the app is back here in another ten months.*
+Flip every ratcheted invariant from warn to **hard error** now that the
+counters are at their floors — the rules themselves were introduced back at
+Step 3 and ran throughout the sweep (see §4). Publish the primitives and tokens
+as a living reference (Storybook or a `/styleguide` page), and write the short
+contributor guide ("use tokens; gold is brand-only; azure is interactive;
+corners are square; here's the type scale"). Close with a verification pass:
+WCAG AA contrast across tokens, and a visual sweep of the enumerated surfaces.
+*Prevents the drift from re-accumulating — without this, the app is back here in
+another ten months.*
 
 ---
 
-## 5. Sequencing & effort
+## 6. Sequencing & effort
 
 - **Foundation (Steps 1–5):** the highest-leverage work; unblocks everything.
   Small, surgical edits to a handful of files.
@@ -261,6 +328,13 @@ re-accumulating — without this, the app is back here in another ten months.*
   parallelizable by directory once the tokens exist.
 - **Hardening (Steps 9–10):** the difference between "looks unified today" and
   "stays unified." Do not skip Step 10.
+
+**The census + ratchet (see §4) is the spine that runs through all of it.** The
+census is captured at Step 1 (baseline), the lint rules land at Step 3 in
+warn/ratchet mode the moment tokens exist, they gate every Propagation PR so the
+counters only fall, and they flip to hard error at Step 10. Enforcement is not
+the last step — it is the rail the whole migration rides, which is precisely
+what keeps this from becoming another piecemeal pass.
 
 The first visible payoff lands early: Steps 2–3 alone make the logo correct and
 give a single lever over the whole palette. Steps 6–8 are where a discerning eye
