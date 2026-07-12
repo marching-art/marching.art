@@ -705,9 +705,27 @@ exports.setPodiumFoodPlan = onCall({ cors: true }, async (request) => {
   return { success: true, tier };
 });
 
+// The assistant director keeps a plan per day TYPE (design §5.2): `rehearsal`
+// is the full-grind default, `show` the lighter pre-performance routine, and
+// `springTraining` the install-heavy camp plan — each run by the nightly
+// autoplay on the matching unplayed day. `rehearsal` writes the legacy
+// `planTemplate` field so existing corps are untouched.
+const PLAN_FIELD_BY_TYPE = {
+  rehearsal: "planTemplate",
+  show: "showDayPlan",
+  springTraining: "springTrainingPlan",
+};
+
 exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
-  const { blocks } = request.data || {};
+  const { blocks, planType = "rehearsal" } = request.data || {};
+  const field = PLAN_FIELD_BY_TYPE[planType];
+  if (!field) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Plan type must be one of: ${Object.keys(PLAN_FIELD_BY_TYPE).join(", ")}.`
+    );
+  }
   if (!Array.isArray(blocks) || blocks.length > MAX_TEMPLATE_BLOCKS) {
     throw new HttpsError("invalid-argument", `Template must be an array of at most ${MAX_TEMPLATE_BLOCKS} blocks.`);
   }
@@ -724,11 +742,11 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
     }
     transaction.set(
       sRef,
-      { planTemplate: blocks, updatedAt: new Date().toISOString() },
+      { [field]: blocks, updatedAt: new Date().toISOString() },
       { merge: true }
     );
   });
-  return { success: true, planTemplate: blocks };
+  return { success: true, planType, [field]: blocks };
 });
 
 exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {

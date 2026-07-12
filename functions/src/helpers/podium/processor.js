@@ -72,6 +72,35 @@ function resolveCorpsShow(state, competitionDay, division, dayShows) {
 }
 
 /**
+ * The assistant-director plan the nightly autoplay runs for this day's TYPE
+ * (design §5.2). A director keeps a plan per day type, because the three types
+ * play differently: spring-training days are install-heavy (~20 blocks), show
+ * days are a lighter pre-performance routine (~8 blocks, the corps competes
+ * that night), and rehearsal days are the full grind (~12 blocks). Each type
+ * runs its own plan when one is set; anything unset falls back to the rehearsal
+ * plan (`planTemplate`), so a single-plan corps is unaffected. Precedence
+ * mirrors the engine's block-budget branch: spring training, then show day,
+ * then rehearsal. Returns [] when nothing applies (no plan → the missed day
+ * stays lost, never wrecked).
+ * @param {object} state season state
+ * @param {{isShowDay: boolean, isSpringTraining: boolean}} dayType flags for the day
+ * @returns {string[]} the ordered block plan for this day type
+ */
+function planForDay(state, { isShowDay, isSpringTraining }) {
+  if (
+    isSpringTraining &&
+    Array.isArray(state.springTrainingPlan) &&
+    state.springTrainingPlan.length > 0
+  ) {
+    return state.springTrainingPlan;
+  }
+  if (!isSpringTraining && isShowDay && Array.isArray(state.showDayPlan) && state.showDayPlan.length > 0) {
+    return state.showDayPlan;
+  }
+  return Array.isArray(state.planTemplate) ? state.planTemplate : [];
+}
+
+/**
  * @param {FirebaseFirestore.Firestore} db
  * @param {object} seasonData game-settings/season data
  * @param {{calendarDay: number, competitionDay: number}} dayContext completed day
@@ -195,18 +224,20 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       }
 
       // Assistant director (design §5.2): on a day the director never played,
-      // the saved plan template runs at reduced yield. Active play strictly
-      // dominates; a missed day is growth lost, never a wrecked season.
+      // the saved plan for THIS day's type runs at reduced yield — the
+      // install-heavy spring-training plan, the lighter show-day routine, or
+      // the full rehearsal grind. Active play strictly dominates; a missed day
+      // is growth lost, never a wrecked season.
+      const activePlan = planForDay(state, { isShowDay, isSpringTraining });
       if (
         (dayInfo.blocksUsed || 0) === 0 &&
         !dayInfo.restDay &&
-        Array.isArray(state.planTemplate) &&
-        state.planTemplate.length > 0 &&
+        activePlan.length > 0 &&
         competitionDay <= 49
       ) {
         const blocksSoFar = {};
         const applied = [];
-        for (const blockType of state.planTemplate.slice(0, maxBlocks)) {
+        for (const blockType of activePlan.slice(0, maxBlocks)) {
           if (!engine.BLOCK_TYPES.includes(blockType)) continue;
           // An accepted joint rehearsal boosts Full Ensemble even on an
           // assistant-run day — the handshake happened, the partner showed
@@ -791,4 +822,4 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
   }
 }
 
-module.exports = { processPodiumDay, showVenueFor, resolveCorpsShow };
+module.exports = { processPodiumDay, showVenueFor, resolveCorpsShow, planForDay };

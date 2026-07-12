@@ -155,8 +155,14 @@ export const setPodiumFoodPlan = createCallable<
 >('setPodiumFoodPlan');
 
 export const setPodiumPlanTemplate = createCallable<
-  { blocks: string[] },
-  { success: boolean; planTemplate: string[] }
+  { blocks: string[]; planType?: 'rehearsal' | 'show' | 'springTraining' },
+  {
+    success: boolean;
+    planType: string;
+    planTemplate?: string[];
+    showDayPlan?: string[];
+    springTrainingPlan?: string[];
+  }
 >('setPodiumPlanTemplate');
 
 export const commitPodiumBudget = createCallable<
