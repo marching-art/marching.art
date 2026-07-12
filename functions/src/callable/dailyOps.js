@@ -16,9 +16,7 @@ const {
 const {
   PREDICTION_QUESTIONS,
   SCORE_FREE_QUESTION_IDS,
-  fetchRecentRecaps,
-  findRecentResultsForCorps,
-  findLatestResultForCorps,
+  fetchRecentResultsForClass,
   deriveQuestionThreshold,
   resolveBucket,
   pruneOldPredictions,
@@ -341,16 +339,22 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         Object.keys(pre.predictions?.[gameDayPre]?.picks || {}).length > 0;
       if (!hasPicksToday) {
         const seasonUid = pre.activeSeasonId;
-        const recapDocs = seasonUid ? await fetchRecentRecaps(db, seasonUid) : [];
         const classes = Object.keys(pre.corps || {});
-        predictionAvailable = classes.some((cls) => {
-          const recent = findRecentResultsForCorps(recapDocs, uid, cls, 5);
-          return PREDICTION_QUESTIONS.some(
+        predictionAvailable = false;
+        for (const cls of classes) {
+          // Class-aware source (Podium reads podium-recaps) so a podium-only
+          // director's make-prediction challenge isn't wrongly dropped.
+          const recent = await fetchRecentResultsForClass(db, seasonUid, uid, cls, 5);
+          const available = PREDICTION_QUESTIONS.some(
             (q) =>
               (cls !== "soundSport" || SCORE_FREE_QUESTION_IDS.includes(q.id)) &&
               deriveQuestionThreshold(q.id, recent) !== null
           );
-        });
+          if (available) {
+            predictionAvailable = true;
+            break;
+          }
+        }
       }
     }
 
@@ -686,8 +690,11 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
       throw new HttpsError("not-found", "User profile not found.");
     }
     const seasonUid = preSnap.data().activeSeasonId;
-    const recapDocs = seasonUid ? await fetchRecentRecaps(db, seasonUid) : [];
-    const recentResults = findRecentResultsForCorps(recapDocs, uid, corpsClass, 5);
+    // Class-aware: Podium reads its own recap collection, fantasy classes read
+    // fantasy_recaps. Reading the wrong source yields no results → a null
+    // threshold → the pick is rejected as "not available yet" (the bug that
+    // stopped Podium Class predictions from registering).
+    const recentResults = await fetchRecentResultsForClass(db, seasonUid, uid, corpsClass, 5);
     const canonicalThreshold = deriveQuestionThreshold(questionId, recentResults);
     const serverSnapshotEvent = recentResults[0]?.eventName ?? null;
 
@@ -807,10 +814,11 @@ const resolvePredictions = onCall({ cors: true }, async (request) => {
       return { success: true, resolvedDays: 0 };
     }
 
-    const recapDocs = await fetchRecentRecaps(db, seasonUid);
-
     // Precompute each pending day's resolution. The latest result per corps
-    // class is the same across buckets, so cache it.
+    // class is the same across buckets, so cache it. Podium and fantasy classes
+    // read different recap sources (fetchRecentResultsForClass), so the latest
+    // result is fetched lazily per class — a podium bucket resolves against
+    // podium-recaps, exactly the source its threshold was derived from.
     const latestByClass = {};
     const resolutions = {};
     for (const day of pendingDays) {
@@ -818,7 +826,8 @@ const resolvePredictions = onCall({ cors: true }, async (request) => {
       const corpsClass = bucket.corpsClass;
       if (!corpsClass) continue;
       if (!(corpsClass in latestByClass)) {
-        latestByClass[corpsClass] = findLatestResultForCorps(recapDocs, uid, corpsClass);
+        const latest = await fetchRecentResultsForClass(db, seasonUid, uid, corpsClass, 1);
+        latestByClass[corpsClass] = latest[0] || null;
       }
       const resolution = resolveBucket(bucket, latestByClass[corpsClass]);
       if (resolution) resolutions[day] = resolution;

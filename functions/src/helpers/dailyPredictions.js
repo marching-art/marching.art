@@ -134,6 +134,78 @@ function findLatestResultForCorps(recapDocs, uid, corpsClass) {
 }
 
 /**
+ * Read a season's Podium Class recap days. Podium scores are produced by a
+ * separate nightly pipeline and stored in `podium-recaps/{seasonUid}/days`
+ * (keyed by competitionDay), NOT in fantasy_recaps — so the fantasy readers
+ * above find nothing for podiumClass. Mirrors src/api/season.getPodiumSeasonRecaps.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid
+ * @returns {Promise<Array<Object>>}
+ */
+async function fetchPodiumRecaps(db, seasonUid) {
+  const daysSnap = await db.collection(`podium-recaps/${seasonUid}/days`).get();
+  return daysSnap.docs.map((doc) => doc.data());
+}
+
+/**
+ * Find a director's most recent Podium Class results across a set of podium
+ * recap days, newest first. Podium recaps rank each show on its own and key
+ * results by uid (no corpsClass tag), using `place`/`totalScore` — so this
+ * normalizes into the same {eventName, score, placement} shape the fantasy
+ * reader returns. Mirrors src/hooks/useDashboardScores.usePodiumRecentResults.
+ *
+ * @param {Array<Object>} recapDocs
+ * @param {string} uid
+ * @param {number} [limit]
+ * @returns {Array<{eventName: string, score: (number|null), placement: (number|null)}>}
+ */
+function findRecentPodiumResults(recapDocs, uid, limit = 5) {
+  const sorted = [...recapDocs].sort(
+    (a, b) => (b.competitionDay || 0) - (a.competitionDay || 0)
+  );
+  const results = [];
+  for (const recap of sorted) {
+    for (const show of recap.shows || []) {
+      const mine = (show.results || []).find((r) => r.uid === uid);
+      if (mine) {
+        results.push({
+          eventName: show.eventName || show.name || "Show",
+          score: mine.totalScore ?? null,
+          placement: mine.place ?? mine.placement ?? null,
+        });
+        if (results.length >= limit) return results;
+      }
+    }
+  }
+  return results;
+}
+
+/**
+ * Class-aware recent-results reader: Podium Class reads its own recap
+ * collection, every fantasy class reads fantasy_recaps. This is the single
+ * entry point the prediction callables use so both submit (threshold
+ * derivation) and resolve read the SAME source per class — otherwise
+ * podiumClass picks derive a null threshold and are silently rejected.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid
+ * @param {string} uid
+ * @param {string} corpsClass
+ * @param {number} [limit]
+ * @returns {Promise<Array<{eventName: string, score: (number|null), placement: (number|null)}>>}
+ */
+async function fetchRecentResultsForClass(db, seasonUid, uid, corpsClass, limit = 5) {
+  if (!seasonUid) return [];
+  if (corpsClass === "podiumClass") {
+    const recapDocs = await fetchPodiumRecaps(db, seasonUid);
+    return findRecentPodiumResults(recapDocs, uid, limit);
+  }
+  const recapDocs = await fetchRecentRecaps(db, seasonUid);
+  return findRecentResultsForCorps(recapDocs, uid, corpsClass, limit);
+}
+
+/**
  * Server-authoritative threshold for a question, derived from the director's
  * recent recap results with EXACTLY the client's buildQuestions math
  * (src/utils/dailyPredictions.js). Returns null when the question isn't
@@ -259,6 +331,9 @@ module.exports = {
   fetchRecentRecaps,
   findRecentResultsForCorps,
   findLatestResultForCorps,
+  fetchPodiumRecaps,
+  findRecentPodiumResults,
+  fetchRecentResultsForClass,
   deriveQuestionThreshold,
   resolveBucket,
   pruneOldPredictions,
