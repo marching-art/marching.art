@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { Loader2, Share2, Check } from 'lucide-react';
 import { db } from '../../api';
+import { TeamAvatar } from '../ui/TeamAvatar';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
 const MAJOR_MASTHEADS = {
@@ -185,34 +186,42 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                   className={`border-b border-[#242424] ${isMine ? 'bg-[#0057B8]/10' : ''}`}
                 >
                   <td className="py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">
-                    <div className="flex items-baseline gap-1.5 min-w-0">
+                    {/* Place · avatar · corps name — the corps avatar is shown
+                        the same way as the other classes (see CorpsIdentity in
+                        ScoresParts). */}
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <span className="text-gray-500 flex-shrink-0">{row.place}.</span>
-                      <span
-                        className={`font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
-                      >
-                        {row.corpsName}
-                      </span>
-                      {showDivisionTag && (
-                        <span className="text-[8px] font-bold uppercase text-gray-600 flex-shrink-0">
-                          {(row.division || 'aClass').replace('Class', '')}
-                        </span>
-                      )}
+                      <TeamAvatar name={row.corpsName} logoUrl={row.avatarUrl} size="xs" />
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-1.5 min-w-0">
+                          <span
+                            className={`font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+                          >
+                            {row.corpsName}
+                          </span>
+                          {showDivisionTag && (
+                            <span className="text-[8px] font-bold uppercase text-gray-600 flex-shrink-0">
+                              {(row.division || 'aClass').replace('Class', '')}
+                            </span>
+                          )}
+                        </div>
+                        {/* Director credit + profile link under the corps name —
+                            displayed the same way as the other classes. */}
+                        {row.displayName &&
+                          (row.uid ? (
+                            <Link
+                              to={`/profile/${row.uid}`}
+                              className="block text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
+                            >
+                              {row.displayName}
+                            </Link>
+                          ) : (
+                            <span className="block text-[10px] text-gray-500 truncate">
+                              {row.displayName}
+                            </span>
+                          ))}
+                      </div>
                     </div>
-                    {/* Director credit + profile link under the corps name —
-                        displayed the same way as the other classes. */}
-                    {row.displayName &&
-                      (row.uid ? (
-                        <Link
-                          to={`/profile/${row.uid}`}
-                          className="block pl-4 text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
-                        >
-                          {row.displayName}
-                        </Link>
-                      ) : (
-                        <span className="block pl-4 text-[10px] text-gray-500 truncate">
-                          {row.displayName}
-                        </span>
-                      ))}
                   </td>
                   {PODIUM_CAPTIONS.map((caption) => {
                     const value = row.captions?.[caption];
