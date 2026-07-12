@@ -34,9 +34,8 @@ system, confetti/chart palettes, functional image scrims, and overlay shadows.
 The ratchet holds them frozen; they can only fall.
 
 The tooling: `npm run census` (table), `npm run census:check` (CI ratchet),
-`node scripts/designCensus.mjs --files <key>` (offenders), `scripts/tokenMap.json`
-
-- `scripts/applyTokenMap.mjs` (the deterministic codemod).
+`node scripts/designCensus.mjs --files <key>` (offenders), and
+`scripts/tokenMap.json` + `scripts/applyTokenMap.mjs` (the deterministic codemod).
 
 ---
 
