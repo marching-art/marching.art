@@ -213,9 +213,6 @@ const {
   regenerateAllAvatars,
 } = require("./src/triggers/avatarGeneration");
 
-// Webhooks
-const { stripeWebhook } = require("./src/webhooks/stripe");
-
 // Export all functions for deployment
 module.exports = {
   // Callable
@@ -407,9 +404,6 @@ module.exports = {
   onUniformDesignUpdated,
   generateCorpsAvatar,
   regenerateAllAvatars,
-
-  // Webhooks
-  stripeWebhook,
 
   // YouTube Search
   searchYoutubeVideo,

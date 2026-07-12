@@ -155,7 +155,7 @@ const UsernamePromptModal = () => {
                 <h2 id="username-prompt-title" className="text-sm font-bold text-white">
                   Choose Your Username
                 </h2>
-                <p className="text-xs text-gray-500">This will be your unique identifier</p>
+                <p className="text-xs text-muted">This will be your unique identifier</p>
               </div>
             </div>
           </div>
@@ -212,7 +212,7 @@ const UsernamePromptModal = () => {
                   {usernameStatus.message}
                 </p>
               )}
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted mt-2">
                 3-15 characters, letters, numbers, and underscores only
               </p>
             </div>

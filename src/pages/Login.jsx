@@ -94,7 +94,7 @@ const Login = () => {
                   />
                 </div>
                 <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-                <p className="text-base text-gray-500 mt-2">Your corps is waiting.</p>
+                <p className="text-base text-muted mt-2">Your corps is waiting.</p>
               </div>
 
               {/* Error Alert */}
@@ -117,12 +117,12 @@ const Login = () => {
                 <div>
                   <label
                     htmlFor="login-email"
-                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                    className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
                   >
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                     <input
                       id="login-email"
                       type="email"
@@ -141,12 +141,12 @@ const Login = () => {
                 <div>
                   <label
                     htmlFor="login-password"
-                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                    className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
                   >
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                     <input
                       id="login-password"
                       type={showPassword ? 'text' : 'password'}
@@ -160,7 +160,7 @@ const Login = () => {
                     />
                     <button
                       type="button"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-500 hover:text-white active:text-white transition-colors min-w-touch min-h-touch flex items-center justify-center"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-muted hover:text-white active:text-white transition-colors min-w-touch min-h-touch flex items-center justify-center"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
@@ -204,7 +204,7 @@ const Login = () => {
               </form>
 
               {/* Sign Up Link */}
-              <p className="text-center mt-8 text-base text-gray-500">
+              <p className="text-center mt-8 text-base text-muted">
                 Don't have an account?{' '}
                 <Link
                   to="/register"

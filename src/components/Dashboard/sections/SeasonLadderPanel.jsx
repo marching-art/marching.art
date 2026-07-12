@@ -64,7 +64,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
           <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
           Season Ladder
         </h3>
-        <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
           {claimed.length}/{TIERS.length} tiers
         </span>
       </div>
@@ -72,7 +72,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
       {/* Season XP progress */}
       <div className="px-4 pt-3">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-gray-500">Season XP</span>
+          <span className="text-[10px] text-muted">Season XP</span>
           <span className="text-[10px] font-bold text-emerald-400 font-data tabular-nums">
             {seasonXP.toLocaleString()}
             {nextTier ? ` / ${nextTier.xp.toLocaleString()}` : ' — maxed!'}
@@ -111,7 +111,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
 
       {/* Baseline not stamped yet — tracking begins with the next XP event */}
       {!baselineStamped && (
-        <div className="px-4 py-3 text-[10px] text-gray-500">
+        <div className="px-4 py-3 text-[10px] text-muted">
           Season XP starts counting with your next check-in, challenge, or prediction — all the XP
           you earn from then on climbs the ladder.
         </div>
@@ -119,7 +119,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
 
       {/* Next tier preview */}
       {baselineStamped && nextTier && claimable.length === 0 && (
-        <div className="px-4 py-3 flex items-center gap-2 text-[10px] text-gray-500">
+        <div className="px-4 py-3 flex items-center gap-2 text-[10px] text-muted">
           <Lock className="w-3 h-3" />
           Tier {nextTier.tier}: {(nextTier.xp - seasonXP).toLocaleString()} XP away — +
           {nextTier.coin} CC{nextTier.exclusive ? ` + ${nextTier.exclusive}` : ''}

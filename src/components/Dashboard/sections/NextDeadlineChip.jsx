@@ -82,17 +82,17 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
         >
           {countdown}
           {tradeLabel && (
-            <span className="text-[10px] text-gray-500 whitespace-nowrap truncate">
+            <span className="text-[10px] text-muted whitespace-nowrap truncate">
               • {tradeLabel}
             </span>
           )}
           <ChevronDown
-            className={`w-3 h-3 text-gray-600 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+            className={`w-3 h-3 text-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
             aria-hidden="true"
           />
         </button>
         {expanded && (
-          <ul className="px-4 pb-2 space-y-0.5 text-[10px] text-gray-500 text-center">
+          <ul className="px-4 pb-2 space-y-0.5 text-[10px] text-muted text-center">
             {tooltipLines.map((line) => (
               <li key={line}>{line}</li>
             ))}
@@ -109,7 +109,7 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     >
       {countdown}
       {tradeLabel && (
-        <span className="text-[10px] text-gray-500 whitespace-nowrap hidden xl:inline">
+        <span className="text-[10px] text-muted whitespace-nowrap hidden xl:inline">
           • {tradeLabel}
         </span>
       )}

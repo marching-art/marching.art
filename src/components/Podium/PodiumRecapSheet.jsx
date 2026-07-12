@@ -102,7 +102,7 @@ const SORT_OPTIONS = [
 function SortBar({ sortBy, onChange }) {
   return (
     <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-      <span className="text-[9px] uppercase tracking-wider text-gray-600 pr-1 flex-shrink-0">
+      <span className="text-[9px] uppercase tracking-wider text-muted pr-1 flex-shrink-0">
         Sort
       </span>
       {SORT_OPTIONS.map((opt) => (
@@ -113,7 +113,7 @@ function SortBar({ sortBy, onChange }) {
           className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors press-feedback ${
             sortBy === opt.id
               ? 'bg-[#8a6d1a] text-white'
-              : 'bg-[#222] text-gray-500 hover:text-gray-300'
+              : 'bg-[#222] text-muted hover:text-gray-300'
           }`}
         >
           {opt.label}
@@ -141,7 +141,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
           {show.eventName || head.name}
         </div>
         {(show.location || head.site) && (
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 flex-shrink-0 pl-2">
+          <div className="text-[10px] uppercase tracking-wider text-muted flex-shrink-0 pl-2">
             {show.location || head.site}
           </div>
         )}
@@ -161,7 +161,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
             <col style={{ width: '62px' }} />
           </colgroup>
           <thead>
-            <tr className="text-[9px] uppercase tracking-wider text-gray-500 border-b border-[#333]">
+            <tr className="text-[9px] uppercase tracking-wider text-muted border-b border-[#333]">
               <th className="text-left py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">Pl · Corps</th>
               {PODIUM_CAPTIONS.map((caption) => (
                 <th
@@ -190,7 +190,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                         the same way as the other classes (see CorpsIdentity in
                         ScoresParts). */}
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-gray-500 flex-shrink-0">{row.place}.</span>
+                      <span className="text-muted flex-shrink-0">{row.place}.</span>
                       <TeamAvatar name={row.corpsName} logoUrl={row.avatarUrl} size="xs" />
                       <div className="min-w-0">
                         <div className="flex items-baseline gap-1.5 min-w-0">
@@ -200,7 +200,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                             {row.corpsName}
                           </span>
                           {showDivisionTag && (
-                            <span className="text-[8px] font-bold uppercase text-gray-600 flex-shrink-0">
+                            <span className="text-[8px] font-bold uppercase text-muted flex-shrink-0">
                               {(row.division || 'aClass').replace('Class', '')}
                             </span>
                           )}
@@ -211,12 +211,12 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                           (row.uid ? (
                             <Link
                               to={`/profile/${row.uid}`}
-                              className="block text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
+                              className="block text-[10px] text-muted hover:text-[#c9a227] truncate"
                             >
                               {row.displayName}
                             </Link>
                           ) : (
-                            <span className="block text-[10px] text-gray-500 truncate">
+                            <span className="block text-[10px] text-muted truncate">
                               {row.displayName}
                             </span>
                           ))}
@@ -264,7 +264,7 @@ function PodiumReport({ column, userCorpsName }) {
       <div className="flex items-baseline justify-between border-b border-[#333] pb-2">
         <div>
           <div className="text-sm font-bold text-white">The Podium Report</div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500">
+          <div className="text-[10px] uppercase tracking-wider text-muted">
             Power Rankings · Week {column.week} · {column.fieldSize} corps
           </div>
         </div>
@@ -275,13 +275,13 @@ function PodiumReport({ column, userCorpsName }) {
           const isMine = userCorpsName && entry.corpsName === userCorpsName;
           const move =
             entry.delta == null ? (
-              <span className="text-gray-600">·</span>
+              <span className="text-muted">·</span>
             ) : entry.delta > 0 ? (
               <span className="text-green-400">▲{entry.delta}</span>
             ) : entry.delta < 0 ? (
               <span className="text-red-400">▼{-entry.delta}</span>
             ) : (
-              <span className="text-gray-600">—</span>
+              <span className="text-muted">—</span>
             );
           return (
             <div
@@ -290,7 +290,7 @@ function PodiumReport({ column, userCorpsName }) {
                 isMine ? 'bg-[#0057B8]/10 -mx-1 px-1 rounded-none' : ''
               }`}
             >
-              <span className="w-5 text-right text-gray-500 font-bold">{entry.rank}.</span>
+              <span className="w-5 text-right text-muted font-bold">{entry.rank}.</span>
               <span className="w-7 text-[10px]">{move}</span>
               <span
                 className={`flex-1 min-w-0 truncate font-bold ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
@@ -359,14 +359,14 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
   if (loading) {
     return (
       <div className="p-8 flex justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted" />
       </div>
     );
   }
 
   if (days.length === 0) {
     return (
-      <div className="p-8 text-center text-xs text-gray-500">
+      <div className="p-8 text-center text-xs text-muted">
         No Podium Class results yet this season — the first recap sheet posts after the next scored
         show.
       </div>
@@ -390,7 +390,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
             className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-none tabular-nums transition-colors press-feedback ${
               day === selected.day
                 ? 'bg-[#8a6d1a] text-white'
-                : 'text-gray-500 hover:text-white hover:bg-white/5 border border-[#333]'
+                : 'text-muted hover:text-white hover:bg-white/5 border border-[#333]'
             }`}
           >
             D{day}
@@ -435,7 +435,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
         </div>
 
         {shows.length === 0 ? (
-          <div className="text-[11px] text-gray-500">No shows scored on Day {selected.day}.</div>
+          <div className="text-[11px] text-muted">No shows scored on Day {selected.day}.</div>
         ) : (
           shows.map((show, idx) => (
             <ShowTable
@@ -451,19 +451,19 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
         {/* Joint-rehearsal feed lines (§5.12): public smoke, private fire —
             who shared a floor, never the scrimmage numbers. */}
         {(selected.recap.jointRehearsals || []).map((item, idx) => (
-          <div key={idx} className="text-[10px] text-gray-500 italic">
+          <div key={idx} className="text-[10px] text-muted italic">
             {item.corpsA} and {item.corpsB} held a joint rehearsal
             {item.city ? ` in ${item.city}` : ''}.
           </div>
         ))}
 
         {/* Wordmark footer — every screenshot is an advertisement */}
-        <div className="flex justify-between items-center pt-1 text-[9px] uppercase tracking-wider text-gray-600">
+        <div className="flex justify-between items-center pt-1 text-[9px] uppercase tracking-wider text-muted">
           <span>
             Box-toppers in <span className="text-[#c9a227] font-bold">gold</span> · full captions —
             Podium Class only
           </span>
-          <span className="font-bold text-gray-500">
+          <span className="font-bold text-muted">
             marching.art{seasonName ? ` · ${seasonName}` : ''}
           </span>
         </div>

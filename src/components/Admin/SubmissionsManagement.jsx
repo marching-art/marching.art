@@ -137,7 +137,7 @@ const SubmissionsManagement = () => {
   if (loading && submissions.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-6 h-6 text-gray-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-muted animate-spin" />
       </div>
     );
   }
@@ -179,8 +179,8 @@ const SubmissionsManagement = () => {
       {/* Submissions list */}
       {submissions.length === 0 ? (
         <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 text-center">
-          <FileText className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-          <p className="text-gray-500 text-sm">
+          <FileText className="w-8 h-8 text-muted mx-auto mb-2" />
+          <p className="text-muted text-sm">
             No {statusFilter !== 'all' ? statusFilter : ''} submissions found
           </p>
         </div>
@@ -240,8 +240,8 @@ const SubmissionRow = ({
           </span>
         </div>
         <h3 className="text-sm font-bold text-white truncate mb-1">{submission.headline}</h3>
-        <p className="text-xs text-gray-500 truncate">{submission.summary}</p>
-        <div className="flex items-center gap-4 mt-2 text-[10px] text-gray-500">
+        <p className="text-xs text-muted truncate">{submission.summary}</p>
+        <div className="flex items-center gap-4 mt-2 text-[10px] text-muted">
           <span className="flex items-center gap-1">
             <User className="w-3 h-3" />
             {submission.authorName}
@@ -339,7 +339,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
             </div>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white transition-colors"
+              className="p-1 text-muted hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -359,13 +359,13 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
               >
                 {CATEGORY_LABELS[submission.category]}
               </span>
-              <span className="text-gray-500">by {submission.authorName}</span>
-              <span className="text-gray-500">{formatDate(submission.createdAt)}</span>
+              <span className="text-muted">by {submission.authorName}</span>
+              <span className="text-muted">{formatDate(submission.createdAt)}</span>
             </div>
 
             {/* Headline */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                 Headline
               </label>
               <p className="text-lg font-bold text-white">{submission.headline}</p>
@@ -373,7 +373,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
 
             {/* Summary */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                 Summary
               </label>
               <p className="text-sm text-gray-300">{submission.summary}</p>
@@ -381,7 +381,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
 
             {/* Full Story */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                 Full Story
               </label>
               <div className="bg-[#0a0a0a] border border-[#333] rounded-none p-3 max-h-48 overflow-y-auto">
@@ -392,7 +392,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
             {/* Image */}
             {submission.imageUrl && (
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Submitted Image
                 </label>
                 <img
@@ -427,7 +427,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                 <div className="space-y-3">
                   {/* Image options */}
                   <div className="space-y-2">
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">
                       Article Image
                     </label>
                     <div className="space-y-2">
@@ -471,7 +471,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                           onChange={(e) => setImageOption(e.target.value)}
                           className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
                         />
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X className="w-4 h-4 text-muted" />
                         <span>No image</span>
                       </label>
                     </div>

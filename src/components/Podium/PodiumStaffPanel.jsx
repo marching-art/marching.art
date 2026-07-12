@@ -94,10 +94,10 @@ export default function PodiumStaffPanel({ podium }) {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <Users className="w-3 h-3" /> Staff ({hiredCount}/10)
         </span>
-        <span className="flex items-center gap-2 text-[9px] uppercase tracking-wider text-gray-600">
+        <span className="flex items-center gap-2 text-[9px] uppercase tracking-wider text-muted">
           <span className="hidden sm:inline">
             {hiredCount === 10
               ? 'roster full'
@@ -108,7 +108,7 @@ export default function PodiumStaffPanel({ podium }) {
 
       {/* Contract length — applies to every hire below */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
           Contract
         </span>
         {CONTRACT_LENGTHS.map((seasons) => (
@@ -118,25 +118,25 @@ export default function PodiumStaffPanel({ podium }) {
             className={`text-[10px] font-bold px-2 py-0.5 rounded-none border press-feedback ${
               contractSeasons === seasons
                 ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
-                : 'border-[#333] text-gray-500 hover:text-white'
+                : 'border-[#333] text-muted hover:text-white'
             }`}
           >
             {seasons} season{seasons > 1 ? 's' : ''}
           </button>
         ))}
-        <span className="text-[9px] text-gray-600 basis-full sm:basis-auto sm:flex-1">
+        <span className="text-[9px] text-muted basis-full sm:basis-auto sm:flex-1">
           Longer contracts lock the salary against the raises tenure brings — retain a staffer and
           they grow from Apprentice toward Legend.
         </span>
       </div>
 
       {!catalog && !error && (
-        <div className="text-[9px] uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
+        <div className="text-[9px] uppercase tracking-wider text-muted flex items-center gap-1.5">
           <Loader2 className="w-3 h-3 animate-spin" /> Loading catalog…
         </div>
       )}
       {catalog && catalog.length === 0 && !error && (
-        <div className="text-[11px] text-gray-500 py-1">
+        <div className="text-[11px] text-muted py-1">
           No staff catalog available right now. If this persists, the staff service may still be
           deploying — try again shortly.
         </div>
@@ -159,7 +159,7 @@ export default function PodiumStaffPanel({ podium }) {
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 truncate">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted truncate">
                   {SPECIALTY_LABELS[specialty] || specialty}
                 </span>
                 {filled ? (
@@ -169,7 +169,7 @@ export default function PodiumStaffPanel({ podium }) {
                     {TIER_LABELS[member.tier] || member.tier}
                   </span>
                 ) : (
-                  <span className="text-[9px] uppercase tracking-wider text-gray-700 shrink-0">
+                  <span className="text-[9px] uppercase tracking-wider text-muted shrink-0">
                     Vacant
                   </span>
                 )}
@@ -178,7 +178,7 @@ export default function PodiumStaffPanel({ podium }) {
               {filled ? (
                 <>
                   <div
-                    className="flex items-center justify-between gap-2 text-[10px] tabular-nums text-gray-600"
+                    className="flex items-center justify-between gap-2 text-[10px] tabular-nums text-muted"
                     title={resumeSummary(member)}
                   >
                     <span>
@@ -195,7 +195,7 @@ export default function PodiumStaffPanel({ podium }) {
                         className={`press-feedback ${
                           retraining === member.id
                             ? 'text-[#4d9fff]'
-                            : 'text-gray-500 hover:text-white'
+                            : 'text-muted hover:text-white'
                         }`}
                       >
                         <GraduationCap className="w-3 h-3" />
@@ -206,7 +206,7 @@ export default function PodiumStaffPanel({ podium }) {
                           act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
                         }
                         title="Release this staffer — frees the seat, ends their tenure (no refund)"
-                        className="text-gray-500 hover:text-red-400 press-feedback"
+                        className="text-muted hover:text-red-400 press-feedback"
                       >
                         {busy === `release_${specialty}` ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
@@ -218,11 +218,11 @@ export default function PodiumStaffPanel({ podium }) {
                   </div>
                   {retraining === member.id && (
                     <div className="flex flex-wrap items-center gap-1 pt-0.5 border-t border-[#2a2a2a]">
-                      <span className="text-[9px] uppercase font-bold text-gray-600 w-full">
+                      <span className="text-[9px] uppercase font-bold text-muted w-full">
                         Retrain to:
                       </span>
                       {openSpecialties.length === 0 ? (
-                        <span className="text-[9px] text-gray-600">
+                        <span className="text-[9px] text-muted">
                           No open seats to move into.
                         </span>
                       ) : (
@@ -275,7 +275,7 @@ export default function PodiumStaffPanel({ podium }) {
                             <span className={`font-bold ${TIER_STYLES[option.tier]}`}>
                               {TIER_LABELS[option.tier]}
                             </span>
-                            <span className="text-gray-600">
+                            <span className="text-muted">
                               +{Math.round(option.boost * 100)}% · {option.salary}/season
                             </span>
                           </>
@@ -285,9 +285,9 @@ export default function PodiumStaffPanel({ podium }) {
                   })}
                 </div>
               ) : catalog ? (
-                <span className="text-[9px] text-gray-700">No candidates listed.</span>
+                <span className="text-[9px] text-muted">No candidates listed.</span>
               ) : (
-                <span className="text-[9px] text-gray-700">Open seat — loading catalog…</span>
+                <span className="text-[9px] text-muted">Open seat — loading catalog…</span>
               )}
             </div>
           );

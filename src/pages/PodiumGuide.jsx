@@ -93,7 +93,7 @@ export default function PodiumGuide() {
         <div className="mb-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-white mb-4"
+            className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-white mb-4"
           >
             <ChevronLeft className="w-3.5 h-3.5" /> marching.art
           </Link>
@@ -120,7 +120,7 @@ export default function PodiumGuide() {
 
         {/* Footer CTA */}
         <div className="mt-10 pt-6 border-t border-[#333] flex items-center justify-between">
-          <span className="text-[11px] text-gray-500">
+          <span className="text-[11px] text-muted">
             Podium Class is always open — found your corps from the Dashboard.
           </span>
           <Link

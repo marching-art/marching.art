@@ -26,7 +26,7 @@ const ClassStandings = ({ block }) => (
 
     {/* Combined-family standings table. */}
     <div className="bg-[#111] border border-[#333] overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[2.5rem_1fr_5rem_repeat(3,4rem)] gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 border-b border-[#333]">
+      <div className="hidden sm:grid grid-cols-[2.5rem_1fr_5rem_repeat(3,4rem)] gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-[#333]">
         <span>#</span>
         <span>Ensemble</span>
         <span className="text-right">Total</span>
@@ -42,14 +42,14 @@ const ClassStandings = ({ block }) => (
           >
             <span
               className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-none ${
-                s.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
+                s.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-muted'
               }`}
             >
               {s.rank}
             </span>
             <div className="min-w-0">
               <div className="text-sm text-white truncate">{s.corpsName}</div>
-              <div className="text-[11px] text-gray-500 truncate">
+              <div className="text-[11px] text-muted truncate">
                 {s.director}
                 {s.showsCount ? ` · ${s.showsCount} show${s.showsCount === 1 ? '' : 's'}` : ''}
                 {s.showWins > 0 ? ` · ${s.showWins} show win${s.showWins === 1 ? '' : 's'}` : ''}
@@ -71,7 +71,7 @@ const ClassStandings = ({ block }) => (
         ))}
       </div>
     </div>
-    <p className="text-[11px] text-gray-600 mt-2">
+    <p className="text-[11px] text-muted mt-2">
       Total is the latest score; GE / Vis / Mus are season-average combined-family scores.
     </p>
 
@@ -117,7 +117,7 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
             {showWinLeaders.map((b, idx) => (
               <div key={idx} className="bg-[#111] border border-[#333] px-3 py-2">
                 <span className="text-sm text-white">{b.corpsName}</span>
-                <span className="text-xs text-gray-500 ml-2">{b.classLabel}</span>
+                <span className="text-xs text-muted ml-2">{b.classLabel}</span>
                 <span className="text-sm font-bold font-data text-orange-400 ml-2">
                   ×{b.showWins}
                 </span>
@@ -153,7 +153,7 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
 
             {soundSport.bestInShowLeaders?.length > 0 && (
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted">
                   Best-in-Show Recognition
                 </div>
                 {soundSport.bestInShowLeaders.map((l, idx) => (
@@ -164,7 +164,7 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
                     <div>
                       <span className="text-sm text-white">{l.corpsName}</span>
                       {l.director && (
-                        <span className="text-xs text-gray-500 ml-2">{l.director}</span>
+                        <span className="text-xs text-muted ml-2">{l.director}</span>
                       )}
                     </div>
                     <span className="text-sm font-bold font-data text-purple-400">

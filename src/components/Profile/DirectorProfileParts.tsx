@@ -82,7 +82,7 @@ const StatPill = memo(
     <div className="flex items-center gap-1.5 px-2 py-1 bg-[#222] border border-[#333]">
       <Icon className={`w-3.5 h-3.5 ${color}`} />
       <span className={`text-xs font-bold font-data tabular-nums ${color}`}>{value}</span>
-      <span className="text-[9px] text-gray-500 uppercase">{label}</span>
+      <span className="text-[9px] text-muted uppercase">{label}</span>
     </div>
   )
 );
@@ -162,7 +162,7 @@ const SeasonRow = memo(
                   ? 'bg-gray-400/10 border-gray-500/30 text-gray-300'
                   : placement && placement <= 10
                     ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
-                    : 'bg-[#222] border-[#333] text-gray-500'
+                    : 'bg-[#222] border-[#333] text-muted'
             }`}
           >
             {placement ? (
@@ -180,7 +180,7 @@ const SeasonRow = memo(
                 {classConfig.short}
               </span>
             </div>
-            <span className="text-[10px] text-gray-500">
+            <span className="text-[10px] text-muted">
               {conceptTitle && (
                 <span className="text-[#0057B8] italic">&ldquo;{conceptTitle}&rdquo; · </span>
               )}
@@ -202,7 +202,7 @@ const SeasonRow = memo(
           </div>
 
           <ChevronRight
-            className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            className={`w-3 h-3 text-muted transition-transform ${isExpanded ? 'rotate-90' : ''}`}
           />
         </button>
 
@@ -226,17 +226,17 @@ const SeasonRow = memo(
               <div className="px-3 pb-2 pt-1 bg-[#0a0a0a] grid grid-cols-3 gap-2 text-center">
                 <div>
                   <div className="text-xs font-bold text-white">{season.showsAttended || 0}</div>
-                  <div className="text-[9px] text-gray-500">Shows</div>
+                  <div className="text-[9px] text-muted">Shows</div>
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white">{season.circuitPoints || 0}</div>
-                  <div className="text-[9px] text-gray-500">Pts</div>
+                  <div className="text-[9px] text-muted">Pts</div>
                 </div>
                 <div>
                   {isSoundSport ? (
                     <>
                       <div className="text-xs font-bold text-orange-400">{rating || '-'}</div>
-                      <div className="text-[9px] text-gray-500">Rating</div>
+                      <div className="text-[9px] text-muted">Rating</div>
                     </>
                   ) : (
                     <>
@@ -245,7 +245,7 @@ const SeasonRow = memo(
                           ? (score / season.showsAttended).toFixed(1)
                           : '-'}
                       </div>
-                      <div className="text-[9px] text-gray-500">Avg</div>
+                      <div className="text-[9px] text-muted">Avg</div>
                     </>
                   )}
                 </div>
@@ -419,7 +419,7 @@ const EnsembleCard = memo(
           )}
           <div className="flex-1 min-w-0">
             <div className="text-xs font-bold text-white truncate">{corpsName}</div>
-            <div className="flex items-center gap-2 text-[9px] text-gray-500">
+            <div className="flex items-center gap-2 text-[9px] text-muted">
               <span className={`font-bold ${classConfig.color}`}>{classConfig.name}</span>
               {showTitle && (
                 <span className="text-[#0057B8] italic truncate">&ldquo;{showTitle}&rdquo;</span>
@@ -435,7 +435,7 @@ const EnsembleCard = memo(
 
         {!hasAnyInfo ? (
           <div className="px-3 py-4 text-center">
-            <p className="text-[10px] text-gray-500">No ensemble details yet.</p>
+            <p className="text-[10px] text-muted">No ensemble details yet.</p>
           </div>
         ) : (
           <div className="px-3 py-2 space-y-2">
@@ -463,7 +463,7 @@ const EnsembleCard = memo(
 
             {info.mission && (
               <div>
-                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-0.5">
                   Mission
                 </div>
                 <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.mission}</p>
@@ -472,7 +472,7 @@ const EnsembleCard = memo(
 
             {info.history && (
               <div>
-                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-0.5">
                   History
                 </div>
                 <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.history}</p>
@@ -481,7 +481,7 @@ const EnsembleCard = memo(
 
             {info.notableShows && info.notableShows.length > 0 && (
               <div>
-                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-0.5">
                   Notable Shows
                 </div>
                 <ul className="space-y-0.5">
@@ -511,7 +511,7 @@ const UnregisteredEnsembleCard = memo(({ classKey }: { classKey: CorpsClass }) =
     <div className="bg-[#0a0a0a] border border-dashed border-[#333]">
       <div className="px-3 py-2 border-b border-[#333] bg-[#111] flex items-center gap-2">
         <div className="w-7 h-7 border border-dashed border-[#333] flex items-center justify-center">
-          <Music className="w-3.5 h-3.5 text-gray-600" />
+          <Music className="w-3.5 h-3.5 text-muted" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-bold text-gray-400 truncate">Not yet registered</div>
@@ -519,7 +519,7 @@ const UnregisteredEnsembleCard = memo(({ classKey }: { classKey: CorpsClass }) =
         </div>
       </div>
       <div className="px-3 py-3 text-center space-y-2">
-        <p className="text-[10px] text-gray-500">
+        <p className="text-[10px] text-muted">
           You&apos;ve unlocked {classConfig.name}. Register a corps to start competing.
         </p>
         <Link
@@ -548,8 +548,8 @@ const EmptyWithCTA = memo(
     to: string;
   }) => (
     <div className="p-4 text-center">
-      <Icon className="w-6 h-6 text-gray-600 mx-auto mb-1" />
-      <p className="text-[10px] text-gray-500 mb-2">{title}</p>
+      <Icon className="w-6 h-6 text-muted mx-auto mb-1" />
+      <p className="text-[10px] text-muted mb-2">{title}</p>
       <Link
         to={to}
         className="inline-flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline"

@@ -108,7 +108,7 @@ const VersusCard = ({
             >
               {user1Score.toFixed(1)}
             </span>
-            <span className="text-gray-600 text-xs">-</span>
+            <span className="text-muted text-xs">-</span>
             <span
               className={`font-bold tabular-nums ${user2Leading ? 'text-green-500' : 'text-white'}`}
             >
@@ -134,7 +134,7 @@ const VersusCard = ({
             </div>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-gray-600 ml-2" />
+          <ChevronRight className="w-4 h-4 text-muted ml-2" />
         </div>
       </m.div>
     );
@@ -179,7 +179,7 @@ const VersusCard = ({
             </span>
           )}
           {!isLive && !isCompleted && (
-            <span className="text-xs text-gray-500">Week {week} Matchup</span>
+            <span className="text-xs text-muted">Week {week} Matchup</span>
           )}
           {isRivalry && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-none bg-red-500/20 text-red-500 text-xs font-bold">
@@ -188,7 +188,7 @@ const VersusCard = ({
             </span>
           )}
         </div>
-        <ChevronRight className="w-4 h-4 text-gray-600" />
+        <ChevronRight className="w-4 h-4 text-muted" />
       </div>
 
       {/* Main Matchup Content */}
@@ -233,7 +233,7 @@ const VersusCard = ({
             </p>
 
             {/* Record */}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               {user1Record.wins}-{user1Record.losses}
             </p>
 
@@ -253,7 +253,7 @@ const VersusCard = ({
                 {user1Score.toFixed(1)}
               </p>
               {user1Projected > 0 && !isCompleted && (
-                <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                <p className="text-xs text-muted flex items-center justify-center gap-1">
                   <Zap className="w-3 h-3" />
                   Proj: {user1Projected.toFixed(1)}
                 </p>
@@ -328,7 +328,7 @@ const VersusCard = ({
             </p>
 
             {/* Record */}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               {user2Record.wins}-{user2Record.losses}
             </p>
 
@@ -348,7 +348,7 @@ const VersusCard = ({
                 {user2Score.toFixed(1)}
               </p>
               {user2Projected > 0 && !isCompleted && (
-                <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                <p className="text-xs text-muted flex items-center justify-center gap-1">
                   <Zap className="w-3 h-3" />
                   Proj: {user2Projected.toFixed(1)}
                 </p>
@@ -362,15 +362,15 @@ const VersusCard = ({
           <div className="mt-4 pt-3 border-t border-[#333]">
             <div className="flex items-center justify-between text-xs mb-2">
               <span
-                className={`font-bold ${winProbability >= 50 ? 'text-green-500' : 'text-gray-500'}`}
+                className={`font-bold ${winProbability >= 50 ? 'text-green-500' : 'text-muted'}`}
               >
                 {winProbability.toFixed(0)}%
               </span>
-              <span className="text-gray-600 uppercase tracking-wide text-[10px]">
+              <span className="text-muted uppercase tracking-wide text-[10px]">
                 Win Probability
               </span>
               <span
-                className={`font-bold ${winProbability < 50 ? 'text-green-500' : 'text-gray-500'}`}
+                className={`font-bold ${winProbability < 50 ? 'text-green-500' : 'text-muted'}`}
               >
                 {(100 - winProbability).toFixed(0)}%
               </span>

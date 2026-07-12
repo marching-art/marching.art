@@ -8,7 +8,7 @@ import { Share2, MoreVertical, Plus } from 'lucide-react';
 
 const Step = ({ n, children }) => (
   <div className="flex items-center gap-2 flex-wrap">
-    <span className="text-gray-500">{n}.</span>
+    <span className="text-muted">{n}.</span>
     {children}
   </div>
 );

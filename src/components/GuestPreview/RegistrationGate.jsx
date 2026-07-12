@@ -111,7 +111,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-none transition-colors z-10"
+              className="absolute top-3 right-3 p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors z-10"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
@@ -158,7 +158,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
               </div>
 
               {/* Free badge */}
-              <div className="flex items-center justify-center gap-2 mt-4 text-gray-500">
+              <div className="flex items-center justify-center gap-2 mt-4 text-muted">
                 <Zap className="w-4 h-4 text-green-500" />
                 <span className="text-xs">100% free, no credit card required</span>
               </div>

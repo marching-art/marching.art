@@ -34,7 +34,7 @@ const Toggle = ({ checked, onChange, label, description }) => (
   <label className="flex items-center justify-between py-2.5 cursor-pointer group">
     <div className="flex-1 mr-3">
       <p className="text-sm text-white group-hover:text-gray-200">{label}</p>
-      {description && <p className="text-[10px] text-gray-500 mt-0.5">{description}</p>}
+      {description && <p className="text-[10px] text-muted mt-0.5">{description}</p>}
     </div>
     <div className="relative">
       <input type="checkbox" className="sr-only peer" checked={checked} onChange={onChange} />
@@ -359,10 +359,10 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         </div>
 
         <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between shrink-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Settings</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">Settings</span>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+            className="p-2 -mr-2 text-muted hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -376,7 +376,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
               activeTab === 'account'
                 ? 'text-white border-b-2 border-[#0057B8]'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-muted hover:text-gray-300'
             }`}
           >
             Account
@@ -386,7 +386,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
               activeTab === 'notifications'
                 ? 'text-white border-b-2 border-[#0057B8]'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-muted hover:text-gray-300'
             }`}
           >
             Alerts
@@ -399,7 +399,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             <div className="p-3 space-y-3">
               {/* Username Field */}
               <div className="bg-[#111] border border-[#333] p-3">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
                   <AtSign className="w-3 h-3" />
                   Username
                 </div>
@@ -412,9 +412,9 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   }}
                   placeholder="Enter username"
                   maxLength={15}
-                  className="w-full bg-transparent text-sm text-white font-data border-none outline-none placeholder:text-gray-600"
+                  className="w-full bg-transparent text-sm text-white font-data border-none outline-none placeholder:text-muted"
                 />
-                <div className="text-[9px] text-gray-600 mt-1">
+                <div className="text-[9px] text-muted mt-1">
                   3-15 characters, letters, numbers, underscores
                 </div>
                 {usernameError && (
@@ -427,7 +427,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
               {/* Email Field */}
               <div className="bg-[#111] border border-[#333] p-3">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
                   <Mail className="w-3 h-3" />
                   Email
                 </div>
@@ -439,7 +439,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                     setEmailError('');
                   }}
                   placeholder="Enter email address"
-                  className="w-full bg-transparent text-sm text-white font-data border-none outline-none placeholder:text-gray-600"
+                  className="w-full bg-transparent text-sm text-white font-data border-none outline-none placeholder:text-muted"
                 />
                 {emailError && (
                   <div className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
@@ -461,7 +461,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
               )}
 
               <div className="bg-[#111] border border-[#333] p-3">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Member Since
                 </div>
                 <div className="text-sm text-white">
@@ -473,7 +473,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
               {/* Help Tooltips Toggle */}
               <div className="bg-[#111] border border-[#333] p-3">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                   Gameplay Help
                 </div>
                 <Toggle
@@ -551,7 +551,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">
+                      <label className="text-[10px] text-muted uppercase tracking-wider block mb-1">
                         Type DELETE to confirm
                       </label>
                       <input
@@ -602,20 +602,20 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             <div className="p-3 space-y-4">
               {/* Push Notifications Section */}
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <p className="text-[10px] text-muted uppercase tracking-wider mb-2 flex items-center gap-1">
                   <Bell className="w-3 h-3" />
                   Push Notifications
                 </p>
 
                 {!pushSupported ? (
                   <div className="bg-[#111] border border-[#333] p-3 text-center">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted">
                       Push notifications not supported in this browser
                     </p>
                   </div>
                 ) : pushPermission === 'denied' ? (
                   <div className="bg-[#111] border border-[#333] p-3 text-center">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted">
                       Push notifications blocked. Enable in browser settings.
                     </p>
                   </div>
@@ -667,7 +667,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
               {/* Email Notifications Section */}
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <p className="text-[10px] text-muted uppercase tracking-wider mb-2 flex items-center gap-1">
                   <Mail className="w-3 h-3" />
                   Email Notifications
                 </p>

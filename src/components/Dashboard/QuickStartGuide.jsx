@@ -196,7 +196,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                       <p className="text-sm text-gray-400 truncate">{step.description}</p>
                     </div>
                     <ChevronRight
-                      className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                      className={`w-5 h-5 text-muted transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                     />
                   </button>
 
@@ -261,7 +261,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
           {/* Footer */}
           <div className="p-4 border-t border-[#333] bg-[#111]">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted">
                 <HelpCircle className="w-4 h-4 inline mr-1" />
                 Need more help? Check out the{' '}
                 <Link

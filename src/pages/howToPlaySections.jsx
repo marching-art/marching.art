@@ -211,7 +211,7 @@ const CaptionsSection = () => (
                   {group.label}
                 </span>
               </div>
-              <span className="text-[10px] text-gray-500">scores up to {group.max}</span>
+              <span className="text-[10px] text-muted">scores up to {group.max}</span>
             </div>
             <div className="grid sm:grid-cols-3 gap-2">
               {group.abbrs.map((abbr) => {
@@ -222,7 +222,7 @@ const CaptionsSection = () => (
                       <span className="font-bold text-[#0057B8] mr-1.5">{cap.abbr}</span>
                       {cap.name}
                     </p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{cap.desc}</p>
+                    <p className="text-[10px] text-muted mt-0.5">{cap.desc}</p>
                   </div>
                 );
               })}
@@ -249,7 +249,7 @@ const ScoringSection = () => (
         >
           <div>
             <span className="text-xs font-bold text-white">{g.group}</span>
-            <span className="block text-[10px] text-gray-500">
+            <span className="block text-[10px] text-muted">
               {g.captions} · {g.note}
             </span>
           </div>
@@ -317,7 +317,7 @@ const ClassesSection = () => (
               <span className="text-xs font-bold text-white">{cls.points} pts</span>
             </div>
             <p className="text-[11px] text-gray-400">{cls.desc}</p>
-            <p className="text-[10px] text-gray-500 mt-1">Unlock: {cls.unlock}</p>
+            <p className="text-[10px] text-muted mt-1">Unlock: {cls.unlock}</p>
           </div>
         );
       })}
@@ -334,7 +334,7 @@ const ClassesSection = () => (
             <Zap className="w-3 h-3 text-yellow-500" />
             <p className="text-xs font-bold text-gray-200">{path.label}</p>
           </div>
-          <p className="text-[11px] text-gray-500 leading-snug">{path.detail}</p>
+          <p className="text-[11px] text-muted leading-snug">{path.detail}</p>
         </div>
       ))}
     </div>
@@ -372,7 +372,7 @@ const ProgressionSection = () => (
       {PROGRESSION_AXES.map((axis) => (
         <div key={axis.id} className="bg-black/30 border border-white/10 rounded-none p-3">
           <p className="text-xs font-bold text-gray-200">{axis.label}</p>
-          <p className="text-[11px] text-gray-500 leading-snug">{axis.meaning}</p>
+          <p className="text-[11px] text-muted leading-snug">{axis.meaning}</p>
           <p className="text-[11px] text-gray-400 mt-0.5">
             <span className="text-[#0057B8] font-bold">Raise it:</span> {axis.raise}
           </p>
@@ -392,7 +392,7 @@ const ProgressionSection = () => (
         >
           <div className="min-w-0">
             <span className="text-xs font-bold text-white">{source.label}</span>
-            <span className="block text-[10px] text-gray-500 leading-snug">{source.cadence}</span>
+            <span className="block text-[10px] text-muted leading-snug">{source.cadence}</span>
           </div>
           <span className="text-xs font-bold text-[#0057B8] whitespace-nowrap flex-shrink-0">
             {typeof source.xp === 'number' ? `${source.xp} XP` : source.xp}
@@ -405,7 +405,7 @@ const ProgressionSection = () => (
     <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
       The title ladder
     </p>
-    <p className="text-[11px] text-gray-500 mb-2">
+    <p className="text-[11px] text-muted mb-2">
       Every {XP_PER_LEVEL.toLocaleString()} XP is one level. Levels never reset, and each brings a
       new title — from Rookie all the way to Eternal.
     </p>
@@ -438,7 +438,7 @@ const SeasonSection = () => (
         <div className="flex items-center gap-2 mb-2">
           <Calendar className="w-4 h-4 text-[#0057B8]" />
           <span className="text-sm font-bold text-white">Live Season</span>
-          <span className="text-[10px] text-gray-500 ml-auto">Jun – Aug</span>
+          <span className="text-[10px] text-muted ml-auto">Jun – Aug</span>
         </div>
         <p className="text-xs text-gray-400 leading-relaxed mb-2">
           Runs alongside the real DCI summer tour, scored from actual results night by night through
@@ -451,7 +451,7 @@ const SeasonSection = () => (
         <div className="flex items-center gap-2 mb-2">
           <Clock className="w-4 h-4 text-purple-500" />
           <span className="text-sm font-bold text-white">Off-Season</span>
-          <span className="text-[10px] text-gray-500 ml-auto">Aug – May</span>
+          <span className="text-[10px] text-muted ml-auto">Aug – May</span>
         </div>
         <p className="text-xs text-gray-400 leading-relaxed mb-2">
           Six back-to-back 7-week seasons scored with historical DCI data, so there is always a
@@ -472,7 +472,7 @@ const SeasonSection = () => (
       <DataRow label="Days 43–44" value="Closed" />
       <DataRow label="Championship Week (45–49)" value="2 total" />
     </Card>
-    <p className="text-[11px] text-gray-500 leading-relaxed">
+    <p className="text-[11px] text-muted leading-relaxed">
       Changes lock every Saturday at 8:00 PM ET and reopen once scores process (around 2:00 AM ET).
       During Championship Week they lock at 8:00 PM ET each day. Weekly changes are per class and
       can be spent one at a time or all at once. You can register for up to 4 shows a week.
@@ -592,11 +592,11 @@ const PodiumSection = () => (
           >
             {tier}
           </span>
-          {i < REP_TIERS.length - 1 && <ChevronRight className="w-3 h-3 text-gray-600" />}
+          {i < REP_TIERS.length - 1 && <ChevronRight className="w-3 h-3 text-muted" />}
         </React.Fragment>
       ))}
     </div>
-    <p className="text-[11px] text-gray-500 leading-relaxed mb-4">
+    <p className="text-[11px] text-muted leading-relaxed mb-4">
       Reputation is earned only from competitive results and caps how high you can score. Nobody
       debuts a champion — like Crown or the Bluecoats, Champion Status takes roughly a dozen strong
       seasons. Along the way you can hire persistent staff, host your own shows for CorpsCoin, and
@@ -712,7 +712,7 @@ export const SearchResults = ({ query, onNavigate }) => {
 
   if (results.length === 0) {
     return (
-      <p className="text-sm text-gray-500 text-center py-12">
+      <p className="text-sm text-muted text-center py-12">
         No results for &ldquo;{query}&rdquo; — try the section list instead.
       </p>
     );

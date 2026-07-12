@@ -70,7 +70,7 @@ const SheetMasthead = ({ title, location, date }) => (
   <div className="flex items-baseline justify-between gap-2 border-b border-[#2a2a2a] pb-1.5">
     <div className="text-[13px] font-bold text-white truncate min-w-0">{title}</div>
     {(location || date) && (
-      <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-gray-500">
+      <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-muted">
         {location && (
           <span className="hidden sm:flex items-center gap-1 truncate max-w-[160px]">
             <MapPin className="w-3 h-3" />
@@ -87,12 +87,12 @@ const SheetMasthead = ({ title, location, date }) => (
 // caption currently being sorted on (parity with the Podium sheet).
 const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) => (
   <div className="flex items-center gap-2 px-1 pb-1.5 border-b border-[#333] text-[9px] uppercase tracking-wider">
-    <span className="flex-1 min-w-0 text-gray-500">Pl · Corps</span>
+    <span className="flex-1 min-w-0 text-muted">Pl · Corps</span>
     <div className="flex items-center gap-1.5 flex-shrink-0">
       {['GE', 'VIS', 'MUS'].map((cap) => (
         <span
           key={cap}
-          className={`${CAP_W} text-right ${active === cap ? GOLD : 'text-gray-500'}`}
+          className={`${CAP_W} text-right ${active === cap ? GOLD : 'text-muted'}`}
         >
           {cap}
         </span>
@@ -108,7 +108,7 @@ const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) => (
 // Podium sheet's understated credit.
 const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }) => (
   <div className="flex-1 min-w-0 flex items-center gap-2">
-    <span className="text-[11px] text-gray-500 tabular-nums flex-shrink-0">{place}.</span>
+    <span className="text-[11px] text-muted tabular-nums flex-shrink-0">{place}.</span>
     <TeamAvatar name={name} logoUrl={avatarUrl} size="xs" />
     <div className="min-w-0">
       <div className="flex items-baseline gap-1.5 min-w-0">
@@ -123,12 +123,12 @@ const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }
         (uid ? (
           <Link
             to={`/profile/${uid}`}
-            className="block text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
+            className="block text-[10px] text-muted hover:text-[#c9a227] truncate"
           >
             {displayName}
           </Link>
         ) : (
-          <span className="block text-[10px] text-gray-500 truncate">{displayName}</span>
+          <span className="block text-[10px] text-muted truncate">{displayName}</span>
         ))}
     </div>
   </div>
@@ -149,9 +149,9 @@ const CaptionValue = ({ value, isTop, active, width = CAP_W }) => (
 // Wordmark / legend footer — echoes the Podium sheet's "screenshots are ads"
 // footer and quietly documents why the fantasy sheets are GE/VIS/MUS only.
 const SheetFooter = ({ note }) => (
-  <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-gray-600">
+  <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-muted">
     <span className="truncate">{note}</span>
-    <span className="font-bold text-gray-500 flex-shrink-0">marching.art</span>
+    <span className="font-bold text-muted flex-shrink-0">marching.art</span>
   </div>
 );
 
@@ -216,7 +216,7 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
                   : tab.accent === 'yellow'
                     ? 'text-yellow-400 border-yellow-500'
                     : 'text-white border-[#0057B8]'
-                : 'text-gray-500 hover:text-gray-300 border-transparent'
+                : 'text-muted hover:text-gray-300 border-transparent'
             }`}
           >
             {tab.label}
@@ -247,7 +247,7 @@ const SortPills = ({ options, value, onChange }) => (
         className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors ${
           value === opt.id
             ? 'bg-[#8a6d1a] text-white'
-            : 'bg-[#222] text-gray-500 hover:text-gray-300'
+            : 'bg-[#222] text-muted hover:text-gray-300'
         }`}
       >
         {opt.label}
@@ -341,7 +341,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
             {formatEventName(combined.eventName)}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-gray-500">
+        <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-muted">
           {combined.location && (
             <span className="hidden sm:flex items-center gap-1 truncate max-w-[140px]">
               <MapPin className="w-3 h-3" />
@@ -363,11 +363,11 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
               <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
                 {section.label}
               </span>
-              <span className="text-[9px] text-gray-600 tabular-nums">
+              <span className="text-[9px] text-muted tabular-nums">
                 {section.rows.length} corps
               </span>
             </div>
-            <BoxScoreHead trailing={<span className="w-7 text-right text-gray-500">Night</span>} />
+            <BoxScoreHead trailing={<span className="w-7 text-right text-muted">Night</span>} />
             <div>
               {section.rows.map((row, idx) => {
                 const isUserCorps =
@@ -500,8 +500,8 @@ const SoundSportMedalList = ({ shows }) => {
   if (groupedResults.length === 0) {
     return (
       <div className="p-8 text-center">
-        <Music className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-        <p className="text-gray-500 text-sm">No SoundSport results yet</p>
+        <Music className="w-8 h-8 text-muted mx-auto mb-2" />
+        <p className="text-muted text-sm">No SoundSport results yet</p>
       </div>
     );
   }
@@ -529,7 +529,7 @@ const SoundSportMedalList = ({ shows }) => {
             <Medal className="w-3 h-3" />
             {stats.Bronze}
           </span>
-          <span className="text-gray-500">
+          <span className="text-muted">
             <Users className="w-3 h-3 inline mr-1" />
             {stats.total}
           </span>
@@ -572,12 +572,12 @@ const SoundSportMedalList = ({ shows }) => {
                         (result.uid ? (
                           <Link
                             to={`/profile/${result.uid}`}
-                            className="text-[10px] text-gray-500 hover:text-[#c9a227] block truncate"
+                            className="text-[10px] text-muted hover:text-[#c9a227] block truncate"
                           >
                             {result.displayName}
                           </Link>
                         ) : (
-                          <span className="text-[10px] text-gray-500 block truncate">
+                          <span className="text-[10px] text-muted block truncate">
                             {result.displayName}
                           </span>
                         ))}
@@ -645,8 +645,8 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   if (!standings || standings.length === 0) {
     return (
       <div className="p-8 text-center">
-        <Trophy className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-        <p className="text-gray-500 text-sm">No {className} standings yet</p>
+        <Trophy className="w-8 h-8 text-muted mx-auto mb-2" />
+        <p className="text-muted text-sm">No {className} standings yet</p>
       </div>
     );
   }
@@ -718,7 +718,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                   ) : trend < 0 ? (
                     <TrendingDown className="w-3.5 h-3.5 text-red-500" />
                   ) : (
-                    <span className="text-gray-600 text-xs">-</span>
+                    <span className="text-muted text-xs">-</span>
                   )}
                 </span>
               </div>

@@ -70,7 +70,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
 
         {/* Footer with YouTube link */}
         <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between">
-          <p className="text-[10px] text-gray-500 truncate flex-1 mr-2">
+          <p className="text-[10px] text-muted truncate flex-1 mr-2">
             Search: "{videoModal.searchQuery}"
           </p>
           <div className="flex items-center gap-3 flex-shrink-0">

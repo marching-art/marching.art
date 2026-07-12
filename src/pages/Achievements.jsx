@@ -81,9 +81,9 @@ const AchievementCard = ({ a }) => {
           {a.earned ? (
             <Icon className={`w-4 h-4 ${styles.text}`} />
           ) : started ? (
-            <Icon className="w-4 h-4 text-gray-500" />
+            <Icon className="w-4 h-4 text-muted" />
           ) : (
-            <Lock className="w-3.5 h-3.5 text-gray-600" />
+            <Lock className="w-3.5 h-3.5 text-muted" />
           )}
         </div>
 
@@ -104,11 +104,11 @@ const AchievementCard = ({ a }) => {
             )}
           </div>
 
-          <p className="text-xs text-gray-500 mb-2">{a.description}</p>
+          <p className="text-xs text-muted mb-2">{a.description}</p>
 
           {/* Progress or earned date */}
           {a.earned ? (
-            <div className="flex items-center gap-2 text-[10px] text-gray-600 font-data">
+            <div className="flex items-center gap-2 text-[10px] text-muted font-data">
               {a.earnedAt && <span>{new Date(a.earnedAt).toLocaleDateString()}</span>}
               {a.ccReward > 0 && (
                 <span className="flex items-center gap-0.5 text-yellow-600">
@@ -119,12 +119,12 @@ const AchievementCard = ({ a }) => {
           ) : (
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-gray-600 font-data tabular-nums">
+                <span className="text-[10px] text-muted font-data tabular-nums">
                   {a.current}/{a.goal}
                 </span>
                 <div className="flex items-center gap-2">
                   {a.ccReward > 0 && (
-                    <span className="text-[10px] text-gray-600 font-data flex items-center gap-0.5">
+                    <span className="text-[10px] text-muted font-data flex items-center gap-0.5">
                       <Coins className="w-3 h-3" />+{a.ccReward}
                     </span>
                   )}
@@ -184,7 +184,7 @@ const Achievements = () => {
       {/* Back link */}
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 mb-3"
+        className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-gray-300 mb-3"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
       </Link>
@@ -195,16 +195,16 @@ const Achievements = () => {
           <Award className="w-5 h-5 text-yellow-500" />
           <div className="flex-1">
             <h1 className="text-sm font-bold uppercase tracking-wider text-white">Achievements</h1>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[11px] text-muted">
               Every award in the game — earned, in progress, and locked
             </p>
           </div>
           <div className="text-right">
             <div className="text-lg font-bold text-white font-data tabular-nums leading-none">
               {earnedCount}
-              <span className="text-gray-600">/{totalCount}</span>
+              <span className="text-muted">/{totalCount}</span>
             </div>
-            <div className="text-[10px] text-gray-500">earned</div>
+            <div className="text-[10px] text-muted">earned</div>
           </div>
         </div>
         <div className="h-1.5 bg-[#222]">
@@ -214,7 +214,7 @@ const Achievements = () => {
           />
         </div>
         {ccEarned > 0 && (
-          <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-gray-500">
+          <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-muted">
             <Coins className="w-3.5 h-3.5 text-yellow-600" />
             <span className="text-yellow-600 font-bold font-data">
               {ccEarned.toLocaleString()} CC
@@ -244,8 +244,8 @@ const Achievements = () => {
       {/* Categories */}
       {grouped.length === 0 ? (
         <div className="bg-[#1a1a1a] border border-[#333] px-4 py-12 text-center">
-          <Award className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Nothing here yet for this filter.</p>
+          <Award className="w-10 h-10 text-muted mx-auto mb-3" />
+          <p className="text-sm text-muted">Nothing here yet for this filter.</p>
         </div>
       ) : (
         <div className="space-y-5">
@@ -256,11 +256,11 @@ const Achievements = () => {
                   <h2 className="text-[11px] font-bold uppercase tracking-wider text-gray-300">
                     {cat.label}
                   </h2>
-                  <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+                  <span className="text-[10px] font-bold text-muted font-data tabular-nums">
                     {cat.earned}/{cat.total}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500 leading-snug">{cat.hint}</p>
+                <p className="text-[11px] text-muted leading-snug">{cat.hint}</p>
               </div>
               <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
                 {cat.shown.map((a) => (

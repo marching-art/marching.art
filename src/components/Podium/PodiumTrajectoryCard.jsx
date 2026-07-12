@@ -64,10 +64,10 @@ export default function PodiumTrajectoryCard({ podium }) {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-2">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <TrendingUp className="w-3 h-3" /> Trajectory vs. history
         </span>
-        <span className="text-[9px] text-gray-600">
+        <span className="text-[9px] text-muted">
           Real DCI season arcs (2000&ndash;2012) · gray lines are the ghosts
         </span>
       </div>
@@ -159,7 +159,7 @@ export default function PodiumTrajectoryCard({ podium }) {
         )}
       </svg>
 
-      <div className="flex items-center gap-3 text-[9px] text-gray-500">
+      <div className="flex items-center gap-3 text-[9px] text-muted">
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-0.5 bg-[#4d9fff]" /> {state.corpsName || 'Your corps'}
         </span>
@@ -167,7 +167,7 @@ export default function PodiumTrajectoryCard({ podium }) {
           <span className="inline-block w-3 h-px bg-gray-500" /> historical shadows
         </span>
         {history.length === 0 && (
-          <span className="text-gray-600">Your line starts after your first scored show.</span>
+          <span className="text-muted">Your line starts after your first scored show.</span>
         )}
       </div>
     </div>

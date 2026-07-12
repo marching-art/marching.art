@@ -77,7 +77,7 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false 
           <Crosshair className="w-3.5 h-3.5 text-cyan-500" />
           Daily Predictions
         </h3>
-        <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
           {isResolved ? `${correctCount}/${totalQ}` : `${pickedCount}/${totalQ}`}
         </span>
       </div>
@@ -117,7 +117,7 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false 
                   >
                     {q.text.split('?')[0]}?
                   </span>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
+                  <p className="text-[10px] text-muted mt-0.5">
                     You said <span className="text-white font-bold">{pick?.pick}</span>
                     {' — '}
                     {result.isCorrect ? 'correct!' : `answer: ${result.answer}`}
@@ -176,13 +176,13 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false 
         </div>
       ) : accuracy != null ? (
         <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
-          <p className="text-[10px] text-gray-600">
+          <p className="text-[10px] text-muted">
             Lifetime accuracy: {stats.correct}/{stats.total} ({accuracy}%)
           </p>
         </div>
       ) : !isResolved && pickedCount === totalQ ? (
         <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
-          <p className="text-[10px] text-gray-600">Predictions locked — results after next show</p>
+          <p className="text-[10px] text-muted">Predictions locked — results after next show</p>
         </div>
       ) : null}
     </div>

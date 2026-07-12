@@ -101,7 +101,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
               Week {recap.week} Recap
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted">
             <Swords className="w-3 h-3" />
             <span>{recap.stats?.totalMatchups || 0} matchups</span>
           </div>
@@ -135,7 +135,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
             {recap.stats.biggestUpset && (
               <div className="bg-[#222] p-2 text-center">
                 <AlertTriangle className="w-4 h-4 text-orange-500 mx-auto mb-1" />
-                <p className="text-[9px] text-gray-500 uppercase">Upset</p>
+                <p className="text-[9px] text-muted uppercase">Upset</p>
                 <p className="text-xs font-bold text-white truncate">
                   {recap.stats.biggestUpset.magnitude} ranks
                 </p>
@@ -144,7 +144,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
             {recap.stats.closestMatch && (
               <div className="bg-[#222] p-2 text-center">
                 <Swords className="w-4 h-4 text-red-500 mx-auto mb-1" />
-                <p className="text-[9px] text-gray-500 uppercase">Closest</p>
+                <p className="text-[9px] text-muted uppercase">Closest</p>
                 <p className="text-xs font-bold text-white truncate">
                   {recap.stats.closestMatch.margin?.toFixed(1)} pts
                 </p>
@@ -153,7 +153,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
             {recap.stats.highestScorer && (
               <div className="bg-[#222] p-2 text-center">
                 <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
-                <p className="text-[9px] text-gray-500 uppercase">Top Score</p>
+                <p className="text-[9px] text-muted uppercase">Top Score</p>
                 <p className="text-xs font-bold text-white truncate">
                   {recap.stats.highestScorer.score?.toFixed(1)}
                 </p>
@@ -265,7 +265,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
           {rivalries.length > 2 && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-xs text-gray-500 hover:text-white flex items-center gap-1"
+              className="text-xs text-muted hover:text-white flex items-center gap-1"
             >
               {expanded ? 'Show less' : 'Show all'}
               <ChevronRight
@@ -303,19 +303,19 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
 
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-[#222]/50 p-2">
-                    <p className="text-xs text-gray-500">Your Wins</p>
+                    <p className="text-xs text-muted">Your Wins</p>
                     <p className="text-lg font-bold text-green-500 font-data tabular-nums">
                       {userWins}
                     </p>
                   </div>
                   <div className="bg-[#222]/50 p-2">
-                    <p className="text-xs text-gray-500">Total</p>
+                    <p className="text-xs text-muted">Total</p>
                     <p className="text-lg font-bold text-white font-data tabular-nums">
                       {rivalry.totalMatches}
                     </p>
                   </div>
                   <div className="bg-[#222]/50 p-2">
-                    <p className="text-xs text-gray-500">Their Wins</p>
+                    <p className="text-xs text-muted">Their Wins</p>
                     <p className="text-lg font-bold text-red-500 font-data tabular-nums">
                       {rivalWins}
                     </p>
@@ -323,7 +323,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
                 </div>
 
                 {rivalry.closeMatches > 0 && (
-                  <p className="text-[10px] text-gray-500 mt-2 text-center">
+                  <p className="text-[10px] text-muted mt-2 text-center">
                     {rivalry.closeMatches} close game{rivalry.closeMatches !== 1 ? 's' : ''} between
                     you
                   </p>

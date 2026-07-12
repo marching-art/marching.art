@@ -22,7 +22,7 @@ export default function PodiumZone() {
   if (podium.loading && !podium.data) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted" />
       </div>
     );
   }

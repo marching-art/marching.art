@@ -159,7 +159,7 @@ const CommentsModeration = () => {
   if (loading && comments.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-6 h-6 text-gray-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-muted animate-spin" />
       </div>
     );
   }
@@ -240,8 +240,8 @@ const CommentsModeration = () => {
       {/* Comments list */}
       {comments.length === 0 ? (
         <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 text-center">
-          <MessageSquare className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-          <p className="text-gray-500 text-sm">
+          <MessageSquare className="w-8 h-8 text-muted mx-auto mb-2" />
+          <p className="text-muted text-sm">
             No {statusFilter !== 'all' ? statusFilter : ''} comments to moderate
           </p>
         </div>
@@ -255,13 +255,13 @@ const CommentsModeration = () => {
               onChange={toggleSelectAll}
               className="w-4 h-4 bg-[#333] border-[#444] rounded-none focus:ring-[#0057B8]"
             />
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex-1">
+            <span className="text-[10px] font-bold text-muted uppercase tracking-wider flex-1">
               Comment
             </span>
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider w-24 text-center">
+            <span className="text-[10px] font-bold text-muted uppercase tracking-wider w-24 text-center">
               Status
             </span>
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider w-32 text-center">
+            <span className="text-[10px] font-bold text-muted uppercase tracking-wider w-32 text-center">
               Actions
             </span>
           </div>
@@ -332,7 +332,7 @@ const CommentRow = ({
               {comment.userTitle}
             </span>
           )}
-          <span className="text-[10px] text-gray-500">{formatRelativeTime(comment.createdAt)}</span>
+          <span className="text-[10px] text-muted">{formatRelativeTime(comment.createdAt)}</span>
           {hasReports && (
             <span className="flex items-center gap-1 text-[10px] text-red-400">
               <Flag className="w-3 h-3" />
@@ -342,7 +342,7 @@ const CommentRow = ({
         </div>
         <p className="text-sm text-gray-400 line-clamp-2">{comment.content}</p>
         {comment.articleHeadline && (
-          <p className="text-[10px] text-gray-600 mt-1 truncate">On: {comment.articleHeadline}</p>
+          <p className="text-[10px] text-muted mt-1 truncate">On: {comment.articleHeadline}</p>
         )}
       </div>
 
@@ -431,7 +431,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
             </div>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white transition-colors"
+              className="p-1 text-muted hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -446,7 +446,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
               >
                 {comment.status}
               </span>
-              <span className="text-xs text-gray-500">{formatRelativeTime(comment.createdAt)}</span>
+              <span className="text-xs text-muted">{formatRelativeTime(comment.createdAt)}</span>
               {comment.reportCount > 0 && (
                 <span className="flex items-center gap-1 text-xs text-red-400">
                   <Flag className="w-3 h-3" />
@@ -475,8 +475,8 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
 
             {/* Article reference */}
             {comment.articleHeadline && (
-              <div className="text-xs text-gray-500">
-                <span className="text-gray-600">On article:</span>{' '}
+              <div className="text-xs text-muted">
+                <span className="text-muted">On article:</span>{' '}
                 <span className="text-gray-400">{comment.articleHeadline}</span>
               </div>
             )}
@@ -515,11 +515,11 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
 
             {/* Previous moderation */}
             {comment.moderatedAt && (
-              <div className="text-[10px] text-gray-600">
+              <div className="text-[10px] text-muted">
                 Last moderated {formatRelativeTime(comment.moderatedAt)}
                 {comment.moderatedBy && ` by ${comment.moderatedBy}`}
                 {comment.moderationReason && (
-                  <span className="block text-gray-500 mt-1">
+                  <span className="block text-muted mt-1">
                     Reason: {comment.moderationReason}
                   </span>
                 )}

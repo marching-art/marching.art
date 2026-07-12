@@ -91,12 +91,12 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
                 >
                   Your Achievements
                 </h2>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-muted">
                   {achievements.length} achievement{achievements.length !== 1 ? 's' : ''} unlocked
                 </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -161,8 +161,8 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
                               {achievement.rarity}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 mb-1">{achievement.description}</p>
-                          <p className="text-[10px] text-gray-600 font-data">
+                          <p className="text-xs text-muted mb-1">{achievement.description}</p>
+                          <p className="text-[10px] text-muted font-data">
                             {new Date(achievement.earnedAt).toLocaleDateString()}
                           </p>
                         </div>
@@ -173,9 +173,9 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Award className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-sm text-gray-500">No achievements yet.</p>
-                <p className="text-xs text-gray-600">Keep playing to unlock them!</p>
+                <Award className="w-12 h-12 text-muted mx-auto mb-3" />
+                <p className="text-sm text-muted">No achievements yet.</p>
+                <p className="text-xs text-muted">Keep playing to unlock them!</p>
               </div>
             )}
           </div>

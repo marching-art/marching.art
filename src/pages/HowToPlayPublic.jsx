@@ -161,7 +161,7 @@ const HowToPlayPublic = () => {
                   <span className="font-bold text-[#0057B8] mr-2">{cap.abbr}</span>
                   {cap.name}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{cap.desc}</p>
+                <p className="text-xs text-muted mt-1">{cap.desc}</p>
               </div>
             ))}
           </div>
@@ -183,11 +183,11 @@ const HowToPlayPublic = () => {
               >
                 <div>
                   <p className="text-sm font-bold text-white">{cls.name}</p>
-                  <p className="text-xs text-gray-500">{cls.desc}</p>
+                  <p className="text-xs text-muted">{cls.desc}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-sm font-bold text-[#0057B8]">{cls.points} pts</p>
-                  <p className="text-xs text-gray-500">{cls.unlock}</p>
+                  <p className="text-xs text-muted">{cls.unlock}</p>
                 </div>
               </div>
             ))}
@@ -201,7 +201,7 @@ const HowToPlayPublic = () => {
             <div className="bg-[#111] border border-[#0057B8]/30 rounded-none p-4">
               <p className="text-sm font-bold text-white mb-1">
                 Live Season{' '}
-                <span className="text-xs font-normal text-gray-500 ml-2">June – August</span>
+                <span className="text-xs font-normal text-muted ml-2">June – August</span>
               </p>
               <p className="text-sm text-gray-400">
                 Runs alongside the real DCI summer tour. Your fantasy scores track actual
@@ -211,7 +211,7 @@ const HowToPlayPublic = () => {
             <div className="bg-[#111] border border-purple-500/30 rounded-none p-4">
               <p className="text-sm font-bold text-white mb-1">
                 Off-Season{' '}
-                <span className="text-xs font-normal text-gray-500 ml-2">August – May</span>
+                <span className="text-xs font-normal text-muted ml-2">August – May</span>
               </p>
               <p className="text-sm text-gray-400">
                 Six 7-week seasons scored with historical DCI data, so there is always a leaderboard
@@ -234,9 +234,9 @@ const HowToPlayPublic = () => {
             {SCORING_MODEL.map((g) => (
               <div key={g.group} className="bg-[#111] border border-white/10 rounded-none p-3">
                 <p className="text-sm font-bold text-white">{g.group}</p>
-                <p className="text-xs text-gray-500">{g.captions}</p>
+                <p className="text-xs text-muted">{g.captions}</p>
                 <p className="text-sm font-bold text-[#0057B8] mt-1">up to {g.max} pts</p>
-                <p className="text-[11px] text-gray-500">{g.note}</p>
+                <p className="text-[11px] text-muted">{g.note}</p>
               </div>
             ))}
           </div>
@@ -266,7 +266,7 @@ const HowToPlayPublic = () => {
                 <p className="text-sm font-bold text-[#0057B8]">
                   {r.min === 0 ? 'Any score' : `${r.min}+`}
                 </p>
-                <p className="text-[11px] text-gray-500 mt-1">{r.blurb}</p>
+                <p className="text-[11px] text-muted mt-1">{r.blurb}</p>
               </div>
             ))}
           </div>
@@ -364,7 +364,7 @@ const HowToPlayPublic = () => {
 
       {/* Footer */}
       <footer className="border-t border-white/10 mt-4">
-        <div className="max-w-3xl mx-auto px-4 py-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
+        <div className="max-w-3xl mx-auto px-4 py-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted">
           <Link to="/" className="hover:text-white transition-colors">
             Home
           </Link>

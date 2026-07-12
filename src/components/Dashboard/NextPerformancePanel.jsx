@@ -189,7 +189,7 @@ const NextPerformancePanel = ({
               >
                 <span className="truncate">
                   <span className="text-white font-medium">{s.corps}</span>
-                  <span className="text-gray-500"> — your {s.captions.join(' & ')} pick</span>
+                  <span className="text-muted"> — your {s.captions.join(' & ')} pick</span>
                 </span>
                 {s.performLabel && (
                   <span className="text-xs font-data text-[#F5A623] tabular-nums flex-shrink-0">
@@ -205,7 +205,7 @@ const NextPerformancePanel = ({
       {/* Your next competition */}
       {nextCompetition && (
         <div className="px-4 py-3">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
             {nextLive ? 'Your corps is competing' : 'Your corps competes next'}
           </div>
           <div className="text-sm text-white font-medium">{nextCompetition.eventName}</div>

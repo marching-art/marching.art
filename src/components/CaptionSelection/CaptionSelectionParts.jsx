@@ -68,7 +68,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
           {isSelected && <Check className="w-3 h-3 text-white" />}
         </div>
         <span className="font-medium text-white text-sm truncate">{corps.corpsName}</span>
-        <span className="text-[10px] text-gray-500">
+        <span className="text-[10px] text-muted">
           '{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}
         </span>
         {captionHotStatus?.isHot && (
@@ -112,7 +112,7 @@ const CorpsSelectionList = ({
     {/* Search — 16px text so iOS doesn't zoom on focus, 44px touch height */}
     <div className="px-3 py-2 bg-[#1a1a1a] border-b border-[#333] flex-shrink-0">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
         <input
           type="search"
           inputMode="search"
@@ -125,7 +125,7 @@ const CorpsSelectionList = ({
         {searchValue && (
           <button
             onClick={() => onSearchChange('')}
-            className="absolute right-0 top-0 h-11 w-11 flex items-center justify-center text-gray-500 hover:text-white active:text-white"
+            className="absolute right-0 top-0 h-11 w-11 flex items-center justify-center text-muted hover:text-white active:text-white"
             aria-label="Clear search"
           >
             <X className="w-4 h-4" />
@@ -136,7 +136,7 @@ const CorpsSelectionList = ({
 
     <div className="flex-1 overflow-y-auto min-h-0">
       {corpsList.length === 0 && (
-        <p className="px-4 py-8 text-sm text-gray-500 text-center">
+        <p className="px-4 py-8 text-sm text-muted text-center">
           No corps match &ldquo;{searchValue}&rdquo;
         </p>
       )}
@@ -162,7 +162,7 @@ const CorpsSelectionList = ({
           );
         })}
       </div>
-      <p className="px-4 py-3 text-[10px] text-gray-600 text-center border-t border-[#222]">
+      <p className="px-4 py-3 text-[10px] text-muted text-center border-t border-[#222]">
         Showing this season's draftable corps (cost 50 or less). Cost counts against your budget —
         scores come from real performances.
       </p>
@@ -194,7 +194,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">
             Lineup Templates
           </h3>
-          <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+          <button onClick={onClose} className="p-1 text-muted hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -202,7 +202,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
         <div className="p-4">
           {/* Save current */}
           <div className="mb-4 p-3 bg-[#0a0a0a] border border-[#333]">
-            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <h4 className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
               Save Current
             </h4>
             <div className="flex gap-2">
@@ -231,7 +231,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
           {/* Saved templates */}
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {templates.length === 0 ? (
-              <p className="text-center text-gray-500 py-4 text-sm">No saved templates</p>
+              <p className="text-center text-muted py-4 text-sm">No saved templates</p>
             ) : (
               templates.map((template, idx) => (
                 <div
@@ -240,7 +240,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
                 >
                   <div>
                     <div className="font-bold text-white text-sm">{template.name}</div>
-                    <div className="text-[10px] text-gray-500">
+                    <div className="text-[10px] text-muted">
                       {Object.keys(template.lineup).length} selections • cost {template.totalPoints}
                     </div>
                   </div>
@@ -298,13 +298,13 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-3 hover:bg-white/5"
       >
-        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
           Draft Helper
         </span>
         {isExpanded ? (
-          <ChevronUp className="w-4 h-4 text-gray-500" />
+          <ChevronUp className="w-4 h-4 text-muted" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+          <ChevronDown className="w-4 h-4 text-muted" />
         )}
       </button>
 
@@ -320,7 +320,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
                   className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 text-[10px] font-bold uppercase transition-colors ${
                     activeTab === tab.id
                       ? `${tab.color} bg-white/5 border-b-2 border-current`
-                      : 'text-gray-600 hover:text-gray-400'
+                      : 'text-muted hover:text-gray-400'
                   }`}
                 >
                   <Icon className="w-3 h-3" />
@@ -331,7 +331,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
           </div>
           <div className="p-2 space-y-1 max-h-32 overflow-y-auto border-t border-[#333]">
             {currentSuggestions.length === 0 ? (
-              <p className="text-center text-gray-600 py-2 text-xs">No suggestions</p>
+              <p className="text-center text-muted py-2 text-xs">No suggestions</p>
             ) : (
               currentSuggestions.slice(0, 4).map((corps, idx) => {
                 const isAlreadySelected = Object.values(selections).some(
@@ -351,7 +351,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
                     }`}
                   >
                     <span className="text-gray-300">{corps.corpsName}</span>
-                    <span className="text-gray-500 font-data">Cost {corps.points}</span>
+                    <span className="text-muted font-data">Cost {corps.points}</span>
                   </button>
                 );
               })
@@ -514,7 +514,7 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
         <div className={`w-1.5 h-4 rounded-none ${categoryColor}`} />
         <div className="text-left min-w-0">
           <div className="text-xs font-bold text-white">{caption.id}</div>
-          <div className="text-[10px] text-gray-500 truncate">{caption.name}</div>
+          <div className="text-[10px] text-muted truncate">{caption.name}</div>
         </div>
       </div>
       {hasValue ? (

@@ -143,7 +143,7 @@ export default function HostEventCard({ seasonUid }) {
         </span>
       </div>
 
-      <p className="text-[10px] text-gray-500 leading-relaxed">
+      <p className="text-[10px] text-muted leading-relaxed">
         Rent a venue with CorpsCoin and your event joins the season schedule — open enrollment for
         every class. You earn CC per corps that performs, paid the night the show is scored, so a
         well-drawn show profits. Run successful shows to unlock bigger stadiums: 2 successful High
@@ -196,7 +196,7 @@ export default function HostEventCard({ seasonUid }) {
                 {locked && '🔒 '}
                 {t.label}
               </div>
-              <div className="text-[9px] text-gray-500 tabular-nums">
+              <div className="text-[9px] text-muted tabular-nums">
                 {locked
                   ? `${progress} successful ${VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label.split(' ')[0]} shows`
                   : `${t.rentalCC} CC · cap ${t.capacity} · ${t.payoutPerCorpsCC}/corps`}
@@ -222,7 +222,7 @@ export default function HostEventCard({ seasonUid }) {
                   schedule. No free-text guessing, no double-booking a city. */}
           <div className="relative">
             <div className="relative">
-              <MapPin className="w-3 h-3 text-gray-600 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <MapPin className="w-3 h-3 text-muted absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={venueQuery}
@@ -246,7 +246,7 @@ export default function HostEventCard({ seasonUid }) {
             {venueListOpen && (
               <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-[#0f0f0f] border border-[#333] rounded-none shadow-lg">
                 {venueResults.length === 0 ? (
-                  <div className="px-2 py-1.5 text-[10px] text-gray-600">
+                  <div className="px-2 py-1.5 text-[10px] text-muted">
                     No matching city — try a nearby one.
                   </div>
                 ) : (
@@ -265,13 +265,13 @@ export default function HostEventCard({ seasonUid }) {
                         }}
                         className={`w-full flex items-center justify-between px-2 py-1.5 text-[10px] text-left ${
                           taken
-                            ? 'text-gray-600 cursor-not-allowed'
+                            ? 'text-muted cursor-not-allowed'
                             : 'text-gray-300 hover:bg-[#1f1f1f]'
                         }`}
                       >
                         <span className="truncate">{v.label}</span>
                         {taken && (
-                          <span className="text-[8px] uppercase tracking-wider text-gray-600 flex-shrink-0 pl-2">
+                          <span className="text-[8px] uppercase tracking-wider text-muted flex-shrink-0 pl-2">
                             On schedule
                           </span>
                         )}
@@ -294,9 +294,9 @@ export default function HostEventCard({ seasonUid }) {
           />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-gray-500 tabular-nums">
+          <span className="text-[10px] text-muted tabular-nums">
             Rental: <span className="text-white font-bold">{tier.rentalCC} CC</span>
-            <span className="text-gray-600"> · you have {corpsCoin.toLocaleString()} CC</span>
+            <span className="text-muted"> · you have {corpsCoin.toLocaleString()} CC</span>
           </span>
           <button
             type="submit"
@@ -304,7 +304,7 @@ export default function HostEventCard({ seasonUid }) {
               busy || !hasCorps || seasonLimitReached || !selectedVenue || corpsCoin < tier.rentalCC
             }
             className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider
-                  bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-gray-600 press-feedback"
+                  bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-muted press-feedback"
           >
             {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Book Venue'}
           </button>
@@ -317,16 +317,16 @@ export default function HostEventCard({ seasonUid }) {
       {/* This season's hosted events */}
       {events && events.length > 0 && (
         <div className="pt-2 border-t border-[#242424] space-y-1">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-muted">
             Hosted This Season
           </div>
           {events.map((event) => (
             <div key={event.id} className="flex items-center justify-between text-[10px]">
               <span className="text-gray-300 truncate pr-2">
-                <span className="text-gray-600 tabular-nums">D{event.day}</span> {event.eventName}
-                <span className="text-gray-600"> · {event.location}</span>
+                <span className="text-muted tabular-nums">D{event.day}</span> {event.eventName}
+                <span className="text-muted"> · {event.location}</span>
               </span>
-              <span className="text-gray-500 tabular-nums flex-shrink-0">
+              <span className="text-muted tabular-nums flex-shrink-0">
                 {event.paidOut ? `${event.attendance} corps · +${event.payout} CC` : 'upcoming'}
               </span>
             </div>

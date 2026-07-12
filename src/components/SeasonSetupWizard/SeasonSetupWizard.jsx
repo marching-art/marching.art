@@ -238,8 +238,8 @@ const SeasonSetupWizard = ({
           <span className="text-sm font-bold text-white uppercase tracking-wider">
             Corps Registration
           </span>
-          <span className="ml-2 text-xs text-gray-500">{formatSeasonName(seasonData?.name)}</span>
-          <button onClick={onComplete} className="ml-auto p-2 text-gray-500 hover:text-white">
+          <span className="ml-2 text-xs text-muted">{formatSeasonName(seasonData?.name)}</span>
+          <button onClick={onComplete} className="ml-auto p-2 text-muted hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -264,7 +264,7 @@ const SeasonSetupWizard = ({
                             ? 'border-[#0057B8] text-white'
                             : isComplete
                               ? 'border-green-500 text-green-500'
-                              : 'border-transparent text-gray-500'
+                              : 'border-transparent text-muted'
                         }`}
                       >
                         <span className="text-xs font-bold uppercase tracking-wider">
@@ -287,7 +287,7 @@ const SeasonSetupWizard = ({
                             ? 'border-[#0057B8] text-white'
                             : isComplete
                               ? 'border-green-500 text-green-500'
-                              : 'border-transparent text-gray-500'
+                              : 'border-transparent text-muted'
                         }`}
                       >
                         <span className="text-xs font-bold uppercase tracking-wider">
@@ -329,7 +329,7 @@ const SeasonSetupWizard = ({
               </div>
               <div className="p-4 space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Corps Name *
                   </label>
                   <input
@@ -341,7 +341,7 @@ const SeasonSetupWizard = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Director Name
                   </label>
                   <input
@@ -353,7 +353,7 @@ const SeasonSetupWizard = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Home Location
                   </label>
                   <input
@@ -390,17 +390,17 @@ const SeasonSetupWizard = ({
                 <table className="w-full">
                   <thead>
                     <tr className="bg-[#1a1a1a] border-b border-[#333]">
-                      <th className="px-4 py-2 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-8"></th>
-                      <th className="px-4 py-2 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-left text-[10px] font-bold text-muted uppercase tracking-wider w-8"></th>
+                      <th className="px-4 py-2 text-left text-[10px] font-bold text-muted uppercase tracking-wider">
                         Class
                       </th>
-                      <th className="px-4 py-2 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-right text-[10px] font-bold text-muted uppercase tracking-wider">
                         Budget
                       </th>
-                      <th className="px-4 py-2 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-[10px] font-bold text-muted uppercase tracking-wider">
                         Difficulty
                       </th>
-                      <th className="px-4 py-2 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-[10px] font-bold text-muted uppercase tracking-wider">
                         Status
                       </th>
                     </tr>
@@ -460,11 +460,11 @@ const SeasonSetupWizard = ({
                           </td>
                           <td className="px-4 py-2 text-center">
                             {hasExisting ? (
-                              <span className="text-xs text-gray-500">Active</span>
+                              <span className="text-xs text-muted">Active</span>
                             ) : isUnlocked ? (
                               <span className="text-xs text-green-500">Available</span>
                             ) : (
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted">
                                 Locked (Lvl {cls.reqLevel})
                               </span>
                             )}
@@ -506,24 +506,24 @@ const SeasonSetupWizard = ({
               <div className="p-4">
                 {/* Summary Ticket */}
                 <div className="bg-[#0a0a0a] border border-[#333] p-4 mb-4">
-                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                  <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
                     Entry Confirmation
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="text-[10px] text-gray-500 uppercase">Corps Name</div>
+                      <div className="text-[10px] text-muted uppercase">Corps Name</div>
                       <div className="text-sm font-bold text-white">{formData.corpsName}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-gray-500 uppercase">Director</div>
+                      <div className="text-[10px] text-muted uppercase">Director</div>
                       <div className="text-sm text-gray-300">{formData.directorName || '—'}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-gray-500 uppercase">Location</div>
+                      <div className="text-[10px] text-muted uppercase">Location</div>
                       <div className="text-sm text-gray-300">{formData.location || '—'}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-gray-500 uppercase">Competition Class</div>
+                      <div className="text-[10px] text-muted uppercase">Competition Class</div>
                       <div className="text-sm font-bold text-[#0057B8]">
                         {getCorpsClassName(formData.selectedClass)}
                       </div>
@@ -531,7 +531,7 @@ const SeasonSetupWizard = ({
                   </div>
                   <div className="mt-4 pt-4 border-t border-[#333]">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-gray-500 uppercase">Point Budget</span>
+                      <span className="text-[10px] text-muted uppercase">Point Budget</span>
                       <span className="text-lg font-bold text-white tabular-nums">
                         {POINT_LIMITS[formData.selectedClass]} pts
                       </span>
@@ -540,7 +540,7 @@ const SeasonSetupWizard = ({
                 </div>
 
                 {/* Terms */}
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-xs text-muted mb-4">
                   By submitting, you confirm this entry for the {formatSeasonName(seasonData?.name)}{' '}
                   season. You can modify your lineup and show selections after registration.
                 </p>

@@ -49,7 +49,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
         {/* Error Details (dev only) */}
         {error && process.env.NODE_ENV === 'development' && (
           <details className="mb-6 text-left">
-            <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-300 mb-2">
+            <summary className="text-sm text-muted cursor-pointer hover:text-gray-300 mb-2">
               Technical Details
             </summary>
             <pre className="p-4 bg-[#0a0a0a] border border-[#333] rounded-none text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">

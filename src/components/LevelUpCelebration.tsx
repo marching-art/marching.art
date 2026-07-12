@@ -229,7 +229,7 @@ const LevelUpModal: React.FC<{
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
           transition={{ delay: 1.5 }}
-          className="mt-8 text-sm text-gray-500"
+          className="mt-8 text-sm text-muted"
         >
           Tap anywhere to continue
         </m.p>

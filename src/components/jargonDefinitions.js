@@ -39,6 +39,11 @@ export const JARGON_DEFINITIONS = {
     definition:
       'The second-tier competitive division in DCI. Smaller corps building toward World Class compete here.',
   },
+  aClass: {
+    term: 'A Class',
+    definition:
+      'A mid-tier fantasy division between SoundSport and Open Class, with a larger budget than SoundSport. Unlocked as you level up.',
+  },
   soundsport: {
     term: 'SoundSport',
     definition:

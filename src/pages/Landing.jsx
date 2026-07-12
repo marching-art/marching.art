@@ -262,13 +262,13 @@ const Landing = () => {
                 </a>
                 <Link
                   to="/privacy"
-                  className="px-2 py-2.5 min-h-touch text-xs text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
                 >
                   Privacy
                 </Link>
                 <Link
                   to="/terms"
-                  className="px-2 py-2.5 min-h-touch text-xs text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
                 >
                   Terms
                 </Link>
@@ -360,7 +360,7 @@ const Landing = () => {
                           <div className="text-sm font-bold text-white truncate">
                             {profile?.displayName || 'Director'}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                          <div className="text-xs text-muted truncate">{user.email}</div>
                         </div>
                       </div>
 
@@ -413,7 +413,7 @@ const Landing = () => {
                     <div className="hidden lg:block px-2 py-2 border-t border-[#333] bg-[#111]">
                       <button
                         onClick={handleSignOut}
-                        className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-gray-500 hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-none"
+                        className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-muted hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-none"
                       >
                         <LogOut className="w-4 h-4" />
                         Sign Out
@@ -443,7 +443,7 @@ const Landing = () => {
 
                       {/* Email Input - 44px+ height for touch targets */}
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                         <input
                           type="email"
                           placeholder="Email"
@@ -457,7 +457,7 @@ const Landing = () => {
 
                       {/* Password Input - 44px+ height for touch targets */}
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                         <input
                           type="password"
                           placeholder="Password"
@@ -504,7 +504,7 @@ const Landing = () => {
                       </Link>
 
                       {/* Footer Links */}
-                      <div className="flex items-center justify-center text-xs text-gray-500 pt-1">
+                      <div className="flex items-center justify-center text-xs text-muted pt-1">
                         <Link
                           to="/forgot-password"
                           className="hover:text-[#0057B8] transition-colors"
@@ -564,7 +564,7 @@ const Landing = () => {
 
               {/* Section header for mobile - helps users understand the content */}
               <div className="flex items-center gap-2 mb-0 lg:hidden">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-muted uppercase tracking-wider">
                   Latest News
                 </span>
                 <div className="flex-1 h-px bg-[#333]" />

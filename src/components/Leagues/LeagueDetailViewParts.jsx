@@ -37,7 +37,7 @@ export const SmackTalkInput = ({ leagueId, userProfile: _userProfile, disabled =
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="Talk trash..."
-        className="flex-1 h-9 px-3 bg-[#111] border border-[#333] text-white placeholder:text-gray-600 focus:outline-none focus:border-[#444] text-sm"
+        className="flex-1 h-9 px-3 bg-[#111] border border-[#333] text-white placeholder:text-muted focus:outline-none focus:border-[#444] text-sm"
         disabled={sending || disabled}
         maxLength={200}
       />
@@ -82,7 +82,7 @@ export const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) 
             <AlertTriangle className="w-3.5 h-3.5" />
             Leave League
           </h2>
-          <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+          <button onClick={onClose} className="p-1 text-muted hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </div>

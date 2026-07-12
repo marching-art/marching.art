@@ -177,8 +177,8 @@ const CorpsValuesEditor = () => {
       {/* Header / controls */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-          <Database className="w-4 h-4 text-gray-500 flex-shrink-0" />
-          <label className="text-[10px] uppercase tracking-wider text-gray-500">Season Doc</label>
+          <Database className="w-4 h-4 text-muted flex-shrink-0" />
+          <label className="text-[10px] uppercase tracking-wider text-muted">Season Doc</label>
           <select
             value={selectedDocId}
             onChange={(e) => {
@@ -232,7 +232,7 @@ const CorpsValuesEditor = () => {
         </div>
 
         {loadingDoc ? (
-          <div className="flex items-center justify-center py-10 text-xs text-gray-500">
+          <div className="flex items-center justify-center py-10 text-xs text-muted">
             <RefreshCw className="w-4 h-4 animate-spin mr-2" />
             Loading...
           </div>
@@ -241,19 +241,19 @@ const CorpsValuesEditor = () => {
             <table className="w-full text-xs">
               <thead className="bg-[#1a1a1a] sticky top-0">
                 <tr>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-muted font-bold">
                     #
                   </th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-muted font-bold">
                     Corps Name
                   </th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-28">
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-muted font-bold w-28">
                     Source Year
                   </th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-24">
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-muted font-bold w-24">
                     Points
                   </th>
-                  <th className="text-right px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-16">
+                  <th className="text-right px-3 py-2 text-[10px] uppercase tracking-wider text-muted font-bold w-16">
                     Actions
                   </th>
                 </tr>
@@ -261,7 +261,7 @@ const CorpsValuesEditor = () => {
               <tbody className="divide-y divide-[#222]">
                 {rows.map((row, idx) => (
                   <tr key={idx} className="hover:bg-white/5">
-                    <td className="px-3 py-1.5 text-gray-600 font-data tabular-nums">{idx + 1}</td>
+                    <td className="px-3 py-1.5 text-muted font-data tabular-nums">{idx + 1}</td>
                     <td className="px-3 py-1.5">
                       <input
                         type="text"
@@ -299,7 +299,7 @@ const CorpsValuesEditor = () => {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-xs text-gray-500">
+                    <td colSpan={5} className="px-3 py-6 text-center text-xs text-muted">
                       No corps yet. Click "Add Corps" below to add one.
                     </td>
                   </tr>
@@ -357,7 +357,7 @@ const CorpsValuesEditor = () => {
             </div>
             <div className="p-4 space-y-3">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase mb-2">
+                <label className="block text-[10px] text-muted uppercase mb-2">
                   Season Doc ID
                 </label>
                 <input
@@ -367,7 +367,7 @@ const CorpsValuesEditor = () => {
                   onChange={(e) => setNewSeasonId(e.target.value)}
                   className="w-full px-3 py-2 bg-[#111] border border-[#333] text-sm text-white font-data focus:outline-none focus:border-[#0057B8]"
                 />
-                <p className="text-[10px] text-gray-500 mt-1">
+                <p className="text-[10px] text-muted mt-1">
                   Creates an empty dci-data/&lt;id&gt; doc. Letters, numbers, _ and - only.
                 </p>
               </div>

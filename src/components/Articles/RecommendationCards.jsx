@@ -66,7 +66,7 @@ const REC_CONFIG = {
 function MetricChip({ label, value, tone = 'text-gray-300' }) {
   return (
     <span className="inline-flex items-baseline gap-1 px-1.5 py-0.5 bg-white/5 rounded-none">
-      <span className="text-[9px] uppercase tracking-wider text-gray-500">{label}</span>
+      <span className="text-[9px] uppercase tracking-wider text-muted">{label}</span>
       <span className={`text-[11px] font-data font-bold tabular-nums ${tone}`}>{value}</span>
     </span>
   );
@@ -89,7 +89,7 @@ function RecommendationItem({ rec, config }) {
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="flex-1 min-w-0">
           <span className="text-sm font-bold text-white block truncate">{rec.corps}</span>
-          {rec.caption && <span className="text-xs text-gray-500">{captionLabel}</span>}
+          {rec.caption && <span className="text-xs text-muted">{captionLabel}</span>}
         </div>
         {rec.score > 0 && (
           <span
@@ -132,7 +132,7 @@ function RecommendationSection({ type, items }) {
         </div>
         <div>
           <span className={`text-sm font-bold ${config.titleClass}`}>{config.title}</span>
-          <span className="text-xs text-gray-500 ml-2">{config.subtitle}</span>
+          <span className="text-xs text-muted ml-2">{config.subtitle}</span>
         </div>
       </div>
       <div className="space-y-2">

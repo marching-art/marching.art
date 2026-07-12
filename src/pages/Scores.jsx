@@ -313,7 +313,7 @@ const Scores = () => {
               <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                 Scores & Recaps
               </h1>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-muted">
                 {displayedSeasonName}
                 {isArchived && <span className="ml-1 text-yellow-500">(Archived)</span>}
               </p>
@@ -321,11 +321,11 @@ const Scores = () => {
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="text-right">
-              <div className="text-[10px] text-gray-500 uppercase">Corps</div>
+              <div className="text-[10px] text-muted uppercase">Corps</div>
               <div className="font-bold text-white tabular-nums">{stats.corpsActive || 0}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] text-gray-500 uppercase">High</div>
+              <div className="text-[10px] text-muted uppercase">High</div>
               <div className="font-bold text-green-400 tabular-nums">{stats.topScore || '-'}</div>
             </div>
           </div>
@@ -348,7 +348,7 @@ const Scores = () => {
       <div className="flex-1 min-h-0">
         <PullToRefresh onRefresh={handleRefresh} contentClassName="pb-20 md:pb-4">
           {loading ? (
-            <div className="p-8 text-center text-gray-500 text-sm">Loading scores...</div>
+            <div className="p-8 text-center text-muted text-sm">Loading scores...</div>
           ) : error ? (
             <div className="p-8 text-center text-red-500 text-sm">{error}</div>
           ) : (
@@ -372,8 +372,8 @@ const Scores = () => {
                     ))
                   ) : (
                     <div className="p-8 text-center">
-                      <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                      <p className="text-gray-500 text-sm">No recent shows</p>
+                      <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
+                      <p className="text-muted text-sm">No recent shows</p>
                     </div>
                   )}
                 </div>
@@ -422,7 +422,7 @@ const Scores = () => {
               {/* PODIUM CLASS TAB — full-caption recap sheets (flag-gated) */}
               {activeTab === 'podium' && (
                 <Suspense
-                  fallback={<div className="p-8 text-center text-xs text-gray-500">Loading…</div>}
+                  fallback={<div className="p-8 text-center text-xs text-muted">Loading…</div>}
                 >
                   <PodiumRecapSheet
                     seasonUid={currentSeasonUid}
@@ -445,7 +445,7 @@ const Scores = () => {
                         </span>
                       </div>
                       {archivedSeasons.length > 0 && (
-                        <span className="text-[10px] text-gray-500 tabular-nums">
+                        <span className="text-[10px] text-muted tabular-nums">
                           {archivedSeasons.length} season{archivedSeasons.length === 1 ? '' : 's'} ·{' '}
                           {archivedYears.length} year{archivedYears.length === 1 ? '' : 's'}
                         </span>
@@ -460,7 +460,7 @@ const Scores = () => {
                           aria-label="Archived season year"
                           className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 mb-2 border-b border-[#2a2a2a]"
                         >
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 pr-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-muted pr-1">
                             Year
                           </span>
                           {archivedSeasonsByYear.map(({ year, seasons }) => (
@@ -493,7 +493,7 @@ const Scores = () => {
                             aria-label="Archived season"
                             className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1"
                           >
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 pr-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted pr-1">
                               Season
                             </span>
                             {seasonsForSelectedYear.map((season) => (
@@ -518,7 +518,7 @@ const Scores = () => {
                         )}
                       </>
                     ) : (
-                      <p className="text-gray-500 text-xs">No archived seasons available</p>
+                      <p className="text-muted text-xs">No archived seasons available</p>
                     )}
                   </div>
 
@@ -545,7 +545,7 @@ const Scores = () => {
                             className={`px-2.5 py-1.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all rounded-none whitespace-nowrap flex-shrink-0 ${
                               archiveViewTab === tab.id
                                 ? 'bg-[#333] text-white'
-                                : 'text-gray-500 hover:text-gray-300'
+                                : 'text-muted hover:text-gray-300'
                             }`}
                           >
                             {tab.label}
@@ -575,8 +575,8 @@ const Scores = () => {
                             ))
                           ) : (
                             <div className="p-8 text-center">
-                              <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                              <p className="text-gray-500 text-sm">
+                              <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
+                              <p className="text-muted text-sm">
                                 No recaps found for this season
                               </p>
                             </div>
@@ -629,7 +629,7 @@ const Scores = () => {
                       {archiveViewTab === 'podium' && podiumEnabled && (
                         <Suspense
                           fallback={
-                            <div className="p-8 text-center text-xs text-gray-500">Loading…</div>
+                            <div className="p-8 text-center text-xs text-muted">Loading…</div>
                           }
                         >
                           <PodiumRecapSheet
@@ -645,8 +645,8 @@ const Scores = () => {
                   {/* No season selected state */}
                   {!selectedArchiveSeason && archivedSeasons.length > 0 && (
                     <div className="p-8 text-center">
-                      <Archive className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                      <p className="text-gray-500 text-sm">
+                      <Archive className="w-8 h-8 text-muted mx-auto mb-2" />
+                      <p className="text-muted text-sm">
                         Select a season to view historical scores
                       </p>
                     </div>
@@ -659,7 +659,7 @@ const Scores = () => {
                 <div className="min-h-[calc(100vh-180px)] flex flex-col">
                   <Suspense
                     fallback={
-                      <div className="p-8 text-center text-gray-500 text-sm">
+                      <div className="p-8 text-center text-muted text-sm">
                         Loading Hall of Champions...
                       </div>
                     }
@@ -689,7 +689,7 @@ const Scores = () => {
                 <h2 className="text-sm font-bold text-white">
                   {formatEventName(selectedShow.eventName)}
                 </h2>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-muted">
                   {selectedShow.location} • {selectedShow.date}
                 </p>
               </div>

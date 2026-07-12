@@ -178,7 +178,7 @@ const ArticleManagement = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-6 h-6 text-gray-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-muted animate-spin" />
       </div>
     );
   }
@@ -193,7 +193,7 @@ const ArticleManagement = () => {
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">
               Article Management
             </h2>
-            <span className="text-xs text-gray-500">({articles.length} total)</span>
+            <span className="text-xs text-muted">({articles.length} total)</span>
           </div>
           <button
             onClick={handleRefresh}
@@ -208,7 +208,7 @@ const ArticleManagement = () => {
         {/* Search and filters */}
         <div className="p-4 space-y-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <input
               type="text"
               placeholder="Search articles by headline or summary..."
@@ -241,8 +241,8 @@ const ArticleManagement = () => {
       <div className="space-y-2">
         {filteredArticles.length === 0 ? (
           <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 text-center">
-            <FileText className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">
+            <FileText className="w-8 h-8 text-muted mx-auto mb-2" />
+            <p className="text-muted text-sm">
               {searchTerm ? `No articles found matching "${searchTerm}"` : 'No articles found'}
             </p>
           </div>

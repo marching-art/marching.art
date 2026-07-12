@@ -138,7 +138,7 @@ export default function CorpsConditionPanel({ podium }) {
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+      <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
         Tour Logistics
       </h3>
 
@@ -151,9 +151,9 @@ export default function CorpsConditionPanel({ podium }) {
             <span className="text-lg font-bold text-white tabular-nums leading-none">
               {budget.balance}
             </span>
-            <span className="text-[9px] uppercase tracking-wider text-gray-600">balance</span>
+            <span className="text-[9px] uppercase tracking-wider text-muted">balance</span>
           </div>
-          <div className="text-[10px] text-gray-500 tabular-nums">
+          <div className="text-[10px] text-muted tabular-nums">
             committed {budget.committed || 0}/{commitmentCap.toLocaleString()} · earned{' '}
             {budget.earned || 0} · spent {budget.spent || 0}
           </div>
@@ -191,7 +191,7 @@ export default function CorpsConditionPanel({ podium }) {
             </p>
           ) : (
             <>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-muted">
                 Book a specialist to boost one block by +30% for 3 days.
               </p>
               <div className="flex flex-wrap items-center gap-2">
@@ -244,7 +244,7 @@ export default function CorpsConditionPanel({ podium }) {
                 <span className="text-[11px] font-bold text-white">{tier.label}</span>
                 {busy === tier.id && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
               </span>
-              <span className="block text-[9px] text-gray-500">{tier.detail}</span>
+              <span className="block text-[9px] text-muted">{tier.detail}</span>
             </button>
           ))}
         </div>
@@ -261,7 +261,7 @@ export default function CorpsConditionPanel({ podium }) {
               setEditingTemplate((v) => !v);
               setTemplateDraft(template);
             }}
-            className="text-[10px] font-bold uppercase text-gray-500 hover:text-white press-feedback"
+            className="text-[10px] font-bold uppercase text-muted hover:text-white press-feedback"
           >
             {editingTemplate ? 'Cancel' : template.length > 0 ? 'Edit plan' : 'Set a plan'}
           </button>
@@ -280,7 +280,7 @@ export default function CorpsConditionPanel({ podium }) {
               className={`flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-none border transition-colors press-feedback ${
                 planType === p.id
                   ? 'border-[#0057B8] bg-[#0057B8]/10 text-white'
-                  : 'border-[#333] text-gray-500 hover:text-gray-300 hover:border-gray-500'
+                  : 'border-[#333] text-muted hover:text-gray-300 hover:border-gray-500'
               }`}
             >
               {p.tab}
@@ -300,12 +300,12 @@ export default function CorpsConditionPanel({ podium }) {
                     key={`${b}-${i}`}
                     className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-none border border-[#333] bg-[#141414]"
                   >
-                    <span className="text-gray-600 tabular-nums">{i + 1}</span>
+                    <span className="text-muted tabular-nums">{i + 1}</span>
                     <span className="text-gray-200">{blockLabel(b)}</span>
                   </span>
                 ))}
               </div>
-              <p className="text-[9px] text-gray-500">
+              <p className="text-[9px] text-muted">
                 Runs this order at 85% yield on {activePlanType.runsOn}.
               </p>
             </div>
@@ -345,7 +345,7 @@ export default function CorpsConditionPanel({ podium }) {
                           </span>
                         )}
                       </div>
-                      <div className="text-[9px] text-gray-500 mt-0.5">{block.detail}</div>
+                      <div className="text-[9px] text-muted mt-0.5">{block.detail}</div>
                     </button>
                   );
                 })}
@@ -354,12 +354,12 @@ export default function CorpsConditionPanel({ podium }) {
               {/* Running order — numbered, reorderable, removable */}
               <div className="lg:w-56 shrink-0 flex flex-col rounded-none border border-[#333] bg-[#141414] p-3">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted">
                     Running order
                   </span>
                   <span className="text-lg font-bold text-white tabular-nums leading-none">
                     {templateDraft.length}
-                    <span className="text-[10px] font-bold text-gray-600">
+                    <span className="text-[10px] font-bold text-muted">
                       /{maxTemplateBlocks}
                     </span>
                   </span>
@@ -367,7 +367,7 @@ export default function CorpsConditionPanel({ podium }) {
 
                 <div className="mt-2 flex-1 space-y-1 min-h-[3rem]">
                   {templateDraft.length === 0 ? (
-                    <div className="text-[10px] text-gray-600 italic">
+                    <div className="text-[10px] text-muted italic">
                       Click blocks to build the plan
                     </div>
                   ) : (
@@ -376,7 +376,7 @@ export default function CorpsConditionPanel({ podium }) {
                         key={`${blockId}-${index}`}
                         className="flex items-center gap-1 text-[10px] text-gray-300"
                       >
-                        <span className="text-gray-600 tabular-nums w-4 text-right shrink-0">
+                        <span className="text-muted tabular-nums w-4 text-right shrink-0">
                           {index + 1}.
                         </span>
                         <span className="truncate flex-1">{blockLabel(blockId)}</span>
@@ -384,7 +384,7 @@ export default function CorpsConditionPanel({ podium }) {
                           onClick={() => moveBlock(index, -1)}
                           disabled={index === 0}
                           title="Move earlier"
-                          className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 press-feedback"
+                          className="text-muted hover:text-white disabled:opacity-30 disabled:hover:text-muted press-feedback"
                         >
                           <ChevronUp className="w-3 h-3" />
                         </button>
@@ -392,14 +392,14 @@ export default function CorpsConditionPanel({ podium }) {
                           onClick={() => moveBlock(index, 1)}
                           disabled={index === templateDraft.length - 1}
                           title="Move later"
-                          className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 press-feedback"
+                          className="text-muted hover:text-white disabled:opacity-30 disabled:hover:text-muted press-feedback"
                         >
                           <ChevronDown className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => removeBlock(index)}
                           title="Remove"
-                          className="text-gray-600 hover:text-red-400 press-feedback"
+                          className="text-muted hover:text-red-400 press-feedback"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -433,7 +433,7 @@ export default function CorpsConditionPanel({ podium }) {
               </div>
             </div>
 
-            <p className="text-[9px] text-gray-600 leading-relaxed">
+            <p className="text-[9px] text-muted leading-relaxed">
               {activePlanType.hint} Lead with Stretch / PT to cut the stamina cost of the blocks
               that follow, and avoid repeating a block back-to-back — repeats yield less.
             </p>
@@ -458,14 +458,14 @@ export default function CorpsConditionPanel({ podium }) {
         </div>
 
         {routePreview.length === 0 ? (
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-muted">
             No upcoming shows. Open the <span className="text-[#4d9fff]">Schedule</span> page, pick
             a show, and add your Podium corps — each show you add is routed onto the tour below.
           </p>
         ) : (
           <div className="rounded-none border border-[#333] overflow-hidden">
             <div
-              className={`${ROUTE_COLS} px-3 py-1 bg-[#161616] text-[8px] uppercase tracking-wider text-gray-600`}
+              className={`${ROUTE_COLS} px-3 py-1 bg-[#161616] text-[8px] uppercase tracking-wider text-muted`}
             >
               <span>Day</span>
               <span>Show · City</span>
@@ -486,14 +486,14 @@ export default function CorpsConditionPanel({ podium }) {
                   key={leg.day}
                   className={`${ROUTE_COLS} px-3 py-1 border-t border-[#242424] text-[10px] tabular-nums`}
                 >
-                  <span className="text-gray-500">D{leg.day}</span>
+                  <span className="text-muted">D{leg.day}</span>
                   <span
                     className={`truncate ${leg.isMajor ? 'text-[#c9a227] font-bold' : 'text-gray-300'}`}
                     title={name ? `${name} — ${leg.city}` : leg.city}
                   >
                     {name ? `${name} · ${leg.city}` : leg.city}
                   </span>
-                  <span className="text-right text-gray-500">
+                  <span className="text-right text-muted">
                     {leg.miles != null && leg.miles > 0
                       ? `${TIER_LABELS[leg.tier] || leg.tier} · ${leg.miles} mi`
                       : ''}
@@ -516,7 +516,7 @@ export default function CorpsConditionPanel({ podium }) {
           </div>
         )}
 
-        <p className="mt-1.5 text-[9px] text-gray-600 leading-relaxed">
+        <p className="mt-1.5 text-[9px] text-muted leading-relaxed">
           <span className="text-[#c9a227] font-bold">Gold</span> stops — majors &amp; championship
           week — are attended automatically. Every other stop is a show you added on the Schedule
           page.

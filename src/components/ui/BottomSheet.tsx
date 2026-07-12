@@ -198,7 +198,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="p-2.5 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+                    className="p-2.5 -mr-2 text-muted hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
                     aria-label="Close"
                   >
                     <X className="w-5 h-5" />

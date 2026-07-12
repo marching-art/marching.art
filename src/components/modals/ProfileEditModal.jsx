@@ -44,7 +44,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
     className={`flex-1 min-w-0 py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 ${
       active
         ? 'text-white border-b-2 border-[#0057B8]'
-        : 'text-gray-500 hover:text-gray-300 border-b-2 border-transparent'
+        : 'text-muted hover:text-gray-300 border-b-2 border-transparent'
     }`}
   >
     <Icon className="w-3.5 h-3.5" />
@@ -55,15 +55,15 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
 const Field = ({ label, hint, children, count }) => (
   <div>
     <div className="flex items-center justify-between mb-1">
-      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+      <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">
         {label}
       </label>
       {count != null && (
-        <span className="text-[10px] text-gray-600 font-data tabular-nums">{count}</span>
+        <span className="text-[10px] text-muted font-data tabular-nums">{count}</span>
       )}
     </div>
     {children}
-    {hint && <p className="text-[10px] text-gray-600 mt-1">{hint}</p>}
+    {hint && <p className="text-[10px] text-muted mt-1">{hint}</p>}
   </div>
 );
 
@@ -247,7 +247,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
             </h2>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white"
+              className="p-1 text-muted hover:text-white"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />
@@ -339,7 +339,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                         className={`w-full h-10 px-3 border text-sm font-bold uppercase tracking-wider ${
                           director.acceptingLeagueInvites
                             ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
-                            : 'bg-[#0a0a0a] border-[#333] text-gray-500'
+                            : 'bg-[#0a0a0a] border-[#333] text-muted'
                         }`}
                       >
                         {director.acceptingLeagueInvites ? 'Open' : 'Closed'}
@@ -359,7 +359,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                             className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border ${
                               active
                                 ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
-                                : 'bg-[#0a0a0a] border-[#333] text-gray-500 hover:text-gray-300'
+                                : 'bg-[#0a0a0a] border-[#333] text-muted hover:text-gray-300'
                             }`}
                           >
                             {s}
@@ -390,7 +390,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
 
               {activeTab === 'social' && (
                 <>
-                  <p className="text-[11px] text-gray-500">
+                  <p className="text-[11px] text-muted">
                     Only fields you fill in will be shown publicly on your profile.
                   </p>
                   <Field label="Website">
@@ -455,7 +455,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
               {activeTab === 'ensemble' && (
                 <>
                   {availableCorps.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-8">
+                    <p className="text-sm text-muted text-center py-8">
                       You don&apos;t have any active ensembles yet. Register a corps on your
                       dashboard to add ensemble details.
                     </p>
@@ -471,8 +471,8 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                               activeEnsembleClass === corps.classKey
                                 ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
                                 : corps.isRegistered
-                                  ? 'bg-[#0a0a0a] border-[#333] text-gray-500 hover:text-gray-300'
-                                  : 'bg-[#0a0a0a] border-dashed border-[#333] text-gray-600 hover:text-gray-400'
+                                  ? 'bg-[#0a0a0a] border-[#333] text-muted hover:text-gray-300'
+                                  : 'bg-[#0a0a0a] border-dashed border-[#333] text-muted hover:text-gray-400'
                             }`}
                           >
                             {corps.isRegistered ? (
@@ -495,7 +495,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                             You&apos;ve unlocked {CLASS_LABELS[currentCorps.classKey]}, but
                             haven&apos;t registered a corps in this class yet.
                           </p>
-                          <p className="text-[11px] text-gray-500">
+                          <p className="text-[11px] text-muted">
                             Visit your dashboard to register a corps. Once registered, you can edit
                             ensemble details here.
                           </p>

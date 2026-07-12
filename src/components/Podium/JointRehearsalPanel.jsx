@@ -42,7 +42,7 @@ function WindowCard({ win, selected, onSelect }) {
     >
       <div className="text-center">
         <div className="text-lg font-bold tabular-nums leading-none">{win.day}</div>
-        <div className="text-[8px] font-mono uppercase text-gray-600 tracking-wider">
+        <div className="text-[8px] font-mono uppercase text-muted tracking-wider">
           Wk {win.week}
         </div>
       </div>
@@ -51,7 +51,7 @@ function WindowCard({ win, selected, onSelect }) {
         {win.stadium && (
           <div className="text-[10px] font-mono text-[#c9a227] truncate">{win.stadium}</div>
         )}
-        <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1 text-[9px] font-mono text-gray-500">
+        <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1 text-[9px] font-mono text-muted">
           {win.milesApart != null && <span>{win.milesApart} mi apart</span>}
           <span className={fitColor}>
             {win.isFree
@@ -85,7 +85,7 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
           <span className="font-bold text-white">{proposal.fromCorpsName}</span> wants a joint
           rehearsal
         </span>
-        <span className="text-[9px] font-mono text-gray-600 uppercase shrink-0">
+        <span className="text-[9px] font-mono text-muted uppercase shrink-0">
           Day {proposal.day}
         </span>
       </div>
@@ -96,22 +96,22 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
         </div>
         <div className="grid grid-cols-2 gap-px bg-[#333] border border-[#333]">
           <div className="bg-[#161616] px-2.5 py-2">
-            <div className="text-[8px] font-mono uppercase tracking-wider text-gray-600 mb-1">
+            <div className="text-[8px] font-mono uppercase tracking-wider text-muted mb-1">
               Your burden
             </div>
             <div className="text-[13px] font-bold text-green-400">No travel</div>
-            <div className="text-[9px] text-gray-600 mt-0.5">
+            <div className="text-[9px] text-muted mt-0.5">
               {tier
                 ? `${proposal.fromCorpsName} covers the ${TIER_LABELS[tier] || tier} leg.`
                 : 'You are already together on tour.'}
             </div>
           </div>
           <div className="bg-[#161616] px-2.5 py-2">
-            <div className="text-[8px] font-mono uppercase tracking-wider text-gray-600 mb-1">
+            <div className="text-[8px] font-mono uppercase tracking-wider text-muted mb-1">
               Your gain
             </div>
             <div className="text-[13px] font-bold text-[#c9a227]">Ensemble +25%</div>
-            <div className="text-[9px] text-gray-600 mt-0.5">
+            <div className="text-[9px] text-muted mt-0.5">
               + morale &amp; the scrimmage report.
             </div>
           </div>
@@ -132,7 +132,7 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
           <button
             disabled={busy || blocked}
             onClick={onAccept}
-            className="px-3 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-none press-feedback disabled:opacity-50 disabled:bg-[#333] disabled:text-gray-600"
+            className="px-3 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-none press-feedback disabled:opacity-50 disabled:bg-[#333] disabled:text-muted"
           >
             Accept — book Day {proposal.day}
           </button>
@@ -176,19 +176,19 @@ function TaleOfTheTape({ scrimmage }) {
         <div className="text-[8px] font-mono uppercase tracking-[0.3em] text-[#c9a227]">
           Tale of the Tape
         </div>
-        <div className="text-[9px] font-mono text-gray-500 mt-1">
+        <div className="text-[9px] font-mono text-muted mt-1">
           Day {scrimmage.day}
           {scrimmage.city ? ` · ${cityLine(scrimmage.city, scrimmage.stadium)}` : ''} · private
         </div>
       </div>
       <div className="px-3 py-2">
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-0.5 text-[10px] tabular-nums">
-          <span className="text-gray-600 uppercase text-[9px]">Caption</span>
-          <span className="text-gray-600 uppercase text-[9px] text-right">You</span>
-          <span className="text-gray-600 uppercase text-[9px] text-right">
+          <span className="text-muted uppercase text-[9px]">Caption</span>
+          <span className="text-muted uppercase text-[9px] text-right">You</span>
+          <span className="text-muted uppercase text-[9px] text-right">
             {scrimmage.partnerCorpsName || 'Them'}
           </span>
-          <span className="text-gray-600 uppercase text-[9px] text-right">±</span>
+          <span className="text-muted uppercase text-[9px] text-right">±</span>
           {PODIUM_CAPTIONS.map((caption) => {
             const mine = scrimmage.mine?.captions?.[caption];
             const theirs = scrimmage.theirs?.captions?.[caption];
@@ -204,7 +204,7 @@ function TaleOfTheTape({ scrimmage }) {
                 </span>
                 <span className="text-gray-300 text-right">{theirs?.toFixed(2) ?? '—'}</span>
                 <span
-                  className={`text-right ${d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-600'}`}
+                  className={`text-right ${d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-muted'}`}
                 >
                   {d > 0 ? '+' : ''}
                   {d.toFixed(2)}
@@ -221,7 +221,7 @@ function TaleOfTheTape({ scrimmage }) {
           </span>
           <span
             className={`font-bold text-right border-t border-[#333] pt-1 ${
-              totalDiff > 0 ? 'text-green-400' : totalDiff < 0 ? 'text-red-400' : 'text-gray-600'
+              totalDiff > 0 ? 'text-green-400' : totalDiff < 0 ? 'text-red-400' : 'text-muted'
             }`}
           >
             {totalDiff > 0 ? '+' : ''}
@@ -230,7 +230,7 @@ function TaleOfTheTape({ scrimmage }) {
         </div>
       </div>
       <div className="px-3 py-2 border-t border-[#333] bg-[#0f0f0f] flex items-center justify-between">
-        <span className="text-[10px] font-mono text-gray-500">
+        <span className="text-[10px] font-mono text-muted">
           {totalDiff > 0 ? 'You took it' : totalDiff < 0 ? 'They took it' : 'Dead heat'}
         </span>
         <button
@@ -252,7 +252,7 @@ function HeadToHead({ headToHead }) {
   if (rows.length === 0) return null;
   return (
     <div className="space-y-1">
-      <div className="text-[9px] font-mono uppercase tracking-wider text-gray-600">
+      <div className="text-[9px] font-mono uppercase tracking-wider text-muted">
         Head-to-head · this season
       </div>
       <div className="border border-[#333] rounded-none divide-y divide-[#222]">
@@ -262,11 +262,11 @@ function HeadToHead({ headToHead }) {
           return (
             <div key={uid} className="flex items-center justify-between px-2.5 py-1.5">
               <span className="text-[11px] text-gray-300 truncate flex items-center gap-1.5">
-                <Trophy className="w-3 h-3 text-gray-600 shrink-0" />
+                <Trophy className="w-3 h-3 text-muted shrink-0" />
                 {rec.partnerCorpsName || 'Unknown corps'}
               </span>
               <span className="flex items-center gap-2.5 shrink-0">
-                <span className="text-[9px] font-mono text-gray-600">
+                <span className="text-[9px] font-mono text-muted">
                   {rec.joints} joint{rec.joints === 1 ? '' : 's'}
                 </span>
                 <span className={`text-[11px] font-mono font-bold tabular-nums ${cls}`}>
@@ -367,7 +367,7 @@ export default function JointRehearsalPanel() {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <Handshake className="w-3 h-3" /> Joint Rehearsals
           {incoming.length > 0 && (
             <span className="px-1.5 py-0.5 bg-[#c9a227] text-black rounded-none text-[9px]">
@@ -377,7 +377,7 @@ export default function JointRehearsalPanel() {
         </span>
       </div>
 
-      <p className="text-[10px] text-gray-500 leading-relaxed">
+      <p className="text-[10px] text-muted leading-relaxed">
         Pick a rival and the system maps both tours, then ranks the open days you could share — each
         with its host city, distance, and stamina cost. Full Ensemble sharpens (+25%, decaying for
         repeat partners), morale lifts, and both directors get a private scrimmage report. One per
@@ -386,7 +386,7 @@ export default function JointRehearsalPanel() {
 
       {!data && !error && (
         <div className="flex justify-center py-3">
-          <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+          <Loader2 className="w-4 h-4 animate-spin text-muted" />
         </div>
       )}
 
@@ -437,7 +437,7 @@ export default function JointRehearsalPanel() {
 
       {/* Outgoing pending */}
       {(data?.outgoing || []).map((proposal) => (
-        <div key={proposal.id} className="px-3 py-1.5 text-[10px] text-gray-500">
+        <div key={proposal.id} className="px-3 py-1.5 text-[10px] text-muted">
           Awaiting <span className="text-gray-300">{proposal.toCorpsName}</span> for Day{' '}
           {proposal.day}
           {proposal.city ? ` · ${proposal.city}` : ''} — expires unanswered that morning.
@@ -450,7 +450,7 @@ export default function JointRehearsalPanel() {
         <div className="space-y-3 border border-[#333] rounded-none p-3 bg-[#161616]">
           {!overlaps ? (
             <div className="space-y-2">
-              <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
+              <label className="text-[9px] font-bold uppercase tracking-wider text-muted">
                 Scout a corps
               </label>
               <div className="flex gap-2">
@@ -471,7 +471,7 @@ export default function JointRehearsalPanel() {
                   type="button"
                   disabled={busy || !toUid}
                   onClick={findOverlaps}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-gray-600 press-feedback"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-muted press-feedback"
                 >
                   {busy ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -491,14 +491,14 @@ export default function JointRehearsalPanel() {
                 <button
                   type="button"
                   onClick={cancelOverlaps}
-                  className="flex items-center gap-1 text-[9px] font-mono uppercase text-gray-500 hover:text-gray-300 press-feedback"
+                  className="flex items-center gap-1 text-[9px] font-mono uppercase text-muted hover:text-gray-300 press-feedback"
                 >
                   <X className="w-3 h-3" /> Cancel
                 </button>
               </div>
 
               {overlaps.windows.length === 0 ? (
-                <p className="text-[10px] text-gray-500 py-2">
+                <p className="text-[10px] text-muted py-2">
                   No shared open week in the next two weeks — your tours never sit idle on the same
                   day, or the overlapping weeks are already booked. Try another partner.
                 </p>
@@ -514,7 +514,7 @@ export default function JointRehearsalPanel() {
                       />
                     ))}
                   </div>
-                  <p className="text-[9px] font-mono text-gray-600">
+                  <p className="text-[9px] font-mono text-muted">
                     Stadium shown when on file — otherwise the city stands alone.
                   </p>
                   <div className="flex items-center justify-end gap-2 pt-0.5 border-t border-[#2a2a2a]">
@@ -529,7 +529,7 @@ export default function JointRehearsalPanel() {
                       type="button"
                       disabled={busy || !selectedDay}
                       onClick={propose}
-                      className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-gray-600 press-feedback"
+                      className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-muted press-feedback"
                     >
                       {busy ? (
                         <Loader2 className="w-3 h-3 animate-spin inline" />

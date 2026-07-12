@@ -120,7 +120,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
 
       {error && process.env.NODE_ENV === 'development' && (
         <details className="mb-4 w-full max-w-md">
-          <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-300">
+          <summary className="text-sm text-muted cursor-pointer hover:text-gray-300">
             Error details (dev only)
           </summary>
           <pre className="mt-2 p-3 bg-[#0a0a0a] border border-[#333] rounded-none text-xs text-red-400 overflow-auto max-h-40">

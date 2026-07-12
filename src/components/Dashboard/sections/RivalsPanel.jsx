@@ -40,13 +40,13 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
           <Swords className="w-3.5 h-3.5 text-red-500" />
           Rivals
         </h3>
-        <span className="text-[10px] text-gray-500">
+        <span className="text-[10px] text-muted">
           {CLASS_SHORT_LABELS[corpsClass] || corpsClass}
         </span>
       </div>
 
       {list.length === 0 ? (
-        <div className="px-4 py-5 text-xs text-gray-500 text-center">
+        <div className="px-4 py-5 text-xs text-muted text-center">
           No rivals yet — once other directors compete in your class, the closest scores will show
           up here.
         </div>
@@ -64,7 +64,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
               const tied = rankDelta === 0;
               const ahead = rankDelta > 0;
               const RankIcon = tied ? Minus : ahead ? ChevronUp : ChevronDown;
-              const rankColor = tied ? 'text-gray-500' : ahead ? 'text-red-400' : 'text-green-400';
+              const rankColor = tied ? 'text-muted' : ahead ? 'text-red-400' : 'text-green-400';
               const rankLabel = tied
                 ? `Tied at ${rival.medal || 'Participation'}`
                 : ahead
@@ -79,10 +79,10 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm text-white truncate">{rival.corpsName}</div>
-                    <div className="text-[10px] text-gray-500 truncate">
+                    <div className="text-[10px] text-muted truncate">
                       {rival.username}
                       {crossClass && (
-                        <span className="ml-1 text-gray-600">
+                        <span className="ml-1 text-muted">
                           · {CLASS_SHORT_LABELS[rival.corpsClass] || rival.corpsClass}
                         </span>
                       )}
@@ -110,7 +110,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
             const ahead = (rival.scoreDelta || 0) > 0;
             const tied = (rival.scoreDelta || 0) === 0;
             const DeltaIcon = tied ? Minus : ahead ? ChevronUp : ChevronDown;
-            const deltaColor = tied ? 'text-gray-500' : ahead ? 'text-red-400' : 'text-green-400';
+            const deltaColor = tied ? 'text-muted' : ahead ? 'text-red-400' : 'text-green-400';
 
             return (
               <Link
@@ -120,10 +120,10 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
               >
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white truncate">{rival.corpsName}</div>
-                  <div className="text-[10px] text-gray-500 truncate">
+                  <div className="text-[10px] text-muted truncate">
                     {rival.username}
                     {crossClass && (
-                      <span className="ml-1 text-gray-600">
+                      <span className="ml-1 text-muted">
                         · {CLASS_SHORT_LABELS[rival.corpsClass] || rival.corpsClass}
                       </span>
                     )}

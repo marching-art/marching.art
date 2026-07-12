@@ -176,7 +176,7 @@ export default function PodiumRegistration({ podium }) {
         {STEPS.map((label, index) => (
           <React.Fragment key={label}>
             <div
-              className={`text-[10px] font-bold uppercase tracking-wider ${index === step ? 'text-[#4d9fff]' : index < step ? 'text-gray-300' : 'text-gray-600'}`}
+              className={`text-[10px] font-bold uppercase tracking-wider ${index === step ? 'text-[#4d9fff]' : index < step ? 'text-gray-300' : 'text-muted'}`}
             >
               {index + 1}. {label}
             </div>
@@ -248,7 +248,7 @@ export default function PodiumRegistration({ podium }) {
               <label key={caption} className="flex items-center gap-3">
                 <span className="w-24 shrink-0 text-[11px] font-bold text-white">
                   {caption}
-                  <span className="block text-[9px] font-normal text-gray-600 truncate">
+                  <span className="block text-[9px] font-normal text-muted truncate">
                     {CAPTION_LABELS[caption]}
                   </span>
                 </span>
@@ -313,7 +313,7 @@ export default function PodiumRegistration({ podium }) {
               buys margin — food, travel, staff — never caption points).
               Server validates the cap; zero is always playable. */}
           <div className="pt-2 border-t border-[#333]">
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
               Fund the season {hasCarried ? '' : '(optional)'}
             </label>
             <div className="flex items-center gap-2">
@@ -330,7 +330,7 @@ export default function PodiumRegistration({ podium }) {
                 }
                 className="w-28 bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
               />
-              <span className="text-[10px] text-gray-500">
+              <span className="text-[10px] text-muted">
                 {hasCarried ? (
                   <>
                     CorpsCoin into this season&apos;s Corps Budget. You hold{' '}
@@ -356,7 +356,7 @@ export default function PodiumRegistration({ podium }) {
           {hasCarried && keptStaff && (
             <div className="pt-3 border-t border-[#333] space-y-2">
               <div className="flex items-baseline justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted">
                   Staff payroll — who marches next season
                 </label>
                 <span
@@ -365,7 +365,7 @@ export default function PodiumRegistration({ podium }) {
                   {keptPayroll} / {budgetCommitment} CC
                 </span>
               </div>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-muted">
                 Tenure raised your staff&apos;s salaries. Uncheck anyone you&apos;re letting go —
                 their seat reopens and their tenure ends. Whatever you keep must fit your
                 commitment.
@@ -389,7 +389,7 @@ export default function PodiumRegistration({ podium }) {
                     />
                     <span className="flex-1 text-[11px] font-bold text-white">
                       {SPECIALTY_LABELS[s.specialty] || s.specialty}
-                      <span className="ml-2 text-[9px] font-normal text-gray-500">
+                      <span className="ml-2 text-[9px] font-normal text-muted">
                         {TIER_LABELS[s.nextTier] || TIER_LABELS[s.tier]}
                         {promoted && (
                           <span className="text-[#c9a227]">
@@ -402,7 +402,7 @@ export default function PodiumRegistration({ podium }) {
                     <span className="text-[11px] tabular-nums text-gray-300">
                       {s.nextSalary} CC
                       {s.nextSalary > s.salary && (
-                        <span className="text-gray-600"> (was {s.salary})</span>
+                        <span className="text-muted"> (was {s.salary})</span>
                       )}
                     </span>
                   </label>
@@ -417,7 +417,7 @@ export default function PodiumRegistration({ podium }) {
                   <span className="flex-1 text-[11px] text-gray-400">
                     {SPECIALTY_LABELS[s.specialty] || s.specialty}
                   </span>
-                  <span className="text-[9px] uppercase tracking-wider text-gray-500">
+                  <span className="text-[9px] uppercase tracking-wider text-muted">
                     Retiring · 30-season career
                   </span>
                 </div>

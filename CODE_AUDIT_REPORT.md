@@ -78,7 +78,6 @@ apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSy[REDACTED]',
 | `functions/src/callable/registerCorps.js:7` | Basic regex profanity filter only               |
 | `firestore.rules:50-52`                     | Collection group queries allow user enumeration |
 | `firestore.rules:27-33`                     | Comments readable without authentication        |
-| `functions/src/webhooks/stripe.js:43`       | Webhook error exposed in response               |
 
 ### Recommendations
 

@@ -46,8 +46,8 @@ export const BattleScoreHeader = ({
         </div>
 
         <div className="flex flex-col items-center">
-          <span className="text-xs text-gray-500/40 uppercase tracking-wider">Battle</span>
-          <span className="text-xs text-gray-500/40 uppercase tracking-wider">Points</span>
+          <span className="text-xs text-muted/40 uppercase tracking-wider">Battle</span>
+          <span className="text-xs text-muted/40 uppercase tracking-wider">Points</span>
         </div>
 
         <div className="text-left flex-1">
@@ -207,7 +207,7 @@ export const CaptionBattlesSection = ({
             >
               {captionBattlesWon.home}
             </span>
-            <span className="text-xs text-gray-500/40">-</span>
+            <span className="text-xs text-muted/40">-</span>
             <span
               className={`text-sm font-bold ${
                 captionBattlesWon.away > captionBattlesWon.home ? 'text-green-400' : 'text-gray-300'
@@ -297,9 +297,9 @@ export const BattleSummaryBar = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-500/60">{homeBattlePoints} pts</span>
-        <span className="text-gray-500/40">of {maxPoints} possible</span>
-        <span className="text-gray-500/60">{awayBattlePoints} pts</span>
+        <span className="text-muted/60">{homeBattlePoints} pts</span>
+        <span className="text-muted/40">of {maxPoints} possible</span>
+        <span className="text-muted/60">{awayBattlePoints} pts</span>
       </div>
       <div className="flex h-3 rounded-none overflow-hidden bg-charcoal-800">
         <m.div
@@ -327,8 +327,8 @@ const BattleBreakdown = ({ battleBreakdown, homeDisplayName, awayDisplayName, cu
   if (!battleBreakdown) {
     return (
       <div className="glass rounded-none p-8 text-center">
-        <Target className="w-8 h-8 text-gray-500/30 mx-auto mb-2" />
-        <p className="text-sm text-gray-500/40">Battle data not available</p>
+        <Target className="w-8 h-8 text-muted/30 mx-auto mb-2" />
+        <p className="text-sm text-muted/40">Battle data not available</p>
       </div>
     );
   }
@@ -393,7 +393,7 @@ const BattleBreakdown = ({ battleBreakdown, homeDisplayName, awayDisplayName, cu
 
       {/* Legend */}
       <div className="glass rounded-none p-3">
-        <p className="text-[10px] text-gray-500/40 text-center">
+        <p className="text-[10px] text-muted/40 text-center">
           Win 6+ battle points to win the matchup. Caption battles (8 pts) + Total Score (1 pt) +
           High Single (1 pt) + Momentum (1 pt) = 11 max
         </p>

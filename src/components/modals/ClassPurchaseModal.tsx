@@ -114,7 +114,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
             </h2>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white"
+              className="p-1 text-muted hover:text-white"
               disabled={isPurchasing}
             >
               <X className="w-4 h-4" />

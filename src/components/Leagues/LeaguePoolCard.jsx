@@ -61,7 +61,7 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
           <Coins className="w-3.5 h-3.5 text-yellow-500" />
           Daily Prediction Pool
         </h3>
-        <span className="text-[10px] text-gray-500 flex items-center gap-1 font-data tabular-nums">
+        <span className="text-[10px] text-muted flex items-center gap-1 font-data tabular-nums">
           <Users className="w-3 h-3" />
           {entrantCount} in
         </span>
@@ -72,7 +72,7 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
           <p className="text-2xl font-bold text-yellow-500 font-data tabular-nums">
             {pot.toLocaleString()} <span className="text-sm">CC</span>
           </p>
-          <p className="text-[10px] text-gray-500">
+          <p className="text-[10px] text-muted">
             {resolved
               ? winners.length > 0
                 ? `Settled — ${winners.length} perfect day${winners.length > 1 ? 's' : ''} split the pot`
@@ -82,7 +82,7 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
         </div>
 
         {resolved ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Settled
           </span>
         ) : isIn ? (

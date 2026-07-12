@@ -117,7 +117,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                     Create League
                   </h2>
                 </div>
-                <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+                <button onClick={onClose} className="p-1 text-muted hover:text-white">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -127,7 +127,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                 <div className="p-4 space-y-4">
                   {/* League Name */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       League Name *
                     </label>
                     <input
@@ -144,7 +144,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
 
                   {/* Public/Private Toggle */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                       League Visibility
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -159,7 +159,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       >
                         <Users className="w-4 h-4 text-gray-300 mb-1" />
                         <p className="text-sm font-bold text-white">Public</p>
-                        <p className="text-[10px] text-gray-500">Anyone can find</p>
+                        <p className="text-[10px] text-muted">Anyone can find</p>
                       </button>
                       <button
                         type="button"
@@ -172,14 +172,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       >
                         <Lock className="w-4 h-4 text-gray-300 mb-1" />
                         <p className="text-sm font-bold text-white">Private</p>
-                        <p className="text-[10px] text-gray-500">Invite only</p>
+                        <p className="text-[10px] text-muted">Invite only</p>
                       </button>
                     </div>
                   </div>
 
                   {/* Entry Fee (CorpsCoin, feeds the prize pool) */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                       Entry Fee (CorpsCoin)
                     </label>
                     <div className="grid grid-cols-5 gap-1">
@@ -196,14 +196,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                           className={`py-2 text-[10px] font-bold border transition-colors ${
                             (formData.settings.entryFee || 0) === fee
                               ? 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
-                              : 'border-[#333] text-gray-500 hover:border-[#444]'
+                              : 'border-[#333] text-muted hover:border-[#444]'
                           }`}
                         >
                           {fee === 0 ? 'Free' : fee.toLocaleString()}
                         </button>
                       ))}
                     </div>
-                    <p className="text-[10px] text-gray-600 mt-1">
+                    <p className="text-[10px] text-muted mt-1">
                       Every joiner (you included) pays into the prize pool — the league champion
                       takes it all at Finals. No refunds for leaving.
                     </p>
@@ -212,7 +212,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                   {/* Max Members */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      <label className="text-[10px] font-bold text-muted uppercase tracking-wider">
                         Max Members
                       </label>
                       <span className="text-sm font-data font-bold text-[#0057B8]">
@@ -229,7 +229,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       }
                       className="w-full h-2 bg-[#333] rounded-none appearance-none cursor-pointer accent-[#0057B8]"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+                    <div className="flex justify-between text-[10px] text-muted mt-1">
                       <span>4</span>
                       <span>12</span>
                       <span>20</span>
@@ -282,7 +282,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                     <Trophy className="w-4 h-4 text-[#0057B8]" />
                     <span className="font-bold text-white">{formData.name}</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted">
                     {formData.isPublic ? (
                       <>
                         <Users className="w-3 h-3" />
@@ -301,7 +301,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
 
                 {/* Invite Code */}
                 <div className="mb-4">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                     Invite Code
                   </label>
                   <div className="flex items-center gap-2">

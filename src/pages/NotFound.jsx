@@ -135,7 +135,7 @@ const NotFound = () => {
           transition={{ delay: 0.6 }}
           className="mt-10 pt-6 border-t border-[#333]"
         >
-          <p className="text-xs text-gray-500 mb-3 font-mono uppercase tracking-wider">
+          <p className="text-xs text-muted mb-3 font-mono uppercase tracking-wider">
             Quick Links
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
@@ -171,12 +171,12 @@ const NotFound = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="mt-8 flex items-center justify-center gap-4 text-[9px] font-mono text-gray-600 uppercase tracking-widest"
+          className="mt-8 flex items-center justify-center gap-4 text-[9px] font-mono text-muted uppercase tracking-widest"
         >
           <span>Error: ENOENT</span>
-          <span className="text-gray-700">|</span>
+          <span className="text-muted">|</span>
           <span>Route: {window.location.pathname}</span>
-          <span className="text-gray-700">|</span>
+          <span className="text-muted">|</span>
           <span>Status: 404</span>
         </m.div>
       </m.div>

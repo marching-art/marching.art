@@ -18,7 +18,7 @@ import { ALL_CLASSES, getCorpsClassName } from './constants';
 
 const PickerRow = ({ label, options, value, onChange }) => (
   <div>
-    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
       {label}
     </label>
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
@@ -138,7 +138,7 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
                 className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border transition-colors flex items-center gap-1 ${
                   selectedClass === classId
                     ? 'border-[#0057B8] bg-[#0057B8]/10 text-white'
-                    : 'border-[#333] text-gray-500 hover:border-[#555]'
+                    : 'border-[#333] text-muted hover:border-[#555]'
                 }`}
               >
                 {drafts[classId]?.saved && <Check className="w-3 h-3 text-green-400" />}
@@ -149,7 +149,7 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
         )}
 
         <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
             Show Title
           </label>
           <input

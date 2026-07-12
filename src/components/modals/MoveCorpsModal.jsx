@@ -68,7 +68,7 @@ const MoveCorpsModal = ({
             >
               Transfer Corps
             </h2>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -77,18 +77,18 @@ const MoveCorpsModal = ({
           <div className="p-4">
             {/* Corps Info */}
             <div className="bg-[#0a0a0a] border border-[#333] p-3 mb-4">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Moving:</p>
+              <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Moving:</p>
               <p className="text-sm font-bold text-white">{corpsName}</p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted mt-1">
                 From: <span className="text-gray-300">{CLASS_NAMES[currentClass]}</span>
               </p>
             </div>
 
             {availableClasses.length === 0 ? (
               <div className="text-center py-6">
-                <Lock className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 mb-2">No classes available</p>
-                <p className="text-xs text-gray-600">
+                <Lock className="w-10 h-10 text-muted mx-auto mb-3" />
+                <p className="text-sm text-muted mb-2">No classes available</p>
+                <p className="text-xs text-muted">
                   Either you haven't unlocked other classes, or you already have a corps in each
                   available class.
                 </p>
@@ -96,7 +96,7 @@ const MoveCorpsModal = ({
             ) : (
               <form onSubmit={handleSubmit}>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                     Select Target Class
                   </label>
                   <div className="border border-[#333] divide-y divide-[#333]">
@@ -114,7 +114,7 @@ const MoveCorpsModal = ({
                         >
                           <div>
                             <p className="text-sm font-medium text-white">{cls.name}</p>
-                            <p className="text-xs text-gray-500">{cls.level}</p>
+                            <p className="text-xs text-muted">{cls.level}</p>
                           </div>
                           {isSelected && <Check className="w-4 h-4 text-[#0057B8]" />}
                         </button>

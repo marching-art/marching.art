@@ -119,9 +119,9 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-gray-500">
+            <div className="flex items-center gap-2 text-[10px] text-muted">
               <span>{formatRelativeTime(comment.createdAt)}</span>
-              {comment.isEdited && <span className="text-gray-600">(edited)</span>}
+              {comment.isEdited && <span className="text-muted">(edited)</span>}
               {isPending && (
                 <span className="flex items-center gap-1 text-yellow-500">
                   <Clock className="w-3 h-3" />
@@ -143,7 +143,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 text-gray-500 hover:text-white transition-colors"
+              className="p-1 text-muted hover:text-white transition-colors"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
@@ -211,7 +211,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
               <h3 className="text-xs font-bold uppercase text-gray-400">Report Comment</h3>
               <button
                 onClick={() => setShowReportModal(false)}
-                className="text-gray-500 hover:text-white"
+                className="text-muted hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -448,11 +448,11 @@ export default function ArticleComments({
       {/* Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-gray-500" />
+          <MessageSquare className="w-4 h-4 text-muted" />
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Comments</h3>
-          <span className="text-xs text-gray-500 font-data tabular-nums">({commentCount})</span>
+          <span className="text-xs text-muted font-data tabular-nums">({commentCount})</span>
         </div>
-        <button onClick={() => setIsExpanded(false)} className="text-gray-500 hover:text-white">
+        <button onClick={() => setIsExpanded(false)} className="text-muted hover:text-white">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -472,7 +472,7 @@ export default function ArticleComments({
                 className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
               />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-600">
+                <span className="text-[10px] text-muted">
                   {editContent.length}/{MAX_COMMENT_LENGTH}
                 </span>
                 <div className="flex gap-2">
@@ -518,7 +518,7 @@ export default function ArticleComments({
                 />
               </div>
               <div className="flex items-center justify-between pl-10">
-                <span className="text-[10px] text-gray-600">
+                <span className="text-[10px] text-muted">
                   {newComment.length}/{MAX_COMMENT_LENGTH}
                 </span>
                 <button
@@ -538,7 +538,7 @@ export default function ArticleComments({
           )
         ) : (
           <div className="text-center py-3">
-            <p className="text-sm text-gray-500">Sign in to join the discussion</p>
+            <p className="text-sm text-muted">Sign in to join the discussion</p>
           </div>
         )}
       </div>
@@ -547,13 +547,13 @@ export default function ArticleComments({
       <div className="p-4">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+            <Loader2 className="w-5 h-5 animate-spin text-muted" />
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-            <p className="text-sm text-gray-500">No comments yet</p>
-            <p className="text-xs text-gray-600 mt-1">Be the first to share your thoughts</p>
+            <MessageSquare className="w-8 h-8 mx-auto mb-2 text-muted" />
+            <p className="text-sm text-muted">No comments yet</p>
+            <p className="text-xs text-muted mt-1">Be the first to share your thoughts</p>
           </div>
         ) : (
           <div>
@@ -603,7 +603,7 @@ export function CommentCount({ count, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors"
+      className="flex items-center gap-1 text-muted hover:text-gray-300 transition-colors"
     >
       <MessageSquare className="w-3.5 h-3.5" />
       <span className="text-[11px] font-data tabular-nums">{count}</span>

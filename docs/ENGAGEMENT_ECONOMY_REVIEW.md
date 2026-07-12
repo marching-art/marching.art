@@ -2,7 +2,7 @@
 
 > Generated: July 2026 (revised same month)
 > Scope: complete review of the user experience, gameplay process, and gamification elements, with a concrete plan for making CorpsCoin and XP valuable, giving new directors a guided path, and giving long-term directors goals worth chasing.
-> Assumption: **no real-money monetization.** The game is donation-supported (Buy Me a Coffee). CorpsCoin is a fully closed-loop currency — earned only by playing, spent only in-game. `MONETIZATION_ROADMAP.md` is deprecated; only its competitive-integrity principle carries forward.
+> Assumption: **no real-money monetization.** The game is donation-supported (Buy Me a Coffee). CorpsCoin is a fully closed-loop currency — earned only by playing, spent only in-game. The former `MONETIZATION_ROADMAP.md` has been removed; only its competitive-integrity principle carries forward.
 
 ---
 
@@ -63,7 +63,6 @@ That's the entire list. **8,500 CC of one-time lifetime spending** against an in
 | **Season completion XP** (top10 500 / top25 400 / top50 300 / completed 200)              | `getSeasonCompletionXP` defined, **never invoked**                                                                                                              | `xpCalculations.js:195`                                                             |
 | **CorpsCoin ledger + earning guide**                                                      | `getCorpsCoinHistory` and `getEarningOpportunities` implemented and deployed, **no frontend caller**                                                            | `economy.js:486, 525`; `index.js:240-241`                                           |
 | League entry fees                                                                         | `payLeagueEntryFee` implemented, not deployed, no UI                                                                                                            | `economy.js:436`                                                                    |
-| Stripe webhook                                                                            | Placeholder; logs analytics only, grants nothing                                                                                                                | `functions/src/webhooks/stripe.js`                                                  |
 | Execution system (equipment/morale/readiness)                                             | Typed client stubs in `functions.ts:182-212` with **no backend** (intentionally cut per `PRIORITIES.md`)                                                        | dead client code                                                                    |
 | XP display drift                                                                          | Frontend shows `weeklyParticipation: 100, leagueWin: 50` (`captionPricing.js:59-68`) — **half** the real backend values (200/100)                               | stale mirror                                                                        |
 
@@ -76,7 +75,7 @@ The practical consequence: **every season ends in silence.** No rank bonus, no c
 > - **CorpsCoin ledger + earning guide:** ✅ SHIPPED — `CorpsCoinModal.jsx` calls `getCorpsCoinHistory` and `getEarningOpportunities`.
 > - **XP display drift:** ✅ FIXED — `captionPricing.js` now mirrors the backend values (200/100). _However_ those backend values still never pay out (`awardXP` uninvoked) — see `PROGRESSION_ECONOMY_REDESIGN.md` Phase A, the top open bug.
 > - **League entry fees:** ⚠️ actually HALF-LIVE, contrary to this doc's "not deployed" — fees are charged into `settings.prizePool` on league create/join via `chargeEntryFeeInTransaction` (`functions/src/helpers/leagueEconomy.js`), but the payout side (`archiveSeasonResultsLogic`, `season.js:511`) is only reachable via the admin `manualTrigger` — automatic rollovers collect fees and **never pay the pool out**. The exported `payLeagueEntryFee` callable named here does not exist. See the execution plan.
-> - **Stripe webhook, execution-system stubs:** ⏳ unchanged (Stripe stays a placeholder — no real-money path, per this doc's own assumption).
+> - **Stripe webhook:** ✅ REMOVED — the dead placeholder handler and the `stripe` dependency are gone; the project is donation-only with no real-money path (per this doc's own assumption). **Execution-system stubs:** ⏳ unchanged.
 
 ### 1.3 XP: a road that ends at Level 10
 

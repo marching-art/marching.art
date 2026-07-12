@@ -61,14 +61,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+            className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {LeftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
               <LeftIcon className={iconSizes[inputSize]} />
             </div>
           )}
@@ -95,13 +95,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {(RightIcon || rightElement) && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">
               {rightElement || (RightIcon && <RightIcon className={iconSizes[inputSize]} />)}
             </div>
           )}
         </div>
         {(helperText || error) && (
-          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}>
+          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-muted'}`}>
             {error || helperText}
           </p>
         )}
@@ -133,7 +133,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+            className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
           >
             {label}
           </label>
@@ -158,7 +158,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {(helperText || error) && (
-          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}>
+          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-muted'}`}>
             {error || helperText}
           </p>
         )}
@@ -212,7 +212,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+            className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
           >
             {label}
           </label>
@@ -249,7 +249,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
         {(helperText || error) && (
-          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}>
+          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-muted'}`}>
             {error || helperText}
           </p>
         )}

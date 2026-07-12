@@ -40,7 +40,7 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
               <AlertTriangle className="w-4 h-4" />
               Confirm Delete
             </h2>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -56,7 +56,7 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
             <div className="text-center mb-4">
               <p className="text-sm text-gray-300 mb-2">You are about to delete:</p>
               <p className="text-lg font-bold text-white">{corpsName}</p>
-              <p className="text-xs text-gray-500">{CLASS_NAMES[corpsClass] || corpsClass}</p>
+              <p className="text-xs text-muted">{CLASS_NAMES[corpsClass] || corpsClass}</p>
             </div>
 
             {/* Warning */}

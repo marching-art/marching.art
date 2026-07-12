@@ -42,10 +42,10 @@ export default function PodiumJourneyPanel() {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-2">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <Map className="w-3 h-3" /> Rookie Journey
         </span>
-        <span className="text-[10px] text-gray-500 tabular-nums">
+        <span className="text-[10px] text-muted tabular-nums">
           {doneCount}/{PODIUM_JOURNEY.length}
         </span>
       </div>
@@ -71,7 +71,7 @@ export default function PodiumJourneyPanel() {
                 <span className={`text-[11px] font-bold ${done ? 'text-gray-400' : 'text-white'}`}>
                   {step.title}
                 </span>
-                <span className="text-[10px] text-gray-500"> · {step.detail}</span>
+                <span className="text-[10px] text-muted"> · {step.detail}</span>
               </span>
               {!done && (
                 <button

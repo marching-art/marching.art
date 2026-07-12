@@ -172,7 +172,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
               </div>
               <div>
                 <h3 className="font-bold text-white">{step.title}</h3>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   Step {currentStep + 1} of {TOUR_STEPS.length}
                 </p>
               </div>

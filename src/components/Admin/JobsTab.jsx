@@ -42,26 +42,26 @@ const EconomyStatsPanel = ({ refreshKey }) => {
       <SectionHeader title="Economy — Mint vs Sink" icon={Coins} />
       <div className="p-3">
         {!stats ? (
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-muted">
             No stats yet — run “Refresh Economy Stats” below (also runs automatically every Monday).
           </p>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2 mb-3">
               <div className="bg-[#111] border border-[#333] p-2 text-center">
-                <p className="text-[9px] uppercase tracking-wider text-gray-500">Minted</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted">Minted</p>
                 <p className="text-sm font-bold text-green-500 font-data tabular-nums">
                   +{(stats.minted || 0).toLocaleString()}
                 </p>
               </div>
               <div className="bg-[#111] border border-[#333] p-2 text-center">
-                <p className="text-[9px] uppercase tracking-wider text-gray-500">Sunk</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted">Sunk</p>
                 <p className="text-sm font-bold text-red-500 font-data tabular-nums">
                   −{(stats.sunk || 0).toLocaleString()}
                 </p>
               </div>
               <div className="bg-[#111] border border-[#333] p-2 text-center">
-                <p className="text-[9px] uppercase tracking-wider text-gray-500">Net</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted">Net</p>
                 <p
                   className={`text-sm font-bold font-data tabular-nums ${
                     (stats.net || 0) > 0 ? 'text-yellow-500' : 'text-emerald-400'
@@ -81,12 +81,12 @@ const EconomyStatsPanel = ({ refreshKey }) => {
                   >
                     {t.amount >= 0 ? '+' : ''}
                     {t.amount.toLocaleString()} CC
-                    <span className="text-gray-600"> · {t.count}×</span>
+                    <span className="text-muted"> · {t.count}×</span>
                   </span>
                 </div>
               ))}
             </div>
-            <p className="text-[9px] text-gray-600 mt-2">
+            <p className="text-[9px] text-muted mt-2">
               Trailing {stats.windowDays}d · {stats.transactions?.toLocaleString()} transactions ·{' '}
               {stats.activeWallets?.toLocaleString()} active wallets
               {computedAt ? ` · computed ${computedAt.toLocaleString()}` : ''}
@@ -282,7 +282,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
         <SectionHeader title="News Generation" icon={Newspaper} />
         <div className="p-3">
-          <p className="text-[11px] text-gray-500 mb-2">
+          <p className="text-[11px] text-muted mb-2">
             Generate news articles for a specific day (1-49). Uses current season data.
           </p>
           <div className="flex gap-2">
@@ -315,7 +315,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
         <SectionHeader title="Season Summary Article" icon={BookOpen} />
         <div className="p-3">
-          <p className="text-[11px] text-gray-500 mb-2">
+          <p className="text-[11px] text-muted mb-2">
             Generate the season-to-date summary (Article 6) for a day (15-49). Auto-publishes on
             dark days; use this to backfill a day already scored or to test.
           </p>
@@ -376,7 +376,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
         <SectionHeader title="Duplicate Corps Sweep" icon={AlertTriangle} />
         <div className="p-3 space-y-3">
-          <p className="text-[11px] text-gray-500 leading-relaxed">
+          <p className="text-[11px] text-muted leading-relaxed">
             Scan every active corps for name collisions. The higher-tier corps wins (World &gt; Open
             &gt; A &gt; SoundSport, ties broken by oldest createdAt). Each loser is flagged so the
             director sees a rename modal on next dashboard load and is hard-blocked from other corps
@@ -398,25 +398,25 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
             <div className="bg-[#111] border border-[#333] p-3 space-y-2">
               <div className="grid grid-cols-4 gap-2 text-[10px] uppercase tracking-wider">
                 <div>
-                  <div className="text-gray-500">Scanned</div>
+                  <div className="text-muted">Scanned</div>
                   <div className="text-sm text-white font-data tabular-nums">
                     {sweepResult.scanned}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500">Flagged</div>
+                  <div className="text-muted">Flagged</div>
                   <div className="text-sm text-red-400 font-data tabular-nums">
                     {sweepResult.flagged}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500">Cleared</div>
+                  <div className="text-muted">Cleared</div>
                   <div className="text-sm text-green-400 font-data tabular-nums">
                     {sweepResult.cleared}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500">Directors</div>
+                  <div className="text-muted">Directors</div>
                   <div className="text-sm text-white font-data tabular-nums">
                     {sweepResult.directorsAffected}
                   </div>
@@ -424,12 +424,12 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
               </div>
               {sweepResult.losers?.length > 0 && (
                 <div className="border-t border-[#333] pt-2 max-h-64 overflow-y-auto">
-                  <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                  <div className="text-[10px] uppercase tracking-wider text-muted mb-1">
                     Flagged Corps
                   </div>
                   <table className="w-full text-[11px]">
                     <thead>
-                      <tr className="text-gray-500 text-left">
+                      <tr className="text-muted text-left">
                         <th className="font-normal pb-1">Corps</th>
                         <th className="font-normal pb-1">Class</th>
                         <th className="font-normal pb-1">Loses To</th>
@@ -442,8 +442,8 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
                           className="border-t border-[#222]"
                         >
                           <td className="py-1 pr-2">{l.corpsName}</td>
-                          <td className="py-1 pr-2 text-gray-500">{l.corpsClass}</td>
-                          <td className="py-1 text-gray-500">
+                          <td className="py-1 pr-2 text-muted">{l.corpsClass}</td>
+                          <td className="py-1 text-muted">
                             {l.winner.corpsName} ({l.winner.corpsClass})
                           </td>
                         </tr>

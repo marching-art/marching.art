@@ -26,12 +26,12 @@ const CaptionDominationBar = ({
         <span className="text-[10px] font-bold text-gray-400 w-8">{caption}</span>
         <div className="flex items-center gap-2 text-[10px]">
           <span
-            className={`font-bold ${user1Wins > user2Wins ? 'text-green-400' : 'text-gray-500'}`}
+            className={`font-bold ${user1Wins > user2Wins ? 'text-green-400' : 'text-muted'}`}
           >
             {user1Wins}
           </span>
-          <span className="text-gray-600">-</span>
-          <span className={`font-bold ${user2Wins > user1Wins ? 'text-red-400' : 'text-gray-500'}`}>
+          <span className="text-muted">-</span>
+          <span className={`font-bold ${user2Wins > user1Wins ? 'text-red-400' : 'text-muted'}`}>
             {user2Wins}
           </span>
         </div>
@@ -92,7 +92,7 @@ const MatchupHistoryItem = ({
       }`}
     >
       <div className="flex items-center gap-3">
-        <span className="text-[10px] font-bold text-gray-500 w-8">W{week}</span>
+        <span className="text-[10px] font-bold text-muted w-8">W{week}</span>
         <div className="flex items-center gap-1.5">
           {isClutch && <Flame className="w-3 h-3 text-orange-400" />}
           {isBlowout && <Zap className="w-3 h-3 text-red-400" />}
@@ -109,14 +109,14 @@ const MatchupHistoryItem = ({
       <div className="flex items-center gap-4">
         {/* Battle Points */}
         <div className="text-center">
-          <p className="text-[9px] text-gray-500 uppercase">BP</p>
+          <p className="text-[9px] text-muted uppercase">BP</p>
           <p className="text-sm font-bold font-data tabular-nums">
             <span
               className={user1BattlePoints > user2BattlePoints ? 'text-green-400' : 'text-gray-400'}
             >
               {user1BattlePoints}
             </span>
-            <span className="text-gray-600">-</span>
+            <span className="text-muted">-</span>
             <span
               className={user2BattlePoints > user1BattlePoints ? 'text-red-400' : 'text-gray-400'}
             >
@@ -127,7 +127,7 @@ const MatchupHistoryItem = ({
 
         {/* Total Scores */}
         <div className="text-center">
-          <p className="text-[9px] text-gray-500 uppercase">Score</p>
+          <p className="text-[9px] text-muted uppercase">Score</p>
           <p className="text-sm font-data tabular-nums text-gray-400">
             {user1Score.toFixed(1)} - {user2Score.toFixed(1)}
           </p>
@@ -169,9 +169,9 @@ const RivalryHistoryCard = ({
   if (!headToHead || headToHead.totalMatchups === 0) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] p-6 text-center">
-        <Swords className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+        <Swords className="w-8 h-8 text-muted mx-auto mb-2" />
         <p className="text-sm text-gray-400">No head-to-head history yet</p>
-        <p className="text-xs text-gray-600 mt-1">
+        <p className="text-xs text-muted mt-1">
           This is the first matchup between these directors
         </p>
       </div>
@@ -208,12 +208,12 @@ const RivalryHistoryCard = ({
       >
         <div className="grid grid-cols-4 gap-3 text-center">
           <div>
-            <p className="text-[10px] text-gray-500 uppercase">Series</p>
+            <p className="text-[10px] text-muted uppercase">Series</p>
             <p className="text-sm font-bold font-data tabular-nums">
               <span className={user1Wins > user2Wins ? 'text-green-400' : 'text-gray-400'}>
                 {user1Wins}
               </span>
-              <span className="text-gray-600">-</span>
+              <span className="text-muted">-</span>
               <span className={user2Wins > user1Wins ? 'text-red-400' : 'text-gray-400'}>
                 {user2Wins}
               </span>
@@ -221,28 +221,28 @@ const RivalryHistoryCard = ({
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-gray-500 uppercase">Total BP</p>
+            <p className="text-[10px] text-muted uppercase">Total BP</p>
             <p className="text-sm font-bold font-data tabular-nums">
               <span className="text-green-400">{user1TotalBattlePoints}</span>
-              <span className="text-gray-600">-</span>
+              <span className="text-muted">-</span>
               <span className="text-red-400">{user2TotalBattlePoints}</span>
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-gray-500 uppercase">Cap Lead</p>
+            <p className="text-[10px] text-muted uppercase">Cap Lead</p>
             <p className="text-sm font-bold text-purple-400">
               {captionDominationCounts.user1Dominant}-{captionDominationCounts.user2Dominant}
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-gray-500 uppercase">Streak</p>
+            <p className="text-[10px] text-muted uppercase">Streak</p>
             <p
               className={`text-sm font-bold ${
                 currentStreak?.userId === user1Id
                   ? 'text-green-400'
                   : currentStreak?.userId === user2Id
                     ? 'text-red-400'
-                    : 'text-gray-500'
+                    : 'text-muted'
               }`}
             >
               {currentStreak ? `${currentStreak.count}` : '—'}
@@ -267,7 +267,7 @@ const RivalryHistoryCard = ({
             <Swords className="w-3.5 h-3.5 text-red-400" />
             Rivalry History
           </h3>
-          <span className="text-[10px] text-gray-500">
+          <span className="text-[10px] text-muted">
             {totalMatchups} matchup{totalMatchups !== 1 ? 's' : ''}
           </span>
         </div>
@@ -290,12 +290,12 @@ const RivalryHistoryCard = ({
               >
                 {user1Wins}
               </p>
-              <p className="text-[10px] text-gray-500 truncate max-w-[80px]">{user1DisplayName}</p>
+              <p className="text-[10px] text-muted truncate max-w-[80px]">{user1DisplayName}</p>
             </div>
 
             <div className="text-center px-4">
               {ties > 0 && <p className="text-lg font-bold text-yellow-400">{ties}</p>}
-              <p className="text-[10px] text-gray-500 uppercase">{ties > 0 ? 'Ties' : 'vs'}</p>
+              <p className="text-[10px] text-muted uppercase">{ties > 0 ? 'Ties' : 'vs'}</p>
             </div>
 
             <div className="text-center flex-1">
@@ -310,7 +310,7 @@ const RivalryHistoryCard = ({
               >
                 {user2Wins}
               </p>
-              <p className="text-[10px] text-gray-500 truncate max-w-[80px]">{user2DisplayName}</p>
+              <p className="text-[10px] text-muted truncate max-w-[80px]">{user2DisplayName}</p>
             </div>
           </div>
 
@@ -347,17 +347,17 @@ const RivalryHistoryCard = ({
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-[#111] p-2.5 text-center">
             <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
-            <p className="text-[10px] text-gray-500 uppercase mb-0.5">Total BP</p>
+            <p className="text-[10px] text-muted uppercase mb-0.5">Total BP</p>
             <p className="text-sm font-bold font-data tabular-nums">
               <span className="text-green-400">{user1TotalBattlePoints}</span>
-              <span className="text-gray-600">-</span>
+              <span className="text-muted">-</span>
               <span className="text-red-400">{user2TotalBattlePoints}</span>
             </p>
           </div>
 
           <div className="bg-[#111] p-2.5 text-center">
             <TrendingUp className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-            <p className="text-[10px] text-gray-500 uppercase mb-0.5">Avg Margin</p>
+            <p className="text-[10px] text-muted uppercase mb-0.5">Avg Margin</p>
             <p
               className={`text-sm font-bold ${
                 avgMargin > 0 ? 'text-green-400' : avgMargin < 0 ? 'text-red-400' : 'text-gray-400'
@@ -370,7 +370,7 @@ const RivalryHistoryCard = ({
 
           <div className="bg-[#111] p-2.5 text-center">
             <Flame className="w-4 h-4 text-orange-400 mx-auto mb-1" />
-            <p className="text-[10px] text-gray-500 uppercase mb-0.5">Streak</p>
+            <p className="text-[10px] text-muted uppercase mb-0.5">Streak</p>
             {currentStreak ? (
               <p
                 className={`text-sm font-bold flex items-center justify-center gap-0.5 ${
@@ -378,7 +378,7 @@ const RivalryHistoryCard = ({
                 }`}
               >
                 {currentStreak.count}
-                <span className="text-[10px] text-gray-500">
+                <span className="text-[10px] text-muted">
                   (
                   {currentStreak.userId === user1Id
                     ? user1DisplayName.slice(0, 3)
@@ -387,19 +387,19 @@ const RivalryHistoryCard = ({
                 </span>
               </p>
             ) : (
-              <p className="text-sm font-bold text-gray-500">—</p>
+              <p className="text-sm font-bold text-muted">—</p>
             )}
           </div>
         </div>
 
         {/* Caption Domination */}
         <div>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-1.5">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
             <Target className="w-3 h-3 text-purple-400" />
             Caption Domination
           </h4>
           <div className="bg-[#111] p-3">
-            <div className="flex items-center justify-between mb-2 text-[10px] text-gray-500">
+            <div className="flex items-center justify-between mb-2 text-[10px] text-muted">
               <span className="truncate max-w-[80px]">{user1DisplayName}</span>
               <span className="truncate max-w-[80px]">{user2DisplayName}</span>
             </div>
@@ -417,17 +417,17 @@ const RivalryHistoryCard = ({
               );
             })}
             <div className="mt-2 pt-2 border-t border-[#222] flex items-center justify-between text-[10px]">
-              <span className="text-gray-500">Captions Led:</span>
+              <span className="text-muted">Captions Led:</span>
               <span>
                 <span className="text-green-400 font-bold">
                   {captionDominationCounts.user1Dominant}
                 </span>
-                <span className="text-gray-600 mx-1">-</span>
+                <span className="text-muted mx-1">-</span>
                 <span className="text-red-400 font-bold">
                   {captionDominationCounts.user2Dominant}
                 </span>
                 {captionDominationCounts.tied > 0 && (
-                  <span className="text-gray-500 ml-1">({captionDominationCounts.tied} tied)</span>
+                  <span className="text-muted ml-1">({captionDominationCounts.tied} tied)</span>
                 )}
               </span>
             </div>
@@ -436,7 +436,7 @@ const RivalryHistoryCard = ({
 
         {/* Matchup History */}
         <div>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-1.5">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
             <Award className="w-3 h-3 text-yellow-400" />
             Match History
           </h4>

@@ -12,7 +12,7 @@ function ConditionBar({ label, value, icon: Icon, color }) {
     <div className="flex items-center gap-2 flex-1 min-w-[120px]">
       <Icon className={`w-3.5 h-3.5 ${color}`} />
       <div className="flex-1">
-        <div className="flex justify-between text-[10px] text-gray-500 uppercase font-bold">
+        <div className="flex justify-between text-[10px] text-muted uppercase font-bold">
           <span>{label}</span>
           <span className="tabular-nums">{Math.round(value)}</span>
         </div>
@@ -105,7 +105,7 @@ export default function RehearsalPlanner({ podium }) {
       {/* Header: day type + condition strip */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
             {isSpringTraining
               ? `Spring training · Day ${data.calendarDay}`
               : seasonOver
@@ -174,7 +174,7 @@ export default function RehearsalPlanner({ podium }) {
                       )}
                     </span>
                   </div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">{block.detail}</div>
+                  <div className="text-[10px] text-muted mt-0.5">{block.detail}</div>
                 </button>
               );
             })}
@@ -189,7 +189,7 @@ export default function RehearsalPlanner({ podium }) {
                   <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
                 )}
               </div>
-              <div className="text-[10px] text-gray-500 mt-0.5">
+              <div className="text-[10px] text-muted mt-0.5">
                 Convert a block to Corps Budget income (+3 Budget per block) — no caption growth
               </div>
             </button>
@@ -199,7 +199,7 @@ export default function RehearsalPlanner({ podium }) {
         {/* Schedule panel: today's block count + running order */}
         <div className="lg:w-56 shrink-0 flex flex-col rounded-none border border-[#333] bg-[#141414] p-3">
           <div className="flex items-baseline justify-between">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-muted">
               Blocks today
             </span>
             <span className="text-lg font-bold text-white tabular-nums leading-none">
@@ -214,7 +214,7 @@ export default function RehearsalPlanner({ podium }) {
                   key={`${b}-${i}`}
                   className="flex items-center gap-1.5 text-[10px] text-gray-300"
                 >
-                  <span className="text-gray-600 tabular-nums w-4 text-right shrink-0">
+                  <span className="text-muted tabular-nums w-4 text-right shrink-0">
                     {i + 1}.
                   </span>
                   <span className="truncate">
@@ -224,7 +224,7 @@ export default function RehearsalPlanner({ podium }) {
                 </div>
               ))
             ) : (
-              <div className="text-[10px] text-gray-600 italic">
+              <div className="text-[10px] text-muted italic">
                 {today.restDay ? 'Rest day declared' : 'No blocks yet'}
               </div>
             )}

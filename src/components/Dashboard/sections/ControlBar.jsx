@@ -102,7 +102,7 @@ const ControlBar = memo(
                   <button
                     key={classId}
                     onClick={() => onCreateCorps?.(classId)}
-                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors press-feedback"
+                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none text-muted hover:text-gray-400 border border-dashed border-[#444] transition-colors press-feedback"
                   >
                     {CLASS_SHORT_LABELS[classId]}
                   </button>
@@ -117,7 +117,7 @@ const ControlBar = memo(
                   className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                     isActive
                       ? 'bg-[#0057B8] text-white'
-                      : 'text-gray-500 hover:text-white hover:bg-white/5'
+                      : 'text-muted hover:text-white hover:bg-white/5'
                   }`}
                 >
                   {CLASS_SHORT_LABELS[classId]}
@@ -131,7 +131,7 @@ const ControlBar = memo(
                   activeCorpsClass === 'podiumClass'
                     ? 'bg-[#8a6d1a] text-white'
                     : corps?.podiumClass
-                      ? 'text-gray-500 hover:text-white hover:bg-white/5'
+                      ? 'text-muted hover:text-white hover:bg-white/5'
                       : 'text-[#c9a227]/70 hover:text-[#c9a227] border border-dashed border-[#8a6d1a]/50'
                 }`}
               >
@@ -240,7 +240,7 @@ const ControlBar = memo(
                   {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
                 </button>
               ) : (
-                <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                <span className="text-[10px] text-muted flex items-center gap-1">
                   {nextUnlock.className}: {nextUnlock.coinCost}CC
                   {nextUnlock.seasonsUntil != null && nextUnlock.seasonsUntil > 0 && (
                     <span

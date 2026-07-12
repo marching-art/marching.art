@@ -57,7 +57,7 @@ const LEVEL_STYLES = {
     container: 'bg-[#1a1a1a] border-[#333]',
     icon: 'bg-[#0057B8]/20 text-[#0057B8]',
     text: 'text-gray-300',
-    subtext: 'text-gray-500',
+    subtext: 'text-muted',
     pulse: '',
   },
 };

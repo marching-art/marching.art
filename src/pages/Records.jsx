@@ -38,17 +38,17 @@ const RecordRow = ({ category, record }) => {
     <div className="px-4 py-3 flex items-center gap-3">
       <Icon className={`w-4 h-4 flex-shrink-0 ${category.color}`} />
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500">{category.label}</p>
+        <p className="text-[10px] uppercase tracking-wider text-muted">{category.label}</p>
         {record ? (
           <p className="text-sm text-white truncate">
             <span className="font-bold">{record.corpsName || 'Unknown Corps'}</span>
             {record.displayName && <span className="text-gray-400"> — {record.displayName}</span>}
           </p>
         ) : (
-          <p className="text-sm text-gray-600">Unclaimed — make history</p>
+          <p className="text-sm text-muted">Unclaimed — make history</p>
         )}
         {record && (
-          <p className="text-[10px] text-gray-600">
+          <p className="text-[10px] text-muted">
             {formatSeasonName(record.seasonName)}
             {record.day ? ` · Day ${record.day}` : ''}
           </p>
@@ -88,7 +88,7 @@ const Records = () => {
               <h1 className="text-lg font-bold text-white uppercase tracking-wider">
                 Records Book
               </h1>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 All-time marks across every season. Records update after each night's scoring.
               </p>
             </div>
@@ -103,7 +103,7 @@ const Records = () => {
         </div>
 
         {loading ? (
-          <div className="py-16 text-center text-sm text-gray-500">Opening the record books...</div>
+          <div className="py-16 text-center text-sm text-muted">Opening the record books...</div>
         ) : (
           <div className="space-y-6">
             {RECORD_CLASSES.map((cls) => {
@@ -129,7 +129,7 @@ const Records = () => {
               );
             })}
 
-            <p className="text-[10px] text-gray-600 text-center">
+            <p className="text-[10px] text-muted text-center">
               SoundSport competes for medals, not records — its corps march for the love of it.
             </p>
           </div>

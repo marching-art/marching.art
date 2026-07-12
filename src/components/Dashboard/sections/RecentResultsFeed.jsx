@@ -36,7 +36,7 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
               <div key={idx} className="px-4 py-3 flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white truncate">{result.eventName}</p>
-                  <p className="text-[10px] text-gray-500">{result.date || 'Recent'}</p>
+                  <p className="text-[10px] text-muted">{result.date || 'Recent'}</p>
                 </div>
                 <div className="text-right ml-3">
                   {isSoundSport && rating ? (
@@ -56,7 +56,7 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
                         {result.score?.toFixed(2)}
                       </p>
                       {result.placement && (
-                        <p className="text-[10px] text-gray-500">#{result.placement}</p>
+                        <p className="text-[10px] text-muted">#{result.placement}</p>
                       )}
                     </>
                   )}
@@ -67,9 +67,9 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
         </div>
       ) : (
         <div className="p-6 text-center">
-          <Activity className="w-6 h-6 text-gray-600 mx-auto mb-2" />
-          <p className="text-xs text-gray-500">No results yet</p>
-          <p className="text-[10px] text-gray-600 mt-1">Compete in shows to see results</p>
+          <Activity className="w-6 h-6 text-muted mx-auto mb-2" />
+          <p className="text-xs text-muted">No results yet</p>
+          <p className="text-[10px] text-muted mt-1">Compete in shows to see results</p>
         </div>
       )}
     </div>

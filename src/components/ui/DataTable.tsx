@@ -186,7 +186,7 @@ const SkeletonRow = <T,>({ columns }: SkeletonRowProps<T>) => (
 
 const DefaultEmptyState: React.FC = () => (
   <div className="flex flex-col items-center justify-center py-8 text-center">
-    <p className="text-sm text-gray-500">No data available</p>
+    <p className="text-sm text-muted">No data available</p>
   </div>
 );
 
@@ -251,7 +251,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                     key={column.key}
                     scope="col"
                     className={`
-                      px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider
+                      px-2 py-2 text-[10px] font-bold text-muted uppercase tracking-wider
                       sticky top-0 bg-[#1a1a1a] z-20
                       ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
                       ${alignStyles[column.align || 'left']}
@@ -306,7 +306,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                     key={column.key}
                     scope="col"
                     className={`
-                      px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider
+                      px-2 py-2 text-[10px] font-bold text-muted uppercase tracking-wider
                       sticky top-0 bg-[#1a1a1a] z-20
                       ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
                       ${isRankColumn ? 'text-center w-12' : alignStyles[column.align || 'left']}

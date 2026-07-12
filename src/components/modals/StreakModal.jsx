@@ -73,7 +73,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                 Login Streak
               </h2>
             </div>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -81,7 +81,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
           {/* Body */}
           <div className="p-4 space-y-4">
             {loading ? (
-              <div className="py-8 text-center text-sm text-gray-500">Loading streak...</div>
+              <div className="py-8 text-center text-sm text-muted">Loading streak...</div>
             ) : (
               <>
                 {/* Current streak */}
@@ -91,7 +91,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                   />
                   <div>
                     <p className="text-3xl font-bold text-white font-data tabular-nums">{streak}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-gray-500">
+                    <p className="text-[10px] uppercase tracking-wider text-muted">
                       day{streak === 1 ? '' : 's'} in a row
                     </p>
                   </div>
@@ -114,12 +114,12 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                 {/* Next milestone */}
                 {status?.nextMilestone && (
                   <div className="p-3 bg-[#0a0a0a] border border-[#333]">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
                       Next Milestone
                     </p>
                     <p className="text-sm text-white font-bold">
                       {status.nextMilestone.rewards.title}{' '}
-                      <span className="text-gray-500 font-normal">
+                      <span className="text-muted font-normal">
                         — {status.nextMilestone.daysRemaining} day
                         {status.nextMilestone.daysRemaining === 1 ? '' : 's'} away
                       </span>
@@ -136,7 +136,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                 <div className="p-3 bg-[#0a0a0a] border border-[#333]">
                   <div className="flex items-center gap-2 mb-2">
                     <Snowflake className="w-4 h-4 text-cyan-400" />
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
                       Streak Freeze
                     </p>
                   </div>
@@ -162,7 +162,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                           className={`w-full h-9 flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-wider transition-colors ${
                             canAfford
                               ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                              : 'bg-[#222] text-gray-600 cursor-not-allowed'
+                              : 'bg-[#222] text-muted cursor-not-allowed'
                           }`}
                         >
                           <Coins className="w-4 h-4" />
@@ -173,7 +173,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                               : `Need ${freezeCost} CC (you have ${corpsCoin.toLocaleString()})`}
                         </button>
                       ) : (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted">
                           On cooldown — available in {status?.freezeCooldownDays} day
                           {status?.freezeCooldownDays === 1 ? '' : 's'}.
                         </p>

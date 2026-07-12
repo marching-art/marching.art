@@ -107,11 +107,11 @@ const HowToPlay = () => {
             </div>
             <div>
               <h1 className="text-sm font-bold text-white">Game Guide</h1>
-              <p className="text-[10px] text-gray-500">Everything you need to know, in order</p>
+              <p className="text-[10px] text-muted">Everything you need to know, in order</p>
             </div>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
             <input
               type="search"
               inputMode="search"
@@ -135,7 +135,7 @@ const HowToPlay = () => {
                   className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-colors ${
                     activeId === s.id
                       ? 'text-white bg-[#0057B8]'
-                      : 'text-gray-500 hover:text-gray-300'
+                      : 'text-muted hover:text-gray-300'
                   }`}
                 >
                   {s.label}
@@ -156,7 +156,7 @@ const HowToPlay = () => {
           <div className="max-w-5xl mx-auto px-4 flex gap-6">
             {/* Desktop section rail */}
             <nav className="hidden lg:block w-52 flex-shrink-0 sticky top-0 self-start pt-6">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-600 px-3 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted px-3 mb-2">
                 Sections
               </p>
               <ul className="space-y-0.5">
@@ -170,7 +170,7 @@ const HowToPlay = () => {
                         className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-none transition-colors ${
                           active
                             ? 'text-white bg-[#0057B8]/15 border-l-2 border-[#0057B8]'
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-l-2 border-transparent'
+                            : 'text-muted hover:text-gray-300 hover:bg-white/5 border-l-2 border-transparent'
                         }`}
                       >
                         <Icon
@@ -196,15 +196,15 @@ const HowToPlay = () => {
               <div className="border-t border-white/10 pt-4">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Budgets</p>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Budgets</p>
                     <p className="text-xs text-white font-mono">90/60/120/150</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Unlocks</p>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Unlocks</p>
                     <p className="text-xs text-white font-mono">1/2/3 seasons</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Captions</p>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Captions</p>
                     <p className="text-xs text-white font-mono">8 per lineup</p>
                   </div>
                 </div>

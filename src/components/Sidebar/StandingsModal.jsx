@@ -30,7 +30,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
               Full Standings
             </h2>
             {displayDay && (
-              <p className="text-[10px] font-data text-gray-500 mt-0.5">Season Day {displayDay}</p>
+              <p className="text-[10px] font-data text-muted mt-0.5">Season Day {displayDay}</p>
             )}
           </div>
           <button
@@ -59,7 +59,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
                   <div className="flex items-center gap-3">
                     <span
                       className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-none ${
-                        row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
+                        row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-muted'
                       }`}
                     >
                       {row.rank}
@@ -84,7 +84,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
                           ? 'text-green-500'
                           : row.direction === 'down'
                             ? 'text-red-500'
-                            : 'text-gray-500'
+                            : 'text-muted'
                       }`}
                     >
                       {row.direction === 'up' && <TrendingUp className="w-3 h-3" />}
@@ -96,7 +96,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
                         e.stopPropagation();
                         onYoutubeClick(row.sourceYear, row.corpsName);
                       }}
-                      className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+                      className="p-1 text-muted hover:text-red-500 transition-colors"
                       title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                     >
                       <Play className="w-4 h-4" />
@@ -110,7 +110,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex-shrink-0">
-          <p className="text-[10px] font-data text-gray-500 text-center">
+          <p className="text-[10px] font-data text-muted text-center">
             {liveScores.length} of 25 corps with scores
           </p>
         </div>

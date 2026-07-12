@@ -399,8 +399,8 @@ const Profile = () => {
     return (
       <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
         <div className="text-center">
-          <User className="w-10 h-10 text-gray-600 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">{usernameResolveError}</p>
+          <User className="w-10 h-10 text-muted mx-auto mb-2" />
+          <p className="text-sm text-muted">{usernameResolveError}</p>
         </div>
       </div>
     );
@@ -412,7 +412,7 @@ const Profile = () => {
       <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
         <div className="text-center">
           <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-xs text-gray-500">Loading profile...</p>
+          <p className="text-xs text-muted">Loading profile...</p>
         </div>
       </div>
     );
@@ -437,8 +437,8 @@ const Profile = () => {
     return (
       <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
         <div className="text-center">
-          <User className="w-10 h-10 text-gray-600 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Profile not found</p>
+          <User className="w-10 h-10 text-muted mx-auto mb-2" />
+          <p className="text-sm text-muted">Profile not found</p>
         </div>
       </div>
     );
@@ -518,7 +518,7 @@ const Profile = () => {
 
           {/* Legal links — restored here so signed-in users always have a path
               to Privacy & Terms (they used to live in the home header). */}
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-600">
+          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted">
             <Link to="/privacy" className="hover:text-gray-400 transition-colors">
               Privacy
             </Link>

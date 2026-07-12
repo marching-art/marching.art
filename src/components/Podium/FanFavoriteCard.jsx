@@ -61,7 +61,7 @@ export default function FanFavoriteCard() {
           <Heart className="w-3 h-3" /> {title}
         </span>
         {data.stage !== 'decided' && (
-          <span className="text-[9px] text-gray-600">Cosmetic only — one vote per ballot</span>
+          <span className="text-[9px] text-muted">Cosmetic only — one vote per ballot</span>
         )}
       </div>
 
@@ -91,7 +91,7 @@ export default function FanFavoriteCard() {
                   <>
                     {isMyVote && '♥ '}
                     {candidate.corpsName || 'Unknown corps'}
-                    <span className="text-gray-600">
+                    <span className="text-muted">
                       {' '}
                       · {DIVISION_SHORT[candidate.division] || 'A'}
                     </span>
@@ -101,7 +101,7 @@ export default function FanFavoriteCard() {
             );
           })}
           {(data.candidates || []).length === 0 && (
-            <span className="text-[10px] text-gray-600">
+            <span className="text-[10px] text-muted">
               Candidates appear once the major&apos;s scores land.
             </span>
           )}

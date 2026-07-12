@@ -132,11 +132,19 @@ const NavItem = ({ to, icon: Icon, label }) => (
 // TICKER BAR - Fixed h-8 (Sub Nav) - Sports Stats Style
 // =============================================================================
 
-// Class colors for styling
-const CLASS_COLORS = {
-  worldClass: { bg: 'blue', text: 'blue' },
-  openClass: { bg: 'emerald', text: 'emerald' },
-  aClass: { bg: 'orange', text: 'orange' },
+// Class colors for styling.
+// IMPORTANT: these must be complete, static class strings — Tailwind's JIT
+// compiler only sees class names that appear verbatim in the source. The old
+// interpolated form (`bg-${color}-500/20`) was purged from the build, so the
+// Open Class (emerald) chips in particular rendered with no color at all.
+const CLASS_STYLES = {
+  worldClass: { chip: 'bg-blue-500/20 border-blue-500/30', text: 'text-blue-400' },
+  openClass: { chip: 'bg-emerald-500/20 border-emerald-500/30', text: 'text-emerald-400' },
+  aClass: { chip: 'bg-orange-500/20 border-orange-500/30', text: 'text-orange-400' },
+};
+const DEFAULT_CLASS_STYLE = {
+  chip: 'bg-purple-500/20 border-purple-500/30',
+  text: 'text-purple-400',
 };
 
 // Medal colors for SoundSport
@@ -239,7 +247,7 @@ const TickerBar = () => {
   const TrendIndicator = ({ trend }) => {
     if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-500" />;
     if (trend === 'down') return <TrendingDown className="w-3 h-3 text-red-500" />;
-    return <Minus className="w-3 h-3 text-gray-500" />;
+    return <Minus className="w-3 h-3 text-muted" />;
   };
 
   // Loading state
@@ -247,7 +255,7 @@ const TickerBar = () => {
     return (
       <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
-          <span className="text-gray-500 animate-pulse">Loading scores...</span>
+          <span className="text-muted animate-pulse">Loading scores...</span>
         </div>
       </div>
     );
@@ -258,7 +266,7 @@ const TickerBar = () => {
     return (
       <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
-          <span className="text-gray-500">No scores available yet</span>
+          <span className="text-muted">No scores available yet</span>
         </div>
       </div>
     );
@@ -271,7 +279,7 @@ const TickerBar = () => {
 
     const { type, classKey, label } = section;
     const classData = classKey ? tickerData.byClass?.[classKey] : null;
-    const colors = classKey ? CLASS_COLORS[classKey] : { bg: 'purple', text: 'purple' };
+    const colors = (classKey && CLASS_STYLES[classKey]) || DEFAULT_CLASS_STYLE;
 
     switch (type) {
       case 'scores':
@@ -279,10 +287,10 @@ const TickerBar = () => {
         return (
           <>
             <div
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 border ${colors.chip} rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
             >
-              <Trophy className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
-              <span className={`text-${colors.text}-400 whitespace-nowrap`}>
+              <Trophy className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${colors.text}`} />
+              <span className={`${colors.text} whitespace-nowrap`}>
                 {label} {tickerData.dayLabel}
               </span>
             </div>
@@ -340,10 +348,10 @@ const TickerBar = () => {
         return (
           <>
             <div
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 border ${colors.chip} rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
             >
-              <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
-              <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Leaders</span>
+              <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${colors.text}`} />
+              <span className={`${colors.text} whitespace-nowrap`}>{label} Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData?.leaders?.slice(0, 8).map((item, idx) => (
@@ -470,13 +478,13 @@ const TickerBar = () => {
           return (
             <>
               <div
-                className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 border ${colors.chip} rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
               >
-                <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
-                <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>
+                <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${colors.text}`} />
+                <span className={`${colors.text} whitespace-nowrap`}>{label} Movers</span>
               </div>
               <div className="w-px h-4 bg-[#333]" />
-              <span className="text-gray-500 text-xs">No significant moves today</span>
+              <span className="text-muted text-xs">No significant moves today</span>
             </>
           );
         }
@@ -484,10 +492,10 @@ const TickerBar = () => {
         return (
           <>
             <div
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 border ${colors.chip} rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
             >
-              <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
-              <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>
+              <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${colors.text}`} />
+              <span className={`${colors.text} whitespace-nowrap`}>{label} Movers</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData.movers.map((item, idx) => (

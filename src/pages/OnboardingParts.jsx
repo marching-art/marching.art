@@ -95,7 +95,7 @@ export const GuidedCaptionSelection = ({
                   ? `${catColors.bg} ${catColors.border} border-2 ${catColors.text}`
                   : isSelected
                     ? 'bg-green-500/20 border border-green-500/30 text-green-400'
-                    : 'bg-charcoal-800 border border-charcoal-700 text-gray-500'
+                    : 'bg-charcoal-800 border border-charcoal-700 text-muted'
               }`}
             >
               {isSelected && !isCurrent ? <Check className="w-4 h-4" /> : cap.id}
@@ -123,7 +123,7 @@ export const GuidedCaptionSelection = ({
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-400" />
               <span className="text-sm text-white font-semibold">{selectedCorps.name}</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted">
                 '{selectedCorps.year != null ? String(selectedCorps.year).slice(-2) : ''}
               </span>
             </div>
@@ -164,10 +164,10 @@ export const GuidedCaptionSelection = ({
               >
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-white text-sm">{corps.corpsName}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted">
                     '{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}
                   </span>
-                  {isUsed && <span className="text-xs text-gray-500/60">(already used)</span>}
+                  {isUsed && <span className="text-xs text-muted/60">(already used)</span>}
                 </div>
                 <div
                   className={`px-2 py-1 rounded-none text-xs font-bold ${
@@ -185,7 +185,7 @@ export const GuidedCaptionSelection = ({
       )}
 
       {/* Hint text */}
-      <p className="text-xs text-gray-500 text-center">
+      <p className="text-xs text-muted text-center">
         <HelpCircle className="w-3 h-3 inline mr-1" />
         Pick the historical <JargonTooltip termKey="corps">corps</JargonTooltip> you think will
         score best in this <JargonTooltip termKey="caption">caption</JargonTooltip> — your total

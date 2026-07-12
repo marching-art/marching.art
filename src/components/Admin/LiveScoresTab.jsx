@@ -103,7 +103,7 @@ const DeepScrapeCard = () => {
       <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
         <SectionHeader title="Deep Scrape — Full DCI History" icon={Database} />
         <div className="p-4 space-y-3">
-          <p className="text-[11px] text-gray-500 leading-relaxed">
+          <p className="text-[11px] text-muted leading-relaxed">
             Backfill the entire scores database from dci.org —{' '}
             <span className="text-gray-300">all events across all years</span>. Use this to fill in
             missing caption scores and events. The scrape runs asynchronously in the background
@@ -137,7 +137,7 @@ const DeepScrapeCard = () => {
       <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
         <SectionHeader title="Deep Scrape — Schedules & Performance Times" icon={Calendar} />
         <div className="p-4 space-y-3">
-          <p className="text-[11px] text-gray-500 leading-relaxed">
+          <p className="text-[11px] text-muted leading-relaxed">
             Backfill the schedule archive from dci.org —{' '}
             <span className="text-gray-300">every event's running order + performance times</span>,{' '}
             all years (2019-present; earlier years aren't published). This fills{' '}
@@ -167,7 +167,7 @@ const DeepScrapeCard = () => {
             {scheduleLoading ? 'Starting…' : 'Start Schedule Scrape (All Years)'}
           </button>
           <div className="pt-2 border-t border-[#333]">
-            <p className="text-[11px] text-gray-500 leading-relaxed mb-2">
+            <p className="text-[11px] text-muted leading-relaxed mb-2">
               After the scrape, synthesize running orders for the years dci.org never published
               (pre-2019) from each event's real corps + scores. Writes{' '}
               <span className="text-gray-300">learned</span> entries into historical_schedules; real
@@ -233,7 +233,7 @@ const ScheduleCoverageCard = () => {
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
       <SectionHeader title="Schedule Coverage — August Readiness" icon={Activity} />
       <div className="p-4 space-y-3">
-        <p className="text-[11px] text-gray-500 leading-relaxed">
+        <p className="text-[11px] text-muted leading-relaxed">
           Per-year running-order coverage across historical_schedules: how many expected events have
           a real (scraped) or synthesized (learned) running order, what's still missing, any all-age
           leakage, the Finals-Saturday disambiguation, and the current pool's unmapped corps. Run
@@ -285,7 +285,7 @@ const ScheduleCoverageCard = () => {
                   ],
                 ].map(([label, val, cls]) => (
                   <div key={label} className="bg-[#111] border border-[#333] p-2">
-                    <div className="text-gray-500">{label}</div>
+                    <div className="text-muted">{label}</div>
                     <div className={`text-sm font-data tabular-nums ${cls}`}>{val}</div>
                   </div>
                 ))}
@@ -305,7 +305,7 @@ const ScheduleCoverageCard = () => {
             <div className="max-h-72 overflow-y-auto border-t border-[#333] pt-2">
               <table className="w-full text-[11px]">
                 <thead>
-                  <tr className="text-gray-500 text-left">
+                  <tr className="text-muted text-left">
                     {['Year', 'Expected', 'Matched', 'Missing', 'Scraped', 'Learned', 'Finals'].map(
                       (h) => (
                         <th key={h} className="font-normal pb-1 pr-2">
@@ -326,7 +326,7 @@ const ScheduleCoverageCard = () => {
                       </td>
                       <td className="py-1 pr-2">{r.scraped}</td>
                       <td className="py-1 pr-2">{r.learned}</td>
-                      <td className={`py-1 pr-2 ${r.finalsOk ? 'text-gray-500' : 'text-red-400'}`}>
+                      <td className={`py-1 pr-2 ${r.finalsOk ? 'text-muted' : 'text-red-400'}`}>
                         {r.finalsOk ? 'ok' : 'LEAK'}
                       </td>
                     </tr>
@@ -346,7 +346,7 @@ const LiveScoresTab = () => (
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
       <SectionHeader title="Live Season Score Verification" icon={Activity} />
       <div className="px-4 py-3 border-b border-[#333] bg-[#111]">
-        <p className="text-[11px] text-gray-500 leading-relaxed">
+        <p className="text-[11px] text-muted leading-relaxed">
           The Scores Reference (Content tab) shows the prior-year selectable corps. This view shows
           the
           <span className="text-gray-300"> current DCI season's scraped scores</span> — the data the

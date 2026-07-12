@@ -55,7 +55,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             <h1 className="text-sm font-bold text-white uppercase tracking-wider truncate">
               {title}
             </h1>
-            {subtitle && <div className="text-[10px] text-gray-500 truncate">{subtitle}</div>}
+            {subtitle && <div className="text-[10px] text-muted truncate">{subtitle}</div>}
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               <div className="flex items-center gap-4 text-xs flex-shrink-0">
                 {stats.map((stat, idx) => (
                   <div key={idx} className="text-right">
-                    <div className="text-[10px] text-gray-500 uppercase">{stat.label}</div>
+                    <div className="text-[10px] text-muted uppercase">{stat.label}</div>
                     <div
                       className={`font-bold font-data tabular-nums ${
                         stat.valueClassName || 'text-white'

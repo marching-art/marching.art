@@ -25,7 +25,7 @@ const sizeStyles: Record<SpinnerSize, string> = {
 };
 
 const variantStyles: Record<SpinnerVariant, string> = {
-  default: 'text-gray-500',
+  default: 'text-muted',
   gold: 'text-[#eab308]',
   white: 'text-white',
 };
