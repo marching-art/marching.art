@@ -47,9 +47,10 @@ export interface SeasonProgress {
 
 function toDate(value: TimestampLike | null | undefined): Date | null {
   if (!value) return null;
-  const date = typeof (value as { toDate?: unknown }).toDate === 'function'
-    ? (value as { toDate: () => Date }).toDate()
-    : (value as Date);
+  const date =
+    typeof (value as { toDate?: unknown }).toDate === 'function'
+      ? (value as { toDate: () => Date }).toDate()
+      : (value as Date);
   return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
 }
 
