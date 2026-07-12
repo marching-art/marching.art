@@ -97,7 +97,7 @@ const ArticleSidebarAuth = () => {
             <div className="text-sm font-bold text-white truncate">
               {profile?.displayName || 'Director'}
             </div>
-            <div className="text-xs text-gray-500 truncate">{user.email}</div>
+            <div className="text-xs text-muted truncate">{user.email}</div>
           </div>
         </div>
 
@@ -144,7 +144,7 @@ const ArticleSidebarAuth = () => {
         >
           <LayoutDashboard className="w-4 h-4 text-[#0057B8]" />
           <span className="text-sm text-white font-medium">Dashboard</span>
-          <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+          <ChevronRight className="w-4 h-4 text-muted ml-auto group-hover:text-gray-400" />
         </Link>
         <Link
           to="/leagues"
@@ -152,7 +152,7 @@ const ArticleSidebarAuth = () => {
         >
           <Award className="w-4 h-4 text-orange-500" />
           <span className="text-sm text-white font-medium">My Leagues</span>
-          <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+          <ChevronRight className="w-4 h-4 text-muted ml-auto group-hover:text-gray-400" />
         </Link>
         <Link
           to="/scores"
@@ -160,7 +160,7 @@ const ArticleSidebarAuth = () => {
         >
           <Activity className="w-4 h-4 text-green-500" />
           <span className="text-sm text-white font-medium">Live Scores</span>
-          <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+          <ChevronRight className="w-4 h-4 text-muted ml-auto group-hover:text-gray-400" />
         </Link>
         <Link
           to="/profile"
@@ -168,7 +168,7 @@ const ArticleSidebarAuth = () => {
         >
           <Settings className="w-4 h-4 text-gray-400" />
           <span className="text-sm text-white font-medium">Profile & Settings</span>
-          <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+          <ChevronRight className="w-4 h-4 text-muted ml-auto group-hover:text-gray-400" />
         </Link>
       </div>
 
@@ -176,7 +176,7 @@ const ArticleSidebarAuth = () => {
       <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-2 text-xs text-gray-500 hover:text-red-400 transition-colors"
+          className="flex items-center gap-2 text-xs text-muted hover:text-red-400 transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />
           Sign Out
@@ -206,7 +206,7 @@ const ArticleSidebarAuth = () => {
 
         {/* Email Input */}
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
             type="email"
             placeholder="Email"
@@ -220,7 +220,7 @@ const ArticleSidebarAuth = () => {
 
         {/* Password Input */}
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
             type="password"
             placeholder="Password"
@@ -250,7 +250,7 @@ const ArticleSidebarAuth = () => {
         </div>
 
         {/* Footer Links */}
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+        <div className="flex items-center justify-between text-xs text-muted pt-1">
           <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
             Forgot password?
           </Link>

@@ -337,7 +337,7 @@ const ShowRegistrationModal = ({
         {!isMobile && (
           <button
             onClick={onClose}
-            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-none hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
+            className="p-2 -mr-2 -mt-1 text-muted hover:text-white active:text-white rounded-none hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -350,7 +350,7 @@ const ShowRegistrationModal = ({
         <span className="px-2 py-1 bg-[#0057B8]/10 text-[#0057B8] text-[10px] font-bold uppercase">
           Week {show.week}
         </span>
-        <span className="text-[10px] text-gray-500">Max {maxShows} shows per corps</span>
+        <span className="text-[10px] text-muted">Max {maxShows} shows per corps</span>
       </div>
 
       {/* Two-night event notice (e.g. the Eastern Classic, days 41-42) */}
@@ -406,7 +406,7 @@ const ShowRegistrationModal = ({
           {/* Enrolled Corps */}
           {enrolledCorps.length > 0 && (
             <div className="mb-4">
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+              <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
                 <Check className="w-3 h-3 inline mr-1 text-green-500" />
                 Automatically Enrolled
               </div>
@@ -441,7 +441,7 @@ const ShowRegistrationModal = ({
           {/* Ineligible Corps */}
           {ineligibleCorps.length > 0 && (
             <div>
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+              <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
                 <X className="w-3 h-3 inline mr-1 text-red-400" />
                 Not Eligible
               </div>
@@ -463,7 +463,7 @@ const ShowRegistrationModal = ({
                           {config.shortName}
                         </span>
                       </div>
-                      <span className="text-[10px] text-gray-500 font-medium">
+                      <span className="text-[10px] text-muted font-medium">
                         Class not eligible
                       </span>
                     </div>
@@ -476,7 +476,7 @@ const ShowRegistrationModal = ({
           {/* No Corps Message */}
           {userCorpsClasses.length === 0 && (
             <div className="text-center py-6">
-              <AlertTriangle className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+              <AlertTriangle className="w-10 h-10 text-muted mx-auto mb-3" />
               <p className="text-sm text-gray-400">No corps registered yet.</p>
               <Link
                 to="/"
@@ -490,7 +490,7 @@ const ShowRegistrationModal = ({
 
           {/* Eligible Classes Info */}
           <div className="mt-4 p-3 bg-[#111] border border-[#333]">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
               Eligible Classes for This Event
             </p>
             <div className="flex flex-wrap gap-2">
@@ -510,9 +510,9 @@ const ShowRegistrationModal = ({
         </div>
       ) : userCorpsClasses.length === 0 && !podiumInfo && !podiumLoading ? (
         <div className="text-center py-10 px-4">
-          <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <AlertTriangle className="w-12 h-12 text-muted mx-auto mb-3" />
           <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
-          <p className="text-xs text-gray-600 mt-1 max-w-[280px] mx-auto">
+          <p className="text-xs text-muted mt-1 max-w-[280px] mx-auto">
             Create a corps from the Dashboard to start registering for shows.
           </p>
           <Link
@@ -527,7 +527,7 @@ const ShowRegistrationModal = ({
         <>
           {/* Quick Actions */}
           <div className="flex items-center justify-between px-4 py-3 bg-[#111] border-b border-[#333]">
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-muted uppercase tracking-wider">
               Select Corps to Attend
             </span>
             <div className="flex items-center gap-3 text-xs">
@@ -540,13 +540,13 @@ const ShowRegistrationModal = ({
               >
                 Select All
               </button>
-              <span className="text-gray-700">|</span>
+              <span className="text-muted">|</span>
               <button
                 onClick={() => {
                   haptic('light');
                   clearAll();
                 }}
-                className="text-gray-500 hover:text-white font-bold py-2 px-2 -mx-2 rounded-none hover:bg-white/5 min-h-touch press-feedback"
+                className="text-muted hover:text-white font-bold py-2 px-2 -mx-2 rounded-none hover:bg-white/5 min-h-touch press-feedback"
               >
                 Clear
               </button>
@@ -604,7 +604,7 @@ const ShowRegistrationModal = ({
                     </span>
                     <span className="text-[10px] font-bold uppercase text-yellow-400">Podium</span>
                   </div>
-                  <div className="mt-0.5 text-[11px] text-gray-500">
+                  <div className="mt-0.5 text-[11px] text-muted">
                     {podiumIsMyAutoDay
                       ? 'Auto-attended — major / championship'
                       : podiumIsEasternOffNight
@@ -665,7 +665,7 @@ const ShowRegistrationModal = ({
           {/* Registration Summary */}
           {selectedCorps.length > 0 && (
             <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+              <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                 Registering
               </div>
               <div className="flex flex-wrap gap-2">

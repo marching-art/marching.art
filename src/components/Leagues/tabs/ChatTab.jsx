@@ -98,7 +98,7 @@ const ChatTab = ({
             <MessageSquare className="w-3.5 h-3.5 text-purple-500" />
             League Chat
           </h3>
-          <span className="text-[10px] text-gray-500 flex items-center gap-1.5">
+          <span className="text-[10px] text-muted flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-none bg-green-500 animate-pulse" />
             {messages.length} messages
           </span>
@@ -113,7 +113,7 @@ const ChatTab = ({
               <MessageSquare className="w-6 h-6 text-purple-500/50" />
             </div>
             <p className="text-sm text-gray-400">No messages yet</p>
-            <p className="text-xs text-gray-600 mt-1">Start the conversation!</p>
+            <p className="text-xs text-muted mt-1">Start the conversation!</p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
@@ -121,7 +121,7 @@ const ChatTab = ({
               if (item.type === 'date') {
                 return (
                   <div key={`date-${idx}`} className="flex items-center justify-center my-3">
-                    <div className="px-2.5 py-1 bg-[#222] text-[10px] text-gray-500 uppercase tracking-wider font-bold">
+                    <div className="px-2.5 py-1 bg-[#222] text-[10px] text-muted uppercase tracking-wider font-bold">
                       {formatDateSeparator(item.date)}
                     </div>
                   </div>
@@ -172,10 +172,10 @@ const ChatTab = ({
                       {/* Timestamp */}
                       <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
                         <Clock
-                          className={`w-2.5 h-2.5 ${isOwn ? 'text-white/50' : 'text-gray-600'}`}
+                          className={`w-2.5 h-2.5 ${isOwn ? 'text-white/50' : 'text-muted'}`}
                         />
                         <span
-                          className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-gray-600'}`}
+                          className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-muted'}`}
                         >
                           {formatTime(item.createdAt)}
                         </span>

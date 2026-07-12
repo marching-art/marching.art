@@ -488,7 +488,7 @@ const CaptionSelectionModal = ({
                       ? `Select for ${activeCaptionData.name}`
                       : 'Draft Your Lineup'}
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted">
                     {CLASS_LABELS[corpsClass]} • Draft budget: {pointLimit}
                   </p>
                 </div>
@@ -515,7 +515,7 @@ const CaptionSelectionModal = ({
                 </button>
                 <button
                   onClick={onClose}
-                  className="min-w-touch min-h-touch -mr-2 flex items-center justify-center text-gray-500 hover:text-white active:text-white press-feedback"
+                  className="min-w-touch min-h-touch -mr-2 flex items-center justify-center text-muted hover:text-white active:text-white press-feedback"
                   aria-label="Close lineup editor"
                 >
                   <X className="w-5 h-5" />
@@ -538,7 +538,7 @@ const CaptionSelectionModal = ({
               </div>
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-xs font-bold ${isComplete ? 'text-green-400' : 'text-gray-500'}`}
+                  className={`text-xs font-bold ${isComplete ? 'text-green-400' : 'text-muted'}`}
                 >
                   {selectionCount}/8 selected
                 </span>
@@ -588,7 +588,7 @@ const CaptionSelectionModal = ({
             {loading ? (
               <div className="text-center py-12">
                 <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-none animate-spin mx-auto mb-3" />
-                <p className="text-xs text-gray-500 uppercase tracking-wider">Loading corps...</p>
+                <p className="text-xs text-muted uppercase tracking-wider">Loading corps...</p>
               </div>
             ) : (
               <div className="flex-1 flex min-h-0">
@@ -612,7 +612,7 @@ const CaptionSelectionModal = ({
                     {/* Your Lineup - Caption List */}
                     <div className="bg-[#0a0a0a] border border-[#333]">
                       <div className="p-3 border-b border-[#333] flex items-center justify-between">
-                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
                           <Award className="w-3 h-3" /> Your Lineup
                         </h3>
                         {selectionCount < 8 && (
@@ -662,7 +662,7 @@ const CaptionSelectionModal = ({
                               <h3 className="text-sm font-bold text-white">
                                 {activeCaptionData.name}
                               </h3>
-                              <p className="text-[10px] text-gray-500">
+                              <p className="text-[10px] text-muted">
                                 {activeCaptionData.category}
                               </p>
                             </div>
@@ -695,9 +695,9 @@ const CaptionSelectionModal = ({
                   ) : (
                     <div className="flex-1 flex items-center justify-center text-center p-8">
                       <div>
-                        <Award className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                        <Award className="w-12 h-12 text-muted mx-auto mb-3" />
                         <h3 className="text-lg font-bold text-gray-400 mb-1">Select a Caption</h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted">
                           Click on a caption from Your Lineup to see available corps
                         </p>
                       </div>
@@ -710,7 +710,7 @@ const CaptionSelectionModal = ({
 
           {/* Footer */}
           <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
-            <p className="text-[10px] text-gray-500 leading-snug min-w-0 hidden sm:block">
+            <p className="text-[10px] text-muted leading-snug min-w-0 hidden sm:block">
               Locked lineups are scored nightly at 2 AM ET — next run in{' '}
               <span className="text-cyan-400 font-bold font-data tabular-nums">
                 {formatCountdown(scoresInMs)}

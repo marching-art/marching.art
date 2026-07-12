@@ -77,7 +77,7 @@ const SeasonScheduleOverview = ({
               Season Schedule
             </span>
           </div>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted">
             Week {currentWeek} of {totalWeeks}
           </span>
         </div>
@@ -106,8 +106,8 @@ const SeasonScheduleOverview = ({
                         : hasData
                           ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
                           : isPast
-                            ? 'bg-[#222] border border-[#333] text-gray-600'
-                            : 'bg-[#222] border border-[#333] text-gray-500 hover:border-[#444]'
+                            ? 'bg-[#222] border border-[#333] text-muted'
+                            : 'bg-[#222] border border-[#333] text-muted hover:border-[#444]'
                 }`}
               >
                 {week}
@@ -120,7 +120,7 @@ const SeasonScheduleOverview = ({
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#333] text-[9px] text-gray-500">
+        <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#333] text-[9px] text-muted">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-purple-500/30 border-2 border-purple-500" />
             <span>Current</span>
@@ -194,9 +194,9 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
                           : 'bg-[#222] border border-[#333] hover:border-[#444]'
                 }`}
               >
-                <p className="text-[9px] text-gray-500 mb-0.5">Wk {match.week}</p>
+                <p className="text-[9px] text-muted mb-0.5">Wk {match.week}</p>
                 {isBye ? (
-                  <p className="text-xs text-gray-500">BYE</p>
+                  <p className="text-xs text-muted">BYE</p>
                 ) : (
                   <>
                     <p
@@ -212,7 +212,7 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
                     >
                       {won ? 'W' : lost ? 'L' : tie ? 'T' : 'vs'}
                     </p>
-                    <p className="text-[9px] text-gray-500 truncate">
+                    <p className="text-[9px] text-muted truncate">
                       {getDisplayName(opponentId)}
                     </p>
                   </>
@@ -314,7 +314,7 @@ const HeadToHeadSection = ({
                   <p className="font-bold text-sm text-white">
                     {getDisplayName(record.opponentId)}
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-muted">
                     {record.totalGames} matchup{record.totalGames !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -326,13 +326,13 @@ const HeadToHeadSection = ({
                     <span className="text-sm font-bold text-green-500 font-data tabular-nums">
                       {record.wins}
                     </span>
-                    <span className="text-gray-600">-</span>
+                    <span className="text-muted">-</span>
                     <span className="text-sm font-bold text-red-500 font-data tabular-nums">
                       {record.losses}
                     </span>
                     {record.ties > 0 && (
                       <>
-                        <span className="text-gray-600">-</span>
+                        <span className="text-muted">-</span>
                         <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
                           {record.ties}
                         </span>
@@ -376,7 +376,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
         }`}
       >
         <Swords
-          className={`w-8 h-8 ${isCommissioner && isCurrentWeek ? 'text-yellow-500' : 'text-gray-500'}`}
+          className={`w-8 h-8 ${isCommissioner && isCurrentWeek ? 'text-yellow-500' : 'text-muted'}`}
         />
       </div>
 
@@ -409,7 +409,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
               </div>
               {isCommissioner && (
                 <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted">
                     Go to Settings → Generate Matchups to create this week's schedule
                   </p>
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-500">
@@ -429,7 +429,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
                 </span>
               </div>
               {league?.inviteCode && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   Share code: <span className="font-mono text-gray-400">{league.inviteCode}</span>
                 </p>
               )}
@@ -440,11 +440,11 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
 
       {isFutureWeek && (
         <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center justify-center gap-2 text-xs text-muted">
             <Clock className="w-4 h-4" />
             <span>Week {selectedWeek} matchups will be set automatically</span>
           </div>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-muted">
             Matchups are generated every Sunday at 11:59 PM ET
           </p>
         </div>
@@ -522,7 +522,7 @@ const VersusStrip = memo(
               </span>
             )}
             {isBye && (
-              <span className="text-[10px] font-bold uppercase text-gray-500">BYE WEEK</span>
+              <span className="text-[10px] font-bold uppercase text-muted">BYE WEEK</span>
             )}
           </div>
 
@@ -549,7 +549,7 @@ const VersusStrip = memo(
                   {home.name}
                 </p>
                 {home.standing && (
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-muted">
                     {home.standing.wins}-{home.standing.losses}
                   </p>
                 )}
@@ -559,7 +559,7 @@ const VersusStrip = memo(
             {/* Score / VS */}
             <div className="flex-shrink-0 text-center min-w-[70px]">
               {isBye ? (
-                <div className="px-2 py-1 bg-[#222] text-gray-500 text-xs">WIN</div>
+                <div className="px-2 py-1 bg-[#222] text-muted text-xs">WIN</div>
               ) : matchup.completed || matchup.status === 'live' ? (
                 <div className="flex items-center justify-center gap-1">
                   <span
@@ -573,7 +573,7 @@ const VersusStrip = memo(
                         : '—'
                       : home.score.toFixed(0)}
                   </span>
-                  <span className="text-gray-600">-</span>
+                  <span className="text-muted">-</span>
                   <span
                     className={`font-bold ${
                       isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
@@ -588,7 +588,7 @@ const VersusStrip = memo(
                 </div>
               ) : (
                 <div className="px-2 py-1 bg-[#222]">
-                  <Swords className="w-3.5 h-3.5 text-gray-500 mx-auto" />
+                  <Swords className="w-3.5 h-3.5 text-muted mx-auto" />
                 </div>
               )}
               {matchup.status === 'live' && !featured && (
@@ -608,7 +608,7 @@ const VersusStrip = memo(
                     {away.name}
                   </p>
                   {away.standing && (
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-muted">
                       {away.standing.wins}-{away.standing.losses}
                     </p>
                   )}

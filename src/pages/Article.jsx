@@ -267,7 +267,7 @@ const Article = () => {
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4">
         <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
         <h1 className="text-xl font-bold text-white mb-2">Article Not Found</h1>
-        <p className="text-gray-500 mb-6 text-center">
+        <p className="text-muted mb-6 text-center">
           This article may have been removed or the link is invalid.
         </p>
         <Link
@@ -316,7 +316,7 @@ const Article = () => {
                 {/* Article Header */}
                 <div className="p-5 lg:p-6 border-b border-[#333]">
                   {/* Meta */}
-                  <div className="flex items-center gap-3 mb-4 text-xs text-gray-500 flex-wrap">
+                  <div className="flex items-center gap-3 mb-4 text-xs text-muted flex-wrap">
                     <span
                       className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}
                     >
@@ -325,13 +325,13 @@ const Article = () => {
                     <span>{formatArticleDate(article.createdAt)}</span>
                     {article.metadata?.eventName && (
                       <>
-                        <span className="text-gray-600">•</span>
+                        <span className="text-muted">•</span>
                         <span>{article.metadata.eventName}</span>
                       </>
                     )}
                     {cleanLocation(article.metadata?.location || article.authorLocation) && (
                       <>
-                        <span className="text-gray-600">•</span>
+                        <span className="text-muted">•</span>
                         <span>
                           {cleanLocation(article.metadata?.location || article.authorLocation)}
                         </span>
@@ -348,7 +348,7 @@ const Article = () => {
                       links to their profile, the same pattern used on the scores. */}
                   {article.authorUid && (article.authorUsername || article.authorName) && (
                     <div className="flex items-center gap-2 mb-4 text-sm text-gray-400">
-                      <span className="text-gray-500">By</span>
+                      <span className="text-muted">By</span>
                       <Link
                         to={`/profile/${article.authorUid}`}
                         className="font-bold text-[#4d9fff] hover:text-[#c9a227] transition-colors"
@@ -357,7 +357,7 @@ const Article = () => {
                       </Link>
                       {cleanLocation(article.authorLocation) && (
                         <>
-                          <span className="text-gray-600">•</span>
+                          <span className="text-muted">•</span>
                           <span>{cleanLocation(article.authorLocation)}</span>
                         </>
                       )}
@@ -375,7 +375,7 @@ const Article = () => {
                       {/* Share button */}
                       <button
                         onClick={handleShare}
-                        className="p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-none"
+                        className="p-2 text-muted hover:text-white hover:bg-white/10 transition-colors rounded-none"
                         title="Share article"
                         aria-label="Share article"
                       >
@@ -390,7 +390,7 @@ const Article = () => {
                     {/* Comment count - scrolls to comments */}
                     <button
                       onClick={scrollToComments}
-                      className="flex items-center gap-1.5 px-2 py-1.5 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-none"
+                      className="flex items-center gap-1.5 px-2 py-1.5 text-muted hover:text-white hover:bg-white/10 transition-colors rounded-none"
                       title="Jump to comments"
                       aria-label="Jump to comments"
                     >

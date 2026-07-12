@@ -52,7 +52,7 @@ const ItemPreview = ({ item }) => {
         <div
           className={`w-9 h-9 rounded-none bg-[#222] ${item.frameClass} flex items-center justify-center`}
         >
-          <User className="w-4 h-4 text-gray-500" />
+          <User className="w-4 h-4 text-muted" />
         </div>
       </div>
     );
@@ -134,7 +134,7 @@ const Shop = () => {
             <ShoppingBag className="w-6 h-6 text-yellow-500" />
             <div>
               <h1 className="text-lg font-bold text-white uppercase tracking-wider">Corps Shop</h1>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 Identity and flair, earned by playing. Nothing here affects scores.
               </p>
             </div>
@@ -164,7 +164,7 @@ const Shop = () => {
             {freezeStatus?.hasActiveFreeze ? (
               <span className="text-xs text-cyan-300 font-bold whitespace-nowrap">Active</span>
             ) : freezeStatus && !freezeStatus.canPurchaseFreeze ? (
-              <span className="text-xs text-gray-500 whitespace-nowrap">
+              <span className="text-xs text-muted whitespace-nowrap">
                 Cooldown: {freezeStatus.freezeCooldownDays}d
               </span>
             ) : (
@@ -174,7 +174,7 @@ const Shop = () => {
                 className={`h-9 px-4 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                   balance >= (freezeStatus?.freezeCost ?? 300)
                     ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                    : 'bg-[#222] text-gray-600 cursor-not-allowed'
+                    : 'bg-[#222] text-muted cursor-not-allowed'
                 }`}
               >
                 {busy === 'streak_freeze' ? '...' : `${freezeStatus?.freezeCost ?? 300} CC`}
@@ -236,16 +236,16 @@ const Shop = () => {
                               className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider whitespace-nowrap border ${
                                 inSeason
                                   ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
-                                  : 'bg-[#222] border-[#333] text-gray-500'
+                                  : 'bg-[#222] border-[#333] text-muted'
                               }`}
                             >
                               {seasonalLabel(item)}
                             </span>
                           )}
                         </div>
-                        <p className="text-[10px] text-gray-500 mb-3 flex-1">{item.description}</p>
+                        <p className="text-[10px] text-muted mb-3 flex-1">{item.description}</p>
                         {!owned && !item.grantOnly && !inSeason ? (
-                          <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-[#222] border border-[#333] text-gray-500">
+                          <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-[#222] border border-[#333] text-muted">
                             Returns Next {item.seasonal === 'live-season' ? 'Summer' : 'Off-Season'}
                           </div>
                         ) : item.grantOnly && !owned ? (
@@ -277,7 +277,7 @@ const Shop = () => {
                             className={`h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${
                               canAfford
                                 ? 'bg-yellow-600 hover:bg-yellow-500 text-white'
-                                : 'bg-[#222] text-gray-600 cursor-not-allowed'
+                                : 'bg-[#222] text-muted cursor-not-allowed'
                             }`}
                           >
                             <Coins className="w-3 h-3" />
@@ -293,7 +293,7 @@ const Shop = () => {
           );
         })}
 
-        <p className="text-[10px] text-gray-600 text-center">
+        <p className="text-[10px] text-muted text-center">
           Our promise: the shop will never sell competitive advantages. Free players and collectors
           score exactly the same.
         </p>

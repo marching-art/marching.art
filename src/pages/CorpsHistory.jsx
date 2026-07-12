@@ -204,7 +204,7 @@ const CorpsHistory = () => {
         <div className="text-center p-8 bg-[#111] border border-red-500/20 rounded-none max-w-md">
           <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Error Loading History</h2>
-          <p className="text-gray-500/60 mb-6">{error}</p>
+          <p className="text-muted/60 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-charcoal-900 rounded-none font-bold"
@@ -221,9 +221,9 @@ const CorpsHistory = () => {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center px-6">
-          <BrandLogo className="w-16 h-16 mx-auto mb-4" color="text-gray-500/20" />
+          <BrandLogo className="w-16 h-16 mx-auto mb-4" color="text-muted/20" />
           <h3 className="text-2xl font-bold text-white mb-2">No Corps Found</h3>
-          <p className="text-gray-500/60">Create a corps to start building your legacy!</p>
+          <p className="text-muted/60">Create a corps to start building your legacy!</p>
         </div>
       </div>
     );
@@ -248,7 +248,7 @@ const CorpsHistory = () => {
                 <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                   Corps History
                 </h1>
-                <p className="text-[10px] text-gray-500">Track performance and growth over time</p>
+                <p className="text-[10px] text-muted">Track performance and growth over time</p>
               </div>
             </div>
 
@@ -285,11 +285,11 @@ const CorpsHistory = () => {
           {activeCorps && (
             <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
               <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Seasons</p>
+                <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Seasons</p>
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalSeasons}</p>
               </div>
               <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Shows</p>
+                <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Shows</p>
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalShows}</p>
               </div>
               {isSoundSportView ? (
@@ -303,7 +303,7 @@ const CorpsHistory = () => {
                     </p>
                   </div>
                   <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Gold
                     </p>
                     <p className="text-xl font-mono font-bold text-yellow-400">
@@ -311,7 +311,7 @@ const CorpsHistory = () => {
                     </p>
                   </div>
                   <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Silver
                     </p>
                     <p className="text-xl font-mono font-bold text-gray-300">
@@ -319,7 +319,7 @@ const CorpsHistory = () => {
                     </p>
                   </div>
                   <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Bronze
                     </p>
                     <p className="text-xl font-mono font-bold text-orange-400">
@@ -330,7 +330,7 @@ const CorpsHistory = () => {
               ) : (
                 <>
                   <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Total Pts
                     </p>
                     <p className="text-xl font-mono font-bold text-white">
@@ -346,7 +346,7 @@ const CorpsHistory = () => {
                     </p>
                   </div>
                   <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Best Week
                     </p>
                     <p className="text-xl font-mono font-bold text-white">
@@ -354,7 +354,7 @@ const CorpsHistory = () => {
                     </p>
                   </div>
                   <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Avg Season
                     </p>
                     <p className="text-xl font-mono font-bold text-white">
@@ -384,7 +384,7 @@ const CorpsHistory = () => {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wide transition-all ${
                     effectiveView === 'chart'
                       ? 'bg-yellow-500/20 text-yellow-400'
-                      : 'text-gray-500/60 hover:text-gray-300'
+                      : 'text-muted/60 hover:text-gray-300'
                   }`}
                 >
                   <Activity className="w-3.5 h-3.5" />
@@ -396,14 +396,14 @@ const CorpsHistory = () => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wide transition-all ${
                   effectiveView === 'timeline'
                     ? 'bg-yellow-500/20 text-yellow-400'
-                    : 'text-gray-500/60 hover:text-gray-300'
+                    : 'text-muted/60 hover:text-gray-300'
                 }`}
               >
                 <History className="w-3.5 h-3.5" />
                 Timeline
               </button>
             </div>
-            <span className="text-xs text-gray-500/40">{seasonHistory.length} seasons</span>
+            <span className="text-xs text-muted/40">{seasonHistory.length} seasons</span>
           </div>
 
           {/* Content Area */}
@@ -411,9 +411,9 @@ const CorpsHistory = () => {
             {!hasHistory ? (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <Calendar className="w-12 h-12 text-gray-500/20 mx-auto mb-3" />
+                  <Calendar className="w-12 h-12 text-muted/20 mx-auto mb-3" />
                   <h3 className="text-xl font-bold text-white mb-2">No Season History Yet</h3>
-                  <p className="text-gray-500/60 text-sm">
+                  <p className="text-muted/60 text-sm">
                     Complete your first season to start building your corps' legacy!
                   </p>
                 </div>
@@ -482,7 +482,7 @@ const CorpsHistory = () => {
                                   {getClassDisplayName(season.corpsClass)}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-4 text-xs text-gray-500/60">
+                              <div className="flex items-center gap-4 text-xs text-muted/60">
                                 <span className="flex items-center gap-1">
                                   <Star className="w-3 h-3" />
                                   {isSoundSportView
@@ -503,7 +503,7 @@ const CorpsHistory = () => {
                             </div>
                             <ChevronRight
                               className={`w-5 h-5 transition-transform ${
-                                isSelected ? 'text-yellow-400 rotate-90' : 'text-gray-500/40'
+                                isSelected ? 'text-yellow-400 rotate-90' : 'text-muted/40'
                               }`}
                             />
                           </div>
@@ -535,7 +535,7 @@ const CorpsHistory = () => {
                       </div>
                       <div>
                         <h3 className="font-bold text-white truncate">{season.seasonName}</h3>
-                        <p className="text-xs text-gray-500/60">
+                        <p className="text-xs text-muted/60">
                           {season.archivedAt
                             ? new Date(season.archivedAt.seconds * 1000).toLocaleDateString()
                             : 'Unknown date'}
@@ -563,7 +563,7 @@ const CorpsHistory = () => {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                        <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                        <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                           Best Week
                         </p>
                         <p className="text-xl font-mono font-bold text-white">
@@ -575,7 +575,7 @@ const CorpsHistory = () => {
                         </p>
                       </div>
                       <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                        <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                        <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                           Shows
                         </p>
                         <p className="text-xl font-mono font-bold text-white">
@@ -597,7 +597,7 @@ const CorpsHistory = () => {
                               key={week}
                               className="bg-[#222] rounded-none p-2 flex items-center justify-between"
                             >
-                              <span className="text-xs text-gray-500/60">{week}</span>
+                              <span className="text-xs text-muted/60">{week}</span>
                               <span className="text-xs font-mono font-bold text-white">
                                 {isSoundSportView
                                   ? weeklyScores[week] > 0
@@ -623,7 +623,7 @@ const CorpsHistory = () => {
                             const [corpsName] = (value || '').split('|');
                             return (
                               <div key={caption} className="bg-[#222] rounded-none p-2">
-                                <div className="text-[10px] text-gray-500/60 uppercase">
+                                <div className="text-[10px] text-muted/60 uppercase">
                                   {caption}
                                 </div>
                                 <div className="text-sm font-semibold text-white truncate">
@@ -642,8 +642,8 @@ const CorpsHistory = () => {
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center px-6">
-                <History className="w-12 h-12 text-gray-500/20 mx-auto mb-3" />
-                <p className="text-sm text-gray-500/60">
+                <History className="w-12 h-12 text-muted/20 mx-auto mb-3" />
+                <p className="text-sm text-muted/60">
                   Select a season from the timeline to view details
                 </p>
               </div>

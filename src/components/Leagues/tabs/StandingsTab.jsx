@@ -120,7 +120,7 @@ const StandingsTab = ({
     return (
       <div className="p-4">
         <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
-          <p className="text-gray-500 text-sm">Loading standings...</p>
+          <p className="text-muted text-sm">Loading standings...</p>
         </div>
       </div>
     );
@@ -139,7 +139,7 @@ const StandingsTab = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
               viewMode === 'dashboard'
                 ? 'bg-yellow-500 text-black'
-                : 'text-gray-500 hover:text-white'
+                : 'text-muted hover:text-white'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
@@ -148,7 +148,7 @@ const StandingsTab = ({
           <button
             onClick={() => setViewMode('table')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'table' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:text-white'
+              viewMode === 'table' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
             }`}
           >
             <Table2 className="w-3.5 h-3.5" />
@@ -191,7 +191,7 @@ const StandingsTab = ({
                     Standings Preview
                   </span>
                 </div>
-                <span className="text-xs text-gray-500 flex items-center gap-1">
+                <span className="text-xs text-muted flex items-center gap-1">
                   View Full <ChevronDown className="w-3 h-3" />
                 </span>
               </button>
@@ -225,7 +225,7 @@ const StandingsTab = ({
                         <div className="flex items-center gap-3">
                           <span className="font-bold font-data tabular-nums text-sm">
                             <span className="text-green-500">{stats.wins}</span>
-                            <span className="text-gray-600">-</span>
+                            <span className="text-muted">-</span>
                             <span className="text-red-500">{stats.losses}</span>
                           </span>
                           {stats.streak > 0 && (
@@ -244,8 +244,8 @@ const StandingsTab = ({
                   })
                 ) : (
                   <div className="px-4 py-6 text-center">
-                    <p className="text-sm text-gray-500">No standings yet</p>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-sm text-muted">No standings yet</p>
+                    <p className="text-xs text-muted mt-1">
                       Standings will appear after matchups are resolved
                     </p>
                   </div>
@@ -255,13 +255,13 @@ const StandingsTab = ({
               {enhancedStandings.length > 5 && (
                 <button
                   onClick={() => setViewMode('table')}
-                  className="w-full px-4 py-2 text-xs text-gray-500 hover:text-white transition-colors border-t border-[#333]"
+                  className="w-full px-4 py-2 text-xs text-muted hover:text-white transition-colors border-t border-[#333]"
                 >
                   +{enhancedStandings.length - 5} more...
                 </button>
               )}
               {inactiveStandings.length > 0 && (
-                <div className="px-4 py-2 text-[10px] text-gray-600 border-t border-[#222]">
+                <div className="px-4 py-2 text-[10px] text-muted border-t border-[#222]">
                   {inactiveStandings.length} inactive member
                   {inactiveStandings.length !== 1 ? 's' : ''} not shown
                 </div>
@@ -284,13 +284,13 @@ const StandingsTab = ({
                     <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                     Standings
                     {lastUpdated && (
-                      <span className="text-[9px] text-gray-600 font-normal normal-case ml-2">
+                      <span className="text-[9px] text-muted font-normal normal-case ml-2">
                         Updated{' '}
                         {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                       </span>
                     )}
                   </h3>
-                  <span className="text-[10px] text-gray-500">Top {playoffSize} qualify</span>
+                  <span className="text-[10px] text-muted">Top {playoffSize} qualify</span>
                 </div>
               </div>
 
@@ -299,22 +299,22 @@ const StandingsTab = ({
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#333] bg-[#111]">
-                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">
+                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted w-10">
                         RK
                       </th>
-                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted">
                         Director
                       </th>
-                      <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                      <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-16">
                         W-L
                       </th>
-                      <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                      <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-16">
                         PF
                       </th>
-                      <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-14">
+                      <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-14">
                         STRK
                       </th>
-                      <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">
+                      <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-10">
                         <TrendingUp className="w-3 h-3 mx-auto" />
                       </th>
                     </tr>
@@ -382,7 +382,7 @@ const StandingsTab = ({
                                   )}
                                   {hasStats && (
                                     <ChevronDown
-                                      className={`w-3 h-3 text-gray-500 transition-transform ${
+                                      className={`w-3 h-3 text-muted transition-transform ${
                                         isExpanded ? 'rotate-180' : ''
                                       }`}
                                     />
@@ -395,7 +395,7 @@ const StandingsTab = ({
                             <td className="text-center py-2 px-2">
                               <span className="font-bold font-data tabular-nums text-sm">
                                 <span className="text-green-500">{stats.wins}</span>
-                                <span className="text-gray-600">-</span>
+                                <span className="text-muted">-</span>
                                 <span className="text-red-500">{stats.losses}</span>
                               </span>
                             </td>
@@ -422,7 +422,7 @@ const StandingsTab = ({
                                   {stats.streak}
                                 </span>
                               ) : (
-                                <span className="text-gray-600 text-xs">—</span>
+                                <span className="text-muted text-xs">—</span>
                               )}
                             </td>
 
@@ -491,7 +491,7 @@ const StandingsTab = ({
                       <span>Register for a show to start earning points</span>
                     </div>
                     {currentWeek > 0 && (
-                      <div className="text-xs text-gray-500">Currently Week {currentWeek}</div>
+                      <div className="text-xs text-muted">Currently Week {currentWeek}</div>
                     )}
                   </div>
                 </div>
@@ -499,7 +499,7 @@ const StandingsTab = ({
 
               {/* Legend */}
               <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
-                <div className="flex flex-wrap items-center gap-4 text-[10px] text-gray-500">
+                <div className="flex flex-wrap items-center gap-4 text-[10px] text-muted">
                   <span>
                     <strong>PF</strong> = Points For
                   </span>
@@ -525,16 +525,16 @@ const StandingsTab = ({
                   className="w-full px-4 py-3 bg-[#222] flex items-center justify-between hover:bg-[#2a2a2a] transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <UserX className="w-3.5 h-3.5 text-gray-500" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    <UserX className="w-3.5 h-3.5 text-muted" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                       Inactive Members
                     </span>
-                    <span className="text-[10px] text-gray-600">({inactiveStandings.length})</span>
+                    <span className="text-[10px] text-muted">({inactiveStandings.length})</span>
                   </div>
                   {showInactive ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+                    <ChevronUp className="w-3.5 h-3.5 text-muted" />
                   ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+                    <ChevronDown className="w-3.5 h-3.5 text-muted" />
                   )}
                 </button>
 
@@ -547,7 +547,7 @@ const StandingsTab = ({
                       className="overflow-hidden"
                     >
                       <div className="px-4 py-2 border-t border-[#222] bg-[#111]">
-                        <p className="text-[10px] text-gray-600">
+                        <p className="text-[10px] text-muted">
                           These members haven't participated in any shows this season.
                         </p>
                       </div>
@@ -571,7 +571,7 @@ const StandingsTab = ({
                               >
                                 <span
                                   className={`text-xs font-bold ${
-                                    isUser ? 'text-purple-400' : 'text-gray-600'
+                                    isUser ? 'text-purple-400' : 'text-muted'
                                   }`}
                                 >
                                   {getDisplayName(stats.uid).charAt(0)}
@@ -579,7 +579,7 @@ const StandingsTab = ({
                               </div>
                               <p
                                 className={`text-sm truncate ${
-                                  isUser ? 'text-purple-400 font-bold' : 'text-gray-500'
+                                  isUser ? 'text-purple-400 font-bold' : 'text-muted'
                                 }`}
                               >
                                 {getDisplayName(stats.uid)}
@@ -611,9 +611,9 @@ const StandingsTab = ({
                     </span>
                   </div>
                   {showLeaderboardSection ? (
-                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                    <ChevronUp className="w-4 h-4 text-muted" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                    <ChevronDown className="w-4 h-4 text-muted" />
                   )}
                 </button>
 
@@ -671,7 +671,7 @@ const RankBadge = React.memo(({ rank, isPlayoffSpot }) => {
       className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold ${
         isPlayoffSpot
           ? 'bg-green-500/10 text-green-500 border border-green-500/30'
-          : 'bg-[#222] text-gray-500'
+          : 'bg-[#222] text-muted'
       }`}
     >
       {rank}
@@ -687,7 +687,7 @@ const TrendIndicator = React.memo(({ trend }) => {
   if (trend === 'down') {
     return <TrendingDown className="w-3.5 h-3.5 text-red-500 mx-auto" />;
   }
-  return <Minus className="w-3.5 h-3.5 text-gray-600 mx-auto" />;
+  return <Minus className="w-3.5 h-3.5 text-muted mx-auto" />;
 });
 
 export default StandingsTab;

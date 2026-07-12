@@ -50,7 +50,7 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
                 ${
                   isSelected
                     ? 'bg-[#0057B8] text-white'
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                    : 'text-muted hover:text-gray-300 hover:bg-white/5'
                 }
               `}
             >
@@ -220,7 +220,7 @@ const ShowCard = ({
             <h3 className="text-sm font-bold text-white truncate leading-tight">
               {show.eventName}
             </h3>
-            <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-500">
+            <div className="flex items-center gap-3 mt-1 text-[10px] text-muted">
               <span className="flex items-center gap-1 font-data">
                 <Calendar className="w-3 h-3 text-[#0057B8]" />
                 {formattedDate}
@@ -288,7 +288,7 @@ const ShowCard = ({
 
           {/* Empty State */}
           {!isRegistered && !isPast && (
-            <span className="text-[10px] text-gray-600">Tap to register</span>
+            <span className="text-[10px] text-muted">Tap to register</span>
           )}
         </div>
       </div>
@@ -314,7 +314,7 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
       py-3 px-2 rounded-none border
       ${
         isPast
-          ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
+          ? 'bg-[#1a1a1a] border-[#333] text-muted'
           : isMajorDay
             ? 'bg-yellow-500/10 border-yellow-500/40'
             : 'bg-[#0057B8]/10 border-[#0057B8]/30'
@@ -323,7 +323,7 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
     >
       <span
         className={`text-[10px] font-bold uppercase ${
-          isPast ? 'text-gray-500' : isMajorDay ? 'text-yellow-500' : 'text-[#0057B8]'
+          isPast ? 'text-muted' : isMajorDay ? 'text-yellow-500' : 'text-[#0057B8]'
         }`}
       >
         {dayOfWeek}
@@ -332,7 +332,7 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
         {monthDay}
       </span>
       {dayNumber != null && (
-        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 font-data">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-muted font-data">
           Day {dayNumber}
         </span>
       )}
@@ -418,9 +418,9 @@ const ShowsList = ({
   if (!shows || shows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <Calendar className="w-12 h-12 text-gray-600 mb-3" />
+        <Calendar className="w-12 h-12 text-muted mb-3" />
         <h3 className="text-sm font-bold text-white mb-1">No Shows This Week</h3>
-        <p className="text-xs text-gray-500 max-w-[280px]">
+        <p className="text-xs text-muted max-w-[280px]">
           Check other weeks for available shows.
         </p>
       </div>
@@ -502,7 +502,7 @@ const ChampionshipEventCard = ({
                 {event.eventName}
               </h3>
             </div>
-            <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-500">
+            <div className="flex items-center gap-3 mt-1 text-[10px] text-muted">
               <span className="flex items-center gap-1 font-data">
                 <Calendar className="w-3 h-3 text-[#0057B8]" />
                 {formattedDate}
@@ -511,7 +511,7 @@ const ChampionshipEventCard = ({
                 <MapPin className="w-3 h-3 text-purple-400" />
                 <span className="truncate">{event.location}</span>
               </span>
-              <span className="text-gray-600 font-data">Day {event.day}</span>
+              <span className="text-muted font-data">Day {event.day}</span>
             </div>
           </div>
 
@@ -526,7 +526,7 @@ const ChampionshipEventCard = ({
               Completed
             </span>
           ) : (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-500 rounded-none">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-muted rounded-none">
               No Corps
             </span>
           )}
@@ -565,7 +565,7 @@ const ChampionshipEventCard = ({
               )}
             </div>
           ) : (
-            <span className="text-[10px] text-gray-600">{event.description}</span>
+            <span className="text-[10px] text-muted">{event.description}</span>
           )}
 
           {/* Eligible Classes Info */}

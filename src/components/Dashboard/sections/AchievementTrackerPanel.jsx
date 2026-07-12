@@ -48,7 +48,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
           <Award className="w-3.5 h-3.5 text-yellow-500" />
           Achievements
         </h3>
-        <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
           {totalEarned}/{totalCount}
         </span>
       </div>
@@ -74,7 +74,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-sm text-white">{a.title}</span>
-                    <span className="text-[10px] text-gray-600 ml-2">
+                    <span className="text-[10px] text-muted ml-2">
                       {a.current}/{a.goal}
                     </span>
                   </div>
@@ -86,7 +86,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
                     style={{ width: `${a.pct}%` }}
                   />
                 </div>
-                <p className="ml-8 text-[10px] text-gray-600 mt-1">{a.description}</p>
+                <p className="ml-8 text-[10px] text-muted mt-1">{a.description}</p>
               </div>
             );
           })}
@@ -128,7 +128,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
       <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
         <Link
           to="/achievements"
-          className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+          className="text-[10px] text-muted hover:text-gray-300 transition-colors"
         >
           View all achievements →
         </Link>

@@ -107,12 +107,12 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
         {/* Title + summary */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-muted uppercase tracking-wider">
               Step {step.id}
             </span>
           </div>
           <h3 className="text-sm font-bold text-white mt-0.5">{step.title}</h3>
-          <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{step.summary}</p>
+          <p className="text-xs text-muted mt-0.5 hidden sm:block">{step.summary}</p>
         </div>
 
         {/* Expand/collapse indicator */}
@@ -121,7 +121,7 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
           transition={{ duration: 0.2 }}
           className="flex-shrink-0"
         >
-          <ChevronDown className="w-5 h-5 text-gray-500" />
+          <ChevronDown className="w-5 h-5 text-muted" />
         </m.div>
       </button>
 
@@ -139,7 +139,7 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
               <ul className="space-y-2">
                 {step.details.map((detail, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm text-gray-400">
-                    <span className="text-gray-600 mt-1">•</span>
+                    <span className="text-muted mt-1">•</span>
                     <span>{detail}</span>
                   </li>
                 ))}
@@ -197,7 +197,7 @@ const HowItWorks = () => {
         </h2>
         <button
           onClick={allExpanded ? collapseAll : expandAll}
-          className="text-[10px] font-medium text-gray-500 hover:text-white transition-colors uppercase tracking-wider"
+          className="text-[10px] font-medium text-muted hover:text-white transition-colors uppercase tracking-wider"
         >
           {allExpanded ? 'Collapse all' : 'Expand all'}
         </button>

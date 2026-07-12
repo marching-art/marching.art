@@ -61,7 +61,7 @@ const CorpsSelectionItem = ({
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <span
-            className={`text-[11px] ${isAtMax && !isAlreadyAtShow ? 'text-red-400' : 'text-gray-500'}`}
+            className={`text-[11px] ${isAtMax && !isAlreadyAtShow ? 'text-red-400' : 'text-muted'}`}
           >
             {showsThisWeek}/{maxShows} shows this week
           </span>

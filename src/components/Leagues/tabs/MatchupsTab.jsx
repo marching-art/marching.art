@@ -203,8 +203,8 @@ const MatchupsTab = ({
     return (
       <div className="p-4">
         <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
-          <Swords className="w-8 h-8 text-gray-500 mx-auto mb-2 animate-pulse" />
-          <p className="text-gray-500 text-sm">Loading matchups...</p>
+          <Swords className="w-8 h-8 text-muted mx-auto mb-2 animate-pulse" />
+          <p className="text-muted text-sm">Loading matchups...</p>
         </div>
       </div>
     );
@@ -249,7 +249,7 @@ const MatchupsTab = ({
           <button
             onClick={() => setViewMode('week')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'week' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:text-white'
+              viewMode === 'week' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
             }`}
           >
             <List className="w-3.5 h-3.5" />
@@ -258,7 +258,7 @@ const MatchupsTab = ({
           <button
             onClick={() => setViewMode('season')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'season' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:text-white'
+              viewMode === 'season' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -313,11 +313,11 @@ const MatchupsTab = ({
                   <button
                     onClick={goToPrevWeek}
                     disabled={selectedWeek <= 1}
-                    className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-xs text-gray-500 min-w-[60px] text-center">
+                  <span className="text-xs text-muted min-w-[60px] text-center">
                     {selectedWeek === currentWeek
                       ? 'Current'
                       : selectedWeek < currentWeek
@@ -327,7 +327,7 @@ const MatchupsTab = ({
                   <button
                     onClick={goToNextWeek}
                     disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
-                    className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -354,7 +354,7 @@ const MatchupsTab = ({
                             ? 'bg-[#222] border border-purple-500/50 text-white'
                             : hasData
                               ? 'bg-[#222] border border-[#444] text-white hover:border-[#555]'
-                              : 'bg-[#222] border border-[#333] text-gray-500 hover:text-white hover:border-[#444]'
+                              : 'bg-[#222] border border-[#333] text-muted hover:text-white hover:border-[#444]'
                       }`}
                     >
                       W{week}

@@ -152,14 +152,14 @@ const ShowSelectionStep = ({
             </div>
             {currentWeek !== 7 && (
               <div className="flex items-center gap-1 text-xs">
-                <span className="text-gray-500">Registrations:</span>
+                <span className="text-muted">Registrations:</span>
                 <span className="font-bold text-[#0057B8] tabular-nums">
                   {totalWeekRegistrations}
                 </span>
               </div>
             )}
           </div>
-          <p className="text-[10px] text-gray-500 mt-1">Tap a show to register your corps</p>
+          <p className="text-[10px] text-muted mt-1">Tap a show to register your corps</p>
         </div>
 
         <div className="p-3">
@@ -177,7 +177,7 @@ const ShowSelectionStep = ({
                 class and advancement results.
               </p>
               <div className="bg-[#0a0a0a] border border-[#333] p-4 text-left max-w-md mx-auto">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
                   Championship Schedule
                 </div>
                 <div className="space-y-2 text-xs">
@@ -207,7 +207,7 @@ const ShowSelectionStep = ({
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-4">
+              <p className="text-xs text-muted mt-4">
                 Your corps will automatically compete based on class eligibility and prior day
                 results.
               </p>
@@ -215,12 +215,12 @@ const ShowSelectionStep = ({
           ) : scheduleLoading ? (
             <div className="text-center py-8">
               <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-xs text-gray-500">Loading schedule...</p>
+              <p className="text-xs text-muted">Loading schedule...</p>
             </div>
           ) : sortedDays.length === 0 ? (
             <div className="text-center py-8">
-              <Calendar className="w-10 h-10 text-gray-600 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No shows available this week</p>
+              <Calendar className="w-10 h-10 text-muted mx-auto mb-2" />
+              <p className="text-sm text-muted">No shows available this week</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -243,13 +243,13 @@ const ShowSelectionStep = ({
                             py-2 px-1 rounded-none border
                             ${
                               isPast
-                                ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
+                                ? 'bg-[#1a1a1a] border-[#333] text-muted'
                                 : 'bg-[#0057B8]/10 border-[#0057B8]/30'
                             }
                           `}
                     >
                       <span
-                        className={`text-[9px] font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}
+                        className={`text-[9px] font-bold uppercase ${isPast ? 'text-muted' : 'text-[#0057B8]'}`}
                       >
                         {dayOfWeek}
                       </span>
@@ -283,7 +283,7 @@ const ShowSelectionStep = ({
                                     {show.eventName}
                                   </h3>
                                   {show.location && (
-                                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-gray-500">
+                                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted">
                                       <MapPin className="w-3 h-3 text-purple-400 flex-shrink-0" />
                                       <span className="truncate">{show.location}</span>
                                     </div>
@@ -343,7 +343,7 @@ const ShowSelectionStep = ({
         {/* Footer */}
         <div className="px-4 py-3 border-t border-[#333] flex justify-between items-center">
           {currentWeek !== 7 && totalWeekRegistrations === 0 && (
-            <p className="text-[10px] text-gray-500">Register at least one corps to continue</p>
+            <p className="text-[10px] text-muted">Register at least one corps to continue</p>
           )}
           <div className="ml-auto">
             <button

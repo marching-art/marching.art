@@ -283,7 +283,7 @@ const ScoresSpreadsheet = () => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Scores Reference Spreadsheet</h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               {seasonData?.name} • {corpsValues.length} corps • {allDates.length} days
             </p>
           </div>
@@ -341,12 +341,12 @@ const ScoresSpreadsheet = () => {
           className={`p-1 rounded-none transition-all ${
             canScrollLeft
               ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
-              : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
+              : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
           }`}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <span className="text-[10px] text-gray-500 font-mono">
+        <span className="text-[10px] text-muted font-mono">
           Showing days {scrollPosition + 1}-
           {Math.min(scrollPosition + VISIBLE_COLUMNS, allDates.length)} of {allDates.length}
         </span>
@@ -356,7 +356,7 @@ const ScoresSpreadsheet = () => {
           className={`p-1 rounded-none transition-all ${
             canScrollRight
               ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
-              : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
+              : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
           }`}
         >
           <ChevronRight className="w-4 h-4" />
@@ -383,7 +383,7 @@ const ScoresSpreadsheet = () => {
                   className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[10px] text-gray-500/70 leading-none">
+                  <div className="text-[10px] text-muted/70 leading-none">
                     {dateInfo.dateLabel}
                   </div>
                 </th>
@@ -408,7 +408,7 @@ const ScoresSpreadsheet = () => {
                   >
                     {corps.corpsName}
                   </div>
-                  <div className="text-[9px] text-gray-500/50 leading-none">{corps.sourceYear}</div>
+                  <div className="text-[9px] text-muted/50 leading-none">{corps.sourceYear}</div>
                 </td>
 
                 {/* Points - Sticky */}
@@ -421,7 +421,7 @@ const ScoresSpreadsheet = () => {
                           ? 'text-gray-200'
                           : corps.points >= 10
                             ? 'text-gray-400'
-                            : 'text-gray-500'
+                            : 'text-muted'
                     }`}
                   >
                     {corps.points}
@@ -460,7 +460,7 @@ const ScoresSpreadsheet = () => {
                           {score.toFixed(3)}
                         </span>
                       ) : (
-                        <span className="text-gray-500/20">-</span>
+                        <span className="text-muted/20">-</span>
                       )}
                     </td>
                   );
@@ -472,7 +472,7 @@ const ScoresSpreadsheet = () => {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 text-[9px] text-gray-500/60">
+      <div className="flex items-center gap-3 text-[9px] text-muted/60">
         <span className="font-mono">Legend:</span>
         <span className="flex items-center gap-0.5">
           <span className="w-2.5 h-2.5 rounded-none bg-green-900/30" /> 90%+

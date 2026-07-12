@@ -337,8 +337,8 @@ const MatchupDetailView = ({
         </button>
 
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Calendar className="w-4 h-4 text-gray-500/60" />
-          <span className="text-sm text-gray-500/60">Week {matchup.week} Matchup</span>
+          <Calendar className="w-4 h-4 text-muted/60" />
+          <span className="text-sm text-muted/60">Week {matchup.week} Matchup</span>
           {rivalry && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-none bg-red-500/20 text-red-400 text-xs font-semibold">
               <Flame className="w-3 h-3" /> Rivalry
@@ -410,7 +410,7 @@ const MatchupDetailView = ({
             >
               {getDisplayName(matchup.user1)}
             </p>
-            <p className="text-xs text-gray-500/40 mb-3">
+            <p className="text-xs text-muted/40 mb-3">
               {getCorpsName(matchup.user1) || 'Unknown Corps'}
             </p>
 
@@ -431,10 +431,10 @@ const MatchupDetailView = ({
             >
               {loading ? '—' : weeklyScores.user1.toFixed(1)}
             </div>
-            <p className="text-[10px] text-gray-500/40 mt-1">Total Score</p>
+            <p className="text-[10px] text-muted/40 mt-1">Total Score</p>
 
             {user1Stats && (
-              <p className="text-sm text-gray-500/60 mt-2">
+              <p className="text-sm text-muted/60 mt-2">
                 {user1Stats.wins}-{user1Stats.losses} Record
               </p>
             )}
@@ -486,7 +486,7 @@ const MatchupDetailView = ({
             >
               {getDisplayName(matchup.user2)}
             </p>
-            <p className="text-xs text-gray-500/40 mb-3">
+            <p className="text-xs text-muted/40 mb-3">
               {getCorpsName(matchup.user2) || 'Unknown Corps'}
             </p>
 
@@ -507,10 +507,10 @@ const MatchupDetailView = ({
             >
               {loading ? '—' : weeklyScores.user2.toFixed(1)}
             </div>
-            <p className="text-[10px] text-gray-500/40 mt-1">Total Score</p>
+            <p className="text-[10px] text-muted/40 mt-1">Total Score</p>
 
             {user2Stats && (
-              <p className="text-sm text-gray-500/60 mt-2">
+              <p className="text-sm text-muted/60 mt-2">
                 {user2Stats.wins}-{user2Stats.losses} Record
               </p>
             )}
@@ -534,17 +534,17 @@ const MatchupDetailView = ({
             <div className="flex items-center justify-between text-xs mb-2">
               <span
                 className={`font-semibold ${
-                  winProbability >= 50 ? 'text-green-400' : 'text-gray-500/60'
+                  winProbability >= 50 ? 'text-green-400' : 'text-muted/60'
                 }`}
               >
                 {winProbability.toFixed(0)}%
               </span>
-              <span className="text-gray-500/40 uppercase tracking-wide text-[10px]">
+              <span className="text-muted/40 uppercase tracking-wide text-[10px]">
                 Win Probability
               </span>
               <span
                 className={`font-semibold ${
-                  winProbability < 50 ? 'text-green-400' : 'text-gray-500/60'
+                  winProbability < 50 ? 'text-green-400' : 'text-muted/60'
                 }`}
               >
                 {(100 - winProbability).toFixed(0)}%

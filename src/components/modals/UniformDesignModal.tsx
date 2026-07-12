@@ -183,7 +183,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
             </h2>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white"
+              className="p-1 text-muted hover:text-white"
               disabled={isSaving}
             >
               <X className="w-4 h-4" />
@@ -196,7 +196,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
               {/* Corps Selector - Only show if multiple corps */}
               {allCorps && allCorps.length > 1 && (
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">
                     Select Ensemble
                   </label>
                   <div className="relative">
@@ -211,7 +211,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                   </div>
                 </div>
               )}
@@ -247,7 +247,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Primary Color */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Primary Color *
                     </label>
                     <input
@@ -262,7 +262,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                   {/* Secondary Color */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Secondary Color *
                     </label>
                     <input
@@ -277,7 +277,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                   {/* Accent Color */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Accent Color
                     </label>
                     <input
@@ -323,7 +323,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Uniform Style */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Style
                     </label>
                     <select
@@ -346,7 +346,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                   {/* Helmet Style */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Headwear
                     </label>
                     <select
@@ -371,7 +371,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                 {/* Plume Description - Only show if not "none" */}
                 {formData.helmetStyle !== 'none' && (
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Plume/Headwear Details
                     </label>
                     <input
@@ -392,14 +392,14 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
               <div className="space-y-4">
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#333] pb-1">
                   Section Details{' '}
-                  <span className="text-gray-600 font-normal">
+                  <span className="text-muted font-normal">
                     (Optional - AI will generate if blank)
                   </span>
                 </h3>
 
                 {/* Brass */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Brass Section
                   </label>
                   <input
@@ -414,7 +414,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                 {/* Percussion */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Percussion Section
                   </label>
                   <input
@@ -431,7 +431,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                 {/* Color Guard */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Color Guard
                   </label>
                   <input
@@ -454,7 +454,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Mascot/Emblem */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Mascot or Emblem
                     </label>
                     <input
@@ -469,7 +469,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                   {/* Performance Style */}
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Performance Style
                     </label>
                     <input
@@ -487,7 +487,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                 {/* Theme Keywords */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Theme Keywords
                   </label>
                   <div className="flex gap-2">
@@ -527,7 +527,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       ))}
                     </div>
                   )}
-                  <p className="text-[10px] text-gray-600 mt-1">
+                  <p className="text-[10px] text-muted mt-1">
                     Keywords help AI match your corps to appropriate imagery (e.g., fire, ice,
                     power, ancient)
                   </p>
@@ -535,7 +535,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
                 {/* Venue Preference */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                     Venue Preference
                   </label>
                   <div className="flex gap-2">
@@ -577,7 +577,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     maxLength={300}
                     className="w-full h-24 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                   />
-                  <p className="text-[10px] text-gray-600 mt-1">
+                  <p className="text-[10px] text-muted mt-1">
                     {(formData.additionalNotes || '').length}/300
                   </p>
                 </div>
@@ -590,7 +590,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     <Copy className="w-3 h-3" />
                     Copy Design to Other Ensembles
                   </h3>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-muted">
                     Apply this uniform design to your other corps as well.
                   </p>
                   <div className="space-y-2">
@@ -638,7 +638,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
             {/* Footer */}
             <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-between gap-2 flex-shrink-0">
-              <p className="text-[10px] text-gray-600 self-center">* Required fields</p>
+              <p className="text-[10px] text-muted self-center">* Required fields</p>
               <div className="flex gap-2">
                 <button
                   type="button"

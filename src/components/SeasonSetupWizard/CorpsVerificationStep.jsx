@@ -56,7 +56,7 @@ const CorpsVerificationStep = ({
                       {getCorpsClassName(classId)}
                     </span>
                     <h4 className="text-sm font-bold text-white">{corps.corpsName}</h4>
-                    <p className="text-xs text-gray-500">{corps.location}</p>
+                    <p className="text-xs text-muted">{corps.location}</p>
                   </div>
                   <Trophy className="w-5 h-5 text-yellow-500" />
                 </div>
@@ -128,7 +128,7 @@ const CorpsVerificationStep = ({
                 {/* Skip info message */}
                 {decision === 'skip' && (
                   <div className="mt-3 pt-3 border-t border-[#333]">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted">
                       This corps will sit out this season. You can re-activate it next season.
                     </p>
                   </div>
@@ -137,7 +137,7 @@ const CorpsVerificationStep = ({
                 {/* Move class selection */}
                 {decision === 'move' && (
                   <div className="mt-3 pt-3 border-t border-[#333]">
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                       Move to Class
                     </label>
                     <select
@@ -157,7 +157,7 @@ const CorpsVerificationStep = ({
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-muted mt-2">
                       Corps identity will be preserved. Season data (lineup, scores) will be reset.
                     </p>
                   </div>
@@ -234,10 +234,10 @@ const CorpsVerificationStep = ({
                   <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                        <span className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
                           {getCorpsClassName(classId)}
                         </span>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted">
                           {POINT_LIMITS[classId]} point budget
                         </p>
                       </div>
@@ -253,7 +253,7 @@ const CorpsVerificationStep = ({
                         className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                           !decision
                             ? 'bg-[#1a1a1a] border-2 border-gray-500 text-gray-300'
-                            : 'bg-[#1a1a1a] border-2 border-transparent text-gray-500 hover:border-gray-500'
+                            : 'bg-[#1a1a1a] border-2 border-transparent text-muted hover:border-gray-500'
                         }`}
                       >
                         Skip

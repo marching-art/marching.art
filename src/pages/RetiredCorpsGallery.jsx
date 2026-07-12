@@ -188,7 +188,7 @@ const RetiredCorpsGallery = () => {
                   className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-all ${
                     isActive
                       ? 'bg-[#0057B8] text-white'
-                      : 'bg-[#1a1a1a] text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                      : 'bg-[#1a1a1a] text-muted hover:text-gray-300 hover:bg-white/5'
                   }`}
                 >
                   {filter.label}
@@ -215,13 +215,13 @@ const RetiredCorpsGallery = () => {
         {/* Empty State */}
         {filteredCorps.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <Archive className="w-12 h-12 text-gray-600 mb-3" />
+            <Archive className="w-12 h-12 text-muted mb-3" />
             <h3 className="text-sm font-bold text-white mb-1">
               {filterClass === 'all'
                 ? 'No Retired Corps Yet'
                 : `No Retired ${getClassConfig(filterClass).name} Corps`}
             </h3>
-            <p className="text-xs text-gray-500 max-w-[280px]">
+            <p className="text-xs text-muted max-w-[280px]">
               Retired corps will appear here when you retire them from your active roster.
             </p>
           </div>
@@ -275,7 +275,7 @@ const RetiredCorpsGallery = () => {
                           {corps.corpsName}
                         </h3>
                         {corps.location && (
-                          <div className="flex items-center gap-1 text-gray-500 text-[11px] mt-1">
+                          <div className="flex items-center gap-1 text-muted text-[11px] mt-1">
                             <MapPin className="w-3 h-3" />
                             <span className="truncate">{corps.location}</span>
                           </div>
@@ -287,7 +287,7 @@ const RetiredCorpsGallery = () => {
                         <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                            <span className="text-[10px] text-muted uppercase tracking-wider">
                               Seasons
                             </span>
                           </div>
@@ -299,14 +299,14 @@ const RetiredCorpsGallery = () => {
                         <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                            <span className="text-[10px] text-muted uppercase tracking-wider">
                               Best
                             </span>
                           </div>
                           {isSoundSport ? (
                             <div
                               className={`inline-block text-xs font-bold uppercase px-2 py-1 rounded-none ${
-                                bestRating ? RATING_CONFIG[bestRating].badge : 'text-gray-500'
+                                bestRating ? RATING_CONFIG[bestRating].badge : 'text-muted'
                               }`}
                             >
                               {bestRating || '—'}
@@ -321,7 +321,7 @@ const RetiredCorpsGallery = () => {
                         <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Star className="w-3.5 h-3.5 text-purple-400" />
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                            <span className="text-[10px] text-muted uppercase tracking-wider">
                               Shows
                             </span>
                           </div>
@@ -333,7 +333,7 @@ const RetiredCorpsGallery = () => {
                         <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Archive className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                            <span className="text-[10px] text-muted uppercase tracking-wider">
                               Retired
                             </span>
                           </div>
@@ -420,7 +420,7 @@ const RetiredCorpsGallery = () => {
                     <span className="text-white font-bold">{selectedCorps.corpsName}</span> with a
                     memorial plaque, displayed forever on its gallery card.
                   </p>
-                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 mb-4">
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted mb-4">
                     <Coins className="w-3 h-3 text-yellow-500" />
                     <span className="font-data tabular-nums">
                       {corpsCoin.toLocaleString()}
@@ -462,7 +462,7 @@ const RetiredCorpsGallery = () => {
                   </div>
 
                   {selectedCorps.plaque && (
-                    <p className="text-[10px] text-gray-500 mt-3">
+                    <p className="text-[10px] text-muted mt-3">
                       Upgrading replaces the current {PLAQUE_TIERS[selectedCorps.plaque.tier]?.name}{' '}
                       and pays the full price of the new tier.
                     </p>
@@ -515,14 +515,14 @@ const RetiredCorpsGallery = () => {
                         <h4 className="text-base font-bold text-white">
                           {selectedCorps.corpsName}
                         </h4>
-                        <p className="text-[11px] text-gray-500">
+                        <p className="text-[11px] text-muted">
                           {getClassConfig(selectedCorps.corpsClass).name}
                         </p>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center">
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+                        <div className="text-[10px] text-muted uppercase tracking-wider">
                           Seasons
                         </div>
                         <div className="text-base font-bold text-white font-data tabular-nums">
@@ -530,7 +530,7 @@ const RetiredCorpsGallery = () => {
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+                        <div className="text-[10px] text-muted uppercase tracking-wider">
                           Best
                         </div>
                         {selectedCorps.corpsClass === 'soundSport' ? (
@@ -546,7 +546,7 @@ const RetiredCorpsGallery = () => {
                         )}
                       </div>
                       <div className="text-center">
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+                        <div className="text-[10px] text-muted uppercase tracking-wider">
                           Shows
                         </div>
                         <div className="text-base font-bold text-white font-data tabular-nums">

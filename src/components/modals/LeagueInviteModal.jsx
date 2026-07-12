@@ -111,7 +111,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
             </div>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white"
+              className="p-1 text-muted hover:text-white"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
@@ -123,21 +123,21 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
               {loadingLeagues ? (
                 <div className="text-center py-8">
                   <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-[11px] text-gray-500">Loading your leagues...</p>
+                  <p className="text-[11px] text-muted">Loading your leagues...</p>
                 </div>
               ) : leagues.length === 0 ? (
                 <div className="text-center py-6">
-                  <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                  <Users className="w-8 h-8 text-muted mx-auto mb-2" />
                   <p className="text-sm text-gray-400 mb-1">
                     You don&apos;t commission any leagues yet
                   </p>
-                  <p className="text-[11px] text-gray-600">Create a league to send invites.</p>
+                  <p className="text-[11px] text-muted">Create a league to send invites.</p>
                 </div>
               ) : availableLeagues.length === 0 ? (
                 <div className="text-center py-6">
-                  <AlertCircle className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                  <AlertCircle className="w-8 h-8 text-muted mx-auto mb-2" />
                   <p className="text-sm text-gray-400 mb-1">No leagues available</p>
-                  <p className="text-[11px] text-gray-600">
+                  <p className="text-[11px] text-muted">
                     {leagues.every((l) => l.alreadyMember)
                       ? 'This director is already a member of all your leagues.'
                       : 'All your leagues are full.'}
@@ -146,7 +146,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
               ) : (
                 <>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       League
                     </label>
                     <div className="space-y-1">
@@ -163,24 +163,24 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
                               selected
                                 ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-white'
                                 : disabled
-                                  ? 'bg-[#0a0a0a] border-[#222] text-gray-600 cursor-not-allowed'
+                                  ? 'bg-[#0a0a0a] border-[#222] text-muted cursor-not-allowed'
                                   : 'bg-[#0a0a0a] border-[#333] text-gray-300 hover:border-[#555] hover:text-white'
                             }`}
                           >
                             <div className="min-w-0">
                               <div className="text-sm font-bold truncate">{l.name}</div>
-                              <div className="text-[10px] text-gray-500">
+                              <div className="text-[10px] text-muted">
                                 {l.members.length}/{l.maxMembers} members
                               </div>
                             </div>
                             {selected && <Check className="w-4 h-4 text-[#0057B8]" />}
                             {l.alreadyMember && !selected && (
-                              <span className="text-[9px] text-gray-500 uppercase tracking-wider">
+                              <span className="text-[9px] text-muted uppercase tracking-wider">
                                 Already in
                               </span>
                             )}
                             {l.isFull && !l.alreadyMember && !selected && (
-                              <span className="text-[9px] text-gray-500 uppercase tracking-wider">
+                              <span className="text-[9px] text-muted uppercase tracking-wider">
                                 Full
                               </span>
                             )}
@@ -191,9 +191,9 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                       Message (optional)
-                      <span className="float-right text-gray-600 font-normal normal-case">
+                      <span className="float-right text-muted font-normal normal-case">
                         {message.length}/280
                       </span>
                     </label>

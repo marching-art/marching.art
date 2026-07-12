@@ -23,13 +23,13 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
     <div className="mb-4 last:mb-0">
       <div className="flex items-center justify-between text-xs mb-1">
         <span
-          className={`text-gray-500/60 font-semibold ${score1 > score2 ? 'text-green-400' : ''}`}
+          className={`text-muted/60 font-semibold ${score1 > score2 ? 'text-green-400' : ''}`}
         >
           {score1.toFixed(1)}
         </span>
         <span className="font-semibold text-gray-300">{label}</span>
         <span
-          className={`text-gray-500/60 font-semibold ${score2 > score1 ? 'text-green-400' : ''}`}
+          className={`text-muted/60 font-semibold ${score2 > score1 ? 'text-green-400' : ''}`}
         >
           {score2.toFixed(1)}
         </span>
@@ -73,7 +73,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
         <div className="grid grid-cols-3 gap-4">
           {/* Wins */}
           <div className="text-center">
-            <p className="text-xs text-gray-500/60 mb-1">Wins</p>
+            <p className="text-xs text-muted/60 mb-1">Wins</p>
             <div className="flex items-center justify-center gap-4">
               <span
                 className={`font-bold text-lg ${
@@ -82,7 +82,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
               >
                 {user1Stats.wins}
               </span>
-              <span className="text-gray-500/20">|</span>
+              <span className="text-muted/20">|</span>
               <span
                 className={`font-bold text-lg ${
                   user2Stats.wins > user1Stats.wins ? 'text-green-400' : 'text-white'
@@ -95,7 +95,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
 
           {/* Total Points */}
           <div className="text-center">
-            <p className="text-xs text-gray-500/60 mb-1">Total Pts</p>
+            <p className="text-xs text-muted/60 mb-1">Total Pts</p>
             <div className="flex items-center justify-center gap-4">
               <span
                 className={`font-bold text-lg ${
@@ -104,7 +104,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
               >
                 {user1Stats.totalPoints.toFixed(0)}
               </span>
-              <span className="text-gray-500/20">|</span>
+              <span className="text-muted/20">|</span>
               <span
                 className={`font-bold text-lg ${
                   user2Stats.totalPoints > user1Stats.totalPoints ? 'text-yellow-400' : 'text-white'
@@ -117,7 +117,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
 
           {/* Streak */}
           <div className="text-center">
-            <p className="text-xs text-gray-500/60 mb-1">Streak</p>
+            <p className="text-xs text-muted/60 mb-1">Streak</p>
             <div className="flex items-center justify-center gap-4">
               <span
                 className={`font-bold text-lg flex items-center gap-0.5 ${
@@ -128,7 +128,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
                 {user1Stats.streakType || '—'}
                 {user1Stats.streak || ''}
               </span>
-              <span className="text-gray-500/20">|</span>
+              <span className="text-muted/20">|</span>
               <span
                 className={`font-bold text-lg flex items-center gap-0.5 ${
                   user2Stats.streakType === 'W' ? 'text-green-400' : 'text-red-400'
@@ -229,13 +229,13 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
           <div key={`u1-${idx}`} className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-none bg-charcoal-800 flex items-center justify-center">
-                <span className="text-xs font-bold text-gray-500/60">
+                <span className="text-xs font-bold text-muted/60">
                   {getDisplayName(matchup.user1).charAt(0)}
                 </span>
               </div>
               <div>
                 <p className="text-sm text-white">{show.eventName}</p>
-                <p className="text-xs text-gray-500/40">{getDisplayName(matchup.user1)}</p>
+                <p className="text-xs text-muted/40">{getDisplayName(matchup.user1)}</p>
               </div>
             </div>
             <span className="font-bold text-yellow-500">{show.score.toFixed(1)}</span>
@@ -247,13 +247,13 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
           <div key={`u2-${idx}`} className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-none bg-charcoal-800 flex items-center justify-center">
-                <span className="text-xs font-bold text-gray-500/60">
+                <span className="text-xs font-bold text-muted/60">
                   {getDisplayName(matchup.user2).charAt(0)}
                 </span>
               </div>
               <div>
                 <p className="text-sm text-white">{show.eventName}</p>
-                <p className="text-xs text-gray-500/40">{getDisplayName(matchup.user2)}</p>
+                <p className="text-xs text-muted/40">{getDisplayName(matchup.user2)}</p>
               </div>
             </div>
             <span className="font-bold text-yellow-500">{show.score.toFixed(1)}</span>
@@ -261,7 +261,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
         ))}
 
         {scoreBreakdown.user1?.shows.length === 0 && scoreBreakdown.user2?.shows.length === 0 && (
-          <div className="p-8 text-center text-gray-500/40">No shows scored yet this week</div>
+          <div className="p-8 text-center text-muted/40">No shows scored yet this week</div>
         )}
       </div>
     </div>

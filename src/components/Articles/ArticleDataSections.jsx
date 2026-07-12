@@ -20,7 +20,7 @@ const ArticleDataSections = ({ article }) => (
               <div className="flex items-center gap-3">
                 <span
                   className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-none ${
-                    item.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
+                    item.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-muted'
                   }`}
                 >
                   {item.rank}
@@ -63,7 +63,7 @@ const ArticleDataSections = ({ article }) => (
                 </span>
               </div>
               {perf.director && (
-                <span className="text-xs text-gray-500">Director: {perf.director}</span>
+                <span className="text-xs text-muted">Director: {perf.director}</span>
               )}
               {perf.highlight && <p className="text-xs text-gray-400 mt-1">{perf.highlight}</p>}
             </div>
@@ -100,7 +100,7 @@ const ArticleDataSections = ({ article }) => (
     {/* Trending Corps */}
     {article.trendingCorps?.length > 0 && (
       <div className="bg-[#111] border border-[#333] p-5 mb-8">
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+        <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-4">
           Trending Corps
         </h3>
         <div className="space-y-4">
@@ -109,7 +109,7 @@ const ArticleDataSections = ({ article }) => (
               <TrendingBadge direction={corp.direction} className="w-4 h-4" />
               <div>
                 <span className="text-sm font-bold text-white">{corp.corps}</span>
-                {corp.reason && <p className="text-xs text-gray-500 mt-0.5">{corp.reason}</p>}
+                {corp.reason && <p className="text-xs text-muted mt-0.5">{corp.reason}</p>}
               </div>
             </div>
           ))}

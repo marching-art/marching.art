@@ -88,7 +88,7 @@ const CorpsCoinModal = ({ onClose }) => {
                 )}
               </div>
             </div>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -105,7 +105,7 @@ const CorpsCoinModal = ({ onClose }) => {
                 className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${
                   tab === t.id
                     ? 'text-white border-b-2 border-[#0057B8] bg-white/5'
-                    : 'text-gray-500 hover:text-gray-300'
+                    : 'text-muted hover:text-gray-300'
                 }`}
               >
                 {t.label}
@@ -116,7 +116,7 @@ const CorpsCoinModal = ({ onClose }) => {
           {/* Body */}
           <div className="p-4 overflow-y-auto flex-1">
             {loading ? (
-              <div className="py-8 text-center text-sm text-gray-500">Loading wallet...</div>
+              <div className="py-8 text-center text-sm text-muted">Loading wallet...</div>
             ) : tab === 'history' ? (
               history.length > 0 ? (
                 <div className="space-y-1">
@@ -136,7 +136,7 @@ const CorpsCoinModal = ({ onClose }) => {
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-gray-300 truncate">{txn.description}</p>
                           {date && (
-                            <p className="text-[10px] text-gray-600 font-data">
+                            <p className="text-[10px] text-muted font-data">
                               {date.toLocaleDateString()}
                             </p>
                           )}
@@ -153,9 +153,9 @@ const CorpsCoinModal = ({ onClose }) => {
                 </div>
               ) : (
                 <div className="text-center py-10">
-                  <Coins className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">No transactions yet.</p>
-                  <p className="text-xs text-gray-600">
+                  <Coins className="w-10 h-10 text-muted mx-auto mb-3" />
+                  <p className="text-sm text-muted">No transactions yet.</p>
+                  <p className="text-xs text-muted">
                     Register for shows and check the earning guide to get started.
                   </p>
                 </div>
@@ -195,7 +195,7 @@ const CorpsCoinModal = ({ onClose }) => {
                   ))}
                 {earning?.spending && (
                   <>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 pt-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted pt-2">
                       Ways to Spend
                     </p>
                     {Object.entries(earning.spending).map(([key, opt]) => (

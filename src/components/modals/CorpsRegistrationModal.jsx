@@ -61,7 +61,7 @@ const CorpsRegistrationModal = ({
             >
               Register Corps
             </h2>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -71,7 +71,7 @@ const CorpsRegistrationModal = ({
             <div className="p-4 space-y-4">
               {/* Corps Name */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Corps Name *
                 </label>
                 <input
@@ -87,7 +87,7 @@ const CorpsRegistrationModal = ({
 
               {/* Location */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Home Location *
                 </label>
                 <input
@@ -103,7 +103,7 @@ const CorpsRegistrationModal = ({
 
               {/* Group Description */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Group Description
                 </label>
                 <textarea
@@ -113,12 +113,12 @@ const CorpsRegistrationModal = ({
                   maxLength={500}
                   className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                 />
-                <p className="text-[10px] text-gray-600 mt-1">{formData.description.length}/500</p>
+                <p className="text-[10px] text-muted mt-1">{formData.description.length}/500</p>
               </div>
 
               {/* Class Selection Table */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                   Competition Class
                 </label>
                 <div className="border border-[#333] divide-y divide-[#333]">
@@ -147,8 +147,8 @@ const CorpsRegistrationModal = ({
                           <span className="text-sm font-medium text-white">{cls.name}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-gray-500 tabular-nums">{cls.budget}</span>
-                          {!cls.unlocked && <Lock className="w-3 h-3 text-gray-600" />}
+                          <span className="text-xs text-muted tabular-nums">{cls.budget}</span>
+                          {!cls.unlocked && <Lock className="w-3 h-3 text-muted" />}
                         </div>
                       </button>
                     );

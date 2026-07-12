@@ -11,7 +11,7 @@ const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
           <Flame className="w-3.5 h-3.5" />
           Fantasy Trending
         </h3>
-        <span className="text-[10px] font-data text-gray-500">{dayLabel || '24h'}</span>
+        <span className="text-[10px] font-data text-muted">{dayLabel || '24h'}</span>
       </div>
 
       {/* Trending List */}
@@ -38,7 +38,7 @@ const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="w-5 h-5 flex items-center justify-center text-xs font-bold font-data text-gray-500 tabular-nums">
+                <span className="w-5 h-5 flex items-center justify-center text-xs font-bold font-data text-muted tabular-nums">
                   {idx + 1}
                 </span>
                 <span className="text-sm text-white">{player.name}</span>
@@ -59,7 +59,7 @@ const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
           ))
         ) : (
           <div className="px-3 py-4 text-center">
-            <p className="text-xs text-gray-500">No trending data available</p>
+            <p className="text-xs text-muted">No trending data available</p>
           </div>
         )}
       </div>

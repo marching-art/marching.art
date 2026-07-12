@@ -62,7 +62,7 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#0057B8]">
             League Invitations
           </span>
-          <span className="text-[9px] text-gray-500 ml-auto font-data tabular-nums">
+          <span className="text-[9px] text-muted ml-auto font-data tabular-nums">
             {invitations.length}
           </span>
         </div>
@@ -73,7 +73,7 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-bold text-white truncate">{inv.leagueName}</span>
                 </div>
-                <div className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-2">
+                <div className="text-[10px] text-muted mt-0.5 flex items-center gap-2">
                   <span>from {inv.inviterName || 'A director'}</span>
                   {inv.invitedAt?.toDate && (
                     <span className="flex items-center gap-1">

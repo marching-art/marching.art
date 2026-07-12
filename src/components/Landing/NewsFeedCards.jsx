@@ -37,7 +37,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
             </div>
           )}
         </div>
-        <span className="text-[10px] text-gray-500 font-data tabular-nums uppercase">
+        <span className="text-[10px] text-muted font-data tabular-nums uppercase">
           {storyCount} {storyCount === 1 ? 'story' : 'stories'}
         </span>
       </div>
@@ -54,7 +54,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
               className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                 isActive
                   ? 'bg-[#0057B8] text-white'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                  : 'text-muted hover:text-gray-300 hover:bg-white/5'
               }`}
             >
               <Icon className="w-3 h-3" />
@@ -130,7 +130,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
           >
             {config.label}
           </span>
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-xs text-muted">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {formatTimestamp(story.createdAt)}
@@ -208,7 +208,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
             {/* Share button */}
             <ShareButton story={story} />
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-600 uppercase">marching.art</span>
+              <span className="text-[10px] text-muted uppercase">marching.art</span>
               <ChevronRight className="w-4 h-4 text-[#0057B8] group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
@@ -247,7 +247,7 @@ const TextStoryRow = memo(({ story, onClick, engagement }) => {
 
       {/* Meta */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wide">
+        <span className="text-[10px] text-muted uppercase tracking-wide">
           {formatTimestamp(story.createdAt)}
           {(story.authorUsername || story.authorName) && (
             <span className="text-gray-400"> · By {story.authorUsername || story.authorName}</span>
@@ -272,7 +272,7 @@ function LoadingState() {
 
 function ErrorState({ onRetry }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+    <div className="flex flex-col items-center justify-center py-16 text-muted">
       <AlertCircle className="w-8 h-8 mb-3 text-red-400" />
       <p className="text-sm mb-4">Unable to load news feed</p>
       <button
@@ -287,12 +287,12 @@ function ErrorState({ onRetry }) {
 
 function EmptyState({ category }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-      <Newspaper className="w-12 h-12 mb-3 text-gray-600" />
+    <div className="flex flex-col items-center justify-center py-16 text-muted">
+      <Newspaper className="w-12 h-12 mb-3 text-muted" />
       <p className="text-sm font-medium mb-1">
         {category === 'all' ? 'No articles yet' : `No ${category} stories available`}
       </p>
-      <p className="text-xs text-gray-600 text-center max-w-xs">
+      <p className="text-xs text-muted text-center max-w-xs">
         {category === 'all'
           ? 'New recaps and analysis post after each DCI competition day.'
           : 'Try another category or check back after the next competition day.'}

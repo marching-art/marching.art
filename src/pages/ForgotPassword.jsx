@@ -81,7 +81,7 @@ const ForgotPassword = () => {
                   />
                 </div>
                 <h1 className="text-2xl font-bold text-white">Reset Password</h1>
-                <p className="text-base text-gray-500 mt-2">
+                <p className="text-base text-muted mt-2">
                   Enter your email address and we'll send you a link to reset your password
                 </p>
               </div>
@@ -106,7 +106,7 @@ const ForgotPassword = () => {
                     </div>
                   </div>
 
-                  <p className="text-sm text-gray-500 mb-6">
+                  <p className="text-sm text-muted mb-6">
                     Didn't receive the email? Check your spam folder or try again.
                   </p>
 
@@ -148,11 +148,11 @@ const ForgotPassword = () => {
                   <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Email Field */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                         Email Address
                       </label>
                       <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                         <input
                           type="email"
                           className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
@@ -185,7 +185,7 @@ const ForgotPassword = () => {
                   </form>
 
                   {/* Back to Login Link */}
-                  <p className="text-center mt-8 text-base text-gray-500">
+                  <p className="text-center mt-8 text-base text-muted">
                     Remember your password?{' '}
                     <Link
                       to="/login"

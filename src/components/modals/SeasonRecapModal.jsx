@@ -61,12 +61,12 @@ const SeasonRecapModal = ({ recap, onClose }) => {
                 >
                   Season Complete
                 </h2>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-muted">
                   {formatSeasonName(recap?.seasonName) || recap?.seasonName}
                 </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -83,7 +83,7 @@ const SeasonRecapModal = ({ recap, onClose }) => {
                   <p className="text-sm font-bold text-white truncate">
                     {result.corpsName || 'Your Corps'}
                   </p>
-                  <p className="text-[10px] uppercase tracking-wider text-gray-500">
+                  <p className="text-[10px] uppercase tracking-wider text-muted">
                     {CLASS_DISPLAY_NAMES[result.corpsClass] || result.corpsClass}
                   </p>
                   {result.newBestSeason && (
@@ -96,7 +96,7 @@ const SeasonRecapModal = ({ recap, onClose }) => {
                   <p className="text-sm font-bold text-white font-data">
                     {placementLabel(result.placement)}
                     {result.totalInClass ? (
-                      <span className="text-gray-500 font-normal"> of {result.totalInClass}</span>
+                      <span className="text-muted font-normal"> of {result.totalInClass}</span>
                     ) : null}
                   </p>
                   <div className="flex items-center justify-end gap-2">

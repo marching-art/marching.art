@@ -91,7 +91,7 @@ const Meter = ({ label, value, color, note }) => (
       <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</span>
       <span className="text-[11px] font-bold font-data tabular-nums text-white">
         {Math.round(value)}
-        <span className="text-gray-600">/100</span>
+        <span className="text-muted">/100</span>
       </span>
     </div>
     <div className="h-2 bg-[#111] border border-[#2a2a2a] overflow-hidden">
@@ -111,12 +111,12 @@ const CaptionRow = ({ id, caps }) => {
     <div className="flex items-center gap-3 px-3 py-2 border-b border-[#222] last:border-0">
       <div className="w-9 flex-shrink-0">
         <div className="text-xs font-bold text-white">{id}</div>
-        <div className="text-[9px] text-gray-600 leading-tight">{CAPTION_LABELS[id]}</div>
+        <div className="text-[9px] text-muted leading-tight">{CAPTION_LABELS[id]}</div>
       </div>
       <div className="flex-1 space-y-1">
         {/* Content bar */}
         <div className="flex items-center gap-2">
-          <span className="text-[8px] uppercase text-gray-600 w-12">Content</span>
+          <span className="text-[8px] uppercase text-muted w-12">Content</span>
           <div className="flex-1 h-1.5 bg-[#111] overflow-hidden">
             <div
               className="h-full transition-all duration-500"
@@ -126,7 +126,7 @@ const CaptionRow = ({ id, caps }) => {
         </div>
         {/* Clean bar */}
         <div className="flex items-center gap-2">
-          <span className="text-[8px] uppercase text-gray-600 w-12">Clean</span>
+          <span className="text-[8px] uppercase text-muted w-12">Clean</span>
           <div className="flex-1 h-1.5 bg-[#111] overflow-hidden">
             <div
               className="h-full bg-[#5a8dd6] transition-all duration-500"
@@ -353,13 +353,13 @@ const PodiumPreview = () => {
                   <div className="text-base font-bold text-white leading-tight">
                     Cadence Community Corps
                   </div>
-                  <div className="text-[11px] text-gray-500">
+                  <div className="text-[11px] text-muted">
                     Dayton, OH · Community Corps · Day {day} of the season
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
                   Projected Total
                 </div>
                 <div
@@ -392,7 +392,7 @@ const PodiumPreview = () => {
                   </h2>
                   <span className="text-[11px] font-bold font-data tabular-nums text-white">
                     {blocksLeft}
-                    <span className="text-gray-600">/{BLOCKS_PER_DAY} blocks</span>
+                    <span className="text-muted">/{BLOCKS_PER_DAY} blocks</span>
                   </span>
                 </div>
                 <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -412,7 +412,7 @@ const PodiumPreview = () => {
                           +
                         </span>
                       </div>
-                      <p className="text-[10px] text-gray-500 leading-tight mt-0.5">
+                      <p className="text-[10px] text-muted leading-tight mt-0.5">
                         {block.detail}
                       </p>
                     </button>
@@ -446,7 +446,7 @@ const PodiumPreview = () => {
                 </div>
                 <div className="max-h-64 overflow-y-auto scroll-momentum">
                   {log.length === 0 ? (
-                    <p className="text-xs text-gray-600 p-4">
+                    <p className="text-xs text-muted p-4">
                       Assign a rehearsal block to see its itemized result here.
                     </p>
                   ) : (
@@ -480,7 +480,7 @@ const PodiumPreview = () => {
                 <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                   Caption Sheet
                 </h2>
-                <span className="text-[10px] text-gray-600">all 8 captions · 0–20</span>
+                <span className="text-[10px] text-muted">all 8 captions · 0–20</span>
               </div>
               <div>
                 {PODIUM_CAPTIONS.map((id) => (
@@ -488,7 +488,7 @@ const PodiumPreview = () => {
                 ))}
               </div>
               <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
-                <p className="text-[10px] text-gray-500 leading-relaxed">
+                <p className="text-[10px] text-muted leading-relaxed">
                   Your captions score inside the real historical envelope of DCI results for the day
                   — content installed, cleaned, and gated by condition. In a real season this drops
                   nightly as a full box score.
@@ -518,7 +518,7 @@ const PodiumPreview = () => {
               <UserPlus className="w-4 h-4" />
               Found Your Corps — Free
             </Link>
-            <div className="flex items-center justify-center gap-2 mt-3 text-gray-500">
+            <div className="flex items-center justify-center gap-2 mt-3 text-muted">
               <Zap className="w-3.5 h-3.5 text-green-500" />
               <span className="text-xs">Always open · takes under two minutes</span>
             </div>
@@ -540,7 +540,7 @@ const PodiumPreview = () => {
           >
             <button
               onClick={() => setGateOpen(false)}
-              className="absolute top-3 right-3 p-1.5 text-gray-500 hover:text-white"
+              className="absolute top-3 right-3 p-1.5 text-muted hover:text-white"
               aria-label="Close"
             >
               <X className="w-5 h-5" />

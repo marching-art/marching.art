@@ -144,7 +144,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
       {/* Error State */}
       {hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#222]">
-          <span className="text-xs text-gray-500">Failed to load</span>
+          <span className="text-xs text-muted">Failed to load</span>
         </div>
       )}
 
@@ -307,7 +307,7 @@ export const CorpsLogo: React.FC<CorpsLogoProps> = ({
       `}
     >
       {/* Fallback with initials */}
-      {showFallback && <span className="text-gray-500 font-bold text-[10px]">{initials}</span>}
+      {showFallback && <span className="text-muted font-bold text-[10px]">{initials}</span>}
 
       {/* Logo Image */}
       {!showFallback && (

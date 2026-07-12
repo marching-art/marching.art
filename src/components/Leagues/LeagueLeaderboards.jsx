@@ -129,9 +129,9 @@ const LeaderboardCard = memo(
             )}
             {hasMore &&
               (expanded ? (
-                <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronUp className="w-3.5 h-3.5 text-muted" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-muted" />
               ))}
           </div>
         </button>
@@ -186,7 +186,7 @@ const LeaderboardCard = memo(
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 text-center text-xs text-gray-500 font-bold">
+                        <span className="w-5 text-center text-xs text-muted font-bold">
                           {rank}
                         </span>
                         <span className={`text-sm ${isUser ? 'text-purple-400' : 'text-gray-300'}`}>
@@ -243,7 +243,7 @@ const RankBadge = ({ rank, size = 'md' }) => {
   }
   return (
     <div
-      className={`${sizeClasses} flex items-center justify-center bg-[#333] text-gray-500 font-bold`}
+      className={`${sizeClasses} flex items-center justify-center bg-[#333] text-muted font-bold`}
     >
       {rank}
     </div>
@@ -327,9 +327,9 @@ const LeagueLeaderboards = ({
   if (!leagueStats || Object.keys(leagueStats).length === 0) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
-        <Award className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+        <Award className="w-8 h-8 text-muted mx-auto mb-2" />
         <p className="text-sm text-gray-400">No stats available yet</p>
-        <p className="text-xs text-gray-600">Complete some matchups to see leaderboards</p>
+        <p className="text-xs text-muted">Complete some matchups to see leaderboards</p>
       </div>
     );
   }
@@ -363,9 +363,9 @@ const LeagueLeaderboards = ({
           <span className="text-xs font-bold text-white">Caption Leaders</span>
         </div>
         {showCaptions ? (
-          <ChevronUp className="w-4 h-4 text-gray-500" />
+          <ChevronUp className="w-4 h-4 text-muted" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+          <ChevronDown className="w-4 h-4 text-muted" />
         )}
       </button>
 

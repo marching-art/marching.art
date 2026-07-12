@@ -25,7 +25,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Avatar Style */}
       <div>
-        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+        <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
           Avatar Type
         </label>
         <div className="space-y-2">
@@ -53,7 +53,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
               />
               <div>
                 <div className="text-sm text-white font-bold">{style.label}</div>
-                <div className="text-[10px] text-gray-500">{style.description}</div>
+                <div className="text-[10px] text-muted">{style.description}</div>
               </div>
             </label>
           ))}
@@ -63,7 +63,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
       {/* Section Selection - Only show for performer style */}
       {formData.avatarStyle === 'performer' && (
         <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+          <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
             Featured Section
           </label>
           <div className="space-y-2">
@@ -92,7 +92,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
                 />
                 <div>
                   <div className="text-sm text-white font-bold">{section.label}</div>
-                  <div className="text-[10px] text-gray-500">{section.description}</div>
+                  <div className="text-[10px] text-muted">{section.description}</div>
                 </div>
               </label>
             ))}
@@ -101,7 +101,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
       )}
     </div>
 
-    <p className="text-[10px] text-gray-500">
+    <p className="text-[10px] text-muted">
       Your avatar will be automatically generated when you save. Change the style or section to
       generate a new avatar.
     </p>

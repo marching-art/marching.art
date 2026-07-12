@@ -173,8 +173,8 @@ const LineupSimulatorPanel = React.memo(
 
         {!hasScores ? (
           <div className="px-4 py-6 text-center">
-            <BarChart2 className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-            <p className="text-xs text-gray-500">
+            <BarChart2 className="w-8 h-8 text-muted mx-auto mb-2" />
+            <p className="text-xs text-muted">
               {avgsLoading ? 'Calculating averages…' : 'Score data appears after your first show.'}
             </p>
           </div>
@@ -201,7 +201,7 @@ const LineupSimulatorPanel = React.memo(
                           ? 'bg-green-500/20 text-green-400'
                           : row.pct != null
                             ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-[#333] text-gray-500'
+                            : 'bg-[#333] text-muted'
                     }`}
                   >
                     {row.id}
@@ -212,7 +212,7 @@ const LineupSimulatorPanel = React.memo(
                     <div className="flex items-center gap-1 mb-1">
                       <span className="text-xs text-white truncate">{row.corpsName ?? '—'}</span>
                       {row.year && (
-                        <span className="text-[10px] text-gray-500 flex-shrink-0">
+                        <span className="text-[10px] text-muted flex-shrink-0">
                           '{String(row.year).slice(-2)}
                         </span>
                       )}
@@ -233,11 +233,11 @@ const LineupSimulatorPanel = React.memo(
                         </div>
                       </>
                     ) : (
-                      <span className="text-xs text-gray-600">—</span>
+                      <span className="text-xs text-muted">—</span>
                     )}
                   </div>
 
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-muted flex-shrink-0" />
                 </button>
               );
             })}
@@ -265,7 +265,7 @@ const LineupSimulatorPanel = React.memo(
 
             {/* Footer label */}
             <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
-              <p className="text-[10px] text-gray-600">
+              <p className="text-[10px] text-muted">
                 {avgsLoading
                   ? 'Calculating season averages…'
                   : usingSeasonAvgs

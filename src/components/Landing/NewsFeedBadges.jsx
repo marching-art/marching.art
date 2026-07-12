@@ -20,7 +20,7 @@ function TrendingBadge({ direction, className = 'w-3 h-3' }) {
   if (direction === 'down') {
     return <TrendingDown className={`${className} text-red-500`} />;
   }
-  return <Minus className={`${className} text-gray-500`} />;
+  return <Minus className={`${className} text-muted`} />;
 }
 
 function FantasyValueBadge({ value }) {
@@ -140,7 +140,7 @@ function ShareButton({ story, className = '' }) {
   return (
     <button
       onClick={handleShare}
-      className={`p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-none ${className}`}
+      className={`p-2 text-muted hover:text-white hover:bg-white/10 transition-colors rounded-none ${className}`}
       title="Share article"
       aria-label="Share article"
     >

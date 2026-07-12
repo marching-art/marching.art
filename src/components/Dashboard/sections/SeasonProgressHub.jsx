@@ -32,7 +32,7 @@ const SeasonProgressHub = memo(({ profile, seasonUid }) => {
               className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${
                 isActive
                   ? 'text-white bg-[#222] border-b-2 border-[#0057B8]'
-                  : 'text-gray-500 hover:text-gray-300 border-b-2 border-transparent'
+                  : 'text-muted hover:text-gray-300 border-b-2 border-transparent'
               }`}
             >
               <Icon className="w-3 h-3" />

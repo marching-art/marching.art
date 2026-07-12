@@ -306,7 +306,7 @@ const LiveScoresVerification = () => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Live DCI Scores — {currentYear}</h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               {seasonData?.name} • {corpsRows.length} corps • {events.length} events across{' '}
               {columns.length} days • {totalScores} score rows
               {seasonData?.lastScrapedDate ? ` • last scraped ${seasonData.lastScrapedDate}` : ''}
@@ -345,7 +345,7 @@ const LiveScoresVerification = () => {
       )}
 
       {events.length === 0 ? (
-        <div className="px-3 py-8 text-center text-sm text-gray-500 border border-white/20 rounded-none">
+        <div className="px-3 py-8 text-center text-sm text-muted border border-white/20 rounded-none">
           No scraped scores found for {currentYear}.{' '}
           {isLiveSeason ? 'Use "Scrape DCI Scores Now" to pull the latest recap.' : ''}
         </div>
@@ -390,12 +390,12 @@ const LiveScoresVerification = () => {
               className={`p-1 rounded-none transition-all ${
                 canScrollLeft
                   ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
-                  : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
+                  : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-[10px] text-gray-500 font-mono">
+            <span className="text-[10px] text-muted font-mono">
               Showing days {columns.length === 0 ? 0 : scrollPosition + 1}-
               {Math.min(scrollPosition + VISIBLE_COLUMNS, columns.length)} of {columns.length}
             </span>
@@ -405,7 +405,7 @@ const LiveScoresVerification = () => {
               className={`p-1 rounded-none transition-all ${
                 canScrollRight
                   ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
-                  : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
+                  : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
               <ChevronRight className="w-4 h-4" />
@@ -426,11 +426,11 @@ const LiveScoresVerification = () => {
                       className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
                       title={`${col.eventNames.join(' + ')}\n${[...col.locations].join(' • ')}\nDay ${col.day ?? 'pre-season'}\nFantasy recap: ${col.scored ? 'scored' : 'not yet scored'}`}
                     >
-                      <div className="text-[10px] text-gray-500/70 leading-none">
+                      <div className="text-[10px] text-muted/70 leading-none">
                         {col.dateLabel}
                       </div>
                       <div
-                        className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-gray-500/40'}`}
+                        className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-muted/40'}`}
                       >
                         {col.day != null ? `D${col.day}` : 'pre'}
                       </div>
@@ -454,7 +454,7 @@ const LiveScoresVerification = () => {
                       >
                         {corps}
                       </div>
-                      <div className="text-[9px] text-gray-500/50 leading-none font-mono">
+                      <div className="text-[9px] text-muted/50 leading-none font-mono">
                         {latestTotal ? latestTotal.toFixed(3) : '—'}
                       </div>
                     </td>
@@ -478,7 +478,7 @@ const LiveScoresVerification = () => {
                               {value.toFixed(3)}
                             </span>
                           ) : (
-                            <span className="text-gray-500/20">-</span>
+                            <span className="text-muted/20">-</span>
                           )}
                         </td>
                       );
@@ -490,7 +490,7 @@ const LiveScoresVerification = () => {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center gap-3 text-[9px] text-gray-500/60">
+          <div className="flex flex-wrap items-center gap-3 text-[9px] text-muted/60">
             <span className="font-mono">Heatmap:</span>
             <span className="flex items-center gap-0.5">
               <span className="w-2.5 h-2.5 rounded-none bg-green-900/30" /> 90%+

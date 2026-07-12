@@ -165,7 +165,7 @@ export default function ArticleReactions({
     return (
       <div className="flex items-center gap-1.5">
         {loading ? (
-          <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
+          <Loader2 className="w-3 h-3 animate-spin text-muted" />
         ) : (
           <>
             {topReactions.length > 0 && (
@@ -180,7 +180,7 @@ export default function ArticleReactions({
                 ))}
               </div>
             )}
-            <span className="text-[11px] text-gray-500 font-data tabular-nums">{counts.total}</span>
+            <span className="text-[11px] text-muted font-data tabular-nums">{counts.total}</span>
           </>
         )}
       </div>
@@ -192,8 +192,8 @@ export default function ArticleReactions({
     <div className="flex items-center gap-4 flex-wrap">
       {loading ? (
         <div className="flex items-center gap-2 py-2">
-          <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
-          <span className="text-xs text-gray-500">Loading reactions...</span>
+          <Loader2 className="w-4 h-4 animate-spin text-muted" />
+          <span className="text-xs text-muted">Loading reactions...</span>
         </div>
       ) : (
         <>
@@ -208,7 +208,7 @@ export default function ArticleReactions({
 
           {/* Total count */}
           {counts.total > 0 && (
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted">
               <span className="font-data tabular-nums">{counts.total}</span> reactions
             </div>
           )}
@@ -279,8 +279,8 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
           </>
         ) : (
           <>
-            <SmilePlus className="w-4 h-4 text-gray-500" />
-            <span className="text-xs text-gray-500">React</span>
+            <SmilePlus className="w-4 h-4 text-muted" />
+            <span className="text-xs text-muted">React</span>
           </>
         )}
       </button>
@@ -309,7 +309,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
                   <span className={`text-xl ${isReacting ? 'animate-pulse' : ''}`}>{emoji}</span>
                   {count > 0 && (
                     <span
-                      className={`text-[9px] font-data tabular-nums ${isSelected ? 'text-[#0057B8]' : 'text-gray-500'}`}
+                      className={`text-[9px] font-data tabular-nums ${isSelected ? 'text-[#0057B8]' : 'text-muted'}`}
                     >
                       {count}
                     </span>
@@ -351,7 +351,7 @@ export function ReactionSummary({ counts, userReaction }) {
           ))}
         </div>
       )}
-      <span className="text-[10px] text-gray-500 font-data tabular-nums">{counts.total}</span>
+      <span className="text-[10px] text-muted font-data tabular-nums">{counts.total}</span>
     </div>
   );
 }
@@ -373,7 +373,7 @@ export function EngagementSummary({ reactionCounts, userReaction, commentCount }
     : [];
 
   return (
-    <div className="flex items-center gap-3 text-gray-500">
+    <div className="flex items-center gap-3 text-muted">
       {/* Reactions - overlapping emojis + count */}
       {hasReactions && (
         <div className="flex items-center gap-1.5">

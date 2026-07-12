@@ -183,7 +183,7 @@ const Schedule = () => {
       <div className="w-full py-20 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Loading schedule...</p>
+          <p className="text-sm text-muted">Loading schedule...</p>
         </div>
       </div>
     );
@@ -194,9 +194,9 @@ const Schedule = () => {
     return (
       <div className="w-full py-20 flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
-          <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <Calendar className="w-12 h-12 text-muted mx-auto mb-3" />
           <h2 className="text-sm font-bold text-white mb-1">No Active Season</h2>
-          <p className="text-xs text-gray-500">The schedule will appear once a season is active.</p>
+          <p className="text-xs text-muted">The schedule will appear once a season is active.</p>
         </div>
       </div>
     );
@@ -213,7 +213,7 @@ const Schedule = () => {
               <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                 {formatSeasonName?.() || '2025'} Schedule
               </h1>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-muted">
                 Week {currentWeek} of 7 • {getWeekDateRange(currentWeek)}
               </p>
               <p className="text-[10px] text-cyan-400 flex items-center gap-1">
@@ -230,13 +230,13 @@ const Schedule = () => {
           {/* Registration Stats */}
           <div className="flex items-center gap-4 text-xs">
             <div className="text-right">
-              <div className="text-[10px] text-gray-500 uppercase">This Week</div>
+              <div className="text-[10px] text-muted uppercase">This Week</div>
               <div className="font-bold text-white font-data tabular-nums">
                 {registrationStats.thisWeek}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] text-gray-500 uppercase">Total</div>
+              <div className="text-[10px] text-muted uppercase">Total</div>
               <div className="font-bold text-[#0057B8] font-data tabular-nums">
                 {registrationStats.total}
               </div>

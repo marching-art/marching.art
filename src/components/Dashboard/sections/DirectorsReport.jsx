@@ -139,7 +139,7 @@ const DirectorsReport = memo(
           >
             {loginDone && <Check className="w-3 h-3 text-white" />}
           </div>
-          <span className={`text-sm flex-1 ${loginDone ? 'text-gray-500' : 'text-white'}`}>
+          <span className={`text-sm flex-1 ${loginDone ? 'text-muted' : 'text-white'}`}>
             Daily login{streak > 1 ? ` — ${streak} day streak` : ''}
           </span>
           <span className="text-[10px] font-bold text-purple-400 font-data">+25 XP</span>

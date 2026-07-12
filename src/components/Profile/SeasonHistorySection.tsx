@@ -44,7 +44,7 @@ const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) =>
             Season History
           </span>
         </div>
-        <span className="text-[9px] text-gray-500">
+        <span className="text-[9px] text-muted">
           {visibleSeasons.length} season{visibleSeasons.length === 1 ? '' : 's'}
         </span>
       </div>
@@ -63,7 +63,7 @@ const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) =>
                 className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${
                   isActive
                     ? 'text-white border-b-2 border-[#0057B8] bg-white/5'
-                    : 'text-gray-500 hover:text-gray-300'
+                    : 'text-muted hover:text-gray-300'
                 }`}
               >
                 {label}

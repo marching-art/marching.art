@@ -93,7 +93,7 @@ const DailyChallenges = memo(
             <Target className="w-3.5 h-3.5 text-orange-500" />
             Daily Challenges
           </h3>
-          <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+          <span className="text-[10px] font-bold text-muted font-data tabular-nums">
             {completedCount}/{totalCount}
           </span>
         </div>
@@ -119,7 +119,7 @@ const DailyChallenges = memo(
                   {isDone && <Check className="w-3 h-3 text-white" />}
                 </div>
                 <span
-                  className={`text-sm flex-1 text-left ${isDone ? 'text-gray-500 line-through' : 'text-white'}`}
+                  className={`text-sm flex-1 text-left ${isDone ? 'text-muted line-through' : 'text-white'}`}
                 >
                   {challenge.label}
                 </span>
@@ -127,7 +127,7 @@ const DailyChallenges = memo(
                   <span className="text-[10px] font-bold text-purple-400 font-data">
                     +{challenge.xp} XP
                   </span>
-                  {!isDone && <ChevronRight className="w-3.5 h-3.5 text-gray-600" />}
+                  {!isDone && <ChevronRight className="w-3.5 h-3.5 text-muted" />}
                 </div>
               </div>
             );
@@ -147,7 +147,7 @@ const DailyChallenges = memo(
               return (
                 <div key={challenge.id} className="px-4 py-3">
                   {inner}
-                  <p className="text-[10px] text-gray-600 mt-1 ml-8">
+                  <p className="text-[10px] text-muted mt-1 ml-8">
                     Answer in Daily Predictions below
                   </p>
                 </div>
@@ -192,7 +192,7 @@ const DailyChallenges = memo(
         {/* Weekly arc — a week-long pursuit on top of the daily set */}
         <div className="px-4 py-2 border-t border-[#222] flex items-center gap-2">
           <CalendarCheck className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-          <span className="text-[10px] text-gray-500 flex-1">
+          <span className="text-[10px] text-muted flex-1">
             Weekly arc: full set on {arcDays}/{WEEKLY_LOOP_TARGET_DAYS} days
           </span>
           <span className="text-[10px] font-bold text-emerald-400 font-data">

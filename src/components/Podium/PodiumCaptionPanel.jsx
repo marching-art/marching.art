@@ -36,7 +36,7 @@ export default function PodiumCaptionPanel({ podium }) {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
           Caption Progress
         </h3>
         <span className="text-[10px] font-bold uppercase text-[#c9a227]">
@@ -60,7 +60,7 @@ export default function PodiumCaptionPanel({ podium }) {
                     </span>
                   )}
                 </div>
-                <div className="text-[9px] text-gray-600 truncate">
+                <div className="text-[9px] text-muted truncate">
                   {CAPTION_LABELS[caption]} · Lv {cap.challenge}
                 </div>
               </div>
@@ -74,7 +74,7 @@ export default function PodiumCaptionPanel({ podium }) {
         })}
       </div>
 
-      <div className="flex gap-4 text-[9px] text-gray-600 uppercase font-bold">
+      <div className="flex gap-4 text-[9px] text-muted uppercase font-bold">
         <span>
           <span className="inline-block w-2 h-2 bg-[#0057B8] rounded-none mr-1" />
           Content installed

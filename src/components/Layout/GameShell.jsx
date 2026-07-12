@@ -247,7 +247,7 @@ const TickerBar = () => {
   const TrendIndicator = ({ trend }) => {
     if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-500" />;
     if (trend === 'down') return <TrendingDown className="w-3 h-3 text-red-500" />;
-    return <Minus className="w-3 h-3 text-gray-500" />;
+    return <Minus className="w-3 h-3 text-muted" />;
   };
 
   // Loading state
@@ -255,7 +255,7 @@ const TickerBar = () => {
     return (
       <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
-          <span className="text-gray-500 animate-pulse">Loading scores...</span>
+          <span className="text-muted animate-pulse">Loading scores...</span>
         </div>
       </div>
     );
@@ -266,7 +266,7 @@ const TickerBar = () => {
     return (
       <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
-          <span className="text-gray-500">No scores available yet</span>
+          <span className="text-muted">No scores available yet</span>
         </div>
       </div>
     );
@@ -484,7 +484,7 @@ const TickerBar = () => {
                 <span className={`${colors.text} whitespace-nowrap`}>{label} Movers</span>
               </div>
               <div className="w-px h-4 bg-[#333]" />
-              <span className="text-gray-500 text-xs">No significant moves today</span>
+              <span className="text-muted text-xs">No significant moves today</span>
             </>
           );
         }

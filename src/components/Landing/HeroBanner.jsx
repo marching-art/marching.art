@@ -35,7 +35,7 @@ const HeroBanner = ({ onDismiss }) => {
         {/* Dismiss button */}
         <button
           onClick={onDismiss}
-          className="absolute top-3 right-3 p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-none transition-colors z-10"
+          className="absolute top-3 right-3 p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors z-10"
           aria-label="Dismiss welcome message"
         >
           <X className="w-4 h-4" />

@@ -131,7 +131,7 @@ const Register = () => {
                   />
                 </div>
                 <h1 className="text-2xl font-bold text-white">Start Playing Free</h1>
-                <p className="text-base text-gray-500 mt-2">
+                <p className="text-base text-muted mt-2">
                   Build your dream corps in under 2 minutes
                 </p>
               </div>
@@ -156,12 +156,12 @@ const Register = () => {
                 <div>
                   <label
                     htmlFor="register-name"
-                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                    className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
                   >
                     Director Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                     <input
                       id="register-name"
                       type="text"
@@ -180,12 +180,12 @@ const Register = () => {
                 <div>
                   <label
                     htmlFor="register-email"
-                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                    className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
                   >
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                     <input
                       id="register-email"
                       type="email"
@@ -204,12 +204,12 @@ const Register = () => {
                 <div>
                   <label
                     htmlFor="register-password"
-                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                    className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
                   >
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
                     <input
                       id="register-password"
                       type={showPassword ? 'text' : 'password'}
@@ -223,7 +223,7 @@ const Register = () => {
                     />
                     <button
                       type="button"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-500 hover:text-white active:text-white transition-colors min-w-touch min-h-touch flex items-center justify-center"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-muted hover:text-white active:text-white transition-colors min-w-touch min-h-touch flex items-center justify-center"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
@@ -305,7 +305,7 @@ const Register = () => {
               </form>
 
               {/* Sign In Link */}
-              <p className="text-center mt-6 text-base text-gray-500">
+              <p className="text-center mt-6 text-base text-muted">
                 Already have an account?{' '}
                 <Link
                   to="/login"

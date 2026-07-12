@@ -125,7 +125,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
             </div>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white transition-colors"
+              className="p-1 text-muted hover:text-white transition-colors"
               disabled={isSubmitting}
               aria-label="Close modal"
             >
@@ -146,7 +146,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
 
               {/* Category Selection */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                   Category
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -165,7 +165,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                       `}
                     >
                       <div className="text-xs font-bold">{cat.name}</div>
-                      <div className="text-[10px] text-gray-500 mt-0.5 hidden sm:block">
+                      <div className="text-[10px] text-muted mt-0.5 hidden sm:block">
                         {cat.description}
                       </div>
                     </button>
@@ -175,7 +175,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
 
               {/* Headline */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Headline *
                 </label>
                 <input
@@ -202,7 +202,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
 
               {/* Summary */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Summary *
                 </label>
                 <textarea
@@ -229,7 +229,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
 
               {/* Full Story */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Full Story *
                 </label>
                 <textarea
@@ -256,7 +256,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
 
               {/* Article Image */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                   Article Image
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -281,10 +281,10 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                         {opt.id === 'submitted' && (
                           <ImageIcon className="w-3.5 h-3.5 text-blue-400" />
                         )}
-                        {opt.id === 'none' && <X className="w-3.5 h-3.5 text-gray-500" />}
+                        {opt.id === 'none' && <X className="w-3.5 h-3.5 text-muted" />}
                         {opt.name}
                       </div>
-                      <div className="text-[10px] text-gray-500 mt-0.5 hidden sm:block">
+                      <div className="text-[10px] text-muted mt-0.5 hidden sm:block">
                         {opt.description}
                       </div>
                     </button>

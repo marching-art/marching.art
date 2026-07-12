@@ -102,7 +102,7 @@ const CommunityPulse = memo(() => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-300 truncate">{activity.text}</p>
-                <p className="text-[10px] text-gray-600">{activity.time}</p>
+                <p className="text-[10px] text-muted">{activity.time}</p>
               </div>
             </div>
           ))}

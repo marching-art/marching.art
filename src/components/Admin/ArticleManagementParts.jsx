@@ -43,7 +43,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
               <img src={article.imageUrl} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Image className="w-6 h-6 text-gray-600" />
+                <Image className="w-6 h-6 text-muted" />
               </div>
             )}
           </div>
@@ -97,7 +97,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
             </div>
 
             {article.summary && (
-              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{article.summary}</p>
+              <p className="text-xs text-muted mt-0.5 line-clamp-2">{article.summary}</p>
             )}
 
             {/* Status badges - wrap under the headline instead of competing
@@ -126,7 +126,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
             </div>
 
             {/* Metadata row - wraps gracefully on narrow screens */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted">
               {article.reportDay !== undefined && (
                 <span className="flex items-center gap-1 whitespace-nowrap">
                   <Calendar className="w-3 h-3 flex-shrink-0" />
@@ -137,7 +137,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                 <Clock className="w-3 h-3 flex-shrink-0" />
                 {formatDate(article.createdAt)}
               </span>
-              {article.category && <span className="text-gray-600">{article.category}</span>}
+              {article.category && <span className="text-muted">{article.category}</span>}
             </div>
           </div>
         </div>
@@ -148,16 +148,16 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
         <div className="border-t border-[#333] bg-[#0a0a0a] p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs">
             <div className="min-w-0">
-              <span className="text-gray-500">Path:</span>
+              <span className="text-muted">Path:</span>
               <span className="ml-2 text-gray-300 font-mono break-all">{article.path}</span>
             </div>
             <div className="min-w-0">
-              <span className="text-gray-500">ID:</span>
+              <span className="text-muted">ID:</span>
               <span className="ml-2 text-gray-300 font-mono break-all">{article.id}</span>
             </div>
             {article.updatedAt && (
               <div>
-                <span className="text-gray-500">Last Updated:</span>
+                <span className="text-muted">Last Updated:</span>
                 <span className="ml-2 text-gray-300">{formatDate(article.updatedAt)}</span>
               </div>
             )}
@@ -276,7 +276,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeSection === tab.id
                   ? 'text-[#0057B8] border-[#0057B8]'
-                  : 'text-gray-500 border-transparent hover:text-white'
+                  : 'text-muted border-transparent hover:text-white'
               }`}
             >
               {tab.label}
@@ -291,7 +291,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
               <>
                 {/* Headline */}
                 <div>
-                  <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-xs text-muted uppercase tracking-wider mb-2">
                     Headline *
                   </label>
                   <input
@@ -305,7 +305,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
 
                 {/* Summary */}
                 <div>
-                  <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-xs text-muted uppercase tracking-wider mb-2">
                     Summary
                   </label>
                   <textarea
@@ -319,7 +319,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
 
                 {/* Image URL */}
                 <div>
-                  <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-xs text-muted uppercase tracking-wider mb-2">
                     Image URL
                   </label>
                   <div className="flex gap-3">
@@ -388,7 +388,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
               <>
                 {/* Full Story */}
                 <div>
-                  <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-xs text-muted uppercase tracking-wider mb-2">
                     Full Story
                   </label>
                   <textarea
@@ -402,7 +402,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
 
                 {/* Fantasy Impact */}
                 <div>
-                  <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-xs text-muted uppercase tracking-wider mb-2">
                     Fantasy Impact
                   </label>
                   <textarea
@@ -442,7 +442,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                 )}
 
                 {!article.dciRecap && !article.fantasySpotlight && !article.crossOverAnalysis && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted">
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No structured sections available for this article</p>
                     <p className="text-xs mt-1">Use the Content tab to edit the full story</p>
@@ -454,7 +454,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
 
           {/* Footer */}
           <div className="border-t border-[#333] bg-[#222] px-4 py-3 flex items-center justify-between flex-shrink-0">
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted">
               {hasChanges() ? (
                 <span className="text-yellow-500">Unsaved changes</span>
               ) : (
@@ -512,14 +512,14 @@ const SectionEditor = ({ title, section, color }) => {
         className="w-full px-4 py-3 flex items-center justify-between"
       >
         <div className="flex items-center gap-2">
-          <Check className="w-4 h-4 text-gray-500" />
+          <Check className="w-4 h-4 text-muted" />
           <span className="font-medium text-white text-sm">{title}</span>
-          {section.title && <span className="text-xs text-gray-500">- {section.title}</span>}
+          {section.title && <span className="text-xs text-muted">- {section.title}</span>}
         </div>
         {expanded ? (
-          <ChevronUp className="w-4 h-4 text-gray-500" />
+          <ChevronUp className="w-4 h-4 text-muted" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+          <ChevronDown className="w-4 h-4 text-muted" />
         )}
       </button>
 
@@ -527,7 +527,7 @@ const SectionEditor = ({ title, section, color }) => {
         <div className="px-4 pb-4 space-y-3">
           {section.narrative && (
             <div>
-              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-xs text-muted uppercase tracking-wider mb-1">
                 Narrative
               </label>
               <p className="text-sm text-gray-300 bg-[#1a1a1a] p-3 rounded-none">
@@ -541,7 +541,7 @@ const SectionEditor = ({ title, section, color }) => {
             if (Array.isArray(value) && value.length > 0) {
               return (
                 <div key={key}>
-                  <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-xs text-muted uppercase tracking-wider mb-1">
                     {key.replace(/([A-Z])/g, ' $1').trim()}
                   </label>
                   <div className="text-xs text-gray-400 bg-[#1a1a1a] p-3 rounded-none font-mono overflow-x-auto">

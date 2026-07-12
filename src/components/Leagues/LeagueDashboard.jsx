@@ -66,7 +66,7 @@ const StatCard = ({
                 ? 'text-green-500'
                 : trend === 'down'
                   ? 'text-red-500'
-                  : 'text-gray-500'
+                  : 'text-muted'
             }`}
           >
             {trend === 'up' && <TrendingUp className="w-3 h-3" />}
@@ -76,7 +76,7 @@ const StatCard = ({
         )}
       </div>
       <div>
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-0.5">{title}</p>
+        <p className="text-[10px] uppercase tracking-wider text-muted mb-0.5">{title}</p>
         <p className="text-xl font-bold text-white font-data tabular-nums">{value}</p>
         {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
       </div>
@@ -130,19 +130,19 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
             <span className="text-4xl font-bold text-white font-data tabular-nums">
               {ordinalSuffix(rank)}
             </span>
-            <span className="text-sm text-gray-500">of {totalMembers}</span>
+            <span className="text-sm text-muted">of {totalMembers}</span>
           </div>
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-1">
               <span className="text-lg font-bold text-green-500 font-data tabular-nums">
                 {userStats.wins}
               </span>
-              <span className="text-gray-600">-</span>
+              <span className="text-muted">-</span>
               <span className="text-lg font-bold text-red-500 font-data tabular-nums">
                 {userStats.losses}
               </span>
             </div>
-            <span className="text-sm text-gray-500">({winPct}%)</span>
+            <span className="text-sm text-muted">({winPct}%)</span>
           </div>
         </div>
 
@@ -208,15 +208,15 @@ const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive
           <div>
             <p className="font-bold text-white text-sm">vs {opponent || 'TBD'}</p>
             {opponentStats && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 {opponentStats.wins}-{opponentStats.losses} record
               </p>
             )}
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[10px] text-gray-500 uppercase">Week {currentWeek}</p>
-          <ChevronRight className="w-4 h-4 text-gray-500 ml-auto" />
+          <p className="text-[10px] text-muted uppercase">Week {currentWeek}</p>
+          <ChevronRight className="w-4 h-4 text-muted ml-auto" />
         </div>
       </div>
     </m.button>
@@ -230,25 +230,25 @@ const QuickStatsRow = ({ stats, leagueStats, userId }) => {
   return (
     <div className="grid grid-cols-4 gap-2">
       <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Points</p>
+        <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Points</p>
         <p className="text-lg font-bold text-yellow-500 font-data tabular-nums">
           {stats?.totalPoints?.toFixed(0) || 0}
         </p>
       </div>
       <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Battle Pts</p>
+        <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Battle Pts</p>
         <p className="text-lg font-bold text-purple-500 font-data tabular-nums">
           {userLeagueStats?.totalBattlePointsFor || 0}
         </p>
       </div>
       <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Clutch</p>
+        <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Clutch</p>
         <p className="text-lg font-bold text-orange-500 font-data tabular-nums">
           {userLeagueStats?.clutchWins || 0}
         </p>
       </div>
       <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Best Wk</p>
+        <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Best Wk</p>
         <p className="text-lg font-bold text-green-500 font-data tabular-nums">
           {userLeagueStats?.bestWeek?.battlePoints || 0}
         </p>
@@ -278,7 +278,7 @@ const LeagueLeadersMini = ({
         </div>
         <button
           onClick={onViewLeaderboards}
-          className="text-xs text-gray-500 hover:text-white flex items-center gap-1"
+          className="text-xs text-muted hover:text-white flex items-center gap-1"
         >
           All Stats <ChevronRight className="w-3 h-3" />
         </button>
@@ -311,7 +311,7 @@ const LeagueLeadersMini = ({
                 >
                   {displayName}
                 </p>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-muted">
                   {player.wins}-{player.losses}
                 </p>
               </div>
@@ -335,7 +335,7 @@ const LeagueLeadersMini = ({
                 <div className="flex items-center gap-2 p-2 bg-[#222]">
                   <Target className="w-4 h-4 text-purple-500 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase text-gray-500">Most BP</p>
+                    <p className="text-[9px] uppercase text-muted">Most BP</p>
                     <p
                       className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}
                     >
@@ -363,7 +363,7 @@ const LeagueLeadersMini = ({
                 <div className="flex items-center gap-2 p-2 bg-[#222]">
                   <Award className="w-4 h-4 text-green-500 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase text-gray-500">Best Win%</p>
+                    <p className="text-[9px] uppercase text-muted">Best Win%</p>
                     <p
                       className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}
                     >
@@ -397,7 +397,7 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
             Season Progress
           </span>
         </div>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-muted">
           Week {currentWeek} of {totalWeeks}
         </span>
       </div>
@@ -410,9 +410,9 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
         />
       </div>
       <div className="flex justify-between mt-1">
-        <span className="text-[9px] text-gray-600">Start</span>
-        <span className="text-[9px] text-gray-600">Playoffs</span>
-        <span className="text-[9px] text-gray-600">Finals</span>
+        <span className="text-[9px] text-muted">Start</span>
+        <span className="text-[9px] text-muted">Playoffs</span>
+        <span className="text-[9px] text-muted">Finals</span>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import { HALL_BANNER_PRICE, HALL_BANNER_MAX_LENGTH } from '../utils/prestige';
 export const NoChampionsPanel = ({ label }) => (
   <div className="bg-[#1a1a1a] border border-[#333] p-10 text-center max-w-md mx-auto my-8">
     <div className="w-14 h-14 mx-auto mb-4 border border-[#333] flex items-center justify-center">
-      <Trophy className="w-7 h-7 text-gray-600" />
+      <Trophy className="w-7 h-7 text-muted" />
     </div>
     <h3 className="text-base font-bold text-white uppercase tracking-wider mb-2">
       No {label} Champions Yet
@@ -91,7 +91,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
                 className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
               />
               <div className="flex items-center justify-between mt-1 mb-4">
-                <span className="text-[10px] text-gray-500 font-data tabular-nums">
+                <span className="text-[10px] text-muted font-data tabular-nums">
                   {message.length}/{HALL_BANNER_MAX_LENGTH}
                 </span>
                 <span className="flex items-center gap-1 text-[11px] text-gray-400 font-data tabular-nums">

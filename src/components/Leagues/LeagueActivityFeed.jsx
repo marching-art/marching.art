@@ -144,7 +144,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <h4 className="font-bold text-sm text-white truncate">{activity.title}</h4>
-          <span className="text-xs text-gray-500 whitespace-nowrap">{timeAgo}</span>
+          <span className="text-xs text-muted whitespace-nowrap">{timeAgo}</span>
         </div>
         <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
           {activity.message || activity.description}
@@ -202,11 +202,11 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
           className="p-1.5 rounded-none hover:bg-[#333] transition-colors"
           title="Mark as read"
         >
-          <CheckCircle className="w-4 h-4 text-gray-500 hover:text-green-500" />
+          <CheckCircle className="w-4 h-4 text-muted hover:text-green-500" />
         </button>
       )}
 
-      <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0 self-center" />
+      <ChevronRight className="w-4 h-4 text-muted flex-shrink-0 self-center" />
     </m.div>
   );
 });
@@ -350,7 +350,7 @@ const LeagueActivityFeed = ({
         {leagueUnreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1"
+            className="text-xs text-muted hover:text-gray-300 transition-colors flex items-center gap-1"
           >
             <Eye className="w-3 h-3" />
             Mark all read
@@ -407,9 +407,9 @@ const LeagueActivityFeed = ({
             ))
           ) : (
             <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
-              <Bell className="w-8 h-8 mx-auto text-gray-600 mb-2" />
-              <p className="text-gray-500 text-sm">No activity yet</p>
-              <p className="text-gray-600 text-xs mt-1">Check back after some matchups!</p>
+              <Bell className="w-8 h-8 mx-auto text-muted mb-2" />
+              <p className="text-muted text-sm">No activity yet</p>
+              <p className="text-muted text-xs mt-1">Check back after some matchups!</p>
             </m.div>
           )}
         </AnimatePresence>
@@ -429,7 +429,7 @@ const LeagueActivityFeed = ({
       {showAll && (
         <button
           onClick={() => setShowAll(false)}
-          className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-400 transition-colors"
+          className="w-full mt-3 py-2 text-sm text-muted hover:text-gray-400 transition-colors"
         >
           Show less
         </button>
@@ -470,12 +470,12 @@ export const NotificationDropdown = ({
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <button onClick={onMarkAllRead} className="text-xs text-gray-500 hover:text-gray-300">
+            <button onClick={onMarkAllRead} className="text-xs text-muted hover:text-gray-300">
               Mark all read
             </button>
           )}
           <button onClick={onClose} className="p-1 hover:bg-[#333] rounded-none">
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-muted" />
           </button>
         </div>
       </div>
@@ -496,8 +496,8 @@ export const NotificationDropdown = ({
             ))
         ) : (
           <div className="text-center py-8">
-            <Bell className="w-8 h-8 mx-auto text-gray-600 mb-2" />
-            <p className="text-gray-500 text-sm">No notifications</p>
+            <Bell className="w-8 h-8 mx-auto text-muted mb-2" />
+            <p className="text-muted text-sm">No notifications</p>
           </div>
         )}
       </div>
@@ -531,15 +531,15 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-gray-500">vs {rivalry.rivalName}</p>
+          <p className="text-xs text-muted">vs {rivalry.rivalName}</p>
           <p className="font-bold text-white">
             {rivalry.userWins}-{rivalry.rivalWins}
-            {rivalry.ties > 0 && <span className="text-gray-500">-{rivalry.ties}</span>}
+            {rivalry.ties > 0 && <span className="text-muted">-{rivalry.ties}</span>}
           </p>
         </div>
 
         <div className="text-right">
-          <p className="text-xs text-gray-500">{rivalry.matchupCount} matchups</p>
+          <p className="text-xs text-muted">{rivalry.matchupCount} matchups</p>
           {rivalry.streak && (
             <p
               className={`text-xs font-bold ${

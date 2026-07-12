@@ -85,13 +85,13 @@ const ArticleSiteHeader = () => {
               </a>
               <Link
                 to="/privacy"
-                className="px-2 py-2.5 min-h-touch text-xs text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
               >
                 Privacy
               </Link>
               <Link
                 to="/terms"
-                className="px-2 py-2.5 min-h-touch text-xs text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
               >
                 Terms
               </Link>

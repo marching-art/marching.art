@@ -20,7 +20,7 @@ import { SHOW_THEMES, MUSIC_SOURCES, DRILL_STYLES } from '../../utils/showConcep
 
 const PickerGroup = ({ label, icon: Icon, options, value, onChange }) => (
   <div>
-    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+    <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
       <Icon className="w-3 h-3 text-[#0057B8]" />
       {label}
     </p>
@@ -98,10 +98,10 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
                 >
                   Design Your Show
                 </h2>
-                {corpsName && <p className="text-[10px] text-gray-500">{corpsName}</p>}
+                {corpsName && <p className="text-[10px] text-muted">{corpsName}</p>}
               </div>
             </div>
-            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <button onClick={onClose} className="p-1 text-muted hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -114,7 +114,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
               affect competitive scores. One season, one show — every new season is a new design.
             </p>
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Type className="w-3 h-3 text-[#0057B8]" />
                 Show Title
               </p>
@@ -126,7 +126,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
                 maxLength={60}
                 className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
               />
-              <p className="text-[10px] text-gray-600 mt-1">
+              <p className="text-[10px] text-muted mt-1">
                 The name of this season&apos;s program — it appears in recaps and press coverage.
               </p>
             </div>
@@ -155,7 +155,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
 
           {/* Footer */}
           <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between flex-shrink-0">
-            <p className="text-[10px] text-gray-600">
+            <p className="text-[10px] text-muted">
               {complete
                 ? 'Ready to take the field'
                 : 'Name your show and pick a theme, music source, and drill style'}
@@ -166,7 +166,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
               className={`h-9 px-4 text-sm font-bold uppercase tracking-wider transition-colors ${
                 complete
                   ? 'bg-[#0057B8] hover:bg-[#0066d6] text-white'
-                  : 'bg-[#222] text-gray-600 cursor-not-allowed'
+                  : 'bg-[#222] text-muted cursor-not-allowed'
               }`}
             >
               {saving ? 'Saving...' : 'Save Concept'}

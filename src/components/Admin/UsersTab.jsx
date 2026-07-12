@@ -100,19 +100,19 @@ const UsersTab = () => {
         <SectionHeader title="User Telemetry" icon={Users} />
         <div className="flex divide-x divide-[#333]">
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1">Total</p>
+            <p className="text-[9px] uppercase text-muted mb-1">Total</p>
             <p className="text-xl font-bold text-white font-data tabular-nums">
               {stats.totalUsers}
             </p>
           </div>
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1">Active (7d)</p>
+            <p className="text-[9px] uppercase text-muted mb-1">Active (7d)</p>
             <p className="text-xl font-bold text-green-500 font-data tabular-nums">
               {stats.activeUsers}
             </p>
           </div>
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1 flex items-center gap-1">
+            <p className="text-[9px] uppercase text-muted mb-1 flex items-center gap-1">
               <Flame className="w-3 h-3" />
               Avg Streak
             </p>
@@ -121,7 +121,7 @@ const UsersTab = () => {
             </p>
           </div>
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1">Corps</p>
+            <p className="text-[9px] uppercase text-muted mb-1">Corps</p>
             <p className="text-xl font-bold text-[#0057B8] font-data tabular-nums">
               {stats.totalCorps}
             </p>
@@ -129,13 +129,13 @@ const UsersTab = () => {
         </div>
         <div className="flex divide-x divide-[#333] border-t border-[#333]">
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1">Total Logins</p>
+            <p className="text-[9px] uppercase text-muted mb-1">Total Logins</p>
             <p className="text-lg font-bold text-gray-300 font-data tabular-nums">
               {stats.totalLogins.toLocaleString()}
             </p>
           </div>
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1">Engagement</p>
+            <p className="text-[9px] uppercase text-muted mb-1">Engagement</p>
             <p className="text-lg font-bold text-gray-300 font-data tabular-nums">
               {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%
             </p>
@@ -186,7 +186,7 @@ const UsersTab = () => {
             </div>
             <div className="p-3 border-b border-[#333]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
                 <input
                   type="text"
                   placeholder="Search..."
@@ -200,20 +200,20 @@ const UsersTab = () => {
               <table className="w-full">
                 <thead className="bg-[#222] sticky top-0">
                   <tr>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
                       User
                     </th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Lvl</th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">Lvl</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
                       Streak
                     </th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
                       Logins
                     </th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
                       Corps
                     </th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
                       Last Login
                     </th>
                   </tr>
@@ -223,7 +223,7 @@ const UsersTab = () => {
                     <tr key={user.uid} className="hover:bg-[#111]">
                       <td className="px-4 py-2.5">
                         <p className="text-sm text-white">{user.username}</p>
-                        <p className="text-[10px] text-gray-600 font-data">
+                        <p className="text-[10px] text-muted font-data">
                           {user.uid.slice(0, 12)}...
                         </p>
                       </td>
@@ -270,7 +270,7 @@ const UsersTab = () => {
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase mb-2">
+                <label className="block text-[10px] text-muted uppercase mb-2">
                   Email Address
                 </label>
                 <input

@@ -196,7 +196,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
                             ? 'bg-green-500/20 border border-green-500/30 text-green-500'
                             : isCurrent
                               ? 'bg-purple-500/20 border border-purple-500/30 text-purple-400'
-                              : 'bg-[#222] border border-[#333] text-gray-500 hover:border-[#444]'
+                              : 'bg-[#222] border border-[#333] text-muted hover:border-[#444]'
                       }`}
                     >
                       {week}
@@ -242,7 +242,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
                   Matchups exist
                 </span>
               ) : (
-                <span className="text-xs text-gray-500">No matchups</span>
+                <span className="text-xs text-muted">No matchups</span>
               )}
             </div>
 
@@ -280,7 +280,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
             disabled={generating || !canGenerate}
             className={`w-full py-3 flex items-center justify-center gap-2 font-bold text-sm transition-colors ${
               generating || !canGenerate
-                ? 'bg-[#333] text-gray-500 cursor-not-allowed'
+                ? 'bg-[#333] text-muted cursor-not-allowed'
                 : weekHasMatchups
                   ? 'bg-orange-500 hover:bg-orange-400 text-black'
                   : 'bg-green-500 hover:bg-green-400 text-black'
@@ -328,7 +328,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
           )}
 
           {/* Help Text */}
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-muted">
             Matchups are generated separately for each corps class (World, Open, A, SoundSport).
             Members are randomly paired within their class. Odd numbers result in bye weeks.
           </p>
@@ -365,7 +365,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
               <span className="text-sm text-gray-400">{inviteCopied ? 'Copied!' : 'Copy'}</span>
             </button>
           </div>
-          <p className="text-[11px] text-gray-500 mt-2">
+          <p className="text-[11px] text-muted mt-2">
             Share this code with others to invite them to your league.
           </p>
         </div>

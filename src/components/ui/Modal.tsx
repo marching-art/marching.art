@@ -157,7 +157,7 @@ export const Modal: React.FC<ModalProps> = ({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-2.5 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+                className="p-2.5 -mr-2 text-muted hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -216,7 +216,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
     {showCloseButton && onClose && (
       <button
         onClick={onClose}
-        className="p-2.5 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+        className="p-2.5 -mr-2 text-muted hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
         aria-label="Close modal"
       >
         <X className="w-5 h-5" />

@@ -21,7 +21,7 @@ const LiveScoresBox = ({
           {hasData && (
             <>
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-data text-gray-500">Day {displayDay}</span>
+              <span className="text-[10px] font-data text-muted">Day {displayDay}</span>
             </>
           )}
         </div>
@@ -64,7 +64,7 @@ const LiveScoresBox = ({
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold font-data text-gray-500 tabular-nums rounded-none">
+                  <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold font-data text-muted tabular-nums rounded-none">
                     {row.rank}
                   </span>
                   <span className="text-sm text-white" title={`${row.sourceYear} ${row.corpsName}`}>
@@ -82,7 +82,7 @@ const LiveScoresBox = ({
                         ? 'text-green-500'
                         : row.direction === 'down'
                           ? 'text-red-500'
-                          : 'text-gray-500'
+                          : 'text-muted'
                     }`}
                   >
                     {row.direction === 'up' && <TrendingUp className="w-3 h-3" />}
@@ -94,7 +94,7 @@ const LiveScoresBox = ({
                       e.stopPropagation();
                       onYoutubeClick(row.sourceYear, row.corpsName);
                     }}
-                    className="p-2 -mr-1 text-gray-500 hover:text-red-500 active:text-red-600 transition-colors press-feedback touch-target"
+                    className="p-2 -mr-1 text-muted hover:text-red-500 active:text-red-600 transition-colors press-feedback touch-target"
                     title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                   >
                     <Play className="w-4 h-4" />
@@ -105,7 +105,7 @@ const LiveScoresBox = ({
           })
         ) : (
           <div className="px-3 py-4 text-center">
-            <p className="text-xs text-gray-500">No scores available yet</p>
+            <p className="text-xs text-muted">No scores available yet</p>
           </div>
         )}
       </div>

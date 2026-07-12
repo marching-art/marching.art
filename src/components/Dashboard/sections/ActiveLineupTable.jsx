@@ -25,7 +25,7 @@ const TrendChip = ({ trend }) => {
       ? 'text-green-500'
       : trend.direction === 'down'
         ? 'text-red-500'
-        : 'text-gray-500';
+        : 'text-muted';
   return (
     <span
       className={`inline-flex items-center gap-0.5 text-[11px] font-data tabular-nums ${color}`}
@@ -55,7 +55,7 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
       {/* Slot Badge */}
       <span
         className={`flex-shrink-0 w-11 text-center px-1.5 py-1 text-[10px] font-bold ${
-          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
+          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-muted'
         }`}
       >
         {caption.name}
@@ -69,13 +69,13 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
               <>
                 <span className="text-sm text-white truncate">{corpsName}</span>
                 {sourceYear && (
-                  <span className="text-[10px] text-gray-500 flex-shrink-0">
+                  <span className="text-[10px] text-muted flex-shrink-0">
                     '{String(sourceYear).slice(-2)}
                   </span>
                 )}
               </>
             ) : (
-              <span className="text-sm text-gray-500 italic">Empty slot</span>
+              <span className="text-sm text-muted italic">Empty slot</span>
             )}
           </div>
 
@@ -86,7 +86,7 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
                   {score.toFixed(2)}
                 </span>
               ) : (
-                <span className="text-sm text-gray-600">—</span>
+                <span className="text-sm text-muted">—</span>
               )}
               <TrendChip trend={trend} />
             </div>
@@ -143,10 +143,10 @@ const ActiveLineupTable = memo(
           (nextShow ? (
             <div className="px-4 py-2 border-b border-[#333] bg-[#111] flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
               <MapPin className="w-3 h-3 flex-shrink-0 text-purple-400" />
-              <span className="font-bold uppercase tracking-wider text-gray-500 flex-shrink-0">
+              <span className="font-bold uppercase tracking-wider text-muted flex-shrink-0">
                 Next Show
               </span>
-              <span className="text-gray-600 flex-shrink-0">·</span>
+              <span className="text-muted flex-shrink-0">·</span>
               <span className="truncate text-gray-300">
                 Day {nextShow.day}
                 {nextShow.eventName ? ` · ${nextShow.eventName}` : ''}
@@ -154,7 +154,7 @@ const ActiveLineupTable = memo(
               </span>
             </div>
           ) : (
-            <div className="px-4 py-2 border-b border-[#333] bg-[#111] flex items-center gap-1.5 text-[11px] text-gray-500">
+            <div className="px-4 py-2 border-b border-[#333] bg-[#111] flex items-center gap-1.5 text-[11px] text-muted">
               <Lock className="w-3 h-3 flex-shrink-0" />
               <span className="font-bold uppercase tracking-wider">No upcoming show selected</span>
             </div>

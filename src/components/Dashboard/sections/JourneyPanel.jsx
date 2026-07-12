@@ -190,7 +190,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
           <Map className="w-3.5 h-3.5 text-[#0057B8]" />
           First Season Journey
         </h3>
-        <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
           {doneCount}/{STEPS.length}
         </span>
       </div>
@@ -220,13 +220,13 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                     <Check className="w-3 h-3 text-green-400" />
                   ) : (
                     <Icon
-                      className={`w-3 h-3 ${step.ready ? 'text-[#0057B8]' : 'text-gray-600'}`}
+                      className={`w-3 h-3 ${step.ready ? 'text-[#0057B8]' : 'text-muted'}`}
                     />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <span
-                    className={`text-sm ${step.done ? 'text-gray-500 line-through' : 'text-white'}`}
+                    className={`text-sm ${step.done ? 'text-muted line-through' : 'text-white'}`}
                   >
                     {step.title}
                   </span>
@@ -249,7 +249,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
               </div>
               {!step.done && !step.ready && (
                 <div className="ml-8 mt-1 flex items-center justify-between gap-2">
-                  <p className="text-[10px] text-gray-600">{step.description}</p>
+                  <p className="text-[10px] text-muted">{step.description}</p>
                   {step.action?.type === 'link' && (
                     <Link
                       to={step.action.to}

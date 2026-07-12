@@ -482,7 +482,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+              <div className="flex items-center gap-3 text-xs text-muted mt-0.5">
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   {league.members?.length || 0}
@@ -500,13 +500,13 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               className="hidden sm:flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] hover:border-[#444] transition-colors"
             >
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wider text-gray-500">Invite Code</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted">Invite Code</p>
                 <p className="text-sm font-bold font-mono text-yellow-500">{league.inviteCode}</p>
               </div>
               {inviteCopied ? (
                 <Check className="w-4 h-4 text-green-500" />
               ) : (
-                <Copy className="w-4 h-4 text-gray-500" />
+                <Copy className="w-4 h-4 text-muted" />
               )}
             </button>
 
@@ -514,22 +514,22 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             {userStats && (
               <div className="hidden md:flex items-center gap-1 border-l border-[#333] pl-3">
                 <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
-                  <p className="text-[10px] uppercase tracking-wider text-gray-500">Rank</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted">Rank</p>
                   <p className="text-base font-bold text-white font-data tabular-nums">
                     #{userStats.currentRank}
                   </p>
                 </div>
                 <div className="px-2 py-1 bg-[#222] text-center min-w-[60px]">
-                  <p className="text-[10px] uppercase tracking-wider text-gray-500">Record</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted">Record</p>
                   <p className="text-base font-bold font-data tabular-nums">
                     <span className="text-green-500">{userStats.wins}</span>
-                    <span className="text-gray-600">-</span>
+                    <span className="text-muted">-</span>
                     <span className="text-red-500">{userStats.losses}</span>
                   </p>
                 </div>
                 {userStats.streak > 0 && (
                   <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-500">Streak</p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted">Streak</p>
                     <p
                       className={`text-base font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
                         userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
@@ -549,22 +549,22 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
           {userStats && (
             <div className="flex md:hidden items-center gap-2 mt-3 pt-3 border-t border-[#222]">
               <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
-                <p className="text-[10px] uppercase tracking-wider text-gray-500">Rank</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted">Rank</p>
                 <p className="text-sm font-bold text-white font-data tabular-nums">
                   #{userStats.currentRank}
                 </p>
               </div>
               <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
-                <p className="text-[10px] uppercase tracking-wider text-gray-500">Record</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted">Record</p>
                 <p className="text-sm font-bold font-data tabular-nums">
                   <span className="text-green-500">{userStats.wins}</span>
-                  <span className="text-gray-600">-</span>
+                  <span className="text-muted">-</span>
                   <span className="text-red-500">{userStats.losses}</span>
                 </p>
               </div>
               {userStats.streak > 0 && (
                 <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-gray-500">Streak</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted">Streak</p>
                   <p
                     className={`text-sm font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
                       userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
@@ -581,7 +581,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 onClick={handleCopyInvite}
                 className="flex-1 px-2 py-1.5 bg-[#222] text-center"
               >
-                <p className="text-[10px] uppercase tracking-wider text-gray-500">Code</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted">Code</p>
                 <p className="text-sm font-bold font-mono text-yellow-500">{league.inviteCode}</p>
               </button>
             </div>
@@ -600,7 +600,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 font-bold text-sm transition-all relative ${
                   isActive
                     ? 'bg-[#0a0a0a] text-yellow-500 border-t-2 border-yellow-500'
-                    : 'text-gray-500 hover:text-white hover:bg-[#222]'
+                    : 'text-muted hover:text-white hover:bg-[#222]'
                 }`}
               >
                 <Icon className="w-4 h-4" />

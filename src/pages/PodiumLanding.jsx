@@ -327,7 +327,7 @@ const PodiumLanding = () => {
                       type="button"
                       onClick={() => switchMode('register')}
                       className={`h-12 text-sm font-bold uppercase tracking-wider transition-colors press-feedback ${
-                        isRegister ? 'text-black' : 'text-gray-500 hover:text-white bg-[#141414]'
+                        isRegister ? 'text-black' : 'text-muted hover:text-white bg-[#141414]'
                       }`}
                       style={isRegister ? { backgroundColor: GOLD } : undefined}
                     >
@@ -337,7 +337,7 @@ const PodiumLanding = () => {
                       type="button"
                       onClick={() => switchMode('login')}
                       className={`h-12 text-sm font-bold uppercase tracking-wider transition-colors press-feedback ${
-                        !isRegister ? 'text-black' : 'text-gray-500 hover:text-white bg-[#141414]'
+                        !isRegister ? 'text-black' : 'text-muted hover:text-white bg-[#141414]'
                       }`}
                       style={!isRegister ? { backgroundColor: GOLD } : undefined}
                     >
@@ -350,7 +350,7 @@ const PodiumLanding = () => {
                       <h2 className="text-lg font-bold text-white">
                         {isRegister ? 'Start your corps' : 'Welcome back, Director'}
                       </h2>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted mt-1">
                         {isRegister
                           ? 'Create a free account and take the podium in under two minutes.'
                           : 'Sign in to pick up your season where you left it.'}
@@ -368,7 +368,7 @@ const PodiumLanding = () => {
                     {/* Director name (register only) */}
                     {isRegister && (
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                         <input
                           type="text"
                           placeholder="Director name"
@@ -384,7 +384,7 @@ const PodiumLanding = () => {
 
                     {/* Email */}
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                       <input
                         type="email"
                         placeholder="Email"
@@ -399,7 +399,7 @@ const PodiumLanding = () => {
 
                     {/* Password */}
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         placeholder={isRegister ? 'Password (min 8 characters)' : 'Password'}
@@ -413,7 +413,7 @@ const PodiumLanding = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-white transition-colors min-w-touch min-h-touch flex items-center justify-center"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-muted hover:text-white transition-colors min-w-touch min-h-touch flex items-center justify-center"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? (
@@ -466,7 +466,7 @@ const PodiumLanding = () => {
                     </button>
 
                     {/* Secondary links */}
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+                    <div className="flex items-center justify-between text-xs text-muted pt-1">
                       {isRegister ? (
                         <button
                           type="button"
@@ -507,7 +507,7 @@ const PodiumLanding = () => {
                 </m.div>
 
                 {/* Reassurance strip */}
-                <p className="mt-3 text-center text-[11px] text-gray-600 leading-relaxed">
+                <p className="mt-3 text-center text-[11px] text-muted leading-relaxed">
                   Podium is one of five corps classes on marching.art. One account plays them all.
                 </p>
               </div>

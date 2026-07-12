@@ -415,7 +415,7 @@ const Dashboard = () => {
                   and tonight's performances. `order-3` drops it into the
                   My-Corps slot of the mobile stack. */}
               <div className="order-3 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-1 space-y-4">
-                <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2 lg:sr-only">
+                <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted -mb-2 lg:sr-only">
                   My Corps
                 </h2>
                 {isPodiumSelected ? (
@@ -502,7 +502,7 @@ const Dashboard = () => {
                     the mobile stack so the to-do list is one scroll from the
                     score) */}
                 <div className="order-2 lg:order-none space-y-4">
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
+                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted -mb-2">
                     Today
                   </h2>
 
@@ -537,7 +537,7 @@ const Dashboard = () => {
                 {/* ZONE D — THE SEASON: how am I advancing, who am I chasing,
                     what just happened */}
                 <div className="order-4 lg:order-none space-y-4">
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
+                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted -mb-2">
                     The Season
                   </h2>
 
@@ -568,7 +568,7 @@ const Dashboard = () => {
                 below the zones instead of occupying sidebar real estate */}
             <div className="mt-4 bg-[#1a1a1a] border border-[#333] overflow-hidden">
               <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <p className="text-xs text-gray-500 flex-1">
+                <p className="text-xs text-muted flex-1">
                   Share your insights, analysis, or news with the community.
                 </p>
                 <button
@@ -591,7 +591,7 @@ const Dashboard = () => {
                 </h3>
               </div>
               <div className="p-6 text-center">
-                <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <Trophy className="w-12 h-12 text-muted mx-auto mb-4" />
                 <p className="text-sm text-gray-400 mb-4">
                   Create your first fantasy corps to begin competing.
                 </p>

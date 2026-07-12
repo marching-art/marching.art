@@ -77,7 +77,7 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
               </p>
 
               {current.conflictsWith && (
-                <div className="text-xs text-gray-500 bg-[#0a0a0a] border border-[#333] rounded-none p-3">
+                <div className="text-xs text-muted bg-[#0a0a0a] border border-[#333] rounded-none p-3">
                   Conflict: another director already has{' '}
                   <span className="text-gray-300">"{current.conflictsWith.winnerCorpsName}"</span>{' '}
                   in {getCorpsClassName(current.conflictsWith.winnerCorpsClass)}.
@@ -85,13 +85,13 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
               )}
 
               {duplicates.length > 1 && (
-                <div className="text-[10px] uppercase tracking-wider text-gray-500">
+                <div className="text-[10px] uppercase tracking-wider text-muted">
                   {index + 1} of {duplicates.length}
                 </div>
               )}
 
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   New Corps Name
                 </label>
                 <input

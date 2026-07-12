@@ -47,7 +47,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
             </div>
             <div>
               <h4 className="text-sm font-semibold text-white">{feature.title}</h4>
-              <p className="text-xs text-gray-500">{feature.description}</p>
+              <p className="text-xs text-muted">{feature.description}</p>
             </div>
           </div>
         );
@@ -56,7 +56,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
 
     <div className="pt-2 space-y-4">
       <div>
-        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+        <label className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
           <User className="w-4 h-4 text-[#0057B8]" />
           What's your name, Director?
         </label>
@@ -74,7 +74,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
       </div>
 
       <div>
-        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+        <label className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
           <AtSign className="w-4 h-4 text-[#0057B8]" />
           Choose a username
         </label>
@@ -118,7 +118,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
             {usernameStatus.message}
           </p>
         )}
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-muted mt-1">
           3-15 characters, letters, numbers, and underscores only
         </p>
       </div>
@@ -152,7 +152,7 @@ export const StepCorps = ({ formData, setFormData }) => (
     </div>
 
     <div>
-      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+      <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
         Corps Name *
       </label>
       <input
@@ -184,7 +184,7 @@ export const StepCorps = ({ formData, setFormData }) => (
 
     <div className="p-4 bg-charcoal-800/50 rounded-none">
       <h4 className="font-semibold text-gray-200 mb-2">Next: Build Your Lineup</h4>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-muted">
         You'll pick historical corps performances to compete in 8 scoring captions. Think of it like
         a fantasy football draft!
       </p>

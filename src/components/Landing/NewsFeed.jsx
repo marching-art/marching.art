@@ -470,7 +470,7 @@ export default function NewsFeed({ maxItems = 4 }) {
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="w-4 h-4 text-[#0057B8]" />
-                <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <h2 className="text-xs font-bold text-muted uppercase tracking-widest">
                   More Stories
                 </h2>
                 <div className="flex-1 h-px bg-[#333]" />
@@ -496,7 +496,7 @@ export default function NewsFeed({ maxItems = 4 }) {
 
               {/* Loading indicator - shown during fetch */}
               {loadingMore && (
-                <div className="flex items-center justify-center gap-2 py-4 text-gray-500">
+                <div className="flex items-center justify-center gap-2 py-4 text-muted">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="text-sm">Loading more stories...</span>
                 </div>
@@ -540,7 +540,7 @@ export function FantasyImpactWidget({ news }) {
           <Flame className="w-3.5 h-3.5" />
           Fantasy Impact
         </h3>
-        <span className="text-xs text-gray-500">Latest</span>
+        <span className="text-xs text-muted">Latest</span>
       </div>
 
       {/* Content */}
@@ -613,7 +613,7 @@ export function FantasyImpactWidget({ news }) {
         {/* Trending Corps */}
         {latestWithImpact.trendingCorps?.length > 0 && (
           <div className="pt-3 border-t border-[#333]/50">
-            <div className="text-xs text-gray-500 uppercase mb-2">Trending Corps</div>
+            <div className="text-xs text-muted uppercase mb-2">Trending Corps</div>
             <div className="space-y-1.5">
               {latestWithImpact.trendingCorps.slice(0, 3).map((corp, idx) => (
                 <div key={idx} className="flex items-center justify-between">
@@ -627,7 +627,7 @@ export function FantasyImpactWidget({ news }) {
                         ? 'text-green-500'
                         : corp.direction === 'down'
                           ? 'text-red-500'
-                          : 'text-gray-500'
+                          : 'text-muted'
                     }`}
                   >
                     <TrendingBadge direction={corp.direction} />

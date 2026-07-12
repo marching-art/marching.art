@@ -63,7 +63,7 @@ const RankBadge = ({ rank, total }) => {
     `}
     >
       <span className="text-lg font-bold font-data tabular-nums leading-tight">#{rank}</span>
-      <span className="text-[9px] uppercase tracking-wider text-gray-500">of {total}</span>
+      <span className="text-[9px] uppercase tracking-wider text-muted">of {total}</span>
     </div>
   );
 };
@@ -128,16 +128,16 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
           <h3 className="text-sm font-bold text-white truncate">{league.name}</h3>
           <ActivityIndicator hasNewMessages={hasNewMessages} isLive={isLive} />
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-gray-500">
+        <div className="flex items-center gap-2 text-[11px] text-muted">
           <span className="flex items-center gap-1">
             <Users className="w-3 h-3" />
             {memberCount}/{maxMembers}
           </span>
-          <span className="text-gray-600">•</span>
+          <span className="text-muted">•</span>
           <span>Week {currentWeek}</span>
         </div>
         {hasMatchupsGenerated && (
-          <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-600">
+          <div className="flex items-center gap-1 mt-1 text-[10px] text-muted">
             <Swords className="w-3 h-3" />
             <span>Matchup in progress</span>
           </div>
@@ -148,7 +148,7 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
       <RankBadge rank={userRank} total={memberCount} />
 
       {/* Chevron */}
-      <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0" />
+      <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />
     </div>
   );
 };
@@ -195,7 +195,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
       {/* Card Body */}
       <div className="px-3 py-2 bg-[#111]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 text-[11px] text-gray-500">
+          <div className="flex items-center gap-3 text-[11px] text-muted">
             <span className="flex items-center gap-1">
               <Users className="w-3 h-3" />
               {memberCount}/{maxMembers}
@@ -215,7 +215,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
             disabled={isFull || isJoining}
             className={`px-4 min-h-touch text-[10px] font-bold uppercase transition-colors press-feedback ${
               isFull
-                ? 'bg-[#333] text-gray-500 cursor-not-allowed'
+                ? 'bg-[#333] text-muted cursor-not-allowed'
                 : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'
             }`}
           >
@@ -251,12 +251,12 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
         </div>
 
         <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
             Join by Code
           </span>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 text-gray-500 hover:text-white min-w-touch min-h-touch flex items-center justify-center"
+            className="p-2 -mr-2 text-muted hover:text-white min-w-touch min-h-touch flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>
@@ -274,7 +274,7 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
             placeholder="XXXXXXXX"
-            className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#444] text-center text-xl font-bold font-data text-white tracking-[0.3em] focus:outline-none focus:border-[#0057B8] placeholder:text-gray-600"
+            className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#444] text-center text-xl font-bold font-data text-white tracking-[0.3em] focus:outline-none focus:border-[#0057B8] placeholder:text-muted"
             maxLength={8}
             autoFocus
           />
@@ -298,10 +298,10 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
 const EmptyMyLeagues = ({ onCreate }) => (
   <div className="p-6 bg-[#1a1a1a] border-2 border-dashed border-[#333] text-center">
     <div className="w-12 h-12 bg-[#222] border border-[#333] rounded-none mx-auto mb-3 flex items-center justify-center">
-      <Trophy className="w-6 h-6 text-gray-600" />
+      <Trophy className="w-6 h-6 text-muted" />
     </div>
     <h3 className="text-sm font-bold text-white mb-1">No Leagues Yet</h3>
-    <p className="text-xs text-gray-500 mb-4 max-w-[200px] mx-auto">
+    <p className="text-xs text-muted mb-4 max-w-[200px] mx-auto">
       Join a league to compete with other directors
     </p>
     <div className="flex items-center justify-center gap-2">
@@ -318,11 +318,11 @@ const EmptyMyLeagues = ({ onCreate }) => (
 
 const EmptyDiscover = ({ searchTerm }) => (
   <div className="col-span-2 p-6 bg-[#1a1a1a] border-2 border-dashed border-[#333] text-center">
-    <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-    <p className="text-sm text-gray-500">
+    <Users className="w-8 h-8 text-muted mx-auto mb-2" />
+    <p className="text-sm text-muted">
       {searchTerm ? 'No leagues match your search' : 'No public leagues available'}
     </p>
-    <p className="text-xs text-gray-600 mt-1">
+    <p className="text-xs text-muted mt-1">
       {searchTerm ? 'Try a different search term' : 'Create one to get started!'}
     </p>
   </div>
@@ -471,7 +471,7 @@ const Leagues = () => {
             <Users className="w-5 h-5 text-[#0057B8]" />
             <div>
               <h1 className="text-sm font-bold text-white uppercase">Leagues</h1>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-muted">
                 {myLeagues.length} active • {discoverLeagues.length} available
               </p>
             </div>
@@ -501,12 +501,12 @@ const Leagues = () => {
           <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Zap className="w-3.5 h-3.5 text-[#0057B8]" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
                 My Leagues
               </h2>
             </div>
             {myLeagues.length > 0 && (
-              <span className="text-[10px] font-data tabular-nums text-gray-500">
+              <span className="text-[10px] font-data tabular-nums text-muted">
                 {myLeagues.length}
               </span>
             )}
@@ -515,7 +515,7 @@ const Leagues = () => {
           {loadingMyLeagues ? (
             <div className="p-6 text-center">
               <div className="w-5 h-5 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-xs text-gray-500">Loading leagues...</p>
+              <p className="text-xs text-muted">Loading leagues...</p>
             </div>
           ) : myLeagues.length === 0 ? (
             <EmptyMyLeagues onCreate={() => setShowCreateModal(true)} />
@@ -536,11 +536,11 @@ const Leagues = () => {
         {/* DISCOVER SECTION */}
         <section>
           <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
               Discover Leagues
             </h2>
             {discoverLeagues.length > 0 && (
-              <span className="text-[10px] font-data tabular-nums text-gray-500">
+              <span className="text-[10px] font-data tabular-nums text-muted">
                 {discoverLeagues.length}
               </span>
             )}
@@ -549,7 +549,7 @@ const Leagues = () => {
           {/* Search */}
           <div className="p-3 border-b border-[#333] bg-[#1a1a1a]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
               <input
                 type="search"
                 inputMode="search"
@@ -557,7 +557,7 @@ const Leagues = () => {
                 aria-label="Search public leagues"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 pl-10 pr-4 bg-[#0a0a0a] border border-[#444] text-base text-white focus:outline-none focus:border-[#0057B8] placeholder:text-gray-600"
+                className="w-full h-11 pl-10 pr-4 bg-[#0a0a0a] border border-[#444] text-base text-white focus:outline-none focus:border-[#0057B8] placeholder:text-muted"
               />
             </div>
           </div>
@@ -567,7 +567,7 @@ const Leagues = () => {
             {loadingPublicLeagues ? (
               <div className="p-6 text-center">
                 <div className="w-5 h-5 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-xs text-gray-500">Loading leagues...</p>
+                <p className="text-xs text-muted">Loading leagues...</p>
               </div>
             ) : discoverLeagues.length === 0 ? (
               <EmptyDiscover searchTerm={searchTerm} />

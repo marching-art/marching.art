@@ -146,7 +146,7 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
         title={captionLabel}
         aria-hidden="true"
         className={`w-10 h-8 flex items-center justify-center rounded-none text-xs font-bold flex-shrink-0 ${
-          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
+          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-muted'
         }`}
       >
         {caption.name}
@@ -158,13 +158,13 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
           <div className="flex items-center gap-1.5">
             <span className="text-sm text-white truncate">{corpsName}</span>
             {sourceYear && (
-              <span className="text-[10px] text-gray-500">'{String(sourceYear).slice(-2)}</span>
+              <span className="text-[10px] text-muted">'{String(sourceYear).slice(-2)}</span>
             )}
           </div>
         ) : (
-          <span className="text-sm text-gray-500 italic">Empty slot</span>
+          <span className="text-sm text-muted italic">Empty slot</span>
         )}
-        <div className="text-[10px] text-gray-500 truncate mt-0.5">{caption.fullName}</div>
+        <div className="text-[10px] text-muted truncate mt-0.5">{caption.fullName}</div>
       </div>
 
       {/* Right side: pick cost (draft mode) or draft CTA. SoundSport is a
@@ -182,7 +182,7 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
             + Draft
           </span>
         )}
-        {!isPlayable && <Lock className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400" />}
+        {!isPlayable && <Lock className="w-3.5 h-3.5 text-muted group-hover:text-gray-400" />}
       </div>
     </button>
   );
@@ -210,7 +210,7 @@ const DemoDailyChallenges = ({ onGate }) => {
           <Target className="w-3.5 h-3.5 text-orange-500" />
           Daily Challenges
         </h3>
-        <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
           {completedCount}/{totalCount}
         </span>
       </div>
@@ -241,7 +241,7 @@ const DemoDailyChallenges = ({ onGate }) => {
                   {isDone && <Check className="w-3 h-3 text-white" />}
                 </div>
                 <span
-                  className={`text-sm flex-1 ${isDone ? 'text-gray-500 line-through' : 'text-white'}`}
+                  className={`text-sm flex-1 ${isDone ? 'text-muted line-through' : 'text-white'}`}
                 >
                   {challenge.label}
                 </span>
@@ -249,7 +249,7 @@ const DemoDailyChallenges = ({ onGate }) => {
                   <span className="text-[10px] font-bold text-purple-400 font-data">
                     +{challenge.xp} XP
                   </span>
-                  {!isDone && <ChevronRight className="w-3.5 h-3.5 text-gray-600" />}
+                  {!isDone && <ChevronRight className="w-3.5 h-3.5 text-muted" />}
                 </div>
               </div>
             </button>
@@ -308,7 +308,7 @@ const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) =>
                   ? 'bg-[#0057B8]/20 text-[#0057B8]'
                   : isUnlocked
                     ? 'bg-green-500/10 text-green-500'
-                    : 'bg-[#111] text-gray-600'
+                    : 'bg-[#111] text-muted'
               }`}
             >
               {CLASS_POINT_CAPS[classId]}
@@ -328,17 +328,17 @@ const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) =>
                   </span>
                 ) : null}
               </div>
-              <div className="text-[11px] text-gray-500 truncate">{CLASS_PERKS[classId]}</div>
-              <div className="text-[10px] text-gray-600 truncate mt-0.5">{requirement}</div>
+              <div className="text-[11px] text-muted truncate">{CLASS_PERKS[classId]}</div>
+              <div className="text-[10px] text-muted truncate mt-0.5">{requirement}</div>
             </div>
-            {!isUnlocked && <Lock className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />}
+            {!isUnlocked && <Lock className="w-3.5 h-3.5 text-muted flex-shrink-0" />}
           </button>
         );
       })}
     </div>
 
     <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
-      <p className="text-[10px] text-gray-500">
+      <p className="text-[10px] text-muted">
         Level up as a director to unlock higher classes and the full competitive dashboard.
       </p>
     </div>
@@ -597,7 +597,7 @@ const GuestDashboard = () => {
                         </span>
                         <button
                           onClick={resetPreview}
-                          className="text-[10px] text-gray-500 hover:text-white uppercase"
+                          className="text-[10px] text-muted hover:text-white uppercase"
                         >
                           Reset
                         </button>
@@ -684,7 +684,7 @@ const GuestDashboard = () => {
                       className="w-full p-3 flex items-center gap-3 hover:bg-[#222] transition-colors text-left"
                     >
                       <div className="w-10 h-10 rounded-none bg-[#111] flex flex-col items-center justify-center flex-shrink-0">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted">
                           {new Date(show.date)
                             .toLocaleDateString('en-US', { month: 'short' })
                             .toUpperCase()}
@@ -695,7 +695,7 @@ const GuestDashboard = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm text-white truncate">{show.eventName}</div>
-                        <div className="text-xs text-gray-500 truncate">{show.location}</div>
+                        <div className="text-xs text-muted truncate">{show.location}</div>
                       </div>
                       {show.isSelected && (
                         <div className="px-2 py-0.5 bg-green-500/20 rounded-none">
@@ -731,9 +731,9 @@ const GuestDashboard = () => {
                     <div className="text-sm font-bold text-white group-hover:text-yellow-500 transition-colors">
                       Join a League
                     </div>
-                    <div className="text-xs text-gray-500">Compete against friends</div>
+                    <div className="text-xs text-muted">Compete against friends</div>
                   </div>
-                  <Lock className="w-4 h-4 text-gray-500 group-hover:text-yellow-500 transition-colors" />
+                  <Lock className="w-4 h-4 text-muted group-hover:text-yellow-500 transition-colors" />
                 </div>
               </button>
 
@@ -746,7 +746,7 @@ const GuestDashboard = () => {
                   </h3>
                 </div>
                 <div className="p-4">
-                  <p className="text-xs text-gray-500 mb-3">
+                  <p className="text-xs text-muted mb-3">
                     Share your insights, analysis, or news with the community.
                   </p>
                   <button
@@ -773,7 +773,7 @@ const GuestDashboard = () => {
                   <UserPlus className="w-4 h-4" />
                   Create Free Account
                 </Link>
-                <div className="flex items-center justify-center gap-2 mt-3 text-gray-500">
+                <div className="flex items-center justify-center gap-2 mt-3 text-muted">
                   <Zap className="w-3.5 h-3.5 text-green-500" />
                   <span className="text-xs">Takes less than 30 seconds</span>
                 </div>

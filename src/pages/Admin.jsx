@@ -70,7 +70,7 @@ const OverviewTab = ({ seasonData }) => (
           <InfoRow label="Point Cap" value={seasonData.currentPointCap} mono />
         </div>
       ) : (
-        <div className="p-4 text-sm text-gray-500">No active season found</div>
+        <div className="p-4 text-sm text-muted">No active season found</div>
       )}
     </div>
   </div>
@@ -126,7 +126,7 @@ const PodiumLaunchCard = () => {
               </span>
             </span>
           </div>
-          <p className="text-[11px] text-gray-500 mt-1">
+          <p className="text-[11px] text-muted mt-1">
             Runtime flag — gates every Podium surface and the nightly stage. Beta tuning lives in
             podium-config/balance (read at runtime; missing doc = committed defaults). Use the Jobs
             tab&apos;s “Run Podium Stage” to process a day on demand.
@@ -184,7 +184,7 @@ const PodiumFunnelCard = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-[10px] tabular-nums">
           <thead>
-            <tr className="text-gray-500 uppercase text-left">
+            <tr className="text-muted uppercase text-left">
               <th className="px-3 py-1.5">Day</th>
               <th className="px-2 py-1.5">Corps</th>
               <th className="px-2 py-1.5">Played</th>
@@ -393,7 +393,7 @@ const Admin = () => {
           <Shield className="w-6 h-6 text-red-500" />
         </div>
         <p className="text-sm font-bold text-white mb-1">ACCESS DENIED</p>
-        <p className="text-xs text-gray-500">Administrator privileges required</p>
+        <p className="text-xs text-muted">Administrator privileges required</p>
       </div>
     );
   }
@@ -410,7 +410,7 @@ const Admin = () => {
             <h1 className="text-sm font-bold text-white uppercase tracking-wider">
               System Administration
             </h1>
-            <p className="text-[10px] text-gray-500">Ops Console</p>
+            <p className="text-[10px] text-muted">Ops Console</p>
           </div>
         </div>
       </div>

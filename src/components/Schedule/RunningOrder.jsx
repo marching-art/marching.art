@@ -48,7 +48,7 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
           <Clock className="w-3.5 h-3.5 text-[#0057B8]" />
           Running Order
         </h3>
-        <span className="text-[10px] font-data text-gray-500">{lineup.length} corps</span>
+        <span className="text-[10px] font-data text-muted">{lineup.length} corps</span>
       </div>
 
       <div className="divide-y divide-[#333]/50">
@@ -76,7 +76,7 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="text-xs font-bold font-data text-gray-500 tabular-nums w-14 flex-shrink-0">
+                <span className="text-xs font-bold font-data text-muted tabular-nums w-14 flex-shrink-0">
                   {entry.performanceTime}
                 </span>
                 <span className="text-sm text-white truncate flex items-center gap-1.5">

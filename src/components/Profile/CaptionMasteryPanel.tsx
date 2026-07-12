@@ -46,7 +46,7 @@ const CaptionMasteryPanel = memo(({ profile }: { profile: UserProfile }) => {
                   </span>
                   <span
                     className={`text-[9px] font-bold uppercase tracking-wider ${
-                      style ? style.text : 'text-gray-600'
+                      style ? style.text : 'text-muted'
                     }`}
                   >
                     {mastery.tier ? mastery.tier.name : '—'}
@@ -59,11 +59,11 @@ const CaptionMasteryPanel = memo(({ profile }: { profile: UserProfile }) => {
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] text-gray-500 font-data tabular-nums">
+                  <span className="text-[9px] text-muted font-data tabular-nums">
                     {Math.round(mastery.points).toLocaleString()}
                   </span>
                   {mastery.next && (
-                    <span className="text-[9px] text-gray-600 font-data tabular-nums">
+                    <span className="text-[9px] text-muted font-data tabular-nums">
                       {mastery.next.min.toLocaleString()}
                     </span>
                   )}

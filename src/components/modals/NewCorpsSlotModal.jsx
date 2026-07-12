@@ -50,7 +50,7 @@ const NewCorpsSlotModal = ({
             </h2>
             <button
               onClick={onClose}
-              className="p-1 text-gray-500 hover:text-white"
+              className="p-1 text-muted hover:text-white"
               disabled={processing}
             >
               <X className="w-4 h-4" />
@@ -69,7 +69,7 @@ const NewCorpsSlotModal = ({
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-white">Start a new corps</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   Register a fresh corps in {CLASS_NAMES[corpsClass] || corpsClass}.
                 </p>
               </div>
@@ -79,7 +79,7 @@ const NewCorpsSlotModal = ({
               <>
                 <div className="flex items-center gap-2 pt-1">
                   <div className="flex-1 h-px bg-[#333]" />
-                  <span className="text-[10px] uppercase tracking-wider text-gray-600">
+                  <span className="text-[10px] uppercase tracking-wider text-muted">
                     Or bring back a retired corps
                   </span>
                   <div className="flex-1 h-px bg-[#333]" />
@@ -101,7 +101,7 @@ const NewCorpsSlotModal = ({
                         <p className="text-sm font-bold text-white truncate">
                           {entry.record.corpsName}
                         </p>
-                        <p className="text-[11px] text-gray-500 truncate">
+                        <p className="text-[11px] text-muted truncate">
                           {entry.record.location || '—'}
                           {entry.record.totalSeasons ? (
                             <span className="ml-2 inline-flex items-center gap-1 text-gray-400">

@@ -75,7 +75,7 @@ const GuestLineupPicker = ({
                 >
                   Draft {caption.fullName}
                 </h2>
-                <p className="text-[11px] text-gray-500 mt-0.5">
+                <p className="text-[11px] text-muted mt-0.5">
                   Budget:{' '}
                   <span
                     className={`font-bold font-data tabular-nums ${
@@ -89,7 +89,7 @@ const GuestLineupPicker = ({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 text-gray-500 hover:text-white min-w-touch min-h-touch flex items-center justify-center"
+                className="p-2 text-muted hover:text-white min-w-touch min-h-touch flex items-center justify-center"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -123,10 +123,10 @@ const GuestLineupPicker = ({
                       <span className="text-sm text-white font-medium truncate">
                         {corps.corpsName}
                       </span>
-                      <span className="text-[10px] text-gray-500">
+                      <span className="text-[10px] text-muted">
                         '{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}
                       </span>
-                      {isUsed && <span className="text-[10px] text-gray-500/70">(used)</span>}
+                      {isUsed && <span className="text-[10px] text-muted/70">(used)</span>}
                     </div>
                     <span
                       className={`text-xs font-bold font-data px-2 py-1 rounded-none ${
@@ -144,7 +144,7 @@ const GuestLineupPicker = ({
 
             {/* Footer */}
             <div className="px-4 py-3 bg-[#111] border-t border-[#333] flex-shrink-0">
-              <p className="text-[11px] text-gray-500 flex items-center gap-1.5 justify-center">
+              <p className="text-[11px] text-muted flex items-center gap-1.5 justify-center">
                 <Sparkles className="w-3 h-3 text-[#0057B8]" aria-hidden="true" />
                 Your draft carries over when you create your free account
               </p>

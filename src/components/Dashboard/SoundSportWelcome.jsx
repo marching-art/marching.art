@@ -58,7 +58,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
       {onDismiss && (
         <button
           onClick={handleDismiss}
-          className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-white transition-colors z-10"
+          className="absolute top-2 right-2 p-1.5 text-muted hover:text-white transition-colors z-10"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />
@@ -110,7 +110,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
                         <Icon className="w-3 h-3 text-green-500" />
                         <span className="text-lg font-bold font-data text-white">{stat.value}</span>
                       </div>
-                      <span className="text-[9px] uppercase tracking-wider text-gray-500">
+                      <span className="text-[9px] uppercase tracking-wider text-muted">
                         {stat.label}
                       </span>
                     </div>
@@ -188,7 +188,7 @@ export const SoundSportBanner = () => (
       </div>
       <div>
         <span className="font-bold text-white text-sm">Game Guide</span>
-        <p className="text-gray-500 text-[10px]">Rules, ratings & tips</p>
+        <p className="text-muted text-[10px]">Rules, ratings & tips</p>
       </div>
     </div>
     <ChevronRight className="w-4 h-4 text-green-500 group-hover:translate-x-1 transition-transform" />

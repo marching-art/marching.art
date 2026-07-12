@@ -231,7 +231,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
-                  <User className="w-12 h-12 text-gray-600" />
+                  <User className="w-12 h-12 text-muted" />
                 </div>
               )}
             </div>
@@ -264,7 +264,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                       </span>
                       <button
                         onClick={() => setShowAvatarSelector(false)}
-                        className="p-1 text-gray-500 hover:text-white"
+                        className="p-1 text-muted hover:text-white"
                         aria-label="Close modal"
                       >
                         <X className="w-4 h-4" />
@@ -313,7 +313,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     </div>
 
                     <div className="px-4 pb-4">
-                      <p className="text-[10px] text-gray-500 text-center">
+                      <p className="text-[10px] text-muted text-center">
                         Choose which corps uniform to display on your profile
                       </p>
                     </div>
@@ -380,7 +380,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
               {/* Username handle */}
               {profile.username && (
-                <div className="text-[10px] text-gray-500 font-data mb-1">@{profile.username}</div>
+                <div className="text-[10px] text-muted font-data mb-1">@{profile.username}</div>
               )}
 
               <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -391,7 +391,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   </span>
                 </div>
                 <span
-                  className="flex items-center gap-1.5 text-[10px] text-gray-500"
+                  className="flex items-center gap-1.5 text-[10px] text-muted"
                   title={`${getXPProgress(profile.xp || 0).current}/${getXPProgress(profile.xp || 0).needed} XP to Level ${(profile.xpLevel || 1) + 1}`}
                 >
                   Lv{' '}
@@ -408,7 +408,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 {equippedTitle && <ShopTitleFlair item={equippedTitle} />}
               </div>
 
-              <div className="flex items-center gap-3 text-[10px] text-gray-500">
+              <div className="flex items-center gap-3 text-[10px] text-muted">
                 {profile.location && (
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3 h-3" /> {profile.location}
@@ -475,7 +475,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             <div className="px-3 pt-3">
               <Section icon={BookOpen} iconColor="text-[#0057B8]" title="About">
                 <div className="p-4 text-center">
-                  <p className="text-[11px] text-gray-500 mb-2">
+                  <p className="text-[11px] text-muted mb-2">
                     Tell other directors about yourself — bio, philosophy, specialties, and links.
                   </p>
                   {onEditProfile && (
@@ -511,7 +511,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                         <span className="font-bold font-data tabular-nums">
                           {info!.yearsDirecting}
                         </span>
-                        <span className="text-gray-500">yrs directing</span>
+                        <span className="text-muted">yrs directing</span>
                       </span>
                     )}
                     {hasSpecialties &&
@@ -528,7 +528,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
                 {hasCreds && (
                   <div>
-                    <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-0.5">
                       Background
                     </div>
                     <p className="text-[11px] text-gray-300 whitespace-pre-wrap">
@@ -539,7 +539,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
                 {hasSocials && (
                   <div>
-                    <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-1">
                       Connect
                     </div>
                     <SocialLinks links={info!.socialLinks!} />
@@ -629,7 +629,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               </span>
             </div>
             {trophies.length > 0 && (
-              <span className="text-[9px] text-gray-500">{trophies.length}</span>
+              <span className="text-[9px] text-muted">{trophies.length}</span>
             )}
           </div>
 
@@ -647,7 +647,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             </div>
             <div className="flex items-center gap-2">
               {achievements.length > 0 && (
-                <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
+                <span className="text-[9px] text-muted">{achievements.length} earned</span>
               )}
               {/* Own profile only — the page shows the viewer's own list. */}
               {isOwnProfile && (

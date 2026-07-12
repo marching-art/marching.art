@@ -415,7 +415,7 @@ const Onboarding = () => {
                   </React.Fragment>
                 ))}
               </div>
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between text-xs text-muted">
                 {STEPS.map((s) => (
                   <span
                     key={s.number}
@@ -481,7 +481,7 @@ const Onboarding = () => {
                         <p className="text-white text-sm font-semibold mb-1">
                           Couldn't load the corps list
                         </p>
-                        <p className="text-gray-500 text-xs mb-4">
+                        <p className="text-muted text-xs mb-4">
                           Check your connection and try again — your other answers are safe.
                         </p>
                         <button
@@ -516,7 +516,7 @@ const Onboarding = () => {
                           style={{ width: `${(Object.keys(lineup).length / 8) * 100}%` }}
                         />
                       </div>
-                      <p className="text-xs text-gray-500 mt-2 text-center">
+                      <p className="text-xs text-muted mt-2 text-center">
                         You can adjust this from your dashboard — changes are unlimited for the
                         first two weeks, then limited to 3 per week (2 total during Championship
                         Week)
