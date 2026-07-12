@@ -59,6 +59,9 @@ export default function CorpsConditionPanel({ podium }) {
   const [error, setError] = useState(null);
   const [editingTemplate, setEditingTemplate] = useState(false);
   const [templateDraft, setTemplateDraft] = useState([]);
+  // Which day-type plan the assistant-director editor is showing (§5.2):
+  // 'rehearsal', 'show', or 'springTraining'.
+  const [planType, setPlanType] = useState('rehearsal');
   const [topUp, setTopUp] = useState(100);
   const [clinicianBlock, setClinicianBlock] = useState('brassSectionals');
 
@@ -76,7 +79,39 @@ export default function CorpsConditionPanel({ podium }) {
     }
   };
 
-  const template = state.planTemplate || [];
+  // The assistant director keeps one plan per day type (§5.2). Each runs on the
+  // matching unplayed day; a type with no plan falls back to the rehearsal plan.
+  const PLAN_TYPES = [
+    {
+      id: 'rehearsal',
+      tab: 'Rehearsal',
+      plan: state.planTemplate || [],
+      runsOn: "rehearsal days you don't log in",
+      hint: 'The full grind — up to 12 blocks. This is the fallback for any day type you leave unplanned.',
+      empty:
+        'No rehearsal-day plan — days you miss are lost entirely. Set one and the assistant rehearses it at 85% yield while you’re away.',
+    },
+    {
+      id: 'show',
+      tab: 'Show day',
+      plan: state.showDayPlan || [],
+      runsOn: "show days you don't log in",
+      hint: 'A lighter pre-performance routine — only 8 blocks, and the corps competes that night.',
+      empty:
+        'No show-day plan — unplayed show days fall back to your rehearsal plan. Set a lighter routine here (8 blocks) for performance days.',
+    },
+    {
+      id: 'springTraining',
+      tab: 'Spring training',
+      plan: state.springTrainingPlan || [],
+      runsOn: "spring-training days you don't log in",
+      hint: 'Install-heavy camp days — up to 20 blocks, weighted toward content over clean.',
+      empty:
+        'No spring-training plan — unplayed camp days fall back to your rehearsal plan. Set an install-heavy plan here (20 blocks) for the preseason.',
+    },
+  ];
+  const activePlanType = PLAN_TYPES.find((p) => p.id === planType) || PLAN_TYPES[0];
+  const template = activePlanType.plan;
   const budget = state.budget || { balance: 0, committed: 0, earned: 0, spent: 0 };
   const commitmentCap = podium.data?.commitmentCap || 2500;
 
@@ -207,6 +242,7 @@ export default function CorpsConditionPanel({ podium }) {
       </div>
 
       {/* Assistant director — the fallback plan for days you don't log in.
+          One plan per day type (§5.2): rehearsal, show day, spring training.
           Mirrors the daily Rehearsal Planner: block palette + running order. */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
@@ -220,6 +256,30 @@ export default function CorpsConditionPanel({ podium }) {
           >
             {editingTemplate ? 'Cancel' : template.length > 0 ? 'Edit plan' : 'Set a plan'}
           </button>
+        </div>
+
+        {/* Day-type tabs — each keeps its own plan; switching cancels an
+            in-progress edit so a draft never lands on the wrong day type. */}
+        <div className="flex gap-1 mb-2">
+          {PLAN_TYPES.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => {
+                setPlanType(p.id);
+                setEditingTemplate(false);
+              }}
+              className={`flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-none border transition-colors press-feedback ${
+                planType === p.id
+                  ? 'border-[#0057B8] bg-[#0057B8]/10 text-white'
+                  : 'border-[#333] text-gray-500 hover:text-gray-300 hover:border-gray-500'
+              }`}
+            >
+              {p.tab}
+              {p.plan.length > 0 && (
+                <span className="text-[9px] text-[#4d9fff] tabular-nums">{p.plan.length}</span>
+              )}
+            </button>
+          ))}
         </div>
 
         {!editingTemplate ? (
@@ -237,16 +297,13 @@ export default function CorpsConditionPanel({ podium }) {
                 ))}
               </div>
               <p className="text-[9px] text-gray-500">
-                Runs this order at 85% yield on days you don&apos;t log in.
+                Runs this order at 85% yield on {activePlanType.runsOn}.
               </p>
             </div>
           ) : (
             <div className="flex items-start gap-2 rounded-none border border-amber-500/30 bg-amber-500/5 px-3 py-2">
               <Moon className="w-3.5 h-3.5 text-amber-400/80 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-amber-200/70 leading-relaxed">
-                No plan set — days you miss are lost entirely. Set a default plan and the assistant
-                rehearses it at 85% yield while you&apos;re away.
-              </p>
+              <p className="text-[10px] text-amber-200/70 leading-relaxed">{activePlanType.empty}</p>
             </div>
           )
         ) : (
@@ -335,7 +392,7 @@ export default function CorpsConditionPanel({ podium }) {
                     disabled={busy !== null}
                     onClick={() =>
                       act('template', async () => {
-                        await podium.savePlanTemplate(templateDraft);
+                        await podium.savePlanTemplate(templateDraft, planType);
                         setEditingTemplate(false);
                       })
                     }
@@ -356,8 +413,8 @@ export default function CorpsConditionPanel({ podium }) {
             </div>
 
             <p className="text-[9px] text-gray-600 leading-relaxed">
-              Lead with Stretch / PT to cut the stamina cost of the blocks that follow, and avoid
-              repeating a block back-to-back — repeats yield less.
+              {activePlanType.hint} Lead with Stretch / PT to cut the stamina cost of the blocks that
+              follow, and avoid repeating a block back-to-back — repeats yield less.
             </p>
           </div>
         )}

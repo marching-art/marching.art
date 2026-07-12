@@ -328,12 +328,15 @@ Notes:
 - The FMA "Action Complete!" moment is sacred: every allocation returns an immediate, satisfying
   itemized result panel. Instant feedback on the action; competitive consequence only at the
   nightly drop.
-- **Assistant director (plan template):** every corps can save a default weekly rehearsal plan.
-  On any day the director doesn't log in, the assistant executes the template at **~85% yield**
-  and cannot declare rest days or accept joint rehearsals. Active play strictly dominates, but a
-  vacation doesn't wreck a season. This one mechanic fixes both of FMA's opposite complaints at
-  once: inactive groups coasting on stale scores, and an energy system that punished anyone who
-  couldn't log in 3–4 times a day.
+- **Assistant director (plan templates):** every corps can save a default rehearsal plan **per day
+  type**, because the three types play differently: spring-training days are install-heavy (~20
+  blocks), show days are a lighter pre-performance routine (~8 blocks, the corps competes that
+  night), and rehearsal days are the full grind (~12 blocks). On any day the director doesn't log
+  in, the assistant executes that day type's plan at **~85% yield** and cannot declare rest days or
+  accept joint rehearsals. A day type with no plan of its own falls back to the rehearsal plan, so a
+  single-plan corps is unaffected. Active play strictly dominates, but a vacation doesn't wreck a
+  season. This one mechanic fixes both of FMA's opposite complaints at once: inactive groups coasting
+  on stale scores, and an energy system that punished anyone who couldn't log in 3–4 times a day.
 
 ### 5.3 Condition — travel, food, rest, performance load
 
@@ -968,7 +971,9 @@ Podium populates identically).
     today:      { day: 22, blocksUsed: 2, blocks: ['visualBasics','fullEnsemble'],
                   restDay: false },             // written by the callable, read by the processor
     travelLog:  [{ day, fromShow, toShow, miles, coinCost, staminaCost }],
-    planTemplate: { mon: ['visualBasics','fullEnsemble','brassSectionals'], ... }, // §5.2 assistant
+    planTemplate:        ['visualBasics','fullEnsemble','brassSectionals'], // §5.2 rehearsal-day plan
+    showDayPlan:         ['warmup','fullEnsemble'],                        // §5.2 show-day plan (falls back to planTemplate)
+    springTrainingPlan:  ['visualBasics','brassSectionals','percussionSectionals'], // §5.2 spring-training plan
     jointRehearsals: { usedThisWeek: 1,
                        partnersThisSeason: { '<uid>': 2 },   // repeat-pair decay counter
                        pending: { withUid, day, proposedBy } | null },
@@ -1002,7 +1007,7 @@ lesson).
 | `registerPodiumCorps`                                        | Extends existing registration; validates challenge levels; initializes caption state from the corpus baselines for the chosen challenge profile                                                                                                                                               |
 | `allocateRehearsalBlock`                                     | The daily verb. Validates block budget for the day (server-derived from day type + condition), applies yields (staff/clinician/phase/diminishing-return multipliers), applies immediate state update, returns the itemized result panel. Idempotency: per-`(uid, seasonUid, day, blockIndex)` |
 | `setRestDay` / `setFoodPlan` / `hireStaff` / `hireClinician` | Setup verbs; Corps Budget transactions via the Podium ledger (§14.2.1)                                                                                                                                                                                                                        |
-| `savePlanTemplate`                                           | Stores the assistant-director weekly plan (§5.2); the nightly processor executes it at ~85% yield on unplayed days                                                                                                                                                                            |
+| `savePlanTemplate`                                           | Stores an assistant-director plan for a day type (§5.2) — `rehearsal` (default), `show`, or `springTraining`; the nightly processor executes the matching day type's plan at ~85% yield on unplayed days (falling back to the rehearsal plan when a type has none)                              |
 | `proposeJointRehearsal` / `respondJointRehearsal`            | The §5.12 handshake; validates weekly cap, geography tier, repeat-pair decay; on acceptance both corps are flagged for the shared day and the diagnostic is generated at nightly processing                                                                                                   |
 | `hostEvent` (all classes)                                    | Creates a §5.10 hosted show in the schedule subcollection: validates date/venue-tier/CorpsCoin, stamps gazetteer venue data; attendance payouts settle in the nightly run                                                                                                                     |
 

@@ -5,7 +5,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { resolveCorpsShow } = require("./processor");
+const { resolveCorpsShow, planForDay } = require("./processor");
 const store = require("./store");
 
 describe("resolveCorpsShow", () => {
@@ -67,6 +67,42 @@ describe("resolveCorpsShow", () => {
 
   test("an unscheduled day degrades to a Day-N label", () => {
     assert.deepEqual(resolveCorpsShow({}, 3, "aClass", []), { eventName: "Day 3", location: null });
+  });
+});
+
+describe("planForDay (assistant-director plan by day type)", () => {
+  const rehearsal = ["fullEnsemble", "brassSectionals"];
+  const show = ["warmup", "fullEnsemble"];
+  const spring = ["visualBasics", "brassSectionals", "percussionSectionals"];
+
+  test("a rehearsal day runs the rehearsal plan", () => {
+    const state = { planTemplate: rehearsal, showDayPlan: show, springTrainingPlan: spring };
+    assert.deepEqual(planForDay(state, { isShowDay: false, isSpringTraining: false }), rehearsal);
+  });
+
+  test("a show day runs the show-day plan when one is set", () => {
+    const state = { planTemplate: rehearsal, showDayPlan: show, springTrainingPlan: spring };
+    assert.deepEqual(planForDay(state, { isShowDay: true, isSpringTraining: false }), show);
+  });
+
+  test("a spring-training day runs the spring plan, and takes precedence over show", () => {
+    const state = { planTemplate: rehearsal, showDayPlan: show, springTrainingPlan: spring };
+    assert.deepEqual(planForDay(state, { isShowDay: true, isSpringTraining: true }), spring);
+  });
+
+  test("show/spring days fall back to the rehearsal plan when their own is unset", () => {
+    const state = { planTemplate: rehearsal };
+    assert.deepEqual(planForDay(state, { isShowDay: true, isSpringTraining: false }), rehearsal);
+    assert.deepEqual(planForDay(state, { isShowDay: false, isSpringTraining: true }), rehearsal);
+  });
+
+  test("an empty day-type plan falls back rather than autoplaying nothing", () => {
+    const state = { planTemplate: rehearsal, showDayPlan: [] };
+    assert.deepEqual(planForDay(state, { isShowDay: true, isSpringTraining: false }), rehearsal);
+  });
+
+  test("no plans at all yields an empty list (the day stays lost)", () => {
+    assert.deepEqual(planForDay({}, { isShowDay: false, isSpringTraining: false }), []);
   });
 });
 

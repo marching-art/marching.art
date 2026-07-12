@@ -109,8 +109,8 @@ export function usePodium(enabled) {
   );
 
   const savePlanTemplate = useCallback(
-    async (blocks) => {
-      const result = await setPodiumPlanTemplate({ blocks });
+    async (blocks, planType = 'rehearsal') => {
+      const result = await setPodiumPlanTemplate({ blocks, planType });
       await reload();
       return result.data;
     },
