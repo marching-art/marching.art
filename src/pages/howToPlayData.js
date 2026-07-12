@@ -4,16 +4,26 @@
 // Kept in its own module (not exported from a component file) so game facts
 // stay in one place without breaking React fast refresh.
 
-export const CAPTIONS = [
-  { abbr: 'GE1', name: 'General Effect 1', desc: 'Overall show design and creativity' },
-  { abbr: 'GE2', name: 'General Effect 2', desc: 'Performance quality and audience impact' },
-  { abbr: 'VP', name: 'Visual Proficiency', desc: 'Marching and movement execution' },
-  { abbr: 'VA', name: 'Visual Analysis', desc: 'Visual design and staging' },
-  { abbr: 'CG', name: 'Color Guard', desc: 'Flag, rifle, and saber performance' },
-  { abbr: 'B', name: 'Brass', desc: 'Horn line performance quality' },
-  { abbr: 'MA', name: 'Music Analysis', desc: 'Musical arrangement and design' },
-  { abbr: 'P', name: 'Percussion', desc: 'Battery and front ensemble' },
-];
+import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
+
+// The guide labels each caption by id + full name (from the canonical source)
+// with its own longer explanatory copy.
+const GUIDE_CAPTION_DESCRIPTIONS = {
+  GE1: 'Overall show design and creativity',
+  GE2: 'Performance quality and audience impact',
+  VP: 'Marching and movement execution',
+  VA: 'Visual design and staging',
+  CG: 'Flag, rifle, and saber performance',
+  B: 'Horn line performance quality',
+  MA: 'Musical arrangement and design',
+  P: 'Battery and front ensemble',
+};
+
+export const CAPTIONS = CAPTION_DEFS.map((c) => ({
+  abbr: c.id,
+  name: c.fullName,
+  desc: GUIDE_CAPTION_DESCRIPTIONS[c.id],
+}));
 
 export const CLASSES = [
   {

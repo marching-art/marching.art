@@ -8,6 +8,7 @@ import {
   REGISTRATION_LOCK_WEEKS,
   UNLOCK_COSTS,
 } from './classRegistry';
+import { CAPTION_IDS } from '../data/captions';
 
 // Class policy values come from the class-capability registry
 // (src/config/classRegistry.json — Phase 1.1). The exported names and shapes
@@ -46,18 +47,9 @@ export const XP_SOURCES = {
 };
 
 /**
- * Required captions for a valid lineup
+ * Required captions for a valid lineup (canonical order and set).
  */
-export const REQUIRED_CAPTIONS = [
-  'GE1', // General Effect 1
-  'GE2', // General Effect 2
-  'VP', // Visual Proficiency
-  'VA', // Visual Analysis
-  'CG', // Color Guard
-  'B', // Brass
-  'MA', // Music Analysis
-  'P', // Percussion
-];
+export const REQUIRED_CAPTIONS = CAPTION_IDS;
 
 /**
  * Caption categories for UI organization

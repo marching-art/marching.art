@@ -6,9 +6,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSeasonSettings, getDciDataDoc, getHistoricalScoresMap } from '../../api/admin';
 import { getCaptionLabel } from '../../utils/captionUtils';
+import { CAPTION_IDS } from '../../data/captions';
 
-// Caption definitions for tabs
-const INDIVIDUAL_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+// Caption tabs (canonical caption set)
+const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
 
 const AGGREGATE_TABS = [
   {

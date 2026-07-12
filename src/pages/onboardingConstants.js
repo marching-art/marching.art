@@ -3,60 +3,30 @@
 // Extracted verbatim from Onboarding.jsx.
 
 import { Star, Flag, Music, Target, Users, Trophy } from 'lucide-react';
+import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
 
 // Caption definitions for the guided selection
-export const CAPTIONS = [
-  {
-    id: 'GE1',
-    name: 'GE1',
-    fullName: 'General Effect 1',
-    category: 'ge',
-    description: 'Overall impact and artistry',
-  },
-  {
-    id: 'GE2',
-    name: 'GE2',
-    fullName: 'General Effect 2',
-    category: 'ge',
-    description: 'Visual and musical excellence',
-  },
-  {
-    id: 'VP',
-    name: 'VP',
-    fullName: 'Visual Proficiency',
-    category: 'vis',
-    description: 'Marching technique',
-  },
-  {
-    id: 'VA',
-    name: 'VA',
-    fullName: 'Visual Analysis',
-    category: 'vis',
-    description: 'Design and composition',
-  },
-  {
-    id: 'CG',
-    name: 'CG',
-    fullName: 'Color Guard',
-    category: 'vis',
-    description: 'Equipment work and artistry',
-  },
-  { id: 'B', name: 'B', fullName: 'Brass', category: 'mus', description: 'Horn line performance' },
-  {
-    id: 'MA',
-    name: 'MA',
-    fullName: 'Music Analysis',
-    category: 'mus',
-    description: 'Musical composition',
-  },
-  {
-    id: 'P',
-    name: 'P',
-    fullName: 'Percussion',
-    category: 'mus',
-    description: 'Battery and front ensemble',
-  },
-];
+// Structural fields (id, fullName, group) come from the canonical caption
+// source; the onboarding-specific one-line descriptions stay here. `name` is
+// the caption id (compact draft slots).
+const ONBOARDING_CAPTION_DESCRIPTIONS = {
+  GE1: 'Overall impact and artistry',
+  GE2: 'Visual and musical excellence',
+  VP: 'Marching technique',
+  VA: 'Design and composition',
+  CG: 'Equipment work and artistry',
+  B: 'Horn line performance',
+  MA: 'Musical composition',
+  P: 'Battery and front ensemble',
+};
+
+export const CAPTIONS = CAPTION_DEFS.map((c) => ({
+  id: c.id,
+  name: c.id,
+  fullName: c.fullName,
+  category: c.group,
+  description: ONBOARDING_CAPTION_DESCRIPTIONS[c.id],
+}));
 
 export const CATEGORY_COLORS = {
   ge: {

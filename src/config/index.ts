@@ -11,6 +11,8 @@
 // - VITE_SUPPORT_EMAIL: Support email address
 // - VITE_FIREBASE_* : Firebase configuration
 
+import { CAPTION_IDS, CAPTION_NAMES } from '../data/captions';
+
 // =============================================================================
 // PRODUCTION ENVIRONMENT VALIDATION
 // =============================================================================
@@ -123,20 +125,11 @@ export const GAME_CONFIG = {
     world: 'gold',
   } as const,
 
-  /** Captions in judging order */
-  captions: ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'] as const,
+  /** Captions in judging order (canonical source: data/captions.ts) */
+  captions: CAPTION_IDS,
 
-  /** Caption display names */
-  captionNames: {
-    GE1: 'General Effect 1',
-    GE2: 'General Effect 2',
-    VP: 'Visual Proficiency',
-    VA: 'Visual Analysis',
-    CG: 'Color Guard',
-    B: 'Brass',
-    MA: 'Music Analysis',
-    P: 'Percussion',
-  } as const,
+  /** Caption display names (canonical source: data/captions.ts) */
+  captionNames: CAPTION_NAMES,
 
   /** Initial corps coin for new users */
   initialCorpsCoin: 1000,

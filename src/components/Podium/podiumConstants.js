@@ -2,7 +2,9 @@
 // balanceConfig block definitions — labels and effect summaries only; all
 // yields are computed server-side.
 
-export const PODIUM_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+import { CAPTION_IDS } from '../../data/captions';
+
+export const PODIUM_CAPTIONS = CAPTION_IDS;
 
 export const BLOCKS = [
   {

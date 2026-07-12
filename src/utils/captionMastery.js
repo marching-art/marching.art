@@ -3,7 +3,9 @@
 // scoring run; tiers here are display-only and captionMastery.test.js fails
 // CI if this mirror drifts from functions/src/helpers/captionMastery.js.
 
-export const MASTERY_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+import { CAPTION_IDS } from '../data/captions';
+
+export const MASTERY_CAPTIONS = CAPTION_IDS;
 
 export const CAPTION_MASTERY_TIERS = [
   { id: 'bronze', name: 'Bronze', min: 500 },
