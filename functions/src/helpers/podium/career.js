@@ -108,12 +108,21 @@ async function seasonIndexFor(db, seasonUid) {
 }
 
 /**
- * Percentile of a season's final result. Uses the corps' last scored day so
- * a mid-season disappearance is judged where it stopped, not at day 49.
+ * Tier-relative season performance (0-100) — how close to this corps' own tier
+ * ceiling it finished. Scoring is reputation-gated, so the reputation ladder
+ * climbs on performance AT YOUR ALTITUDE, not absolute field position (§5.13).
+ * Uses the corps' last scored day so a mid-season disappearance is judged where
+ * it stopped, not at day 49.
  */
 function finalsPercentile(state) {
   if (state.lastTotal == null || state.lastScoredDay == null) return null;
-  return engine.percentileOfTotal(state.lastTotal, state.lastScoredDay, store.curves);
+  return engine.tierPerformance(
+    state.lastTotal,
+    state.lastScoredDay,
+    state.repTier || 1,
+    store.curves,
+    store.balance
+  );
 }
 
 /**

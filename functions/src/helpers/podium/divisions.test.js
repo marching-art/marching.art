@@ -14,7 +14,10 @@ const cfg = {
     minPoolForOpen: 6,
     minPoolForWorld: 12,
     demotionGraceSeasons: 1,
-    absenceResetSeasons: 2,
+    reentryMinRepTier: { worldClass: 5, openClass: 3 },
+  },
+  reputation: {
+    tierThresholds: { 1: 0, 2: 15, 3: 30, 4: 45, 5: 60, 6: 75, 7: 90 },
   },
 };
 
@@ -84,12 +87,39 @@ describe("division assessment (§5.7)", () => {
     assert.equal(next.ghost.division, "aClass");
   });
 
-  test("registration seat: absence grace, then bottom-division re-entry", () => {
-    const veteran = { division: "worldClass" };
-    assert.equal(divisions.divisionForRegistration(veteran, 0, cfg), "worldClass");
-    assert.equal(divisions.divisionForRegistration(veteran, 1, cfg), "worldClass", "one missed season is grace");
-    assert.equal(divisions.divisionForRegistration(veteran, 2, cfg), "aClass", "2+ missed seasons re-enter at A");
-    assert.equal(divisions.divisionForRegistration(null, 0, cfg), "aClass", "new corps start in A");
-    assert.equal(divisions.divisionForRegistration({ division: "junk" }, 0, cfg), "aClass");
+  test("divisionForReputation maps decayed reputation to a re-entry seat", () => {
+    assert.equal(divisions.divisionForReputation(90, cfg), "worldClass", "champion rep -> World");
+    assert.equal(divisions.divisionForReputation(60, cfg), "worldClass", "tier-5 -> World");
+    assert.equal(divisions.divisionForReputation(55, cfg), "openClass", "just below tier-5 -> Open");
+    assert.equal(divisions.divisionForReputation(30, cfg), "openClass", "tier-3 -> Open");
+    assert.equal(divisions.divisionForReputation(20, cfg), "aClass", "below tier-3 -> A");
+  });
+
+  test("registration seat: grace kept, then gradual reputation-driven erosion (not a hard reset)", () => {
+    const champ = { division: "worldClass" };
+    // Active / within grace: seat kept regardless of reputation.
+    assert.equal(divisions.divisionForRegistration(champ, 0, cfg, 90), "worldClass");
+    assert.equal(divisions.divisionForRegistration(champ, 1, cfg, 85), "worldClass", "one missed season is grace");
+    // Beyond grace: seat follows decayed reputation, eroding gradually.
+    assert.equal(
+      divisions.divisionForRegistration(champ, 3, cfg, 64),
+      "worldClass",
+      "a champion a few seasons off is still World (rep only decayed to tier 5)"
+    );
+    assert.equal(
+      divisions.divisionForRegistration(champ, 4, cfg, 52),
+      "openClass",
+      "a longer absence erodes World -> Open"
+    );
+    assert.equal(
+      divisions.divisionForRegistration(champ, 6, cfg, 25),
+      "aClass",
+      "only a long absence, reputation decayed all the way down, re-enters at A"
+    );
+    // Never placed ABOVE the last-held seat, even with high reputation.
+    assert.equal(divisions.divisionForRegistration({ division: "openClass" }, 4, cfg, 90), "openClass");
+    // New corps / junk seat still start in A.
+    assert.equal(divisions.divisionForRegistration(null, 0, cfg, 0), "aClass", "new corps start in A");
+    assert.equal(divisions.divisionForRegistration({ division: "junk" }, 0, cfg, 0), "aClass");
   });
 });

@@ -229,38 +229,67 @@ Each Podium corps carries, per caption `c ∈ {GE1, GE2, VP, VA, CG, B, MA, P}`:
 | `clean[c]`     | 0–100%  | Execution quality of installed content. Grows from rehearsal, decays if neglected, is what converts potential into score                                               |
 | `peak[c]`      | derived | The effective ceiling today: `L(c) × f(content, clean)`                                                                                                                |
 
-**Daily caption score:**
+**Daily caption score (trajectory-anchored model, 2026-07 recalibration):**
+
+Each corps rides its **own** potential curve, realized by its **own** rehearsal, nudged by its
+**own** independent form. The historical band is a realism _guardrail_ (a per-day ceiling), never a
+shared floor — so corps at different shows never move in lockstep and no historical field-dip is
+replayed on the field.
 
 ```
-raw(c, d)   = L(c) · logistic(d; k(c), d₀(c)) · content(c) · (0.72 + 0.28 · clean(c))
-ceiling(c,d)= band(repTier.percentile, c, d)          // reputation-gated top of the band (§5.13)
-score(c, d) = clamp(raw(c,d) + condition(d) + variance(d,c), band_p5(c,d), ceiling(c,d))
-total(d)    = min(99.70, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)   // the unicorn cap
+potential(c,d) = L(c) · logistic(d; k(c), d₀(c)) / norm            // this corps' own trajectory
+realized(c)    = min(1, content(c)·(0.72 + 0.28·clean(c)) / A)     // A = attainmentFullRealization
+ceilFrac(tier) = repCeilingFracByTier[tier]                        // 0.78 (tier 1) → 1.0 (Champion)
+frac(c)        = perfFloor + (ceilFrac(tier) − perfFloor)·realized(c)   // floor..rep-gated ceiling
+formMult       = 1 + form                                          // independent per-corps momentum (§5.3a)
+value(c,d)     = potential(c,d) · frac(c) · formMult + condition(d) + noise(c,d)
+score(c,d)     = softCap(max(0, value), band_max(c,d))             // realism CEILING only, asymptotic
+total(d)       = min(99.70, softCap([GE1+GE2]+[VP+VA+CG]/2+[B+MA+P]/2, totalBand_max(d)))
 ```
 
 - The total formula is **identical to the existing fantasy formula** in `scoring.js` (GE full
   weight, Visual/Music halved) so Podium scores read exactly like every other score in the game and
   like a real DCI recap.
-- `condition(d)` is the small signed modifier from stamina/morale (§5.3) — bounded to roughly
-  ±0.15 per caption (±1.2 total), enough to decide a rivalry, never enough to fake a season.
-- `variance(d,c)` is FMA-faithful judge jitter: deterministic per `(seasonUid, day, uid, caption)`
-  seed, magnitude ≈ ±0.05 per caption. It breaks ties and makes recaps breathe; it never changes a
-  well-managed season's outcome. **No other randomness exists anywhere in the engine.**
-- The clamp against the historical band is the realism guarantee: a Day-10 brass score cannot be
-  18.4 because no Day-10 brass score in history was 18.4. The _top_ of each corps' band is gated
-  by its multi-season Reputation tier (§5.13) — a first-season corps peaks in the historical
-  mid-percentiles no matter how perfectly it is managed, and only Champion-Status corps can touch
-  the top of the envelope. **No corps ever scores 100**: the hard cap is **99.70** — deliberately
-  just above DCI's real all-time best (99.65, Blue Devils 2014) so beating history is _possible_
-  but requires a true unicorn: Champion Status, maximum challenge, a near-perfect season, peak
-  condition, and the variance breaking your way, all at once. Asserted by the harness
-  (decision 25).
+- **Rehearsal is the dominant driver.** `realized` — set entirely by the corps' own installed &
+  clean content — moves the score between the reputation-independent floor (`perfFloor`, a corps
+  that just shows up, ≈60% of its potential) and the reputation-gated ceiling. Two corps at the same
+  challenge and tier that rehearsed differently score differently; there is no clamp collapsing a
+  well-managed field to one identical number.
+- **Reputation gates the ceiling, not a wall or a shared clamp (§5.13).** `ceilFrac` rises on an
+  explicit, top-bunched ladder from `0.78` (tier 1) to `1.0` (Champion) — diminishing returns near
+  the top, so Elite and Champion sit within ~1.5 pts while the big gaps are lower down. A
+  **perfectly-rehearsed first season tops out in the mid/upper 70s**; a Champion can reach the high
+  90s. Rehearsal still fully controls where you land within your tier, so a flawless newcomer
+  overtakes an absent dynasty by finals — reputation is an earned edge, not a substitute for the
+  season's work. Because scoring is reputation-gated, reputation itself is **earned by
+  tier-relative performance** (`tierPerformance`): you climb by finishing near the top of your own
+  tier, not by an absolute field position you cannot yet reach.
+- **Form** is an independent per-corps momentum random-walk (§5.3a), seeded only by
+  `(seasonUid, uid)` and drawn from the historical day-over-day movement distribution. It is what
+  makes the field breathe individually: a corps can be on a hot streak or in a slump on its own,
+  and two corps at two shows on the same night are never correlated. Mean-reverting and bounded
+  (±`form.max`), so it is texture, never the story.
+- `condition(d)` is the small signed modifier from stamina/morale (§5.3), bounded to ≈±0.15 per
+  caption. `noise(c,d)` is a zero-median one-night judge wiggle, shaped by the caption's real
+  day-over-day movement and seeded per `(seasonUid, day, uid, caption)`. **All randomness is
+  deterministic from seeds** — every score is replayable.
+- The soft-cap against the historical band `max` is the realism guarantee: a Day-10 brass score
+  approaches, but never reaches, the highest Day-10 brass score in history. **No corps ever scores
+  100**: the hard cap is **99.70** — just above DCI's real all-time best (99.65, Blue Devils 2014).
+  Reaching the very top still requires Champion-tier reputation, maximum challenge, a near-perfect
+  season, peak condition, and form breaking your way, all at once. Asserted by the harness
+  (`podiumSim.js` A/B/C/G, decision 25).
 
 ### 4.3 The season arc this produces
 
-Calibration targets, straight from the corpus: a top-percentile-managed corps arcs roughly 70–72
-(day 1) → 84–86 (day 25) → 97–99 (day 49); a median corps 60 → 75 → 85; a neglected corps installs
-early points then visibly plateaus and slides down the rankings as everyone else's slope continues.
+Calibration targets (2026-07 trajectory model, verified in `podiumSim.js` / `podiumPacingHarness.js`):
+the reputation-gated tier ceiling runs **~77 → 84 → 89 → 92 → 95 → 96 → 97** from a debut season to
+Champion Status. So a **perfectly-rehearsed first season** tops out in the **mid/upper 70s**, a
+**Finalist-tier** corps around **92**, and a **flawless Champion** near **97**; a brass-spamming or
+chronically-absent corps sits in the **62–74** range. A neglected corps installs early points then
+visibly plateaus and slides down the rankings as everyone else's slope continues. Because each corps
+rides its own curve with its own independent form, the field **fluctuates individually** — there is
+no season-day on which everyone drops together.
 Caption peaks and lows emerge naturally: hammer brass for two weeks and your visual captions sit at
 low `clean` values, plateau, and start decaying — the recap will show exactly the lopsided,
 realistic caption profile a real corps with that rehearsal balance would show.
@@ -1326,9 +1355,11 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     published formulas for divisions. Nothing compounds from account age.
 17. **Dormancy** (§5.13): a corps never returns from an absence stronger than it left —
     graduated reputation decay per dormant season (tuned to the ~7-week season cadence), staff
-    contracts lapse after the one-season loyalty grace, 2+ season absences re-enter the bottom
-    division, and heritage credit (+50% re-earn rate up to one tier below the old peak) turns
-    comebacks into a storyline instead of a pure penalty.
+    contracts lapse after the one-season loyalty grace, a returning corps re-enters at the division
+    its now-decayed reputation supports (gradual erosion by time away, NOT a hard reset — a champion
+    off for a season or two comes back near the top; only a long absence re-enters low), and
+    heritage credit (+50% re-earn rate up to one tier below the old peak) turns comebacks into a
+    storyline instead of a pure penalty.
 
 **Resolved in v1.9.1:**
 
@@ -1437,7 +1468,8 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     cutoffs (population-balanced thirds; Open forms at 6+ corps, World at 12+). Promotion is one
     division per season, earned by finishing at/above the next division's cutoff. Demotion is
     slow like old DCI: one grace season below your cutoff, a one-division drop after two straight.
-    One missed season holds the seat; two or more re-enter at A Class. Each division crowns its
+    One missed season holds the seat; beyond that a returning corps re-enters at the division its
+    decayed reputation supports (gradual erosion, not a hard reset to A). Each division crowns its
     own Finals hardware; the Hall of Champions shows the top active division's podium. The
     Eastern Classic night snake is division-seeded from Day-38 standings (published Day 39;
     uid-parity fallback until then). Championship Week is Indianapolis and runs the fantasy

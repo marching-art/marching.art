@@ -158,6 +158,8 @@ function simulateSeason(strategy, repTier, seed) {
         used++;
       }
     }
+    // Evolve independent per-corps form every day (seeded only by this corps).
+    engine.updateForm(state, day, `form|${seed}`, curves, cfg);
     if (isShowDay) {
       state.condition.stamina = Math.max(0, state.condition.stamina - cfg.condition.showStaminaCost);
       scores.push({ day, ...engine.scoreCorps(state, day, `${seed}|${day}`, curves, cfg) });
@@ -247,8 +249,8 @@ function main() {
       const strategies = makeStrategies(`career|${season}`);
       const tier = engine.tierForReputation(reputation, cfg);
       const { finalsTotal } = simulateSeason(strategies[strategyName], tier, `career|${season}`);
-      const pct = engine.percentileOfTotal(finalsTotal, 49, curves);
-      reputation = engine.updateReputation(reputation, pct, { dormantSeasons: 0 }, cfg);
+      const perf = engine.tierPerformance(finalsTotal, 49, tier, curves, cfg);
+      reputation = engine.updateReputation(reputation, perf, { dormantSeasons: 0 }, cfg);
       if (!tierReachedAt && engine.tierForReputation(reputation, cfg) === 7) tierReachedAt = season;
     }
     return { reputation, tierReachedAt };
@@ -295,6 +297,81 @@ function main() {
   const upsetRate = upsets / trials;
   console.log(`    upset rate: ${(upsetRate * 100).toFixed(0)}% (${upsets}/${trials})`);
   assert("F. upset rate in 30-45%", upsetRate >= 0.3 && upsetRate <= 0.45, `${(upsetRate * 100).toFixed(0)}%`);
+
+  // --- G. Independence (the 2026-07 trajectory-model fix) ------------------
+  // The original bug: every corps was anchored to the same per-day historical
+  // band, so the whole field moved in lockstep and dipped together on days the
+  // 2000s field happened to dip. Under the trajectory model each corps carries
+  // its OWN form, so corps at DIFFERENT shows must fluctuate INDEPENDENTLY.
+  //
+  // Method: plateau K identical corps (same challenge/rep/rehearsal, so growth
+  // is ~0 and any day-to-day movement is pure fluctuation), evolve each with an
+  // INDEPENDENT seed, score daily, and measure (1) mean pairwise correlation of
+  // daily deltas and (2) how often the field moves UNANIMOUSLY. A lockstep model
+  // scores ~1.0 correlation and ~100% unanimous; independent corps do not.
+  console.log("\nG. Independence — corps at different shows fluctuate on their own:");
+  const K = 12;
+  const DAYS = 40;
+  const series = [];
+  for (let i = 0; i < K; i++) {
+    const challenge = {};
+    for (const caption of engine.CAPTIONS) challenge[caption] = 5;
+    const state = engine.createSeasonState({ challenge, repTier: 4 }, curves, cfg);
+    // Plateau: fully installed & clean, so rehearsal growth is not the mover.
+    for (const caption of engine.CAPTIONS) {
+      state.captions[caption].content = 1;
+      state.captions[caption].clean = 1;
+    }
+    state.condition.stamina = 100;
+    state.condition.morale = 100;
+    const totals = [];
+    for (let d = 20; d < 20 + DAYS; d++) {
+      engine.updateForm(state, d, `indep|corps${i}`, curves, cfg);
+      totals.push(engine.scoreCorps(state, d, `indep|${d}|corps${i}`, curves, cfg).total);
+    }
+    series.push(totals);
+  }
+  const deltas = series.map((t) => t.slice(1).map((v, j) => v - t[j]));
+  // Mean pairwise Pearson correlation of daily deltas.
+  const corr = (a, b) => {
+    const ma = a.reduce((s, v) => s + v, 0) / a.length;
+    const mb = b.reduce((s, v) => s + v, 0) / b.length;
+    let num = 0;
+    let da = 0;
+    let db = 0;
+    for (let j = 0; j < a.length; j++) {
+      num += (a[j] - ma) * (b[j] - mb);
+      da += (a[j] - ma) ** 2;
+      db += (b[j] - mb) ** 2;
+    }
+    return num / Math.max(1e-9, Math.sqrt(da * db));
+  };
+  let corrSum = 0;
+  let pairs = 0;
+  for (let i = 0; i < K; i++) {
+    for (let j = i + 1; j < K; j++) {
+      corrSum += corr(deltas[i], deltas[j]);
+      pairs++;
+    }
+  }
+  const meanCorr = corrSum / pairs;
+  // Unanimity: fraction of transitions where the WHOLE field moved one way.
+  let unanimous = 0;
+  for (let t = 0; t < DAYS - 1; t++) {
+    const downs = deltas.filter((d) => d[t] < 0).length;
+    if (downs === 0 || downs === K) unanimous++;
+  }
+  const unanimousFrac = unanimous / (DAYS - 1);
+  console.log(
+    `    mean pairwise delta-correlation: ${meanCorr.toFixed(3)} (lockstep→1.0); ` +
+      `unanimous-direction days: ${(unanimousFrac * 100).toFixed(0)}% (lockstep→100%)`
+  );
+  assert("G1. corps move independently (mean delta-correlation < 0.35)", meanCorr < 0.35, meanCorr.toFixed(3));
+  assert(
+    "G2. no whole-field lockstep (unanimous-direction days < 20%)",
+    unanimousFrac < 0.2,
+    `${(unanimousFrac * 100).toFixed(0)}%`
+  );
 
   // --- Summary --------------------------------------------------------------
   const summary =

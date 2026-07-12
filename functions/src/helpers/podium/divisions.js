@@ -17,8 +17,11 @@
  *     division's cutoff keeps its seat for one grace season; a second
  *     consecutive below-cutoff season drops it ONE division. Hitting the
  *     cutoff again resets the clock.
- *   - Absence: one missed season is grace (seat kept); two or more missed
- *     seasons re-enter at A Class (decision 17's bottom-division re-entry).
+ *   - Absence: one missed season is grace (seat kept). Beyond that a returning
+ *     corps re-enters at the division its DECAYED reputation supports — a
+ *     gradual erosion by time away (§5.13 dormancy decay), NOT a hard reset to
+ *     A. A champion who takes a season or two off comes back near the top; only
+ *     a long absence, having decayed reputation all the way down, re-enters low.
  *
  * Divisions group and award — they never touch the scoring engine.
  * Reputation tiers (§5.13) remain the only ceiling mechanism.
@@ -48,13 +51,35 @@ function percentileValue(sortedScores, percentile) {
 }
 
 /**
- * The division a corps registers into this season, given its career and how
- * many seasons it missed. Pure.
+ * The highest division a given (already dormancy-decayed) reputation supports.
+ * Reputation is the persistent career-strength measure that erodes with time
+ * away, so a returning corps' seat degrades WITH it rather than by a season
+ * count. Thresholds are reputation-tier gates (cfg.divisions.reentryMinRepTier)
+ * read against the reputation ladder (cfg.reputation.tierThresholds). Pure.
  */
-function divisionForRegistration(careerData, missedSeasons, cfg) {
-  const rules = cfg.divisions;
-  if (missedSeasons >= rules.absenceResetSeasons) return "aClass";
-  return normalizeDivision(careerData && careerData.division);
+function divisionForReputation(reputation, cfg) {
+  const thresholds = cfg.reputation.tierThresholds;
+  const gates = cfg.divisions.reentryMinRepTier || { worldClass: 5, openClass: 3 };
+  const rep = reputation || 0;
+  if (rep >= (thresholds[String(gates.worldClass)] ?? Infinity)) return "worldClass";
+  if (rep >= (thresholds[String(gates.openClass)] ?? Infinity)) return "openClass";
+  return "aClass";
+}
+
+/**
+ * The division a corps registers into this season, given its career, how many
+ * seasons it missed, and its current (already dormancy-decayed) reputation.
+ * Within the grace window the seat is kept outright; beyond it, the corps
+ * re-enters at the division its decayed reputation supports — never above the
+ * seat it last held. Pure.
+ */
+function divisionForRegistration(careerData, missedSeasons, cfg, reputation) {
+  const last = normalizeDivision(careerData && careerData.division);
+  const grace = cfg.divisions.demotionGraceSeasons ?? 1;
+  if (!missedSeasons || missedSeasons <= grace) return last;
+  if (reputation == null) return last;
+  const repCap = divisionForReputation(reputation, cfg);
+  return DIVISIONS[Math.min(divisionRank(last), divisionRank(repCap))];
 }
 
 /**
@@ -119,6 +144,7 @@ module.exports = {
   divisionRank,
   normalizeDivision,
   percentileValue,
+  divisionForReputation,
   divisionForRegistration,
   assessDivisions,
 };
