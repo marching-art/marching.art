@@ -109,11 +109,30 @@ const DirectorsReport = memo(
     if (!profile) return null;
 
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      /* Focal card: while the day still has open items this is the primary
+         action on the dashboard, so it carries the ESPN-blue accent frame that
+         lifts it above the flat #333 sibling panels. Once everything is done
+         it recedes to the neutral chrome — the eye should move on. Border-only
+         accent keeps it within the no-glow/no-gradient design laws. */
+      <div
+        className={`bg-[#1a1a1a] overflow-hidden border transition-colors duration-500 ${
+          allDone ? 'border-[#333]' : 'border-[#0057B8]'
+        }`}
+      >
         {/* Report header — the one count that answers "am I done today?" */}
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-            <ClipboardList className="w-3.5 h-3.5 text-[#0057B8]" />
+        <div
+          className={`px-4 py-3 border-b flex items-center justify-between transition-colors duration-500 ${
+            allDone ? 'bg-[#222] border-[#333]' : 'bg-[#0057B8]/15 border-[#0057B8]/40'
+          }`}
+        >
+          <h3
+            className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${
+              allDone ? 'text-gray-300' : 'text-white'
+            }`}
+          >
+            <ClipboardList
+              className={`w-3.5 h-3.5 ${allDone ? 'text-[#0057B8]' : 'text-white'}`}
+            />
             Director&apos;s Report
           </h3>
           <span
