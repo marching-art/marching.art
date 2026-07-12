@@ -293,7 +293,8 @@ exports.generateCorpsAvatar = onCall(
       };
     } catch (error) {
       logger.error("Error in manual avatar generation:", error);
-      throw new HttpsError("internal", error.message || "Failed to generate avatar");
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to generate avatar.");
     }
   }
 );
@@ -366,7 +367,8 @@ exports.regenerateAllAvatars = onCall(
       };
     } catch (error) {
       logger.error("Error in batch avatar regeneration:", error);
-      throw new HttpsError("internal", error.message);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Batch avatar regeneration failed.");
     }
   }
 );

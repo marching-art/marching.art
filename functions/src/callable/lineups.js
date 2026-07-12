@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getDb, dataNamespaceParam } = require("../config");
+const { paths } = require("../helpers/paths");
+const { getDb } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
@@ -93,7 +94,7 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
 
   try {
     await db.runTransaction(async (transaction) => {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      const userProfileRef = db.doc(paths.userProfile(uid));
       const userProfileDoc = await transaction.get(userProfileRef);
       if (!userProfileDoc.exists) {
         throw new HttpsError("not-found", "User profile does not exist.");
@@ -325,7 +326,7 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     }
   }
 
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
 
   try {
     // Also set activeSeasonId so user is properly tracked for season resets
@@ -381,7 +382,7 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
 
   try {
     await userProfileRef.update({
@@ -605,7 +606,7 @@ exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
 
   try {
     // Get user's lineup
-    const profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`).get();
+    const profileDoc = await db.doc(paths.userProfile(uid)).get();
     if (!profileDoc.exists) {
       throw new HttpsError("not-found", "User profile not found.");
     }
@@ -712,7 +713,7 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
 
     // Get user's current lineup
     const profileDoc = await db.doc(
-      `artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`
+      paths.userProfile(uid)
     ).get();
 
     if (!profileDoc.exists) {
@@ -759,7 +760,7 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
       // Only update if not already marked (avoid unnecessary writes)
       if (!currentNeedsUpdate) {
         await db.doc(
-          `artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`
+          paths.userProfile(uid)
         ).update({
           [needsUpdateField]: true
         });

@@ -1,4 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
@@ -6,7 +7,7 @@ const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = req
 const { updateStandings } = require("../helpers/leagueStandings");
 const { assertAuth } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
-const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
+const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
@@ -42,9 +43,9 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
   // OPTIMIZATION #2: Generate unique invite code deterministically (no DB reads needed)
   const inviteCode = generateUniqueInviteCode(uid);
 
-  const leagueRef = db.collection(`artifacts/${dataNamespaceParam.value()}/leagues`).doc();
+  const leagueRef = db.collection(paths.leagues()).doc();
   const inviteRef = db.doc(`leagueInvites/${inviteCode}`);
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
@@ -156,8 +157,8 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
   if (!leagueId) throw new HttpsError("invalid-argument", "A league ID is required.");
 
   const db = getDb();
-  const leagueRef = db.doc(`artifacts/${dataNamespaceParam.value()}/leagues/${leagueId}`);
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const leagueRef = db.doc(paths.league(leagueId));
+  const userProfileRef = db.doc(paths.userProfile(uid));
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
@@ -229,7 +230,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
   });
 
   // Create activity event for member joining
-  const userProfileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`).get();
+  const userProfileDoc = await db.doc(paths.userProfile(uid)).get();
   const userDisplayName = userProfileDoc.exists
     ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
     : 'New Member';
@@ -356,8 +357,8 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const leagueRef = db.doc(`artifacts/${dataNamespaceParam.value()}/leagues/${leagueId}`);
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const leagueRef = db.doc(paths.league(leagueId));
+  const userProfileRef = db.doc(paths.userProfile(uid));
 
   try {
     await db.runTransaction(async (transaction) => {
@@ -701,7 +702,7 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const leagueRef = db.doc(`artifacts/${dataNamespaceParam.value()}/leagues/${leagueId}`);
+  const leagueRef = db.doc(paths.league(leagueId));
 
   // Verify user is a member
   const leagueDoc = await leagueRef.get();

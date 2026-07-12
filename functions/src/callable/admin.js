@@ -49,7 +49,8 @@ exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
     return { success: true, message: "A new off-season has been started successfully." };
   } catch (error) {
     logger.error("Error manually starting new off-season:", error);
-    throw new HttpsError("internal", `An error occurred while starting the season: ${error.message}`);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "An error occurred while starting the season.");
   }
 });
 
@@ -66,7 +67,8 @@ exports.startNewLiveSeason = onCall({
     return { success: true, message: "A new live-season has been started successfully." };
   } catch (error) {
     logger.error("Error manually starting new live-season:", error);
-    throw new HttpsError("internal", `An error occurred while starting the live season: ${error.message}`);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "An error occurred while starting the live season.");
   }
 });
 
@@ -527,7 +529,8 @@ exports.manualTrigger = onCall({
     }
   } catch (error) {
     logger.error(`Manual trigger for job '${jobName}' failed:`, error);
-    throw new HttpsError("internal", `An error occurred while running ${jobName}: ${error.message}`);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", `An error occurred while running ${jobName}.`);
   }
 });
 
@@ -576,7 +579,8 @@ exports.scrapeLiveScoresNow = onCall({
     };
   } catch (error) {
     logger.error("Manual live score scrape failed:", error);
-    throw new HttpsError("internal", `Live score scrape failed: ${error.message}`);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Live score scrape failed.");
   }
 });
 

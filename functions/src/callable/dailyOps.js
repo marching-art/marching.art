@@ -1,9 +1,10 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { calculateXPUpdates, XP_SOURCES } = require("../helpers/xpCalculations");
-const { addCoinHistoryEntryToTransaction } = require("./economy");
+const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
@@ -50,7 +51,7 @@ function seasonBaselineStamp(profileData) {
 const claimDailyLogin = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -317,7 +318,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     // Weekly-arc fairness for brand-new directors: with fewer than two
@@ -469,7 +470,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
 const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -561,7 +562,7 @@ const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
 const getStreakStatus = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const profileDoc = await profileRef.get();
@@ -679,7 +680,7 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     // Canonical question context, derived outside the transaction (recaps
@@ -786,7 +787,7 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
 const resolvePredictions = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     // Read the profile once up front to discover pending buckets and the

@@ -1,7 +1,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
-const { addCoinHistoryEntryToTransaction } = require("./economy");
+const { getDb } = require("../config");
+const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const { VALID_CLASSES, isProfaneCorpsName } = require("../helpers/corpsHelpers");
 const {
@@ -41,7 +42,7 @@ const purchaseRetirementPlaque = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -139,7 +140,7 @@ const purchaseHallBanner = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   const championsRef = db.doc(`season_champions/${seasonId}`);
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {

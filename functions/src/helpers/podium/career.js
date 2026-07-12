@@ -20,7 +20,7 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const { dataNamespaceParam } = require("../../config");
+const { paths } = require("../paths");
 const engine = require("./engine");
 const store = require("./store");
 const divisions = require("./divisions");
@@ -28,7 +28,7 @@ const divisions = require("./divisions");
 const SEASONS_DOC = "podium-config/podiumSeasons";
 
 function careerRef(db, uid) {
-  return db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/podium/career`);
+  return db.doc(paths.userPodiumCareer(uid));
 }
 
 /** Fresh career shape. */

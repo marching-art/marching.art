@@ -1,7 +1,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
@@ -72,8 +73,8 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
   try {
     const db = getDb();
 
-    const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-    const userPrivateRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/private/data`);
+    const userProfileRef = db.doc(paths.userProfile(uid));
+    const userPrivateRef = db.doc(paths.userPrivate(uid));
 
     // Idempotent: if this user already has a profile, treat as success so the
     // onboarding/guard flow can safely retry without erroring out.
@@ -307,7 +308,8 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
     };
   } catch (error) {
     logger.error("Migration failed:", error);
-    throw new HttpsError("internal", "Migration failed: " + error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Migration failed.");
   }
 });
 
@@ -435,6 +437,7 @@ exports.fixProfileFields = onCall({ cors: true }, async (request) => {
     };
   } catch (error) {
     logger.error("Profile fix failed:", error);
-    throw new HttpsError("internal", "Profile fix failed: " + error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Profile fix failed.");
   }
 });

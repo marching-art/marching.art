@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getSeasonRecaps, getCorpsValues } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
-import { useSeason, getSeasonProgress } from './useSeason';
+import { useSeason } from './useSeason';
 import { useProfileStore } from '../store/profileStore';
 import toast from 'react-hot-toast';
 import { getCorpsClassName, getCorpsClassColor } from '../utils/corps';
@@ -19,7 +19,13 @@ import { formatSeasonName } from '../utils/season';
  */
 export const useDashboardData = () => {
   const { user } = useAuth();
-  const { seasonData, loading: seasonLoading, weeksRemaining } = useSeason();
+  const {
+    seasonData,
+    loading: seasonLoading,
+    weeksRemaining,
+    currentDay,
+    currentWeek,
+  } = useSeason();
 
   // Get profile data from global store (singleton listener)
   const storeProfile = useProfileStore((state) => state.profile);
@@ -73,9 +79,6 @@ export const useDashboardData = () => {
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
   const activeCorps = activeCorpsClass && corps ? corps[activeCorpsClass] : null;
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
-  const { currentWeek, currentDay } = seasonData
-    ? getSeasonProgress(seasonData)
-    : { currentWeek: 1, currentDay: 1 };
 
   // CONSOLIDATED: Corps selection state management
   // Combines localStorage load/save and corps data sync into single effect

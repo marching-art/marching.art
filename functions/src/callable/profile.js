@@ -1,7 +1,8 @@
 // functions/src/callable/profile.js
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { assertAuth } = require("../helpers/callableGuards");
 
@@ -23,7 +24,7 @@ exports.updateProfile = onCall({ cors: true }, async (request) => {
 
   try {
     const db = getDb();
-    const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
+    const profileRef = db.doc(paths.userProfile(userId));
 
     // Validate inputs
     if (displayName !== undefined) {
@@ -114,7 +115,7 @@ exports.updateUsername = onCall({ cors: true }, async (request) => {
 
   try {
     const db = getDb();
-    const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
+    const profileRef = db.doc(paths.userProfile(userId));
     const newUsernameRef = db.doc(`usernames/${trimmedUsername.toLowerCase()}`);
 
     // Get current profile to check old username
@@ -235,8 +236,8 @@ exports.updateEmail = onCall({ cors: true }, async (request) => {
     // Persist the email ONLY to the owner-private document. The public
     // `profile/data` doc is world-readable (leaderboards / public profiles),
     // so email addresses must never be written there.
-    const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
-    const privateRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/private/data`);
+    const profileRef = db.doc(paths.userProfile(userId));
+    const privateRef = db.doc(paths.userPrivate(userId));
 
     const batch = db.batch();
     // Touch the public profile's updatedAt only (no email field).
@@ -292,7 +293,7 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
 
   try {
     const db = getDb();
-    const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
+    const profileRef = db.doc(paths.userProfile(userId));
     const profileDoc = await profileRef.get();
 
     if (!profileDoc.exists) {
@@ -348,11 +349,11 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
     const db = getDb();
 
     // Get user profile to find username for cleanup
-    const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
+    const profileRef = db.doc(paths.userProfile(userId));
     const profileDoc = await profileRef.get();
     const username = profileDoc.exists ? profileDoc.data().username : null;
 
-    const userDocRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}`);
+    const userDocRef = db.doc(paths.user(userId));
 
     // OPTIMIZATION: Fetch subcollections in parallel instead of sequentially
     const [corpsSnapshot, notificationsSnapshot] = await Promise.all([
@@ -368,7 +369,7 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
     batch.delete(profileRef);
 
     // Delete private data
-    const privateRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/private/data`);
+    const privateRef = db.doc(paths.userPrivate(userId));
     batch.delete(privateRef);
 
     // Delete username reservation if exists

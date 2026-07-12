@@ -277,7 +277,10 @@ const PodiumPreview = () => {
           <ChevronLeft className="w-5 h-5" />
           <span className="text-sm font-medium">Podium</span>
         </Link>
-        <div className="ml-3 px-2.5 py-1 border rounded-none" style={{ borderColor: `${GOLD}66`, backgroundColor: `${GOLD}22` }}>
+        <div
+          className="ml-3 px-2.5 py-1 border rounded-none"
+          style={{ borderColor: `${GOLD}66`, backgroundColor: `${GOLD}22` }}
+        >
           <span className="text-xs font-bold uppercase tracking-wider" style={{ color: GOLD }}>
             Demo
           </span>
@@ -309,7 +312,10 @@ const PodiumPreview = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-4 p-4 border rounded-none flex flex-col sm:flex-row sm:items-center gap-3"
-            style={{ borderColor: `${GOLD}4d`, background: `linear-gradient(90deg, ${GOLD}1f, transparent)` }}
+            style={{
+              borderColor: `${GOLD}4d`,
+              background: `linear-gradient(90deg, ${GOLD}1f, transparent)`,
+            }}
           >
             <div className="flex items-center gap-3 flex-1">
               <Info className="w-5 h-5 flex-shrink-0" style={{ color: GOLD }} />
@@ -356,7 +362,10 @@ const PodiumPreview = () => {
                 <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   Projected Total
                 </div>
-                <div className="text-3xl font-extrabold font-data tabular-nums" style={{ color: GOLD }}>
+                <div
+                  className="text-3xl font-extrabold font-data tabular-nums"
+                  style={{ color: GOLD }}
+                >
                   {total.toFixed(2)}
                 </div>
               </div>
@@ -442,7 +451,10 @@ const PodiumPreview = () => {
                     </p>
                   ) : (
                     log.map((entry) => (
-                      <div key={entry.id} className="px-4 py-2.5 border-b border-[#222] last:border-0">
+                      <div
+                        key={entry.id}
+                        className="px-4 py-2.5 border-b border-[#222] last:border-0"
+                      >
                         <div className="text-xs font-bold text-white mb-1">{entry.block}</div>
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                           {entry.deltas.map((d, i) => (
@@ -488,7 +500,10 @@ const PodiumPreview = () => {
           {/* Bottom CTA */}
           <div
             className="mt-6 border rounded-none p-5 text-center"
-            style={{ borderColor: `${GOLD}4d`, background: `linear-gradient(180deg, ${GOLD}14, transparent)` }}
+            style={{
+              borderColor: `${GOLD}4d`,
+              background: `linear-gradient(180deg, ${GOLD}14, transparent)`,
+            }}
           >
             <h3 className="text-base font-bold text-white">Ready to run a real season?</h3>
             <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">

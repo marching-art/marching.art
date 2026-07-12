@@ -7,7 +7,7 @@
  */
 const { HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../callable/economy");
+const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
 
 // Commissioner-set entry fee bounds (CorpsCoin)
 const MAX_LEAGUE_ENTRY_FEE = 5000;

@@ -111,4 +111,6 @@ export interface LineupSlot {
 // CAPTION TYPE
 // =============================================================================
 
-export type Caption = 'GE1' | 'GE2' | 'VP' | 'VA' | 'CG' | 'B' | 'MA' | 'P';
+// Canonical caption union lives in data/captions.ts; re-exported here so the
+// existing `Caption` import sites keep working without duplicating the list.
+export type { CaptionId as Caption } from '../data/captions';

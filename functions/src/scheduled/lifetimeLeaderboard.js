@@ -1,4 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
@@ -14,7 +15,7 @@ exports.updateLifetimeLeaderboard = onCall({ cors: true }, async (request) => {
 
   // Check if user is admin - only fetch the role field
   const db = getDb();
-  const userDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${request.auth.uid}/profile/data`).get();
+  const userDoc = await db.doc(paths.userProfile(request.auth.uid)).get();
   // Note: Single doc reads don't support select() in Admin SDK, but this is a small doc read for auth
 
   if (!userDoc.exists || userDoc.data().role !== 'admin') {
@@ -60,7 +61,7 @@ async function updateLifetimeLeaderboardLogic() {
     // skips every one of them, reporting the collection as empty even when
     // profiles are present. listDocuments() enumerates every document reference
     // INCLUDING implicit ancestors of subcollections.
-    const usersRef = db.collection(`artifacts/${dataNamespaceParam.value()}/users`);
+    const usersRef = db.collection(paths.users());
     const userDocRefs = await usersRef.listDocuments();
 
     const lifetimeData = [];

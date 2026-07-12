@@ -14,7 +14,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { brevoApiKey } = require("../helpers/emailService");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
 
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
@@ -304,7 +304,7 @@ exports.getArticleComments = onCall(
         .where("articleId", "==", articleId);
 
       // Non-admins can only see approved comments (plus their own pending ones handled client-side)
-      const isAdmin = request.auth?.token?.admin === true;
+      const isAdmin = hasAdminClaim(request);
 
       if (status === "all" && isAdmin) {
         // Admin can see all
@@ -494,7 +494,7 @@ exports.deleteArticleComment = onCall(
       }
 
       const commentData = commentDoc.data();
-      const isAdmin = request.auth.token?.admin === true;
+      const isAdmin = hasAdminClaim(request);
 
       // Only the author or admin can delete
       if (commentData.userId !== request.auth.uid && !isAdmin) {

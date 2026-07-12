@@ -1,12 +1,13 @@
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
+const { paths } = require("./paths");
+const { getDb } = require("../config");
 const { Timestamp } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
   getSeasonBonusAmount,
-} = require("../callable/economy");
+} = require("./economy");
 const { calculateXPUpdates, getSeasonCompletionXP } = require("./xpCalculations");
 const { updateSeasonBestRecords } = require("./gameRecords");
 const { RARITY_CC } = require("./achievements");
@@ -636,7 +637,7 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
   // path must stay in sync with that writer or archival silently processes
   // zero leagues.
   const leaguesSnapshot = await db
-    .collection(`artifacts/${dataNamespaceParam.value()}/leagues`)
+    .collection(paths.leagues())
     .get();
   if (leaguesSnapshot.empty) {
     logger.info("No leagues found to archive.");
@@ -664,7 +665,7 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
 
     let leagueWinner = { userId: null, username: "Unknown", finalScore: -1, corpsName: "Unknown" };
 
-    const profilePromises = members.map((uid) => db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`).get());
+    const profilePromises = members.map((uid) => db.doc(paths.userProfile(uid)).get());
     const profileDocs = await Promise.all(profilePromises);
 
     profileDocs.forEach((profileDoc) => {
@@ -711,7 +712,7 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       // AchievementMini/the celebration modal render: title (not name),
       // rarity, ccReward — the legacy `name` shape rendered with no title
       // and paid nothing.
-      const winnerProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${leagueWinner.userId}/profile/data`);
+      const winnerProfileRef = db.doc(paths.userProfile(leagueWinner.userId));
       const championAchievement = {
         // Keyed per league AND season: a director who wins two leagues in
         // one season earns two distinct achievements (each with its CC),
@@ -767,7 +768,7 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       const notificationMessage = `🏆 ${leagueWinner.username} has won the ${seasonName} ` +
         `championship in your league, ${league.name}!`;
       members.forEach((memberUid) => {
-        const notificationRef = db.collection(`artifacts/${dataNamespaceParam.value()}/users/${memberUid}/notifications`).doc();
+        const notificationRef = db.collection(paths.userNotifications(memberUid)).doc();
         batch.set(notificationRef, {
           type: "new_champion",
           message: notificationMessage,
@@ -781,7 +782,7 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       // Champion crowned is a league moment — drop it into the activity feed
       // too (same batch, so the feed and the champions[] entry land together).
       const activityRef = db
-        .collection(`artifacts/${dataNamespaceParam.value()}/leagues/${leagueId}/activity`)
+        .collection(paths.leagueActivity(leagueId))
         .doc();
       batch.set(activityRef, {
         id: activityRef.id,

@@ -13,7 +13,7 @@
  * curve-data refresh can never desync stored state.
  */
 
-const { dataNamespaceParam } = require("../../config");
+const { paths } = require("../paths");
 const engine = require("./engine");
 const divisions = require("./divisions");
 const curves = require("./curveData.json");
@@ -340,11 +340,11 @@ function isShowDayFor(state, uid, competitionDay, easternAssignments) {
 }
 
 function profileRef(db, uid) {
-  return db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  return db.doc(paths.userProfile(uid));
 }
 
 function stateRef(db, uid) {
-  return db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/podium/state`);
+  return db.doc(paths.userPodiumState(uid));
 }
 
 /** Season roster of Podium corps — lets the nightly processor iterate without a collection-group index. */

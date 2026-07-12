@@ -3,7 +3,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { assertAuth, assertAdmin } = require("./callableGuards");
+const { assertAuth, assertAdmin, hasAdminClaim } = require("./callableGuards");
 
 describe("assertAuth", () => {
   test("throws unauthenticated when there is no auth context", () => {
@@ -48,5 +48,20 @@ describe("assertAdmin", () => {
       auth: { uid: "admin-1", token: { admin: true } },
     });
     assert.equal(uid, "admin-1");
+  });
+});
+
+describe("hasAdminClaim", () => {
+  test("true only when the claim is exactly true", () => {
+    assert.equal(hasAdminClaim({ auth: { uid: "a", token: { admin: true } } }), true);
+    assert.equal(hasAdminClaim({ auth: { uid: "a", token: { admin: "yes" } } }), false);
+    assert.equal(hasAdminClaim({ auth: { uid: "a", token: {} } }), false);
+  });
+
+  test("is null-safe on missing auth or token (never throws)", () => {
+    // This is the case the old `request.auth.token.admin` check crashed on.
+    assert.equal(hasAdminClaim({ auth: null }), false);
+    assert.equal(hasAdminClaim({}), false);
+    assert.equal(hasAdminClaim({ auth: { uid: "a" } }), false);
   });
 });

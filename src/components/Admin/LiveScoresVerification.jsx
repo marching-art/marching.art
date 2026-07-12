@@ -31,8 +31,9 @@ import { getSeasonSettings, getHistoricalScoresForYear, getScoredRecapDays } fro
 import { scrapeLiveScoresNow } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { getCaptionLabel } from '../../utils/captionUtils';
+import { CAPTION_IDS } from '../../data/captions';
 
-const INDIVIDUAL_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
 
 // Aggregate tabs. NOTE: "Total Score" uses the real scraped DCI total
 // (event.scores[].score) so it can be eyeballed directly against dci.org. The

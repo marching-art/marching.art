@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-// Use dataNamespaceParam to match your other files
-const { getDb, dataNamespaceParam } = require("../config"); 
+const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { assertAuth } = require("../helpers/callableGuards");
 const { REGISTRATION_LOCK_WEEKS } = require("../helpers/classRegistry");
@@ -24,8 +24,7 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  // Use dataNamespaceParam.value()
-  const profileDocRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileDocRef = db.doc(paths.userProfile(uid));
 
   try {
     const profileDoc = await profileDocRef.get();

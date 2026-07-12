@@ -1,7 +1,8 @@
 // Duplicate-corps-name detection and admin sweep. Extracted from callable/corps.js.
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getDb, dataNamespaceParam } = require("../config");
+const { paths } = require("../helpers/paths");
+const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { normalizeCorpsName, pickDuplicateWinner, CORPS_NAME_CLASSES } = require("../helpers/corpsHelpers");
@@ -17,7 +18,7 @@ const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 exports.detectMyDuplicateCorps = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
 
   const profileDoc = await userProfileRef.get();
   if (!profileDoc.exists) {
@@ -195,7 +196,7 @@ exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540 }, async 
   } catch (error) {
     logger.error("Failed to sweep duplicate corps:", error);
     if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", `Sweep failed: ${error.message}`);
+    throw new HttpsError("internal", "Failed to sweep duplicate corps.");
   }
 });
 

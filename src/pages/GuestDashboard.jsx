@@ -48,6 +48,7 @@ import SeasonScorecard from '../components/Dashboard/sections/SeasonScorecard';
 import RecentResultsFeed from '../components/Dashboard/sections/RecentResultsFeed';
 import RivalsPanel from '../components/Dashboard/sections/RivalsPanel';
 import AchievementTrackerPanel from '../components/Dashboard/sections/AchievementTrackerPanel';
+import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
 
@@ -55,16 +56,15 @@ const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts und
 // CAPTION DISPLAY DATA
 // =============================================================================
 
-const CAPTIONS = [
-  { id: 'GE1', name: 'GE1', category: 'ge', fullName: 'General Effect 1' },
-  { id: 'GE2', name: 'GE2', category: 'ge', fullName: 'General Effect 2' },
-  { id: 'VP', name: 'VP', category: 'vis', fullName: 'Visual Proficiency' },
-  { id: 'VA', name: 'VA', category: 'vis', fullName: 'Visual Analysis' },
-  { id: 'CG', name: 'CG', category: 'vis', fullName: 'Color Guard' },
-  { id: 'B', name: 'B', category: 'mus', fullName: 'Brass' },
-  { id: 'MA', name: 'MA', category: 'mus', fullName: 'Music Analysis' },
-  { id: 'P', name: 'P', category: 'mus', fullName: 'Percussion' },
-];
+// Guest view of the canonical captions (data/captions.ts). The compact draft
+// badges show the caption id, so `name` maps to id here (not the friendly
+// label the full dashboard uses).
+const CAPTIONS = CAPTION_DEFS.map((c) => ({
+  id: c.id,
+  name: c.id,
+  category: c.group,
+  fullName: c.fullName,
+}));
 
 // =============================================================================
 // GUEST HEADER COMPONENT

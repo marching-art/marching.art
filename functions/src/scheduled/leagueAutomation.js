@@ -17,6 +17,7 @@ const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
+const { processAllInPages } = require("../helpers/firestorePaging");
 
 // Corps class configuration — registry-derived (Phase 7.4) so Podium joins
 // automated matchup generation when its registry entry enables at launch.
@@ -312,22 +313,14 @@ exports.generateWeeklyMatchups = onSchedule(
 
       logger.info(`Generating matchups for week ${nextWeek}`);
 
-      // Get all active leagues
-      const leaguesSnapshot = await db
-        .collection(`artifacts/${namespace}/leagues`)
-        .limit(500)
-        .get();
-
-      if (leaguesSnapshot.empty) {
-        logger.info("No leagues found");
-        return;
-      }
-
       let leaguesProcessed = 0;
       let matchupsGenerated = 0;
       let errors = [];
 
-      const leagueResults = await Promise.all(leaguesSnapshot.docs.map(async (leagueDoc) => {
+      // Page through every league so growth past a single query's 500-doc cap
+      // doesn't silently drop leagues (see helpers/firestorePaging).
+      const leaguesRef = db.collection(`artifacts/${namespace}/leagues`);
+      const leagueResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
         try {
           const league = leagueDoc.data();
           const leagueId = leagueDoc.id;
@@ -415,7 +408,7 @@ exports.generateWeeklyMatchups = onSchedule(
           logger.error(`Error processing league ${leagueDoc.id}:`, leagueError);
           return { error: { leagueId: leagueDoc.id, error: leagueError.message } };
         }
-      }));
+      });
 
       for (const result of leagueResults) {
         if (result.error) errors.push(result.error);
@@ -465,14 +458,11 @@ exports.generateWeeklyRecaps = onSchedule(
 
       logger.info(`Generating recaps for week ${currentWeek}`);
 
-      const leaguesSnapshot = await db
-        .collection(`artifacts/${namespace}/leagues`)
-        .limit(500)
-        .get();
-
       let recapsGenerated = 0;
 
-      const recapResults = await Promise.all(leaguesSnapshot.docs.map(async (leagueDoc) => {
+      // Page through every league (see helpers/firestorePaging) — no silent cap.
+      const leaguesRef = db.collection(`artifacts/${namespace}/leagues`);
+      const recapResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
         try {
           const leagueId = leagueDoc.id;
           const league = leagueDoc.data();
@@ -535,7 +525,7 @@ exports.generateWeeklyRecaps = onSchedule(
           logger.error(`Error generating recap for league ${leagueDoc.id}:`, leagueError);
           return { skipped: true };
         }
-      }));
+      });
 
       recapsGenerated = recapResults.filter(r => r.generated).length;
 
@@ -565,14 +555,11 @@ exports.updateLeagueRivalries = onSchedule(
     const namespace = dataNamespaceParam.value();
 
     try {
-      const leaguesSnapshot = await db
-        .collection(`artifacts/${namespace}/leagues`)
-        .limit(500)
-        .get();
-
       let rivalriesUpdated = 0;
 
-      const rivalryResults = await Promise.all(leaguesSnapshot.docs.map(async (leagueDoc) => {
+      // Page through every league (see helpers/firestorePaging) — no silent cap.
+      const leaguesRef = db.collection(`artifacts/${namespace}/leagues`);
+      const rivalryResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
         try {
           const leagueId = leagueDoc.id;
           const league = leagueDoc.data();
@@ -607,7 +594,7 @@ exports.updateLeagueRivalries = onSchedule(
           logger.error(`Error updating rivalries for league ${leagueDoc.id}:`, leagueError);
           return { skipped: true };
         }
-      }));
+      });
 
       rivalriesUpdated = rivalryResults.filter(r => r.updated).length;
 

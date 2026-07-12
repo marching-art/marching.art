@@ -3,14 +3,14 @@
 // class trophies, finals champions, and weekly league matchups. Extracted
 // verbatim from scoring.js.
 
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
   WEEKLY_LEAGUE_WIN_REWARD,
-} = require("../callable/economy");
+} = require("./economy");
 const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { updateStandings } = require("./leagueStandings");
@@ -291,7 +291,7 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
   // XP lands as a raw increment; xpLevel/title/unlocks recompute on the next
   // claimDailyLogin (same convention as the weekly XP payments).
   for (const [uid, data] of coinByUser) {
-    const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+    const userProfileRef = db.doc(paths.userProfile(uid));
     batch.update(userProfileRef, {
       corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
       ...(data.xpAmount > 0
@@ -358,7 +358,7 @@ async function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, d
       const champion = classResults[0];
       if (!champion) return;
 
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${champion.uid}/profile/data`);
+      const userProfileRef = db.doc(paths.userProfile(champion.uid));
       const trophy = {
         type: "regional",
         corpsClass,
@@ -378,7 +378,7 @@ async function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, d
       .sort((a, b) => b.totalScore - a.totalScore);
     const bestInShow = soundSportResults[0];
     if (bestInShow) {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${bestInShow.uid}/profile/data`);
+      const userProfileRef = db.doc(paths.userProfile(bestInShow.uid));
       const award = {
         type: "regional_best_in_show",
         seasonName: seasonData.name,
@@ -413,7 +413,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
 
     // Award Open Class champion trophies (top 3)
     openClassResults.slice(0, 3).forEach((winner, index) => {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+      const userProfileRef = db.doc(paths.userProfile(winner.uid));
       const trophy = {
         type: "class_championship",
         classType: "openClass",
@@ -430,7 +430,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
 
     // Award A Class champion trophies (top 3)
     aClassResults.slice(0, 3).forEach((winner, index) => {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+      const userProfileRef = db.doc(paths.userProfile(winner.uid));
       const trophy = {
         type: "class_championship",
         classType: "aClass",
@@ -447,7 +447,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
 
     // Award finalist ribbons to all participants
     show.results.forEach((finalist) => {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
+      const userProfileRef = db.doc(paths.userProfile(finalist.uid));
       const ribbon = {
         type: "class_finalist",
         classType: finalist.corpsClass,
@@ -489,7 +489,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
       // finalist ribbons.
       const bestInShow = show.results[0];
       if (bestInShow) {
-        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${bestInShow.uid}/profile/data`);
+        const userProfileRef = db.doc(paths.userProfile(bestInShow.uid));
         const award = {
           type: "international_festival",
           seasonName: seasonData.name,
@@ -504,7 +504,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
       // World Championship Finals: top-3 medals + finalist medals for all.
       const top3 = show.results.slice(0, 3);
       top3.forEach((winner, index) => {
-        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const userProfileRef = db.doc(paths.userProfile(winner.uid));
         const trophy = {
           type: "championship",
           metal: metals[index],
@@ -521,7 +521,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
 
       // Award finalist medals to all participants
       show.results.forEach((finalist, index) => {
-        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
+        const userProfileRef = db.doc(paths.userProfile(finalist.uid));
         const medal = {
           type: "finalist",
           seasonName: seasonData.name,
@@ -566,7 +566,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
 
   // Single batched fetch for all champion profiles
   const championProfileRefs = [...allChampionUids].map(uid =>
-    db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
+    db.doc(paths.userProfile(uid))
   );
   const championProfileDocs = championProfileRefs.length > 0 ? await db.getAll(...championProfileRefs) : [];
   const championUsernameMap = new Map();
@@ -665,7 +665,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
   // generateWeeklyMatchups — these paths must stay in sync with those
   // writers or winner determination silently processes zero leagues.
   const leaguesSnapshot = await db
-    .collection(`artifacts/${dataNamespaceParam.value()}/leagues`)
+    .collection(paths.leagues())
     .limit(LEAGUE_FETCH_LIMIT)
     .get();
   if (leaguesSnapshot.size === LEAGUE_FETCH_LIMIT) {
@@ -724,7 +724,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
 
       // Batch fetch all profiles in ONE operation
       const profileRefs = allPlayerIds.map(uid =>
-        db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
+        db.doc(paths.userProfile(uid))
       );
       const profileDocs = allPlayerIds.length > 0 ? await db.getAll(...profileRefs) : [];
       const profileMap = new Map();
@@ -926,7 +926,7 @@ async function payWeeklyParticipationXP(week, seasonData, db) {
     const amount = XP_SOURCES.weeklyParticipation * classes.size;
     totalXP += amount;
     const profileRef = db.doc(
-      `artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`
+      paths.userProfile(uid)
     );
     xpBatch.set(profileRef, { xp: admin.firestore.FieldValue.increment(amount) }, { merge: true });
   }

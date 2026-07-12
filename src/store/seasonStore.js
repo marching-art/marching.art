@@ -2,26 +2,7 @@ import { create } from 'zustand';
 import { db } from '../api';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { formatSeasonName } from '../utils/season';
-
-/**
- * Get the current date string in Eastern Time (YYYY-MM-DD format)
- * Used to ensure day calculations are based on Eastern Time
- */
-const getEasternDateString = (date) => {
-  return date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-};
-
-/**
- * Get a date string from a Date object using UTC (YYYY-MM-DD format)
- * Used for Firestore timestamps which are stored in UTC
- * This avoids timezone conversion issues where UTC midnight becomes previous day in local time
- */
-const getUTCDateString = (date) => {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+import { getSeasonProgress } from '../utils/seasonProgress';
 
 /**
  * Global Season Store
@@ -66,40 +47,16 @@ export const useSeasonStore = create((set, get) => ({
         if (docSnapshot.exists()) {
           const data = docSnapshot.data();
 
-          // Calculate derived values
+          // Derived day/week come from the single canonical source
+          // (utils/seasonProgress), which mirrors the backend game-day math in
+          // functions/src/helpers/gameDay.js exactly — 2 AM ET reset, start
+          // normalized on the UTC calendar. Keeps the day the UI shows in sync
+          // with the day the nightly scoring processors actually score.
+          const { currentDay, currentWeek } = data.schedule?.startDate
+            ? getSeasonProgress(data)
+            : { currentDay: 1, currentWeek: 1 };
+
           let weeksRemaining = null;
-          let currentWeek = 1;
-          let currentDay = 1;
-
-          if (data.schedule?.startDate) {
-            const startDate = data.schedule.startDate.toDate();
-            const now = new Date();
-
-            // Calculate day difference:
-            // - Use UTC for start date (Firestore stores timestamps in UTC, so we interpret the date as UTC)
-            // - Use Eastern Time for current date (day boundaries should be at midnight ET)
-            // This ensures that if start date was set as "January 4" in the admin UI,
-            // it's interpreted as January 4, not shifted to January 3 due to timezone conversion
-            const startDateUTC = getUTCDateString(startDate);
-            const nowET = getEasternDateString(now);
-            // Parse both dates as UTC to avoid DST-induced off-by-one errors.
-            // Without the 'Z' suffix, dates are parsed in local time, and when
-            // startDate is pre-DST (EST) and now is post-DST (EDT), the 1-hour
-            // difference causes Math.floor to lose a day.
-            const startDateObj = new Date(startDateUTC + 'T00:00:00Z');
-            const nowDateObj = new Date(nowET + 'T00:00:00Z');
-            const diffInDays = Math.floor((nowDateObj - startDateObj) / (1000 * 60 * 60 * 24));
-
-            // Live seasons begin with a spring-training period (schedule.springTrainingDays)
-            // before competition starts; Competition Day 1 is the first day AFTER spring
-            // training, matching the backend (scheduled/dailyProcessors.js). Off-seasons
-            // have no spring training (field absent -> 0).
-            const springTrainingDays = data.schedule.springTrainingDays || 0;
-            const competitionDay = diffInDays + 1 - springTrainingDays;
-
-            currentDay = Math.max(1, Math.min(competitionDay, 49));
-            currentWeek = Math.max(1, Math.ceil(currentDay / 7));
-          }
 
           if (data.schedule?.endDate) {
             const endDate = data.schedule.endDate.toDate();

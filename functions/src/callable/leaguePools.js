@@ -14,7 +14,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
-const { addCoinHistoryEntryToTransaction } = require("./economy");
+const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { getGameDay } = require("../helpers/dailyChallenges");
 const { POOL_ANTE } = require("../helpers/leaguePools");
 

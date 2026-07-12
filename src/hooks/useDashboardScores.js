@@ -8,11 +8,7 @@
 
 import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
-import {
-  getSeasonRecaps,
-  getHistoricalScoresForYear,
-  getPodiumSeasonRecaps,
-} from '../api/season';
+import { getSeasonRecaps, getHistoricalScoresForYear, getPodiumSeasonRecaps } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { CAPTIONS } from '../components/Dashboard';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';

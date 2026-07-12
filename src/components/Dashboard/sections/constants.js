@@ -2,22 +2,21 @@
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and enable code-splitting
 
 import { CORPS_CLASS_LABELS, CORPS_CLASS_SHORT_LABELS } from '../../../utils/corps';
+import { CAPTIONS as CAPTION_DEFS } from '../../../data/captions';
 
 // Class labels come from the single source in utils/corps.ts — do not
 // re-declare label maps here ("A Class", never "Class A").
 export const CLASS_LABELS = CORPS_CLASS_LABELS;
 export const CLASS_SHORT_LABELS = CORPS_CLASS_SHORT_LABELS;
 
-export const CAPTIONS = [
-  { id: 'GE1', name: 'GE1', fullName: 'General Effect 1', category: 'ge' },
-  { id: 'GE2', name: 'GE2', fullName: 'General Effect 2', category: 'ge' },
-  { id: 'VP', name: 'VP', fullName: 'Visual Proficiency', category: 'vis' },
-  { id: 'VA', name: 'VA', fullName: 'Visual Analysis', category: 'vis' },
-  { id: 'CG', name: 'CG', fullName: 'Color Guard', category: 'vis' },
-  { id: 'B', name: 'Brass', fullName: 'Brass', category: 'mus' },
-  { id: 'MA', name: 'MA', fullName: 'Music Analysis', category: 'mus' },
-  { id: 'P', name: 'Perc', fullName: 'Percussion', category: 'mus' },
-];
+// Dashboard view of the canonical captions (data/captions.ts). `name` is the
+// compact label (Brass/Perc); `category` is the coarse group key.
+export const CAPTIONS = CAPTION_DEFS.map((c) => ({
+  id: c.id,
+  name: c.label,
+  fullName: c.fullName,
+  category: c.group,
+}));
 
 // Keyed by canonical class keys (aClass/openClass/worldClass — same scheme as
 // CORPS_CLASS_ORDER and profile.unlockedClasses). The backend callable

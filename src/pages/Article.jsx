@@ -332,7 +332,9 @@ const Article = () => {
                     {cleanLocation(article.metadata?.location || article.authorLocation) && (
                       <>
                         <span className="text-gray-600">•</span>
-                        <span>{cleanLocation(article.metadata?.location || article.authorLocation)}</span>
+                        <span>
+                          {cleanLocation(article.metadata?.location || article.authorLocation)}
+                        </span>
                       </>
                     )}
                   </div>

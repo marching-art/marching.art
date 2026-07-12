@@ -3,6 +3,7 @@
 // Import consolidated utility functions
 import { getCorpsClassName } from '../../utils/corps';
 import { formatSeasonName } from '../../utils/season';
+import { CAPTIONS as CAPTION_DEFS } from '../../data/captions';
 
 // Re-export for backwards compatibility
 export { getCorpsClassName, formatSeasonName };
@@ -35,64 +36,27 @@ export const CLASS_NAMES = {
 };
 
 // Caption definitions for lineup selection
-export const CAPTIONS = [
-  {
-    id: 'GE1',
-    name: 'General Effect 1',
-    category: 'General Effect',
-    color: 'gold',
-    description: 'Overall impact and artistry',
-  },
-  {
-    id: 'GE2',
-    name: 'General Effect 2',
-    category: 'General Effect',
-    color: 'gold',
-    description: 'Visual and musical excellence',
-  },
-  {
-    id: 'VP',
-    name: 'Visual Proficiency',
-    category: 'Visual',
-    color: 'blue',
-    description: 'Marching technique and execution',
-  },
-  {
-    id: 'VA',
-    name: 'Visual Analysis',
-    category: 'Visual',
-    color: 'blue',
-    description: 'Design and composition',
-  },
-  {
-    id: 'CG',
-    name: 'Color Guard',
-    category: 'Visual',
-    color: 'blue',
-    description: 'Equipment work and artistry',
-  },
-  {
-    id: 'B',
-    name: 'Brass',
-    category: 'Music',
-    color: 'purple',
-    description: 'Horn line performance',
-  },
-  {
-    id: 'MA',
-    name: 'Music Analysis',
-    category: 'Music',
-    color: 'purple',
-    description: 'Musical composition and design',
-  },
-  {
-    id: 'P',
-    name: 'Percussion',
-    category: 'Music',
-    color: 'purple',
-    description: 'Battery and front ensemble',
-  },
-];
+// Wizard view of the canonical captions (data/captions.ts): id + full name +
+// group label, with a wizard-specific color per group and its own descriptions.
+const WIZARD_GROUP_COLORS = { ge: 'gold', vis: 'blue', mus: 'purple' };
+const WIZARD_CAPTION_DESCRIPTIONS = {
+  GE1: 'Overall impact and artistry',
+  GE2: 'Visual and musical excellence',
+  VP: 'Marching technique and execution',
+  VA: 'Design and composition',
+  CG: 'Equipment work and artistry',
+  B: 'Horn line performance',
+  MA: 'Musical composition and design',
+  P: 'Battery and front ensemble',
+};
+
+export const CAPTIONS = CAPTION_DEFS.map((c) => ({
+  id: c.id,
+  name: c.fullName,
+  category: c.groupLabel,
+  color: WIZARD_GROUP_COLORS[c.group],
+  description: WIZARD_CAPTION_DESCRIPTIONS[c.id],
+}));
 
 // Caption categories
 export const CAPTION_CATEGORIES = ['General Effect', 'Visual', 'Music'];

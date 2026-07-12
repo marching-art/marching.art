@@ -1,181 +1,19 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const {
+  getHistoryCollection,
+  addCoinHistoryEntryToTransaction,
+  toCanonicalClass,
+  TRANSACTION_TYPES,
+  SHOW_PARTICIPATION_REWARDS,
+  WEEKLY_LEAGUE_WIN_REWARD,
+  SEASON_FINISH_BONUSES,
+  CLASS_UNLOCK_COSTS,
+} = require("../helpers/economy");
+const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
 const { assertAuth } = require("../helpers/callableGuards");
-
-// =============================================================================
-// CORPSCOIN HISTORY SUBCOLLECTION HELPERS
-//
-// History entries are stored in a subcollection instead of an array on the
-// profile document. This prevents hitting Firestore's 1MB document size limit
-// for active users with many transactions.
-//
-// Path: artifacts/{namespace}/users/{uid}/corpsCoinHistory/{txnId}
-// =============================================================================
-
-/**
- * Get the corpsCoinHistory subcollection reference for a user
- * @param {Object} db - Firestore instance
- * @param {string} uid - User ID
- * @returns {CollectionReference}
- */
-function getHistoryCollection(db, uid) {
-  return db.collection(`artifacts/${dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`);
-}
-
-/**
- * Add a CorpsCoin history entry to the subcollection.
- * Use this after a transaction has already updated the corpsCoin balance.
- *
- * @param {Object} db - Firestore instance
- * @param {string} uid - User ID
- * @param {Object} entry - History entry data
- * @returns {Promise<DocumentReference>}
- */
-async function addCoinHistoryEntry(db, uid, entry) {
-  const historyRef = getHistoryCollection(db, uid).doc();
-  await historyRef.set({
-    ...entry,
-    timestamp: entry.timestamp || admin.firestore.FieldValue.serverTimestamp(),
-  });
-  return historyRef;
-}
-
-/**
- * Add a CorpsCoin history entry within a Firestore batch.
- * Used when coin updates are batched with other writes (e.g., scoring).
- *
- * @param {WriteBatch} batch - Firestore batch
- * @param {Object} db - Firestore instance
- * @param {string} uid - User ID
- * @param {Object} entry - History entry data
- */
-function addCoinHistoryEntryToBatch(batch, db, uid, entry) {
-  const historyRef = getHistoryCollection(db, uid).doc();
-  batch.set(historyRef, {
-    ...entry,
-    timestamp: entry.timestamp || admin.firestore.FieldValue.serverTimestamp(),
-  });
-}
-
-/**
- * Add a CorpsCoin history entry within a Firestore transaction.
- *
- * @param {Transaction} transaction - Firestore transaction
- * @param {Object} db - Firestore instance
- * @param {string} uid - User ID
- * @param {Object} entry - History entry data
- */
-function addCoinHistoryEntryToTransaction(transaction, db, uid, entry) {
-  const historyRef = getHistoryCollection(db, uid).doc();
-  transaction.set(historyRef, {
-    ...entry,
-    timestamp: entry.timestamp || new Date(),
-  });
-}
-
-// =============================================================================
-// SIMPLIFIED CORPSCOIN ECONOMY
-//
-// EARNING SOURCES:
-// - Show participation: 50-200 CC per show (by class)
-// - Weekly league win: 100 CC
-// - Season finish bonus: 250-1000 CC (based on final rank)
-//
-// SPENDING:
-// - Class unlocks (one-time): A=1000, Open=2500, World=5000
-// - League entry fees (optional, commissioner-set)
-// =============================================================================
-
-/**
- * CorpsCoin earning amounts by class for show participation.
- * Keyed by canonical class names (the scoring loop looks up the corps-map
- * key, which is always canonical); legacy short aliases retained for any
- * caller still holding old-style keys — same pattern as CLASS_UNLOCK_COSTS.
- * The table was previously short-key-only, which silently paid World and
- * Open class corps ZERO show-participation coins.
- */
-const { SHOW_PARTICIPATION_REWARDS, CLASS_UNLOCK_COSTS } = require("../helpers/classRegistry");
-
-/**
- * Weekly league win reward
- */
-const WEEKLY_LEAGUE_WIN_REWARD = 100;
-
-/**
- * Season finish bonuses based on final rank
- */
-const SEASON_FINISH_BONUSES = {
-  1: 1000,   // Champion
-  2: 750,    // 2nd place
-  3: 500,    // 3rd place
-  top10: 350, // 4th-10th place
-  top25: 250, // 11th-25th place
-};
-
-/**
- * Class unlock costs with CorpsCoin.
- * Accepts both short ('open') and canonical ('openClass') keys — normalized before lookup.
- */
-// CLASS_UNLOCK_COSTS now comes from the class-capability registry (Phase 1.1).
-
-/**
- * Normalize a class key to canonical form stored in `unlockedClasses`.
- * Historical code wrote short keys ('open', 'world') while the rest of the app
- * expects canonical keys ('openClass', 'worldClass'). All writes now use canonical.
- */
-const CANONICAL_CLASS_KEY = {
-  soundSport: 'soundSport',
-  aClass: 'aClass',
-  open: 'openClass',
-  openClass: 'openClass',
-  world: 'worldClass',
-  worldClass: 'worldClass',
-};
-function toCanonicalClass(key) {
-  return CANONICAL_CLASS_KEY[key] || key;
-}
-
-/**
- * Transaction types for history tracking
- */
-const TRANSACTION_TYPES = {
-  SHOW_PARTICIPATION: 'show_participation',
-  LEAGUE_WIN: 'league_win',
-  SEASON_BONUS: 'season_bonus',
-  CLASS_UNLOCK: 'class_unlock',
-  LEAGUE_ENTRY: 'league_entry',
-  COSMETIC_PURCHASE: 'cosmetic_purchase',
-};
-
-// =============================================================================
-// EARNING FUNCTIONS
-// =============================================================================
-// NOTE: single-write helpers awardCorpsCoin, awardLeagueWinBonus, and
-// awardSeasonBonus were removed — the live paths batch these awards instead
-// (helpers/scoringAwards.js processCoinAwardsBatch / processWeeklyMatchups,
-// and helpers/season.js getSeasonBonusAmount at rollover).
-
-/**
- * Pure lookup: CorpsCoin bonus and label for a final season rank.
- * Used by the season-rollover payout in helpers/season.js.
- * Ranks below top 25 earn no coin bonus.
- */
-const getSeasonBonusAmount = (finalRank) => {
-  if (!finalRank || finalRank <= 0) return { amount: 0, rankDescription: '' };
-  if (finalRank === 1) return { amount: SEASON_FINISH_BONUSES[1], rankDescription: 'Champion' };
-  if (finalRank === 2) return { amount: SEASON_FINISH_BONUSES[2], rankDescription: '2nd place' };
-  if (finalRank === 3) return { amount: SEASON_FINISH_BONUSES[3], rankDescription: '3rd place' };
-  if (finalRank <= 10) {
-    return { amount: SEASON_FINISH_BONUSES.top10, rankDescription: `${finalRank}th place (Top 10)` };
-  }
-  if (finalRank <= 25) {
-    return { amount: SEASON_FINISH_BONUSES.top25, rankDescription: `${finalRank}th place (Top 25)` };
-  }
-  return { amount: 0, rankDescription: '' };
-};
 
 // =============================================================================
 // SPENDING FUNCTIONS
@@ -197,7 +35,7 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 
   const cost = CLASS_UNLOCK_COSTS[canonicalClass];
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -271,7 +109,7 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 const syncClassUnlocks = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -331,7 +169,7 @@ const getCorpsCoinHistory = onCall({ cors: true }, async (request) => {
   const { limit: queryLimit = 50 } = request.data || {};
 
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     // Fetch balance and history in parallel
@@ -456,28 +294,11 @@ const getEarningOpportunities = onCall({ cors: true }, async (request) => {
 // =============================================================================
 
 module.exports = {
-  // Earning functions
-  getSeasonBonusAmount,
-
-  // Spending functions
+  // Callable handlers (registered in functions/index.js). Economy primitives
+  // (coin-history writers, constants, rank-bonus lookup) live in
+  // helpers/economy.js — import them from there, not here.
   unlockClassWithCorpsCoin,
-
-  // Progression sync
   syncClassUnlocks,
-
-  // Query functions
   getCorpsCoinHistory,
   getEarningOpportunities,
-
-  // History subcollection helpers (for use in scoring.js, dailyOps.js, etc.)
-  addCoinHistoryEntry,
-  addCoinHistoryEntryToBatch,
-  addCoinHistoryEntryToTransaction,
-
-  // Constants (for use in other modules)
-  SHOW_PARTICIPATION_REWARDS,
-  WEEKLY_LEAGUE_WIN_REWARD,
-  SEASON_FINISH_BONUSES,
-  CLASS_UNLOCK_COSTS,
-  TRANSACTION_TYPES,
 };

@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getDb, dataNamespaceParam } = require("../config");
+const { paths } = require("../helpers/paths");
+const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, createLeagueActivity } = require("../helpers/leagueHelpers");
@@ -23,7 +24,7 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   const pointerRef = db.doc("game-settings/rookie-league");
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
 
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
@@ -37,7 +38,7 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
     let leagueRef = null;
     let leagueData = null;
     if (pointer.leagueId) {
-      leagueRef = db.doc(`artifacts/${dataNamespaceParam.value()}/leagues/${pointer.leagueId}`);
+      leagueRef = db.doc(paths.league(pointer.leagueId));
       const leagueDoc = await transaction.get(leagueRef);
       if (leagueDoc.exists) {
         leagueData = leagueDoc.data();
@@ -83,7 +84,7 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
     const nextNumber = (pointer.counter || 0) + 1;
     const newName = `Rookie Circuit ${nextNumber}`;
     const inviteCode = generateUniqueInviteCode(uid);
-    const newLeagueRef = db.collection(`artifacts/${dataNamespaceParam.value()}/leagues`).doc();
+    const newLeagueRef = db.collection(paths.leagues()).doc();
     const newStandingsRef = newLeagueRef.collection('standings').doc('current');
     const inviteRef = db.doc(`leagueInvites/${inviteCode}`);
 
