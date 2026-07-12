@@ -259,9 +259,9 @@ const PodiumLanding = () => {
                   <span style={{ color: GOLD }}>Earn every point.</span>
                 </h1>
                 <p className="mt-4 text-base lg:text-lg text-gray-400 max-w-xl leading-relaxed">
-                  Podium Class is the director&rsquo;s chair. Not fantasy drafting — a full
-                  season simulation. You run the rehearsals, route the tour, manage the corps,
-                  and every night the recap tells you whether you called it right.
+                  Podium Class is the director&rsquo;s chair. Not fantasy drafting — a full season
+                  simulation. You run the rehearsals, route the tour, manage the corps, and every
+                  night the recap tells you whether you called it right.
                 </p>
 
                 {/* CTA row: primary demo + free-to-play chip. The demo is the
@@ -327,9 +327,7 @@ const PodiumLanding = () => {
                       type="button"
                       onClick={() => switchMode('register')}
                       className={`h-12 text-sm font-bold uppercase tracking-wider transition-colors press-feedback ${
-                        isRegister
-                          ? 'text-black'
-                          : 'text-gray-500 hover:text-white bg-[#141414]'
+                        isRegister ? 'text-black' : 'text-gray-500 hover:text-white bg-[#141414]'
                       }`}
                       style={isRegister ? { backgroundColor: GOLD } : undefined}
                     >
@@ -339,9 +337,7 @@ const PodiumLanding = () => {
                       type="button"
                       onClick={() => switchMode('login')}
                       className={`h-12 text-sm font-bold uppercase tracking-wider transition-colors press-feedback ${
-                        !isRegister
-                          ? 'text-black'
-                          : 'text-gray-500 hover:text-white bg-[#141414]'
+                        !isRegister ? 'text-black' : 'text-gray-500 hover:text-white bg-[#141414]'
                       }`}
                       style={!isRegister ? { backgroundColor: GOLD } : undefined}
                     >
@@ -420,7 +416,11 @@ const PodiumLanding = () => {
                         className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-white transition-colors min-w-touch min-h-touch flex items-center justify-center"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
 

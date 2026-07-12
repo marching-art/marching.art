@@ -41,11 +41,7 @@ vi.mock('./useScoresData', () => ({
   formatRecapDate: vi.fn(() => 'Jan 1'),
 }));
 
-import {
-  getSeasonRecaps,
-  getHistoricalScoresForYear,
-  getPodiumSeasonRecaps,
-} from '../api/season';
+import { getSeasonRecaps, getHistoricalScoresForYear, getPodiumSeasonRecaps } from '../api/season';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
 import {
   useLineupScores,
@@ -225,10 +221,9 @@ describe('usePodiumRecentResults', () => {
   };
 
   it('returns [] when disabled (non-Podium class active)', () => {
-    const { result } = renderHook(
-      () => usePodiumRecentResults(user, seasonData, 10, false),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => usePodiumRecentResults(user, seasonData, 10, false), {
+      wrapper: createWrapper(),
+    });
     expect(result.current).toEqual([]);
     expect(getPodiumSeasonRecaps).not.toHaveBeenCalled();
   });
@@ -244,10 +239,9 @@ describe('usePodiumRecentResults', () => {
       recap(3, [{ uid: 'bob', corpsClass: 'podiumClass', totalScore: 70, place: 1 }]),
     ]);
 
-    const { result } = renderHook(
-      () => usePodiumRecentResults(user, seasonData, 6, true),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => usePodiumRecentResults(user, seasonData, 6, true), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => expect(result.current.length).toBeGreaterThan(0));
 

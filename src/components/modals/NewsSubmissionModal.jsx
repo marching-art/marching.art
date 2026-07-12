@@ -275,8 +275,12 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                       `}
                     >
                       <div className="flex items-center gap-1.5 text-xs font-bold">
-                        {opt.id === 'generate' && <Sparkles className="w-3.5 h-3.5 text-yellow-500" />}
-                        {opt.id === 'submitted' && <ImageIcon className="w-3.5 h-3.5 text-blue-400" />}
+                        {opt.id === 'generate' && (
+                          <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+                        )}
+                        {opt.id === 'submitted' && (
+                          <ImageIcon className="w-3.5 h-3.5 text-blue-400" />
+                        )}
                         {opt.id === 'none' && <X className="w-3.5 h-3.5 text-gray-500" />}
                         {opt.name}
                       </div>

@@ -6,7 +6,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Trophy, User, Newspaper, Calendar, Shield, LucideIcon } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Trophy,
+  User,
+  Newspaper,
+  Calendar,
+  Shield,
+  LucideIcon,
+} from 'lucide-react';
 import { m } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { adminHelpers } from '../api';

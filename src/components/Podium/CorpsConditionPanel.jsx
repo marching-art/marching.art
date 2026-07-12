@@ -312,7 +312,9 @@ export default function CorpsConditionPanel({ podium }) {
           ) : (
             <div className="flex items-start gap-2 rounded-none border border-amber-500/30 bg-amber-500/5 px-3 py-2">
               <Moon className="w-3.5 h-3.5 text-amber-400/80 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-amber-200/70 leading-relaxed">{activePlanType.empty}</p>
+              <p className="text-[10px] text-amber-200/70 leading-relaxed">
+                {activePlanType.empty}
+              </p>
             </div>
           )
         ) : (
@@ -328,7 +330,11 @@ export default function CorpsConditionPanel({ podium }) {
                       key={block.id}
                       onClick={() => addBlock(block.id)}
                       disabled={full}
-                      title={full ? `A ${activePlanType.tab.toLowerCase()} plan holds at most ${maxTemplateBlocks} blocks` : undefined}
+                      title={
+                        full
+                          ? `A ${activePlanType.tab.toLowerCase()} plan holds at most ${maxTemplateBlocks} blocks`
+                          : undefined
+                      }
                       className="text-left px-3 py-2 rounded-none border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback disabled:opacity-40 disabled:hover:border-[#333] disabled:hover:bg-transparent disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -353,7 +359,9 @@ export default function CorpsConditionPanel({ podium }) {
                   </span>
                   <span className="text-lg font-bold text-white tabular-nums leading-none">
                     {templateDraft.length}
-                    <span className="text-[10px] font-bold text-gray-600">/{maxTemplateBlocks}</span>
+                    <span className="text-[10px] font-bold text-gray-600">
+                      /{maxTemplateBlocks}
+                    </span>
                   </span>
                 </div>
 
@@ -426,8 +434,8 @@ export default function CorpsConditionPanel({ podium }) {
             </div>
 
             <p className="text-[9px] text-gray-600 leading-relaxed">
-              {activePlanType.hint} Lead with Stretch / PT to cut the stamina cost of the blocks that
-              follow, and avoid repeating a block back-to-back — repeats yield less.
+              {activePlanType.hint} Lead with Stretch / PT to cut the stamina cost of the blocks
+              that follow, and avoid repeating a block back-to-back — repeats yield less.
             </p>
           </div>
         )}

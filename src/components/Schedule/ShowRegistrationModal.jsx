@@ -740,14 +740,10 @@ const ShowRegistrationModal = ({
     return (
       <BottomSheet isOpen={true} onClose={onClose} snapPoints={[85]} showCloseButton={true}>
         {/* Header */}
-        <div className="px-4 pb-3 border-b border-[#333] flex-shrink-0">
-          {headerContent}
-        </div>
+        <div className="px-4 pb-3 border-b border-[#333] flex-shrink-0">{headerContent}</div>
 
         {/* Body - Scrollable */}
-        <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">
-          {bodyContent}
-        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">{bodyContent}</div>
 
         {/* Footer */}
         {(isChampionship || userCorpsClasses.length > 0 || podiumInfo || podiumLoading) && (
@@ -776,9 +772,7 @@ const ShowRegistrationModal = ({
           </div>
 
           {/* Body - Scrollable */}
-          <div className="flex-1 overflow-y-auto">
-            {bodyContent}
-          </div>
+          <div className="flex-1 overflow-y-auto">{bodyContent}</div>
 
           {/* Footer */}
           {(isChampionship || userCorpsClasses.length > 0 || podiumInfo || podiumLoading) && (
