@@ -54,6 +54,7 @@ const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'), 'Onboarding
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
 const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
 const Landing = lazyWithRetry(() => import('./pages/Landing'), 'Landing');
+const PodiumLanding = lazyWithRetry(() => import('./pages/PodiumLanding'), 'PodiumLanding');
 const RetiredCorpsGallery = lazyWithRetry(
   () => import('./pages/RetiredCorpsGallery'),
   'RetiredCorpsGallery'
@@ -368,6 +369,22 @@ function App() {
                         ) : (
                           <Suspense fallback={<LoadingScreen fullScreen />}>
                             <Register />
+                          </Suspense>
+                        )
+                      }
+                    />
+                    {/* Podium Class recruiting page — signup/login focused on
+                        the Podium director-sim class. Public; bounces
+                        authenticated users to the dashboard like /login and
+                        /register do. */}
+                    <Route
+                      path="/podium"
+                      element={
+                        user ? (
+                          <Navigate to="/dashboard" />
+                        ) : (
+                          <Suspense fallback={<LoadingScreen fullScreen />}>
+                            <PodiumLanding />
                           </Suspense>
                         )
                       }
