@@ -1,12 +1,42 @@
 # Visual Identity Unification — Evaluation & 10-Step Plan
 
-> **Status: proposal.** A diagnosis of the site's current visual identity and a
-> dependency-ordered plan to make every surface read as one system designed at
-> once, rather than a collection of modules assembled over ten months.
+> **Status: in progress — foundation + sweep landed.** A diagnosis of the
+> site's current visual identity and a dependency-ordered plan to make every
+> surface read as one system designed at once, rather than a collection of
+> modules assembled over ten months.
 >
 > **Fixed constraint:** the logo design (the 9-dot field grid + sweeping gold
 > drill path) is permanent and is the anchor of the identity. Everything
 > previously written as "law" is open to revision in service of that anchor.
+>
+> **Ratified decisions:** brand = gold `#EAB308` (identity/reward only);
+> interactive = azure `#3B82F6` (replacing the WCAG-failing `#0057B8`); corners
+> = `rounded-none`; one charcoal surface ramp + one hairline `line` scale.
+
+## Progress log
+
+| Step                   | State         | Evidence                                                                                          |
+| ---------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
+| 1 Ratify spec          | ✅ done       | this doc §3–4                                                                                     |
+| 2 Logo → gold          | ✅ done       | `BrandLogo` defaults to `text-brand`; favicon/loader/theme already gold                           |
+| 3 Token layer          | ✅ done       | `brand` / `interactive` / surface ramp / `line` scale in `tailwind.config.cjs` + `index.css`      |
+| 4 Typography           | ⬜ open       | `font-display` is dead config (0 uses); a shared type scale / `Heading` component is still TODO   |
+| 5 Corners & elevation  | ✅ done       | `rounded` census = 0; shadows only on floating overlays                                           |
+| 6 Harden primitives    | ✅ done       | Card/Button/PageHeader/DataTable/etc. consume tokens (no raw hex)                                 |
+| 7 De-hex sweep         | ✅ done       | codemod (4,147 mech.) + fan-out; arbitrary-hex 3307→25, legacy-gray 1020→0                        |
+| 8 Emphasis per surface | ◑ substantial | gold reassigned by role in the fan-out; deeper per-surface hierarchy work optional                |
+| 9 Purge legacy styling | ◑ substantial | banned-effects 73→17 (remainder = overlay/functional/data); motion normalization TODO             |
+| 10 Guardrails + docs   | ◑ partial     | census + ratchet + CI gate live; hard-error flip / styleguide / contributor guide / AA audit TODO |
+
+**Census journey (TOTAL 5265 → 161).** Remaining counts are legitimate floors:
+categorical tier/medal/prestige **data** (allowlisted), the Podium `GOLD`-const
+system, confetti/chart palettes, functional image scrims, and overlay shadows.
+The ratchet holds them frozen; they can only fall.
+
+The tooling: `npm run census` (table), `npm run census:check` (CI ratchet),
+`node scripts/designCensus.mjs --files <key>` (offenders), `scripts/tokenMap.json`
+
+- `scripts/applyTokenMap.mjs` (the deterministic codemod).
 
 ---
 
