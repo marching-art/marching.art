@@ -5,6 +5,7 @@
 // Laws: No padding in body (p-0), let child content define spacing
 
 import React, { forwardRef } from 'react';
+import { headingRecipes } from './Heading';
 
 // =============================================================================
 // TYPES
@@ -103,11 +104,7 @@ CardHeader.displayName = 'CardHeader';
 const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
   ({ children, className = '', ...props }, ref) => {
     return (
-      <h3
-        ref={ref}
-        className={`text-xs font-bold uppercase text-muted tracking-wider ${className}`}
-        {...props}
-      >
+      <h3 ref={ref} className={`${headingRecipes.eyebrow} ${className}`} {...props}>
         {children}
       </h3>
     );

@@ -157,7 +157,10 @@ module.exports = {
       fontFamily: {
         mono: ['"JetBrains Mono"', '"Roboto Mono"', 'monospace'],
         sans: ['"Inter"', 'sans-serif'],
-        display: ['Oswald', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+        // Single grotesque (Inter) at varied weights — the Swiss/architect
+        // posture. The former Oswald/Barlow display face was never loaded;
+        // `font-display` now resolves to Inter with no fallback surprise.
+        display: ['Inter', 'system-ui', 'sans-serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
         data: ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace'],
       },

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { headingRecipes } from './Heading';
 
 // =============================================================================
 // PAGE HEADER COMPONENT
@@ -52,9 +53,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <Icon className={`w-5 h-5 flex-shrink-0 ${iconClassName}`} aria-hidden="true" />
           <div className="min-w-0">
-            <h1 className="text-sm font-bold text-white uppercase tracking-wider truncate">
-              {title}
-            </h1>
+            <h1 className={`${headingRecipes.section} truncate`}>{title}</h1>
             {subtitle && <div className="text-[10px] text-muted truncate">{subtitle}</div>}
           </div>
         </div>
