@@ -8,7 +8,7 @@ import { m } from 'framer-motion';
 interface TabsContextValue {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  tabListRef: React.RefObject<HTMLDivElement | null>;
+  tabListRef: React.RefObject<HTMLDivElement>;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -43,7 +43,7 @@ export const Tabs: React.FC<TabsProps> = ({
   className = '',
 }) => {
   const [activeTab, setActiveTabState] = useState(defaultTab);
-  const tabListRef = useRef<HTMLDivElement | null>(null);
+  const tabListRef = useRef<HTMLDivElement>(null);
 
   const setActiveTab = useCallback(
     (tab: string) => {
