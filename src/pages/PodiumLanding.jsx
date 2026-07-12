@@ -95,6 +95,21 @@ const PodiumLanding = () => {
 
   const isRegister = mode === 'register';
 
+  // Land the director on the Podium tab, not the default fantasy class. The
+  // Dashboard restores its active class from `selectedCorps_<uid>` in
+  // localStorage and explicitly honors 'podiumClass' even before a Podium
+  // corps exists (it renders the founding flow), so writing that key here —
+  // before we navigate — points sign-in straight at Podium Class.
+  const preselectPodium = (uid) => {
+    if (!uid) return;
+    try {
+      localStorage.setItem(`selectedCorps_${uid}`, 'podiumClass');
+    } catch {
+      // localStorage unavailable (private mode) — the dashboard just falls
+      // back to the default tab; sign-in still succeeds.
+    }
+  };
+
   const update = (field) => (e) =>
     setFormData((prev) => ({
       ...prev,
@@ -136,12 +151,14 @@ const PodiumLanding = () => {
     setLoading(true);
     try {
       if (isRegister) {
-        await signUp(formData.email, formData.password, formData.displayName.trim());
+        const cred = await signUp(formData.email, formData.password, formData.displayName.trim());
+        preselectPodium(cred?.user?.uid);
         markAsReturning();
         toast.success('Corps founded — welcome, Director!');
         startTransition(() => navigate('/onboarding'));
       } else {
-        await signIn(formData.email, formData.password);
+        const cred = await signIn(formData.email, formData.password);
+        preselectPodium(cred?.user?.uid);
         markAsReturning();
         toast.success('Welcome back!');
         startTransition(() => navigate('/dashboard'));
