@@ -5,6 +5,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
 const { computeDirectorRating } = require("../helpers/directorRating");
+const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRankings");
 
 /**
  * Manually callable function to update lifetime leaderboard
@@ -53,6 +54,12 @@ async function updateLifetimeLeaderboardLogic() {
   logger.info("Updating lifetime leaderboard...");
 
   try {
+    // Current active season — profiles registered in it feed the current-season
+    // ranking snapshot materialized alongside the lifetime leaderboard below.
+    const seasonDoc = await db.doc("game-settings/season").get();
+    const activeSeasonId = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
+    const seasonRankEntries = [];
+
     // Get all user document references.
     // The users/{uid} docs are "missing ancestors": createUserProfile only
     // writes the profile/ and private/ subcollection docs, never the parent
@@ -99,8 +106,28 @@ async function updateLifetimeLeaderboardLogic() {
             updatedAt: new Date()
           });
         }
+
+        // Current-season ranking snapshot: include every profile registered in
+        // the active season (mirrors the getUserRankings scan filter). Uses the
+        // full profileData already fetched here, so no extra reads.
+        if (activeSeasonId && profileData.activeSeasonId === activeSeasonId) {
+          seasonRankEntries.push({ uid: userId, totalScore: sumSeasonScore(profileData) });
+        }
       }
     });
+
+    // Materialize the current-season rankings into a single doc so
+    // getUserRankings reads one document instead of scanning all profiles.
+    if (activeSeasonId && seasonRankEntries.length > 0) {
+      const { ranks, totalPlayers } = computeSeasonRankings(seasonRankEntries);
+      await db.doc(paths.seasonRankings()).set({
+        seasonUid: activeSeasonId,
+        totalPlayers,
+        ranks,
+        updatedAt: new Date(),
+      });
+      logger.info(`Materialized season rankings for ${totalPlayers} players`);
+    }
 
     if (lifetimeData.length === 0) {
       logger.info("No lifetime stats found to update");

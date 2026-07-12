@@ -25,6 +25,7 @@ export const CAPTIONS = CAPTION_DEFS.map((c) => ({
 export {
   UNLOCK_LEVELS_GATED as CLASS_UNLOCK_LEVELS,
   UNLOCK_COSTS as CLASS_UNLOCK_COSTS,
+  POINT_CAPS as CLASS_POINT_CAPS,
 } from '../../../utils/classRegistry';
 export const CLASS_DISPLAY_NAMES = CORPS_CLASS_LABELS;
 

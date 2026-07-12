@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
+const { sumSeasonScore } = require("../helpers/seasonRankings");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
@@ -203,7 +204,26 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
   }
   const activeSeasonId = seasonDoc.data().seasonUid;
 
-  // Field projection: Only fetch fields needed for ranking calculation
+  // Fast path: read the precomputed rankings snapshot (materialized nightly by
+  // the lifetime-leaderboard job) instead of scanning every profile per call.
+  // This turns an O(players) read into a single document read.
+  const rankingsSnap = await db.doc(paths.seasonRankings()).get();
+  const rankings = rankingsSnap.exists ? rankingsSnap.data() : null;
+  if (rankings && rankings.seasonUid === activeSeasonId && rankings.ranks) {
+    const totalPlayers = rankings.totalPlayers || Object.keys(rankings.ranks).length || 1;
+    const mine = rankings.ranks[uid];
+    if (mine) {
+      return { globalRank: mine.rank, totalPlayers, totalScore: mine.totalScore };
+    }
+    // Registered since the last materialization (not yet in the snapshot):
+    // rank at the bottom rather than mis-reporting rank 1.
+    return { globalRank: totalPlayers, totalPlayers, totalScore: 0 };
+  }
+
+  // Fallback: snapshot missing or from a previous season (e.g. right after a
+  // season rollover, before the nightly job runs). Compute from a single scan
+  // so the value is never wrong — just occasionally expensive until the first
+  // materialization lands.
   const profilesQuery = db.collectionGroup("profile")
     .where("activeSeasonId", "==", activeSeasonId)
     .select("corps", "corpsName", "totalSeasonScore");
@@ -219,12 +239,7 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
   profilesSnapshot.docs.forEach((doc) => {
     const profile = doc.data();
     const userId = doc.ref.parent.parent.id;
-
-    const userCorps = profile.corps || {};
-    if (profile.corpsName && !userCorps.worldClass) {
-      userCorps.worldClass = { totalSeasonScore: profile.totalSeasonScore || 0 };
-    }
-    const totalScore = Object.values(userCorps).reduce((sum, corps) => sum + (corps.totalSeasonScore || 0), 0);
+    const totalScore = sumSeasonScore(profile);
 
     allPlayerScores.push(totalScore);
     if (userId === uid) {

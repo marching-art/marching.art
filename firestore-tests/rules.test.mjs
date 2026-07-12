@@ -35,6 +35,12 @@ const seedProfile = {
       lineupKey: 'abc123',
       totalSeasonScore: 87.5,
       weeklyTrades: { seasonUid: 'season-1', week: 2, used: 1 },
+      selectedShows: { week2: [{ eventName: 'DCI Anytown', day: 9 }] },
+    },
+    soundSport: {
+      corpsName: 'Alice SS',
+      lineup: { GE1: 'Genesis' },
+      selectedShows: { week2: [{ eventName: 'SoundSport Anytown', day: 9 }] },
     },
   },
 };
@@ -222,6 +228,50 @@ await check(
   assertFails(updateDoc(doc(authed(), profilePath), { 'corps.soundSport.totalSeasonScore': 99.9 }))
 );
 
+// selectedShows drives competitive score AND CorpsCoin payouts in the nightly
+// scorer; the per-week/per-day caps live only in the selectUserShows callable,
+// so a direct client write must be rejected — otherwise a director could
+// "attend" every show every day, forging rank and farming coin.
+await freshSeed();
+await check(
+  'owner cannot forge selectedShows on a competitive class (score/coin farming)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.worldClass.selectedShows.week2': [
+        { eventName: 'DCI Anytown', day: 9 },
+        { eventName: 'DCI Elsewhere', day: 9 },
+        { eventName: 'DCI Everywhere', day: 10 },
+      ],
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot add a new selectedShows week to a competitive class',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.worldClass.selectedShows.week3': [{ eventName: 'Forged Show', day: 15 }],
+    })
+  )
+);
+
+// soundSport is scored from show attendance too (the scorer iterates every
+// class), and only its score was previously guarded — selectedShows must be
+// server-only here as well.
+await freshSeed();
+await check(
+  'owner cannot forge selectedShows on soundSport',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.soundSport.selectedShows.week2': [
+        { eventName: 'SoundSport Anytown', day: 9 },
+        { eventName: 'SoundSport Elsewhere', day: 9 },
+      ],
+    })
+  )
+);
+
 // seasonHistory feeds the public resume AND the lifetime Director Rating
 // leaderboard (placements-only) — a client-forged placement would mint
 // leaderboard rank. medals feed the trophy case. Both are archival-written.
@@ -334,6 +384,48 @@ await freshCommentSeed();
 await check(
   'profile owner can delete a comment on their profile',
   assertSucceeds(deleteDoc(doc(authed(), commentPath)))
+);
+
+// =============================================================================
+// CORPSCOIN HISTORY — the private economy audit trail. It is written only by
+// Cloud Functions and read only through the getCorpsCoinHistory callable
+// (Admin SDK). No client may read it directly: before this guard the
+// subcollection catch-all made every user's full CorpsCoin ledger readable by
+// any signed-in user.
+// =============================================================================
+const coinHistoryPath = `artifacts/${APP}/users/${ALICE}/corpsCoinHistory/txn-1`;
+async function freshCoinHistorySeed() {
+  await testEnv.clearFirestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), coinHistoryPath), {
+      amount: 200,
+      reason: 'show-participation',
+      createdAt: new Date(),
+    });
+  });
+}
+
+await freshCoinHistorySeed();
+await check(
+  'another user cannot read a user corpsCoinHistory ledger (regression)',
+  assertFails(getDoc(doc(mallory(), coinHistoryPath)))
+);
+
+await freshCoinHistorySeed();
+await check(
+  'even the owner cannot read corpsCoinHistory directly (callable-only)',
+  assertFails(getDoc(doc(authed(), coinHistoryPath)))
+);
+
+await freshCoinHistorySeed();
+await check(
+  'a signed-in user cannot forge a corpsCoinHistory entry',
+  assertFails(
+    setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/corpsCoinHistory/txn-2`), {
+      amount: 999999,
+      reason: 'free money',
+    })
+  )
 );
 
 // =============================================================================

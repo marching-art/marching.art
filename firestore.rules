@@ -79,7 +79,15 @@ function corpsClassUntouched(corpsClass) {
      request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null) &&
      // Podium division seat (A/Open/World) — assessed at season boundaries
      // by archival; a client-forged seat would display a stolen rise.
-     request.resource.data.get(['corps', corpsClass, 'division'], null) == resource.data.get(['corps', corpsClass, 'division'], null));
+     request.resource.data.get(['corps', corpsClass, 'division'], null) == resource.data.get(['corps', corpsClass, 'division'], null) &&
+     // Show registrations drive competitive score AND CorpsCoin payouts: the
+     // nightly scorer (helpers/scoring.js) adds each attended show's score to
+     // totalSeasonScore and mints SHOW_PARTICIPATION_REWARDS coin per show. The
+     // per-week/per-day caps (max 4 shows/week, 7 in finals, one per day) live
+     // ONLY in the selectUserShows callable, so selectedShows must be
+     // server-write-only — a direct client write here would let a director
+     // "attend" every show every day, forging rank and farming coin.
+     request.resource.data.get(['corps', corpsClass, 'selectedShows'], null) == resource.data.get(['corps', corpsClass, 'selectedShows'], null));
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
@@ -104,7 +112,12 @@ function touchesProtectedCorpsFields() {
     !corpsClassUntouched('podiumClass') ||
     !podiumStateUntouched() ||
     request.resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null)
-      != resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null);
+      != resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null) ||
+    // soundSport is scored from show attendance too (the scorer iterates every
+    // class on the profile), so its selectedShows must be server-only as well;
+    // corpsClassUntouched only covers the three competitive classes + podium.
+    request.resource.data.get(['corps', 'soundSport', 'selectedShows'], null)
+      != resource.data.get(['corps', 'soundSport', 'selectedShows'], null);
 }
 
 // --- USER DATA ---
@@ -178,8 +191,22 @@ match /artifacts/{appId}/users/{userId} {
     allow write: if isAdmin();
   }
 
+  // NOTE ON READ SCOPE: this catch-all is read-open to any authenticated user
+  // so leaderboards/public profiles can read corps data. `corpsCoinHistory` is
+  // excluded because it is the private economy audit trail — every CorpsCoin
+  // debit/credit for the user — and is no more public than an email address.
+  // The owner reads their own history through the getCorpsCoinHistory callable
+  // (Admin SDK, bypasses rules), so no direct client read is needed at all;
+  // denying it here keeps another user's ledger private. It is also
+  // server-write-only (excluded from owner writes below). HAZARD: any NEW
+  // subcollection added under a user is world-readable-to-authenticated by
+  // default here — add it to this read exclusion (or give it its own stricter
+  // match above) if it carries anything private.
   match /{subcollection}/{document=**} {
-    allow read: if isAuthenticated() && subcollection != 'private' && subcollection != 'podium';
+    allow read: if isAuthenticated() &&
+      subcollection != 'private' &&
+      subcollection != 'podium' &&
+      subcollection != 'corpsCoinHistory';
     allow write: if isAdmin() ||
       (isOwner(userId) &&
         subcollection != 'corpsCoinHistory' &&

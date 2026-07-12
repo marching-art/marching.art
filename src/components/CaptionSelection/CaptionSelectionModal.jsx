@@ -16,6 +16,7 @@ import { useSeasonDeadlines } from '../../hooks/useSeasonClock';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatCountdown } from '../../utils/seasonClock';
 import { CORPS_CLASS_LABELS as CLASS_LABELS } from '../../utils/corps';
+import { POINT_CAPS } from '../../utils/classRegistry';
 import {
   LineupCelebration,
   CorpsSelectionList,
@@ -109,8 +110,7 @@ const CaptionSelectionModal = ({
     []
   );
 
-  const pointLimits = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
-  const pointLimit = pointLimits[corpsClass];
+  const pointLimit = POINT_CAPS[corpsClass];
 
   const categoryColors = {
     'General Effect': 'bg-yellow-500',

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { db } from '../api';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../api';
 import {
   groupShowsByWeek,
   groupShowsByDay,
@@ -8,6 +8,41 @@ import {
   getShowsForDay,
   getShowCountsByWeek,
 } from '../utils/scheduleUtils';
+
+/**
+ * A single competition entry from the `schedules/{seasonUid}` document. The raw
+ * Firestore shape carries many fields; the schedule utilities consume it
+ * structurally, so it is modeled here as an open record.
+ */
+export type Competition = Record<string, unknown>;
+
+interface ScheduleState {
+  // Raw competitions array from Firestore
+  competitions: Competition[];
+
+  // Pre-computed derived data
+  showsByWeek: Record<number, Competition[]>;
+  showsByDay: Competition[][];
+  showCountsByWeek: Record<number, number>;
+
+  // Loading/error state
+  loading: boolean;
+  error: string | null;
+
+  // Current seasonUid being listened to
+  _currentSeasonUid: string | null;
+
+  // Unsubscribe function for cleanup
+  _unsubscribe: (() => void) | null;
+
+  initScheduleListener: (seasonUid: string | null | undefined) => void;
+  cleanup: () => void;
+  getWeekShows: (weekNumber: number, options?: { skipChampionship?: boolean }) => Competition[];
+  getDayShows: (dayNumber: number) => Competition[];
+  getWeekShowCount: (weekNumber: number) => number;
+  getWeeksWithShows: () => number[];
+  hasScheduleData: () => boolean;
+}
 
 /**
  * Global Schedule Store
@@ -20,7 +55,7 @@ import {
  *
  * Components should use this store instead of creating their own fetches.
  */
-export const useScheduleStore = create((set, get) => ({
+export const useScheduleStore = create<ScheduleState>()((set, get) => ({
   // Raw competitions array from Firestore
   competitions: [],
 
@@ -42,7 +77,6 @@ export const useScheduleStore = create((set, get) => ({
   /**
    * Initialize or update the schedule listener for a given seasonUid
    * Should be called when seasonUid changes (typically from seasonStore)
-   * @param {string} seasonUid - The season to listen to
    */
   initScheduleListener: (seasonUid) => {
     const { _currentSeasonUid, _unsubscribe } = get();
@@ -81,12 +115,14 @@ export const useScheduleStore = create((set, get) => ({
       (docSnapshot) => {
         if (docSnapshot.exists()) {
           const data = docSnapshot.data();
-          const competitions = data.competitions || [];
+          const competitions: Competition[] = data.competitions || [];
 
-          // Pre-compute derived data
-          const showsByWeek = groupShowsByWeek(competitions);
-          const showsByDay = groupShowsByDay(competitions);
-          const showCountsByWeek = getShowCountsByWeek(competitions);
+          // Pre-compute derived data. The schedule utilities are untyped JS
+          // (loose `@returns {Object}`/`{Array}` JSDoc), so assert their known
+          // shapes at this boundary.
+          const showsByWeek = groupShowsByWeek(competitions) as Record<number, Competition[]>;
+          const showsByDay = groupShowsByDay(competitions) as Competition[][];
+          const showCountsByWeek = getShowCountsByWeek(competitions) as Record<number, number>;
 
           set({
             competitions,
@@ -135,19 +171,16 @@ export const useScheduleStore = create((set, get) => ({
 
   /**
    * Get shows for a specific week
-   * @param {number} weekNumber - Week number (1-7)
-   * @param {Object} options - Filter options
-   * @returns {Array} Shows for the week
    */
   getWeekShows: (weekNumber, options = {}) => {
     const { competitions } = get();
-    return getShowsForWeek(competitions, weekNumber, options);
+    // getShowsForWeek reads options.skipChampionship (falsy when absent), so a
+    // partial options object is safe; its JSDoc types the field as required.
+    return getShowsForWeek(competitions, weekNumber, options as { skipChampionship: boolean });
   },
 
   /**
    * Get shows for a specific day
-   * @param {number} dayNumber - Day number (1-49)
-   * @returns {Array} Shows for the day
    */
   getDayShows: (dayNumber) => {
     const { competitions } = get();
@@ -156,8 +189,6 @@ export const useScheduleStore = create((set, get) => ({
 
   /**
    * Get show count for a specific week
-   * @param {number} weekNumber - Week number (1-7)
-   * @returns {number} Number of shows
    */
   getWeekShowCount: (weekNumber) => {
     const { showCountsByWeek } = get();
@@ -166,7 +197,6 @@ export const useScheduleStore = create((set, get) => ({
 
   /**
    * Get all weeks that have shows
-   * @returns {Array} Array of week numbers
    */
   getWeeksWithShows: () => {
     const { showsByWeek } = get();
@@ -177,7 +207,6 @@ export const useScheduleStore = create((set, get) => ({
 
   /**
    * Check if schedule data is available
-   * @returns {boolean}
    */
   hasScheduleData: () => {
     const { competitions } = get();
