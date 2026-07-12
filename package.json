@@ -61,6 +61,8 @@
     "test:e2e:debug": "playwright test --debug",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "census": "node scripts/designCensus.mjs",
+    "census:check": "node scripts/designCensus.mjs --check",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

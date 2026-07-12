@@ -41,7 +41,7 @@ There are two root causes, and everything else is a symptom of them:
    both are used as general-purpose accents, and neither owns a job. Gold
    appears **658 times across 147 files**; blue is declared `primary` but is
    applied interchangeably with gold. Same visual weight, no rule → the eye
-   can't learn what either color *means*.
+   can't learn what either color _means_.
 
 The good news: the fix is not "rip out gold" (the redesign tried that and
 abandoned it halfway). With the logo locked as gold, the fix is to **give gold
@@ -53,6 +53,7 @@ resolve each era-contradiction to one deliberate answer.
 ## 2. The fault lines (what a discerning eye actually sees)
 
 ### A. Two brands, no roles
+
 Gold (`#EAB308`) owns the logo, loader, favicon, and `theme-color`; blue
 (`#0057B8`) is declared `primary`. But both are sprinkled as accents with no
 logic. **Exhibit:** `HeroBanner.jsx` uses `yellow-500` (Zap), `orange-500`
@@ -61,19 +62,22 @@ component, and pairs a blue primary CTA with a gold-outlined secondary CTA — n
 rule tells the user what any color signifies.
 
 ### B. The logo doesn't honor its own gold rule
+
 `BrandLogo.jsx` defaults `color = 'text-[#0057B8]'` and paints the drill path
 with `stroke-current` — so the in-app logo renders **blue** unless a caller
 overrides it. The signature gold survives only in the hardcoded `index.html`
 loader. The permanent rule is violated by the component that owns the logo.
 
 ### C. Corner-radius schism (the biggest "two eras" tell)
+
 The ESPN primitives use `rounded-none` (sharp). The rest of the app uses
-`rounded-lg` / `rounded-xl` / `rounded-2xl` — **965 rounded-* uses across 165
+`rounded-lg` / `rounded-xl` / `rounded-2xl` — **965 rounded-\* uses across 165
 files.** Sharp-cornered flagship pages sit directly beside soft-cornered
 feature modules. This single inconsistency does more to betray the "assembled
 over time" feeling than any color issue.
 
 ### D. Tokens bypassed; duplicated neutrals
+
 - **1,977 raw hex color classes** across 179 files — the token layer is
   decorative.
 - **Two border systems:** opaque `#333` (in primitives) vs. the
@@ -84,6 +88,7 @@ over time" feeling than any color issue.
   (`Card.Title` uses `gray-400`; `PageHeader` uses `muted`).
 
 ### E. Typography is declared but not delivered
+
 `tailwind.config.cjs` defines a **display** family (Oswald / Barlow Condensed)
 and `font-display` is used in **89 files** — but `index.html` only loads Inter
 and JetBrains Mono. **Every `font-display` heading silently falls back to
@@ -94,15 +99,17 @@ scale: each module improvises heading sizes/weights/casing (`PageHeader` =
 28px inline).
 
 ### F. "Banned" styling persists
+
 The redesign's "no glow / no gradient / no shadow" law is only half-enforced:
 **84 gradient/blur/shadow uses across 38 files** remain (Landing, GameShell,
 Podium, celebrations). `HeroBanner` opens with `bg-gradient-to-br` and a
 gradient accent bar — directly against the stated law, right on the front door.
 
 ### G. Emphasis is improvised per module
+
 Because there's no shared hierarchy system, "what's important here" is
 re-decided in every feature. Some modules shout with gold, some with blue, some
-with size, some with all three. The result is uniform *loudness* rather than a
+with size, some with all three. The result is uniform _loudness_ rather than a
 consistent sense of where the eye should land.
 
 ---
@@ -113,12 +120,13 @@ One system, driven by tokens, with colors assigned to jobs. This is the spine
 every step below serves.
 
 ### Color roles (the core decision)
-| Role | Color | Used for | Never used for |
-| --- | --- | --- | --- |
-| **Brand / reward** | **Gold `#EAB308`** | Logo, wordmark, marquee brand moments, #1 / podium & medal ranks, achievement unlocks, level-up celebrations | General buttons, links, form accents, arbitrary icons |
-| **Interactive / self** | **Azure `#3B82F6`** | Links, primary buttons, active nav, focus rings, "your row" highlight, selected states | Decoration, celebration, status |
-| **Trend / status** | Green `#00C853` / Red `#FF5252` / Amber `#FF9800` | Score deltas, win/loss, live, warnings only | Branding or navigation |
-| **Neutral** | One charcoal ramp + one border + one muted gray | All surfaces, structure, secondary text | — |
+
+| Role                   | Color                                             | Used for                                                                                                     | Never used for                                        |
+| ---------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| **Brand / reward**     | **Gold `#EAB308`**                                | Logo, wordmark, marquee brand moments, #1 / podium & medal ranks, achievement unlocks, level-up celebrations | General buttons, links, form accents, arbitrary icons |
+| **Interactive / self** | **Azure `#3B82F6`**                               | Links, primary buttons, active nav, focus rings, "your row" highlight, selected states                       | Decoration, celebration, status                       |
+| **Trend / status**     | Green `#00C853` / Red `#FF5252` / Amber `#FF9800` | Score deltas, win/loss, live, warnings only                                                                  | Branding or navigation                                |
+| **Neutral**            | One charcoal ramp + one border + one muted gray   | All surfaces, structure, secondary text                                                                      | —                                                     |
 
 The mental model: **gold = who we are and when you win; azure = what you can
 touch and where you are; green/red = how the numbers moved; everything else is
@@ -137,8 +145,9 @@ interaction; gold is reserved for brand/reward and must never be a general UI
 accent.
 
 ### Emphasis needs per surface (the "product" dimension)
+
 Different surfaces have genuinely different jobs; unifying doesn't mean
-flattening them — it means using the *same vocabulary* to express each job.
+flattening them — it means using the _same vocabulary_ to express each job.
 
 - **Acquisition** (Landing, Hero, How-to-Play, Preview): warmth and
   invitation. **Gold-forward, largest display type, most breathing room.** This
@@ -153,8 +162,9 @@ flattening them — it means using the *same vocabulary* to express each job.
   **Neutral, blue only on the actionable control.**
 
 ### Structural decisions (resolving the era-contradictions)
+
 - **Corners: `rounded-none`, ratified.** Every surface is sharp — 90° or it's
-  a bug. This is deliberately the *least* driftable choice: radius is a
+  a bug. This is deliberately the _least_ driftable choice: radius is a
   spectrum, and spectrums are exactly how the app accumulated `rounded-lg`,
   `-xl`, and `-2xl` side by side. A binary rule has no gray zone to wander
   into. It is also the honest edge for the rest of the system — charcoal
@@ -173,7 +183,7 @@ flattening them — it means using the *same vocabulary* to express each job.
 
 The last redesign was labeled "✅ completed" and wasn't — because "done" was a
 human assertion with no machine-checkable meaning. Diligence didn't fail; the
-absence of a *definition of done* did. This time, "unified" is an objective,
+absence of a _definition of done_ did. This time, "unified" is an objective,
 CI-enforced state, and "everything" is an enumerated set. The guarantee comes
 from measurement and enforcement, not from trying harder.
 
@@ -182,19 +192,19 @@ violation class across `src/`. These are the numbers we drive to their floor.
 Indicative current baseline (the census script produces the authoritative
 figures):
 
-| Invariant | Rule | Baseline | Target |
-| --- | --- | --- | --- |
-| Raw hex color literals | no `bg-[#…]` / `text-[#…]` / `border-[#…]` / bare `#hex` in className | ~1,977 | **0** |
-| Non-token neutrals | no `gray-###` / `slate-###` / opaque `#333` | (census) | **0** |
-| Rounded corners | no `rounded-*` except `rounded-none` | ~965 | **0** |
-| Off-role gold | `gold` / `yellow` / `amber` only inside allowlisted brand & reward components | ~658 | **enumerated allowlist** |
-| Banned styling | no `bg-gradient*` / `backdrop-blur*` / `shadow-*` outside the modal/menu allowlist | ~84 | **allowlist only** |
-| Orphaned display font | no `font-display` unless the face is actually loaded | 89 files | **0 / resolved** |
+| Invariant              | Rule                                                                               | Baseline | Target                   |
+| ---------------------- | ---------------------------------------------------------------------------------- | -------- | ------------------------ |
+| Raw hex color literals | no `bg-[#…]` / `text-[#…]` / `border-[#…]` / bare `#hex` in className              | ~1,977   | **0**                    |
+| Non-token neutrals     | no `gray-###` / `slate-###` / opaque `#333`                                        | (census) | **0**                    |
+| Rounded corners        | no `rounded-*` except `rounded-none`                                               | ~965     | **0**                    |
+| Off-role gold          | `gold` / `yellow` / `amber` only inside allowlisted brand & reward components      | ~658     | **enumerated allowlist** |
+| Banned styling         | no `bg-gradient*` / `backdrop-blur*` / `shadow-*` outside the modal/menu allowlist | ~84      | **allowlist only**       |
+| Orphaned display font  | no `font-display` unless the face is actually loaded                               | 89 files | **0 / resolved**         |
 
 "Complete" = every counter at its floor. This converts "did we get
 everything?" from a judgment call into arithmetic.
 
-**2. The invariants *are* the spec, executable.** Each row above becomes a lint
+**2. The invariants _are_ the spec, executable.** Each row above becomes a lint
 rule (ESLint `no-restricted-syntax` + a class-scanner, or stylelint). They
 don't describe unification — they define it, and on failure they name the exact
 file and line. There is no version of "looks done" that disagrees with them.
@@ -210,7 +220,7 @@ stall in a half-migrated limbo without it showing as a non-zero number.
 **4. The whole surface is enumerated up front.** "Everything" is an explicit
 list — every route and every component directory — not "the app." The
 mechanical invariants are global by construction (they scan all files). The
-*judgment* work (per-surface emphasis, gold reassignment) can't be grepped, so
+_judgment_ work (per-surface emphasis, gold reassignment) can't be grepped, so
 each enumerated surface gets a checklist row and an explicit sign-off against
 the spec. A surface is done only when it passes the automated invariants **and**
 its checklist row is signed.
@@ -228,7 +238,7 @@ green CI. That single rule is what the last effort lacked.
 several PRs (batched by directory for reviewability) — possibly more than one
 session. The ratchet is what makes that safe: at any moment there is an exact
 remaining count, every merge only decreases it, and the system can never be
-*falsely* declared finished. Whether it takes one sitting or five, it
+_falsely_ declared finished. Whether it takes one sitting or five, it
 converges — and "piecemeal" becomes impossible, because partial state is always
 visible and always shrinking.
 
@@ -240,74 +250,84 @@ Ordered by dependency: ratify → anchor → tokenize → propagate → enforce.
 step is shippable on its own and leaves the app in a better, coherent state.
 
 ### Step 1 — Ratify the identity spec
+
 Turn Section 3 into the single canonical reference and **replace the scattered
 "laws"** (which are now explicitly open for revision) with one document: the
 color-role table, the per-surface emphasis guide, and the ratified decisions on
 corners, elevation, and typography. Nothing else proceeds until the four color
-roles and the three structural decisions are locked. *Deliverable: an agreed
-spec; the rest of the plan executes against it.*
+roles and the three structural decisions are locked. _Deliverable: an agreed
+spec; the rest of the plan executes against it._
 
 ### Step 2 — Make the logo honor the permanent gold rule
+
 Fix `BrandLogo.jsx` so the drill path defaults to **gold**, not blue
 (`color` default → gold; the path is the brand mark). Align the favicon,
 `theme-color`, PWA manifest, and the `index.html` loader to the same gold, and
 pair the mark with a defined wordmark treatment (typeface, weight, spacing,
-clear-space rule). *This anchors the entire identity to the one fixed point.*
+clear-space rule). _This anchors the entire identity to the one fixed point._
 
 ### Step 3 — Rebuild the token layer as the real source of truth
+
 Rewrite the color tokens in `tailwind.config.cjs` and the `:root` variables in
 `index.css` around **semantic, role-named tokens** (`brand`, `interactive`,
 `surface-{base,card,elevated}`, `border`, `trend-{up,down}`, `text-{primary,
 secondary,muted}`) — one value each, no synonyms. Collapse the duplicate border
 (`#333` vs `border-default`) and duplicate gray (`gray-400` vs `muted`) into a
-single token apiece. *After this, changing a token changes the app — which is
-the precondition for everything after.*
+single token apiece. _After this, changing a token changes the app — which is
+the precondition for everything after._
 
 ### Step 4 — Resolve typography
+
 Execute the ratified type decision: if keeping the display face, **load it** in
 `index.html` and apply it consistently to headings; if not, remove
 `font-display` and standardize on Inter. Then define a **5-step type scale**
 (display / h1 / h2 / body / caption) as reusable utilities or a `<Heading>`
-component, and route every ad-hoc heading through it. *Kills the silent
-system-ui fallback and the per-module heading improvisation.*
+component, and route every ad-hoc heading through it. _Kills the silent
+system-ui fallback and the per-module heading improvisation._
 
 ### Step 5 — Settle corners & elevation
+
 Encode the single ratified radius and the single elevation rule into the token
-layer, and update the base primitives to use them. *One structural language,
-enforced at the source.*
+layer, and update the base primitives to use them. _One structural language,
+enforced at the source._
 
 ### Step 6 — Harden the core primitives
+
 Refactor `Card`, `Button`, `Badge`, `PageHeader`, `DataTable`, `StatCard`,
 `Modal`, `Tabs`, and `Input` to consume **only tokens** — zero hardcoded hex,
 correct color roles, ratified corners/type. These become the reference
-implementation every feature is measured against. *A small, high-leverage set;
-get these perfect first.*
+implementation every feature is measured against. _A small, high-leverage set;
+get these perfect first._
 
 ### Step 7 — De-hex the codebase (token migration)
+
 Systematically replace the 1,977 raw hex/legacy classes with tokens across all
 179 files: `#1a1a1a`→`surface-card`, `#333`→`border`, `#0057B8`→`interactive`,
-`gray-400`→`text-muted`, and reassign every `gold/yellow/amber` use to *either*
-`brand` (if it's genuinely brand/reward) *or* a neutral/interactive/trend token
+`gray-400`→`text-muted`, and reassign every `gold/yellow/amber` use to _either_
+`brand` (if it's genuinely brand/reward) _or_ a neutral/interactive/trend token
 (if it was just decorative). Script the mechanical mappings; hand-review the
 gold reassignments, since that's where the role model actually gets applied.
-*This is the bulk of the visual unification — do it in reviewable batches by
-directory (Leagues, Podium, Dashboard, Articles, Admin, …).*
+_This is the bulk of the visual unification — do it in reviewable batches by
+directory (Leagues, Podium, Dashboard, Articles, Admin, …)._
 
 ### Step 8 — Retune emphasis per surface
+
 With the vocabulary unified, apply the per-surface emphasis model from Section
 3: make acquisition surfaces gold-forward, calm the data core to
 neutral+blue+trend, tighten reward surfaces so gold reads as payoff, and
 neutralize utility/forms. Fix the specimen offenders first — e.g. `HeroBanner`'s
-three-accent hero → one brand accent + one interactive CTA. *This is where the
-site stops being uniformly loud and starts having intentional hierarchy.*
+three-accent hero → one brand accent + one interactive CTA. _This is where the
+site stops being uniformly loud and starts having intentional hierarchy._
 
 ### Step 9 — Purge off-spec legacy styling & normalize motion
+
 Remove the 84 leftover gradient/blur/shadow uses that don't fit the ratified
 elevation rule, and unify the animation vocabulary (durations, easings,
-reduced-motion behavior) so transitions feel like one hand made them. *Erases
-the last obvious Stadium-HUD-era residue.*
+reduced-motion behavior) so transitions feel like one hand made them. _Erases
+the last obvious Stadium-HUD-era residue._
 
 ### Step 10 — Lock it in with guardrails
+
 Flip every ratcheted invariant from warn to **hard error** now that the
 counters are at their floors — the rules themselves were introduced back at
 Step 3 and ran throughout the sweep (see §4). Publish the primitives and tokens
@@ -315,8 +335,8 @@ as a living reference (Storybook or a `/styleguide` page), and write the short
 contributor guide ("use tokens; gold is brand-only; azure is interactive;
 corners are square; here's the type scale"). Close with a verification pass:
 WCAG AA contrast across tokens, and a visual sweep of the enumerated surfaces.
-*Prevents the drift from re-accumulating — without this, the app is back here in
-another ten months.*
+_Prevents the drift from re-accumulating — without this, the app is back here in
+another ten months._
 
 ---
 

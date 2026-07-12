@@ -105,6 +105,13 @@ jobs:
       - name: Prettier
         run: npm run format:check
 
+      # Design-system ratchet: the visual-identity unification may only
+      # converge. Fails if any violation count rose above the committed
+      # baseline (scripts/design-census.baseline.json). See
+      # docs/VISUAL_IDENTITY_UNIFICATION.md §4.
+      - name: Design-system ratchet
+        run: npm run census:check
+
   functions:
     name: Functions check + tests
     runs-on: ubuntu-latest
