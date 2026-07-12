@@ -5,23 +5,11 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
+const { assertAdmin } = require("../helpers/callableGuards");
 
 // =============================================================================
 // ADMIN MODERATION FUNCTIONS
 // =============================================================================
-
-/**
- * Check if user is admin - helper function
- */
-function checkAdminAuth(auth) {
-  if (!auth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  if (!auth.token || !auth.token.admin) {
-    throw new HttpsError("permission-denied", "Only admins can access this function");
-  }
-}
 
 /**
  * List comments for moderation
@@ -33,7 +21,7 @@ exports.listCommentsForModeration = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const db = getDb();
     const { status = "pending", limit = 50, startAfter } = request.data || {};
@@ -139,7 +127,7 @@ exports.moderateComment = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const db = getDb();
     const { commentId, action, reason } = request.data || {};
@@ -217,7 +205,7 @@ exports.bulkModerateComments = onCall(
     timeoutSeconds: 120,
   },
   async (request) => {
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const db = getDb();
     const { commentIds, action, reason } = request.data || {};

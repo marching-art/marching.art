@@ -308,7 +308,8 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
     };
   } catch (error) {
     logger.error("Migration failed:", error);
-    throw new HttpsError("internal", "Migration failed: " + error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Migration failed.");
   }
 });
 
@@ -436,6 +437,7 @@ exports.fixProfileFields = onCall({ cors: true }, async (request) => {
     };
   } catch (error) {
     logger.error("Profile fix failed:", error);
-    throw new HttpsError("internal", "Profile fix failed: " + error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Profile fix failed.");
   }
 });

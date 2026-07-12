@@ -39,4 +39,17 @@ function assertAdmin(request) {
   return uid;
 }
 
-module.exports = { assertAuth, assertAdmin };
+/**
+ * Non-throwing admin check, for call sites that branch on admin status rather
+ * than gate on it (e.g. "the owner OR an admin may delete"). Reads the same
+ * custom claim as assertAdmin and is null-safe on request.auth / token, so it
+ * can't throw on an unauthenticated or token-less request.
+ *
+ * @param {import("firebase-functions/v2/https").CallableRequest} request
+ * @returns {boolean} true when the caller has the admin custom claim.
+ */
+function hasAdminClaim(request) {
+  return request.auth?.token?.admin === true;
+}
+
+module.exports = { assertAuth, assertAdmin, hasAdminClaim };

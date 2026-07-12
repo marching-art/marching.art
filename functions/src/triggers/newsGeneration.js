@@ -24,7 +24,7 @@ const {
 } = require("../helpers/newsGeneration");
 const { generateSeasonSummaryArticle } = require("../helpers/newsSeasonSummary");
 const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
-const { checkAdminAuth } = require("./newsAdmin");
+const { assertAdmin } = require("../helpers/callableGuards");
 
 // Define Gemini API key secret for triggers that use news generation
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
@@ -519,7 +519,7 @@ exports.triggerDailyNews = onCall(
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const db = getDb();
 
@@ -560,7 +560,8 @@ exports.triggerDailyNews = onCall(
       return { success: false, error: result.error };
     } catch (error) {
       logger.error("Error in manual daily news generation:", error);
-      throw new HttpsError("internal", error.message);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to generate daily news.");
     }
   }
 );
@@ -586,7 +587,7 @@ exports.triggerSeasonSummary = onCall(
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { seasonId, dataDocId, throughDay } = request.data || {};
 
@@ -602,7 +603,8 @@ exports.triggerSeasonSummary = onCall(
       return { success: true, throughDay, headline: article.headline, hasImage: Boolean(article.imageUrl) };
     } catch (error) {
       logger.error("Error in manual season summary generation:", error);
-      throw new HttpsError("internal", error.message);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to generate season summary.");
     }
   }
 );
@@ -832,7 +834,7 @@ exports.triggerNewsGeneration = onCall(
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { type, data } = request.data;
 
@@ -855,7 +857,8 @@ exports.triggerNewsGeneration = onCall(
       return { success: true, result };
     } catch (error) {
       logger.error("Error in manual news generation:", error);
-      throw new HttpsError("internal", error.message);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to generate news.");
     }
   }
 );

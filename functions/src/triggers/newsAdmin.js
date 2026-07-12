@@ -6,6 +6,7 @@ const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
 const { invalidateNewsCache } = require("./newsFeed");
+const { assertAdmin } = require("../helpers/callableGuards");
 
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 const cloudinaryCloudName = defineSecret("CLOUDINARY_CLOUD_NAME");
@@ -15,20 +16,6 @@ const cloudinaryApiSecret = defineSecret("CLOUDINARY_API_SECRET");
 // =============================================================================
 // ARTICLE MANAGEMENT (Admin)
 // =============================================================================
-
-/**
- * Check if user is admin - helper function
- * Uses Firebase auth custom claims (consistent with other admin functions)
- */
-function checkAdminAuth(auth) {
-  if (!auth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  if (!auth.token || !auth.token.admin) {
-    throw new HttpsError("permission-denied", "Only admins can manage articles");
-  }
-}
 
 /**
  * List all articles for admin management
@@ -42,7 +29,7 @@ exports.listAllArticles = onCall(
   },
   async (request) => {
     const db = getDb();
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { limit = 20, startAfter = null } = request.data || {};
 
@@ -134,7 +121,7 @@ exports.getArticleForEdit = onCall(
   },
   async (request) => {
     const db = getDb();
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { path } = request.data || {};
 
@@ -180,7 +167,7 @@ exports.updateArticle = onCall(
   },
   async (request) => {
     const db = getDb();
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { path, updates } = request.data || {};
 
@@ -258,7 +245,7 @@ exports.archiveArticle = onCall(
   },
   async (request) => {
     const db = getDb();
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { path, archive = true } = request.data || {};
 
@@ -298,7 +285,7 @@ exports.deleteArticle = onCall(
   },
   async (request) => {
     const db = getDb();
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { path, confirmDelete } = request.data || {};
 
@@ -336,7 +323,7 @@ exports.regenerateArticleImage = onCall(
   },
   async (request) => {
     const db = getDb();
-    checkAdminAuth(request.auth);
+    assertAdmin(request);
 
     const { path, headline, category } = request.data || {};
 
@@ -528,7 +515,6 @@ exports.regenerateArticleImage = onCall(
 );
 
 module.exports = {
-  checkAdminAuth,
   listAllArticles: exports.listAllArticles,
   getArticleForEdit: exports.getArticleForEdit,
   updateArticle: exports.updateArticle,

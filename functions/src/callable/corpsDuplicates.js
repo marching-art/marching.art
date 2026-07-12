@@ -196,7 +196,7 @@ exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540 }, async 
   } catch (error) {
     logger.error("Failed to sweep duplicate corps:", error);
     if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", `Sweep failed: ${error.message}`);
+    throw new HttpsError("internal", "Failed to sweep duplicate corps.");
   }
 });
 

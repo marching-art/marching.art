@@ -4,7 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { serverTimestamp } = require("firebase-admin/firestore");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
 
 exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -45,7 +45,7 @@ exports.deleteComment = onCall({ cors: true }, async (request) => {
 
   const { profileOwnerId, commentId } = request.data;
   const callerUid = request.auth.uid;
-  const isAdmin = request.auth.token.admin === true;
+  const isAdmin = hasAdminClaim(request);
 
   if (!profileOwnerId || !commentId) {
     throw new HttpsError("invalid-argument", "Missing profile owner ID or comment ID.");
