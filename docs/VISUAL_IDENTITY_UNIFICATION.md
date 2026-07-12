@@ -20,13 +20,13 @@
 | 1 Ratify spec          | ✅ done       | this doc §3–4                                                                                     |
 | 2 Logo → gold          | ✅ done       | `BrandLogo` defaults to `text-brand`; favicon/loader/theme already gold                           |
 | 3 Token layer          | ✅ done       | `brand` / `interactive` / surface ramp / `line` scale in `tailwind.config.cjs` + `index.css`      |
-| 4 Typography           | ⬜ open       | `font-display` is dead config (0 uses); a shared type scale / `Heading` component is still TODO   |
+| 4 Typography           | ◑ substantial | `Heading` scale (display/title/section/eyebrow) + Inter standardized; primitives adopt; page-by-page adoption ongoing |
 | 5 Corners & elevation  | ✅ done       | `rounded` census = 0; shadows only on floating overlays                                           |
 | 6 Harden primitives    | ✅ done       | Card/Button/PageHeader/DataTable/etc. consume tokens (no raw hex)                                 |
 | 7 De-hex sweep         | ✅ done       | codemod (4,147 mech.) + fan-out; arbitrary-hex 3307→25, legacy-gray 1020→0                        |
 | 8 Emphasis per surface | ◑ substantial | gold reassigned by role in the fan-out; deeper per-surface hierarchy work optional                |
 | 9 Purge legacy styling | ◑ substantial | banned-effects 73→17 (remainder = overlay/functional/data); motion normalization TODO             |
-| 10 Guardrails + docs   | ◑ partial     | census + ratchet + CI gate live; hard-error flip / styleguide / contributor guide / AA audit TODO |
+| 10 Guardrails + docs   | ◑ substantial | census + ratchet + CI gate live; contributor guide + WCAG AA audit done (§7); interactive styleguide page remains |
 
 **Census journey (TOTAL 5265 → 161).** Remaining counts are legitimate floors:
 categorical tier/medal/prestige **data** (allowlisted), the Podium `GOLD`-const
@@ -388,3 +388,55 @@ what keeps this from becoming another piecemeal pass.
 The first visible payoff lands early: Steps 2–3 alone make the logo correct and
 give a single lever over the whole palette. Steps 6–8 are where a discerning eye
 stops seeing seams.
+
+---
+
+## 7. Contributor guide (keep it unified)
+
+Six rules. The census (`npm run census:check`) enforces the mechanical ones on
+every PR; the rest are review conventions.
+
+1. **Never hardcode a color.** No `bg-[#..]`, no `gray-###`/`slate-###`. Use a
+   token: surfaces (`bg-background`, `bg-surface-sunken/card/raised/elevated`),
+   borders (`border-line`, `-subtle`/`-muted`/`-strong`), text (`text-main`,
+   `text-secondary`, `text-muted`).
+2. **Gold is brand + reward only.** `brand` for the logo/wordmark, achievements,
+   #1/podium/medals, level-ups, currency, "you won" moments — nothing else. If
+   you reach for gold on a button, link, or generic icon, you want `interactive`
+   or a neutral instead.
+3. **Azure is interaction + self.** `interactive` for links, primary actions,
+   active/selected states, focus, and "your row." (Use it for controls, icons,
+   and large text; avoid azure _small body text_ on `surface-raised` — 4.3:1.)
+4. **Green/red/amber are data only.** `success`/`error`/`warning`/`trend-*`
+   never brand or navigate.
+5. **Corners are square.** `rounded-none` on boxes; `rounded-full` only for
+   circles/pills (avatars, dots). No `rounded-lg`/`-xl`/`-2xl`.
+6. **Headings go through the scale.** Use `<Heading level="display|title|
+section|eyebrow">` or `headingRecipes` (`src/components/ui/Heading.tsx`) —
+   don't invent a new `text-2xl font-bold` combination.
+
+### Accessibility (WCAG AA), audited
+
+Every text token clears AA (≥ 4.5:1) on `background` and `surface-card`; azure
+`interactive` corrects the retired `#0057B8` (which failed at **2.88:1**).
+
+| token                     | on `#0a0a0a` | on `surface-card` | on `surface-raised` |
+| ------------------------- | ------------ | ----------------- | ------------------- |
+| text-main                 | 19.8         | 17.4              | 15.9                |
+| text-secondary            | 9.4          | 8.3               | 7.6                 |
+| text-muted                | 6.9          | 6.1               | 5.6                 |
+| interactive (azure)       | 5.4          | 4.7               | 4.3 ⚠               |
+| brand (gold)              | 10.3         | 9.1               | 8.3                 |
+| warning / success / error | ≥ 6.2        | ≥ 5.5             | ≥ 5.0               |
+
+Recompute anytime: the audit is a few lines of Node (relative-luminance ratio);
+re-run it if a token value changes.
+
+### On "hard error"
+
+The ratchet is already a hard error _at each invariant's floor_: `legacy-gray`,
+`rounded`, and `font-display` sit at 0, so `census:check` fails any PR that adds
+even one. The nonzero floors (`hex-literal`, `banned-effects`, `off-role-gold`,
+`arbitrary-hex`) are frozen ceilings holding legitimate data/overlay/functional
+cases — they too can only fall. There is no separate "flip" needed; convergence
+is the only permitted direction.
