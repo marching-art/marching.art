@@ -8,7 +8,6 @@
 import { useMemo } from 'react';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
-import { getSeasonProgress } from './useSeason';
 import { isShowLive, showStartsAtDate } from '../utils/scheduleUtils';
 
 // =============================================================================
@@ -99,10 +98,14 @@ function formatShowStart(show) {
 // =============================================================================
 
 export function useUrgencyTriggers() {
-  // Season data from global store
+  // Season data from global store. currentDay/currentWeek are derived once in
+  // the store from the canonical season clock (utils/seasonProgress) — read
+  // them here rather than recomputing, so this surface can't drift.
   const seasonData = useSeasonStore((state) => state.seasonData);
   const weeksRemaining = useSeasonStore((state) => state.weeksRemaining);
   const seasonLoading = useSeasonStore((state) => state.loading);
+  const currentDay = useSeasonStore((state) => state.currentDay);
+  const currentWeek = useSeasonStore((state) => state.currentWeek);
 
   // Schedule data from global store
   const competitions = useScheduleStore((state) => state.competitions);
@@ -145,10 +148,9 @@ export function useUrgencyTriggers() {
       return result;
     }
 
-    // Calculate season progress
-    const progress = getSeasonProgress(seasonData);
-    result.currentWeek = progress.currentWeek;
-    result.currentDay = progress.currentDay;
+    // Season progress comes from the store's canonical derivation.
+    result.currentWeek = currentWeek;
+    result.currentDay = currentDay;
 
     // Calculate days until finals/season end
     if (seasonData.schedule?.endDate) {
@@ -303,7 +305,15 @@ export function useUrgencyTriggers() {
     result.primary = triggers.length > 0 ? triggers[0] : null;
 
     return result;
-  }, [seasonData, weeksRemaining, seasonLoading, competitions, scheduleLoading]);
+  }, [
+    seasonData,
+    weeksRemaining,
+    seasonLoading,
+    competitions,
+    scheduleLoading,
+    currentDay,
+    currentWeek,
+  ]);
 
   return triggers;
 }
