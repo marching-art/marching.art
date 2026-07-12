@@ -14,7 +14,8 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "seed:dci": "node src/scripts/seedDciReference.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage"
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.2.0",
