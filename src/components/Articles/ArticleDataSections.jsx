@@ -10,17 +10,17 @@ const ArticleDataSections = ({ article }) => (
     {/* Standings Data */}
     {article.standings && article.standings.length > 0 && (
       <div className="mb-8">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-[#0057B8]" />
+        <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4 flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-interactive" />
           Standings
         </h3>
-        <div className="bg-[#111] border border-[#333] divide-y divide-[#333]/50">
+        <div className="bg-surface-sunken border border-line divide-y divide-line/50">
           {article.standings.slice(0, 10).map((item, idx) => (
             <div key={idx} className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
                 <span
                   className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-none ${
-                    item.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-muted'
+                    item.rank <= 3 ? 'bg-interactive text-white' : 'bg-surface-raised text-muted'
                   }`}
                 >
                   {item.rank}
@@ -55,7 +55,7 @@ const ArticleDataSections = ({ article }) => (
         </h3>
         <div className="space-y-3">
           {article.topPerformers.slice(0, 5).map((perf, idx) => (
-            <div key={idx} className="bg-[#111] border border-[#333] p-4">
+            <div key={idx} className="bg-surface-sunken border border-line p-4">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-bold text-white">{perf.corpsName || perf.corps}</span>
                 <span className="text-sm font-data font-bold text-orange-400">
@@ -65,7 +65,7 @@ const ArticleDataSections = ({ article }) => (
               {perf.director && (
                 <span className="text-xs text-muted">Director: {perf.director}</span>
               )}
-              {perf.highlight && <p className="text-xs text-gray-400 mt-1">{perf.highlight}</p>}
+              {perf.highlight && <p className="text-xs text-muted mt-1">{perf.highlight}</p>}
             </div>
           ))}
         </div>
@@ -86,7 +86,7 @@ const ArticleDataSections = ({ article }) => (
                 {insight.metric}
               </div>
               <p className="text-sm text-white mb-1">{insight.finding}</p>
-              <p className="text-xs text-gray-400">{insight.implication}</p>
+              <p className="text-xs text-muted">{insight.implication}</p>
             </div>
           ))}
         </div>
@@ -99,7 +99,7 @@ const ArticleDataSections = ({ article }) => (
 
     {/* Trending Corps */}
     {article.trendingCorps?.length > 0 && (
-      <div className="bg-[#111] border border-[#333] p-5 mb-8">
+      <div className="bg-surface-sunken border border-line p-5 mb-8">
         <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-4">
           Trending Corps
         </h3>

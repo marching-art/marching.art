@@ -65,7 +65,7 @@ export interface StatusBadgeProps {
 
 const statusColors: Record<StatusType, string> = {
   online: 'bg-green-500',
-  offline: 'bg-gray-500',
+  offline: 'bg-charcoal-500',
   busy: 'bg-red-500',
   away: 'bg-yellow-500',
 };

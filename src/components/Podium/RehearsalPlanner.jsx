@@ -16,7 +16,7 @@ function ConditionBar({ label, value, icon: Icon, color }) {
           <span>{label}</span>
           <span className="tabular-nums">{Math.round(value)}</span>
         </div>
-        <div className="h-1.5 bg-[#2a2a2a] rounded-none overflow-hidden">
+        <div className="h-1.5 bg-surface-elevated rounded-none overflow-hidden">
           <div
             className={`h-full rounded-none ${value >= 50 ? 'bg-green-500' : value >= 30 ? 'bg-yellow-500' : 'bg-red-500'}`}
             style={{ width: `${Math.max(2, Math.min(100, value))}%` }}
@@ -80,10 +80,10 @@ export default function RehearsalPlanner({ podium }) {
 
   return (
     <div
-      className={`bg-[#1a1a1a] border rounded-none p-4 space-y-4 ${
+      className={`bg-surface-card border rounded-none p-4 space-y-4 ${
         isShowDay
           ? 'border-[#c9a227] shadow-[0_0_0_1px_#c9a227] ring-1 ring-[#c9a227]/40'
-          : 'border-[#333]'
+          : 'border-line'
       }`}
     >
       {/* Show day is the payoff — make it unmissable. Banner sits above the
@@ -159,19 +159,17 @@ export default function RehearsalPlanner({ podium }) {
                   key={block.id}
                   disabled={busy !== null}
                   onClick={() => handleAllocate(block.id)}
-                  className="text-left px-3 py-2.5 rounded-none border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback disabled:opacity-50"
+                  className="text-left px-3 py-2.5 rounded-none border border-line hover:border-interactive hover:bg-interactive/10 transition-colors press-feedback disabled:opacity-50"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white">{block.label}</span>
                     <span className="flex items-center gap-1">
                       {usedCount > 0 && (
-                        <span className="text-[10px] font-bold text-[#4d9fff] tabular-nums">
+                        <span className="text-[10px] font-bold text-interactive tabular-nums">
                           ×{usedCount}
                         </span>
                       )}
-                      {busy === block.id && (
-                        <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
-                      )}
+                      {busy === block.id && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
                     </span>
                   </div>
                   <div className="text-[10px] text-muted mt-0.5">{block.detail}</div>
@@ -185,9 +183,7 @@ export default function RehearsalPlanner({ podium }) {
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#c9a227]">Fundraiser</span>
-                {busy === 'fundraiser' && (
-                  <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
-                )}
+                {busy === 'fundraiser' && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
               </div>
               <div className="text-[10px] text-muted mt-0.5">
                 Convert a block to Corps Budget income (+3 Budget per block) — no caption growth
@@ -197,7 +193,7 @@ export default function RehearsalPlanner({ podium }) {
         )}
 
         {/* Schedule panel: today's block count + running order */}
-        <div className="lg:w-56 shrink-0 flex flex-col rounded-none border border-[#333] bg-[#141414] p-3">
+        <div className="lg:w-56 shrink-0 flex flex-col rounded-none border border-line bg-surface-sunken p-3">
           <div className="flex items-baseline justify-between">
             <span className="text-[10px] uppercase font-bold tracking-wider text-muted">
               Blocks today
@@ -212,11 +208,9 @@ export default function RehearsalPlanner({ podium }) {
               today.blocks.map((b, i) => (
                 <div
                   key={`${b}-${i}`}
-                  className="flex items-center gap-1.5 text-[10px] text-gray-300"
+                  className="flex items-center gap-1.5 text-[10px] text-secondary"
                 >
-                  <span className="text-muted tabular-nums w-4 text-right shrink-0">
-                    {i + 1}.
-                  </span>
+                  <span className="text-muted tabular-nums w-4 text-right shrink-0">{i + 1}.</span>
                   <span className="truncate">
                     {BLOCKS.find((x) => x.id === b)?.label ||
                       (b === 'fundraiser' ? 'Fundraiser' : b)}
@@ -234,7 +228,7 @@ export default function RehearsalPlanner({ podium }) {
             <button
               onClick={handleRest}
               disabled={busy !== null}
-              className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-[#333] text-gray-400 hover:text-white hover:border-gray-500 transition-colors press-feedback disabled:opacity-50"
+              className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-line text-muted hover:text-white hover:border-charcoal-500 transition-colors press-feedback disabled:opacity-50"
             >
               <Moon className="w-3 h-3" /> Rest day
             </button>
@@ -263,7 +257,7 @@ export default function RehearsalPlanner({ podium }) {
               </span>
             )}
             {Object.entries(lastPanel.gains || {}).map(([caption, gain]) => (
-              <span key={caption} className="text-[11px] text-gray-300 tabular-nums">
+              <span key={caption} className="text-[11px] text-secondary tabular-nums">
                 {CAPTION_LABELS[caption] || caption}:{' '}
                 <span className="text-green-400">+{(gain.content * 100).toFixed(1)}%</span> content
                 {gain.clean > 0.0005 && (

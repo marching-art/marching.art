@@ -69,10 +69,10 @@ const CommunityPulse = memo(() => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center gap-2">
+    <div className="bg-surface-card border border-line rounded-none overflow-hidden">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center gap-2">
         <Activity className="w-3.5 h-3.5 text-green-500" />
-        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+        <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider">
           Community Pulse
         </h3>
         <span className="ml-auto relative flex h-2 w-2">
@@ -85,23 +85,23 @@ const CommunityPulse = memo(() => {
         <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#333] animate-pulse" />
+              <div className="w-6 h-6 rounded-full bg-line animate-pulse" />
               <div className="flex-1">
-                <div className="w-3/4 h-3 bg-[#333] animate-pulse mb-1" />
-                <div className="w-1/3 h-2 bg-[#333] animate-pulse" />
+                <div className="w-3/4 h-3 bg-line animate-pulse mb-1" />
+                <div className="w-1/3 h-2 bg-line animate-pulse" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="divide-y divide-[#222]">
+        <div className="divide-y divide-line-subtle">
           {activities.map((activity) => (
             <div key={activity.id} className="px-4 py-2.5 flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#222] flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 rounded-full bg-surface-raised flex items-center justify-center flex-shrink-0">
                 {iconMap[activity.icon] || iconMap.users}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-300 truncate">{activity.text}</p>
+                <p className="text-xs text-secondary truncate">{activity.text}</p>
                 <p className="text-[10px] text-muted">{activity.time}</p>
               </div>
             </div>

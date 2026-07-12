@@ -62,14 +62,30 @@ module.exports = {
         panel: '#1a1a1a',
 
         // SURFACE COLORS - Deep neutral backgrounds
-        background: '#0A0A0A',
+        // Canonical neutral ramp (recessed → elevated). The sweep collapses the
+        // scattered near-black hexes (#0f0f0f–#252525) onto these five steps.
+        background: '#0A0A0A', // App background
+        'surface-sunken': '#111111', // Recessed wells, inputs, tracks
         surface: {
           DEFAULT: '#0A0A0A', // App Background
+          sunken: '#111111', // Recessed wells
           card: '#1A1A1A', // Card Background
-          elevated: '#2A2A2A', // Elevated elements
+          raised: '#222222', // Card headers/footers, hover, chips
+          elevated: '#2A2A2A', // Popovers, menus, top layer
         },
         'surface-secondary': '#1A1A1A',
         'surface-tertiary': '#2A2A2A',
+        'surface-card': '#1A1A1A',
+        'surface-raised': '#222222',
+        'surface-elevated': '#2A2A2A',
+
+        // HAIRLINE BORDERS - one opaque line scale (collapses #222/#333/#444/#555)
+        line: {
+          subtle: '#242424', // Faint dividers
+          muted: '#2A2A2A', // Between subtle and default
+          DEFAULT: '#333333', // Standard card/structure hairline
+          strong: '#444444', // Emphasis / hover borders
+        },
 
         // TEXT COLORS - High contrast hierarchy
         text: {
@@ -79,6 +95,7 @@ module.exports = {
           muted: '#999999', // Muted/disabled text (>=4.5:1 on #0A0A0A per WCAG AA)
         },
         main: '#FFFFFF',
+        secondary: '#B3B3B3', // text-secondary (unambiguous single-word key)
         muted: '#999999',
         'text-main': '#FFFFFF',
         'text-secondary': '#B3B3B3',

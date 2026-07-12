@@ -427,9 +427,9 @@ export function getRankDisplay(rank: number): {
     case 2:
       return {
         icon: 'trophy',
-        color: 'text-gray-400',
-        bgColor: 'bg-gradient-to-r from-gray-400/20 to-gray-500/10',
-        borderColor: 'border-gray-400/30',
+        color: 'text-muted',
+        bgColor: 'bg-gradient-to-r from-charcoal-400/20 to-charcoal-500/10',
+        borderColor: 'border-charcoal-400/30',
       };
     case 3:
       return {
@@ -442,16 +442,16 @@ export function getRankDisplay(rank: number): {
       if (rank <= 10) {
         return {
           icon: null,
-          color: 'text-gray-300',
+          color: 'text-secondary',
           bgColor: 'bg-charcoal-800/30',
-          borderColor: 'border-gray-500/20',
+          borderColor: 'border-charcoal-500/20',
         };
       }
       return {
         icon: null,
-        color: 'text-gray-400',
+        color: 'text-muted',
         bgColor: 'bg-charcoal-900/30',
-        borderColor: 'border-gray-500/10',
+        borderColor: 'border-charcoal-500/10',
       };
   }
 }

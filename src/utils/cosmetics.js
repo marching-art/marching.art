@@ -71,7 +71,7 @@ export const SHOP_ITEMS = [
     name: 'Silver Frame',
     price: 1500,
     description: 'Silver border around your profile avatar',
-    frameClass: 'ring-2 ring-gray-300',
+    frameClass: 'ring-2 ring-charcoal-300',
   },
   {
     id: 'frame_gold',
@@ -97,8 +97,8 @@ export const SHOP_ITEMS = [
     name: 'Midnight Blue',
     price: 1500,
     description: 'Deep blue accent on your season scorecard',
-    cardClass: 'border-[#0057B8] bg-gradient-to-br from-[#0a1a2e] to-[#1a1a1a]',
-    swatchClass: 'bg-gradient-to-br from-[#0a1a2e] to-[#0057B8]',
+    cardClass: 'border-interactive bg-gradient-to-br from-[#0a1a2e] to-[#1a1a1a]',
+    swatchClass: 'bg-gradient-to-br from-[#0a1a2e] to-interactive',
   },
   {
     id: 'theme_crimson',
@@ -149,7 +149,7 @@ export const SHOP_ITEMS = [
     seasonal: 'off-season',
     description: 'Rehearsal-hall glow for the grind months — off-season exclusive',
     cardClass: 'border-sky-600 bg-gradient-to-br from-[#0a1c2e] via-[#12122e] to-[#1a1a1a]',
-    swatchClass: 'bg-gradient-to-br from-sky-600 via-slate-500 to-indigo-800',
+    swatchClass: 'bg-gradient-to-br from-sky-600 via-charcoal-500 to-indigo-800',
   },
 ];
 

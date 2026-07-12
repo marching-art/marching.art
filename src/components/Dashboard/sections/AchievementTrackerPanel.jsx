@@ -41,10 +41,10 @@ const AchievementTrackerPanel = memo(({ profile }) => {
   const totalCount = ACHIEVEMENTS.length;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       {/* Header */}
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
           <Award className="w-3.5 h-3.5 text-yellow-500" />
           Achievements
         </h3>
@@ -54,7 +54,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
       </div>
 
       {/* Overall progress bar */}
-      <div className="h-1 bg-[#222]">
+      <div className="h-1 bg-surface-raised">
         <div
           className="h-full bg-yellow-500 transition-all duration-500"
           style={{ width: `${(totalEarned / totalCount) * 100}%` }}
@@ -63,13 +63,13 @@ const AchievementTrackerPanel = memo(({ profile }) => {
 
       {/* Next Up — achievements closest to unlocking */}
       {nextUp.length > 0 && (
-        <div className="divide-y divide-[#222]">
+        <div className="divide-y divide-line-subtle">
           {nextUp.map((a) => {
             const Icon = a.icon;
             return (
               <div key={a.id} className="px-4 py-3">
                 <div className="flex items-center gap-3 mb-1.5">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-[#222] border border-[#333]">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-raised border border-line">
                     <Icon className="w-3 h-3 text-yellow-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -80,7 +80,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
                   </div>
                   <span className="text-[10px] font-bold text-yellow-600 font-data">{a.pct}%</span>
                 </div>
-                <div className="ml-8 h-1 bg-[#222] rounded-full overflow-hidden">
+                <div className="ml-8 h-1 bg-surface-raised rounded-full overflow-hidden">
                   <div
                     className="h-full bg-yellow-600 transition-all duration-500 rounded-full"
                     style={{ width: `${a.pct}%` }}
@@ -95,7 +95,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
 
       {/* Recently earned (last 2) */}
       {completed.length > 0 && (
-        <div className="border-t border-[#333] divide-y divide-[#222]">
+        <div className="border-t border-line divide-y divide-line-subtle">
           {completed
             .slice(-2)
             .reverse()
@@ -116,7 +116,7 @@ const AchievementTrackerPanel = memo(({ profile }) => {
 
       {/* All complete banner */}
       {nextUp.length === 0 && (
-        <div className="px-4 py-3 border-t border-[#222] bg-yellow-500/5">
+        <div className="px-4 py-3 border-t border-line-subtle bg-yellow-500/5">
           <div className="flex items-center gap-2 justify-center">
             <Crown className="w-4 h-4 text-yellow-500" />
             <span className="text-xs font-bold text-yellow-400">All achievements unlocked!</span>
@@ -125,10 +125,10 @@ const AchievementTrackerPanel = memo(({ profile }) => {
       )}
 
       {/* Footer link to the full Achievements page (all earned + locked) */}
-      <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
+      <div className="px-3 py-1.5 border-t border-line bg-surface-sunken">
         <Link
           to="/achievements"
-          className="text-[10px] text-muted hover:text-gray-300 transition-colors"
+          className="text-[10px] text-muted hover:text-secondary transition-colors"
         >
           View all achievements →
         </Link>

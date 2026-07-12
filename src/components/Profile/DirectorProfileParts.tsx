@@ -58,7 +58,7 @@ const StatusIndicator = memo(({ status }: { status: keyof typeof STATUS_INDICATO
           />
         )}
       </div>
-      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
         {config.label}
       </span>
     </div>
@@ -79,7 +79,7 @@ const StatPill = memo(
     label: string;
     color?: string;
   }) => (
-    <div className="flex items-center gap-1.5 px-2 py-1 bg-[#222] border border-[#333]">
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-surface-raised border border-line">
       <Icon className={`w-3.5 h-3.5 ${color}`} />
       <span className={`text-xs font-bold font-data tabular-nums ${color}`}>{value}</span>
       <span className="text-[9px] text-muted uppercase">{label}</span>
@@ -108,8 +108,8 @@ const AchievementMini = memo(({ achievement }: { achievement: Achievement }) => 
   const rarityColors: Record<string, string> = {
     legendary: 'bg-purple-500/20 border-purple-500/40 text-purple-400',
     epic: 'bg-purple-400/15 border-purple-400/30 text-purple-300',
-    rare: 'bg-[#0057B8]/15 border-[#0057B8]/30 text-[#0057B8]',
-    common: 'bg-gray-500/10 border-gray-500/30 text-gray-400',
+    rare: 'bg-interactive/15 border-interactive/30 text-interactive',
+    common: 'bg-charcoal-500/10 border-charcoal-500/30 text-muted',
   };
   const colors = rarityColors[achievement.rarity] || rarityColors.common;
 
@@ -148,10 +148,10 @@ const SeasonRow = memo(
     const conceptStyle = describeConceptStyle(season.showConcept);
 
     return (
-      <div className="border-b border-[#333] last:border-b-0">
+      <div className="border-b border-line last:border-b-0">
         <button
           onClick={onToggle}
-          className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[#222] transition-colors text-left"
+          className="w-full px-3 py-2 flex items-center gap-2 hover:bg-surface-raised transition-colors text-left"
         >
           {/* Rank */}
           <div
@@ -159,10 +159,10 @@ const SeasonRow = memo(
               placement === 1
                 ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400'
                 : placement && placement <= 3
-                  ? 'bg-gray-400/10 border-gray-500/30 text-gray-300'
+                  ? 'bg-charcoal-400/10 border-charcoal-500/30 text-secondary'
                   : placement && placement <= 10
                     ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
-                    : 'bg-[#222] border-[#333] text-muted'
+                    : 'bg-surface-raised border-line text-muted'
             }`}
           >
             {placement ? (
@@ -182,7 +182,7 @@ const SeasonRow = memo(
             </div>
             <span className="text-[10px] text-muted">
               {conceptTitle && (
-                <span className="text-[#0057B8] italic">&ldquo;{conceptTitle}&rdquo; · </span>
+                <span className="text-interactive italic">&ldquo;{conceptTitle}&rdquo; · </span>
               )}
               {formatSeasonName(season.seasonId || season.seasonName || '')}
             </span>
@@ -215,15 +215,15 @@ const SeasonRow = memo(
               className="overflow-hidden"
             >
               {conceptStyle && (
-                <div className="px-3 pt-1 pb-1 bg-[#0a0a0a] flex items-center gap-1.5 text-[10px] text-gray-400">
-                  <Music className="w-3 h-3 text-[#0057B8] flex-shrink-0" />
+                <div className="px-3 pt-1 pb-1 bg-background flex items-center gap-1.5 text-[10px] text-muted">
+                  <Music className="w-3 h-3 text-interactive flex-shrink-0" />
                   <span className="truncate">
                     {conceptTitle ? `“${conceptTitle}” — ` : ''}
                     {conceptStyle}
                   </span>
                 </div>
               )}
-              <div className="px-3 pb-2 pt-1 bg-[#0a0a0a] grid grid-cols-3 gap-2 text-center">
+              <div className="px-3 pb-2 pt-1 bg-background grid grid-cols-3 gap-2 text-center">
                 <div>
                   <div className="text-xs font-bold text-white">{season.showsAttended || 0}</div>
                   <div className="text-[9px] text-muted">Shows</div>
@@ -274,13 +274,11 @@ const Section = memo(
     children: React.ReactNode;
     action?: React.ReactNode;
   }) => (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+    <div className="bg-surface-card border border-line">
+      <div className="px-3 py-2 border-b border-line bg-surface-raised flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Icon className={`w-3.5 h-3.5 ${iconColor || 'text-gray-400'}`} />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-            {title}
-          </span>
+          <Icon className={`w-3.5 h-3.5 ${iconColor || 'text-muted'}`} />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{title}</span>
         </div>
         {action}
       </div>
@@ -325,11 +323,11 @@ const SOCIAL_META: Array<{
   icon: React.ElementType;
   color: string;
 }> = [
-  { key: 'website', label: 'Website', icon: Globe, color: 'text-[#0057B8]' },
+  { key: 'website', label: 'Website', icon: Globe, color: 'text-interactive' },
   { key: 'twitter', label: 'Twitter', icon: Twitter, color: 'text-sky-400' },
   { key: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-400' },
   { key: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-400' },
-  { key: 'tiktok', label: 'TikTok', icon: Music, color: 'text-gray-300' },
+  { key: 'tiktok', label: 'TikTok', icon: Music, color: 'text-secondary' },
   { key: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-500' },
   { key: 'discord', label: 'Discord', icon: MessageCircle, color: 'text-[#5865F2]' },
 ];
@@ -351,7 +349,7 @@ const SocialLinks = memo(({ links }: { links: DirectorSocialLinks }) => {
           return (
             <span
               key={key}
-              className="flex items-center gap-1 px-2 py-1 border border-[#333] bg-[#0a0a0a] text-[10px] text-gray-400"
+              className="flex items-center gap-1 px-2 py-1 border border-line bg-background text-[10px] text-muted"
             >
               <Icon className={`w-3 h-3 ${color}`} />
               <span className="truncate max-w-[120px]">{display}</span>
@@ -364,7 +362,7 @@ const SocialLinks = memo(({ links }: { links: DirectorSocialLinks }) => {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 px-2 py-1 border border-[#333] bg-[#0a0a0a] text-[10px] text-gray-300 hover:text-white hover:border-[#555] transition-colors"
+            className="flex items-center gap-1 px-2 py-1 border border-line bg-background text-[10px] text-secondary hover:text-white hover:border-line-strong transition-colors"
           >
             <Icon className={`w-3 h-3 ${color}`} />
             <span className="truncate max-w-[120px]">{display}</span>
@@ -406,13 +404,13 @@ const EnsembleCard = memo(
     );
 
     return (
-      <div className="bg-[#0a0a0a] border border-[#333]">
-        <div className="px-3 py-2 border-b border-[#333] bg-[#111] flex items-center gap-2">
+      <div className="bg-background border border-line">
+        <div className="px-3 py-2 border-b border-line bg-surface-sunken flex items-center gap-2">
           {avatarUrl && (
             <img
               src={avatarUrl}
               alt={corpsName}
-              className="w-7 h-7 object-cover border border-[#333]"
+              className="w-7 h-7 object-cover border border-line"
               loading="lazy"
               decoding="async"
             />
@@ -422,7 +420,7 @@ const EnsembleCard = memo(
             <div className="flex items-center gap-2 text-[9px] text-muted">
               <span className={`font-bold ${classConfig.color}`}>{classConfig.name}</span>
               {showTitle && (
-                <span className="text-[#0057B8] italic truncate">&ldquo;{showTitle}&rdquo;</span>
+                <span className="text-interactive italic truncate">&ldquo;{showTitle}&rdquo;</span>
               )}
               {location && (
                 <span className="flex items-center gap-1">
@@ -440,10 +438,10 @@ const EnsembleCard = memo(
         ) : (
           <div className="px-3 py-2 space-y-2">
             {info.tagline && (
-              <p className="text-[11px] italic text-gray-300">&ldquo;{info.tagline}&rdquo;</p>
+              <p className="text-[11px] italic text-secondary">&ldquo;{info.tagline}&rdquo;</p>
             )}
 
-            <div className="flex flex-wrap gap-2 text-[10px] text-gray-400">
+            <div className="flex flex-wrap gap-2 text-[10px] text-muted">
               {info.foundedYear && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" /> Est. {info.foundedYear}
@@ -466,7 +464,7 @@ const EnsembleCard = memo(
                 <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-0.5">
                   Mission
                 </div>
-                <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.mission}</p>
+                <p className="text-[11px] text-secondary whitespace-pre-wrap">{info.mission}</p>
               </div>
             )}
 
@@ -475,7 +473,7 @@ const EnsembleCard = memo(
                 <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-0.5">
                   History
                 </div>
-                <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.history}</p>
+                <p className="text-[11px] text-secondary whitespace-pre-wrap">{info.history}</p>
               </div>
             )}
 
@@ -488,9 +486,9 @@ const EnsembleCard = memo(
                   {info.notableShows.map((show, i) => (
                     <li
                       key={`${show}-${i}`}
-                      className="text-[11px] text-gray-300 flex items-center gap-1.5"
+                      className="text-[11px] text-secondary flex items-center gap-1.5"
                     >
-                      <Disc3 className="w-2.5 h-2.5 text-[#0057B8] flex-shrink-0" /> {show}
+                      <Disc3 className="w-2.5 h-2.5 text-interactive flex-shrink-0" /> {show}
                     </li>
                   ))}
                 </ul>
@@ -508,13 +506,13 @@ EnsembleCard.displayName = 'EnsembleCard';
 const UnregisteredEnsembleCard = memo(({ classKey }: { classKey: CorpsClass }) => {
   const classConfig = getClassDisplay(classKey);
   return (
-    <div className="bg-[#0a0a0a] border border-dashed border-[#333]">
-      <div className="px-3 py-2 border-b border-[#333] bg-[#111] flex items-center gap-2">
-        <div className="w-7 h-7 border border-dashed border-[#333] flex items-center justify-center">
+    <div className="bg-background border border-dashed border-line">
+      <div className="px-3 py-2 border-b border-line bg-surface-sunken flex items-center gap-2">
+        <div className="w-7 h-7 border border-dashed border-line flex items-center justify-center">
           <Music className="w-3.5 h-3.5 text-muted" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-bold text-gray-400 truncate">Not yet registered</div>
+          <div className="text-xs font-bold text-muted truncate">Not yet registered</div>
           <div className={`text-[9px] font-bold ${classConfig.color}`}>{classConfig.name}</div>
         </div>
       </div>
@@ -524,7 +522,7 @@ const UnregisteredEnsembleCard = memo(({ classKey }: { classKey: CorpsClass }) =
         </p>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline"
+          className="inline-flex items-center gap-1 text-[10px] text-interactive hover:underline"
         >
           Register on dashboard <ExternalLink className="w-3 h-3" />
         </Link>
@@ -552,7 +550,7 @@ const EmptyWithCTA = memo(
       <p className="text-[10px] text-muted mb-2">{title}</p>
       <Link
         to={to}
-        className="inline-flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline"
+        className="inline-flex items-center gap-1 text-[10px] text-interactive hover:underline"
       >
         {cta} <ExternalLink className="w-3 h-3" />
       </Link>
@@ -604,7 +602,9 @@ const AvatarActions = ({ actions }: { actions: AvatarAction[] }) => {
             onClick={action.onClick}
             disabled={action.disabled}
             className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors disabled:opacity-50 ${
-              action.primary ? 'bg-[#0057B8] hover:bg-[#0066d6]' : 'bg-[#333] hover:bg-[#444]'
+              action.primary
+                ? 'bg-interactive hover:bg-interactive-hover'
+                : 'bg-line hover:bg-line-strong'
             }`}
           >
             <action.icon
@@ -614,7 +614,7 @@ const AvatarActions = ({ actions }: { actions: AvatarAction[] }) => {
           </button>
         ))}
       </div>
-      <div className="lg:hidden flex flex-col border-t border-[#333] divide-y divide-[#333]">
+      <div className="lg:hidden flex flex-col border-t border-line divide-y divide-line">
         {actions.map((action) => (
           <button
             key={action.label}
@@ -622,8 +622,8 @@ const AvatarActions = ({ actions }: { actions: AvatarAction[] }) => {
             disabled={action.disabled}
             className={`flex items-center justify-center gap-1.5 min-h-touch px-2 transition-colors press-feedback disabled:opacity-50 ${
               action.primary
-                ? 'bg-[#0057B8] active:bg-[#0066d6] text-white'
-                : 'bg-[#1a1a1a] active:bg-[#333] text-gray-300'
+                ? 'bg-interactive active:bg-interactive-hover text-white'
+                : 'bg-surface-card active:bg-line text-secondary'
             }`}
           >
             <action.icon className={`w-4 h-4 ${action.spinning ? 'animate-spin' : ''}`} />

@@ -504,7 +504,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
           {actionLabel && onAction && (
             <button
               onClick={onAction}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-mono font-bold text-xs uppercase tracking-wider hover:bg-[#0066d6] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-interactive text-white font-mono font-bold text-xs uppercase tracking-wider hover:bg-interactive-hover transition-colors"
             >
               <Plus className="w-3 h-3" />
               {actionLabel}
@@ -575,7 +575,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         {actionLabel && onAction && (
           <button
             onClick={onAction}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-[#0057B8] text-white font-mono font-bold text-sm uppercase tracking-wider border border-[#0057B8] hover:bg-[#0066d6] transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2 bg-interactive text-white font-mono font-bold text-sm uppercase tracking-wider border border-interactive hover:bg-interactive-hover transition-colors"
           >
             <Plus className="w-4 h-4" />
             {actionLabel}

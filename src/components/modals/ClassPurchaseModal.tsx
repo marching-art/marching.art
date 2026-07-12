@@ -100,11 +100,11 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
         aria-labelledby="modal-title-class-purchase"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none"
+          className="w-full max-w-md bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <h2
               id="modal-title-class-purchase"
               className="text-xs font-bold uppercase tracking-wider text-yellow-400 flex items-center gap-2"
@@ -129,14 +129,14 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
             </div>
 
             {/* Class Info Card */}
-            <div className="bg-[#0a0a0a] border border-[#333] p-4 mb-4">
+            <div className="bg-background border border-line p-4 mb-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-bold text-white">{className}</h3>
-                <span className="text-xs font-data text-[#0057B8]">
+                <span className="text-xs font-data text-interactive">
                   Draft budget: {CLASS_BUDGETS[classKey] || '—'}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 {CLASS_DESCRIPTIONS[classKey] || 'Unlock this class to start a new corps.'}
               </p>
             </div>
@@ -209,23 +209,23 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
               )}
 
             {/* Cost Breakdown */}
-            <div className="bg-[#0a0a0a] border border-[#333] p-4 mb-4">
+            <div className="bg-background border border-line p-4 mb-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-400">Cost</span>
+                <span className="text-xs text-muted">Cost</span>
                 <span className="text-sm font-bold text-yellow-400 flex items-center gap-1">
                   <Coins className="w-3 h-3" />
                   {coinCost.toLocaleString()} CC
                 </span>
               </div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-400">Your Balance</span>
+                <span className="text-xs text-muted">Your Balance</span>
                 <span className="text-sm font-data text-white">
                   {currentBalance.toLocaleString()} CC
                 </span>
               </div>
-              <div className="border-t border-[#333] pt-2 mt-2">
+              <div className="border-t border-line pt-2 mt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">After Purchase</span>
+                  <span className="text-xs text-muted">After Purchase</span>
                   <span className="text-sm font-bold font-data text-green-400">
                     {newBalance.toLocaleString()} CC
                   </span>
@@ -242,11 +242,11 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2">
             <button
               onClick={onClose}
               disabled={isPurchasing}
-              className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+              className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50"
             >
               Cancel
             </button>

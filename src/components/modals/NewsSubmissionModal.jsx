@@ -109,16 +109,16 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
         aria-labelledby="modal-title-news-submission"
       >
         <div
-          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-none max-h-[90dvh] flex flex-col"
+          className="w-full max-w-2xl bg-surface-card border border-line rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#0057B8]" />
+              <FileText className="w-4 h-4 text-interactive" />
               <h2
                 id="modal-title-news-submission"
-                className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                className="text-xs font-bold uppercase tracking-wider text-secondary"
               >
                 Submit News Article
               </h2>
@@ -137,8 +137,8 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
             <div className="p-4 space-y-4 overflow-y-auto flex-1">
               {/* Info Banner */}
-              <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none px-3 py-2">
-                <p className="text-xs text-gray-300">
+              <div className="bg-interactive/10 border border-interactive/30 rounded-none px-3 py-2">
+                <p className="text-xs text-secondary">
                   Your article will be reviewed by admins before publishing. Quality submissions
                   help our community!
                 </p>
@@ -159,8 +159,8 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                         px-3 py-2 text-left rounded-none border transition-all
                         ${
                           formData.category === cat.id
-                            ? 'bg-[#0057B8]/20 border-[#0057B8] text-white'
-                            : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:border-[#444]'
+                            ? 'bg-interactive/20 border-interactive text-white'
+                            : 'bg-background border-line text-muted hover:border-line-strong'
                         }
                       `}
                     >
@@ -185,9 +185,9 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   onChange={(e) => handleChange('headline', e.target.value)}
                   maxLength={120}
                   className={`
-                    w-full h-10 px-3 bg-[#0a0a0a] border rounded-none text-sm text-white
-                    placeholder-gray-400 focus:outline-none transition-colors
-                    ${errors.headline ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
+                    w-full h-10 px-3 bg-background border rounded-none text-sm text-white
+                    placeholder-muted focus:outline-none transition-colors
+                    ${errors.headline ? 'border-red-500 focus:border-red-500' : 'border-line focus:border-interactive'}
                   `}
                 />
                 <div className="flex justify-between mt-1">
@@ -196,7 +196,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   ) : (
                     <span />
                   )}
-                  <p className="text-[10px] text-gray-400">{formData.headline.length}/120</p>
+                  <p className="text-[10px] text-muted">{formData.headline.length}/120</p>
                 </div>
               </div>
 
@@ -212,9 +212,9 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   maxLength={300}
                   rows={2}
                   className={`
-                    w-full px-3 py-2 bg-[#0a0a0a] border rounded-none text-sm text-white
-                    placeholder-gray-400 focus:outline-none resize-none transition-colors
-                    ${errors.summary ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
+                    w-full px-3 py-2 bg-background border rounded-none text-sm text-white
+                    placeholder-muted focus:outline-none resize-none transition-colors
+                    ${errors.summary ? 'border-red-500 focus:border-red-500' : 'border-line focus:border-interactive'}
                   `}
                 />
                 <div className="flex justify-between mt-1">
@@ -223,7 +223,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   ) : (
                     <span />
                   )}
-                  <p className="text-[10px] text-gray-400">{formData.summary.length}/300</p>
+                  <p className="text-[10px] text-muted">{formData.summary.length}/300</p>
                 </div>
               </div>
 
@@ -239,9 +239,9 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   maxLength={5000}
                   rows={6}
                   className={`
-                    w-full px-3 py-2 bg-[#0a0a0a] border rounded-none text-sm text-white
-                    placeholder-gray-400 focus:outline-none resize-none transition-colors
-                    ${errors.fullStory ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
+                    w-full px-3 py-2 bg-background border rounded-none text-sm text-white
+                    placeholder-muted focus:outline-none resize-none transition-colors
+                    ${errors.fullStory ? 'border-red-500 focus:border-red-500' : 'border-line focus:border-interactive'}
                   `}
                 />
                 <div className="flex justify-between mt-1">
@@ -250,7 +250,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   ) : (
                     <span />
                   )}
-                  <p className="text-[10px] text-gray-400">{formData.fullStory.length}/5000</p>
+                  <p className="text-[10px] text-muted">{formData.fullStory.length}/5000</p>
                 </div>
               </div>
 
@@ -269,8 +269,8 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                         px-3 py-2 text-left rounded-none border transition-all
                         ${
                           formData.imageOption === opt.id
-                            ? 'bg-[#0057B8]/20 border-[#0057B8] text-white'
-                            : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:border-[#444]'
+                            ? 'bg-interactive/20 border-interactive text-white'
+                            : 'bg-background border-line text-muted hover:border-line-strong'
                         }
                       `}
                     >
@@ -300,9 +300,9 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                       value={formData.imageUrl}
                       onChange={(e) => handleChange('imageUrl', e.target.value)}
                       className={`
-                        w-full h-10 px-3 bg-[#0a0a0a] border rounded-none text-sm text-white
-                        placeholder-gray-400 focus:outline-none transition-colors
-                        ${errors.imageUrl ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
+                        w-full h-10 px-3 bg-background border rounded-none text-sm text-white
+                        placeholder-muted focus:outline-none transition-colors
+                        ${errors.imageUrl ? 'border-red-500 focus:border-red-500' : 'border-line focus:border-interactive'}
                       `}
                     />
                     {errors.imageUrl && (
@@ -314,19 +314,19 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+            <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+                className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-2"
+                className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 flex items-center gap-2"
               >
                 {isSubmitting ? (
                   'Submitting...'

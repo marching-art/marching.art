@@ -62,11 +62,11 @@ const ActivityTab = ({
       <AchievementsCard standings={standings} leagueStats={leagueStats} userProfile={userProfile} />
 
       {/* Activity Feed */}
-      <div className="bg-[#1a1a1a] border border-[#333]">
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+      <div className="bg-surface-card border border-line">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-green-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Recent Activity
             </span>
           </div>

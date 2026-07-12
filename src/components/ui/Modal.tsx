@@ -3,7 +3,7 @@
 // =============================================================================
 // Rigid system modal. Bottom sheet on mobile, dead-center on sm+.
 // High contrast overlay. No glow.
-// Laws: z-[100], bg-black/80 overlay, border-[#333], no backdrop-blur
+// Laws: z-[100], bg-black/80 overlay, border-line, no backdrop-blur
 
 import React, { useEffect, useCallback, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
@@ -130,7 +130,7 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={modalRef}
         className={`
-          bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none w-full
+          bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none w-full
           overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[90dvh] safe-area-bottom
           transform transition-all duration-150
           ${sizeStyles[size]}
@@ -142,14 +142,17 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {/* Grab cue - mobile sheet only */}
         <div className="sm:hidden flex-shrink-0 pt-2 flex justify-center" aria-hidden="true">
-          <div className="w-9 h-1 rounded-full bg-[#444]" />
+          <div className="w-9 h-1 rounded-full bg-line-strong" />
         </div>
 
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[#333] bg-transparent sm:bg-[#222]">
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-line bg-transparent sm:bg-surface-raised">
             {title && (
-              <h2 id={titleId} className="text-xs font-bold uppercase tracking-wider text-gray-300">
+              <h2
+                id={titleId}
+                className="text-xs font-bold uppercase tracking-wider text-secondary"
+              >
                 {title}
               </h2>
             )}
@@ -171,7 +174,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className="flex-shrink-0 px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+          <div className="flex-shrink-0 px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2">
             {footer}
           </div>
         )}
@@ -211,8 +214,8 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   onClose,
   showCloseButton = true,
 }) => (
-  <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-    <div className="text-sm font-bold uppercase tracking-wider text-gray-300">{children}</div>
+  <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
+    <div className="text-sm font-bold uppercase tracking-wider text-secondary">{children}</div>
     {showCloseButton && onClose && (
       <button
         onClick={onClose}
@@ -251,7 +254,9 @@ export interface ModalFooterProps {
 }
 
 export const ModalFooter: React.FC<ModalFooterProps> = ({ children, className = '' }) => (
-  <div className={`px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 ${className}`}>
+  <div
+    className={`px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2 ${className}`}
+  >
     {children}
   </div>
 );
@@ -294,7 +299,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="min-h-touch px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-none"
+            className="min-h-touch px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-none"
           >
             {cancelText}
           </button>
@@ -306,7 +311,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
               ${
                 variant === 'danger'
                   ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
-                  : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'
+                  : 'bg-interactive text-white hover:bg-interactive-hover active:bg-interactive-subtle'
               }
             `}
           >
@@ -316,7 +321,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       }
     >
       <div className="p-4">
-        <p className="text-sm text-gray-300">{message}</p>
+        <p className="text-sm text-secondary">{message}</p>
       </div>
     </Modal>
   );

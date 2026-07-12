@@ -12,7 +12,7 @@ import { isEventPast } from '../../utils/scheduleUtils';
 // Class config for badges
 const CLASS_CONFIG = {
   openClass: { name: 'Open', color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
-  aClass: { name: 'A Class', color: 'text-[#0057B8]', bgColor: 'bg-[#0057B8]/10' },
+  aClass: { name: 'A Class', color: 'text-interactive', bgColor: 'bg-interactive/10' },
   soundSport: { name: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10' },
 };
 
@@ -140,20 +140,20 @@ const ShowSelectionStep = ({
 
   return (
     <>
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
+      <div className="bg-surface-card border border-line rounded-none">
         {/* Header with week info and registration count */}
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#0057B8]" />
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <Calendar className="w-4 h-4 text-interactive" />
+              <h2 className="text-xs font-bold text-muted uppercase tracking-wider">
                 {currentWeek === 7 ? 'Championship Week' : `Week ${currentWeek} Schedule`}
               </h2>
             </div>
             {currentWeek !== 7 && (
               <div className="flex items-center gap-1 text-xs">
                 <span className="text-muted">Registrations:</span>
-                <span className="font-bold text-[#0057B8] tabular-nums">
+                <span className="font-bold text-interactive tabular-nums">
                   {totalWeekRegistrations}
                 </span>
               </div>
@@ -166,43 +166,43 @@ const ShowSelectionStep = ({
           {/* Championship Week (Week 7) - Auto-enrollment message */}
           {currentWeek === 7 ? (
             <div className="text-center py-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
-                <Trophy className="w-8 h-8 text-[#0057B8]" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-interactive/20 rounded-none flex items-center justify-center">
+                <Trophy className="w-8 h-8 text-interactive" />
               </div>
               <h3 className="text-lg font-bold text-white mb-2">
                 Championship Week - Auto Enrollment
               </h3>
-              <p className="text-sm text-gray-400 mb-4 max-w-md mx-auto">
+              <p className="text-sm text-muted mb-4 max-w-md mx-auto">
                 All championship events (Days 45-49) have automatic enrollment based on your corps
                 class and advancement results.
               </p>
-              <div className="bg-[#0a0a0a] border border-[#333] p-4 text-left max-w-md mx-auto">
+              <div className="bg-background border border-line p-4 text-left max-w-md mx-auto">
                 <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
                   Championship Schedule
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Day 45</span>
+                    <span className="text-muted">Day 45</span>
                     <span className="text-white">Open & A Class Prelims</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Day 46</span>
+                    <span className="text-muted">Day 46</span>
                     <span className="text-white">Open & A Class Finals (Top 8/4)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Day 47</span>
+                    <span className="text-muted">Day 47</span>
                     <span className="text-white">World Championship Prelims</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Day 48</span>
+                    <span className="text-muted">Day 48</span>
                     <span className="text-white">World Championship Semifinals (Top 25)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Day 49</span>
+                    <span className="text-muted">Day 49</span>
                     <span className="text-white">World Championship Finals (Top 12)</span>
                   </div>
-                  <div className="flex justify-between border-t border-[#333] pt-2 mt-2">
-                    <span className="text-gray-400">Day 49</span>
+                  <div className="flex justify-between border-t border-line pt-2 mt-2">
+                    <span className="text-muted">Day 49</span>
                     <span className="text-white">SoundSport Festival (All SoundSport)</span>
                   </div>
                 </div>
@@ -214,7 +214,7 @@ const ShowSelectionStep = ({
             </div>
           ) : scheduleLoading ? (
             <div className="text-center py-8">
-              <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <div className="w-6 h-6 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               <p className="text-xs text-muted">Loading schedule...</p>
             </div>
           ) : sortedDays.length === 0 ? (
@@ -243,19 +243,17 @@ const ShowSelectionStep = ({
                             py-2 px-1 rounded-none border
                             ${
                               isPast
-                                ? 'bg-[#1a1a1a] border-[#333] text-muted'
-                                : 'bg-[#0057B8]/10 border-[#0057B8]/30'
+                                ? 'bg-surface-card border-line text-muted'
+                                : 'bg-interactive/10 border-interactive/30'
                             }
                           `}
                     >
                       <span
-                        className={`text-[9px] font-bold uppercase ${isPast ? 'text-muted' : 'text-[#0057B8]'}`}
+                        className={`text-[9px] font-bold uppercase ${isPast ? 'text-muted' : 'text-interactive'}`}
                       >
                         {dayOfWeek}
                       </span>
-                      <span
-                        className={`text-xs font-bold ${isPast ? 'text-gray-400' : 'text-white'}`}
-                      >
+                      <span className={`text-xs font-bold ${isPast ? 'text-muted' : 'text-white'}`}>
                         {monthDay}
                       </span>
                     </div>
@@ -271,8 +269,8 @@ const ShowSelectionStep = ({
                             key={`${show.eventName}-${idx}`}
                             onClick={() => !isPast && handleShowClick(show)}
                             className={`
-                                    bg-[#111] border rounded-none overflow-hidden
-                                    ${isPast ? 'opacity-60 border-[#333]' : 'hover:border-[#444] cursor-pointer active:bg-[#1a1a1a] border-[#333]'}
+                                    bg-surface-sunken border rounded-none overflow-hidden
+                                    ${isPast ? 'opacity-60 border-line' : 'hover:border-line-strong cursor-pointer active:bg-surface-card border-line'}
                                     ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
                                   `}
                           >
@@ -292,7 +290,7 @@ const ShowSelectionStep = ({
 
                                 {/* Status Badge */}
                                 {isPast ? (
-                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#333] text-gray-400 rounded-none">
+                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-line text-muted rounded-none">
                                     Done
                                   </span>
                                 ) : isRegistered ? (
@@ -301,7 +299,7 @@ const ShowSelectionStep = ({
                                     Going
                                   </span>
                                 ) : (
-                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-none">
+                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-interactive/10 text-interactive rounded-none">
                                     Register
                                   </span>
                                 )}
@@ -313,8 +311,8 @@ const ShowSelectionStep = ({
                                   {registeredCorps.map((corpsClass) => {
                                     const config = CLASS_CONFIG[corpsClass] || {
                                       name: corpsClass,
-                                      color: 'text-gray-400',
-                                      bgColor: 'bg-gray-500/10',
+                                      color: 'text-muted',
+                                      bgColor: 'bg-charcoal-500/10',
                                     };
                                     return (
                                       <span
@@ -341,7 +339,7 @@ const ShowSelectionStep = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-[#333] flex justify-between items-center">
+        <div className="px-4 py-3 border-t border-line flex justify-between items-center">
           {currentWeek !== 7 && totalWeekRegistrations === 0 && (
             <p className="text-[10px] text-muted">Register at least one corps to continue</p>
           )}
@@ -349,7 +347,7 @@ const ShowSelectionStep = ({
             <button
               onClick={() => setStep(5)}
               disabled={currentWeek !== 7 && totalWeekRegistrations === 0}
-              className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
+              className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-interactive-hover"
             >
               Continue
               <ChevronRight className="w-4 h-4 ml-1" />

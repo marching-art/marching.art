@@ -29,8 +29,8 @@ const GATE_CONFIGS = {
   // Trying to save lineup changes
   save: {
     icon: Save,
-    iconColor: 'text-[#0057B8]',
-    iconBg: 'bg-[#0057B8]/20',
+    iconColor: 'text-interactive',
+    iconBg: 'bg-interactive/20',
     title: 'Save Your Progress',
     description: 'Create a free account to save your lineup and compete in leagues.',
     benefit: 'Your draft picks will be waiting for you',
@@ -73,8 +73,8 @@ const GATE_CONFIGS = {
   // Generic gated action
   default: {
     icon: Lock,
-    iconColor: 'text-gray-400',
-    iconBg: 'bg-gray-500/20',
+    iconColor: 'text-muted',
+    iconBg: 'bg-charcoal-500/20',
     title: 'Account Required',
     description: 'Create a free account to unlock this feature.',
     benefit: 'It only takes 30 seconds',
@@ -105,7 +105,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-[#1a1a1a] border border-[#333] rounded-none w-full max-w-md overflow-hidden"
+            className="bg-surface-card border border-line rounded-none w-full max-w-md overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
@@ -130,7 +130,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
               <h2 className="text-xl font-bold text-white mb-2">{config.title}</h2>
 
               {/* Description */}
-              <p className="text-gray-400 mb-4">{config.description}</p>
+              <p className="text-muted mb-4">{config.description}</p>
 
               {/* Benefit highlight */}
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-none mb-6">
@@ -142,7 +142,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
               <div className="space-y-3">
                 <Link
                   to="/register"
-                  className="flex items-center justify-center gap-2 w-full h-12 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider rounded-none hover:bg-[#0066d6] active:bg-[#004a9e] transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-12 bg-interactive text-white font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive-hover active:bg-interactive-subtle transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
                   {config.ctaText}
@@ -150,7 +150,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
 
                 <Link
                   to="/login"
-                  className="flex items-center justify-center gap-2 w-full h-12 border border-[#333] text-gray-400 font-medium text-sm rounded-none hover:border-[#444] hover:text-white transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-12 border border-line text-muted font-medium text-sm rounded-none hover:border-line-strong hover:text-white transition-colors"
                 >
                   Already have an account? Sign in
                   <ChevronRight className="w-4 h-4" />
@@ -167,8 +167,8 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
             {/* Progress preservation message for engaged users */}
             {hasEngaged && (
               <div className="px-6 pb-4">
-                <div className="p-3 bg-[#0057B8]/10 border border-[#0057B8]/20 rounded-none">
-                  <p className="text-xs text-[#0057B8] text-center">
+                <div className="p-3 bg-interactive/10 border border-interactive/20 rounded-none">
+                  <p className="text-xs text-interactive text-center">
                     Your preview progress will be saved when you register
                   </p>
                 </div>

@@ -21,8 +21,8 @@ const STEPS = [
     id: 1,
     title: 'Draft Your Lineup',
     icon: ListChecks,
-    iconColor: 'text-[#0057B8]',
-    iconBg: 'bg-[#0057B8]/10',
+    iconColor: 'text-interactive',
+    iconBg: 'bg-interactive/10',
     summary: (
       <>
         Pick 8 <JargonTooltip termKey="caption">captions</JargonTooltip> from{' '}
@@ -90,7 +90,7 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
   const Icon = step.icon;
 
   return (
-    <div className={`${!isLast ? 'border-b border-[#333]' : ''}`}>
+    <div className={`${!isLast ? 'border-b border-line' : ''}`}>
       {/* Header - Always visible */}
       <button
         onClick={onToggle}
@@ -138,7 +138,7 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
             <div className="px-4 pb-4 pl-[72px]">
               <ul className="space-y-2">
                 {step.details.map((detail, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-400">
+                  <li key={idx} className="flex items-start gap-2 text-sm text-muted">
                     <span className="text-muted mt-1">•</span>
                     <span>{detail}</span>
                   </li>
@@ -187,11 +187,11 @@ const HowItWorks = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
-      className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden"
+      className="bg-surface-card border border-line rounded-none overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#222] border-b border-[#333]">
-        <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-3 bg-surface-raised border-b border-line">
+        <h2 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
           <Award className="w-3.5 h-3.5 text-yellow-500" />
           How It Works
         </h2>

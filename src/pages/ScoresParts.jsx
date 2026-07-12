@@ -38,7 +38,7 @@ import {
 // corps, thin #242424 row dividers.
 // =============================================================================
 
-const SHEET_CARD = 'bg-[#1a1a1a] border border-[#333] rounded-none p-3 md:p-4';
+const SHEET_CARD = 'bg-surface-card border border-line rounded-none p-3 md:p-4';
 const GOLD = 'text-[#c9a227]';
 
 // Fixed numeric-column widths so caption values line up across every row and
@@ -67,7 +67,7 @@ const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
 // Per-sheet masthead — mirrors the Podium ShowTable header (event name left,
 // location/date right, hairline underline).
 const SheetMasthead = ({ title, location, date }) => (
-  <div className="flex items-baseline justify-between gap-2 border-b border-[#2a2a2a] pb-1.5">
+  <div className="flex items-baseline justify-between gap-2 border-b border-line-muted pb-1.5">
     <div className="text-[13px] font-bold text-white truncate min-w-0">{title}</div>
     {(location || date) && (
       <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-muted">
@@ -86,14 +86,11 @@ const SheetMasthead = ({ title, location, date }) => (
 // Column-header row for the flex box scores. `active` gold-highlights the
 // caption currently being sorted on (parity with the Podium sheet).
 const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) => (
-  <div className="flex items-center gap-2 px-1 pb-1.5 border-b border-[#333] text-[9px] uppercase tracking-wider">
+  <div className="flex items-center gap-2 px-1 pb-1.5 border-b border-line text-[9px] uppercase tracking-wider">
     <span className="flex-1 min-w-0 text-muted">Pl · Corps</span>
     <div className="flex items-center gap-1.5 flex-shrink-0">
       {['GE', 'VIS', 'MUS'].map((cap) => (
-        <span
-          key={cap}
-          className={`${CAP_W} text-right ${active === cap ? GOLD : 'text-muted'}`}
-        >
+        <span key={cap} className={`${CAP_W} text-right ${active === cap ? GOLD : 'text-muted'}`}>
           {cap}
         </span>
       ))}
@@ -113,7 +110,7 @@ const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }
     <div className="min-w-0">
       <div className="flex items-baseline gap-1.5 min-w-0">
         <span
-          className={`text-[11px] font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+          className={`text-[11px] font-bold truncate ${isMine ? 'text-interactive' : 'text-white'}`}
         >
           {name}
         </span>
@@ -139,7 +136,7 @@ const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }
 const CaptionValue = ({ value, isTop, active, width = CAP_W }) => (
   <span
     className={`${width} text-right tabular-nums ${
-      isTop ? `font-bold ${GOLD}` : active ? 'text-white' : 'text-gray-300'
+      isTop ? `font-bold ${GOLD}` : active ? 'text-white' : 'text-secondary'
     }`}
   >
     {value !== null && value !== undefined ? value.toFixed(2) : '—'}
@@ -200,7 +197,7 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
     <div className="relative">
       <div
         ref={scrollRef}
-        className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-[#333]"
+        className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-line"
       >
         {tabs.map((tab) => (
           <button
@@ -215,8 +212,8 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
                   ? 'text-green-400 border-green-500'
                   : tab.accent === 'yellow'
                     ? 'text-yellow-400 border-yellow-500'
-                    : 'text-white border-[#0057B8]'
-                : 'text-muted hover:text-gray-300 border-transparent'
+                    : 'text-white border-interactive'
+                : 'text-muted hover:text-secondary border-transparent'
             }`}
           >
             {tab.label}
@@ -247,7 +244,7 @@ const SortPills = ({ options, value, onChange }) => (
         className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors ${
           value === opt.id
             ? 'bg-[#8a6d1a] text-white'
-            : 'bg-[#222] text-muted hover:text-gray-300'
+            : 'bg-surface-raised text-muted hover:text-secondary'
         }`}
       >
         {opt.label}
@@ -284,8 +281,8 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
           return (
             <div
               key={idx}
-              className={`flex items-center gap-2 px-1 py-1.5 border-b border-[#242424] last:border-b-0 ${
-                isUserCorps ? 'bg-[#0057B8]/10' : ''
+              className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
+                isUserCorps ? 'bg-interactive/10' : ''
               }`}
             >
               <CorpsIdentity
@@ -321,7 +318,7 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
 // =============================================================================
 
 const NIGHT_BADGE = {
-  1: 'bg-[#0057B8]/15 text-[#4d9fff]',
+  1: 'bg-interactive/15 text-interactive',
   2: 'bg-purple-500/15 text-purple-300',
 };
 
@@ -360,7 +357,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
         return (
           <div key={section.corpsClass} className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
                 {section.label}
               </span>
               <span className="text-[9px] text-muted tabular-nums">
@@ -376,8 +373,8 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
                 return (
                   <div
                     key={`${row.corpsName}-${idx}`}
-                    className={`flex items-center gap-2 px-1 py-1.5 border-b border-[#242424] last:border-b-0 ${
-                      isUserCorps ? 'bg-[#0057B8]/10' : ''
+                    className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
+                      isUserCorps ? 'bg-interactive/10' : ''
                     }`}
                   >
                     <CorpsIdentity
@@ -512,7 +509,7 @@ const SoundSportMedalList = ({ shows }) => {
       <div className={`${SHEET_CARD} flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <Music className="w-4 h-4 text-green-500" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             SoundSport Results
           </span>
         </div>
@@ -521,7 +518,7 @@ const SoundSportMedalList = ({ shows }) => {
             <Medal className="w-3 h-3" />
             {stats.Gold}
           </span>
-          <span className="flex items-center gap-1 text-gray-300">
+          <span className="flex items-center gap-1 text-secondary">
             <Medal className="w-3 h-3" />
             {stats.Silver}
           </span>
@@ -550,7 +547,7 @@ const SoundSportMedalList = ({ shows }) => {
               return (
                 <div
                   key={idx}
-                  className="px-1 py-1.5 flex items-center justify-between gap-2 border-b border-[#242424] last:border-b-0"
+                  className="px-1 py-1.5 flex items-center justify-between gap-2 border-b border-line-subtle last:border-b-0"
                 >
                   {/* Left: Medal Icon + Avatar + Ensemble Name + Director */}
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -656,7 +653,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   return (
     <div className={`${SHEET_CARD} space-y-2.5`}>
       {/* Section header + Podium-style sort pills */}
-      <div className="flex items-center justify-between gap-2 border-b border-[#2a2a2a] pb-2">
+      <div className="flex items-center justify-between gap-2 border-b border-line-muted pb-2">
         <span className="text-[11px] font-bold uppercase tracking-wider text-white truncate">
           {sortBy === 'total'
             ? `${className} · Season Standings`
@@ -680,8 +677,8 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
           return (
             <div
               key={entry.corpsName || idx}
-              className={`flex items-center gap-2 px-1 py-1.5 border-b border-[#242424] last:border-b-0 ${
-                isUserCorps ? 'bg-[#0057B8]/10' : ''
+              className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
+                isUserCorps ? 'bg-interactive/10' : ''
               }`}
             >
               {/* Rank — position under the active sort (caption rank when caption-sorted) */}

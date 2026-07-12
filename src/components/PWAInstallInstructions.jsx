@@ -18,7 +18,7 @@ const PWAInstallInstructions = ({ platform }) => {
     case 'ios':
     case 'ipados':
       return (
-        <div className="flex flex-col gap-2 text-sm text-gray-400">
+        <div className="flex flex-col gap-2 text-sm text-muted">
           <Step n={1}>
             <span>Tap the</span>
             <Share2 className="w-4 h-4 text-yellow-400" />
@@ -32,7 +32,7 @@ const PWAInstallInstructions = ({ platform }) => {
       );
     case 'android':
       return (
-        <div className="flex flex-col gap-2 text-sm text-gray-400">
+        <div className="flex flex-col gap-2 text-sm text-muted">
           <Step n={1}>
             <span>Open the browser menu</span>
             <MoreVertical className="w-4 h-4 text-yellow-400" />
@@ -49,7 +49,7 @@ const PWAInstallInstructions = ({ platform }) => {
       // Desktop (Windows/macOS/other): Chrome/Edge show an install icon in the
       // address bar, or the option lives in the browser menu.
       return (
-        <div className="flex flex-col gap-2 text-sm text-gray-400">
+        <div className="flex flex-col gap-2 text-sm text-muted">
           <Step n={1}>
             <span>Click the install icon</span>
             <Plus className="w-4 h-4 text-yellow-400" />

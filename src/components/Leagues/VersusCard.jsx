@@ -78,7 +78,7 @@ const VersusCard = ({
           ${
             isUserMatchup
               ? 'bg-purple-500/10 border-purple-500/30 hover:border-purple-500/50'
-              : 'bg-[#1a1a1a] border-[#333] hover:border-[#555]'
+              : 'bg-surface-card border-line hover:border-line-strong'
           }
         `}
       >
@@ -87,14 +87,14 @@ const VersusCard = ({
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div
               className={`w-8 h-8 rounded-none flex items-center justify-center text-sm font-bold ${
-                isUser1 ? 'bg-purple-500/20 text-purple-500' : 'bg-[#333] text-gray-400'
+                isUser1 ? 'bg-purple-500/20 text-purple-500' : 'bg-line text-muted'
               }`}
             >
               {user1?.displayName?.charAt(0) || 'T'}
             </div>
             <span
               className={`truncate text-sm font-bold ${
-                isUser1 ? 'text-purple-500' : 'text-gray-300'
+                isUser1 ? 'text-purple-500' : 'text-secondary'
               }`}
             >
               {user1?.displayName || 'TBD'}
@@ -120,14 +120,14 @@ const VersusCard = ({
           <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
             <span
               className={`truncate text-sm font-bold text-right ${
-                isUser2 ? 'text-purple-500' : 'text-gray-300'
+                isUser2 ? 'text-purple-500' : 'text-secondary'
               }`}
             >
               {user2?.displayName || 'TBD'}
             </span>
             <div
               className={`w-8 h-8 rounded-none flex items-center justify-center text-sm font-bold ${
-                isUser2 ? 'bg-purple-500/20 text-purple-500' : 'bg-[#333] text-gray-400'
+                isUser2 ? 'bg-purple-500/20 text-purple-500' : 'bg-line text-muted'
               }`}
             >
               {user2?.displayName?.charAt(0) || 'T'}
@@ -155,14 +155,14 @@ const VersusCard = ({
             ? 'bg-red-500/10 border-2 border-red-500/30 hover:border-red-500/50'
             : isUserMatchup
               ? 'bg-purple-500/10 border-2 border-purple-500/30 hover:border-purple-500/50'
-              : 'bg-[#1a1a1a] border border-[#333] hover:border-[#555]'
+              : 'bg-surface-card border border-line hover:border-line-strong'
         }
       `}
     >
       {/* Status Header */}
       <div
         className={`px-4 py-2 border-b flex items-center justify-between ${
-          isRivalry ? 'border-red-500/20' : 'border-[#333]'
+          isRivalry ? 'border-red-500/20' : 'border-line'
         }`}
       >
         <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ const VersusCard = ({
             </span>
           )}
           {isCompleted && (
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-none bg-[#333] text-gray-400 text-xs font-bold">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-none bg-line text-muted text-xs font-bold">
               <Trophy className="w-3 h-3" />
               FINAL
             </span>
@@ -207,7 +207,7 @@ const VersusCard = ({
                     ? 'bg-green-500/10 border-2 border-green-500/40'
                     : isUser1
                       ? 'bg-purple-500/20 border-2 border-purple-500/50'
-                      : 'bg-[#333] border-2 border-[#555]'
+                      : 'bg-line border-2 border-line-strong'
               }
             `}
             >
@@ -267,7 +267,7 @@ const VersusCard = ({
               className={`w-12 h-12 rounded-none flex items-center justify-center ${
                 isRivalry
                   ? 'bg-red-500/20 border border-red-500/30'
-                  : 'bg-[#222] border border-[#444]'
+                  : 'bg-surface-raised border border-line-strong'
               }`}
             >
               <Swords className={`w-5 h-5 ${isRivalry ? 'text-red-500' : 'text-purple-500'}`} />
@@ -302,7 +302,7 @@ const VersusCard = ({
                     ? 'bg-green-500/10 border-2 border-green-500/40'
                     : isUser2
                       ? 'bg-purple-500/20 border-2 border-purple-500/50'
-                      : 'bg-[#333] border-2 border-[#555]'
+                      : 'bg-line border-2 border-line-strong'
               }
             `}
             >
@@ -359,7 +359,7 @@ const VersusCard = ({
 
         {/* Win Probability Bar */}
         {(isLive || user1Score > 0 || user2Score > 0) && (
-          <div className="mt-4 pt-3 border-t border-[#333]">
+          <div className="mt-4 pt-3 border-t border-line">
             <div className="flex items-center justify-between text-xs mb-2">
               <span
                 className={`font-bold ${winProbability >= 50 ? 'text-green-500' : 'text-muted'}`}
@@ -375,13 +375,17 @@ const VersusCard = ({
                 {(100 - winProbability).toFixed(0)}%
               </span>
             </div>
-            <div className="h-2 rounded-none overflow-hidden flex bg-[#222]">
+            <div className="h-2 rounded-none overflow-hidden flex bg-surface-raised">
               <m.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
                 className={`h-full ${
-                  isUser1 ? 'bg-purple-500' : winProbability >= 50 ? 'bg-green-500' : 'bg-gray-600'
+                  isUser1
+                    ? 'bg-purple-500'
+                    : winProbability >= 50
+                      ? 'bg-green-500'
+                      : 'bg-charcoal-600'
                 }`}
               />
               <m.div
@@ -389,7 +393,11 @@ const VersusCard = ({
                 animate={{ width: `${100 - winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
                 className={`h-full ${
-                  isUser2 ? 'bg-purple-500' : winProbability < 50 ? 'bg-green-500' : 'bg-gray-600'
+                  isUser2
+                    ? 'bg-purple-500'
+                    : winProbability < 50
+                      ? 'bg-green-500'
+                      : 'bg-charcoal-600'
                 }`}
               />
             </div>
@@ -400,7 +408,7 @@ const VersusCard = ({
       {/* View Details Footer */}
       <div
         className={`px-4 py-2 text-center border-t ${
-          isRivalry ? 'border-red-500/20' : 'border-[#333]'
+          isRivalry ? 'border-red-500/20' : 'border-line'
         }`}
       >
         <span className={`text-xs ${isRivalry ? 'text-red-500' : 'text-purple-500'}`}>

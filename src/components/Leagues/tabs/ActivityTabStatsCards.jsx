@@ -76,9 +76,9 @@ const LeagueStatsOverview = ({
 
   if (!stats) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] p-6 text-center">
+      <div className="bg-surface-card border border-line p-6 text-center">
         <BarChart3 className="w-8 h-8 text-muted mx-auto mb-2" />
-        <p className="text-sm text-gray-400">No stats available yet</p>
+        <p className="text-sm text-muted">No stats available yet</p>
       </div>
     );
   }
@@ -91,11 +91,11 @@ const LeagueStatsOverview = ({
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+    <div className="bg-surface-card border border-line">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-blue-500" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             League Statistics
           </span>
         </div>
@@ -104,19 +104,19 @@ const LeagueStatsOverview = ({
       <div className="p-4">
         {/* Key Stats Grid */}
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-[#222] p-3 text-center">
+          <div className="bg-surface-raised p-3 text-center">
             <p className="text-[10px] uppercase text-muted mb-1">Members</p>
             <p className="text-xl font-bold text-white font-data tabular-nums">
               {stats.memberCount}
             </p>
           </div>
-          <div className="bg-[#222] p-3 text-center">
+          <div className="bg-surface-raised p-3 text-center">
             <p className="text-[10px] uppercase text-muted mb-1">Matchups</p>
             <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">
               {stats.totalGames}
             </p>
           </div>
-          <div className="bg-[#222] p-3 text-center">
+          <div className="bg-surface-raised p-3 text-center">
             <p className="text-[10px] uppercase text-muted mb-1">Week</p>
             <p className="text-xl font-bold text-purple-500 font-data tabular-nums">
               {currentWeek}
@@ -128,10 +128,10 @@ const LeagueStatsOverview = ({
         <div className="space-y-2">
           {/* Top Scorer */}
           {stats.highestScorer && (
-            <div className="flex items-center justify-between p-3 bg-[#222]">
+            <div className="flex items-center justify-between p-3 bg-surface-raised">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-yellow-500" />
-                <span className="text-xs text-gray-400">Top Scorer</span>
+                <span className="text-xs text-muted">Top Scorer</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-white">
@@ -146,14 +146,14 @@ const LeagueStatsOverview = ({
 
           {/* Longest Streak */}
           {stats.longestStreak.count > 0 && (
-            <div className="flex items-center justify-between p-3 bg-[#222]">
+            <div className="flex items-center justify-between p-3 bg-surface-raised">
               <div className="flex items-center gap-2">
                 <Flame
                   className={`w-4 h-4 ${
                     stats.longestStreak.type === 'W' ? 'text-green-500' : 'text-red-500'
                   }`}
                 />
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-muted">
                   {stats.longestStreak.type === 'W' ? 'Hot Streak' : 'Cold Streak'}
                 </span>
               </div>
@@ -174,17 +174,17 @@ const LeagueStatsOverview = ({
           )}
 
           {/* Competitiveness Meter */}
-          <div className="p-3 bg-[#222]">
+          <div className="p-3 bg-surface-raised">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-purple-500" />
-                <span className="text-xs text-gray-400">League Competitiveness</span>
+                <span className="text-xs text-muted">League Competitiveness</span>
               </div>
               <span className="text-sm font-bold text-purple-500">
                 {stats.competitiveness.toFixed(0)}%
               </span>
             </div>
-            <div className="h-2 bg-[#333] overflow-hidden">
+            <div className="h-2 bg-line overflow-hidden">
               <m.div
                 initial={{ width: 0 }}
                 animate={{ width: `${stats.competitiveness}%` }}
@@ -330,16 +330,16 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
     orange: 'text-orange-500 bg-orange-500/10 border-orange-500/30',
     purple: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
     red: 'text-red-500 bg-red-500/10 border-red-500/30',
-    gray: 'text-muted bg-gray-500/10 border-gray-500/30',
+    gray: 'text-muted bg-charcoal-500/10 border-charcoal-500/30',
     green: 'text-green-500 bg-green-500/10 border-green-500/30',
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+    <div className="bg-surface-card border border-line">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center gap-2">
           <Award className="w-4 h-4 text-yellow-500" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Achievements
           </span>
         </div>
@@ -354,18 +354,16 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
             <div
               key={achievement.id}
               className={`p-3 text-center border ${
-                achievement.earned ? colors : 'border-[#333] bg-[#222] opacity-50'
+                achievement.earned ? colors : 'border-line bg-surface-raised opacity-50'
               }`}
             >
               <div
                 className={`w-8 h-8 mx-auto mb-2 flex items-center justify-center ${
-                  achievement.earned ? colors.split(' ')[1] : 'bg-[#333]'
+                  achievement.earned ? colors.split(' ')[1] : 'bg-line'
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 ${
-                    achievement.earned ? colors.split(' ')[0] : 'text-muted'
-                  }`}
+                  className={`w-4 h-4 ${achievement.earned ? colors.split(' ')[0] : 'text-muted'}`}
                 />
               </div>
               <p
@@ -434,12 +432,12 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+    <div className="bg-surface-card border border-line">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-pink-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Power Rankings
             </span>
           </div>
@@ -447,7 +445,7 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
         </div>
       </div>
 
-      <div className="divide-y divide-[#222]">
+      <div className="divide-y divide-line-subtle">
         {powerRankings.slice(0, 5).map((player, idx) => {
           const isUser = player.uid === userProfile?.uid;
           const isMovingUp = player.movement > 0;
@@ -465,10 +463,10 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
                     idx === 0
                       ? 'bg-yellow-500/20 text-yellow-500'
                       : idx === 1
-                        ? 'bg-gray-500/20 text-gray-400'
+                        ? 'bg-charcoal-500/20 text-muted'
                         : idx === 2
                           ? 'bg-orange-500/20 text-orange-500'
-                          : 'bg-[#333] text-muted'
+                          : 'bg-line text-muted'
                   }`}
                 >
                   {idx + 1}

@@ -57,14 +57,14 @@ const MoveCorpsModal = ({
         aria-labelledby="modal-title-move-corps"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none"
+          className="w-full max-w-md bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <h2
               id="modal-title-move-corps"
-              className="text-xs font-bold uppercase tracking-wider text-gray-300"
+              className="text-xs font-bold uppercase tracking-wider text-secondary"
             >
               Transfer Corps
             </h2>
@@ -76,11 +76,11 @@ const MoveCorpsModal = ({
           {/* Body */}
           <div className="p-4">
             {/* Corps Info */}
-            <div className="bg-[#0a0a0a] border border-[#333] p-3 mb-4">
+            <div className="bg-background border border-line p-3 mb-4">
               <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Moving:</p>
               <p className="text-sm font-bold text-white">{corpsName}</p>
               <p className="text-xs text-muted mt-1">
-                From: <span className="text-gray-300">{CLASS_NAMES[currentClass]}</span>
+                From: <span className="text-secondary">{CLASS_NAMES[currentClass]}</span>
               </p>
             </div>
 
@@ -99,7 +99,7 @@ const MoveCorpsModal = ({
                   <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                     Select Target Class
                   </label>
-                  <div className="border border-[#333] divide-y divide-[#333]">
+                  <div className="border border-line divide-y divide-line">
                     {availableClasses.map((cls) => {
                       const isSelected = selectedClass === cls.id;
                       return (
@@ -109,14 +109,14 @@ const MoveCorpsModal = ({
                           onClick={() => setSelectedClass(cls.id)}
                           className={`
                             w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/5
-                            ${isSelected ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
+                            ${isSelected ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]' : ''}
                           `}
                         >
                           <div>
                             <p className="text-sm font-medium text-white">{cls.name}</p>
                             <p className="text-xs text-muted">{cls.level}</p>
                           </div>
-                          {isSelected && <Check className="w-4 h-4 text-[#0057B8]" />}
+                          {isSelected && <Check className="w-4 h-4 text-interactive" />}
                         </button>
                       );
                     })}
@@ -146,18 +146,18 @@ const MoveCorpsModal = ({
                 )}
 
                 {/* Footer */}
-                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-[#333]">
+                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-line">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white"
+                    className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!selectedClass || transferring}
-                    className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {transferring ? 'Transferring...' : 'Transfer Corps'}
                   </button>

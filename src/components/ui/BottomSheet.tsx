@@ -164,7 +164,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             onDragEnd={handleDragEnd}
             className={`
               fixed bottom-0 left-0 right-0 z-[101]
-              bg-[#1a1a1a] border-t border-[#333]
+              bg-surface-card border-t border-line
               rounded-none overflow-hidden
               focus:outline-none
               safe-area-bottom
@@ -179,13 +179,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
                 onPointerDown={startDrag}
               >
-                <div className="w-10 h-1 bg-gray-600 rounded-none" />
+                <div className="w-10 h-1 bg-charcoal-600 rounded-none" />
               </div>
             )}
 
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised flex-shrink-0">
                 {title && (
                   <h2
                     id="bottom-sheet-title"

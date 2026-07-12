@@ -59,16 +59,16 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
         aria-labelledby="modal-title-streak"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none flex flex-col"
+          className="w-full max-w-md bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <div className="flex items-center gap-3">
               <Flame className="w-5 h-5 text-orange-500" />
               <h2
                 id="modal-title-streak"
-                className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                className="text-xs font-bold uppercase tracking-wider text-secondary"
               >
                 Login Streak
               </h2>
@@ -113,7 +113,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
 
                 {/* Next milestone */}
                 {status?.nextMilestone && (
-                  <div className="p-3 bg-[#0a0a0a] border border-[#333]">
+                  <div className="p-3 bg-background border border-line">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
                       Next Milestone
                     </p>
@@ -124,7 +124,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                         {status.nextMilestone.daysRemaining === 1 ? '' : 's'} away
                       </span>
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-muted mt-1">
                       +{status.nextMilestone.rewards.xp} XP · +{status.nextMilestone.rewards.coin}{' '}
                       CC
                       {status.nextMilestone.rewards.freeFreeze ? ' · Free Streak Freeze' : ''}
@@ -133,7 +133,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                 )}
 
                 {/* Freeze status / purchase */}
-                <div className="p-3 bg-[#0a0a0a] border border-[#333]">
+                <div className="p-3 bg-background border border-line">
                   <div className="flex items-center gap-2 mb-2">
                     <Snowflake className="w-4 h-4 text-cyan-400" />
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
@@ -152,7 +152,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs text-gray-400 mb-3">
+                      <p className="text-xs text-muted mb-3">
                         Protects your streak for 24 hours if you miss a day. One freeze per 7 days.
                       </p>
                       {status?.canPurchaseFreeze ? (
@@ -162,7 +162,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                           className={`w-full h-9 flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-wider transition-colors ${
                             canAfford
                               ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                              : 'bg-[#222] text-muted cursor-not-allowed'
+                              : 'bg-surface-raised text-muted cursor-not-allowed'
                           }`}
                         >
                           <Coins className="w-4 h-4" />
@@ -186,10 +186,10 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end">
             <button
               onClick={onClose}
-              className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+              className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover"
             >
               Close
             </button>

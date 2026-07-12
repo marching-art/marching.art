@@ -92,19 +92,19 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
         aria-labelledby="modal-title-league-invite"
       >
         <div
-          className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none max-h-[85dvh] flex flex-col"
+          className="w-full sm:max-w-md bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none max-h-[85dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="sm:hidden flex justify-center py-2">
-            <div className="w-8 h-1 bg-gray-600 rounded-full" />
+            <div className="w-8 h-1 bg-charcoal-600 rounded-full" />
           </div>
 
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#0057B8]" />
+              <Users className="w-4 h-4 text-interactive" />
               <h2
                 id="modal-title-league-invite"
-                className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                className="text-xs font-bold uppercase tracking-wider text-secondary"
               >
                 Invite {inviteeName || 'Director'}
               </h2>
@@ -122,13 +122,13 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
             <div className="flex-1 overflow-y-auto scroll-momentum p-4 space-y-3">
               {loadingLeagues ? (
                 <div className="text-center py-8">
-                  <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-6 h-6 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-[11px] text-muted">Loading your leagues...</p>
                 </div>
               ) : leagues.length === 0 ? (
                 <div className="text-center py-6">
                   <Users className="w-8 h-8 text-muted mx-auto mb-2" />
-                  <p className="text-sm text-gray-400 mb-1">
+                  <p className="text-sm text-muted mb-1">
                     You don&apos;t commission any leagues yet
                   </p>
                   <p className="text-[11px] text-muted">Create a league to send invites.</p>
@@ -136,7 +136,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
               ) : availableLeagues.length === 0 ? (
                 <div className="text-center py-6">
                   <AlertCircle className="w-8 h-8 text-muted mx-auto mb-2" />
-                  <p className="text-sm text-gray-400 mb-1">No leagues available</p>
+                  <p className="text-sm text-muted mb-1">No leagues available</p>
                   <p className="text-[11px] text-muted">
                     {leagues.every((l) => l.alreadyMember)
                       ? 'This director is already a member of all your leagues.'
@@ -161,10 +161,10 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
                             onClick={() => setSelectedLeagueId(l.id)}
                             className={`w-full flex items-center justify-between px-3 py-2 border text-left transition-colors ${
                               selected
-                                ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-white'
+                                ? 'bg-interactive/15 border-interactive/40 text-white'
                                 : disabled
-                                  ? 'bg-[#0a0a0a] border-[#222] text-muted cursor-not-allowed'
-                                  : 'bg-[#0a0a0a] border-[#333] text-gray-300 hover:border-[#555] hover:text-white'
+                                  ? 'bg-background border-line-subtle text-muted cursor-not-allowed'
+                                  : 'bg-background border-line text-secondary hover:border-line-strong hover:text-white'
                             }`}
                           >
                             <div className="min-w-0">
@@ -173,7 +173,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
                                 {l.members.length}/{l.maxMembers} members
                               </div>
                             </div>
-                            {selected && <Check className="w-4 h-4 text-[#0057B8]" />}
+                            {selected && <Check className="w-4 h-4 text-interactive" />}
                             {l.alreadyMember && !selected && (
                               <span className="text-[9px] text-muted uppercase tracking-wider">
                                 Already in
@@ -202,7 +202,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
                       onChange={(e) => setMessage(e.target.value.slice(0, 280))}
                       rows={3}
                       placeholder="Why do you want them in your league?"
-                      className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                      className="w-full px-3 py-2 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
                     />
                   </div>
                 </>
@@ -215,19 +215,19 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
               )}
             </div>
 
-            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 shrink-0 safe-area-bottom">
+            <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2 shrink-0 safe-area-bottom">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={sending}
-                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+                className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={sending || !selectedLeagueId || availableLeagues.length === 0}
-                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {sending ? 'Sending...' : 'Send Invite'}
               </button>

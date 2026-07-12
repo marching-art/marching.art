@@ -113,23 +113,23 @@ const PWAInstallPrompt = () => {
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50"
       >
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4">
+        <div className="bg-surface-card border border-line rounded-none p-4">
           <button
             onClick={handleDismiss}
             className="absolute top-3 right-3 p-1.5 rounded-none hover:bg-white/10 transition-colors"
             aria-label="Dismiss"
           >
-            <X className="w-4 h-4 text-gray-400" />
+            <X className="w-4 h-4 text-muted" />
           </button>
 
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-[#0057B8] rounded-none flex items-center justify-center flex-shrink-0">
-              <Icon className="w-6 h-6 text-slate-900" />
+            <div className="w-10 h-10 bg-interactive rounded-none flex items-center justify-center flex-shrink-0">
+              <Icon className="w-6 h-6 text-charcoal-900" />
             </div>
 
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-bold text-white mb-1 pr-6">{content.title}</h3>
-              <p className="text-sm text-gray-400 mb-4">{content.description}</p>
+              <p className="text-sm text-muted mb-4">{content.description}</p>
 
               {/* Native prompt available: one-tap install. Otherwise show the
                   manual, platform-specific steps. */}
@@ -137,14 +137,14 @@ const PWAInstallPrompt = () => {
                 <div className="flex gap-2 mt-4">
                   <button
                     onClick={handleInstall}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-bold text-sm rounded-none hover:bg-[#0066d6] transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-interactive text-white font-bold text-sm rounded-none hover:bg-interactive-hover transition-all"
                   >
                     <Download className="w-4 h-4" />
                     Install
                   </button>
                   <button
                     onClick={handleDismiss}
-                    className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-none transition-colors"
+                    className="px-4 py-2 text-muted hover:text-white hover:bg-white/5 rounded-none transition-colors"
                   >
                     Later
                   </button>
@@ -154,7 +154,7 @@ const PWAInstallPrompt = () => {
                   <PWAInstallInstructions platform={platform} />
                   <button
                     onClick={handleDismiss}
-                    className="mt-4 w-full px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-none transition-colors"
+                    className="mt-4 w-full px-4 py-2 text-sm text-muted hover:text-white hover:bg-white/5 rounded-none transition-colors"
                   >
                     Got it
                   </button>

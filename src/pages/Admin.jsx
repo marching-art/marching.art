@@ -51,7 +51,7 @@ import LiveScoresTab from '../components/Admin/LiveScoresTab';
 const OverviewTab = ({ seasonData }) => (
   <div className="space-y-4">
     {/* Current Season */}
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Active Season" icon={Calendar} />
       {seasonData ? (
         <div>
@@ -111,17 +111,17 @@ const PodiumLaunchCard = () => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Podium Class Launch" icon={Play} />
       <div className="px-4 py-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span
-              className={`w-2 h-2 rounded-full ${podiumEnabled ? 'bg-green-500' : 'bg-gray-600'}`}
+              className={`w-2 h-2 rounded-full ${podiumEnabled ? 'bg-green-500' : 'bg-charcoal-600'}`}
             />
             <span className="text-xs font-bold text-white">
               game-settings/features.podiumClass ={' '}
-              <span className={podiumEnabled ? 'text-green-400' : 'text-gray-400'}>
+              <span className={podiumEnabled ? 'text-green-400' : 'text-muted'}>
                 {String(podiumEnabled)}
               </span>
             </span>
@@ -136,7 +136,7 @@ const PodiumLaunchCard = () => {
           onClick={toggle}
           disabled={saving}
           className={`flex-shrink-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-none disabled:opacity-50 ${
-            podiumEnabled ? 'bg-[#333] text-gray-300' : 'bg-green-600 text-white'
+            podiumEnabled ? 'bg-line text-secondary' : 'bg-green-600 text-white'
           }`}
         >
           {saving ? 'Saving…' : podiumEnabled ? 'Disable' : 'Enable'}
@@ -179,7 +179,7 @@ const PodiumFunnelCard = () => {
 
   const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Podium Funnel (last 14 days)" icon={Play} />
       <div className="overflow-x-auto">
         <table className="w-full text-[10px] tabular-nums">
@@ -195,9 +195,9 @@ const PodiumFunnelCard = () => {
               <th className="px-2 py-1.5">D7 return</th>
             </tr>
           </thead>
-          <tbody className="text-gray-300">
+          <tbody className="text-secondary">
             {rows.map((row) => (
-              <tr key={row.calendarDay} className="border-t border-[#242424]">
+              <tr key={row.calendarDay} className="border-t border-line-subtle">
                 <td className="px-3 py-1">
                   {row.competitionDay >= 1 ? `D${row.competitionDay}` : `ST${row.calendarDay}`}
                 </td>
@@ -255,9 +255,9 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
     <div className="space-y-4">
       <PodiumLaunchCard />
       <PodiumFunnelCard />
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="Season Operations" icon={Calendar} />
-        <div className="px-4 py-3 border-b border-[#333] bg-[#111]">
+        <div className="px-4 py-3 border-b border-line bg-surface-sunken">
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
             <p className="text-[11px] text-yellow-500/80">
@@ -288,7 +288,7 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
 const ContentTab = () => (
   <div className="space-y-4">
     {/* User Submissions */}
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="User Submissions" icon={Inbox} />
       <div className="p-4">
         <SubmissionsManagement />
@@ -296,7 +296,7 @@ const ContentTab = () => (
     </div>
 
     {/* Comments Moderation */}
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Comments Moderation" icon={MessageSquare} />
       <div className="p-4">
         <CommentsModeration />
@@ -304,7 +304,7 @@ const ContentTab = () => (
     </div>
 
     {/* Articles Management */}
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Article Management" icon={FileText} />
       <div className="p-4">
         <ArticleManagement />
@@ -312,7 +312,7 @@ const ContentTab = () => (
     </div>
 
     {/* Corps Point Values Editor */}
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Corps Point Values" icon={Database} />
       <div className="p-4">
         <CorpsValuesEditor />
@@ -320,7 +320,7 @@ const ContentTab = () => (
     </div>
 
     {/* Scores Reference */}
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Scores Reference" icon={Database} />
       <div className="p-4">
         <ScoresSpreadsheet />
@@ -388,7 +388,7 @@ const Admin = () => {
 
   if (!isAdmin) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-[#0a0a0a]">
+      <div className="h-full flex flex-col items-center justify-center bg-background">
         <div className="w-12 h-12 bg-red-500/20 flex items-center justify-center mb-4">
           <Shield className="w-6 h-6 text-red-500" />
         </div>
@@ -399,9 +399,9 @@ const Admin = () => {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* Page Header */}
-      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+      <div className="bg-surface-card border-b border-line px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-yellow-500/20 flex items-center justify-center">
             <Shield className="w-4 h-4 text-yellow-500" />

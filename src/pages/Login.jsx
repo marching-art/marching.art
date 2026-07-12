@@ -62,12 +62,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
+      <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line flex items-center px-4">
         <Link
           to="/"
-          className="flex items-center gap-2 text-gray-400 hover:text-white active:text-white transition-colors press-feedback min-h-touch px-2 -ml-2"
+          className="flex items-center gap-2 text-muted hover:text-white active:text-white transition-colors press-feedback min-h-touch px-2 -ml-2"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="text-sm font-medium">Back</span>
@@ -85,7 +85,7 @@ const Login = () => {
             >
               {/* Logo & Title */}
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-none overflow-hidden mb-4 bg-[#1a1a1a] border border-[#333] aspect-avatar">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-none overflow-hidden mb-4 bg-surface-card border border-line aspect-avatar">
                   <img
                     src="/logo192.svg"
                     alt="marching.art"
@@ -126,7 +126,7 @@ const Login = () => {
                     <input
                       id="login-email"
                       type="email"
-                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-4 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50"
                       placeholder="director@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -150,7 +150,7 @@ const Login = () => {
                     <input
                       id="login-password"
                       type={showPassword ? 'text' : 'password'}
-                      className="w-full h-12 pl-11 pr-12 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-12 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50"
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -174,13 +174,13 @@ const Login = () => {
                   <label className="flex items-center gap-3 cursor-pointer min-h-touch">
                     <input
                       type="checkbox"
-                      className="w-5 h-5 rounded-none border-[#333] bg-[#0a0a0a] text-[#0057B8] focus:ring-[#0057B8] focus:ring-offset-0"
+                      className="w-5 h-5 rounded-none border-line bg-background text-interactive focus:ring-interactive focus:ring-offset-0"
                     />
-                    <span className="text-base text-gray-400">Remember me</span>
+                    <span className="text-base text-muted">Remember me</span>
                   </label>
                   <Link
                     to="/forgot-password"
-                    className="text-base text-[#0057B8] hover:text-[#0066d6] active:text-[#004a9e] transition-colors min-h-touch flex items-center px-2 -mr-2"
+                    className="text-base text-interactive hover:text-interactive-hover active:text-[#004a9e] transition-colors min-h-touch flex items-center px-2 -mr-2"
                   >
                     Forgot password?
                   </Link>
@@ -189,7 +189,7 @@ const Login = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full h-14 bg-[#0057B8] text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+                  className="w-full h-14 bg-interactive text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-interactive-hover active:bg-interactive-subtle transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
                   disabled={loading}
                 >
                   {loading ? (
@@ -208,7 +208,7 @@ const Login = () => {
                 Don't have an account?{' '}
                 <Link
                   to="/register"
-                  className="text-[#0057B8] hover:text-[#0066d6] font-semibold transition-colors"
+                  className="text-interactive hover:text-interactive-hover font-semibold transition-colors"
                 >
                   Sign up free
                 </Link>

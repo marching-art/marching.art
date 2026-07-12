@@ -103,7 +103,7 @@ const BattleRow = ({
     purple: 'text-purple-400',
     blue: 'text-blue-400',
     green: 'text-green-400',
-    cream: 'text-gray-300',
+    cream: 'text-secondary',
   };
 
   return (
@@ -121,7 +121,7 @@ const BattleRow = ({
       >
         <span
           className={`text-sm tabular-nums ${
-            homeWins ? 'text-green-400 font-bold' : 'text-gray-300'
+            homeWins ? 'text-green-400 font-bold' : 'text-secondary'
           }`}
         >
           {typeof homeValue === 'number' ? homeValue.toFixed(1) : homeValue}
@@ -172,7 +172,7 @@ const BattleRow = ({
         )}
         <span
           className={`text-sm tabular-nums ${
-            awayWins ? 'text-green-400 font-bold' : 'text-gray-300'
+            awayWins ? 'text-green-400 font-bold' : 'text-secondary'
           }`}
         >
           {typeof awayValue === 'number' ? awayValue.toFixed(1) : awayValue}
@@ -202,7 +202,9 @@ export const CaptionBattlesSection = ({
           <div className="flex items-center gap-2">
             <span
               className={`text-sm font-bold ${
-                captionBattlesWon.home > captionBattlesWon.away ? 'text-green-400' : 'text-gray-300'
+                captionBattlesWon.home > captionBattlesWon.away
+                  ? 'text-green-400'
+                  : 'text-secondary'
               }`}
             >
               {captionBattlesWon.home}
@@ -210,7 +212,9 @@ export const CaptionBattlesSection = ({
             <span className="text-xs text-muted/40">-</span>
             <span
               className={`text-sm font-bold ${
-                captionBattlesWon.away > captionBattlesWon.home ? 'text-green-400' : 'text-gray-300'
+                captionBattlesWon.away > captionBattlesWon.home
+                  ? 'text-green-400'
+                  : 'text-secondary'
               }`}
             >
               {captionBattlesWon.away}

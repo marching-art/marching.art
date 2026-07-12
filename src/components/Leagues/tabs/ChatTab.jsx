@@ -92,9 +92,9 @@ const ChatTab = ({
       className="flex flex-col h-full"
     >
       {/* Section Header */}
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
             <MessageSquare className="w-3.5 h-3.5 text-purple-500" />
             League Chat
           </h3>
@@ -112,7 +112,7 @@ const ChatTab = ({
             <div className="w-12 h-12 bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mb-3">
               <MessageSquare className="w-6 h-6 text-purple-500/50" />
             </div>
-            <p className="text-sm text-gray-400">No messages yet</p>
+            <p className="text-sm text-muted">No messages yet</p>
             <p className="text-xs text-muted mt-1">Start the conversation!</p>
           </div>
         ) : (
@@ -121,7 +121,7 @@ const ChatTab = ({
               if (item.type === 'date') {
                 return (
                   <div key={`date-${idx}`} className="flex items-center justify-center my-3">
-                    <div className="px-2.5 py-1 bg-[#222] text-[10px] text-muted uppercase tracking-wider font-bold">
+                    <div className="px-2.5 py-1 bg-surface-raised text-[10px] text-muted uppercase tracking-wider font-bold">
                       {formatDateSeparator(item.date)}
                     </div>
                   </div>
@@ -143,8 +143,8 @@ const ChatTab = ({
                     <div
                       className={`px-3 py-2 ${
                         isOwn
-                          ? 'bg-[#0057B8] text-white'
-                          : 'bg-[#111] border border-[#333] text-white'
+                          ? 'bg-interactive text-white'
+                          : 'bg-surface-sunken border border-line text-white'
                       }`}
                     >
                       {/* Sender name (for received messages) */}
@@ -152,7 +152,7 @@ const ChatTab = ({
                         <div className="flex items-center gap-1.5 mb-1">
                           <p
                             className={`text-[11px] font-bold ${
-                              isCreator ? 'text-yellow-500' : 'text-gray-400'
+                              isCreator ? 'text-yellow-500' : 'text-muted'
                             }`}
                           >
                             @{getDisplayName(item.userId)}
@@ -174,9 +174,7 @@ const ChatTab = ({
                         <Clock
                           className={`w-2.5 h-2.5 ${isOwn ? 'text-white/50' : 'text-muted'}`}
                         />
-                        <span
-                          className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-muted'}`}
-                        >
+                        <span className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-muted'}`}>
                           {formatTime(item.createdAt)}
                         </span>
                       </div>

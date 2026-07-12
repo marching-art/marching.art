@@ -113,7 +113,7 @@ function SortBar({ sortBy, onChange }) {
           className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors press-feedback ${
             sortBy === opt.id
               ? 'bg-[#8a6d1a] text-white'
-              : 'bg-[#222] text-muted hover:text-gray-300'
+              : 'bg-surface-raised text-muted hover:text-secondary'
           }`}
         >
           {opt.label}
@@ -136,7 +136,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
   return (
     <div className="space-y-2">
       {/* Per-show masthead */}
-      <div className="flex items-baseline justify-between border-b border-[#2a2a2a] pb-1.5">
+      <div className="flex items-baseline justify-between border-b border-line-muted pb-1.5">
         <div className="text-[13px] font-bold text-white truncate">
           {show.eventName || head.name}
         </div>
@@ -161,8 +161,8 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
             <col style={{ width: '62px' }} />
           </colgroup>
           <thead>
-            <tr className="text-[9px] uppercase tracking-wider text-muted border-b border-[#333]">
-              <th className="text-left py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">Pl · Corps</th>
+            <tr className="text-[9px] uppercase tracking-wider text-muted border-b border-line">
+              <th className="text-left py-1.5 pr-2 sticky left-0 bg-surface-card">Pl · Corps</th>
               {PODIUM_CAPTIONS.map((caption) => (
                 <th
                   key={caption}
@@ -171,9 +171,9 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                   {caption}
                 </th>
               ))}
-              <th className="px-1.5 text-right text-gray-400">GE</th>
-              <th className="px-1.5 text-right text-gray-400">VIS</th>
-              <th className="px-1.5 text-right text-gray-400">MUS</th>
+              <th className="px-1.5 text-right text-muted">GE</th>
+              <th className="px-1.5 text-right text-muted">VIS</th>
+              <th className="px-1.5 text-right text-muted">MUS</th>
               <th className="pl-2 text-right text-white">Total</th>
             </tr>
           </thead>
@@ -183,9 +183,9 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
               return (
                 <tr
                   key={row.uid}
-                  className={`border-b border-[#242424] ${isMine ? 'bg-[#0057B8]/10' : ''}`}
+                  className={`border-b border-line-subtle ${isMine ? 'bg-interactive/10' : ''}`}
                 >
-                  <td className="py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">
+                  <td className="py-1.5 pr-2 sticky left-0 bg-surface-card">
                     {/* Place · avatar · corps name — the corps avatar is shown
                         the same way as the other classes (see CorpsIdentity in
                         ScoresParts). */}
@@ -195,7 +195,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                       <div className="min-w-0">
                         <div className="flex items-baseline gap-1.5 min-w-0">
                           <span
-                            className={`font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+                            className={`font-bold truncate ${isMine ? 'text-interactive' : 'text-white'}`}
                           >
                             {row.corpsName}
                           </span>
@@ -234,16 +234,16 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                             ? 'font-bold text-[#c9a227]'
                             : sortBy === caption
                               ? 'text-white'
-                              : 'text-gray-300'
+                              : 'text-secondary'
                         }`}
                       >
                         {fmt(value)}
                       </td>
                     );
                   })}
-                  <td className="px-1.5 text-right text-gray-400">{fmt(row.geScore)}</td>
-                  <td className="px-1.5 text-right text-gray-400">{fmt(row.visualScore)}</td>
-                  <td className="px-1.5 text-right text-gray-400">{fmt(row.musicScore)}</td>
+                  <td className="px-1.5 text-right text-muted">{fmt(row.geScore)}</td>
+                  <td className="px-1.5 text-right text-muted">{fmt(row.visualScore)}</td>
+                  <td className="px-1.5 text-right text-muted">{fmt(row.musicScore)}</td>
                   <td className="pl-2 text-right font-bold text-white">{fmt(row.totalScore)}</td>
                 </tr>
               );
@@ -260,8 +260,8 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
 function PodiumReport({ column, userCorpsName }) {
   if (!column || !(column.entries || []).length) return null;
   return (
-    <div className="bg-[#1a1a1a] border border-[#c9a227]/30 rounded-none p-4 space-y-2">
-      <div className="flex items-baseline justify-between border-b border-[#333] pb-2">
+    <div className="bg-surface-card border border-[#c9a227]/30 rounded-none p-4 space-y-2">
+      <div className="flex items-baseline justify-between border-b border-line pb-2">
         <div>
           <div className="text-sm font-bold text-white">The Podium Report</div>
           <div className="text-[10px] uppercase tracking-wider text-muted">
@@ -287,17 +287,17 @@ function PodiumReport({ column, userCorpsName }) {
             <div
               key={entry.uid}
               className={`flex items-center gap-2 text-[11px] tabular-nums ${
-                isMine ? 'bg-[#0057B8]/10 -mx-1 px-1 rounded-none' : ''
+                isMine ? 'bg-interactive/10 -mx-1 px-1 rounded-none' : ''
               }`}
             >
               <span className="w-5 text-right text-muted font-bold">{entry.rank}.</span>
               <span className="w-7 text-[10px]">{move}</span>
               <span
-                className={`flex-1 min-w-0 truncate font-bold ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+                className={`flex-1 min-w-0 truncate font-bold ${isMine ? 'text-interactive' : 'text-white'}`}
               >
                 {entry.corpsName}
               </span>
-              <span className="text-gray-400 text-[10px] italic truncate hidden sm:block">
+              <span className="text-muted text-[10px] italic truncate hidden sm:block">
                 {entry.note}
               </span>
               <span className="text-white font-bold">
@@ -390,7 +390,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
             className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-none tabular-nums transition-colors press-feedback ${
               day === selected.day
                 ? 'bg-[#8a6d1a] text-white'
-                : 'text-muted hover:text-white hover:bg-white/5 border border-[#333]'
+                : 'text-muted hover:text-white hover:bg-white/5 border border-line'
             }`}
           >
             D{day}
@@ -399,7 +399,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
       </div>
 
       {/* The sheet — one box score per show */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-4">
+      <div className="bg-surface-card border border-line rounded-none p-4 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <SortBar sortBy={sortBy} onChange={setSortBy} />
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -419,7 +419,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
                 }
               }}
               title="Copy the sheet as Discord-ready text"
-              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-none border border-[#333] text-gray-400 hover:text-white hover:border-[#c9a227] press-feedback"
+              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-none border border-line text-muted hover:text-white hover:border-[#c9a227] press-feedback"
             >
               {copied ? (
                 <Check className="w-3 h-3 text-green-400" />

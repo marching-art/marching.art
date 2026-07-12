@@ -105,13 +105,13 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
     <button
       onClick={() => onSelect(season)}
       className={`
-        w-full text-left px-4 py-3 border-b border-[#333] transition-colors
-        ${isSelected ? 'bg-[#0057B8]/15 border-l-2 border-l-[#0057B8]' : 'border-l-2 border-l-transparent hover:bg-[#1f1f1f]'}
+        w-full text-left px-4 py-3 border-b border-line transition-colors
+        ${isSelected ? 'bg-interactive/15 border-l-2 border-l-[#0057B8]' : 'border-l-2 border-l-transparent hover:bg-surface-sunken'}
       `}
     >
       <div className="flex items-center justify-between gap-2 mb-1">
         <span
-          className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-gray-300'}`}
+          className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-secondary'}`}
         >
           {type}
         </span>
@@ -127,11 +127,11 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
           {champ.corpsName || champ.username || '—'}
         </span>
         {soundSport ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 flex-shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary flex-shrink-0">
             {rating || '—'}
           </span>
         ) : (
-          <span className="text-[10px] text-gray-400 font-data tabular-nums flex-shrink-0">
+          <span className="text-[10px] text-muted font-data tabular-nums flex-shrink-0">
             {formatScore(champ.score)}
           </span>
         )}
@@ -141,7 +141,7 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
         <span className="text-[10px] text-muted font-data tabular-nums">
           {formatDate(season.archivedAt)}
         </span>
-        {isSelected && <ChevronRight className="w-3 h-3 text-[#0057B8] ml-auto" />}
+        {isSelected && <ChevronRight className="w-3 h-3 text-interactive ml-auto" />}
       </div>
     </button>
   );
@@ -161,12 +161,12 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="bg-[#1a1a1a] border border-[#333] mb-4"
+      className="bg-surface-card border border-line mb-4"
     >
       {/* Top banner */}
       <div
         className={`px-4 py-2 flex items-center justify-between ${
-          soundSport ? 'bg-[#0057B8] text-white' : 'bg-yellow-500 text-black'
+          soundSport ? 'bg-interactive text-white' : 'bg-yellow-500 text-black'
         }`}
       >
         <div className="flex items-center gap-2">
@@ -188,12 +188,12 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
           {champion.uid ? (
             <Link
               to={`/profile/${champion.uid}`}
-              className="text-xs text-gray-400 hover:text-[#0057B8] transition-colors block truncate"
+              className="text-xs text-muted hover:text-interactive transition-colors block truncate"
             >
               Director: {champion.username || 'Unknown'}
             </Link>
           ) : (
-            <span className="text-xs text-gray-400 block truncate">
+            <span className="text-xs text-muted block truncate">
               Director: {champion.username || 'Unknown'}
             </span>
           )}
@@ -209,7 +209,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
                   {rating}
                 </span>
               ) : (
-                <span className="text-xl font-bold text-[#3b82f6]">—</span>
+                <span className="text-xl font-bold text-interactive">—</span>
               )}
             </>
           ) : (
@@ -229,12 +229,12 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
           <div
             className={`flex items-center gap-2.5 px-3 py-2.5 border ${
               soundSport
-                ? 'border-[#0057B8]/40 bg-[#0057B8]/10'
+                ? 'border-interactive/40 bg-interactive/10'
                 : 'border-yellow-500/40 bg-yellow-500/5'
             }`}
           >
             <Flag
-              className={`w-4 h-4 flex-shrink-0 ${soundSport ? 'text-[#3b82f6]' : 'text-yellow-500'}`}
+              className={`w-4 h-4 flex-shrink-0 ${soundSport ? 'text-interactive' : 'text-yellow-500'}`}
             />
             <span className="text-sm text-white italic leading-snug">
               “{champion.banner.message}”
@@ -259,7 +259,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
       )}
 
       {/* Stats strip */}
-      <div className="grid grid-cols-3 border-t border-[#333] divide-x divide-[#333]">
+      <div className="grid grid-cols-3 border-t border-line divide-x divide-line">
         <div className="px-3 py-2.5">
           <div className="text-[10px] text-muted uppercase tracking-wider">
             {soundSport ? 'Awarded' : 'Crowned'}
@@ -277,7 +277,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
             <div className="text-xs text-white truncate">{rating || '—'}</div>
           ) : (
             <div
-              className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-gray-400'}`}
+              className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-muted'}`}
             >
               {formatDelta(fieldStats.margin)}
             </div>
@@ -286,7 +286,9 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
         <div className="px-3 py-2.5">
           <div className="text-[10px] text-muted uppercase tracking-wider">Division</div>
           <div className="text-xs text-white truncate flex items-center gap-1">
-            <ClassIcon className={`w-3 h-3 ${soundSport ? 'text-[#3b82f6]' : 'text-yellow-500'}`} />
+            <ClassIcon
+              className={`w-3 h-3 ${soundSport ? 'text-interactive' : 'text-yellow-500'}`}
+            />
             {CLASS_CONFIG[classKey]?.short}
           </div>
         </div>
@@ -300,15 +302,15 @@ const FinalistsTable = ({ champions, classKey }) => {
   const soundSport = isSoundSportClass(classKey);
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between border-b border-[#333]">
+    <div className="bg-surface-card border border-line">
+      <div className="bg-surface-raised px-4 py-2.5 flex items-center justify-between border-b border-line">
         <div className="flex items-center gap-2">
           {soundSport ? (
-            <Music className="w-3.5 h-3.5 text-[#3b82f6]" />
+            <Music className="w-3.5 h-3.5 text-interactive" />
           ) : (
             <Trophy className="w-3.5 h-3.5 text-yellow-500" />
           )}
-          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
             {soundSport ? 'Recognized Ensembles' : 'Final Standings'}
           </span>
         </div>
@@ -322,7 +324,7 @@ const FinalistsTable = ({ champions, classKey }) => {
 
       <table className="w-full">
         <thead>
-          <tr className="bg-[#111] border-b border-[#333]">
+          <tr className="bg-surface-sunken border-b border-line">
             <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted w-10">
               {soundSport ? '' : '#'}
             </th>
@@ -340,7 +342,7 @@ const FinalistsTable = ({ champions, classKey }) => {
         <tbody>
           {champions.map((c, idx) => {
             const meta = RANK_META[c.rank] || {};
-            const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
+            const rowBg = idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-sunken';
             const corpsName = c.corpsName || c.username || '—';
             const isBestInShow = soundSport && c.rank === 1;
             const rating =
@@ -351,7 +353,7 @@ const FinalistsTable = ({ champions, classKey }) => {
             return (
               <tr
                 key={`${c.uid}-${c.rank}-${idx}`}
-                className={`${rowBg} border-b border-[#333] last:border-b-0`}
+                className={`${rowBg} border-b border-line last:border-b-0`}
               >
                 <td className="py-2.5 px-3">
                   {soundSport ? (
@@ -369,7 +371,7 @@ const FinalistsTable = ({ champions, classKey }) => {
                       ) : (
                         <Hash className="w-3 h-3 text-muted" />
                       )}
-                      <span className="text-xs font-bold text-gray-300 font-data tabular-nums">
+                      <span className="text-xs font-bold text-secondary font-data tabular-nums">
                         {c.rank}
                       </span>
                     </div>
@@ -383,7 +385,7 @@ const FinalistsTable = ({ champions, classKey }) => {
                         className={`text-sm font-bold block truncate ${
                           highlight
                             ? soundSport
-                              ? 'text-[#3b82f6]'
+                              ? 'text-interactive'
                               : 'text-yellow-500'
                             : 'text-white'
                         }`}
@@ -391,7 +393,7 @@ const FinalistsTable = ({ champions, classKey }) => {
                         {corpsName}
                       </span>
                       {isBestInShow ? (
-                        <span className="text-[10px] uppercase tracking-wider text-[#3b82f6]">
+                        <span className="text-[10px] uppercase tracking-wider text-interactive">
                           Best in Show
                         </span>
                       ) : (
@@ -409,14 +411,12 @@ const FinalistsTable = ({ champions, classKey }) => {
                   {c.uid ? (
                     <Link
                       to={`/profile/${c.uid}`}
-                      className="text-xs text-gray-400 hover:text-[#0057B8] transition-colors truncate block"
+                      className="text-xs text-muted hover:text-interactive transition-colors truncate block"
                     >
                       {c.username || '—'}
                     </Link>
                   ) : (
-                    <span className="text-xs text-gray-400 truncate block">
-                      {c.username || '—'}
-                    </span>
+                    <span className="text-xs text-muted truncate block">{c.username || '—'}</span>
                   )}
                 </td>
                 <td className="py-2.5 px-3 text-right">
@@ -599,18 +599,18 @@ const HallOfChampions = () => {
   const champion = currentChampions[0];
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[#0a0a0a]">
+    <div className="flex flex-col h-full min-h-0 bg-background">
       <div className="flex-1 flex min-h-0">
         {/* ========================================================
             SIDEBAR — Season list
             ======================================================== */}
         <div
-          className={`flex flex-col min-h-0 border-r border-[#333] bg-[#111] ${
+          className={`flex flex-col min-h-0 border-r border-line bg-surface-sunken ${
             selectedSeason ? 'hidden lg:flex lg:w-72 xl:w-80' : 'w-full lg:w-72 xl:w-80'
           }`}
         >
           {/* Header */}
-          <div className="flex-shrink-0 px-4 py-3 border-b border-[#333] bg-[#1a1a1a]">
+          <div className="flex-shrink-0 px-4 py-3 border-b border-line bg-surface-card">
             <div className="flex items-center gap-2 mb-3">
               <Trophy className="w-4 h-4 text-yellow-500" />
               <h1 className="text-sm font-bold text-white uppercase tracking-widest">
@@ -620,13 +620,13 @@ const HallOfChampions = () => {
             <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-wider">
               <span className="flex items-center gap-1 text-muted">
                 <Crown className="w-3 h-3 text-yellow-500" />
-                <span className="font-data tabular-nums text-gray-300">
+                <span className="font-data tabular-nums text-secondary">
                   {totalCrowns}
                 </span> Crowned {totalCrowns === 1 ? 'Season' : 'Seasons'}
               </span>
               <Link
                 to="/records"
-                className="font-bold text-[#0057B8] hover:text-[#0066d6] whitespace-nowrap"
+                className="font-bold text-interactive hover:text-interactive-hover whitespace-nowrap"
               >
                 Records Book →
               </Link>
@@ -634,21 +634,21 @@ const HallOfChampions = () => {
           </div>
 
           {/* Division switcher */}
-          <div className="flex-shrink-0 border-b border-[#333] bg-[#0a0a0a]">
+          <div className="flex-shrink-0 border-b border-line bg-background">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted">
               Division
             </div>
-            <div className="flex border-t border-[#333]">
+            <div className="flex border-t border-line">
               {visibleClasses.map(([classKey, config]) => {
                 const isSelected = selectedClass === classKey;
                 return (
                   <button
                     key={classKey}
                     onClick={() => setSelectedClass(classKey)}
-                    className={`flex-1 px-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors border-r border-[#333] last:border-r-0 ${
+                    className={`flex-1 px-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors border-r border-line last:border-r-0 ${
                       isSelected
-                        ? 'bg-[#0057B8] text-white'
-                        : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'
+                        ? 'bg-interactive text-white'
+                        : 'text-muted hover:bg-surface-card hover:text-white'
                     }`}
                   >
                     {config.short}
@@ -659,7 +659,7 @@ const HallOfChampions = () => {
           </div>
 
           {/* Section label */}
-          <div className="flex-shrink-0 bg-[#0a0a0a] border-b border-[#333] px-4 py-1.5">
+          <div className="flex-shrink-0 bg-background border-b border-line px-4 py-1.5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
               {isSoundSportClass(selectedClass) ? 'Best in Show' : 'Champions'} · Most Recent First
             </span>
@@ -670,9 +670,7 @@ const HallOfChampions = () => {
             {crownedSeasons.length === 0 ? (
               <div className="px-4 py-12 text-center">
                 <Trophy className="w-8 h-8 text-muted mx-auto mb-2" />
-                <p className="text-xs text-muted uppercase tracking-wider">
-                  No champions recorded
-                </p>
+                <p className="text-xs text-muted uppercase tracking-wider">No champions recorded</p>
               </div>
             ) : (
               crownedSeasons.map((season) => (
@@ -701,10 +699,10 @@ const HallOfChampions = () => {
           ) : (
             <>
               {/* Mobile back bar */}
-              <div className="lg:hidden flex-shrink-0 px-4 py-2.5 border-b border-[#333] bg-[#1a1a1a]">
+              <div className="lg:hidden flex-shrink-0 px-4 py-2.5 border-b border-line bg-surface-card">
                 <button
                   onClick={() => setSelectedSeason(null)}
-                  className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-secondary hover:text-white transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">Seasons</span>
@@ -712,7 +710,7 @@ const HallOfChampions = () => {
               </div>
 
               {/* Season header strip */}
-              <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333]">
+              <div className="flex-shrink-0 bg-surface-card border-b border-line">
                 <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted mb-0.5">
@@ -720,13 +718,13 @@ const HallOfChampions = () => {
                     </div>
                     <h2 className="text-base sm:text-lg font-bold text-white uppercase tracking-wider truncate">
                       {parseSeasonName(displaySeason.seasonName).type}{' '}
-                      <span className="text-gray-400 font-data tabular-nums">
+                      <span className="text-muted font-data tabular-nums">
                         {parseSeasonName(displaySeason.seasonName).year}
                       </span>
                     </h2>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-wider">
-                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-[#0a0a0a] border border-[#333] text-gray-300">
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-background border border-line text-secondary">
                       <Users className="w-3 h-3" />
                       {currentChampions.length}{' '}
                       {isSoundSportClass(selectedClass) ? 'Ensembles' : 'Finalists'}
@@ -734,7 +732,7 @@ const HallOfChampions = () => {
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-1 font-bold ${
                         isSoundSportClass(selectedClass)
-                          ? 'bg-[#0057B8] text-white'
+                          ? 'bg-interactive text-white'
                           : 'bg-yellow-500 text-black'
                       }`}
                     >

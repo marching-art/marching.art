@@ -259,7 +259,7 @@ const ScoresSpreadsheet = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 text-yellow-500 animate-spin" />
-        <span className="ml-3 text-gray-300">Loading scores data...</span>
+        <span className="ml-3 text-secondary">Loading scores data...</span>
       </div>
     );
   }
@@ -307,7 +307,7 @@ const ScoresSpreadsheet = () => {
             className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === caption
                 ? 'bg-amber-400 text-neutral-900 font-bold'
-                : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                : 'text-muted hover:text-white hover:bg-charcoal-800'
             }`}
           >
             {caption}
@@ -325,7 +325,7 @@ const ScoresSpreadsheet = () => {
             className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === tab.id
                 ? 'bg-amber-400 text-neutral-900 font-bold'
-                : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                : 'text-muted hover:text-white hover:bg-charcoal-800'
             }`}
           >
             {tab.label}
@@ -340,7 +340,7 @@ const ScoresSpreadsheet = () => {
           disabled={!canScrollLeft}
           className={`p-1 rounded-none transition-all ${
             canScrollLeft
-              ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+              ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
               : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
           }`}
         >
@@ -355,7 +355,7 @@ const ScoresSpreadsheet = () => {
           disabled={!canScrollRight}
           className={`p-1 rounded-none transition-all ${
             canScrollRight
-              ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+              ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
               : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
           }`}
         >
@@ -380,12 +380,10 @@ const ScoresSpreadsheet = () => {
               {visibleDates.map((dateInfo) => (
                 <th
                   key={dateInfo.day}
-                  className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
+                  className="px-0 py-1.5 text-center font-mono text-muted w-[38px] border-r border-white/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[10px] text-muted/70 leading-none">
-                    {dateInfo.dateLabel}
-                  </div>
+                  <div className="text-[10px] text-muted/70 leading-none">{dateInfo.dateLabel}</div>
                 </th>
               ))}
             </tr>
@@ -418,9 +416,9 @@ const ScoresSpreadsheet = () => {
                       corps.points >= 20
                         ? 'text-yellow-400'
                         : corps.points >= 15
-                          ? 'text-gray-200'
+                          ? 'text-secondary'
                           : corps.points >= 10
-                            ? 'text-gray-400'
+                            ? 'text-muted'
                             : 'text-muted'
                     }`}
                   >
@@ -455,7 +453,7 @@ const ScoresSpreadsheet = () => {
                     >
                       {score !== null ? (
                         <span
-                          className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'}`}
+                          className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-secondary'}`}
                         >
                           {score.toFixed(3)}
                         </span>

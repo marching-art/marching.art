@@ -39,9 +39,9 @@ const CLASS_CONFIG = {
   },
   aClass: {
     name: 'A Class',
-    color: 'text-[#0057B8]',
-    bg: 'bg-[#0057B8]/10',
-    accent: 'bg-[#0057B8]',
+    color: 'text-interactive',
+    bg: 'bg-interactive/10',
+    accent: 'bg-interactive',
   },
   soundSport: {
     name: 'SoundSport',
@@ -89,9 +89,9 @@ const RetiredCorpsGallery = () => {
   const getClassConfig = (corpsClass) =>
     CLASS_CONFIG[corpsClass] || {
       name: corpsClass,
-      color: 'text-gray-400',
-      bg: 'bg-gray-500/10',
-      accent: 'bg-gray-500',
+      color: 'text-muted',
+      bg: 'bg-charcoal-500/10',
+      accent: 'bg-charcoal-500',
     };
 
   const handleUnretire = async (corpsClass, retiredIndex) => {
@@ -155,7 +155,7 @@ const RetiredCorpsGallery = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+      <div className="h-full flex flex-col overflow-hidden bg-background">
         <PageHeader icon={Archive} title="Retired Corps" subtitle="Career legacy" />
         <div className="flex-1 min-h-0 flex items-center justify-center">
           <LoadingScreen fullScreen={false} />
@@ -165,7 +165,7 @@ const RetiredCorpsGallery = () => {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* FIXED HEADER */}
       <PageHeader
         icon={Archive}
@@ -175,7 +175,7 @@ const RetiredCorpsGallery = () => {
       />
 
       {/* FILTER / SORT BAR - Fixed */}
-      <div className="flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
+      <div className="flex-shrink-0 bg-surface-sunken border-b border-line px-3 py-2">
         <div className="flex items-center gap-2 justify-between flex-wrap">
           {/* Class Filter Pills */}
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
@@ -187,8 +187,8 @@ const RetiredCorpsGallery = () => {
                   onClick={() => setFilterClass(filter.id)}
                   className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-all ${
                     isActive
-                      ? 'bg-[#0057B8] text-white'
-                      : 'bg-[#1a1a1a] text-muted hover:text-gray-300 hover:bg-white/5'
+                      ? 'bg-interactive text-white'
+                      : 'bg-surface-card text-muted hover:text-secondary hover:bg-white/5'
                   }`}
                 >
                   {filter.label}
@@ -201,7 +201,7 @@ const RetiredCorpsGallery = () => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-none bg-[#1a1a1a] text-gray-300 border border-[#333] focus:outline-none focus:border-[#0057B8]"
+            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-none bg-surface-card text-secondary border border-line focus:outline-none focus:border-interactive"
           >
             <option value="retiredAt">Recently Retired</option>
             <option value="totalSeasons">Most Seasons</option>
@@ -244,7 +244,7 @@ const RetiredCorpsGallery = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ delay: index * 0.03 }}
-                    className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden hover:border-[#444] transition-all cursor-pointer"
+                    className="bg-surface-card border border-line rounded-none overflow-hidden hover:border-line-strong transition-all cursor-pointer"
                     onClick={() => setSelectedCorps({ ...corps, index: corps.originalIndex })}
                   >
                     {/* Class Accent Line */}
@@ -284,9 +284,9 @@ const RetiredCorpsGallery = () => {
 
                       {/* Stats Grid */}
                       <div className="grid grid-cols-2 gap-2 mb-4">
-                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
+                        <div className="bg-surface-sunken border border-line rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
+                            <Calendar className="w-3.5 h-3.5 text-interactive" />
                             <span className="text-[10px] text-muted uppercase tracking-wider">
                               Seasons
                             </span>
@@ -296,7 +296,7 @@ const RetiredCorpsGallery = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
+                        <div className="bg-surface-sunken border border-line rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                             <span className="text-[10px] text-muted uppercase tracking-wider">
@@ -318,7 +318,7 @@ const RetiredCorpsGallery = () => {
                           )}
                         </div>
 
-                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
+                        <div className="bg-surface-sunken border border-line rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Star className="w-3.5 h-3.5 text-purple-400" />
                             <span className="text-[10px] text-muted uppercase tracking-wider">
@@ -330,9 +330,9 @@ const RetiredCorpsGallery = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
+                        <div className="bg-surface-sunken border border-line rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Archive className="w-3.5 h-3.5 text-gray-400" />
+                            <Archive className="w-3.5 h-3.5 text-muted" />
                             <span className="text-[10px] text-muted uppercase tracking-wider">
                               Retired
                             </span>
@@ -352,7 +352,7 @@ const RetiredCorpsGallery = () => {
                           setSelectedCorps({ ...corps, index: corps.originalIndex });
                           setShowUnretireModal(true);
                         }}
-                        className="w-full py-2 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
+                        className="w-full py-2 px-4 bg-interactive hover:bg-interactive-hover text-white font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Bring Out of Retirement
@@ -366,7 +366,7 @@ const RetiredCorpsGallery = () => {
                             setSelectedCorps({ ...corps, index: corps.originalIndex });
                             setShowPlaqueModal(true);
                           }}
-                          className="w-full mt-2 py-2 px-4 bg-[#1a1a1a] hover:bg-[#222] border border-yellow-500/40 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
+                          className="w-full mt-2 py-2 px-4 bg-surface-card hover:bg-surface-raised border border-yellow-500/40 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
                         >
                           <Award className="w-3.5 h-3.5" />
                           {corps.plaque ? 'Upgrade Plaque' : 'Commission Plaque'}
@@ -396,10 +396,10 @@ const RetiredCorpsGallery = () => {
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.98, opacity: 0 }}
-                className="bg-[#1a1a1a] border border-[#333] rounded-none max-w-md w-full overflow-hidden"
+                className="bg-surface-card border border-line rounded-none max-w-md w-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+                <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                     <Award className="w-4 h-4 text-yellow-500" />
                     Commission a Plaque
@@ -407,7 +407,7 @@ const RetiredCorpsGallery = () => {
                   <button
                     onClick={() => setShowPlaqueModal(false)}
                     disabled={!!purchasingTier}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-muted hover:text-white transition-colors"
                     aria-label="Close"
                   >
                     <X className="w-5 h-5" />
@@ -415,7 +415,7 @@ const RetiredCorpsGallery = () => {
                 </div>
 
                 <div className="p-4">
-                  <p className="text-xs text-gray-400 mb-1">
+                  <p className="text-xs text-muted mb-1">
                     Honor the legacy of{' '}
                     <span className="text-white font-bold">{selectedCorps.corpsName}</span> with a
                     memorial plaque, displayed forever on its gallery card.
@@ -489,18 +489,18 @@ const RetiredCorpsGallery = () => {
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.98, opacity: 0 }}
-                className="bg-[#1a1a1a] border border-[#333] rounded-none max-w-md w-full overflow-hidden"
+                className="bg-surface-card border border-line rounded-none max-w-md w-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+                <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                     Bring Out of Retirement?
                   </h3>
                   <button
                     onClick={() => setShowUnretireModal(false)}
                     disabled={unretiring}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-muted hover:text-white transition-colors"
                     aria-label="Close"
                   >
                     <X className="w-5 h-5" />
@@ -508,7 +508,7 @@ const RetiredCorpsGallery = () => {
                 </div>
 
                 <div className="p-4">
-                  <div className="bg-[#111] border border-[#333] rounded-none p-4 mb-4">
+                  <div className="bg-surface-sunken border border-line rounded-none p-4 mb-4">
                     <div className="flex items-center gap-3 mb-3">
                       <Music className="w-5 h-5 text-purple-400" />
                       <div>
@@ -530,9 +530,7 @@ const RetiredCorpsGallery = () => {
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-[10px] text-muted uppercase tracking-wider">
-                          Best
-                        </div>
+                        <div className="text-[10px] text-muted uppercase tracking-wider">Best</div>
                         {selectedCorps.corpsClass === 'soundSport' ? (
                           <div className="text-base font-bold text-white">
                             {selectedCorps.bestSeasonScore > 0
@@ -546,9 +544,7 @@ const RetiredCorpsGallery = () => {
                         )}
                       </div>
                       <div className="text-center">
-                        <div className="text-[10px] text-muted uppercase tracking-wider">
-                          Shows
-                        </div>
+                        <div className="text-[10px] text-muted uppercase tracking-wider">Shows</div>
                         <div className="text-base font-bold text-white font-data tabular-nums">
                           {selectedCorps.totalShows}
                         </div>
@@ -568,14 +564,14 @@ const RetiredCorpsGallery = () => {
                     <button
                       onClick={() => setShowUnretireModal(false)}
                       disabled={unretiring}
-                      className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50"
+                      className="flex-1 py-2.5 px-4 bg-surface-raised hover:bg-line border border-line text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={() => handleUnretire(selectedCorps.corpsClass, selectedCorps.index)}
                       disabled={unretiring}
-                      className="flex-1 py-2.5 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white text-xs font-bold uppercase tracking-wider rounded-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 py-2.5 px-4 bg-interactive hover:bg-interactive-hover text-white text-xs font-bold uppercase tracking-wider rounded-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {unretiring ? (
                         <>

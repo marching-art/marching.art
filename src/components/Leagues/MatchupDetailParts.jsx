@@ -22,15 +22,11 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex items-center justify-between text-xs mb-1">
-        <span
-          className={`text-muted/60 font-semibold ${score1 > score2 ? 'text-green-400' : ''}`}
-        >
+        <span className={`text-muted/60 font-semibold ${score1 > score2 ? 'text-green-400' : ''}`}>
           {score1.toFixed(1)}
         </span>
-        <span className="font-semibold text-gray-300">{label}</span>
-        <span
-          className={`text-muted/60 font-semibold ${score2 > score1 ? 'text-green-400' : ''}`}
-        >
+        <span className="font-semibold text-secondary">{label}</span>
+        <span className={`text-muted/60 font-semibold ${score2 > score1 ? 'text-green-400' : ''}`}>
           {score2.toFixed(1)}
         </span>
       </div>

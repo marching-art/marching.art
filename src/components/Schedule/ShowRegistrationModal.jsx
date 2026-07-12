@@ -321,9 +321,9 @@ const ShowRegistrationModal = ({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-bold text-white leading-tight">{show.eventName}</h2>
-          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted">
             <span className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
+              <Calendar className="w-3.5 h-3.5 text-interactive" />
               {formattedDate}
             </span>
             {show.location && (
@@ -347,7 +347,7 @@ const ShowRegistrationModal = ({
 
       {/* Week Info Badge */}
       <div className="mt-3 flex items-center gap-2">
-        <span className="px-2 py-1 bg-[#0057B8]/10 text-[#0057B8] text-[10px] font-bold uppercase">
+        <span className="px-2 py-1 bg-interactive/10 text-interactive text-[10px] font-bold uppercase">
           Week {show.week}
         </span>
         <span className="text-[10px] text-muted">Max {maxShows} shows per corps</span>
@@ -381,7 +381,7 @@ const ShowRegistrationModal = ({
           <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-bold text-yellow-400 mb-0.5">marching.art Major</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted">
               The only event on this day — the whole field converges here, and every class is scored
               on the same night at the same show.
             </p>
@@ -397,7 +397,7 @@ const ShowRegistrationModal = ({
             <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-bold text-yellow-400 mb-1">Championship Event</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted">
                 Eligible corps are automatically enrolled. No manual registration required.
               </p>
             </div>
@@ -452,20 +452,18 @@ const ShowRegistrationModal = ({
                   return (
                     <div
                       key={corpsClass}
-                      className="flex items-center gap-3 p-3 bg-[#222] border border-[#333] opacity-60"
+                      className="flex items-center gap-3 p-3 bg-surface-raised border border-line opacity-60"
                     >
                       <X className="w-4 h-4 text-red-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <span className="font-medium text-gray-400 text-sm">
+                        <span className="font-medium text-muted text-sm">
                           {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
                         </span>
                         <span className={`ml-2 text-[10px] font-bold uppercase ${config.color}`}>
                           {config.shortName}
                         </span>
                       </div>
-                      <span className="text-[10px] text-muted font-medium">
-                        Class not eligible
-                      </span>
+                      <span className="text-[10px] text-muted font-medium">Class not eligible</span>
                     </div>
                   );
                 })}
@@ -477,11 +475,11 @@ const ShowRegistrationModal = ({
           {userCorpsClasses.length === 0 && (
             <div className="text-center py-6">
               <AlertTriangle className="w-10 h-10 text-muted mx-auto mb-3" />
-              <p className="text-sm text-gray-400">No corps registered yet.</p>
+              <p className="text-sm text-muted">No corps registered yet.</p>
               <Link
                 to="/"
                 onClick={onClose}
-                className="inline-block mt-3 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase"
+                className="inline-block mt-3 px-4 py-2 bg-interactive text-white text-xs font-bold uppercase"
               >
                 Create a Corps
               </Link>
@@ -489,7 +487,7 @@ const ShowRegistrationModal = ({
           )}
 
           {/* Eligible Classes Info */}
-          <div className="mt-4 p-3 bg-[#111] border border-[#333]">
+          <div className="mt-4 p-3 bg-surface-sunken border border-line">
             <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
               Eligible Classes for This Event
             </p>
@@ -499,7 +497,7 @@ const ShowRegistrationModal = ({
                 return (
                   <span
                     key={cls}
-                    className={`px-2 py-1 text-xs font-bold ${config?.bgColor || 'bg-gray-500/10'} ${config?.color || 'text-gray-400'}`}
+                    className={`px-2 py-1 text-xs font-bold ${config?.bgColor || 'bg-charcoal-500/10'} ${config?.color || 'text-muted'}`}
                   >
                     {config?.name || cls}
                   </span>
@@ -511,14 +509,14 @@ const ShowRegistrationModal = ({
       ) : userCorpsClasses.length === 0 && !podiumInfo && !podiumLoading ? (
         <div className="text-center py-10 px-4">
           <AlertTriangle className="w-12 h-12 text-muted mx-auto mb-3" />
-          <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
+          <p className="text-sm text-muted font-medium">No Corps Registered</p>
           <p className="text-xs text-muted mt-1 max-w-[280px] mx-auto">
             Create a corps from the Dashboard to start registering for shows.
           </p>
           <Link
             to="/"
             onClick={onClose}
-            className="inline-block mt-4 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase hover:bg-[#0066d6] press-feedback"
+            className="inline-block mt-4 px-4 py-2 bg-interactive text-white text-xs font-bold uppercase hover:bg-interactive-hover press-feedback"
           >
             Go to Dashboard
           </Link>
@@ -526,7 +524,7 @@ const ShowRegistrationModal = ({
       ) : (
         <>
           {/* Quick Actions */}
-          <div className="flex items-center justify-between px-4 py-3 bg-[#111] border-b border-[#333]">
+          <div className="flex items-center justify-between px-4 py-3 bg-surface-sunken border-b border-line">
             <span className="text-[10px] font-bold text-muted uppercase tracking-wider">
               Select Corps to Attend
             </span>
@@ -536,7 +534,7 @@ const ShowRegistrationModal = ({
                   haptic('light');
                   selectAll();
                 }}
-                className="text-[#0057B8] hover:text-[#0066d6] font-bold py-2 px-2 -mx-2 rounded-none hover:bg-[#0057B8]/10 min-h-touch press-feedback"
+                className="text-interactive hover:text-interactive-hover font-bold py-2 px-2 -mx-2 rounded-none hover:bg-interactive/10 min-h-touch press-feedback"
               >
                 Select All
               </button>
@@ -554,7 +552,7 @@ const ShowRegistrationModal = ({
           </div>
 
           {/* Corps List */}
-          <div className="divide-y divide-[#333]">
+          <div className="divide-y divide-line">
             {/* Podium corps rendered FIRST — it's the marquee corps and users
                 shouldn't have to scroll past every fantasy corps to find it.
                 While its async state loads, a skeleton reserves the row height
@@ -564,10 +562,10 @@ const ShowRegistrationModal = ({
                 className="flex items-center gap-3 p-4 w-full min-h-[60px] animate-pulse"
                 aria-hidden="true"
               >
-                <div className="w-5 h-5 border-2 border-[#444] flex-shrink-0" />
+                <div className="w-5 h-5 border-2 border-line-strong flex-shrink-0" />
                 <div className="flex-1 min-w-0 space-y-2">
-                  <div className="h-3.5 w-32 bg-[#333]" />
-                  <div className="h-2.5 w-24 bg-[#2a2a2a]" />
+                  <div className="h-3.5 w-32 bg-line" />
+                  <div className="h-2.5 w-24 bg-surface-elevated" />
                 </div>
               </div>
             )}
@@ -590,7 +588,7 @@ const ShowRegistrationModal = ({
                 <div
                   className={`
                   w-5 h-5 border-2 flex items-center justify-center flex-shrink-0
-                  ${podiumAttend || podiumIsMyAutoDay ? 'bg-yellow-500 border-yellow-500' : 'border-[#444]'}
+                  ${podiumAttend || podiumIsMyAutoDay ? 'bg-yellow-500 border-yellow-500' : 'border-line-strong'}
                 `}
                 >
                   {(podiumAttend || podiumIsMyAutoDay) && (
@@ -638,13 +636,13 @@ const ShowRegistrationModal = ({
           </div>
 
           {/* Info Section */}
-          <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
-            <div className="flex items-start gap-3 p-3 bg-[#0057B8]/5 border border-[#0057B8]/20">
-              <Ticket className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
-              <div className="text-[11px] text-gray-400 leading-relaxed">
+          <div className="px-4 py-3 bg-surface-sunken border-t border-line">
+            <div className="flex items-start gap-3 p-3 bg-interactive/5 border border-interactive/20">
+              <Ticket className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
+              <div className="text-[11px] text-muted leading-relaxed">
                 <p>
                   Each corps can attend up to{' '}
-                  <span className="text-[#0057B8] font-bold">{maxShows} shows per week</span>.
+                  <span className="text-interactive font-bold">{maxShows} shows per week</span>.
                   Scores from attended shows contribute to your season standings.
                 </p>
                 {registrationDeadline && (
@@ -664,7 +662,7 @@ const ShowRegistrationModal = ({
 
           {/* Registration Summary */}
           {selectedCorps.length > 0 && (
-            <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
+            <div className="px-4 py-3 bg-surface-sunken border-t border-line">
               <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                 Registering
               </div>
@@ -698,7 +696,7 @@ const ShowRegistrationModal = ({
         haptic('light');
         onClose();
       }}
-      className="w-full h-12 bg-[#333] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#444] active:bg-[#222] press-feedback flex items-center justify-center gap-2"
+      className="w-full h-12 bg-line text-white text-sm font-bold uppercase tracking-wider hover:bg-line-strong active:bg-surface-raised press-feedback flex items-center justify-center gap-2"
     >
       <X className="w-4 h-4" />
       Close
@@ -711,14 +709,14 @@ const ShowRegistrationModal = ({
           onClose();
         }}
         disabled={saving}
-        className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333] press-feedback"
+        className="flex-1 h-12 border border-line-strong text-secondary text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50 active:bg-line press-feedback"
       >
         Cancel
       </button>
       <button
         onClick={handleSave}
         disabled={saving || !hasChanges}
-        className="flex-1 h-12 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
+        className="flex-1 h-12 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
       >
         {saving ? (
           <>
@@ -740,14 +738,14 @@ const ShowRegistrationModal = ({
     return (
       <BottomSheet isOpen={true} onClose={onClose} snapPoints={[85]} showCloseButton={true}>
         {/* Header */}
-        <div className="px-4 pb-3 border-b border-[#333] flex-shrink-0">{headerContent}</div>
+        <div className="px-4 pb-3 border-b border-line flex-shrink-0">{headerContent}</div>
 
         {/* Body - Scrollable */}
         <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">{bodyContent}</div>
 
         {/* Footer */}
         {(isChampionship || userCorpsClasses.length > 0 || podiumInfo || podiumLoading) && (
-          <div className="px-4 py-4 border-t border-[#333] bg-[#1a1a1a] flex-shrink-0 safe-area-bottom">
+          <div className="px-4 py-4 border-t border-line bg-surface-card flex-shrink-0 safe-area-bottom">
             {footerContent}
           </div>
         )}
@@ -763,11 +761,11 @@ const ShowRegistrationModal = ({
         onClick={onClose}
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-none max-h-[90dvh] flex flex-col"
+          className="w-full max-w-lg bg-surface-card border border-line rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-4 py-4 border-b border-[#333] bg-[#222] flex-shrink-0">
+          <div className="px-4 py-4 border-b border-line bg-surface-raised flex-shrink-0">
             {headerContent}
           </div>
 
@@ -776,7 +774,7 @@ const ShowRegistrationModal = ({
 
           {/* Footer */}
           {(isChampionship || userCorpsClasses.length > 0 || podiumInfo || podiumLoading) && (
-            <div className="px-4 py-4 border-t border-[#333] bg-[#111] flex-shrink-0">
+            <div className="px-4 py-4 border-t border-line bg-surface-sunken flex-shrink-0">
               {footerContent}
             </div>
           )}

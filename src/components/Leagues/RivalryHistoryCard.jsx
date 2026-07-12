@@ -23,11 +23,9 @@ const CaptionDominationBar = ({
   return (
     <div className="py-1.5">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-bold text-gray-400 w-8">{caption}</span>
+        <span className="text-[10px] font-bold text-muted w-8">{caption}</span>
         <div className="flex items-center gap-2 text-[10px]">
-          <span
-            className={`font-bold ${user1Wins > user2Wins ? 'text-green-400' : 'text-muted'}`}
-          >
+          <span className={`font-bold ${user1Wins > user2Wins ? 'text-green-400' : 'text-muted'}`}>
             {user1Wins}
           </span>
           <span className="text-muted">-</span>
@@ -36,13 +34,13 @@ const CaptionDominationBar = ({
           </span>
         </div>
       </div>
-      <div className="h-1.5 bg-[#222] rounded-full overflow-hidden flex">
+      <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden flex">
         <m.div
           initial={{ width: 0 }}
           animate={{ width: `${user1Pct}%` }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className={`h-full ${
-            tied ? 'bg-gray-500' : user1Pct > 50 ? 'bg-green-500' : 'bg-green-500/30'
+            tied ? 'bg-charcoal-500' : user1Pct > 50 ? 'bg-green-500' : 'bg-green-500/30'
           }`}
         />
         <m.div
@@ -50,7 +48,7 @@ const CaptionDominationBar = ({
           animate={{ width: `${100 - user1Pct}%` }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className={`h-full ${
-            tied ? 'bg-gray-500' : user1Pct < 50 ? 'bg-red-500' : 'bg-red-500/30'
+            tied ? 'bg-charcoal-500' : user1Pct < 50 ? 'bg-red-500' : 'bg-red-500/30'
           }`}
         />
       </div>
@@ -81,7 +79,7 @@ const MatchupHistoryItem = ({
 
   return (
     <div
-      className={`flex items-center justify-between py-2 px-3 border-b border-[#222] last:border-0 ${
+      className={`flex items-center justify-between py-2 px-3 border-b border-line-subtle last:border-0 ${
         isUser1CurrentUser
           ? user1Won
             ? 'bg-green-500/5'
@@ -112,14 +110,12 @@ const MatchupHistoryItem = ({
           <p className="text-[9px] text-muted uppercase">BP</p>
           <p className="text-sm font-bold font-data tabular-nums">
             <span
-              className={user1BattlePoints > user2BattlePoints ? 'text-green-400' : 'text-gray-400'}
+              className={user1BattlePoints > user2BattlePoints ? 'text-green-400' : 'text-muted'}
             >
               {user1BattlePoints}
             </span>
             <span className="text-muted">-</span>
-            <span
-              className={user2BattlePoints > user1BattlePoints ? 'text-red-400' : 'text-gray-400'}
-            >
+            <span className={user2BattlePoints > user1BattlePoints ? 'text-red-400' : 'text-muted'}>
               {user2BattlePoints}
             </span>
           </p>
@@ -128,7 +124,7 @@ const MatchupHistoryItem = ({
         {/* Total Scores */}
         <div className="text-center">
           <p className="text-[9px] text-muted uppercase">Score</p>
-          <p className="text-sm font-data tabular-nums text-gray-400">
+          <p className="text-sm font-data tabular-nums text-muted">
             {user1Score.toFixed(1)} - {user2Score.toFixed(1)}
           </p>
         </div>
@@ -168,12 +164,10 @@ const RivalryHistoryCard = ({
 
   if (!headToHead || headToHead.totalMatchups === 0) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] p-6 text-center">
+      <div className="bg-surface-card border border-line p-6 text-center">
         <Swords className="w-8 h-8 text-muted mx-auto mb-2" />
-        <p className="text-sm text-gray-400">No head-to-head history yet</p>
-        <p className="text-xs text-muted mt-1">
-          This is the first matchup between these directors
-        </p>
+        <p className="text-sm text-muted">No head-to-head history yet</p>
+        <p className="text-xs text-muted mt-1">This is the first matchup between these directors</p>
       </div>
     );
   }
@@ -204,17 +198,17 @@ const RivalryHistoryCard = ({
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        className="bg-[#111] border-t border-[#333] px-4 py-3"
+        className="bg-surface-sunken border-t border-line px-4 py-3"
       >
         <div className="grid grid-cols-4 gap-3 text-center">
           <div>
             <p className="text-[10px] text-muted uppercase">Series</p>
             <p className="text-sm font-bold font-data tabular-nums">
-              <span className={user1Wins > user2Wins ? 'text-green-400' : 'text-gray-400'}>
+              <span className={user1Wins > user2Wins ? 'text-green-400' : 'text-muted'}>
                 {user1Wins}
               </span>
               <span className="text-muted">-</span>
-              <span className={user2Wins > user1Wins ? 'text-red-400' : 'text-gray-400'}>
+              <span className={user2Wins > user1Wins ? 'text-red-400' : 'text-muted'}>
                 {user2Wins}
               </span>
               {ties > 0 && <span className="text-yellow-400">-{ties}</span>}
@@ -258,12 +252,12 @@ const RivalryHistoryCard = ({
     <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[#1a1a1a] border border-[#333] overflow-hidden"
+      className="bg-surface-card border border-line overflow-hidden"
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
             <Swords className="w-3.5 h-3.5 text-red-400" />
             Rivalry History
           </h3>
@@ -276,7 +270,7 @@ const RivalryHistoryCard = ({
       {/* Main Stats */}
       <div className="p-4 space-y-4">
         {/* Overall Series Record */}
-        <div className="bg-[#111] p-3">
+        <div className="bg-surface-sunken p-3">
           <div className="flex items-center justify-between mb-3">
             <div className="text-center flex-1">
               <p
@@ -285,7 +279,7 @@ const RivalryHistoryCard = ({
                     ? 'text-purple-400'
                     : overallLeader === user1Id
                       ? 'text-green-400'
-                      : 'text-gray-400'
+                      : 'text-muted'
                 }`}
               >
                 {user1Wins}
@@ -305,7 +299,7 @@ const RivalryHistoryCard = ({
                     ? 'text-purple-400'
                     : overallLeader === user2Id
                       ? 'text-green-400'
-                      : 'text-gray-400'
+                      : 'text-muted'
                 }`}
               >
                 {user2Wins}
@@ -315,14 +309,14 @@ const RivalryHistoryCard = ({
           </div>
 
           {/* Win Percentage Bar */}
-          <div className="h-2 bg-[#222] rounded-full overflow-hidden flex">
+          <div className="h-2 bg-surface-raised rounded-full overflow-hidden flex">
             <m.div
               initial={{ width: 0 }}
               animate={{ width: `${user1WinPct}%` }}
               transition={{ duration: 0.5 }}
               className={`h-full ${
                 user1Wins === user2Wins
-                  ? 'bg-gray-500'
+                  ? 'bg-charcoal-500'
                   : user1Wins > user2Wins
                     ? 'bg-green-500'
                     : 'bg-green-500/30'
@@ -334,7 +328,7 @@ const RivalryHistoryCard = ({
               transition={{ duration: 0.5 }}
               className={`h-full ${
                 user1Wins === user2Wins
-                  ? 'bg-gray-500'
+                  ? 'bg-charcoal-500'
                   : user2Wins > user1Wins
                     ? 'bg-red-500'
                     : 'bg-red-500/30'
@@ -345,7 +339,7 @@ const RivalryHistoryCard = ({
 
         {/* Battle Points & Streak Row */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-[#111] p-2.5 text-center">
+          <div className="bg-surface-sunken p-2.5 text-center">
             <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
             <p className="text-[10px] text-muted uppercase mb-0.5">Total BP</p>
             <p className="text-sm font-bold font-data tabular-nums">
@@ -355,12 +349,12 @@ const RivalryHistoryCard = ({
             </p>
           </div>
 
-          <div className="bg-[#111] p-2.5 text-center">
+          <div className="bg-surface-sunken p-2.5 text-center">
             <TrendingUp className="w-4 h-4 text-blue-400 mx-auto mb-1" />
             <p className="text-[10px] text-muted uppercase mb-0.5">Avg Margin</p>
             <p
               className={`text-sm font-bold ${
-                avgMargin > 0 ? 'text-green-400' : avgMargin < 0 ? 'text-red-400' : 'text-gray-400'
+                avgMargin > 0 ? 'text-green-400' : avgMargin < 0 ? 'text-red-400' : 'text-muted'
               }`}
             >
               {avgMargin > 0 ? '+' : ''}
@@ -368,7 +362,7 @@ const RivalryHistoryCard = ({
             </p>
           </div>
 
-          <div className="bg-[#111] p-2.5 text-center">
+          <div className="bg-surface-sunken p-2.5 text-center">
             <Flame className="w-4 h-4 text-orange-400 mx-auto mb-1" />
             <p className="text-[10px] text-muted uppercase mb-0.5">Streak</p>
             {currentStreak ? (
@@ -398,7 +392,7 @@ const RivalryHistoryCard = ({
             <Target className="w-3 h-3 text-purple-400" />
             Caption Domination
           </h4>
-          <div className="bg-[#111] p-3">
+          <div className="bg-surface-sunken p-3">
             <div className="flex items-center justify-between mb-2 text-[10px] text-muted">
               <span className="truncate max-w-[80px]">{user1DisplayName}</span>
               <span className="truncate max-w-[80px]">{user2DisplayName}</span>
@@ -416,7 +410,7 @@ const RivalryHistoryCard = ({
                 />
               );
             })}
-            <div className="mt-2 pt-2 border-t border-[#222] flex items-center justify-between text-[10px]">
+            <div className="mt-2 pt-2 border-t border-line-subtle flex items-center justify-between text-[10px]">
               <span className="text-muted">Captions Led:</span>
               <span>
                 <span className="text-green-400 font-bold">
@@ -440,7 +434,7 @@ const RivalryHistoryCard = ({
             <Award className="w-3 h-3 text-yellow-400" />
             Match History
           </h4>
-          <div className="bg-[#111] divide-y divide-[#222]">
+          <div className="bg-surface-sunken divide-y divide-line-subtle">
             {matchupHistory
               .slice()
               .reverse()

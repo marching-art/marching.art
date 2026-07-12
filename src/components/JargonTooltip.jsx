@@ -105,7 +105,7 @@ const JargonTooltip = ({ termKey, children, enabled = true, className = '' }) =>
     <>
       <span
         ref={triggerRef}
-        className={`relative cursor-help border-b border-dotted border-gray-500 hover:border-[#0057B8] hover:text-white transition-colors ${className}`}
+        className={`relative cursor-help border-b border-dotted border-charcoal-500 hover:border-interactive hover:text-white transition-colors ${className}`}
         onMouseEnter={showTooltip}
         onMouseLeave={hideTooltip}
         onTouchStart={handleTouch}
@@ -136,11 +136,11 @@ const JargonTooltip = ({ termKey, children, enabled = true, className = '' }) =>
               onMouseEnter={showTooltip}
               onMouseLeave={hideTooltip}
             >
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-3 shadow-xl">
-                <p className="text-xs font-bold text-[#0057B8] uppercase tracking-wider mb-1">
+              <div className="bg-surface-card border border-line rounded-none p-3 shadow-xl">
+                <p className="text-xs font-bold text-interactive uppercase tracking-wider mb-1">
                   {definition.term}
                 </p>
-                <p className="text-sm text-gray-300 leading-relaxed">{definition.definition}</p>
+                <p className="text-sm text-secondary leading-relaxed">{definition.definition}</p>
               </div>
             </m.div>
           )}

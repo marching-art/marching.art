@@ -41,16 +41,16 @@ const SECTION_ICONS = { title: Shield, frame: User, cardTheme: CreditCard };
 const ItemPreview = ({ item }) => {
   if (item.type === 'title') {
     return (
-      <div className="h-14 flex items-center justify-center bg-[#0a0a0a] border border-[#2a2a2a]">
+      <div className="h-14 flex items-center justify-center bg-background border border-line-muted">
         <span className={`text-sm font-bold ${item.textClass}`}>{item.name}</span>
       </div>
     );
   }
   if (item.type === 'frame') {
     return (
-      <div className="h-14 flex items-center justify-center bg-[#0a0a0a] border border-[#2a2a2a]">
+      <div className="h-14 flex items-center justify-center bg-background border border-line-muted">
         <div
-          className={`w-9 h-9 rounded-none bg-[#222] ${item.frameClass} flex items-center justify-center`}
+          className={`w-9 h-9 rounded-none bg-surface-raised ${item.frameClass} flex items-center justify-center`}
         >
           <User className="w-4 h-4 text-muted" />
         </div>
@@ -58,7 +58,7 @@ const ItemPreview = ({ item }) => {
     );
   }
   return (
-    <div className="h-14 flex items-center justify-center bg-[#0a0a0a] border border-[#2a2a2a] p-2">
+    <div className="h-14 flex items-center justify-center bg-background border border-line-muted p-2">
       <div className={`w-full h-full rounded-none ${item.swatchClass}`} />
     </div>
   );
@@ -139,7 +139,7 @@ const Shop = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#333]">
+          <div className="flex items-center gap-2 px-3 py-2 bg-surface-card border border-line">
             <Coins className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
               {balance.toLocaleString()}
@@ -149,15 +149,15 @@ const Shop = () => {
 
         {/* Consumables */}
         <div className="mb-8">
-          <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-2">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
             <Snowflake className="w-3.5 h-3.5 text-cyan-400" />
             Consumables
           </h2>
-          <div className="bg-[#1a1a1a] border border-[#333] p-4 flex items-center gap-4">
+          <div className="bg-surface-card border border-line p-4 flex items-center gap-4">
             <Snowflake className="w-8 h-8 text-cyan-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white">Streak Freeze</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted">
                 Protects your login streak for 24 hours if you miss a day. One per 7 days.
               </p>
             </div>
@@ -174,7 +174,7 @@ const Shop = () => {
                 className={`h-9 px-4 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                   balance >= (freezeStatus?.freezeCost ?? 300)
                     ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                    : 'bg-[#222] text-muted cursor-not-allowed'
+                    : 'bg-surface-raised text-muted cursor-not-allowed'
                 }`}
               >
                 {busy === 'streak_freeze' ? '...' : `${freezeStatus?.freezeCost ?? 300} CC`}
@@ -185,16 +185,16 @@ const Shop = () => {
 
         {/* Hosting — sponsorship's replacement: run the show, don't just brand it */}
         <div className="mb-8">
-          <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-2">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-2">
             <Megaphone className="w-3.5 h-3.5 text-yellow-500" />
             Host Your Own Show
           </h2>
-          <div className="bg-[#1a1a1a] border border-[#333] p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="bg-surface-card border border-line p-4 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1">
               <p className="text-sm font-bold text-white">
                 Sponsorship retired — now you RUN the show.
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 Rent a stadium from 150 CC, put your event on the season schedule with open
                 enrollment for every class, and earn CC for every corps that performs. Run
                 successful shows to climb from a high school field to an NFL stadium.
@@ -215,8 +215,8 @@ const Shop = () => {
           const items = SHOP_ITEMS.filter((item) => item.type === section.type);
           return (
             <div key={section.type} className="mb-8">
-              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-2">
-                <SectionIcon className="w-3.5 h-3.5 text-[#0057B8]" />
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+                <SectionIcon className="w-3.5 h-3.5 text-interactive" />
                 {section.label}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -226,7 +226,7 @@ const Shop = () => {
                   const canAfford = item.price != null && balance >= item.price;
                   const inSeason = isSeasonallyAvailable(item, seasonStatus);
                   return (
-                    <div key={item.id} className="bg-[#1a1a1a] border border-[#333] flex flex-col">
+                    <div key={item.id} className="bg-surface-card border border-line flex flex-col">
                       <ItemPreview item={item} />
                       <div className="p-3 flex-1 flex flex-col">
                         <div className="flex items-center justify-between gap-2">
@@ -236,7 +236,7 @@ const Shop = () => {
                               className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider whitespace-nowrap border ${
                                 inSeason
                                   ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
-                                  : 'bg-[#222] border-[#333] text-muted'
+                                  : 'bg-surface-raised border-line text-muted'
                               }`}
                             >
                               {seasonalLabel(item)}
@@ -245,7 +245,7 @@ const Shop = () => {
                         </div>
                         <p className="text-[10px] text-muted mb-3 flex-1">{item.description}</p>
                         {!owned && !item.grantOnly && !inSeason ? (
-                          <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-[#222] border border-[#333] text-muted">
+                          <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-surface-raised border border-line text-muted">
                             Returns Next {item.seasonal === 'live-season' ? 'Summer' : 'Off-Season'}
                           </div>
                         ) : item.grantOnly && !owned ? (
@@ -259,7 +259,7 @@ const Shop = () => {
                             className={`h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${
                               isEquipped
                                 ? 'bg-green-600/20 border border-green-500/40 text-green-400 hover:bg-green-600/30'
-                                : 'bg-[#0057B8] hover:bg-[#0066d6] text-white'
+                                : 'bg-interactive hover:bg-interactive-hover text-white'
                             }`}
                           >
                             {isEquipped ? (
@@ -277,7 +277,7 @@ const Shop = () => {
                             className={`h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${
                               canAfford
                                 ? 'bg-yellow-600 hover:bg-yellow-500 text-white'
-                                : 'bg-[#222] text-muted cursor-not-allowed'
+                                : 'bg-surface-raised text-muted cursor-not-allowed'
                             }`}
                           >
                             <Coins className="w-3 h-3" />

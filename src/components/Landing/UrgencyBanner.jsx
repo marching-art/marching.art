@@ -54,9 +54,9 @@ const LEVEL_STYLES = {
     pulse: '',
   },
   [URGENCY_LEVELS.LOW]: {
-    container: 'bg-[#1a1a1a] border-[#333]',
-    icon: 'bg-[#0057B8]/20 text-[#0057B8]',
-    text: 'text-gray-300',
+    container: 'bg-surface-card border-line',
+    icon: 'bg-interactive/20 text-interactive',
+    text: 'text-secondary',
     subtext: 'text-muted',
     pulse: '',
   },
@@ -179,7 +179,7 @@ export const SeasonCountdown = ({ className = '' }) => {
   return (
     <div className={`flex items-center gap-2 text-sm ${className}`}>
       <Clock className="w-4 h-4 text-yellow-500" />
-      <span className="text-gray-400">
+      <span className="text-muted">
         <span className="font-semibold text-white">{weeksRemaining}</span> week
         {weeksRemaining > 1 ? 's' : ''} until finals
       </span>

@@ -94,7 +94,7 @@ const BottomNav: React.FC = () => {
       <div className="h-px w-full bg-yellow-500/30" />
 
       {/* Nav container - optimized for 6 items across all screen sizes */}
-      <div className="bg-[#1A1A1A] border-t border-white/10">
+      <div className="bg-surface-card border-t border-white/10">
         <div className="flex items-center justify-around px-0.5 xs:px-1 py-1.5">
           {items.map((item) => {
             const Icon = item.icon;

@@ -47,7 +47,7 @@ const TopNav = () => {
   }, [user]);
 
   return (
-    <nav className="fixed top-0 w-full h-14 bg-[#1a1a1a] border-b border-[#333] z-50">
+    <nav className="fixed top-0 w-full h-14 bg-surface-card border-b border-line z-50">
       <div className="w-full h-full flex items-center px-4 lg:px-6">
         {/* Logo + Brand - OPTIMIZATION #7: Added eager loading for LCP */}
         <Link to="/dashboard" className="flex items-center gap-2.5 mr-4">
@@ -83,7 +83,7 @@ const TopNav = () => {
           href="https://discord.gg/YvFRJ97A5H"
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-2 p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors"
+          className="ml-2 p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors"
           title="Join our Discord"
           aria-label="Join our Discord"
         >
@@ -93,7 +93,7 @@ const TopNav = () => {
         {/* Help Icon */}
         <Link
           to="/guide"
-          className="ml-1 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors"
+          className="ml-1 p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors"
           title="Game Guide"
         >
           <HelpCircle className="w-5 h-5" />
@@ -109,7 +109,7 @@ const NavItem = ({ to, icon: Icon, label }) => (
     to={to}
     className={({ isActive }) =>
       `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
-        isActive ? 'text-white' : 'text-gray-400 hover:text-white'
+        isActive ? 'text-white' : 'text-muted hover:text-white'
       }`
     }
   >
@@ -150,7 +150,7 @@ const DEFAULT_CLASS_STYLE = {
 // Medal colors for SoundSport
 const MEDAL_COLORS = {
   Gold: 'text-yellow-400',
-  Silver: 'text-gray-300',
+  Silver: 'text-secondary',
   Bronze: 'text-amber-600',
 };
 
@@ -253,7 +253,7 @@ const TickerBar = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-line z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
           <span className="text-muted animate-pulse">Loading scores...</span>
         </div>
@@ -264,7 +264,7 @@ const TickerBar = () => {
   // No data state
   if (!hasData || tickerSections.length === 0) {
     return (
-      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-line z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
           <span className="text-muted">No scores available yet</span>
         </div>
@@ -294,19 +294,19 @@ const TickerBar = () => {
                 {label} {tickerData.dayLabel}
               </span>
             </div>
-            <div className="w-px h-4 bg-[#333]" />
+            <div className="w-px h-4 bg-line" />
             {/* OPTIMIZATION #10: Use stable key based on item identity */}
             {classData?.scores?.slice(0, 8).map((item, idx) => (
               <div
                 key={`${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
                 <span className="text-white tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < Math.min(classData.scores.length, 8) - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
             ))}
@@ -321,22 +321,22 @@ const TickerBar = () => {
               <Trophy className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-purple-400" />
               <span className="text-purple-400 whitespace-nowrap">SoundSport Medals</span>
             </div>
-            <div className="w-px h-4 bg-[#333]" />
+            <div className="w-px h-4 bg-line" />
             {tickerData.soundSportMedals?.map((item, idx) => (
               <div
                 key={`${item.medal}-${item.fullName}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
                 <span
-                  className={`text-[11px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-gray-400'}`}
+                  className={`text-[11px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-muted'}`}
                 >
                   {item.medal}
                 </span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
                 {idx < tickerData.soundSportMedals.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
             ))}
@@ -353,16 +353,14 @@ const TickerBar = () => {
               <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${colors.text}`} />
               <span className={`${colors.text} whitespace-nowrap`}>{label} Leaders</span>
             </div>
-            <div className="w-px h-4 bg-[#333]" />
+            <div className="w-px h-4 bg-line" />
             {classData?.leaders?.slice(0, 8).map((item, idx) => (
               <div
                 key={`${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
-                  #{idx + 1}
-                </span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                <span className="text-muted text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
                 <span
@@ -378,7 +376,7 @@ const TickerBar = () => {
                 </span>
                 <TrendIndicator trend={item.trend} />
                 {idx < Math.min(classData.leaders.length, 8) - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
             ))}
@@ -393,21 +391,19 @@ const TickerBar = () => {
               <Sparkles className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-amber-400" />
               <span className="text-amber-400 whitespace-nowrap">GE Leaders</span>
             </div>
-            <div className="w-px h-4 bg-[#333]" />
+            <div className="w-px h-4 bg-line" />
             {tickerData.combinedCaptionLeaders?.ge?.map((item, idx) => (
               <div
                 key={`ge-${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
-                  #{idx + 1}
-                </span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                <span className="text-muted text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
                 <span className="text-amber-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.ge.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
             ))}
@@ -422,21 +418,19 @@ const TickerBar = () => {
               <Eye className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-cyan-400" />
               <span className="text-cyan-400 whitespace-nowrap">Visual Leaders</span>
             </div>
-            <div className="w-px h-4 bg-[#333]" />
+            <div className="w-px h-4 bg-line" />
             {tickerData.combinedCaptionLeaders?.visual?.map((item, idx) => (
               <div
                 key={`vis-${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
-                  #{idx + 1}
-                </span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                <span className="text-muted text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
                 <span className="text-cyan-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.visual.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
             ))}
@@ -451,21 +445,19 @@ const TickerBar = () => {
               <Music className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-pink-400" />
               <span className="text-pink-400 whitespace-nowrap">Music Leaders</span>
             </div>
-            <div className="w-px h-4 bg-[#333]" />
+            <div className="w-px h-4 bg-line" />
             {tickerData.combinedCaptionLeaders?.music?.map((item, idx) => (
               <div
                 key={`mus-${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
-                  #{idx + 1}
-                </span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                <span className="text-muted text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
                 <span className="text-pink-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.music.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
             ))}
@@ -483,7 +475,7 @@ const TickerBar = () => {
                 <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${colors.text}`} />
                 <span className={`${colors.text} whitespace-nowrap`}>{label} Movers</span>
               </div>
-              <div className="w-px h-4 bg-[#333]" />
+              <div className="w-px h-4 bg-line" />
               <span className="text-muted text-xs">No significant moves today</span>
             </>
           );
@@ -497,13 +489,13 @@ const TickerBar = () => {
               <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${colors.text}`} />
               <span className={`${colors.text} whitespace-nowrap`}>{label} Movers</span>
             </div>
-            <div className="w-px h-4 bg-[#333]" />
+            <div className="w-px h-4 bg-line" />
             {classData.movers.map((item, idx) => (
               <div
                 key={`mover-${item.fullName}-${item.change}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
                 <span
@@ -515,7 +507,7 @@ const TickerBar = () => {
                   {item.change}
                 </span>
                 <TrendIndicator trend={item.direction} />
-                {idx < classData.movers.length - 1 && <div className="w-px h-3 bg-[#333] ml-1" />}
+                {idx < classData.movers.length - 1 && <div className="w-px h-3 bg-line ml-1" />}
               </div>
             ))}
           </>
@@ -547,7 +539,7 @@ const TickerBar = () => {
   // auto-scrolling marquee (the OS media query also freezes CSS animations).
   if (prefersReducedMotion) {
     return (
-      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-line z-40 flex items-center overflow-hidden">
         <div className="relative flex-1 min-w-0 h-full flex items-center">
           <div className="flex-1 flex items-center gap-4 sm:gap-6 px-3 text-xs overflow-x-auto scrollbar-hide">
             {renderTrack('a')}
@@ -562,7 +554,7 @@ const TickerBar = () => {
   }
 
   return (
-    <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+    <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-line z-40 flex items-center overflow-hidden">
       <div className="relative flex-1 min-w-0 h-full flex items-center overflow-hidden">
         {/* Continuous marquee: two identical copies scroll left together,
             looping seamlessly. Duration scales with content width. */}
@@ -624,7 +616,7 @@ const GameShell = ({ children }) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <div className="min-h-screen w-full bg-[#0a0a0a] text-white font-sans">
+      <div className="min-h-screen w-full bg-background text-white font-sans">
         {/* Fixed Top Navigation */}
         <TopNav />
 
@@ -637,7 +629,7 @@ const GameShell = ({ children }) => {
         <main
           id="main-content"
           role="main"
-          className="fixed top-[96px] sm:top-[88px] left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
+          className="fixed top-[96px] sm:top-[88px] left-0 right-0 bg-background overflow-hidden main-content-bottom"
         >
           {/* Full-width wrapper so each page's own scroll container spans the
               viewport — this keeps scrollbars flush against the right edge of

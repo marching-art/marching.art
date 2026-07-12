@@ -60,18 +60,18 @@ const GuestLineupPicker = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-[#1a1a1a] border border-[#333] rounded-none w-full max-w-md max-h-[85dvh] flex flex-col overflow-hidden"
+            className="bg-surface-card border border-line rounded-none w-full max-w-md max-h-[85dvh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="guest-picker-title"
           >
             {/* Header */}
-            <div className="px-4 py-3 bg-[#222] border-b border-[#333] flex items-center justify-between flex-shrink-0">
+            <div className="px-4 py-3 bg-surface-raised border-b border-line flex items-center justify-between flex-shrink-0">
               <div>
                 <h2
                   id="guest-picker-title"
-                  className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                  className="text-xs font-bold uppercase tracking-wider text-secondary"
                 >
                   Draft {caption.fullName}
                 </h2>
@@ -97,7 +97,7 @@ const GuestLineupPicker = ({
             </div>
 
             {/* Corps list */}
-            <div className="flex-1 overflow-y-auto divide-y divide-[#333]/50">
+            <div className="flex-1 overflow-y-auto divide-y divide-line/50">
               {sortedCorps.map((corps, idx) => {
                 const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
                 const isSelected = currentValue === value;
@@ -112,14 +112,14 @@ const GuestLineupPicker = ({
                     disabled={disabled}
                     className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${
                       isSelected
-                        ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]'
+                        ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]'
                         : disabled
                           ? 'opacity-40 cursor-not-allowed'
                           : 'hover:bg-white/5'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      {isSelected && <Check className="w-4 h-4 text-[#0057B8] flex-shrink-0" />}
+                      {isSelected && <Check className="w-4 h-4 text-interactive flex-shrink-0" />}
                       <span className="text-sm text-white font-medium truncate">
                         {corps.corpsName}
                       </span>
@@ -143,15 +143,15 @@ const GuestLineupPicker = ({
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 bg-[#111] border-t border-[#333] flex-shrink-0">
+            <div className="px-4 py-3 bg-surface-sunken border-t border-line flex-shrink-0">
               <p className="text-[11px] text-muted flex items-center gap-1.5 justify-center">
-                <Sparkles className="w-3 h-3 text-[#0057B8]" aria-hidden="true" />
+                <Sparkles className="w-3 h-3 text-interactive" aria-hidden="true" />
                 Your draft carries over when you create your free account
               </p>
               {onComplete && (
                 <button
                   onClick={onComplete}
-                  className="mt-2 w-full h-10 border border-[#333] text-gray-400 text-xs font-bold uppercase tracking-wider hover:border-[#444] hover:text-white rounded-none"
+                  className="mt-2 w-full h-10 border border-line text-muted text-xs font-bold uppercase tracking-wider hover:border-line-strong hover:text-white rounded-none"
                 >
                   Done Drafting
                 </button>

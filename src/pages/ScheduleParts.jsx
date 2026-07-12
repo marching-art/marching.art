@@ -28,11 +28,11 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
   }, [currentWeek]);
 
   return (
-    <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2">
+    <div className="bg-surface-card border-b border-line px-3 py-2">
       {/* Segmented Control Container */}
       <div
         ref={containerRef}
-        className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] rounded-none overflow-x-auto scrollbar-hide"
+        className="flex items-center gap-1 p-1 bg-surface-sunken border border-line rounded-none overflow-x-auto scrollbar-hide"
       >
         {weeks.map((week) => {
           const isSelected = selectedWeek === week;
@@ -49,19 +49,19 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
                 whitespace-nowrap transition-all
                 ${
                   isSelected
-                    ? 'bg-[#0057B8] text-white'
-                    : 'text-muted hover:text-gray-300 hover:bg-white/5'
+                    ? 'bg-interactive text-white'
+                    : 'text-muted hover:text-secondary hover:bg-white/5'
                 }
               `}
             >
               {isCurrent && !isSelected && (
-                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#0057B8] rounded-full" />
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-interactive rounded-full" />
               )}
               <span>Wk {week}</span>
               <span
                 className={`
                 text-[9px] px-1 py-0.5
-                ${isSelected ? 'bg-white/20' : 'bg-[#222] text-gray-400'}
+                ${isSelected ? 'bg-white/20' : 'bg-surface-raised text-muted'}
               `}
               >
                 {showCount}
@@ -131,7 +131,7 @@ const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
   return (
     <div className="flex items-center gap-1 flex-wrap">
       {registeredCorps.map((corpsClass) => {
-        const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400' };
+        const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-muted' };
         return (
           <span
             key={corpsClass}
@@ -198,15 +198,15 @@ const ShowCard = ({
       tabIndex={isPast ? undefined : 0}
       aria-label={isPast ? undefined : `Open registration for ${show.eventName}`}
       className={`
-        bg-[#1a1a1a] border rounded-none overflow-hidden
-        ${isMajor ? 'border-yellow-500/40' : 'border-[#333]'}
-        ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-yellow-500/70' : 'hover:border-[#444]'} cursor-pointer active:bg-[#222]`}
+        bg-surface-card border rounded-none overflow-hidden
+        ${isMajor ? 'border-yellow-500/40' : 'border-line'}
+        ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-yellow-500/70' : 'hover:border-line-strong'} cursor-pointer active:bg-surface-raised`}
         ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
       `}
     >
       {/* Card Header */}
       <div
-        className={`px-4 py-3 border-b border-[#333] ${
+        className={`px-4 py-3 border-b border-line ${
           isMajor ? 'bg-gradient-to-r from-yellow-500/10 to-transparent' : ''
         }`}
       >
@@ -222,7 +222,7 @@ const ShowCard = ({
             </h3>
             <div className="flex items-center gap-3 mt-1 text-[10px] text-muted">
               <span className="flex items-center gap-1 font-data">
-                <Calendar className="w-3 h-3 text-[#0057B8]" />
+                <Calendar className="w-3 h-3 text-interactive" />
                 {formattedDate}
               </span>
               {show.location && (
@@ -247,7 +247,7 @@ const ShowCard = ({
 
           {/* Status Badge */}
           {isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-none">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-line text-muted rounded-none">
               {isCompleted ? 'Scored' : 'Done'}
             </span>
           ) : isRegistered ? (
@@ -256,7 +256,7 @@ const ShowCard = ({
               Going
             </span>
           ) : (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-none">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-interactive/10 text-interactive rounded-none">
               Register
             </span>
           )}
@@ -264,7 +264,7 @@ const ShowCard = ({
       </div>
 
       {/* Card Footer */}
-      <div className="px-4 py-2 bg-[#111]">
+      <div className="px-4 py-2 bg-surface-sunken">
         <div className="flex items-center justify-between">
           {/* Registration Badges */}
           <RegistrationBadges
@@ -278,7 +278,7 @@ const ShowCard = ({
             <Link
               to={`/scores?show=${encodeURIComponent(show.eventName)}${seasonUid ? `&season=${seasonUid}` : ''}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline font-bold uppercase"
+              className="flex items-center gap-1 text-[10px] text-interactive hover:underline font-bold uppercase"
             >
               <Trophy className="w-3 h-3" />
               Results
@@ -314,21 +314,21 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
       py-3 px-2 rounded-none border
       ${
         isPast
-          ? 'bg-[#1a1a1a] border-[#333] text-muted'
+          ? 'bg-surface-card border-line text-muted'
           : isMajorDay
             ? 'bg-yellow-500/10 border-yellow-500/40'
-            : 'bg-[#0057B8]/10 border-[#0057B8]/30'
+            : 'bg-interactive/10 border-interactive/30'
       }
     `}
     >
       <span
         className={`text-[10px] font-bold uppercase ${
-          isPast ? 'text-muted' : isMajorDay ? 'text-yellow-500' : 'text-[#0057B8]'
+          isPast ? 'text-muted' : isMajorDay ? 'text-yellow-500' : 'text-interactive'
         }`}
       >
         {dayOfWeek}
       </span>
-      <span className={`text-sm font-bold font-data ${isPast ? 'text-gray-400' : 'text-white'}`}>
+      <span className={`text-sm font-bold font-data ${isPast ? 'text-muted' : 'text-white'}`}>
         {monthDay}
       </span>
       {dayNumber != null && (
@@ -420,9 +420,7 @@ const ShowsList = ({
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <Calendar className="w-12 h-12 text-muted mb-3" />
         <h3 className="text-sm font-bold text-white mb-1">No Shows This Week</h3>
-        <p className="text-xs text-muted max-w-[280px]">
-          Check other weeks for available shows.
-        </p>
+        <p className="text-xs text-muted max-w-[280px]">Check other weeks for available shows.</p>
       </div>
     );
   }
@@ -487,13 +485,13 @@ const ChampionshipEventCard = ({
   return (
     <div
       className={`
-        bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden
+        bg-surface-card border border-line rounded-none overflow-hidden
         ${isPast ? 'opacity-60' : ''}
         ${hasEligibleCorps && !isPast ? 'border-l-2 border-l-[#0057B8]' : ''}
       `}
     >
       {/* Card Header */}
-      <div className="px-4 py-3 border-b border-[#333]">
+      <div className="px-4 py-3 border-b border-line">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -504,7 +502,7 @@ const ChampionshipEventCard = ({
             </div>
             <div className="flex items-center gap-3 mt-1 text-[10px] text-muted">
               <span className="flex items-center gap-1 font-data">
-                <Calendar className="w-3 h-3 text-[#0057B8]" />
+                <Calendar className="w-3 h-3 text-interactive" />
                 {formattedDate}
               </span>
               <span className="flex items-center gap-1 truncate">
@@ -517,16 +515,16 @@ const ChampionshipEventCard = ({
 
           {/* Auto-Enrolled Badge */}
           {hasEligibleCorps && !isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-none flex items-center gap-1">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-interactive/10 text-interactive rounded-none flex items-center gap-1">
               <Check className="w-3 h-3" />
               Auto-Enrolled
             </span>
           ) : isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-none">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-line text-muted rounded-none">
               Completed
             </span>
           ) : (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-muted rounded-none">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-line text-muted rounded-none">
               No Corps
             </span>
           )}
@@ -534,7 +532,7 @@ const ChampionshipEventCard = ({
       </div>
 
       {/* Card Footer */}
-      <div className="px-4 py-2 bg-[#111]">
+      <div className="px-4 py-2 bg-surface-sunken">
         <div className="flex items-center justify-between">
           {/* Enrolled Corps Badges */}
           {hasEligibleCorps ? (
@@ -542,8 +540,8 @@ const ChampionshipEventCard = ({
               {eligibleCorps.map(({ corpsClass }) => {
                 const config = CLASS_CONFIG[corpsClass] || {
                   name: corpsClass,
-                  color: 'text-gray-400',
-                  bgColor: 'bg-gray-500/10',
+                  color: 'text-muted',
+                  bgColor: 'bg-charcoal-500/10',
                 };
                 return (
                   <span
@@ -662,17 +660,17 @@ const ChampionshipWeekDisplay = ({
       )}
 
       {/* Championship Week Header */}
-      <div className="bg-gradient-to-r from-yellow-500/10 to-[#0057B8]/10 border border-yellow-500/20 rounded-none px-4 py-3">
+      <div className="bg-gradient-to-r from-yellow-500/10 to-interactive/10 border border-yellow-500/20 rounded-none px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
           <Trophy className="w-5 h-5 text-yellow-500" />
           <h3 className="text-[10px] font-bold text-white uppercase tracking-wider">
             Championship Week
           </h3>
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted">
           All championship events have{' '}
-          <span className="text-[#0057B8] font-bold">automatic enrollment</span> based on your corps
-          class and advancement. No registration required!
+          <span className="text-interactive font-bold">automatic enrollment</span> based on your
+          corps class and advancement. No registration required!
         </p>
       </div>
 

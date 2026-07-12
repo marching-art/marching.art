@@ -73,12 +73,12 @@ const CAPTIONS = CAPTION_DEFS.map((c) => ({
 
 const GuestHeader = () => {
   return (
-    <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
+    <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line">
       <div className="max-w-[1920px] mx-auto h-full flex items-center px-4 lg:px-6">
         {/* Back to Landing */}
         <Link
           to="/"
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mr-4"
+          className="flex items-center gap-2 text-muted hover:text-white transition-colors mr-4"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm font-medium hidden sm:inline">Back</span>
@@ -103,14 +103,14 @@ const GuestHeader = () => {
         <div className="ml-auto flex items-center gap-2">
           <Link
             to="/login"
-            className="flex items-center gap-1.5 px-3 h-9 text-sm text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 h-9 text-sm text-muted hover:text-white transition-colors"
           >
             <LogIn className="w-4 h-4" />
             <span className="hidden sm:inline">Sign In</span>
           </Link>
           <Link
             to="/register"
-            className="flex items-center gap-1.5 px-4 h-9 bg-[#0057B8] text-white text-sm font-bold rounded-none hover:bg-[#0066d6] transition-colors"
+            className="flex items-center gap-1.5 px-4 h-9 bg-interactive text-white text-sm font-bold rounded-none hover:bg-interactive-hover transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             <span>Sign Up Free</span>
@@ -139,15 +139,15 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
           : `${captionLabel}: empty slot. Tap to draft.`
       }
       className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
-        !isLast ? 'border-b border-[#333]/50' : ''
-      } bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]`}
+        !isLast ? 'border-b border-line/50' : ''
+      } bg-surface-card hover:bg-surface-raised active:bg-surface-raised`}
     >
       {/* Position Badge */}
       <div
         title={captionLabel}
         aria-hidden="true"
         className={`w-10 h-8 flex items-center justify-center rounded-none text-xs font-bold flex-shrink-0 ${
-          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-muted'
+          hasValue ? 'bg-interactive/20 text-interactive' : 'bg-line text-muted'
         }`}
       >
         {caption.name}
@@ -183,7 +183,7 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
             + Draft
           </span>
         )}
-        {!isPlayable && <Lock className="w-3.5 h-3.5 text-muted group-hover:text-gray-400" />}
+        {!isPlayable && <Lock className="w-3.5 h-3.5 text-muted group-hover:text-muted" />}
       </div>
     </button>
   );
@@ -205,9 +205,9 @@ const DemoDailyChallenges = ({ onGate }) => {
   const completedCount = completedIds.size;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+    <div className="bg-surface-card border border-line overflow-hidden">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
           <Target className="w-3.5 h-3.5 text-orange-500" />
           Daily Challenges
         </h3>
@@ -217,26 +217,26 @@ const DemoDailyChallenges = ({ onGate }) => {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-[#222]">
+      <div className="h-1 bg-surface-raised">
         <div
           className="h-full bg-orange-500 transition-all duration-500"
           style={{ width: `${(completedCount / totalCount) * 100}%` }}
         />
       </div>
 
-      <div className="divide-y divide-[#222]">
+      <div className="divide-y divide-line-subtle">
         {challenges.map((challenge) => {
           const isDone = completedIds.has(challenge.id);
           return (
             <button
               key={challenge.id}
               onClick={() => onGate('challenge')}
-              className="w-full px-4 py-3 hover:bg-[#222] transition-colors text-left"
+              className="w-full px-4 py-3 hover:bg-surface-raised transition-colors text-left"
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    isDone ? 'bg-green-500' : 'border border-[#444]'
+                    isDone ? 'bg-green-500' : 'border border-line-strong'
                   }`}
                 >
                   {isDone && <Check className="w-3 h-3 text-white" />}
@@ -277,15 +277,15 @@ const CLASS_PERKS = {
 };
 
 const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
-    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-      <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+  <div className="bg-surface-card border border-line rounded-none overflow-hidden">
+    <div className="bg-surface-raised px-4 py-3 border-b border-line">
+      <h2 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
         <TrendingUp className="w-3.5 h-3.5 text-purple-500" />
         Class Progression
       </h2>
     </div>
 
-    <div className="divide-y divide-[#333]/50">
+    <div className="divide-y divide-line/50">
       {CORPS_CLASS_ORDER.map((classId) => {
         const isUnlocked = isCorpsClassUnlocked(unlockedClasses, classId);
         const isActive = classId === activeCorpsClass;
@@ -298,15 +298,15 @@ const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) =>
           <button
             key={classId}
             onClick={() => onGate('default')}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#222] transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-raised transition-colors"
           >
             <div
               className={`w-9 h-9 rounded-none flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${
                 isActive
-                  ? 'bg-[#0057B8]/20 text-[#0057B8]'
+                  ? 'bg-interactive/20 text-interactive'
                   : isUnlocked
                     ? 'bg-green-500/10 text-green-500'
-                    : 'bg-[#111] text-muted'
+                    : 'bg-surface-sunken text-muted'
               }`}
             >
               {CLASS_POINT_CAPS[classId]}
@@ -317,7 +317,7 @@ const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) =>
                   {CORPS_CLASS_LABELS[classId]}
                 </span>
                 {isActive ? (
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#0057B8]/20 text-[#0057B8] rounded-none">
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-interactive/20 text-interactive rounded-none">
                     Your Corps
                   </span>
                 ) : isUnlocked ? (
@@ -335,7 +335,7 @@ const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) =>
       })}
     </div>
 
-    <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
+    <div className="px-4 py-2.5 border-t border-line bg-surface-sunken">
       <p className="text-[10px] text-muted">
         Level up as a director to unlock higher classes and the full competitive dashboard.
       </p>
@@ -488,14 +488,14 @@ const GuestDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-interactive border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <GuestHeader />
 
@@ -522,16 +522,16 @@ const GuestDashboard = () => {
           <m.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-4 bg-gradient-to-r from-[#0057B8]/20 to-yellow-500/10 border border-[#0057B8]/30 rounded-none"
+            className="mb-4 p-4 bg-gradient-to-r from-interactive/20 to-yellow-500/10 border border-interactive/30 rounded-none"
           >
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
-                <Info className="w-5 h-5 text-[#0057B8] flex-shrink-0" />
+                <Info className="w-5 h-5 text-interactive flex-shrink-0" />
                 <div>
                   <p className="text-sm text-white font-medium">
                     You're exploring a live demo dashboard
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-muted mt-0.5">
                     Draft a SoundSport lineup below — it carries over when you create your free
                     account
                   </p>
@@ -539,7 +539,7 @@ const GuestDashboard = () => {
               </div>
               <Link
                 to="/register"
-                className="flex items-center justify-center gap-2 px-4 h-10 bg-[#0057B8] text-white text-sm font-bold rounded-none hover:bg-[#0066d6] transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-4 h-10 bg-interactive text-white text-sm font-bold rounded-none hover:bg-interactive-hover transition-colors whitespace-nowrap"
               >
                 Create Your Corps
                 <ChevronRight className="w-4 h-4" />
@@ -574,16 +574,16 @@ const GuestDashboard = () => {
             {/* MAIN CONTENT (2/3) - Lineup + results */}
             <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:row-span-2 space-y-4">
               {/* Lineup Panel (draftable) */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                    <Target className="w-3.5 h-3.5 text-[#0057B8]" />
+              <div className="bg-surface-card border border-line rounded-none overflow-hidden">
+                <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+                  <h2 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                    <Target className="w-3.5 h-3.5 text-interactive" />
                     {isDrafting ? 'Your Draft' : 'Active Lineup'}
                   </h2>
                   <div className="flex items-center gap-3">
                     {isDrafting && (
                       <>
-                        <span className="text-[10px] font-bold text-gray-400 font-data tabular-nums">
+                        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
                           {draftPickCount}/8 •{' '}
                           <span
                             className={
@@ -603,7 +603,7 @@ const GuestDashboard = () => {
                     )}
                     <button
                       onClick={handleEditLineupClick}
-                      className="text-xs font-medium text-[#0057B8] hover:text-white transition-colors flex items-center gap-1"
+                      className="text-xs font-medium text-interactive hover:text-white transition-colors flex items-center gap-1"
                     >
                       {!isPlayable && <Lock className="w-3 h-3" />}
                       {isDrafting ? 'Continue Draft' : isPlayable ? 'Try Drafting' : 'Edit Lineup'}
@@ -612,8 +612,8 @@ const GuestDashboard = () => {
                 </div>
 
                 {isDrafting && (
-                  <div className="px-4 py-2 bg-[#0057B8]/10 border-b border-[#0057B8]/20">
-                    <p className="text-[11px] text-[#0057B8]">
+                  <div className="px-4 py-2 bg-interactive/10 border-b border-interactive/20">
+                    <p className="text-[11px] text-interactive">
                       You're drafting your own lineup — it carries over when you sign up.
                     </p>
                   </div>
@@ -659,29 +659,29 @@ const GuestDashboard = () => {
               <DemoDailyChallenges onGate={handleGatedClick} />
 
               {/* Upcoming Shows */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <div className="bg-surface-card border border-line rounded-none overflow-hidden">
+                <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+                  <h2 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
                     <Calendar className="w-3.5 h-3.5 text-green-500" />
                     Upcoming Shows
                   </h2>
                   <button
                     onClick={() => handleGatedClick('shows')}
-                    className="text-xs font-medium text-[#0057B8] hover:text-white transition-colors flex items-center gap-1"
+                    className="text-xs font-medium text-interactive hover:text-white transition-colors flex items-center gap-1"
                   >
                     <Lock className="w-3 h-3" />
                     Select
                   </button>
                 </div>
 
-                <div className="divide-y divide-[#333]/50">
+                <div className="divide-y divide-line/50">
                   {demoUpcomingShows.slice(0, 3).map((show) => (
                     <button
                       key={show.showId}
                       onClick={() => handleGatedClick('shows')}
-                      className="w-full p-3 flex items-center gap-3 hover:bg-[#222] transition-colors text-left"
+                      className="w-full p-3 flex items-center gap-3 hover:bg-surface-raised transition-colors text-left"
                     >
-                      <div className="w-10 h-10 rounded-none bg-[#111] flex flex-col items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-none bg-surface-sunken flex flex-col items-center justify-center flex-shrink-0">
                         <span className="text-xs text-muted">
                           {new Date(show.date)
                             .toLocaleDateString('en-US', { month: 'short' })
@@ -736,9 +736,9 @@ const GuestDashboard = () => {
               </button>
 
               {/* Submit Article — community content (gated) */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+              <div className="bg-surface-card border border-line rounded-none overflow-hidden">
+                <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-green-500" />
                     Community Content
                   </h3>
@@ -749,7 +749,7 @@ const GuestDashboard = () => {
                   </p>
                   <button
                     onClick={() => handleGatedClick('default')}
-                    className="w-full py-2.5 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-2.5 bg-surface-raised hover:bg-line border border-line text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
                   >
                     <Lock className="w-4 h-4" />
                     Submit Article
@@ -758,15 +758,15 @@ const GuestDashboard = () => {
               </div>
 
               {/* Register CTA */}
-              <div className="bg-gradient-to-br from-[#0057B8]/20 to-[#0057B8]/5 border border-[#0057B8]/30 rounded-none p-4">
+              <div className="bg-gradient-to-br from-interactive/20 to-interactive/5 border border-interactive/30 rounded-none p-4">
                 <h3 className="text-sm font-bold text-white mb-2">Ready to compete?</h3>
-                <p className="text-xs text-gray-400 mb-4">
+                <p className="text-xs text-muted mb-4">
                   Create your free account to build your own corps, join leagues, and climb the
                   leaderboard.
                 </p>
                 <Link
                   to="/register"
-                  className="flex items-center justify-center gap-2 w-full h-11 bg-[#0057B8] text-white font-bold text-sm rounded-none hover:bg-[#0066d6] transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-11 bg-interactive text-white font-bold text-sm rounded-none hover:bg-interactive-hover transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
                   Create Free Account

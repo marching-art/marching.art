@@ -96,9 +96,9 @@ const UsersTab = () => {
   return (
     <div className="space-y-4">
       {/* User Stats */}
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="User Telemetry" icon={Users} />
-        <div className="flex divide-x divide-[#333]">
+        <div className="flex divide-x divide-line">
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-muted mb-1">Total</p>
             <p className="text-xl font-bold text-white font-data tabular-nums">
@@ -122,21 +122,21 @@ const UsersTab = () => {
           </div>
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-muted mb-1">Corps</p>
-            <p className="text-xl font-bold text-[#0057B8] font-data tabular-nums">
+            <p className="text-xl font-bold text-interactive font-data tabular-nums">
               {stats.totalCorps}
             </p>
           </div>
         </div>
-        <div className="flex divide-x divide-[#333] border-t border-[#333]">
+        <div className="flex divide-x divide-line border-t border-line">
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-muted mb-1">Total Logins</p>
-            <p className="text-lg font-bold text-gray-300 font-data tabular-nums">
+            <p className="text-lg font-bold text-secondary font-data tabular-nums">
               {stats.totalLogins.toLocaleString()}
             </p>
           </div>
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-muted mb-1">Engagement</p>
-            <p className="text-lg font-bold text-gray-300 font-data tabular-nums">
+            <p className="text-lg font-bold text-secondary font-data tabular-nums">
               {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%
             </p>
           </div>
@@ -144,7 +144,7 @@ const UsersTab = () => {
       </div>
 
       {/* User Operations */}
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="User Operations" icon={Terminal} />
         <ProcessRow
           name="View All Users"
@@ -172,19 +172,19 @@ const UsersTab = () => {
       {/* User List Modal */}
       {showUserList && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-4xl max-h-[80dvh] flex flex-col">
-            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <div className="bg-surface-card border border-line w-full max-w-4xl max-h-[80dvh] flex flex-col">
+            <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted">
                 All Users ({users.length})
               </h2>
               <button
                 onClick={() => setShowUserList(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-muted hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-3 border-b border-[#333]">
+            <div className="p-3 border-b border-line">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
                 <input
@@ -192,35 +192,27 @@ const UsersTab = () => {
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-[#111] border border-[#333] text-xs text-white focus:outline-none focus:border-[#0057B8]"
+                  className="w-full pl-9 pr-3 py-2 bg-surface-sunken border border-line text-xs text-white focus:outline-none focus:border-interactive"
                 />
               </div>
             </div>
             <div className="flex-1 overflow-auto">
               <table className="w-full">
-                <thead className="bg-[#222] sticky top-0">
+                <thead className="bg-surface-raised sticky top-0">
                   <tr>
-                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
-                      User
-                    </th>
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">User</th>
                     <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">Lvl</th>
-                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
-                      Streak
-                    </th>
-                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
-                      Logins
-                    </th>
-                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
-                      Corps
-                    </th>
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">Streak</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">Logins</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">Corps</th>
                     <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
                       Last Login
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#333]">
+                <tbody className="divide-y divide-line">
                   {filteredUsers.map((user) => (
-                    <tr key={user.uid} className="hover:bg-[#111]">
+                    <tr key={user.uid} className="hover:bg-surface-sunken">
                       <td className="px-4 py-2.5">
                         <p className="text-sm text-white">{user.username}</p>
                         <p className="text-[10px] text-muted font-data">
@@ -230,16 +222,16 @@ const UsersTab = () => {
                       <td className="px-4 py-2.5 text-sm text-white font-data">{user.xpLevel}</td>
                       <td className="px-4 py-2.5">
                         <span
-                          className={`text-sm font-data ${user.loginStreak >= 7 ? 'text-yellow-500' : user.loginStreak >= 3 ? 'text-green-500' : 'text-gray-400'}`}
+                          className={`text-sm font-data ${user.loginStreak >= 7 ? 'text-yellow-500' : user.loginStreak >= 3 ? 'text-green-500' : 'text-muted'}`}
                         >
                           {user.loginStreak > 0 ? `${user.loginStreak}d` : '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-gray-400 font-data">
+                      <td className="px-4 py-2.5 text-sm text-muted font-data">
                         {user.totalLogins || 0}
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-gray-400">{user.corps.length}</td>
-                      <td className="px-4 py-2.5 text-xs text-gray-400">
+                      <td className="px-4 py-2.5 text-sm text-muted">{user.corps.length}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted">
                         {user.lastLogin && !isNaN(user.lastLogin.getTime())
                           ? user.lastLogin.toLocaleDateString()
                           : '—'}
@@ -256,29 +248,27 @@ const UsersTab = () => {
       {/* Role Manager Modal */}
       {showRoleManager && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm">
-            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <div className="bg-surface-card border border-line w-full max-w-sm">
+            <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted">
                 Manage Roles
               </h2>
               <button
                 onClick={() => setShowRoleManager(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-muted hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-[10px] text-muted uppercase mb-2">
-                  Email Address
-                </label>
+                <label className="block text-[10px] text-muted uppercase mb-2">Email Address</label>
                 <input
                   type="email"
                   placeholder="user@example.com"
                   value={roleEmail}
                   onChange={(e) => setRoleEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#111] border border-[#333] text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-line text-sm text-white focus:outline-none focus:border-interactive"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">

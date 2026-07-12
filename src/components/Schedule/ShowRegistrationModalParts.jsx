@@ -17,7 +17,7 @@ const CorpsSelectionItem = ({
   isDisabled,
   maxShows,
 }) => {
-  const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400' };
+  const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-muted' };
   const weekKey = `week${show.week}`;
   const currentShows = corpsData.selectedShows?.[weekKey] || [];
   const showsThisWeek = currentShows.length;
@@ -33,7 +33,7 @@ const CorpsSelectionItem = ({
         flex items-center gap-3 p-4 w-full text-left transition-colors min-h-[60px]
         ${
           isSelected
-            ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]'
+            ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]'
             : 'hover:bg-white/5 active:bg-white/10'
         }
         ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -43,7 +43,7 @@ const CorpsSelectionItem = ({
       <div
         className={`
         w-5 h-5 border-2 flex items-center justify-center flex-shrink-0
-        ${isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'}
+        ${isSelected ? 'bg-interactive border-interactive' : 'border-line-strong'}
       `}
       >
         {isSelected && <Check className="w-3.5 h-3.5 text-white" />}

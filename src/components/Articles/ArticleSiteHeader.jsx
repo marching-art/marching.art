@@ -28,7 +28,7 @@ const ArticleSiteHeader = () => {
   const profile = useProfileStore((state) => state.profile);
 
   return (
-    <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
+    <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line">
       <div className="h-full flex items-center px-4 lg:px-6">
         <Link to="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-none overflow-hidden">
@@ -47,13 +47,13 @@ const ArticleSiteHeader = () => {
             <Link
               to="/dashboard"
               aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
-              className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-[#333] active:scale-95 transition-all duration-150 press-feedback"
+              className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-line active:scale-95 transition-all duration-150 press-feedback"
             >
               <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data tabular-nums">
                 <Coins className="w-3.5 h-3.5" />
                 {(profile.corpsCoin || 0).toLocaleString()}
               </span>
-              <span className="flex items-center gap-1 text-sm font-bold text-purple-400 font-data tabular-nums pl-2 border-l border-[#333]">
+              <span className="flex items-center gap-1 text-sm font-bold text-purple-400 font-data tabular-nums pl-2 border-l border-line">
                 <Zap className="w-3.5 h-3.5" />
                 {profile.xpLevel || 1}
               </span>
@@ -77,7 +77,7 @@ const ArticleSiteHeader = () => {
                 href="https://discord.gg/YvFRJ97A5H"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
+                className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                 title="Join our Discord"
                 aria-label="Join our Discord"
               >
@@ -85,13 +85,13 @@ const ArticleSiteHeader = () => {
               </a>
               <Link
                 to="/privacy"
-                className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-secondary active:text-white transition-colors press-feedback flex items-center"
               >
                 Privacy
               </Link>
               <Link
                 to="/terms"
-                className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-secondary active:text-white transition-colors press-feedback flex items-center"
               >
                 Terms
               </Link>
@@ -105,7 +105,7 @@ const ArticleSiteHeader = () => {
               href="https://discord.gg/YvFRJ97A5H"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
+              className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
               title="Join our Discord"
               aria-label="Join our Discord"
             >

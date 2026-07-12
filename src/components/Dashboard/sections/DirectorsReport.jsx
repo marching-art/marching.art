@@ -115,45 +115,45 @@ const DirectorsReport = memo(
          it recedes to the neutral chrome — the eye should move on. Border-only
          accent keeps it within the no-glow/no-gradient design laws. */
       <div
-        className={`bg-[#1a1a1a] overflow-hidden border transition-colors duration-500 ${
-          allDone ? 'border-[#333]' : 'border-[#0057B8]'
+        className={`bg-surface-card overflow-hidden border transition-colors duration-500 ${
+          allDone ? 'border-line' : 'border-interactive'
         }`}
       >
         {/* Report header — the one count that answers "am I done today?" */}
         <div
           className={`px-4 py-3 border-b flex items-center justify-between transition-colors duration-500 ${
-            allDone ? 'bg-[#222] border-[#333]' : 'bg-[#0057B8]/15 border-[#0057B8]/40'
+            allDone ? 'bg-surface-raised border-line' : 'bg-interactive/15 border-interactive/40'
           }`}
         >
           <h3
             className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${
-              allDone ? 'text-gray-300' : 'text-white'
+              allDone ? 'text-secondary' : 'text-white'
             }`}
           >
             <ClipboardList
-              className={`w-3.5 h-3.5 ${allDone ? 'text-[#0057B8]' : 'text-white'}`}
+              className={`w-3.5 h-3.5 ${allDone ? 'text-interactive' : 'text-white'}`}
             />
             Director&apos;s Report
           </h3>
           <span
-            className={`text-[10px] font-bold font-data tabular-nums ${allDone ? 'text-green-400' : 'text-gray-400'}`}
+            className={`text-[10px] font-bold font-data tabular-nums ${allDone ? 'text-green-400' : 'text-muted'}`}
           >
             Today · {doneCount} of {totalCount} done
           </span>
         </div>
-        <div className="h-1 bg-[#222]">
+        <div className="h-1 bg-surface-raised">
           <div
-            className={`h-full transition-all duration-500 ${allDone ? 'bg-green-500' : 'bg-[#0057B8]'}`}
+            className={`h-full transition-all duration-500 ${allDone ? 'bg-green-500' : 'bg-interactive'}`}
             style={{ width: `${totalCount > 0 ? (doneCount / totalCount) * 100 : 0}%` }}
           />
         </div>
 
         {/* Daily login — auto-claimed on load; surfaced so the day's most
           reliable reward reads as done work, with the streak attached */}
-        <div className="px-4 py-3 border-b border-[#222] flex items-center gap-3">
+        <div className="px-4 py-3 border-b border-line-subtle flex items-center gap-3">
           <div
             className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-              loginDone ? 'bg-green-500' : 'border border-[#444]'
+              loginDone ? 'bg-green-500' : 'border border-line-strong'
             }`}
           >
             {loginDone && <Check className="w-3 h-3 text-white" />}
@@ -178,7 +178,7 @@ const DirectorsReport = memo(
         {/* Pending ladder claim — a reward already earned should never sit
           unnoticed in another card */}
         {claimableTiers.length > 0 && (
-          <div className="px-4 py-3 border-t border-[#222] bg-emerald-500/5 flex items-center gap-3">
+          <div className="px-4 py-3 border-t border-line-subtle bg-emerald-500/5 flex items-center gap-3">
             <Gift className="w-4 h-4 text-emerald-400 flex-shrink-0" />
             <span className="text-sm text-emerald-300 flex-1">
               Season Ladder Tier {claimableTiers[0].tier} ready
@@ -187,7 +187,7 @@ const DirectorsReport = memo(
             <button
               onClick={() => handleClaimTier(claimableTiers[0])}
               disabled={claimingTier !== null}
-              className="h-8 px-3 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#333] text-white transition-colors press-feedback"
+              className="h-8 px-3 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 disabled:bg-line text-white transition-colors press-feedback"
             >
               {claimingTier ? '...' : `Claim +${claimableTiers[0].coin} CC`}
             </button>

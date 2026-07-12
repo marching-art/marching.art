@@ -68,12 +68,12 @@ const SeasonScheduleOverview = ({
   selectedWeek,
 }) => {
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] mb-4">
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+    <div className="bg-surface-card border border-line mb-4">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Season Schedule
             </span>
           </div>
@@ -106,8 +106,8 @@ const SeasonScheduleOverview = ({
                         : hasData
                           ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
                           : isPast
-                            ? 'bg-[#222] border border-[#333] text-muted'
-                            : 'bg-[#222] border border-[#333] text-muted hover:border-[#444]'
+                            ? 'bg-surface-raised border border-line text-muted'
+                            : 'bg-surface-raised border border-line text-muted hover:border-line-strong'
                 }`}
               >
                 {week}
@@ -120,7 +120,7 @@ const SeasonScheduleOverview = ({
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#333] text-[9px] text-muted">
+        <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-line text-[9px] text-muted">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-purple-500/30 border-2 border-purple-500" />
             <span>Current</span>
@@ -134,7 +134,7 @@ const SeasonScheduleOverview = ({
             <span>Scheduled</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-[#222] border border-[#333]" />
+            <div className="w-3 h-3 bg-surface-raised border border-line" />
             <span>No matchups</span>
           </div>
         </div>
@@ -156,11 +156,11 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] mb-4">
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+    <div className="bg-surface-card border border-line mb-4">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-purple-500" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Your Season History
           </span>
         </div>
@@ -184,14 +184,14 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
                 disabled={isBye}
                 className={`flex-shrink-0 w-16 p-2 text-center transition-colors ${
                   isBye
-                    ? 'bg-[#222] cursor-default'
+                    ? 'bg-surface-raised cursor-default'
                     : won
                       ? 'bg-green-500/10 border border-green-500/30 hover:bg-green-500/20'
                       : lost
                         ? 'bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
                         : tie
                           ? 'bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20'
-                          : 'bg-[#222] border border-[#333] hover:border-[#444]'
+                          : 'bg-surface-raised border border-line hover:border-line-strong'
                 }`}
               >
                 <p className="text-[9px] text-muted mb-0.5">Wk {match.week}</p>
@@ -207,14 +207,12 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
                             ? 'text-red-500'
                             : tie
                               ? 'text-yellow-500'
-                              : 'text-gray-400'
+                              : 'text-muted'
                       }`}
                     >
                       {won ? 'W' : lost ? 'L' : tie ? 'T' : 'vs'}
                     </p>
-                    <p className="text-[9px] text-muted truncate">
-                      {getDisplayName(opponentId)}
-                    </p>
+                    <p className="text-[9px] text-muted truncate">{getDisplayName(opponentId)}</p>
                   </>
                 )}
               </button>
@@ -282,17 +280,17 @@ const HeadToHeadSection = ({
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] mb-4">
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+    <div className="bg-surface-card border border-line mb-4">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-orange-500" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Head to Head Records
           </span>
         </div>
       </div>
 
-      <div className="divide-y divide-[#222]">
+      <div className="divide-y divide-line-subtle">
         {h2hRecords.slice(0, 5).map((record) => {
           const winPct =
             record.totalGames > 0 ? ((record.wins / record.totalGames) * 100).toFixed(0) : 0;
@@ -302,11 +300,11 @@ const HeadToHeadSection = ({
           return (
             <div
               key={record.opponentId}
-              className="px-4 py-3 flex items-center justify-between hover:bg-[#222] transition-colors"
+              className="px-4 py-3 flex items-center justify-between hover:bg-surface-raised transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[#333] flex items-center justify-center">
-                  <span className="text-xs font-bold text-gray-400">
+                <div className="w-8 h-8 bg-line flex items-center justify-center">
+                  <span className="text-xs font-bold text-muted">
                     {getDisplayName(record.opponentId).charAt(0)}
                   </span>
                 </div>
@@ -346,7 +344,7 @@ const HeadToHeadSection = ({
                       ? 'bg-green-500/20 text-green-500'
                       : isLosing
                         ? 'bg-red-500/20 text-red-500'
-                        : 'bg-gray-500/20 text-gray-400'
+                        : 'bg-charcoal-500/20 text-muted'
                   }`}
                 >
                   {winPct}%
@@ -367,12 +365,12 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
   const isFutureWeek = selectedWeek > currentWeek;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
+    <div className="bg-surface-card border border-line p-8 text-center">
       <div
         className={`w-16 h-16 mx-auto mb-4 flex items-center justify-center ${
           isCommissioner && isCurrentWeek
             ? 'bg-yellow-500/10 border-2 border-yellow-500/30'
-            : 'bg-[#222] border border-[#333]'
+            : 'bg-surface-raised border border-line'
         }`}
       >
         <Swords
@@ -386,7 +384,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
         {isFutureWeek && 'Upcoming Week'}
       </h3>
 
-      <p className="text-sm text-gray-400 mb-4 max-w-sm mx-auto">
+      <p className="text-sm text-muted mb-4 max-w-sm mx-auto">
         {isPastWeek && 'This week had no matchups generated or recorded.'}
         {isCurrentWeek &&
           (league?.members?.length < 2
@@ -430,7 +428,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
               </div>
               {league?.inviteCode && (
                 <p className="text-xs text-muted">
-                  Share code: <span className="font-mono text-gray-400">{league.inviteCode}</span>
+                  Share code: <span className="font-mono text-muted">{league.inviteCode}</span>
                 </p>
               )}
             </div>
@@ -444,9 +442,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
             <Clock className="w-4 h-4" />
             <span>Week {selectedWeek} matchups will be set automatically</span>
           </div>
-          <p className="text-xs text-muted">
-            Matchups are generated every Sunday at 11:59 PM ET
-          </p>
+          <p className="text-xs text-muted">Matchups are generated every Sunday at 11:59 PM ET</p>
         </div>
       )}
     </div>
@@ -502,7 +498,7 @@ const VersusStrip = memo(
               ? 'bg-red-500/5 hover:bg-red-500/10'
               : featured
                 ? 'bg-purple-500/5 hover:bg-purple-500/10'
-                : 'hover:bg-[#222]'
+                : 'hover:bg-surface-raised'
         }`}
       >
         <div className={`px-4 py-3 ${featured ? 'py-4' : ''}`}>
@@ -521,9 +517,7 @@ const VersusStrip = memo(
                 Rivalry
               </span>
             )}
-            {isBye && (
-              <span className="text-[10px] font-bold uppercase text-muted">BYE WEEK</span>
-            )}
+            {isBye && <span className="text-[10px] font-bold uppercase text-muted">BYE WEEK</span>}
           </div>
 
           <div className="flex items-center gap-3">
@@ -531,11 +525,11 @@ const VersusStrip = memo(
             <div className="flex-1 flex items-center gap-2">
               <div
                 className={`w-8 h-8 flex-shrink-0 flex items-center justify-center ${
-                  home.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
+                  home.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-line'
                 }`}
               >
                 <span
-                  className={`text-xs font-bold ${home.isUser ? 'text-purple-400' : 'text-gray-400'}`}
+                  className={`text-xs font-bold ${home.isUser ? 'text-purple-400' : 'text-muted'}`}
                 >
                   {home.name.charAt(0)}
                 </span>
@@ -559,13 +553,13 @@ const VersusStrip = memo(
             {/* Score / VS */}
             <div className="flex-shrink-0 text-center min-w-[70px]">
               {isBye ? (
-                <div className="px-2 py-1 bg-[#222] text-muted text-xs">WIN</div>
+                <div className="px-2 py-1 bg-surface-raised text-muted text-xs">WIN</div>
               ) : matchup.completed || matchup.status === 'live' ? (
                 <div className="flex items-center justify-center gap-1">
                   <span
                     className={`font-bold ${
                       isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
-                    } ${homeWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'}`}
+                    } ${homeWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-muted'}`}
                   >
                     {isSoundSport
                       ? home.score > 0
@@ -577,7 +571,7 @@ const VersusStrip = memo(
                   <span
                     className={`font-bold ${
                       isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
-                    } ${awayWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'}`}
+                    } ${awayWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-muted'}`}
                   >
                     {isSoundSport
                       ? away.score > 0
@@ -587,7 +581,7 @@ const VersusStrip = memo(
                   </span>
                 </div>
               ) : (
-                <div className="px-2 py-1 bg-[#222]">
+                <div className="px-2 py-1 bg-surface-raised">
                   <Swords className="w-3.5 h-3.5 text-muted mx-auto" />
                 </div>
               )}
@@ -615,11 +609,11 @@ const VersusStrip = memo(
                 </div>
                 <div
                   className={`w-8 h-8 flex-shrink-0 flex items-center justify-center ${
-                    away.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
+                    away.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-line'
                   }`}
                 >
                   <span
-                    className={`text-xs font-bold ${away.isUser ? 'text-purple-400' : 'text-gray-400'}`}
+                    className={`text-xs font-bold ${away.isUser ? 'text-purple-400' : 'text-muted'}`}
                   >
                     {away.name.charAt(0)}
                   </span>

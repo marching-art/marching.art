@@ -2,7 +2,7 @@
 // Centralized caption options and utilities for the staff system
 
 export const CAPTION_OPTIONS = [
-  { value: 'all', label: 'All Captions', color: 'bg-gray-500' },
+  { value: 'all', label: 'All Captions', color: 'bg-charcoal-500' },
   {
     value: 'GE1',
     label: 'General Effect 1',
@@ -38,7 +38,7 @@ export const CAPTION_OPTIONS_NO_ALL = CAPTION_OPTIONS.filter((opt) => opt.value 
  */
 export const getCaptionColor = (caption) => {
   const option = CAPTION_OPTIONS.find((opt) => opt.value === caption);
-  return option?.color || 'bg-gray-500';
+  return option?.color || 'bg-charcoal-500';
 };
 
 /**

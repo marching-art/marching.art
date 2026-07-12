@@ -63,7 +63,7 @@ const REC_CONFIG = {
 };
 
 // Compact metric chip shown under a pick: cost, value (score/point), or 10-day gain.
-function MetricChip({ label, value, tone = 'text-gray-300' }) {
+function MetricChip({ label, value, tone = 'text-secondary' }) {
   return (
     <span className="inline-flex items-baseline gap-1 px-1.5 py-0.5 bg-white/5 rounded-none">
       <span className="text-[9px] uppercase tracking-wider text-muted">{label}</span>
@@ -112,7 +112,7 @@ function RecommendationItem({ rec, config }) {
           )}
         </div>
       )}
-      {rec.reason && <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{rec.reason}</p>}
+      {rec.reason && <p className="text-xs text-muted mt-1.5 leading-relaxed">{rec.reason}</p>}
     </div>
   );
 }
@@ -158,7 +158,7 @@ export default function RecommendationCards({ recommendations }) {
 
   return (
     <div className="mb-8">
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4 flex items-center gap-2">
         <ShoppingCart className="w-4 h-4 text-green-400" />
         Fantasy Picks
       </h3>

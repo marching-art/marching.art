@@ -330,7 +330,7 @@ const MatchupDetailView = ({
       >
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-4"
+          className="flex items-center gap-2 text-secondary hover:text-white transition-colors mb-4"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="text-sm">Back to Matchups</span>
@@ -591,7 +591,7 @@ const MatchupDetailView = ({
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-none font-semibold transition-all relative ${
                 activeView === tab.id
                   ? 'bg-yellow-500 text-charcoal-900'
-                  : 'glass text-gray-300 hover:text-white'
+                  : 'glass text-secondary hover:text-white'
               }`}
             >
               <Icon

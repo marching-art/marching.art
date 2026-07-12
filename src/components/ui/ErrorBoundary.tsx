@@ -102,7 +102,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
     <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center p-8 rounded-none bg-[#1a1a1a] border border-[#333]"
+      className="flex flex-col items-center justify-center p-8 rounded-none bg-surface-card border border-line"
     >
       <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-none mb-4">
         <AlertTriangle className="w-8 h-8 text-red-400" />
@@ -112,7 +112,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
         {featureName ? `${featureName} Error` : 'Something went wrong'}
       </h3>
 
-      <p className="text-gray-400 text-center mb-4 max-w-md">
+      <p className="text-muted text-center mb-4 max-w-md">
         {featureName
           ? `We encountered an error loading ${featureName.toLowerCase()}. Please try again.`
           : 'An unexpected error occurred. Please try again or contact support if the problem persists.'}
@@ -120,10 +120,10 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
 
       {error && process.env.NODE_ENV === 'development' && (
         <details className="mb-4 w-full max-w-md">
-          <summary className="text-sm text-muted cursor-pointer hover:text-gray-300">
+          <summary className="text-sm text-muted cursor-pointer hover:text-secondary">
             Error details (dev only)
           </summary>
-          <pre className="mt-2 p-3 bg-[#0a0a0a] border border-[#333] rounded-none text-xs text-red-400 overflow-auto max-h-40">
+          <pre className="mt-2 p-3 bg-background border border-line rounded-none text-xs text-red-400 overflow-auto max-h-40">
             {error.message}
             {'\n\n'}
             {error.stack}

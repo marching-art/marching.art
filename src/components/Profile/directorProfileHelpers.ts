@@ -94,10 +94,10 @@ export const TIER_STYLES = {
     icon: 'text-yellow-500',
   },
   silver: {
-    bg: 'bg-gray-300/10',
-    border: 'border-gray-400/40',
-    text: 'text-gray-300',
-    icon: 'text-gray-400',
+    bg: 'bg-charcoal-300/10',
+    border: 'border-charcoal-400/40',
+    text: 'text-secondary',
+    icon: 'text-muted',
   },
   bronze: {
     bg: 'bg-orange-600/15',
@@ -116,7 +116,7 @@ export const TIER_STYLES = {
 export const STATUS_INDICATORS = {
   active: { label: 'Active', color: 'bg-green-500', pulse: true },
   onTour: { label: 'On Tour', color: 'bg-blue-500', pulse: true },
-  offseason: { label: 'Off-Season', color: 'bg-gray-500', pulse: false },
+  offseason: { label: 'Off-Season', color: 'bg-charcoal-500', pulse: false },
   retired: { label: 'Retired', color: 'bg-red-500/50', pulse: false },
 };
 
@@ -303,7 +303,7 @@ const CLASS_CHAMP_ICON: Record<string, React.ElementType> = {
 };
 const METAL_COLOR: Record<number, string> = {
   1: 'text-yellow-400',
-  2: 'text-gray-300',
+  2: 'text-secondary',
   3: 'text-orange-400',
 };
 // Regionals: Shield colored BY CLASS.
@@ -379,7 +379,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: `Finals ${medalWord(trophy.rank)}`,
       description: trophyDescription(trophy),
       icon: CLASS_CHAMP_ICON[cls] || Crown,
-      color: METAL_COLOR[trophy.rank ?? 1] || 'text-gray-300',
+      color: METAL_COLOR[trophy.rank ?? 1] || 'text-secondary',
       season: trophy.seasonName,
       sortWeight: classSort(cls) * 10 + ((trophy.rank ?? 1) - 1),
     });
@@ -393,7 +393,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: `${classLabel(cls)} ${medalWord(trophy.rank)}`.trim(),
       description: trophyDescription(trophy),
       icon: CLASS_CHAMP_ICON[cls] || Trophy,
-      color: METAL_COLOR[trophy.rank ?? 1] || 'text-gray-300',
+      color: METAL_COLOR[trophy.rank ?? 1] || 'text-secondary',
       season: trophy.seasonName,
       sortWeight: classSort(cls) * 10 + ((trophy.rank ?? 1) - 1),
     });
@@ -424,7 +424,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: cls ? `${classLabel(cls)} Regional Champion` : 'Regional Champion',
       description: trophyDescription(trophy),
       icon: Shield,
-      color: (cls && CLASS_COLOR[cls]) || 'text-gray-400',
+      color: (cls && CLASS_COLOR[cls]) || 'text-muted',
       season: trophy.seasonName,
       sortWeight: 2000 + classSort(cls || undefined),
     });
@@ -439,7 +439,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: 'World Finals Finalist',
       description: trophyDescription(medal),
       icon: Medal,
-      color: 'text-gray-400',
+      color: 'text-muted',
       season: medal.seasonName,
       sortWeight: 3000 + (medal.rank ?? 0),
     });
@@ -498,7 +498,7 @@ export function getPodiumMedalTrophies(profile: UserProfile): TrophyData[] {
       title: `Podium ${label} ×${lifetime[key]}`,
       description: 'Podium Class show medals (lifetime)',
       icon: Medal,
-      color: METAL_COLOR[rank] || 'text-gray-300',
+      color: METAL_COLOR[rank] || 'text-secondary',
       // Between the regional champions (2000+) and the finalists (3000+).
       sortWeight: 2500 + rank,
     }));
@@ -528,7 +528,7 @@ function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
         id: `top10-${i}`,
         title: 'Top 10 Finish',
         description: 'Finished in the top 10',
-        color: 'text-gray-300',
+        color: 'text-secondary',
         icon: Medal,
       });
     }

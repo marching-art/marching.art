@@ -14,7 +14,7 @@ const DesktopNavItem = ({ to, icon: Icon, label, end = false }) => (
     end={end}
     className={({ isActive }) =>
       `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
-        isActive ? 'text-white' : 'text-gray-400 hover:text-white'
+        isActive ? 'text-white' : 'text-muted hover:text-white'
       }`
     }
   >

@@ -35,7 +35,7 @@ const effTextColor = (pct) =>
   pct >= 80 ? 'text-green-500' : pct >= 60 ? 'text-yellow-500' : 'text-red-500';
 
 const EfficiencyBar = React.memo(({ pct }) => (
-  <div className="h-1.5 bg-[#333] rounded-full overflow-hidden">
+  <div className="h-1.5 bg-line rounded-full overflow-hidden">
     <div
       className={`h-full ${effBgColor(pct)} rounded-full transition-all duration-500`}
       style={{ width: `${Math.min(pct, 100)}%` }}
@@ -149,10 +149,10 @@ const LineupSimulatorPanel = React.memo(
     const usingSeasonAvgs = Object.keys(seasonAvgs).length > 0;
 
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         {/* Header */}
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
             <Zap className="w-3.5 h-3.5 text-[#F5A623]" />
             Lineup Analyzer
           </h3>
@@ -188,8 +188,8 @@ const LineupSimulatorPanel = React.memo(
                 <button
                   key={row.id}
                   onClick={() => onSwapCaption?.(row.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 transition-all hover:bg-[#222] active:bg-[#252525] text-left ${
-                    !isLast ? 'border-b border-[#333]/50' : ''
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 transition-all hover:bg-surface-raised active:bg-surface-raised text-left ${
+                    !isLast ? 'border-b border-line/50' : ''
                   }`}
                 >
                   {/* Caption badge */}
@@ -201,7 +201,7 @@ const LineupSimulatorPanel = React.memo(
                           ? 'bg-green-500/20 text-green-400'
                           : row.pct != null
                             ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-[#333] text-muted'
+                            : 'bg-line text-muted'
                     }`}
                   >
                     {row.id}
@@ -244,11 +244,11 @@ const LineupSimulatorPanel = React.memo(
 
             {/* Weak spot recommendations */}
             {weakSpots.length > 0 && (
-              <div className="px-3 py-2.5 border-t border-[#333] bg-[#111] space-y-1">
+              <div className="px-3 py-2.5 border-t border-line bg-surface-sunken space-y-1">
                 {weakSpots.map((w) => (
                   <div key={w.id} className="flex items-start gap-1.5 text-[11px]">
                     <AlertTriangle className="w-3 h-3 text-red-400 flex-shrink-0 mt-px" />
-                    <span className="text-gray-400">
+                    <span className="text-muted">
                       <span className="text-red-400 font-bold">{w.id}</span> at {w.pct}%
                       {w.potentialGain != null && (
                         <span className="text-green-400">
@@ -264,7 +264,7 @@ const LineupSimulatorPanel = React.memo(
             )}
 
             {/* Footer label */}
-            <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
+            <div className="px-3 py-1.5 border-t border-line bg-surface-sunken">
               <p className="text-[10px] text-muted">
                 {avgsLoading
                   ? 'Calculating season averages…'

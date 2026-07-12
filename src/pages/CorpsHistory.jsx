@@ -86,7 +86,7 @@ const CorpsHistory = () => {
       aClass: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
       soundSport: 'text-green-400 bg-green-500/20 border-green-500/30',
     };
-    return colors[corpsClass] || 'text-gray-400 bg-white/20 border-white/30';
+    return colors[corpsClass] || 'text-muted bg-white/20 border-white/30';
   };
 
   const activeCorps = selectedCorpsClass ? corps?.[selectedCorpsClass] : null;
@@ -201,7 +201,7 @@ const CorpsHistory = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center p-8 bg-[#111] border border-red-500/20 rounded-none max-w-md">
+        <div className="text-center p-8 bg-surface-sunken border border-red-500/20 rounded-none max-w-md">
           <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Error Loading History</h2>
           <p className="text-muted/60 mb-6">{error}</p>
@@ -230,7 +230,7 @@ const CorpsHistory = () => {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden bg-[#0a0a0a]">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden bg-background">
       {/* ================================================================
           FIXED HEIGHT LAYOUT: Top Stats + Bottom Split
           ================================================================ */}
@@ -238,12 +238,12 @@ const CorpsHistory = () => {
       {/* ============================================================
           TOP: Corps Selector + Stats Row
           ============================================================ */}
-      <div className="flex-shrink-0 border-b border-[#333] bg-[#1a1a1a]">
+      <div className="flex-shrink-0 border-b border-line bg-surface-card">
         <div className="p-4 lg:p-6">
           {/* Header & Corps Selector */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
-              <BarChart3 className="w-5 h-5 text-[#0057B8] flex-shrink-0" aria-hidden="true" />
+              <BarChart3 className="w-5 h-5 text-interactive flex-shrink-0" aria-hidden="true" />
               <div>
                 <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                   Corps History
@@ -266,7 +266,7 @@ const CorpsHistory = () => {
                     className={`flex items-center gap-2 px-3 py-2 rounded-none border transition-all ${
                       selectedCorpsClass === corpsClass
                         ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
-                        : 'bg-[#111] border-[#333] text-gray-400 hover:border-[#444]'
+                        : 'bg-surface-sunken border-line text-muted hover:border-line-strong'
                     }`}
                   >
                     <Music className="w-4 h-4" />
@@ -284,11 +284,11 @@ const CorpsHistory = () => {
           {/* Stats Row */}
           {activeCorps && (
             <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
+              <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                 <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Seasons</p>
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalSeasons}</p>
               </div>
-              <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
+              <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                 <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Shows</p>
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalShows}</p>
               </div>
@@ -302,26 +302,20 @@ const CorpsHistory = () => {
                       {soundSportRatings.bestRating || '—'}
                     </p>
                   </div>
-                  <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
-                      Gold
-                    </p>
+                  <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Gold</p>
                     <p className="text-xl font-mono font-bold text-yellow-400">
                       {soundSportRatings.counts.Gold}
                     </p>
                   </div>
-                  <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
-                      Silver
-                    </p>
-                    <p className="text-xl font-mono font-bold text-gray-300">
+                  <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Silver</p>
+                    <p className="text-xl font-mono font-bold text-secondary">
                       {soundSportRatings.counts.Silver}
                     </p>
                   </div>
-                  <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
-                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
-                      Bronze
-                    </p>
+                  <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
+                    <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Bronze</p>
                     <p className="text-xl font-mono font-bold text-orange-400">
                       {soundSportRatings.counts.Bronze}
                     </p>
@@ -329,7 +323,7 @@ const CorpsHistory = () => {
                 </>
               ) : (
                 <>
-                  <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
+                  <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                     <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Total Pts
                     </p>
@@ -345,7 +339,7 @@ const CorpsHistory = () => {
                       {careerStats.bestSeasonScore.toFixed(3)}
                     </p>
                   </div>
-                  <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
+                  <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                     <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Best Week
                     </p>
@@ -353,7 +347,7 @@ const CorpsHistory = () => {
                       {careerStats.bestWeeklyScore.toFixed(3)}
                     </p>
                   </div>
-                  <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
+                  <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                     <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                       Avg Season
                     </p>
@@ -373,9 +367,9 @@ const CorpsHistory = () => {
           ============================================================ */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0">
         {/* LEFT: Chart or Timeline View */}
-        <div className="flex-1 flex flex-col min-h-0 lg:border-r border-[#333]">
+        <div className="flex-1 flex flex-col min-h-0 lg:border-r border-line">
           {/* View Toggle */}
-          <div className="flex-shrink-0 flex items-center justify-between p-3 border-b border-[#333] bg-[#111]">
+          <div className="flex-shrink-0 flex items-center justify-between p-3 border-b border-line bg-surface-sunken">
             <div className="flex items-center gap-1">
               {/* SoundSport has no numeric score chart — only the timeline. */}
               {!isSoundSportView && (
@@ -384,7 +378,7 @@ const CorpsHistory = () => {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wide transition-all ${
                     effectiveView === 'chart'
                       ? 'bg-yellow-500/20 text-yellow-400'
-                      : 'text-muted/60 hover:text-gray-300'
+                      : 'text-muted/60 hover:text-secondary'
                   }`}
                 >
                   <Activity className="w-3.5 h-3.5" />
@@ -396,7 +390,7 @@ const CorpsHistory = () => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wide transition-all ${
                   effectiveView === 'timeline'
                     ? 'bg-yellow-500/20 text-yellow-400'
-                    : 'text-muted/60 hover:text-gray-300'
+                    : 'text-muted/60 hover:text-secondary'
                 }`}
               >
                 <History className="w-3.5 h-3.5" />
@@ -428,11 +422,11 @@ const CorpsHistory = () => {
                     exit={{ opacity: 0 }}
                     className="h-full min-h-[300px]"
                   >
-                    <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-yellow-400" />
                       Performance Over Time
                     </h3>
-                    <div className="h-[calc(100%-40px)] bg-[#111] border border-[#333] rounded-none p-4">
+                    <div className="h-[calc(100%-40px)] bg-surface-sunken border border-line rounded-none p-4">
                       <Line data={chartData} options={chartOptions} />
                     </div>
                   </m.div>
@@ -456,17 +450,17 @@ const CorpsHistory = () => {
                           className={`w-full text-left p-4 rounded-none border transition-all ${
                             isSelected
                               ? 'bg-yellow-500/20 border-yellow-500/50'
-                              : 'bg-[#111] border-[#333] hover:border-[#444]'
+                              : 'bg-surface-sunken border-line hover:border-line-strong'
                           }`}
                         >
                           <div className="flex items-center gap-4">
                             <div
                               className={`w-12 h-12 rounded-none flex items-center justify-center ${
-                                isSelected ? 'bg-yellow-500/30' : 'bg-[#222]'
+                                isSelected ? 'bg-yellow-500/30' : 'bg-surface-raised'
                               }`}
                             >
                               <Trophy
-                                className={`w-5 h-5 ${isSelected ? 'text-yellow-400' : 'text-gray-400'}`}
+                                className={`w-5 h-5 ${isSelected ? 'text-yellow-400' : 'text-muted'}`}
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -518,7 +512,7 @@ const CorpsHistory = () => {
         </div>
 
         {/* RIGHT: Season Detail Panel (visible on lg+) */}
-        <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col min-h-0 bg-[#111]">
+        <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col min-h-0 bg-surface-sunken">
           {selectedSeason !== null && seasonHistory[selectedSeason] ? (
             (() => {
               const season = seasonHistory[selectedSeason];
@@ -528,7 +522,7 @@ const CorpsHistory = () => {
               return (
                 <>
                   {/* Panel Header */}
-                  <div className="flex-shrink-0 p-4 border-b border-[#333]">
+                  <div className="flex-shrink-0 p-4 border-b border-line">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-none bg-yellow-500/20 flex items-center justify-center">
                         <Trophy className="w-5 h-5 text-yellow-400" />
@@ -562,7 +556,7 @@ const CorpsHistory = () => {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
+                      <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                         <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                           Best Week
                         </p>
@@ -574,7 +568,7 @@ const CorpsHistory = () => {
                             : (season.highestWeeklyScore || 0).toFixed(3)}
                         </p>
                       </div>
-                      <div className="bg-[#111] border border-[#333] rounded-none p-3 text-center">
+                      <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                         <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
                           Shows
                         </p>
@@ -587,7 +581,7 @@ const CorpsHistory = () => {
                     {/* Weekly Performance */}
                     {weeks.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
                           <BarChart3 className="w-4 h-4 text-purple-400" />
                           Weekly Breakdown
                         </h4>
@@ -595,7 +589,7 @@ const CorpsHistory = () => {
                           {weeks.map((week) => (
                             <div
                               key={week}
-                              className="bg-[#222] rounded-none p-2 flex items-center justify-between"
+                              className="bg-surface-raised rounded-none p-2 flex items-center justify-between"
                             >
                               <span className="text-xs text-muted/60">{week}</span>
                               <span className="text-xs font-mono font-bold text-white">
@@ -614,7 +608,7 @@ const CorpsHistory = () => {
                     {/* Lineup */}
                     {season.lineup && Object.keys(season.lineup).length > 0 && (
                       <div>
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
                           <Target className="w-4 h-4 text-blue-400" />
                           Season Lineup
                         </h4>
@@ -622,10 +616,8 @@ const CorpsHistory = () => {
                           {Object.entries(season.lineup).map(([caption, value]) => {
                             const [corpsName] = (value || '').split('|');
                             return (
-                              <div key={caption} className="bg-[#222] rounded-none p-2">
-                                <div className="text-[10px] text-muted/60 uppercase">
-                                  {caption}
-                                </div>
+                              <div key={caption} className="bg-surface-raised rounded-none p-2">
+                                <div className="text-[10px] text-muted/60 uppercase">{caption}</div>
                                 <div className="text-sm font-semibold text-white truncate">
                                   {corpsName || 'Not Set'}
                                 </div>

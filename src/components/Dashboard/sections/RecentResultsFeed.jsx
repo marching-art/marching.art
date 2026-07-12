@@ -9,9 +9,9 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
   const isSoundSport = corpsClass === 'soundSport';
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+    <div className="bg-surface-card border border-line overflow-hidden">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
           <Activity className="w-3.5 h-3.5 text-purple-500" />
           Recent Results
         </h3>
@@ -21,13 +21,13 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
         <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center justify-between">
-              <div className="w-32 h-4 bg-[#333] animate-pulse" />
-              <div className="w-16 h-4 bg-[#333] animate-pulse" />
+              <div className="w-32 h-4 bg-line animate-pulse" />
+              <div className="w-16 h-4 bg-line animate-pulse" />
             </div>
           ))}
         </div>
       ) : results && results.length > 0 ? (
-        <div className="divide-y divide-[#222]">
+        <div className="divide-y divide-line-subtle">
           {results.slice(0, 5).map((result, idx) => {
             // For SoundSport, get the medal rating
             const rating = isSoundSport && result.score ? getSoundSportRating(result.score) : null;

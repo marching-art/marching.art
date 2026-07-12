@@ -142,8 +142,11 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
       {/* Header with Back Button */}
       <div className="flex items-center gap-3 mb-4">
         {onBack && (
-          <button onClick={onBack} className="p-2 bg-[#222] hover:bg-[#333] transition-colors">
-            <ChevronLeft className="w-4 h-4 text-gray-400" />
+          <button
+            onClick={onBack}
+            className="p-2 bg-surface-raised hover:bg-line transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 text-muted" />
           </button>
         )}
         <div className="flex items-center gap-2">
@@ -153,11 +156,11 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
       </div>
 
       {/* Matchup Generation Section */}
-      <div className="bg-[#1a1a1a] border border-[#333]">
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+      <div className="bg-surface-card border border-line">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised">
           <div className="flex items-center gap-2">
             <Swords className="w-4 h-4 text-red-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Generate Matchups
             </span>
           </div>
@@ -166,14 +169,14 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
         <div className="p-4 space-y-4">
           {/* Week Selection */}
           <div>
-            <p className="text-xs text-gray-400 mb-2">Select week to generate matchups for:</p>
+            <p className="text-xs text-muted mb-2">Select week to generate matchups for:</p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSelectedWeek(Math.max(1, selectedWeek - 1))}
                 disabled={selectedWeek <= 1}
-                className="p-2 bg-[#222] hover:bg-[#333] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 bg-surface-raised hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                <ChevronLeft className="w-4 h-4 text-gray-400" />
+                <ChevronLeft className="w-4 h-4 text-muted" />
               </button>
 
               <div className="flex-1 flex gap-1 overflow-x-auto py-1">
@@ -196,7 +199,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
                             ? 'bg-green-500/20 border border-green-500/30 text-green-500'
                             : isCurrent
                               ? 'bg-purple-500/20 border border-purple-500/30 text-purple-400'
-                              : 'bg-[#222] border border-[#333] text-muted hover:border-[#444]'
+                              : 'bg-surface-raised border border-line text-muted hover:border-line-strong'
                       }`}
                     >
                       {week}
@@ -213,9 +216,9 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
                   setSelectedWeek(Math.min(GAME_CONFIG.season.totalWeeks, selectedWeek + 1))
                 }
                 disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
-                className="p-2 bg-[#222] hover:bg-[#333] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 bg-surface-raised hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <ChevronRight className="w-4 h-4 text-muted" />
               </button>
             </div>
           </div>
@@ -223,12 +226,14 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
           {/* Week Status */}
           <div
             className={`p-3 border ${
-              weekHasMatchups ? 'bg-green-500/10 border-green-500/30' : 'bg-[#222] border-[#333]'
+              weekHasMatchups
+                ? 'bg-green-500/10 border-green-500/30'
+                : 'bg-surface-raised border-line'
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
+                <Calendar className="w-4 h-4 text-muted" />
                 <span className="text-sm font-bold text-white">Week {selectedWeek}</span>
                 {selectedWeek === currentWeek && (
                   <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 text-[9px] font-bold uppercase">
@@ -248,7 +253,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
 
             {/* Show existing matchup counts */}
             {weekHasMatchups && (
-              <div className="mt-2 pt-2 border-t border-[#333] flex flex-wrap gap-2">
+              <div className="mt-2 pt-2 border-t border-line flex flex-wrap gap-2">
                 {Object.entries(CORPS_CLASS_CONFIG).map(([key, config]) => {
                   const count = existingMatchups[selectedWeek]?.[`${key}Matchups`]?.length || 0;
                   if (count === 0) return null;
@@ -280,7 +285,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
             disabled={generating || !canGenerate}
             className={`w-full py-3 flex items-center justify-center gap-2 font-bold text-sm transition-colors ${
               generating || !canGenerate
-                ? 'bg-[#333] text-muted cursor-not-allowed'
+                ? 'bg-line text-muted cursor-not-allowed'
                 : weekHasMatchups
                   ? 'bg-orange-500 hover:bg-orange-400 text-black'
                   : 'bg-green-500 hover:bg-green-400 text-black'
@@ -314,7 +319,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
                     <CheckCircle className="w-4 h-4" />
                     Week {lastGeneratedResult.week} matchups generated!
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted mt-1">
                     Members have been paired based on their active corps classes.
                   </p>
                 </div>
@@ -336,11 +341,11 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
       </div>
 
       {/* Invite Code Section */}
-      <div className="bg-[#1a1a1a] border border-[#333]">
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+      <div className="bg-surface-card border border-line">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Invite Code
             </span>
           </div>
@@ -348,21 +353,21 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
 
         <div className="p-4">
           <div className="flex items-center gap-3">
-            <div className="flex-1 px-4 py-3 bg-[#222] border border-[#333]">
+            <div className="flex-1 px-4 py-3 bg-surface-raised border border-line">
               <code className="text-xl font-mono font-bold text-yellow-500 tracking-wider">
                 {league.inviteCode}
               </code>
             </div>
             <button
               onClick={handleCopyInvite}
-              className="px-4 py-3 bg-[#222] border border-[#333] hover:border-[#444] transition-colors flex items-center gap-2"
+              className="px-4 py-3 bg-surface-raised border border-line hover:border-line-strong transition-colors flex items-center gap-2"
             >
               {inviteCopied ? (
                 <Check className="w-4 h-4 text-green-500" />
               ) : (
-                <Copy className="w-4 h-4 text-gray-400" />
+                <Copy className="w-4 h-4 text-muted" />
               )}
-              <span className="text-sm text-gray-400">{inviteCopied ? 'Copied!' : 'Copy'}</span>
+              <span className="text-sm text-muted">{inviteCopied ? 'Copied!' : 'Copy'}</span>
             </button>
           </div>
           <p className="text-[11px] text-muted mt-2">
@@ -372,32 +377,32 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
       </div>
 
       {/* League Settings Display */}
-      <div className="bg-[#1a1a1a] border border-[#333]">
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+      <div className="bg-surface-card border border-line">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised">
           <div className="flex items-center gap-2">
-            <Settings className="w-4 h-4 text-gray-400" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <Settings className="w-4 h-4 text-muted" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               League Settings
             </span>
           </div>
         </div>
 
-        <div className="divide-y divide-[#222]">
+        <div className="divide-y divide-line-subtle">
           <div className="px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-gray-400">Prize Pool</span>
+            <span className="text-sm text-muted">Prize Pool</span>
             <span className="text-sm font-bold text-yellow-500">
               {/* Escrowed entry fees only — no phantom seeded pool */}
               {(league.settings?.prizePool || 0).toLocaleString()} CC
             </span>
           </div>
           <div className="px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-gray-400">Finals Spots</span>
+            <span className="text-sm text-muted">Finals Spots</span>
             <span className="text-sm font-bold text-white">
               {league.settings?.finalsSize || 12}
             </span>
           </div>
           <div className="px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-gray-400">Members</span>
+            <span className="text-sm text-muted">Members</span>
             <span className="text-sm font-bold text-white">
               {memberCount} / {league.maxMembers || 20}
             </span>

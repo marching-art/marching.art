@@ -432,14 +432,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   ];
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* FIXED HEADER - League Banner (Director Card Pattern) */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333]">
+      <div className="flex-shrink-0 bg-surface-card border-b border-line">
         {/* Top Bar: Back + Actions */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-[#222]">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-line-subtle">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm"
+            className="flex items-center gap-1.5 text-muted hover:text-white transition-colors text-sm"
           >
             <ChevronLeft className="w-4 h-4" />
             Back
@@ -448,9 +448,9 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             {isCommissioner && (
               <button
                 onClick={() => setActiveTab('settings')}
-                className="p-1.5 bg-[#222] hover:bg-[#333] transition-colors"
+                className="p-1.5 bg-surface-raised hover:bg-line transition-colors"
               >
-                <Settings className="w-4 h-4 text-gray-400" />
+                <Settings className="w-4 h-4 text-muted" />
               </button>
             )}
             <button
@@ -467,7 +467,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
             {/* League Avatar */}
-            <div className="w-12 h-12 bg-[#333] border border-[#444] flex-shrink-0 flex items-center justify-center">
+            <div className="w-12 h-12 bg-line border border-line-strong flex-shrink-0 flex items-center justify-center">
               <Trophy className="w-6 h-6 text-yellow-500" />
             </div>
 
@@ -497,7 +497,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             {/* Invite Code Badge */}
             <button
               onClick={handleCopyInvite}
-              className="hidden sm:flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] hover:border-[#444] transition-colors"
+              className="hidden sm:flex items-center gap-2 px-3 py-2 bg-surface-raised border border-line hover:border-line-strong transition-colors"
             >
               <div className="text-right">
                 <p className="text-[10px] uppercase tracking-wider text-muted">Invite Code</p>
@@ -512,14 +512,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
             {/* Your Stats - Desktop */}
             {userStats && (
-              <div className="hidden md:flex items-center gap-1 border-l border-[#333] pl-3">
-                <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
+              <div className="hidden md:flex items-center gap-1 border-l border-line pl-3">
+                <div className="px-2 py-1 bg-surface-raised text-center min-w-[50px]">
                   <p className="text-[10px] uppercase tracking-wider text-muted">Rank</p>
                   <p className="text-base font-bold text-white font-data tabular-nums">
                     #{userStats.currentRank}
                   </p>
                 </div>
-                <div className="px-2 py-1 bg-[#222] text-center min-w-[60px]">
+                <div className="px-2 py-1 bg-surface-raised text-center min-w-[60px]">
                   <p className="text-[10px] uppercase tracking-wider text-muted">Record</p>
                   <p className="text-base font-bold font-data tabular-nums">
                     <span className="text-green-500">{userStats.wins}</span>
@@ -528,7 +528,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                   </p>
                 </div>
                 {userStats.streak > 0 && (
-                  <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
+                  <div className="px-2 py-1 bg-surface-raised text-center min-w-[50px]">
                     <p className="text-[10px] uppercase tracking-wider text-muted">Streak</p>
                     <p
                       className={`text-base font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
@@ -547,14 +547,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
           {/* Mobile Stats Strip */}
           {userStats && (
-            <div className="flex md:hidden items-center gap-2 mt-3 pt-3 border-t border-[#222]">
-              <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
+            <div className="flex md:hidden items-center gap-2 mt-3 pt-3 border-t border-line-subtle">
+              <div className="flex-1 px-2 py-1.5 bg-surface-raised text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted">Rank</p>
                 <p className="text-sm font-bold text-white font-data tabular-nums">
                   #{userStats.currentRank}
                 </p>
               </div>
-              <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
+              <div className="flex-1 px-2 py-1.5 bg-surface-raised text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted">Record</p>
                 <p className="text-sm font-bold font-data tabular-nums">
                   <span className="text-green-500">{userStats.wins}</span>
@@ -563,7 +563,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 </p>
               </div>
               {userStats.streak > 0 && (
-                <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
+                <div className="flex-1 px-2 py-1.5 bg-surface-raised text-center">
                   <p className="text-[10px] uppercase tracking-wider text-muted">Streak</p>
                   <p
                     className={`text-sm font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
@@ -579,7 +579,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               {/* Mobile Invite Code */}
               <button
                 onClick={handleCopyInvite}
-                className="flex-1 px-2 py-1.5 bg-[#222] text-center"
+                className="flex-1 px-2 py-1.5 bg-surface-raised text-center"
               >
                 <p className="text-[10px] uppercase tracking-wider text-muted">Code</p>
                 <p className="text-sm font-bold font-mono text-yellow-500">{league.inviteCode}</p>
@@ -589,7 +589,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         </div>
 
         {/* STICKY TABS */}
-        <div className="flex border-t border-[#222]">
+        <div className="flex border-t border-line-subtle">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -599,8 +599,8 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 font-bold text-sm transition-all relative ${
                   isActive
-                    ? 'bg-[#0a0a0a] text-yellow-500 border-t-2 border-yellow-500'
-                    : 'text-muted hover:text-white hover:bg-[#222]'
+                    ? 'bg-background text-yellow-500 border-t-2 border-yellow-500'
+                    : 'text-muted hover:text-white hover:bg-surface-raised'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -720,7 +720,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
           Sending now always happens where the conversation is visible.
           pb-14 clears mobile nav. */}
       {activeTab === 'chat' && (
-        <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3 pb-14 md:pb-3 z-40">
+        <div className="flex-shrink-0 bg-surface-card border-t border-line px-4 py-3 pb-14 md:pb-3 z-40">
           <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
         </div>
       )}

@@ -279,7 +279,7 @@ const LiveScoresVerification = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 text-yellow-500 animate-spin" />
-        <span className="ml-3 text-gray-300">Loading live DCI scores…</span>
+        <span className="ml-3 text-secondary">Loading live DCI scores…</span>
       </div>
     );
   }
@@ -360,7 +360,7 @@ const LiveScoresVerification = () => {
                 className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === caption
                     ? 'bg-amber-400 text-neutral-900 font-bold'
-                    : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                    : 'text-muted hover:text-white hover:bg-charcoal-800'
                 }`}
               >
                 {caption}
@@ -374,7 +374,7 @@ const LiveScoresVerification = () => {
                 className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === tab.id
                     ? 'bg-amber-400 text-neutral-900 font-bold'
-                    : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                    : 'text-muted hover:text-white hover:bg-charcoal-800'
                 }`}
               >
                 {tab.label}
@@ -389,7 +389,7 @@ const LiveScoresVerification = () => {
               disabled={!canScrollLeft}
               className={`p-1 rounded-none transition-all ${
                 canScrollLeft
-                  ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+                  ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
                   : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
@@ -404,7 +404,7 @@ const LiveScoresVerification = () => {
               disabled={!canScrollRight}
               className={`p-1 rounded-none transition-all ${
                 canScrollRight
-                  ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+                  ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
                   : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
@@ -423,12 +423,10 @@ const LiveScoresVerification = () => {
                   {visibleColumns.map((col) => (
                     <th
                       key={col.key}
-                      className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
+                      className="px-0 py-1.5 text-center font-mono text-muted w-[38px] border-r border-white/10"
                       title={`${col.eventNames.join(' + ')}\n${[...col.locations].join(' • ')}\nDay ${col.day ?? 'pre-season'}\nFantasy recap: ${col.scored ? 'scored' : 'not yet scored'}`}
                     >
-                      <div className="text-[10px] text-muted/70 leading-none">
-                        {col.dateLabel}
-                      </div>
+                      <div className="text-[10px] text-muted/70 leading-none">{col.dateLabel}</div>
                       <div
                         className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-muted/40'}`}
                       >
@@ -472,7 +470,7 @@ const LiveScoresVerification = () => {
                           {value !== null ? (
                             <span
                               className={
-                                value >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'
+                                value >= maxScore * 0.85 ? 'text-green-400' : 'text-secondary'
                               }
                             >
                               {value.toFixed(3)}

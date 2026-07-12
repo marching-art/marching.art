@@ -36,16 +36,16 @@ const RARITY_STYLES = {
     badge: 'bg-purple-400/20 text-purple-300',
   },
   rare: {
-    border: 'border-[#0057B8]/40',
-    bg: 'bg-[#0057B8]/10',
-    text: 'text-[#0057B8]',
-    badge: 'bg-[#0057B8]/20 text-[#0057B8]',
+    border: 'border-interactive/40',
+    bg: 'bg-interactive/10',
+    text: 'text-interactive',
+    badge: 'bg-interactive/20 text-interactive',
   },
   common: {
-    border: 'border-gray-500/30',
-    bg: 'bg-gray-500/10',
-    text: 'text-gray-400',
-    badge: 'bg-gray-500/20 text-gray-400',
+    border: 'border-charcoal-500/30',
+    bg: 'bg-charcoal-500/10',
+    text: 'text-muted',
+    badge: 'bg-charcoal-500/20 text-muted',
   },
 };
 
@@ -66,16 +66,16 @@ const AchievementCard = ({ a }) => {
     <div
       className={`p-3 border transition-colors ${
         a.earned
-          ? `${styles.border} bg-[#0a0a0a]`
+          ? `${styles.border} bg-background`
           : started
-            ? 'border-[#333] bg-[#111]'
+            ? 'border-line bg-surface-sunken'
             : 'border-[#282828] bg-[#0d0d0d] opacity-70'
       }`}
     >
       <div className="flex items-start gap-3">
         <div
           className={`w-8 h-8 flex items-center justify-center border flex-shrink-0 ${
-            a.earned ? `${styles.bg} ${styles.border}` : 'bg-[#1a1a1a] border-[#333]'
+            a.earned ? `${styles.bg} ${styles.border}` : 'bg-surface-card border-line'
           }`}
         >
           {a.earned ? (
@@ -90,7 +90,7 @@ const AchievementCard = ({ a }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h4
-              className={`font-bold text-sm truncate ${a.earned ? 'text-white' : 'text-gray-300'}`}
+              className={`font-bold text-sm truncate ${a.earned ? 'text-white' : 'text-secondary'}`}
             >
               {a.title}
             </h4>
@@ -131,7 +131,7 @@ const AchievementCard = ({ a }) => {
                   <span className="text-[10px] font-bold text-yellow-600 font-data">{a.pct}%</span>
                 </div>
               </div>
-              <div className="h-1 bg-[#222] rounded-full overflow-hidden">
+              <div className="h-1 bg-surface-raised rounded-full overflow-hidden">
                 <div
                   className="h-full bg-yellow-600 transition-all duration-500 rounded-full"
                   style={{ width: `${a.pct}%` }}
@@ -184,14 +184,14 @@ const Achievements = () => {
       {/* Back link */}
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-gray-300 mb-3"
+        className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-secondary mb-3"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
       </Link>
 
       {/* Header / overall progress */}
-      <div className="bg-[#1a1a1a] border border-[#333] mb-4">
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center gap-3">
+      <div className="bg-surface-card border border-line mb-4">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center gap-3">
           <Award className="w-5 h-5 text-yellow-500" />
           <div className="flex-1">
             <h1 className="text-sm font-bold uppercase tracking-wider text-white">Achievements</h1>
@@ -207,7 +207,7 @@ const Achievements = () => {
             <div className="text-[10px] text-muted">earned</div>
           </div>
         </div>
-        <div className="h-1.5 bg-[#222]">
+        <div className="h-1.5 bg-surface-raised">
           <div
             className="h-full bg-yellow-500 transition-all duration-500"
             style={{ width: `${overallPct}%` }}
@@ -232,8 +232,8 @@ const Achievements = () => {
             onClick={() => setFilter(f.id)}
             className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border transition-colors ${
               filter === f.id
-                ? 'bg-[#0057B8] border-[#0057B8] text-white'
-                : 'bg-[#1a1a1a] border-[#333] text-gray-400 hover:text-white'
+                ? 'bg-interactive border-interactive text-white'
+                : 'bg-surface-card border-line text-muted hover:text-white'
             }`}
           >
             {f.label}
@@ -243,17 +243,17 @@ const Achievements = () => {
 
       {/* Categories */}
       {grouped.length === 0 ? (
-        <div className="bg-[#1a1a1a] border border-[#333] px-4 py-12 text-center">
+        <div className="bg-surface-card border border-line px-4 py-12 text-center">
           <Award className="w-10 h-10 text-muted mx-auto mb-3" />
           <p className="text-sm text-muted">Nothing here yet for this filter.</p>
         </div>
       ) : (
         <div className="space-y-5">
           {grouped.map((cat) => (
-            <section key={cat.id} className="bg-[#1a1a1a] border border-[#333]">
-              <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+            <section key={cat.id} className="bg-surface-card border border-line">
+              <div className="px-4 py-3 border-b border-line bg-surface-raised">
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-[11px] font-bold uppercase tracking-wider text-gray-300">
+                  <h2 className="text-[11px] font-bold uppercase tracking-wider text-secondary">
                     {cat.label}
                   </h2>
                   <span className="text-[10px] font-bold text-muted font-data tabular-nums">

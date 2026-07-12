@@ -1,6 +1,6 @@
 // src/components/Admin/ArticleManagement.jsx
 // Admin article management - list, edit, archive articles
-// Follows Admin panel dark theme: bg-[#0a0a0a], bg-[#1a1a1a], bg-[#222]
+// Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised
 
 import React, { useState, useEffect } from 'react';
 import { FileText, Search, RefreshCw, ChevronDown } from 'lucide-react';
@@ -186,8 +186,8 @@ const ArticleManagement = () => {
   return (
     <div className="space-y-4">
       {/* Header with search and refresh */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+      <div className="bg-surface-card border border-line rounded-none overflow-hidden">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-yellow-500" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">
@@ -198,7 +198,7 @@ const ArticleManagement = () => {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted hover:text-white transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -214,7 +214,7 @@ const ArticleManagement = () => {
               placeholder="Search articles by headline or summary..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded-none text-white text-sm focus:outline-none focus:border-[#0057B8]"
+              className="w-full pl-10 pr-4 py-2 bg-surface-raised border border-line rounded-none text-white text-sm focus:outline-none focus:border-interactive"
             />
           </div>
 
@@ -226,8 +226,8 @@ const ArticleManagement = () => {
                 onClick={() => setActiveFilter(tab.id)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-none transition-colors ${
                   activeFilter === tab.id
-                    ? 'bg-[#0057B8] text-white'
-                    : 'bg-[#222] text-gray-400 hover:text-white border border-[#333]'
+                    ? 'bg-interactive text-white'
+                    : 'bg-surface-raised text-muted hover:text-white border border-line'
                 }`}
               >
                 {tab.label}
@@ -240,7 +240,7 @@ const ArticleManagement = () => {
       {/* Articles list */}
       <div className="space-y-2">
         {filteredArticles.length === 0 ? (
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 text-center">
+          <div className="bg-surface-card border border-line rounded-none p-8 text-center">
             <FileText className="w-8 h-8 text-muted mx-auto mb-2" />
             <p className="text-muted text-sm">
               {searchTerm ? `No articles found matching "${searchTerm}"` : 'No articles found'}
@@ -265,7 +265,7 @@ const ArticleManagement = () => {
           <button
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="w-full py-3 bg-[#1a1a1a] border border-[#333] rounded-none text-gray-400 hover:text-white hover:bg-[#222] transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-surface-card border border-line rounded-none text-muted hover:text-white hover:bg-surface-raised transition-colors flex items-center justify-center gap-2"
           >
             {loadingMore ? (
               <>

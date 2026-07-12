@@ -51,8 +51,8 @@ const StatCard = ({
   return (
     <Component
       onClick={onClick}
-      className={`bg-[#1a1a1a] border border-[#333] ${sizeClasses[size]} ${
-        onClick ? 'hover:border-[#444] cursor-pointer transition-colors' : ''
+      className={`bg-surface-card border border-line ${sizeClasses[size]} ${
+        onClick ? 'hover:border-line-strong cursor-pointer transition-colors' : ''
       }`}
     >
       <div className="flex items-start justify-between mb-2">
@@ -62,11 +62,7 @@ const StatCard = ({
         {trend && (
           <div
             className={`flex items-center gap-0.5 text-xs font-bold ${
-              trend === 'up'
-                ? 'text-green-500'
-                : trend === 'down'
-                  ? 'text-red-500'
-                  : 'text-muted'
+              trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-muted'
             }`}
           >
             {trend === 'up' && <TrendingUp className="w-3 h-3" />}
@@ -78,7 +74,7 @@ const StatCard = ({
       <div>
         <p className="text-[10px] uppercase tracking-wider text-muted mb-0.5">{title}</p>
         <p className="text-xl font-bold text-white font-data tabular-nums">{value}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-muted mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </Component>
@@ -181,14 +177,14 @@ const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
-      className="w-full bg-[#1a1a1a] border border-[#333] p-4 hover:border-[#444] transition-colors text-left"
+      className="w-full bg-surface-card border border-line p-4 hover:border-line-strong transition-colors text-left"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-red-500/20 border border-red-500/30">
             <Swords className="w-4 h-4 text-red-400" />
           </div>
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+          <span className="text-[10px] uppercase tracking-wider text-muted font-bold">
             {isLive ? 'Live Matchup' : 'Next Matchup'}
           </span>
         </div>
@@ -202,8 +198,8 @@ const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#333] flex items-center justify-center">
-            <span className="text-sm font-bold text-gray-400">{opponent?.charAt(0) || '?'}</span>
+          <div className="w-10 h-10 bg-line flex items-center justify-center">
+            <span className="text-sm font-bold text-muted">{opponent?.charAt(0) || '?'}</span>
           </div>
           <div>
             <p className="font-bold text-white text-sm">vs {opponent || 'TBD'}</p>
@@ -229,25 +225,25 @@ const QuickStatsRow = ({ stats, leagueStats, userId }) => {
 
   return (
     <div className="grid grid-cols-4 gap-2">
-      <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
+      <div className="bg-surface-card border border-line p-3 text-center">
         <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Points</p>
         <p className="text-lg font-bold text-yellow-500 font-data tabular-nums">
           {stats?.totalPoints?.toFixed(0) || 0}
         </p>
       </div>
-      <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
+      <div className="bg-surface-card border border-line p-3 text-center">
         <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Battle Pts</p>
         <p className="text-lg font-bold text-purple-500 font-data tabular-nums">
           {userLeagueStats?.totalBattlePointsFor || 0}
         </p>
       </div>
-      <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
+      <div className="bg-surface-card border border-line p-3 text-center">
         <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Clutch</p>
         <p className="text-lg font-bold text-orange-500 font-data tabular-nums">
           {userLeagueStats?.clutchWins || 0}
         </p>
       </div>
-      <div className="bg-[#1a1a1a] border border-[#333] p-3 text-center">
+      <div className="bg-surface-card border border-line p-3 text-center">
         <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Best Wk</p>
         <p className="text-lg font-bold text-green-500 font-data tabular-nums">
           {userLeagueStats?.bestWeek?.battlePoints || 0}
@@ -268,11 +264,11 @@ const LeagueLeadersMini = ({
   const topThree = standings.slice(0, 3);
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
+    <div className="bg-surface-card border border-line">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy className="w-4 h-4 text-yellow-500" />
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+          <span className="text-[10px] uppercase tracking-wider text-muted font-bold">
             League Leaders
           </span>
         </div>
@@ -294,13 +290,13 @@ const LeagueLeadersMini = ({
                 ? profile.displayName
                 : profile?.username;
             const displayName = isUser ? 'You' : rawName || `User ${player.uid?.slice(0, 6)}`;
-            const medals = ['text-yellow-500', 'text-gray-400', 'text-orange-500'];
+            const medals = ['text-yellow-500', 'text-muted', 'text-orange-500'];
 
             return (
               <div
                 key={player.uid}
                 className={`p-2 text-center ${
-                  isUser ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-[#222]'
+                  isUser ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-surface-raised'
                 }`}
               >
                 <div className="flex items-center justify-center mb-1">
@@ -321,7 +317,7 @@ const LeagueLeadersMini = ({
 
         {/* Quick stat leaders */}
         {leagueStats && Object.keys(leagueStats).length > 0 && (
-          <div className="mt-3 pt-3 border-t border-[#333] grid grid-cols-2 gap-2">
+          <div className="mt-3 pt-3 border-t border-line grid grid-cols-2 gap-2">
             {/* Most Battle Points */}
             {(() => {
               const sorted = Object.values(leagueStats).sort(
@@ -332,7 +328,7 @@ const LeagueLeadersMini = ({
               const profile = memberProfiles[leader.userId];
               const isUser = leader.userId === userId;
               return (
-                <div className="flex items-center gap-2 p-2 bg-[#222]">
+                <div className="flex items-center gap-2 p-2 bg-surface-raised">
                   <Target className="w-4 h-4 text-purple-500 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase text-muted">Most BP</p>
@@ -360,7 +356,7 @@ const LeagueLeadersMini = ({
               const profile = memberProfiles[leader.userId];
               const isUser = leader.userId === userId;
               return (
-                <div className="flex items-center gap-2 p-2 bg-[#222]">
+                <div className="flex items-center gap-2 p-2 bg-surface-raised">
                   <Award className="w-4 h-4 text-green-500 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase text-muted">Best Win%</p>
@@ -389,11 +385,11 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
   const progress = (currentWeek / totalWeeks) * 100;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] p-3">
+    <div className="bg-surface-card border border-line p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-blue-500" />
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+          <span className="text-[10px] uppercase tracking-wider text-muted font-bold">
             Season Progress
           </span>
         </div>
@@ -401,7 +397,7 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
           Week {currentWeek} of {totalWeeks}
         </span>
       </div>
-      <div className="h-2 bg-[#222] overflow-hidden">
+      <div className="h-2 bg-surface-raised overflow-hidden">
         <m.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}

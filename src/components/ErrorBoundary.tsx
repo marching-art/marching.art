@@ -11,20 +11,20 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { ErrorBoundary as BaseErrorBoundary } from './ui/ErrorBoundary';
 
 const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
-  <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-    <div className="max-w-md w-full bg-[#1a1a1a] rounded-none border border-[#333] p-8 text-center">
+  <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="max-w-md w-full bg-surface-card rounded-none border border-line p-8 text-center">
       <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-none flex items-center justify-center mx-auto mb-6">
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>
 
       <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
 
-      <p className="text-gray-400 mb-6">
+      <p className="text-muted mb-6">
         An unexpected error occurred. Please try refreshing the page or return to the home page.
       </p>
 
       {import.meta.env.DEV && error && (
-        <div className="bg-[#0a0a0a] border border-[#333] rounded-none p-4 mb-6 text-left">
+        <div className="bg-background border border-line rounded-none p-4 mb-6 text-left">
           <p className="text-red-400 text-sm font-mono break-all">{error.toString()}</p>
         </div>
       )}
@@ -32,7 +32,7 @@ const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
       <div className="flex gap-3 justify-center">
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] border border-[#0057B8] text-white rounded-none font-semibold hover:bg-[#0057B8]/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-interactive border border-interactive text-white rounded-none font-semibold hover:bg-interactive/90 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh

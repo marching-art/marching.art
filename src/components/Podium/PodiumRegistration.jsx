@@ -131,9 +131,9 @@ export default function PodiumRegistration({ podium }) {
     const lapsed = done.lapsedStaff || [];
     const reasonWord = { unaffordable: 'unfunded', released: 'released', retired: 'retired' };
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 text-center space-y-2">
+      <div className="bg-surface-card border border-line rounded-none p-6 text-center space-y-2">
         <div className="text-lg font-bold text-white">{done.corpsName} is on tour.</div>
-        <div className="text-xs text-gray-400">
+        <div className="text-xs text-muted">
           Competing in{' '}
           <span className="text-yellow-400 font-bold">{done.divisionLabel || 'A Class'}</span>. Your
           provisional Eastern Classic night:{' '}
@@ -141,11 +141,11 @@ export default function PodiumRegistration({ podium }) {
           publish Day 39). First rehearsal block is waiting below.
         </div>
         {(retained.length > 0 || lapsed.length > 0) && (
-          <div className="text-[11px] text-gray-400 pt-1">
+          <div className="text-[11px] text-muted pt-1">
             {retained.length > 0 && (
               <div>
                 Staff retained:{' '}
-                <span className="text-gray-200">
+                <span className="text-secondary">
                   {retained.map((s) => SPECIALTY_LABELS[s] || s).join(', ')}
                 </span>
               </div>
@@ -153,7 +153,7 @@ export default function PodiumRegistration({ podium }) {
             {lapsed.length > 0 && (
               <div>
                 Left the corps:{' '}
-                <span className="text-gray-300">
+                <span className="text-secondary">
                   {lapsed
                     .map(
                       (s) =>
@@ -170,17 +170,17 @@ export default function PodiumRegistration({ podium }) {
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 md:p-6 space-y-5 max-w-2xl">
+    <div className="bg-surface-card border border-line rounded-none p-4 md:p-6 space-y-5 max-w-2xl">
       {/* Stepper */}
       <div className="flex items-center gap-2">
         {STEPS.map((label, index) => (
           <React.Fragment key={label}>
             <div
-              className={`text-[10px] font-bold uppercase tracking-wider ${index === step ? 'text-[#4d9fff]' : index < step ? 'text-gray-300' : 'text-muted'}`}
+              className={`text-[10px] font-bold uppercase tracking-wider ${index === step ? 'text-interactive' : index < step ? 'text-secondary' : 'text-muted'}`}
             >
               {index + 1}. {label}
             </div>
-            {index < STEPS.length - 1 && <div className="flex-1 h-px bg-[#333]" />}
+            {index < STEPS.length - 1 && <div className="flex-1 h-px bg-line" />}
           </React.Fragment>
         ))}
       </div>
@@ -188,7 +188,7 @@ export default function PodiumRegistration({ podium }) {
       {step === 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-white">Found your corps</h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted">
             One drum corps, yours for as long as you keep marching it. Reputation attaches to the
             corps — its name is the thing you&apos;ll spend seasons building.{' '}
             <a
@@ -205,14 +205,14 @@ export default function PodiumRegistration({ podium }) {
             onChange={(e) => setCorpsName(e.target.value)}
             maxLength={40}
             placeholder="Corps name"
-            className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none"
+            className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
           />
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             maxLength={80}
             placeholder="Hometown (e.g., Canton, Ohio) — your tour starts here"
-            className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none"
+            className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
           />
         </div>
       )}
@@ -220,16 +220,14 @@ export default function PodiumRegistration({ podium }) {
       {step === 1 && (
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-white">This season&apos;s show</h2>
-          <p className="text-xs text-gray-400">
-            Title and concept — pure identity, zero mechanics.
-          </p>
+          <p className="text-xs text-muted">Title and concept — pure identity, zero mechanics.</p>
           <textarea
             value={showConcept}
             onChange={(e) => setShowConcept(e.target.value)}
             maxLength={200}
             rows={3}
             placeholder={'e.g., "The Weight of Water" — Debussy, Glass, and a flooded stage'}
-            className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none resize-none"
+            className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none resize-none"
           />
         </div>
       )}
@@ -238,7 +236,7 @@ export default function PodiumRegistration({ podium }) {
         <div className="space-y-4">
           <div>
             <h2 className="text-sm font-bold text-white">Challenge levels</h2>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted">
               Per caption, 1–8. Low = earlier, safer, capped. High = later, riskier, higher ceiling.
               Locked for the season.
             </p>
@@ -262,7 +260,7 @@ export default function PodiumRegistration({ podium }) {
                   }
                   className="flex-1 accent-[#0057B8]"
                 />
-                <span className="w-5 text-right text-xs font-bold text-[#4d9fff] tabular-nums">
+                <span className="w-5 text-right text-xs font-bold text-interactive tabular-nums">
                   {challenge[caption]}
                 </span>
               </label>
@@ -270,7 +268,7 @@ export default function PodiumRegistration({ podium }) {
           </div>
           <div>
             <h3 className="text-xs font-bold text-white mb-1">Auditions</h3>
-            <p className="text-[11px] text-gray-400 mb-2">
+            <p className="text-[11px] text-muted mb-2">
               Where did your recruiting focus land? Shifts your starting distribution, never its
               total.
             </p>
@@ -281,8 +279,8 @@ export default function PodiumRegistration({ podium }) {
                   onClick={() => setAuditionPreset(preset.id)}
                   className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border transition-colors press-feedback ${
                     auditionPreset === preset.id
-                      ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
-                      : 'border-[#333] text-gray-400 hover:text-white'
+                      ? 'border-interactive bg-interactive/15 text-white'
+                      : 'border-line text-muted hover:text-white'
                   }`}
                 >
                   {preset.label}
@@ -296,7 +294,7 @@ export default function PodiumRegistration({ podium }) {
       {step === 3 && (
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-white">Ready to march</h2>
-          <div className="text-xs text-gray-400 space-y-1">
+          <div className="text-xs text-muted space-y-1">
             <div>
               <span className="text-white font-bold">{corpsName.trim()}</span>
               {location.trim() && <> · {location.trim()}</>}
@@ -312,7 +310,7 @@ export default function PodiumRegistration({ podium }) {
           {/* Optional CC -> Corps Budget commitment (decision 24: capped,
               buys margin — food, travel, staff — never caption points).
               Server validates the cap; zero is always playable. */}
-          <div className="pt-2 border-t border-[#333]">
+          <div className="pt-2 border-t border-line">
             <label className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
               Fund the season {hasCarried ? '' : '(optional)'}
             </label>
@@ -328,15 +326,15 @@ export default function PodiumRegistration({ podium }) {
                     Math.max(0, Math.min(commitmentMax, Math.floor(Number(e.target.value) || 0)))
                   )
                 }
-                className="w-28 bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
+                className="w-28 bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white focus:border-interactive outline-none tabular-nums"
               />
               <span className="text-[10px] text-muted">
                 {hasCarried ? (
                   <>
                     CorpsCoin into this season&apos;s Corps Budget. You hold{' '}
-                    <span className="text-gray-300 tabular-nums">{preview.corpsCoin}</span> CC;{' '}
+                    <span className="text-secondary tabular-nums">{preview.corpsCoin}</span> CC;{' '}
                     {preview.divisionLabel} caps a commitment at{' '}
-                    <span className="text-gray-300 tabular-nums">{preview.commitmentCap}</span>.
+                    <span className="text-secondary tabular-nums">{preview.commitmentCap}</span>.
                   </>
                 ) : (
                   <>
@@ -354,7 +352,7 @@ export default function PodiumRegistration({ podium }) {
               who to keep when the CC won't cover the whole aged payroll —
               rather than discovering a silent lapse afterward. */}
           {hasCarried && keptStaff && (
-            <div className="pt-3 border-t border-[#333] space-y-2">
+            <div className="pt-3 border-t border-line space-y-2">
               <div className="flex items-baseline justify-between">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted">
                   Staff payroll — who marches next season
@@ -378,7 +376,9 @@ export default function PodiumRegistration({ podium }) {
                   <label
                     key={s.specialty}
                     className={`flex items-center gap-2 px-2 py-1.5 border rounded-none cursor-pointer press-feedback ${
-                      kept ? 'border-[#333] bg-[#111]' : 'border-[#2a1a1a] bg-[#160f0f] opacity-70'
+                      kept
+                        ? 'border-line bg-surface-sunken'
+                        : 'border-[#2a1a1a] bg-[#160f0f] opacity-70'
                     }`}
                   >
                     <input
@@ -399,7 +399,7 @@ export default function PodiumRegistration({ podium }) {
                         )}
                       </span>
                     </span>
-                    <span className="text-[11px] tabular-nums text-gray-300">
+                    <span className="text-[11px] tabular-nums text-secondary">
                       {s.nextSalary} CC
                       {s.nextSalary > s.salary && (
                         <span className="text-muted"> (was {s.salary})</span>
@@ -412,9 +412,9 @@ export default function PodiumRegistration({ podium }) {
               {retiringStaff.map((s) => (
                 <div
                   key={s.specialty}
-                  className="flex items-center gap-2 px-2 py-1.5 border border-[#222] rounded-none opacity-50"
+                  className="flex items-center gap-2 px-2 py-1.5 border border-line-subtle rounded-none opacity-50"
                 >
-                  <span className="flex-1 text-[11px] text-gray-400">
+                  <span className="flex-1 text-[11px] text-muted">
                     {SPECIALTY_LABELS[s.specialty] || s.specialty}
                   </span>
                   <span className="text-[9px] uppercase tracking-wider text-muted">
@@ -443,7 +443,7 @@ export default function PodiumRegistration({ podium }) {
         <button
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0 || submitting}
-          className="flex items-center gap-1 text-[10px] font-bold uppercase px-3 py-2 rounded-none border border-[#333] text-gray-400 hover:text-white disabled:opacity-40 press-feedback"
+          className="flex items-center gap-1 text-[10px] font-bold uppercase px-3 py-2 rounded-none border border-line text-muted hover:text-white disabled:opacity-40 press-feedback"
         >
           <ChevronLeft className="w-3 h-3" /> Back
         </button>
@@ -451,7 +451,7 @@ export default function PodiumRegistration({ podium }) {
           <button
             onClick={() => setStep((s) => s + 1)}
             disabled={!canNext}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-40 press-feedback"
+            className="flex items-center gap-1 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-interactive text-white hover:bg-interactive-hover disabled:opacity-40 press-feedback"
           >
             Next <ChevronRight className="w-3 h-3" />
           </button>
@@ -460,7 +460,7 @@ export default function PodiumRegistration({ podium }) {
             onClick={submit}
             disabled={submitting || overBudget}
             title={overBudget ? 'Your staff payroll exceeds your commitment.' : undefined}
-            className="flex items-center gap-2 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-60 press-feedback"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-interactive text-white hover:bg-interactive-hover disabled:opacity-60 press-feedback"
           >
             {submitting && <Loader2 className="w-3 h-3 animate-spin" />} Found the corps
           </button>

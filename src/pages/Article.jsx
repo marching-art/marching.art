@@ -256,15 +256,15 @@ const Article = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#0057B8] animate-spin" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-interactive animate-spin" />
       </div>
     );
   }
 
   if (isDayGated || error || !article) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
         <h1 className="text-xl font-bold text-white mb-2">Article Not Found</h1>
         <p className="text-muted mb-6 text-center">
@@ -272,7 +272,7 @@ const Article = () => {
         </p>
         <Link
           to="/"
-          className="px-6 py-3 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider hover:bg-[#0066d6] transition-colors"
+          className="px-6 py-3 bg-interactive text-white font-bold text-sm uppercase tracking-wider hover:bg-interactive-hover transition-colors"
         >
           Back to News
         </Link>
@@ -285,7 +285,7 @@ const Article = () => {
     article.fullStory || (article.narrative && article.narrative.trim()) || article.summary;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* FIXED HEADER - Same as Landing */}
       <ArticleSiteHeader />
 
@@ -300,7 +300,7 @@ const Article = () => {
             <div className="lg:col-span-8">
               {/* Hero Image - OPTIMIZATION #7: Uses OptimizedImage for lazy loading with skeleton */}
               {article.imageUrl && (
-                <div className="w-full mb-6 border border-[#333] relative">
+                <div className="w-full mb-6 border border-line relative">
                   <OptimizedImage
                     src={article.imageUrl}
                     alt={article.headline}
@@ -312,9 +312,9 @@ const Article = () => {
               )}
 
               {/* Article Card */}
-              <article className="bg-[#1a1a1a] border border-[#333]">
+              <article className="bg-surface-card border border-line">
                 {/* Article Header */}
-                <div className="p-5 lg:p-6 border-b border-[#333]">
+                <div className="p-5 lg:p-6 border-b border-line">
                   {/* Meta */}
                   <div className="flex items-center gap-3 mb-4 text-xs text-muted flex-wrap">
                     <span
@@ -347,11 +347,11 @@ const Article = () => {
                   {/* Author byline — credits the submitting director; the username
                       links to their profile, the same pattern used on the scores. */}
                   {article.authorUid && (article.authorUsername || article.authorName) && (
-                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-2 mb-4 text-sm text-muted">
                       <span className="text-muted">By</span>
                       <Link
                         to={`/profile/${article.authorUid}`}
-                        className="font-bold text-[#4d9fff] hover:text-[#c9a227] transition-colors"
+                        className="font-bold text-interactive hover:text-[#c9a227] transition-colors"
                       >
                         {article.authorUsername || article.authorName}
                       </Link>
@@ -365,11 +365,11 @@ const Article = () => {
                   )}
 
                   {/* Summary */}
-                  <p className="text-lg text-gray-400 leading-relaxed">{article.summary}</p>
+                  <p className="text-lg text-muted leading-relaxed">{article.summary}</p>
                 </div>
 
                 {/* Reactions */}
-                <div className="px-5 lg:px-6 py-4 border-b border-[#333] bg-[#111]">
+                <div className="px-5 lg:px-6 py-4 border-b border-line bg-surface-sunken">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {/* Share button */}
@@ -431,7 +431,7 @@ const Article = () => {
                       {fullContent.split('\n\n').map((paragraph, idx) => (
                         <p
                           key={idx}
-                          className="text-base md:text-lg text-gray-300 leading-relaxed mb-6"
+                          className="text-base md:text-lg text-secondary leading-relaxed mb-6"
                         >
                           {paragraph}
                         </p>
@@ -486,7 +486,7 @@ const Article = () => {
                 </div>
 
                 {/* Comments Section */}
-                <div ref={commentsRef} className="p-5 lg:p-6 border-t border-[#333]">
+                <div ref={commentsRef} className="p-5 lg:p-6 border-t border-line">
                   <ArticleComments
                     articleId={article.id}
                     initialCount={engagement?.commentCount || 0}
@@ -500,7 +500,7 @@ const Article = () => {
               <div className="mt-6 text-center">
                 <Link
                   to="/"
-                  className="inline-flex items-center gap-2 text-sm text-[#0057B8] hover:text-[#0066d6] transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-interactive hover:text-interactive-hover transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back to News Hub

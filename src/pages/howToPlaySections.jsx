@@ -66,24 +66,30 @@ const findCaption = (abbr) => CAPTIONS.find((c) => c.abbr === abbr);
 // =============================================================================
 
 const Card = ({ className = '', children }) => (
-  <div className={`bg-[#111] border border-white/10 rounded-none p-4 ${className}`}>{children}</div>
+  <div className={`bg-surface-sunken border border-white/10 rounded-none p-4 ${className}`}>
+    {children}
+  </div>
 );
 
 const DataRow = ({ label, value, accent = false }) => (
   <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-    <span className="text-gray-400 text-xs">{label}</span>
-    <span className={`text-xs font-bold ${accent ? 'text-[#0057B8]' : 'text-white'}`}>{value}</span>
+    <span className="text-muted text-xs">{label}</span>
+    <span className={`text-xs font-bold ${accent ? 'text-interactive' : 'text-white'}`}>
+      {value}
+    </span>
   </div>
 );
 
 const SectionHead = ({ icon: Icon, title, kicker }) => (
   <div className="mb-4">
     {kicker && (
-      <p className="text-[10px] font-bold uppercase tracking-wider text-[#0057B8] mb-1">{kicker}</p>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-interactive mb-1">
+        {kicker}
+      </p>
     )}
     <div className="flex items-center gap-3">
-      <span className="w-9 h-9 bg-[#0057B8]/20 rounded-none flex items-center justify-center flex-shrink-0">
-        <Icon className="w-4 h-4 text-[#0057B8]" />
+      <span className="w-9 h-9 bg-interactive/20 rounded-none flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-interactive" />
       </span>
       <h2 className="text-lg font-bold text-white">{title}</h2>
     </div>
@@ -101,7 +107,7 @@ const OverviewSection = () => (
       kicker="The Fantasy Drum Corps Game"
       title="What is marching.art?"
     />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       marching.art is fantasy sports for the marching arts. Instead of drafting quarterbacks, you
       draft <strong className="text-white">caption performances</strong> — General Effect, Visual,
       and Music — from 50 years of Drum Corps International history, build a lineup within a point
@@ -110,32 +116,30 @@ const OverviewSection = () => (
     </p>
 
     {/* The journey, in order */}
-    <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Your path</p>
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Your path</p>
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 mb-5">
       {JOURNEY.map((step) => (
-        <div key={step.n} className="bg-[#111] border border-white/10 rounded-none p-3">
+        <div key={step.n} className="bg-surface-sunken border border-white/10 rounded-none p-3">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+            <span className="w-6 h-6 bg-interactive text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
               {step.n}
             </span>
             <span className="text-xs font-bold text-white leading-tight">{step.title}</span>
           </div>
-          <p className="text-[11px] text-gray-400 leading-snug">{step.desc}</p>
+          <p className="text-[11px] text-muted leading-snug">{step.desc}</p>
         </div>
       ))}
     </div>
 
     {/* Two ways to play */}
-    <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-      Two ways to play
-    </p>
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Two ways to play</p>
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none p-4">
+      <div className="bg-interactive/10 border border-interactive/30 rounded-none p-4">
         <div className="flex items-center gap-2 mb-1.5">
-          <Target className="w-4 h-4 text-[#0057B8]" />
+          <Target className="w-4 h-4 text-interactive" />
           <span className="text-sm font-bold text-white">Draft — the fantasy classes</span>
         </div>
-        <p className="text-xs text-gray-400 leading-relaxed">
+        <p className="text-xs text-muted leading-relaxed">
           Build a lineup of historical caption performances and let real (or historical) scores do
           the rest. Four classes: SoundSport, A, Open, and World. This is where everyone starts.
         </p>
@@ -145,7 +149,7 @@ const OverviewSection = () => (
           <Medal className="w-4 h-4 text-[#c9a227]" />
           <span className="text-sm font-bold text-white">Found — Podium Class</span>
         </div>
-        <p className="text-xs text-gray-400 leading-relaxed">
+        <p className="text-xs text-muted leading-relaxed">
           Run your own corps and earn every point: rehearse, route a tour, and climb from Community
           Corps to Champion. Always open, always free — jump to the Podium Class section below.
         </p>
@@ -177,12 +181,12 @@ const StartSection = () => (
         ],
       ].map(([title, desc], i) => (
         <div key={title} className="flex items-start gap-3">
-          <span className="w-7 h-7 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+          <span className="w-7 h-7 bg-interactive text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
             {i + 1}
           </span>
           <div>
             <p className="text-sm font-semibold text-white">{title}</p>
-            <p className="text-xs text-gray-400 leading-relaxed">{desc}</p>
+            <p className="text-xs text-muted leading-relaxed">{desc}</p>
           </div>
         </div>
       ))}
@@ -193,7 +197,7 @@ const StartSection = () => (
 const CaptionsSection = () => (
   <>
     <SectionHead icon={Target} kicker="Your lineup" title="The 8 Captions You Draft" />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       Your lineup mirrors real DCI judging: one pick in each of eight captions, grouped into three
       families. Each pick comes from a real historical corps and costs{' '}
       <strong className="text-white">1–25 points</strong> based on how that corps actually scored —
@@ -203,7 +207,10 @@ const CaptionsSection = () => (
       {CAPTION_GROUPS.map((group) => {
         const Icon = group.icon;
         return (
-          <div key={group.label} className="bg-[#111] border border-white/10 rounded-none p-3">
+          <div
+            key={group.label}
+            className="bg-surface-sunken border border-white/10 rounded-none p-3"
+          >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Icon className={`w-4 h-4 ${group.accent}`} />
@@ -219,7 +226,7 @@ const CaptionsSection = () => (
                 return (
                   <div key={abbr} className="bg-black/30 rounded-none p-2">
                     <p className="text-xs text-white">
-                      <span className="font-bold text-[#0057B8] mr-1.5">{cap.abbr}</span>
+                      <span className="font-bold text-interactive mr-1.5">{cap.abbr}</span>
                       {cap.name}
                     </p>
                     <p className="text-[10px] text-muted mt-0.5">{cap.desc}</p>
@@ -237,7 +244,7 @@ const CaptionsSection = () => (
 const ScoringSection = () => (
   <>
     <SectionHead icon={Trophy} kicker="Out of 100" title="How Scoring Works" />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       Every night your corps earns a score out of 100, built the same 40/30/30 way real DCI builds
       it. General Effect counts at full weight, while Visual and Music are each summed and halved.
     </p>
@@ -253,26 +260,26 @@ const ScoringSection = () => (
               {g.captions} · {g.note}
             </span>
           </div>
-          <span className="text-sm font-bold text-gray-400">up to {g.max}</span>
+          <span className="text-sm font-bold text-muted">up to {g.max}</span>
         </div>
       ))}
       <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
         <span className="text-xs font-bold uppercase tracking-wider text-white">Maximum score</span>
-        <span className="text-sm font-bold text-[#0057B8]">100</span>
+        <span className="text-sm font-bold text-interactive">100</span>
       </div>
     </Card>
-    <ul className="space-y-1.5 text-xs text-gray-400">
+    <ul className="space-y-1.5 text-xs text-muted">
       <li className="flex items-start gap-2">
-        <ChevronRight className="w-3.5 h-3.5 text-[#0057B8] flex-shrink-0 mt-0.5" />
+        <ChevronRight className="w-3.5 h-3.5 text-interactive flex-shrink-0 mt-0.5" />
         Each caption is capped, and your score comes straight from the performances you drafted —
         nothing you buy or earn can change it.
       </li>
       <li className="flex items-start gap-2">
-        <ChevronRight className="w-3.5 h-3.5 text-[#0057B8] flex-shrink-0 mt-0.5" />
+        <ChevronRight className="w-3.5 h-3.5 text-interactive flex-shrink-0 mt-0.5" />
         Live Season uses real DCI results as they happen; the Off-Season uses historical data.
       </li>
       <li className="flex items-start gap-2">
-        <ChevronRight className="w-3.5 h-3.5 text-[#0057B8] flex-shrink-0 mt-0.5" />
+        <ChevronRight className="w-3.5 h-3.5 text-interactive flex-shrink-0 mt-0.5" />
         Your class rank uses your most recent night&rsquo;s total, so a strong show night can move
         you fast.
       </li>
@@ -283,7 +290,7 @@ const ScoringSection = () => (
 const ClassesSection = () => (
   <>
     <SectionHead icon={Layers} kicker="Where you compete" title="Classes & Ratings" />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       Classes set your drafting budget — a bigger budget buys pricier, higher-scoring caption picks.
       Everyone starts in SoundSport. You can field a separate corps in every class you unlock, each
       with its own lineup and ranking.
@@ -295,7 +302,7 @@ const ClassesSection = () => (
           cls.color === 'green'
             ? 'border-green-500/30'
             : cls.color === 'blue'
-              ? 'border-[#0057B8]/30'
+              ? 'border-interactive/30'
               : cls.color === 'purple'
                 ? 'border-purple-500/30'
                 : 'border-yellow-500/30';
@@ -303,12 +310,12 @@ const ClassesSection = () => (
           cls.color === 'green'
             ? 'text-green-500'
             : cls.color === 'blue'
-              ? 'text-[#0057B8]'
+              ? 'text-interactive'
               : cls.color === 'purple'
                 ? 'text-purple-500'
                 : 'text-yellow-500';
         return (
-          <div key={cls.id} className={`bg-[#111] border ${ring} rounded-none p-3`}>
+          <div key={cls.id} className={`bg-surface-sunken border ${ring} rounded-none p-3`}>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <Trophy className={`w-4 h-4 ${dot}`} />
@@ -316,7 +323,7 @@ const ClassesSection = () => (
               </div>
               <span className="text-xs font-bold text-white">{cls.points} pts</span>
             </div>
-            <p className="text-[11px] text-gray-400">{cls.desc}</p>
+            <p className="text-[11px] text-muted">{cls.desc}</p>
             <p className="text-[10px] text-muted mt-1">Unlock: {cls.unlock}</p>
           </div>
         );
@@ -324,7 +331,7 @@ const ClassesSection = () => (
     </div>
 
     {/* Unlock paths */}
-    <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
       Three ways to unlock — any one is enough
     </p>
     <div className="grid gap-2 sm:grid-cols-3 mb-5">
@@ -332,7 +339,7 @@ const ClassesSection = () => (
         <div key={path.id} className="bg-black/30 border border-white/10 rounded-none p-3">
           <div className="flex items-center gap-1.5 mb-1">
             <Zap className="w-3 h-3 text-yellow-500" />
-            <p className="text-xs font-bold text-gray-200">{path.label}</p>
+            <p className="text-xs font-bold text-secondary">{path.label}</p>
           </div>
           <p className="text-[11px] text-muted leading-snug">{path.detail}</p>
         </div>
@@ -340,12 +347,12 @@ const ClassesSection = () => (
     </div>
 
     {/* SoundSport ratings — findable, prominent */}
-    <div className="bg-[#111] border border-green-500/30 rounded-none p-4">
+    <div className="bg-surface-sunken border border-green-500/30 rounded-none p-4">
       <div className="flex items-center gap-2 mb-2">
         <Medal className="w-4 h-4 text-green-500" />
         <span className="text-sm font-bold text-white">SoundSport is scored differently</span>
       </div>
-      <p className="text-xs text-gray-400 leading-relaxed mb-3">
+      <p className="text-xs text-muted leading-relaxed mb-3">
         SoundSport is the entry class and the only one that never ranks. Instead of a leaderboard
         slot, your out-of-100 score earns a medal rating — recognition while you learn the game.
       </p>
@@ -353,7 +360,9 @@ const ClassesSection = () => (
         {RATINGS.map((r) => (
           <div key={r.tier} className="bg-black/30 rounded-none p-2 text-center">
             <p className="text-xs font-bold text-white">{r.tier}</p>
-            <p className="text-sm font-bold text-[#0057B8]">{r.min === 0 ? 'Any' : `${r.min}+`}</p>
+            <p className="text-sm font-bold text-interactive">
+              {r.min === 0 ? 'Any' : `${r.min}+`}
+            </p>
           </div>
         ))}
       </div>
@@ -364,24 +373,24 @@ const ClassesSection = () => (
 const ProgressionSection = () => (
   <>
     <SectionHead icon={TrendingUp} kicker="Level up" title="Progression" />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       Four separate numbers track your career — nothing overlaps, and each one tells you exactly how
       to raise it.
     </p>
     <div className="space-y-2 mb-5">
       {PROGRESSION_AXES.map((axis) => (
         <div key={axis.id} className="bg-black/30 border border-white/10 rounded-none p-3">
-          <p className="text-xs font-bold text-gray-200">{axis.label}</p>
+          <p className="text-xs font-bold text-secondary">{axis.label}</p>
           <p className="text-[11px] text-muted leading-snug">{axis.meaning}</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">
-            <span className="text-[#0057B8] font-bold">Raise it:</span> {axis.raise}
+          <p className="text-[11px] text-muted mt-0.5">
+            <span className="text-interactive font-bold">Raise it:</span> {axis.raise}
           </p>
         </div>
       ))}
     </div>
 
     {/* XP sources */}
-    <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
       Every way to earn XP
     </p>
     <Card className="mb-5">
@@ -394,7 +403,7 @@ const ProgressionSection = () => (
             <span className="text-xs font-bold text-white">{source.label}</span>
             <span className="block text-[10px] text-muted leading-snug">{source.cadence}</span>
           </div>
-          <span className="text-xs font-bold text-[#0057B8] whitespace-nowrap flex-shrink-0">
+          <span className="text-xs font-bold text-interactive whitespace-nowrap flex-shrink-0">
             {typeof source.xp === 'number' ? `${source.xp} XP` : source.xp}
           </span>
         </div>
@@ -402,9 +411,7 @@ const ProgressionSection = () => (
     </Card>
 
     {/* Level ladder */}
-    <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
-      The title ladder
-    </p>
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-1">The title ladder</p>
     <p className="text-[11px] text-muted mb-2">
       Every {XP_PER_LEVEL.toLocaleString()} XP is one level. Levels never reset, and each brings a
       new title — from Rookie all the way to Eternal.
@@ -417,8 +424,8 @@ const ProgressionSection = () => (
             key={lvl}
             className="flex items-center gap-1.5 bg-black/30 border border-white/10 rounded-none px-2 py-1"
           >
-            <span className="text-[10px] font-mono text-[#0057B8]">L{lvl}</span>
-            <span className="text-[11px] text-gray-300">{title}</span>
+            <span className="text-[10px] font-mono text-interactive">L{lvl}</span>
+            <span className="text-[11px] text-secondary">{title}</span>
           </div>
         ))}
     </div>
@@ -428,32 +435,32 @@ const ProgressionSection = () => (
 const SeasonSection = () => (
   <>
     <SectionHead icon={Calendar} kicker="The calendar" title="Season Calendar" />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       There is always a season running. XP, levels, unlocked classes, and CorpsCoin carry over every
       time — only the leaderboards reset.
     </p>
 
     <div className="grid gap-3 sm:grid-cols-2 mb-5">
-      <div className="bg-[#111] border border-[#0057B8]/30 rounded-none p-4">
+      <div className="bg-surface-sunken border border-interactive/30 rounded-none p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Calendar className="w-4 h-4 text-[#0057B8]" />
+          <Calendar className="w-4 h-4 text-interactive" />
           <span className="text-sm font-bold text-white">Live Season</span>
           <span className="text-[10px] text-muted ml-auto">Jun – Aug</span>
         </div>
-        <p className="text-xs text-gray-400 leading-relaxed mb-2">
+        <p className="text-xs text-muted leading-relaxed mb-2">
           Runs alongside the real DCI summer tour, scored from actual results night by night through
           Finals in August.
         </p>
         <DataRow label="Length" value="~10 weeks" />
         <DataRow label="Competition" value="49-day schedule" />
       </div>
-      <div className="bg-[#111] border border-purple-500/30 rounded-none p-4">
+      <div className="bg-surface-sunken border border-purple-500/30 rounded-none p-4">
         <div className="flex items-center gap-2 mb-2">
           <Clock className="w-4 h-4 text-purple-500" />
           <span className="text-sm font-bold text-white">Off-Season</span>
           <span className="text-[10px] text-muted ml-auto">Aug – May</span>
         </div>
-        <p className="text-xs text-gray-400 leading-relaxed mb-2">
+        <p className="text-xs text-muted leading-relaxed mb-2">
           Six back-to-back 7-week seasons scored with historical DCI data, so there is always a
           leaderboard to climb.
         </p>
@@ -463,7 +470,7 @@ const SeasonSection = () => (
     </div>
 
     {/* Lineup change windows */}
-    <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
       Lineup change windows
     </p>
     <Card className="mb-2">
@@ -483,14 +490,14 @@ const SeasonSection = () => (
 const EconomySection = () => (
   <>
     <SectionHead icon={Coins} kicker="The currency" title="CorpsCoin" />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       CorpsCoin (CC) is the game-wide currency, earned entirely through play. It buys convenience
       and cosmetics — <strong className="text-white">never</strong> a competitive edge. Nothing you
       spend can add a point to a score.
     </p>
     <div className="grid gap-3 sm:grid-cols-2">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Earn it</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Earn it</p>
         <Card>
           <DataRow label="Show participation" value="50–200 CC" />
           <DataRow label="Correct predictions" value="+10 CC each" />
@@ -499,7 +506,7 @@ const EconomySection = () => (
         </Card>
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Spend it</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Spend it</p>
         <Card>
           <DataRow label="A Class unlock" value="1,000 CC" />
           <DataRow label="Open Class unlock" value="2,500 CC" />
@@ -514,7 +521,7 @@ const EconomySection = () => (
 const LeaguesSection = () => (
   <>
     <SectionHead icon={Users} kicker="Play with friends" title="Leagues & Leaderboards" />
-    <ul className="space-y-2 text-sm text-gray-300">
+    <ul className="space-y-2 text-sm text-secondary">
       {[
         'Create public or private leagues with join codes and go head-to-head with friends.',
         'Global leaderboards for every ranked class, updated as scores come in.',
@@ -522,7 +529,7 @@ const LeaguesSection = () => (
         'Field a separate corps in each class you have unlocked, each with its own ranking.',
       ].map((line) => (
         <li key={line} className="flex items-start gap-2">
-          <ChevronRight className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
+          <ChevronRight className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
           {line}
         </li>
       ))}
@@ -531,19 +538,19 @@ const LeaguesSection = () => (
 );
 
 const PodiumCard = ({ icon: Icon, title, children }) => (
-  <div className="bg-[#111] border border-[#c9a227]/20 rounded-none p-3">
+  <div className="bg-surface-sunken border border-[#c9a227]/20 rounded-none p-3">
     <div className="flex items-center gap-2 mb-1">
       <Icon className="w-4 h-4 text-[#c9a227]" />
       <span className="text-xs font-bold uppercase tracking-wider text-white">{title}</span>
     </div>
-    <p className="text-[11px] text-gray-400 leading-relaxed">{children}</p>
+    <p className="text-[11px] text-muted leading-relaxed">{children}</p>
   </div>
 );
 
 const PodiumSection = () => (
   <>
     <SectionHead icon={Medal} kicker="The other way to play" title="Podium Class" />
-    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+    <p className="text-sm text-secondary leading-relaxed mb-4">
       Podium Class flips the game. Instead of drafting caption performances, you{' '}
       <strong className="text-white">found your own drum corps</strong> and earn every point — one
       corps per director, always open, always free. No purchase ever adds a point to a score.
@@ -577,7 +584,7 @@ const PodiumSection = () => (
     </div>
 
     {/* Reputation ladder */}
-    <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mt-4 mb-2">
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mt-4 mb-2">
       Reputation: the climb to Champion Status
     </p>
     <div className="flex flex-wrap items-center gap-1.5 mb-4">
@@ -587,7 +594,7 @@ const PodiumSection = () => (
             className={`text-[11px] font-bold rounded-none px-2 py-1 ${
               i === REP_TIERS.length - 1
                 ? 'bg-[#c9a227]/20 text-[#c9a227]'
-                : 'bg-black/30 text-gray-300'
+                : 'bg-black/30 text-secondary'
             }`}
           >
             {tier}
@@ -618,9 +625,9 @@ const GlossarySection = () => (
     <SectionHead icon={Book} kicker="New to drum corps?" title="Glossary" />
     <div className="grid gap-2 sm:grid-cols-2">
       {GLOSSARY.map((item) => (
-        <div key={item.term} className="bg-[#111] border border-white/10 rounded-none p-3">
-          <span className="text-xs font-bold text-[#0057B8]">{item.term}</span>
-          <p className="text-xs text-gray-400 mt-1 leading-relaxed">{item.def}</p>
+        <div key={item.term} className="bg-surface-sunken border border-white/10 rounded-none p-3">
+          <span className="text-xs font-bold text-interactive">{item.term}</span>
+          <p className="text-xs text-muted mt-1 leading-relaxed">{item.def}</p>
         </div>
       ))}
     </div>
@@ -632,9 +639,9 @@ const FaqSection = () => (
     <SectionHead icon={HelpCircle} kicker="Common questions" title="FAQ" />
     <div className="space-y-3">
       {FAQ.map((item) => (
-        <div key={item.q} className="bg-[#111] border border-white/10 rounded-none p-4">
+        <div key={item.q} className="bg-surface-sunken border border-white/10 rounded-none p-4">
           <h3 className="text-sm font-bold text-white mb-1.5">{item.q}</h3>
-          <p className="text-xs text-gray-400 leading-relaxed">{item.a}</p>
+          <p className="text-xs text-muted leading-relaxed">{item.a}</p>
         </div>
       ))}
     </div>
@@ -724,13 +731,13 @@ export const SearchResults = ({ query, onNavigate }) => {
         <button
           key={`${r.id}-${r.title}`}
           onClick={() => onNavigate(r.id)}
-          className="w-full text-left bg-[#111] border border-white/10 rounded-none px-4 py-3 hover:bg-white/5 transition-colors"
+          className="w-full text-left bg-surface-sunken border border-white/10 rounded-none px-4 py-3 hover:bg-white/5 transition-colors"
         >
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#0057B8]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-interactive">
             {r.section}
           </span>
           <p className="text-sm font-bold text-white mt-0.5">{r.title}</p>
-          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{r.text}</p>
+          <p className="text-xs text-muted mt-0.5 line-clamp-2">{r.text}</p>
         </button>
       ))}
     </div>

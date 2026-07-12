@@ -63,7 +63,7 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
           <span className={`text-2xl font-bold ${colorClass} tabular-nums`}>
             +{item.amount.toLocaleString()} {label}
           </span>
-          {item.message && <span className="text-xs text-gray-400">{item.message}</span>}
+          {item.message && <span className="text-xs text-muted">{item.message}</span>}
         </div>
       </div>
     </m.div>

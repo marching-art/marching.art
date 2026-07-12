@@ -48,7 +48,7 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
   if (logoUrl && !hasError) {
     return (
       <div
-        className={`${sizeClass} rounded-none overflow-hidden bg-[#333] flex-shrink-0 ${className}`}
+        className={`${sizeClass} rounded-none overflow-hidden bg-line flex-shrink-0 ${className}`}
       >
         <img
           src={logoUrl}

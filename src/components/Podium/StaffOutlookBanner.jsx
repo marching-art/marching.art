@@ -36,7 +36,7 @@ export default function StaffOutlookBanner({ podium }) {
           <div className="text-xs font-bold text-[#f0c060] uppercase tracking-wider">
             Payroll warning — you&apos;ll lose staff next season
           </div>
-          <p className="text-[11px] text-gray-300 leading-relaxed">
+          <p className="text-[11px] text-secondary leading-relaxed">
             As your staff gain tenure their salaries rise. Next season your roster will cost{' '}
             <span className="font-bold text-white tabular-nums">{outlook.payroll} CC</span>, but{' '}
             {outlook.commitmentCap === 0 ? 'your division' : 'your division cap'} lets you commit at

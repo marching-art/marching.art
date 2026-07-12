@@ -38,7 +38,7 @@ const EconomyStatsPanel = ({ refreshKey }) => {
   const computedAt = stats?.computedAt?.toDate?.();
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Economy — Mint vs Sink" icon={Coins} />
       <div className="p-3">
         {!stats ? (
@@ -48,19 +48,19 @@ const EconomyStatsPanel = ({ refreshKey }) => {
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2 mb-3">
-              <div className="bg-[#111] border border-[#333] p-2 text-center">
+              <div className="bg-surface-sunken border border-line p-2 text-center">
                 <p className="text-[9px] uppercase tracking-wider text-muted">Minted</p>
                 <p className="text-sm font-bold text-green-500 font-data tabular-nums">
                   +{(stats.minted || 0).toLocaleString()}
                 </p>
               </div>
-              <div className="bg-[#111] border border-[#333] p-2 text-center">
+              <div className="bg-surface-sunken border border-line p-2 text-center">
                 <p className="text-[9px] uppercase tracking-wider text-muted">Sunk</p>
                 <p className="text-sm font-bold text-red-500 font-data tabular-nums">
                   −{(stats.sunk || 0).toLocaleString()}
                 </p>
               </div>
-              <div className="bg-[#111] border border-[#333] p-2 text-center">
+              <div className="bg-surface-sunken border border-line p-2 text-center">
                 <p className="text-[9px] uppercase tracking-wider text-muted">Net</p>
                 <p
                   className={`text-sm font-bold font-data tabular-nums ${
@@ -75,7 +75,7 @@ const EconomyStatsPanel = ({ refreshKey }) => {
             <div className="space-y-0.5">
               {types.map(([type, t]) => (
                 <div key={type} className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-400 font-mono">{type}</span>
+                  <span className="text-muted font-mono">{type}</span>
                   <span
                     className={`font-data tabular-nums ${t.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}
                   >
@@ -279,7 +279,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       <EconomyStatsPanel refreshKey={statsRefresh} />
 
       {/* News Generation - Trigger for specific day */}
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="News Generation" icon={Newspaper} />
         <div className="p-3">
           <p className="text-[11px] text-muted mb-2">
@@ -293,12 +293,12 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
               placeholder="Day #"
               value={newsDay}
               onChange={(e) => setNewsDay(e.target.value)}
-              className="w-20 px-3 py-2 bg-[#111] border border-[#333] text-xs text-white font-data tabular-nums focus:outline-none focus:border-[#0057B8]"
+              className="w-20 px-3 py-2 bg-surface-sunken border border-line text-xs text-white font-data tabular-nums focus:outline-none focus:border-interactive"
             />
             <button
               onClick={handleTriggerNews}
               disabled={loading === 'newsGen' || !newsDay || !seasonData}
-              className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-interactive/10 text-interactive border border-interactive/20 hover:bg-interactive hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading === 'newsGen' ? (
                 <RefreshCw className="w-3 h-3 animate-spin" />
@@ -312,7 +312,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       </div>
 
       {/* Season Summary (Article 6) - manual generate/backfill for a dark day */}
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="Season Summary Article" icon={BookOpen} />
         <div className="p-3">
           <p className="text-[11px] text-muted mb-2">
@@ -327,12 +327,12 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
               placeholder="Day #"
               value={summaryDay}
               onChange={(e) => setSummaryDay(e.target.value)}
-              className="w-20 px-3 py-2 bg-[#111] border border-[#333] text-xs text-white font-data tabular-nums focus:outline-none focus:border-[#0057B8]"
+              className="w-20 px-3 py-2 bg-surface-sunken border border-line text-xs text-white font-data tabular-nums focus:outline-none focus:border-interactive"
             />
             <button
               onClick={handleTriggerSeasonSummary}
               disabled={loading === 'seasonSummary' || !summaryDay || !seasonData}
-              className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-interactive/10 text-interactive border border-interactive/20 hover:bg-interactive hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading === 'seasonSummary' ? (
                 <RefreshCw className="w-3 h-3 animate-spin" />
@@ -346,7 +346,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       </div>
 
       {/* Test Email - Compact Input Group */}
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="Test Email" icon={Mail} />
         <div className="p-3">
           <div className="flex gap-2">
@@ -355,12 +355,12 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
               placeholder="test@example.com"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
-              className="flex-1 px-3 py-2 bg-[#111] border border-[#333] text-xs text-white focus:outline-none focus:border-[#0057B8]"
+              className="flex-1 px-3 py-2 bg-surface-sunken border border-line text-xs text-white focus:outline-none focus:border-interactive"
             />
             <button
               onClick={handleSendTestEmail}
               disabled={loading === 'testEmail' || !testEmail.trim()}
-              className="flex items-center justify-center w-10 h-9 bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center justify-center w-10 h-9 bg-interactive text-white hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading === 'testEmail' ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -373,7 +373,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       </div>
 
       {/* Duplicate Corps Sweep */}
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="Duplicate Corps Sweep" icon={AlertTriangle} />
         <div className="p-3 space-y-3">
           <p className="text-[11px] text-muted leading-relaxed">
@@ -385,7 +385,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
           <button
             onClick={handleSweepDuplicates}
             disabled={loading === 'sweepDuplicates'}
-            className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-interactive/10 text-interactive border border-interactive/20 hover:bg-interactive hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading === 'sweepDuplicates' ? (
               <RefreshCw className="w-3 h-3 animate-spin" />
@@ -395,7 +395,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
             {loading === 'sweepDuplicates' ? 'Scanning…' : 'Run Sweep'}
           </button>
           {sweepResult && (
-            <div className="bg-[#111] border border-[#333] p-3 space-y-2">
+            <div className="bg-surface-sunken border border-line p-3 space-y-2">
               <div className="grid grid-cols-4 gap-2 text-[10px] uppercase tracking-wider">
                 <div>
                   <div className="text-muted">Scanned</div>
@@ -423,7 +423,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
                 </div>
               </div>
               {sweepResult.losers?.length > 0 && (
-                <div className="border-t border-[#333] pt-2 max-h-64 overflow-y-auto">
+                <div className="border-t border-line pt-2 max-h-64 overflow-y-auto">
                   <div className="text-[10px] uppercase tracking-wider text-muted mb-1">
                     Flagged Corps
                   </div>
@@ -435,11 +435,11 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
                         <th className="font-normal pb-1">Loses To</th>
                       </tr>
                     </thead>
-                    <tbody className="text-gray-300">
+                    <tbody className="text-secondary">
                       {sweepResult.losers.map((l, idx) => (
                         <tr
                           key={`${l.uid}-${l.corpsClass}-${idx}`}
-                          className="border-t border-[#222]"
+                          className="border-t border-line-subtle"
                         >
                           <td className="py-1 pr-2">{l.corpsName}</td>
                           <td className="py-1 pr-2 text-muted">{l.corpsClass}</td>
@@ -458,7 +458,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       </div>
 
       {/* Background Jobs Process Table */}
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         <SectionHeader title="Background Processes" icon={Terminal} />
         {jobs.map((job) => (
           <ProcessRow

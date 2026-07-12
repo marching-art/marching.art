@@ -198,12 +198,12 @@ const PodiumLanding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+    <div className="min-h-screen bg-background text-white flex flex-col">
       {/* HEADER */}
-      <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
+      <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line flex items-center px-4">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-gray-400 hover:text-white active:text-white transition-colors press-feedback min-h-touch px-2 -ml-2"
+          className="inline-flex items-center gap-1.5 text-muted hover:text-white active:text-white transition-colors press-feedback min-h-touch px-2 -ml-2"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="text-sm font-medium">marching.art</span>
@@ -211,7 +211,7 @@ const PodiumLanding = () => {
         <div className="ml-auto flex items-center gap-1">
           <Link
             to="/podium-guide"
-            className="hidden sm:inline-flex items-center gap-1.5 px-2 py-2 min-h-touch text-xs text-gray-400 hover:text-white transition-colors press-feedback"
+            className="hidden sm:inline-flex items-center gap-1.5 px-2 py-2 min-h-touch text-xs text-muted hover:text-white transition-colors press-feedback"
           >
             <BookOpen className="w-4 h-4" />
             Guide
@@ -220,7 +220,7 @@ const PodiumLanding = () => {
             href="https://discord.gg/YvFRJ97A5H"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
+            className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
             title="Join our Discord"
             aria-label="Join our Discord"
           >
@@ -245,9 +245,9 @@ const PodiumLanding = () => {
                 transition={{ duration: 0.3 }}
               >
                 {/* Eyebrow */}
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 mb-4 border border-[#333] bg-[#141414]">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 mb-4 border border-line bg-surface-sunken">
                   <Medal className="w-3.5 h-3.5" style={{ color: GOLD }} />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
                     Podium Class
                   </span>
                 </div>
@@ -258,7 +258,7 @@ const PodiumLanding = () => {
                   <br />
                   <span style={{ color: GOLD }}>Earn every point.</span>
                 </h1>
-                <p className="mt-4 text-base lg:text-lg text-gray-400 max-w-xl leading-relaxed">
+                <p className="mt-4 text-base lg:text-lg text-muted max-w-xl leading-relaxed">
                   Podium Class is the director&rsquo;s chair. Not fantasy drafting — a full season
                   simulation. You run the rehearsals, route the tour, manage the corps, and every
                   night the recap tells you whether you called it right.
@@ -288,12 +288,12 @@ const PodiumLanding = () => {
                 <div className="mt-8 space-y-4">
                   {PILLARS.map(({ icon: Icon, title, body }) => (
                     <div key={title} className="flex gap-3.5">
-                      <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-[#141414] border border-[#333]">
+                      <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-sunken border border-line">
                         <Icon className="w-4 h-4" style={{ color: GOLD }} />
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-white">{title}</h3>
-                        <p className="text-[13px] leading-relaxed text-gray-400 mt-0.5">{body}</p>
+                        <p className="text-[13px] leading-relaxed text-muted mt-0.5">{body}</p>
                       </div>
                     </div>
                   ))}
@@ -302,7 +302,7 @@ const PodiumLanding = () => {
                 {/* Full guide link */}
                 <Link
                   to="/podium-guide"
-                  className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                  className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-white transition-colors"
                 >
                   <BookOpen className="w-4 h-4" style={{ color: GOLD }} />
                   Read the full Podium Class guide
@@ -319,15 +319,15 @@ const PodiumLanding = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.05 }}
-                  className="bg-[#1a1a1a] border border-[#333] rounded-none"
+                  className="bg-surface-card border border-line rounded-none"
                 >
                   {/* Mode toggle */}
-                  <div className="grid grid-cols-2 border-b border-[#333]">
+                  <div className="grid grid-cols-2 border-b border-line">
                     <button
                       type="button"
                       onClick={() => switchMode('register')}
                       className={`h-12 text-sm font-bold uppercase tracking-wider transition-colors press-feedback ${
-                        isRegister ? 'text-black' : 'text-muted hover:text-white bg-[#141414]'
+                        isRegister ? 'text-black' : 'text-muted hover:text-white bg-surface-sunken'
                       }`}
                       style={isRegister ? { backgroundColor: GOLD } : undefined}
                     >
@@ -337,7 +337,7 @@ const PodiumLanding = () => {
                       type="button"
                       onClick={() => switchMode('login')}
                       className={`h-12 text-sm font-bold uppercase tracking-wider transition-colors press-feedback ${
-                        !isRegister ? 'text-black' : 'text-muted hover:text-white bg-[#141414]'
+                        !isRegister ? 'text-black' : 'text-muted hover:text-white bg-surface-sunken'
                       }`}
                       style={!isRegister ? { backgroundColor: GOLD } : undefined}
                     >
@@ -377,7 +377,7 @@ const PodiumLanding = () => {
                           required
                           disabled={loading}
                           autoComplete="name"
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
                         />
                       </div>
                     )}
@@ -393,7 +393,7 @@ const PodiumLanding = () => {
                         required
                         disabled={loading}
                         autoComplete="email"
-                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
+                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
                       />
                     </div>
 
@@ -408,7 +408,7 @@ const PodiumLanding = () => {
                         required
                         disabled={loading}
                         autoComplete={isRegister ? 'new-password' : 'current-password'}
-                        className="w-full min-h-[44px] h-11 pl-10 pr-11 bg-[#111] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
+                        className="w-full min-h-[44px] h-11 pl-10 pr-11 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
                       />
                       <button
                         type="button"
@@ -431,9 +431,9 @@ const PodiumLanding = () => {
                           type="checkbox"
                           checked={formData.acceptTerms}
                           onChange={update('acceptTerms')}
-                          className="w-5 h-5 mt-0.5 rounded-none border-[#333] bg-[#111] text-[#c9a227] focus:ring-[#c9a227] focus:ring-offset-0 flex-shrink-0"
+                          className="w-5 h-5 mt-0.5 rounded-none border-line bg-surface-sunken text-[#c9a227] focus:ring-[#c9a227] focus:ring-offset-0 flex-shrink-0"
                         />
-                        <span className="text-xs text-gray-400 leading-relaxed">
+                        <span className="text-xs text-muted leading-relaxed">
                           I accept the{' '}
                           <Link to="/terms" className="hover:underline" style={{ color: GOLD }}>
                             Terms

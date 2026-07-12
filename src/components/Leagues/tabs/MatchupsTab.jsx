@@ -202,7 +202,7 @@ const MatchupsTab = ({
   if (loading) {
     return (
       <div className="p-4">
-        <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
+        <div className="bg-surface-card border border-line p-8 text-center">
           <Swords className="w-8 h-8 text-muted mx-auto mb-2 animate-pulse" />
           <p className="text-muted text-sm">Loading matchups...</p>
         </div>
@@ -242,10 +242,10 @@ const MatchupsTab = ({
     <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4">
       {/* View Toggle */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
           {viewMode === 'week' ? `Week ${selectedWeek} Matchups` : 'Season Overview'}
         </h2>
-        <div className="flex items-center gap-1 p-1 bg-[#1a1a1a] border border-[#333]">
+        <div className="flex items-center gap-1 p-1 bg-surface-card border border-line">
           <button
             onClick={() => setViewMode('week')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
@@ -302,10 +302,10 @@ const MatchupsTab = ({
       {viewMode === 'week' && (
         <>
           {/* Week Navigator */}
-          <div className="bg-[#1a1a1a] border border-[#333] mb-4">
-            <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="bg-surface-card border border-line mb-4">
+            <div className="px-4 py-3 border-b border-line bg-surface-raised">
               <div className="flex items-center justify-between">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5 text-yellow-500" />
                   Week {selectedWeek}
                 </h3>
@@ -351,10 +351,10 @@ const MatchupsTab = ({
                         isSelected
                           ? 'bg-yellow-500 text-black'
                           : isCurrent
-                            ? 'bg-[#222] border border-purple-500/50 text-white'
+                            ? 'bg-surface-raised border border-purple-500/50 text-white'
                             : hasData
-                              ? 'bg-[#222] border border-[#444] text-white hover:border-[#555]'
-                              : 'bg-[#222] border border-[#333] text-muted hover:text-white hover:border-[#444]'
+                              ? 'bg-surface-raised border border-line-strong text-white hover:border-line-strong'
+                              : 'bg-surface-raised border border-line text-muted hover:text-white hover:border-line-strong'
                       }`}
                     >
                       W{week}
@@ -370,9 +370,9 @@ const MatchupsTab = ({
 
           {/* Your Matchups - Featured */}
           {userMatchups.length > 0 && (
-            <div className="bg-[#1a1a1a] border border-[#333] mb-4">
-              <div className="px-4 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <div className="bg-surface-card border border-line mb-4">
+              <div className="px-4 py-2 border-b border-line bg-surface-raised flex items-center justify-between">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
                   Your Matchups ({userMatchups.length})
                 </h3>
                 {selectedWeek === currentWeek && (
@@ -383,7 +383,7 @@ const MatchupsTab = ({
                 )}
               </div>
 
-              <div className="divide-y divide-[#222]">
+              <div className="divide-y divide-line-subtle">
                 {userMatchups.map((matchup) => (
                   <VersusStrip
                     key={matchup.id}
@@ -415,9 +415,9 @@ const MatchupsTab = ({
             const Icon = config.icon;
 
             return (
-              <div key={corpsClass} className="bg-[#1a1a1a] border border-[#333] mb-4">
+              <div key={corpsClass} className="bg-surface-card border border-line mb-4">
                 <div
-                  className={`px-4 py-2 border-b border-[#333] bg-[#222] flex items-center gap-2`}
+                  className={`px-4 py-2 border-b border-line bg-surface-raised flex items-center gap-2`}
                 >
                   <div className={`p-1 ${config.bgColor} border ${config.borderColor}`}>
                     <Icon className={`w-3 h-3 ${config.color}`} />
@@ -427,7 +427,7 @@ const MatchupsTab = ({
                   </h3>
                 </div>
 
-                <div className="divide-y divide-[#222]">
+                <div className="divide-y divide-line-subtle">
                   {otherMatchups.map((matchup) => (
                     <VersusStrip
                       key={matchup.id}

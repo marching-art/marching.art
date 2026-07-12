@@ -19,9 +19,9 @@ export const CLASS_CONFIG = {
   },
   aClass: {
     name: 'A Class',
-    color: 'text-[#0057B8]',
-    bgColor: 'bg-[#0057B8]/10',
-    borderColor: 'border-[#0057B8]/30',
+    color: 'text-interactive',
+    bgColor: 'bg-interactive/10',
+    borderColor: 'border-interactive/30',
   },
   soundSport: {
     name: 'SS',

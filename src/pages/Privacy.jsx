@@ -14,22 +14,22 @@ const Privacy = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       <div className="container-responsive py-8 px-4 max-w-3xl mx-auto">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-gray-300 hover:text-yellow-500 transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-secondary hover:text-yellow-500 transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Link>
 
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 sm:p-8">
+        <div className="bg-surface-card border border-line rounded-none p-6 sm:p-8">
           <h1 className="text-3xl font-bold text-gradient mb-6">Privacy Policy</h1>
 
-          <p className="text-gray-400 text-sm mb-6">Last updated: January 2026</p>
+          <p className="text-muted text-sm mb-6">Last updated: January 2026</p>
 
-          <div className="space-y-6 text-gray-300">
+          <div className="space-y-6 text-secondary">
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">1. Information We Collect</h2>
               <p className="mb-2">We collect information you provide directly:</p>

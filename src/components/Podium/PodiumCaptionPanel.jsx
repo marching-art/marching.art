@@ -10,13 +10,16 @@ import { PODIUM_CAPTIONS, CAPTION_LABELS, REP_TIER_NAMES } from './podiumConstan
 function ProgressPair({ content, clean }) {
   return (
     <div className="flex-1 space-y-1">
-      <div className="h-1.5 bg-[#2a2a2a] rounded-none overflow-hidden" title="Content installed">
+      <div
+        className="h-1.5 bg-surface-elevated rounded-none overflow-hidden"
+        title="Content installed"
+      >
         <div
-          className="h-full bg-[#0057B8] rounded-none"
+          className="h-full bg-interactive rounded-none"
           style={{ width: `${Math.min(100, content * 100)}%` }}
         />
       </div>
-      <div className="h-1.5 bg-[#2a2a2a] rounded-none overflow-hidden" title="Cleanliness">
+      <div className="h-1.5 bg-surface-elevated rounded-none overflow-hidden" title="Cleanliness">
         <div
           className="h-full bg-green-500 rounded-none"
           style={{ width: `${Math.min(100, clean * 100)}%` }}
@@ -34,7 +37,7 @@ export default function PodiumCaptionPanel({ podium }) {
   const repTier = state.repTier || 1;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
+    <div className="bg-surface-card border border-line rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
           Caption Progress
@@ -65,7 +68,7 @@ export default function PodiumCaptionPanel({ podium }) {
                 </div>
               </div>
               <ProgressPair content={cap.content || 0} clean={cap.clean || 0} />
-              <div className="w-16 shrink-0 text-right text-[10px] tabular-nums text-gray-400">
+              <div className="w-16 shrink-0 text-right text-[10px] tabular-nums text-muted">
                 {Math.round((cap.content || 0) * 100)}% ·{' '}
                 <span className="text-green-400">{Math.round((cap.clean || 0) * 100)}%</span>
               </div>
@@ -76,7 +79,7 @@ export default function PodiumCaptionPanel({ podium }) {
 
       <div className="flex gap-4 text-[9px] text-muted uppercase font-bold">
         <span>
-          <span className="inline-block w-2 h-2 bg-[#0057B8] rounded-none mr-1" />
+          <span className="inline-block w-2 h-2 bg-interactive rounded-none mr-1" />
           Content installed
         </span>
         <span>
@@ -84,7 +87,7 @@ export default function PodiumCaptionPanel({ podium }) {
           Cleanliness
         </span>
         {state.lastTotal != null && (
-          <span className="ml-auto text-gray-400 normal-case">
+          <span className="ml-auto text-muted normal-case">
             Last score:{' '}
             <span className="text-white tabular-nums font-bold">{state.lastTotal.toFixed(3)}</span>
             {state.seasonRank && (

@@ -13,9 +13,13 @@ export type SoundSportRating = 'Gold' | 'Silver' | 'Bronze' | 'Participation';
 
 export const RATING_CONFIG: Record<SoundSportRating, RatingStyle> = {
   Gold: { bg: 'bg-yellow-500', text: 'text-black', badge: 'bg-yellow-500/20 text-yellow-500' },
-  Silver: { bg: 'bg-gray-300', text: 'text-black', badge: 'bg-gray-300/20 text-gray-300' },
+  Silver: { bg: 'bg-charcoal-300', text: 'text-black', badge: 'bg-charcoal-300/20 text-secondary' },
   Bronze: { bg: 'bg-orange-400', text: 'text-black', badge: 'bg-orange-400/20 text-orange-400' },
-  Participation: { bg: 'bg-gray-600', text: 'text-white', badge: 'bg-gray-600/20 text-gray-400' },
+  Participation: {
+    bg: 'bg-charcoal-600',
+    text: 'text-white',
+    badge: 'bg-charcoal-600/20 text-muted',
+  },
 };
 
 export const CLASS_LABELS: Record<string, string> = {

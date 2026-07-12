@@ -337,7 +337,7 @@ const Dashboard = () => {
   // =============================================================================
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* Rename-required modal: hard-blocks all dashboard actions until every
           duplicate-name conflict surfaced by the admin sweep is resolved. */}
       {duplicateCorps.length > 0 && (
@@ -566,14 +566,14 @@ const Dashboard = () => {
 
             {/* Footer — community content is not a daily action, so it sits
                 below the zones instead of occupying sidebar real estate */}
-            <div className="mt-4 bg-[#1a1a1a] border border-[#333] overflow-hidden">
+            <div className="mt-4 bg-surface-card border border-line overflow-hidden">
               <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                 <p className="text-xs text-muted flex-1">
                   Share your insights, analysis, or news with the community.
                 </p>
                 <button
                   onClick={() => setShowNewsSubmission(true)}
-                  className="py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                  className="py-2.5 px-4 bg-surface-raised hover:bg-line border border-line text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
                 >
                   <FileText className="w-4 h-4" />
                   Submit Article
@@ -584,20 +584,20 @@ const Dashboard = () => {
         ) : (
           /* No Corps State */
           <div className="flex items-center justify-center min-h-[60vh] p-4">
-            <div className="bg-[#1a1a1a] border border-[#333] max-w-sm w-full">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <div className="bg-surface-card border border-line max-w-sm w-full">
+              <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
                   Start Your Season
                 </h3>
               </div>
               <div className="p-6 text-center">
                 <Trophy className="w-12 h-12 text-muted mx-auto mb-4" />
-                <p className="text-sm text-gray-400 mb-4">
+                <p className="text-sm text-muted mb-4">
                   Create your first fantasy corps to begin competing.
                 </p>
                 <button
                   onClick={() => setShowRegistration(true)}
-                  className="w-full py-3 bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6]"
+                  className="w-full py-3 bg-interactive text-white text-sm font-bold hover:bg-interactive-hover"
                 >
                   Register Corps
                 </button>

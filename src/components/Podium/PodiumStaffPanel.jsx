@@ -20,9 +20,9 @@ import {
 import { SPECIALTY_LABELS, TIER_LABELS } from './podiumConstants';
 
 const TIER_STYLES = {
-  apprentice: 'text-gray-400',
-  journeyman: 'text-gray-200',
-  veteran: 'text-[#4d9fff]',
+  apprentice: 'text-muted',
+  journeyman: 'text-secondary',
+  veteran: 'text-interactive',
   master: 'text-purple-300',
   legend: 'text-[#c9a227]',
 };
@@ -92,7 +92,7 @@ export default function PodiumStaffPanel({ podium }) {
       .sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier));
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
+    <div className="bg-surface-card border border-line rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <Users className="w-3 h-3" /> Staff ({hiredCount}/10)
@@ -108,17 +108,15 @@ export default function PodiumStaffPanel({ podium }) {
 
       {/* Contract length — applies to every hire below */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
-          Contract
-        </span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-muted">Contract</span>
         {CONTRACT_LENGTHS.map((seasons) => (
           <button
             key={seasons}
             onClick={() => setContractSeasons(seasons)}
             className={`text-[10px] font-bold px-2 py-0.5 rounded-none border press-feedback ${
               contractSeasons === seasons
-                ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
-                : 'border-[#333] text-muted hover:text-white'
+                ? 'border-interactive bg-interactive/15 text-white'
+                : 'border-line text-muted hover:text-white'
             }`}
           >
             {seasons} season{seasons > 1 ? 's' : ''}
@@ -154,8 +152,8 @@ export default function PodiumStaffPanel({ podium }) {
               key={specialty}
               className={`rounded-none border p-2.5 flex flex-col gap-1.5 ${
                 filled
-                  ? 'border-[#333] bg-[#161616]'
-                  : 'border-dashed border-[#2a2a2a] bg-[#141414]'
+                  ? 'border-line bg-surface-sunken'
+                  : 'border-dashed border-line-muted bg-surface-sunken'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -194,7 +192,7 @@ export default function PodiumStaffPanel({ podium }) {
                         title="Retrain into a new specialty (reduced boost this season)"
                         className={`press-feedback ${
                           retraining === member.id
-                            ? 'text-[#4d9fff]'
+                            ? 'text-interactive'
                             : 'text-muted hover:text-white'
                         }`}
                       >
@@ -217,14 +215,12 @@ export default function PodiumStaffPanel({ podium }) {
                     </span>
                   </div>
                   {retraining === member.id && (
-                    <div className="flex flex-wrap items-center gap-1 pt-0.5 border-t border-[#2a2a2a]">
+                    <div className="flex flex-wrap items-center gap-1 pt-0.5 border-t border-line-muted">
                       <span className="text-[9px] uppercase font-bold text-muted w-full">
                         Retrain to:
                       </span>
                       {openSpecialties.length === 0 ? (
-                        <span className="text-[9px] text-muted">
-                          No open seats to move into.
-                        </span>
+                        <span className="text-[9px] text-muted">No open seats to move into.</span>
                       ) : (
                         openSpecialties.map((target) => (
                           <button
@@ -239,7 +235,7 @@ export default function PodiumStaffPanel({ podium }) {
                                 setRetraining(null);
                               })
                             }
-                            className="text-[9px] px-1.5 py-0.5 rounded-none border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] press-feedback"
+                            className="text-[9px] px-1.5 py-0.5 rounded-none border border-line text-muted hover:text-white hover:border-interactive press-feedback"
                           >
                             {SPECIALTY_LABELS[target]}
                           </button>
@@ -266,7 +262,7 @@ export default function PodiumStaffPanel({ podium }) {
                           )
                         }
                         title={`${TIER_LABELS[option.tier]} ${SPECIALTY_LABELS[specialty]} · +${Math.round(option.boost * 100)}% rehearsal yield · ${option.salary}/season`}
-                        className="flex items-center justify-between gap-2 text-[10px] px-2 py-1 rounded-none border border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white tabular-nums press-feedback"
+                        className="flex items-center justify-between gap-2 text-[10px] px-2 py-1 rounded-none border border-line text-secondary hover:border-interactive hover:text-white tabular-nums press-feedback"
                       >
                         {busy === key ? (
                           <Loader2 className="w-3 h-3 animate-spin mx-auto" />

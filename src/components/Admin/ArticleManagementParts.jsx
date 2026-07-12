@@ -33,12 +33,12 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
+    <div className="bg-surface-card border border-line rounded-none overflow-hidden">
       {/* Main row */}
       <div className="p-3 sm:p-4">
         <div className="flex items-start gap-3 sm:gap-4">
           {/* Image thumbnail */}
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#222] rounded-none flex-shrink-0 overflow-hidden">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-surface-raised rounded-none flex-shrink-0 overflow-hidden">
             {article.imageUrl ? (
               <img src={article.imageUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -62,7 +62,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                 <button
                   onClick={onEdit}
                   disabled={editLoading}
-                  className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
+                  className="p-2 text-muted hover:text-white hover:bg-line rounded-none transition-colors"
                   title="Edit article"
                 >
                   <Edit3 className="w-4 h-4" />
@@ -72,7 +72,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                   className={`p-2 rounded-none transition-colors ${
                     article.isArchived
                       ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
-                      : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10'
+                      : 'text-muted hover:text-yellow-400 hover:bg-yellow-500/10'
                   }`}
                   title={article.isArchived ? 'Restore article' : 'Archive article'}
                 >
@@ -84,7 +84,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                 </button>
                 <button
                   onClick={() => setExpanded(!expanded)}
-                  className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
+                  className="p-2 text-muted hover:text-white hover:bg-line rounded-none transition-colors"
                   title="Toggle details"
                 >
                   {expanded ? (
@@ -145,26 +145,26 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t border-[#333] bg-[#0a0a0a] p-4 space-y-3">
+        <div className="border-t border-line bg-background p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs">
             <div className="min-w-0">
               <span className="text-muted">Path:</span>
-              <span className="ml-2 text-gray-300 font-mono break-all">{article.path}</span>
+              <span className="ml-2 text-secondary font-mono break-all">{article.path}</span>
             </div>
             <div className="min-w-0">
               <span className="text-muted">ID:</span>
-              <span className="ml-2 text-gray-300 font-mono break-all">{article.id}</span>
+              <span className="ml-2 text-secondary font-mono break-all">{article.id}</span>
             </div>
             {article.updatedAt && (
               <div>
                 <span className="text-muted">Last Updated:</span>
-                <span className="ml-2 text-gray-300">{formatDate(article.updatedAt)}</span>
+                <span className="ml-2 text-secondary">{formatDate(article.updatedAt)}</span>
               </div>
             )}
           </div>
 
           {/* Danger zone */}
-          <div className="pt-3 border-t border-[#333]">
+          <div className="pt-3 border-t border-line">
             <button
               onClick={onDelete}
               className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-none transition-colors"
@@ -251,20 +251,20 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none w-full max-w-4xl max-h-[90dvh] flex flex-col">
+      <div className="bg-surface-card border border-line rounded-none w-full max-w-4xl max-h-[90dvh] flex flex-col">
         {/* Header */}
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <Edit3 className="w-4 h-4 text-yellow-500" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">Edit Article</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-muted hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Section tabs */}
-        <div className="flex border-b border-[#333] bg-[#1a1a1a] flex-shrink-0">
+        <div className="flex border-b border-line bg-surface-card flex-shrink-0">
           {[
             { id: 'basic', label: 'Basic Info' },
             { id: 'content', label: 'Full Content' },
@@ -275,7 +275,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
               onClick={() => setActiveSection(tab.id)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeSection === tab.id
-                  ? 'text-[#0057B8] border-[#0057B8]'
+                  ? 'text-interactive border-interactive'
                   : 'text-muted border-transparent hover:text-white'
               }`}
             >
@@ -298,7 +298,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                     type="text"
                     value={formData.headline}
                     onChange={(e) => handleChange('headline', e.target.value)}
-                    className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded-none text-white text-sm focus:outline-none focus:border-[#0057B8]"
+                    className="w-full px-3 py-2 bg-surface-raised border border-line rounded-none text-white text-sm focus:outline-none focus:border-interactive"
                     placeholder="Enter headline..."
                   />
                 </div>
@@ -312,7 +312,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                     value={formData.summary}
                     onChange={(e) => handleChange('summary', e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded-none text-white text-sm focus:outline-none focus:border-[#0057B8] resize-none"
+                    className="w-full px-3 py-2 bg-surface-raised border border-line rounded-none text-white text-sm focus:outline-none focus:border-interactive resize-none"
                     placeholder="Enter summary..."
                   />
                 </div>
@@ -327,11 +327,11 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                       type="url"
                       value={formData.imageUrl}
                       onChange={(e) => handleChange('imageUrl', e.target.value)}
-                      className="flex-1 px-3 py-2 bg-[#222] border border-[#333] rounded-none text-white text-sm focus:outline-none focus:border-[#0057B8]"
+                      className="flex-1 px-3 py-2 bg-surface-raised border border-line rounded-none text-white text-sm focus:outline-none focus:border-interactive"
                       placeholder="https://..."
                     />
                     {formData.imageUrl && (
-                      <div className="w-16 h-10 bg-[#222] rounded-none overflow-hidden flex-shrink-0">
+                      <div className="w-16 h-10 bg-surface-raised rounded-none overflow-hidden flex-shrink-0">
                         <img
                           src={formData.imageUrl}
                           alt="Preview"
@@ -368,7 +368,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                     type="button"
                     onClick={() => handleChange('isPublished', !formData.isPublished)}
                     className={`relative w-12 h-6 rounded-none transition-colors ${
-                      formData.isPublished ? 'bg-green-600' : 'bg-[#333]'
+                      formData.isPublished ? 'bg-green-600' : 'bg-line'
                     }`}
                   >
                     <span
@@ -377,7 +377,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                       }`}
                     />
                   </button>
-                  <span className="text-sm text-gray-300">
+                  <span className="text-sm text-secondary">
                     {formData.isPublished ? 'Published' : 'Unpublished'}
                   </span>
                 </div>
@@ -395,7 +395,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                     value={formData.fullStory}
                     onChange={(e) => handleChange('fullStory', e.target.value)}
                     rows={12}
-                    className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded-none text-white text-sm focus:outline-none focus:border-[#0057B8] resize-none font-mono"
+                    className="w-full px-3 py-2 bg-surface-raised border border-line rounded-none text-white text-sm focus:outline-none focus:border-interactive resize-none font-mono"
                     placeholder="Enter full story content..."
                   />
                 </div>
@@ -409,7 +409,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                     value={formData.fantasyImpact}
                     onChange={(e) => handleChange('fantasyImpact', e.target.value)}
                     rows={4}
-                    className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded-none text-white text-sm focus:outline-none focus:border-[#0057B8] resize-none"
+                    className="w-full px-3 py-2 bg-surface-raised border border-line rounded-none text-white text-sm focus:outline-none focus:border-interactive resize-none"
                     placeholder="Describe fantasy impact..."
                   />
                 </div>
@@ -453,7 +453,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
           </div>
 
           {/* Footer */}
-          <div className="border-t border-[#333] bg-[#222] px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="border-t border-line bg-surface-raised px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="text-xs text-muted">
               {hasChanges() ? (
                 <span className="text-yellow-500">Unsaved changes</span>
@@ -465,14 +465,14 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-medium text-muted hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving || !hasChanges()}
-                className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-bold text-sm rounded-none hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-interactive text-white font-bold text-sm rounded-none hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? (
                   <>
@@ -530,7 +530,7 @@ const SectionEditor = ({ title, section, color }) => {
               <label className="block text-xs text-muted uppercase tracking-wider mb-1">
                 Narrative
               </label>
-              <p className="text-sm text-gray-300 bg-[#1a1a1a] p-3 rounded-none">
+              <p className="text-sm text-secondary bg-surface-card p-3 rounded-none">
                 {section.narrative}
               </p>
             </div>
@@ -544,7 +544,7 @@ const SectionEditor = ({ title, section, color }) => {
                   <label className="block text-xs text-muted uppercase tracking-wider mb-1">
                     {key.replace(/([A-Z])/g, ' $1').trim()}
                   </label>
-                  <div className="text-xs text-gray-400 bg-[#1a1a1a] p-3 rounded-none font-mono overflow-x-auto">
+                  <div className="text-xs text-muted bg-surface-card p-3 rounded-none font-mono overflow-x-auto">
                     <pre>{JSON.stringify(value, null, 2)}</pre>
                   </div>
                 </div>

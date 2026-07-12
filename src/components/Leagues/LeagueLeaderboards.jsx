@@ -109,11 +109,11 @@ const LeaderboardCard = memo(
     const hasMore = entries.length > 3;
 
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         {/* Header - clickable to expand */}
         <button
           onClick={onToggle}
-          className="w-full px-3 py-2 flex items-center justify-between hover:bg-[#222] transition-colors"
+          className="w-full px-3 py-2 flex items-center justify-between hover:bg-surface-raised transition-colors"
         >
           <div className="flex items-center gap-2">
             <div className={`w-6 h-6 flex items-center justify-center border ${colors}`}>
@@ -145,14 +145,14 @@ const LeaderboardCard = memo(
                 <div
                   key={entry.userId}
                   className={`flex-1 px-2 py-1.5 text-center ${
-                    isUser ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-[#222]'
+                    isUser ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-surface-raised'
                   }`}
                 >
                   <div className="flex items-center justify-center gap-1 mb-0.5">
                     <RankBadge rank={idx + 1} size="sm" />
                   </div>
                   <p
-                    className={`text-[10px] truncate ${isUser ? 'text-purple-400' : 'text-gray-400'}`}
+                    className={`text-[10px] truncate ${isUser ? 'text-purple-400' : 'text-muted'}`}
                   >
                     {getDisplayName(entry.userId)}
                   </p>
@@ -172,9 +172,9 @@ const LeaderboardCard = memo(
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="border-t border-[#333] overflow-hidden"
+              className="border-t border-line overflow-hidden"
             >
-              <div className="divide-y divide-[#222]">
+              <div className="divide-y divide-line-subtle">
                 {entries.slice(3).map((entry, idx) => {
                   const rank = idx + 4;
                   const isUser = entry.userId === currentUserId;
@@ -186,10 +186,10 @@ const LeaderboardCard = memo(
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 text-center text-xs text-muted font-bold">
-                          {rank}
-                        </span>
-                        <span className={`text-sm ${isUser ? 'text-purple-400' : 'text-gray-300'}`}>
+                        <span className="w-5 text-center text-xs text-muted font-bold">{rank}</span>
+                        <span
+                          className={`text-sm ${isUser ? 'text-purple-400' : 'text-secondary'}`}
+                        >
                           {getDisplayName(entry.userId)}
                         </span>
                       </div>
@@ -226,7 +226,7 @@ const RankBadge = ({ rank, size = 'md' }) => {
   if (rank === 2) {
     return (
       <div
-        className={`${sizeClasses} flex items-center justify-center bg-gray-500/20 text-gray-400 font-bold`}
+        className={`${sizeClasses} flex items-center justify-center bg-charcoal-500/20 text-muted font-bold`}
       >
         2
       </div>
@@ -242,9 +242,7 @@ const RankBadge = ({ rank, size = 'md' }) => {
     );
   }
   return (
-    <div
-      className={`${sizeClasses} flex items-center justify-center bg-[#333] text-muted font-bold`}
-    >
+    <div className={`${sizeClasses} flex items-center justify-center bg-line text-muted font-bold`}>
       {rank}
     </div>
   );
@@ -326,9 +324,9 @@ const LeagueLeaderboards = ({
 
   if (!leagueStats || Object.keys(leagueStats).length === 0) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
+      <div className="bg-surface-card border border-line p-8 text-center">
         <Award className="w-8 h-8 text-muted mx-auto mb-2" />
-        <p className="text-sm text-gray-400">No stats available yet</p>
+        <p className="text-sm text-muted">No stats available yet</p>
         <p className="text-xs text-muted">Complete some matchups to see leaderboards</p>
       </div>
     );
@@ -356,7 +354,7 @@ const LeagueLeaderboards = ({
       {/* Caption Categories Toggle */}
       <button
         onClick={() => setShowCaptions(!showCaptions)}
-        className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] flex items-center justify-between hover:bg-[#222] transition-colors"
+        className="w-full px-3 py-2 bg-surface-card border border-line flex items-center justify-between hover:bg-surface-raised transition-colors"
       >
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-blue-400" />

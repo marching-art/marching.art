@@ -205,7 +205,7 @@ function RecommendationList({ recs }) {
                     </span>
                   )}
                 </div>
-                {rec.reason && <p className="text-xs text-gray-400">{rec.reason}</p>}
+                {rec.reason && <p className="text-xs text-muted">{rec.reason}</p>}
               </div>
             ))}
           </div>
@@ -236,7 +236,7 @@ function RecommendationList({ recs }) {
                     </span>
                   )}
                 </div>
-                {rec.reason && <p className="text-xs text-gray-400">{rec.reason}</p>}
+                {rec.reason && <p className="text-xs text-muted">{rec.reason}</p>}
               </div>
             ))}
           </div>
@@ -264,7 +264,7 @@ function RecommendationList({ recs }) {
                     </span>
                   )}
                 </div>
-                {rec.reason && <p className="text-xs text-gray-400">{rec.reason}</p>}
+                {rec.reason && <p className="text-xs text-muted">{rec.reason}</p>}
               </div>
             ))}
           </div>
@@ -281,10 +281,10 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
 
   const config = SECTION_CONFIG[normalizedTitle] || {
     icon: Eye,
-    bgClass: 'bg-gray-500/10',
-    borderClass: 'border-gray-500/30',
-    iconClass: 'text-gray-400',
-    titleClass: 'text-gray-400',
+    bgClass: 'bg-charcoal-500/10',
+    borderClass: 'border-charcoal-500/30',
+    iconClass: 'text-muted',
+    titleClass: 'text-muted',
   };
 
   const Icon = config.icon;
@@ -312,7 +312,7 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
           <RecommendationList recs={recs} />
         ) : (
           // Fallback to formatted text if parsing fails
-          <div className="text-base text-gray-300 leading-relaxed">{formatContent(content)}</div>
+          <div className="text-base text-secondary leading-relaxed">{formatContent(content)}</div>
         )}
       </div>
     );
@@ -326,7 +326,7 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
           {normalizedTitle}
         </h3>
       </div>
-      <div className="text-base text-gray-300 leading-relaxed">{formatContent(content)}</div>
+      <div className="text-base text-secondary leading-relaxed">{formatContent(content)}</div>
     </div>
   );
 }
@@ -450,7 +450,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
   if (!narrative || typeof narrative !== 'string') {
     // Fallback to summary if no narrative
     if (summary) {
-      return <div className="text-base md:text-lg text-gray-300 leading-relaxed">{summary}</div>;
+      return <div className="text-base md:text-lg text-secondary leading-relaxed">{summary}</div>;
     }
     return null;
   }
@@ -473,7 +473,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
     return (
       <div className="prose prose-invert prose-lg max-w-none">
         {narrative.split('\n\n').map((paragraph, idx) => (
-          <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+          <p key={idx} className="text-base md:text-lg text-secondary leading-relaxed mb-6">
             {paragraph.replace(/\*\*/g, '')}
           </p>
         ))}
@@ -489,7 +489,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
           const cleanedIntro = section.content.replace(/^#+\s+.*$/gm, '').trim();
           if (!cleanedIntro) return null;
           return (
-            <div key={idx} className="text-base text-gray-300 leading-relaxed mb-6">
+            <div key={idx} className="text-base text-secondary leading-relaxed mb-6">
               {formatContent(cleanedIntro)}
             </div>
           );
@@ -541,13 +541,15 @@ function formatEditorialContent(narrative) {
       const body = bodyText;
       return (
         <div key={idx} className="mb-6">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-2">{head}</h4>
-          {body && <p className="text-base md:text-lg text-gray-300 leading-relaxed">{body}</p>}
+          <h4 className="text-xs font-bold uppercase tracking-wider text-interactive mb-2">
+            {head}
+          </h4>
+          {body && <p className="text-base md:text-lg text-secondary leading-relaxed">{body}</p>}
         </div>
       );
     }
     return (
-      <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+      <p key={idx} className="text-base md:text-lg text-secondary leading-relaxed mb-6">
         {strip(p)}
       </p>
     );

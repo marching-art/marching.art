@@ -82,7 +82,7 @@ const ControlBar = memo(
     );
 
     return (
-      <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
+      <div className="sticky top-0 z-10 bg-surface-card border-b border-line">
         {/* On mobile the class selector and the director HUD each get their own
             row so neither clips off the right edge; on md+ they share one row. */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2">
@@ -102,7 +102,7 @@ const ControlBar = memo(
                   <button
                     key={classId}
                     onClick={() => onCreateCorps?.(classId)}
-                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none text-muted hover:text-gray-400 border border-dashed border-[#444] transition-colors press-feedback"
+                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none text-muted hover:text-muted border border-dashed border-line-strong transition-colors press-feedback"
                   >
                     {CLASS_SHORT_LABELS[classId]}
                   </button>
@@ -116,7 +116,7 @@ const ControlBar = memo(
                   onClick={() => onSwitch(classId)}
                   className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                     isActive
-                      ? 'bg-[#0057B8] text-white'
+                      ? 'bg-interactive text-white'
                       : 'text-muted hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -147,7 +147,7 @@ const ControlBar = memo(
 
           {/* Director HUD - Order: Streak, Level, Coins, Buy. On mobile this
               sits on its own row; a top divider separates it from the tabs. */}
-          <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap border-t border-[#2a2a2a] pt-2 md:border-t-0 md:pt-0">
+          <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap border-t border-line-muted pt-2 md:border-t-0 md:pt-0">
             {/* Streak with milestone indicator — opens the streak panel
                 (status, next milestone, streak freeze purchase) */}
             {streak > 0 && (
@@ -198,7 +198,7 @@ const ControlBar = memo(
                 Lvl {level}
               </span>
               <div
-                className="w-12 h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden"
+                className="w-12 h-1.5 bg-surface-elevated rounded-full overflow-hidden"
                 role="progressbar"
                 aria-valuenow={xpProgress.current}
                 aria-valuemin={0}

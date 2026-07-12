@@ -10,14 +10,14 @@ import { HALL_BANNER_PRICE, HALL_BANNER_MAX_LENGTH } from '../utils/prestige';
 
 /** Empty state for a division with no crowned seasons yet. */
 export const NoChampionsPanel = ({ label }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] p-10 text-center max-w-md mx-auto my-8">
-    <div className="w-14 h-14 mx-auto mb-4 border border-[#333] flex items-center justify-center">
+  <div className="bg-surface-card border border-line p-10 text-center max-w-md mx-auto my-8">
+    <div className="w-14 h-14 mx-auto mb-4 border border-line flex items-center justify-center">
       <Trophy className="w-7 h-7 text-muted" />
     </div>
     <h3 className="text-base font-bold text-white uppercase tracking-wider mb-2">
       No {label} Champions Yet
     </h3>
-    <p className="text-sm text-gray-400 leading-relaxed">
+    <p className="text-sm text-muted leading-relaxed">
       Once a season concludes, its champions will be inducted here.
     </p>
   </div>
@@ -59,10 +59,10 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
-            className="bg-[#1a1a1a] border border-[#333] rounded-none max-w-md w-full overflow-hidden"
+            className="bg-surface-card border border-line rounded-none max-w-md w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+            <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                 <Flag className="w-4 h-4 text-yellow-500" />
                 Hang Your Banner
@@ -70,7 +70,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
               <button
                 onClick={onClose}
                 disabled={purchasing}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-muted hover:text-white transition-colors"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
@@ -78,7 +78,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
             </div>
 
             <div className="p-4">
-              <p className="text-xs text-gray-400 mb-3">
+              <p className="text-xs text-muted mb-3">
                 Your message hangs on this championship plaque permanently, visible to every
                 director who visits the Hall. One banner per championship — choose your words.
               </p>
@@ -88,13 +88,13 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
                 maxLength={HALL_BANNER_MAX_LENGTH}
                 rows={2}
                 placeholder="e.g. Forged in the summer of 2026."
-                className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
               />
               <div className="flex items-center justify-between mt-1 mb-4">
                 <span className="text-[10px] text-muted font-data tabular-nums">
                   {message.length}/{HALL_BANNER_MAX_LENGTH}
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-gray-400 font-data tabular-nums">
+                <span className="flex items-center gap-1 text-[11px] text-muted font-data tabular-nums">
                   <Coins className="w-3 h-3 text-yellow-500" />
                   {HALL_BANNER_PRICE.toLocaleString()} CorpsCoin
                 </span>
@@ -104,7 +104,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
                 <button
                   onClick={onClose}
                   disabled={purchasing}
-                  className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50"
+                  className="flex-1 py-2.5 px-4 bg-surface-raised hover:bg-line border border-line text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>

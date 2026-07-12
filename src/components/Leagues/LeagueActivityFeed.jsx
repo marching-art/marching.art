@@ -126,8 +126,8 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       onClick={handleClick}
       className={`
         relative flex items-start gap-3 p-3 rounded-none cursor-pointer transition-all
-        ${isNotification && !activity.read ? 'bg-[#222] border border-yellow-500/30' : 'bg-[#1a1a1a] border border-[#333]'}
-        hover:border-[#555]
+        ${isNotification && !activity.read ? 'bg-surface-raised border border-yellow-500/30' : 'bg-surface-card border border-line'}
+        hover:border-line-strong
       `}
     >
       {/* Unread indicator */}
@@ -146,7 +146,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
           <h4 className="font-bold text-sm text-white truncate">{activity.title}</h4>
           <span className="text-xs text-muted whitespace-nowrap">{timeAgo}</span>
         </div>
-        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
+        <p className="text-xs text-muted mt-0.5 line-clamp-2">
           {activity.message || activity.description}
         </p>
 
@@ -170,7 +170,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
               </span>
             )}
             {activity.metadata.week && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-[#333] text-gray-400">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-line text-muted">
                 Week {activity.metadata.week}
               </span>
             )}
@@ -199,7 +199,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       {isNotification && !activity.read && onMarkRead && (
         <button
           onClick={handleMarkRead}
-          className="p-1.5 rounded-none hover:bg-[#333] transition-colors"
+          className="p-1.5 rounded-none hover:bg-line transition-colors"
           title="Mark as read"
         >
           <CheckCircle className="w-4 h-4 text-muted hover:text-green-500" />
@@ -221,7 +221,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
     onClick={onClick}
     className={`
       relative px-3 py-1.5 rounded-none text-xs font-bold transition-all
-      ${active ? 'bg-yellow-500 text-black' : 'bg-[#222] text-gray-400 hover:bg-[#333]'}
+      ${active ? 'bg-yellow-500 text-black' : 'bg-surface-raised text-muted hover:bg-line'}
     `}
   >
     {children}
@@ -321,12 +321,12 @@ const LeagueActivityFeed = ({
 
   if (isLoading && filteredItems.length === 0) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4">
+      <div className="bg-surface-card border border-line rounded-none p-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-none bg-[#333] animate-pulse" />
+          <div className="w-8 h-8 rounded-none bg-line animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 bg-[#333] rounded-none animate-pulse" />
-            <div className="h-3 w-48 bg-[#333] rounded-none animate-pulse" />
+            <div className="h-4 w-32 bg-line rounded-none animate-pulse" />
+            <div className="h-3 w-48 bg-line rounded-none animate-pulse" />
           </div>
         </div>
       </div>
@@ -334,7 +334,7 @@ const LeagueActivityFeed = ({
   }
 
   return (
-    <div className={`bg-[#1a1a1a] border border-[#333] rounded-none ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`bg-surface-card border border-line rounded-none ${compact ? 'p-3' : 'p-4'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -350,7 +350,7 @@ const LeagueActivityFeed = ({
         {leagueUnreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-xs text-muted hover:text-gray-300 transition-colors flex items-center gap-1"
+            className="text-xs text-muted hover:text-secondary transition-colors flex items-center gap-1"
           >
             <Eye className="w-3 h-3" />
             Mark all read
@@ -360,7 +360,7 @@ const LeagueActivityFeed = ({
 
       {/* Filters */}
       {showFilters && (
-        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-[#333]">
+        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-line">
           <FilterTab
             active={activeFilter === 'all'}
             onClick={() => setActiveFilter('all')}
@@ -419,7 +419,7 @@ const LeagueActivityFeed = ({
       {hasMore && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full mt-3 py-2 text-sm text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+          className="w-full mt-3 py-2 text-sm text-muted hover:text-white transition-colors flex items-center justify-center gap-2"
         >
           Show all activity
           <ChevronRight className="w-4 h-4" />
@@ -429,7 +429,7 @@ const LeagueActivityFeed = ({
       {showAll && (
         <button
           onClick={() => setShowAll(false)}
-          className="w-full mt-3 py-2 text-sm text-muted hover:text-gray-400 transition-colors"
+          className="w-full mt-3 py-2 text-sm text-muted hover:text-muted transition-colors"
         >
           Show less
         </button>
@@ -455,10 +455,10 @@ export const NotificationDropdown = ({
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
-      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-[#1a1a1a] border border-[#333] rounded-none z-50"
+      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-surface-card border border-line rounded-none z-50"
     >
       {/* Header */}
-      <div className="sticky top-0 bg-[#1a1a1a] p-3 border-b border-[#333] flex items-center justify-between">
+      <div className="sticky top-0 bg-surface-card p-3 border-b border-line flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-yellow-500" />
           <span className="font-bold text-white">Notifications</span>
@@ -470,11 +470,11 @@ export const NotificationDropdown = ({
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <button onClick={onMarkAllRead} className="text-xs text-muted hover:text-gray-300">
+            <button onClick={onMarkAllRead} className="text-xs text-muted hover:text-secondary">
               Mark all read
             </button>
           )}
-          <button onClick={onClose} className="p-1 hover:bg-[#333] rounded-none">
+          <button onClick={onClose} className="p-1 hover:bg-line rounded-none">
             <X className="w-4 h-4 text-muted" />
           </button>
         </div>
@@ -553,10 +553,10 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
         </div>
       </div>
 
-      <div className="mt-2 h-1 rounded-none bg-[#222] overflow-hidden">
+      <div className="mt-2 h-1 rounded-none bg-surface-raised overflow-hidden">
         <div
           className={`h-full rounded-none transition-all ${
-            userLeading ? 'bg-green-500' : tied ? 'bg-gray-500' : 'bg-red-500'
+            userLeading ? 'bg-green-500' : tied ? 'bg-charcoal-500' : 'bg-red-500'
           }`}
           style={{
             width: `${(rivalry.userWins / (rivalry.userWins + rivalry.rivalWins + rivalry.ties)) * 100}%`,

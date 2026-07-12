@@ -30,14 +30,14 @@ const CorpsVerificationStep = ({
 }) => {
   return (
     <>
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+      <div className="bg-surface-card border border-line rounded-none">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line">
+          <h2 className="text-xs font-bold text-muted uppercase tracking-wider">
             Step 1: Manage Your Corps
           </h2>
         </div>
         <div className="p-4">
-          <p className="text-sm text-gray-400 mb-4">
+          <p className="text-sm text-muted mb-4">
             Welcome back! Review your corps from last season and decide how to proceed.
           </p>
 
@@ -49,10 +49,10 @@ const CorpsVerificationStep = ({
             const classRetired = retiredByClass[classId] || [];
 
             return (
-              <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
+              <div key={classId} className="bg-background border border-line p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] font-bold text-interactive uppercase tracking-wider block mb-1">
                       {getCorpsClassName(classId)}
                     </span>
                     <h4 className="text-sm font-bold text-white">{corps.corpsName}</h4>
@@ -67,7 +67,7 @@ const CorpsVerificationStep = ({
                     className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                       decision === 'continue'
                         ? 'bg-green-500/20 border-2 border-green-500 text-green-400'
-                        : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                        : 'bg-surface-card border-2 border-transparent text-secondary hover:border-charcoal-500'
                     }`}
                   >
                     <Play className="w-4 h-4" />
@@ -77,8 +77,8 @@ const CorpsVerificationStep = ({
                     onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'skip' })}
                     className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                       decision === 'skip'
-                        ? 'bg-gray-500/20 border-2 border-gray-500 text-gray-300'
-                        : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                        ? 'bg-charcoal-500/20 border-2 border-charcoal-500 text-secondary'
+                        : 'bg-surface-card border-2 border-transparent text-secondary hover:border-charcoal-500'
                     }`}
                   >
                     <SkipForward className="w-4 h-4" />
@@ -89,7 +89,7 @@ const CorpsVerificationStep = ({
                     className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                       decision === 'new'
                         ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
-                        : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                        : 'bg-surface-card border-2 border-transparent text-secondary hover:border-charcoal-500'
                     }`}
                   >
                     <Plus className="w-4 h-4" />
@@ -101,7 +101,7 @@ const CorpsVerificationStep = ({
                       className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                         decision === 'move'
                           ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
-                          : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                          : 'bg-surface-card border-2 border-transparent text-secondary hover:border-charcoal-500'
                       }`}
                     >
                       <ArrowRightLeft className="w-4 h-4" />
@@ -116,7 +116,7 @@ const CorpsVerificationStep = ({
                       className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                         decision === 'unretire'
                           ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
-                          : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                          : 'bg-surface-card border-2 border-transparent text-secondary hover:border-charcoal-500'
                       }`}
                     >
                       <RotateCcw className="w-4 h-4" />
@@ -127,7 +127,7 @@ const CorpsVerificationStep = ({
 
                 {/* Skip info message */}
                 {decision === 'skip' && (
-                  <div className="mt-3 pt-3 border-t border-[#333]">
+                  <div className="mt-3 pt-3 border-t border-line">
                     <p className="text-xs text-muted">
                       This corps will sit out this season. You can re-activate it next season.
                     </p>
@@ -136,12 +136,12 @@ const CorpsVerificationStep = ({
 
                 {/* Move class selection */}
                 {decision === 'move' && (
-                  <div className="mt-3 pt-3 border-t border-[#333]">
+                  <div className="mt-3 pt-3 border-t border-line">
                     <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                       Move to Class
                     </label>
                     <select
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-surface-card border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
                       value={newCorpsData[classId]?.targetClass || ''}
                       onChange={(e) =>
                         setNewCorpsData({
@@ -165,7 +165,7 @@ const CorpsVerificationStep = ({
 
                 {/* New corps form when "Start New" is selected */}
                 {decision === 'new' && (
-                  <div className="mt-3 pt-3 border-t border-[#333] space-y-2">
+                  <div className="mt-3 pt-3 border-t border-line space-y-2">
                     <input
                       type="text"
                       placeholder="New Corps Name"
@@ -176,7 +176,7 @@ const CorpsVerificationStep = ({
                           [classId]: { ...newCorpsData[classId], corpsName: e.target.value },
                         })
                       }
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-surface-card border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                     />
                     <input
                       type="text"
@@ -188,16 +188,16 @@ const CorpsVerificationStep = ({
                           [classId]: { ...newCorpsData[classId], location: e.target.value },
                         })
                       }
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-surface-card border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                     />
                   </div>
                 )}
 
                 {/* Unretire selection */}
                 {decision === 'unretire' && classRetired.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-[#333]">
+                  <div className="mt-3 pt-3 border-t border-line">
                     <select
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-surface-card border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
                       value={newCorpsData[classId]?.retiredIndex ?? ''}
                       onChange={(e) =>
                         setNewCorpsData({
@@ -222,7 +222,7 @@ const CorpsVerificationStep = ({
           {/* Eligible new classes (optional expansion) */}
           {eligibleNewClasses.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Unlock className="w-4 h-4 text-blue-500" />
                 Expand to New Classes (Optional)
               </h3>
@@ -231,15 +231,13 @@ const CorpsVerificationStep = ({
                 const classRetired = retiredByClass[classId] || [];
 
                 return (
-                  <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
+                  <div key={classId} className="bg-background border border-line p-4 mb-3">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <span className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
                           {getCorpsClassName(classId)}
                         </span>
-                        <p className="text-xs text-muted">
-                          {POINT_LIMITS[classId]} point budget
-                        </p>
+                        <p className="text-xs text-muted">{POINT_LIMITS[classId]} point budget</p>
                       </div>
                     </div>
 
@@ -252,8 +250,8 @@ const CorpsVerificationStep = ({
                         }}
                         className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                           !decision
-                            ? 'bg-[#1a1a1a] border-2 border-gray-500 text-gray-300'
-                            : 'bg-[#1a1a1a] border-2 border-transparent text-muted hover:border-gray-500'
+                            ? 'bg-surface-card border-2 border-charcoal-500 text-secondary'
+                            : 'bg-surface-card border-2 border-transparent text-muted hover:border-charcoal-500'
                         }`}
                       >
                         Skip
@@ -263,7 +261,7 @@ const CorpsVerificationStep = ({
                         className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                           decision === 'new'
                             ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
-                            : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                            : 'bg-surface-card border-2 border-transparent text-secondary hover:border-charcoal-500'
                         }`}
                       >
                         <Plus className="w-4 h-4" />
@@ -277,7 +275,7 @@ const CorpsVerificationStep = ({
                           className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                             decision === 'unretire'
                               ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
-                              : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                              : 'bg-surface-card border-2 border-transparent text-secondary hover:border-charcoal-500'
                           }`}
                         >
                           <RotateCcw className="w-4 h-4" />
@@ -288,7 +286,7 @@ const CorpsVerificationStep = ({
 
                     {/* New corps form */}
                     {decision === 'new' && (
-                      <div className="mt-3 pt-3 border-t border-[#333] space-y-2">
+                      <div className="mt-3 pt-3 border-t border-line space-y-2">
                         <input
                           type="text"
                           placeholder="Corps Name"
@@ -299,7 +297,7 @@ const CorpsVerificationStep = ({
                               [classId]: { ...newCorpsData[classId], corpsName: e.target.value },
                             })
                           }
-                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                          className="w-full h-9 px-3 bg-surface-card border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                         />
                         <input
                           type="text"
@@ -311,16 +309,16 @@ const CorpsVerificationStep = ({
                               [classId]: { ...newCorpsData[classId], location: e.target.value },
                             })
                           }
-                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                          className="w-full h-9 px-3 bg-surface-card border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                         />
                       </div>
                     )}
 
                     {/* Unretire selection */}
                     {decision === 'unretire' && classRetired.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-[#333]">
+                      <div className="mt-3 pt-3 border-t border-line">
                         <select
-                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                          className="w-full h-9 px-3 bg-surface-card border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
                           value={newCorpsData[classId]?.retiredIndex ?? ''}
                           onChange={(e) =>
                             setNewCorpsData({
@@ -344,11 +342,11 @@ const CorpsVerificationStep = ({
             </div>
           )}
         </div>
-        <div className="px-4 py-3 border-t border-[#333] flex justify-end">
+        <div className="px-4 py-3 border-t border-line flex justify-end">
           <button
             onClick={handleCorpsVerificationContinue}
             disabled={processing}
-            className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
+            className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-interactive-hover"
           >
             {processing ? (
               <>

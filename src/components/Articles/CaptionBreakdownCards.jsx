@@ -56,7 +56,7 @@ function BreakdownCard({ type, content }) {
             <h4 className={`text-sm font-bold ${config.titleClass}`}>{config.title}</h4>
             <span className="text-xs text-muted">{config.subtitle}</span>
           </div>
-          <p className="text-sm text-gray-300 leading-relaxed">{content}</p>
+          <p className="text-sm text-secondary leading-relaxed">{content}</p>
         </div>
       </div>
     </div>
@@ -77,7 +77,7 @@ export default function CaptionBreakdownCards({ captionBreakdown }) {
 
   return (
     <div className="mb-8">
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4 flex items-center gap-2">
         <Target className="w-4 h-4 text-purple-400" />
         Caption Analysis Summary
       </h3>

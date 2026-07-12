@@ -12,21 +12,21 @@ const fmt = (n, d = 2) => (typeof n === 'number' ? n.toFixed(d) : n);
 
 const RATING_STYLES = {
   Gold: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10',
-  Silver: 'text-gray-300 border-gray-400/30 bg-gray-400/10',
+  Silver: 'text-secondary border-charcoal-400/30 bg-charcoal-400/10',
   Bronze: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
   Participation: 'text-blue-300 border-blue-500/30 bg-blue-500/10',
 };
 
 const ClassStandings = ({ block }) => (
   <div className="mb-8">
-    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-      <Trophy className="w-4 h-4 text-[#0057B8]" />
+    <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4 flex items-center gap-2">
+      <Trophy className="w-4 h-4 text-interactive" />
       {block.label} — Season Standings
     </h3>
 
     {/* Combined-family standings table. */}
-    <div className="bg-[#111] border border-[#333] overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[2.5rem_1fr_5rem_repeat(3,4rem)] gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-[#333]">
+    <div className="bg-surface-sunken border border-line overflow-hidden">
+      <div className="hidden sm:grid grid-cols-[2.5rem_1fr_5rem_repeat(3,4rem)] gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-line">
         <span>#</span>
         <span>Ensemble</span>
         <span className="text-right">Total</span>
@@ -34,7 +34,7 @@ const ClassStandings = ({ block }) => (
         <span className="text-right">Vis</span>
         <span className="text-right">Mus</span>
       </div>
-      <div className="divide-y divide-[#333]/50">
+      <div className="divide-y divide-line/50">
         {block.standings.slice(0, 10).map((s) => (
           <div
             key={`${s.rank}-${s.corpsName}`}
@@ -42,7 +42,7 @@ const ClassStandings = ({ block }) => (
           >
             <span
               className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-none ${
-                s.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-muted'
+                s.rank <= 3 ? 'bg-interactive text-white' : 'bg-surface-raised text-muted'
               }`}
             >
               {s.rank}
@@ -58,13 +58,13 @@ const ClassStandings = ({ block }) => (
             <span className="text-sm font-bold font-data text-white tabular-nums text-right">
               {fmt(s.latestTotal, 3)}
             </span>
-            <span className="hidden sm:block text-xs font-data text-gray-300 tabular-nums text-right">
+            <span className="hidden sm:block text-xs font-data text-secondary tabular-nums text-right">
               {fmt(s.avgGE)}
             </span>
-            <span className="hidden sm:block text-xs font-data text-gray-300 tabular-nums text-right">
+            <span className="hidden sm:block text-xs font-data text-secondary tabular-nums text-right">
               {fmt(s.avgVisual)}
             </span>
-            <span className="hidden sm:block text-xs font-data text-gray-300 tabular-nums text-right">
+            <span className="hidden sm:block text-xs font-data text-secondary tabular-nums text-right">
               {fmt(s.avgMusic)}
             </span>
           </div>
@@ -81,10 +81,10 @@ const ClassStandings = ({ block }) => (
         {block.rivalries.map((r, idx) => (
           <div
             key={idx}
-            className="flex items-start gap-3 bg-[#0057B8]/5 border border-[#0057B8]/20 p-3"
+            className="flex items-start gap-3 bg-interactive/5 border border-interactive/20 p-3"
           >
-            <Swords className="w-4 h-4 text-[#0057B8] mt-0.5 shrink-0" />
-            <p className="text-xs text-gray-300">
+            <Swords className="w-4 h-4 text-interactive mt-0.5 shrink-0" />
+            <p className="text-xs text-secondary">
               <span className="font-bold text-white">{r.corpsA}</span> vs{' '}
               <span className="font-bold text-white">{r.corpsB}</span>
               {r.note ? ` — ${r.note}` : ''}
@@ -115,7 +115,7 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
           </h3>
           <div className="flex flex-wrap gap-2">
             {showWinLeaders.map((b, idx) => (
-              <div key={idx} className="bg-[#111] border border-[#333] px-3 py-2">
+              <div key={idx} className="bg-surface-sunken border border-line px-3 py-2">
                 <span className="text-sm text-white">{b.corpsName}</span>
                 <span className="text-xs text-muted ml-2">{b.classLabel}</span>
                 <span className="text-sm font-bold font-data text-orange-400 ml-2">
@@ -142,7 +142,7 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
                   <span
                     key={r.rating}
                     className={`text-xs font-bold px-3 py-1.5 border rounded-none ${
-                      RATING_STYLES[r.rating] || 'text-gray-300 border-[#333] bg-[#111]'
+                      RATING_STYLES[r.rating] || 'text-secondary border-line bg-surface-sunken'
                     }`}
                   >
                     {r.rating}: {r.count}
@@ -159,13 +159,11 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
                 {soundSport.bestInShowLeaders.map((l, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between bg-[#111] border border-[#333] px-4 py-2.5"
+                    className="flex items-center justify-between bg-surface-sunken border border-line px-4 py-2.5"
                   >
                     <div>
                       <span className="text-sm text-white">{l.corpsName}</span>
-                      {l.director && (
-                        <span className="text-xs text-muted ml-2">{l.director}</span>
-                      )}
+                      {l.director && <span className="text-xs text-muted ml-2">{l.director}</span>}
                     </div>
                     <span className="text-sm font-bold font-data text-purple-400">
                       ×{l.bestInShow}

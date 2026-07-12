@@ -35,11 +35,11 @@ const RetireCorpsModal = ({
         aria-labelledby="modal-title-retire-corps"
       >
         <div
-          className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-none"
+          className="w-full max-w-sm bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <h2
               id="modal-title-retire-corps"
               className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-2"
@@ -61,15 +61,15 @@ const RetireCorpsModal = ({
 
             {/* Message */}
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-300 mb-2">You are about to retire:</p>
+              <p className="text-sm text-secondary mb-2">You are about to retire:</p>
               <p className="text-lg font-bold text-white">{corpsName}</p>
               <p className="text-xs text-muted">{CLASS_NAMES[corpsClass] || corpsClass}</p>
             </div>
 
             {/* Info */}
-            <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 p-3 mb-4">
-              <p className="text-xs text-[#0057B8] mb-2 font-bold uppercase">What happens next</p>
-              <ul className="text-xs text-gray-400 space-y-1">
+            <div className="bg-interactive/10 border border-interactive/30 p-3 mb-4">
+              <p className="text-xs text-interactive mb-2 font-bold uppercase">What happens next</p>
+              <ul className="text-xs text-muted space-y-1">
                 <li>• All season history preserved</li>
                 <li>• Lifetime stats maintained</li>
                 <li>• Can be brought out of retirement anytime</li>
@@ -96,11 +96,11 @@ const RetireCorpsModal = ({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2">
             <button
               onClick={onClose}
               disabled={retiring}
-              className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+              className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50"
             >
               Cancel
             </button>

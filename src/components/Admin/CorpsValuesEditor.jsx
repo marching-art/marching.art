@@ -186,7 +186,7 @@ const CorpsValuesEditor = () => {
               setSelectedDocId(e.target.value);
             }}
             disabled={loadingList || saving}
-            className="flex-1 max-w-xs px-2 py-1.5 bg-[#111] border border-[#333] text-xs text-white font-data focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+            className="flex-1 max-w-xs px-2 py-1.5 bg-surface-sunken border border-line text-xs text-white font-data focus:outline-none focus:border-interactive disabled:opacity-50"
           >
             {seasonDocIds.length === 0 && <option value="">(none)</option>}
             {seasonDocIds.map((id) => (
@@ -199,14 +199,14 @@ const CorpsValuesEditor = () => {
         <button
           onClick={loadSeasonDocs}
           disabled={loadingList}
-          className="flex items-center gap-1.5 h-8 px-2 text-[10px] font-bold uppercase bg-white/5 text-gray-300 border border-[#333] hover:bg-white/10 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-1.5 h-8 px-2 text-[10px] font-bold uppercase bg-white/5 text-secondary border border-line hover:bg-white/10 disabled:opacity-50 transition-colors"
         >
           <RefreshCw className={`w-3 h-3 ${loadingList ? 'animate-spin' : ''}`} />
           Refresh
         </button>
         <button
           onClick={() => setShowNewSeasonModal(true)}
-          className="flex items-center gap-1.5 h-8 px-2 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white transition-colors"
+          className="flex items-center gap-1.5 h-8 px-2 text-[10px] font-bold uppercase bg-interactive/10 text-interactive border border-interactive/20 hover:bg-interactive hover:text-white transition-colors"
         >
           <FilePlus className="w-3 h-3" />
           New Season
@@ -221,9 +221,9 @@ const CorpsValuesEditor = () => {
       )}
 
       {/* Table */}
-      <div className="bg-[#111] border border-[#333] overflow-hidden">
-        <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+      <div className="bg-surface-sunken border border-line overflow-hidden">
+        <div className="bg-surface-raised px-3 py-2 border-b border-line flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             {selectedDocId ? `${selectedDocId} — ${rows.length} corps` : 'Select a season'}
           </span>
           {isDirty && (
@@ -239,7 +239,7 @@ const CorpsValuesEditor = () => {
         ) : (
           <div className="overflow-x-auto max-h-[60vh]">
             <table className="w-full text-xs">
-              <thead className="bg-[#1a1a1a] sticky top-0">
+              <thead className="bg-surface-card sticky top-0">
                 <tr>
                   <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-muted font-bold">
                     #
@@ -258,7 +258,7 @@ const CorpsValuesEditor = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#222]">
+              <tbody className="divide-y divide-line-subtle">
                 {rows.map((row, idx) => (
                   <tr key={idx} className="hover:bg-white/5">
                     <td className="px-3 py-1.5 text-muted font-data tabular-nums">{idx + 1}</td>
@@ -267,7 +267,7 @@ const CorpsValuesEditor = () => {
                         type="text"
                         value={row.corpsName}
                         onChange={(e) => updateRow(idx, 'corpsName', e.target.value)}
-                        className="w-full px-2 py-1 bg-[#0a0a0a] border border-[#333] text-xs text-white focus:outline-none focus:border-[#0057B8]"
+                        className="w-full px-2 py-1 bg-background border border-line text-xs text-white focus:outline-none focus:border-interactive"
                       />
                     </td>
                     <td className="px-3 py-1.5">
@@ -275,7 +275,7 @@ const CorpsValuesEditor = () => {
                         type="number"
                         value={row.sourceYear}
                         onChange={(e) => updateRow(idx, 'sourceYear', e.target.value)}
-                        className="w-full px-2 py-1 bg-[#0a0a0a] border border-[#333] text-xs text-white font-data tabular-nums focus:outline-none focus:border-[#0057B8]"
+                        className="w-full px-2 py-1 bg-background border border-line text-xs text-white font-data tabular-nums focus:outline-none focus:border-interactive"
                       />
                     </td>
                     <td className="px-3 py-1.5">
@@ -283,7 +283,7 @@ const CorpsValuesEditor = () => {
                         type="number"
                         value={row.points}
                         onChange={(e) => updateRow(idx, 'points', e.target.value)}
-                        className="w-full px-2 py-1 bg-[#0a0a0a] border border-[#333] text-xs text-white font-data tabular-nums focus:outline-none focus:border-[#0057B8]"
+                        className="w-full px-2 py-1 bg-background border border-line text-xs text-white font-data tabular-nums focus:outline-none focus:border-interactive"
                       />
                     </td>
                     <td className="px-3 py-1.5 text-right">
@@ -309,11 +309,11 @@ const CorpsValuesEditor = () => {
           </div>
         )}
 
-        <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]">
+        <div className="px-3 py-2 border-t border-line bg-surface-card">
           <button
             onClick={addRow}
             disabled={!selectedDocId || loadingDoc}
-            className="flex items-center gap-1.5 h-7 px-2 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 h-7 px-2 text-[10px] font-bold uppercase bg-interactive/10 text-interactive border border-interactive/20 hover:bg-interactive hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Plus className="w-3 h-3" />
             Add Corps
@@ -326,14 +326,14 @@ const CorpsValuesEditor = () => {
         <button
           onClick={discardChanges}
           disabled={!isDirty || saving}
-          className="flex items-center gap-1.5 h-8 px-3 text-[10px] font-bold uppercase bg-white/5 text-gray-300 border border-[#333] hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1.5 h-8 px-3 text-[10px] font-bold uppercase bg-white/5 text-secondary border border-line hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Discard
         </button>
         <button
           onClick={handleSave}
           disabled={!isDirty || saving || !selectedDocId}
-          className="flex items-center gap-1.5 h-8 px-3 text-[10px] font-bold uppercase bg-[#0057B8] text-white border border-[#0057B8] hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1.5 h-8 px-3 text-[10px] font-bold uppercase bg-interactive text-white border border-interactive hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {saving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
           {saving ? 'Saving...' : 'Save Changes'}
@@ -343,29 +343,27 @@ const CorpsValuesEditor = () => {
       {/* New Season Modal */}
       {showNewSeasonModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm">
-            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <div className="bg-surface-card border border-line w-full max-w-sm">
+            <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted">
                 Create Season Doc
               </h2>
               <button
                 onClick={() => setShowNewSeasonModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-muted hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-4 space-y-3">
               <div>
-                <label className="block text-[10px] text-muted uppercase mb-2">
-                  Season Doc ID
-                </label>
+                <label className="block text-[10px] text-muted uppercase mb-2">Season Doc ID</label>
                 <input
                   type="text"
                   placeholder="e.g. live_25 or off_summer_2025"
                   value={newSeasonId}
                   onChange={(e) => setNewSeasonId(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#111] border border-[#333] text-sm text-white font-data focus:outline-none focus:border-[#0057B8]"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-line text-sm text-white font-data focus:outline-none focus:border-interactive"
                 />
                 <p className="text-[10px] text-muted mt-1">
                   Creates an empty dci-data/&lt;id&gt; doc. Letters, numbers, _ and - only.
@@ -374,7 +372,7 @@ const CorpsValuesEditor = () => {
               <button
                 onClick={handleCreateSeason}
                 disabled={creatingSeason || !newSeasonId.trim()}
-                className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#0057B8] text-white text-xs font-bold hover:bg-[#0066d6] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-1.5 py-2 bg-interactive text-white text-xs font-bold hover:bg-interactive-hover disabled:opacity-50"
               >
                 {creatingSeason ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

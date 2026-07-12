@@ -47,17 +47,17 @@ const SeasonRecapModal = ({ recap, onClose }) => {
         aria-labelledby="modal-title-season-recap"
       >
         <div
-          className="w-full max-w-lg max-h-[85dvh] bg-[#1a1a1a] border border-yellow-500/30 rounded-none flex flex-col"
+          className="w-full max-w-lg max-h-[85dvh] bg-surface-card border border-yellow-500/30 rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised flex-shrink-0">
             <div className="flex items-center gap-3">
               <Trophy className="w-5 h-5 text-yellow-500" />
               <div>
                 <h2
                   id="modal-title-season-recap"
-                  className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                  className="text-xs font-bold uppercase tracking-wider text-secondary"
                 >
                   Season Complete
                 </h2>
@@ -76,9 +76,9 @@ const SeasonRecapModal = ({ recap, onClose }) => {
             {results.map((result) => (
               <div
                 key={result.corpsClass}
-                className="p-3 bg-[#0a0a0a] border border-[#333] flex items-center gap-3"
+                className="p-3 bg-background border border-line flex items-center gap-3"
               >
-                <Medal className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <Medal className="w-5 h-5 text-muted flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white truncate">
                     {result.corpsName || 'Your Corps'}
@@ -139,10 +139,10 @@ const SeasonRecapModal = ({ recap, onClose }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end flex-shrink-0">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end flex-shrink-0">
             <button
               onClick={onClose}
-              className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+              className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover"
             >
               On to the Next Season
             </button>

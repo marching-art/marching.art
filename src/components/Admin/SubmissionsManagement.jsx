@@ -1,6 +1,6 @@
 // src/components/Admin/SubmissionsManagement.jsx
 // Admin interface for reviewing and managing user-submitted articles
-// Follows Admin panel dark theme: bg-[#0a0a0a], bg-[#1a1a1a], bg-[#222]
+// Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -153,8 +153,8 @@ const SubmissionsManagement = () => {
               onClick={() => setStatusFilter(status)}
               className={`px-3 py-1.5 text-xs font-medium rounded-none transition-colors ${
                 statusFilter === status
-                  ? 'bg-[#0057B8] text-white'
-                  : 'bg-[#222] text-gray-400 hover:text-white border border-[#333]'
+                  ? 'bg-interactive text-white'
+                  : 'bg-surface-raised text-muted hover:text-white border border-line'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -169,7 +169,7 @@ const SubmissionsManagement = () => {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted hover:text-white transition-colors"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -178,7 +178,7 @@ const SubmissionsManagement = () => {
 
       {/* Submissions list */}
       {submissions.length === 0 ? (
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 text-center">
+        <div className="bg-surface-card border border-line rounded-none p-8 text-center">
           <FileText className="w-8 h-8 text-muted mx-auto mb-2" />
           <p className="text-muted text-sm">
             No {statusFilter !== 'all' ? statusFilter : ''} submissions found
@@ -224,7 +224,7 @@ const SubmissionRow = ({
   formatDate,
   isProcessing,
 }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
+  <div className="bg-surface-card border border-line rounded-none overflow-hidden">
     <div className="flex items-center justify-between p-4">
       <div className="flex-1 min-w-0 mr-4">
         <div className="flex items-center gap-2 mb-1">
@@ -268,7 +268,7 @@ const SubmissionRow = ({
       <div className="flex items-center gap-2">
         <button
           onClick={onPreview}
-          className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
+          className="p-2 text-muted hover:text-white hover:bg-line rounded-none transition-colors"
           title="Preview"
         >
           <Eye className="w-4 h-4" />
@@ -326,21 +326,18 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
         onClick={onClose}
       >
         <div
-          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-none max-h-[90dvh] flex flex-col"
+          className="w-full max-w-2xl bg-surface-card border border-line rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#0057B8]" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+              <FileText className="w-4 h-4 text-interactive" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-secondary">
                 Review Submission
               </h2>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1 text-muted hover:text-white transition-colors"
-            >
+            <button onClick={onClose} className="p-1 text-muted hover:text-white transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -376,7 +373,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
               <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                 Summary
               </label>
-              <p className="text-sm text-gray-300">{submission.summary}</p>
+              <p className="text-sm text-secondary">{submission.summary}</p>
             </div>
 
             {/* Full Story */}
@@ -384,8 +381,8 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
               <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                 Full Story
               </label>
-              <div className="bg-[#0a0a0a] border border-[#333] rounded-none p-3 max-h-48 overflow-y-auto">
-                <p className="text-sm text-gray-300 whitespace-pre-wrap">{submission.fullStory}</p>
+              <div className="bg-background border border-line rounded-none p-3 max-h-48 overflow-y-auto">
+                <p className="text-sm text-secondary whitespace-pre-wrap">{submission.fullStory}</p>
               </div>
             </div>
 
@@ -398,7 +395,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                 <img
                   src={submission.imageUrl}
                   alt="Article"
-                  className="max-h-48 rounded-none border border-[#333]"
+                  className="max-h-48 rounded-none border border-line"
                 />
               </div>
             )}
@@ -414,7 +411,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Explain why this submission is being rejected..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-red-500"
                 />
               </div>
             )}
@@ -422,7 +419,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
 
           {/* Footer */}
           {(submission.status === 'pending' || submission.status === 'scheduled') && (
-            <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
+            <div className="px-4 py-3 border-t border-line bg-surface-sunken">
               {!showRejectForm ? (
                 <div className="space-y-3">
                   {/* Image options */}
@@ -433,14 +430,14 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                     <div className="space-y-2">
                       {/* Option: Use submitted image (only if available) */}
                       {submission.imageUrl && (
-                        <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer p-2 rounded-none hover:bg-[#222] transition-colors">
+                        <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
                           <input
                             type="radio"
                             name="imageOption"
                             value="submitted"
                             checked={imageOption === 'submitted'}
                             onChange={(e) => setImageOption(e.target.value)}
-                            className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
+                            className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                           />
                           <Image className="w-4 h-4 text-blue-400" />
                           <span>Use submitted image</span>
@@ -448,28 +445,28 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                       )}
 
                       {/* Option: Generate AI image */}
-                      <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer p-2 rounded-none hover:bg-[#222] transition-colors">
+                      <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
                         <input
                           type="radio"
                           name="imageOption"
                           value="generate"
                           checked={imageOption === 'generate'}
                           onChange={(e) => setImageOption(e.target.value)}
-                          className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
+                          className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                         />
                         <Sparkles className="w-4 h-4 text-yellow-500" />
                         <span>Generate AI image (Fantasy Daily style)</span>
                       </label>
 
                       {/* Option: No image */}
-                      <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer p-2 rounded-none hover:bg-[#222] transition-colors">
+                      <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
                         <input
                           type="radio"
                           name="imageOption"
                           value="none"
                           checked={imageOption === 'none'}
                           onChange={(e) => setImageOption(e.target.value)}
-                          className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
+                          className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                         />
                         <X className="w-4 h-4 text-muted" />
                         <span>No image</span>
@@ -506,7 +503,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                   <button
                     onClick={() => setShowRejectForm(false)}
                     disabled={isProcessing}
-                    className="px-4 py-2 border border-[#333] text-gray-400 text-sm font-bold hover:text-white disabled:opacity-50"
+                    className="px-4 py-2 border border-line text-muted text-sm font-bold hover:text-white disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -529,14 +526,14 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
 
           {/* Rejection reason display for rejected submissions */}
           {submission.status === 'rejected' && submission.rejectionReason && (
-            <div className="px-4 py-3 border-t border-[#333] bg-red-500/10">
+            <div className="px-4 py-3 border-t border-line bg-red-500/10">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-red-400 mt-0.5" />
                 <div>
                   <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-1">
                     Rejection Reason
                   </p>
-                  <p className="text-sm text-gray-300">{submission.rejectionReason}</p>
+                  <p className="text-sm text-secondary">{submission.rejectionReason}</p>
                 </div>
               </div>
             </div>

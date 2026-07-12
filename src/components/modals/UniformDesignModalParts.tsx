@@ -17,7 +17,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
   setFormData,
 }) => (
   <div className="space-y-4">
-    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#333] pb-1 flex items-center gap-2">
+    <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider border-b border-line pb-1 flex items-center gap-2">
       <User className="w-3 h-3" />
       Profile Avatar Style
     </h3>
@@ -34,8 +34,8 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
               key={style.value}
               className={`flex items-center gap-3 p-2 border cursor-pointer transition-all ${
                 formData.avatarStyle === style.value
-                  ? 'bg-[#0057B8]/10 border-[#0057B8]/50'
-                  : 'bg-[#0a0a0a] border-[#333] hover:border-[#444]'
+                  ? 'bg-interactive/10 border-interactive/50'
+                  : 'bg-background border-line hover:border-line-strong'
               }`}
             >
               <input
@@ -72,8 +72,8 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
                 key={section.value}
                 className={`flex items-center gap-3 p-2 border cursor-pointer transition-all ${
                   formData.avatarSection === section.value
-                    ? 'bg-[#0057B8]/10 border-[#0057B8]/50'
-                    : 'bg-[#0a0a0a] border-[#333] hover:border-[#444]'
+                    ? 'bg-interactive/10 border-interactive/50'
+                    : 'bg-background border-line hover:border-line-strong'
                 }`}
               >
                 <input

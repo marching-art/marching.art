@@ -56,17 +56,17 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
 
   return (
     <div className="px-3 pt-3">
-      <div className="bg-[#1a1a1a] border border-[#0057B8]/40">
-        <div className="px-3 py-2 border-b border-[#333] bg-[#0057B8]/10 flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5 text-[#0057B8]" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#0057B8]">
+      <div className="bg-surface-card border border-interactive/40">
+        <div className="px-3 py-2 border-b border-line bg-interactive/10 flex items-center gap-1.5">
+          <Users className="w-3.5 h-3.5 text-interactive" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-interactive">
             League Invitations
           </span>
           <span className="text-[9px] text-muted ml-auto font-data tabular-nums">
             {invitations.length}
           </span>
         </div>
-        <div className="divide-y divide-[#333]">
+        <div className="divide-y divide-line">
           {invitations.map((inv) => (
             <div key={inv.id} className="p-3 flex items-start gap-3">
               <div className="flex-1 min-w-0">
@@ -83,7 +83,7 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
                   )}
                 </div>
                 {inv.message && (
-                  <p className="text-[11px] text-gray-300 italic mt-1 whitespace-pre-wrap">
+                  <p className="text-[11px] text-secondary italic mt-1 whitespace-pre-wrap">
                     &ldquo;{inv.message}&rdquo;
                   </p>
                 )}
@@ -92,7 +92,7 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
                 <button
                   onClick={() => handleRespond(inv, true)}
                   disabled={respondingId === inv.id}
-                  className="flex items-center gap-1 px-2 py-1 bg-[#0057B8] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50"
+                  className="flex items-center gap-1 px-2 py-1 bg-interactive text-white text-[10px] font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50"
                   aria-label={`Accept invitation to ${inv.leagueName}`}
                 >
                   <Check className="w-3 h-3" />
@@ -101,7 +101,7 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
                 <button
                   onClick={() => handleRespond(inv, false)}
                   disabled={respondingId === inv.id}
-                  className="flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 text-[10px] font-bold uppercase tracking-wider hover:border-[#555] hover:text-white disabled:opacity-50"
+                  className="flex items-center gap-1 px-2 py-1 border border-line text-muted text-[10px] font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50"
                   aria-label={`Decline invitation to ${inv.leagueName}`}
                 >
                   <X className="w-3 h-3" />

@@ -67,7 +67,7 @@ export const GuidedCaptionSelection = ({
     <div className="space-y-4">
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-gray-400">
+        <span className="text-sm text-muted">
           <JargonTooltip termKey="caption">Caption</JargonTooltip> {currentCaptionIndex + 1} of 8
         </span>
         <span
@@ -114,7 +114,7 @@ export const GuidedCaptionSelection = ({
           </div>
           <div>
             <h4 className={`font-bold ${categoryInfo.text}`}>{currentCaption.fullName}</h4>
-            <p className="text-xs text-gray-400">{currentCaption.description}</p>
+            <p className="text-xs text-muted">{currentCaption.description}</p>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export const GuidedCaptionSelection = ({
                 className={`w-full flex items-center justify-between p-3 rounded-none transition-all ${
                   disabled
                     ? 'bg-charcoal-900/30 border border-charcoal-800 opacity-50 cursor-not-allowed'
-                    : `bg-charcoal-800 border border-charcoal-700 hover:border-[#0057B8]/50 cursor-pointer`
+                    : `bg-charcoal-800 border border-charcoal-700 hover:border-interactive/50 cursor-pointer`
                 }`}
               >
                 <div className="flex items-center gap-2">

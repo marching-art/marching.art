@@ -303,12 +303,12 @@ const Scores = () => {
   // =============================================================================
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* FIXED HEADER */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+      <div className="flex-shrink-0 bg-surface-card border-b border-line px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Activity className="w-5 h-5 text-[#0057B8]" />
+            <Activity className="w-5 h-5 text-interactive" />
             <div>
               <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                 Scores & Recaps
@@ -333,7 +333,7 @@ const Scores = () => {
       </div>
 
       {/* TAB STRIP */}
-      <div className="flex-shrink-0 bg-[#0A0A0A] px-3">
+      <div className="flex-shrink-0 bg-background px-3">
         <PillTabControl
           tabs={tabs}
           activeTab={activeTab}
@@ -436,11 +436,11 @@ const Scores = () => {
               {activeTab === 'archive' && (
                 <div>
                   {/* Archive Header with Year → Season Selector */}
-                  <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+                  <div className="bg-surface-card border-b border-line px-4 py-3">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Archive className="w-4 h-4 text-yellow-500" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                           Historical Seasons
                         </span>
                       </div>
@@ -458,7 +458,7 @@ const Scores = () => {
                         <div
                           role="tablist"
                           aria-label="Archived season year"
-                          className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 mb-2 border-b border-[#2a2a2a]"
+                          className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 mb-2 border-b border-line-muted"
                         >
                           <span className="text-[10px] font-bold uppercase tracking-wider text-muted pr-1">
                             Year
@@ -475,7 +475,7 @@ const Scores = () => {
                               className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap rounded-none border transition-all tabular-nums ${
                                 selectedArchiveYear === year
                                   ? 'bg-yellow-500 text-black border-yellow-500'
-                                  : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
+                                  : 'bg-surface-raised text-secondary border-line-strong hover:border-yellow-500/50 hover:text-white'
                               }`}
                             >
                               {year}
@@ -508,7 +508,7 @@ const Scores = () => {
                                 className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-none border transition-all ${
                                   selectedArchiveSeason === season.id
                                     ? 'bg-yellow-500 text-black border-yellow-500'
-                                    : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
+                                    : 'bg-surface-raised text-secondary border-line-strong hover:border-yellow-500/50 hover:text-white'
                                 }`}
                               >
                                 {season.seasonName || season.id.replace(/_/g, ' ')}
@@ -525,7 +525,7 @@ const Scores = () => {
                   {/* Archive Sub-tabs for different views — scrollable so five
                       tabs can't force horizontal page scroll on narrow phones */}
                   {selectedArchiveSeason && (
-                    <div className="bg-[#111] border-b border-[#333] px-4 py-2">
+                    <div className="bg-surface-sunken border-b border-line px-4 py-2">
                       <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
                         {[
                           { id: 'latest', label: 'Recaps' },
@@ -544,8 +544,8 @@ const Scores = () => {
                             }}
                             className={`px-2.5 py-1.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all rounded-none whitespace-nowrap flex-shrink-0 ${
                               archiveViewTab === tab.id
-                                ? 'bg-[#333] text-white'
-                                : 'text-muted hover:text-gray-300'
+                                ? 'bg-line text-white'
+                                : 'text-muted hover:text-secondary'
                             }`}
                           >
                             {tab.label}
@@ -576,9 +576,7 @@ const Scores = () => {
                           ) : (
                             <div className="p-8 text-center">
                               <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
-                              <p className="text-muted text-sm">
-                                No recaps found for this season
-                              </p>
+                              <p className="text-muted text-sm">No recaps found for this season</p>
                             </div>
                           )}
                         </div>
@@ -682,9 +680,9 @@ const Scores = () => {
           aria-label={`Recap for ${formatEventName(selectedShow.eventName)}`}
         >
           <div className="absolute inset-0 bg-black/80" onClick={() => setSelectedShow(null)} />
-          <div className="relative w-full max-w-lg max-h-[80dvh] bg-[#1a1a1a] border border-[#333] sm:rounded-none overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-lg max-h-[80dvh] bg-surface-card border border-line sm:rounded-none overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
+            <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between flex-shrink-0">
               <div>
                 <h2 className="text-sm font-bold text-white">
                   {formatEventName(selectedShow.eventName)}
@@ -695,7 +693,7 @@ const Scores = () => {
               </div>
               <button
                 onClick={() => setSelectedShow(null)}
-                className="text-gray-400 hover:text-white text-xs font-bold"
+                className="text-muted hover:text-white text-xs font-bold"
               >
                 CLOSE
               </button>

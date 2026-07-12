@@ -19,7 +19,7 @@ const SeasonProgressHub = memo(({ profile, seasonUid }) => {
 
   return (
     <div>
-      <div className="flex bg-[#1a1a1a] border border-[#333] border-b-0" role="tablist">
+      <div className="flex bg-surface-card border border-line border-b-0" role="tablist">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -31,8 +31,8 @@ const SeasonProgressHub = memo(({ profile, seasonUid }) => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${
                 isActive
-                  ? 'text-white bg-[#222] border-b-2 border-[#0057B8]'
-                  : 'text-muted hover:text-gray-300 border-b-2 border-transparent'
+                  ? 'text-white bg-surface-raised border-b-2 border-interactive'
+                  : 'text-muted hover:text-secondary border-b-2 border-transparent'
               }`}
             >
               <Icon className="w-3 h-3" />

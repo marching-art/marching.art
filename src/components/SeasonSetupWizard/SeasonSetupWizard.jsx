@@ -231,10 +231,10 @@ const SeasonSetupWizard = ({
   // Save lineup
   return (
     <Portal>
-      <div className="fixed inset-0 bg-[#0a0a0a] z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-background z-50 overflow-y-auto">
         {/* Header */}
-        <div className="h-12 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
-          <ClipboardList className="w-5 h-5 text-[#0057B8] mr-2" />
+        <div className="h-12 bg-surface-card border-b border-line flex items-center px-4">
+          <ClipboardList className="w-5 h-5 text-interactive mr-2" />
           <span className="text-sm font-bold text-white uppercase tracking-wider">
             Corps Registration
           </span>
@@ -245,7 +245,7 @@ const SeasonSetupWizard = ({
         </div>
 
         {/* Progress Tabs */}
-        <div className="bg-[#1a1a1a] border-b border-[#333]">
+        <div className="bg-surface-card border-b border-line">
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex">
               {hasExistingCorps
@@ -261,7 +261,7 @@ const SeasonSetupWizard = ({
                         key={label}
                         className={`flex-1 py-3 text-center border-b-2 ${
                           isActive
-                            ? 'border-[#0057B8] text-white'
+                            ? 'border-interactive text-white'
                             : isComplete
                               ? 'border-green-500 text-green-500'
                               : 'border-transparent text-muted'
@@ -284,7 +284,7 @@ const SeasonSetupWizard = ({
                         key={label}
                         className={`flex-1 py-3 text-center border-b-2 ${
                           isActive
-                            ? 'border-[#0057B8] text-white'
+                            ? 'border-interactive text-white'
                             : isComplete
                               ? 'border-green-500 text-green-500'
                               : 'border-transparent text-muted'
@@ -321,9 +321,9 @@ const SeasonSetupWizard = ({
 
           {/* STEP 1: Identity */}
           {step === 1 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <div className="bg-surface-card border border-line rounded-none">
+              <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                <h2 className="text-xs font-bold text-muted uppercase tracking-wider">
                   Step 1: Corps Identity
                 </h2>
               </div>
@@ -337,7 +337,7 @@ const SeasonSetupWizard = ({
                     value={formData.corpsName}
                     onChange={(e) => setFormData({ ...formData, corpsName: e.target.value })}
                     placeholder="e.g., Phoenix Rising"
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                   />
                 </div>
                 <div>
@@ -349,7 +349,7 @@ const SeasonSetupWizard = ({
                     value={formData.directorName}
                     onChange={(e) => setFormData({ ...formData, directorName: e.target.value })}
                     placeholder="Your name"
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                   />
                 </div>
                 <div>
@@ -361,15 +361,15 @@ const SeasonSetupWizard = ({
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g., Indianapolis, IN"
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                   />
                 </div>
               </div>
-              <div className="px-4 py-3 border-t border-[#333] flex justify-end">
+              <div className="px-4 py-3 border-t border-line flex justify-end">
                 <button
                   onClick={() => setStep(2)}
                   disabled={!formData.corpsName.trim()}
-                  className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0066d6]"
+                  className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-interactive-hover"
                 >
                   Next
                   <ChevronRight className="w-4 h-4 ml-1" />
@@ -380,16 +380,16 @@ const SeasonSetupWizard = ({
 
           {/* STEP 2: Class Selection Table */}
           {step === 2 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <div className="bg-surface-card border border-line rounded-none">
+              <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                <h2 className="text-xs font-bold text-muted uppercase tracking-wider">
                   Step 2: Select Competition Class
                 </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-[#1a1a1a] border-b border-[#333]">
+                    <tr className="bg-surface-card border-b border-line">
                       <th className="px-4 py-2 text-left text-[10px] font-bold text-muted uppercase tracking-wider w-8"></th>
                       <th className="px-4 py-2 text-left text-[10px] font-bold text-muted uppercase tracking-wider">
                         Class
@@ -420,16 +420,18 @@ const SeasonSetupWizard = ({
                             setFormData({ ...formData, selectedClass: cls.id })
                           }
                           className={`
-                            border-b border-[#333]/50 h-12
+                            border-b border-line/50 h-12
                             ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}
                             ${isUnlocked && !hasExisting ? 'cursor-pointer hover:bg-white/5' : 'opacity-50'}
-                            ${isSelected ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
+                            ${isSelected ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]' : ''}
                           `}
                         >
                           <td className="px-4 py-2">
                             <div
                               className={`w-4 h-4 rounded-none border-2 ${
-                                isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
+                                isSelected
+                                  ? 'border-interactive bg-interactive'
+                                  : 'border-line-strong'
                               }`}
                             >
                               {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -439,7 +441,7 @@ const SeasonSetupWizard = ({
                             <span className="text-sm font-bold text-white">{cls.name}</span>
                           </td>
                           <td className="px-4 py-2 text-right">
-                            <span className="text-sm text-gray-400 tabular-nums">
+                            <span className="text-sm text-muted tabular-nums">
                               {cls.budget} pts
                             </span>
                           </td>
@@ -475,10 +477,10 @@ const SeasonSetupWizard = ({
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 border-t border-[#333] flex justify-between">
+              <div className="px-4 py-3 border-t border-line flex justify-between">
                 <button
                   onClick={() => setStep(1)}
-                  className="h-10 px-4 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center hover:border-[#444] hover:text-white"
+                  className="h-10 px-4 border border-line text-muted font-bold text-sm uppercase tracking-wider flex items-center hover:border-line-strong hover:text-white"
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Back
@@ -486,7 +488,7 @@ const SeasonSetupWizard = ({
                 <button
                   onClick={() => setStep(3)}
                   disabled={!formData.selectedClass}
-                  className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0066d6]"
+                  className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-interactive-hover"
                 >
                   Next
                   <ChevronRight className="w-4 h-4 ml-1" />
@@ -497,15 +499,15 @@ const SeasonSetupWizard = ({
 
           {/* STEP 3: Summary Ticket */}
           {step === 3 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <div className="bg-surface-card border border-line rounded-none">
+              <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                <h2 className="text-xs font-bold text-muted uppercase tracking-wider">
                   Step 3: Registration Summary
                 </h2>
               </div>
               <div className="p-4">
                 {/* Summary Ticket */}
-                <div className="bg-[#0a0a0a] border border-[#333] p-4 mb-4">
+                <div className="bg-background border border-line p-4 mb-4">
                   <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
                     Entry Confirmation
                   </div>
@@ -516,20 +518,20 @@ const SeasonSetupWizard = ({
                     </div>
                     <div>
                       <div className="text-[10px] text-muted uppercase">Director</div>
-                      <div className="text-sm text-gray-300">{formData.directorName || '—'}</div>
+                      <div className="text-sm text-secondary">{formData.directorName || '—'}</div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted uppercase">Location</div>
-                      <div className="text-sm text-gray-300">{formData.location || '—'}</div>
+                      <div className="text-sm text-secondary">{formData.location || '—'}</div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted uppercase">Competition Class</div>
-                      <div className="text-sm font-bold text-[#0057B8]">
+                      <div className="text-sm font-bold text-interactive">
                         {getCorpsClassName(formData.selectedClass)}
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-[#333]">
+                  <div className="mt-4 pt-4 border-t border-line">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] text-muted uppercase">Point Budget</span>
                       <span className="text-lg font-bold text-white tabular-nums">
@@ -545,10 +547,10 @@ const SeasonSetupWizard = ({
                   season. You can modify your lineup and show selections after registration.
                 </p>
               </div>
-              <div className="px-4 py-3 border-t border-[#333] flex justify-between">
+              <div className="px-4 py-3 border-t border-line flex justify-between">
                 <button
                   onClick={() => setStep(2)}
-                  className="h-10 px-4 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center hover:border-[#444] hover:text-white"
+                  className="h-10 px-4 border border-line text-muted font-bold text-sm uppercase tracking-wider flex items-center hover:border-line-strong hover:text-white"
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Back
@@ -556,7 +558,7 @@ const SeasonSetupWizard = ({
                 <button
                   onClick={handleSubmit}
                   disabled={processing}
-                  className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
+                  className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-interactive-hover"
                 >
                   {processing ? (
                     <>
@@ -593,9 +595,9 @@ const SeasonSetupWizard = ({
 
           {/* STEP 6: Complete */}
           {step === 6 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-surface-card border border-line rounded-none">
+              <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                <h2 className="text-xs font-bold text-muted uppercase tracking-wider flex items-center gap-2">
                   <Check className="w-4 h-4 text-green-500" />
                   Registration Complete
                 </h2>
@@ -605,13 +607,13 @@ const SeasonSetupWizard = ({
                   <Check className="w-8 h-8 text-green-500" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">Entry Confirmed</h3>
-                <p className="text-sm text-gray-400 mb-6">
+                <p className="text-sm text-muted mb-6">
                   Your corps is registered for {formatSeasonName(seasonData?.name)}. Head to your
                   dashboard to manage lineups and view upcoming shows.
                 </p>
                 <button
                   onClick={onComplete}
-                  className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider hover:bg-[#0066d6]"
+                  className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider hover:bg-interactive-hover"
                 >
                   Go to Dashboard
                 </button>

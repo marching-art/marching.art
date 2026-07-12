@@ -39,7 +39,7 @@ export interface PageHeaderProps {
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
   icon: Icon,
-  iconClassName = 'text-[#0057B8]',
+  iconClassName = 'text-interactive',
   title,
   subtitle,
   stats,
@@ -47,7 +47,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 ${className}`}>
+    <div className={`flex-shrink-0 bg-surface-card border-b border-line px-4 py-3 ${className}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Icon className={`w-5 h-5 flex-shrink-0 ${iconClassName}`} aria-hidden="true" />

@@ -42,7 +42,7 @@ const RecordRow = ({ category, record }) => {
         {record ? (
           <p className="text-sm text-white truncate">
             <span className="font-bold">{record.corpsName || 'Unknown Corps'}</span>
-            {record.displayName && <span className="text-gray-400"> — {record.displayName}</span>}
+            {record.displayName && <span className="text-muted"> — {record.displayName}</span>}
           </p>
         ) : (
           <p className="text-sm text-muted">Unclaimed — make history</p>
@@ -95,7 +95,7 @@ const Records = () => {
           </div>
           <Link
             to="/hall-of-champions"
-            className="flex items-center gap-1 text-[10px] font-bold text-[#0057B8] hover:text-[#0066d6] uppercase tracking-wider whitespace-nowrap"
+            className="flex items-center gap-1 text-[10px] font-bold text-interactive hover:text-interactive-hover uppercase tracking-wider whitespace-nowrap"
           >
             <Medal className="w-3 h-3" />
             Hall of Champions →
@@ -109,8 +109,8 @@ const Records = () => {
             {RECORD_CLASSES.map((cls) => {
               const classRecords = records?.classes?.[cls.key] || {};
               return (
-                <div key={cls.key} className="bg-[#1a1a1a] border border-[#333] rounded-none">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-[#2a2a2a]">
+                <div key={cls.key} className="bg-surface-card border border-line rounded-none">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-line-muted">
                     <span className="w-1 h-3.5 bg-[#c9a227] flex-shrink-0" aria-hidden="true" />
                     <h2 className="text-[13px] font-bold uppercase tracking-wider text-white">
                       {cls.label}

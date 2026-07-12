@@ -97,24 +97,26 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
   }
 
   return (
-    <div className={`py-3 border-b border-[#222] last:border-b-0 ${isHidden ? 'opacity-50' : ''}`}>
+    <div
+      className={`py-3 border-b border-line-subtle last:border-b-0 ${isHidden ? 'opacity-50' : ''}`}
+    >
       {/* Comment header */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
           {/* User avatar placeholder */}
-          <div className="w-7 h-7 bg-[#333] rounded-full flex items-center justify-center text-xs font-bold text-gray-400 flex-shrink-0">
+          <div className="w-7 h-7 bg-line rounded-full flex items-center justify-center text-xs font-bold text-muted flex-shrink-0">
             {comment.userName?.charAt(0)?.toUpperCase() || '?'}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-bold text-white truncate">{comment.userName}</span>
               {comment.userTitle && (
-                <span className="text-[10px] px-1.5 py-0.5 bg-[#0057B8]/20 text-[#0057B8] font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 bg-interactive/20 text-interactive font-medium">
                   {comment.userTitle}
                 </span>
               )}
               {isOwner && (
-                <span className="text-[10px] px-1.5 py-0.5 bg-gray-500/20 text-gray-400 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 bg-charcoal-500/20 text-muted font-medium">
                   You
                 </span>
               )}
@@ -149,7 +151,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 top-full mt-1 w-36 bg-[#222] border border-[#333] shadow-lg z-10">
+              <div className="absolute right-0 top-full mt-1 w-36 bg-surface-raised border border-line shadow-lg z-10">
                 {isOwner && !isHidden && (
                   <>
                     <button
@@ -157,7 +159,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                         onEdit(comment);
                         setShowMenu(false);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-[#333] transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-secondary hover:bg-line transition-colors"
                     >
                       <Edit2 className="w-3 h-3" />
                       Edit
@@ -167,7 +169,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                         onDelete(comment.id);
                         setShowMenu(false);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-[#333] transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-line transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                       Delete
@@ -180,7 +182,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                       setShowReportModal(true);
                       setShowMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-yellow-500 hover:bg-[#333] transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-yellow-500 hover:bg-line transition-colors"
                   >
                     <Flag className="w-3 h-3" />
                     Report
@@ -193,7 +195,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
       </div>
 
       {/* Comment content */}
-      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+      <p className="text-sm text-secondary leading-relaxed whitespace-pre-wrap break-words">
         {comment.content}
       </p>
 
@@ -204,11 +206,11 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
           onClick={() => setShowReportModal(false)}
         >
           <div
-            className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm"
+            className="bg-surface-card border border-line w-full max-w-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase text-gray-400">Report Comment</h3>
+            <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase text-muted">Report Comment</h3>
               <button
                 onClick={() => setShowReportModal(false)}
                 className="text-muted hover:text-white"
@@ -223,12 +225,12 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                 onChange={(e) => setReportReason(e.target.value)}
                 maxLength={500}
                 rows={3}
-                className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                className="w-full px-3 py-2 bg-background border border-line text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
               />
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setShowReportModal(false)}
-                  className="px-3 py-1.5 text-xs text-gray-400 hover:text-white"
+                  className="px-3 py-1.5 text-xs text-muted hover:text-white"
                 >
                   Cancel
                 </button>
@@ -433,7 +435,7 @@ export default function ArticleComments({
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+        className="flex items-center gap-2 text-sm text-muted hover:text-white transition-colors"
       >
         <MessageSquare className="w-4 h-4" />
         <span className="font-data tabular-nums">{commentCount}</span>
@@ -444,12 +446,12 @@ export default function ArticleComments({
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
+    <div className="bg-surface-card border border-line">
       {/* Header */}
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-muted" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Comments</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted">Comments</h3>
           <span className="text-xs text-muted font-data tabular-nums">({commentCount})</span>
         </div>
         <button onClick={() => setIsExpanded(false)} className="text-muted hover:text-white">
@@ -458,7 +460,7 @@ export default function ArticleComments({
       </div>
 
       {/* Comment input */}
-      <div className="p-4 border-b border-[#333]">
+      <div className="p-4 border-b border-line">
         {user ? (
           editingComment ? (
             // Edit mode
@@ -469,7 +471,7 @@ export default function ArticleComments({
                 maxLength={MAX_COMMENT_LENGTH}
                 rows={3}
                 placeholder="Edit your comment..."
-                className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                className="w-full px-3 py-2 bg-background border border-line text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
               />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted">
@@ -479,14 +481,14 @@ export default function ArticleComments({
                   <button
                     onClick={cancelEditing}
                     disabled={submitting}
-                    className="px-3 py-1.5 text-xs text-gray-400 hover:text-white"
+                    className="px-3 py-1.5 text-xs text-muted hover:text-white"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleEdit}
                     disabled={submitting || !editContent.trim()}
-                    className="px-3 py-1.5 bg-[#0057B8] text-white text-xs font-bold hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-1.5"
+                    className="px-3 py-1.5 bg-interactive text-white text-xs font-bold hover:bg-interactive-hover disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {submitting ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -502,7 +504,7 @@ export default function ArticleComments({
             // New comment mode
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 bg-[#333] rounded-full flex items-center justify-center text-xs font-bold text-gray-400 flex-shrink-0">
+                <div className="w-7 h-7 bg-line rounded-full flex items-center justify-center text-xs font-bold text-muted flex-shrink-0">
                   {profile?.username?.charAt(0)?.toUpperCase() ||
                     user.email?.charAt(0)?.toUpperCase() ||
                     '?'}
@@ -514,7 +516,7 @@ export default function ArticleComments({
                   maxLength={MAX_COMMENT_LENGTH}
                   rows={2}
                   placeholder="Add a comment..."
-                  className="flex-1 px-3 py-2 bg-[#0a0a0a] border border-[#333] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                  className="flex-1 px-3 py-2 bg-background border border-line text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
                 />
               </div>
               <div className="flex items-center justify-between pl-10">
@@ -524,7 +526,7 @@ export default function ArticleComments({
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || !newComment.trim()}
-                  className="px-3 py-1.5 bg-[#0057B8] text-white text-xs font-bold hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-interactive text-white text-xs font-bold hover:bg-interactive-hover disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {submitting ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -574,7 +576,7 @@ export default function ArticleComments({
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="text-xs text-[#0057B8] hover:text-[#0066d6] font-bold uppercase tracking-wider disabled:opacity-50"
+                  className="text-xs text-interactive hover:text-interactive-hover font-bold uppercase tracking-wider disabled:opacity-50"
                 >
                   {loadingMore ? (
                     <span className="flex items-center gap-2 justify-center">
@@ -603,7 +605,7 @@ export function CommentCount({ count, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 text-muted hover:text-gray-300 transition-colors"
+      className="flex items-center gap-1 text-muted hover:text-secondary transition-colors"
     >
       <MessageSquare className="w-3.5 h-3.5" />
       <span className="text-[11px] font-data tabular-nums">{count}</span>

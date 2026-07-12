@@ -30,7 +30,7 @@ const GuestActionBar = () => {
       {/* Accent line at top - matches BottomNav */}
       <div className="h-px w-full bg-yellow-500/30" />
 
-      <div className="bg-[#1A1A1A] border-t border-white/10">
+      <div className="bg-surface-card border-t border-white/10">
         <div className="flex items-center justify-around px-0.5 xs:px-1 py-1.5">
           {actions.map((item) => {
             const Icon = item.icon;

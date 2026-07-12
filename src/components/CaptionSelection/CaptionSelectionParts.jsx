@@ -34,10 +34,10 @@ const LineupCelebration = ({ onComplete }) => {
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90">
       <div className="text-center p-8">
         <div className="mb-4">
-          <PartyPopper className="w-16 h-16 text-[#0057B8] mx-auto" />
+          <PartyPopper className="w-16 h-16 text-interactive mx-auto" />
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">LINEUP LOCKED</h2>
-        <p className="text-gray-400">Your draft is set. Good luck!</p>
+        <p className="text-muted">Your draft is set. Good luck!</p>
       </div>
     </div>
   );
@@ -53,7 +53,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
       disabled={disabled}
       className={`w-full min-h-touch flex items-center justify-between px-3 py-2.5 text-left transition-colors ${
         isSelected
-          ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]'
+          ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]'
           : disabled
             ? 'opacity-50 cursor-not-allowed'
             : 'hover:bg-white/5 cursor-pointer'
@@ -62,7 +62,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div
           className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 rounded-none ${
-            isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'
+            isSelected ? 'bg-interactive border-interactive' : 'border-line-strong'
           }`}
         >
           {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -85,7 +85,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
         )}
       </div>
       <div
-        className={`text-xs font-data font-bold ${isSelected ? 'text-[#0057B8]' : 'text-gray-400'}`}
+        className={`text-xs font-data font-bold ${isSelected ? 'text-interactive' : 'text-muted'}`}
       >
         Cost {corps.points}
       </div>
@@ -110,7 +110,7 @@ const CorpsSelectionList = ({
 }) => (
   <>
     {/* Search — 16px text so iOS doesn't zoom on focus, 44px touch height */}
-    <div className="px-3 py-2 bg-[#1a1a1a] border-b border-[#333] flex-shrink-0">
+    <div className="px-3 py-2 bg-surface-card border-b border-line flex-shrink-0">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
         <input
@@ -120,7 +120,7 @@ const CorpsSelectionList = ({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search corps or year..."
           aria-label="Search available corps"
-          className="w-full h-11 pl-9 pr-9 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:border-[#0057B8] focus:outline-none"
+          className="w-full h-11 pl-9 pr-9 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:border-interactive focus:outline-none"
         />
         {searchValue && (
           <button
@@ -140,7 +140,7 @@ const CorpsSelectionList = ({
           No corps match &ldquo;{searchValue}&rdquo;
         </p>
       )}
-      <div className="divide-y divide-[#222]">
+      <div className="divide-y divide-line-subtle">
         {corpsList.map((corps) => {
           const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
           const isCurrentSel = selections[activeCaption] === value;
@@ -162,7 +162,7 @@ const CorpsSelectionList = ({
           );
         })}
       </div>
-      <p className="px-4 py-3 text-[10px] text-muted text-center border-t border-[#222]">
+      <p className="px-4 py-3 text-[10px] text-muted text-center border-t border-line-subtle">
         Showing this season's draftable corps (cost 50 or less). Cost counts against your budget —
         scores come from real performances.
       </p>
@@ -187,11 +187,11 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
       aria-label="Lineup templates"
     >
       <div
-        className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none"
+        className="w-full max-w-md bg-surface-card border border-line rounded-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-secondary">
             Lineup Templates
           </h3>
           <button onClick={onClose} className="p-1 text-muted hover:text-white">
@@ -201,7 +201,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
 
         <div className="p-4">
           {/* Save current */}
-          <div className="mb-4 p-3 bg-[#0a0a0a] border border-[#333]">
+          <div className="mb-4 p-3 bg-background border border-line">
             <h4 className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
               Save Current
             </h4>
@@ -211,7 +211,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
                 value={newTemplateName}
                 onChange={(e) => setNewTemplateName(e.target.value)}
                 placeholder="Template name..."
-                className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                className="flex-1 px-3 py-2 bg-surface-card border border-line text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
               />
               <button
                 onClick={() => {
@@ -221,7 +221,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
                   }
                 }}
                 disabled={!newTemplateName.trim() || Object.keys(currentLineup).length === 0}
-                className="px-3 py-2 bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6] disabled:opacity-50"
+                className="px-3 py-2 bg-interactive text-white text-sm font-bold hover:bg-interactive-hover disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
               </button>
@@ -236,7 +236,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
               templates.map((template, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-2 bg-[#0a0a0a] border border-[#333]"
+                  className="flex items-center justify-between p-2 bg-background border border-line"
                 >
                   <div>
                     <div className="font-bold text-white text-sm">{template.name}</div>
@@ -247,7 +247,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => onLoad(template)}
-                      className="p-1.5 hover:bg-[#0057B8]/20 text-[#0057B8]"
+                      className="p-1.5 hover:bg-interactive/20 text-interactive"
                     >
                       <Download className="w-4 h-4" />
                     </button>
@@ -264,10 +264,10 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
           </div>
         </div>
 
-        <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end">
+        <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end">
           <button
             onClick={onClose}
-            className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+            className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover"
           >
             Done
           </button>
@@ -287,13 +287,13 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
   const tabs = [
     { id: 'hot', label: 'Hot', icon: Flame, color: 'text-orange-400' },
     { id: 'value', label: 'Value', icon: Zap, color: 'text-green-400' },
-    { id: 'history', label: 'History', icon: History, color: 'text-[#0057B8]' },
+    { id: 'history', label: 'History', icon: History, color: 'text-interactive' },
   ];
 
   const currentSuggestions = suggestions[activeTab] || [];
 
   return (
-    <div className="bg-[#0a0a0a] border border-[#333]">
+    <div className="bg-background border border-line">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-3 hover:bg-white/5"
@@ -310,7 +310,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
 
       {isExpanded && (
         <>
-          <div className="flex border-t border-[#333]">
+          <div className="flex border-t border-line">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -320,7 +320,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
                   className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 text-[10px] font-bold uppercase transition-colors ${
                     activeTab === tab.id
                       ? `${tab.color} bg-white/5 border-b-2 border-current`
-                      : 'text-muted hover:text-gray-400'
+                      : 'text-muted hover:text-muted'
                   }`}
                 >
                   <Icon className="w-3 h-3" />
@@ -329,7 +329,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
               );
             })}
           </div>
-          <div className="p-2 space-y-1 max-h-32 overflow-y-auto border-t border-[#333]">
+          <div className="p-2 space-y-1 max-h-32 overflow-y-auto border-t border-line">
             {currentSuggestions.length === 0 ? (
               <p className="text-center text-muted py-2 text-xs">No suggestions</p>
             ) : (
@@ -350,7 +350,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
                       isAlreadySelected || !activeCaption ? 'opacity-50' : 'hover:bg-white/5'
                     }`}
                   >
-                    <span className="text-gray-300">{corps.corpsName}</span>
+                    <span className="text-secondary">{corps.corpsName}</span>
                     <span className="text-muted font-data">Cost {corps.points}</span>
                   </button>
                 );
@@ -426,19 +426,19 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   if (changeInfo.phase === 'unlimited') {
     return (
       <div
-        className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none"
+        className="flex items-center gap-1.5 px-2 py-1 bg-interactive/10 border border-interactive/30 rounded-none"
         title={
           changeInfo.unlimitedEndsAt
             ? `Weekly limits begin ${formatEtDayTime(changeInfo.unlimitedEndsAt)}`
             : undefined
         }
       >
-        <RefreshCw className="w-3 h-3 text-[#0057B8]" />
-        <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider">
+        <RefreshCw className="w-3 h-3 text-interactive" />
+        <span className="text-[10px] font-bold text-interactive uppercase tracking-wider">
           Unlimited Changes
         </span>
         {changeInfo.unlimitedEndsAt && (
-          <span className="text-[9px] text-[#0057B8]/70 normal-case whitespace-nowrap">
+          <span className="text-[9px] text-interactive/70 normal-case whitespace-nowrap">
             until {formatEtShort(changeInfo.unlimitedEndsAt)}
           </span>
         )}
@@ -450,7 +450,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   const isLow = tradesRemaining <= 1;
   const colorClass = isLow
     ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
-    : 'text-gray-400 border-[#333] bg-[#222]';
+    : 'text-muted border-line bg-surface-raised';
 
   if (isChampionship) {
     return (
@@ -504,10 +504,10 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
       onClick={onClick}
       className={`w-full min-h-touch flex items-center justify-between p-2.5 border transition-all ${
         isActive
-          ? 'border-[#0057B8] bg-[#0057B8]/10'
+          ? 'border-interactive bg-interactive/10'
           : hasValue
-            ? 'border-green-500/30 bg-green-500/5 hover:border-[#0057B8] hover:bg-[#0057B8]/10'
-            : 'border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10'
+            ? 'border-green-500/30 bg-green-500/5 hover:border-interactive hover:bg-interactive/10'
+            : 'border-line hover:border-interactive hover:bg-interactive/10'
       }`}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -521,12 +521,12 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
         <div className="flex items-center gap-2">
           <div className="text-right min-w-0">
             <div className="text-xs text-white truncate max-w-[100px]">{selected.name}</div>
-            <div className="text-[10px] font-data text-[#0057B8]">Cost {selected.points}</div>
+            <div className="text-[10px] font-data text-interactive">Cost {selected.points}</div>
           </div>
           <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
         </div>
       ) : (
-        <div className="text-[10px] text-[#0057B8] font-bold">+ DRAFT</div>
+        <div className="text-[10px] text-interactive font-bold">+ DRAFT</div>
       )}
     </button>
   );

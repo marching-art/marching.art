@@ -28,11 +28,11 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
         aria-labelledby="modal-title-delete-corps"
       >
         <div
-          className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-none"
+          className="w-full max-w-sm bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <h2
               id="modal-title-delete-corps"
               className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2"
@@ -54,7 +54,7 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
 
             {/* Message */}
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-300 mb-2">You are about to delete:</p>
+              <p className="text-sm text-secondary mb-2">You are about to delete:</p>
               <p className="text-lg font-bold text-white">{corpsName}</p>
               <p className="text-xs text-muted">{CLASS_NAMES[corpsClass] || corpsClass}</p>
             </div>
@@ -71,10 +71,10 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2">
             <button
               onClick={onClose}
-              className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white"
+              className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white"
             >
               Cancel
             </button>
