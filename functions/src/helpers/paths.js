@@ -33,6 +33,10 @@ const paths = {
 
   // --- Leaderboard ---
   lifetimeLeaderboard: (view) => `artifacts/${ns()}/leaderboard/lifetime_${view}`,
+  // Precomputed current-season global rankings (uid -> {rank,totalScore}),
+  // materialized by the nightly lifetime-leaderboard job so getUserRankings
+  // reads one doc instead of scanning every profile per call.
+  seasonRankings: () => `artifacts/${ns()}/leaderboard/season_rankings/data`,
 
   // --- Leagues ---
   leagues: () => `artifacts/${ns()}/leagues`,
