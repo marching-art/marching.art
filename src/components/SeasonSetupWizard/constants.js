@@ -19,13 +19,10 @@ export const REGISTRATION_LOCKS = {
   soundSport: 0,
 };
 
-// Point limits by class
-export const POINT_LIMITS = {
-  soundSport: 90,
-  aClass: 60,
-  openClass: 120,
-  worldClass: 150,
-};
+// Point limits by class — sourced from the canonical class-capability registry
+// (utils/classRegistry) rather than re-declared here, so the wizard's budgets
+// can never drift from the rest of the app or the backend registry JSON.
+export { POINT_CAPS as POINT_LIMITS } from '../../utils/classRegistry';
 
 // Class display names
 export const CLASS_NAMES = {

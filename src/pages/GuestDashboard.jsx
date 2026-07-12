@@ -38,6 +38,7 @@ import { CORPS_CLASS_ORDER, CORPS_CLASS_LABELS, isCorpsClassUnlocked } from '../
 import {
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
+  CLASS_POINT_CAPS,
 } from '../components/Dashboard/sections/constants';
 
 // Real dashboard section components — reused directly so the preview is the
@@ -267,9 +268,6 @@ const DemoDailyChallenges = ({ onGate }) => {
 // ratings-only starter tier; A/Open/World Class add full competitive scoring
 // (numeric scores + rank, Lineup Analyzer, Daily Predictions). Surfaces what a
 // director unlocks as they level up — the "fuller dashboard" beyond SoundSport.
-
-// Per-class point caps (SoundSport 90, A 60, Open 120, World 150).
-const CLASS_POINT_CAPS = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
 
 const CLASS_PERKS = {
   soundSport: 'Medal ratings & Best in Show',
