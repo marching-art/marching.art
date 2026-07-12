@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { db, functions, paths } from '../api';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
+import { db, functions, paths } from '../api';
 import { AUTH_CONFIG } from '../config';
 import { normalizeUnlockedClasses } from '../utils/classUnlocks';
 import { getGameDay } from '../utils/dailyChallenges';
@@ -20,6 +20,80 @@ const ALL_CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 // Guard to prevent duplicate time-based unlock writes per session
 let _timeUnlockProcessed = false;
 
+/** A single daily-challenge completion entry within a day bucket. */
+interface ChallengeCompletion {
+  id: string;
+  completed?: boolean;
+  [key: string]: unknown;
+}
+
+/** A day's prediction bucket keyed under the game day. */
+interface PredictionBucket {
+  resolved?: boolean;
+  picks?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** Engagement/streak block on the profile. */
+export interface Engagement {
+  loginStreak: number;
+  lastLogin: unknown;
+  totalLogins: number;
+  recentActivity: unknown[];
+  weeklyProgress: unknown[];
+}
+
+/**
+ * The user profile document (`paths.userProfile(uid)`) as this store reads it.
+ * The Firestore doc carries more fields than are listed here; the index
+ * signature preserves them.
+ */
+export interface ProfileDoc {
+  corps?: Record<string, unknown> | null;
+  unlockedClasses?: string[];
+  createdAt?: unknown;
+  challenges?: Record<string, ChallengeCompletion[]>;
+  predictions?: Record<string, PredictionBucket>;
+  engagement?: Engagement;
+  [key: string]: unknown;
+}
+
+interface ProfileState {
+  // Core profile data from Firestore
+  profile: ProfileDoc | null;
+  corps: Record<string, unknown> | null;
+  loading: boolean;
+  error: string | null;
+
+  // Admin status (checked on init)
+  isAdmin: boolean;
+
+  // Current user ID being tracked
+  _currentUid: string | null;
+
+  // Unsubscribe function for cleanup
+  _unsubscribe: (() => void) | null;
+
+  // Guard against overlapping resolvePredictions calls
+  _resolvingPredictions: boolean;
+
+  initProfileListener: (uid: string | null | undefined) => () => void;
+  cleanup: () => void;
+  updateProfile: (updates: Record<string, unknown>) => Promise<void>;
+  completeDailyChallenge: (challengeId: string) => Promise<boolean>;
+  submitPrediction: (
+    questionId: string,
+    pick: string,
+    threshold: number | null,
+    corpsClass: string,
+    snapshotEvent: string | null
+  ) => Promise<boolean>;
+  resolvePredictions: () => Promise<void>;
+  getEngagement: () => Engagement;
+  getUnlockedClasses: () => string[];
+  isClassUnlocked: (classId: string) => boolean;
+}
+
 /**
  * Global Profile Store
  *
@@ -29,9 +103,9 @@ let _timeUnlockProcessed = false;
  * Components should use this store via useProfileStore() instead of creating
  * their own onSnapshot listeners.
  *
- * Pattern matches seasonStore.js for consistency.
+ * Pattern matches seasonStore.ts for consistency.
  */
-export const useProfileStore = create((set, get) => ({
+export const useProfileStore = create<ProfileState>()((set, get) => ({
   // Core profile data from Firestore
   profile: null,
   corps: null,
@@ -47,12 +121,15 @@ export const useProfileStore = create((set, get) => ({
   // Unsubscribe function for cleanup
   _unsubscribe: null,
 
+  // Guard against overlapping resolvePredictions calls (the panel re-triggers
+  // as results change; the callable is idempotent but the round trip is not
+  // free).
+  _resolvingPredictions: false,
+
   /**
    * Initialize the profile listener for a specific user
    * Should be called when user authenticates
    * Returns unsubscribe function for cleanup
-   *
-   * @param {string} uid - User ID to track
    */
   initProfileListener: (uid) => {
     const { _unsubscribe, _currentUid } = get();
@@ -94,7 +171,7 @@ export const useProfileStore = create((set, get) => ({
       profileRef,
       (docSnapshot) => {
         if (docSnapshot.exists()) {
-          const data = docSnapshot.data();
+          const data = docSnapshot.data() as ProfileDoc;
           set({
             profile: data,
             corps: data.corps || null,
@@ -174,7 +251,6 @@ export const useProfileStore = create((set, get) => ({
 
   /**
    * Update profile data (optimistic update + Firestore write)
-   * @param {Object} updates - Fields to update
    */
   updateProfile: async (updates) => {
     const { _currentUid, profile } = get();
@@ -202,8 +278,6 @@ export const useProfileStore = create((set, get) => ({
    * server-side (the `challenges` field is server-only in firestore.rules).
    * The onSnapshot listener syncs the store afterwards, so no optimistic set
    * is needed. Returns true when a challenge was newly completed.
-   *
-   * @param {string} challengeId - Challenge key (see CHALLENGE_POOL)
    */
   completeDailyChallenge: async (challengeId) => {
     const { _currentUid, profile } = get();
@@ -242,12 +316,6 @@ export const useProfileStore = create((set, get) => ({
    * profile's server-only `predictions` ledger (client-writes are blocked by
    * firestore.rules). The onSnapshot listener syncs the store afterwards, so
    * no optimistic set is needed. Returns true when the pick was accepted.
-   *
-   * @param {string} questionId - Prediction question key
-   * @param {string} pick - The chosen option
-   * @param {number|null} threshold - Threshold the pick is scored against
-   * @param {string} corpsClass - Active corps class the prediction is for
-   * @param {string|null} snapshotEvent - Latest event at pick time
    */
   submitPrediction: async (questionId, pick, threshold, corpsClass, snapshotEvent) => {
     const { _currentUid, profile } = get();
@@ -274,11 +342,6 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
-  // Guard against overlapping resolvePredictions calls (the panel re-triggers
-  // as results change; the callable is idempotent but the round trip is not
-  // free).
-  _resolvingPredictions: false,
-
   /**
    * Resolve outstanding daily predictions and collect any bonuses.
    *
@@ -295,12 +358,14 @@ export const useProfileStore = create((set, get) => ({
     try {
       const { data } = await resolvePredictionsFn();
       if (data?.resolvedDays > 0) {
-        if (data.xpAwarded > 0) {
-          triggerXPFeedback(data.xpAwarded, 'xp');
+        const xpAwarded = data.xpAwarded ?? 0;
+        const coinAwarded = data.coinAwarded ?? 0;
+        if (xpAwarded > 0) {
+          triggerXPFeedback(xpAwarded, 'xp');
         }
         const bits = [`${data.correct}/${data.total} predictions correct`];
-        if (data.xpAwarded > 0) bits.push(`+${data.xpAwarded} XP`);
-        if (data.coinAwarded > 0) bits.push(`+${data.coinAwarded} CC`);
+        if (xpAwarded > 0) bits.push(`+${xpAwarded} XP`);
+        if (coinAwarded > 0) bits.push(`+${coinAwarded} CC`);
         toast.success(bits.join(' · '));
       }
     } catch (error) {

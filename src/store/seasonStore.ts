@@ -1,8 +1,67 @@
 import { create } from 'zustand';
-import { db } from '../api';
+import { Timestamp } from 'firebase/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../api';
 import { formatSeasonName } from '../utils/season';
 import { getSeasonProgress } from '../utils/seasonProgress';
+
+/**
+ * Raw shape of the `game-settings/season` Firestore document as this store and
+ * its consumers actually read it. The document carries more fields than are
+ * listed here; the index signature preserves that while still documenting the
+ * ones the app depends on. (This is the on-the-wire doc, deliberately kept
+ * separate from the idealized `SeasonData` type in `../types/season`.)
+ */
+export interface SeasonDoc {
+  seasonUid?: string;
+  name?: string;
+  /** e.g. 'live-season' | 'off-season' */
+  status?: string;
+  seasonType?: string;
+  seasonYear?: number;
+  totalWeeks?: number;
+  currentPointCap?: number;
+  dataDocId?: string;
+  lastScrapedDate?: string;
+  registrationOpen?: boolean;
+  registrationDeadline?: Timestamp;
+  schedule?: {
+    startDate?: Timestamp;
+    endDate?: Timestamp;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface SeasonTypeInfo {
+  label: string;
+  color: string;
+  bgColor: string;
+  description: string;
+}
+
+interface SeasonState {
+  // Core season data from Firestore
+  seasonData: SeasonDoc | null;
+  loading: boolean;
+  error: string | null;
+
+  // Derived values (computed when seasonData changes)
+  weeksRemaining: number | null;
+  currentWeek: number;
+  currentDay: number;
+  seasonUid: string | null;
+
+  // Unsubscribe function for cleanup
+  _unsubscribe: (() => void) | null;
+
+  initSeasonListener: () => () => void;
+  cleanup: () => void;
+  getSeasonProgress: () => { currentDay: number; currentWeek: number };
+  isRegistrationLocked: (corpsClass: string) => boolean;
+  getSeasonTypeInfo: () => SeasonTypeInfo;
+  formatSeasonName: () => string;
+}
 
 /**
  * Global Season Store
@@ -12,7 +71,7 @@ import { getSeasonProgress } from '../utils/seasonProgress';
  *
  * Components should use this store instead of creating their own listeners.
  */
-export const useSeasonStore = create((set, get) => ({
+export const useSeasonStore = create<SeasonState>()((set, get) => ({
   // Core season data from Firestore
   seasonData: null,
   loading: true,
@@ -45,7 +104,7 @@ export const useSeasonStore = create((set, get) => ({
       seasonRef,
       (docSnapshot) => {
         if (docSnapshot.exists()) {
-          const data = docSnapshot.data();
+          const data = docSnapshot.data() as SeasonDoc;
 
           // Derived day/week come from the single canonical source
           // (utils/seasonProgress), which mirrors the backend game-day math in
@@ -56,10 +115,11 @@ export const useSeasonStore = create((set, get) => ({
             ? getSeasonProgress(data)
             : { currentDay: 1, currentWeek: 1 };
 
-          let weeksRemaining = null;
+          let weeksRemaining: number | null = null;
 
-          if (data.schedule?.endDate) {
-            const endDate = data.schedule.endDate.toDate();
+          const endTimestamp = data.schedule?.endDate;
+          if (endTimestamp) {
+            const endDate = endTimestamp.toDate();
             const now = new Date();
             const millisRemaining = endDate.getTime() - now.getTime();
             const weeks = Math.ceil(millisRemaining / (7 * 24 * 60 * 60 * 1000));
@@ -113,7 +173,6 @@ export const useSeasonStore = create((set, get) => ({
 
   /**
    * Get season progress info
-   * @returns {Object} { currentDay, currentWeek }
    */
   getSeasonProgress: () => {
     const { currentDay, currentWeek } = get();
@@ -122,8 +181,6 @@ export const useSeasonStore = create((set, get) => ({
 
   /**
    * Check if a class registration is locked based on weeks remaining
-   * @param {string} corpsClass - Class to check
-   * @returns {boolean} True if registration is locked
    */
   isRegistrationLocked: (corpsClass) => {
     const { weeksRemaining } = get();
@@ -131,7 +188,7 @@ export const useSeasonStore = create((set, get) => ({
 
     // Accepts canonical keys (worldClass/openClass) and legacy short keys
     // (world/open) — callers now pass canonical.
-    const locks = {
+    const locks: Record<string, number> = {
       worldClass: 6,
       world: 6,
       openClass: 5,
@@ -146,7 +203,6 @@ export const useSeasonStore = create((set, get) => ({
 
   /**
    * Get season type display information
-   * @returns {Object} Display info { label, color, bgColor, description }
    */
   getSeasonTypeInfo: () => {
     const { seasonData } = get();
@@ -170,7 +226,6 @@ export const useSeasonStore = create((set, get) => ({
 
   /**
    * Format season name for display
-   * @returns {string} Formatted season name
    */
   formatSeasonName: () => {
     const { seasonData } = get();
