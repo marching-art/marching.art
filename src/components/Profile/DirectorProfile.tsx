@@ -64,6 +64,7 @@ import { getEquippedCosmetic } from '../../utils/cosmetics';
 import { getXPProgress } from '../../utils/captionPricing';
 import CaptionMasteryPanel from './CaptionMasteryPanel';
 import SeasonHistorySection from './SeasonHistorySection';
+import { Heading } from '../ui';
 
 // =============================================================================
 // TYPES
@@ -328,9 +329,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             {/* Top: Name + Status */}
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h1 className="text-base sm:text-lg font-bold text-white truncate">
+                <Heading level="title" as="h1" className="truncate">
                   {profile.displayName || 'Anonymous Director'}
-                </h1>
+                </Heading>
                 <StatusIndicator status={status} />
 
                 <div className="ml-auto flex items-center gap-1">

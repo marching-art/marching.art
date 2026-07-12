@@ -7,6 +7,7 @@ import { Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight } fr
 import { getSeasonSettings, getDciDataDoc, getHistoricalScoresMap } from '../../api/admin';
 import { getCaptionLabel } from '../../utils/captionUtils';
 import { CAPTION_IDS } from '../../data/captions';
+import { Heading } from '../ui';
 
 // Caption tabs (canonical caption set)
 const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
@@ -282,7 +283,7 @@ const ScoresSpreadsheet = () => {
             <Table className="w-4 h-4 text-secondary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Scores Reference Spreadsheet</h2>
+            <Heading level="title">Scores Reference Spreadsheet</Heading>
             <p className="text-xs text-muted">
               {seasonData?.name} • {corpsValues.length} corps • {allDates.length} days
             </p>

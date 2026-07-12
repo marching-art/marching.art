@@ -40,6 +40,7 @@ import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNo
 import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeaguePoolCard from './LeaguePoolCard';
+import { Heading } from '../ui';
 
 const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
@@ -474,7 +475,9 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             {/* Name + Meta */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-white truncate">{league.name}</h1>
+                <Heading level="title" as="h1" className="truncate">
+                  {league.name}
+                </Heading>
                 {isCommissioner && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-raised border border-line text-secondary text-[10px] font-bold">
                     <Crown className="w-2.5 h-2.5" />

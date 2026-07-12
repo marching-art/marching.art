@@ -18,6 +18,7 @@ import {
   Medal,
 } from 'lucide-react';
 import { getSoundSportRating } from '../../../utils/scoresUtils';
+import { Heading } from '../../ui';
 
 // Corps class display configuration
 const CORPS_CLASS_CONFIG = {
@@ -378,11 +379,11 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
         />
       </div>
 
-      <h3 className="text-lg font-bold text-white mb-2">
+      <Heading level="title" as="h3" className="mb-2">
         {isPastWeek && 'No Matchups Recorded'}
         {isCurrentWeek && 'Matchups Not Generated Yet'}
         {isFutureWeek && 'Upcoming Week'}
-      </h3>
+      </Heading>
 
       <p className="text-sm text-muted mb-4 max-w-sm mx-auto">
         {isPastWeek && 'This week had no matchups generated or recorded.'}

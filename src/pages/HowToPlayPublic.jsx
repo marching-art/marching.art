@@ -24,6 +24,7 @@ import {
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
+import { Heading } from '../components/ui';
 
 const PAGE_FAQ = [
   {
@@ -48,12 +49,12 @@ const FAQ_SCHEMA = {
 };
 
 const SectionHeading = ({ icon: Icon, children }) => (
-  <h2 className="flex items-center gap-3 text-xl font-bold text-white mb-4">
+  <Heading level="title" as="h2" className="flex items-center gap-3 mb-4">
     <span className="w-8 h-8 bg-interactive/20 rounded-none flex items-center justify-center flex-shrink-0">
       <Icon className="w-4 h-4 text-interactive" />
     </span>
     {children}
-  </h2>
+  </Heading>
 );
 
 const HowToPlayPublic = () => {
@@ -97,9 +98,9 @@ const HowToPlayPublic = () => {
         <p className="text-xs font-bold uppercase tracking-wider text-interactive mb-2">
           The Fantasy Drum Corps Game
         </p>
-        <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight mb-4">
+        <Heading level="display" className="leading-tight mb-4">
           How to Play Fantasy Drum Corps
-        </h1>
+        </Heading>
         <p className="text-lg text-secondary mb-4">
           Fantasy drum corps works like fantasy football for the marching arts. Instead of drafting
           quarterbacks and running backs, you draft{' '}
@@ -347,7 +348,9 @@ const HowToPlayPublic = () => {
 
         {/* CTA */}
         <section className="bg-interactive/10 border border-interactive/30 rounded-none p-6 text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Ready to Direct Your Own Corps?</h2>
+          <Heading level="title" className="mb-2">
+            Ready to Direct Your Own Corps?
+          </Heading>
           <p className="text-sm text-muted mb-4">
             Join directors worldwide playing fantasy drum corps — free, year-round, no downloads.
           </p>

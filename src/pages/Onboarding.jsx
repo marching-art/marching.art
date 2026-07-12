@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, ArrowLeft, Music, PartyPopper, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Heading } from '../components/ui';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { getSeasonData, getCorpsValues } from '../api/season';
 import { mergeProfile } from '../api/profile';
@@ -459,7 +460,9 @@ const Onboarding = () => {
                       <div className="inline-flex items-center justify-center w-14 h-14 bg-interactive/20 rounded-none mb-3">
                         <Music className="w-7 h-7 text-interactive" />
                       </div>
-                      <h2 className="text-xl font-bold text-white mb-1">Build Your Lineup</h2>
+                      <Heading level="title" className="mb-1">
+                        Build Your Lineup
+                      </Heading>
                       <p className="text-muted text-xs">
                         Draft a corps for each caption • Budget: {SOUNDSPORT_POINT_LIMIT}
                       </p>

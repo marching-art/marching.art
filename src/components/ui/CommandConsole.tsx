@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Plus, AlertTriangle, Radar, Server, WifiOff } from 'lucide-react';
 import { useShouldReduceMotion } from '../../hooks/useReducedMotion';
+import { Heading } from './Heading';
 
 // =============================================================================
 // SYSTEM INITIALIZATION LOADER
@@ -562,9 +563,9 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         </div>
 
         {/* Title */}
-        <h3 className="font-mono font-bold text-base md:text-lg text-white/80 uppercase tracking-wider mb-2">
+        <Heading level="section" className="font-mono mb-2">
           {displayTitle}
-        </h3>
+        </Heading>
 
         {/* Subtitle */}
         <p className="font-mono text-xs text-white/40 mb-6 max-w-xs mx-auto leading-relaxed">

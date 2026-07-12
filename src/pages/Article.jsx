@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import ArticleSidebarAuth from '../components/Articles/ArticleSidebarAuth';
 import ArticleComments from '../components/Articles/ArticleComments';
 import { OptimizedImage } from '../components/ui/OptimizedImage';
+import { Heading } from '../components/ui';
 import ArticleNarrativeParser from '../components/Articles/ArticleNarrativeParser';
 import CaptionInsightsCards from '../components/Articles/CaptionInsightsCards';
 import CaptionBreakdownCards from '../components/Articles/CaptionBreakdownCards';
@@ -266,7 +267,9 @@ const Article = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
-        <h1 className="text-xl font-bold text-white mb-2">Article Not Found</h1>
+        <Heading level="title" as="h1" className="mb-2">
+          Article Not Found
+        </Heading>
         <p className="text-muted mb-6 text-center">
           This article may have been removed or the link is invalid.
         </p>
@@ -340,9 +343,9 @@ const Article = () => {
                   </div>
 
                   {/* Headline */}
-                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight mb-4">
+                  <Heading level="display" className="leading-tight mb-4">
                     {article.headline}
-                  </h1>
+                  </Heading>
 
                   {/* Author byline — credits the submitting director; the username
                       links to their profile, the same pattern used on the scores. */}

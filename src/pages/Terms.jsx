@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { Heading } from '../components/ui';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 
@@ -25,13 +26,17 @@ const Terms = () => {
         </Link>
 
         <div className="bg-surface-card border border-line rounded-none p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-gradient mb-6">Terms of Service</h1>
+          <Heading level="display" className="text-gradient mb-6">
+            Terms of Service
+          </Heading>
 
           <p className="text-muted text-sm mb-6">Last updated: January 2026</p>
 
           <div className="space-y-6 text-secondary">
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">1. Acceptance of Terms</h2>
+              <Heading level="title" className="mb-3">
+                1. Acceptance of Terms
+              </Heading>
               <p className="text-sm">
                 By accessing or using marching.art, you agree to be bound by these Terms of Service.
                 If you do not agree to these terms, please do not use the service.
@@ -52,7 +57,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">2. Description of Service</h2>
+              <Heading level="title" className="mb-3">
+                2. Description of Service
+              </Heading>
               <p className="text-sm">
                 marching.art is a fantasy drum corps game that allows users to create virtual corps,
                 compete in leagues, and track scores based on real DCI performances. The service is
@@ -61,7 +68,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">3. User Accounts</h2>
+              <Heading level="title" className="mb-3">
+                3. User Accounts
+              </Heading>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>You must provide accurate information when creating an account</li>
                 <li>You are responsible for maintaining the security of your account</li>
@@ -71,7 +80,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">4. User Conduct</h2>
+              <Heading level="title" className="mb-3">
+                4. User Conduct
+              </Heading>
               <p className="text-sm mb-2">You agree not to:</p>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>Use offensive, abusive, or inappropriate names or content</li>
@@ -83,7 +94,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">5. Intellectual Property</h2>
+              <Heading level="title" className="mb-3">
+                5. Intellectual Property
+              </Heading>
               <p className="text-sm">
                 The service and its original content, features, and functionality are owned by
                 marching.art and are protected by copyright and other intellectual property laws.
@@ -92,7 +105,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">6. User Content</h2>
+              <Heading level="title" className="mb-3">
+                6. User Content
+              </Heading>
               <p className="text-sm">
                 You retain ownership of content you create (corps names, show concepts). By posting
                 content, you grant us a license to display it within the service. We may remove
@@ -101,7 +116,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">7. Disclaimer of Warranties</h2>
+              <Heading level="title" className="mb-3">
+                7. Disclaimer of Warranties
+              </Heading>
               <p className="text-sm">
                 The service is provided "as is" without warranties of any kind. We do not guarantee
                 the service will be uninterrupted, secure, or error-free. Game scores and rankings
@@ -110,7 +127,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">8. Limitation of Liability</h2>
+              <Heading level="title" className="mb-3">
+                8. Limitation of Liability
+              </Heading>
               <p className="text-sm">
                 To the maximum extent permitted by law, marching.art shall not be liable for any
                 indirect, incidental, special, or consequential damages arising from your use of the
@@ -119,7 +138,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">9. Termination</h2>
+              <Heading level="title" className="mb-3">
+                9. Termination
+              </Heading>
               <p className="text-sm">
                 We reserve the right to suspend or terminate your account at our discretion, with or
                 without notice, for conduct that violates these terms or is harmful to other users
@@ -128,7 +149,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">10. Changes to Terms</h2>
+              <Heading level="title" className="mb-3">
+                10. Changes to Terms
+              </Heading>
               <p className="text-sm">
                 We may modify these terms at any time. Continued use of the service after changes
                 constitutes acceptance of the new terms.
@@ -136,7 +159,9 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">11. Contact</h2>
+              <Heading level="title" className="mb-3">
+                11. Contact
+              </Heading>
               <p className="text-sm">
                 If you have questions about these Terms of Service, please contact us at:{' '}
                 <a

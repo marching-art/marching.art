@@ -14,6 +14,7 @@ import CorpsVerificationStep from './CorpsVerificationStep';
 import ShowSelectionStep from './ShowSelectionStep';
 import ShowConceptStep from './ShowConceptStep';
 import { useAuth } from '../../context/AuthContext';
+import { Heading } from '../ui';
 
 // Import constants
 import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName, formatSeasonName } from './constants';
@@ -606,7 +607,9 @@ const SeasonSetupWizard = ({
                 <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-none flex items-center justify-center">
                   <Check className="w-8 h-8 text-green-500" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Entry Confirmed</h3>
+                <Heading level="title" as="h3" className="mb-2">
+                  Entry Confirmed
+                </Heading>
                 <p className="text-sm text-muted mb-6">
                   Your corps is registered for {formatSeasonName(seasonData?.name)}. Head to your
                   dashboard to manage lineups and view upcoming shows.

@@ -19,6 +19,7 @@ import {
 import { WEEKLY_TRADE_LIMIT, CHAMPIONSHIP_TRADE_LIMIT } from '../../utils/seasonClock';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { Heading } from '../ui';
 
 // Rule numbers come from the same constants the game enforces
 // (WEEKLY_TRADE_LIMIT, getMaxShowsForWeek) so this guide can't drift out of
@@ -126,7 +127,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                   <BookOpen className="w-6 h-6 text-interactive" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">Quick Start Guide</h2>
+                  <Heading level="title">Quick Start Guide</Heading>
                   <p className="text-sm text-muted">Get the most out of marching.art</p>
                 </div>
               </div>

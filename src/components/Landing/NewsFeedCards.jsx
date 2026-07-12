@@ -19,6 +19,7 @@ import {
   ShareButton,
 } from './NewsFeedBadges';
 import { NewsFeedSkeleton } from './NewsFeedSkeletons';
+import { Heading } from '../ui';
 
 function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) {
   return (
@@ -28,7 +29,9 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Newspaper className="w-6 h-6 text-interactive" />
-            <h1 className="text-lg font-black text-white uppercase tracking-wide">News Hub</h1>
+            <Heading level="section" as="h1">
+              News Hub
+            </Heading>
           </div>
           {isLive && (
             <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30">
@@ -148,9 +151,12 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
         </div>
 
         {/* Headline */}
-        <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black text-white leading-[1.1] mb-4 group-hover:text-main transition-colors">
+        <Heading
+          level="display"
+          className="leading-[1.1] mb-4 group-hover:text-main transition-colors"
+        >
           {safeString(story.headline)}
-        </h1>
+        </Heading>
 
         {/* Summary */}
         <p className="text-base lg:text-lg text-muted leading-relaxed mb-5">
@@ -236,9 +242,12 @@ const TextStoryRow = memo(({ story, onClick, engagement }) => {
       </div>
 
       {/* Headline */}
-      <h2 className="text-lg font-bold text-white leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]">
+      <Heading
+        level="title"
+        className="leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]"
+      >
         {safeString(story.headline)}
-      </h2>
+      </Heading>
 
       {/* Summary line */}
       <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-2">

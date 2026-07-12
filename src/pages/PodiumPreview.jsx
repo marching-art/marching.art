@@ -15,6 +15,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
+import { Heading } from '../components/ui';
 import {
   ChevronLeft,
   LogIn,
@@ -549,7 +550,9 @@ const PodiumPreview = () => {
             >
               <Medal className="w-6 h-6" style={{ color: GOLD }} />
             </div>
-            <h3 className="text-lg font-bold text-white">Nice — the corps is growing.</h3>
+            <Heading level="title" as="h3">
+              Nice — the corps is growing.
+            </Heading>
             <p className="text-sm text-muted mt-1.5">
               You&rsquo;re getting the loop. Found a free corps and this becomes a real season:
               nightly box scores, a full tour, staff, divisions, and the climb to Champion Status.

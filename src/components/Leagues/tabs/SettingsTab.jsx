@@ -24,6 +24,7 @@ import { getLeagueMatchupWeek } from '../../../api/leagues';
 import { generateMatchups } from '../../../api/functions';
 import { GAME_CONFIG } from '../../../config';
 import toast from 'react-hot-toast';
+import { Heading } from '../../ui';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -151,7 +152,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
         )}
         <div className="flex items-center gap-2">
           <Settings className="w-5 h-5 text-secondary" />
-          <h2 className="text-lg font-bold text-white">Commissioner Settings</h2>
+          <Heading level="title">Commissioner Settings</Heading>
         </div>
       </div>
 

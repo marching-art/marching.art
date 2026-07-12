@@ -6,6 +6,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Medal, ChevronLeft } from 'lucide-react';
+import { Heading } from '../components/ui';
 
 const SECTIONS = [
   {
@@ -99,7 +100,7 @@ export default function PodiumGuide() {
           </Link>
           <div className="flex items-center gap-2 mb-1">
             <Medal className="w-6 h-6 text-brand" />
-            <h1 className="text-2xl font-bold">The Podium Class Guide</h1>
+            <Heading level="display">The Podium Class Guide</Heading>
           </div>
           <p className="text-sm text-muted">
             Run a drum corps. Earn every point. Twelve short sections — everything you need.

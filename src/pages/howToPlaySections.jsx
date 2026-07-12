@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Heading } from '../components/ui';
 import {
   Compass,
   Rocket,
@@ -91,7 +92,7 @@ const SectionHead = ({ icon: Icon, title, kicker }) => (
       <span className="w-9 h-9 bg-interactive/20 rounded-none flex items-center justify-center flex-shrink-0">
         <Icon className="w-4 h-4 text-interactive" />
       </span>
-      <h2 className="text-lg font-bold text-white">{title}</h2>
+      <Heading level="title">{title}</Heading>
     </div>
   </div>
 );

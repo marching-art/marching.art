@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Trophy, Music, Eye, Sparkles, Medal, Crown } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../api';
+import { Heading } from '../components/ui';
 import { formatSeasonName } from '../utils/season';
 
 const RECORD_CLASSES = [
@@ -85,9 +86,9 @@ const Records = () => {
           <div className="flex items-center gap-3">
             <BookOpen className="w-6 h-6 text-secondary" />
             <div>
-              <h1 className="text-lg font-bold text-white uppercase tracking-wider">
+              <Heading level="section" as="h1">
                 Records Book
-              </h1>
+              </Heading>
               <p className="text-xs text-muted">
                 All-time marks across every season. Records update after each night's scoring.
               </p>

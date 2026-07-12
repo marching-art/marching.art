@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
+import { Heading } from './ui';
 
 // Lazy-loaded confetti module (only loaded when celebration triggers)
 let confettiModule = null;
@@ -170,9 +171,9 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
               }
               className="relative bg-brand rounded-none px-12 py-8 border-4 border-brand-strong"
             >
-              <h2 className="text-5xl md:text-6xl font-black text-charcoal-900 text-center">
+              <Heading level="display" as="h2" className="text-charcoal-900 text-center">
                 {message}
-              </h2>
+              </Heading>
             </m.div>
 
             {/* Sparkles - skip on mobile for performance */}

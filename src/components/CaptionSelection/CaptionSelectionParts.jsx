@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { formatEtShort, formatEtDayTime } from '../../utils/seasonClock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { Heading } from '../ui';
 
 // -----------------------------------------------------------------------------
 // LINEUP CELEBRATION
@@ -36,7 +37,9 @@ const LineupCelebration = ({ onComplete }) => {
         <div className="mb-4">
           <PartyPopper className="w-16 h-16 text-interactive mx-auto" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">LINEUP LOCKED</h2>
+        <Heading level="display" as="h2" className="mb-2">
+          LINEUP LOCKED
+        </Heading>
         <p className="text-muted">Your draft is set. Good luck!</p>
       </div>
     </div>

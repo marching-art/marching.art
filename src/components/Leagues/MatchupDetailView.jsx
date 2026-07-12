@@ -8,6 +8,7 @@ import { getSeasonData, getSeasonRecaps } from '../../api/season';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
 import RivalryHistoryCard from './RivalryHistoryCard';
+import { Heading } from '../ui';
 import { MatchupOverviewPanel, MatchupShowsPanel } from './MatchupDetailParts';
 import {
   calculateMatchupBattles,
@@ -346,7 +347,9 @@ const MatchupDetailView = ({
           )}
         </div>
 
-        <h1 className="text-xl font-bold text-white text-center">Head-to-Head Matchup</h1>
+        <Heading level="title" as="h1" className="text-center">
+          Head-to-Head Matchup
+        </Heading>
       </m.div>
 
       {/* Rivalry Card */}

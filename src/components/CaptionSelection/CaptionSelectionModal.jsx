@@ -26,6 +26,7 @@ import {
   CaptionButton,
 } from './CaptionSelectionParts';
 import { generateQuickFillLineup } from './quickFillLineup';
+import { Heading } from '../ui';
 
 const CaptionSelectionModal = ({
   onClose,
@@ -694,7 +695,9 @@ const CaptionSelectionModal = ({
                     <div className="flex-1 flex items-center justify-center text-center p-8">
                       <div>
                         <Award className="w-12 h-12 text-muted mx-auto mb-3" />
-                        <h3 className="text-lg font-bold text-muted mb-1">Select a Caption</h3>
+                        <Heading level="title" as="h3" className="text-muted mb-1">
+                          Select a Caption
+                        </Heading>
                         <p className="text-sm text-muted">
                           Click on a caption from Your Lineup to see available corps
                         </p>

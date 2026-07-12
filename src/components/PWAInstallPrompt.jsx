@@ -5,6 +5,7 @@ import { Download, X, Smartphone, Monitor } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import PWAInstallInstructions from './PWAInstallInstructions';
+import { Heading } from './ui';
 
 /**
  * PWA Install Prompt Component
@@ -128,7 +129,9 @@ const PWAInstallPrompt = () => {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-white mb-1 pr-6">{content.title}</h3>
+              <Heading level="title" as="h3" className="mb-1 pr-6">
+                {content.title}
+              </Heading>
               <p className="text-sm text-muted mb-4">{content.description}</p>
 
               {/* Native prompt available: one-tap install. Otherwise show the

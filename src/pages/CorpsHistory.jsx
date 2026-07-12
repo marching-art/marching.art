@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
+import { Heading } from '../components/ui';
 import { subscribeToProfile } from '../api/profile';
 import { compareCorpsClasses } from '../utils/corps';
 import LoadingScreen from '../components/LoadingScreen';
@@ -203,7 +204,9 @@ const CorpsHistory = () => {
       <div className="flex items-center justify-center h-full">
         <div className="text-center p-8 bg-surface-sunken border border-red-500/20 rounded-none max-w-md">
           <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Error Loading History</h2>
+          <Heading level="title" className="mb-2">
+            Error Loading History
+          </Heading>
           <p className="text-muted/60 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -222,7 +225,9 @@ const CorpsHistory = () => {
       <div className="flex items-center justify-center h-full">
         <div className="text-center px-6">
           <BrandLogo className="w-16 h-16 mx-auto mb-4" color="text-muted/20" />
-          <h3 className="text-2xl font-bold text-white mb-2">No Corps Found</h3>
+          <Heading level="title" as="h3" className="mb-2">
+            No Corps Found
+          </Heading>
           <p className="text-muted/60">Create a corps to start building your legacy!</p>
         </div>
       </div>
@@ -406,7 +411,9 @@ const CorpsHistory = () => {
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
                   <Calendar className="w-12 h-12 text-muted/20 mx-auto mb-3" />
-                  <h3 className="text-xl font-bold text-white mb-2">No Season History Yet</h3>
+                  <Heading level="title" as="h3" className="mb-2">
+                    No Season History Yet
+                  </Heading>
                   <p className="text-muted/60 text-sm">
                     Complete your first season to start building your corps' legacy!
                   </p>

@@ -32,6 +32,7 @@ import { scrapeLiveScoresNow } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { getCaptionLabel } from '../../utils/captionUtils';
 import { CAPTION_IDS } from '../../data/captions';
+import { Heading } from '../ui';
 
 const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
 
@@ -305,7 +306,7 @@ const LiveScoresVerification = () => {
             <Table className="w-4 h-4 text-secondary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Live DCI Scores — {currentYear}</h2>
+            <Heading level="title">Live DCI Scores — {currentYear}</Heading>
             <p className="text-xs text-muted">
               {seasonData?.name} • {corpsRows.length} corps • {events.length} events across{' '}
               {columns.length} days • {totalScores} score rows

@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { m, AnimatePresence } from 'framer-motion';
+import { Heading } from '../components/ui';
 import {
   User,
   Flag,
@@ -33,7 +34,9 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
       <div className="inline-flex items-center justify-center w-16 h-16 bg-interactive/20 rounded-none mb-4">
         <Star className="w-8 h-8 text-interactive" />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-2">Welcome to marching.art!</h2>
+      <Heading level="display" as="h2" className="mb-2">
+        Welcome to marching.art!
+      </Heading>
       <p className="text-muted text-sm">Fantasy drum corps gaming</p>
     </div>
 
@@ -147,7 +150,9 @@ export const StepCorps = ({ formData, setFormData }) => (
       <div className="inline-flex items-center justify-center w-16 h-16 bg-interactive/20 rounded-none mb-4">
         <Flag className="w-8 h-8 text-interactive" />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-2">Create Your Corps</h2>
+      <Heading level="display" as="h2" className="mb-2">
+        Create Your Corps
+      </Heading>
       <p className="text-muted text-sm">Name your first fantasy drum corps</p>
     </div>
 

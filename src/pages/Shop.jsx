@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { Link } from 'react-router-dom';
+import { Heading } from '../components/ui';
 import {
   purchaseShopItem,
   equipShopItem,
@@ -133,7 +134,9 @@ const Shop = () => {
           <div className="flex items-center gap-3">
             <ShoppingBag className="w-6 h-6 text-secondary" />
             <div>
-              <h1 className="text-lg font-bold text-white uppercase tracking-wider">Corps Shop</h1>
+              <Heading level="section" as="h1">
+                Corps Shop
+              </Heading>
               <p className="text-xs text-muted">
                 Identity and flair, earned by playing. Nothing here affects scores.
               </p>

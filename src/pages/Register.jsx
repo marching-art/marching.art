@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
+import { Heading } from '../components/ui';
 
 const Register = () => {
   useBodyScroll();
@@ -130,7 +131,7 @@ const Register = () => {
                     loading="eager"
                   />
                 </div>
-                <h1 className="text-2xl font-bold text-white">Start Playing Free</h1>
+                <Heading level="display">Start Playing Free</Heading>
                 <p className="text-base text-muted mt-2">
                   Build your dream corps in under 2 minutes
                 </p>

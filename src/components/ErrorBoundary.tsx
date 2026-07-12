@@ -9,6 +9,7 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { ErrorBoundary as BaseErrorBoundary } from './ui/ErrorBoundary';
+import { Heading } from './ui';
 
 const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
   <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -17,7 +18,9 @@ const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>
 
-      <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
+      <Heading level="display" className="mb-2">
+        Something went wrong
+      </Heading>
 
       <p className="text-muted mb-6">
         An unexpected error occurred. Please try refreshing the page or return to the home page.

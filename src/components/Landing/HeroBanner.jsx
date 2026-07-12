@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Zap, ChevronRight, X, Play, Clock } from 'lucide-react';
 import JargonTooltip from '../JargonTooltip';
+import { Heading } from '../ui';
 import { useUrgencyTriggers } from '../../hooks/useUrgencyTriggers';
 
 // =============================================================================
@@ -83,13 +84,13 @@ const HeroBanner = ({ onDismiss }) => {
             </div>
 
             {/* Headline */}
-            <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-3">
+            <Heading level="display" className="leading-tight mb-3">
               The fantasy drum corps game.
               <span className="text-muted">
                 {' '}
                 Draft legendary performers. Compete with fans worldwide.
               </span>
-            </h1>
+            </Heading>
 
             {/* Subhead */}
             <p className="text-base lg:text-lg text-muted mb-6 max-w-xl">

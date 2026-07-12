@@ -18,7 +18,7 @@ import { unretireCorps, purchaseRetirementPlaque } from '../api/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';
-import { PageHeader } from '../components/ui';
+import { Heading, PageHeader } from '../components/ui';
 import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
 import { PLAQUE_TIERS, PLAQUE_STYLES, availablePlaqueUpgrades } from '../utils/prestige';
 
@@ -271,9 +271,9 @@ const RetiredCorpsGallery = () => {
                             </span>
                           </div>
                         </div>
-                        <h3 className="text-lg font-bold text-white leading-tight truncate">
+                        <Heading level="title" as="h3" className="leading-tight truncate">
                           {corps.corpsName}
-                        </h3>
+                        </Heading>
                         {corps.location && (
                           <div className="flex items-center gap-1 text-muted text-[11px] mt-1">
                             <MapPin className="w-3 h-3" />

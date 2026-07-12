@@ -12,6 +12,7 @@
 import React, { useState, startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
+import { Heading } from '../components/ui';
 import {
   Medal,
   Mail,
@@ -253,11 +254,11 @@ const PodiumLanding = () => {
                 </div>
 
                 {/* Hero */}
-                <h1 className="text-3xl lg:text-5xl font-extrabold leading-[1.05] tracking-tight">
+                <Heading level="display" className="leading-[1.05]">
                   Found your corps.
                   <br />
                   <span style={{ color: GOLD }}>Earn every point.</span>
-                </h1>
+                </Heading>
                 <p className="mt-4 text-base lg:text-lg text-muted max-w-xl leading-relaxed">
                   Podium Class is the director&rsquo;s chair. Not fantasy drafting — a full season
                   simulation. You run the rehearsals, route the tour, manage the corps, and every
@@ -347,9 +348,9 @@ const PodiumLanding = () => {
 
                   <form onSubmit={handleSubmit} className="p-5 space-y-4">
                     <div>
-                      <h2 className="text-lg font-bold text-white">
+                      <Heading level="title">
                         {isRegister ? 'Start your corps' : 'Welcome back, Director'}
-                      </h2>
+                      </Heading>
                       <p className="text-xs text-muted mt-1">
                         {isRegister
                           ? 'Create a free account and take the podium in under two minutes.'

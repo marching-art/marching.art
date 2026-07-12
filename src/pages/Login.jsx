@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
+import { Heading } from '../components/ui';
 
 const Login = () => {
   useBodyScroll();
@@ -93,7 +94,7 @@ const Login = () => {
                     loading="eager"
                   />
                 </div>
-                <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
+                <Heading level="display">Welcome Back</Heading>
                 <p className="text-base text-muted mt-2">Your corps is waiting.</p>
               </div>
 

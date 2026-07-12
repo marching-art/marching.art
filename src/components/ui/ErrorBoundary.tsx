@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo } from 'react';
 import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from './Button';
+import { Heading } from './Heading';
 
 // =============================================================================
 // ERROR BOUNDARY COMPONENT
@@ -108,9 +109,9 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>
 
-      <h3 className="text-xl font-bold text-white mb-2">
+      <Heading level="title" as="h3" className="mb-2">
         {featureName ? `${featureName} Error` : 'Something went wrong'}
-      </h3>
+      </Heading>
 
       <p className="text-muted text-center mb-4 max-w-md">
         {featureName

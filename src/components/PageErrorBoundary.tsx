@@ -13,6 +13,7 @@ import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import { Heading } from './ui';
 
 // =============================================================================
 // PAGE ERROR FALLBACK
@@ -40,7 +41,9 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
         </div>
 
         {/* Error Message */}
-        <h2 className="text-2xl font-bold text-white mb-3">{pageName} Error</h2>
+        <Heading level="title" className="mb-3">
+          {pageName} Error
+        </Heading>
         <p className="text-muted mb-6">
           We encountered an issue loading this page. This might be a temporary problem - please try
           again.

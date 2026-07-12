@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
+import { Heading } from '../components/ui';
 import { BlueRibbonIcon, BannerModal, NoChampionsPanel } from './HallOfChampionsParts';
 import { RANK_META } from './hallOfChampionsMeta';
 
@@ -712,12 +713,12 @@ const HallOfChampions = () => {
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted mb-0.5">
                       <span>Championship Record</span>
                     </div>
-                    <h2 className="text-base sm:text-lg font-bold text-white uppercase tracking-wider truncate">
+                    <Heading level="section" as="h2" className="truncate">
                       {parseSeasonName(displaySeason.seasonName).type}{' '}
                       <span className="text-muted font-data tabular-nums">
                         {parseSeasonName(displaySeason.seasonName).year}
                       </span>
-                    </h2>
+                    </Heading>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-wider">
                     <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-background border border-line text-secondary">

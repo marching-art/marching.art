@@ -6,6 +6,7 @@ import { Calendar, Check, ChevronRight, MapPin, Trophy } from 'lucide-react';
 import { getProfile } from '../../api/profile';
 import { ShowRegistrationModal } from '../Schedule';
 import { useScheduleStore } from '../../store/scheduleStore';
+import { Heading } from '../ui';
 import { compareCorpsClasses } from '../../utils/corps';
 import { isEventPast } from '../../utils/scheduleUtils';
 
@@ -169,9 +170,9 @@ const ShowSelectionStep = ({
               <div className="w-16 h-16 mx-auto mb-4 bg-interactive/20 rounded-none flex items-center justify-center">
                 <Trophy className="w-8 h-8 text-interactive" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">
+              <Heading level="title" as="h3" className="mb-2">
                 Championship Week - Auto Enrollment
-              </h3>
+              </Heading>
               <p className="text-sm text-muted mb-4 max-w-md mx-auto">
                 All championship events (Days 45-49) have automatic enrollment based on your corps
                 class and advancement results.

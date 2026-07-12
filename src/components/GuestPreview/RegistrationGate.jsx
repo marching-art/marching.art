@@ -20,6 +20,7 @@ import {
   Zap,
   Star,
 } from 'lucide-react';
+import { Heading } from '../ui';
 
 // =============================================================================
 // GATE TYPES - Different prompts for different actions
@@ -127,7 +128,9 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
               </div>
 
               {/* Title */}
-              <h2 className="text-xl font-bold text-white mb-2">{config.title}</h2>
+              <Heading level="title" as="h2" className="mb-2">
+                {config.title}
+              </Heading>
 
               {/* Description */}
               <p className="text-muted mb-4">{config.description}</p>

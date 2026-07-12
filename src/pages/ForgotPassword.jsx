@@ -10,6 +10,7 @@ import { m } from 'framer-motion';
 import { Mail, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { authApi } from '../api/client';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { Heading } from '../components/ui';
 
 const ForgotPassword = () => {
   useBodyScroll();
@@ -80,7 +81,7 @@ const ForgotPassword = () => {
                     loading="eager"
                   />
                 </div>
-                <h1 className="text-2xl font-bold text-white">Reset Password</h1>
+                <Heading level="display">Reset Password</Heading>
                 <p className="text-base text-muted mt-2">
                   Enter your email address and we'll send you a link to reset your password
                 </p>
