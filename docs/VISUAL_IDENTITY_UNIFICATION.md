@@ -116,14 +116,25 @@ every step below serves.
 | Role | Color | Used for | Never used for |
 | --- | --- | --- | --- |
 | **Brand / reward** | **Gold `#EAB308`** | Logo, wordmark, marquee brand moments, #1 / podium & medal ranks, achievement unlocks, level-up celebrations | General buttons, links, form accents, arbitrary icons |
-| **Interactive / self** | **Blue `#0057B8`** | Links, primary buttons, active nav, focus rings, "your row" highlight, selected states | Decoration, celebration, status |
+| **Interactive / self** | **Azure `#3B82F6`** | Links, primary buttons, active nav, focus rings, "your row" highlight, selected states | Decoration, celebration, status |
 | **Trend / status** | Green `#00C853` / Red `#FF5252` / Amber `#FF9800` | Score deltas, win/loss, live, warnings only | Branding or navigation |
 | **Neutral** | One charcoal ramp + one border + one muted gray | All surfaces, structure, secondary text | — |
 
-The mental model: **gold = who we are and when you win; blue = what you can
+The mental model: **gold = who we are and when you win; azure = what you can
 touch and where you are; green/red = how the numbers moved; everything else is
 quiet charcoal.** A user should be able to learn those four meanings in the
 first minute and have them hold on every screen.
+
+**On the accent choice.** Azure is chosen deliberately, not inherited. It is
+the chromatic complement of the amber-gold anchor (warm reward vs. cool
+interactive — the cleanest possible separation on a leaderboard), it preserves
+the learned "blue = clickable" web convention, and it **corrects an
+accessibility defect**: the incumbent `#0057B8` computes to only ~2.9:1 on the
+`#0A0A0A` background — below the WCAG floor for the links, focus rings, and
+"your row" it was used for. `#3B82F6` clears ~5.4:1 (AA for text) with headroom.
+Green and red are reserved for trend/status and must never be used for
+interaction; gold is reserved for brand/reward and must never be a general UI
+accent.
 
 ### Emphasis needs per surface (the "product" dimension)
 Different surfaces have genuinely different jobs; unifying doesn't mean
@@ -142,13 +153,14 @@ flattening them — it means using the *same vocabulary* to express each job.
   **Neutral, blue only on the actionable control.**
 
 ### Structural decisions (resolving the era-contradictions)
-- **Corners:** pick **one** radius language and apply it everywhere. Given the
-  logo's soft, curved drill path and the data-density goals, the recommended
-  answer is a single small radius (e.g. `rounded-md`, ~8–10px) as the default —
-  softer than brutalist `rounded-none`, tighter than `rounded-2xl` — so the app
-  feels precise but not clinical, and echoes the logo's geometry. (Open to
-  `rounded-none` if the broadcast-terminal read is preferred — the point is
-  *one* answer, ratified, not thirteen.)
+- **Corners: `rounded-none`, ratified.** Every surface is sharp — 90° or it's
+  a bug. This is deliberately the *least* driftable choice: radius is a
+  spectrum, and spectrums are exactly how the app accumulated `rounded-lg`,
+  `-xl`, and `-2xl` side by side. A binary rule has no gray zone to wander
+  into. It is also the honest edge for the rest of the system — charcoal
+  ground, flat fills, one confident accent, strict grid: the Swiss/Vignelli
+  idiom, whose native corner is square. The 965 `rounded-*` uses collapse to
+  one value.
 - **Elevation:** one rule. Flat fills + 1px borders for structure; reserve any
   shadow for genuinely floating layers (modals, menus) only.
 - **Type:** either **load the display face and use it deliberately** for
