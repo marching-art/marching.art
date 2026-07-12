@@ -21,8 +21,6 @@ const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
-// Template covers a full spring-training day (the largest block budget).
-const MAX_TEMPLATE_BLOCKS = 20;
 
 /**
  * Validate a CorpsCoin -> Corps Budget commitment amount against the
@@ -722,6 +720,18 @@ const PLAN_FIELD_BY_TYPE = {
   springTraining: "springTrainingPlan",
 };
 
+// A plan may hold at most the blocks its matching day type actually runs
+// (§6.1): 12 on a rehearsal day, 8 on a show day, 20 in spring training. The
+// nightly autoplay clamps to this anyway (processor.js), but capping here keeps
+// the assistant-director editor honest instead of accepting blocks that would
+// never run. Read from balanceConfig so a Phase 8 re-tune stays in one place.
+function maxBlocksForPlanType(planType) {
+  const cfg = store.balance.rehearsal;
+  if (planType === "show") return cfg.blocksOnShowDay;
+  if (planType === "springTraining") return cfg.blocksPerDaySpringTraining;
+  return cfg.blocksPerDay;
+}
+
 exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
   const { blocks, planType = "rehearsal" } = request.data || {};
@@ -732,8 +742,12 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
       `Plan type must be one of: ${Object.keys(PLAN_FIELD_BY_TYPE).join(", ")}.`
     );
   }
-  if (!Array.isArray(blocks) || blocks.length > MAX_TEMPLATE_BLOCKS) {
-    throw new HttpsError("invalid-argument", `Template must be an array of at most ${MAX_TEMPLATE_BLOCKS} blocks.`);
+  const maxBlocks = maxBlocksForPlanType(planType);
+  if (!Array.isArray(blocks) || blocks.length > maxBlocks) {
+    throw new HttpsError(
+      "invalid-argument",
+      `A ${planType} plan may hold at most ${maxBlocks} blocks.`
+    );
   }
   for (const blockType of blocks) {
     if (!engine.BLOCK_TYPES.includes(blockType)) {
@@ -815,5 +829,6 @@ module.exports.validateCommitment = validateCommitment;
 module.exports.validateAuditions = validateAuditions;
 module.exports.validateShowPicks = validateShowPicks;
 module.exports.validateStaffPriority = validateStaffPriority;
+module.exports.maxBlocksForPlanType = maxBlocksForPlanType;
 // Shared preamble for the split callable modules (podiumJoint.js).
 module.exports.podiumContext = podiumContext;

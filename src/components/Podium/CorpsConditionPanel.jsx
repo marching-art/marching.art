@@ -86,6 +86,7 @@ export default function CorpsConditionPanel({ podium }) {
       id: 'rehearsal',
       tab: 'Rehearsal',
       plan: state.planTemplate || [],
+      maxBlocks: 12,
       runsOn: "rehearsal days you don't log in",
       hint: 'The full grind — up to 12 blocks. This is the fallback for any day type you leave unplanned.',
       empty:
@@ -95,6 +96,7 @@ export default function CorpsConditionPanel({ podium }) {
       id: 'show',
       tab: 'Show day',
       plan: state.showDayPlan || [],
+      maxBlocks: 8,
       runsOn: "show days you don't log in",
       hint: 'A lighter pre-performance routine — only 8 blocks, and the corps competes that night.',
       empty:
@@ -104,6 +106,7 @@ export default function CorpsConditionPanel({ podium }) {
       id: 'springTraining',
       tab: 'Spring training',
       plan: state.springTrainingPlan || [],
+      maxBlocks: 20,
       runsOn: "spring-training days you don't log in",
       hint: 'Install-heavy camp days — up to 20 blocks, weighted toward content over clean.',
       empty:
@@ -112,11 +115,17 @@ export default function CorpsConditionPanel({ podium }) {
   ];
   const activePlanType = PLAN_TYPES.find((p) => p.id === planType) || PLAN_TYPES[0];
   const template = activePlanType.plan;
+  // Each day-type plan may hold only as many blocks as that day actually runs
+  // (§6.1) — 12 rehearsal, 8 show, 20 spring training. The server enforces the
+  // same cap; keeping the editor in sync stops a user from building a plan whose
+  // tail blocks would silently never run.
+  const maxTemplateBlocks = activePlanType.maxBlocks;
   const budget = state.budget || { balance: 0, committed: 0, earned: 0, spent: 0 };
   const commitmentCap = podium.data?.commitmentCap || 2500;
 
   const blockLabel = (id) => BLOCKS.find((x) => x.id === id)?.label || id;
-  const addBlock = (id) => setTemplateDraft((prev) => (prev.length < 20 ? [...prev, id] : prev));
+  const addBlock = (id) =>
+    setTemplateDraft((prev) => (prev.length < maxTemplateBlocks ? [...prev, id] : prev));
   const removeBlock = (index) => setTemplateDraft((prev) => prev.filter((_, i) => i !== index));
   const moveBlock = (index, dir) =>
     setTemplateDraft((prev) => {
@@ -313,11 +322,14 @@ export default function CorpsConditionPanel({ podium }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 content-start">
                 {BLOCKS.map((block) => {
                   const count = templateDraft.filter((b) => b === block.id).length;
+                  const full = templateDraft.length >= maxTemplateBlocks;
                   return (
                     <button
                       key={block.id}
                       onClick={() => addBlock(block.id)}
-                      className="text-left px-3 py-2 rounded-none border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback"
+                      disabled={full}
+                      title={full ? `A ${activePlanType.tab.toLowerCase()} plan holds at most ${maxTemplateBlocks} blocks` : undefined}
+                      className="text-left px-3 py-2 rounded-none border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback disabled:opacity-40 disabled:hover:border-[#333] disabled:hover:bg-transparent disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-bold text-white">{block.label}</span>
@@ -341,6 +353,7 @@ export default function CorpsConditionPanel({ podium }) {
                   </span>
                   <span className="text-lg font-bold text-white tabular-nums leading-none">
                     {templateDraft.length}
+                    <span className="text-[10px] font-bold text-gray-600">/{maxTemplateBlocks}</span>
                   </span>
                 </div>
 

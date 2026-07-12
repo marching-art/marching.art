@@ -13,6 +13,7 @@ const {
   validateShowPicks,
   validateCommitment,
   validateStaffPriority,
+  maxBlocksForPlanType,
 } = require("./podium");
 const store = require("../helpers/podium/store");
 
@@ -160,6 +161,30 @@ describe("validateCommitment (Corps Budget, decision 24)", () => {
     assert.throws(() => validateCommitment(10.5, 0));
     assert.throws(() => validateCommitment(2501, 0));
     assert.throws(() => validateCommitment(500, 2100));
+  });
+});
+
+describe("maxBlocksForPlanType (assistant-director plan caps, §6.1)", () => {
+  test("each plan type caps at the blocks its day actually runs", () => {
+    // A rehearsal plan must not exceed the rehearsal-day budget — the bug was
+    // it allowed a full spring-training-sized 20-block plan on a rehearsal day.
+    assert.equal(maxBlocksForPlanType("rehearsal"), store.balance.rehearsal.blocksPerDay);
+    assert.equal(maxBlocksForPlanType("show"), store.balance.rehearsal.blocksOnShowDay);
+    assert.equal(
+      maxBlocksForPlanType("springTraining"),
+      store.balance.rehearsal.blocksPerDaySpringTraining
+    );
+  });
+
+  test("only spring training gets the largest (20-block) budget", () => {
+    assert.equal(maxBlocksForPlanType("rehearsal"), 12);
+    assert.equal(maxBlocksForPlanType("show"), 8);
+    assert.equal(maxBlocksForPlanType("springTraining"), 20);
+    assert.ok(maxBlocksForPlanType("rehearsal") < maxBlocksForPlanType("springTraining"));
+  });
+
+  test("an unknown/default plan type falls back to the rehearsal-day cap", () => {
+    assert.equal(maxBlocksForPlanType(undefined), store.balance.rehearsal.blocksPerDay);
   });
 });
 
