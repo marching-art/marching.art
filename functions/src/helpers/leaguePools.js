@@ -24,6 +24,8 @@ const { dataNamespaceParam } = require("../config");
 const {
   fetchRecentRecaps,
   findLatestResultForCorps,
+  fetchPodiumRecaps,
+  findRecentPodiumResults,
   resolveBucket,
 } = require("./dailyPredictions");
 const { getCompletedGameDayET } = require("./gameDay");
@@ -53,7 +55,7 @@ function completedGameDayString(now = new Date()) {
  */
 const POOL_MIN_ANSWERED = 2;
 
-function entrantHadPerfectDay(uid, profileData, gameDay, recapDocs) {
+function entrantHadPerfectDay(uid, profileData, gameDay, recaps) {
   const bucket = profileData?.predictions?.[gameDay];
   if (!bucket || Object.keys(bucket.picks || {}).length === 0) return false;
 
@@ -62,7 +64,13 @@ function entrantHadPerfectDay(uid, profileData, gameDay, recapDocs) {
     return results.length >= POOL_MIN_ANSWERED && results.every((r) => r.isCorrect);
   }
 
-  const latest = findLatestResultForCorps(recapDocs, uid, bucket.corpsClass);
+  // Class-aware source: a podium bucket resolves against podium-recaps (where
+  // its threshold was derived), never fantasy_recaps — otherwise a podium
+  // entrant's perfect day is silently missed in pool settlement.
+  const latest =
+    bucket.corpsClass === "podiumClass"
+      ? findRecentPodiumResults(recaps.podium || [], uid, 1)[0] || null
+      : findLatestResultForCorps(recaps.fantasy || [], uid, bucket.corpsClass);
   const resolved = resolveBucket(bucket, latest);
   return (
     !!resolved &&
@@ -89,8 +97,10 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
   const leaguesSnapshot = await db.collection(`artifacts/${ns}/leagues`).limit(500).get();
   if (leaguesSnapshot.empty) return;
 
-  // One recap read serves every league's settlement.
-  let recapDocs = null;
+  // One recap read per source serves every league's settlement. Podium and
+  // fantasy classes live in separate recap collections, so both are needed to
+  // settle a mixed-class pool.
+  let recaps = null;
 
   const batch = new ChunkedWriter(db);
   let settled = 0;
@@ -109,8 +119,12 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
       continue;
     }
 
-    if (!recapDocs) {
-      recapDocs = await fetchRecentRecaps(db, seasonData.seasonUid);
+    if (!recaps) {
+      const [fantasy, podium] = await Promise.all([
+        fetchRecentRecaps(db, seasonData.seasonUid),
+        fetchPodiumRecaps(db, seasonData.seasonUid),
+      ]);
+      recaps = { fantasy, podium };
     }
 
     const profileRefs = entrants.map((uid) =>
@@ -119,7 +133,7 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
     const profileDocs = await db.getAll(...profileRefs);
     const winners = entrants.filter((uid, i) => {
       const doc = profileDocs[i];
-      return doc.exists && entrantHadPerfectDay(uid, doc.data(), gameDay, recapDocs);
+      return doc.exists && entrantHadPerfectDay(uid, doc.data(), gameDay, recaps);
     });
 
     const perWinner = winners.length > 0 ? Math.floor(pot / winners.length) : 0;

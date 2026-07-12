@@ -116,16 +116,16 @@ describe("completedGameDayString", () => {
 
 describe("entrantHadPerfectDay", () => {
   test("no picks is never a perfect day", () => {
-    assert.equal(entrantHadPerfectDay("u", {}, GAME_DAY, []), false);
+    assert.equal(entrantHadPerfectDay("u", {}, GAME_DAY, {}), false);
     assert.equal(
-      entrantHadPerfectDay("u", { predictions: { [GAME_DAY]: { picks: {} } } }, GAME_DAY, []),
+      entrantHadPerfectDay("u", { predictions: { [GAME_DAY]: { picks: {} } } }, GAME_DAY, {}),
       false
     );
   });
 
   test("uses the already-resolved bucket when present", () => {
     const profile = { predictions: { [GAME_DAY]: perfectBucket } };
-    assert.equal(entrantHadPerfectDay("u", profile, GAME_DAY, []), true);
+    assert.equal(entrantHadPerfectDay("u", profile, GAME_DAY, {}), true);
 
     const missed = {
       predictions: {
@@ -135,7 +135,7 @@ describe("entrantHadPerfectDay", () => {
         },
       },
     };
-    assert.equal(entrantHadPerfectDay("u", missed, GAME_DAY, []), false);
+    assert.equal(entrantHadPerfectDay("u", missed, GAME_DAY, {}), false);
   });
 
   test("resolves an unresolved bucket read-only against the recaps", () => {
@@ -163,7 +163,44 @@ describe("entrantHadPerfectDay", () => {
         ],
       },
     ];
-    assert.equal(entrantHadPerfectDay("u", profile, GAME_DAY, recapDays), true);
+    assert.equal(entrantHadPerfectDay("u", profile, GAME_DAY, { fantasy: recapDays }), true);
+  });
+
+  test("resolves an unresolved Podium bucket against podium-recaps", () => {
+    // Podium picks store their threshold from podium-recaps; settlement must
+    // resolve them against the SAME source (result.place / totalScore, keyed
+    // by uid) or a podium entrant's perfect day is never counted.
+    const profile = {
+      predictions: {
+        [GAME_DAY]: {
+          corpsClass: "podiumClass",
+          resolved: false,
+          snapshotEvent: "Show A",
+          picks: {
+            podium: { pick: "Yes", threshold: 3 },
+            "over-under": { pick: "Over", threshold: 70 },
+          },
+        },
+      },
+    };
+    const podiumDays = [
+      {
+        competitionDay: 10,
+        shows: [
+          {
+            eventName: "Show B",
+            results: [{ uid: "u", totalScore: 80, place: 2 }],
+          },
+        ],
+      },
+    ];
+    // Fantasy recaps hold nothing for this director — the old code read only
+    // these and missed the win.
+    assert.equal(entrantHadPerfectDay("u", profile, GAME_DAY, { fantasy: [] }), false);
+    assert.equal(
+      entrantHadPerfectDay("u", profile, GAME_DAY, { podium: podiumDays }),
+      true
+    );
   });
 
   test("a single-pick perfect day never wins the pool (min 2 answered)", () => {
@@ -179,7 +216,7 @@ describe("entrantHadPerfectDay", () => {
         },
       },
     };
-    assert.equal(entrantHadPerfectDay("u", onePickResolved, GAME_DAY, []), false);
+    assert.equal(entrantHadPerfectDay("u", onePickResolved, GAME_DAY, {}), false);
 
     const onePickUnresolved = {
       predictions: {
@@ -202,7 +239,10 @@ describe("entrantHadPerfectDay", () => {
         ],
       },
     ];
-    assert.equal(entrantHadPerfectDay("u", onePickUnresolved, GAME_DAY, recapDays), false);
+    assert.equal(
+      entrantHadPerfectDay("u", onePickUnresolved, GAME_DAY, { fantasy: recapDays }),
+      false
+    );
   });
 });
 

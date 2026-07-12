@@ -9,6 +9,8 @@ const {
   PREDICTION_QUESTIONS,
   SCORE_FREE_QUESTION_IDS,
   resolveBucket,
+  findRecentPodiumResults,
+  deriveQuestionThreshold,
 } = require("./dailyPredictions");
 
 describe("SoundSport prediction variant", () => {
@@ -65,5 +67,62 @@ describe("SoundSport prediction variant", () => {
       placement: 1,
     });
     assert.equal(resolved, null, "no resolvable picks → bucket stays open");
+  });
+});
+
+describe("Podium Class recent results", () => {
+  // Podium recaps live in podium-recaps (keyed by competitionDay), rank each
+  // show on its own (result.place), and key results by uid with no corpsClass
+  // tag — the fantasy reader finds nothing here, which is what stopped Podium
+  // predictions from registering. findRecentPodiumResults normalizes them into
+  // the {eventName, score, placement} shape the resolver expects.
+  const uid = "director-1";
+  const recapDocs = [
+    {
+      competitionDay: 3,
+      shows: [
+        {
+          eventName: "Finals Night",
+          results: [
+            { uid: "other", totalScore: 90.0, place: 1 },
+            { uid, totalScore: 85.5, place: 2 },
+          ],
+        },
+      ],
+    },
+    {
+      competitionDay: 1,
+      shows: [
+        {
+          eventName: "Opening Show",
+          results: [{ uid, totalScore: 82.1, place: 1 }],
+        },
+      ],
+    },
+  ];
+
+  test("returns the director's podium rows newest-first, normalized", () => {
+    const results = findRecentPodiumResults(recapDocs, uid, 5);
+    assert.deepEqual(results, [
+      { eventName: "Finals Night", score: 85.5, placement: 2 },
+      { eventName: "Opening Show", score: 82.1, placement: 1 },
+    ]);
+  });
+
+  test("normalized podium results derive real thresholds (not a null reject)", () => {
+    const results = findRecentPodiumResults(recapDocs, uid, 5);
+    // The bug: fantasy-only reads returned [] for podium, so every threshold
+    // came back null and submitPrediction rejected the pick.
+    assert.equal(deriveQuestionThreshold("beat-prev", results), 85.5);
+    assert.equal(deriveQuestionThreshold("podium", results), 3);
+    assert.equal(
+      deriveQuestionThreshold("over-under", results),
+      Math.round(((85.5 + 82.1) / 2) * 10) / 10
+    );
+  });
+
+  test("ignores other directors and respects the limit", () => {
+    assert.deepEqual(findRecentPodiumResults(recapDocs, "nobody", 5), []);
+    assert.equal(findRecentPodiumResults(recapDocs, uid, 1).length, 1);
   });
 });
