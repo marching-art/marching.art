@@ -7,7 +7,7 @@ const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = req
 const { updateStandings } = require("../helpers/leagueStandings");
 const { assertAuth } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
-const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
+const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {

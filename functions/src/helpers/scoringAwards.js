@@ -10,7 +10,7 @@ const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
   WEEKLY_LEAGUE_WIN_REWARD,
-} = require("../callable/economy");
+} = require("./economy");
 const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { updateStandings } = require("./leagueStandings");

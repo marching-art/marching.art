@@ -7,7 +7,7 @@ const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
   getSeasonBonusAmount,
-} = require("../callable/economy");
+} = require("./economy");
 const { calculateXPUpdates, getSeasonCompletionXP } = require("./xpCalculations");
 const { updateSeasonBestRecords } = require("./gameRecords");
 const { RARITY_CC } = require("./achievements");

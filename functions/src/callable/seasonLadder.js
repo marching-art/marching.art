@@ -3,7 +3,7 @@ const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
-const { addCoinHistoryEntryToTransaction } = require("./economy");
+const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getLadderTier, getSeasonXP } = require("../helpers/seasonLadder");
 

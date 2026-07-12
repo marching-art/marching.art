@@ -14,12 +14,8 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
-const {
-  unlockClassWithCorpsCoin,
-  syncClassUnlocks,
-  CLASS_UNLOCK_COSTS,
-  TRANSACTION_TYPES,
-} = require("./economy");
+const { unlockClassWithCorpsCoin, syncClassUnlocks } = require("./economy");
+const { CLASS_UNLOCK_COSTS, TRANSACTION_TYPES } = require("../helpers/economy");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;

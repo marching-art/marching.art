@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { addCoinHistoryEntryToTransaction } = require("./economy");
+const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const { VALID_CLASSES, isProfaneCorpsName } = require("../helpers/corpsHelpers");
 const {

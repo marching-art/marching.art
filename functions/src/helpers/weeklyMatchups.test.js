@@ -14,7 +14,7 @@ const assert = require("node:assert/strict");
 
 const admin = require("firebase-admin");
 const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./scoringAwards");
-const { WEEKLY_LEAGUE_WIN_REWARD } = require("../callable/economy");
+const { WEEKLY_LEAGUE_WIN_REWARD } = require("./economy");
 const { XP_SOURCES } = require("./xpCalculations");
 
 const NS = process.env.DATA_NAMESPACE;

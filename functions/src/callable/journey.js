@@ -4,7 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
-const { addCoinHistoryEntryToTransaction } = require("./economy");
+const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getJourneyStep, verifyJourneyStep } = require("../helpers/journey");
 

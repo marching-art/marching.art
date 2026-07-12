@@ -4,7 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDoc, FieldValue } = require("firebase-admin/firestore");
 const { getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
-const { SHOW_PARTICIPATION_REWARDS } = require("../callable/economy");
+const { SHOW_PARTICIPATION_REWARDS } = require("./economy");
 const {
   clearRegressionCache,
   getCachedRegressionScore,

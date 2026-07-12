@@ -3,7 +3,7 @@ const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
-const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
+const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getShopItem, TYPE_TO_SLOT } = require("../helpers/shopCatalog");
 

@@ -11,7 +11,7 @@ const {
   SEASON_FINISH_BONUSES,
   WEEKLY_LEAGUE_WIN_REWARD,
   TRANSACTION_TYPES,
-} = require("./economy");
+} = require("../helpers/economy");
 
 // A minimal Firestore double that records writes without touching the network.
 function makeDb() {
