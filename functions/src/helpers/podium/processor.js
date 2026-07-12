@@ -431,6 +431,11 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         store.balance
       );
 
+      // Evolve this corps' INDEPENDENT performance form for the night. Seeded
+      // only by (seasonUid, uid), so no two corps share a shock — the field
+      // fluctuates individually, never in lockstep (§4.2 trajectory model).
+      engine.updateForm(state, competitionDay, `${seasonUid}|${uid}`, store.curves, store.balance);
+
       // --- 2. Score show days ----------------------------------------------
       let score = null;
       if (isShowDay) {

@@ -229,38 +229,61 @@ Each Podium corps carries, per caption `c ∈ {GE1, GE2, VP, VA, CG, B, MA, P}`:
 | `clean[c]`     | 0–100%  | Execution quality of installed content. Grows from rehearsal, decays if neglected, is what converts potential into score                                               |
 | `peak[c]`      | derived | The effective ceiling today: `L(c) × f(content, clean)`                                                                                                                |
 
-**Daily caption score:**
+**Daily caption score (trajectory-anchored model, 2026-07 recalibration):**
+
+Each corps rides its **own** potential curve, realized by its **own** rehearsal, nudged by its
+**own** independent form. The historical band is a realism _guardrail_ (a per-day ceiling), never a
+shared floor — so corps at different shows never move in lockstep and no historical field-dip is
+replayed on the field.
 
 ```
-raw(c, d)   = L(c) · logistic(d; k(c), d₀(c)) · content(c) · (0.72 + 0.28 · clean(c))
-ceiling(c,d)= band(repTier.percentile, c, d)          // reputation-gated top of the band (§5.13)
-score(c, d) = clamp(raw(c,d) + condition(d) + variance(d,c), band_p5(c,d), ceiling(c,d))
-total(d)    = min(99.70, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)   // the unicorn cap
+potential(c,d) = L(c) · logistic(d; k(c), d₀(c)) / norm            // this corps' own trajectory
+realized(c)    = min(1, content(c)·(0.72 + 0.28·clean(c)) / A)     // A = attainmentFullRealization
+perfFrac(c)    = perfFloor + (1 − perfFloor)·realized(c)           // rehearsal → 55%..100% of potential
+repMult        = 1 + repTailwindPerTier·(repTier − 1)              // modest EARNED edge, not a wall
+formMult       = 1 + form                                          // independent per-corps momentum (§5.3a)
+value(c,d)     = potential(c,d) · perfFrac(c) · repMult · formMult + condition(d) + noise(c,d)
+score(c,d)     = softCap(max(0, value), band_max(c,d))             // realism CEILING only, asymptotic
+total(d)       = min(99.70, softCap([GE1+GE2]+[VP+VA+CG]/2+[B+MA+P]/2, totalBand_max(d)))
 ```
 
 - The total formula is **identical to the existing fantasy formula** in `scoring.js` (GE full
   weight, Visual/Music halved) so Podium scores read exactly like every other score in the game and
   like a real DCI recap.
-- `condition(d)` is the small signed modifier from stamina/morale (§5.3) — bounded to roughly
-  ±0.15 per caption (±1.2 total), enough to decide a rivalry, never enough to fake a season.
-- `variance(d,c)` is FMA-faithful judge jitter: deterministic per `(seasonUid, day, uid, caption)`
-  seed, magnitude ≈ ±0.05 per caption. It breaks ties and makes recaps breathe; it never changes a
-  well-managed season's outcome. **No other randomness exists anywhere in the engine.**
-- The clamp against the historical band is the realism guarantee: a Day-10 brass score cannot be
-  18.4 because no Day-10 brass score in history was 18.4. The _top_ of each corps' band is gated
-  by its multi-season Reputation tier (§5.13) — a first-season corps peaks in the historical
-  mid-percentiles no matter how perfectly it is managed, and only Champion-Status corps can touch
-  the top of the envelope. **No corps ever scores 100**: the hard cap is **99.70** — deliberately
-  just above DCI's real all-time best (99.65, Blue Devils 2014) so beating history is _possible_
-  but requires a true unicorn: Champion Status, maximum challenge, a near-perfect season, peak
-  condition, and the variance breaking your way, all at once. Asserted by the harness
-  (decision 25).
+- **Rehearsal is the dominant driver.** `perfFrac` — set entirely by the corps' own installed &
+  clean content — moves the score between `perfFloor` (a corps that just shows up, ≈55% of its
+  potential) and 100% of its potential. Two corps at the same challenge and tier that rehearsed
+  differently score differently; there is no ceiling clamp collapsing a well-managed field to one
+  identical number.
+- **Reputation is a tailwind, not a wall (§5.13).** A dynasty gets a small earned multiplier
+  (≈+1.7%/tier) on its ceiling, so a Champion out-scores a newcomer at equal rehearsal — but a
+  flawless newcomer still beats an absent dynasty. Reputation raises the ceiling; rehearsal decides
+  how much of it you reach.
+- **Form** is an independent per-corps momentum random-walk (§5.3a), seeded only by
+  `(seasonUid, uid)` and drawn from the historical day-over-day movement distribution. It is what
+  makes the field breathe individually: a corps can be on a hot streak or in a slump on its own,
+  and two corps at two shows on the same night are never correlated. Mean-reverting and bounded
+  (±`form.max`), so it is texture, never the story.
+- `condition(d)` is the small signed modifier from stamina/morale (§5.3), bounded to ≈±0.15 per
+  caption. `noise(c,d)` is a zero-median one-night judge wiggle, shaped by the caption's real
+  day-over-day movement and seeded per `(seasonUid, day, uid, caption)`. **All randomness is
+  deterministic from seeds** — every score is replayable.
+- The soft-cap against the historical band `max` is the realism guarantee: a Day-10 brass score
+  approaches, but never reaches, the highest Day-10 brass score in history. **No corps ever scores
+  100**: the hard cap is **99.70** — just above DCI's real all-time best (99.65, Blue Devils 2014).
+  Reaching the very top still requires Champion-tier reputation, maximum challenge, a near-perfect
+  season, peak condition, and form breaking your way, all at once. Asserted by the harness
+  (`podiumSim.js` A/B/C/G, decision 25).
 
 ### 4.3 The season arc this produces
 
-Calibration targets, straight from the corpus: a top-percentile-managed corps arcs roughly 70–72
-(day 1) → 84–86 (day 25) → 97–99 (day 49); a median corps 60 → 75 → 85; a neglected corps installs
-early points then visibly plateaus and slides down the rankings as everyone else's slope continues.
+Calibration targets (2026-07 trajectory model, verified in `podiumSim.js` / `podiumPacingHarness.js`):
+a flawless **Champion-tier** corps finals around **96–97**; a flawless **newcomer** around **89–90**
+(elite, but the dynasty edge is real); a diligent-but-simple debut in the **low-to-mid 80s**; a
+brass-spamming or chronically-absent corps in the **68–78** range. A neglected corps installs early
+points then visibly plateaus and slides down the rankings as everyone else's slope continues.
+Because each corps rides its own curve with its own form, the field **fluctuates individually** —
+there is no season-day on which everyone drops together.
 Caption peaks and lows emerge naturally: hammer brass for two weeks and your visual captions sit at
 low `clean` values, plateau, and start decaying — the recap will show exactly the lopsided,
 realistic caption profile a real corps with that rehearsal balance would show.

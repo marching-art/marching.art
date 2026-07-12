@@ -203,9 +203,19 @@
   "scoring": {
     "cleanFloor": 0.72,
     "cleanWeight": 0.28,
-    "attainmentFullRealization": 0.58,
+    "attainmentFullRealization": 0.92,
     "judgeVarianceMax": 0.05,
     "totalCap": 99.7,
+    "_model": "Trajectory-anchored (Option B, 2026-07). Each corps rides its OWN challenge-selected potential curve, scaled by its OWN rehearsal (perfFloorFraction..1.0), nudged by an INDEPENDENT per-corps form random-walk. The historical bands are a realism guardrail (per-day band.max soft-cap) and calibration reference ONLY — never a shared per-day floor, so corps at different shows never move in lockstep and no historical field-dip is baked into the season.",
+    "perfFloorFraction": 0.55,
+    "repTailwindPerTier": 0.017,
+    "judgeNoiseScale": 0.6,
+    "softCapKnee": 0.96,
+    "form": {
+      "max": 0.05,
+      "step": 0.028,
+      "reversion": 0.3
+    },
     "repCeilingPercentileByTier": {
       "1": 25,
       "2": 43,
