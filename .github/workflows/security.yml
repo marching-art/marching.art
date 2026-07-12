@@ -1,0 +1,46 @@
+name: Security audit
+
+# Weekly dependency vulnerability visibility. Runs on a schedule (and on
+# demand) — NOT on pull requests — and is intentionally NON-blocking: it
+# reports the audit to the run summary rather than failing. The repo carries
+# known transitive/dev-tooling advisories plus a few that only clear with
+# deferred major upgrades (see PRIORITIES.md), so a hard gate would sit red on
+# pre-existing debt this scan didn't introduce and gate nothing (it runs on no
+# PR). The actual fixes arrive as Dependabot PRs (.github/dependabot.yml);
+# this job is the weekly "where do we stand" signal.
+
+on:
+  schedule:
+    # Mondays 13:00 UTC
+    - cron: '0 13 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ['.', 'functions', 'firestore-tests', 'functions-scraper', 'scripts']
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      # Audit against the committed lockfile only (no install needed). Never
+      # fails the job; the high/critical count goes to the run summary so a
+      # regression is visible at a glance without blocking anything.
+      - name: npm audit (report only)
+        working-directory: ${{ matrix.dir }}
+        run: |
+          npm audit || true
+          high=$(npm audit --json 2>/dev/null \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const m=JSON.parse(s).metadata.vulnerabilities;console.log((m.high||0)+(m.critical||0))}catch{console.log('?')}})")
+          echo "### npm audit — \`${{ matrix.dir }}\`: ${high} high/critical" >> "$GITHUB_STEP_SUMMARY"
