@@ -1,6 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { serverTimestamp } = require("firebase-admin/firestore");
 const { assertAuth } = require("../helpers/callableGuards");
@@ -20,7 +21,7 @@ exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const notificationRef = db.collection(`artifacts/${dataNamespaceParam.value()}/users/${recipientUid}/notifications`).doc();
+  const notificationRef = db.collection(paths.userNotifications(recipientUid)).doc();
 
   try {
     await notificationRef.set({
@@ -56,7 +57,7 @@ exports.deleteComment = onCall({ cors: true }, async (request) => {
   }
 
   try {
-    const commentRef = getDb().doc(`artifacts/${dataNamespaceParam.value()}/users/${profileOwnerId}/comments/${commentId}`);
+    const commentRef = getDb().doc(paths.userComment(profileOwnerId, commentId));
     await commentRef.delete();
     return { success: true, message: "Comment deleted successfully." };
   } catch (error) {

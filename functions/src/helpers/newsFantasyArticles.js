@@ -2,6 +2,7 @@
 // caption-analysis market report. Extracted verbatim from newsGeneration.js.
 
 const { Type } = require("@google/genai");
+const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,
@@ -375,7 +376,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
     if (topCorps?.uid && topCorps?.corpsClass && db && dataDocId) {
       try {
         // Profiles are namespaced by DATA_NAMESPACE, not the dci-data doc id.
-        const profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${topCorps.uid}/profile/data`).get();
+        const profileDoc = await db.doc(paths.userProfile(topCorps.uid)).get();
         if (profileDoc.exists) {
           const profileData = profileDoc.data();
           const corpsData = profileData?.corps?.[topCorps.corpsClass];

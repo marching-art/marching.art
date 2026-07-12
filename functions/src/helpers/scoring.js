@@ -1,4 +1,5 @@
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
+const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
 const { getDoc, FieldValue } = require("firebase-admin/firestore");
 const { getScheduleDay } = require("./season");
@@ -356,7 +357,7 @@ async function commitDailyScoring({
   for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
     if (totalDailyScore > 0) {
       const [uid, corpsClass] = uidAndClass.split("_");
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      const userProfileRef = db.doc(paths.userProfile(uid));
       batch.update(userProfileRef, {
         [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
         [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
@@ -372,7 +373,7 @@ async function commitDailyScoring({
     const rankings = computeSeasonRankings(profilesSnapshot, dailyScores);
     for (const [uidAndClass, { rank, of }] of rankings.entries()) {
       const [uid, corpsClass] = uidAndClass.split("_");
-      const ref = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      const ref = db.doc(paths.userProfile(uid));
       batch.update(ref, {
         [`corps.${corpsClass}.seasonRank`]: rank,
         [`corps.${corpsClass}.seasonRankOf`]: of,
@@ -393,7 +394,7 @@ async function commitDailyScoring({
         }
       }
       if (Object.keys(updates).length > 0) {
-        const ref = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+        const ref = db.doc(paths.userProfile(uid));
         batch.update(ref, updates);
       }
     }

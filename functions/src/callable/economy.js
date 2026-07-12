@@ -1,7 +1,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
 const { assertAuth } = require("../helpers/callableGuards");
 
@@ -22,7 +23,7 @@ const { assertAuth } = require("../helpers/callableGuards");
  * @returns {CollectionReference}
  */
 function getHistoryCollection(db, uid) {
-  return db.collection(`artifacts/${dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`);
+  return db.collection(paths.userCorpsCoinHistory(uid));
 }
 
 /**
@@ -197,7 +198,7 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 
   const cost = CLASS_UNLOCK_COSTS[canonicalClass];
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -271,7 +272,7 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 const syncClassUnlocks = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -331,7 +332,7 @@ const getCorpsCoinHistory = onCall({ cors: true }, async (request) => {
   const { limit: queryLimit = 50 } = request.data || {};
 
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     // Fetch balance and history in parallel

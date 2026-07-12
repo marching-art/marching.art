@@ -12,6 +12,7 @@
  */
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { paths } = require("../helpers/paths");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
@@ -279,7 +280,7 @@ exports.updateRivalsNow = onCall({ cors: true }, async (request) => {
   assertAuth(request);
   const db = getDb();
   const callerProfile = await db
-    .doc(`artifacts/${dataNamespaceParam.value()}/users/${request.auth.uid}/profile/data`)
+    .doc(paths.userProfile(request.auth.uid))
     .get();
   if (!callerProfile.exists || callerProfile.data().role !== "admin") {
     throw new HttpsError("permission-denied", "Admin access required");

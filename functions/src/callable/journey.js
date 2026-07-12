@@ -1,7 +1,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("./economy");
 const { assertAuth } = require("../helpers/callableGuards");
@@ -26,7 +27,7 @@ const completeJourneyStep = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -45,7 +46,7 @@ const completeJourneyStep = onCall({ cors: true }, async (request) => {
       let podiumState = null;
       if (step.id.startsWith("podium_")) {
         const podiumStateRef = db.doc(
-          `artifacts/${dataNamespaceParam.value()}/users/${uid}/podium/state`
+          paths.userPodiumState(uid)
         );
         const podiumStateDoc = await transaction.get(podiumStateRef);
         podiumState = podiumStateDoc.exists ? podiumStateDoc.data() : null;

@@ -1,7 +1,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { addCoinHistoryEntryToTransaction } = require("./economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getLadderTier, getSeasonXP } = require("../helpers/seasonLadder");
@@ -29,7 +30,7 @@ const claimLadderTier = onCall({ cors: true }, async (request) => {
     throw new HttpsError("not-found", "No active season.");
   }
   const { seasonUid } = seasonDoc.data();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {

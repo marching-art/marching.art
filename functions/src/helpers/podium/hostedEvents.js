@@ -30,7 +30,7 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const { dataNamespaceParam } = require("../../config");
+const { paths } = require("../paths");
 const venues = require("./venues");
 const store = require("./store");
 
@@ -181,7 +181,7 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
       const successful = attendance >= (tier.successAttendance || Infinity);
 
       const profileRef = db.doc(
-        `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/profile/data`
+        paths.userProfile(event.hostUid)
       );
       await db.runTransaction(async (transaction) => {
         const profile = await transaction.get(profileRef);
@@ -198,7 +198,7 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
         if (payout > 0) {
           const historyRef = db
             .collection(
-              `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/corpsCoinHistory`
+              paths.userCorpsCoinHistory(event.hostUid)
             )
             .doc();
           transaction.set(historyRef, {

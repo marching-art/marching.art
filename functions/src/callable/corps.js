@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getDb, dataNamespaceParam } = require("../config");
+const { paths } = require("../helpers/paths");
+const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
@@ -68,7 +69,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
   const seasonSettingsRef = db.doc("game-settings/season");
 
   try {
@@ -346,7 +347,7 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
 
   try {
     // First, check the corps exists
@@ -448,7 +449,7 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
   const seasonSettingsRef = db.doc("game-settings/season");
 
   try {
@@ -615,7 +616,7 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
 
   try {
     await db.runTransaction(async (transaction) => {
@@ -712,7 +713,7 @@ exports.renameCorps = onCall({ cors: true }, async (request) => {
   const normalizedNewName = normalizeCorpsName(trimmedNewName);
 
   const db = getDb();
-  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const userProfileRef = db.doc(paths.userProfile(uid));
   const seasonSettingsRef = db.doc("game-settings/season");
 
   try {
