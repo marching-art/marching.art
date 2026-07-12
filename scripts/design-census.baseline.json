@@ -2,11 +2,11 @@
   "_note": "Ratchet ceiling for the visual-identity unification (docs/VISUAL_IDENTITY_UNIFICATION.md §4). Counts may only fall. After lowering a count, run `npm run census -- --write` to lock the new floor. Never edit these upward by hand.",
   "filesScanned": 327,
   "invariants": {
-    "arbitrary-hex": 3307,
+    "arbitrary-hex": 3302,
     "hex-literal": 108,
     "rounded": 19,
     "banned-effects": 73,
-    "off-role-gold": 738,
+    "off-role-gold": 734,
     "legacy-gray": 1020,
     "font-display": 0
   }

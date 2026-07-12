@@ -27,10 +27,35 @@ module.exports = {
         black: '#000000',
         white: '#FFFFFF',
 
-        // PRIMARY BRAND (ESPN Blue)
-        'espn-blue': '#0057B8',
-        'dci-blue': '#0057B8',
-        primary: '#0057B8',
+        // ===========================================
+        // BRAND — permanent gold. The anchor of the visual identity:
+        // logo, wordmark, and reward/achievement moments only. Per the
+        // unification plan (docs/VISUAL_IDENTITY_UNIFICATION.md), gold is
+        // NEVER a generic UI accent — that job belongs to `interactive`.
+        // ===========================================
+        brand: {
+          DEFAULT: '#EAB308', // gold
+          strong: '#CA8A04', // hover / active / borders
+          subtle: '#A16207', // dim gold
+        },
+
+        // ===========================================
+        // INTERACTIVE / SELF — azure. Links, primary actions, active nav,
+        // focus rings, "your row" highlight. Replaces the legacy #0057B8,
+        // which failed WCAG (~2.9:1) on the app background; azure clears
+        // ~5.4:1. Warm gold vs. cool azure keeps reward and interaction
+        // perceptually distinct.
+        // ===========================================
+        interactive: {
+          DEFAULT: '#3B82F6', // azure
+          hover: '#2563EB',
+          subtle: '#1D4ED8',
+        },
+
+        // Legacy aliases — repointed to azure; migrated away by the sweep.
+        'espn-blue': '#3B82F6',
+        'dci-blue': '#3B82F6',
+        primary: '#3B82F6',
         'primary-content': '#FFFFFF',
 
         // Panel color

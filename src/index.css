@@ -12,11 +12,15 @@
   --bg-app: #0a0a0a;
   --bg-panel: #1a1a1a;
   --border-subtle: #333333;
-  --espn-blue: #0057b8;
+
+  /* Identity tokens (docs/VISUAL_IDENTITY_UNIFICATION.md) */
+  --brand: #eab308; /* permanent gold — logo / reward */
+  --interactive: #3b82f6; /* azure — links / focus / self */
+  --espn-blue: #3b82f6; /* deprecated alias → --interactive */
 
   /* Touch & Interaction */
   --touch-target-min: 44px;
-  --tap-highlight: rgba(0, 87, 184, 0.15);
+  --tap-highlight: rgba(59, 130, 246, 0.15);
 
   /* Safe areas for notched devices */
   --safe-top: env(safe-area-inset-top, 0px);

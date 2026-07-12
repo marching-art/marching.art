@@ -26,7 +26,7 @@ const sizeStyles: Record<SpinnerSize, string> = {
 
 const variantStyles: Record<SpinnerVariant, string> = {
   default: 'text-muted',
-  gold: 'text-[#eab308]',
+  gold: 'text-brand',
   white: 'text-white',
 };
 
@@ -85,7 +85,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             aria-label={label || 'Loading...'}
           >
             <div className="animate-pulse">
-              <BrandLogo className="w-12 h-12" color="text-[#eab308]" />
+              <BrandLogo className="w-12 h-12" color="text-brand" />
             </div>
           </div>
         </m.div>
@@ -119,7 +119,7 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
             role="status"
             aria-label={label}
           >
-            <BrandLogo className="w-24 h-24" color="text-[#eab308]" />
+            <BrandLogo className="w-24 h-24" color="text-brand" />
           </m.div>
         )}
       </div>
