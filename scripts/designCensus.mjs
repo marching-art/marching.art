@@ -102,6 +102,14 @@ const INVARIANTS = [
     re: /\bfont-display\b/g,
     allow: [],
   },
+  {
+    key: 'adhoc-heading',
+    label: 'Heading tags with inline large text size  (should route through <Heading>)',
+    // <h1>-<h4> whose opening tag hardcodes a display-scale size instead of
+    // using the Heading component / headingRecipes.
+    re: /<h[1-4][^>]*\btext-(?:lg|xl|2xl|3xl|4xl|5xl)\b/g,
+    allow: [],
+  },
 ];
 
 // -----------------------------------------------------------------------------
