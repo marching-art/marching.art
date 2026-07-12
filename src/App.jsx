@@ -55,6 +55,7 @@ const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
 const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
 const Landing = lazyWithRetry(() => import('./pages/Landing'), 'Landing');
 const PodiumLanding = lazyWithRetry(() => import('./pages/PodiumLanding'), 'PodiumLanding');
+const PodiumPreview = lazyWithRetry(() => import('./pages/PodiumPreview'), 'PodiumPreview');
 const RetiredCorpsGallery = lazyWithRetry(
   () => import('./pages/RetiredCorpsGallery'),
   'RetiredCorpsGallery'
@@ -385,6 +386,20 @@ function App() {
                         ) : (
                           <Suspense fallback={<LoadingScreen fullScreen />}>
                             <PodiumLanding />
+                          </Suspense>
+                        )
+                      }
+                    />
+                    {/* Podium "try it out" demo — the interactive Podium daily
+                        loop, no signup. Signed-in users go to the real thing. */}
+                    <Route
+                      path="/podium/preview"
+                      element={
+                        user ? (
+                          <Navigate to="/dashboard" />
+                        ) : (
+                          <Suspense fallback={<LoadingScreen fullScreen />}>
+                            <PodiumPreview />
                           </Suspense>
                         )
                       }

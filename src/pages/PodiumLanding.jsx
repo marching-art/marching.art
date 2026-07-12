@@ -28,6 +28,7 @@ import {
   Trophy,
   BookOpen,
   MessageCircle,
+  Play,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -211,8 +212,10 @@ const PodiumLanding = () => {
         </div>
       </header>
 
-      {/* MAIN */}
-      <main className="flex-1 overflow-y-auto scroll-momentum">
+      {/* MAIN — document-body scroll (like the index). A nested overflow-y-auto
+          here fights the flex column and traps/kills the scroll on tall
+          content, so let the page scroll normally. */}
+      <main className="flex-1 pb-16">
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             {/* ============================================================= */}
@@ -244,11 +247,23 @@ const PodiumLanding = () => {
                   and every night the recap tells you whether you called it right.
                 </p>
 
-                {/* Free-to-play chip */}
-                <div className="mt-5 inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-none">
-                  <Zap className="w-4 h-4 text-green-500" />
-                  <span className="text-sm font-semibold text-green-400">
-                    100% free — always open, no unlock
+                {/* CTA row: primary demo + free-to-play chip. The demo is the
+                    "try it out" path the index has (/preview) — a Podium version
+                    that needs no signup. */}
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <Link
+                    to="/podium/preview"
+                    className="inline-flex items-center gap-2 h-11 px-5 text-black font-bold text-sm uppercase tracking-wider active:scale-[0.98] transition-all duration-150 press-feedback-strong rounded-none"
+                    style={{ backgroundColor: GOLD }}
+                  >
+                    <Play className="w-4 h-4" />
+                    Try it — no signup
+                  </Link>
+                  <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-none">
+                    <Zap className="w-4 h-4 text-green-500" />
+                    <span className="text-sm font-semibold text-green-400">
+                      100% free, always open
+                    </span>
                   </span>
                 </div>
 
@@ -462,6 +477,16 @@ const PodiumLanding = () => {
                       )}
                     </div>
                   </form>
+
+                  {/* Try-the-demo path — mirrors the index's "Try Demo First",
+                      Podium-flavored and pointed at the sample loop. */}
+                  <Link
+                    to="/podium/preview"
+                    className="flex items-center justify-center gap-2 mx-5 mb-5 py-2.5 border border-[#c9a227]/30 rounded-none text-[#c9a227] hover:bg-[#c9a227]/10 hover:border-[#c9a227]/50 transition-colors"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span className="text-sm font-medium">Try the demo first</span>
+                  </Link>
                 </m.div>
 
                 {/* Reassurance strip */}
