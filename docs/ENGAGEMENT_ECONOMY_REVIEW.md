@@ -2,7 +2,7 @@
 
 > Generated: July 2026 (revised same month)
 > Scope: complete review of the user experience, gameplay process, and gamification elements, with a concrete plan for making CorpsCoin and XP valuable, giving new directors a guided path, and giving long-term directors goals worth chasing.
-> Assumption: **no real-money monetization.** The game is donation-supported (Buy Me a Coffee). CorpsCoin is a fully closed-loop currency — earned only by playing, spent only in-game. `MONETIZATION_ROADMAP.md` is deprecated; only its competitive-integrity principle carries forward.
+> Assumption: **no real-money monetization.** The game is donation-supported (Buy Me a Coffee). CorpsCoin is a fully closed-loop currency — earned only by playing, spent only in-game. The former `MONETIZATION_ROADMAP.md` has been removed; only its competitive-integrity principle carries forward.
 
 ---
 
