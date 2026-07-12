@@ -7,6 +7,7 @@ const { assertAuth } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const {
   VALID_CLASSES,
+  CORPS_NAME_CLASSES,
   normalizeCorpsName,
   isProfaneCorpsName,
   buildRetiredRecord,
@@ -266,8 +267,11 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
       // Final-state guard: within this user's active corps, no two classes
       // may share the same name. This catches scenarios like "move soundSport
       // → openClass" combined with "new soundSport" using the moved name.
+      // Sweep every name-bearing class (CORPS_NAME_CLASSES, incl. podiumClass),
+      // not just the fantasy classes this endpoint acts on, so a fantasy corps
+      // can't be left sharing a name with the director's own Podium corps.
       const finalNames = [];
-      for (const cls of validClasses) {
+      for (const cls of CORPS_NAME_CLASSES) {
         const name = updatedCorps[cls]?.corpsName;
         if (name) finalNames.push(name.toLowerCase().trim());
       }
@@ -742,7 +746,10 @@ exports.renameCorps = onCall({ cors: true }, async (request) => {
       }
 
       // Reject if the new name matches another of this director's active corps.
-      for (const cls of VALID_CLASSES) {
+      // Check every name-bearing class (CORPS_NAME_CLASSES, incl. podiumClass),
+      // not just the fantasy classes, so a rename can't collide with the
+      // director's own Podium corps.
+      for (const cls of CORPS_NAME_CLASSES) {
         if (cls === corpsClass) continue;
         const otherName = profileData.corps?.[cls]?.corpsName;
         if (otherName && normalizeCorpsName(otherName) === normalizedNewName) {
