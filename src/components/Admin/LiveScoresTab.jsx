@@ -113,8 +113,8 @@ const DeepScrapeCard = () => {
             overwrites existing values.
           </p>
           <div className="flex items-start gap-2 px-3 py-2 bg-surface-sunken border border-line">
-            <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] text-yellow-500/80">
+            <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-warning/80">
               Heavy, long-running job. It paginates all of dci.org's score history, so it may take a
               while and generate many background invocations. Safe to re-run; runs are idempotent.
             </p>
@@ -148,8 +148,8 @@ const DeepScrapeCard = () => {
             <span className="text-secondary">current year in full</span> (past + upcoming shows).
           </p>
           <div className="flex items-start gap-2 px-3 py-2 bg-surface-sunken border border-line">
-            <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] text-yellow-500/80">
+            <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-warning/80">
               Heavy, long-running job — ~1,100 event pages across all years. Safe to re-run; runs
               are idempotent.
             </p>
@@ -275,7 +275,7 @@ const ScheduleCoverageCard = () => {
                 {[
                   ['Expected', t.expected, 'text-white'],
                   ['Matched', t.matched, 'text-green-400'],
-                  ['Missing', t.missing, t.missing > 0 ? 'text-yellow-500' : 'text-muted'],
+                  ['Missing', t.missing, t.missing > 0 ? 'text-warning' : 'text-muted'],
                   ['Scraped', t.scraped, 'text-white'],
                   ['Learned', t.learned, 'text-white'],
                   ['All-Age Leak', t.allAgeLeak, t.allAgeLeak > 0 ? 'text-red-400' : 'text-muted'],
@@ -317,7 +317,7 @@ const ScheduleCoverageCard = () => {
                       <td className="py-1 pr-2">{r.year}</td>
                       <td className="py-1 pr-2">{r.expected}</td>
                       <td className="py-1 pr-2 text-green-400">{r.matched}</td>
-                      <td className={`py-1 pr-2 ${r.missingCount > 0 ? 'text-yellow-500' : ''}`}>
+                      <td className={`py-1 pr-2 ${r.missingCount > 0 ? 'text-warning' : ''}`}>
                         {r.missingCount}
                       </td>
                       <td className="py-1 pr-2">{r.scraped}</td>

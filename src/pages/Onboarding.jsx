@@ -505,14 +505,14 @@ const Onboarding = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted">Lineup Progress</span>
                         <span
-                          className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-yellow-400'}`}
+                          className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-secondary'}`}
                         >
                           {Object.keys(lineup).length}/8 selected
                         </span>
                       </div>
                       <div className="h-2 bg-charcoal-900 rounded-full mt-2 overflow-hidden">
                         <div
-                          className={`h-full transition-all ${isLineupValid ? 'bg-green-500' : 'bg-yellow-500'}`}
+                          className={`h-full transition-all ${isLineupValid ? 'bg-green-500' : 'bg-surface-elevated'}`}
                           style={{ width: `${(Object.keys(lineup).length / 8) * 100}%` }}
                         />
                       </div>

@@ -40,8 +40,8 @@ const GATE_CONFIGS = {
   // Trying to join a league
   league: {
     icon: Users,
-    iconColor: 'text-yellow-500',
-    iconBg: 'bg-yellow-500/20',
+    iconColor: 'text-secondary',
+    iconBg: 'bg-surface-raised',
     title: 'Join the Competition',
     description: 'Create a free account to join leagues and compete against other fans.',
     benefit: 'Weekly matchups, leaderboards, and bragging rights',
@@ -97,7 +97,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
           onClick={onClose}
         >
           <m.div

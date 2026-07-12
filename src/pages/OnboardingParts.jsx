@@ -71,7 +71,7 @@ export const GuidedCaptionSelection = ({
           <JargonTooltip termKey="caption">Caption</JargonTooltip> {currentCaptionIndex + 1} of 8
         </span>
         <span
-          className={`text-sm font-bold ${remainingPoints < 10 ? 'text-yellow-400' : 'text-green-400'}`}
+          className={`text-sm font-bold ${remainingPoints < 10 ? 'text-warning' : 'text-green-400'}`}
         >
           {remainingPoints} budget left
         </span>
@@ -128,7 +128,7 @@ export const GuidedCaptionSelection = ({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-yellow-400">Cost {selectedCorps.points}</span>
+              <span className="text-sm font-bold text-secondary">Cost {selectedCorps.points}</span>
               <button
                 onClick={handleDeselect}
                 className="text-xs text-red-400 hover:text-red-300 active:text-red-300 min-h-touch px-2 -my-2 press-feedback"
@@ -173,7 +173,7 @@ export const GuidedCaptionSelection = ({
                   className={`px-2 py-1 rounded-none text-xs font-bold ${
                     wouldExceedBudget
                       ? 'bg-red-500/20 text-red-400'
-                      : 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-surface-raised text-secondary'
                   }`}
                 >
                   Cost {corps.points}

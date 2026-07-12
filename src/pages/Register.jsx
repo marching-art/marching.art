@@ -239,7 +239,7 @@ const Register = () => {
                             passwordStrength === 'strong'
                               ? 'w-full bg-green-500'
                               : passwordStrength === 'medium'
-                                ? 'w-1/2 bg-yellow-500'
+                                ? 'w-1/2 bg-warning'
                                 : 'w-1/4 bg-red-500'
                           }`}
                         />
@@ -249,7 +249,7 @@ const Register = () => {
                           passwordStrength === 'strong'
                             ? 'text-green-500'
                             : passwordStrength === 'medium'
-                              ? 'text-yellow-500'
+                              ? 'text-warning'
                               : 'text-red-500'
                         }`}
                       >

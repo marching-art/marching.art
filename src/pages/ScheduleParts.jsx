@@ -199,21 +199,17 @@ const ShowCard = ({
       aria-label={isPast ? undefined : `Open registration for ${show.eventName}`}
       className={`
         bg-surface-card border rounded-none overflow-hidden
-        ${isMajor ? 'border-yellow-500/40' : 'border-line'}
-        ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-yellow-500/70' : 'hover:border-line-strong'} cursor-pointer active:bg-surface-raised`}
+        ${isMajor ? 'border-brand/40' : 'border-line'}
+        ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-brand/70' : 'hover:border-line-strong'} cursor-pointer active:bg-surface-raised`}
         ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
       `}
     >
       {/* Card Header */}
-      <div
-        className={`px-4 py-3 border-b border-line ${
-          isMajor ? 'bg-gradient-to-r from-yellow-500/10 to-transparent' : ''
-        }`}
-      >
+      <div className={`px-4 py-3 border-b border-line ${isMajor ? 'bg-brand/10' : ''}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             {isMajor && (
-              <div className="flex items-center gap-1 mb-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-yellow-500">
+              <div className="flex items-center gap-1 mb-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-brand">
                 <Trophy className="w-3 h-3" /> marching.art Major
               </div>
             )}
@@ -233,13 +229,13 @@ const ShowCard = ({
               )}
             </div>
             {show.multiNight?.nights?.length > 1 && (
-              <div className="mt-1 text-[10px] text-[#c9a227]">
+              <div className="mt-1 text-[10px] text-secondary">
                 Two-night event — one registration covers both nights; you perform on your assigned
                 night (lineups announced Day {show.multiNight.nights[0] - 2})
               </div>
             )}
             {show.sponsor?.corpsName && (
-              <div className="mt-1 text-[10px] text-yellow-500/90 truncate">
+              <div className="mt-1 text-[10px] text-secondary truncate">
                 ★ Presented by {show.sponsor.corpsName}
               </div>
             )}
@@ -316,14 +312,14 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
         isPast
           ? 'bg-surface-card border-line text-muted'
           : isMajorDay
-            ? 'bg-yellow-500/10 border-yellow-500/40'
+            ? 'bg-brand/10 border-brand/40'
             : 'bg-interactive/10 border-interactive/30'
       }
     `}
     >
       <span
         className={`text-[10px] font-bold uppercase ${
-          isPast ? 'text-muted' : isMajorDay ? 'text-yellow-500' : 'text-interactive'
+          isPast ? 'text-muted' : isMajorDay ? 'text-brand' : 'text-interactive'
         }`}
       >
         {dayOfWeek}
@@ -336,7 +332,7 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
           Day {dayNumber}
         </span>
       )}
-      {isMajorDay && !isPast && <Trophy className="w-3 h-3 text-yellow-500 mt-0.5" />}
+      {isMajorDay && !isPast && <Trophy className="w-3 h-3 text-brand mt-0.5" />}
     </div>
   );
 };
@@ -487,7 +483,7 @@ const ChampionshipEventCard = ({
       className={`
         bg-surface-card border border-line rounded-none overflow-hidden
         ${isPast ? 'opacity-60' : ''}
-        ${hasEligibleCorps && !isPast ? 'border-l-2 border-l-[#0057B8]' : ''}
+        ${hasEligibleCorps && !isPast ? 'border-l-2 border-l-interactive' : ''}
       `}
     >
       {/* Card Header */}
@@ -495,7 +491,7 @@ const ChampionshipEventCard = ({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+              <Trophy className="w-4 h-4 text-secondary flex-shrink-0" />
               <h3 className="text-sm font-bold text-white truncate leading-tight">
                 {event.eventName}
               </h3>
@@ -660,9 +656,9 @@ const ChampionshipWeekDisplay = ({
       )}
 
       {/* Championship Week Header */}
-      <div className="bg-gradient-to-r from-yellow-500/10 to-interactive/10 border border-yellow-500/20 rounded-none px-4 py-3">
+      <div className="bg-brand/10 border border-brand/20 rounded-none px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
-          <Trophy className="w-5 h-5 text-yellow-500" />
+          <Trophy className="w-5 h-5 text-brand" />
           <h3 className="text-[10px] font-bold text-white uppercase tracking-wider">
             Championship Week
           </h3>

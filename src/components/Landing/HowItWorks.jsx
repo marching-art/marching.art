@@ -45,8 +45,8 @@ const STEPS = [
     id: 2,
     title: 'Earn Points from Real Shows',
     icon: Calendar,
-    iconColor: 'text-yellow-500',
-    iconBg: 'bg-yellow-500/10',
+    iconColor: 'text-secondary',
+    iconBg: 'bg-surface-raised',
     summary: (
       <>
         Your lineup scores when <JargonTooltip termKey="dci">DCI</JargonTooltip> performs
@@ -192,7 +192,7 @@ const HowItWorks = () => {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-surface-raised border-b border-line">
         <h2 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
-          <Award className="w-3.5 h-3.5 text-yellow-500" />
+          <Award className="w-3.5 h-3.5 text-muted" />
           How It Works
         </h2>
         <button

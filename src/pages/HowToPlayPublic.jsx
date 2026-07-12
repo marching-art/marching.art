@@ -75,11 +75,8 @@ const HowToPlayPublic = () => {
       {/* Top bar */}
       <header className="border-b border-white/10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            to="/"
-            className="text-sm font-bold text-white hover:text-yellow-500 transition-colors"
-          >
-            marching<span className="text-yellow-500">.art</span>
+          <Link to="/" className="text-sm font-bold text-white hover:text-brand transition-colors">
+            marching<span className="text-brand">.art</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/login" className="text-muted hover:text-white transition-colors">
@@ -291,7 +288,7 @@ const HowToPlayPublic = () => {
           </p>
           <Link
             to="/podium-guide"
-            className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-[#c9a227]/50 text-[#c9a227] font-bold text-sm uppercase tracking-wider rounded-none hover:bg-[#c9a227]/10 transition-colors"
+            className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-interactive/50 text-interactive font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive/10 transition-colors"
           >
             Read the Podium Guide
             <ChevronRight className="w-4 h-4" />
@@ -364,7 +361,7 @@ const HowToPlayPublic = () => {
             </Link>
             <Link
               to="/preview"
-              className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-yellow-500/50 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-none hover:bg-yellow-500/10 transition-colors"
+              className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-interactive/50 text-interactive font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive/10 transition-colors"
             >
               <Play className="w-4 h-4" />
               Try the Demo

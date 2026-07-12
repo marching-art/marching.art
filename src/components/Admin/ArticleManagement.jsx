@@ -189,7 +189,7 @@ const ArticleManagement = () => {
       <div className="bg-surface-card border border-line rounded-none overflow-hidden">
         <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-yellow-500" />
+            <FileText className="w-4 h-4 text-secondary" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">
               Article Management
             </h2>

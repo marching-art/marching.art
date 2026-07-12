@@ -83,7 +83,7 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised flex-shrink-0">
             <div className="flex items-center gap-3">
-              <Trophy className="w-5 h-5 text-yellow-500" />
+              <Trophy className="w-5 h-5 text-brand" />
               <div>
                 <h2
                   id="modal-title-achievement"
@@ -105,10 +105,10 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
           <div className="p-4 overflow-y-auto flex-1">
             {/* New Achievement Highlight */}
             {newAchievement && (
-              <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30">
+              <div className="mb-4 p-4 bg-brand/10 border border-brand/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider">
+                  <Star className="w-4 h-4 text-brand" />
+                  <p className="text-[10px] font-bold text-brand uppercase tracking-wider">
                     Just Unlocked!
                   </p>
                 </div>
@@ -124,7 +124,7 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
                     <h3 className="text-sm font-bold text-white">{newAchievement.title}</h3>
                     <p className="text-xs text-muted">{newAchievement.description}</p>
                     {newAchievement.ccReward > 0 && (
-                      <p className="text-[11px] font-bold text-yellow-500 flex items-center gap-1 mt-1">
+                      <p className="text-[11px] font-bold text-brand flex items-center gap-1 mt-1">
                         <Coins className="w-3 h-3" />+{newAchievement.ccReward} CC
                       </p>
                     )}

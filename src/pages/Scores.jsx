@@ -315,7 +315,7 @@ const Scores = () => {
               </h1>
               <p className="text-[10px] text-muted">
                 {displayedSeasonName}
-                {isArchived && <span className="ml-1 text-yellow-500">(Archived)</span>}
+                {isArchived && <span className="ml-1 text-secondary">(Archived)</span>}
               </p>
             </div>
           </div>
@@ -439,7 +439,7 @@ const Scores = () => {
                   <div className="bg-surface-card border-b border-line px-4 py-3">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Archive className="w-4 h-4 text-yellow-500" />
+                        <Archive className="w-4 h-4 text-secondary" />
                         <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                           Historical Seasons
                         </span>
@@ -474,8 +474,8 @@ const Scores = () => {
                               }}
                               className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap rounded-none border transition-all tabular-nums ${
                                 selectedArchiveYear === year
-                                  ? 'bg-yellow-500 text-black border-yellow-500'
-                                  : 'bg-surface-raised text-secondary border-line-strong hover:border-yellow-500/50 hover:text-white'
+                                  ? 'bg-interactive text-white border-interactive'
+                                  : 'bg-surface-raised text-secondary border-line-strong hover:border-interactive/50 hover:text-white'
                               }`}
                             >
                               {year}
@@ -507,8 +507,8 @@ const Scores = () => {
                                 }}
                                 className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-none border transition-all ${
                                   selectedArchiveSeason === season.id
-                                    ? 'bg-yellow-500 text-black border-yellow-500'
-                                    : 'bg-surface-raised text-secondary border-line-strong hover:border-yellow-500/50 hover:text-white'
+                                    ? 'bg-interactive text-white border-interactive'
+                                    : 'bg-surface-raised text-secondary border-line-strong hover:border-interactive/50 hover:text-white'
                                 }`}
                               >
                                 {season.seasonName || season.id.replace(/_/g, ' ')}

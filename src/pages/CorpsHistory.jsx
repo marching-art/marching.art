@@ -81,7 +81,7 @@ const CorpsHistory = () => {
 
   const getClassColor = (corpsClass) => {
     const colors = {
-      worldClass: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
+      worldClass: 'text-secondary bg-surface-raised border-line',
       openClass: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
       aClass: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
       soundSport: 'text-green-400 bg-green-500/20 border-green-500/30',
@@ -207,7 +207,7 @@ const CorpsHistory = () => {
           <p className="text-muted/60 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-charcoal-900 rounded-none font-bold"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-interactive text-white rounded-none font-bold"
           >
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -265,7 +265,7 @@ const CorpsHistory = () => {
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-none border transition-all ${
                       selectedCorpsClass === corpsClass
-                        ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
+                        ? 'bg-interactive/20 border-interactive/50 text-interactive'
                         : 'bg-surface-sunken border-line text-muted hover:border-line-strong'
                     }`}
                   >
@@ -294,17 +294,17 @@ const CorpsHistory = () => {
               </div>
               {isSoundSportView ? (
                 <>
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-none p-3 text-center">
-                    <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">
+                  <div className="bg-surface-raised border border-line rounded-none p-3 text-center">
+                    <p className="text-[10px] text-muted uppercase tracking-wide mb-1">
                       Best Rating
                     </p>
-                    <p className="text-xl font-bold text-yellow-400">
+                    <p className="text-xl font-bold text-white">
                       {soundSportRatings.bestRating || '—'}
                     </p>
                   </div>
                   <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
                     <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Gold</p>
-                    <p className="text-xl font-mono font-bold text-yellow-400">
+                    <p className="text-xl font-mono font-bold text-brand">
                       {soundSportRatings.counts.Gold}
                     </p>
                   </div>
@@ -331,11 +331,11 @@ const CorpsHistory = () => {
                       {careerStats.totalPoints.toFixed(3)}
                     </p>
                   </div>
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-none p-3 text-center">
-                    <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">
+                  <div className="bg-surface-raised border border-line rounded-none p-3 text-center">
+                    <p className="text-[10px] text-muted uppercase tracking-wide mb-1">
                       Best Season
                     </p>
-                    <p className="text-xl font-mono font-bold text-yellow-400">
+                    <p className="text-xl font-mono font-bold text-white">
                       {careerStats.bestSeasonScore.toFixed(3)}
                     </p>
                   </div>
@@ -377,7 +377,7 @@ const CorpsHistory = () => {
                   onClick={() => setActiveView('chart')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wide transition-all ${
                     effectiveView === 'chart'
-                      ? 'bg-yellow-500/20 text-yellow-400'
+                      ? 'bg-interactive/20 text-interactive'
                       : 'text-muted/60 hover:text-secondary'
                   }`}
                 >
@@ -389,7 +389,7 @@ const CorpsHistory = () => {
                 onClick={() => setActiveView('timeline')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wide transition-all ${
                   effectiveView === 'timeline'
-                    ? 'bg-yellow-500/20 text-yellow-400'
+                    ? 'bg-interactive/20 text-interactive'
                     : 'text-muted/60 hover:text-secondary'
                 }`}
               >
@@ -423,7 +423,7 @@ const CorpsHistory = () => {
                     className="h-full min-h-[300px]"
                   >
                     <h3 className="text-sm font-bold text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-yellow-400" />
+                      <TrendingUp className="w-4 h-4 text-secondary" />
                       Performance Over Time
                     </h3>
                     <div className="h-[calc(100%-40px)] bg-surface-sunken border border-line rounded-none p-4">
@@ -449,24 +449,24 @@ const CorpsHistory = () => {
                           onClick={() => setSelectedSeason(isSelected ? null : index)}
                           className={`w-full text-left p-4 rounded-none border transition-all ${
                             isSelected
-                              ? 'bg-yellow-500/20 border-yellow-500/50'
+                              ? 'bg-interactive/20 border-interactive/50'
                               : 'bg-surface-sunken border-line hover:border-line-strong'
                           }`}
                         >
                           <div className="flex items-center gap-4">
                             <div
                               className={`w-12 h-12 rounded-none flex items-center justify-center ${
-                                isSelected ? 'bg-yellow-500/30' : 'bg-surface-raised'
+                                isSelected ? 'bg-interactive/30' : 'bg-surface-raised'
                               }`}
                             >
                               <Trophy
-                                className={`w-5 h-5 ${isSelected ? 'text-yellow-400' : 'text-muted'}`}
+                                className={`w-5 h-5 ${isSelected ? 'text-interactive' : 'text-muted'}`}
                               />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <h4
-                                  className={`font-bold truncate ${isSelected ? 'text-yellow-400' : 'text-white'}`}
+                                  className={`font-bold truncate ${isSelected ? 'text-interactive' : 'text-white'}`}
                                 >
                                   {season.seasonName || 'Unknown Season'}
                                 </h4>
@@ -497,7 +497,7 @@ const CorpsHistory = () => {
                             </div>
                             <ChevronRight
                               className={`w-5 h-5 transition-transform ${
-                                isSelected ? 'text-yellow-400 rotate-90' : 'text-muted/40'
+                                isSelected ? 'text-interactive rotate-90' : 'text-muted/40'
                               }`}
                             />
                           </div>
@@ -524,8 +524,8 @@ const CorpsHistory = () => {
                   {/* Panel Header */}
                   <div className="flex-shrink-0 p-4 border-b border-line">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-none bg-yellow-500/20 flex items-center justify-center">
-                        <Trophy className="w-5 h-5 text-yellow-400" />
+                      <div className="w-10 h-10 rounded-none bg-surface-raised flex items-center justify-center">
+                        <Trophy className="w-5 h-5 text-secondary" />
                       </div>
                       <div>
                         <h3 className="font-bold text-white truncate">{season.seasonName}</h3>
@@ -541,11 +541,11 @@ const CorpsHistory = () => {
                   {/* Panel Content */}
                   <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 space-y-4">
                     {/* Final Score / Rating */}
-                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-none p-4 text-center">
-                      <p className="text-xs text-yellow-400 uppercase tracking-wide mb-1">
+                    <div className="bg-surface-raised border border-line rounded-none p-4 text-center">
+                      <p className="text-xs text-muted uppercase tracking-wide mb-1">
                         {isSoundSportView ? 'Rating' : 'Final Score'}
                       </p>
-                      <p className="text-3xl font-bold text-yellow-400 font-mono">
+                      <p className="text-3xl font-bold text-white font-mono">
                         {isSoundSportView
                           ? season.totalSeasonScore > 0
                             ? getSoundSportRating(season.totalSeasonScore)

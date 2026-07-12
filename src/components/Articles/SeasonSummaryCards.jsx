@@ -11,7 +11,7 @@ import { Trophy, Swords, Medal, Award } from 'lucide-react';
 const fmt = (n, d = 2) => (typeof n === 'number' ? n.toFixed(d) : n);
 
 const RATING_STYLES = {
-  Gold: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10',
+  Gold: 'text-brand border-brand/30 bg-brand/10',
   Silver: 'text-secondary border-charcoal-400/30 bg-charcoal-400/10',
   Bronze: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
   Participation: 'text-blue-300 border-blue-500/30 bg-blue-500/10',

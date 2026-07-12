@@ -52,7 +52,7 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
                   ) : (
                     // Other classes: Display numeric score
                     <>
-                      <p className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                      <p className="text-sm font-bold text-main font-data tabular-nums">
                         {result.score?.toFixed(2)}
                       </p>
                       {result.placement && (

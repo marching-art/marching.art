@@ -138,7 +138,7 @@ export default function HostEventCard({ seasonUid }) {
   return (
     <div className="mx-3 my-4 bg-surface-card border border-line rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#c9a227]">
+        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-secondary">
           <Landmark className="w-3 h-3" /> Host Your Own Show
         </span>
       </div>
@@ -155,11 +155,11 @@ export default function HostEventCard({ seasonUid }) {
       </p>
 
       {!hasCorps && (
-        <div className="text-[10px] text-amber-400">Field a corps before hosting events.</div>
+        <div className="text-[10px] text-warning">Field a corps before hosting events.</div>
       )}
 
       {hasCorps && seasonLimitReached && (
-        <div className="text-[10px] text-amber-400">
+        <div className="text-[10px] text-warning">
           You&apos;ve already hosted a show this season — directors can host one show per season.
         </div>
       )}
@@ -188,7 +188,7 @@ export default function HostEventCard({ seasonUid }) {
                 locked
                   ? 'border-line-muted opacity-50 cursor-not-allowed'
                   : venueTier === t.id
-                    ? 'border-[#c9a227] bg-[#c9a227]/10'
+                    ? 'border-interactive bg-interactive/10'
                     : 'border-line hover:border-line-strong'
               }`}
             >
@@ -304,7 +304,7 @@ export default function HostEventCard({ seasonUid }) {
               busy || !hasCorps || seasonLimitReached || !selectedVenue || corpsCoin < tier.rentalCC
             }
             className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider
-                  bg-[#c9a227] text-black disabled:bg-line disabled:text-muted press-feedback"
+                  bg-interactive text-white disabled:bg-line disabled:text-muted press-feedback"
           >
             {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Book Venue'}
           </button>

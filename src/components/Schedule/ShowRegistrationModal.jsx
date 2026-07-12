@@ -355,7 +355,7 @@ const ShowRegistrationModal = ({
 
       {/* Two-night event notice (e.g. the Eastern Classic, days 41-42) */}
       {show.multiNight?.nights?.length > 1 && (
-        <div className="mt-2 px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227]">
+        <div className="mt-2 px-3 py-2 bg-surface-raised border border-line text-[10px] text-secondary">
           Two-night event (Days {show.multiNight.nights.join(' & ')}): registering counts as ONE
           show and covers both nights. Each corps performs once, on its assigned night — night
           lineups are announced on Day {show.multiNight.nights[0] - 2}.
@@ -377,10 +377,10 @@ const ShowRegistrationModal = ({
       {/* marching.art Major banner (§5.11): exclusive day, full-field
           convergence — the season's shared reference points */}
       {show.eventTier === 'regional' && !isChampionship && (
-        <div className="mx-4 mt-4 flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30">
-          <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+        <div className="mx-4 mt-4 flex items-start gap-3 p-3 bg-brand/10 border border-brand/30">
+          <Trophy className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-yellow-400 mb-0.5">marching.art Major</p>
+            <p className="text-sm font-bold text-brand mb-0.5">marching.art Major</p>
             <p className="text-xs text-muted">
               The only event on this day — the whole field converges here, and every class is scored
               on the same night at the same show.
@@ -393,10 +393,10 @@ const ShowRegistrationModal = ({
       {isChampionship ? (
         <div className="px-4 py-6">
           {/* Auto-Enrollment Banner */}
-          <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 mb-4">
-            <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-4 bg-brand/10 border border-brand/30 mb-4">
+            <Trophy className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-bold text-yellow-400 mb-1">Championship Event</p>
+              <p className="text-sm font-bold text-brand mb-1">Championship Event</p>
               <p className="text-xs text-muted">
                 Eligible corps are automatically enrolled. No manual registration required.
               </p>
@@ -579,7 +579,7 @@ const ShowRegistrationModal = ({
                   flex items-center gap-3 p-4 w-full text-left transition-colors min-h-[60px]
                   ${
                     podiumAttend
-                      ? 'bg-yellow-400/5 border-l-2 border-l-yellow-400'
+                      ? 'bg-brand/5 border-l-2 border-l-brand'
                       : 'hover:bg-white/5 active:bg-white/10'
                   }
                   ${podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
@@ -588,7 +588,7 @@ const ShowRegistrationModal = ({
                 <div
                   className={`
                   w-5 h-5 border-2 flex items-center justify-center flex-shrink-0
-                  ${podiumAttend || podiumIsMyAutoDay ? 'bg-yellow-500 border-yellow-500' : 'border-line-strong'}
+                  ${podiumAttend || podiumIsMyAutoDay ? 'bg-brand border-brand' : 'border-line-strong'}
                 `}
                 >
                   {(podiumAttend || podiumIsMyAutoDay) && (
@@ -600,7 +600,7 @@ const ShowRegistrationModal = ({
                     <span className="font-bold text-white text-sm truncate">
                       {podiumInfo.corpsName}
                     </span>
-                    <span className="text-[10px] font-bold uppercase text-yellow-400">Podium</span>
+                    <span className="text-[10px] font-bold uppercase text-brand">Podium</span>
                   </div>
                   <div className="mt-0.5 text-[11px] text-muted">
                     {podiumIsMyAutoDay
@@ -716,7 +716,7 @@ const ShowRegistrationModal = ({
       <button
         onClick={handleSave}
         disabled={saving || !hasChanges}
-        className="flex-1 h-12 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
+        className="flex-1 h-12 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-interactive-subtle press-feedback-strong"
       >
         {saving ? (
           <>

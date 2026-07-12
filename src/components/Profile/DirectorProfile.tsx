@@ -623,7 +623,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         <div className="bg-surface-card border border-line">
           <div className="px-3 py-2 border-b border-line bg-surface-raised flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+              <Trophy className="w-3.5 h-3.5 text-brand" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                 Trophy Case
               </span>
@@ -705,7 +705,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 {
                   label: 'Championships',
                   value: profile.trophies?.championships?.length || 0,
-                  color: 'text-yellow-400',
+                  color: 'text-brand',
                 },
                 {
                   label: 'Career Shows',

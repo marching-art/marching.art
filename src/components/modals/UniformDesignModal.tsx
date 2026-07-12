@@ -603,7 +603,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                           type="checkbox"
                           checked={copyToClasses.includes(corps.classKey)}
                           onChange={() => toggleCopyToClass(corps.classKey)}
-                          className="w-4 h-4 bg-background border border-line rounded-none accent-[#0057B8]"
+                          className="w-4 h-4 bg-background border border-line rounded-none accent-interactive"
                         />
                         <div className="flex-1">
                           <span className="text-sm text-white">{corps.corpsName}</span>
@@ -614,13 +614,13 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                           </span>
                         </div>
                         {corps.uniformDesign && (
-                          <span className="text-[9px] text-yellow-500 uppercase">Has Design</span>
+                          <span className="text-[9px] text-secondary uppercase">Has Design</span>
                         )}
                       </label>
                     ))}
                   </div>
                   {copyToClasses.length > 0 && (
-                    <p className="text-[10px] text-yellow-500">
+                    <p className="text-[10px] text-warning">
                       This will overwrite existing designs for {copyToClasses.length} ensemble
                       {copyToClasses.length > 1 ? 's' : ''}.
                     </p>

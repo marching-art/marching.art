@@ -116,7 +116,7 @@ const UsersTab = () => {
               <Flame className="w-3 h-3" />
               Avg Streak
             </p>
-            <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">
+            <p className="text-xl font-bold text-secondary font-data tabular-nums">
               {stats.avgLoginStreak}d
             </p>
           </div>
@@ -222,7 +222,7 @@ const UsersTab = () => {
                       <td className="px-4 py-2.5 text-sm text-white font-data">{user.xpLevel}</td>
                       <td className="px-4 py-2.5">
                         <span
-                          className={`text-sm font-data ${user.loginStreak >= 7 ? 'text-yellow-500' : user.loginStreak >= 3 ? 'text-green-500' : 'text-muted'}`}
+                          className={`text-sm font-data ${user.loginStreak >= 7 ? 'text-secondary' : user.loginStreak >= 3 ? 'text-green-500' : 'text-muted'}`}
                         >
                           {user.loginStreak > 0 ? `${user.loginStreak}d` : '—'}
                         </span>

@@ -85,7 +85,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
       case 'close_game':
         return 'text-red-500 bg-red-500/10 border-red-500/30';
       case 'top_scorer':
-        return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30';
+        return 'text-brand bg-brand/10 border-brand/30';
       default:
         return 'text-blue-500 bg-blue-500/10 border-blue-500/30';
     }
@@ -93,7 +93,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
 
   return (
     <div className="bg-surface-card border border-line">
-      <div className="px-4 py-3 border-b border-line bg-gradient-to-r from-[#222] to-purple-500/10">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-purple-500" />
@@ -152,7 +152,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
             )}
             {recap.stats.highestScorer && (
               <div className="bg-surface-raised p-2 text-center">
-                <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
+                <Trophy className="w-4 h-4 text-brand mx-auto mb-1" />
                 <p className="text-[9px] text-muted uppercase">Top Score</p>
                 <p className="text-xs font-bold text-white truncate">
                   {recap.stats.highestScorer.score?.toFixed(1)}
@@ -207,21 +207,21 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
     switch (intensity) {
       case 'intense':
         return {
-          bg: 'bg-gradient-to-r from-red-500/20 to-orange-500/20',
+          bg: 'bg-surface-raised',
           border: 'border-red-500/50',
           badge: 'bg-red-500',
           badgeText: 'INTENSE',
         };
       case 'established':
         return {
-          bg: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20',
+          bg: 'bg-surface-raised',
           border: 'border-purple-500/50',
           badge: 'bg-purple-500',
           badgeText: 'ESTABLISHED',
         };
       default:
         return {
-          bg: 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20',
+          bg: 'bg-surface-raised',
           border: 'border-blue-500/50',
           badge: 'bg-blue-500',
           badgeText: 'EMERGING',
@@ -254,7 +254,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
 
   return (
     <div className="bg-surface-card border border-line">
-      <div className="px-4 py-3 border-b border-line bg-gradient-to-r from-[#222] to-red-500/10">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 text-red-500" />

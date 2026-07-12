@@ -137,7 +137,7 @@ const StandingsTab = ({
           <button
             onClick={() => setViewMode('dashboard')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'dashboard' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
+              viewMode === 'dashboard' ? 'bg-interactive text-white' : 'text-muted hover:text-white'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
@@ -146,7 +146,7 @@ const StandingsTab = ({
           <button
             onClick={() => setViewMode('table')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'table' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
+              viewMode === 'table' ? 'bg-interactive text-white' : 'text-muted hover:text-white'
             }`}
           >
             <Table2 className="w-3.5 h-3.5" />
@@ -184,7 +184,7 @@ const StandingsTab = ({
                 className="w-full px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between hover:bg-surface-elevated transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                  <Trophy className="w-3.5 h-3.5 text-secondary" />
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                     Standings Preview
                   </span>
@@ -217,7 +217,7 @@ const StandingsTab = ({
                           </span>
                           <MemberFlair uid={stats.uid} />
                           {stats.uid === league?.creatorId && (
-                            <Crown className="w-3 h-3 text-yellow-500" />
+                            <Crown className="w-3 h-3 text-secondary" />
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -279,7 +279,7 @@ const StandingsTab = ({
               <div className="px-4 py-3 border-b border-line bg-surface-raised">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                    <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                    <Trophy className="w-3.5 h-3.5 text-secondary" />
                     Standings
                     {lastUpdated && (
                       <span className="text-[9px] text-muted font-normal normal-case ml-2">
@@ -378,7 +378,7 @@ const StandingsTab = ({
                                   </p>
                                   <MemberFlair uid={stats.uid} />
                                   {isCommissioner && (
-                                    <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                                    <Crown className="w-3 h-3 text-secondary flex-shrink-0" />
                                   )}
                                   {hasStats && (
                                     <ChevronDown
@@ -402,7 +402,7 @@ const StandingsTab = ({
 
                             {/* Points For */}
                             <td className="text-right py-2 px-2">
-                              <span className="font-bold text-yellow-500 font-data tabular-nums text-sm">
+                              <span className="font-bold text-secondary font-data tabular-nums text-sm">
                                 {stats.totalPoints.toFixed(1)}
                               </span>
                             </td>
@@ -585,7 +585,7 @@ const StandingsTab = ({
                                 {getDisplayName(stats.uid)}
                               </p>
                               {isCommissioner && (
-                                <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                                <Crown className="w-3 h-3 text-secondary flex-shrink-0" />
                               )}
                             </div>
                           );
@@ -605,7 +605,7 @@ const StandingsTab = ({
                   className="w-full bg-surface-card border border-line px-4 py-3 flex items-center justify-between hover:bg-surface-raised transition-colors mb-3"
                 >
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-yellow-500" />
+                    <BarChart3 className="w-4 h-4 text-secondary" />
                     <span className="text-xs font-bold uppercase tracking-wider text-muted">
                       Season Leaderboards
                     </span>
@@ -646,7 +646,7 @@ const StandingsTab = ({
 const RankBadge = React.memo(({ rank, isPlayoffSpot }) => {
   if (rank === 1) {
     return (
-      <div className="inline-flex items-center justify-center w-6 h-6 bg-yellow-500/20 text-yellow-500 text-xs font-bold">
+      <div className="inline-flex items-center justify-center w-6 h-6 bg-brand/20 text-brand text-xs font-bold">
         1
       </div>
     );

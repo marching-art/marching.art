@@ -29,7 +29,7 @@ const cityLine = (city, stadium) => (stadium ? `${city} · ${stadium}` : city ||
 
 // One ranked overlap window — day, host city/stadium, distance, fit, cost.
 function WindowCard({ win, selected, onSelect }) {
-  const fitColor = win.isFree ? 'text-green-400' : 'text-amber-400';
+  const fitColor = win.isFree ? 'text-green-400' : 'text-warning';
   return (
     <button
       type="button"
@@ -49,7 +49,7 @@ function WindowCard({ win, selected, onSelect }) {
       <div className="min-w-0">
         <div className="text-[12px] font-bold text-white truncate">{win.city || 'TBA'}</div>
         {win.stadium && (
-          <div className="text-[10px] font-mono text-[#c9a227] truncate">{win.stadium}</div>
+          <div className="text-[10px] font-mono text-secondary truncate">{win.stadium}</div>
         )}
         <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1 text-[9px] font-mono text-muted">
           {win.milesApart != null && <span>{win.milesApart} mi apart</span>}
@@ -62,11 +62,11 @@ function WindowCard({ win, selected, onSelect }) {
       </div>
       <div className="text-right space-y-1">
         <div
-          className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-amber-400'}`}
+          className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-warning'}`}
         >
           {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost}`}
         </div>
-        <div className="text-[8px] font-mono uppercase tracking-wider text-[#c9a227] border border-[#8c7220] rounded-none px-1.5 py-0.5 inline-block">
+        <div className="text-[8px] font-mono uppercase tracking-wider text-secondary border border-line rounded-none px-1.5 py-0.5 inline-block">
           Ens +{win.ensembleBonusPct}%
         </div>
       </div>
@@ -91,7 +91,7 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
       </div>
       <div className="px-3 py-2.5 space-y-2.5">
         <div className="text-[11px] text-secondary flex items-center gap-1.5">
-          <MapPin className="w-3 h-3 text-[#c9a227] shrink-0" />
+          <MapPin className="w-3 h-3 text-muted shrink-0" />
           <span className="truncate">{cityLine(proposal.city, proposal.stadium)}</span>
         </div>
         <div className="grid grid-cols-2 gap-px bg-line border border-line">
@@ -110,12 +110,12 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
             <div className="text-[8px] font-mono uppercase tracking-wider text-muted mb-1">
               Your gain
             </div>
-            <div className="text-[13px] font-bold text-[#c9a227]">Ensemble +25%</div>
+            <div className="text-[13px] font-bold text-secondary">Ensemble +25%</div>
             <div className="text-[9px] text-muted mt-0.5">+ morale &amp; the scrimmage report.</div>
           </div>
         </div>
         {blocked && (
-          <p className="text-[9px] font-mono text-amber-400/80">
+          <p className="text-[9px] font-mono text-warning">
             Week {Math.ceil(proposal.day / 7)} already has a joint — that week is full.
           </p>
         )}
@@ -170,8 +170,8 @@ function TaleOfTheTape({ scrimmage }) {
 
   return (
     <div className="border border-line rounded-none overflow-hidden">
-      <div className="px-3 py-2 text-center border-b border-line bg-gradient-to-b from-[#c9a227]/10 to-transparent">
-        <div className="text-[8px] font-mono uppercase tracking-[0.3em] text-[#c9a227]">
+      <div className="px-3 py-2 text-center border-b border-line bg-surface-raised">
+        <div className="text-[8px] font-mono uppercase tracking-[0.3em] text-secondary">
           Tale of the Tape
         </div>
         <div className="text-[9px] font-mono text-muted mt-1">
@@ -368,7 +368,7 @@ export default function JointRehearsalPanel() {
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <Handshake className="w-3 h-3" /> Joint Rehearsals
           {incoming.length > 0 && (
-            <span className="px-1.5 py-0.5 bg-[#c9a227] text-black rounded-none text-[9px]">
+            <span className="px-1.5 py-0.5 bg-interactive text-white rounded-none text-[9px]">
               {incoming.length}
             </span>
           )}
@@ -392,20 +392,20 @@ export default function JointRehearsalPanel() {
       {upcoming.map((joint) => (
         <div
           key={joint.day}
-          className="px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227] flex items-start gap-2"
+          className="px-3 py-2 bg-surface-sunken border border-line text-[10px] text-secondary flex items-start gap-2"
         >
           <Handshake className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
           <span>
             Day {joint.day} (Wk {weekOf(joint.day)}): joint rehearsal with{' '}
             <span className="font-bold">{joint.partnerCorpsName}</span>
             {joint.city && (
-              <span className="text-[#c9a227]/70">
+              <span className="text-muted">
                 {' '}
                 <MapPin className="w-2.5 h-2.5 inline" /> {cityLine(joint.city, joint.stadium)}
               </span>
             )}
             {joint.travelTier && (
-              <span className="text-amber-400">
+              <span className="text-warning">
                 {' '}
                 · you cover the {TIER_LABELS[joint.travelTier] || joint.travelTier} leg
               </span>
@@ -469,7 +469,7 @@ export default function JointRehearsalPanel() {
                   type="button"
                   disabled={busy || !toUid}
                   onClick={findOverlaps}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#c9a227] text-black disabled:bg-line disabled:text-muted press-feedback"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-interactive text-white disabled:bg-line disabled:text-muted press-feedback"
                 >
                   {busy ? (
                     <Loader2 className="w-3 h-3 animate-spin" />

@@ -65,7 +65,7 @@ const CommunityPulse = memo(() => {
   const iconMap = {
     users: <Users className="w-3.5 h-3.5 text-blue-500" />,
     trending: <TrendingUp className="w-3.5 h-3.5 text-green-500" />,
-    award: <Award className="w-3.5 h-3.5 text-yellow-500" />,
+    award: <Award className="w-3.5 h-3.5 text-brand" />,
   };
 
   return (

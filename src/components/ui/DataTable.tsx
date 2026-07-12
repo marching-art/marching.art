@@ -117,7 +117,7 @@ const TableRowComponent = <T extends Record<string, unknown>>({
         h-11 border-b border-line/50
         ${rowBg}
         ${onRowClick ? 'cursor-pointer hover:bg-surface-raised' : ''}
-        ${isHighlighted ? '!bg-interactive/10 border-l-2 border-l-[#0057B8]' : ''}
+        ${isHighlighted ? '!bg-interactive/10 border-l-2 border-l-interactive' : ''}
       `.trim()}
       onClick={onRowClick ? handleClick : undefined}
       onKeyDown={onRowClick ? handleKeyDown : undefined}

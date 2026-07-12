@@ -52,7 +52,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="relative bg-gradient-to-br from-green-900/30 via-[#1a1a1a] to-[#1a1a1a] border border-green-500/30 rounded-none overflow-hidden mb-4"
+      className="relative bg-surface-card border border-green-500/30 rounded-none overflow-hidden mb-4"
     >
       {/* Dismiss button */}
       {onDismiss && (
@@ -180,7 +180,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
 export const SoundSportBanner = () => (
   <Link
     to="/guide"
-    className="flex items-center justify-between p-3 bg-gradient-to-r from-green-900/30 to-transparent border border-green-500/30 rounded-none hover:border-green-500/50 transition-colors group"
+    className="flex items-center justify-between p-3 bg-surface-raised border border-green-500/30 rounded-none hover:border-green-500/50 transition-colors group"
   >
     <div className="flex items-center gap-3">
       <div className="p-1.5 bg-green-500/20 rounded-none">

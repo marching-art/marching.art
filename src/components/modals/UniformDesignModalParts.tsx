@@ -49,7 +49,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
                     avatarStyle: e.target.value as 'logo' | 'performer',
                   })
                 }
-                className="w-4 h-4 accent-[#0057B8]"
+                className="w-4 h-4 accent-interactive"
               />
               <div>
                 <div className="text-sm text-white font-bold">{style.label}</div>
@@ -88,7 +88,7 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
                         'drumMajor' | 'hornline' | 'drumline' | 'colorGuard',
                     })
                   }
-                  className="w-4 h-4 accent-[#0057B8]"
+                  className="w-4 h-4 accent-interactive"
                 />
                 <div>
                   <div className="text-sm text-white font-bold">{section.label}</div>

@@ -84,7 +84,7 @@ const MatchupHistoryItem = ({
           ? user1Won
             ? 'bg-green-500/5'
             : isTie
-              ? 'bg-yellow-500/5'
+              ? 'bg-surface-raised'
               : 'bg-red-500/5'
           : ''
       }`}
@@ -96,7 +96,7 @@ const MatchupHistoryItem = ({
           {isBlowout && <Zap className="w-3 h-3 text-red-400" />}
           <span
             className={`text-xs font-bold ${
-              isTie ? 'text-yellow-400' : user1Won ? 'text-green-400' : 'text-red-400'
+              isTie ? 'text-secondary' : user1Won ? 'text-green-400' : 'text-red-400'
             }`}
           >
             {isTie ? 'TIE' : user1Won ? 'W' : 'L'}
@@ -211,7 +211,7 @@ const RivalryHistoryCard = ({
               <span className={user2Wins > user1Wins ? 'text-red-400' : 'text-muted'}>
                 {user2Wins}
               </span>
-              {ties > 0 && <span className="text-yellow-400">-{ties}</span>}
+              {ties > 0 && <span className="text-secondary">-{ties}</span>}
             </p>
           </div>
           <div>
@@ -288,7 +288,7 @@ const RivalryHistoryCard = ({
             </div>
 
             <div className="text-center px-4">
-              {ties > 0 && <p className="text-lg font-bold text-yellow-400">{ties}</p>}
+              {ties > 0 && <p className="text-lg font-bold text-secondary">{ties}</p>}
               <p className="text-[10px] text-muted uppercase">{ties > 0 ? 'Ties' : 'vs'}</p>
             </div>
 
@@ -340,7 +340,7 @@ const RivalryHistoryCard = ({
         {/* Battle Points & Streak Row */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-surface-sunken p-2.5 text-center">
-            <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
+            <Trophy className="w-4 h-4 text-secondary mx-auto mb-1" />
             <p className="text-[10px] text-muted uppercase mb-0.5">Total BP</p>
             <p className="text-sm font-bold font-data tabular-nums">
               <span className="text-green-400">{user1TotalBattlePoints}</span>
@@ -431,7 +431,7 @@ const RivalryHistoryCard = ({
         {/* Matchup History */}
         <div>
           <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
-            <Award className="w-3 h-3 text-yellow-400" />
+            <Award className="w-3 h-3 text-secondary" />
             Match History
           </h4>
           <div className="bg-surface-sunken divide-y divide-line-subtle">

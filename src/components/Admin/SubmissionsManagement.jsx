@@ -22,7 +22,7 @@ import { listPendingSubmissions, approveSubmission, rejectSubmission } from '../
 
 // Status badge colors
 const STATUS_COLORS = {
-  pending: 'bg-yellow-500/20 text-yellow-400',
+  pending: 'bg-warning/20 text-warning',
   scheduled: 'bg-purple-500/20 text-purple-400',
   approved: 'bg-green-500/20 text-green-400',
   rejected: 'bg-red-500/20 text-red-400',
@@ -159,7 +159,7 @@ const SubmissionsManagement = () => {
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
               {status === 'pending' && pendingCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 bg-yellow-500 text-black text-[10px] font-bold rounded-full">
+                <span className="ml-1.5 px-1.5 py-0.5 bg-warning text-black text-[10px] font-bold rounded-full">
                   {pendingCount}
                 </span>
               )}
@@ -454,7 +454,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                           onChange={(e) => setImageOption(e.target.value)}
                           className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                         />
-                        <Sparkles className="w-4 h-4 text-yellow-500" />
+                        <Sparkles className="w-4 h-4 text-secondary" />
                         <span>Generate AI image (Fantasy Daily style)</span>
                       </label>
 

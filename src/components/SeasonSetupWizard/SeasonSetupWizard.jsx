@@ -423,7 +423,7 @@ const SeasonSetupWizard = ({
                             border-b border-line/50 h-12
                             ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}
                             ${isUnlocked && !hasExisting ? 'cursor-pointer hover:bg-white/5' : 'opacity-50'}
-                            ${isSelected ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]' : ''}
+                            ${isSelected ? 'bg-interactive/10 border-l-2 border-l-interactive' : ''}
                           `}
                         >
                           <td className="px-4 py-2">

@@ -59,7 +59,7 @@ const colorMap = {
     bg: 'bg-purple-500/10',
     border: 'border-purple-500/30',
   },
-  new_champion: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  new_champion: { text: 'text-brand', bg: 'bg-brand/10', border: 'border-brand/30' },
   standings_change: { text: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
   new_message: { text: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/30' },
   trade_proposal: {
@@ -70,20 +70,20 @@ const colorMap = {
   trade_response: { text: 'text-teal-500', bg: 'bg-teal-500/10', border: 'border-teal-500/30' },
   member_joined: { text: 'text-cyan-500', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
   rivalry_matchup: { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' },
-  show_result: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  show_result: { text: 'text-secondary', bg: 'bg-surface-raised', border: 'border-line' },
   week_start: { text: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
   week_end: { text: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/30' },
   // New transaction log event types
   lineup_update: {
-    text: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
+    text: 'text-secondary',
+    bg: 'bg-surface-raised',
+    border: 'border-line',
   },
-  season_high: { text: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+  season_high: { text: 'text-brand', bg: 'bg-brand/10', border: 'border-brand/30' },
   commissioner_action: {
-    text: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
+    text: 'text-secondary',
+    bg: 'bg-surface-raised',
+    border: 'border-line',
   },
   achievement_unlocked: {
     text: 'text-emerald-500',
@@ -126,13 +126,13 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       onClick={handleClick}
       className={`
         relative flex items-start gap-3 p-3 rounded-none cursor-pointer transition-all
-        ${isNotification && !activity.read ? 'bg-surface-raised border border-yellow-500/30' : 'bg-surface-card border border-line'}
+        ${isNotification && !activity.read ? 'bg-surface-raised border border-warning/30' : 'bg-surface-card border border-line'}
         hover:border-line-strong
       `}
     >
       {/* Unread indicator */}
       {isNotification && !activity.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-none bg-yellow-500 animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-none bg-warning animate-pulse" />
       )}
 
       {/* Icon */}
@@ -175,7 +175,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
               </span>
             )}
             {activity.metadata.score && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-yellow-500/10 text-yellow-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-surface-raised text-secondary flex items-center gap-1">
                 <Target className="w-3 h-3" />
                 {activity.metadata.score.toFixed(1)}
               </span>
@@ -186,7 +186,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
               </span>
             )}
             {activity.metadata.seasonHigh && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-amber-500/10 text-amber-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-brand/10 text-brand flex items-center gap-1">
                 <Star className="w-3 h-3" />
                 Season High!
               </span>
@@ -221,7 +221,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
     onClick={onClick}
     className={`
       relative px-3 py-1.5 rounded-none text-xs font-bold transition-all
-      ${active ? 'bg-yellow-500 text-black' : 'bg-surface-raised text-muted hover:bg-line'}
+      ${active ? 'bg-interactive text-white' : 'bg-surface-raised text-muted hover:bg-line'}
     `}
   >
     {children}
@@ -229,7 +229,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
       <span
         className={`
         absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-none text-[10px] flex items-center justify-center
-        ${active ? 'bg-black text-yellow-500' : 'bg-yellow-500 text-black'}
+        ${active ? 'bg-black text-interactive' : 'bg-interactive text-white'}
       `}
       >
         {count > 99 ? '99+' : count}
@@ -338,10 +338,10 @@ const LeagueActivityFeed = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-yellow-500" />
+          <Bell className="w-4 h-4 text-secondary" />
           <h3 className="text-sm font-bold text-white">Activity Feed</h3>
           {leagueUnreadCount > 0 && (
-            <span className="px-2 py-0.5 rounded-none bg-yellow-500/10 text-yellow-500 text-xs font-bold">
+            <span className="px-2 py-0.5 rounded-none bg-warning/10 text-warning text-xs font-bold">
               {leagueUnreadCount} new
             </span>
           )}
@@ -460,10 +460,10 @@ export const NotificationDropdown = ({
       {/* Header */}
       <div className="sticky top-0 bg-surface-card p-3 border-b border-line flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-yellow-500" />
+          <Bell className="w-4 h-4 text-secondary" />
           <span className="font-bold text-white">Notifications</span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.5 rounded-none bg-yellow-500 text-black text-xs font-bold">
+            <span className="px-1.5 py-0.5 rounded-none bg-warning text-black text-xs font-bold">
               {unreadCount}
             </span>
           )}

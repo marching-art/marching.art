@@ -106,7 +106,7 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
       onClick={() => onSelect(season)}
       className={`
         w-full text-left px-4 py-3 border-b border-line transition-colors
-        ${isSelected ? 'bg-interactive/15 border-l-2 border-l-[#0057B8]' : 'border-l-2 border-l-transparent hover:bg-surface-sunken'}
+        ${isSelected ? 'bg-interactive/15 border-l-2 border-l-interactive' : 'border-l-2 border-l-transparent hover:bg-surface-sunken'}
       `}
     >
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -121,7 +121,7 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
         {soundSport ? (
           <BlueRibbonIcon className="w-3 h-3 flex-shrink-0" />
         ) : (
-          <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+          <Crown className="w-3 h-3 text-brand flex-shrink-0" />
         )}
         <span className="text-xs text-white truncate min-w-0 flex-1">
           {champ.corpsName || champ.username || '—'}
@@ -166,7 +166,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
       {/* Top banner */}
       <div
         className={`px-4 py-2 flex items-center justify-between ${
-          soundSport ? 'bg-interactive text-white' : 'bg-yellow-500 text-black'
+          soundSport ? 'bg-interactive text-white' : 'bg-brand text-black'
         }`}
       >
         <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
           ) : (
             <>
               <div className="text-[10px] text-muted uppercase tracking-wider">Final Score</div>
-              <div className="text-3xl sm:text-4xl font-bold text-yellow-500 font-data tabular-nums leading-none">
+              <div className="text-3xl sm:text-4xl font-bold text-brand font-data tabular-nums leading-none">
                 {formatScore(champion.score)}
               </div>
             </>
@@ -228,13 +228,11 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
         <div className="px-4 sm:px-6 pb-4">
           <div
             className={`flex items-center gap-2.5 px-3 py-2.5 border ${
-              soundSport
-                ? 'border-interactive/40 bg-interactive/10'
-                : 'border-yellow-500/40 bg-yellow-500/5'
+              soundSport ? 'border-interactive/40 bg-interactive/10' : 'border-brand/40 bg-brand/5'
             }`}
           >
             <Flag
-              className={`w-4 h-4 flex-shrink-0 ${soundSport ? 'text-interactive' : 'text-yellow-500'}`}
+              className={`w-4 h-4 flex-shrink-0 ${soundSport ? 'text-interactive' : 'text-brand'}`}
             />
             <span className="text-sm text-white italic leading-snug">
               “{champion.banner.message}”
@@ -246,12 +244,12 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
         <div className="px-4 sm:px-6 pb-4">
           <button
             onClick={onHangBanner}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-dashed border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/5 text-xs font-bold uppercase tracking-wider transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-dashed border-interactive/40 text-interactive hover:bg-interactive/5 text-xs font-bold uppercase tracking-wider transition-colors"
           >
             <Flag className="w-3.5 h-3.5" />
             Hang Your Champion's Banner
             <span className="flex items-center gap-1 text-white font-data tabular-nums normal-case">
-              <Coins className="w-3.5 h-3.5 text-yellow-500" />
+              <Coins className="w-3.5 h-3.5 text-brand" />
               {HALL_BANNER_PRICE.toLocaleString()}
             </span>
           </button>
@@ -286,9 +284,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
         <div className="px-3 py-2.5">
           <div className="text-[10px] text-muted uppercase tracking-wider">Division</div>
           <div className="text-xs text-white truncate flex items-center gap-1">
-            <ClassIcon
-              className={`w-3 h-3 ${soundSport ? 'text-interactive' : 'text-yellow-500'}`}
-            />
+            <ClassIcon className={`w-3 h-3 ${soundSport ? 'text-interactive' : 'text-brand'}`} />
             {CLASS_CONFIG[classKey]?.short}
           </div>
         </div>
@@ -308,7 +304,7 @@ const FinalistsTable = ({ champions, classKey }) => {
           {soundSport ? (
             <Music className="w-3.5 h-3.5 text-interactive" />
           ) : (
-            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+            <Trophy className="w-3.5 h-3.5 text-brand" />
           )}
           <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
             {soundSport ? 'Recognized Ensembles' : 'Final Standings'}
@@ -386,7 +382,7 @@ const FinalistsTable = ({ champions, classKey }) => {
                           highlight
                             ? soundSport
                               ? 'text-interactive'
-                              : 'text-yellow-500'
+                              : 'text-brand'
                             : 'text-white'
                         }`}
                       >
@@ -432,7 +428,7 @@ const FinalistsTable = ({ champions, classKey }) => {
                     )
                   ) : (
                     <span
-                      className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}
+                      className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-brand' : 'text-white'}`}
                     >
                       {formatScore(c.score)}
                     </span>
@@ -612,14 +608,14 @@ const HallOfChampions = () => {
           {/* Header */}
           <div className="flex-shrink-0 px-4 py-3 border-b border-line bg-surface-card">
             <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-4 h-4 text-yellow-500" />
+              <Trophy className="w-4 h-4 text-brand" />
               <h1 className="text-sm font-bold text-white uppercase tracking-widest">
                 Hall of Champions
               </h1>
             </div>
             <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-wider">
               <span className="flex items-center gap-1 text-muted">
-                <Crown className="w-3 h-3 text-yellow-500" />
+                <Crown className="w-3 h-3 text-brand" />
                 <span className="font-data tabular-nums text-secondary">
                   {totalCrowns}
                 </span> Crowned {totalCrowns === 1 ? 'Season' : 'Seasons'}
@@ -733,7 +729,7 @@ const HallOfChampions = () => {
                       className={`inline-flex items-center gap-1 px-2 py-1 font-bold ${
                         isSoundSportClass(selectedClass)
                           ? 'bg-interactive text-white'
-                          : 'bg-yellow-500 text-black'
+                          : 'bg-brand text-black'
                       }`}
                     >
                       {CLASS_CONFIG[selectedClass]?.name}

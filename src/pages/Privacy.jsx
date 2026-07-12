@@ -18,7 +18,7 @@ const Privacy = () => {
       <div className="container-responsive py-8 px-4 max-w-3xl mx-auto">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-secondary hover:text-yellow-500 transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-secondary hover:text-interactive transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
@@ -67,7 +67,7 @@ const Privacy = () => {
                   href="https://www.youtube.com/t/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-yellow-500 hover:text-yellow-400 underline"
+                  className="text-interactive hover:text-interactive-hover underline"
                 >
                   YouTube Terms of Service
                 </a>
@@ -79,7 +79,7 @@ const Privacy = () => {
                   href="http://www.google.com/policies/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-yellow-500 hover:text-yellow-400 underline"
+                  className="text-interactive hover:text-interactive-hover underline"
                 >
                   Google's Privacy Policy
                 </a>
@@ -167,7 +167,7 @@ const Privacy = () => {
                 If you have questions about this Privacy Policy, please contact us at:{' '}
                 <a
                   href="mailto:contact@marching.art"
-                  className="text-yellow-500 hover:text-yellow-400 underline"
+                  className="text-interactive hover:text-interactive-hover underline"
                 >
                   contact@marching.art
                 </a>

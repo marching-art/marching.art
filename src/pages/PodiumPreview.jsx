@@ -401,7 +401,7 @@ const PodiumPreview = () => {
                       key={block.id}
                       onClick={() => assignBlock(block)}
                       disabled={blocksLeft <= 0}
-                      className="text-left p-2.5 border border-line bg-surface-sunken hover:border-[#c9a227]/60 hover:bg-surface-sunken active:scale-[0.98] transition-all rounded-none disabled:opacity-40 disabled:cursor-not-allowed group"
+                      className="text-left p-2.5 border border-line bg-surface-sunken hover:border-interactive/60 hover:bg-surface-sunken active:scale-[0.98] transition-all rounded-none disabled:opacity-40 disabled:cursor-not-allowed group"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-white">{block.label}</span>

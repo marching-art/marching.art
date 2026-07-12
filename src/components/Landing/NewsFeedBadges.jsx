@@ -37,7 +37,7 @@ function FantasyValueBadge({ value }) {
       textClass: 'text-red-400',
       icon: ArrowDownRight,
     },
-    hold: { label: 'HOLD', bgClass: 'bg-yellow-500/20', textClass: 'text-yellow-400', icon: Minus },
+    hold: { label: 'HOLD', bgClass: 'bg-warning/20', textClass: 'text-warning', icon: Minus },
   };
   const { label, bgClass, textClass, icon: Icon } = config[value] || config.hold;
 
@@ -61,7 +61,7 @@ function UrgencyBadge({ urgency }) {
       className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
         isBreaking
           ? 'bg-red-500 text-white animate-pulse'
-          : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+          : 'bg-warning/20 text-warning border border-warning/30'
       }`}
     >
       {isBreaking && <Radio className="w-2.5 h-2.5" />}

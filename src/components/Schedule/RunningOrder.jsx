@@ -69,9 +69,9 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
                 isNow
                   ? 'bg-interactive/10'
                   : isFull
-                    ? 'bg-[#F5A623]/[0.06]'
+                    ? 'bg-interactive/[0.06]'
                     : isDim
-                      ? 'bg-[#F5A623]/[0.02]'
+                      ? 'bg-interactive/[0.02]'
                       : ''
               }`}
             >
@@ -81,9 +81,9 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
                 </span>
                 <span className="text-sm text-white truncate flex items-center gap-1.5">
                   {isFull && (
-                    <Star className="w-3 h-3 text-[#F5A623] fill-[#F5A623] flex-shrink-0" />
+                    <Star className="w-3 h-3 text-interactive fill-interactive flex-shrink-0" />
                   )}
-                  {isDim && <Star className="w-3 h-3 text-[#F5A623]/50 flex-shrink-0" />}
+                  {isDim && <Star className="w-3 h-3 text-interactive/50 flex-shrink-0" />}
                   <span className={`truncate ${isDim ? 'text-secondary' : ''}`}>{entry.corps}</span>
                 </span>
               </div>

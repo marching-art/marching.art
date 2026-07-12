@@ -28,11 +28,10 @@ const calcSeasonAvg = (yearData, corpsName, captionId) => {
 };
 
 /** Map efficiency percentage to a color tier */
-const effBgColor = (pct) =>
-  pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-yellow-500' : 'bg-red-500';
+const effBgColor = (pct) => (pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-warning' : 'bg-red-500');
 
 const effTextColor = (pct) =>
-  pct >= 80 ? 'text-green-500' : pct >= 60 ? 'text-yellow-500' : 'text-red-500';
+  pct >= 80 ? 'text-green-500' : pct >= 60 ? 'text-warning' : 'text-red-500';
 
 const EfficiencyBar = React.memo(({ pct }) => (
   <div className="h-1.5 bg-line rounded-full overflow-hidden">
@@ -153,7 +152,7 @@ const LineupSimulatorPanel = React.memo(
         {/* Header */}
         <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-            <Zap className="w-3.5 h-3.5 text-[#F5A623]" />
+            <Zap className="w-3.5 h-3.5 text-secondary" />
             Lineup Analyzer
           </h3>
           {overallEff != null && (
@@ -162,7 +161,7 @@ const LineupSimulatorPanel = React.memo(
                 overallEff >= 80
                   ? 'bg-green-500/20 text-green-500'
                   : overallEff >= 60
-                    ? 'bg-yellow-500/20 text-yellow-500'
+                    ? 'bg-warning/20 text-warning'
                     : 'bg-red-500/20 text-red-500'
               }`}
             >
@@ -200,7 +199,7 @@ const LineupSimulatorPanel = React.memo(
                         : (row.pct ?? 0) >= 80
                           ? 'bg-green-500/20 text-green-400'
                           : row.pct != null
-                            ? 'bg-yellow-500/20 text-yellow-400'
+                            ? 'bg-warning/20 text-warning'
                             : 'bg-line text-muted'
                     }`}
                   >

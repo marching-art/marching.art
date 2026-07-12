@@ -132,7 +132,7 @@ const SocialProofBar = ({ className = '' }) => {
       {/* Leagues count */}
       {stats.leagues > 0 && (
         <div className="flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-yellow-500" />
+          <Trophy className="w-4 h-4 text-secondary" />
           <span className="text-sm text-muted font-data tabular-nums">
             <span className="text-white font-semibold">{formatNumber(stats.leagues)}</span> leagues
           </span>

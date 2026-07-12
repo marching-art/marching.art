@@ -160,16 +160,16 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
         relative flex items-center gap-2 px-4 py-2.5
         text-sm font-medium rounded-none
         transition-all duration-300
-        focus:outline-none focus:ring-2 focus:ring-yellow-500/30
+        focus:outline-none focus:ring-2 focus:ring-interactive/30
         disabled:opacity-50 disabled:cursor-not-allowed
-        ${isActive ? 'text-charcoal-950' : 'text-white/60 hover:text-white hover:bg-white/5'}
+        ${isActive ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}
         ${className}
       `}
     >
       {isActive && (
         <m.div
           layoutId="activeTab"
-          className="absolute inset-0 bg-yellow-500 rounded-none shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+          className="absolute inset-0 bg-interactive rounded-none"
           initial={false}
           transition={{ type: 'spring', duration: 0.4, bounce: 0.2 }}
         />

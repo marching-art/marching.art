@@ -116,7 +116,7 @@ const LevelUpModal: React.FC<{
 
   return (
     <m.div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -186,7 +186,7 @@ const LevelUpModal: React.FC<{
         >
           <div className="relative">
             <m.div
-              className="text-[120px] md:text-[160px] font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-300 via-blue-400 to-blue-600 leading-none"
+              className="text-[120px] md:text-[160px] font-black text-blue-400 leading-none"
               animate={
                 shouldReduceMotion
                   ? {}

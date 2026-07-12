@@ -112,7 +112,7 @@ const SeasonScorecard = memo(
       <div className={`border overflow-hidden ${themeClass || 'bg-surface-card border-line'}`}>
         <div className="bg-surface-raised px-4 py-3 border-b border-line">
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+            <Trophy className="w-3.5 h-3.5 text-brand" />
             Season Scorecard
           </h3>
         </div>
@@ -135,7 +135,7 @@ const SeasonScorecard = memo(
                   decoding="async"
                 />
               ) : (
-                <Trophy className="w-7 h-7 text-yellow-500" />
+                <Trophy className="w-7 h-7 text-brand" />
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 hidden lg:flex items-center justify-center transition-opacity">
                 <Palette className="w-4 h-4 text-white" />
@@ -327,7 +327,7 @@ const SeasonScorecard = memo(
               widget. SoundSport shows the medal tier, never the number. */}
           {bestRecent && bestRecent.score > 0 && (
             <p className="mt-3 text-[10px] text-muted flex items-center gap-1.5">
-              <Trophy className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+              <Trophy className="w-3 h-3 text-brand flex-shrink-0" />
               <span className="truncate">
                 Best recent:{' '}
                 <span className="font-bold text-secondary">

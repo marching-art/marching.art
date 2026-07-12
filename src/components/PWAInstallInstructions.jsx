@@ -21,12 +21,12 @@ const PWAInstallInstructions = ({ platform }) => {
         <div className="flex flex-col gap-2 text-sm text-muted">
           <Step n={1}>
             <span>Tap the</span>
-            <Share2 className="w-4 h-4 text-yellow-400" />
+            <Share2 className="w-4 h-4 text-main" />
             <span>Share button in Safari</span>
           </Step>
           <Step n={2}>
             <span>Scroll down and tap</span>
-            <span className="text-yellow-400 font-medium">"Add to Home Screen"</span>
+            <span className="text-main font-medium">"Add to Home Screen"</span>
           </Step>
         </div>
       );
@@ -35,13 +35,13 @@ const PWAInstallInstructions = ({ platform }) => {
         <div className="flex flex-col gap-2 text-sm text-muted">
           <Step n={1}>
             <span>Open the browser menu</span>
-            <MoreVertical className="w-4 h-4 text-yellow-400" />
+            <MoreVertical className="w-4 h-4 text-main" />
           </Step>
           <Step n={2}>
             <span>Tap</span>
-            <span className="text-yellow-400 font-medium">"Install app"</span>
+            <span className="text-main font-medium">"Install app"</span>
             <span>or</span>
-            <span className="text-yellow-400 font-medium">"Add to Home screen"</span>
+            <span className="text-main font-medium">"Add to Home screen"</span>
           </Step>
         </div>
       );
@@ -52,12 +52,12 @@ const PWAInstallInstructions = ({ platform }) => {
         <div className="flex flex-col gap-2 text-sm text-muted">
           <Step n={1}>
             <span>Click the install icon</span>
-            <Plus className="w-4 h-4 text-yellow-400" />
+            <Plus className="w-4 h-4 text-main" />
             <span>in the address bar</span>
           </Step>
           <Step n={2}>
             <span>or open the browser menu and choose</span>
-            <span className="text-yellow-400 font-medium">"Install marching.art"</span>
+            <span className="text-main font-medium">"Install marching.art"</span>
           </Step>
         </div>
       );

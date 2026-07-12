@@ -38,7 +38,7 @@ export const BattleScoreHeader = ({
         <div className="text-right flex-1">
           <span
             className={`text-3xl font-bold tabular-nums ${
-              homeWins ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-white'
+              homeWins ? 'text-green-400' : isTie ? 'text-secondary' : 'text-white'
             }`}
           >
             {homeBattlePoints}
@@ -53,7 +53,7 @@ export const BattleScoreHeader = ({
         <div className="text-left flex-1">
           <span
             className={`text-3xl font-bold tabular-nums ${
-              awayWins ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-white'
+              awayWins ? 'text-green-400' : isTie ? 'text-secondary' : 'text-white'
             }`}
           >
             {awayBattlePoints}
@@ -65,7 +65,7 @@ export const BattleScoreHeader = ({
       {(isClutch || isBlowout) && (
         <div className="flex justify-center">
           {isClutch && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-yellow-500/20 text-yellow-400 text-xs font-bold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-surface-raised text-secondary text-xs font-bold">
               <Flame className="w-3 h-3" />
               CLUTCH
             </span>
@@ -99,7 +99,7 @@ const BattleRow = ({
   const isTie = !homeWins && !awayWins;
 
   const colorClasses = {
-    gold: 'text-yellow-400',
+    gold: 'text-secondary',
     purple: 'text-purple-400',
     blue: 'text-blue-400',
     green: 'text-green-400',
@@ -137,8 +137,8 @@ const BattleRow = ({
           </div>
         )}
         {isTie && (
-          <div className="w-5 h-5 rounded-none bg-yellow-500/10 flex items-center justify-center">
-            <Minus className="w-3 h-3 text-yellow-400/50" />
+          <div className="w-5 h-5 rounded-none bg-line flex items-center justify-center">
+            <Minus className="w-3 h-3 text-muted" />
           </div>
         )}
       </div>
@@ -166,8 +166,8 @@ const BattleRow = ({
           </div>
         )}
         {isTie && (
-          <div className="w-5 h-5 rounded-none bg-yellow-500/10 flex items-center justify-center">
-            <Minus className="w-3 h-3 text-yellow-400/50" />
+          <div className="w-5 h-5 rounded-none bg-line flex items-center justify-center">
+            <Minus className="w-3 h-3 text-muted" />
           </div>
         )}
         <span
@@ -196,7 +196,7 @@ export const CaptionBattlesSection = ({
       <div className="p-3 border-b border-white/10 bg-charcoal-900/50">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-white flex items-center gap-2">
-            <Target className="w-3.5 h-3.5 text-yellow-400" />
+            <Target className="w-3.5 h-3.5 text-secondary" />
             Caption Battles
           </h3>
           <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export const SpecialBattlesSection = ({
     <div className="glass rounded-none overflow-hidden">
       <div className="p-3 border-b border-white/10 bg-charcoal-900/50">
         <h3 className="text-xs font-bold text-white flex items-center gap-2">
-          <Award className="w-3.5 h-3.5 text-yellow-400" />
+          <Award className="w-3.5 h-3.5 text-secondary" />
           Bonus Battles
         </h3>
       </div>
@@ -312,7 +312,7 @@ export const BattleSummaryBar = ({
           transition={{ type: 'spring', damping: 20, delay: 0.2 }}
           className={`${homeColor === 'purple' ? 'bg-purple-500' : 'bg-green-500'}`}
         />
-        {tiePercent > 0 && <div style={{ width: `${tiePercent}%` }} className="bg-yellow-500/30" />}
+        {tiePercent > 0 && <div style={{ width: `${tiePercent}%` }} className="bg-line" />}
         <m.div
           initial={{ width: 0 }}
           animate={{ width: `${awayPercent}%` }}

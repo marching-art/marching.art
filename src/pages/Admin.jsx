@@ -259,8 +259,8 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
         <SectionHeader title="Season Operations" icon={Calendar} />
         <div className="px-4 py-3 border-b border-line bg-surface-sunken">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] text-yellow-500/80">
+            <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-warning/80">
               Starting a new season will archive all current user corps data and reset the game
               state.
             </p>
@@ -403,8 +403,8 @@ const Admin = () => {
       {/* Page Header */}
       <div className="bg-surface-card border-b border-line px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-yellow-500/20 flex items-center justify-center">
-            <Shield className="w-4 h-4 text-yellow-500" />
+          <div className="w-8 h-8 bg-surface-raised flex items-center justify-center">
+            <Shield className="w-4 h-4 text-secondary" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-white uppercase tracking-wider">

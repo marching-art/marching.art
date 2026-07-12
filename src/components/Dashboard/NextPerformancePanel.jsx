@@ -161,7 +161,7 @@ const NextPerformancePanel = ({
     <div className="bg-surface-card border border-line rounded-none">
       <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
         <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
-          <CalendarClock className="w-3.5 h-3.5 text-[#F5A623]" />
+          <CalendarClock className="w-3.5 h-3.5 text-secondary" />
           Next Performance
         </h3>
         {nextLive && (
@@ -174,10 +174,10 @@ const NextPerformancePanel = ({
 
       {/* Your picks are performing live today */}
       {spotlight.length > 0 && (
-        <div className="px-4 py-3 border-b border-line bg-[#F5A623]/[0.04]">
+        <div className="px-4 py-3 border-b border-line bg-interactive/5">
           <div className="flex items-center gap-1.5 mb-2">
-            <Radio className="w-3.5 h-3.5 text-[#F5A623]" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#F5A623]">
+            <Radio className="w-3.5 h-3.5 text-interactive" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-interactive">
               Your picks are on tour today
             </span>
           </div>
@@ -192,7 +192,7 @@ const NextPerformancePanel = ({
                   <span className="text-muted"> — your {s.captions.join(' & ')} pick</span>
                 </span>
                 {s.performLabel && (
-                  <span className="text-xs font-data text-[#F5A623] tabular-nums flex-shrink-0">
+                  <span className="text-xs font-data text-secondary tabular-nums flex-shrink-0">
                     {s.performLabel}
                   </span>
                 )}
@@ -236,7 +236,7 @@ const NextPerformancePanel = ({
       <div className="px-2 py-1.5 border-t border-line bg-surface-sunken">
         <Link
           to="/schedule"
-          className="min-h-[40px] px-2 text-xs text-[#F5A623] hover:text-[#FFB84D] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded-none"
+          className="min-h-[40px] px-2 text-xs text-interactive hover:text-interactive-hover font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded-none"
         >
           Full Schedule
           <ChevronRight className="w-4 h-4" />

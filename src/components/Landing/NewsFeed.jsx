@@ -599,7 +599,7 @@ export function FantasyImpactWidget({ news }) {
                     item.riskLevel === 'high'
                       ? 'text-red-400'
                       : item.riskLevel === 'medium'
-                        ? 'text-yellow-400'
+                        ? 'text-warning'
                         : 'text-muted'
                   }`}
                 >

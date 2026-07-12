@@ -72,7 +72,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                   className={`p-2 rounded-none transition-colors ${
                     article.isArchived
                       ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
-                      : 'text-muted hover:text-yellow-400 hover:bg-yellow-500/10'
+                      : 'text-muted hover:text-warning hover:bg-warning/10'
                   }`}
                   title={article.isArchived ? 'Restore article' : 'Archive article'}
                 >
@@ -119,7 +119,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                   Published
                 </span>
               ) : (
-                <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-none text-xs font-medium">
+                <span className="px-2 py-0.5 bg-warning/20 text-warning rounded-none text-xs font-medium">
                   Draft
                 </span>
               )}
@@ -255,7 +255,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
         {/* Header */}
         <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
-            <Edit3 className="w-4 h-4 text-yellow-500" />
+            <Edit3 className="w-4 h-4 text-secondary" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">Edit Article</h2>
           </div>
           <button onClick={onClose} className="text-muted hover:text-white transition-colors">
@@ -456,7 +456,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
           <div className="border-t border-line bg-surface-raised px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="text-xs text-muted">
               {hasChanges() ? (
-                <span className="text-yellow-500">Unsaved changes</span>
+                <span className="text-warning">Unsaved changes</span>
               ) : (
                 <span>No changes</span>
               )}

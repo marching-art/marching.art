@@ -18,7 +18,7 @@ function ConditionBar({ label, value, icon: Icon, color }) {
         </div>
         <div className="h-1.5 bg-surface-elevated rounded-none overflow-hidden">
           <div
-            className={`h-full rounded-none ${value >= 50 ? 'bg-green-500' : value >= 30 ? 'bg-yellow-500' : 'bg-red-500'}`}
+            className={`h-full rounded-none ${value >= 50 ? 'bg-green-500' : value >= 30 ? 'bg-warning' : 'bg-red-500'}`}
             style={{ width: `${Math.max(2, Math.min(100, value))}%` }}
           />
         </div>
@@ -81,21 +81,19 @@ export default function RehearsalPlanner({ podium }) {
   return (
     <div
       className={`bg-surface-card border rounded-none p-4 space-y-4 ${
-        isShowDay
-          ? 'border-[#c9a227] shadow-[0_0_0_1px_#c9a227] ring-1 ring-[#c9a227]/40'
-          : 'border-line'
+        isShowDay ? 'border-interactive ring-1 ring-interactive/40' : 'border-line'
       }`}
     >
       {/* Show day is the payoff — make it unmissable. Banner sits above the
           whole planner so a returning FMA veteran never mistakes the lighter
           8-block run-through for a normal 12-click rehearsal day. */}
       {isShowDay && (
-        <div className="flex items-center gap-2 -mx-4 -mt-4 mb-0 px-4 py-2 bg-gradient-to-r from-[#c9a227]/25 to-transparent border-b border-[#c9a227]/60">
-          <Trophy className="w-4 h-4 text-[#c9a227] shrink-0" />
-          <span className="text-xs font-bold uppercase tracking-wider text-[#c9a227]">
+        <div className="flex items-center gap-2 -mx-4 -mt-4 mb-0 px-4 py-2 bg-surface-raised border-b border-interactive">
+          <Trophy className="w-4 h-4 text-interactive shrink-0" />
+          <span className="text-xs font-bold uppercase tracking-wider text-interactive">
             Show day — you compete tonight
           </span>
-          <span className="text-[10px] text-[#e0c25a] ml-auto text-right leading-tight">
+          <span className="text-[10px] text-secondary ml-auto text-right leading-tight">
             {today.restDay
               ? 'Resting — you still perform with today’s book'
               : 'Light run-through: 8 blocks, half value each'}
@@ -114,17 +112,17 @@ export default function RehearsalPlanner({ podium }) {
           </div>
           <div
             className={`text-sm font-bold flex items-center gap-3 ${
-              isShowDay ? 'text-[#c9a227]' : 'text-white'
+              isShowDay ? 'text-interactive' : 'text-white'
             }`}
           >
             {dayType}
             {data.divisionLabel && (
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-none bg-yellow-400/15 text-yellow-400">
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-none bg-surface-raised text-secondary">
                 {data.divisionLabel}
               </span>
             )}
             <span
-              className="flex items-center gap-1 text-[10px] font-bold text-[#c9a227] tabular-nums"
+              className="flex items-center gap-1 text-[10px] font-bold text-brand tabular-nums"
               title="Corps Budget"
             >
               <Coins className="w-3 h-3" /> {budget.balance}
@@ -179,10 +177,10 @@ export default function RehearsalPlanner({ podium }) {
             <button
               disabled={busy !== null}
               onClick={() => handleAllocate('fundraiser')}
-              className="text-left px-3 py-2.5 rounded-none border border-[#5a4a12] hover:border-[#c9a227] hover:bg-[#c9a227]/10 transition-colors press-feedback disabled:opacity-50"
+              className="text-left px-3 py-2.5 rounded-none border border-brand-subtle hover:border-brand hover:bg-brand/10 transition-colors press-feedback disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#c9a227]">Fundraiser</span>
+                <span className="text-xs font-bold text-brand">Fundraiser</span>
                 {busy === 'fundraiser' && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
               </div>
               <div className="text-[10px] text-muted mt-0.5">
@@ -247,12 +245,12 @@ export default function RehearsalPlanner({ podium }) {
           <div className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
             Action complete — {BLOCKS.find((b) => b.id === lastPanel.blockType)?.label}
             {lastPanel.repeatMult < 1 && (
-              <span className="text-yellow-500"> · repeat yield ×{lastPanel.repeatMult}</span>
+              <span className="text-warning"> · repeat yield ×{lastPanel.repeatMult}</span>
             )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
             {lastPanel.budgetEarned > 0 && (
-              <span className="text-[11px] text-[#c9a227] tabular-nums font-bold">
+              <span className="text-[11px] text-brand tabular-nums font-bold">
                 +{lastPanel.budgetEarned} Corps Budget
               </span>
             )}

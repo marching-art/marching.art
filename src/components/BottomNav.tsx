@@ -91,7 +91,7 @@ const BottomNav: React.FC = () => {
       aria-label="Mobile navigation"
     >
       {/* Accent line at top - solid, no gradient per design laws */}
-      <div className="h-px w-full bg-yellow-500/30" />
+      <div className="h-px w-full bg-line" />
 
       {/* Nav container - optimized for 6 items across all screen sizes */}
       <div className="bg-surface-card border-t border-white/10">
@@ -115,18 +115,18 @@ const BottomNav: React.FC = () => {
                 {active && (
                   <m.div
                     layoutId="bottomNavActive"
-                    className="absolute inset-0 bg-yellow-500/10 rounded-none"
+                    className="absolute inset-0 bg-interactive/10 rounded-none"
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
 
                 {/* Icon - larger on active */}
                 <div
-                  className={`relative z-10 p-1.5 rounded-none transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}
+                  className={`relative z-10 p-1.5 rounded-none transition-all duration-150 ${active ? 'bg-interactive/20' : ''}`}
                 >
                   <Icon
                     className={`w-5 h-5 xs:w-[22px] xs:h-[22px] transition-all duration-150 ${
-                      active ? 'text-yellow-400 scale-110' : 'text-yellow-50/70'
+                      active ? 'text-interactive scale-110' : 'text-secondary'
                     }`}
                     aria-hidden="true"
                   />
@@ -135,7 +135,7 @@ const BottomNav: React.FC = () => {
                 {/* Label - hidden on very small screens, visible on xs+ */}
                 <span
                   className={`relative z-10 text-[9px] xs:text-[10px] font-medium transition-all duration-150 leading-tight ${
-                    active ? 'text-yellow-400' : 'text-yellow-50/60'
+                    active ? 'text-interactive' : 'text-muted'
                   }`}
                 >
                   {item.label}
@@ -146,7 +146,7 @@ const BottomNav: React.FC = () => {
                   <m.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"
+                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-interactive rounded-full"
                   />
                 )}
               </Link>

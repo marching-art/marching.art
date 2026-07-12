@@ -116,12 +116,12 @@ const NavItem = ({ to, icon: Icon, label }) => (
     {({ isActive }) => (
       <>
         <Icon
-          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`}
+          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-interactive' : ''}`}
         />
         <span>{label}</span>
         {/* Active indicator - bottom bar */}
         {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-none" />
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-interactive rounded-none" />
         )}
       </>
     )}
@@ -149,7 +149,7 @@ const DEFAULT_CLASS_STYLE = {
 
 // Medal colors for SoundSport
 const MEDAL_COLORS = {
-  Gold: 'text-yellow-400',
+  Gold: 'text-brand',
   Silver: 'text-secondary',
   Bronze: 'text-amber-600',
 };

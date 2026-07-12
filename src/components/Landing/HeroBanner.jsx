@@ -27,10 +27,10 @@ const HeroBanner = ({ onDismiss }) => {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20, height: 0, marginBottom: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="relative bg-gradient-to-br from-[#1a1a1a] via-[#1a1a1a] to-[#0a0a0a] border border-line rounded-none overflow-hidden"
+        className="relative bg-surface-card border border-line rounded-none overflow-hidden"
       >
         {/* Subtle accent line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-interactive via-yellow-500 to-interactive" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-interactive" />
 
         {/* Dismiss button */}
         <button
@@ -60,7 +60,7 @@ const HeroBanner = ({ onDismiss }) => {
                     primary.level === 'high'
                       ? 'bg-red-500/20 border-red-500/30'
                       : primary.level === 'medium'
-                        ? 'bg-yellow-500/20 border-yellow-500/30'
+                        ? 'bg-warning/20 border-warning/30'
                         : 'bg-charcoal-500/20 border-charcoal-500/30'
                   }`}
                 >
@@ -70,10 +70,10 @@ const HeroBanner = ({ onDismiss }) => {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                     </span>
                   )}
-                  {primary.type !== 'live' && <Clock className="w-3.5 h-3.5 text-yellow-500" />}
+                  {primary.type !== 'live' && <Clock className="w-3.5 h-3.5 text-warning" />}
                   <span
                     className={`text-xs font-bold uppercase tracking-wider ${
-                      primary.level === 'high' ? 'text-red-500' : 'text-yellow-500'
+                      primary.level === 'high' ? 'text-red-500' : 'text-warning'
                     }`}
                   >
                     {primary.message}
@@ -101,7 +101,7 @@ const HeroBanner = ({ onDismiss }) => {
             {/* Feature pills */}
             <div className="flex flex-wrap gap-3 mb-6">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-sunken border border-line rounded-none">
-                <Zap className="w-4 h-4 text-yellow-500" />
+                <Zap className="w-4 h-4 text-interactive" />
                 <span className="text-sm text-secondary">Free to play</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-sunken border border-line rounded-none">
@@ -109,7 +109,7 @@ const HeroBanner = ({ onDismiss }) => {
                 <span className="text-sm text-secondary">Join leagues</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-sunken border border-line rounded-none">
-                <Trophy className="w-4 h-4 text-orange-500" />
+                <Trophy className="w-4 h-4 text-interactive" />
                 <span className="text-sm text-secondary">Win bragging rights</span>
               </div>
             </div>
@@ -125,7 +125,7 @@ const HeroBanner = ({ onDismiss }) => {
               </Link>
               <Link
                 to="/preview"
-                className="inline-flex items-center gap-2 min-h-[48px] px-5 border border-yellow-500/50 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-none hover:bg-yellow-500/10 hover:border-yellow-500 active:scale-[0.98] transition-all duration-150 press-feedback"
+                className="inline-flex items-center gap-2 min-h-[48px] px-5 border border-interactive/50 text-interactive font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive/10 hover:border-interactive active:scale-[0.98] transition-all duration-150 press-feedback"
               >
                 <Play className="w-4 h-4" />
                 Try Demo

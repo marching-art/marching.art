@@ -32,7 +32,7 @@ const StatCard = ({
   children,
 }) => {
   const colorClasses = {
-    yellow: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30',
+    yellow: 'text-secondary bg-surface-raised border-line',
     purple: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
     green: 'text-green-500 bg-green-500/10 border-green-500/30',
     red: 'text-red-500 bg-red-500/10 border-red-500/30',
@@ -101,7 +101,7 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
     <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-[#1a1a1a] border border-purple-500/30 p-4"
+      className="bg-surface-raised border border-purple-500/30 p-4"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ const QuickStatsRow = ({ stats, leagueStats, userId }) => {
     <div className="grid grid-cols-4 gap-2">
       <div className="bg-surface-card border border-line p-3 text-center">
         <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Points</p>
-        <p className="text-lg font-bold text-yellow-500 font-data tabular-nums">
+        <p className="text-lg font-bold text-secondary font-data tabular-nums">
           {stats?.totalPoints?.toFixed(0) || 0}
         </p>
       </div>
@@ -267,7 +267,7 @@ const LeagueLeadersMini = ({
     <div className="bg-surface-card border border-line">
       <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-yellow-500" />
+          <Trophy className="w-4 h-4 text-secondary" />
           <span className="text-[10px] uppercase tracking-wider text-muted font-bold">
             League Leaders
           </span>
@@ -290,7 +290,7 @@ const LeagueLeadersMini = ({
                 ? profile.displayName
                 : profile?.username;
             const displayName = isUser ? 'You' : rawName || `User ${player.uid?.slice(0, 6)}`;
-            const medals = ['text-yellow-500', 'text-muted', 'text-orange-500'];
+            const medals = ['text-brand', 'text-muted', 'text-orange-500'];
 
             return (
               <div
@@ -402,7 +402,7 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+          className="h-full bg-interactive"
         />
       </div>
       <div className="flex justify-between mt-1">

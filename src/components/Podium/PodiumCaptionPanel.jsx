@@ -42,7 +42,7 @@ export default function PodiumCaptionPanel({ podium }) {
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
           Caption Progress
         </h3>
-        <span className="text-[10px] font-bold uppercase text-[#c9a227]">
+        <span className="text-[10px] font-bold uppercase text-brand">
           {REP_TIER_NAMES[repTier]}
         </span>
       </div>
@@ -59,7 +59,7 @@ export default function PodiumCaptionPanel({ podium }) {
                   {caption}
                   {neglected && (
                     <span title={`Unrehearsed ${idleDays} days — cleanliness is decaying`}>
-                      <AlertTriangle className="w-3 h-3 text-yellow-500" />
+                      <AlertTriangle className="w-3 h-3 text-warning" />
                     </span>
                   )}
                 </div>

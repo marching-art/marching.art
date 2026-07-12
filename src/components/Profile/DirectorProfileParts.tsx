@@ -157,7 +157,7 @@ const SeasonRow = memo(
           <div
             className={`w-8 h-8 flex-shrink-0 flex items-center justify-center border ${
               placement === 1
-                ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400'
+                ? 'bg-brand/20 border-brand/40 text-brand'
                 : placement && placement <= 3
                   ? 'bg-charcoal-400/10 border-charcoal-500/30 text-secondary'
                   : placement && placement <= 10
@@ -638,7 +638,7 @@ const AvatarActions = ({ actions }: { actions: AvatarAction[] }) => {
 // Purchased director title from the Corps Identity Shop, shown as flair next
 // to the level title in the profile hero.
 const ShopTitleFlair = ({ item }: { item: { name: string; textClass?: string } }) => (
-  <span className={`text-[11px] font-bold ${item.textClass || 'text-yellow-400'}`}>
+  <span className={`text-[11px] font-bold ${item.textClass || 'text-secondary'}`}>
     ★ {item.name}
   </span>
 );

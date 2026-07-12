@@ -88,10 +88,10 @@ export function getClassDisplay(classKey: string): ClassDisplayConfig {
 
 export const TIER_STYLES = {
   gold: {
-    bg: 'bg-yellow-500/15',
-    border: 'border-yellow-500/40',
-    text: 'text-yellow-400',
-    icon: 'text-yellow-500',
+    bg: 'bg-brand/15',
+    border: 'border-brand/40',
+    text: 'text-brand',
+    icon: 'text-brand',
   },
   silver: {
     bg: 'bg-charcoal-300/10',
@@ -302,7 +302,7 @@ const CLASS_CHAMP_ICON: Record<string, React.ElementType> = {
   podiumClass: Gem,
 };
 const METAL_COLOR: Record<number, string> = {
-  1: 'text-yellow-400',
+  1: 'text-brand',
   2: 'text-secondary',
   3: 'text-orange-400',
 };
@@ -515,7 +515,7 @@ function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
         id: `champ-${i}`,
         title: 'League Champion',
         description: 'Captured a league championship',
-        color: 'text-yellow-400',
+        color: 'text-brand',
         icon: Trophy,
       });
     }

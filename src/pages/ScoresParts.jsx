@@ -39,7 +39,7 @@ import {
 // =============================================================================
 
 const SHEET_CARD = 'bg-surface-card border border-line rounded-none p-3 md:p-4';
-const GOLD = 'text-[#c9a227]';
+const GOLD = 'text-brand';
 
 // Fixed numeric-column widths so caption values line up across every row and
 // card while the corps column flexes and truncates — the key to a box-score
@@ -120,7 +120,7 @@ const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }
         (uid ? (
           <Link
             to={`/profile/${uid}`}
-            className="block text-[10px] text-muted hover:text-[#c9a227] truncate"
+            className="block text-[10px] text-muted hover:text-interactive truncate"
           >
             {displayName}
           </Link>
@@ -211,7 +211,7 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
                 ? tab.accent === 'green'
                   ? 'text-green-400 border-green-500'
                   : tab.accent === 'yellow'
-                    ? 'text-yellow-400 border-yellow-500'
+                    ? 'text-interactive border-interactive'
                     : 'text-white border-interactive'
                 : 'text-muted hover:text-secondary border-transparent'
             }`}
@@ -243,7 +243,7 @@ const SortPills = ({ options, value, onChange }) => (
         aria-pressed={value === opt.id}
         className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors ${
           value === opt.id
-            ? 'bg-[#8a6d1a] text-white'
+            ? 'bg-interactive text-white'
             : 'bg-surface-raised text-muted hover:text-secondary'
         }`}
       >
@@ -329,9 +329,9 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
   return (
     <div className={`${SHEET_CARD} space-y-3`}>
       {/* Masthead — gold-tinted to flag the marquee event */}
-      <div className="flex items-baseline justify-between gap-2 border-b border-[#c9a227]/40 pb-2">
+      <div className="flex items-baseline justify-between gap-2 border-b border-brand/40 pb-2">
         <div className="min-w-0">
-          <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#c9a227]">
+          <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-brand">
             Combined Standings · Both Nights
           </div>
           <div className="font-bold text-white text-[13px] truncate">
@@ -514,7 +514,7 @@ const SoundSportMedalList = ({ shows }) => {
           </span>
         </div>
         <div className="flex items-center gap-3 text-[10px]">
-          <span className="flex items-center gap-1 text-yellow-500">
+          <span className="flex items-center gap-1 text-brand">
             <Medal className="w-3 h-3" />
             {stats.Gold}
           </span>
@@ -569,7 +569,7 @@ const SoundSportMedalList = ({ shows }) => {
                         (result.uid ? (
                           <Link
                             to={`/profile/${result.uid}`}
-                            className="text-[10px] text-muted hover:text-[#c9a227] block truncate"
+                            className="text-[10px] text-muted hover:text-interactive block truncate"
                           >
                             {result.displayName}
                           </Link>

@@ -31,10 +31,10 @@ const INSIGHT_CONFIG = {
     title: 'Music Captions',
     subtitle: 'Brass, MA & Percussion',
     icon: Music2,
-    bgClass: 'bg-amber-500/10',
-    borderClass: 'border-amber-500/30',
-    iconClass: 'text-amber-400',
-    titleClass: 'text-amber-400',
+    bgClass: 'bg-surface-raised',
+    borderClass: 'border-line',
+    iconClass: 'text-secondary',
+    titleClass: 'text-secondary',
   },
 };
 

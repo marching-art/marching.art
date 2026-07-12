@@ -24,7 +24,7 @@ const CATEGORIES = [
     key: 'highestScore',
     label: 'Highest Single-Night Score',
     icon: Trophy,
-    color: 'text-yellow-500',
+    color: 'text-secondary',
   },
   { key: 'highestGE', label: 'Best General Effect', icon: Sparkles, color: 'text-purple-400' },
   { key: 'highestVisual', label: 'Best Visual', icon: Eye, color: 'text-cyan-400' },
@@ -83,7 +83,7 @@ const Records = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <BookOpen className="w-6 h-6 text-yellow-500" />
+            <BookOpen className="w-6 h-6 text-secondary" />
             <div>
               <h1 className="text-lg font-bold text-white uppercase tracking-wider">
                 Records Book
@@ -111,12 +111,12 @@ const Records = () => {
               return (
                 <div key={cls.key} className="bg-surface-card border border-line rounded-none">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-line-muted">
-                    <span className="w-1 h-3.5 bg-[#c9a227] flex-shrink-0" aria-hidden="true" />
+                    <span className="w-1 h-3.5 bg-brand flex-shrink-0" aria-hidden="true" />
                     <h2 className="text-[13px] font-bold uppercase tracking-wider text-white">
                       {cls.label}
                     </h2>
                   </div>
-                  <div className="divide-y divide-[#242424]">
+                  <div className="divide-y divide-line">
                     {CATEGORIES.map((category) => (
                       <RecordRow
                         key={category.key}

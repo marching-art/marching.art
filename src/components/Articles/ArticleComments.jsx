@@ -125,7 +125,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
               <span>{formatRelativeTime(comment.createdAt)}</span>
               {comment.isEdited && <span className="text-muted">(edited)</span>}
               {isPending && (
-                <span className="flex items-center gap-1 text-yellow-500">
+                <span className="flex items-center gap-1 text-warning">
                   <Clock className="w-3 h-3" />
                   Pending review
                 </span>
@@ -182,7 +182,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                       setShowReportModal(true);
                       setShowMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-yellow-500 hover:bg-line transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-warning hover:bg-line transition-colors"
                   >
                     <Flag className="w-3 h-3" />
                     Report
@@ -237,7 +237,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                 <button
                   onClick={handleReport}
                   disabled={reporting || !reportReason.trim()}
-                  className="px-3 py-1.5 bg-yellow-600 text-white text-xs font-bold hover:bg-yellow-700 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-interactive text-white text-xs font-bold hover:bg-interactive-hover disabled:opacity-50"
                 >
                   {reporting ? 'Reporting...' : 'Report'}
                 </button>

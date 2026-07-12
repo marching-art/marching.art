@@ -152,13 +152,13 @@ const ChatTab = ({
                         <div className="flex items-center gap-1.5 mb-1">
                           <p
                             className={`text-[11px] font-bold ${
-                              isCreator ? 'text-yellow-500' : 'text-muted'
+                              isCreator ? 'text-secondary' : 'text-muted'
                             }`}
                           >
                             @{getDisplayName(item.userId)}
                           </p>
                           {isCreator && (
-                            <span className="inline-flex items-center gap-0.5 px-1 py-0.5 bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 text-[9px] font-bold">
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0.5 bg-surface-raised border border-line text-secondary text-[9px] font-bold">
                               <Crown className="w-2 h-2" />
                               Commish
                             </span>

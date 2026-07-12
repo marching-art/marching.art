@@ -531,7 +531,7 @@ const CaptionSelectionModal = ({
                 <Target className="w-4 h-4 text-interactive" />
                 <span className="text-sm text-muted">Budget:</span>
                 <span
-                  className={`text-lg font-data font-bold ${isOverLimit ? 'text-red-500' : remainingPoints < 10 ? 'text-yellow-500' : 'text-interactive'}`}
+                  className={`text-lg font-data font-bold ${isOverLimit ? 'text-red-500' : remainingPoints < 10 ? 'text-warning' : 'text-interactive'}`}
                 >
                   {totalPoints} / {pointLimit}
                 </span>

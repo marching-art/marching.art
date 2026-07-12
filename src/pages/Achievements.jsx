@@ -111,7 +111,7 @@ const AchievementCard = ({ a }) => {
             <div className="flex items-center gap-2 text-[10px] text-muted font-data">
               {a.earnedAt && <span>{new Date(a.earnedAt).toLocaleDateString()}</span>}
               {a.ccReward > 0 && (
-                <span className="flex items-center gap-0.5 text-yellow-600">
+                <span className="flex items-center gap-0.5 text-brand">
                   <Coins className="w-3 h-3" />+{a.ccReward} CC
                 </span>
               )}
@@ -128,12 +128,12 @@ const AchievementCard = ({ a }) => {
                       <Coins className="w-3 h-3" />+{a.ccReward}
                     </span>
                   )}
-                  <span className="text-[10px] font-bold text-yellow-600 font-data">{a.pct}%</span>
+                  <span className="text-[10px] font-bold text-secondary font-data">{a.pct}%</span>
                 </div>
               </div>
               <div className="h-1 bg-surface-raised rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-yellow-600 transition-all duration-500 rounded-full"
+                  className="h-full bg-surface-elevated transition-all duration-500 rounded-full"
                   style={{ width: `${a.pct}%` }}
                 />
               </div>
@@ -192,7 +192,7 @@ const Achievements = () => {
       {/* Header / overall progress */}
       <div className="bg-surface-card border border-line mb-4">
         <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center gap-3">
-          <Award className="w-5 h-5 text-yellow-500" />
+          <Award className="w-5 h-5 text-brand" />
           <div className="flex-1">
             <h1 className="text-sm font-bold uppercase tracking-wider text-white">Achievements</h1>
             <p className="text-[11px] text-muted">
@@ -209,16 +209,14 @@ const Achievements = () => {
         </div>
         <div className="h-1.5 bg-surface-raised">
           <div
-            className="h-full bg-yellow-500 transition-all duration-500"
+            className="h-full bg-brand transition-all duration-500"
             style={{ width: `${overallPct}%` }}
           />
         </div>
         {ccEarned > 0 && (
           <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-muted">
-            <Coins className="w-3.5 h-3.5 text-yellow-600" />
-            <span className="text-yellow-600 font-bold font-data">
-              {ccEarned.toLocaleString()} CC
-            </span>
+            <Coins className="w-3.5 h-3.5 text-brand" />
+            <span className="text-brand font-bold font-data">{ccEarned.toLocaleString()} CC</span>
             <span>earned from achievements</span>
           </div>
         )}

@@ -99,7 +99,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-interactive/10 to-transparent">
+          <div className="absolute inset-0 flex items-center justify-center bg-interactive/10">
             <Icon className="w-20 h-20 text-interactive/30" />
           </div>
         )}

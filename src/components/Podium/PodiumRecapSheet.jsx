@@ -112,7 +112,7 @@ function SortBar({ sortBy, onChange }) {
           aria-pressed={sortBy === opt.id}
           className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors press-feedback ${
             sortBy === opt.id
-              ? 'bg-[#8a6d1a] text-white'
+              ? 'bg-interactive text-white'
               : 'bg-surface-raised text-muted hover:text-secondary'
           }`}
         >
@@ -166,7 +166,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
               {PODIUM_CAPTIONS.map((caption) => (
                 <th
                   key={caption}
-                  className={`px-1.5 text-right ${sortBy === caption ? 'text-[#c9a227]' : ''}`}
+                  className={`px-1.5 text-right ${sortBy === caption ? 'text-interactive' : ''}`}
                 >
                   {caption}
                 </th>
@@ -211,7 +211,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                           (row.uid ? (
                             <Link
                               to={`/profile/${row.uid}`}
-                              className="block text-[10px] text-muted hover:text-[#c9a227] truncate"
+                              className="block text-[10px] text-muted hover:text-interactive truncate"
                             >
                               {row.displayName}
                             </Link>
@@ -231,7 +231,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                         key={caption}
                         className={`px-1.5 text-right ${
                           isTop
-                            ? 'font-bold text-[#c9a227]'
+                            ? 'font-bold text-brand'
                             : sortBy === caption
                               ? 'text-white'
                               : 'text-secondary'
@@ -260,7 +260,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
 function PodiumReport({ column, userCorpsName }) {
   if (!column || !(column.entries || []).length) return null;
   return (
-    <div className="bg-surface-card border border-[#c9a227]/30 rounded-none p-4 space-y-2">
+    <div className="bg-surface-card border border-line rounded-none p-4 space-y-2">
       <div className="flex items-baseline justify-between border-b border-line pb-2">
         <div>
           <div className="text-sm font-bold text-white">The Podium Report</div>
@@ -268,7 +268,7 @@ function PodiumReport({ column, userCorpsName }) {
             Power Rankings · Week {column.week} · {column.fieldSize} corps
           </div>
         </div>
-        <span className="text-[9px] uppercase tracking-wider text-[#c9a227] font-bold">Column</span>
+        <span className="text-[9px] uppercase tracking-wider text-secondary font-bold">Column</span>
       </div>
       <div className="space-y-1">
         {column.entries.map((entry) => {
@@ -389,7 +389,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
             onClick={() => setSelectedDay(day)}
             className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-none tabular-nums transition-colors press-feedback ${
               day === selected.day
-                ? 'bg-[#8a6d1a] text-white'
+                ? 'bg-interactive text-white'
                 : 'text-muted hover:text-white hover:bg-white/5 border border-line'
             }`}
           >
@@ -419,7 +419,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
                 }
               }}
               title="Copy the sheet as Discord-ready text"
-              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-none border border-line text-muted hover:text-white hover:border-[#c9a227] press-feedback"
+              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-none border border-line text-muted hover:text-white hover:border-interactive press-feedback"
             >
               {copied ? (
                 <Check className="w-3 h-3 text-green-400" />
@@ -428,7 +428,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
               )}
               {copied ? 'Copied' : 'Share'}
             </button>
-            <div className="text-[9px] uppercase tracking-wider text-[#c9a227] font-bold">
+            <div className="text-[9px] uppercase tracking-wider text-secondary font-bold">
               Official Recap
             </div>
           </div>
@@ -460,7 +460,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
         {/* Wordmark footer — every screenshot is an advertisement */}
         <div className="flex justify-between items-center pt-1 text-[9px] uppercase tracking-wider text-muted">
           <span>
-            Box-toppers in <span className="text-[#c9a227] font-bold">gold</span> · full captions —
+            Box-toppers in <span className="text-brand font-bold">gold</span> · full captions —
             Podium Class only
           </span>
           <span className="font-bold text-muted">

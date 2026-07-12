@@ -47,13 +47,13 @@ const SeasonRecapModal = ({ recap, onClose }) => {
         aria-labelledby="modal-title-season-recap"
       >
         <div
-          className="w-full max-w-lg max-h-[85dvh] bg-surface-card border border-yellow-500/30 rounded-none flex flex-col"
+          className="w-full max-w-lg max-h-[85dvh] bg-surface-card border border-brand/30 rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised flex-shrink-0">
             <div className="flex items-center gap-3">
-              <Trophy className="w-5 h-5 text-yellow-500" />
+              <Trophy className="w-5 h-5 text-brand" />
               <div>
                 <h2
                   id="modal-title-season-recap"
@@ -101,9 +101,7 @@ const SeasonRecapModal = ({ recap, onClose }) => {
                   </p>
                   <div className="flex items-center justify-end gap-2">
                     {result.coinBonus > 0 && (
-                      <span className="text-xs text-yellow-500 font-data">
-                        +{result.coinBonus} CC
-                      </span>
+                      <span className="text-xs text-brand font-data">+{result.coinBonus} CC</span>
                     )}
                     {result.xpBonus > 0 && (
                       <span className="text-xs text-purple-400 font-data">
@@ -116,16 +114,16 @@ const SeasonRecapModal = ({ recap, onClose }) => {
             ))}
 
             {/* Totals */}
-            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-between">
+            <div className="p-3 bg-brand/10 border border-brand/30 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-yellow-500" />
-                <p className="text-xs font-bold uppercase tracking-wider text-yellow-500">
+                <Star className="w-4 h-4 text-brand" />
+                <p className="text-xs font-bold uppercase tracking-wider text-brand">
                   Season Rewards
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 {recap?.totalCoin > 0 && (
-                  <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data">
+                  <span className="flex items-center gap-1 text-sm font-bold text-brand font-data">
                     <Coins className="w-4 h-4" />+{recap.totalCoin.toLocaleString()}
                   </span>
                 )}

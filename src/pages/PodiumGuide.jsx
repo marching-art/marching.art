@@ -98,7 +98,7 @@ export default function PodiumGuide() {
             <ChevronLeft className="w-3.5 h-3.5" /> marching.art
           </Link>
           <div className="flex items-center gap-2 mb-1">
-            <Medal className="w-6 h-6 text-[#c9a227]" />
+            <Medal className="w-6 h-6 text-brand" />
             <h1 className="text-2xl font-bold">The Podium Class Guide</h1>
           </div>
           <p className="text-sm text-muted">
@@ -110,7 +110,7 @@ export default function PodiumGuide() {
         <div className="space-y-6">
           {SECTIONS.map((section) => (
             <section key={section.n} id={`s${section.n}`}>
-              <h2 className="text-sm font-bold text-[#c9a227] uppercase tracking-wider mb-1.5">
+              <h2 className="text-sm font-bold text-brand uppercase tracking-wider mb-1.5">
                 {section.n}. {section.title}
               </h2>
               <p className="text-[13px] leading-relaxed text-secondary">{section.body}</p>
@@ -125,7 +125,7 @@ export default function PodiumGuide() {
           </span>
           <Link
             to="/dashboard"
-            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-[#c9a227] text-black rounded-none"
+            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-interactive text-white rounded-none"
           >
             Play
           </Link>

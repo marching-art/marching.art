@@ -17,10 +17,10 @@ export interface BadgeProps {
 // Premium refined: Subtle backgrounds, soft borders, no shadows
 const variantStyles: Record<BadgeVariant, string> = {
   default: 'bg-white/10 text-white border border-white/20',
-  gold: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+  gold: 'bg-brand/15 text-brand border border-brand/30',
   success: 'bg-green-500/15 text-green-400 border border-green-500/30',
   danger: 'bg-red-500/15 text-red-400 border border-red-500/30',
-  warning: 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30',
+  warning: 'bg-warning/15 text-warning border border-warning/30',
   info: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
 };
 
@@ -67,7 +67,7 @@ const statusColors: Record<StatusType, string> = {
   online: 'bg-green-500',
   offline: 'bg-charcoal-500',
   busy: 'bg-red-500',
-  away: 'bg-yellow-500',
+  away: 'bg-warning',
 };
 
 const statusLabels: Record<StatusType, string> = {

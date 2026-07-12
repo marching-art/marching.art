@@ -53,7 +53,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
       disabled={disabled}
       className={`w-full min-h-touch flex items-center justify-between px-3 py-2.5 text-left transition-colors ${
         isSelected
-          ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]'
+          ? 'bg-interactive/10 border-l-2 border-l-interactive'
           : disabled
             ? 'opacity-50 cursor-not-allowed'
             : 'hover:bg-white/5 cursor-pointer'
@@ -385,14 +385,14 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   if (changeInfo.status === 'locked') {
     return (
       <div
-        className="flex items-center gap-1.5 px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-none"
+        className="flex items-center gap-1.5 px-2 py-1 bg-warning/10 border border-warning/30 rounded-none"
         title={`Caption changes reopen once scores are processed (~${formatEtDayTime(changeInfo.reopensAt)})`}
       >
-        <Lock className="w-3 h-3 text-yellow-400" />
-        <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
+        <Lock className="w-3 h-3 text-warning" />
+        <span className="text-[10px] font-bold text-warning uppercase tracking-wider">
           Changes Locked
         </span>
-        <span className="text-[9px] text-yellow-400/70 normal-case whitespace-nowrap">
+        <span className="text-[9px] text-warning/70 normal-case whitespace-nowrap">
           until scores process (~{formatEtShort(changeInfo.reopensAt)})
         </span>
       </div>
@@ -449,7 +449,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   const isChampionship = changeInfo.phase === 'championship';
   const isLow = tradesRemaining <= 1;
   const colorClass = isLow
-    ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
+    ? 'text-warning border-warning/30 bg-warning/10'
     : 'text-muted border-line bg-surface-raised';
 
   if (isChampionship) {

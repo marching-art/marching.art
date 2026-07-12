@@ -52,10 +52,10 @@ const SECTION_CONFIG = {
   },
   'MUSIC CAPTIONS': {
     icon: Music2,
-    bgClass: 'bg-amber-500/10',
-    borderClass: 'border-amber-500/30',
-    iconClass: 'text-amber-400',
-    titleClass: 'text-amber-400',
+    bgClass: 'bg-surface-raised',
+    borderClass: 'border-line',
+    iconClass: 'text-secondary',
+    titleClass: 'text-secondary',
   },
   'CAPTION PICKS': {
     icon: ShoppingCart,
@@ -88,10 +88,10 @@ const SECTION_CONFIG = {
   },
   MUSIC: {
     icon: Music2,
-    bgClass: 'bg-amber-500/10',
-    borderClass: 'border-amber-500/30',
-    iconClass: 'text-amber-400',
-    titleClass: 'text-amber-400',
+    bgClass: 'bg-surface-raised',
+    borderClass: 'border-line',
+    iconClass: 'text-secondary',
+    titleClass: 'text-secondary',
   },
   'TRAJECTORY & FUTURE OUTLOOK': {
     icon: Compass,
@@ -216,21 +216,18 @@ function RecommendationList({ recs }) {
       {recs.hold.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Pause className="w-4 h-4 text-yellow-500" />
-            <span className="text-xs font-bold text-yellow-500 uppercase">
+            <Pause className="w-4 h-4 text-warning" />
+            <span className="text-xs font-bold text-warning uppercase">
               HOLD - Keep if you have them
             </span>
           </div>
           <div className="space-y-2">
             {recs.hold.map((rec, idx) => (
-              <div
-                key={idx}
-                className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-none"
-              >
+              <div key={idx} className="bg-warning/10 border border-warning/20 p-3 rounded-none">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
                   {rec.score > 0 && (
-                    <span className="text-xs font-data font-bold text-yellow-400 tabular-nums">
+                    <span className="text-xs font-data font-bold text-warning tabular-nums">
                       {rec.caption && `${rec.caption} @ `}
                       {rec.score.toFixed(2)}
                     </span>

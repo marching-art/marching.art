@@ -131,7 +131,7 @@ const Shop = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <ShoppingBag className="w-6 h-6 text-yellow-500" />
+            <ShoppingBag className="w-6 h-6 text-secondary" />
             <div>
               <h1 className="text-lg font-bold text-white uppercase tracking-wider">Corps Shop</h1>
               <p className="text-xs text-muted">
@@ -140,8 +140,8 @@ const Shop = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 bg-surface-card border border-line">
-            <Coins className="w-4 h-4 text-yellow-500" />
-            <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+            <Coins className="w-4 h-4 text-brand" />
+            <span className="text-sm font-bold text-brand font-data tabular-nums">
               {balance.toLocaleString()}
             </span>
           </div>
@@ -186,7 +186,7 @@ const Shop = () => {
         {/* Hosting — sponsorship's replacement: run the show, don't just brand it */}
         <div className="mb-8">
           <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-2">
-            <Megaphone className="w-3.5 h-3.5 text-yellow-500" />
+            <Megaphone className="w-3.5 h-3.5 text-secondary" />
             Host Your Own Show
           </h2>
           <div className="bg-surface-card border border-line p-4 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -202,7 +202,7 @@ const Shop = () => {
             </div>
             <Link
               to="/schedule"
-              className="shrink-0 h-9 px-4 flex items-center text-xs font-bold uppercase tracking-wider bg-yellow-600 hover:bg-yellow-500 text-white"
+              className="shrink-0 h-9 px-4 flex items-center text-xs font-bold uppercase tracking-wider bg-interactive hover:bg-interactive-hover text-white"
             >
               Book a venue
             </Link>
@@ -235,7 +235,7 @@ const Shop = () => {
                             <span
                               className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider whitespace-nowrap border ${
                                 inSeason
-                                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
+                                  ? 'bg-warning/10 border-warning/40 text-warning'
                                   : 'bg-surface-raised border-line text-muted'
                               }`}
                             >
@@ -276,7 +276,7 @@ const Shop = () => {
                             disabled={busy === item.id || !canAfford}
                             className={`h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors ${
                               canAfford
-                                ? 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                                ? 'bg-interactive hover:bg-interactive-hover text-white'
                                 : 'bg-surface-raised text-muted cursor-not-allowed'
                             }`}
                           >

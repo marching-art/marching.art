@@ -107,7 +107,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
           <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <h2
               id="modal-title-class-purchase"
-              className="text-xs font-bold uppercase tracking-wider text-yellow-400 flex items-center gap-2"
+              className="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-2"
             >
               <ShoppingCart className="w-4 h-4" />
               {isEarlyUnlock ? 'Early Unlock' : 'Unlock Class'}
@@ -124,8 +124,8 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
           {/* Body */}
           <div className="p-4">
             {/* Icon */}
-            <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
-              <Coins className="w-8 h-8 text-yellow-500" />
+            <div className="w-16 h-16 mx-auto mb-4 bg-brand/10 border border-brand/30 flex items-center justify-center">
+              <Coins className="w-8 h-8 text-brand" />
             </div>
 
             {/* Class Info Card */}
@@ -171,14 +171,12 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
 
             {/* Early Unlock Warning */}
             {isEarlyUnlock && !isRegistrationLocked && (
-              <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 mb-4">
+              <div className="bg-warning/10 border border-warning/30 p-3 mb-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-yellow-400 font-bold uppercase mb-1">
-                      Skip the Earn
-                    </p>
-                    <p className="text-xs text-yellow-300/80">
+                    <p className="text-xs text-warning font-bold uppercase mb-1">Skip the Earn</p>
+                    <p className="text-xs text-warning/80">
                       You're unlocking this class before earning it. You can also earn it free by
                       reaching Level {levelRequired}
                       {seasonsUntilUnlock != null && seasonsUntilUnlock > 0
@@ -212,7 +210,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
             <div className="bg-background border border-line p-4 mb-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted">Cost</span>
-                <span className="text-sm font-bold text-yellow-400 flex items-center gap-1">
+                <span className="text-sm font-bold text-brand flex items-center gap-1">
                   <Coins className="w-3 h-3" />
                   {coinCost.toLocaleString()} CC
                 </span>
@@ -253,7 +251,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
             <button
               onClick={handleConfirm}
               disabled={isPurchasing}
-              className="h-9 px-4 bg-yellow-600 text-white text-sm font-bold uppercase tracking-wider hover:bg-yellow-500 disabled:opacity-50 flex items-center gap-2"
+              className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 flex items-center gap-2"
             >
               {isPurchasing ? (
                 <>

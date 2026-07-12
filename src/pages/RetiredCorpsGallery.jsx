@@ -27,9 +27,9 @@ import { PLAQUE_TIERS, PLAQUE_STYLES, availablePlaqueUpgrades } from '../utils/p
 const CLASS_CONFIG = {
   worldClass: {
     name: 'World Class',
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    accent: 'bg-yellow-500',
+    color: 'text-secondary',
+    bg: 'bg-surface-raised',
+    accent: 'bg-line-strong',
   },
   openClass: {
     name: 'Open Class',
@@ -298,7 +298,7 @@ const RetiredCorpsGallery = () => {
 
                         <div className="bg-surface-sunken border border-line rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                            <Trophy className="w-3.5 h-3.5 text-brand" />
                             <span className="text-[10px] text-muted uppercase tracking-wider">
                               Best
                             </span>
@@ -366,7 +366,7 @@ const RetiredCorpsGallery = () => {
                             setSelectedCorps({ ...corps, index: corps.originalIndex });
                             setShowPlaqueModal(true);
                           }}
-                          className="w-full mt-2 py-2 px-4 bg-surface-card hover:bg-surface-raised border border-yellow-500/40 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
+                          className="w-full mt-2 py-2 px-4 bg-surface-card hover:bg-surface-raised border border-interactive/40 text-interactive font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
                         >
                           <Award className="w-3.5 h-3.5" />
                           {corps.plaque ? 'Upgrade Plaque' : 'Commission Plaque'}
@@ -401,7 +401,7 @@ const RetiredCorpsGallery = () => {
               >
                 <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <Award className="w-4 h-4 text-yellow-500" />
+                    <Award className="w-4 h-4 text-brand" />
                     Commission a Plaque
                   </h3>
                   <button
@@ -421,7 +421,7 @@ const RetiredCorpsGallery = () => {
                     memorial plaque, displayed forever on its gallery card.
                   </p>
                   <div className="flex items-center gap-1.5 text-[11px] text-muted mb-4">
-                    <Coins className="w-3 h-3 text-yellow-500" />
+                    <Coins className="w-3 h-3 text-brand" />
                     <span className="font-data tabular-nums">
                       {corpsCoin.toLocaleString()}
                     </span>{' '}
@@ -453,7 +453,7 @@ const RetiredCorpsGallery = () => {
                             {tier.name}
                           </span>
                           <span className="flex items-center gap-1 text-xs font-bold text-white font-data tabular-nums">
-                            <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                            <Coins className="w-3.5 h-3.5 text-brand" />
                             {tier.price.toLocaleString()}
                           </span>
                         </button>
@@ -552,8 +552,8 @@ const RetiredCorpsGallery = () => {
                     </div>
                   </div>
 
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-3 mb-4">
-                    <p className="text-xs text-yellow-200">
+                  <div className="bg-warning/10 border border-warning/30 rounded-none p-3 mb-4">
+                    <p className="text-xs text-warning">
                       <strong>Note:</strong> This corps will become your active{' '}
                       {getClassConfig(selectedCorps.corpsClass).name} corps. All season history will
                       be preserved, but you'll start fresh for the current season.

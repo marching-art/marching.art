@@ -48,7 +48,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
       >
         {!isOnline ? (
           // Offline Banner
-          <div className="bg-red-500/95 backdrop-blur-sm border-b border-red-400/50">
+          <div className="bg-red-500/95 border-b border-red-400/50">
             <div className="container-responsive py-2 px-4">
               <div className="flex items-center justify-center gap-3">
                 <WifiOff className="w-4 h-4 text-white animate-pulse" />
@@ -71,7 +71,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
           </div>
         ) : showReconnected ? (
           // Reconnected Banner
-          <div className="bg-green-500/95 backdrop-blur-sm border-b border-green-400/50">
+          <div className="bg-green-500/95 border-b border-green-400/50">
             <div className="container-responsive py-2 px-4">
               <div className="flex items-center justify-center gap-3">
                 <Wifi className="w-4 h-4 text-white" />
@@ -84,7 +84,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
           </div>
         ) : isSlowConnection ? (
           // Slow Connection Banner
-          <div className="bg-amber-500/95 backdrop-blur-sm border-b border-amber-400/50">
+          <div className="bg-warning/95 border-b border-warning/50">
             <div className="container-responsive py-2 px-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

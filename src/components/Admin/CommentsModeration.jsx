@@ -15,7 +15,7 @@ import {
 
 // Status badge colors
 const STATUS_COLORS = {
-  pending: 'bg-yellow-500/20 text-yellow-400',
+  pending: 'bg-warning/20 text-warning',
   approved: 'bg-green-500/20 text-green-400',
   rejected: 'bg-red-500/20 text-red-400',
   hidden: 'bg-charcoal-500/20 text-muted',
@@ -183,7 +183,7 @@ const CommentsModeration = () => {
               {counts[status] > 0 && status !== 'all' && (
                 <span
                   className={`ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
-                    status === 'pending' ? 'bg-yellow-500 text-black' : 'bg-line text-secondary'
+                    status === 'pending' ? 'bg-warning text-black' : 'bg-line text-secondary'
                   }`}
                 >
                   {counts[status]}

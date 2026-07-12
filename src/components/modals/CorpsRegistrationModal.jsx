@@ -133,7 +133,7 @@ const CorpsRegistrationModal = ({
                         className={`
                           w-full flex items-center justify-between px-3 py-2 text-left
                           ${cls.unlocked ? 'hover:bg-white/5 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
-                          ${isSelected ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]' : ''}
+                          ${isSelected ? 'bg-interactive/10 border-l-2 border-l-interactive' : ''}
                         `}
                       >
                         <div className="flex items-center gap-3">

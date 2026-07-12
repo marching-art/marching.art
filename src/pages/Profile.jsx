@@ -474,7 +474,7 @@ const Profile = () => {
               to="/scores?tab=champions"
               className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
-              <Crown className="w-5 h-5 text-yellow-400 mb-1" />
+              <Crown className="w-5 h-5 text-brand mb-1" />
               <span className="text-xs text-muted">Champions</span>
             </Link>
             <a
@@ -483,7 +483,7 @@ const Profile = () => {
               rel="noopener noreferrer"
               className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
-              <Heart className="w-5 h-5 text-amber-500 mb-1" />
+              <Heart className="w-5 h-5 text-secondary mb-1" />
               <span className="text-xs text-muted">Support</span>
             </a>
             <a
@@ -508,7 +508,7 @@ const Profile = () => {
                 onClick={() => setShowCorpsCoin(true)}
                 className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
               >
-                <Coins className="w-5 h-5 text-yellow-500 mb-1" />
+                <Coins className="w-5 h-5 text-brand mb-1" />
                 <span className="text-xs text-muted font-data tabular-nums">
                   {(profile.corpsCoin || 0).toLocaleString()} CC
                 </span>

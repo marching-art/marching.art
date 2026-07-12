@@ -180,7 +180,7 @@ const Login = () => {
                   </label>
                   <Link
                     to="/forgot-password"
-                    className="text-base text-interactive hover:text-interactive-hover active:text-[#004a9e] transition-colors min-h-touch flex items-center px-2 -mr-2"
+                    className="text-base text-interactive hover:text-interactive-hover active:text-interactive-subtle transition-colors min-h-touch flex items-center px-2 -mr-2"
                   >
                     Forgot password?
                   </Link>

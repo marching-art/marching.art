@@ -229,7 +229,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                     {step.title}
                   </span>
                   {!step.done && (
-                    <span className="text-[10px] text-yellow-600 ml-2 font-data whitespace-nowrap">
+                    <span className="text-[10px] text-brand ml-2 font-data whitespace-nowrap">
                       +{step.xp} XP{step.coin > 0 ? ` +${step.coin} CC` : ''}
                     </span>
                   )}
@@ -238,7 +238,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   <button
                     onClick={() => handleClaim(step)}
                     disabled={claiming === step.id}
-                    className="flex items-center gap-1 px-2.5 h-7 bg-yellow-600 hover:bg-yellow-500 text-white text-[10px] font-bold uppercase tracking-wider transition-colors press-feedback flex-shrink-0"
+                    className="flex items-center gap-1 px-2.5 h-7 bg-interactive hover:bg-interactive-hover text-white text-[10px] font-bold uppercase tracking-wider transition-colors press-feedback flex-shrink-0"
                   >
                     <Gift className="w-3 h-3" />
                     {claiming === step.id ? '...' : 'Claim'}

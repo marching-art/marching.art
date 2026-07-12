@@ -112,7 +112,7 @@ const LeagueStatsOverview = ({
           </div>
           <div className="bg-surface-raised p-3 text-center">
             <p className="text-[10px] uppercase text-muted mb-1">Matchups</p>
-            <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">
+            <p className="text-xl font-bold text-secondary font-data tabular-nums">
               {stats.totalGames}
             </p>
           </div>
@@ -130,14 +130,14 @@ const LeagueStatsOverview = ({
           {stats.highestScorer && (
             <div className="flex items-center justify-between p-3 bg-surface-raised">
               <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-yellow-500" />
+                <Trophy className="w-4 h-4 text-brand" />
                 <span className="text-xs text-muted">Top Scorer</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-white">
                   {getDisplayName(stats.highestScorer.uid)}
                 </span>
-                <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                <span className="text-sm font-bold text-brand font-data tabular-nums">
                   {stats.highestScorer.totalPoints?.toFixed(1)}
                 </span>
               </div>
@@ -189,7 +189,7 @@ const LeagueStatsOverview = ({
                 initial={{ width: 0 }}
                 animate={{ width: `${stats.competitiveness}%` }}
                 transition={{ duration: 0.5 }}
-                className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                className="h-full bg-interactive"
               />
             </div>
             <p className="text-[9px] text-muted mt-1">
@@ -326,7 +326,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
   }, [standings, leagueStats, userProfile?.uid]);
 
   const colorClasses = {
-    yellow: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30',
+    yellow: 'text-brand bg-brand/10 border-brand/30',
     orange: 'text-orange-500 bg-orange-500/10 border-orange-500/30',
     purple: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
     red: 'text-red-500 bg-red-500/10 border-red-500/30',
@@ -338,7 +338,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
     <div className="bg-surface-card border border-line">
       <div className="px-4 py-3 border-b border-line bg-surface-raised">
         <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-yellow-500" />
+          <Award className="w-4 h-4 text-secondary" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Achievements
           </span>
@@ -461,7 +461,7 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
                 <div
                   className={`w-6 h-6 flex items-center justify-center text-xs font-bold ${
                     idx === 0
-                      ? 'bg-yellow-500/20 text-yellow-500'
+                      ? 'bg-brand/20 text-brand'
                       : idx === 1
                         ? 'bg-charcoal-500/20 text-muted'
                         : idx === 2

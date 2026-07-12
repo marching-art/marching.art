@@ -79,7 +79,7 @@ const GuestLineupPicker = ({
                   Budget:{' '}
                   <span
                     className={`font-bold font-data tabular-nums ${
-                      remainingPoints < 10 ? 'text-yellow-400' : 'text-green-400'
+                      remainingPoints < 10 ? 'text-warning' : 'text-green-400'
                     }`}
                   >
                     {remainingPoints}
@@ -112,7 +112,7 @@ const GuestLineupPicker = ({
                     disabled={disabled}
                     className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${
                       isSelected
-                        ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]'
+                        ? 'bg-interactive/10 border-l-2 border-l-interactive'
                         : disabled
                           ? 'opacity-40 cursor-not-allowed'
                           : 'hover:bg-white/5'
@@ -132,7 +132,7 @@ const GuestLineupPicker = ({
                       className={`text-xs font-bold font-data px-2 py-1 rounded-none ${
                         overBudget
                           ? 'bg-red-500/20 text-red-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-surface-raised text-secondary'
                       }`}
                     >
                       Cost {corps.points}

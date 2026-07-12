@@ -222,7 +222,7 @@ const Landing = () => {
                 aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
                 className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-line active:scale-95 transition-all duration-150 press-feedback"
               >
-                <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data tabular-nums">
+                <span className="flex items-center gap-1 text-sm font-bold text-brand font-data tabular-nums">
                   <Coins className="w-3.5 h-3.5" />
                   {(profile.corpsCoin || 0).toLocaleString()}
                 </span>
@@ -394,9 +394,9 @@ const Landing = () => {
                             </div>
                           )}
                           <div className="flex items-center gap-1.5">
-                            <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                            <Coins className="w-3.5 h-3.5 text-brand" />
                             <span className="text-xs text-muted">Coins</span>
-                            <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                            <span className="text-sm font-bold text-brand font-data tabular-nums">
                               {(profile.corpsCoin || 0).toLocaleString()}
                             </span>
                           </div>
@@ -426,7 +426,7 @@ const Landing = () => {
                     {/* Card Header */}
                     <div className="bg-surface-raised px-4 py-3 border-b border-line">
                       <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
-                        <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                        <Trophy className="w-3.5 h-3.5 text-secondary" />
                         Play Now
                       </h3>
                     </div>
@@ -497,7 +497,7 @@ const Landing = () => {
                       {/* Try Demo Link */}
                       <Link
                         to="/preview"
-                        className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-none text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
+                        className="flex items-center justify-center gap-2 py-2.5 border border-interactive/30 rounded-none text-interactive hover:bg-interactive/10 hover:border-interactive/50 transition-colors"
                       >
                         <Play className="w-4 h-4" />
                         <span className="text-sm font-medium">Try Demo First</span>

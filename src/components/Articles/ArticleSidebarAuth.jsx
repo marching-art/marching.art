@@ -126,9 +126,9 @@ const ArticleSidebarAuth = () => {
               </div>
             )}
             <div className="flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5 text-yellow-500" />
+              <Coins className="w-3.5 h-3.5 text-brand" />
               <span className="text-xs text-muted">Coins</span>
-              <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+              <span className="text-sm font-bold text-brand font-data tabular-nums">
                 {(profile.corpsCoin || 0).toLocaleString()}
               </span>
             </div>

@@ -109,7 +109,7 @@ const MoveCorpsModal = ({
                           onClick={() => setSelectedClass(cls.id)}
                           className={`
                             w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/5
-                            ${isSelected ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]' : ''}
+                            ${isSelected ? 'bg-interactive/10 border-l-2 border-l-interactive' : ''}
                           `}
                         >
                           <div>
@@ -124,8 +124,8 @@ const MoveCorpsModal = ({
                 </div>
 
                 {/* Info */}
-                <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 mt-4">
-                  <p className="text-xs text-yellow-400">
+                <div className="bg-warning/10 border border-warning/30 p-3 mt-4">
+                  <p className="text-xs text-warning">
                     <strong>Note:</strong> Your corps name and identity will be preserved, but
                     season-specific data (lineup, show selections, scores) will be reset. Each corps
                     can only transfer once per season.

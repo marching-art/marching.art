@@ -30,7 +30,7 @@ const LEAGUE_TAGS = {
   competitive: { label: 'Competitive', color: 'text-red-400 bg-red-500/10' },
   casual: { label: 'Casual', color: 'text-green-400 bg-green-500/10' },
   roleplay: { label: 'Roleplay', color: 'text-purple-400 bg-purple-500/10' },
-  dynasty: { label: 'Dynasty', color: 'text-yellow-400 bg-yellow-500/10' },
+  dynasty: { label: 'Dynasty', color: 'text-secondary bg-surface-raised' },
   weekly: { label: 'Weekly', color: 'text-blue-400 bg-blue-500/10' },
   public: { label: 'Public', color: 'text-muted bg-white/5' },
 };
@@ -59,7 +59,7 @@ const RankBadge = ({ rank, total }) => {
     <div
       className={`
       flex flex-col items-center justify-center px-2
-      ${isFirst ? 'text-yellow-400' : isTop3 ? 'text-green-400' : 'text-muted'}
+      ${isFirst ? 'text-brand' : isTop3 ? 'text-green-400' : 'text-muted'}
     `}
     >
       <span className="text-lg font-bold font-data tabular-nums leading-tight">#{rank}</span>
@@ -119,7 +119,7 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
     >
       {/* League Avatar */}
       <div className="w-12 h-12 bg-line border border-line-strong rounded-none flex-shrink-0 flex items-center justify-center">
-        <Trophy className="w-5 h-5 text-yellow-500" />
+        <Trophy className="w-5 h-5 text-secondary" />
       </div>
 
       {/* League Info - Middle */}
@@ -170,7 +170,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-9 h-9 bg-line border border-line-strong rounded-none flex-shrink-0 flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-yellow-500" />
+              <Trophy className="w-4 h-4 text-secondary" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-white truncate">{league.name}</h3>
@@ -202,7 +202,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
             </span>
             {league.creatorName && (
               <span className="flex items-center gap-1 truncate max-w-[80px]">
-                <Crown className="w-3 h-3 text-yellow-500/50" />
+                <Crown className="w-3 h-3 text-muted" />
                 <span className="truncate">{league.creatorName}</span>
               </span>
             )}

@@ -308,11 +308,9 @@ export default function CorpsConditionPanel({ podium }) {
               </p>
             </div>
           ) : (
-            <div className="flex items-start gap-2 rounded-none border border-amber-500/30 bg-amber-500/5 px-3 py-2">
-              <Moon className="w-3.5 h-3.5 text-amber-400/80 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-amber-200/70 leading-relaxed">
-                {activePlanType.empty}
-              </p>
+            <div className="flex items-start gap-2 rounded-none border border-warning/30 bg-warning/5 px-3 py-2">
+              <Moon className="w-3.5 h-3.5 text-warning shrink-0 mt-0.5" />
+              <p className="text-[10px] text-warning leading-relaxed">{activePlanType.empty}</p>
             </div>
           )
         ) : (
@@ -485,7 +483,7 @@ export default function CorpsConditionPanel({ podium }) {
                 >
                   <span className="text-muted">D{leg.day}</span>
                   <span
-                    className={`truncate ${leg.isMajor ? 'text-[#c9a227] font-bold' : 'text-secondary'}`}
+                    className={`truncate ${leg.isMajor ? 'text-brand font-bold' : 'text-secondary'}`}
                     title={name ? `${name} — ${leg.city}` : leg.city}
                   >
                     {name ? `${name} · ${leg.city}` : leg.city}
@@ -514,9 +512,8 @@ export default function CorpsConditionPanel({ podium }) {
         )}
 
         <p className="mt-1.5 text-[9px] text-muted leading-relaxed">
-          <span className="text-[#c9a227] font-bold">Gold</span> stops — majors &amp; championship
-          week — are attended automatically. Every other stop is a show you added on the Schedule
-          page.
+          <span className="text-brand font-bold">Gold</span> stops — majors &amp; championship week
+          — are attended automatically. Every other stop is a show you added on the Schedule page.
         </p>
       </div>
 

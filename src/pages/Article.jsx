@@ -351,7 +351,7 @@ const Article = () => {
                       <span className="text-muted">By</span>
                       <Link
                         to={`/profile/${article.authorUid}`}
-                        className="font-bold text-interactive hover:text-[#c9a227] transition-colors"
+                        className="font-bold text-interactive hover:text-interactive-hover transition-colors"
                       >
                         {article.authorUsername || article.authorName}
                       </Link>

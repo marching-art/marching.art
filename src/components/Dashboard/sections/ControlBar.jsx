@@ -129,10 +129,10 @@ const ControlBar = memo(
                 onClick={() => onSwitch('podiumClass')}
                 className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                   activeCorpsClass === 'podiumClass'
-                    ? 'bg-[#8a6d1a] text-white'
+                    ? 'bg-brand text-white'
                     : corps?.podiumClass
                       ? 'text-muted hover:text-white hover:bg-white/5'
-                      : 'text-[#c9a227]/70 hover:text-[#c9a227] border border-dashed border-[#8a6d1a]/50'
+                      : 'text-brand/70 hover:text-brand border border-dashed border-brand/50'
                 }`}
               >
                 {CLASS_SHORT_LABELS.podiumClass}
@@ -171,7 +171,7 @@ const ControlBar = memo(
                         ? 'bg-red-500/20 text-red-400'
                         : streak >= 30
                           ? 'bg-orange-500/20 text-orange-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-warning/20 text-warning'
                     }`}
                   >
                     {streak >= 100
@@ -218,8 +218,8 @@ const ControlBar = memo(
               className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-none px-1 -mx-1"
               title="CorpsCoin wallet — history and how to earn"
             >
-              <Coins className="w-3.5 h-3.5 text-yellow-500" />
-              <span className="text-xs font-bold text-yellow-500 font-data tabular-nums">
+              <Coins className="w-3.5 h-3.5 text-brand" />
+              <span className="text-xs font-bold text-brand font-data tabular-nums">
                 {corpsCoin.toLocaleString()}
               </span>
             </button>
@@ -232,7 +232,7 @@ const ControlBar = memo(
                   className={`min-h-touch px-3 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors press-feedback ${
                     nextUnlock.meetsLevel
                       ? 'bg-green-600 hover:bg-green-500 text-white'
-                      : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                      : 'bg-interactive hover:bg-interactive-hover text-white'
                   }`}
                   title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)`}
                 >

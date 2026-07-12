@@ -62,7 +62,7 @@ const getCellBgColor = (value, maxPossible) => {
   const percentage = value / maxPossible;
   if (percentage >= 0.9) return 'bg-green-900/30';
   if (percentage >= 0.8) return 'bg-green-900/20';
-  if (percentage >= 0.7) return 'bg-yellow-900/20';
+  if (percentage >= 0.7) return 'bg-warning/20';
   if (percentage < 0.5) return 'bg-red-900/20';
   return '';
 };
@@ -278,7 +278,7 @@ const LiveScoresVerification = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-yellow-500 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-secondary animate-spin" />
         <span className="ml-3 text-secondary">Loading live DCI scores…</span>
       </div>
     );
@@ -301,8 +301,8 @@ const LiveScoresVerification = () => {
       {/* Header (mirrors ScoresSpreadsheet) */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-yellow-500/20 rounded-none">
-            <Table className="w-4 h-4 text-yellow-500" />
+          <div className="p-1.5 bg-surface-raised rounded-none">
+            <Table className="w-4 h-4 text-secondary" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Live DCI Scores — {currentYear}</h2>
@@ -325,7 +325,7 @@ const LiveScoresVerification = () => {
           <button
             onClick={handleScrape}
             disabled={scraping}
-            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-none bg-amber-400 text-neutral-900 font-bold hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-none bg-interactive text-white font-bold hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {scraping ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -338,7 +338,7 @@ const LiveScoresVerification = () => {
       </div>
 
       {!isLiveSeason && (
-        <div className="text-[11px] text-yellow-500/80 px-1">
+        <div className="text-[11px] text-warning/80 px-1">
           Status: {seasonData?.status?.toUpperCase() || 'UNKNOWN'} — scraping is a no-op until a
           live DCI season is active.
         </div>
@@ -359,7 +359,7 @@ const LiveScoresVerification = () => {
                 onClick={() => setActiveTab(caption)}
                 className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === caption
-                    ? 'bg-amber-400 text-neutral-900 font-bold'
+                    ? 'bg-interactive text-white font-bold'
                     : 'text-muted hover:text-white hover:bg-charcoal-800'
                 }`}
               >
@@ -373,7 +373,7 @@ const LiveScoresVerification = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === tab.id
-                    ? 'bg-amber-400 text-neutral-900 font-bold'
+                    ? 'bg-interactive text-white font-bold'
                     : 'text-muted hover:text-white hover:bg-charcoal-800'
                 }`}
               >
@@ -417,7 +417,7 @@ const LiveScoresVerification = () => {
             <table className="w-full border-collapse text-[10px]">
               <thead>
                 <tr className="bg-charcoal-900/80 border-b border-white/20">
-                  <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-yellow-400 border-r border-white/20 w-[90px]">
+                  <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-secondary border-r border-white/20 w-[90px]">
                     {activeLabel}
                   </th>
                   {visibleColumns.map((col) => (
@@ -497,7 +497,7 @@ const LiveScoresVerification = () => {
               <span className="w-2.5 h-2.5 rounded-none bg-green-900/20" /> 80-90%
             </span>
             <span className="flex items-center gap-0.5">
-              <span className="w-2.5 h-2.5 rounded-none bg-yellow-900/20" /> 70-80%
+              <span className="w-2.5 h-2.5 rounded-none bg-warning/20" /> 70-80%
             </span>
             <span className="flex items-center gap-0.5">
               <span className="w-2.5 h-2.5 rounded-none bg-red-900/20" /> &lt;50%

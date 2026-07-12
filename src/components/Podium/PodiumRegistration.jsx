@@ -135,7 +135,7 @@ export default function PodiumRegistration({ podium }) {
         <div className="text-lg font-bold text-white">{done.corpsName} is on tour.</div>
         <div className="text-xs text-muted">
           Competing in{' '}
-          <span className="text-yellow-400 font-bold">{done.divisionLabel || 'A Class'}</span>. Your
+          <span className="text-secondary font-bold">{done.divisionLabel || 'A Class'}</span>. Your
           provisional Eastern Classic night:{' '}
           <span className="text-white font-bold">Day {done.easternNight}</span> (night lineups
           publish Day 39). First rehearsal block is waiting below.
@@ -195,7 +195,7 @@ export default function PodiumRegistration({ podium }) {
               href="/podium-guide"
               target="_blank"
               rel="noreferrer"
-              className="text-[#c9a227] hover:underline"
+              className="text-interactive hover:underline"
             >
               Read the guide →
             </a>
@@ -258,7 +258,7 @@ export default function PodiumRegistration({ podium }) {
                   onChange={(e) =>
                     setChallenge((prev) => ({ ...prev, [caption]: Number(e.target.value) }))
                   }
-                  className="flex-1 accent-[#0057B8]"
+                  className="flex-1 accent-interactive"
                 />
                 <span className="w-5 text-right text-xs font-bold text-interactive tabular-nums">
                   {challenge[caption]}
@@ -385,17 +385,14 @@ export default function PodiumRegistration({ podium }) {
                       type="checkbox"
                       checked={kept}
                       onChange={() => toggleKeep(s.specialty)}
-                      className="accent-[#0057B8]"
+                      className="accent-interactive"
                     />
                     <span className="flex-1 text-[11px] font-bold text-white">
                       {SPECIALTY_LABELS[s.specialty] || s.specialty}
                       <span className="ml-2 text-[9px] font-normal text-muted">
                         {TIER_LABELS[s.nextTier] || TIER_LABELS[s.tier]}
                         {promoted && (
-                          <span className="text-[#c9a227]">
-                            {' '}
-                            · promoted from {TIER_LABELS[s.tier]}
-                          </span>
+                          <span className="text-brand"> · promoted from {TIER_LABELS[s.tier]}</span>
                         )}
                       </span>
                     </span>

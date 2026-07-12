@@ -246,7 +246,7 @@ const VersusCard = ({
                     : user1Leading && isLive
                       ? 'text-green-500'
                       : tied
-                        ? 'text-yellow-500'
+                        ? 'text-secondary'
                         : 'text-white'
                 }`}
               >
@@ -285,7 +285,7 @@ const VersusCard = ({
               </div>
             )}
             {tied && (isLive || isCompleted) && (
-              <span className="mt-2 text-xs font-bold text-yellow-500">TIE</span>
+              <span className="mt-2 text-xs font-bold text-secondary">TIE</span>
             )}
           </div>
 
@@ -341,7 +341,7 @@ const VersusCard = ({
                     : user2Leading && isLive
                       ? 'text-green-500'
                       : tied
-                        ? 'text-yellow-500'
+                        ? 'text-secondary'
                         : 'text-white'
                 }`}
               >

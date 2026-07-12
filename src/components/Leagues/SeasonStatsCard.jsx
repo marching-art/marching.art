@@ -26,7 +26,7 @@ const StatRow = ({ label, value, subValue, icon: Icon, color = 'cream' }) => {
     cream: 'text-secondary',
     green: 'text-green-400',
     red: 'text-red-400',
-    yellow: 'text-yellow-400',
+    yellow: 'text-secondary',
     purple: 'text-purple-400',
     blue: 'text-blue-400',
   };
@@ -56,7 +56,7 @@ const CaptionBar = ({ caption, winRate, avgDiff: _avgDiff, isStrength, isWeaknes
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-bold text-muted w-8">{caption}</span>
-          {isStrength && <Crown className="w-3 h-3 text-yellow-500" />}
+          {isStrength && <Crown className="w-3 h-3 text-brand" />}
           {isWeakness && <TrendingDown className="w-3 h-3 text-red-400" />}
         </div>
         <span
@@ -88,7 +88,7 @@ const AchievementBadge = ({ label, value, icon: Icon, color }) => {
   if (!value || value === 0) return null;
 
   const colorClasses = {
-    yellow: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400',
+    yellow: 'bg-brand/10 border-brand/30 text-brand',
     green: 'bg-green-500/10 border-green-500/30 text-green-400',
     red: 'bg-red-500/10 border-red-500/30 text-red-400',
     purple: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
@@ -160,7 +160,7 @@ const SeasonStatsCard = ({
         <div className="grid grid-cols-4 gap-3 text-center">
           <div>
             <p className="text-[10px] text-muted uppercase">BP For</p>
-            <p className="text-sm font-bold text-yellow-400">{totalBattlePointsFor}</p>
+            <p className="text-sm font-bold text-secondary">{totalBattlePointsFor}</p>
           </div>
           <div>
             <p className="text-[10px] text-muted uppercase">BP Avg</p>
@@ -230,7 +230,7 @@ const SeasonStatsCard = ({
                 <span className="text-green-400">{wins}</span>
                 <span className="text-muted">-</span>
                 <span className="text-red-400">{losses}</span>
-                {ties > 0 && <span className="text-yellow-400">-{ties}</span>}
+                {ties > 0 && <span className="text-secondary">-{ties}</span>}
               </p>
               <p className="text-[10px] text-muted uppercase mt-1">Record</p>
             </div>
@@ -243,7 +243,7 @@ const SeasonStatsCard = ({
               <p className="text-[10px] text-muted uppercase mt-1">Win Rate</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-yellow-400">{totalBattlePointsFor}</p>
+              <p className="text-2xl font-bold text-secondary">{totalBattlePointsFor}</p>
               <p className="text-[10px] text-muted uppercase mt-1">Battle Pts</p>
             </div>
           </div>
@@ -252,7 +252,7 @@ const SeasonStatsCard = ({
         {/* Battle Point Stats */}
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
-            <Trophy className="w-3 h-3 text-yellow-500" />
+            <Trophy className="w-3 h-3 text-secondary" />
             Battle Points
           </h3>
           <div className="bg-surface-sunken p-3">
@@ -319,7 +319,7 @@ const SeasonStatsCard = ({
         {/* Achievements */}
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
-            <Medal className="w-3 h-3 text-yellow-400" />
+            <Medal className="w-3 h-3 text-secondary" />
             Achievements
           </h3>
           <div className="flex flex-wrap gap-2">

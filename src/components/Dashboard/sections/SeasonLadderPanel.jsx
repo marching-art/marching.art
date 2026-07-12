@@ -101,7 +101,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
                 Tier {tier.tier} ready
                 {tier.exclusive ? ` — includes the ${tier.exclusive}!` : ''}
               </span>
-              <span className="text-[10px] font-bold text-yellow-500 font-data whitespace-nowrap">
+              <span className="text-[10px] font-bold text-brand font-data whitespace-nowrap">
                 {claiming === tier.tier ? '...' : `+${tier.coin} CC`}
               </span>
             </button>

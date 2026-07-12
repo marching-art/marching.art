@@ -73,7 +73,7 @@ const CorpsCoinModal = ({ onClose }) => {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised flex-shrink-0">
             <div className="flex items-center gap-3">
-              <Coins className="w-5 h-5 text-yellow-500" />
+              <Coins className="w-5 h-5 text-brand" />
               <div>
                 <h2
                   id="modal-title-corpscoin"
@@ -82,7 +82,7 @@ const CorpsCoinModal = ({ onClose }) => {
                   CorpsCoin Wallet
                 </h2>
                 {balance != null && (
-                  <p className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                  <p className="text-sm font-bold text-brand font-data tabular-nums">
                     {balance.toLocaleString()} CC
                   </p>
                 )}
@@ -168,7 +168,7 @@ const CorpsCoinModal = ({ onClose }) => {
                       <p className="text-sm font-bold text-white">{opp.title}</p>
                       <p className="text-xs text-muted mb-1">{opp.description}</p>
                       {opp.reward != null && (
-                        <p className="text-xs text-yellow-500 font-data">+{opp.reward} CC</p>
+                        <p className="text-xs text-brand font-data">+{opp.reward} CC</p>
                       )}
                       {opp.rewards && (
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5">
@@ -177,7 +177,7 @@ const CorpsCoinModal = ({ onClose }) => {
                             // show only the canonical class keys
                             .filter(([k]) => CLASS_REWARD_LABELS[k] || !isNaN(Number(k)))
                             .map(([k, v]) => (
-                              <span key={k} className="text-xs text-yellow-500 font-data">
+                              <span key={k} className="text-xs text-brand font-data">
                                 {CLASS_REWARD_LABELS[k] ||
                                   (k === '1'
                                     ? 'Champion'
@@ -207,7 +207,7 @@ const CorpsCoinModal = ({ onClose }) => {
                             {Object.entries(opt.costs)
                               .filter(([k]) => CLASS_REWARD_LABELS[k])
                               .map(([k, v]) => (
-                                <span key={k} className="text-xs text-yellow-500 font-data">
+                                <span key={k} className="text-xs text-brand font-data">
                                   {CLASS_REWARD_LABELS[k]}: {v.toLocaleString()}
                                 </span>
                               ))}
@@ -232,7 +232,7 @@ const CorpsCoinModal = ({ onClose }) => {
             <Link
               to="/shop"
               onClick={onClose}
-              className="text-xs font-bold text-yellow-500 hover:text-yellow-400 uppercase tracking-wider"
+              className="text-xs font-bold text-interactive hover:text-interactive-hover uppercase tracking-wider"
             >
               Visit the Shop →
             </Link>

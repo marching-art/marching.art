@@ -24,9 +24,9 @@ const CORPS_CLASS_CONFIG = {
   worldClass: {
     name: 'World Class',
     icon: Trophy,
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/10',
-    borderColor: 'border-yellow-500/30',
+    color: 'text-secondary',
+    bgColor: 'bg-surface-raised',
+    borderColor: 'border-line',
   },
   openClass: {
     name: 'Open Class',
@@ -54,9 +54,9 @@ const CORPS_CLASS_CONFIG = {
   podiumClass: {
     name: 'Podium Class',
     icon: Medal,
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-400/10',
-    borderColor: 'border-amber-400/30',
+    color: 'text-brand',
+    bgColor: 'bg-brand/10',
+    borderColor: 'border-brand/30',
   },
 };
 
@@ -98,7 +98,7 @@ const SeasonScheduleOverview = ({
                 onClick={() => onSelectWeek(week)}
                 className={`relative aspect-square flex items-center justify-center text-xs font-bold transition-all ${
                   isSelected
-                    ? 'bg-yellow-500 text-black'
+                    ? 'bg-interactive text-white'
                     : isCurrent
                       ? 'bg-purple-500/30 border-2 border-purple-500 text-white'
                       : hasData && isPast
@@ -190,7 +190,7 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
                       : lost
                         ? 'bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
                         : tie
-                          ? 'bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20'
+                          ? 'bg-surface-raised border border-line hover:bg-line'
                           : 'bg-surface-raised border border-line hover:border-line-strong'
                 }`}
               >
@@ -206,7 +206,7 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
                           : lost
                             ? 'text-red-500'
                             : tie
-                              ? 'text-yellow-500'
+                              ? 'text-secondary'
                               : 'text-muted'
                       }`}
                     >
@@ -331,7 +331,7 @@ const HeadToHeadSection = ({
                     {record.ties > 0 && (
                       <>
                         <span className="text-muted">-</span>
-                        <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                        <span className="text-sm font-bold text-secondary font-data tabular-nums">
                           {record.ties}
                         </span>
                       </>
@@ -369,12 +369,12 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
       <div
         className={`w-16 h-16 mx-auto mb-4 flex items-center justify-center ${
           isCommissioner && isCurrentWeek
-            ? 'bg-yellow-500/10 border-2 border-yellow-500/30'
+            ? 'bg-warning/10 border-2 border-warning/30'
             : 'bg-surface-raised border border-line'
         }`}
       >
         <Swords
-          className={`w-8 h-8 ${isCommissioner && isCurrentWeek ? 'text-yellow-500' : 'text-muted'}`}
+          className={`w-8 h-8 ${isCommissioner && isCurrentWeek ? 'text-warning' : 'text-muted'}`}
         />
       </div>
 
@@ -410,7 +410,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
                   <p className="text-xs text-muted">
                     Go to Settings → Generate Matchups to create this week's schedule
                   </p>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-500">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-raised border border-line text-xs text-secondary">
                     <Zap className="w-3.5 h-3.5" />
                     Uses smart pairing based on standings
                   </div>
@@ -419,9 +419,9 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
             </>
           ) : (
             <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30">
-                <Users className="w-4 h-4 text-yellow-500" />
-                <span className="text-xs text-yellow-500">
+              <div className="flex items-center gap-2 px-3 py-2 bg-warning/10 border border-warning/30">
+                <Users className="w-4 h-4 text-warning" />
+                <span className="text-xs text-warning">
                   Invite {2 - (league?.members?.length || 0)} more member
                   {2 - (league?.members?.length || 0) !== 1 ? 's' : ''} to start
                 </span>
@@ -559,7 +559,7 @@ const VersusStrip = memo(
                   <span
                     className={`font-bold ${
                       isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
-                    } ${homeWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-muted'}`}
+                    } ${homeWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'}`}
                   >
                     {isSoundSport
                       ? home.score > 0
@@ -571,7 +571,7 @@ const VersusStrip = memo(
                   <span
                     className={`font-bold ${
                       isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
-                    } ${awayWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-muted'}`}
+                    } ${awayWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'}`}
                   >
                     {isSoundSport
                       ? away.score > 0

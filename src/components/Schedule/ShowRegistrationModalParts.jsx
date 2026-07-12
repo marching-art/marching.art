@@ -33,7 +33,7 @@ const CorpsSelectionItem = ({
         flex items-center gap-3 p-4 w-full text-left transition-colors min-h-[60px]
         ${
           isSelected
-            ? 'bg-interactive/10 border-l-2 border-l-[#0057B8]'
+            ? 'bg-interactive/10 border-l-2 border-l-interactive'
             : 'hover:bg-white/5 active:bg-white/10'
         }
         ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}

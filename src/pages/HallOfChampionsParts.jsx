@@ -64,7 +64,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
           >
             <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <Flag className="w-4 h-4 text-yellow-500" />
+                <Flag className="w-4 h-4 text-brand" />
                 Hang Your Banner
               </h3>
               <button
@@ -95,7 +95,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
                   {message.length}/{HALL_BANNER_MAX_LENGTH}
                 </span>
                 <span className="flex items-center gap-1 text-[11px] text-muted font-data tabular-nums">
-                  <Coins className="w-3 h-3 text-yellow-500" />
+                  <Coins className="w-3 h-3 text-brand" />
                   {HALL_BANNER_PRICE.toLocaleString()} CorpsCoin
                 </span>
               </div>
@@ -111,7 +111,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
                 <button
                   onClick={onConfirm}
                   disabled={purchasing || !message.trim()}
-                  className="flex-1 py-2.5 px-4 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold uppercase tracking-wider rounded-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 px-4 bg-interactive hover:bg-interactive-hover text-white text-xs font-bold uppercase tracking-wider rounded-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Flag className="w-3.5 h-3.5" />
                   {purchasing ? 'Hanging…' : 'Hang Banner'}

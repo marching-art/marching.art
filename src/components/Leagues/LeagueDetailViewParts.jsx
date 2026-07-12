@@ -44,7 +44,7 @@ export const SmackTalkInput = ({ leagueId, userProfile: _userProfile, disabled =
       <button
         type="submit"
         disabled={sending || !message.trim() || disabled}
-        className="h-9 px-3 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold flex items-center gap-1.5 transition-colors text-sm"
+        className="h-9 px-3 bg-interactive hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold flex items-center gap-1.5 transition-colors text-sm"
       >
         <Send className="w-3.5 h-3.5" />
       </button>

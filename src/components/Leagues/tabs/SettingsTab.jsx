@@ -30,8 +30,8 @@ const CORPS_CLASS_CONFIG = {
   worldClass: {
     name: 'World Class',
     icon: Trophy,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
+    color: 'text-secondary',
+    bg: 'bg-surface-raised',
   },
   openClass: { name: 'Open Class', icon: Award, color: 'text-purple-500', bg: 'bg-purple-500/10' },
   aClass: { name: 'A Class', icon: Star, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -150,7 +150,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
           </button>
         )}
         <div className="flex items-center gap-2">
-          <Settings className="w-5 h-5 text-yellow-500" />
+          <Settings className="w-5 h-5 text-secondary" />
           <h2 className="text-lg font-bold text-white">Commissioner Settings</h2>
         </div>
       </div>
@@ -194,7 +194,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
                       onClick={() => setSelectedWeek(week)}
                       className={`relative flex-shrink-0 w-10 h-10 flex items-center justify-center text-xs font-bold transition-all ${
                         isSelected
-                          ? 'bg-yellow-500 text-black'
+                          ? 'bg-interactive text-white'
                           : hasMatchups
                             ? 'bg-green-500/20 border border-green-500/30 text-green-500'
                             : isCurrent
@@ -271,9 +271,9 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
 
           {/* Member Count Warning */}
           {!canGenerate && (
-            <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30">
-              <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-              <p className="text-xs text-yellow-500">
+            <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/30">
+              <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
+              <p className="text-xs text-warning">
                 Need at least 2 members to generate matchups. Currently: {memberCount}
               </p>
             </div>
@@ -354,7 +354,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
         <div className="p-4">
           <div className="flex items-center gap-3">
             <div className="flex-1 px-4 py-3 bg-surface-raised border border-line">
-              <code className="text-xl font-mono font-bold text-yellow-500 tracking-wider">
+              <code className="text-xl font-mono font-bold text-interactive tracking-wider">
                 {league.inviteCode}
               </code>
             </div>
@@ -390,7 +390,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
         <div className="divide-y divide-line-subtle">
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-muted">Prize Pool</span>
-            <span className="text-sm font-bold text-yellow-500">
+            <span className="text-sm font-bold text-brand">
               {/* Escrowed entry fees only — no phantom seeded pool */}
               {(league.settings?.prizePool || 0).toLocaleString()} CC
             </span>

@@ -195,7 +195,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                           }
                           className={`py-2 text-[10px] font-bold border transition-colors ${
                             (formData.settings.entryFee || 0) === fee
-                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
+                              ? 'border-interactive bg-interactive/10 text-interactive'
                               : 'border-line text-muted hover:border-line-strong'
                           }`}
                         >
@@ -227,7 +227,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       onChange={(e) =>
                         setFormData({ ...formData, maxMembers: parseInt(e.target.value) })
                       }
-                      className="w-full h-2 bg-line rounded-none appearance-none cursor-pointer accent-[#0057B8]"
+                      className="w-full h-2 bg-line rounded-none appearance-none cursor-pointer accent-interactive"
                     />
                     <div className="flex justify-between text-[10px] text-muted mt-1">
                       <span>4</span>

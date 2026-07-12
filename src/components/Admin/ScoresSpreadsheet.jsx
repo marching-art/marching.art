@@ -67,7 +67,7 @@ const getCellBgColor = (value, maxPossible) => {
   const percentage = value / maxPossible;
   if (percentage >= 0.9) return 'bg-green-900/30';
   if (percentage >= 0.8) return 'bg-green-900/20';
-  if (percentage >= 0.7) return 'bg-yellow-900/20';
+  if (percentage >= 0.7) return 'bg-warning/20';
   if (percentage < 0.5) return 'bg-red-900/20';
   return '';
 };
@@ -258,7 +258,7 @@ const ScoresSpreadsheet = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-yellow-500 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-secondary animate-spin" />
         <span className="ml-3 text-secondary">Loading scores data...</span>
       </div>
     );
@@ -278,8 +278,8 @@ const ScoresSpreadsheet = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-yellow-500/20 rounded-none">
-            <Table className="w-4 h-4 text-yellow-500" />
+          <div className="p-1.5 bg-surface-raised rounded-none">
+            <Table className="w-4 h-4 text-secondary" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Scores Reference Spreadsheet</h2>
@@ -306,7 +306,7 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(caption)}
             className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === caption
-                ? 'bg-amber-400 text-neutral-900 font-bold'
+                ? 'bg-interactive text-white font-bold'
                 : 'text-muted hover:text-white hover:bg-charcoal-800'
             }`}
           >
@@ -324,7 +324,7 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === tab.id
-                ? 'bg-amber-400 text-neutral-900 font-bold'
+                ? 'bg-interactive text-white font-bold'
                 : 'text-muted hover:text-white hover:bg-charcoal-800'
             }`}
           >
@@ -369,12 +369,12 @@ const ScoresSpreadsheet = () => {
           {/* Header Row */}
           <thead>
             <tr className="bg-charcoal-900/80 border-b border-white/20">
-              <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-yellow-400 border-r border-white/20 w-[90px]">
+              <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-secondary border-r border-white/20 w-[90px]">
                 {INDIVIDUAL_CAPTIONS.includes(activeTab)
                   ? getCaptionLabel(activeTab)
                   : AGGREGATE_TABS.find((t) => t.id === activeTab)?.label || activeTab}
               </th>
-              <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-yellow-400 border-r border-white/20 w-6">
+              <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-secondary border-r border-white/20 w-6">
                 Pts
               </th>
               {visibleDates.map((dateInfo) => (
@@ -414,7 +414,7 @@ const ScoresSpreadsheet = () => {
                   <span
                     className={`font-mono text-[11px] font-bold ${
                       corps.points >= 20
-                        ? 'text-yellow-400'
+                        ? 'text-main'
                         : corps.points >= 15
                           ? 'text-secondary'
                           : corps.points >= 10
@@ -479,7 +479,7 @@ const ScoresSpreadsheet = () => {
           <span className="w-2.5 h-2.5 rounded-none bg-green-900/20" /> 80-90%
         </span>
         <span className="flex items-center gap-0.5">
-          <span className="w-2.5 h-2.5 rounded-none bg-yellow-900/20" /> 70-80%
+          <span className="w-2.5 h-2.5 rounded-none bg-warning/20" /> 70-80%
         </span>
         <span className="flex items-center gap-0.5">
           <span className="w-2.5 h-2.5 rounded-none bg-red-900/20" /> &lt;50%

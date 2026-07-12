@@ -64,7 +64,7 @@ const EconomyStatsPanel = ({ refreshKey }) => {
                 <p className="text-[9px] uppercase tracking-wider text-muted">Net</p>
                 <p
                   className={`text-sm font-bold font-data tabular-nums ${
-                    (stats.net || 0) > 0 ? 'text-yellow-500' : 'text-emerald-400'
+                    (stats.net || 0) > 0 ? 'text-warning' : 'text-emerald-400'
                   }`}
                 >
                   {(stats.net || 0) > 0 ? '+' : ''}

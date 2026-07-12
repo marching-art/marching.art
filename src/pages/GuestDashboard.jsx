@@ -93,8 +93,8 @@ const GuestHeader = () => {
         </div>
 
         {/* Preview Badge */}
-        <div className="ml-3 px-2.5 py-1 bg-yellow-500/20 border border-yellow-500/30 rounded-none">
-          <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">
+        <div className="ml-3 px-2.5 py-1 bg-surface-raised border border-line rounded-none">
+          <span className="text-xs font-bold text-secondary uppercase tracking-wider">
             Preview Mode
           </span>
         </div>
@@ -174,12 +174,12 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
       <div className="flex items-center gap-2">
         {hasValue ? (
           pointsCost != null ? (
-            <span className="text-xs font-bold font-data text-yellow-400 tabular-nums">
+            <span className="text-xs font-bold font-data text-secondary tabular-nums">
               Cost {pointsCost}
             </span>
           ) : null
         ) : (
-          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">
+          <span className="text-xs font-bold text-interactive group-hover:text-interactive-hover">
             + Draft
           </span>
         )}
@@ -522,7 +522,7 @@ const GuestDashboard = () => {
           <m.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-4 bg-gradient-to-r from-interactive/20 to-yellow-500/10 border border-interactive/30 rounded-none"
+            className="mb-4 p-4 bg-interactive/10 border border-interactive/30 rounded-none"
           >
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
@@ -587,7 +587,7 @@ const GuestDashboard = () => {
                           {draftPickCount}/8 •{' '}
                           <span
                             className={
-                              draftPoints > STARTER_BUDGET ? 'text-red-400' : 'text-yellow-400'
+                              draftPoints > STARTER_BUDGET ? 'text-red-400' : 'text-secondary'
                             }
                           >
                             {draftPoints}/{STARTER_BUDGET} budget
@@ -719,19 +719,19 @@ const GuestDashboard = () => {
               {/* Join League CTA */}
               <button
                 onClick={() => handleGatedClick('league')}
-                className="w-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-none p-4 text-left hover:border-yellow-500/50 transition-colors group"
+                className="w-full bg-interactive/10 border border-interactive/30 rounded-none p-4 text-left hover:border-interactive/50 transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-none bg-yellow-500/20 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-yellow-500" />
+                  <div className="w-10 h-10 rounded-none bg-interactive/20 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-interactive" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-bold text-white group-hover:text-yellow-500 transition-colors">
+                    <div className="text-sm font-bold text-white group-hover:text-interactive transition-colors">
                       Join a League
                     </div>
                     <div className="text-xs text-muted">Compete against friends</div>
                   </div>
-                  <Lock className="w-4 h-4 text-muted group-hover:text-yellow-500 transition-colors" />
+                  <Lock className="w-4 h-4 text-muted group-hover:text-interactive transition-colors" />
                 </div>
               </button>
 
@@ -758,7 +758,7 @@ const GuestDashboard = () => {
               </div>
 
               {/* Register CTA */}
-              <div className="bg-gradient-to-br from-interactive/20 to-interactive/5 border border-interactive/30 rounded-none p-4">
+              <div className="bg-interactive/10 border border-interactive/30 rounded-none p-4">
                 <h3 className="text-sm font-bold text-white mb-2">Ready to compete?</h3>
                 <p className="text-xs text-muted mb-4">
                   Create your free account to build your own corps, join leagues, and climb the

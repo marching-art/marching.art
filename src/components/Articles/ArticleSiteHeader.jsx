@@ -49,7 +49,7 @@ const ArticleSiteHeader = () => {
               aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
               className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-line active:scale-95 transition-all duration-150 press-feedback"
             >
-              <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data tabular-nums">
+              <span className="flex items-center gap-1 text-sm font-bold text-brand font-data tabular-nums">
                 <Coins className="w-3.5 h-3.5" />
                 {(profile.corpsCoin || 0).toLocaleString()}
               </span>

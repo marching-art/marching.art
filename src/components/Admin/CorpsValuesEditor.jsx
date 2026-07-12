@@ -227,7 +227,7 @@ const CorpsValuesEditor = () => {
             {selectedDocId ? `${selectedDocId} — ${rows.length} corps` : 'Select a season'}
           </span>
           {isDirty && (
-            <span className="text-[10px] font-bold uppercase text-yellow-500">Unsaved changes</span>
+            <span className="text-[10px] font-bold uppercase text-warning">Unsaved changes</span>
           )}
         </div>
 

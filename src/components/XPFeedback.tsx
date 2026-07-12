@@ -34,10 +34,8 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
 
   const isXP = item.type === 'xp';
   const Icon = isXP ? TrendingUp : Coins;
-  const colorClass = isXP ? 'text-blue-400' : 'text-yellow-400';
-  const bgClass = isXP
-    ? 'bg-blue-500/20 border-blue-500/40'
-    : 'bg-yellow-500/20 border-yellow-500/40';
+  const colorClass = isXP ? 'text-blue-400' : 'text-brand';
+  const bgClass = isXP ? 'bg-blue-500/20 border-blue-500/40' : 'bg-brand/20 border-brand/40';
   const glowColor = isXP ? 'rgba(59,130,246,0.6)' : 'rgba(234,179,8,0.6)';
   const label = isXP ? 'XP' : 'CC';
 
@@ -55,7 +53,7 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
       transition={{ duration: 2.5, times: [0, 0.15, 0.7, 1] }}
     >
       <div
-        className={`flex items-center gap-3 px-5 py-3 rounded-none border ${bgClass} backdrop-blur-sm`}
+        className={`flex items-center gap-3 px-5 py-3 rounded-none border ${bgClass}`}
         style={{ boxShadow: `0 0 20px ${glowColor}` }}
       >
         <Icon className={`w-6 h-6 ${colorClass}`} />

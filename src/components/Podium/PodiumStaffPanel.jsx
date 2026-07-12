@@ -24,7 +24,7 @@ const TIER_STYLES = {
   journeyman: 'text-secondary',
   veteran: 'text-interactive',
   master: 'text-purple-300',
-  legend: 'text-[#c9a227]',
+  legend: 'text-brand',
 };
 
 // Experience levels, least → most experienced. The label IS the staffer's

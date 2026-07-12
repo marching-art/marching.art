@@ -44,7 +44,8 @@ const INVARIANTS = [
     key: 'arbitrary-hex',
     label: 'Arbitrary hex utilities  bg-[#..] text-[#..] border-[#..]',
     re: /\b(?:bg|text|border|ring|ring-offset|from|via|to|fill|stroke|decoration|outline|divide|placeholder|caret|accent)-\[#[0-9a-fA-F]{3,8}\]/g,
-    allow: [],
+    // Cosmetic/uniform gradient definitions are DATA (per-item colors), not chrome.
+    allow: ['src/data/', 'src/utils/cosmetics.js'],
   },
   {
     key: 'hex-literal',
@@ -56,24 +57,38 @@ const INVARIANTS = [
   },
   {
     key: 'rounded',
-    label: 'Rounded corners  (soft box radii; rounded-none & rounded-full are exempt)',
-    // rounded-full is for circles/pills (avatars, status dots, spinner rings),
-    // not soft box corners — legitimate even in a sharp-cornered system.
-    re: /\brounded(?:-[a-z0-9]+)*\b/g,
-    reject: (m) => m !== 'rounded-none' && m !== 'rounded-full',
+    label: 'Rounded corners  (soft box radii; rounded-none & any -full are exempt)',
+    // Only match real rounded-* classes (a size suffix is required) so the bare
+    // JS identifier/prop `rounded` isn't counted. rounded-full and directional
+    // full variants (rounded-l-full) are circles/pills — legitimate when sharp.
+    re: /\brounded-(?:[tblrse]{1,2}-)?(?:sm|md|lg|xl|2xl|3xl|none|full)\b/g,
+    reject: (m) => !/-(?:none|full)$/.test(m),
     allow: [],
   },
   {
     key: 'banned-effects',
     label: 'Banned effects  bg-gradient-* / backdrop-blur-* / shadow-* / drop-shadow-*',
     re: /\b(?:bg-gradient-to-[a-z]{1,2}|backdrop-blur(?:-[a-z0-9]+)?|shadow-(?:sm|md|lg|xl|2xl|inner)|drop-shadow(?:-[a-z0-9]+)?)\b/g,
-    allow: [],
+    // Cosmetic-uniform gradient definitions are DATA (per-item visuals).
+    allow: ['src/data/', 'src/utils/cosmetics.js'],
   },
   {
     key: 'off-role-gold',
     label: 'Gold/amber/yellow color utilities  (brand color used as generic accent)',
     re: /\b(?:bg|text|border|ring|from|via|to|fill|stroke|decoration|outline)-(?:yellow|amber)-\d{2,3}\b|#[eE][aA][bB]308/g,
-    allow: [],
+    // Categorical DATA: class-tier/medal/prestige palettes where gold is one
+    // legend value among green/blue/purple tiers, not a decorative accent.
+    // Lives in util/api/config files, treated like a chart's categorical scale.
+    allow: [
+      'src/utils/',
+      'src/api/',
+      'src/data/',
+      'src/pages/scheduleConstants.js',
+      'src/pages/onboardingConstants.js',
+      'src/pages/hallOfChampionsMeta.js',
+      'src/components/Schedule/showRegistrationConfig.js',
+      'src/components/Dashboard/sections/constants.js',
+    ],
   },
   {
     key: 'legacy-gray',

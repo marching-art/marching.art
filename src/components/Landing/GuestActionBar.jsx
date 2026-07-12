@@ -28,7 +28,7 @@ const GuestActionBar = () => {
       aria-label="Get started"
     >
       {/* Accent line at top - matches BottomNav */}
-      <div className="h-px w-full bg-yellow-500/30" />
+      <div className="h-px w-full bg-interactive/30" />
 
       <div className="bg-surface-card border-t border-white/10">
         <div className="flex items-center justify-around px-0.5 xs:px-1 py-1.5">
@@ -43,24 +43,24 @@ const GuestActionBar = () => {
                 onMouseEnter={() => prefetchRoute(item.path)}
                 onFocus={() => prefetchRoute(item.path)}
                 className={`relative flex flex-col items-center justify-center gap-0.5 px-1 xs:px-2 py-1.5 min-w-[44px] xs:min-w-[50px] min-h-[48px] press-feedback rounded-none ${
-                  item.emphasized ? 'bg-yellow-500/10' : ''
+                  item.emphasized ? 'bg-interactive/10' : ''
                 }`}
               >
                 <div
                   className={`relative z-10 p-1.5 rounded-none transition-all duration-150 ${
-                    item.emphasized ? 'bg-yellow-500/20' : ''
+                    item.emphasized ? 'bg-interactive/20' : ''
                   }`}
                 >
                   <Icon
                     className={`w-5 h-5 xs:w-[22px] xs:h-[22px] transition-all duration-150 ${
-                      item.emphasized ? 'text-yellow-400' : 'text-yellow-50/70'
+                      item.emphasized ? 'text-interactive' : 'text-muted'
                     }`}
                     aria-hidden="true"
                   />
                 </div>
                 <span
                   className={`relative z-10 text-[9px] xs:text-[10px] font-medium transition-all duration-150 leading-tight ${
-                    item.emphasized ? 'text-yellow-400' : 'text-yellow-50/60'
+                    item.emphasized ? 'text-interactive' : 'text-muted'
                   }`}
                 >
                   {item.label}

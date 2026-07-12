@@ -53,7 +53,7 @@ const CAPTION_GROUPS = [
     abbrs: ['GE1', 'GE2'],
     max: 40,
     icon: Sparkles,
-    accent: 'text-yellow-400',
+    accent: 'text-secondary',
   },
   { label: 'Visual', abbrs: ['VP', 'VA', 'CG'], max: 30, icon: Eye, accent: 'text-blue-400' },
   { label: 'Music', abbrs: ['B', 'MA', 'P'], max: 30, icon: Music, accent: 'text-purple-400' },
@@ -144,9 +144,9 @@ const OverviewSection = () => (
           the rest. Four classes: SoundSport, A, Open, and World. This is where everyone starts.
         </p>
       </div>
-      <div className="bg-[#c9a227]/10 border border-[#c9a227]/30 rounded-none p-4">
+      <div className="bg-brand/10 border border-brand/30 rounded-none p-4">
         <div className="flex items-center gap-2 mb-1.5">
-          <Medal className="w-4 h-4 text-[#c9a227]" />
+          <Medal className="w-4 h-4 text-brand" />
           <span className="text-sm font-bold text-white">Found — Podium Class</span>
         </div>
         <p className="text-xs text-muted leading-relaxed">
@@ -305,7 +305,7 @@ const ClassesSection = () => (
               ? 'border-interactive/30'
               : cls.color === 'purple'
                 ? 'border-purple-500/30'
-                : 'border-yellow-500/30';
+                : 'border-line';
         const dot =
           cls.color === 'green'
             ? 'text-green-500'
@@ -313,7 +313,7 @@ const ClassesSection = () => (
               ? 'text-interactive'
               : cls.color === 'purple'
                 ? 'text-purple-500'
-                : 'text-yellow-500';
+                : 'text-secondary';
         return (
           <div key={cls.id} className={`bg-surface-sunken border ${ring} rounded-none p-3`}>
             <div className="flex items-center justify-between mb-1">
@@ -338,7 +338,7 @@ const ClassesSection = () => (
       {UNLOCK_PATH_GUIDE.map((path) => (
         <div key={path.id} className="bg-black/30 border border-white/10 rounded-none p-3">
           <div className="flex items-center gap-1.5 mb-1">
-            <Zap className="w-3 h-3 text-yellow-500" />
+            <Zap className="w-3 h-3 text-brand" />
             <p className="text-xs font-bold text-secondary">{path.label}</p>
           </div>
           <p className="text-[11px] text-muted leading-snug">{path.detail}</p>
@@ -538,9 +538,9 @@ const LeaguesSection = () => (
 );
 
 const PodiumCard = ({ icon: Icon, title, children }) => (
-  <div className="bg-surface-sunken border border-[#c9a227]/20 rounded-none p-3">
+  <div className="bg-surface-sunken border border-brand/20 rounded-none p-3">
     <div className="flex items-center gap-2 mb-1">
-      <Icon className="w-4 h-4 text-[#c9a227]" />
+      <Icon className="w-4 h-4 text-brand" />
       <span className="text-xs font-bold uppercase tracking-wider text-white">{title}</span>
     </div>
     <p className="text-[11px] text-muted leading-relaxed">{children}</p>
@@ -592,9 +592,7 @@ const PodiumSection = () => (
         <React.Fragment key={tier}>
           <span
             className={`text-[11px] font-bold rounded-none px-2 py-1 ${
-              i === REP_TIERS.length - 1
-                ? 'bg-[#c9a227]/20 text-[#c9a227]'
-                : 'bg-black/30 text-secondary'
+              i === REP_TIERS.length - 1 ? 'bg-brand/20 text-brand' : 'bg-black/30 text-secondary'
             }`}
           >
             {tier}
@@ -612,7 +610,7 @@ const PodiumSection = () => (
 
     <Link
       to="/podium-guide"
-      className="inline-flex items-center gap-2 min-h-[40px] px-4 border border-[#c9a227]/50 text-[#c9a227] font-bold text-xs uppercase tracking-wider rounded-none hover:bg-[#c9a227]/10 transition-colors"
+      className="inline-flex items-center gap-2 min-h-[40px] px-4 border border-interactive/50 text-interactive font-bold text-xs uppercase tracking-wider rounded-none hover:bg-interactive/10 transition-colors"
     >
       Read the full Podium guide
       <ChevronRight className="w-4 h-4" />

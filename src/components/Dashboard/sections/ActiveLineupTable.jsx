@@ -97,7 +97,7 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
             the corps-level next show is surfaced in the header). */}
         {!hasValue && (
           <div className="mt-0.5">
-            <span className="text-[11px] text-yellow-500 font-bold">+ Draft player</span>
+            <span className="text-[11px] text-interactive font-bold">+ Draft player</span>
           </div>
         )}
       </div>
@@ -127,9 +127,7 @@ const ActiveLineupTable = memo(
             </h2>
             <span
               className={`text-xs font-bold px-2 py-0.5 ${
-                lineupCount === 8
-                  ? 'bg-green-500/20 text-green-500'
-                  : 'bg-yellow-500/20 text-yellow-500'
+                lineupCount === 8 ? 'bg-green-500/20 text-green-500' : 'bg-warning/20 text-warning'
               }`}
             >
               {lineupCount}/8

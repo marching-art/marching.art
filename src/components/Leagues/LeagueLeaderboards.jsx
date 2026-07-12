@@ -88,12 +88,12 @@ const CAPTION_CATEGORIES = GAME_CONFIG.captions.map((caption) => ({
 }));
 
 const colorClasses = {
-  yellow: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
+  yellow: 'text-secondary bg-surface-raised border-line',
   purple: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
   green: 'text-green-400 bg-green-500/10 border-green-500/30',
   orange: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
   red: 'text-red-400 bg-red-500/10 border-red-500/30',
-  gold: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30',
+  gold: 'text-secondary bg-surface-raised border-line',
   blue: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
 };
 
@@ -217,7 +217,7 @@ const RankBadge = ({ rank, size = 'md' }) => {
   if (rank === 1) {
     return (
       <div
-        className={`${sizeClasses} flex items-center justify-center bg-yellow-500/20 text-yellow-500 font-bold`}
+        className={`${sizeClasses} flex items-center justify-center bg-brand/20 text-brand font-bold`}
       >
         1
       </div>

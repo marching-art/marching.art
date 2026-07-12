@@ -377,7 +377,7 @@ const PodiumLanding = () => {
                           required
                           disabled={loading}
                           autoComplete="name"
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
                         />
                       </div>
                     )}
@@ -393,7 +393,7 @@ const PodiumLanding = () => {
                         required
                         disabled={loading}
                         autoComplete="email"
-                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
+                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
                       />
                     </div>
 
@@ -408,7 +408,7 @@ const PodiumLanding = () => {
                         required
                         disabled={loading}
                         autoComplete={isRegister ? 'new-password' : 'current-password'}
-                        className="w-full min-h-[44px] h-11 pl-10 pr-11 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-[#c9a227] disabled:opacity-50 transition-colors"
+                        className="w-full min-h-[44px] h-11 pl-10 pr-11 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
                       />
                       <button
                         type="button"
@@ -431,7 +431,7 @@ const PodiumLanding = () => {
                           type="checkbox"
                           checked={formData.acceptTerms}
                           onChange={update('acceptTerms')}
-                          className="w-5 h-5 mt-0.5 rounded-none border-line bg-surface-sunken text-[#c9a227] focus:ring-[#c9a227] focus:ring-offset-0 flex-shrink-0"
+                          className="w-5 h-5 mt-0.5 rounded-none border-line bg-surface-sunken text-interactive focus:ring-interactive focus:ring-offset-0 flex-shrink-0"
                         />
                         <span className="text-xs text-muted leading-relaxed">
                           I accept the{' '}
@@ -499,7 +499,7 @@ const PodiumLanding = () => {
                       Podium-flavored and pointed at the sample loop. */}
                   <Link
                     to="/podium/preview"
-                    className="flex items-center justify-center gap-2 mx-5 mb-5 py-2.5 border border-[#c9a227]/30 rounded-none text-[#c9a227] hover:bg-[#c9a227]/10 hover:border-[#c9a227]/50 transition-colors"
+                    className="flex items-center justify-center gap-2 mx-5 mb-5 py-2.5 border border-interactive/30 rounded-none text-interactive hover:bg-interactive/10 hover:border-interactive/50 transition-colors"
                   >
                     <Play className="w-4 h-4" />
                     <span className="text-sm font-medium">Try the demo first</span>

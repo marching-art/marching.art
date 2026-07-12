@@ -454,7 +454,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <button
                   onClick={saveAccountSettings}
                   disabled={accountSaving}
-                  className="w-full py-3 min-h-[44px] bg-interactive text-white text-sm font-bold hover:bg-interactive-hover active:bg-[#004999] disabled:opacity-50 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
+                  className="w-full py-3 min-h-[44px] bg-interactive text-white text-sm font-bold hover:bg-interactive-hover active:bg-interactive-subtle disabled:opacity-50 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
                 >
                   {accountSaving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -514,7 +514,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 href="https://buymeacoffee.com/marching.art"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 min-h-[44px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
+                className="w-full py-3 min-h-[44px] bg-interactive/10 border border-interactive/30 text-interactive text-sm font-bold hover:bg-interactive/20 active:bg-interactive/30 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
               >
                 <Heart className="w-4 h-4" />
                 Support marching.art

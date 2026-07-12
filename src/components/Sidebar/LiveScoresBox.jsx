@@ -113,7 +113,7 @@ const LiveScoresBox = ({
       <div className="px-2 py-1.5 border-t border-line bg-surface-sunken">
         <button
           onClick={onShowStandings}
-          className="min-h-[44px] px-2 text-xs text-interactive hover:text-interactive-hover active:text-[#004a9e] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-none"
+          className="min-h-[44px] px-2 text-xs text-interactive hover:text-interactive-hover active:text-interactive-subtle font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-none"
         >
           Full Standings
           <ChevronRight className="w-4 h-4" />

@@ -249,7 +249,7 @@ const MatchupsTab = ({
           <button
             onClick={() => setViewMode('week')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'week' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
+              viewMode === 'week' ? 'bg-interactive text-white' : 'text-muted hover:text-white'
             }`}
           >
             <List className="w-3.5 h-3.5" />
@@ -258,7 +258,7 @@ const MatchupsTab = ({
           <button
             onClick={() => setViewMode('season')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'season' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
+              viewMode === 'season' ? 'bg-interactive text-white' : 'text-muted hover:text-white'
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -306,7 +306,7 @@ const MatchupsTab = ({
             <div className="px-4 py-3 border-b border-line bg-surface-raised">
               <div className="flex items-center justify-between">
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-yellow-500" />
+                  <Calendar className="w-3.5 h-3.5 text-secondary" />
                   Week {selectedWeek}
                 </h3>
                 <div className="flex items-center gap-1">
@@ -349,7 +349,7 @@ const MatchupsTab = ({
                       onClick={() => setSelectedWeek(week)}
                       className={`flex-shrink-0 px-3 py-1.5 text-xs font-bold transition-all relative ${
                         isSelected
-                          ? 'bg-yellow-500 text-black'
+                          ? 'bg-interactive text-white'
                           : isCurrent
                             ? 'bg-surface-raised border border-purple-500/50 text-white'
                             : hasData

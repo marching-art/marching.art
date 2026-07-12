@@ -58,7 +58,7 @@ const CorpsVerificationStep = ({
                     <h4 className="text-sm font-bold text-white">{corps.corpsName}</h4>
                     <p className="text-xs text-muted">{corps.location}</p>
                   </div>
-                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  <Trophy className="w-5 h-5 text-secondary" />
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

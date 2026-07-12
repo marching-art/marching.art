@@ -468,7 +468,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
           <div className="flex items-center gap-3">
             {/* League Avatar */}
             <div className="w-12 h-12 bg-line border border-line-strong flex-shrink-0 flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-yellow-500" />
+              <Trophy className="w-6 h-6 text-secondary" />
             </div>
 
             {/* Name + Meta */}
@@ -476,7 +476,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold text-white truncate">{league.name}</h1>
                 {isCommissioner && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 text-[10px] font-bold">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-raised border border-line text-secondary text-[10px] font-bold">
                     <Crown className="w-2.5 h-2.5" />
                     Commish
                   </span>
@@ -501,7 +501,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             >
               <div className="text-right">
                 <p className="text-[10px] uppercase tracking-wider text-muted">Invite Code</p>
-                <p className="text-sm font-bold font-mono text-yellow-500">{league.inviteCode}</p>
+                <p className="text-sm font-bold font-mono text-interactive">{league.inviteCode}</p>
               </div>
               {inviteCopied ? (
                 <Check className="w-4 h-4 text-green-500" />
@@ -582,7 +582,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 className="flex-1 px-2 py-1.5 bg-surface-raised text-center"
               >
                 <p className="text-[10px] uppercase tracking-wider text-muted">Code</p>
-                <p className="text-sm font-bold font-mono text-yellow-500">{league.inviteCode}</p>
+                <p className="text-sm font-bold font-mono text-interactive">{league.inviteCode}</p>
               </button>
             </div>
           )}
@@ -599,7 +599,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 font-bold text-sm transition-all relative ${
                   isActive
-                    ? 'bg-background text-yellow-500 border-t-2 border-yellow-500'
+                    ? 'bg-background text-interactive border-t-2 border-interactive'
                     : 'text-muted hover:text-white hover:bg-surface-raised'
                 }`}
               >
