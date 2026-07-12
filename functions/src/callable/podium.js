@@ -303,10 +303,16 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   }
   const startingReputation = careerData.reputation || 0;
   const startingTier = engine.tierForReputation(startingReputation, store.balance);
-  // Division seat (§5.7): carried from the career's assessed seat; a fresh
-  // start or a 2+ season absence re-enters at A Class. The commitment cap is
-  // division-equal, so it can only be validated once the seat is known.
-  const division = divisions.divisionForRegistration(careerData, missedSeasons, store.balance);
+  // Division seat (§5.7): carried from the career's assessed seat; beyond the
+  // grace window a returning corps re-enters at the division its now-decayed
+  // reputation supports (gradual erosion by time away, not a hard reset). The
+  // commitment cap is division-equal, so validate it once the seat is known.
+  const division = divisions.divisionForRegistration(
+    careerData,
+    missedSeasons,
+    store.balance,
+    careerData.reputation
+  );
   const budgetCommitment = validateCommitment(request.data?.budgetCommitment, 0, division);
   // Staff are RETAINED across seasons: every employed staffer ages up one
   // year (tenure raises their tier, the salary lock floats once it lapses)

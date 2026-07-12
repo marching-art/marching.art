@@ -331,6 +331,24 @@ function updateForm(state, day, seed, curves, cfg) {
 }
 
 /**
+ * The reputation-gated ceiling fraction for a tier: the fraction of full
+ * potential a FLAWLESS corps at this tier can reach. An explicit, top-bunched
+ * ladder (diminishing returns near the top: Elite and Champion sit close, big
+ * gaps are lower down) — a newcomer tops out at repCeilingFracByTier["1"], a
+ * Champion at 1.0. Falls back to a linear repCeilingFloor→1.0 ramp if the
+ * per-tier table is absent.
+ */
+function ceilFracForTier(repTier, cfg) {
+  const sc = cfg.scoring;
+  const tier = Math.max(1, Math.min(sc.maxRepTier || 7, repTier || 1));
+  const table = sc.repCeilingFracByTier;
+  if (table && table[String(tier)] != null) return Number(table[String(tier)]);
+  const span = (sc.maxRepTier || 7) - 1;
+  const progress = span > 0 ? (tier - 1) / span : 0;
+  return sc.repCeilingFloor + (1 - sc.repCeilingFloor) * progress;
+}
+
+/**
  * Score a corps for a show on `day` (§4.2, trajectory-anchored model). Pure;
  * does not mutate state.
  *
@@ -349,10 +367,14 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
     ((state.condition.stamina - 60) / 40 + (state.condition.morale - 60) / 40) / 2;
   const conditionMod =
     Math.max(-1, Math.min(1, conditionSignal)) * cfg.condition.scoreModifierMaxPerCaption;
-  // Reputation is a modest EARNED tailwind on a corps' ceiling, not a shared
-  // clamp: rehearsal still dominates (a flawless newcomer out-scores an absent
-  // dynasty). Tier 1 gets +0%, each tier above adds repTailwindPerTier.
-  const repMult = 1 + sc.repTailwindPerTier * Math.max(0, (state.repTier || 1) - 1);
+  // Reputation gates the CEILING — not a wall, not a shared clamp. A newcomer's
+  // best-possible show tops out well below a dynasty's (ceilFracForTier).
+  // Rehearsal then places the corps between the reputation-INDEPENDENT floor
+  // (any corps can field a mediocre show) and that reputation-gated ceiling —
+  // so rehearsal fully controls where you land within your tier, and a
+  // perfectly-rehearsed FIRST season still tops out in the mid/upper 70s while
+  // a Champion can reach the high 90s.
+  const ceilFrac = ceilFracForTier(state.repTier || 1, cfg);
   // Independent per-corps momentum (see updateForm) — the field's individuality.
   const formMult = 1 + (state.form || 0);
 
@@ -367,15 +389,16 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
     // Rehearsal attainment: how much of the book is installed AND clean.
     const attainment = cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean);
     const realized = Math.min(1, attainment / sc.attainmentFullRealization);
-    // A corps performs between perfFloorFraction and 100% of its potential,
-    // set ENTIRELY by its own rehearsal. This is where effort becomes score.
-    const perfFrac = sc.perfFloorFraction + (1 - sc.perfFloorFraction) * realized;
+    // Position between the rep-independent floor and the rep-gated ceiling,
+    // set ENTIRELY by this corps' own rehearsal. This is where effort becomes
+    // score — and why two same-tier corps that rehearsed differently differ.
+    const frac = sc.perfFloorFraction + (ceilFrac - sc.perfFloorFraction) * realized;
     // One-night judge wiggle, shaped by the caption's real day-over-day
     // movement (zero-median), seeded independently per corps + caption.
     const dist = deltaDistFor(caption, day, curves, cfg);
     const noise =
       (sampleDelta(dist, seededUnit(`${varianceSeed}|${caption}`)) - dist.p50) * sc.judgeNoiseScale;
-    const value = potential * perfFrac * repMult * formMult + conditionMod + noise;
+    const value = potential * frac * formMult + conditionMod + noise;
     // Realism guardrail only: never negative, never above the all-time day mark.
     captionScores[caption] = Number(softCap(value, band.max, sc.softCapKnee).toFixed(3));
   }
@@ -402,12 +425,48 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
 }
 
 /**
+ * The reference maximum finals-caliber total for a day: a challenge-8,
+ * fully-realized potential total. This is the top of the ladder — what a
+ * Champion-tier flawless corps is measured against. Deterministic in the curve
+ * data; cheap enough to call once per reputation update.
+ */
+function maxPotentialTotal(day, curves, cfg) {
+  const challenge = {};
+  for (const caption of CAPTIONS) challenge[caption] = 8;
+  const state = createSeasonState({ challenge, repTier: cfg.scoring.maxRepTier || 7 }, curves, cfg);
+  const p = {};
+  for (const caption of CAPTIONS) {
+    const { L, k, d0, norm } = state.captions[caption].curve;
+    p[caption] = (L * (1 / (1 + Math.exp(-k * (day - d0))))) / norm;
+  }
+  return p.GE1 + p.GE2 + (p.VP + p.VA + p.CG) / 2 + (p.B + p.MA + p.P) / 2;
+}
+
+/**
+ * Tier-relative season performance (0-100): how close to your CURRENT tier's
+ * flawless ceiling you finished. Because scoring is reputation-gated (a
+ * newcomer physically cannot post a Champion's number), reputation must be
+ * earned by maxing out AT YOUR OWN ALTITUDE — a perfect tier-1 season reads as
+ * ~100 here even though its absolute total (~76) is mid-field. This is the
+ * signal the reputation ladder climbs on (§5.13).
+ * @returns {number} 0-100
+ */
+function tierPerformance(finalsTotal, day, repTier, curves, cfg) {
+  const sc = cfg.scoring;
+  const refMax = maxPotentialTotal(day, curves, cfg);
+  const ceilFrac = ceilFracForTier(repTier || 1, cfg);
+  const ceiling = refMax * ceilFrac;
+  const floor = refMax * sc.perfFloorFraction;
+  return Math.max(0, Math.min(100, (100 * (finalsTotal - floor)) / Math.max(1e-6, ceiling - floor)));
+}
+
+/**
  * Season-end reputation update (§5.13). Returns the new reputation value.
  * @param {number} reputation current 0-100
- * @param {number} finalsPercentile 0-100 percentile of finals total within the band
+ * @param {number} seasonPerf tier-relative performance 0-100 (see tierPerformance)
  * @param {object} opts { dormantSeasons: number, historicalPeak: number }
  */
-function updateReputation(reputation, finalsPercentile, opts, cfg) {
+function updateReputation(reputation, seasonPerf, opts, cfg) {
   const r = cfg.reputation;
   if (opts.dormantSeasons > 0) {
     let decay = 0;
@@ -416,26 +475,21 @@ function updateReputation(reputation, finalsPercentile, opts, cfg) {
     }
     return Math.max(0, reputation - decay);
   }
-  // Gain is earned only by performing NEAR YOUR CURRENT CEILING: the season
-  // gain is how far the finals percentile reaches into the window just
-  // below the tier's ceiling percentile. A corps whose absolute quality
-  // sits below its tier's window stops climbing — the ladder advances only
-  // while you keep outperforming at your own altitude (§5.13).
+  // Gain is earned only by finishing NEAR THE TOP OF YOUR TIER: seasonPerf is a
+  // tier-relative 0-100 (how close to your tier's flawless ceiling you played),
+  // so you climb only while you keep maxing out at your own altitude. A merely-
+  // good season for your tier plateaus; the ladder never advances on absolute
+  // field position, which reputation itself gates (§5.13).
   const tier = tierForReputation(reputation, cfg);
-  const ceilingPct = Number(
-    (cfg.scoring.repCeilingPercentileByTier[String(tier)] ?? 100)
-  );
-  let gain = Math.max(
-    0,
-    Math.min(r.seasonGainCap, Math.round(finalsPercentile - (ceilingPct - r.gainWindow)))
-  );
+  let gain = Math.max(0, Math.min(r.seasonGainCap, Math.round(seasonPerf - r.climbThreshold)));
   // Heritage credit: accelerated re-earn below (peak - one tier's width).
   const tierWidth = r.tierThresholds["3"] - r.tierThresholds["2"];
   if (opts.historicalPeak && reputation < opts.historicalPeak - tierWidth) {
     gain = Math.round(gain * r.heritageCreditMultiplier);
   }
-  // Underperformance decay: well below tier expectation.
-  if (gain === 0 && tier >= 3 && finalsPercentile < 25) gain = -r.underperformDecay;
+  // Underperformance decay: a proven corps (tier 3+) that has a poor season
+  // for its tier slides back a little.
+  if (gain === 0 && tier >= 3 && seasonPerf < r.underperformThreshold) gain = -r.underperformDecay;
   return Math.max(0, Math.min(r.max, reputation + gain));
 }
 
@@ -484,7 +538,10 @@ module.exports = {
   deltaDistFor,
   softCap,
   updateForm,
+  ceilFracForTier,
   scoreCorps,
+  maxPotentialTotal,
+  tierPerformance,
   updateReputation,
   tierForReputation,
   percentileOfTotal,

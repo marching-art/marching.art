@@ -203,17 +203,27 @@
   "scoring": {
     "cleanFloor": 0.72,
     "cleanWeight": 0.28,
-    "attainmentFullRealization": 0.92,
+    "attainmentFullRealization": 0.7,
     "judgeVarianceMax": 0.05,
     "totalCap": 99.7,
-    "_model": "Trajectory-anchored (Option B, 2026-07). Each corps rides its OWN challenge-selected potential curve, scaled by its OWN rehearsal (perfFloorFraction..1.0), nudged by an INDEPENDENT per-corps form random-walk. The historical bands are a realism guardrail (per-day band.max soft-cap) and calibration reference ONLY — never a shared per-day floor, so corps at different shows never move in lockstep and no historical field-dip is baked into the season.",
-    "perfFloorFraction": 0.55,
-    "repTailwindPerTier": 0.017,
+    "_model": "Trajectory-anchored (Option B, 2026-07). Each corps rides its OWN challenge-selected potential curve. Rehearsal (realized) places the corps between a reputation-INDEPENDENT floor (perfFloorFraction of potential — any corps can field a mediocre show) and a reputation-GATED ceiling (ceilFrac, rising from repCeilingFloor at tier 1 to 1.0 at the top tier — only a dynasty can touch the very top, so a perfectly-rehearsed FIRST season tops out in the mid/upper 70s). An INDEPENDENT per-corps form random-walk adds individual fluctuation. The historical bands are a realism guardrail (per-day band.max soft-cap) and calibration reference ONLY — never a shared per-day floor, so corps at different shows never move in lockstep and no historical field-dip is baked into the season.",
+    "perfFloorFraction": 0.6,
+    "maxRepTier": 7,
+    "repCeilingFracByTier": {
+      "1": 0.78,
+      "2": 0.85,
+      "3": 0.9,
+      "4": 0.935,
+      "5": 0.965,
+      "6": 0.985,
+      "7": 1.0
+    },
+    "repCeilingFloor": 0.78,
     "judgeNoiseScale": 0.6,
     "softCapKnee": 0.96,
     "form": {
-      "max": 0.05,
-      "step": 0.028,
+      "max": 0.04,
+      "step": 0.023,
       "reversion": 0.3
     },
     "repCeilingPercentileByTier": {
@@ -248,6 +258,8 @@
       "7": 90
     },
     "seasonGainCap": 9,
+    "climbThreshold": 82,
+    "underperformThreshold": 45,
     "gainWindow": 8,
     "underperformDecay": 2,
     "dormancyDecayBySeason": [
@@ -266,7 +278,10 @@
     "minPoolForOpen": 6,
     "minPoolForWorld": 12,
     "demotionGraceSeasons": 1,
-    "absenceResetSeasons": 2
+    "reentryMinRepTier": {
+      "worldClass": 5,
+      "openClass": 3
+    }
   },
   "budget": {
     "commitmentCap": 2500,

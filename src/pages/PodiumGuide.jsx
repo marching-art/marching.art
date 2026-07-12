@@ -51,7 +51,7 @@ const SECTIONS = [
   {
     n: 9,
     title: 'Divisions: A Class, Open Class, World Class',
-    body: `Every corps starts in A Class. At each season's end the whole veteran field is assessed against published cutoffs (balanced thirds of the finals scores): finish above the next division's cutoff and you rise — one division per season, A to Open to World, the same climb corps made in the old days. Falling below your division's line gives you one grace season; two straight seasons below it and you drop one division. Sit out a season and your seat is held once; miss two or more and you restart in A Class. Each division crowns its own champions and medals at Finals.`,
+    body: `Every corps starts in A Class. At each season's end the whole veteran field is assessed against published cutoffs (balanced thirds of the finals scores): finish above the next division's cutoff and you rise — one division per season, A to Open to World, the same climb corps made in the old days. Falling below your division's line gives you one grace season; two straight seasons below it and you drop one division. Sit out a season and your seat is held; take a longer break and you return in the division your reputation still supports — a champion who steps away for a season or two comes back near the top, and only a long absence, with reputation decayed all the way down, re-enters A Class. Each division crowns its own champions and medals at Finals.`,
   },
   {
     n: 10,

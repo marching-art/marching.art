@@ -83,13 +83,15 @@ describe("reputation is a tailwind, not a wall", () => {
     assert.ok(mk(7) > mk(1), "a dynasty edges a newcomer at equal rehearsal");
   });
 
-  test("a flawless newcomer still beats an absent dynasty (rehearsal dominates)", () => {
+  test("a full flawless newcomer season beats an absent dynasty (rehearsal dominates by finals)", () => {
+    // Legacy carries an absent dynasty early, but a newcomer who rehearses the
+    // WHOLE season overtakes it by finals — reputation is an edge, not a wall.
     const newcomer = corps(6, 1);
-    for (let day = 1; day <= 8; day++) rehearse(newcomer, day, 12);
+    for (let day = 1; day <= 48; day++) rehearse(newcomer, day, 12);
     const dynasty = corps(6, 7); // tier 7 but never rehearsed past day-1 install
-    const nc = engine.scoreCorps(newcomer, 9, "s|9|showA|nc", curves, cfg);
-    const dy = engine.scoreCorps(dynasty, 9, "s|9|showB|dy", curves, cfg);
-    assert.ok(nc.total > dy.total, `flawless newcomer ${nc.total} must beat absent dynasty ${dy.total}`);
+    const nc = engine.scoreCorps(newcomer, 49, "s|49|showA|nc", curves, cfg);
+    const dy = engine.scoreCorps(dynasty, 49, "s|49|showB|dy", curves, cfg);
+    assert.ok(nc.total > dy.total, `flawless newcomer ${nc.total} must beat absent dynasty ${dy.total} at finals`);
   });
 });
 
@@ -126,21 +128,40 @@ describe("independent fluctuation (the 'everyone drops together' bug)", () => {
     };
     const x = mk();
     const y = mk();
-    let disagreements = 0;
+    const dx = [];
+    const dy = [];
     let prevX = null;
     let prevY = null;
-    for (let day = 20; day <= 45; day++) {
+    for (let day = 10; day <= 49; day++) {
       engine.updateForm(x, day, "seasonX|x", curves, cfg);
       engine.updateForm(y, day, "seasonX|y", curves, cfg);
       const tx = engine.scoreCorps(x, day, `seasonX|${day}|showX|x`, curves, cfg).total;
       const ty = engine.scoreCorps(y, day, `seasonX|${day}|showY|y`, curves, cfg).total;
-      if (prevX != null && Math.sign(tx - prevX) !== Math.sign(ty - prevY)) disagreements++;
+      if (prevX != null) {
+        dx.push(tx - prevX);
+        dy.push(ty - prevY);
+      }
       prevX = tx;
       prevY = ty;
     }
-    // A lockstep model moves the two corps the same direction every day
-    // (0 disagreements). Independent corps disagree on plenty of days.
-    assert.ok(disagreements >= 5, `expected frequent independent moves, got ${disagreements} disagreements`);
+    // Pearson correlation of the two corps' daily deltas. A lockstep model (the
+    // old shared-band bug) sits near 1.0; independent corps sit near 0.
+    const mean = (a) => a.reduce((s, v) => s + v, 0) / a.length;
+    const mx = mean(dx);
+    const my = mean(dy);
+    let num = 0;
+    let vx = 0;
+    let vy = 0;
+    for (let i = 0; i < dx.length; i++) {
+      num += (dx[i] - mx) * (dy[i] - my);
+      vx += (dx[i] - mx) ** 2;
+      vy += (dy[i] - my) ** 2;
+    }
+    const correlation = num / Math.max(1e-9, Math.sqrt(vx * vy));
+    assert.ok(
+      correlation < 0.5,
+      `two corps must not move in lockstep; delta-correlation was ${correlation.toFixed(3)}`
+    );
   });
 });
 

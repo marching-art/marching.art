@@ -249,8 +249,8 @@ function main() {
       const strategies = makeStrategies(`career|${season}`);
       const tier = engine.tierForReputation(reputation, cfg);
       const { finalsTotal } = simulateSeason(strategies[strategyName], tier, `career|${season}`);
-      const pct = engine.percentileOfTotal(finalsTotal, 49, curves);
-      reputation = engine.updateReputation(reputation, pct, { dormantSeasons: 0 }, cfg);
+      const perf = engine.tierPerformance(finalsTotal, 49, tier, curves, cfg);
+      reputation = engine.updateReputation(reputation, perf, { dormantSeasons: 0 }, cfg);
       if (!tierReachedAt && engine.tierForReputation(reputation, cfg) === 7) tierReachedAt = season;
     }
     return { reputation, tierReachedAt };

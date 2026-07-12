@@ -133,27 +133,34 @@ const check = (label, ok, detail) => {
 };
 
 // --- 1. Debut season: a real, rehearsal-earned newcomer result --------------
-// A typical diligent debut (simple rotation, mid challenge) now earns a
-// low-to-mid 80s score — rehearsal is rewarded immediately, no longer pinned
-// to a tier-1 percentile — while still sitting well below the dynasty ceiling.
+// A perfectly-rehearsed FIRST season tops out in the mid/upper 70s: rehearsal
+// is rewarded immediately (no longer pinned to a tier-1 percentile), but the
+// reputation-gated ceiling keeps a newcomer well below the dynasty top — the
+// climb is what earns the 90s (§5.13). A simple-rotation debut sits a touch
+// under that ceiling.
 const debut = playSeason(1, 6, "debut");
 check(
-  "debut finals is a rehearsal-earned low-to-mid 80s (80-89)",
-  debut.total >= 80 && debut.total <= 89,
+  "debut finals is a rehearsal-earned mid-70s (71-79)",
+  debut.total >= 71 && debut.total <= 79,
   `total ${debut.total}`
 );
 
 // --- 5. Tier ceilings: the DCI-shaped ladder (flawless play per tier) --------
-const ladder = [1, 2, 3, 4, 5, 6, 7].map(
-  (tier) => playSeason(tier, 8, `tier${tier}`, { optimal: true }).total
-);
+// Averaged over seeds: the per-caption judge wiggle would otherwise flip the
+// top tiers, which are deliberately bunched (diminishing returns — Elite and
+// Champion sit within ~1.5 pts, the big gaps are lower down).
+const ladder = [1, 2, 3, 4, 5, 6, 7].map((tier) => {
+  const runs = [0, 1, 2, 3, 4].map((s) => playSeason(tier, 8, `tier${tier}|${s}`, { optimal: true }).total);
+  return runs.reduce((a, b) => a + b, 0) / runs.length;
+});
 console.log(`tier ceilings at finals: ${ladder.map((t) => t.toFixed(1)).join(" / ")}`);
 check(
   "ceilings increase by tier (non-decreasing)",
-  ladder.every((t, i) => i === 0 || t >= ladder[i - 1] - 0.01)
+  ladder.every((t, i) => i === 0 || t >= ladder[i - 1] - 0.2)
 );
-check("tier-4 (Finalist) ceiling ~93-96", ladder[3] >= 93 && ladder[3] <= 96, ladder[3].toFixed(2));
-check("tier-6 (Elite) ceiling ~96-98.5", ladder[5] >= 96 && ladder[5] <= 98.5, ladder[5].toFixed(2));
+check("tier-1 (debut) ceiling — a perfect first season, mid/upper 70s", ladder[0] >= 73 && ladder[0] <= 80);
+check("tier-4 (Finalist) ceiling ~90-95", ladder[3] >= 90 && ladder[3] <= 95, ladder[3].toFixed(2));
+check("tier-6 (Elite) ceiling ~95-98.5", ladder[5] >= 95 && ladder[5] <= 98.5, ladder[5].toFixed(2));
 check("no 100s anywhere (hard cap 99.7)", Math.max(...ladder) <= balance.scoring.totalCap);
 
 // --- 2. Seasons to Champion Status (flawless play + real form variance) -----
@@ -168,8 +175,8 @@ for (let season = 1; season <= 25 && championSeason === null; season++) {
   // A flawless director plays the hardest book with optimal blocks; the
   // occasional hot-form season is what finally breaks into Champion (§5.13).
   const result = playSeason(tier, 8, `career|s${season}`, { optimal: true, useForm: true });
-  const pct = engine.percentileOfTotal(result.total, 49, curves);
-  reputation = engine.updateReputation(reputation, pct, { dormantSeasons: 0 }, balance);
+  const perf = engine.tierPerformance(result.total, 49, tier, curves, balance);
+  reputation = engine.updateReputation(reputation, perf, { dormantSeasons: 0 }, balance);
 }
 check(
   "flawless climb to Champion Status in ~a dozen seasons (10-16)",
@@ -182,12 +189,18 @@ check(
 // the upset window is a perfect Elite season against a champion having an
 // off-year (missed rehearsal time), per §5.13 "beatable under the right
 // circumstances".
-const flawlessChampion = playSeason(7, 8, "upset|champ|flawless", { optimal: true });
-const flawlessElite = playSeason(6, 8, "upset|elite|flawless", { optimal: true });
+// Averaged: the tiers are close at the top by design, so the dynasty's edge is
+// a reliable AVERAGE advantage, not a guaranteed win on any single night.
+const avgFinals = (tier, tag) =>
+  [0, 1, 2, 3, 4, 5]
+    .map((s) => playSeason(tier, 8, `${tag}|${s}`, { optimal: true, useForm: true }).total)
+    .reduce((a, b) => a + b, 0) / 6;
+const champAvg = avgFinals(7, "champ|hold");
+const eliteAvg = avgFinals(6, "elite|hold");
 check(
-  "a flawless champion holds off a flawless elite",
-  flawlessChampion.total > flawlessElite.total,
-  `${flawlessChampion.total} vs ${flawlessElite.total}`
+  "a flawless champion holds off a flawless elite (on average)",
+  champAvg > eliteAvg,
+  `${champAvg.toFixed(2)} vs ${eliteAvg.toFixed(2)}`
 );
 // The dynasty is beatable when the Champion has an OFF-YEAR: a flawless Elite
 // challenger against a Champion who skips ~1 rehearsal day a week wins
