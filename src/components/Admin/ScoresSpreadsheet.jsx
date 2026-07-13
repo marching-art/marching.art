@@ -37,14 +37,22 @@ const AGGREGATE_TABS = [
 ];
 
 /**
- * Calculate the fantasy date for a given day number
+ * Calculate the fantasy date for a given competition day number
  * Uses UTC to interpret the start date to avoid timezone issues
  * (Firestore timestamps are stored in UTC, so we use UTC to read them)
+ *
+ * Competition Day N falls on the Nth competition day, which starts AFTER the
+ * spring-training period: startDate + springTrainingDays + (N - 1). Live
+ * seasons carry 21 days of spring training before Day 1; off-seasons have
+ * none (field absent -> 0). This mirrors getActualDate in Schedule.jsx and
+ * the dayStart math in utils/seasonClock.js — keep the three in sync.
+ *
  * @param {Date} seasonStartDate - The start date of the fantasy season
- * @param {number} dayNumber - The day number (1-49)
+ * @param {number} dayNumber - The competition day number (1-49)
+ * @param {number} [springTrainingDays=0] - Days of spring training before Day 1
  * @returns {string} The formatted date string (e.g., "4-Jan")
  */
-const getFantasyDateFormatted = (seasonStartDate, dayNumber) => {
+const getFantasyDateFormatted = (seasonStartDate, dayNumber, springTrainingDays = 0) => {
   if (!seasonStartDate || !dayNumber) return `Day ${dayNumber}`;
 
   // Get the start date in UTC (Firestore stores dates as UTC)
@@ -53,9 +61,10 @@ const getFantasyDateFormatted = (seasonStartDate, dayNumber) => {
   const startMonth = seasonStartDate.getUTCMonth();
   const startDay = seasonStartDate.getUTCDate();
 
-  // Create a new date and add days (using local Date for formatting)
+  // Create a new date and add days (using local Date for formatting),
+  // offsetting past spring training so Day 1 lands on the first competition day
   const date = new Date(startYear, startMonth, startDay);
-  date.setDate(date.getDate() + dayNumber - 1); // Day 1 = start date
+  date.setDate(date.getDate() + springTrainingDays + dayNumber - 1);
 
   // Format as "D-Mon"
   const monthStr = date.toLocaleString('en-US', { month: 'short' });
@@ -131,6 +140,10 @@ const ScoresSpreadsheet = () => {
     return seasonData.schedule.startDate.toDate();
   }, [seasonData]);
 
+  // Days of spring training before competition Day 1 (live seasons: 21;
+  // off-seasons: absent -> 0). Competition day dates are offset past this.
+  const springTrainingDays = seasonData?.schedule?.springTrainingDays || 0;
+
   // Get all unique dates/days from historical data, with fantasy dates calculated
   const allDates = useMemo(() => {
     const datesMap = new Map();
@@ -140,8 +153,14 @@ const ScoresSpreadsheet = () => {
         if (event.offSeasonDay && !datesMap.has(event.offSeasonDay)) {
           datesMap.set(event.offSeasonDay, {
             day: event.offSeasonDay,
-            // Calculate the formatted fantasy date based on season start date
-            dateLabel: getFantasyDateFormatted(seasonStartDate, event.offSeasonDay),
+            // Calculate the formatted fantasy date based on season start date,
+            // offset past spring training so live-season dates line up with
+            // the actual competition calendar (Schedule page / seasonClock).
+            dateLabel: getFantasyDateFormatted(
+              seasonStartDate,
+              event.offSeasonDay,
+              springTrainingDays
+            ),
             eventName: event.eventName,
           });
         }
@@ -150,7 +169,7 @@ const ScoresSpreadsheet = () => {
 
     // Sort by day number
     return Array.from(datesMap.values()).sort((a, b) => a.day - b.day);
-  }, [historicalData, seasonStartDate]);
+  }, [historicalData, seasonStartDate, springTrainingDays]);
 
   // Get score for a specific corps on a specific day
   const getScore = (corpsName, sourceYear, day, caption) => {
