@@ -51,6 +51,7 @@ async function applyActiveSupport(db, parsed) {
         tier: parsed.tier,
         coffeeAmount: parsed.monthlyAmount,
         currency: parsed.currency || "USD",
+        levelName: parsed.levelName ?? existing?.levelName ?? null,
         active: true,
         anonymous: existing?.anonymous ?? false,
         message: existing?.message ?? null,

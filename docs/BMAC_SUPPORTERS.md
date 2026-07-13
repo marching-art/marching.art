@@ -7,11 +7,19 @@ scoring: marching.art is donation-only and stays no-pay-to-win.
 
 ## Tiers
 
-Derived from the **monthly USD amount** (BMAC's webhook/API sends the coffee
-price × count, never a tier name), so the BMAC membership level prices must
-match these floors. Defined once in
-`functions/src/helpers/bmacSupporters.js` and mirrored for display in
-`src/utils/supporterTiers.ts`.
+Derived from the **monthly USD amount**, so the BMAC membership level prices
+must match these floors. We map by amount rather than by BMAC's membership
+level name because the same logic also covers generic `recurring_donation`
+support (which has no level name) and because amounts are stable across
+creators. Yearly plans are normalized to their monthly-equivalent (amount ÷ 12),
+so price yearly tiers at exactly 12× the monthly floor to land on the intended
+tier. Defined once in `functions/src/helpers/bmacSupporters.js` and mirrored for
+display in `src/utils/supporterTiers.ts`.
+
+The parser reads both payload shapes: the **webhook** subscription event
+(`supporter_email`, `amount`, `status`, `duration_type`, `membership_level_name`)
+and the **REST** `/subscriptions` record used by the nightly reconcile
+(`payer_email`, `subscription_coffee_price` × `subscription_coffee_num`).
 
 | Tier | Monthly | Flair |
 | --- | --- | --- |

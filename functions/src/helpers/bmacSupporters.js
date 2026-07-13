@@ -96,77 +96,116 @@ const ENDED_EVENTS = new Set([
   "recurring_donation.cancelled",
 ]);
 
+/** month | year — webhook uses `duration_type`, the REST record uses `subscription_duration_type`. */
+function extractDurationType(data) {
+  return data.duration_type || data.subscription_duration_type || "month";
+}
+
 /**
- * Pull the monthly USD amount out of a membership payload/record. BMAC's
- * membership object gives coffee price × count; we tolerate a few field-name
- * shapes because the webhook `data` schema and the REST record differ slightly.
- * @returns {number} 0 when nothing parseable is found.
+ * Monthly-equivalent USD for a subscription. Two payload shapes are handled:
+ *  - Webhook membership/recurring_donation events send `amount` (the per-period
+ *    charge) directly (see the BMAC webhook OpenAPI SubscriptionFields).
+ *  - REST /subscriptions records send coffee price × count.
+ * Yearly plans are normalized to a monthly figure so they compare against the
+ * same tier floors. @returns {number} 0 when nothing parseable is found.
  */
 function extractMonthlyAmount(data) {
   if (!data || typeof data !== "object") return 0;
-  const price = Number(
-    data.subscription_coffee_price ?? data.coffee_price ?? data.amount ?? 0
-  );
-  const num = Number(
-    data.subscription_coffee_num ?? data.coffee_num ?? 1
-  );
-  if (!Number.isFinite(price) || price <= 0) return 0;
-  const count = Number.isFinite(num) && num > 0 ? num : 1;
-  // `amount` (when present) is already the total; only multiply the per-coffee
-  // price by the count.
-  if (data.subscription_coffee_price == null && data.coffee_price == null) {
-    return price;
+  let total;
+  if (data.amount != null) {
+    // Webhook subscription events: `amount` is the full per-period charge.
+    total = Number(data.amount);
+  } else {
+    // REST subscription record: per-coffee price × number of coffees.
+    const price = Number(data.subscription_coffee_price ?? data.coffee_price ?? 0);
+    const num = Number(data.subscription_coffee_num ?? data.coffee_num ?? 1);
+    const count = Number.isFinite(num) && num > 0 ? num : 1;
+    total = price * count;
   }
-  return price * count;
+  if (!Number.isFinite(total) || total <= 0) return 0;
+  // A yearly plan's charge covers 12 months — compare its monthly-equivalent.
+  if (extractDurationType(data) === "year") total = total / 12;
+  return total;
 }
 
 function extractEmail(data) {
   if (!data || typeof data !== "object") return "";
+  // Webhook payloads use `supporter_email`; REST records use `payer_email`.
   return normalizeEmail(
-    data.payer_email || data.email || data.support_email || ""
+    data.supporter_email || data.payer_email || data.email || data.support_email || ""
   );
 }
 
+function extractPayerName(data) {
+  const name = data.supporter_name || data.payer_name || "";
+  return typeof name === "string" ? name.slice(0, 120) : "";
+}
+
 /**
- * Normalize a raw BMAC webhook body into the fields our upsert needs, or null
- * when the event isn't a recurring-support lifecycle event we act on.
+ * Whether a subscription payload represents a currently-active supporter. The
+ * explicit status/flags on the payload win when present (so a `membership.updated`
+ * that is really a cancellation or pause is treated as inactive); otherwise we
+ * fall back to the event-type classification. Note: `cancel_at_period_end` is
+ * NOT treated as inactive — the supporter keeps flair until the period actually
+ * ends and the `membership.cancelled` event fires.
+ */
+function isActiveSubscription(type, data) {
+  const status = data.status; // active | canceled | paused
+  if (status === "canceled" || status === "paused") return false;
+  if (
+    data.canceled === "true" ||
+    data.paused === "true" ||
+    data.subscription_is_cancelled === "true"
+  ) {
+    return false;
+  }
+  if (status === "active") return true;
+  if (ENDED_EVENTS.has(type)) return false;
+  return ACTIVE_EVENTS.has(type);
+}
+
+/**
+ * Normalize a raw BMAC webhook body (or a REST subscription record wrapped in a
+ * synthetic envelope) into the fields our upsert needs, or null when the event
+ * isn't a recurring-support lifecycle event we act on.
  *
  * @param {object} body parsed webhook envelope { type, event_id, data }
  * @returns {null | {
  *   type: string, eventId: number|null, active: boolean,
  *   email: string, emailHash: string|null, payerName: string,
  *   monthlyAmount: number, tier: string|null, currency: string,
+ *   levelName: string|null,
  * }}
  */
 function parseSupporterEvent(body) {
   if (!body || typeof body !== "object") return null;
   const type = body.type;
-  const isActive = ACTIVE_EVENTS.has(type);
-  const isEnded = ENDED_EVENTS.has(type);
-  if (!isActive && !isEnded) return null;
+  if (!ACTIVE_EVENTS.has(type) && !ENDED_EVENTS.has(type)) return null;
 
   const data = body.data || {};
   const email = extractEmail(data);
   const emailHash = hashEmail(email);
   if (!emailHash) return null; // can't key/match without an email
 
+  const active = isActiveSubscription(type, data);
   const monthlyAmount = extractMonthlyAmount(data);
   return {
     type,
-    eventId: Number.isFinite(Number(body.event_id))
-      ? Number(body.event_id)
-      : null,
-    active: isActive,
+    eventId: Number.isFinite(Number(body.event_id)) ? Number(body.event_id) : null,
+    active,
     email,
     emailHash,
-    payerName:
-      typeof data.payer_name === "string" ? data.payer_name.slice(0, 120) : "",
+    payerName: extractPayerName(data),
     monthlyAmount,
-    tier: isActive ? tierFromMonthlyAmount(monthlyAmount) : null,
+    tier: active ? tierFromMonthlyAmount(monthlyAmount) : null,
     currency:
-      typeof data.subscription_currency === "string"
-        ? data.subscription_currency.toUpperCase()
+      typeof (data.currency || data.subscription_currency) === "string"
+        ? (data.currency || data.subscription_currency).toUpperCase()
         : "USD",
+    levelName:
+      typeof data.membership_level_name === "string"
+        ? data.membership_level_name
+        : null,
   };
 }
 
