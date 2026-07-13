@@ -20,9 +20,9 @@ export const PLAQUE_STYLES = {
     border: 'border-orange-400/40',
   },
   silver: {
-    text: 'text-gray-300',
-    bg: 'bg-gray-300/10',
-    border: 'border-gray-300/40',
+    text: 'text-secondary',
+    bg: 'bg-charcoal-300/10',
+    border: 'border-charcoal-300/40',
   },
   gold: {
     text: 'text-yellow-500',

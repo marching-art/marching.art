@@ -15,6 +15,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
+import { Heading } from '../components/ui';
 import {
   ChevronLeft,
   LogIn,
@@ -88,13 +89,13 @@ const projectedTotal = (caps) => {
 const Meter = ({ label, value, color, note }) => (
   <div>
     <div className="flex items-center justify-between mb-1">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{label}</span>
       <span className="text-[11px] font-bold font-data tabular-nums text-white">
         {Math.round(value)}
         <span className="text-muted">/100</span>
       </span>
     </div>
-    <div className="h-2 bg-[#111] border border-[#2a2a2a] overflow-hidden">
+    <div className="h-2 bg-surface-sunken border border-line-muted overflow-hidden">
       <div
         className="h-full transition-all duration-500"
         style={{ width: `${clamp(value, 0, 100)}%`, backgroundColor: color }}
@@ -108,7 +109,7 @@ const CaptionRow = ({ id, caps }) => {
   const { content, clean } = caps[id];
   const val = captionValue(caps[id]);
   return (
-    <div className="flex items-center gap-3 px-3 py-2 border-b border-[#222] last:border-0">
+    <div className="flex items-center gap-3 px-3 py-2 border-b border-line-subtle last:border-0">
       <div className="w-9 flex-shrink-0">
         <div className="text-xs font-bold text-white">{id}</div>
         <div className="text-[9px] text-muted leading-tight">{CAPTION_LABELS[id]}</div>
@@ -117,7 +118,7 @@ const CaptionRow = ({ id, caps }) => {
         {/* Content bar */}
         <div className="flex items-center gap-2">
           <span className="text-[8px] uppercase text-muted w-12">Content</span>
-          <div className="flex-1 h-1.5 bg-[#111] overflow-hidden">
+          <div className="flex-1 h-1.5 bg-surface-sunken overflow-hidden">
             <div
               className="h-full transition-all duration-500"
               style={{ width: `${content}%`, backgroundColor: GOLD }}
@@ -127,7 +128,7 @@ const CaptionRow = ({ id, caps }) => {
         {/* Clean bar */}
         <div className="flex items-center gap-2">
           <span className="text-[8px] uppercase text-muted w-12">Clean</span>
-          <div className="flex-1 h-1.5 bg-[#111] overflow-hidden">
+          <div className="flex-1 h-1.5 bg-surface-sunken overflow-hidden">
             <div
               className="h-full bg-[#5a8dd6] transition-all duration-500"
               style={{ width: `${clean}%` }}
@@ -267,12 +268,12 @@ const PodiumPreview = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0a] text-white">
+    <div className="min-h-screen flex flex-col bg-background text-white">
       {/* HEADER */}
-      <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
+      <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line flex items-center px-4">
         <Link
           to="/podium"
-          className="inline-flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors press-feedback min-h-touch px-2 -ml-2"
+          className="inline-flex items-center gap-1.5 text-muted hover:text-white transition-colors press-feedback min-h-touch px-2 -ml-2"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="text-sm font-medium">Podium</span>
@@ -288,7 +289,7 @@ const PodiumPreview = () => {
         <div className="ml-auto flex items-center gap-2">
           <Link
             to="/podium"
-            className="flex items-center gap-1.5 px-3 h-9 text-sm text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 h-9 text-sm text-muted hover:text-white transition-colors"
           >
             <LogIn className="w-4 h-4" />
             <span className="hidden sm:inline">Sign In</span>
@@ -323,7 +324,7 @@ const PodiumPreview = () => {
                 <p className="text-sm text-white font-medium">
                   This is the Podium daily loop — no signup needed
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   Spend today&rsquo;s rehearsal blocks, watch your show grow, then advance the day.
                   Found a corps to keep a real season going.
                 </p>
@@ -340,7 +341,7 @@ const PodiumPreview = () => {
           </m.div>
 
           {/* Director's Sheet header */}
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-none mb-4">
+          <div className="bg-surface-card border border-line rounded-none mb-4">
             <div className="flex flex-wrap items-center gap-4 p-4">
               <div className="flex items-center gap-3 flex-1 min-w-[200px]">
                 <div
@@ -384,9 +385,9 @@ const PodiumPreview = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* LEFT: Rehearsal */}
             <div className="space-y-4">
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+              <div className="bg-surface-card border border-line rounded-none">
+                <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
                     <Sparkles className="w-3.5 h-3.5" style={{ color: GOLD }} />
                     Today&rsquo;s Rehearsal
                   </h2>
@@ -401,7 +402,7 @@ const PodiumPreview = () => {
                       key={block.id}
                       onClick={() => assignBlock(block)}
                       disabled={blocksLeft <= 0}
-                      className="text-left p-2.5 border border-[#333] bg-[#111] hover:border-[#c9a227]/60 hover:bg-[#161616] active:scale-[0.98] transition-all rounded-none disabled:opacity-40 disabled:cursor-not-allowed group"
+                      className="text-left p-2.5 border border-line bg-surface-sunken hover:border-interactive/60 hover:bg-surface-sunken active:scale-[0.98] transition-all rounded-none disabled:opacity-40 disabled:cursor-not-allowed group"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-white">{block.label}</span>
@@ -412,13 +413,11 @@ const PodiumPreview = () => {
                           +
                         </span>
                       </div>
-                      <p className="text-[10px] text-muted leading-tight mt-0.5">
-                        {block.detail}
-                      </p>
+                      <p className="text-[10px] text-muted leading-tight mt-0.5">{block.detail}</p>
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-2 p-3 border-t border-[#333]">
+                <div className="flex gap-2 p-3 border-t border-line">
                   <button
                     onClick={() => finishDay({ rest: false })}
                     className="flex-1 h-11 flex items-center justify-center gap-2 text-black font-bold text-sm uppercase tracking-wider rounded-none active:scale-[0.98] transition-all"
@@ -429,7 +428,7 @@ const PodiumPreview = () => {
                   </button>
                   <button
                     onClick={() => finishDay({ rest: true })}
-                    className="flex-1 h-11 flex items-center justify-center gap-2 border border-[#333] text-gray-300 font-bold text-sm uppercase tracking-wider rounded-none hover:border-[#444] hover:text-white active:scale-[0.98] transition-all"
+                    className="flex-1 h-11 flex items-center justify-center gap-2 border border-line text-secondary font-bold text-sm uppercase tracking-wider rounded-none hover:border-line-strong hover:text-white active:scale-[0.98] transition-all"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Rest Day
@@ -438,9 +437,9 @@ const PodiumPreview = () => {
               </div>
 
               {/* Activity log — the "Action Complete!" feedback */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              <div className="bg-surface-card border border-line rounded-none">
+                <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted">
                     Today&rsquo;s Results
                   </h2>
                 </div>
@@ -453,7 +452,7 @@ const PodiumPreview = () => {
                     log.map((entry) => (
                       <div
                         key={entry.id}
-                        className="px-4 py-2.5 border-b border-[#222] last:border-0"
+                        className="px-4 py-2.5 border-b border-line-subtle last:border-0"
                       >
                         <div className="text-xs font-bold text-white mb-1">{entry.block}</div>
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5">
@@ -475,9 +474,9 @@ const PodiumPreview = () => {
             </div>
 
             {/* RIGHT: Caption sheet */}
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-none h-fit">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-                <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <div className="bg-surface-card border border-line rounded-none h-fit">
+              <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+                <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted">
                   Caption Sheet
                 </h2>
                 <span className="text-[10px] text-muted">all 8 captions · 0–20</span>
@@ -487,7 +486,7 @@ const PodiumPreview = () => {
                   <CaptionRow key={id} id={id} caps={caps} />
                 ))}
               </div>
-              <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
+              <div className="px-4 py-2.5 border-t border-line bg-surface-sunken">
                 <p className="text-[10px] text-muted leading-relaxed">
                   Your captions score inside the real historical envelope of DCI results for the day
                   — content installed, cleaned, and gated by condition. In a real season this drops
@@ -506,7 +505,7 @@ const PodiumPreview = () => {
             }}
           >
             <h3 className="text-base font-bold text-white">Ready to run a real season?</h3>
-            <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+            <p className="text-xs text-muted mt-1 max-w-md mx-auto">
               This demo resets on refresh. Found a free corps to keep your season, route a tour,
               compete on the nightly box score, and climb toward Champion Status.
             </p>
@@ -535,7 +534,7 @@ const PodiumPreview = () => {
           <m.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-none p-6 relative"
+            className="w-full max-w-sm bg-surface-card border border-line rounded-none p-6 relative"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -551,8 +550,10 @@ const PodiumPreview = () => {
             >
               <Medal className="w-6 h-6" style={{ color: GOLD }} />
             </div>
-            <h3 className="text-lg font-bold text-white">Nice — the corps is growing.</h3>
-            <p className="text-sm text-gray-400 mt-1.5">
+            <Heading level="title" as="h3">
+              Nice — the corps is growing.
+            </Heading>
+            <p className="text-sm text-muted mt-1.5">
               You&rsquo;re getting the loop. Found a free corps and this becomes a real season:
               nightly box scores, a full tour, staff, divisions, and the climb to Champion Status.
             </p>
@@ -566,7 +567,7 @@ const PodiumPreview = () => {
             </Link>
             <button
               onClick={() => setGateOpen(false)}
-              className="mt-2 w-full h-10 flex items-center justify-center gap-2 text-gray-400 hover:text-white text-sm font-medium transition-colors"
+              className="mt-2 w-full h-10 flex items-center justify-center gap-2 text-muted hover:text-white text-sm font-medium transition-colors"
             >
               <Play className="w-4 h-4" />
               Keep exploring the demo

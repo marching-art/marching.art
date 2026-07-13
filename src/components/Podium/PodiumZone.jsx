@@ -21,7 +21,7 @@ export default function PodiumZone() {
 
   if (podium.loading && !podium.data) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 flex items-center justify-center">
+      <div className="bg-surface-card border border-line rounded-none p-8 flex items-center justify-center">
         <Loader2 className="w-5 h-5 animate-spin text-muted" />
       </div>
     );
@@ -29,7 +29,7 @@ export default function PodiumZone() {
 
   if (podium.error) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 text-xs text-red-400">
+      <div className="bg-surface-card border border-line rounded-none p-4 text-xs text-red-400">
         {podium.error}
       </div>
     );

@@ -18,8 +18,8 @@ export const CLASS_CONFIG = {
   aClass: {
     name: 'A Class',
     shortName: 'A Class',
-    color: 'text-[#0057B8]',
-    bgColor: 'bg-[#0057B8]/10',
+    color: 'text-interactive',
+    bgColor: 'bg-interactive/10',
   },
   soundSport: {
     name: 'SoundSport',

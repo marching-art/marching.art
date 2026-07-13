@@ -469,11 +469,11 @@ export default function NewsFeed({ maxItems = 4 }) {
           {otherStories.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-4 h-4 text-[#0057B8]" />
+                <Zap className="w-4 h-4 text-interactive" />
                 <h2 className="text-xs font-bold text-muted uppercase tracking-widest">
                   More Stories
                 </h2>
-                <div className="flex-1 h-px bg-[#333]" />
+                <div className="flex-1 h-px bg-line" />
               </div>
               <div className="md:columns-2 md:gap-10 md:[column-rule:1px_solid_#33333399]">
                 {otherStories.map((story) => (
@@ -506,7 +506,7 @@ export default function NewsFeed({ maxItems = 4 }) {
               {!loadingMore && !autoLoadEnabled && (
                 <button
                   onClick={loadMore}
-                  className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all press-feedback"
+                  className="px-6 py-3 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white transition-all press-feedback"
                 >
                   Load More Stories
                 </button>
@@ -533,9 +533,9 @@ export function FantasyImpactWidget({ news }) {
   const metrics = latestWithImpact.fantasyMetrics;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
+    <div className="bg-surface-card border border-line">
       {/* Header */}
-      <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
+      <div className="bg-surface-raised px-3 py-2.5 border-b border-line flex items-center justify-between">
         <h3 className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
           <Flame className="w-3.5 h-3.5" />
           Fantasy Impact
@@ -564,7 +564,7 @@ export function FantasyImpactWidget({ news }) {
           </div>
         )}
 
-        <p className="text-sm text-gray-300 leading-relaxed mb-3">
+        <p className="text-sm text-secondary leading-relaxed mb-3">
           {safeString(latestWithImpact.fantasyImpact)}
         </p>
 
@@ -599,8 +599,8 @@ export function FantasyImpactWidget({ news }) {
                     item.riskLevel === 'high'
                       ? 'text-red-400'
                       : item.riskLevel === 'medium'
-                        ? 'text-yellow-400'
-                        : 'text-gray-400'
+                        ? 'text-warning'
+                        : 'text-muted'
                   }`}
                 >
                   {item.riskLevel} risk
@@ -612,7 +612,7 @@ export function FantasyImpactWidget({ news }) {
 
         {/* Trending Corps */}
         {latestWithImpact.trendingCorps?.length > 0 && (
-          <div className="pt-3 border-t border-[#333]/50">
+          <div className="pt-3 border-t border-line/50">
             <div className="text-xs text-muted uppercase mb-2">Trending Corps</div>
             <div className="space-y-1.5">
               {latestWithImpact.trendingCorps.slice(0, 3).map((corp, idx) => (

@@ -35,8 +35,8 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
       <div
         ref={ref}
         className={`
-          bg-[#1A1A1A]
-          border border-[#333]
+          bg-surface-card
+          border border-line
           rounded-none
           p-4
           relative

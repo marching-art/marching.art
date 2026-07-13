@@ -1,5 +1,5 @@
 // =============================================================================
-// ACHIEVEMENT MODAL - ESPN DATA STYLE
+// ACHIEVEMENT MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useEffect } from 'react';
@@ -30,16 +30,16 @@ const RARITY_STYLES = {
     badge: 'bg-purple-400/20 text-purple-300',
   },
   rare: {
-    bg: 'bg-[#0057B8]/10',
-    border: 'border-[#0057B8]/30',
-    text: 'text-[#0057B8]',
-    badge: 'bg-[#0057B8]/20 text-[#0057B8]',
+    bg: 'bg-interactive/10',
+    border: 'border-interactive/30',
+    text: 'text-interactive',
+    badge: 'bg-interactive/20 text-interactive',
   },
   common: {
-    bg: 'bg-gray-500/10',
-    border: 'border-gray-500/30',
-    text: 'text-gray-400',
-    badge: 'bg-gray-500/20 text-gray-400',
+    bg: 'bg-charcoal-500/10',
+    border: 'border-charcoal-500/30',
+    text: 'text-muted',
+    badge: 'bg-charcoal-500/20 text-muted',
   },
 };
 
@@ -77,17 +77,17 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
         aria-labelledby="modal-title-achievement"
       >
         <div
-          className="w-full max-w-2xl max-h-[80dvh] bg-[#1a1a1a] border border-[#333] rounded-none flex flex-col"
+          className="w-full max-w-2xl max-h-[80dvh] bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised flex-shrink-0">
             <div className="flex items-center gap-3">
-              <Trophy className="w-5 h-5 text-yellow-500" />
+              <Trophy className="w-5 h-5 text-brand" />
               <div>
                 <h2
                   id="modal-title-achievement"
-                  className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                  className="text-xs font-bold uppercase tracking-wider text-secondary"
                 >
                   Your Achievements
                 </h2>
@@ -105,26 +105,26 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
           <div className="p-4 overflow-y-auto flex-1">
             {/* New Achievement Highlight */}
             {newAchievement && (
-              <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30">
+              <div className="mb-4 p-4 bg-brand/10 border border-brand/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider">
+                  <Star className="w-4 h-4 text-brand" />
+                  <p className="text-[10px] font-bold text-brand uppercase tracking-wider">
                     Just Unlocked!
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-10 h-10 flex items-center justify-center ${RARITY_STYLES[newAchievement.rarity]?.bg || 'bg-gray-500/10'} border ${RARITY_STYLES[newAchievement.rarity]?.border || 'border-gray-500/30'}`}
+                    className={`w-10 h-10 flex items-center justify-center ${RARITY_STYLES[newAchievement.rarity]?.bg || 'bg-charcoal-500/10'} border ${RARITY_STYLES[newAchievement.rarity]?.border || 'border-charcoal-500/30'}`}
                   >
                     {React.createElement(getIcon(newAchievement.icon), {
-                      className: `w-5 h-5 ${RARITY_STYLES[newAchievement.rarity]?.text || 'text-gray-400'}`,
+                      className: `w-5 h-5 ${RARITY_STYLES[newAchievement.rarity]?.text || 'text-muted'}`,
                     })}
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-white">{newAchievement.title}</h3>
-                    <p className="text-xs text-gray-400">{newAchievement.description}</p>
+                    <p className="text-xs text-muted">{newAchievement.description}</p>
                     {newAchievement.ccReward > 0 && (
-                      <p className="text-[11px] font-bold text-yellow-500 flex items-center gap-1 mt-1">
+                      <p className="text-[11px] font-bold text-brand flex items-center gap-1 mt-1">
                         <Coins className="w-3 h-3" />+{newAchievement.ccReward} CC
                       </p>
                     )}
@@ -142,7 +142,7 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
                   return (
                     <div
                       key={achievement.id}
-                      className={`p-3 bg-[#0a0a0a] border ${styles.border} hover:bg-white/5 transition-colors`}
+                      className={`p-3 bg-background border ${styles.border} hover:bg-white/5 transition-colors`}
                     >
                       <div className="flex items-start gap-3">
                         <div
@@ -181,10 +181,10 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end flex-shrink-0">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end flex-shrink-0">
             <button
               onClick={onClose}
-              className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+              className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover"
             >
               Close
             </button>

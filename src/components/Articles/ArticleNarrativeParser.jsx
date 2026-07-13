@@ -52,10 +52,10 @@ const SECTION_CONFIG = {
   },
   'MUSIC CAPTIONS': {
     icon: Music2,
-    bgClass: 'bg-amber-500/10',
-    borderClass: 'border-amber-500/30',
-    iconClass: 'text-amber-400',
-    titleClass: 'text-amber-400',
+    bgClass: 'bg-surface-raised',
+    borderClass: 'border-line',
+    iconClass: 'text-secondary',
+    titleClass: 'text-secondary',
   },
   'CAPTION PICKS': {
     icon: ShoppingCart,
@@ -88,10 +88,10 @@ const SECTION_CONFIG = {
   },
   MUSIC: {
     icon: Music2,
-    bgClass: 'bg-amber-500/10',
-    borderClass: 'border-amber-500/30',
-    iconClass: 'text-amber-400',
-    titleClass: 'text-amber-400',
+    bgClass: 'bg-surface-raised',
+    borderClass: 'border-line',
+    iconClass: 'text-secondary',
+    titleClass: 'text-secondary',
   },
   'TRAJECTORY & FUTURE OUTLOOK': {
     icon: Compass,
@@ -205,7 +205,7 @@ function RecommendationList({ recs }) {
                     </span>
                   )}
                 </div>
-                {rec.reason && <p className="text-xs text-gray-400">{rec.reason}</p>}
+                {rec.reason && <p className="text-xs text-muted">{rec.reason}</p>}
               </div>
             ))}
           </div>
@@ -216,27 +216,24 @@ function RecommendationList({ recs }) {
       {recs.hold.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Pause className="w-4 h-4 text-yellow-500" />
-            <span className="text-xs font-bold text-yellow-500 uppercase">
+            <Pause className="w-4 h-4 text-warning" />
+            <span className="text-xs font-bold text-warning uppercase">
               HOLD - Keep if you have them
             </span>
           </div>
           <div className="space-y-2">
             {recs.hold.map((rec, idx) => (
-              <div
-                key={idx}
-                className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-none"
-              >
+              <div key={idx} className="bg-warning/10 border border-warning/20 p-3 rounded-none">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
                   {rec.score > 0 && (
-                    <span className="text-xs font-data font-bold text-yellow-400 tabular-nums">
+                    <span className="text-xs font-data font-bold text-warning tabular-nums">
                       {rec.caption && `${rec.caption} @ `}
                       {rec.score.toFixed(2)}
                     </span>
                   )}
                 </div>
-                {rec.reason && <p className="text-xs text-gray-400">{rec.reason}</p>}
+                {rec.reason && <p className="text-xs text-muted">{rec.reason}</p>}
               </div>
             ))}
           </div>
@@ -264,7 +261,7 @@ function RecommendationList({ recs }) {
                     </span>
                   )}
                 </div>
-                {rec.reason && <p className="text-xs text-gray-400">{rec.reason}</p>}
+                {rec.reason && <p className="text-xs text-muted">{rec.reason}</p>}
               </div>
             ))}
           </div>
@@ -281,10 +278,10 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
 
   const config = SECTION_CONFIG[normalizedTitle] || {
     icon: Eye,
-    bgClass: 'bg-gray-500/10',
-    borderClass: 'border-gray-500/30',
-    iconClass: 'text-gray-400',
-    titleClass: 'text-gray-400',
+    bgClass: 'bg-charcoal-500/10',
+    borderClass: 'border-charcoal-500/30',
+    iconClass: 'text-muted',
+    titleClass: 'text-muted',
   };
 
   const Icon = config.icon;
@@ -312,7 +309,7 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
           <RecommendationList recs={recs} />
         ) : (
           // Fallback to formatted text if parsing fails
-          <div className="text-base text-gray-300 leading-relaxed">{formatContent(content)}</div>
+          <div className="text-base text-secondary leading-relaxed">{formatContent(content)}</div>
         )}
       </div>
     );
@@ -326,7 +323,7 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
           {normalizedTitle}
         </h3>
       </div>
-      <div className="text-base text-gray-300 leading-relaxed">{formatContent(content)}</div>
+      <div className="text-base text-secondary leading-relaxed">{formatContent(content)}</div>
     </div>
   );
 }
@@ -450,7 +447,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
   if (!narrative || typeof narrative !== 'string') {
     // Fallback to summary if no narrative
     if (summary) {
-      return <div className="text-base md:text-lg text-gray-300 leading-relaxed">{summary}</div>;
+      return <div className="text-base md:text-lg text-secondary leading-relaxed">{summary}</div>;
     }
     return null;
   }
@@ -473,7 +470,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
     return (
       <div className="prose prose-invert prose-lg max-w-none">
         {narrative.split('\n\n').map((paragraph, idx) => (
-          <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+          <p key={idx} className="text-base md:text-lg text-secondary leading-relaxed mb-6">
             {paragraph.replace(/\*\*/g, '')}
           </p>
         ))}
@@ -489,7 +486,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
           const cleanedIntro = section.content.replace(/^#+\s+.*$/gm, '').trim();
           if (!cleanedIntro) return null;
           return (
-            <div key={idx} className="text-base text-gray-300 leading-relaxed mb-6">
+            <div key={idx} className="text-base text-secondary leading-relaxed mb-6">
               {formatContent(cleanedIntro)}
             </div>
           );
@@ -541,13 +538,15 @@ function formatEditorialContent(narrative) {
       const body = bodyText;
       return (
         <div key={idx} className="mb-6">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-2">{head}</h4>
-          {body && <p className="text-base md:text-lg text-gray-300 leading-relaxed">{body}</p>}
+          <h4 className="text-xs font-bold uppercase tracking-wider text-interactive mb-2">
+            {head}
+          </h4>
+          {body && <p className="text-base md:text-lg text-secondary leading-relaxed">{body}</p>}
         </div>
       );
     }
     return (
-      <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+      <p key={idx} className="text-base md:text-lg text-secondary leading-relaxed mb-6">
         {strip(p)}
       </p>
     );

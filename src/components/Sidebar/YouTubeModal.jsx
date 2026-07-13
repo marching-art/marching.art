@@ -20,17 +20,17 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
 
       {/* Modal Content - 720p aspect ratio (1280x720) */}
       <div
-        className="relative w-full max-w-4xl bg-[#0A0A0A] border border-[#333] rounded-none"
+        className="relative w-full max-w-4xl bg-background border border-line rounded-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+        <div className="bg-surface-card px-4 py-3 border-b border-line flex items-center justify-between">
           <h2 className="text-sm font-bold text-white truncate flex-1 min-w-0">
             {videoModal.title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors flex-shrink-0 ml-2"
+            className="p-1.5 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors flex-shrink-0 ml-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -41,12 +41,12 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
           {videoModal.loading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <Loader2 className="w-12 h-12 text-red-500 animate-spin mb-4" />
-              <p className="text-gray-400 text-sm">Searching YouTube...</p>
+              <p className="text-muted text-sm">Searching YouTube...</p>
             </div>
           ) : videoModal.error ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <YouTubeIcon height={100} className="mb-4 opacity-40" />
-              <p className="text-gray-400 text-sm mb-4">{videoModal.error}</p>
+              <p className="text-muted text-sm mb-4">{videoModal.error}</p>
               <a
                 href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
                 target="_blank"
@@ -69,7 +69,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
         </div>
 
         {/* Footer with YouTube link */}
-        <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-line bg-surface-sunken flex items-center justify-between">
           <p className="text-[10px] text-muted truncate flex-1 mr-2">
             Search: "{videoModal.searchQuery}"
           </p>
@@ -77,7 +77,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
             <button
               onClick={onRetry}
               disabled={videoModal.loading}
-              className="text-[10px] text-gray-400 hover:text-white font-bold uppercase tracking-wider transition-colors flex items-center gap-1 disabled:opacity-50"
+              className="text-[10px] text-muted hover:text-white font-bold uppercase tracking-wider transition-colors flex items-center gap-1 disabled:opacity-50"
               title="Search again (skip cache)"
             >
               <RefreshCw className={`w-3 h-3 ${videoModal.loading ? 'animate-spin' : ''}`} />

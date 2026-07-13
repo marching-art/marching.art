@@ -23,19 +23,19 @@ import { GAME_CONFIG } from '../../config';
  */
 const StatRow = ({ label, value, subValue, icon: Icon, color = 'cream' }) => {
   const colorClasses = {
-    cream: 'text-gray-300',
+    cream: 'text-secondary',
     green: 'text-green-400',
     red: 'text-red-400',
-    yellow: 'text-yellow-400',
+    yellow: 'text-secondary',
     purple: 'text-purple-400',
     blue: 'text-blue-400',
   };
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-[#222] last:border-0">
+    <div className="flex items-center justify-between py-2 border-b border-line-subtle last:border-0">
       <div className="flex items-center gap-2">
         {Icon && <Icon className={`w-3.5 h-3.5 ${colorClasses[color]}`} />}
-        <span className="text-xs text-gray-400">{label}</span>
+        <span className="text-xs text-muted">{label}</span>
       </div>
       <div className="text-right">
         <span className={`text-sm font-bold ${colorClasses[color]}`}>{value}</span>
@@ -55,29 +55,25 @@ const CaptionBar = ({ caption, winRate, avgDiff: _avgDiff, isStrength, isWeaknes
     <div className="py-1.5">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold text-gray-400 w-8">{caption}</span>
-          {isStrength && <Crown className="w-3 h-3 text-yellow-500" />}
+          <span className="text-[10px] font-bold text-muted w-8">{caption}</span>
+          {isStrength && <Crown className="w-3 h-3 text-brand" />}
           {isWeakness && <TrendingDown className="w-3 h-3 text-red-400" />}
         </div>
         <span
           className={`text-[10px] font-bold ${
-            percentage >= 60
-              ? 'text-green-400'
-              : percentage >= 40
-                ? 'text-gray-400'
-                : 'text-red-400'
+            percentage >= 60 ? 'text-green-400' : percentage >= 40 ? 'text-muted' : 'text-red-400'
           }`}
         >
           {percentage.toFixed(0)}%
         </span>
       </div>
-      <div className="h-1.5 bg-[#222] rounded-full overflow-hidden">
+      <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
         <m.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className={`h-full rounded-full ${
-            percentage >= 60 ? 'bg-green-500' : percentage >= 40 ? 'bg-gray-500' : 'bg-red-500'
+            percentage >= 60 ? 'bg-green-500' : percentage >= 40 ? 'bg-charcoal-500' : 'bg-red-500'
           }`}
         />
       </div>
@@ -92,7 +88,7 @@ const AchievementBadge = ({ label, value, icon: Icon, color }) => {
   if (!value || value === 0) return null;
 
   const colorClasses = {
-    yellow: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400',
+    yellow: 'bg-brand/10 border-brand/30 text-brand',
     green: 'bg-green-500/10 border-green-500/30 text-green-400',
     red: 'bg-red-500/10 border-red-500/30 text-red-400',
     purple: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
@@ -120,9 +116,9 @@ const SeasonStatsCard = ({
 }) => {
   if (!stats) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] p-6 text-center">
+      <div className="bg-surface-card border border-line p-6 text-center">
         <BarChart3 className="w-8 h-8 text-muted mx-auto mb-2" />
-        <p className="text-sm text-gray-400">No stats available</p>
+        <p className="text-sm text-muted">No stats available</p>
       </div>
     );
   }
@@ -159,12 +155,12 @@ const SeasonStatsCard = ({
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        className="bg-[#111] border-t border-[#333] px-4 py-3"
+        className="bg-surface-sunken border-t border-line px-4 py-3"
       >
         <div className="grid grid-cols-4 gap-3 text-center">
           <div>
             <p className="text-[10px] text-muted uppercase">BP For</p>
-            <p className="text-sm font-bold text-yellow-400">{totalBattlePointsFor}</p>
+            <p className="text-sm font-bold text-secondary">{totalBattlePointsFor}</p>
           </div>
           <div>
             <p className="text-[10px] text-muted uppercase">BP Avg</p>
@@ -194,18 +190,18 @@ const SeasonStatsCard = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-[#1a1a1a] border border-[#333] overflow-hidden"
+      className="bg-surface-card border border-line overflow-hidden"
     >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
             className={`w-8 h-8 flex items-center justify-center ${
-              isCurrentUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
+              isCurrentUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-line'
             }`}
           >
             <span
-              className={`text-sm font-bold ${isCurrentUser ? 'text-purple-400' : 'text-gray-400'}`}
+              className={`text-sm font-bold ${isCurrentUser ? 'text-purple-400' : 'text-muted'}`}
             >
               {displayName.charAt(0)}
             </span>
@@ -227,14 +223,14 @@ const SeasonStatsCard = ({
       {/* Main Stats */}
       <div className="p-4 space-y-4">
         {/* Record Overview */}
-        <div className="bg-[#111] p-3">
+        <div className="bg-surface-sunken p-3">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold text-white">
                 <span className="text-green-400">{wins}</span>
                 <span className="text-muted">-</span>
                 <span className="text-red-400">{losses}</span>
-                {ties > 0 && <span className="text-yellow-400">-{ties}</span>}
+                {ties > 0 && <span className="text-secondary">-{ties}</span>}
               </p>
               <p className="text-[10px] text-muted uppercase mt-1">Record</p>
             </div>
@@ -247,7 +243,7 @@ const SeasonStatsCard = ({
               <p className="text-[10px] text-muted uppercase mt-1">Win Rate</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-yellow-400">{totalBattlePointsFor}</p>
+              <p className="text-2xl font-bold text-secondary">{totalBattlePointsFor}</p>
               <p className="text-[10px] text-muted uppercase mt-1">Battle Pts</p>
             </div>
           </div>
@@ -256,10 +252,10 @@ const SeasonStatsCard = ({
         {/* Battle Point Stats */}
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
-            <Trophy className="w-3 h-3 text-yellow-500" />
+            <Trophy className="w-3 h-3 text-secondary" />
             Battle Points
           </h3>
-          <div className="bg-[#111] p-3">
+          <div className="bg-surface-sunken p-3">
             <StatRow
               label="BP Per Match"
               value={avgBattlePointsFor.toFixed(1)}
@@ -303,7 +299,7 @@ const SeasonStatsCard = ({
             <Target className="w-3 h-3 text-purple-400" />
             Caption Performance
           </h3>
-          <div className="bg-[#111] p-3">
+          <div className="bg-surface-sunken p-3">
             {GAME_CONFIG.captions.map((caption) => {
               const rate = captionWinRates[caption];
               return (
@@ -323,7 +319,7 @@ const SeasonStatsCard = ({
         {/* Achievements */}
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
-            <Medal className="w-3 h-3 text-yellow-400" />
+            <Medal className="w-3 h-3 text-secondary" />
             Achievements
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -356,7 +352,7 @@ const SeasonStatsCard = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400">Current Streak</span>
+              <span className="text-xs text-muted">Current Streak</span>
               <span
                 className={`text-lg font-bold flex items-center gap-1 ${
                   currentStreakType === 'W' ? 'text-green-400' : 'text-red-400'

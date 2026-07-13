@@ -85,11 +85,11 @@ const DailyChallenges = memo(
     return (
       <div
         className={
-          embedded ? 'overflow-hidden' : 'bg-[#1a1a1a] border border-[#333] overflow-hidden'
+          embedded ? 'overflow-hidden' : 'bg-surface-card border border-line overflow-hidden'
         }
       >
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
             <Target className="w-3.5 h-3.5 text-orange-500" />
             Daily Challenges
           </h3>
@@ -99,21 +99,21 @@ const DailyChallenges = memo(
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 bg-[#222]">
+        <div className="h-1 bg-surface-raised">
           <div
             className="h-full bg-orange-500 transition-all duration-500"
             style={{ width: `${(completedCount / totalCount) * 100}%` }}
           />
         </div>
 
-        <div className="divide-y divide-[#222]">
+        <div className="divide-y divide-line-subtle">
           {challenges.map((challenge) => {
             const isDone = completedIds.has(challenge.id);
             const inner = (
               <div className="flex items-center gap-3">
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    isDone ? 'bg-green-500' : 'border border-[#444]'
+                    isDone ? 'bg-green-500' : 'border border-line-strong'
                   }`}
                 >
                   {isDone && <Check className="w-3 h-3 text-white" />}
@@ -159,7 +159,7 @@ const DailyChallenges = memo(
                 <button
                   key={challenge.id}
                   onClick={() => handleAction(challenge)}
-                  className="w-full px-4 py-3 hover:bg-[#222] transition-colors text-left press-feedback"
+                  className="w-full px-4 py-3 hover:bg-surface-raised transition-colors text-left press-feedback"
                 >
                   {inner}
                 </button>
@@ -171,7 +171,7 @@ const DailyChallenges = memo(
                 key={challenge.id}
                 to={challenge.link}
                 onClick={() => haptic?.()}
-                className="block px-4 py-3 hover:bg-[#222] transition-colors press-feedback"
+                className="block px-4 py-3 hover:bg-surface-raised transition-colors press-feedback"
               >
                 {inner}
               </Link>
@@ -181,7 +181,7 @@ const DailyChallenges = memo(
 
         {/* All complete state */}
         {completedCount === totalCount && (
-          <div className="px-4 py-3 border-t border-[#222] bg-orange-500/5">
+          <div className="px-4 py-3 border-t border-line-subtle bg-orange-500/5">
             <div className="flex items-center gap-2 justify-center">
               <Flame className="w-4 h-4 text-orange-500" />
               <span className="text-xs font-bold text-orange-400">All challenges complete!</span>
@@ -190,7 +190,7 @@ const DailyChallenges = memo(
         )}
 
         {/* Weekly arc — a week-long pursuit on top of the daily set */}
-        <div className="px-4 py-2 border-t border-[#222] flex items-center gap-2">
+        <div className="px-4 py-2 border-t border-line-subtle flex items-center gap-2">
           <CalendarCheck className="w-3 h-3 text-emerald-500 flex-shrink-0" />
           <span className="text-[10px] text-muted flex-1">
             Weekly arc: full set on {arcDays}/{WEEKLY_LOOP_TARGET_DAYS} days

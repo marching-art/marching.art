@@ -55,10 +55,10 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-          <Coins className="w-3.5 h-3.5 text-yellow-500" />
+    <div className="bg-surface-card border border-line overflow-hidden">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+          <Coins className="w-3.5 h-3.5 text-brand" />
           Daily Prediction Pool
         </h3>
         <span className="text-[10px] text-muted flex items-center gap-1 font-data tabular-nums">
@@ -69,7 +69,7 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
 
       <div className="p-4 flex items-center gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-2xl font-bold text-yellow-500 font-data tabular-nums">
+          <p className="text-2xl font-bold text-brand font-data tabular-nums">
             {pot.toLocaleString()} <span className="text-sm">CC</span>
           </p>
           <p className="text-[10px] text-muted">
@@ -82,9 +82,7 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
         </div>
 
         {resolved ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            Settled
-          </span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Settled</span>
         ) : isIn ? (
           <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
             <Trophy className="w-3.5 h-3.5" />
@@ -94,7 +92,7 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
           <button
             onClick={handleJoin}
             disabled={joining}
-            className="h-9 px-4 text-xs font-bold uppercase tracking-wider bg-yellow-600 hover:bg-yellow-500 disabled:bg-[#333] text-white transition-colors press-feedback flex items-center gap-1.5"
+            className="h-9 px-4 text-xs font-bold uppercase tracking-wider bg-interactive hover:bg-interactive-hover disabled:bg-line text-white transition-colors press-feedback flex items-center gap-1.5"
           >
             {joining ? '...' : `Buy in · ${POOL_ANTE} CC`}
             {!joining && <ArrowRight className="w-3 h-3" />}

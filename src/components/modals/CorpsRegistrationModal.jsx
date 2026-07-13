@@ -1,5 +1,5 @@
 // =============================================================================
-// CORPS REGISTRATION MODAL - ESPN DATA STYLE
+// CORPS REGISTRATION MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useState } from 'react';
@@ -50,14 +50,14 @@ const CorpsRegistrationModal = ({
         aria-labelledby="modal-title-corps-registration"
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-none"
+          className="w-full max-w-lg bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <h2
               id="modal-title-corps-registration"
-              className="text-xs font-bold uppercase tracking-wider text-gray-300"
+              className="text-xs font-bold uppercase tracking-wider text-secondary"
             >
               Register Corps
             </h2>
@@ -81,7 +81,7 @@ const CorpsRegistrationModal = ({
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   maxLength={50}
-                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                  className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                 />
               </div>
 
@@ -97,7 +97,7 @@ const CorpsRegistrationModal = ({
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   required
                   maxLength={50}
-                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                  className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                 />
               </div>
 
@@ -111,7 +111,7 @@ const CorpsRegistrationModal = ({
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   maxLength={500}
-                  className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                  className="w-full h-20 px-3 py-2 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
                 />
                 <p className="text-[10px] text-muted mt-1">{formData.description.length}/500</p>
               </div>
@@ -121,7 +121,7 @@ const CorpsRegistrationModal = ({
                 <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                   Competition Class
                 </label>
-                <div className="border border-[#333] divide-y divide-[#333]">
+                <div className="border border-line divide-y divide-line">
                   {classes.map((cls) => {
                     const isSelected = formData.class === cls.id;
                     return (
@@ -133,13 +133,15 @@ const CorpsRegistrationModal = ({
                         className={`
                           w-full flex items-center justify-between px-3 py-2 text-left
                           ${cls.unlocked ? 'hover:bg-white/5 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
-                          ${isSelected ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
+                          ${isSelected ? 'bg-interactive/10 border-l-2 border-l-interactive' : ''}
                         `}
                       >
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-4 h-4 rounded-none border-2 flex items-center justify-center ${
-                              isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
+                              isSelected
+                                ? 'border-interactive bg-interactive'
+                                : 'border-line-strong'
                             }`}
                           >
                             {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
@@ -158,17 +160,17 @@ const CorpsRegistrationModal = ({
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+            <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white"
+                className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+                className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover"
               >
                 Register
               </button>

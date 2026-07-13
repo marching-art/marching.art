@@ -54,7 +54,7 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
         aria-modal="true"
         aria-labelledby="rename-duplicate-title"
       >
-        <div className="w-full max-w-md bg-[#1a1a1a] border border-red-500/50 rounded-none">
+        <div className="w-full max-w-md bg-surface-card border border-red-500/50 rounded-none">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-red-500/30 bg-red-950/40">
             <AlertTriangle className="w-4 h-4 text-red-400" />
             <h2
@@ -67,7 +67,7 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
 
           <form onSubmit={handleSubmit}>
             <div className="p-4 space-y-4">
-              <p className="text-sm text-gray-300 leading-relaxed">
+              <p className="text-sm text-secondary leading-relaxed">
                 Your corps <span className="font-bold text-white">"{current.corpsName}"</span> in{' '}
                 <span className="font-bold text-white">
                   {getCorpsClassName(current.corpsClass)}
@@ -77,9 +77,9 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
               </p>
 
               {current.conflictsWith && (
-                <div className="text-xs text-muted bg-[#0a0a0a] border border-[#333] rounded-none p-3">
+                <div className="text-xs text-muted bg-background border border-line rounded-none p-3">
                   Conflict: another director already has{' '}
-                  <span className="text-gray-300">"{current.conflictsWith.winnerCorpsName}"</span>{' '}
+                  <span className="text-secondary">"{current.conflictsWith.winnerCorpsName}"</span>{' '}
                   in {getCorpsClassName(current.conflictsWith.winnerCorpsClass)}.
                 </div>
               )}
@@ -103,12 +103,12 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
                   maxLength={50}
                   disabled={submitting}
                   placeholder="Enter a unique name"
-                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-60"
+                  className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-60"
                 />
               </div>
             </div>
 
-            <div className="px-4 py-3 border-t border-[#333] bg-[#0f0f0f] flex justify-end">
+            <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end">
               <button
                 type="submit"
                 disabled={submitting || !newName.trim()}

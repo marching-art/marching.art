@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { Heading } from '../components/ui';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 
@@ -14,24 +15,28 @@ const Privacy = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       <div className="container-responsive py-8 px-4 max-w-3xl mx-auto">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-gray-300 hover:text-yellow-500 transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-secondary hover:text-interactive transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Link>
 
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-gradient mb-6">Privacy Policy</h1>
+        <div className="bg-surface-card border border-line rounded-none p-6 sm:p-8">
+          <Heading level="display" className="text-gradient mb-6">
+            Privacy Policy
+          </Heading>
 
-          <p className="text-gray-400 text-sm mb-6">Last updated: January 2026</p>
+          <p className="text-muted text-sm mb-6">Last updated: January 2026</p>
 
-          <div className="space-y-6 text-gray-300">
+          <div className="space-y-6 text-secondary">
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">1. Information We Collect</h2>
+              <Heading level="title" className="mb-3">
+                1. Information We Collect
+              </Heading>
               <p className="mb-2">We collect information you provide directly:</p>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>Account information (email address, display name)</li>
@@ -46,9 +51,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">
+              <Heading level="title" className="mb-3">
                 2. How We Use Your Information
-              </h2>
+              </Heading>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>To provide and maintain the game service</li>
                 <li>To personalize your experience</li>
@@ -59,7 +64,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">3. YouTube API Services</h2>
+              <Heading level="title" className="mb-3">
+                3. YouTube API Services
+              </Heading>
               <p className="text-sm mb-2">
                 Our service uses the YouTube API Services to display video content related to drum
                 corps performances. By using marching.art, you are also agreeing to be bound by the{' '}
@@ -67,7 +74,7 @@ const Privacy = () => {
                   href="https://www.youtube.com/t/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-yellow-500 hover:text-yellow-400 underline"
+                  className="text-interactive hover:text-interactive-hover underline"
                 >
                   YouTube Terms of Service
                 </a>
@@ -79,7 +86,7 @@ const Privacy = () => {
                   href="http://www.google.com/policies/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-yellow-500 hover:text-yellow-400 underline"
+                  className="text-interactive hover:text-interactive-hover underline"
                 >
                   Google's Privacy Policy
                 </a>
@@ -93,7 +100,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">4. Information Sharing</h2>
+              <Heading level="title" className="mb-3">
+                4. Information Sharing
+              </Heading>
               <p className="text-sm">
                 We do not sell your personal information. We may share information:
               </p>
@@ -105,9 +114,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">
+              <Heading level="title" className="mb-3">
                 5. Cookies and Tracking Technologies
-              </h2>
+              </Heading>
               <p className="text-sm mb-2">
                 We and our service providers (including Google/YouTube) may store, access, or
                 collect information directly or indirectly on or from your device by placing,
@@ -127,7 +136,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">6. Data Security</h2>
+              <Heading level="title" className="mb-3">
+                6. Data Security
+              </Heading>
               <p className="text-sm">
                 We implement reasonable security measures to protect your information. However, no
                 method of transmission over the Internet is 100% secure, and we cannot guarantee
@@ -136,7 +147,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">7. Your Rights</h2>
+              <Heading level="title" className="mb-3">
+                7. Your Rights
+              </Heading>
               <p className="text-sm">You may:</p>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>Access and update your account information</li>
@@ -146,7 +159,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">8. Children's Privacy</h2>
+              <Heading level="title" className="mb-3">
+                8. Children's Privacy
+              </Heading>
               <p className="text-sm">
                 Our service is not intended for children under 13. We do not knowingly collect
                 information from children under 13.
@@ -154,7 +169,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">9. Changes to This Policy</h2>
+              <Heading level="title" className="mb-3">
+                9. Changes to This Policy
+              </Heading>
               <p className="text-sm">
                 We may update this policy from time to time. We will notify you of significant
                 changes by posting the new policy on this page.
@@ -162,12 +179,14 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">10. Contact Us</h2>
+              <Heading level="title" className="mb-3">
+                10. Contact Us
+              </Heading>
               <p className="text-sm">
                 If you have questions about this Privacy Policy, please contact us at:{' '}
                 <a
                   href="mailto:contact@marching.art"
-                  className="text-yellow-500 hover:text-yellow-400 underline"
+                  className="text-interactive hover:text-interactive-hover underline"
                 >
                   contact@marching.art
                 </a>

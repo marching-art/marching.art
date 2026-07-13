@@ -57,10 +57,10 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       {/* Header */}
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
           <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
           Season Ladder
         </h3>
@@ -78,7 +78,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
             {nextTier ? ` / ${nextTier.xp.toLocaleString()}` : ' — maxed!'}
           </span>
         </div>
-        <div className="h-1.5 bg-[#222] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
           <div
             className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
             style={{ width: `${Math.min(100, (seasonXP / maxXP) * 100)}%` }}
@@ -101,7 +101,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
                 Tier {tier.tier} ready
                 {tier.exclusive ? ` — includes the ${tier.exclusive}!` : ''}
               </span>
-              <span className="text-[10px] font-bold text-yellow-500 font-data whitespace-nowrap">
+              <span className="text-[10px] font-bold text-brand font-data whitespace-nowrap">
                 {claiming === tier.tier ? '...' : `+${tier.coin} CC`}
               </span>
             </button>

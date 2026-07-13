@@ -171,7 +171,7 @@ const CLASS_COLORS: Record<string, string> = {
   worldClass: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
 };
 
-const DEFAULT_COLOR = 'text-muted bg-gray-500/10 border-gray-500/30';
+const DEFAULT_COLOR = 'text-muted bg-charcoal-500/10 border-charcoal-500/30';
 
 // =============================================================================
 // CLASS STYLES (extended styling)
@@ -226,9 +226,9 @@ const CLASS_STYLES: Record<string, CorpsClassStyles> = {
 
 const DEFAULT_STYLES: CorpsClassStyles = {
   text: 'text-muted',
-  bg: 'bg-gray-500/10',
-  border: 'border-gray-500/30',
-  gradient: 'from-gray-500 to-gray-600',
+  bg: 'bg-charcoal-500/10',
+  border: 'border-charcoal-500/30',
+  gradient: 'from-charcoal-500 to-charcoal-600',
 };
 
 // =============================================================================

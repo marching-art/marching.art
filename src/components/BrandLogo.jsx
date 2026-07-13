@@ -6,11 +6,10 @@
 
 import React from 'react';
 
-const BrandLogo = ({
-  className = 'w-16 h-16',
-  color = 'text-[#0057B8]',
-  label = 'marching.art',
-}) => (
+// The drill path is the brand mark, so it defaults to the permanent brand gold
+// (`text-brand`). `stroke-current` inherits that color; callers may override
+// `color` for muted/watermark treatments, but the default is always gold.
+const BrandLogo = ({ className = 'w-16 h-16', color = 'text-brand', label = 'marching.art' }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="-5 -5 65 65"

@@ -14,18 +14,18 @@ const DesktopNavItem = ({ to, icon: Icon, label, end = false }) => (
     end={end}
     className={({ isActive }) =>
       `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
-        isActive ? 'text-white' : 'text-gray-400 hover:text-white'
+        isActive ? 'text-white' : 'text-muted hover:text-white'
       }`
     }
   >
     {({ isActive }) => (
       <>
         <Icon
-          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`}
+          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-interactive' : ''}`}
         />
         <span>{label}</span>
         {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-none" />
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-interactive rounded-none" />
         )}
       </>
     )}

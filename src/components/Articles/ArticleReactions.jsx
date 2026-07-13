@@ -173,7 +173,7 @@ export default function ArticleReactions({
                 {topReactions.map((emoji) => (
                   <span
                     key={emoji}
-                    className="text-xs bg-[#222] border border-[#333] rounded-full w-5 h-5 flex items-center justify-center"
+                    className="text-xs bg-surface-raised border border-line rounded-full w-5 h-5 flex items-center justify-center"
                   >
                     {emoji}
                   </span>
@@ -254,8 +254,8 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
         disabled={disabled}
         className={`flex items-center gap-2 px-3 py-2 rounded-none border transition-all ${
           userReaction
-            ? 'bg-[#0057B8]/20 border-[#0057B8]'
-            : 'bg-[#1a1a1a] border-[#333] hover:border-[#444] hover:bg-[#222]'
+            ? 'bg-interactive/20 border-interactive'
+            : 'bg-surface-card border-line hover:border-line-strong hover:bg-surface-raised'
         } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         {activeEmojis.length > 0 ? (
@@ -265,8 +265,8 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
               {activeEmojis.slice(0, 3).map((emoji, idx) => (
                 <span
                   key={emoji}
-                  className={`w-6 h-6 flex items-center justify-center text-sm bg-[#222] border-2 border-[#1a1a1a] rounded-full ${
-                    userReaction === emoji ? 'ring-1 ring-[#0057B8]' : ''
+                  className={`w-6 h-6 flex items-center justify-center text-sm bg-surface-raised border-2 border-[#1a1a1a] rounded-full ${
+                    userReaction === emoji ? 'ring-1 ring-interactive' : ''
                   }`}
                   style={{ zIndex: 3 - idx }}
                 >
@@ -275,7 +275,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
               ))}
             </div>
             {/* Total count */}
-            <span className="text-xs text-gray-400 font-data tabular-nums">{counts.total}</span>
+            <span className="text-xs text-muted font-data tabular-nums">{counts.total}</span>
           </>
         ) : (
           <>
@@ -288,7 +288,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
       {/* Emoji picker popup */}
       {isOpen && (
         <div className="absolute left-0 bottom-full mb-2 z-50">
-          <div className="bg-[#222] border border-[#444] rounded-none shadow-xl p-2 flex gap-1">
+          <div className="bg-surface-raised border border-line-strong rounded-none shadow-xl p-2 flex gap-1">
             {REACTIONS.map((emoji) => {
               const count = counts[emoji] || 0;
               const isSelected = userReaction === emoji;
@@ -302,14 +302,14 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
                   title={`${REACTION_LABELS[emoji]}${count > 0 ? ` (${count})` : ''}`}
                   className={`
                     w-10 h-10 flex flex-col items-center justify-center rounded-none transition-all
-                    ${isSelected ? 'bg-[#0057B8]/30 scale-110' : 'hover:bg-[#333] hover:scale-110'}
+                    ${isSelected ? 'bg-interactive/30 scale-110' : 'hover:bg-line hover:scale-110'}
                     ${isReacting ? 'opacity-50' : ''}
                   `}
                 >
                   <span className={`text-xl ${isReacting ? 'animate-pulse' : ''}`}>{emoji}</span>
                   {count > 0 && (
                     <span
-                      className={`text-[9px] font-data tabular-nums ${isSelected ? 'text-[#0057B8]' : 'text-muted'}`}
+                      className={`text-[9px] font-data tabular-nums ${isSelected ? 'text-interactive' : 'text-muted'}`}
                     >
                       {count}
                     </span>
@@ -341,8 +341,8 @@ export function ReactionSummary({ counts, userReaction }) {
           {topReactions.map((emoji, idx) => (
             <span
               key={emoji}
-              className={`w-5 h-5 flex items-center justify-center text-xs bg-[#222] border border-[#333] rounded-full ${
-                userReaction === emoji ? 'ring-1 ring-[#0057B8]' : ''
+              className={`w-5 h-5 flex items-center justify-center text-xs bg-surface-raised border border-line rounded-full ${
+                userReaction === emoji ? 'ring-1 ring-interactive' : ''
               }`}
               style={{ zIndex: 3 - idx }}
             >
@@ -381,8 +381,8 @@ export function EngagementSummary({ reactionCounts, userReaction, commentCount }
             {topReactions.map((emoji, idx) => (
               <span
                 key={emoji}
-                className={`w-5 h-5 flex items-center justify-center text-xs bg-[#222] border border-[#333] rounded-full ${
-                  userReaction === emoji ? 'ring-1 ring-[#0057B8]' : ''
+                className={`w-5 h-5 flex items-center justify-center text-xs bg-surface-raised border border-line rounded-full ${
+                  userReaction === emoji ? 'ring-1 ring-interactive' : ''
                 }`}
                 style={{ zIndex: 3 - idx }}
               >

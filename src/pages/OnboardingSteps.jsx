@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { m, AnimatePresence } from 'framer-motion';
+import { Heading } from '../components/ui';
 import {
   User,
   Flag,
@@ -30,11 +31,13 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
     className="space-y-5"
   >
     <div className="text-center mb-4">
-      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-none mb-4">
-        <Star className="w-8 h-8 text-[#0057B8]" />
+      <div className="inline-flex items-center justify-center w-16 h-16 bg-interactive/20 rounded-none mb-4">
+        <Star className="w-8 h-8 text-interactive" />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-2">Welcome to marching.art!</h2>
-      <p className="text-gray-400 text-sm">Fantasy drum corps gaming</p>
+      <Heading level="display" as="h2" className="mb-2">
+        Welcome to marching.art!
+      </Heading>
+      <p className="text-muted text-sm">Fantasy drum corps gaming</p>
     </div>
 
     <div className="space-y-2">
@@ -42,8 +45,8 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
         const Icon = feature.icon;
         return (
           <div key={idx} className="flex items-start gap-3 p-3 rounded-none bg-charcoal-800/50">
-            <div className="p-2 rounded-none bg-[#0057B8]/20 flex-shrink-0">
-              <Icon className="w-4 h-4 text-[#0057B8]" />
+            <div className="p-2 rounded-none bg-interactive/20 flex-shrink-0">
+              <Icon className="w-4 h-4 text-interactive" />
             </div>
             <div>
               <h4 className="text-sm font-semibold text-white">{feature.title}</h4>
@@ -57,12 +60,12 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
     <div className="pt-2 space-y-4">
       <div>
         <label className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
-          <User className="w-4 h-4 text-[#0057B8]" />
+          <User className="w-4 h-4 text-interactive" />
           What's your name, Director?
         </label>
         <input
           type="text"
-          className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+          className="w-full h-12 px-4 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive"
           name="name"
           autoComplete="name"
           placeholder="e.g., George Zingali"
@@ -75,13 +78,13 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
 
       <div>
         <label className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
-          <AtSign className="w-4 h-4 text-[#0057B8]" />
+          <AtSign className="w-4 h-4 text-interactive" />
           Choose a username
         </label>
         <div className="relative">
           <input
             type="text"
-            className={`w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] pr-10 ${
+            className={`w-full h-12 px-4 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive pr-10 ${
               usernameStatus.valid === true
                 ? 'border-green-500/50 focus:border-green-500'
                 : usernameStatus.valid === false
@@ -96,7 +99,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
             maxLength={15}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            {usernameStatus.checking && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
+            {usernameStatus.checking && <Loader2 className="w-5 h-5 text-muted animate-spin" />}
             {!usernameStatus.checking && usernameStatus.valid === true && (
               <CheckCircle2 className="w-5 h-5 text-green-400" />
             )}
@@ -112,7 +115,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
                 ? 'text-green-400'
                 : usernameStatus.valid === false
                   ? 'text-red-400'
-                  : 'text-gray-400'
+                  : 'text-muted'
             }`}
           >
             {usernameStatus.message}
@@ -144,11 +147,13 @@ export const StepCorps = ({ formData, setFormData }) => (
     className="space-y-6"
   >
     <div className="text-center mb-6">
-      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-none mb-4">
-        <Flag className="w-8 h-8 text-[#0057B8]" />
+      <div className="inline-flex items-center justify-center w-16 h-16 bg-interactive/20 rounded-none mb-4">
+        <Flag className="w-8 h-8 text-interactive" />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-2">Create Your Corps</h2>
-      <p className="text-gray-400 text-sm">Name your first fantasy drum corps</p>
+      <Heading level="display" as="h2" className="mb-2">
+        Create Your Corps
+      </Heading>
+      <p className="text-muted text-sm">Name your first fantasy drum corps</p>
     </div>
 
     <div>
@@ -157,7 +162,7 @@ export const StepCorps = ({ formData, setFormData }) => (
       </label>
       <input
         type="text"
-        className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+        className="w-full h-12 px-4 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive"
         name="corpsName"
         autoComplete="off"
         placeholder="e.g., The Cavaliers"
@@ -183,7 +188,7 @@ export const StepCorps = ({ formData, setFormData }) => (
     </div>
 
     <div className="p-4 bg-charcoal-800/50 rounded-none">
-      <h4 className="font-semibold text-gray-200 mb-2">Next: Build Your Lineup</h4>
+      <h4 className="font-semibold text-secondary mb-2">Next: Build Your Lineup</h4>
       <p className="text-xs text-muted">
         You'll pick historical corps performances to compete in 8 scoring captions. Think of it like
         a fantasy football draft!
@@ -200,7 +205,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
         onClick={onComplete}
       >
         <m.div
@@ -218,14 +223,14 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             transition={{ duration: 0.5, repeat: 2 }}
             className="inline-block mb-6"
           >
-            <PartyPopper className="w-24 h-24 text-[#0057B8]" />
+            <PartyPopper className="w-24 h-24 text-interactive" />
           </m.div>
 
           <m.h2
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-4xl font-black text-[#0057B8] mb-3"
+            className="text-4xl font-black text-interactive mb-3"
           >
             YOU'RE ALL SET!
           </m.h2>
@@ -234,7 +239,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-gray-300 text-lg mb-2"
+            className="text-secondary text-lg mb-2"
           >
             Welcome, {displayName}!
           </m.p>
@@ -243,7 +248,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="text-gray-400 mb-8"
+            className="text-muted mb-8"
           >
             {corpsName} is ready to compete
           </m.p>
@@ -253,7 +258,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.9 }}
             onClick={onComplete}
-            className="px-8 py-4 bg-[#0057B8] text-white rounded-none font-bold uppercase tracking-wide hover:bg-[#0066d6] transition-colors flex items-center gap-2 mx-auto"
+            className="px-8 py-4 bg-interactive text-white rounded-none font-bold uppercase tracking-wide hover:bg-interactive-hover transition-colors flex items-center gap-2 mx-auto"
           >
             Go to Dashboard
             <ChevronRight className="w-5 h-5" />
@@ -266,7 +271,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1.1 }}
               onClick={onJoinLeague}
-              className="mt-3 px-6 py-2.5 border border-[#0057B8]/50 text-[#0057B8] rounded-none font-bold text-sm uppercase tracking-wide hover:bg-[#0057B8]/10 transition-colors mx-auto block"
+              className="mt-3 px-6 py-2.5 border border-interactive/50 text-interactive rounded-none font-bold text-sm uppercase tracking-wide hover:bg-interactive/10 transition-colors mx-auto block"
             >
               Join the Rookie Circuit — compete head-to-head weekly
             </m.button>

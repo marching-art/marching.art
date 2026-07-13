@@ -33,13 +33,13 @@ import PWAInstallInstructions from '../PWAInstallInstructions';
 const Toggle = ({ checked, onChange, label, description }) => (
   <label className="flex items-center justify-between py-2.5 cursor-pointer group">
     <div className="flex-1 mr-3">
-      <p className="text-sm text-white group-hover:text-gray-200">{label}</p>
+      <p className="text-sm text-white group-hover:text-secondary">{label}</p>
       {description && <p className="text-[10px] text-muted mt-0.5">{description}</p>}
     </div>
     <div className="relative">
       <input type="checkbox" className="sr-only peer" checked={checked} onChange={onChange} />
       <div
-        className={`w-10 h-5 rounded-full transition-colors ${checked ? 'bg-[#0057B8]' : 'bg-[#333]'}`}
+        className={`w-10 h-5 rounded-full transition-colors ${checked ? 'bg-interactive' : 'bg-line'}`}
       >
         <div
           className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`}
@@ -350,15 +350,15 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       aria-label="Settings"
     >
       <div
-        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none safe-area-bottom max-h-[85dvh] flex flex-col"
+        className="w-full sm:max-w-md bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none safe-area-bottom max-h-[85dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle - mobile only */}
         <div className="sm:hidden flex justify-center py-2">
-          <div className="w-8 h-1 bg-gray-600 rounded-full" />
+          <div className="w-8 h-1 bg-charcoal-600 rounded-full" />
         </div>
 
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between shrink-0">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between shrink-0">
           <span className="text-xs font-bold uppercase tracking-wider text-muted">Settings</span>
           <button
             onClick={onClose}
@@ -370,13 +370,13 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#333] shrink-0 overflow-x-auto">
+        <div className="flex border-b border-line shrink-0 overflow-x-auto">
           <button
             onClick={() => setActiveTab('account')}
             className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
               activeTab === 'account'
-                ? 'text-white border-b-2 border-[#0057B8]'
-                : 'text-muted hover:text-gray-300'
+                ? 'text-white border-b-2 border-interactive'
+                : 'text-muted hover:text-secondary'
             }`}
           >
             Account
@@ -385,8 +385,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             onClick={() => setActiveTab('notifications')}
             className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
               activeTab === 'notifications'
-                ? 'text-white border-b-2 border-[#0057B8]'
-                : 'text-muted hover:text-gray-300'
+                ? 'text-white border-b-2 border-interactive'
+                : 'text-muted hover:text-secondary'
             }`}
           >
             Alerts
@@ -398,7 +398,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
           {activeTab === 'account' && (
             <div className="p-3 space-y-3">
               {/* Username Field */}
-              <div className="bg-[#111] border border-[#333] p-3">
+              <div className="bg-surface-sunken border border-line p-3">
                 <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
                   <AtSign className="w-3 h-3" />
                   Username
@@ -426,7 +426,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
               </div>
 
               {/* Email Field */}
-              <div className="bg-[#111] border border-[#333] p-3">
+              <div className="bg-surface-sunken border border-line p-3">
                 <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
                   <Mail className="w-3 h-3" />
                   Email
@@ -454,13 +454,13 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <button
                   onClick={saveAccountSettings}
                   disabled={accountSaving}
-                  className="w-full py-3 min-h-[44px] bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6] active:bg-[#004999] disabled:opacity-50 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
+                  className="w-full py-3 min-h-[44px] bg-interactive text-white text-sm font-bold hover:bg-interactive-hover active:bg-interactive-subtle disabled:opacity-50 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
                 >
                   {accountSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               )}
 
-              <div className="bg-[#111] border border-[#333] p-3">
+              <div className="bg-surface-sunken border border-line p-3">
                 <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                   Member Since
                 </div>
@@ -472,7 +472,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
               </div>
 
               {/* Help Tooltips Toggle */}
-              <div className="bg-[#111] border border-[#333] p-3">
+              <div className="bg-surface-sunken border border-line p-3">
                 <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                   Gameplay Help
                 </div>
@@ -488,7 +488,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   dead end after the transient prompt is dismissed. Hidden once
                   the app is running as an installed PWA. */}
               {isInstalled ? (
-                <div className="w-full py-3 min-h-[44px] bg-[#111] border border-[#333] text-gray-400 text-sm font-bold rounded-none flex items-center justify-center gap-2">
+                <div className="w-full py-3 min-h-[44px] bg-surface-sunken border border-line text-muted text-sm font-bold rounded-none flex items-center justify-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                   App Installed
                 </div>
@@ -496,14 +496,14 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <div className="space-y-2">
                   <button
                     onClick={handleInstallApp}
-                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/15 border border-[#0057B8]/40 text-[#4d9fff] text-sm font-bold hover:bg-[#0057B8]/25 active:bg-[#0057B8]/35 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
+                    className="w-full py-3 min-h-[44px] bg-interactive/15 border border-interactive/40 text-interactive text-sm font-bold hover:bg-interactive/25 active:bg-interactive/35 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
                     aria-expanded={!canPromptInstall ? showInstallHelp : undefined}
                   >
                     <Download className="w-4 h-4" />
                     {canPromptInstall ? 'Install App' : 'How to Install App'}
                   </button>
                   {!canPromptInstall && showInstallHelp && (
-                    <div className="bg-[#111] border border-[#333] p-3 rounded-none">
+                    <div className="bg-surface-sunken border border-line p-3 rounded-none">
                       <PWAInstallInstructions platform={platform} />
                     </div>
                   )}
@@ -514,7 +514,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 href="https://buymeacoffee.com/marching.art"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 min-h-[44px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
+                className="w-full py-3 min-h-[44px] bg-interactive/10 border border-interactive/30 text-interactive text-sm font-bold hover:bg-interactive/20 active:bg-interactive/30 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
               >
                 <Heart className="w-4 h-4" />
                 Support marching.art
@@ -529,7 +529,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
               </button>
 
               {/* Delete Account Section */}
-              <div className="pt-4 border-t border-[#333]">
+              <div className="pt-4 border-t border-line">
                 {!showDeleteConfirm ? (
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
@@ -544,7 +544,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                       <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="text-sm font-bold text-red-400">Delete Your Account?</p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-muted mt-1">
                           This action is permanent and cannot be undone. All your data, corps, and
                           season history will be permanently deleted.
                         </p>
@@ -559,7 +559,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                         value={deleteConfirmText}
                         onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                         placeholder="DELETE"
-                        className="w-full px-3 py-2 bg-[#111] border border-[#333] text-white text-sm font-mono focus:outline-none focus:border-red-500/50"
+                        className="w-full px-3 py-2 bg-surface-sunken border border-line text-white text-sm font-mono focus:outline-none focus:border-red-500/50"
                         disabled={isDeleting}
                       />
                     </div>
@@ -570,7 +570,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                           setDeleteConfirmText('');
                         }}
                         disabled={isDeleting}
-                        className="flex-1 py-2.5 min-h-[44px] bg-[#333] text-gray-300 text-sm font-bold hover:bg-[#444] disabled:opacity-50 transition-all rounded-none"
+                        className="flex-1 py-2.5 min-h-[44px] bg-line text-secondary text-sm font-bold hover:bg-line-strong disabled:opacity-50 transition-all rounded-none"
                       >
                         Cancel
                       </button>
@@ -608,13 +608,13 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 </p>
 
                 {!pushSupported ? (
-                  <div className="bg-[#111] border border-[#333] p-3 text-center">
+                  <div className="bg-surface-sunken border border-line p-3 text-center">
                     <p className="text-xs text-muted">
                       Push notifications not supported in this browser
                     </p>
                   </div>
                 ) : pushPermission === 'denied' ? (
-                  <div className="bg-[#111] border border-[#333] p-3 text-center">
+                  <div className="bg-surface-sunken border border-line p-3 text-center">
                     <p className="text-xs text-muted">
                       Push notifications blocked. Enable in browser settings.
                     </p>
@@ -622,13 +622,13 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 ) : !pushPrefs.allPush ? (
                   <button
                     onClick={handleEnablePush}
-                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/20 border border-[#0057B8]/40 text-[#0057B8] text-sm font-bold hover:bg-[#0057B8]/30 transition-all rounded-none flex items-center justify-center gap-2"
+                    className="w-full py-3 min-h-[44px] bg-interactive/20 border border-interactive/40 text-interactive text-sm font-bold hover:bg-interactive/30 transition-all rounded-none flex items-center justify-center gap-2"
                   >
                     <Bell className="w-4 h-4" />
                     Enable Push Notifications
                   </button>
                 ) : (
-                  <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
+                  <div className="space-y-0 divide-y divide-line bg-surface-sunken border border-line">
                     <div className="px-3">
                       <Toggle
                         label="Push Notifications"
@@ -672,7 +672,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   Email Notifications
                 </p>
 
-                <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
+                <div className="space-y-0 divide-y divide-line bg-surface-sunken border border-line">
                   <div className="px-3">
                     <Toggle
                       label="All Emails"
@@ -717,7 +717,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <button
                   onClick={saveNotificationPrefs}
                   disabled={saving}
-                  className="w-full py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-none hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+                  className="w-full py-2.5 bg-interactive text-white text-sm font-bold rounded-none hover:bg-interactive-hover disabled:opacity-50 transition-colors"
                 >
                   {saving ? 'Saving...' : 'Save Preferences'}
                 </button>

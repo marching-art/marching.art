@@ -66,7 +66,7 @@ export function getNotificationStyle(type: LeagueNotification['type']) {
     case 'rivalry_matchup':
       return { icon: 'Flame', color: 'text-red-400', bg: 'bg-red-500/20' };
     default:
-      return { icon: 'Bell', color: 'text-gray-400', bg: 'bg-gray-500/20' };
+      return { icon: 'Bell', color: 'text-muted', bg: 'bg-charcoal-500/20' };
   }
 }
 

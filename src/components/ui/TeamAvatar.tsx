@@ -48,7 +48,7 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
   if (logoUrl && !hasError) {
     return (
       <div
-        className={`${sizeClass} rounded-none overflow-hidden bg-[#333] flex-shrink-0 ${className}`}
+        className={`${sizeClass} rounded-none overflow-hidden bg-line flex-shrink-0 ${className}`}
       >
         <img
           src={logoUrl}
@@ -68,10 +68,10 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
       className={`
         ${sizeClass}
         rounded-none flex-shrink-0
-        bg-gradient-to-br from-yellow-500/30 to-yellow-600/20
-        border border-yellow-500/40
+        bg-surface-raised
+        border border-line
         flex items-center justify-center
-        font-bold text-yellow-400
+        font-bold text-secondary
         ${className}
       `}
       title={name || undefined}

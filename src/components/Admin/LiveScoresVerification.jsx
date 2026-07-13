@@ -32,6 +32,7 @@ import { scrapeLiveScoresNow } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { getCaptionLabel } from '../../utils/captionUtils';
 import { CAPTION_IDS } from '../../data/captions';
+import { Heading } from '../ui';
 
 const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
 
@@ -62,7 +63,7 @@ const getCellBgColor = (value, maxPossible) => {
   const percentage = value / maxPossible;
   if (percentage >= 0.9) return 'bg-green-900/30';
   if (percentage >= 0.8) return 'bg-green-900/20';
-  if (percentage >= 0.7) return 'bg-yellow-900/20';
+  if (percentage >= 0.7) return 'bg-warning/20';
   if (percentage < 0.5) return 'bg-red-900/20';
   return '';
 };
@@ -278,8 +279,8 @@ const LiveScoresVerification = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-yellow-500 animate-spin" />
-        <span className="ml-3 text-gray-300">Loading live DCI scores…</span>
+        <RefreshCw className="w-8 h-8 text-secondary animate-spin" />
+        <span className="ml-3 text-secondary">Loading live DCI scores…</span>
       </div>
     );
   }
@@ -301,11 +302,11 @@ const LiveScoresVerification = () => {
       {/* Header (mirrors ScoresSpreadsheet) */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-yellow-500/20 rounded-none">
-            <Table className="w-4 h-4 text-yellow-500" />
+          <div className="p-1.5 bg-surface-raised rounded-none">
+            <Table className="w-4 h-4 text-secondary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Live DCI Scores — {currentYear}</h2>
+            <Heading level="title">Live DCI Scores — {currentYear}</Heading>
             <p className="text-xs text-muted">
               {seasonData?.name} • {corpsRows.length} corps • {events.length} events across{' '}
               {columns.length} days • {totalScores} score rows
@@ -325,7 +326,7 @@ const LiveScoresVerification = () => {
           <button
             onClick={handleScrape}
             disabled={scraping}
-            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-none bg-amber-400 text-neutral-900 font-bold hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-none bg-interactive text-white font-bold hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {scraping ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -338,7 +339,7 @@ const LiveScoresVerification = () => {
       </div>
 
       {!isLiveSeason && (
-        <div className="text-[11px] text-yellow-500/80 px-1">
+        <div className="text-[11px] text-warning/80 px-1">
           Status: {seasonData?.status?.toUpperCase() || 'UNKNOWN'} — scraping is a no-op until a
           live DCI season is active.
         </div>
@@ -359,8 +360,8 @@ const LiveScoresVerification = () => {
                 onClick={() => setActiveTab(caption)}
                 className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === caption
-                    ? 'bg-amber-400 text-neutral-900 font-bold'
-                    : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                    ? 'bg-interactive text-white font-bold'
+                    : 'text-muted hover:text-white hover:bg-charcoal-800'
                 }`}
               >
                 {caption}
@@ -373,8 +374,8 @@ const LiveScoresVerification = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === tab.id
-                    ? 'bg-amber-400 text-neutral-900 font-bold'
-                    : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                    ? 'bg-interactive text-white font-bold'
+                    : 'text-muted hover:text-white hover:bg-charcoal-800'
                 }`}
               >
                 {tab.label}
@@ -389,7 +390,7 @@ const LiveScoresVerification = () => {
               disabled={!canScrollLeft}
               className={`p-1 rounded-none transition-all ${
                 canScrollLeft
-                  ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+                  ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
                   : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
@@ -404,7 +405,7 @@ const LiveScoresVerification = () => {
               disabled={!canScrollRight}
               className={`p-1 rounded-none transition-all ${
                 canScrollRight
-                  ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+                  ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
                   : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
@@ -417,18 +418,16 @@ const LiveScoresVerification = () => {
             <table className="w-full border-collapse text-[10px]">
               <thead>
                 <tr className="bg-charcoal-900/80 border-b border-white/20">
-                  <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-yellow-400 border-r border-white/20 w-[90px]">
+                  <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-secondary border-r border-white/20 w-[90px]">
                     {activeLabel}
                   </th>
                   {visibleColumns.map((col) => (
                     <th
                       key={col.key}
-                      className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
+                      className="px-0 py-1.5 text-center font-mono text-muted w-[38px] border-r border-white/10"
                       title={`${col.eventNames.join(' + ')}\n${[...col.locations].join(' • ')}\nDay ${col.day ?? 'pre-season'}\nFantasy recap: ${col.scored ? 'scored' : 'not yet scored'}`}
                     >
-                      <div className="text-[10px] text-muted/70 leading-none">
-                        {col.dateLabel}
-                      </div>
+                      <div className="text-[10px] text-muted/70 leading-none">{col.dateLabel}</div>
                       <div
                         className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-muted/40'}`}
                       >
@@ -472,7 +471,7 @@ const LiveScoresVerification = () => {
                           {value !== null ? (
                             <span
                               className={
-                                value >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'
+                                value >= maxScore * 0.85 ? 'text-green-400' : 'text-secondary'
                               }
                             >
                               {value.toFixed(3)}
@@ -499,7 +498,7 @@ const LiveScoresVerification = () => {
               <span className="w-2.5 h-2.5 rounded-none bg-green-900/20" /> 80-90%
             </span>
             <span className="flex items-center gap-0.5">
-              <span className="w-2.5 h-2.5 rounded-none bg-yellow-900/20" /> 70-80%
+              <span className="w-2.5 h-2.5 rounded-none bg-warning/20" /> 70-80%
             </span>
             <span className="flex items-center gap-0.5">
               <span className="w-2.5 h-2.5 rounded-none bg-red-900/20" /> &lt;50%

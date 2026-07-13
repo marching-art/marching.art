@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Plus, AlertTriangle, Radar, Server, WifiOff } from 'lucide-react';
 import { useShouldReduceMotion } from '../../hooks/useReducedMotion';
+import { Heading } from './Heading';
 
 // =============================================================================
 // SYSTEM INITIALIZATION LOADER
@@ -82,24 +83,24 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           {shouldReduceMotion ? (
-            <div className="w-2 h-2 bg-yellow-500 rounded-none" />
+            <div className="w-2 h-2 bg-warning rounded-none" />
           ) : (
             <m.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity }}
-              className="w-2 h-2 bg-yellow-500 rounded-none"
+              className="w-2 h-2 bg-warning rounded-none"
             />
           )}
-          <span className="font-mono text-[10px] text-yellow-500/80 uppercase tracking-[0.3em]">
+          <span className="font-mono text-[10px] text-warning/80 uppercase tracking-[0.3em]">
             System Boot
           </span>
           {shouldReduceMotion ? (
-            <div className="w-2 h-2 bg-yellow-500 rounded-none" />
+            <div className="w-2 h-2 bg-warning rounded-none" />
           ) : (
             <m.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-              className="w-2 h-2 bg-yellow-500 rounded-none"
+              className="w-2 h-2 bg-warning rounded-none"
             />
           )}
         </div>
@@ -108,10 +109,10 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       {/* Status Message - Monospace Terminal Style */}
       <div className="relative min-w-[280px] max-w-md">
         {/* Message Container with Border */}
-        <div className="border border-yellow-500/30 bg-black/60 backdrop-blur-sm px-4 py-3">
+        <div className="border border-warning/30 bg-black/60 px-4 py-3">
           {shouldReduceMotion ? (
             <div className="flex items-center gap-3">
-              <span className="text-yellow-500 font-mono">&gt;</span>
+              <span className="text-warning font-mono">&gt;</span>
               <span className="font-mono text-sm text-white tracking-wide">
                 {messages[currentMessageIndex]}
               </span>
@@ -130,7 +131,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
                 <m.span
                   animate={{ opacity: [1, 0] }}
                   transition={{ duration: 0.5, repeat: Infinity }}
-                  className="text-yellow-500 font-mono"
+                  className="text-warning font-mono"
                 >
                   &gt;
                 </m.span>
@@ -143,20 +144,20 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
         </div>
 
         {/* Corner Brackets */}
-        <div className="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-yellow-500/50" />
-        <div className="absolute -top-1 -right-1 w-3 h-3 border-r-2 border-t-2 border-yellow-500/50" />
-        <div className="absolute -bottom-1 -left-1 w-3 h-3 border-l-2 border-b-2 border-yellow-500/50" />
-        <div className="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-yellow-500/50" />
+        <div className="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-warning/50" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 border-r-2 border-t-2 border-warning/50" />
+        <div className="absolute -bottom-1 -left-1 w-3 h-3 border-l-2 border-b-2 border-warning/50" />
+        <div className="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-warning/50" />
       </div>
 
       {/* Technical Progress Bar */}
       {showProgress && (
         <div className="w-full max-w-md">
           {/* Progress Container */}
-          <div className="relative h-1.5 bg-charcoal-800 border border-yellow-500/20 overflow-hidden">
+          <div className="relative h-1.5 bg-charcoal-800 border border-warning/20 overflow-hidden">
             {/* Progress Fill */}
             <m.div
-              className="absolute inset-y-0 left-0 bg-yellow-500"
+              className="absolute inset-y-0 left-0 bg-warning"
               initial={{ width: 0 }}
               animate={{ width: `${displayProgress}%` }}
               transition={{ duration: 0.3, ease: 'linear' }}
@@ -164,7 +165,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
             {/* Scanline Effect - skip on mobile */}
             {!shouldReduceMotion && (
               <m.div
-                className="absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent"
+                className="absolute inset-y-0 w-8 bg-warning/50"
                 animate={{ left: ['-10%', '110%'] }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
               />
@@ -175,7 +176,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
             <span className="font-mono text-[9px] text-white/40 uppercase tracking-widest">
               Progress
             </span>
-            <span className="font-mono text-[10px] text-yellow-500 tabular-nums">
+            <span className="font-mono text-[10px] text-warning tabular-nums">
               {Math.round(displayProgress)}%
             </span>
           </div>
@@ -185,9 +186,9 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       {/* Technical Footer */}
       <div className="flex items-center gap-4 text-[8px] font-mono text-white/20 uppercase tracking-widest">
         <span>SYS.INIT</span>
-        <span className="text-yellow-500/40">|</span>
+        <span className="text-warning/40">|</span>
         <span>v2.4.1</span>
-        <span className="text-yellow-500/40">|</span>
+        <span className="text-warning/40">|</span>
         {shouldReduceMotion ? (
           <span className="opacity-60">STANDBY</span>
         ) : (
@@ -217,7 +218,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
           }}
         />
         {/* Radial Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/80" />
+        <div className="absolute inset-0 bg-black/20" />
         {content}
       </div>
     );
@@ -250,7 +251,7 @@ export const ConsoleLoadingOverlay: React.FC<ConsoleLoadingOverlayProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 flex items-center justify-center bg-charcoal-950/80 backdrop-blur-sm z-10"
+            className="absolute inset-0 flex items-center justify-center bg-charcoal-950/80 z-10"
           >
             <SystemLoader messages={messages} showProgress={true} />
           </m.div>
@@ -490,7 +491,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       <div
         className={`
         border-2 border-dashed border-warning/30
-        bg-warning/5 backdrop-blur-sm
+        bg-warning/5
         rounded-none p-6 md:p-8
         ${className}
       `}
@@ -504,7 +505,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
           {actionLabel && onAction && (
             <button
               onClick={onAction}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-mono font-bold text-xs uppercase tracking-wider hover:bg-[#0066d6] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-interactive text-white font-mono font-bold text-xs uppercase tracking-wider hover:bg-interactive-hover transition-colors"
             >
               <Plus className="w-3 h-3" />
               {actionLabel}
@@ -521,7 +522,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       className={`
       relative min-h-[320px] flex items-center justify-center
       border-2 border-dashed border-warning/30
-      bg-gradient-to-b from-warning/[0.02] to-transparent
+      bg-warning/[0.02]
       rounded-none overflow-hidden
       ${className}
     `}
@@ -539,7 +540,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       {/* Scanning Line Animation - skip on mobile */}
       {!shouldReduceMotion && (
         <m.div
-          className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-warning/40 to-transparent pointer-events-none"
+          className="absolute inset-x-0 h-[1px] bg-warning/40 pointer-events-none"
           initial={{ top: '10%' }}
           animate={{ top: ['10%', '90%', '10%'] }}
           transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
@@ -562,9 +563,9 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         </div>
 
         {/* Title */}
-        <h3 className="font-mono font-bold text-base md:text-lg text-white/80 uppercase tracking-wider mb-2">
+        <Heading level="section" className="font-mono mb-2">
           {displayTitle}
-        </h3>
+        </Heading>
 
         {/* Subtitle */}
         <p className="font-mono text-xs text-white/40 mb-6 max-w-xs mx-auto leading-relaxed">
@@ -575,7 +576,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         {actionLabel && onAction && (
           <button
             onClick={onAction}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-[#0057B8] text-white font-mono font-bold text-sm uppercase tracking-wider border border-[#0057B8] hover:bg-[#0066d6] transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2 bg-interactive text-white font-mono font-bold text-sm uppercase tracking-wider border border-interactive hover:bg-interactive-hover transition-colors"
           >
             <Plus className="w-4 h-4" />
             {actionLabel}

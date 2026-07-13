@@ -13,6 +13,7 @@ import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import { Heading } from './ui';
 
 // =============================================================================
 // PAGE ERROR FALLBACK
@@ -40,8 +41,10 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
         </div>
 
         {/* Error Message */}
-        <h2 className="text-2xl font-bold text-white mb-3">{pageName} Error</h2>
-        <p className="text-gray-400 mb-6">
+        <Heading level="title" className="mb-3">
+          {pageName} Error
+        </Heading>
+        <p className="text-muted mb-6">
           We encountered an issue loading this page. This might be a temporary problem - please try
           again.
         </p>
@@ -49,10 +52,10 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
         {/* Error Details (dev only) */}
         {error && process.env.NODE_ENV === 'development' && (
           <details className="mb-6 text-left">
-            <summary className="text-sm text-muted cursor-pointer hover:text-gray-300 mb-2">
+            <summary className="text-sm text-muted cursor-pointer hover:text-secondary mb-2">
               Technical Details
             </summary>
-            <pre className="p-4 bg-[#0a0a0a] border border-[#333] rounded-none text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">
+            <pre className="p-4 bg-background border border-line rounded-none text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">
               {error.message}
               {error.stack && `\n\nStack trace:\n${error.stack}`}
             </pre>
@@ -64,7 +67,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
           {onReset && (
             <button
               onClick={onReset}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-[#0057B8] border border-[#0057B8] text-white hover:bg-[#0057B8]/90 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-interactive border border-interactive text-white hover:bg-interactive/90 transition-colors"
             >
               <RefreshCw className="w-5 h-5" />
               Try Again
@@ -79,7 +82,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
           </button>
           <button
             onClick={() => startTransition(() => navigate('/dashboard'))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-transparent border border-[#333] text-gray-300 hover:bg-white/5 hover:border-[#555] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-transparent border border-line text-secondary hover:bg-white/5 hover:border-line-strong transition-colors"
           >
             <Home className="w-5 h-5" />
             Dashboard

@@ -397,7 +397,7 @@ const Profile = () => {
   // Username resolution error
   if (usernameResolveError) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+      <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center">
           <User className="w-10 h-10 text-muted mx-auto mb-2" />
           <p className="text-sm text-muted">{usernameResolveError}</p>
@@ -409,9 +409,9 @@ const Profile = () => {
   // Loading state (username lookup or profile fetch)
   if (isLoading || (isUsernameParam && !resolvedUid)) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+      <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <div className="w-6 h-6 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-2" />
           <p className="text-xs text-muted">Loading profile...</p>
         </div>
       </div>
@@ -421,10 +421,10 @@ const Profile = () => {
   // Error state
   if (isError) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+      <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-sm text-red-400 mb-3">{error?.message || 'Error loading profile'}</p>
-          <button onClick={() => refetch()} className="text-xs text-[#0057B8] hover:underline">
+          <button onClick={() => refetch()} className="text-xs text-interactive hover:underline">
             Try Again
           </button>
         </div>
@@ -435,7 +435,7 @@ const Profile = () => {
   // Not found
   if (!profile) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+      <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center">
           <User className="w-10 h-10 text-muted mx-auto mb-2" />
           <p className="text-sm text-muted">Profile not found</p>
@@ -445,7 +445,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a] relative">
+    <div className="h-full flex flex-col overflow-hidden bg-background relative">
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 scroll-momentum">
         {/* DIRECTOR PROFILE - New Career Portfolio Layout */}
@@ -472,44 +472,44 @@ const Profile = () => {
           >
             <Link
               to="/scores?tab=champions"
-              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+              className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
-              <Crown className="w-5 h-5 text-yellow-400 mb-1" />
-              <span className="text-xs text-gray-400">Champions</span>
+              <Crown className="w-5 h-5 text-brand mb-1" />
+              <span className="text-xs text-muted">Champions</span>
             </Link>
             <a
               href="https://buymeacoffee.com/marching.art"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+              className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
-              <Heart className="w-5 h-5 text-amber-500 mb-1" />
-              <span className="text-xs text-gray-400">Support</span>
+              <Heart className="w-5 h-5 text-secondary mb-1" />
+              <span className="text-xs text-muted">Support</span>
             </a>
             <a
               href="https://discord.gg/YvFRJ97A5H"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+              className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
               <MessageCircle className="w-5 h-5 text-[#5865F2] mb-1" />
-              <span className="text-xs text-gray-400">Discord</span>
+              <span className="text-xs text-muted">Discord</span>
             </a>
             <Link
               to="/leagues"
-              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+              className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
               <Crown className="w-5 h-5 text-purple-500 mb-1" />
-              <span className="text-xs text-gray-400">Leagues</span>
+              <span className="text-xs text-muted">Leagues</span>
             </Link>
             {isOwnProfile && (
               <button
                 type="button"
                 onClick={() => setShowCorpsCoin(true)}
-                className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+                className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
               >
-                <Coins className="w-5 h-5 text-yellow-500 mb-1" />
-                <span className="text-xs text-gray-400 font-data tabular-nums">
+                <Coins className="w-5 h-5 text-brand mb-1" />
+                <span className="text-xs text-muted font-data tabular-nums">
                   {(profile.corpsCoin || 0).toLocaleString()} CC
                 </span>
               </button>
@@ -519,11 +519,11 @@ const Profile = () => {
           {/* Legal links — restored here so signed-in users always have a path
               to Privacy & Terms (they used to live in the home header). */}
           <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted">
-            <Link to="/privacy" className="hover:text-gray-400 transition-colors">
+            <Link to="/privacy" className="hover:text-muted transition-colors">
               Privacy
             </Link>
             <span aria-hidden="true">·</span>
-            <Link to="/terms" className="hover:text-gray-400 transition-colors">
+            <Link to="/terms" className="hover:text-muted transition-colors">
               Terms
             </Link>
           </div>

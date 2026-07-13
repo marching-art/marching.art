@@ -11,7 +11,7 @@
 // bodies live in howToPlaySections.jsx.
 //
 // Design laws: no glow, no shadow, dense data, sharp corners (rounded-none),
-// ESPN data-terminal palette (#0057B8 blue, #c9a227 Podium gold).
+// data-terminal palette (azure interactive, gold brand/Podium).
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
@@ -102,8 +102,8 @@ const HowToPlay = () => {
       <div className="flex-shrink-0 border-b border-white/10">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
-              <Book className="w-4 h-4 text-[#0057B8]" />
+            <div className="w-8 h-8 bg-interactive/20 rounded-none flex items-center justify-center">
+              <Book className="w-4 h-4 text-interactive" />
             </div>
             <div>
               <h1 className="text-sm font-bold text-white">Game Guide</h1>
@@ -119,7 +119,7 @@ const HowToPlay = () => {
               aria-label="Search the game guide"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-9 pr-3 bg-black/30 border border-white/10 rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8]/50"
+              className="w-full h-11 pl-9 pr-3 bg-black/30 border border-white/10 rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive/50"
             />
           </div>
         </div>
@@ -134,8 +134,8 @@ const HowToPlay = () => {
                   onClick={() => scrollToSection(s.id)}
                   className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-colors ${
                     activeId === s.id
-                      ? 'text-white bg-[#0057B8]'
-                      : 'text-muted hover:text-gray-300'
+                      ? 'text-white bg-interactive'
+                      : 'text-muted hover:text-secondary'
                   }`}
                 >
                   {s.label}
@@ -169,12 +169,12 @@ const HowToPlay = () => {
                         onClick={() => scrollToSection(s.id)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-none transition-colors ${
                           active
-                            ? 'text-white bg-[#0057B8]/15 border-l-2 border-[#0057B8]'
-                            : 'text-muted hover:text-gray-300 hover:bg-white/5 border-l-2 border-transparent'
+                            ? 'text-white bg-interactive/15 border-l-2 border-interactive'
+                            : 'text-muted hover:text-secondary hover:bg-white/5 border-l-2 border-transparent'
                         }`}
                       >
                         <Icon
-                          className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#0057B8]' : ''}`}
+                          className={`w-4 h-4 flex-shrink-0 ${active ? 'text-interactive' : ''}`}
                         />
                         {s.label}
                       </button>

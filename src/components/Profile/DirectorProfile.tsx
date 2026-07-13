@@ -64,6 +64,7 @@ import { getEquippedCosmetic } from '../../utils/cosmetics';
 import { getXPProgress } from '../../utils/captionPricing';
 import CaptionMasteryPanel from './CaptionMasteryPanel';
 import SeasonHistorySection from './SeasonHistorySection';
+import { Heading } from '../ui';
 
 // =============================================================================
 // TYPES
@@ -209,15 +210,15 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
     (profile.stats?.leagueWins || 0) > 0;
 
   return (
-    <div className="bg-[#0a0a0a]">
+    <div className="bg-background">
       {/* ================================================================== */}
       {/* HERO SECTION - Avatar Left, Info Right */}
       {/* ================================================================== */}
-      <div className="bg-[#1a1a1a] border-b border-[#333]">
+      <div className="bg-surface-card border-b border-line">
         <div className="flex">
           {/* LEFT: Avatar/Uniform - Large (equipped shop frame renders as ring) */}
           <div
-            className={`flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-[#0a0a0a] border-r border-[#333] relative group ${equippedFrame ? equippedFrame.frameClass : ''}`}
+            className={`flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-background border-r border-line relative group ${equippedFrame ? equippedFrame.frameClass : ''}`}
           >
             {/* OPTIMIZATION #7: Added lazy loading for profile avatar */}
             <div className="aspect-square w-full">
@@ -230,7 +231,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   decoding="async"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                <div className="w-full h-full flex items-center justify-center bg-surface-card">
                   <User className="w-12 h-12 text-muted" />
                 </div>
               )}
@@ -255,11 +256,11 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm"
+                    className="bg-surface-card border border-line w-full max-w-sm"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                    <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted">
                         Select Profile Avatar
                       </span>
                       <button
@@ -282,8 +283,8 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                             disabled={savingAvatar}
                             className={`relative border-2 p-1 transition-all ${
                               isSelected
-                                ? 'border-[#0057B8] bg-[#0057B8]/10'
-                                : 'border-[#333] hover:border-[#555]'
+                                ? 'border-interactive bg-interactive/10'
+                                : 'border-line hover:border-line-strong'
                             } ${savingAvatar ? 'opacity-50' : ''}`}
                           >
                             {/* OPTIMIZATION #7: Added lazy loading for corps avatar */}
@@ -303,7 +304,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                               </div>
                             </div>
                             {isSelected && (
-                              <div className="absolute top-1 right-1 w-5 h-5 bg-[#0057B8] flex items-center justify-center">
+                              <div className="absolute top-1 right-1 w-5 h-5 bg-interactive flex items-center justify-center">
                                 <Star className="w-3 h-3 text-white" />
                               </div>
                             )}
@@ -328,16 +329,16 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             {/* Top: Name + Status */}
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h1 className="text-base sm:text-lg font-bold text-white truncate">
+                <Heading level="title" as="h1" className="truncate">
                   {profile.displayName || 'Anonymous Director'}
-                </h1>
+                </Heading>
                 <StatusIndicator status={status} />
 
                 <div className="ml-auto flex items-center gap-1">
                   {onShare && (
                     <button
                       onClick={onShare}
-                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#333] text-gray-400 hover:text-white hover:border-[#555] active:text-white transition-colors press-feedback"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-line text-muted hover:text-white hover:border-line-strong active:text-white transition-colors press-feedback"
                       aria-label="Share profile"
                     >
                       <Share2 className="w-3 h-3" />
@@ -349,7 +350,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {!isOwnProfile && canInviteToLeague && onInviteToLeague && (
                     <button
                       onClick={onInviteToLeague}
-                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#0057B8]/40 bg-[#0057B8]/10 text-[#0057B8] hover:bg-[#0057B8]/20 transition-colors press-feedback"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-interactive/40 bg-interactive/10 text-interactive hover:bg-interactive/20 transition-colors press-feedback"
                       aria-label="Invite to league"
                     >
                       <UserPlus className="w-3 h-3" />
@@ -359,7 +360,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {isOwnProfile && onEditProfile && (
                     <button
                       onClick={onEditProfile}
-                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#333] text-gray-400 hover:text-white hover:border-[#555] active:text-white transition-colors press-feedback"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-line text-muted hover:text-white hover:border-line-strong active:text-white transition-colors press-feedback"
                       aria-label="Edit profile"
                     >
                       <Edit3 className="w-3 h-3" />
@@ -369,7 +370,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {isOwnProfile && onSettings && (
                     <button
                       onClick={onSettings}
-                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#333] text-gray-400 hover:text-white hover:border-[#555] active:text-white transition-colors press-feedback"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-line text-muted hover:text-white hover:border-line-strong active:text-white transition-colors press-feedback"
                       aria-label="Settings"
                     >
                       <Settings className="w-3 h-3" />
@@ -385,8 +386,8 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <div className="flex items-center gap-1">
-                  <Shield className="w-3 h-3 text-[#0057B8]" />
-                  <span className="text-[11px] text-[#0057B8] font-bold">
+                  <Shield className="w-3 h-3 text-interactive" />
+                  <span className="text-[11px] text-interactive font-bold">
                     {getDisplayTitle(profile)}
                   </span>
                 </div>
@@ -395,12 +396,12 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   title={`${getXPProgress(profile.xp || 0).current}/${getXPProgress(profile.xp || 0).needed} XP to Level ${(profile.xpLevel || 1) + 1}`}
                 >
                   Lv{' '}
-                  <span className="font-bold text-gray-300 font-data tabular-nums">
+                  <span className="font-bold text-secondary font-data tabular-nums">
                     {profile.xpLevel || 1}
                   </span>
-                  <span className="inline-block w-10 h-1 bg-[#2a2a2a] rounded-full overflow-hidden align-middle">
+                  <span className="inline-block w-10 h-1 bg-surface-elevated rounded-full overflow-hidden align-middle">
                     <span
-                      className="block h-full bg-[#0057B8]"
+                      className="block h-full bg-interactive"
                       style={{ width: `${getXPProgress(profile.xp || 0).percentage}%` }}
                     />
                   </span>
@@ -430,7 +431,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   icon={Target}
                   value={`${standing.value}${standing.of ? ` of ${standing.of}` : ''}`}
                   label={standing.label}
-                  color={standing.soundSport ? 'text-green-400' : 'text-[#0057B8]'}
+                  color={standing.soundSport ? 'text-green-400' : 'text-interactive'}
                 />
               )}
               <StatPill
@@ -440,7 +441,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 color={
                   profile.engagement?.loginStreak && profile.engagement.loginStreak >= 7
                     ? 'text-orange-400'
-                    : 'text-gray-400'
+                    : 'text-muted'
                 }
               />
               <StatPill
@@ -473,7 +474,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
           if (!isOwnProfile) return null;
           return (
             <div className="px-3 pt-3">
-              <Section icon={BookOpen} iconColor="text-[#0057B8]" title="About">
+              <Section icon={BookOpen} iconColor="text-interactive" title="About">
                 <div className="p-4 text-center">
                   <p className="text-[11px] text-muted mb-2">
                     Tell other directors about yourself — bio, philosophy, specialties, and links.
@@ -481,7 +482,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {onEditProfile && (
                     <button
                       onClick={onEditProfile}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0057B8] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#0066d6] transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-interactive text-white text-[10px] font-bold uppercase tracking-wider hover:bg-interactive-hover transition-colors"
                     >
                       <Edit3 className="w-3 h-3" />
                       Build your profile
@@ -495,10 +496,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
         return (
           <div className="px-3 pt-3">
-            <Section icon={BookOpen} iconColor="text-[#0057B8]" title="About">
+            <Section icon={BookOpen} iconColor="text-interactive" title="About">
               <div className="p-3 space-y-3">
                 {hasBio && (
-                  <p className="text-[12px] text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-[12px] text-secondary leading-relaxed whitespace-pre-wrap">
                     {info!.bio}
                   </p>
                 )}
@@ -506,7 +507,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 {(hasYears || hasSpecialties) && (
                   <div className="flex flex-wrap gap-1.5">
                     {hasYears && (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-[#0a0a0a] border border-[#333] text-[10px] text-gray-300">
+                      <span className="flex items-center gap-1 px-2 py-1 bg-background border border-line text-[10px] text-secondary">
                         <Clock className="w-3 h-3 text-green-400" />
                         <span className="font-bold font-data tabular-nums">
                           {info!.yearsDirecting}
@@ -518,7 +519,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                       info!.specialties!.map((s) => (
                         <span
                           key={s}
-                          className="px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 text-[10px] text-[#0057B8] font-bold"
+                          className="px-2 py-1 bg-interactive/10 border border-interactive/30 text-[10px] text-interactive font-bold"
                         >
                           {s}
                         </span>
@@ -531,7 +532,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     <div className="text-[9px] font-bold text-muted uppercase tracking-wider mb-0.5">
                       Background
                     </div>
-                    <p className="text-[11px] text-gray-300 whitespace-pre-wrap">
+                    <p className="text-[11px] text-secondary whitespace-pre-wrap">
                       {info!.credentials}
                     </p>
                   </div>
@@ -586,7 +587,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 isOwnProfile && onEditProfile ? (
                   <button
                     onClick={onEditProfile}
-                    className="text-[9px] text-[#0057B8] hover:underline flex items-center gap-1"
+                    className="text-[9px] text-interactive hover:underline flex items-center gap-1"
                   >
                     <Edit3 className="w-2.5 h-2.5" /> Edit
                   </button>
@@ -620,11 +621,11 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* ================================================================== */}
       <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* COLUMN 1: Trophy Case */}
-        <div className="bg-[#1a1a1a] border border-[#333]">
-          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+        <div className="bg-surface-card border border-line">
+          <div className="px-3 py-2 border-b border-line bg-surface-raised flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              <Trophy className="w-3.5 h-3.5 text-brand" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                 Trophy Case
               </span>
             </div>
@@ -637,11 +638,11 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         </div>
 
         {/* COLUMN 2: Achievements */}
-        <div className="bg-[#1a1a1a] border border-[#333]">
-          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+        <div className="bg-surface-card border border-line">
+          <div className="px-3 py-2 border-b border-line bg-surface-raised flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Star className="w-3.5 h-3.5 text-purple-400" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                 Achievements
               </span>
             </div>
@@ -651,7 +652,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               )}
               {/* Own profile only — the page shows the viewer's own list. */}
               {isOwnProfile && (
-                <Link to="/achievements" className="text-[9px] text-[#0057B8] hover:underline">
+                <Link to="/achievements" className="text-[9px] text-interactive hover:underline">
                   View all →
                 </Link>
               )}
@@ -668,7 +669,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               {achievements.length > 4 && (
                 <button
                   onClick={() => setShowAllAchievements((v) => !v)}
-                  className="w-full text-[9px] text-[#0057B8] hover:underline py-1"
+                  className="w-full text-[9px] text-interactive hover:underline py-1"
                   aria-expanded={showAllAchievements}
                   aria-label={
                     showAllAchievements
@@ -691,10 +692,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         </div>
 
         {/* COLUMN 3: Career Stats */}
-        <div className="bg-[#1a1a1a] border border-[#333]">
-          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center gap-1.5">
+        <div className="bg-surface-card border border-line">
+          <div className="px-3 py-2 border-b border-line bg-surface-raised flex items-center gap-1.5">
             <TrendingUp className="w-3.5 h-3.5 text-green-400" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Career Stats
             </span>
           </div>
@@ -705,7 +706,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 {
                   label: 'Championships',
                   value: profile.trophies?.championships?.length || 0,
-                  color: 'text-yellow-400',
+                  color: 'text-brand',
                 },
                 {
                   label: 'Career Shows',
@@ -729,7 +730,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 },
               ].map((stat) => (
                 <div key={stat.label} className="flex justify-between items-center py-0.5">
-                  <span className="text-[10px] text-gray-400">{stat.label}</span>
+                  <span className="text-[10px] text-muted">{stat.label}</span>
                   <span className={`text-xs font-bold font-data ${stat.color}`}>{stat.value}</span>
                 </div>
               ))}

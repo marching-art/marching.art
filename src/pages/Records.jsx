@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Trophy, Music, Eye, Sparkles, Medal, Crown } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../api';
+import { Heading } from '../components/ui';
 import { formatSeasonName } from '../utils/season';
 
 const RECORD_CLASSES = [
@@ -24,7 +25,7 @@ const CATEGORIES = [
     key: 'highestScore',
     label: 'Highest Single-Night Score',
     icon: Trophy,
-    color: 'text-yellow-500',
+    color: 'text-secondary',
   },
   { key: 'highestGE', label: 'Best General Effect', icon: Sparkles, color: 'text-purple-400' },
   { key: 'highestVisual', label: 'Best Visual', icon: Eye, color: 'text-cyan-400' },
@@ -42,7 +43,7 @@ const RecordRow = ({ category, record }) => {
         {record ? (
           <p className="text-sm text-white truncate">
             <span className="font-bold">{record.corpsName || 'Unknown Corps'}</span>
-            {record.displayName && <span className="text-gray-400"> — {record.displayName}</span>}
+            {record.displayName && <span className="text-muted"> — {record.displayName}</span>}
           </p>
         ) : (
           <p className="text-sm text-muted">Unclaimed — make history</p>
@@ -83,11 +84,11 @@ const Records = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <BookOpen className="w-6 h-6 text-yellow-500" />
+            <BookOpen className="w-6 h-6 text-secondary" />
             <div>
-              <h1 className="text-lg font-bold text-white uppercase tracking-wider">
+              <Heading level="section" as="h1">
                 Records Book
-              </h1>
+              </Heading>
               <p className="text-xs text-muted">
                 All-time marks across every season. Records update after each night's scoring.
               </p>
@@ -95,7 +96,7 @@ const Records = () => {
           </div>
           <Link
             to="/hall-of-champions"
-            className="flex items-center gap-1 text-[10px] font-bold text-[#0057B8] hover:text-[#0066d6] uppercase tracking-wider whitespace-nowrap"
+            className="flex items-center gap-1 text-[10px] font-bold text-interactive hover:text-interactive-hover uppercase tracking-wider whitespace-nowrap"
           >
             <Medal className="w-3 h-3" />
             Hall of Champions →
@@ -109,14 +110,14 @@ const Records = () => {
             {RECORD_CLASSES.map((cls) => {
               const classRecords = records?.classes?.[cls.key] || {};
               return (
-                <div key={cls.key} className="bg-[#1a1a1a] border border-[#333] rounded-none">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-[#2a2a2a]">
-                    <span className="w-1 h-3.5 bg-[#c9a227] flex-shrink-0" aria-hidden="true" />
+                <div key={cls.key} className="bg-surface-card border border-line rounded-none">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-line-muted">
+                    <span className="w-1 h-3.5 bg-brand flex-shrink-0" aria-hidden="true" />
                     <h2 className="text-[13px] font-bold uppercase tracking-wider text-white">
                       {cls.label}
                     </h2>
                   </div>
-                  <div className="divide-y divide-[#242424]">
+                  <div className="divide-y divide-line">
                     {CATEGORIES.map((category) => (
                       <RecordRow
                         key={category.key}

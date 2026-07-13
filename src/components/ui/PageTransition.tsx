@@ -204,7 +204,7 @@ export const SkeletonGroup: React.FC<SkeletonGroupProps> = ({ type, count = 1 })
       return (
         <div className="space-y-3">
           {items.map((i) => (
-            <div key={i} className="bg-[#1a1a1a] border border-[#333] rounded-none p-4">
+            <div key={i} className="bg-surface-card border border-line rounded-none p-4">
               <Skeleton height={20} width="60%" className="mb-3" />
               <Skeleton height={14} width="100%" className="mb-2" />
               <Skeleton height={14} width="80%" />
@@ -215,7 +215,7 @@ export const SkeletonGroup: React.FC<SkeletonGroupProps> = ({ type, count = 1 })
 
     case 'list-item':
       return (
-        <div className="divide-y divide-[#333]">
+        <div className="divide-y divide-line">
           {items.map((i) => (
             <div key={i} className="flex items-center gap-3 py-3 px-4">
               <Skeleton variant="circular" width={40} height={40} />
@@ -230,7 +230,7 @@ export const SkeletonGroup: React.FC<SkeletonGroupProps> = ({ type, count = 1 })
 
     case 'table-row':
       return (
-        <div className="divide-y divide-[#333]">
+        <div className="divide-y divide-line">
           {items.map((i) => (
             <div key={i} className="flex items-center gap-4 py-3 px-4">
               <Skeleton width={32} height={24} />

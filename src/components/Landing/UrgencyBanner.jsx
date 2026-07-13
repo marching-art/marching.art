@@ -40,23 +40,23 @@ const ICONS = {
 
 const LEVEL_STYLES = {
   [URGENCY_LEVELS.HIGH]: {
-    container: 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/30',
+    container: 'bg-red-500/20 border-red-500/30',
     icon: 'bg-red-500/20 text-red-500',
     text: 'text-red-400',
     subtext: 'text-red-300/70',
     pulse: 'animate-pulse',
   },
   [URGENCY_LEVELS.MEDIUM]: {
-    container: 'bg-gradient-to-r from-yellow-500/20 to-orange-500/10 border-yellow-500/30',
-    icon: 'bg-yellow-500/20 text-yellow-500',
-    text: 'text-yellow-400',
-    subtext: 'text-yellow-300/70',
+    container: 'bg-warning/20 border-warning/30',
+    icon: 'bg-warning/20 text-warning',
+    text: 'text-warning',
+    subtext: 'text-warning/70',
     pulse: '',
   },
   [URGENCY_LEVELS.LOW]: {
-    container: 'bg-[#1a1a1a] border-[#333]',
-    icon: 'bg-[#0057B8]/20 text-[#0057B8]',
-    text: 'text-gray-300',
+    container: 'bg-surface-card border-line',
+    icon: 'bg-interactive/20 text-interactive',
+    text: 'text-secondary',
     subtext: 'text-muted',
     pulse: '',
   },
@@ -152,7 +152,7 @@ const UrgencyBanner = ({ showCTA = true, maxTriggers = 2, className = '' }) => {
                 to="/register"
                 className="flex items-center justify-center gap-2 px-3 py-2 bg-white/5 border-t border-white/10 text-sm font-medium text-white hover:bg-white/10 transition-colors"
               >
-                <Zap className="w-4 h-4 text-yellow-500" />
+                <Zap className="w-4 h-4 text-warning" />
                 Join now to compete
                 <ChevronRight className="w-4 h-4" />
               </Link>
@@ -178,8 +178,8 @@ export const SeasonCountdown = ({ className = '' }) => {
 
   return (
     <div className={`flex items-center gap-2 text-sm ${className}`}>
-      <Clock className="w-4 h-4 text-yellow-500" />
-      <span className="text-gray-400">
+      <Clock className="w-4 h-4 text-warning" />
+      <span className="text-muted">
         <span className="font-semibold text-white">{weeksRemaining}</span> week
         {weeksRemaining > 1 ? 's' : ''} until finals
       </span>
@@ -208,8 +208,8 @@ export const LiveIndicator = ({ className = '' }) => {
         </>
       ) : (
         <>
-          <Activity className="w-3.5 h-3.5 text-yellow-500" />
-          <span className="text-xs font-medium text-yellow-500">
+          <Activity className="w-3.5 h-3.5 text-warning" />
+          <span className="text-xs font-medium text-warning">
             {showsToday.length} show{showsToday.length > 1 ? 's' : ''} today
           </span>
         </>

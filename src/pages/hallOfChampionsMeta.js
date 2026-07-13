@@ -12,10 +12,10 @@ export const RANK_META = {
   },
   2: {
     label: 'RUNNER-UP',
-    badge: 'bg-gray-300 text-black',
-    accent: 'text-gray-300',
-    border: 'border-gray-400/40',
-    medalColor: 'text-gray-300',
+    badge: 'bg-charcoal-300 text-black',
+    accent: 'text-secondary',
+    border: 'border-charcoal-400/40',
+    medalColor: 'text-secondary',
   },
   3: {
     label: 'THIRD',

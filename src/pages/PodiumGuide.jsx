@@ -6,6 +6,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Medal, ChevronLeft } from 'lucide-react';
+import { Heading } from '../components/ui';
 
 const SECTIONS = [
   {
@@ -87,7 +88,7 @@ const SECTIONS = [
 
 export default function PodiumGuide() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-background text-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Masthead */}
         <div className="mb-8">
@@ -98,10 +99,10 @@ export default function PodiumGuide() {
             <ChevronLeft className="w-3.5 h-3.5" /> marching.art
           </Link>
           <div className="flex items-center gap-2 mb-1">
-            <Medal className="w-6 h-6 text-[#c9a227]" />
-            <h1 className="text-2xl font-bold">The Podium Class Guide</h1>
+            <Medal className="w-6 h-6 text-brand" />
+            <Heading level="display">The Podium Class Guide</Heading>
           </div>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted">
             Run a drum corps. Earn every point. Twelve short sections — everything you need.
           </p>
         </div>
@@ -110,22 +111,22 @@ export default function PodiumGuide() {
         <div className="space-y-6">
           {SECTIONS.map((section) => (
             <section key={section.n} id={`s${section.n}`}>
-              <h2 className="text-sm font-bold text-[#c9a227] uppercase tracking-wider mb-1.5">
+              <h2 className="text-sm font-bold text-brand uppercase tracking-wider mb-1.5">
                 {section.n}. {section.title}
               </h2>
-              <p className="text-[13px] leading-relaxed text-gray-300">{section.body}</p>
+              <p className="text-[13px] leading-relaxed text-secondary">{section.body}</p>
             </section>
           ))}
         </div>
 
         {/* Footer CTA */}
-        <div className="mt-10 pt-6 border-t border-[#333] flex items-center justify-between">
+        <div className="mt-10 pt-6 border-t border-line flex items-center justify-between">
           <span className="text-[11px] text-muted">
             Podium Class is always open — found your corps from the Dashboard.
           </span>
           <Link
             to="/dashboard"
-            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-[#c9a227] text-black rounded-none"
+            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-interactive text-white rounded-none"
           >
             Play
           </Link>

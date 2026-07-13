@@ -63,6 +63,7 @@ const RetiredCorpsGallery = lazyWithRetry(
 const CorpsHistory = lazyWithRetry(() => import('./pages/CorpsHistory'), 'CorpsHistory');
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
 const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms');
+const StyleGuide = lazyWithRetry(() => import('./pages/StyleGuide'), 'StyleGuide');
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
 const Article = lazyWithRetry(() => import('./pages/Article'), 'Article');
 const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
@@ -429,6 +430,15 @@ function App() {
                       element={
                         <Suspense fallback={<LoadingScreen fullScreen />}>
                           <Terms />
+                        </Suspense>
+                      }
+                    />
+                    {/* Living design-system reference (docs/VISUAL_IDENTITY_UNIFICATION.md) */}
+                    <Route
+                      path="/styleguide"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <StyleGuide />
                         </Suspense>
                       }
                     />

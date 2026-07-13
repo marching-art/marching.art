@@ -2,7 +2,7 @@
 // SCHEDULE - SHOW REGISTRATION & BROWSING
 // =============================================================================
 // Browse all shows by week, register corps for competitions
-// Laws: Dense data, ESPN aesthetic, mobile-optimized touch targets
+// Laws: Dense data, data-terminal aesthetic, mobile-optimized touch targets
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calendar, Clock } from 'lucide-react';
@@ -182,7 +182,7 @@ const Schedule = () => {
     return (
       <div className="w-full py-20 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-sm text-muted">Loading schedule...</p>
         </div>
       </div>
@@ -203,12 +203,12 @@ const Schedule = () => {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* FIXED HEADER */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+      <div className="flex-shrink-0 bg-surface-card border-b border-line px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-[#0057B8]" />
+            <Calendar className="w-5 h-5 text-interactive" />
             <div>
               <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                 {formatSeasonName?.() || '2025'} Schedule
@@ -237,7 +237,7 @@ const Schedule = () => {
             </div>
             <div className="text-right">
               <div className="text-[10px] text-muted uppercase">Total</div>
-              <div className="font-bold text-[#0057B8] font-data tabular-nums">
+              <div className="font-bold text-interactive font-data tabular-nums">
                 {registrationStats.total}
               </div>
             </div>

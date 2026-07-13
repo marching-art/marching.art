@@ -1,6 +1,6 @@
 // src/pages/NotFound.jsx
-// 404 page styled to match the ESPN-style professional dark design system:
-// charcoal surfaces, ESPN-blue primary actions, no gradients / glow / shadow.
+// 404 page styled to match the data-terminal dark design system:
+// charcoal surfaces, azure primary actions, no gradients / glow / shadow.
 import React, { startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
@@ -14,7 +14,7 @@ const NotFound = () => {
   const shouldReduceMotion = useShouldReduceMotion();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Subtle grid pattern */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -40,7 +40,7 @@ const NotFound = () => {
       {/* Scanning line - skip when reduced motion is requested */}
       {!shouldReduceMotion && (
         <m.div
-          className="absolute inset-x-0 h-px bg-[#0057B8]/40 pointer-events-none"
+          className="absolute inset-x-0 h-px bg-interactive/40 pointer-events-none"
           initial={{ top: '10%' }}
           animate={{ top: ['10%', '90%', '10%'] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
@@ -98,7 +98,7 @@ const NotFound = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-gray-400 mb-8 font-mono text-sm"
+          className="text-muted mb-8 font-mono text-sm"
         >
           The requested page doesn't exist or has been moved.
           <br className="hidden sm:block" />
@@ -121,7 +121,7 @@ const NotFound = () => {
           </button>
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0057B8] border border-[#0057B8] text-white rounded-none font-semibold uppercase hover:bg-[#0057B8]/90 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-interactive border border-interactive text-white rounded-none font-semibold uppercase hover:bg-interactive/90 transition-colors"
           >
             <Home className="w-4 h-4" />
             Return Home
@@ -133,33 +133,31 @@ const NotFound = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="mt-10 pt-6 border-t border-[#333]"
+          className="mt-10 pt-6 border-t border-line"
         >
-          <p className="text-xs text-muted mb-3 font-mono uppercase tracking-wider">
-            Quick Links
-          </p>
+          <p className="text-xs text-muted mb-3 font-mono uppercase tracking-wider">Quick Links</p>
           <div className="flex flex-wrap gap-2 justify-center">
             <Link
               to="/dashboard"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-muted hover:text-white bg-surface-card hover:bg-surface-raised rounded-none border border-line hover:border-line-strong transition-colors"
             >
               Dashboard
             </Link>
             <Link
               to="/schedule"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-muted hover:text-white bg-surface-card hover:bg-surface-raised rounded-none border border-line hover:border-line-strong transition-colors"
             >
               Schedule
             </Link>
             <Link
               to="/scores"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-muted hover:text-white bg-surface-card hover:bg-surface-raised rounded-none border border-line hover:border-line-strong transition-colors"
             >
               Scores
             </Link>
             <Link
               to="/leagues"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-muted hover:text-white bg-surface-card hover:bg-surface-raised rounded-none border border-line hover:border-line-strong transition-colors"
             >
               Leagues
             </Link>

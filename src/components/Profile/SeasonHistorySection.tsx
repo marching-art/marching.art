@@ -36,11 +36,11 @@ const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) =>
   );
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+    <div className="bg-surface-card border border-line">
+      <div className="px-3 py-2 border-b border-line bg-surface-raised flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Swords className="w-3.5 h-3.5 text-[#0057B8]" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <Swords className="w-3.5 h-3.5 text-interactive" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Season History
           </span>
         </div>
@@ -51,7 +51,7 @@ const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) =>
 
       {/* Class tabs (only when there is history in more than one class) */}
       {classesWithHistory.length > 1 && (
-        <div className="flex border-b border-[#333] bg-[#111]">
+        <div className="flex border-b border-line bg-surface-sunken">
           {(['all', ...classesWithHistory] as (CorpsClass | 'all')[]).map((cls) => {
             const isActive = classFilter === cls;
             const label = cls === 'all' ? 'All' : getClassDisplay(cls).short;
@@ -62,8 +62,8 @@ const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) =>
                 onClick={() => setClassFilter(cls)}
                 className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${
                   isActive
-                    ? 'text-white border-b-2 border-[#0057B8] bg-white/5'
-                    : 'text-muted hover:text-gray-300'
+                    ? 'text-white border-b-2 border-interactive bg-white/5'
+                    : 'text-muted hover:text-secondary'
                 }`}
               >
                 {label}

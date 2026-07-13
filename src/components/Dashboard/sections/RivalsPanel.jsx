@@ -26,7 +26,7 @@ const MEDAL_COLORS = {
   Gold: 'text-yellow-400',
   Silver: 'text-stone-300',
   Bronze: 'text-orange-300',
-  Participation: 'text-gray-400',
+  Participation: 'text-muted',
 };
 
 const RivalsPanel = memo(({ rivals, corpsClass }) => {
@@ -34,9 +34,9 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
   const list = Array.isArray(rivals) ? rivals : [];
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+    <div className="bg-surface-card border border-line overflow-hidden">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
           <Swords className="w-3.5 h-3.5 text-red-500" />
           Rivals
         </h3>
@@ -51,7 +51,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
           up here.
         </div>
       ) : (
-        <div className="divide-y divide-[#222]">
+        <div className="divide-y divide-line-subtle">
           {list.map((rival) => {
             const isSoundSport = corpsClass === 'soundSport' || rival.corpsClass === 'soundSport';
             const crossClass = rival.corpsClass && rival.corpsClass !== corpsClass;
@@ -59,7 +59,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
             // SoundSport: render medal tier instead of numeric score, and a
             // relative arrow based on medal rank rather than score delta.
             if (isSoundSport) {
-              const medalColor = MEDAL_COLORS[rival.medal] || 'text-gray-300';
+              const medalColor = MEDAL_COLORS[rival.medal] || 'text-secondary';
               const rankDelta = (rival.medalRank ?? 0) - (rival.userMedalRank ?? 0);
               const tied = rankDelta === 0;
               const ahead = rankDelta > 0;
@@ -75,7 +75,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
                 <Link
                   key={`${rival.uid}:${rival.corpsClass}`}
                   to={`/profile/${rival.uid}`}
-                  className="flex items-center justify-between px-4 py-2.5 hover:bg-[#222] transition-colors gap-3"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-surface-raised transition-colors gap-3"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm text-white truncate">{rival.corpsName}</div>
@@ -116,7 +116,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
               <Link
                 key={`${rival.uid}:${rival.corpsClass}`}
                 to={`/profile/${rival.uid}`}
-                className="flex items-center justify-between px-4 py-2.5 hover:bg-[#222] transition-colors gap-3"
+                className="flex items-center justify-between px-4 py-2.5 hover:bg-surface-raised transition-colors gap-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white truncate">{rival.corpsName}</div>

@@ -186,7 +186,7 @@ export interface TableSkeletonProps {
 }
 
 export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns = 4 }) => (
-  <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-none overflow-hidden">
+  <div className="bg-black/40 border border-white/10 rounded-none overflow-hidden">
     <table className="w-full">
       <thead className="bg-charcoal-900/95">
         <tr className="border-b border-white/10">
@@ -218,7 +218,7 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns 
 
 /**
  * Dashboard Page Skeleton
- * Matches the ESPN data grid layout with stats, corps table, and recent shows
+ * Matches the data-grid layout with stats, corps table, and recent shows
  * Works inside GameShell layout
  */
 export const DashboardSkeleton: React.FC = () => (
@@ -268,13 +268,13 @@ export const DashboardSkeleton: React.FC = () => (
 
 /**
  * Scores Page Skeleton
- * Matches the ESPN spreadsheet view with tabs and data table
+ * Matches the spreadsheet view with tabs and data table
  * Works inside GameShell layout
  */
 export const ScoresPageSkeleton: React.FC = () => (
   <div className="max-w-7xl mx-auto">
     {/* Ticker skeleton */}
-    <div className="h-10 bg-charcoal-900 border-b border-yellow-500/30 flex items-center px-4">
+    <div className="h-10 bg-charcoal-900 border-b border-line flex items-center px-4">
       <Skeleton variant="text" className="w-24 mr-6" />
       <Skeleton variant="text" className="w-32 mr-6" />
       <Skeleton variant="text" className="w-20" />
@@ -296,7 +296,7 @@ export const ScoresPageSkeleton: React.FC = () => (
 
 /**
  * Leagues Page Skeleton
- * Matches the ESPN league office style with standings and matchups
+ * Matches the league-office style with standings and matchups
  * Works inside GameShell layout
  */
 export const LeaguesPageSkeleton: React.FC = () => (

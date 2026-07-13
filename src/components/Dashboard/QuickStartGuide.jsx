@@ -19,6 +19,7 @@ import {
 import { WEEKLY_TRADE_LIMIT, CHAMPIONSHIP_TRADE_LIMIT } from '../../utils/seasonClock';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { Heading } from '../ui';
 
 // Rule numbers come from the same constants the game enforces
 // (WEEKLY_TRADE_LIMIT, getMaxShowsForWeek) so this guide can't drift out of
@@ -78,10 +79,10 @@ const colorClasses = {
     button: 'bg-purple-500 hover:bg-purple-400',
   },
   blue: {
-    bg: 'bg-[#0057B8]/15',
-    border: 'border-[#0057B8]/40',
-    text: 'text-[#0057B8]',
-    button: 'bg-[#0057B8] hover:bg-[#0066d6]',
+    bg: 'bg-interactive/15',
+    border: 'border-interactive/40',
+    text: 'text-interactive',
+    button: 'bg-interactive hover:bg-interactive-hover',
   },
   green: {
     bg: 'bg-green-500/20',
@@ -105,7 +106,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
         onClick={onClose}
         role="dialog"
         aria-modal="true"
@@ -116,25 +117,25 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-2xl max-h-[85dvh] bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden flex flex-col"
+          className="w-full max-w-2xl max-h-[85dvh] bg-surface-card border border-line rounded-none overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="p-6 border-b border-[#333] bg-[#222]">
+          <div className="p-6 border-b border-line bg-surface-raised">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-none bg-[#0057B8]/20 flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-[#0057B8]" />
+                <div className="w-12 h-12 rounded-none bg-interactive/20 flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-interactive" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">Quick Start Guide</h2>
-                  <p className="text-sm text-gray-400">Get the most out of marching.art</p>
+                  <Heading level="title">Quick Start Guide</Heading>
+                  <p className="text-sm text-muted">Get the most out of marching.art</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-none transition-colors"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-muted" />
               </button>
             </div>
 
@@ -144,10 +145,10 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                 <m.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  className="h-full bg-[#0057B8]"
+                  className="h-full bg-interactive"
                 />
               </div>
-              <span className="text-sm font-bold text-gray-400">
+              <span className="text-sm font-bold text-muted">
                 {completedSteps.length}/{QUICK_START_STEPS.length}
               </span>
             </div>
@@ -193,7 +194,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                       <h3 className={`font-bold ${isCompleted ? 'text-green-300' : 'text-white'}`}>
                         {step.title}
                       </h3>
-                      <p className="text-sm text-gray-400 truncate">{step.description}</p>
+                      <p className="text-sm text-muted truncate">{step.description}</p>
                     </div>
                     <ChevronRight
                       className={`w-5 h-5 text-muted transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -210,18 +211,18 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                         className="overflow-hidden"
                       >
                         <div className="px-4 pb-4 pt-0">
-                          <div className="p-4 bg-[#111] rounded-none mb-3">
-                            <h4 className="text-sm font-semibold text-gray-200 mb-2 flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-[#0057B8]" />
+                          <div className="p-4 bg-surface-sunken rounded-none mb-3">
+                            <h4 className="text-sm font-semibold text-secondary mb-2 flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-interactive" />
                               Pro Tips
                             </h4>
                             <ul className="space-y-1.5">
                               {step.tips.map((tip, tipIdx) => (
                                 <li
                                   key={tipIdx}
-                                  className="flex items-start gap-2 text-sm text-gray-400"
+                                  className="flex items-start gap-2 text-sm text-muted"
                                 >
-                                  <Star className="w-3 h-3 text-[#0057B8] mt-1 flex-shrink-0" />
+                                  <Star className="w-3 h-3 text-interactive mt-1 flex-shrink-0" />
                                   {tip}
                                 </li>
                               ))}
@@ -259,7 +260,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-[#333] bg-[#111]">
+          <div className="p-4 border-t border-line bg-surface-sunken">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted">
                 <HelpCircle className="w-4 h-4 inline mr-1" />
@@ -267,7 +268,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                 <Link
                   to="/how-to-play"
                   onClick={onClose}
-                  className="text-[#0057B8] hover:underline"
+                  className="text-interactive hover:underline"
                 >
                   How to Play
                 </Link>{' '}
@@ -275,7 +276,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
               </p>
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-muted hover:text-white transition-colors"
               >
                 Close Guide
               </button>
@@ -298,7 +299,7 @@ export const QuickStartButton = ({ onClick, show = true }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white rounded-none font-bold text-sm hover:bg-[#0066d6] transition-colors"
+      className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-2 bg-interactive text-white rounded-none font-bold text-sm hover:bg-interactive-hover transition-colors"
     >
       <HelpCircle className="w-5 h-5" />
       Quick Start

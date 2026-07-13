@@ -109,20 +109,20 @@ const SeasonScorecard = memo(
     const hasConcept = !!conceptTitle;
 
     return (
-      <div className={`border overflow-hidden ${themeClass || 'bg-[#1a1a1a] border-[#333]'}`}>
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+      <div className={`border overflow-hidden ${themeClass || 'bg-surface-card border-line'}`}>
+        <div className="bg-surface-raised px-4 py-3 border-b border-line">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+            <Trophy className="w-3.5 h-3.5 text-brand" />
             Season Scorecard
           </h3>
         </div>
 
         <div className="p-4">
           {/* Corps Identity */}
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
+          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-line">
             <button
               onClick={onDesignUniform}
-              className="relative w-14 h-14 bg-[#222] border border-[#444] overflow-hidden flex items-center justify-center hover:border-[#0057B8] transition-colors group"
+              className="relative w-14 h-14 bg-surface-raised border border-line-strong overflow-hidden flex items-center justify-center hover:border-interactive transition-colors group"
               title="Design Uniform"
             >
               {/* OPTIMIZATION #7: Added lazy loading for avatar */}
@@ -135,7 +135,7 @@ const SeasonScorecard = memo(
                   decoding="async"
                 />
               ) : (
-                <Trophy className="w-7 h-7 text-yellow-500" />
+                <Trophy className="w-7 h-7 text-brand" />
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 hidden lg:flex items-center justify-center transition-opacity">
                 <Palette className="w-4 h-4 text-white" />
@@ -175,10 +175,10 @@ const SeasonScorecard = memo(
                 {menuOpen && (
                   <div
                     role="menu"
-                    className="absolute right-0 top-full mt-1 w-56 bg-[#1a1a1a] border border-[#333] shadow-xl z-20"
+                    className="absolute right-0 top-full mt-1 w-56 bg-surface-card border border-line shadow-xl z-20"
                   >
                     {!canManage && lockReason && (
-                      <div className="px-3 py-2 text-[10px] text-muted border-b border-[#333] flex items-start gap-2">
+                      <div className="px-3 py-2 text-[10px] text-muted border-b border-line flex items-start gap-2">
                         <Lock className="w-3 h-3 mt-0.5 flex-shrink-0" />
                         <span>{lockReason}</span>
                       </div>
@@ -189,7 +189,7 @@ const SeasonScorecard = memo(
                         role="menuitem"
                         onClick={handleMove}
                         disabled={!canManage || !canMove}
-                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-secondary hover:bg-white/5 hover:text-white disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
                         title={
                           !canManage
                             ? lockReason || 'Locked after your corps competes'
@@ -208,7 +208,7 @@ const SeasonScorecard = memo(
                         role="menuitem"
                         onClick={handleRetire}
                         disabled={!canManage}
-                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-gray-300 hover:bg-white/5 hover:text-orange-400 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors border-t border-[#333]"
+                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-secondary hover:bg-white/5 hover:text-orange-400 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors border-t border-line"
                         title={
                           !canManage
                             ? lockReason || 'Locked after your corps competes'
@@ -232,10 +232,10 @@ const SeasonScorecard = memo(
             <button
               type="button"
               onClick={onShowConcept}
-              className="w-full mb-4 flex items-center gap-3 px-3 py-2.5 bg-[#222] border border-[#333] hover:border-[#0057B8] text-left transition-colors group"
+              className="w-full mb-4 flex items-center gap-3 px-3 py-2.5 bg-surface-raised border border-line hover:border-interactive text-left transition-colors group"
               title={hasConcept ? 'Edit this corps’ show design' : 'Design this corps’ show'}
             >
-              <Sparkles className="w-4 h-4 text-[#0057B8] flex-shrink-0" />
+              <Sparkles className="w-4 h-4 text-interactive flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] uppercase tracking-wider text-muted">Show Design</p>
                 {hasConcept ? (
@@ -246,11 +246,11 @@ const SeasonScorecard = memo(
                     )}
                   </>
                 ) : (
-                  <p className="text-sm font-bold text-[#0057B8]">Design your show →</p>
+                  <p className="text-sm font-bold text-interactive">Design your show →</p>
                 )}
               </div>
               {hasConcept && (
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted group-hover:text-[#0057B8] flex-shrink-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted group-hover:text-interactive flex-shrink-0">
                   Edit
                 </span>
               )}
@@ -260,12 +260,12 @@ const SeasonScorecard = memo(
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
             {/* Total Score / Medal Rating */}
-            <div className="bg-[#222] p-3">
+            <div className="bg-surface-raised p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted mb-1">
                 {isSoundSport ? 'Medal Rating' : 'Season Score'}
               </p>
               {loading ? (
-                <div className="h-8 w-20 bg-[#333] animate-pulse" />
+                <div className="h-8 w-20 bg-line animate-pulse" />
               ) : isSoundSport && rating ? (
                 // SoundSport: Display medal badge
                 <div
@@ -284,17 +284,17 @@ const SeasonScorecard = memo(
             </div>
 
             {/* Rank / Best in Show */}
-            <div className="bg-[#222] p-3">
+            <div className="bg-surface-raised p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted mb-1">
                 {isSoundSport ? 'Best in Show' : 'Rank'}
               </p>
               {loading ? (
-                <div className="h-8 w-16 bg-[#333] animate-pulse" />
+                <div className="h-8 w-16 bg-line animate-pulse" />
               ) : isSoundSport ? (
                 // SoundSport: Display Best in Show count with blue ribbon
                 <div className="flex items-center gap-2">
                   <BlueRibbonIcon className="w-6 h-6" />
-                  <span className="text-2xl font-bold text-[#0057B8] font-data tabular-nums">
+                  <span className="text-2xl font-bold text-interactive font-data tabular-nums">
                     {bestInShowCount}
                   </span>
                 </div>
@@ -327,10 +327,10 @@ const SeasonScorecard = memo(
               widget. SoundSport shows the medal tier, never the number. */}
           {bestRecent && bestRecent.score > 0 && (
             <p className="mt-3 text-[10px] text-muted flex items-center gap-1.5">
-              <Trophy className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+              <Trophy className="w-3 h-3 text-brand flex-shrink-0" />
               <span className="truncate">
                 Best recent:{' '}
-                <span className="font-bold text-gray-300">
+                <span className="font-bold text-secondary">
                   {isSoundSport
                     ? getSoundSportRating(bestRecent.score).rating
                     : bestRecent.score.toFixed(2)}

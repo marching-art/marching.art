@@ -29,8 +29,8 @@ const PickerRow = ({ label, options, value, onChange }) => (
           onClick={() => onChange(option.value)}
           className={`px-2 py-2 text-[11px] text-left border transition-colors ${
             value === option.value
-              ? 'border-[#0057B8] bg-[#0057B8]/10 text-white font-bold'
-              : 'border-[#333] text-gray-400 hover:border-[#555] hover:text-gray-200'
+              ? 'border-interactive bg-interactive/10 text-white font-bold'
+              : 'border-line text-muted hover:border-line-strong hover:text-secondary'
           }`}
         >
           {option.label}
@@ -112,15 +112,15 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
   if (namedCorps.length === 0) return null;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#0057B8]" />
+    <div className="bg-surface-card border border-line rounded-none">
+      <div className="bg-surface-raised px-4 py-3 border-b border-line">
+        <h2 className="text-xs font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-interactive" />
           Design This Season&apos;s Show
         </h2>
       </div>
       <div className="p-4 space-y-4">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted">
           New season, new program. Name your show and pick its style — matching your concept to the
           corps in your lineup earns nightly CorpsCoin design bonuses, and marching.art&apos;s daily
           coverage may feature your program. Concepts never affect competitive scores. You can also
@@ -137,8 +137,8 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
                 onClick={() => setSelectedClass(classId)}
                 className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border transition-colors flex items-center gap-1 ${
                   selectedClass === classId
-                    ? 'border-[#0057B8] bg-[#0057B8]/10 text-white'
-                    : 'border-[#333] text-muted hover:border-[#555]'
+                    ? 'border-interactive bg-interactive/10 text-white'
+                    : 'border-line text-muted hover:border-line-strong'
                 }`}
               >
                 {drafts[classId]?.saved && <Check className="w-3 h-3 text-green-400" />}
@@ -158,7 +158,7 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
             onChange={(e) => updateDraft({ showName: e.target.value })}
             placeholder={'e.g., "Beneath the Surface"'}
             maxLength={60}
-            className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+            className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
           />
         </div>
 
@@ -182,11 +182,11 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
         />
       </div>
 
-      <div className="px-4 py-3 border-t border-[#333] flex items-center justify-between">
+      <div className="px-4 py-3 border-t border-line flex items-center justify-between">
         <button
           type="button"
           onClick={onContinue}
-          className="h-10 px-4 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider hover:border-[#444] hover:text-white"
+          className="h-10 px-4 border border-line text-muted font-bold text-sm uppercase tracking-wider hover:border-line-strong hover:text-white"
         >
           Skip for now
         </button>
@@ -196,7 +196,7 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
               type="button"
               onClick={handleSave}
               disabled={!complete || saving}
-              className="h-10 px-4 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0066d6]"
+              className="h-10 px-4 bg-interactive text-white font-bold text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed hover:bg-interactive-hover"
             >
               {saving ? 'Saving...' : 'Save Concept'}
             </button>
@@ -204,7 +204,7 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
             <button
               type="button"
               onClick={onContinue}
-              className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center hover:bg-[#0066d6]"
+              className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center hover:bg-interactive-hover"
             >
               Continue
               <ChevronRight className="w-4 h-4 ml-1" />

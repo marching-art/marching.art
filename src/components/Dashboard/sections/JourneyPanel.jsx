@@ -183,25 +183,25 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-surface-card border border-line overflow-hidden">
       {/* Header */}
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-          <Map className="w-3.5 h-3.5 text-[#0057B8]" />
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+          <Map className="w-3.5 h-3.5 text-interactive" />
           First Season Journey
         </h3>
         <span className="text-[10px] font-bold text-muted font-data tabular-nums">
           {doneCount}/{STEPS.length}
         </span>
       </div>
-      <div className="h-1 bg-[#222]">
+      <div className="h-1 bg-surface-raised">
         <div
-          className="h-full bg-[#0057B8] transition-all duration-500"
+          className="h-full bg-interactive transition-all duration-500"
           style={{ width: `${(doneCount / STEPS.length) * 100}%` }}
         />
       </div>
 
-      <div className="divide-y divide-[#222]">
+      <div className="divide-y divide-line-subtle">
         {steps.map((step) => {
           const Icon = step.icon;
           return (
@@ -212,16 +212,14 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                     step.done
                       ? 'bg-green-500/20'
                       : step.ready
-                        ? 'bg-[#0057B8]/20'
-                        : 'bg-[#222] border border-[#333]'
+                        ? 'bg-interactive/20'
+                        : 'bg-surface-raised border border-line'
                   }`}
                 >
                   {step.done ? (
                     <Check className="w-3 h-3 text-green-400" />
                   ) : (
-                    <Icon
-                      className={`w-3 h-3 ${step.ready ? 'text-[#0057B8]' : 'text-muted'}`}
-                    />
+                    <Icon className={`w-3 h-3 ${step.ready ? 'text-interactive' : 'text-muted'}`} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -231,7 +229,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                     {step.title}
                   </span>
                   {!step.done && (
-                    <span className="text-[10px] text-yellow-600 ml-2 font-data whitespace-nowrap">
+                    <span className="text-[10px] text-brand ml-2 font-data whitespace-nowrap">
                       +{step.xp} XP{step.coin > 0 ? ` +${step.coin} CC` : ''}
                     </span>
                   )}
@@ -240,7 +238,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   <button
                     onClick={() => handleClaim(step)}
                     disabled={claiming === step.id}
-                    className="flex items-center gap-1 px-2.5 h-7 bg-yellow-600 hover:bg-yellow-500 text-white text-[10px] font-bold uppercase tracking-wider transition-colors press-feedback flex-shrink-0"
+                    className="flex items-center gap-1 px-2.5 h-7 bg-interactive hover:bg-interactive-hover text-white text-[10px] font-bold uppercase tracking-wider transition-colors press-feedback flex-shrink-0"
                   >
                     <Gift className="w-3 h-3" />
                     {claiming === step.id ? '...' : 'Claim'}
@@ -253,7 +251,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   {step.action?.type === 'link' && (
                     <Link
                       to={step.action.to}
-                      className="text-[10px] font-bold text-[#0057B8] hover:text-[#0066d6] whitespace-nowrap"
+                      className="text-[10px] font-bold text-interactive hover:text-interactive-hover whitespace-nowrap"
                     >
                       {step.action.label} →
                     </Link>
@@ -261,7 +259,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   {step.action?.type === 'lineup' && (
                     <button
                       onClick={() => onEditLineup?.()}
-                      className="text-[10px] font-bold text-[#0057B8] hover:text-[#0066d6] whitespace-nowrap"
+                      className="text-[10px] font-bold text-interactive hover:text-interactive-hover whitespace-nowrap"
                     >
                       {step.action.label} →
                     </button>
@@ -269,7 +267,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   {step.action?.type === 'concept' && (
                     <button
                       onClick={() => onSetConcept?.()}
-                      className="text-[10px] font-bold text-[#0057B8] hover:text-[#0066d6] whitespace-nowrap"
+                      className="text-[10px] font-bold text-interactive hover:text-interactive-hover whitespace-nowrap"
                     >
                       {step.action.label} →
                     </button>
@@ -278,7 +276,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                     <button
                       onClick={handleQuickJoin}
                       disabled={claiming === 'join_league'}
-                      className="text-[10px] font-bold text-[#0057B8] hover:text-[#0066d6] whitespace-nowrap"
+                      className="text-[10px] font-bold text-interactive hover:text-interactive-hover whitespace-nowrap"
                     >
                       {claiming === 'join_league' ? 'Joining...' : `${step.action.label} →`}
                     </button>

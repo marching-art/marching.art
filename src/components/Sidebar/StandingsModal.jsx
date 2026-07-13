@@ -19,14 +19,14 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
 
       {/* Modal Content */}
       <div
-        className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none max-h-[85dvh] flex flex-col"
+        className="relative w-full max-w-md bg-surface-card border border-line rounded-none max-h-[85dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between flex-shrink-0">
           <div>
-            <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#0057B8]" />
+            <h2 className="text-xs font-bold text-secondary uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-4 h-4 text-interactive" />
               Full Standings
             </h2>
             {displayDay && (
@@ -35,7 +35,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors"
+            className="p-1.5 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -43,7 +43,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
 
         {/* Standings List */}
         <div className="flex-1 overflow-y-auto">
-          <div className="divide-y divide-[#333]/50">
+          <div className="divide-y divide-line/50">
             {liveScores.map((row) => {
               const changeValue = row.change;
               const hasChange = changeValue !== null;
@@ -59,7 +59,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
                   <div className="flex items-center gap-3">
                     <span
                       className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-none ${
-                        row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-muted'
+                        row.rank <= 3 ? 'bg-interactive text-white' : 'bg-surface-raised text-muted'
                       }`}
                     >
                       {row.rank}
@@ -69,7 +69,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
                         className="text-sm text-white block"
                         title={`${row.sourceYear} ${row.corpsName}`}
                       >
-                        <span className="text-gray-400 font-data">{row.sourceYear}</span>{' '}
+                        <span className="text-muted font-data">{row.sourceYear}</span>{' '}
                         {row.corpsName}
                       </span>
                     </div>
@@ -109,7 +109,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex-shrink-0">
+        <div className="px-4 py-3 border-t border-line bg-surface-sunken flex-shrink-0">
           <p className="text-[10px] font-data text-muted text-center">
             {liveScores.length} of 25 corps with scores
           </p>

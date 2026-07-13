@@ -29,15 +29,15 @@ const cityLine = (city, stadium) => (stadium ? `${city} · ${stadium}` : city ||
 
 // One ranked overlap window — day, host city/stadium, distance, fit, cost.
 function WindowCard({ win, selected, onSelect }) {
-  const fitColor = win.isFree ? 'text-green-400' : 'text-amber-400';
+  const fitColor = win.isFree ? 'text-green-400' : 'text-warning';
   return (
     <button
       type="button"
       onClick={() => onSelect(win.day)}
       className={`w-full text-left grid grid-cols-[46px_1fr_auto] gap-3 items-center px-3 py-2.5 rounded-none border transition-colors press-feedback ${
         selected
-          ? 'border-[#0057B8] bg-[#0057B8]/10'
-          : 'border-[#333] bg-[#141414] hover:border-[#555]'
+          ? 'border-interactive bg-interactive/10'
+          : 'border-line bg-surface-sunken hover:border-line-strong'
       }`}
     >
       <div className="text-center">
@@ -49,7 +49,7 @@ function WindowCard({ win, selected, onSelect }) {
       <div className="min-w-0">
         <div className="text-[12px] font-bold text-white truncate">{win.city || 'TBA'}</div>
         {win.stadium && (
-          <div className="text-[10px] font-mono text-[#c9a227] truncate">{win.stadium}</div>
+          <div className="text-[10px] font-mono text-secondary truncate">{win.stadium}</div>
         )}
         <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1 text-[9px] font-mono text-muted">
           {win.milesApart != null && <span>{win.milesApart} mi apart</span>}
@@ -62,11 +62,11 @@ function WindowCard({ win, selected, onSelect }) {
       </div>
       <div className="text-right space-y-1">
         <div
-          className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-amber-400'}`}
+          className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-warning'}`}
         >
           {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost}`}
         </div>
-        <div className="text-[8px] font-mono uppercase tracking-wider text-[#c9a227] border border-[#8c7220] rounded-none px-1.5 py-0.5 inline-block">
+        <div className="text-[8px] font-mono uppercase tracking-wider text-secondary border border-line rounded-none px-1.5 py-0.5 inline-block">
           Ens +{win.ensembleBonusPct}%
         </div>
       </div>
@@ -79,9 +79,9 @@ function WindowCard({ win, selected, onSelect }) {
 function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
   const tier = proposal.proposerTravelTier;
   return (
-    <div className="border border-[#333] rounded-none overflow-hidden">
-      <div className="px-3 py-2 bg-[#222] flex items-center justify-between">
-        <span className="text-[11px] text-gray-300 min-w-0 truncate">
+    <div className="border border-line rounded-none overflow-hidden">
+      <div className="px-3 py-2 bg-surface-raised flex items-center justify-between">
+        <span className="text-[11px] text-secondary min-w-0 truncate">
           <span className="font-bold text-white">{proposal.fromCorpsName}</span> wants a joint
           rehearsal
         </span>
@@ -90,12 +90,12 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
         </span>
       </div>
       <div className="px-3 py-2.5 space-y-2.5">
-        <div className="text-[11px] text-gray-300 flex items-center gap-1.5">
-          <MapPin className="w-3 h-3 text-[#c9a227] shrink-0" />
+        <div className="text-[11px] text-secondary flex items-center gap-1.5">
+          <MapPin className="w-3 h-3 text-muted shrink-0" />
           <span className="truncate">{cityLine(proposal.city, proposal.stadium)}</span>
         </div>
-        <div className="grid grid-cols-2 gap-px bg-[#333] border border-[#333]">
-          <div className="bg-[#161616] px-2.5 py-2">
+        <div className="grid grid-cols-2 gap-px bg-line border border-line">
+          <div className="bg-surface-sunken px-2.5 py-2">
             <div className="text-[8px] font-mono uppercase tracking-wider text-muted mb-1">
               Your burden
             </div>
@@ -106,18 +106,16 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
                 : 'You are already together on tour.'}
             </div>
           </div>
-          <div className="bg-[#161616] px-2.5 py-2">
+          <div className="bg-surface-sunken px-2.5 py-2">
             <div className="text-[8px] font-mono uppercase tracking-wider text-muted mb-1">
               Your gain
             </div>
-            <div className="text-[13px] font-bold text-[#c9a227]">Ensemble +25%</div>
-            <div className="text-[9px] text-muted mt-0.5">
-              + morale &amp; the scrimmage report.
-            </div>
+            <div className="text-[13px] font-bold text-secondary">Ensemble +25%</div>
+            <div className="text-[9px] text-muted mt-0.5">+ morale &amp; the scrimmage report.</div>
           </div>
         </div>
         {blocked && (
-          <p className="text-[9px] font-mono text-amber-400/80">
+          <p className="text-[9px] font-mono text-warning">
             Week {Math.ceil(proposal.day / 7)} already has a joint — that week is full.
           </p>
         )}
@@ -125,14 +123,14 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
           <button
             disabled={busy}
             onClick={onDecline}
-            className="px-2.5 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-300 rounded-none press-feedback disabled:opacity-50"
+            className="px-2.5 py-1 text-[10px] font-bold uppercase bg-line text-secondary rounded-none press-feedback disabled:opacity-50"
           >
             Decline
           </button>
           <button
             disabled={busy || blocked}
             onClick={onAccept}
-            className="px-3 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-none press-feedback disabled:opacity-50 disabled:bg-[#333] disabled:text-muted"
+            className="px-3 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-none press-feedback disabled:opacity-50 disabled:bg-line disabled:text-muted"
           >
             Accept — book Day {proposal.day}
           </button>
@@ -171,9 +169,9 @@ function TaleOfTheTape({ scrimmage }) {
   };
 
   return (
-    <div className="border border-[#333] rounded-none overflow-hidden">
-      <div className="px-3 py-2 text-center border-b border-[#333] bg-gradient-to-b from-[#c9a227]/10 to-transparent">
-        <div className="text-[8px] font-mono uppercase tracking-[0.3em] text-[#c9a227]">
+    <div className="border border-line rounded-none overflow-hidden">
+      <div className="px-3 py-2 text-center border-b border-line bg-surface-raised">
+        <div className="text-[8px] font-mono uppercase tracking-[0.3em] text-secondary">
           Tale of the Tape
         </div>
         <div className="text-[9px] font-mono text-muted mt-1">
@@ -196,13 +194,13 @@ function TaleOfTheTape({ scrimmage }) {
             const win = d > 0;
             return (
               <React.Fragment key={caption}>
-                <span className="text-gray-400" title={CAPTION_LABELS[caption]}>
+                <span className="text-muted" title={CAPTION_LABELS[caption]}>
                   {caption}
                 </span>
                 <span className={`text-right ${win ? 'text-green-400 font-bold' : 'text-white'}`}>
                   {mine?.toFixed(2) ?? '—'}
                 </span>
-                <span className="text-gray-300 text-right">{theirs?.toFixed(2) ?? '—'}</span>
+                <span className="text-secondary text-right">{theirs?.toFixed(2) ?? '—'}</span>
                 <span
                   className={`text-right ${d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-muted'}`}
                 >
@@ -212,15 +210,15 @@ function TaleOfTheTape({ scrimmage }) {
               </React.Fragment>
             );
           })}
-          <span className="text-white font-bold border-t border-[#333] pt-1">Total</span>
-          <span className="text-white font-bold text-right border-t border-[#333] pt-1">
+          <span className="text-white font-bold border-t border-line pt-1">Total</span>
+          <span className="text-white font-bold text-right border-t border-line pt-1">
             {scrimmage.mine?.total?.toFixed(3) ?? '—'}
           </span>
-          <span className="text-gray-300 font-bold text-right border-t border-[#333] pt-1">
+          <span className="text-secondary font-bold text-right border-t border-line pt-1">
             {scrimmage.theirs?.total?.toFixed(3) ?? '—'}
           </span>
           <span
-            className={`font-bold text-right border-t border-[#333] pt-1 ${
+            className={`font-bold text-right border-t border-line pt-1 ${
               totalDiff > 0 ? 'text-green-400' : totalDiff < 0 ? 'text-red-400' : 'text-muted'
             }`}
           >
@@ -229,13 +227,13 @@ function TaleOfTheTape({ scrimmage }) {
           </span>
         </div>
       </div>
-      <div className="px-3 py-2 border-t border-[#333] bg-[#0f0f0f] flex items-center justify-between">
+      <div className="px-3 py-2 border-t border-line bg-surface-sunken flex items-center justify-between">
         <span className="text-[10px] font-mono text-muted">
           {totalDiff > 0 ? 'You took it' : totalDiff < 0 ? 'They took it' : 'Dead heat'}
         </span>
         <button
           onClick={copyText}
-          className="flex items-center gap-1.5 px-2 py-1 text-[9px] font-bold uppercase tracking-wider border border-[#333] text-gray-300 rounded-none press-feedback"
+          className="flex items-center gap-1.5 px-2 py-1 text-[9px] font-bold uppercase tracking-wider border border-line text-secondary rounded-none press-feedback"
         >
           {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
           {copied ? 'Copied' : 'Copy for Discord'}
@@ -255,13 +253,13 @@ function HeadToHead({ headToHead }) {
       <div className="text-[9px] font-mono uppercase tracking-wider text-muted">
         Head-to-head · this season
       </div>
-      <div className="border border-[#333] rounded-none divide-y divide-[#222]">
+      <div className="border border-line rounded-none divide-y divide-line-subtle">
         {rows.map(([uid, rec]) => {
           const lead = rec.wins - rec.losses;
-          const cls = lead > 0 ? 'text-green-400' : lead < 0 ? 'text-red-400' : 'text-gray-400';
+          const cls = lead > 0 ? 'text-green-400' : lead < 0 ? 'text-red-400' : 'text-muted';
           return (
             <div key={uid} className="flex items-center justify-between px-2.5 py-1.5">
-              <span className="text-[11px] text-gray-300 truncate flex items-center gap-1.5">
+              <span className="text-[11px] text-secondary truncate flex items-center gap-1.5">
                 <Trophy className="w-3 h-3 text-muted shrink-0" />
                 {rec.partnerCorpsName || 'Unknown corps'}
               </span>
@@ -365,12 +363,12 @@ export default function JointRehearsalPanel() {
   ]);
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
+    <div className="bg-surface-card border border-line rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <Handshake className="w-3 h-3" /> Joint Rehearsals
           {incoming.length > 0 && (
-            <span className="px-1.5 py-0.5 bg-[#c9a227] text-black rounded-none text-[9px]">
+            <span className="px-1.5 py-0.5 bg-interactive text-white rounded-none text-[9px]">
               {incoming.length}
             </span>
           )}
@@ -394,20 +392,20 @@ export default function JointRehearsalPanel() {
       {upcoming.map((joint) => (
         <div
           key={joint.day}
-          className="px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227] flex items-start gap-2"
+          className="px-3 py-2 bg-surface-sunken border border-line text-[10px] text-secondary flex items-start gap-2"
         >
           <Handshake className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
           <span>
             Day {joint.day} (Wk {weekOf(joint.day)}): joint rehearsal with{' '}
             <span className="font-bold">{joint.partnerCorpsName}</span>
             {joint.city && (
-              <span className="text-[#c9a227]/70">
+              <span className="text-muted">
                 {' '}
                 <MapPin className="w-2.5 h-2.5 inline" /> {cityLine(joint.city, joint.stadium)}
               </span>
             )}
             {joint.travelTier && (
-              <span className="text-amber-400">
+              <span className="text-warning">
                 {' '}
                 · you cover the {TIER_LABELS[joint.travelTier] || joint.travelTier} leg
               </span>
@@ -438,7 +436,7 @@ export default function JointRehearsalPanel() {
       {/* Outgoing pending */}
       {(data?.outgoing || []).map((proposal) => (
         <div key={proposal.id} className="px-3 py-1.5 text-[10px] text-muted">
-          Awaiting <span className="text-gray-300">{proposal.toCorpsName}</span> for Day{' '}
+          Awaiting <span className="text-secondary">{proposal.toCorpsName}</span> for Day{' '}
           {proposal.day}
           {proposal.city ? ` · ${proposal.city}` : ''} — expires unanswered that morning.
         </div>
@@ -447,7 +445,7 @@ export default function JointRehearsalPanel() {
       {/* Propose flow — partner select → find overlaps → ranked windows.
               Available even with joints booked; only booked weeks are excluded. */}
       {data && (
-        <div className="space-y-3 border border-[#333] rounded-none p-3 bg-[#161616]">
+        <div className="space-y-3 border border-line rounded-none p-3 bg-surface-sunken">
           {!overlaps ? (
             <div className="space-y-2">
               <label className="text-[9px] font-bold uppercase tracking-wider text-muted">
@@ -457,7 +455,7 @@ export default function JointRehearsalPanel() {
                 <select
                   value={toUid}
                   onChange={(e) => setToUid(e.target.value)}
-                  className="flex-1 bg-[#0f0f0f] border border-[#333] rounded-none px-2 py-1.5 text-xs text-white focus:border-[#0057B8] focus:outline-none"
+                  className="flex-1 bg-surface-sunken border border-line rounded-none px-2 py-1.5 text-xs text-white focus:border-interactive focus:outline-none"
                 >
                   <option value="">Choose a corps…</option>
                   {(data.roster || []).map((corps) => (
@@ -471,7 +469,7 @@ export default function JointRehearsalPanel() {
                   type="button"
                   disabled={busy || !toUid}
                   onClick={findOverlaps}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-muted press-feedback"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-interactive text-white disabled:bg-line disabled:text-muted press-feedback"
                 >
                   {busy ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -491,7 +489,7 @@ export default function JointRehearsalPanel() {
                 <button
                   type="button"
                   onClick={cancelOverlaps}
-                  className="flex items-center gap-1 text-[9px] font-mono uppercase text-muted hover:text-gray-300 press-feedback"
+                  className="flex items-center gap-1 text-[9px] font-mono uppercase text-muted hover:text-secondary press-feedback"
                 >
                   <X className="w-3 h-3" /> Cancel
                 </button>
@@ -517,11 +515,11 @@ export default function JointRehearsalPanel() {
                   <p className="text-[9px] font-mono text-muted">
                     Stadium shown when on file — otherwise the city stands alone.
                   </p>
-                  <div className="flex items-center justify-end gap-2 pt-0.5 border-t border-[#2a2a2a]">
+                  <div className="flex items-center justify-end gap-2 pt-0.5 border-t border-line-muted">
                     <button
                       type="button"
                       onClick={cancelOverlaps}
-                      className="px-2.5 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider border border-[#333] text-gray-400 press-feedback"
+                      className="px-2.5 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider border border-line text-muted press-feedback"
                     >
                       Cancel
                     </button>
@@ -529,7 +527,7 @@ export default function JointRehearsalPanel() {
                       type="button"
                       disabled={busy || !selectedDay}
                       onClick={propose}
-                      className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-muted press-feedback"
+                      className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-interactive text-white disabled:bg-line disabled:text-muted press-feedback"
                     >
                       {busy ? (
                         <Loader2 className="w-3 h-3 animate-spin inline" />

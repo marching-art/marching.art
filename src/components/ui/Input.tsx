@@ -1,8 +1,8 @@
 // =============================================================================
-// INPUT COMPONENTS - ESPN PRO DATA STYLE
+// INPUT COMPONENTS - DATA-TERMINAL STYLE
 // =============================================================================
 // Dense, utilitarian form controls. No floating labels, no material design.
-// Laws: bg-[#0a0a0a], border-[#333], focus:border-espn-blue, rounded-none
+// Laws: bg-background, border-line, focus:border-interactive, rounded-none
 
 import React, { forwardRef, useId } from 'react';
 import { LucideIcon } from 'lucide-react';
@@ -77,15 +77,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={id}
             className={`
               w-full rounded-none
-              bg-[#111] border
-              text-white text-base sm:text-sm placeholder-gray-400
+              bg-surface-sunken border
+              text-white text-base sm:text-sm placeholder-muted
               transition-colors
               focus:outline-none
               disabled:opacity-50 disabled:cursor-not-allowed
               ${
                 hasError
                   ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
-                  : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
+                  : 'border-line hover:border-line-strong focus:border-interactive'
               }
               ${sizeStyles[inputSize]}
               ${LeftIcon ? 'pl-8' : ''}
@@ -143,15 +143,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={id}
           className={`
             w-full px-3 py-2 rounded-none min-h-[80px] resize-none
-            bg-[#111] border
-            text-white text-base sm:text-sm placeholder-gray-400
+            bg-surface-sunken border
+            text-white text-base sm:text-sm placeholder-muted
             transition-colors
             focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed
             ${
               hasError
                 ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
-                : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
+                : 'border-line hover:border-line-strong focus:border-interactive'
             }
             ${className}
           `}
@@ -222,7 +222,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={id}
           className={`
             w-full rounded-none appearance-none cursor-pointer
-            bg-[#111] border
+            bg-surface-sunken border
             text-white text-base sm:text-sm
             transition-colors
             focus:outline-none
@@ -230,7 +230,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ${
               hasError
                 ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
-                : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
+                : 'border-line hover:border-line-strong focus:border-interactive'
             }
             ${sizeStyles[selectSize]}
             ${className}

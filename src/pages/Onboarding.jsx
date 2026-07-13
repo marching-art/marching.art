@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, ArrowLeft, Music, PartyPopper, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Heading } from '../components/ui';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { getSeasonData, getCorpsValues } from '../api/season';
 import { mergeProfile } from '../api/profile';
@@ -375,14 +376,14 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 sm:p-8">
+          <div className="bg-surface-card border border-line rounded-none p-6 sm:p-8">
             {/* Progress Bar */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
@@ -392,17 +393,17 @@ const Onboarding = () => {
                       {idx > 0 && (
                         <div
                           className={`flex-1 h-1 mx-2 rounded-full ${
-                            step > idx ? 'bg-[#0057B8]' : 'bg-charcoal-700'
+                            step > idx ? 'bg-interactive' : 'bg-charcoal-700'
                           }`}
                         />
                       )}
                       <div
                         className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
                           step === s.number
-                            ? 'bg-[#0057B8] text-white'
+                            ? 'bg-interactive text-white'
                             : step > s.number
                               ? 'bg-green-500 text-white'
-                              : 'bg-charcoal-700 text-gray-400'
+                              : 'bg-charcoal-700 text-muted'
                         }`}
                       >
                         {step > s.number ? (
@@ -419,7 +420,7 @@ const Onboarding = () => {
                 {STEPS.map((s) => (
                   <span
                     key={s.number}
-                    className={step === s.number ? 'text-[#0057B8] font-semibold' : ''}
+                    className={step === s.number ? 'text-interactive font-semibold' : ''}
                   >
                     {s.title}
                   </span>
@@ -456,11 +457,13 @@ const Onboarding = () => {
                     className="space-y-4"
                   >
                     <div className="text-center mb-2">
-                      <div className="inline-flex items-center justify-center w-14 h-14 bg-[#0057B8]/20 rounded-none mb-3">
-                        <Music className="w-7 h-7 text-[#0057B8]" />
+                      <div className="inline-flex items-center justify-center w-14 h-14 bg-interactive/20 rounded-none mb-3">
+                        <Music className="w-7 h-7 text-interactive" />
                       </div>
-                      <h2 className="text-xl font-bold text-white mb-1">Build Your Lineup</h2>
-                      <p className="text-gray-400 text-xs">
+                      <Heading level="title" className="mb-1">
+                        Build Your Lineup
+                      </Heading>
+                      <p className="text-muted text-xs">
                         Draft a corps for each caption • Budget: {SOUNDSPORT_POINT_LIMIT}
                       </p>
                     </div>
@@ -486,7 +489,7 @@ const Onboarding = () => {
                         </p>
                         <button
                           onClick={fetchSeasonData}
-                          className="h-10 px-5 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider rounded-none hover:bg-[#0066d6]"
+                          className="h-10 px-5 bg-interactive text-white text-sm font-bold uppercase tracking-wider rounded-none hover:bg-interactive-hover"
                         >
                           Try Again
                         </button>
@@ -494,25 +497,25 @@ const Onboarding = () => {
                     ) : (
                       <div className="text-center py-8">
                         <div className="animate-pulse mb-4">
-                          <div className="w-12 h-12 rounded-full bg-[#0057B8]/20 mx-auto" />
+                          <div className="w-12 h-12 rounded-full bg-interactive/20 mx-auto" />
                         </div>
-                        <p className="text-gray-400 text-sm">Loading available corps...</p>
+                        <p className="text-muted text-sm">Loading available corps...</p>
                       </div>
                     )}
 
                     {/* Lineup summary */}
                     <div className="p-3 rounded-none bg-charcoal-800/70 border border-charcoal-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">Lineup Progress</span>
+                        <span className="text-sm text-muted">Lineup Progress</span>
                         <span
-                          className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-yellow-400'}`}
+                          className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-secondary'}`}
                         >
                           {Object.keys(lineup).length}/8 selected
                         </span>
                       </div>
                       <div className="h-2 bg-charcoal-900 rounded-full mt-2 overflow-hidden">
                         <div
-                          className={`h-full transition-all ${isLineupValid ? 'bg-green-500' : 'bg-yellow-500'}`}
+                          className={`h-full transition-all ${isLineupValid ? 'bg-green-500' : 'bg-surface-elevated'}`}
                           style={{ width: `${(Object.keys(lineup).length / 8) * 100}%` }}
                         />
                       </div>
@@ -532,7 +535,7 @@ const Onboarding = () => {
               {step > 1 && (
                 <button
                   onClick={handleBack}
-                  className="flex items-center gap-2 px-5 py-3 bg-[#2a2a2a] border border-[#333] text-white rounded-none hover:bg-[#333] transition-colors font-semibold"
+                  className="flex items-center gap-2 px-5 py-3 bg-surface-elevated border border-line text-white rounded-none hover:bg-line transition-colors font-semibold"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -549,7 +552,7 @@ const Onboarding = () => {
                         usernameStatus.valid !== true)) ||
                     (step === 2 && !formData.corpsName.trim())
                   }
-                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-none hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-interactive text-white rounded-none hover:bg-interactive-hover transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Continue
                   <ArrowRight className="w-5 h-5" />
@@ -558,7 +561,7 @@ const Onboarding = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !isLineupValid}
-                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-none hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-interactive text-white rounded-none hover:bg-interactive-hover transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -599,7 +602,7 @@ const Onboarding = () => {
                     );
                   }
                 }}
-                className="w-full mt-3 text-gray-400 hover:text-gray-200 text-sm transition-colors"
+                className="w-full mt-3 text-muted hover:text-secondary text-sm transition-colors"
                 disabled={loading || availableCorps.length === 0}
               >
                 Auto-fill remaining slots

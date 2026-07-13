@@ -132,13 +132,13 @@ export default function HostEventCard({ seasonUid }) {
   };
 
   const inputClass =
-    'w-full bg-[#0f0f0f] border border-[#333] rounded-none px-2 py-1.5 text-xs text-white ' +
-    'placeholder-gray-600 focus:border-[#0057B8] focus:outline-none';
+    'w-full bg-surface-sunken border border-line rounded-none px-2 py-1.5 text-xs text-white ' +
+    'placeholder-muted focus:border-interactive focus:outline-none';
 
   return (
-    <div className="mx-3 my-4 bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
+    <div className="mx-3 my-4 bg-surface-card border border-line rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#c9a227]">
+        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-secondary">
           <Landmark className="w-3 h-3" /> Host Your Own Show
         </span>
       </div>
@@ -155,11 +155,11 @@ export default function HostEventCard({ seasonUid }) {
       </p>
 
       {!hasCorps && (
-        <div className="text-[10px] text-amber-400">Field a corps before hosting events.</div>
+        <div className="text-[10px] text-warning">Field a corps before hosting events.</div>
       )}
 
       {hasCorps && seasonLimitReached && (
-        <div className="text-[10px] text-amber-400">
+        <div className="text-[10px] text-warning">
           You&apos;ve already hosted a show this season — directors can host one show per season.
         </div>
       )}
@@ -186,10 +186,10 @@ export default function HostEventCard({ seasonUid }) {
               }
               className={`text-left px-2 py-1.5 rounded-none border press-feedback ${
                 locked
-                  ? 'border-[#2a2a2a] opacity-50 cursor-not-allowed'
+                  ? 'border-line-muted opacity-50 cursor-not-allowed'
                   : venueTier === t.id
-                    ? 'border-[#c9a227] bg-[#c9a227]/10'
-                    : 'border-[#333] hover:border-[#555]'
+                    ? 'border-interactive bg-interactive/10'
+                    : 'border-line hover:border-line-strong'
               }`}
             >
               <div className="text-[10px] font-bold text-white leading-tight">
@@ -244,7 +244,7 @@ export default function HostEventCard({ seasonUid }) {
               )}
             </div>
             {venueListOpen && (
-              <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-[#0f0f0f] border border-[#333] rounded-none shadow-lg">
+              <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-surface-sunken border border-line rounded-none shadow-lg">
                 {venueResults.length === 0 ? (
                   <div className="px-2 py-1.5 text-[10px] text-muted">
                     No matching city — try a nearby one.
@@ -266,7 +266,7 @@ export default function HostEventCard({ seasonUid }) {
                         className={`w-full flex items-center justify-between px-2 py-1.5 text-[10px] text-left ${
                           taken
                             ? 'text-muted cursor-not-allowed'
-                            : 'text-gray-300 hover:bg-[#1f1f1f]'
+                            : 'text-secondary hover:bg-surface-sunken'
                         }`}
                       >
                         <span className="truncate">{v.label}</span>
@@ -304,7 +304,7 @@ export default function HostEventCard({ seasonUid }) {
               busy || !hasCorps || seasonLimitReached || !selectedVenue || corpsCoin < tier.rentalCC
             }
             className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider
-                  bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-muted press-feedback"
+                  bg-interactive text-white disabled:bg-line disabled:text-muted press-feedback"
           >
             {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Book Venue'}
           </button>
@@ -316,13 +316,13 @@ export default function HostEventCard({ seasonUid }) {
 
       {/* This season's hosted events */}
       {events && events.length > 0 && (
-        <div className="pt-2 border-t border-[#242424] space-y-1">
+        <div className="pt-2 border-t border-line-subtle space-y-1">
           <div className="text-[9px] font-bold uppercase tracking-wider text-muted">
             Hosted This Season
           </div>
           {events.map((event) => (
             <div key={event.id} className="flex items-center justify-between text-[10px]">
-              <span className="text-gray-300 truncate pr-2">
+              <span className="text-secondary truncate pr-2">
                 <span className="text-muted tabular-nums">D{event.day}</span> {event.eventName}
                 <span className="text-muted"> · {event.location}</span>
               </span>

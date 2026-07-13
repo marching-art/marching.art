@@ -14,7 +14,7 @@
 
 ## Executive Summary
 
-marching.art has evolved from an MVP to a **professionally polished fantasy drum corps platform**. The ESPN-inspired design system is cohesive, the Firebase architecture scales well, and the gamification loop (streaks, XP, class unlocks) creates genuine engagement. All 10 original Quick Wins have been completed.
+marching.art has evolved from an MVP to a **professionally polished fantasy drum corps platform**. The data-terminal design system is cohesive, the Firebase architecture scales well, and the gamification loop (streaks, XP, class unlocks) creates genuine engagement. All 10 original Quick Wins have been completed.
 
 **However, critical gaps remain between "polished beta" and "award-winning platform":**
 
@@ -37,34 +37,34 @@ The product has excellent bones. What's missing is the **communication layer** t
 
 ### Comparison to Industry Leaders
 
-| Feature              | ESPN Fantasy | Sleeper   | Yahoo Fantasy | marching.art                   |
-| -------------------- | ------------ | --------- | ------------- | ------------------------------ |
+| Feature              | Legacy apps | Sleeper   | Yahoo Fantasy | marching.art                   |
+| -------------------- | ----------- | --------- | ------------- | ------------------------------ |
 | **Core Fantasy**     |
-| Draft System         | ✅           | ✅        | ✅            | ✅ Caption Selection           |
-| Live Scoring         | ✅           | ✅        | ✅            | ✅                             |
-| Leagues              | ✅           | ✅        | ✅            | ✅ (75% complete)              |
-| Leaderboards         | ✅           | ✅        | ✅            | ✅                             |
+| Draft System         | ✅          | ✅        | ✅            | ✅ Caption Selection           |
+| Live Scoring         | ✅          | ✅        | ✅            | ✅                             |
+| Leagues              | ✅          | ✅        | ✅            | ✅ (75% complete)              |
+| Leaderboards         | ✅          | ✅        | ✅            | ✅                             |
 | **Communication**    |
-| Email Notifications  | ✅           | ✅        | ✅            | ❌ **Critical Gap**            |
-| Push Notifications   | ✅           | ✅        | ✅            | ❌ **Critical Gap**            |
-| In-App Notifications | ✅           | ✅        | ✅            | ✅ (League only)               |
+| Email Notifications  | ✅          | ✅        | ✅            | ❌ **Critical Gap**            |
+| Push Notifications   | ✅          | ✅        | ✅            | ❌ **Critical Gap**            |
+| In-App Notifications | ✅          | ✅        | ✅            | ✅ (League only)               |
 | **Social**           |
-| Friend System        | ✅           | ✅        | ✅            | ❌                             |
-| Activity Feed        | ✅           | ✅        | ✅            | ⚠️ (League-scoped)             |
-| Social Sharing       | ✅           | ✅        | ✅            | ❌                             |
+| Friend System        | ✅          | ✅        | ✅            | ❌                             |
+| Activity Feed        | ✅          | ✅        | ✅            | ⚠️ (League-scoped)             |
+| Social Sharing       | ✅          | ✅        | ✅            | ❌                             |
 | **Engagement**       |
-| Daily Streaks        | ✅           | ✅        | ❌            | ✅ **Excellent**               |
-| Weekly Recaps        | ✅           | ✅        | ✅            | ❌                             |
-| Matchup Previews     | ✅           | ✅        | ✅            | ⚠️ (Basic)                     |
-| Rivalry System       | ❌           | ✅        | ❌            | ✅ **Implemented**             |
+| Daily Streaks        | ✅          | ✅        | ❌            | ✅ **Excellent**               |
+| Weekly Recaps        | ✅          | ✅        | ✅            | ❌                             |
+| Matchup Previews     | ✅          | ✅        | ✅            | ⚠️ (Basic)                     |
+| Rivalry System       | ❌          | ✅        | ❌            | ✅ **Implemented**             |
 | **Monetization**     |
-| Battle Pass          | ✅           | ✅        | ❌            | ❌ (Types only)                |
-| Cosmetics Store      | ❌           | ✅        | ❌            | ❌                             |
-| In-Game Currency     | ❌           | ✅        | ❌            | ✅ CorpsCoin                   |
+| Battle Pass          | ✅          | ✅        | ❌            | ❌ (Types only)                |
+| Cosmetics Store      | ❌          | ✅        | ❌            | ❌                             |
+| In-Game Currency     | ❌          | ✅        | ❌            | ✅ CorpsCoin                   |
 | **Polish**           |
-| Onboarding NPS       | High         | High      | Medium        | ✅ Good (3-step)               |
-| Empty States         | Excellent    | Excellent | Good          | ✅ Good                        |
-| Offline Mode         | ✅           | ✅        | Partial       | ⚠️ (SW registered, incomplete) |
+| Onboarding NPS       | High        | High      | Medium        | ✅ Good (3-step)               |
+| Empty States         | Excellent   | Excellent | Good          | ✅ Good                        |
+| Offline Mode         | ✅          | ✅        | Partial       | ⚠️ (SW registered, incomplete) |
 
 ### Missing "Table Stakes" Features
 
@@ -550,7 +550,7 @@ Being critical as requested:
 | ~~**QW-14**~~ | ~~Fix placeholder contrast~~             | 1h     | Medium | **✅ DONE** | Global CSS fix: gray-600→gray-400 (5.4:1 contrast)          |
 | ~~**QW-15**~~ | ~~Add modal ARIA attributes~~            | 2h     | Medium | **✅ DONE** | Added role, aria-modal, aria-labelledby to 9 modals         |
 | ~~**QW-16**~~ | ~~Lazy-load canvas-confetti~~            | 30m    | Low    | **✅ DONE** | Dynamic import with module caching                          |
-| ~~**QW-17**~~ | ~~Add focus-visible global styles~~      | 1h     | Medium | **✅ DONE** | :focus-visible with ESPN blue, input border override        |
+| ~~**QW-17**~~ | ~~Add focus-visible global styles~~      | 1h     | Medium | **✅ DONE** | :focus-visible with azure, input border override            |
 | ~~**QW-18**~~ | ~~Free Streak Freeze at 30 days~~        | 2h     | High   | **✅ DONE** | 30-day milestone now includes free 24h freeze               |
 | ~~**QW-19**~~ | ~~XP gain floating feedback~~            | 3h     | Medium | **✅ DONE** | Enhanced PlayerStatusBar + global XPFeedbackContainer       |
 | ~~**QW-20**~~ | ~~Level-up celebration~~                 | 3h     | High   | **✅ DONE** | Full-screen LevelUpCelebration with confetti + class unlock |
@@ -670,7 +670,7 @@ Being critical as requested:
 
 ### The Bottom Line
 
-marching.art is an **exceptionally well-built fantasy sports platform** with professional-grade architecture, thoughtful gamification, and polished UI. The ESPN-inspired design system creates immediate credibility.
+marching.art is an **exceptionally well-built fantasy sports platform** with professional-grade architecture, thoughtful gamification, and polished UI. The data-terminal design system creates immediate credibility.
 
 **What separates "excellent" from "award-winning":**
 

@@ -119,7 +119,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden bg-[#1a1a1a] ${containerClassName}`}
+      className={`relative overflow-hidden bg-surface-card ${containerClassName}`}
       style={{
         aspectRatio: aspectRatioStyle,
         width: width ? `${width}px` : undefined,
@@ -143,7 +143,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
       {/* Error State */}
       {hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#222]">
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-raised">
           <span className="text-xs text-muted">Failed to load</span>
         </div>
       )}
@@ -218,15 +218,13 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
   return (
     <div
       className={`
-        relative rounded-none overflow-hidden bg-[#333] flex items-center justify-center
+        relative rounded-none overflow-hidden bg-line flex items-center justify-center
         ${avatarSizes[size]}
         ${className}
       `}
     >
       {/* Fallback with initials */}
-      {showFallback && (
-        <span className="text-gray-400 font-bold text-xs">{fallback || initials}</span>
-      )}
+      {showFallback && <span className="text-muted font-bold text-xs">{fallback || initials}</span>}
 
       {/* Avatar Image */}
       {!showFallback && (
@@ -300,7 +298,7 @@ export const CorpsLogo: React.FC<CorpsLogoProps> = ({
   return (
     <div
       className={`
-        relative rounded-none overflow-hidden bg-[#222] border border-[#333]
+        relative rounded-none overflow-hidden bg-surface-raised border border-line
         flex items-center justify-center aspect-avatar
         ${logoSizes[size]}
         ${className}

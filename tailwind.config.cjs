@@ -19,7 +19,7 @@ module.exports = {
     extend: {
       colors: {
         // ===========================================
-        // ESPN FANTASY - PROFESSIONAL DATA DESIGN SYSTEM
+        // DATA-TERMINAL DESIGN SYSTEM
         // High density, no blooms, no gradients, high contrast
         // ===========================================
 
@@ -27,24 +27,64 @@ module.exports = {
         black: '#000000',
         white: '#FFFFFF',
 
-        // PRIMARY BRAND (ESPN Blue)
-        'espn-blue': '#0057B8',
-        'dci-blue': '#0057B8',
-        primary: '#0057B8',
+        // ===========================================
+        // BRAND — permanent gold. The anchor of the visual identity:
+        // logo, wordmark, and reward/achievement moments only. Per the
+        // unification plan (docs/VISUAL_IDENTITY_UNIFICATION.md), gold is
+        // NEVER a generic UI accent — that job belongs to `interactive`.
+        // ===========================================
+        brand: {
+          DEFAULT: '#EAB308', // gold
+          strong: '#CA8A04', // hover / active / borders
+          subtle: '#A16207', // dim gold
+        },
+
+        // ===========================================
+        // INTERACTIVE / SELF — azure. Links, primary actions, active nav,
+        // focus rings, "your row" highlight. Replaces the legacy #0057B8,
+        // which failed WCAG (~2.9:1) on the app background; azure clears
+        // ~5.4:1. Warm gold vs. cool azure keeps reward and interaction
+        // perceptually distinct.
+        // ===========================================
+        interactive: {
+          DEFAULT: '#3B82F6', // azure
+          hover: '#2563EB',
+          subtle: '#1D4ED8',
+        },
+
+        // `primary` maps to azure (the interactive color) for back-compat with
+        // components that use bg-primary/text-primary.
+        primary: '#3B82F6',
         'primary-content': '#FFFFFF',
 
         // Panel color
         panel: '#1a1a1a',
 
         // SURFACE COLORS - Deep neutral backgrounds
-        background: '#0A0A0A',
+        // Canonical neutral ramp (recessed → elevated). The sweep collapses the
+        // scattered near-black hexes (#0f0f0f–#252525) onto these five steps.
+        background: '#0A0A0A', // App background
+        'surface-sunken': '#111111', // Recessed wells, inputs, tracks
         surface: {
           DEFAULT: '#0A0A0A', // App Background
+          sunken: '#111111', // Recessed wells
           card: '#1A1A1A', // Card Background
-          elevated: '#2A2A2A', // Elevated elements
+          raised: '#222222', // Card headers/footers, hover, chips
+          elevated: '#2A2A2A', // Popovers, menus, top layer
         },
         'surface-secondary': '#1A1A1A',
         'surface-tertiary': '#2A2A2A',
+        'surface-card': '#1A1A1A',
+        'surface-raised': '#222222',
+        'surface-elevated': '#2A2A2A',
+
+        // HAIRLINE BORDERS - one opaque line scale (collapses #222/#333/#444/#555)
+        line: {
+          subtle: '#242424', // Faint dividers
+          muted: '#2A2A2A', // Between subtle and default
+          DEFAULT: '#333333', // Standard card/structure hairline
+          strong: '#444444', // Emphasis / hover borders
+        },
 
         // TEXT COLORS - High contrast hierarchy
         text: {
@@ -54,6 +94,7 @@ module.exports = {
           muted: '#999999', // Muted/disabled text (>=4.5:1 on #0A0A0A per WCAG AA)
         },
         main: '#FFFFFF',
+        secondary: '#B3B3B3', // text-secondary (unambiguous single-word key)
         muted: '#999999',
         'text-main': '#FFFFFF',
         'text-secondary': '#B3B3B3',
@@ -115,7 +156,10 @@ module.exports = {
       fontFamily: {
         mono: ['"JetBrains Mono"', '"Roboto Mono"', 'monospace'],
         sans: ['"Inter"', 'sans-serif'],
-        display: ['Oswald', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+        // Single grotesque (Inter) at varied weights — the Swiss/architect
+        // posture. The former Oswald/Barlow display face was never loaded;
+        // `font-display` now resolves to Inter with no fallback surprise.
+        display: ['Inter', 'system-ui', 'sans-serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
         data: ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace'],
       },

@@ -8,6 +8,7 @@ import { getSeasonData, getSeasonRecaps } from '../../api/season';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
 import RivalryHistoryCard from './RivalryHistoryCard';
+import { Heading } from '../ui';
 import { MatchupOverviewPanel, MatchupShowsPanel } from './MatchupDetailParts';
 import {
   calculateMatchupBattles,
@@ -330,7 +331,7 @@ const MatchupDetailView = ({
       >
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-4"
+          className="flex items-center gap-2 text-secondary hover:text-white transition-colors mb-4"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="text-sm">Back to Matchups</span>
@@ -346,7 +347,9 @@ const MatchupDetailView = ({
           )}
         </div>
 
-        <h1 className="text-xl font-bold text-white text-center">Head-to-Head Matchup</h1>
+        <Heading level="title" as="h1" className="text-center">
+          Head-to-Head Matchup
+        </Heading>
       </m.div>
 
       {/* Rivalry Card */}
@@ -392,10 +395,10 @@ const MatchupDetailView = ({
               className={`w-16 h-16 mx-auto rounded-none flex items-center justify-center mb-2 ${
                 battleBreakdown
                   ? battleBreakdown.winnerId === matchup.user1
-                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    ? 'bg-success/20 border-2 border-green-500/50'
                     : 'bg-charcoal-800 border-2 border-white/20'
                   : user1Leading
-                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    ? 'bg-success/20 border-2 border-green-500/50'
                     : 'bg-charcoal-800 border-2 border-white/20'
               }`}
             >
@@ -420,12 +423,12 @@ const MatchupDetailView = ({
                   ? battleBreakdown.winnerId === matchup.user1
                     ? 'text-green-400'
                     : battleBreakdown.isTie
-                      ? 'text-yellow-400'
+                      ? 'text-secondary'
                       : 'text-white'
                   : user1Leading
                     ? 'text-green-400'
                     : tied
-                      ? 'text-yellow-400'
+                      ? 'text-secondary'
                       : 'text-white'
               }`}
             >
@@ -457,9 +460,7 @@ const MatchupDetailView = ({
                 </span>
               </div>
             )}
-            {tied && !loading && (
-              <span className="mt-2 text-xs font-bold text-yellow-400">TIE</span>
-            )}
+            {tied && !loading && <span className="mt-2 text-xs font-bold text-secondary">TIE</span>}
           </div>
 
           {/* User 2 */}
@@ -468,10 +469,10 @@ const MatchupDetailView = ({
               className={`w-16 h-16 mx-auto rounded-none flex items-center justify-center mb-2 ${
                 battleBreakdown
                   ? battleBreakdown.winnerId === matchup.user2
-                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    ? 'bg-success/20 border-2 border-green-500/50'
                     : 'bg-charcoal-800 border-2 border-white/20'
                   : user2Leading
-                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    ? 'bg-success/20 border-2 border-green-500/50'
                     : 'bg-charcoal-800 border-2 border-white/20'
               }`}
             >
@@ -496,12 +497,12 @@ const MatchupDetailView = ({
                   ? battleBreakdown.winnerId === matchup.user2
                     ? 'text-green-400'
                     : battleBreakdown.isTie
-                      ? 'text-yellow-400'
+                      ? 'text-secondary'
                       : 'text-white'
                   : user2Leading
                     ? 'text-green-400'
                     : tied
-                      ? 'text-yellow-400'
+                      ? 'text-secondary'
                       : 'text-white'
               }`}
             >
@@ -590,8 +591,8 @@ const MatchupDetailView = ({
               onClick={() => setActiveView(tab.id)}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-none font-semibold transition-all relative ${
                 activeView === tab.id
-                  ? 'bg-yellow-500 text-charcoal-900'
-                  : 'glass text-gray-300 hover:text-white'
+                  ? 'bg-interactive text-white'
+                  : 'glass text-secondary hover:text-white'
               }`}
             >
               <Icon

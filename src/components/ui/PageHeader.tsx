@@ -1,10 +1,11 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { headingRecipes } from './Heading';
 
 // =============================================================================
 // PAGE HEADER COMPONENT
 // =============================================================================
-// Shared fixed header for GameShell pages. Matches the ESPN-terminal look
+// Shared fixed header for GameShell pages. Matches the data-terminal look
 // established by the Schedule and Scores pages so every page reads as one
 // system: tight #1a1a1a bar, an accent icon, an uppercase title, an optional
 // subtitle, and up to a few right-aligned stats.
@@ -39,7 +40,7 @@ export interface PageHeaderProps {
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
   icon: Icon,
-  iconClassName = 'text-[#0057B8]',
+  iconClassName = 'text-interactive',
   title,
   subtitle,
   stats,
@@ -47,14 +48,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 ${className}`}>
+    <div className={`flex-shrink-0 bg-surface-card border-b border-line px-4 py-3 ${className}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Icon className={`w-5 h-5 flex-shrink-0 ${iconClassName}`} aria-hidden="true" />
           <div className="min-w-0">
-            <h1 className="text-sm font-bold text-white uppercase tracking-wider truncate">
-              {title}
-            </h1>
+            <h1 className={`${headingRecipes.section} truncate`}>{title}</h1>
             {subtitle && <div className="text-[10px] text-muted truncate">{subtitle}</div>}
           </div>
         </div>

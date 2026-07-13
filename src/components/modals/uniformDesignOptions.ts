@@ -40,7 +40,7 @@ export const CLASS_DISPLAY: Record<CorpsClass, { name: string; color: string }> 
   openClass: { name: 'Open Class', color: 'text-blue-400' },
   aClass: { name: 'A Class', color: 'text-green-400' },
   soundSport: { name: 'SoundSport', color: 'text-orange-400' },
-  podiumClass: { name: 'Podium Class', color: 'text-yellow-400' },
+  podiumClass: { name: 'Podium Class', color: 'text-brand' },
 };
 
 export const UNIFORM_STYLES = [

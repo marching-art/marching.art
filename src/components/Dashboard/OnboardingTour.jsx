@@ -149,7 +149,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/60 z-40"
         onClick={handleSkip}
       />
 
@@ -161,14 +161,14 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         exit={{ opacity: 0, scale: 0.9 }}
         style={tooltipPosition}
         onClick={(e) => e.stopPropagation()}
-        className="fixed z-50 w-80 bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden"
+        className="fixed z-50 w-80 bg-surface-card border border-line rounded-none overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 bg-[#222] border-b border-[#333]">
+        <div className="p-4 bg-surface-raised border-b border-line">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-none bg-[#0057B8]/20 flex items-center justify-center">
-                <Icon className="w-5 h-5 text-[#0057B8]" />
+              <div className="w-10 h-10 rounded-none bg-interactive/20 flex items-center justify-center">
+                <Icon className="w-5 h-5 text-interactive" />
               </div>
               <div>
                 <h3 className="font-bold text-white">{step.title}</h3>
@@ -181,28 +181,28 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
               onClick={handleSkip}
               className="p-1.5 hover:bg-white/10 rounded-none transition-colors"
             >
-              <X className="w-4 h-4 text-gray-400" />
+              <X className="w-4 h-4 text-muted" />
             </button>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-sm text-gray-300 leading-relaxed">{step.description}</p>
+          <p className="text-sm text-secondary leading-relaxed">{step.description}</p>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#111] border-t border-[#333] flex items-center justify-between">
+        <div className="p-4 bg-surface-sunken border-t border-line flex items-center justify-between">
           <div className="flex gap-1.5">
             {TOUR_STEPS.map((_, idx) => (
               <div
                 key={idx}
                 className={`w-2 h-2 rounded-none transition-colors ${
                   idx === currentStep
-                    ? 'bg-[#0057B8]'
+                    ? 'bg-interactive'
                     : idx < currentStep
                       ? 'bg-green-400'
-                      : 'bg-[#333]'
+                      : 'bg-line'
                 }`}
               />
             ))}
@@ -212,7 +212,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             {currentStep > 0 && (
               <button
                 onClick={handleBack}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted hover:text-white transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -220,7 +220,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             )}
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-4 py-1.5 bg-[#0057B8] text-white rounded-none text-sm font-bold hover:bg-[#0066d6] transition-colors"
+              className="flex items-center gap-1 px-4 py-1.5 bg-interactive text-white rounded-none text-sm font-bold hover:bg-interactive-hover transition-colors"
             >
               {currentStep < TOUR_STEPS.length - 1 ? (
                 <>

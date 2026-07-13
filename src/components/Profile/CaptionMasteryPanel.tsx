@@ -19,10 +19,10 @@ const CaptionMasteryPanel = memo(({ profile }: { profile: UserProfile }) => {
 
   return (
     <div className="px-3 pb-3">
-      <div className="bg-[#1a1a1a] border border-[#333]">
-        <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center gap-1.5">
-          <Target className="w-3.5 h-3.5 text-[#0057B8]" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+      <div className="bg-surface-card border border-line">
+        <div className="px-3 py-2 border-b border-line bg-surface-raised flex items-center gap-1.5">
+          <Target className="w-3.5 h-3.5 text-interactive" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Caption Mastery
           </span>
         </div>
@@ -33,7 +33,7 @@ const CaptionMasteryPanel = memo(({ profile }: { profile: UserProfile }) => {
               ? MASTERY_TIER_STYLES[mastery.tier.id as keyof typeof MASTERY_TIER_STYLES]
               : null;
             return (
-              <div key={caption} className="bg-[#111] border border-[#333] px-2.5 py-2">
+              <div key={caption} className="bg-surface-sunken border border-line px-2.5 py-2">
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span
                     className="text-[10px] font-bold text-white"
@@ -52,9 +52,9 @@ const CaptionMasteryPanel = memo(({ profile }: { profile: UserProfile }) => {
                     {mastery.tier ? mastery.tier.name : '—'}
                   </span>
                 </div>
-                <div className="h-1 bg-[#222] rounded-none overflow-hidden mb-1">
+                <div className="h-1 bg-surface-raised rounded-none overflow-hidden mb-1">
                   <div
-                    className={`h-full ${style ? style.bar : 'bg-[#0057B8]'}`}
+                    className={`h-full ${style ? style.bar : 'bg-interactive'}`}
                     style={{ width: `${Math.round(mastery.progress * 100)}%` }}
                   />
                 </div>

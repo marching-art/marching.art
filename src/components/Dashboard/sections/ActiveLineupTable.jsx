@@ -7,13 +7,13 @@ import { CAPTIONS } from './constants';
 
 // Skeleton row for loading state
 const SkeletonRow = memo(() => (
-  <div className="flex items-center gap-3 px-3 py-2.5 border-b border-[#222]">
-    <div className="w-11 h-6 bg-[#333] animate-pulse flex-shrink-0" />
+  <div className="flex items-center gap-3 px-3 py-2.5 border-b border-line-subtle">
+    <div className="w-11 h-6 bg-line animate-pulse flex-shrink-0" />
     <div className="flex-1 min-w-0 space-y-1.5">
-      <div className="w-32 h-3.5 bg-[#333] animate-pulse" />
-      <div className="w-24 h-3 bg-[#222] animate-pulse" />
+      <div className="w-32 h-3.5 bg-line animate-pulse" />
+      <div className="w-24 h-3 bg-surface-raised animate-pulse" />
     </div>
-    <div className="w-12 h-4 bg-[#333] animate-pulse flex-shrink-0" />
+    <div className="w-12 h-4 bg-line animate-pulse flex-shrink-0" />
   </div>
 ));
 
@@ -50,12 +50,12 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
     <button
       type="button"
       onClick={() => onSlotClick(caption.id)}
-      className="w-full text-left flex items-center gap-3 px-3 py-2.5 border-b border-[#222] hover:bg-[#222] active:bg-[#222] transition-colors"
+      className="w-full text-left flex items-center gap-3 px-3 py-2.5 border-b border-line-subtle hover:bg-surface-raised active:bg-surface-raised transition-colors"
     >
       {/* Slot Badge */}
       <span
         className={`flex-shrink-0 w-11 text-center px-1.5 py-1 text-[10px] font-bold ${
-          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-muted'
+          hasValue ? 'bg-interactive/20 text-interactive' : 'bg-line text-muted'
         }`}
       >
         {caption.name}
@@ -97,7 +97,7 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
             the corps-level next show is surfaced in the header). */}
         {!hasValue && (
           <div className="mt-0.5">
-            <span className="text-[11px] text-yellow-500 font-bold">+ Draft player</span>
+            <span className="text-[11px] text-interactive font-bold">+ Draft player</span>
           </div>
         )}
       </div>
@@ -118,18 +118,16 @@ const ActiveLineupTable = memo(
     const lineupCount = Object.keys(lineup).length;
 
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-surface-card border border-line overflow-hidden">
         {/* Header */}
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Active Lineup
             </h2>
             <span
               className={`text-xs font-bold px-2 py-0.5 ${
-                lineupCount === 8
-                  ? 'bg-green-500/20 text-green-500'
-                  : 'bg-yellow-500/20 text-yellow-500'
+                lineupCount === 8 ? 'bg-green-500/20 text-green-500' : 'bg-warning/20 text-warning'
               }`}
             >
               {lineupCount}/8
@@ -141,20 +139,20 @@ const ActiveLineupTable = memo(
             director's next registered show. */}
         {!loading &&
           (nextShow ? (
-            <div className="px-4 py-2 border-b border-[#333] bg-[#111] flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
+            <div className="px-4 py-2 border-b border-line bg-surface-sunken flex items-center gap-1.5 text-[11px] text-muted min-w-0">
               <MapPin className="w-3 h-3 flex-shrink-0 text-purple-400" />
               <span className="font-bold uppercase tracking-wider text-muted flex-shrink-0">
                 Next Show
               </span>
               <span className="text-muted flex-shrink-0">·</span>
-              <span className="truncate text-gray-300">
+              <span className="truncate text-secondary">
                 Day {nextShow.day}
                 {nextShow.eventName ? ` · ${nextShow.eventName}` : ''}
                 {nextShow.location ? ` · ${nextShow.location}` : ''}
               </span>
             </div>
           ) : (
-            <div className="px-4 py-2 border-b border-[#333] bg-[#111] flex items-center gap-1.5 text-[11px] text-muted">
+            <div className="px-4 py-2 border-b border-line bg-surface-sunken flex items-center gap-1.5 text-[11px] text-muted">
               <Lock className="w-3 h-3 flex-shrink-0" />
               <span className="font-bold uppercase tracking-wider">No upcoming show selected</span>
             </div>
@@ -177,10 +175,10 @@ const ActiveLineupTable = memo(
         </div>
 
         {/* Manage Lineup Button */}
-        <div className="p-3 border-t border-[#333] bg-[#111]">
+        <div className="p-3 border-t border-line bg-surface-sunken">
           <button
             onClick={onManageLineup}
-            className="w-full py-3 bg-[#0057B8] hover:bg-[#0066d6] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-interactive hover:bg-interactive-hover text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
           >
             <Edit className="w-4 h-4" />
             Manage Lineup

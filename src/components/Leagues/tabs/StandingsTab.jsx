@@ -71,14 +71,14 @@ const StandingsTab = ({
       <>
         {flair.title && (
           <span
-            className={`text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${flair.title.textClass || 'text-gray-400'}`}
+            className={`text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${flair.title.textClass || 'text-muted'}`}
           >
             {flair.title.name}
           </span>
         )}
         {flair.theme && (
           <span
-            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${flair.theme.swatchClass || 'bg-gray-500'}`}
+            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${flair.theme.swatchClass || 'bg-charcoal-500'}`}
             title={flair.theme.name}
             aria-label={`${flair.theme.name} card theme`}
           />
@@ -119,7 +119,7 @@ const StandingsTab = ({
   if (loading) {
     return (
       <div className="p-4">
-        <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
+        <div className="bg-surface-card border border-line p-8 text-center">
           <p className="text-muted text-sm">Loading standings...</p>
         </div>
       </div>
@@ -130,16 +130,14 @@ const StandingsTab = ({
     <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4">
       {/* View Mode Toggle */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
           {viewMode === 'dashboard' ? 'League Overview' : 'Full Standings'}
         </h2>
-        <div className="flex items-center gap-1 p-1 bg-[#1a1a1a] border border-[#333]">
+        <div className="flex items-center gap-1 p-1 bg-surface-card border border-line">
           <button
             onClick={() => setViewMode('dashboard')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'dashboard'
-                ? 'bg-yellow-500 text-black'
-                : 'text-muted hover:text-white'
+              viewMode === 'dashboard' ? 'bg-interactive text-white' : 'text-muted hover:text-white'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
@@ -148,7 +146,7 @@ const StandingsTab = ({
           <button
             onClick={() => setViewMode('table')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'table' ? 'bg-yellow-500 text-black' : 'text-muted hover:text-white'
+              viewMode === 'table' ? 'bg-interactive text-white' : 'text-muted hover:text-white'
             }`}
           >
             <Table2 className="w-3.5 h-3.5" />
@@ -180,14 +178,14 @@ const StandingsTab = ({
             />
 
             {/* Quick Standings Preview */}
-            <div className="mt-4 bg-[#1a1a1a] border border-[#333] overflow-hidden">
+            <div className="mt-4 bg-surface-card border border-line overflow-hidden">
               <button
                 onClick={() => setViewMode('table')}
-                className="w-full px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between hover:bg-[#2a2a2a] transition-colors"
+                className="w-full px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between hover:bg-surface-elevated transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  <Trophy className="w-3.5 h-3.5 text-secondary" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
                     Standings Preview
                   </span>
                 </div>
@@ -197,7 +195,7 @@ const StandingsTab = ({
               </button>
 
               {/* Top 5 Quick View */}
-              <div className="divide-y divide-[#222]">
+              <div className="divide-y divide-line-subtle">
                 {enhancedStandings.length > 0 ? (
                   enhancedStandings.slice(0, 5).map((stats, idx) => {
                     const isUser = stats.uid === userProfile?.uid;
@@ -219,7 +217,7 @@ const StandingsTab = ({
                           </span>
                           <MemberFlair uid={stats.uid} />
                           {stats.uid === league?.creatorId && (
-                            <Crown className="w-3 h-3 text-yellow-500" />
+                            <Crown className="w-3 h-3 text-secondary" />
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -255,13 +253,13 @@ const StandingsTab = ({
               {enhancedStandings.length > 5 && (
                 <button
                   onClick={() => setViewMode('table')}
-                  className="w-full px-4 py-2 text-xs text-muted hover:text-white transition-colors border-t border-[#333]"
+                  className="w-full px-4 py-2 text-xs text-muted hover:text-white transition-colors border-t border-line"
                 >
                   +{enhancedStandings.length - 5} more...
                 </button>
               )}
               {inactiveStandings.length > 0 && (
-                <div className="px-4 py-2 text-[10px] text-muted border-t border-[#222]">
+                <div className="px-4 py-2 text-[10px] text-muted border-t border-line-subtle">
                   {inactiveStandings.length} inactive member
                   {inactiveStandings.length !== 1 ? 's' : ''} not shown
                 </div>
@@ -276,12 +274,12 @@ const StandingsTab = ({
             exit={{ opacity: 0, x: -20 }}
           >
             {/* Full Standings Table */}
-            <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+            <div className="bg-surface-card border border-line overflow-hidden">
               {/* Section Header */}
-              <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+              <div className="px-4 py-3 border-b border-line bg-surface-raised">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                    <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                    <Trophy className="w-3.5 h-3.5 text-secondary" />
                     Standings
                     {lastUpdated && (
                       <span className="text-[9px] text-muted font-normal normal-case ml-2">
@@ -298,7 +296,7 @@ const StandingsTab = ({
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-[#333] bg-[#111]">
+                    <tr className="border-b border-line bg-surface-sunken">
                       <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted w-10">
                         RK
                       </th>
@@ -336,13 +334,15 @@ const StandingsTab = ({
                               hasStats && setExpandedUser(isExpanded ? null : stats.uid)
                             }
                             className={`border-b transition-colors ${hasStats ? 'cursor-pointer' : ''} ${
-                              isPlayoffLine ? 'border-b-2 border-green-500/50' : 'border-[#222]'
+                              isPlayoffLine
+                                ? 'border-b-2 border-green-500/50'
+                                : 'border-line-subtle'
                             } ${
                               isUser
                                 ? 'bg-purple-500/10'
                                 : isPlayoffSpot
                                   ? 'bg-green-500/5'
-                                  : 'hover:bg-[#222]'
+                                  : 'hover:bg-surface-raised'
                             }`}
                           >
                             {/* Rank */}
@@ -357,12 +357,12 @@ const StandingsTab = ({
                                   className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
                                     isUser
                                       ? 'bg-purple-500/20 border border-purple-500/50'
-                                      : 'bg-[#333]'
+                                      : 'bg-line'
                                   }`}
                                 >
                                   <span
                                     className={`text-xs font-bold ${
-                                      isUser ? 'text-purple-400' : 'text-gray-400'
+                                      isUser ? 'text-purple-400' : 'text-muted'
                                     }`}
                                   >
                                     {getDisplayName(stats.uid).charAt(0)}
@@ -378,7 +378,7 @@ const StandingsTab = ({
                                   </p>
                                   <MemberFlair uid={stats.uid} />
                                   {isCommissioner && (
-                                    <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                                    <Crown className="w-3 h-3 text-secondary flex-shrink-0" />
                                   )}
                                   {hasStats && (
                                     <ChevronDown
@@ -402,7 +402,7 @@ const StandingsTab = ({
 
                             {/* Points For */}
                             <td className="text-right py-2 px-2">
-                              <span className="font-bold text-yellow-500 font-data tabular-nums text-sm">
+                              <span className="font-bold text-secondary font-data tabular-nums text-sm">
                                 {stats.totalPoints.toFixed(1)}
                               </span>
                             </td>
@@ -481,12 +481,12 @@ const StandingsTab = ({
                   <h3 className="text-center text-base font-bold text-white mb-2">
                     No Standings Yet
                   </h3>
-                  <p className="text-center text-sm text-gray-400 mb-4 max-w-xs mx-auto">
+                  <p className="text-center text-sm text-muted mb-4 max-w-xs mx-auto">
                     Standings will appear after league members complete their first shows and
                     matchups are resolved.
                   </p>
                   <div className="flex flex-col items-center gap-2">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] rounded-none text-xs text-gray-400">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-surface-raised border border-line rounded-none text-xs text-muted">
                       <Calendar className="w-4 h-4 text-blue-400" />
                       <span>Register for a show to start earning points</span>
                     </div>
@@ -498,7 +498,7 @@ const StandingsTab = ({
               )}
 
               {/* Legend */}
-              <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
+              <div className="px-4 py-2.5 border-t border-line bg-surface-sunken">
                 <div className="flex flex-wrap items-center gap-4 text-[10px] text-muted">
                   <span>
                     <strong>PF</strong> = Points For
@@ -511,7 +511,7 @@ const StandingsTab = ({
                     <span>Playoff</span>
                   </div>
                   {Object.keys(leagueStats).length > 0 && (
-                    <span className="text-gray-400">Click rows to expand stats</span>
+                    <span className="text-muted">Click rows to expand stats</span>
                   )}
                 </div>
               </div>
@@ -519,10 +519,10 @@ const StandingsTab = ({
 
             {/* Inactive Members Section */}
             {inactiveStandings.length > 0 && (
-              <div className="mt-4 bg-[#1a1a1a] border border-[#333] overflow-hidden">
+              <div className="mt-4 bg-surface-card border border-line overflow-hidden">
                 <button
                   onClick={() => setShowInactive(!showInactive)}
-                  className="w-full px-4 py-3 bg-[#222] flex items-center justify-between hover:bg-[#2a2a2a] transition-colors"
+                  className="w-full px-4 py-3 bg-surface-raised flex items-center justify-between hover:bg-surface-elevated transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <UserX className="w-3.5 h-3.5 text-muted" />
@@ -546,12 +546,12 @@ const StandingsTab = ({
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-4 py-2 border-t border-[#222] bg-[#111]">
+                      <div className="px-4 py-2 border-t border-line-subtle bg-surface-sunken">
                         <p className="text-[10px] text-muted">
                           These members haven't participated in any shows this season.
                         </p>
                       </div>
-                      <div className="divide-y divide-[#222]">
+                      <div className="divide-y divide-line-subtle">
                         {inactiveStandings.map((stats) => {
                           const isUser = stats.uid === userProfile?.uid;
                           const isCommissioner = stats.uid === league?.creatorId;
@@ -566,7 +566,7 @@ const StandingsTab = ({
                                 className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
                                   isUser
                                     ? 'bg-purple-500/20 border border-purple-500/50'
-                                    : 'bg-[#222]'
+                                    : 'bg-surface-raised'
                                 }`}
                               >
                                 <span
@@ -585,7 +585,7 @@ const StandingsTab = ({
                                 {getDisplayName(stats.uid)}
                               </p>
                               {isCommissioner && (
-                                <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                                <Crown className="w-3 h-3 text-secondary flex-shrink-0" />
                               )}
                             </div>
                           );
@@ -602,11 +602,11 @@ const StandingsTab = ({
               <div className="mt-4">
                 <button
                   onClick={() => setShowLeaderboardSection(!showLeaderboardSection)}
-                  className="w-full bg-[#1a1a1a] border border-[#333] px-4 py-3 flex items-center justify-between hover:bg-[#222] transition-colors mb-3"
+                  className="w-full bg-surface-card border border-line px-4 py-3 flex items-center justify-between hover:bg-surface-raised transition-colors mb-3"
                 >
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-yellow-500" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                    <BarChart3 className="w-4 h-4 text-secondary" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
                       Season Leaderboards
                     </span>
                   </div>
@@ -646,14 +646,14 @@ const StandingsTab = ({
 const RankBadge = React.memo(({ rank, isPlayoffSpot }) => {
   if (rank === 1) {
     return (
-      <div className="inline-flex items-center justify-center w-6 h-6 bg-yellow-500/20 text-yellow-500 text-xs font-bold">
+      <div className="inline-flex items-center justify-center w-6 h-6 bg-brand/20 text-brand text-xs font-bold">
         1
       </div>
     );
   }
   if (rank === 2) {
     return (
-      <div className="inline-flex items-center justify-center w-6 h-6 bg-gray-500/20 text-gray-400 text-xs font-bold">
+      <div className="inline-flex items-center justify-center w-6 h-6 bg-charcoal-500/20 text-muted text-xs font-bold">
         2
       </div>
     );
@@ -671,7 +671,7 @@ const RankBadge = React.memo(({ rank, isPlayoffSpot }) => {
       className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold ${
         isPlayoffSpot
           ? 'bg-green-500/10 text-green-500 border border-green-500/30'
-          : 'bg-[#222] text-muted'
+          : 'bg-surface-raised text-muted'
       }`}
     >
       {rank}

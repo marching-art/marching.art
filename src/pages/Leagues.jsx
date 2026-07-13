@@ -30,9 +30,9 @@ const LEAGUE_TAGS = {
   competitive: { label: 'Competitive', color: 'text-red-400 bg-red-500/10' },
   casual: { label: 'Casual', color: 'text-green-400 bg-green-500/10' },
   roleplay: { label: 'Roleplay', color: 'text-purple-400 bg-purple-500/10' },
-  dynasty: { label: 'Dynasty', color: 'text-yellow-400 bg-yellow-500/10' },
+  dynasty: { label: 'Dynasty', color: 'text-secondary bg-surface-raised' },
   weekly: { label: 'Weekly', color: 'text-blue-400 bg-blue-500/10' },
-  public: { label: 'Public', color: 'text-gray-400 bg-white/5' },
+  public: { label: 'Public', color: 'text-muted bg-white/5' },
 };
 
 const getLeagueTags = (league) => {
@@ -59,7 +59,7 @@ const RankBadge = ({ rank, total }) => {
     <div
       className={`
       flex flex-col items-center justify-center px-2
-      ${isFirst ? 'text-yellow-400' : isTop3 ? 'text-green-400' : 'text-gray-400'}
+      ${isFirst ? 'text-brand' : isTop3 ? 'text-green-400' : 'text-muted'}
     `}
     >
       <span className="text-lg font-bold font-data tabular-nums leading-tight">#{rank}</span>
@@ -115,11 +115,11 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-3 p-3 bg-[#1a1a1a] border border-[#333] hover:border-[#444] cursor-pointer transition-colors active:bg-[#222] press-feedback"
+      className="flex items-center gap-3 p-3 bg-surface-card border border-line hover:border-line-strong cursor-pointer transition-colors active:bg-surface-raised press-feedback"
     >
       {/* League Avatar */}
-      <div className="w-12 h-12 bg-[#333] border border-[#444] rounded-none flex-shrink-0 flex items-center justify-center">
-        <Trophy className="w-5 h-5 text-yellow-500" />
+      <div className="w-12 h-12 bg-line border border-line-strong rounded-none flex-shrink-0 flex items-center justify-center">
+        <Trophy className="w-5 h-5 text-secondary" />
       </div>
 
       {/* League Info - Middle */}
@@ -164,13 +164,13 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
   const tags = getLeagueTags(league);
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] hover:border-[#444] transition-colors overflow-hidden">
+    <div className="bg-surface-card border border-line hover:border-line-strong transition-colors overflow-hidden">
       {/* Card Header */}
-      <div className="px-3 py-2.5 border-b border-[#333]">
+      <div className="px-3 py-2.5 border-b border-line">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 bg-[#333] border border-[#444] rounded-none flex-shrink-0 flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-yellow-500" />
+            <div className="w-9 h-9 bg-line border border-line-strong rounded-none flex-shrink-0 flex items-center justify-center">
+              <Trophy className="w-4 h-4 text-secondary" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-white truncate">{league.name}</h3>
@@ -193,7 +193,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
       </div>
 
       {/* Card Body */}
-      <div className="px-3 py-2 bg-[#111]">
+      <div className="px-3 py-2 bg-surface-sunken">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-[11px] text-muted">
             <span className="flex items-center gap-1">
@@ -202,7 +202,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
             </span>
             {league.creatorName && (
               <span className="flex items-center gap-1 truncate max-w-[80px]">
-                <Crown className="w-3 h-3 text-yellow-500/50" />
+                <Crown className="w-3 h-3 text-muted" />
                 <span className="truncate">{league.creatorName}</span>
               </span>
             )}
@@ -215,8 +215,8 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
             disabled={isFull || isJoining}
             className={`px-4 min-h-touch text-[10px] font-bold uppercase transition-colors press-feedback ${
               isFull
-                ? 'bg-[#333] text-muted cursor-not-allowed'
-                : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'
+                ? 'bg-line text-muted cursor-not-allowed'
+                : 'bg-interactive text-white hover:bg-interactive-hover active:bg-interactive-subtle'
             }`}
           >
             {isFull ? 'Full' : 'Join'}
@@ -242,15 +242,15 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
       aria-label="Join league by invite code"
     >
       <div
-        className="w-full sm:max-w-sm bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none"
+        className="w-full sm:max-w-sm bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle - mobile */}
         <div className="sm:hidden flex justify-center py-2">
-          <div className="w-8 h-1 bg-gray-600 rounded-full" />
+          <div className="w-8 h-1 bg-charcoal-600 rounded-full" />
         </div>
 
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-muted">
             Join by Code
           </span>
@@ -274,14 +274,14 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
             placeholder="XXXXXXXX"
-            className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#444] text-center text-xl font-bold font-data text-white tracking-[0.3em] focus:outline-none focus:border-[#0057B8] placeholder:text-muted"
+            className="w-full px-4 py-3 bg-background border border-line-strong text-center text-xl font-bold font-data text-white tracking-[0.3em] focus:outline-none focus:border-interactive placeholder:text-muted"
             maxLength={8}
             autoFocus
           />
           <button
             type="submit"
             disabled={isJoining || !inviteCode.trim()}
-            className="w-full py-3 min-h-[44px] bg-[#0057B8] text-white font-bold text-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+            className="w-full py-3 min-h-[44px] bg-interactive text-white font-bold text-sm hover:bg-interactive-hover disabled:opacity-50 transition-colors"
           >
             {isJoining ? 'Joining...' : 'Join League'}
           </button>
@@ -296,8 +296,8 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
 // =============================================================================
 
 const EmptyMyLeagues = ({ onCreate }) => (
-  <div className="p-6 bg-[#1a1a1a] border-2 border-dashed border-[#333] text-center">
-    <div className="w-12 h-12 bg-[#222] border border-[#333] rounded-none mx-auto mb-3 flex items-center justify-center">
+  <div className="p-6 bg-surface-card border-2 border-dashed border-line text-center">
+    <div className="w-12 h-12 bg-surface-raised border border-line rounded-none mx-auto mb-3 flex items-center justify-center">
       <Trophy className="w-6 h-6 text-muted" />
     </div>
     <h3 className="text-sm font-bold text-white mb-1">No Leagues Yet</h3>
@@ -307,7 +307,7 @@ const EmptyMyLeagues = ({ onCreate }) => (
     <div className="flex items-center justify-center gap-2">
       <button
         onClick={onCreate}
-        className="px-4 py-2 text-xs font-bold text-white bg-[#0057B8] hover:bg-[#0066d6] flex items-center gap-1.5"
+        className="px-4 py-2 text-xs font-bold text-white bg-interactive hover:bg-interactive-hover flex items-center gap-1.5"
       >
         <Plus className="w-3.5 h-3.5" />
         Create League
@@ -317,7 +317,7 @@ const EmptyMyLeagues = ({ onCreate }) => (
 );
 
 const EmptyDiscover = ({ searchTerm }) => (
-  <div className="col-span-2 p-6 bg-[#1a1a1a] border-2 border-dashed border-[#333] text-center">
+  <div className="col-span-2 p-6 bg-surface-card border-2 border-dashed border-line text-center">
     <Users className="w-8 h-8 text-muted mx-auto mb-2" />
     <p className="text-sm text-muted">
       {searchTerm ? 'No leagues match your search' : 'No public leagues available'}
@@ -463,12 +463,12 @@ const Leagues = () => {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* FIXED HEADER */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+      <div className="flex-shrink-0 bg-surface-card border-b border-line px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-[#0057B8]" />
+            <Users className="w-5 h-5 text-interactive" />
             <div>
               <h1 className="text-sm font-bold text-white uppercase">Leagues</h1>
               <p className="text-[10px] text-muted">
@@ -479,13 +479,13 @@ const Leagues = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowQuickJoin(true)}
-              className="px-3 py-2 text-[10px] font-bold uppercase text-gray-400 border border-[#444] hover:text-white hover:border-[#555] min-h-touch transition-colors press-feedback"
+              className="px-3 py-2 text-[10px] font-bold uppercase text-muted border border-line-strong hover:text-white hover:border-line-strong min-h-touch transition-colors press-feedback"
             >
               Join Code
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-3 py-2 text-[10px] font-bold uppercase text-white bg-[#0057B8] hover:bg-[#0066d6] flex items-center gap-1.5 min-h-touch transition-colors press-feedback"
+              className="px-3 py-2 text-[10px] font-bold uppercase text-white bg-interactive hover:bg-interactive-hover flex items-center gap-1.5 min-h-touch transition-colors press-feedback"
             >
               <Plus className="w-3.5 h-3.5" />
               Create
@@ -497,13 +497,11 @@ const Leagues = () => {
       {/* SCROLLABLE CONTENT — pull down at the top to refresh both lists */}
       <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 min-h-0">
         {/* MY LEAGUES SECTION */}
-        <section className="border-b border-[#333]">
-          <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+        <section className="border-b border-line">
+          <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-[#0057B8]" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
-                My Leagues
-              </h2>
+              <Zap className="w-3.5 h-3.5 text-interactive" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted">My Leagues</h2>
             </div>
             {myLeagues.length > 0 && (
               <span className="text-[10px] font-data tabular-nums text-muted">
@@ -514,13 +512,13 @@ const Leagues = () => {
 
           {loadingMyLeagues ? (
             <div className="p-6 text-center">
-              <div className="w-5 h-5 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <div className="w-5 h-5 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               <p className="text-xs text-muted">Loading leagues...</p>
             </div>
           ) : myLeagues.length === 0 ? (
             <EmptyMyLeagues onCreate={() => setShowCreateModal(true)} />
           ) : (
-            <div className="divide-y divide-[#333]">
+            <div className="divide-y divide-line">
               {myLeagues.map((league) => (
                 <MyLeagueCard
                   key={league.id}
@@ -535,7 +533,7 @@ const Leagues = () => {
 
         {/* DISCOVER SECTION */}
         <section>
-          <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+          <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
               Discover Leagues
             </h2>
@@ -547,7 +545,7 @@ const Leagues = () => {
           </div>
 
           {/* Search */}
-          <div className="p-3 border-b border-[#333] bg-[#1a1a1a]">
+          <div className="p-3 border-b border-line bg-surface-card">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
               <input
@@ -557,7 +555,7 @@ const Leagues = () => {
                 aria-label="Search public leagues"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 pl-10 pr-4 bg-[#0a0a0a] border border-[#444] text-base text-white focus:outline-none focus:border-[#0057B8] placeholder:text-muted"
+                className="w-full h-11 pl-10 pr-4 bg-background border border-line-strong text-base text-white focus:outline-none focus:border-interactive placeholder:text-muted"
               />
             </div>
           </div>
@@ -566,7 +564,7 @@ const Leagues = () => {
           <div className="p-3">
             {loadingPublicLeagues ? (
               <div className="p-6 text-center">
-                <div className="w-5 h-5 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <div className="w-5 h-5 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                 <p className="text-xs text-muted">Loading leagues...</p>
               </div>
             ) : discoverLeagues.length === 0 ? (
@@ -588,7 +586,7 @@ const Leagues = () => {
                     <button
                       onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}
-                      className="px-6 py-2.5 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2.5 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isFetchingNextPage ? (
                         <span className="flex items-center justify-center gap-2">

@@ -43,8 +43,8 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
     onClick={onClick}
     className={`flex-1 min-w-0 py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 ${
       active
-        ? 'text-white border-b-2 border-[#0057B8]'
-        : 'text-muted hover:text-gray-300 border-b-2 border-transparent'
+        ? 'text-white border-b-2 border-interactive'
+        : 'text-muted hover:text-secondary border-b-2 border-transparent'
     }`}
   >
     <Icon className="w-3.5 h-3.5" />
@@ -70,7 +70,7 @@ const Field = ({ label, hint, children, count }) => (
 const TextInput = (props) => (
   <input
     {...props}
-    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+    className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
   />
 );
 
@@ -78,7 +78,7 @@ const TextArea = ({ rows = 3, ...props }) => (
   <textarea
     rows={rows}
     {...props}
-    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+    className="w-full px-3 py-2 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
   />
 );
 
@@ -230,18 +230,18 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
         aria-labelledby="modal-title-edit-profile"
       >
         <div
-          className="w-full sm:max-w-lg bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none max-h-[92dvh] flex flex-col"
+          className="w-full sm:max-w-lg bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none max-h-[92dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Drag handle - mobile only */}
           <div className="sm:hidden flex justify-center py-2">
-            <div className="w-8 h-1 bg-gray-600 rounded-full" />
+            <div className="w-8 h-1 bg-charcoal-600 rounded-full" />
           </div>
 
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
             <h2
               id="modal-title-edit-profile"
-              className="text-xs font-bold uppercase tracking-wider text-gray-300"
+              className="text-xs font-bold uppercase tracking-wider text-secondary"
             >
               Edit Profile
             </h2>
@@ -254,7 +254,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
             </button>
           </div>
 
-          <div className="flex border-b border-[#333] shrink-0 overflow-x-auto">
+          <div className="flex border-b border-line shrink-0 overflow-x-auto">
             <TabButton
               active={activeTab === 'director'}
               onClick={() => setActiveTab('director')}
@@ -338,8 +338,8 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                         }
                         className={`w-full h-10 px-3 border text-sm font-bold uppercase tracking-wider ${
                           director.acceptingLeagueInvites
-                            ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
-                            : 'bg-[#0a0a0a] border-[#333] text-muted'
+                            ? 'bg-interactive/15 border-interactive/40 text-interactive'
+                            : 'bg-background border-line text-muted'
                         }`}
                       >
                         {director.acceptingLeagueInvites ? 'Open' : 'Closed'}
@@ -358,8 +358,8 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                             onClick={() => toggleSpecialty(s)}
                             className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border ${
                               active
-                                ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
-                                : 'bg-[#0a0a0a] border-[#333] text-muted hover:text-gray-300'
+                                ? 'bg-interactive/15 border-interactive/40 text-interactive'
+                                : 'bg-background border-line text-muted hover:text-secondary'
                             }`}
                           >
                             {s}
@@ -469,10 +469,10 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                             onClick={() => setActiveEnsembleClass(corps.classKey)}
                             className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider border ${
                               activeEnsembleClass === corps.classKey
-                                ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
+                                ? 'bg-interactive/15 border-interactive/40 text-interactive'
                                 : corps.isRegistered
-                                  ? 'bg-[#0a0a0a] border-[#333] text-muted hover:text-gray-300'
-                                  : 'bg-[#0a0a0a] border-dashed border-[#333] text-muted hover:text-gray-400'
+                                  ? 'bg-background border-line text-muted hover:text-secondary'
+                                  : 'bg-background border-dashed border-line text-muted hover:text-muted'
                             }`}
                           >
                             {corps.isRegistered ? (
@@ -490,8 +490,8 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                       </div>
 
                       {currentCorps && !currentCorps.isRegistered && (
-                        <div className="pt-3 border-t border-[#333] text-center space-y-2">
-                          <p className="text-sm text-gray-400">
+                        <div className="pt-3 border-t border-line text-center space-y-2">
+                          <p className="text-sm text-muted">
                             You&apos;ve unlocked {CLASS_LABELS[currentCorps.classKey]}, but
                             haven&apos;t registered a corps in this class yet.
                           </p>
@@ -503,7 +503,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                       )}
 
                       {currentEnsemble && currentCorps?.isRegistered && (
-                        <div className="space-y-4 pt-2 border-t border-[#333]">
+                        <div className="space-y-4 pt-2 border-t border-line">
                           <Field label="Tagline" count={`${currentEnsemble.tagline.length}/80`}>
                             <TextInput
                               type="text"
@@ -630,19 +630,19 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
               )}
             </div>
 
-            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 shrink-0 safe-area-bottom">
+            <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2 shrink-0 safe-area-bottom">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+                className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50"
+                className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>

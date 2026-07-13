@@ -1,10 +1,11 @@
 // =============================================================================
-// CARD COMPONENT - ESPN RIGID BOX STYLE
+// CARD COMPONENT - RIGID BOX STYLE
 // =============================================================================
 // Rigid boxes, not floating bubbles. No shadows, no glow.
 // Laws: No padding in body (p-0), let child content define spacing
 
 import React, { forwardRef } from 'react';
+import { headingRecipes } from './Heading';
 
 // =============================================================================
 // TYPES
@@ -38,7 +39,7 @@ export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 // =============================================================================
-// CARD ROOT - bg-[#1a1a1a] border border-[#333] rounded-none
+// CARD ROOT - bg-surface-card border border-line rounded-none
 // =============================================================================
 
 const CardRoot = forwardRef<HTMLDivElement, CardProps>(
@@ -58,9 +59,9 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(
         onKeyDown={pressable ? handleKeyDown : undefined}
         onClick={onClick}
         className={`
-          bg-[#1a1a1a] border border-[#333] rounded-none
-          ${hoverable ? 'cursor-pointer hover:border-[#555]' : ''}
-          ${pressable ? 'cursor-pointer active:bg-[#222] focus:outline-none focus:border-[#0057B8]' : ''}
+          bg-surface-card border border-line rounded-none
+          ${hoverable ? 'cursor-pointer hover:border-line-strong' : ''}
+          ${pressable ? 'cursor-pointer active:bg-surface-raised focus:outline-none focus:border-interactive' : ''}
           ${className}
         `
           .trim()
@@ -76,7 +77,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(
 CardRoot.displayName = 'Card';
 
 // =============================================================================
-// CARD HEADER - px-3 py-2 border-b border-[#333] bg-[#222]
+// CARD HEADER - px-3 py-2 border-b border-line bg-surface-raised
 // =============================================================================
 
 const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
@@ -84,7 +85,7 @@ const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
     return (
       <div
         ref={ref}
-        className={`px-3 py-2 border-b border-[#333] bg-[#222] flex justify-between items-center ${className}`}
+        className={`px-3 py-2 border-b border-line bg-surface-raised flex justify-between items-center ${className}`}
         {...props}
       >
         <div className="flex items-center gap-2">{children}</div>
@@ -97,17 +98,13 @@ const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
 CardHeader.displayName = 'CardHeader';
 
 // =============================================================================
-// CARD TITLE - text-xs font-bold uppercase text-gray-400
+// CARD TITLE - text-xs font-bold uppercase text-muted
 // =============================================================================
 
 const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
   ({ children, className = '', ...props }, ref) => {
     return (
-      <h3
-        ref={ref}
-        className={`text-xs font-bold uppercase text-gray-400 tracking-wider ${className}`}
-        {...props}
-      >
+      <h3 ref={ref} className={`${headingRecipes.eyebrow} ${className}`} {...props}>
         {children}
       </h3>
     );
@@ -133,7 +130,7 @@ const CardBody = forwardRef<HTMLDivElement, CardBodyProps>(
 CardBody.displayName = 'CardBody';
 
 // =============================================================================
-// CARD FOOTER - px-3 py-2 border-t border-[#333] bg-[#222]
+// CARD FOOTER - px-3 py-2 border-t border-line bg-surface-raised
 // =============================================================================
 
 const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
@@ -141,7 +138,7 @@ const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
     return (
       <div
         ref={ref}
-        className={`px-3 py-2 border-t border-[#333] bg-[#222] ${className}`}
+        className={`px-3 py-2 border-t border-line bg-surface-raised ${className}`}
         {...props}
       >
         {children}

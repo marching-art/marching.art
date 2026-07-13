@@ -55,7 +55,7 @@ export default function FanFavoriteCard() {
         : `Fan Favorite — ${MAJOR_NAMES[data.major] || `Day ${data.major}`} ballot open`;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#5a1a2e] rounded-none p-4 space-y-2">
+    <div className="bg-surface-card border border-[#5a1a2e] rounded-none p-4 space-y-2">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-pink-400">
           <Heart className="w-3 h-3" /> {title}
@@ -82,7 +82,7 @@ export default function FanFavoriteCard() {
                 className={`text-[10px] px-2 py-1 rounded-none border press-feedback ${
                   isMyVote
                     ? 'border-pink-400 bg-pink-400/10 text-pink-200'
-                    : 'border-[#333] text-gray-300 hover:border-pink-400/60 hover:text-white'
+                    : 'border-line text-secondary hover:border-pink-400/60 hover:text-white'
                 }`}
               >
                 {busy === candidate.uid ? (

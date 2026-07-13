@@ -180,9 +180,9 @@ export function getCategoryConfig(category: string): CategoryConfig {
     case 'dci':
       return {
         label: 'DCI RECAP',
-        bgClass: 'bg-[#0057B8]',
-        textClass: 'text-[#0057B8]',
-        bgLightClass: 'bg-[#0057B8]/20',
+        bgClass: 'bg-interactive',
+        textClass: 'text-interactive',
+        bgLightClass: 'bg-interactive/20',
         icon: Trophy,
       };
     case 'fantasy':
@@ -204,9 +204,9 @@ export function getCategoryConfig(category: string): CategoryConfig {
     default:
       return {
         label: 'NEWS',
-        bgClass: 'bg-gray-500',
-        textClass: 'text-gray-400',
-        bgLightClass: 'bg-gray-500/20',
+        bgClass: 'bg-charcoal-500',
+        textClass: 'text-muted',
+        bgLightClass: 'bg-charcoal-500/20',
         icon: Newspaper,
       };
   }

@@ -12,8 +12,8 @@ const ADMIN_TABS = [
 ];
 
 const TelemetryStrip = ({ stats }) => (
-  <div className="bg-[#1a1a1a] border-b border-[#333]">
-    <div className="flex items-center divide-x divide-[#333]">
+  <div className="bg-surface-card border-b border-line">
+    <div className="flex items-center divide-x divide-line">
       <TelemetryStat label="Users" value={stats.totalUsers.toLocaleString()} />
       <TelemetryStat
         label="Active (7d)"
@@ -23,7 +23,7 @@ const TelemetryStrip = ({ stats }) => (
       <TelemetryStat
         label="Corps"
         value={stats.totalCorps.toLocaleString()}
-        color="text-[#0057B8]"
+        color="text-interactive"
       />
       <TelemetryStat label="System" value="ONLINE" color="text-green-500" icon={CheckCircle} />
     </div>
@@ -45,7 +45,7 @@ const TelemetryStat = ({ label, value, color = 'text-white', icon: Icon }) => (
 // =============================================================================
 
 const NavTabs = ({ activeTab, onTabChange }) => (
-  <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-2">
+  <div className="bg-surface-card border-b border-line px-4 py-2">
     <div className="flex items-center gap-1">
       {ADMIN_TABS.map((tab) => (
         <button
@@ -53,7 +53,7 @@ const NavTabs = ({ activeTab, onTabChange }) => (
           onClick={() => onTabChange(tab.id)}
           className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-none transition-colors ${
             activeTab === tab.id
-              ? 'bg-[#0057B8] text-white'
+              ? 'bg-interactive text-white'
               : 'text-muted hover:text-white hover:bg-white/5'
           }`}
         >
@@ -69,7 +69,7 @@ const NavTabs = ({ activeTab, onTabChange }) => (
 // =============================================================================
 
 const ProcessRow = ({ name, description, icon: Icon, loading, onExecute }) => (
-  <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] hover:bg-[#111] transition-colors">
+  <div className="flex items-center justify-between px-4 py-3 border-b border-line hover:bg-surface-sunken transition-colors">
     <div className="flex items-center gap-3 min-w-0">
       <Icon className="w-4 h-4 text-muted flex-shrink-0" />
       <div className="min-w-0">
@@ -80,7 +80,7 @@ const ProcessRow = ({ name, description, icon: Icon, loading, onExecute }) => (
     <button
       onClick={onExecute}
       disabled={loading}
-      className="flex items-center gap-1.5 h-7 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+      className="flex items-center gap-1.5 h-7 px-3 text-[10px] font-bold uppercase bg-interactive/10 text-interactive border border-interactive/20 hover:bg-interactive hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
     >
       {loading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Terminal className="w-3 h-3" />}
       {loading ? 'Running' : 'Execute'}
@@ -93,9 +93,9 @@ const ProcessRow = ({ name, description, icon: Icon, loading, onExecute }) => (
 // =============================================================================
 
 const SectionHeader = ({ title, icon: Icon }) => (
-  <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center gap-2">
+  <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center gap-2">
     {Icon && <Icon className="w-3.5 h-3.5 text-muted" />}
-    <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{title}</h3>
+    <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">{title}</h3>
   </div>
 );
 
@@ -104,7 +104,7 @@ const SectionHeader = ({ title, icon: Icon }) => (
 // =============================================================================
 
 const InfoRow = ({ label, value, badge, mono }) => (
-  <div className="flex justify-between items-center px-4 py-2.5 border-b border-[#222] last:border-b-0">
+  <div className="flex justify-between items-center px-4 py-2.5 border-b border-line-subtle last:border-b-0">
     <span className="text-[11px] uppercase tracking-wider text-muted">{label}</span>
     {badge ? (
       <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-[10px] font-bold uppercase">

@@ -22,15 +22,11 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex items-center justify-between text-xs mb-1">
-        <span
-          className={`text-muted/60 font-semibold ${score1 > score2 ? 'text-green-400' : ''}`}
-        >
+        <span className={`text-muted/60 font-semibold ${score1 > score2 ? 'text-green-400' : ''}`}>
           {score1.toFixed(1)}
         </span>
-        <span className="font-semibold text-gray-300">{label}</span>
-        <span
-          className={`text-muted/60 font-semibold ${score2 > score1 ? 'text-green-400' : ''}`}
-        >
+        <span className="font-semibold text-secondary">{label}</span>
+        <span className={`text-muted/60 font-semibold ${score2 > score1 ? 'text-green-400' : ''}`}>
           {score2.toFixed(1)}
         </span>
       </div>
@@ -66,7 +62,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
     {user1Stats && user2Stats && (
       <div className="glass rounded-none p-4">
         <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-          <Award className="w-4 h-4 text-yellow-400" />
+          <Award className="w-4 h-4 text-secondary" />
           Season Stats
         </h3>
 
@@ -99,7 +95,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
             <div className="flex items-center justify-center gap-4">
               <span
                 className={`font-bold text-lg ${
-                  user1Stats.totalPoints > user2Stats.totalPoints ? 'text-yellow-400' : 'text-white'
+                  user1Stats.totalPoints > user2Stats.totalPoints ? 'text-secondary' : 'text-white'
                 }`}
               >
                 {user1Stats.totalPoints.toFixed(0)}
@@ -107,7 +103,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
               <span className="text-muted/20">|</span>
               <span
                 className={`font-bold text-lg ${
-                  user2Stats.totalPoints > user1Stats.totalPoints ? 'text-yellow-400' : 'text-white'
+                  user2Stats.totalPoints > user1Stats.totalPoints ? 'text-secondary' : 'text-white'
                 }`}
               >
                 {user2Stats.totalPoints.toFixed(0)}
@@ -149,7 +145,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
       (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
         <div className="glass rounded-none p-4">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <Target className="w-4 h-4 text-yellow-500" />
+            <Target className="w-4 h-4 text-secondary" />
             Caption Summary
           </h3>
 
@@ -189,7 +185,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
       (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
         <div className="glass rounded-none p-4">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <Target className="w-4 h-4 text-yellow-500" />
+            <Target className="w-4 h-4 text-secondary" />
             Caption Breakdown
           </h3>
 
@@ -218,7 +214,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
     <div className="glass rounded-none overflow-hidden">
       <div className="p-4 border-b border-white/10">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-yellow-500" />
+          <Trophy className="w-4 h-4 text-secondary" />
           Shows This Week
         </h3>
       </div>
@@ -238,7 +234,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
                 <p className="text-xs text-muted/40">{getDisplayName(matchup.user1)}</p>
               </div>
             </div>
-            <span className="font-bold text-yellow-500">{show.score.toFixed(1)}</span>
+            <span className="font-bold text-secondary">{show.score.toFixed(1)}</span>
           </div>
         ))}
 
@@ -256,7 +252,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
                 <p className="text-xs text-muted/40">{getDisplayName(matchup.user2)}</p>
               </div>
             </div>
-            <span className="font-bold text-yellow-500">{show.score.toFixed(1)}</span>
+            <span className="font-bold text-secondary">{show.score.toFixed(1)}</span>
           </div>
         ))}
 

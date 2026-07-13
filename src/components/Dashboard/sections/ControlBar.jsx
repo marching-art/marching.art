@@ -82,7 +82,7 @@ const ControlBar = memo(
     );
 
     return (
-      <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
+      <div className="sticky top-0 z-10 bg-surface-card border-b border-line">
         {/* On mobile the class selector and the director HUD each get their own
             row so neither clips off the right edge; on md+ they share one row. */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2">
@@ -102,7 +102,7 @@ const ControlBar = memo(
                   <button
                     key={classId}
                     onClick={() => onCreateCorps?.(classId)}
-                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none text-muted hover:text-gray-400 border border-dashed border-[#444] transition-colors press-feedback"
+                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none text-muted hover:text-muted border border-dashed border-line-strong transition-colors press-feedback"
                   >
                     {CLASS_SHORT_LABELS[classId]}
                   </button>
@@ -116,7 +116,7 @@ const ControlBar = memo(
                   onClick={() => onSwitch(classId)}
                   className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                     isActive
-                      ? 'bg-[#0057B8] text-white'
+                      ? 'bg-interactive text-white'
                       : 'text-muted hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -129,10 +129,10 @@ const ControlBar = memo(
                 onClick={() => onSwitch('podiumClass')}
                 className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                   activeCorpsClass === 'podiumClass'
-                    ? 'bg-[#8a6d1a] text-white'
+                    ? 'bg-brand text-white'
                     : corps?.podiumClass
                       ? 'text-muted hover:text-white hover:bg-white/5'
-                      : 'text-[#c9a227]/70 hover:text-[#c9a227] border border-dashed border-[#8a6d1a]/50'
+                      : 'text-brand/70 hover:text-brand border border-dashed border-brand/50'
                 }`}
               >
                 {CLASS_SHORT_LABELS.podiumClass}
@@ -147,7 +147,7 @@ const ControlBar = memo(
 
           {/* Director HUD - Order: Streak, Level, Coins, Buy. On mobile this
               sits on its own row; a top divider separates it from the tabs. */}
-          <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap border-t border-[#2a2a2a] pt-2 md:border-t-0 md:pt-0">
+          <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap border-t border-line-muted pt-2 md:border-t-0 md:pt-0">
             {/* Streak with milestone indicator — opens the streak panel
                 (status, next milestone, streak freeze purchase) */}
             {streak > 0 && (
@@ -171,7 +171,7 @@ const ControlBar = memo(
                         ? 'bg-red-500/20 text-red-400'
                         : streak >= 30
                           ? 'bg-orange-500/20 text-orange-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-warning/20 text-warning'
                     }`}
                   >
                     {streak >= 100
@@ -198,7 +198,7 @@ const ControlBar = memo(
                 Lvl {level}
               </span>
               <div
-                className="w-12 h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden"
+                className="w-12 h-1.5 bg-surface-elevated rounded-full overflow-hidden"
                 role="progressbar"
                 aria-valuenow={xpProgress.current}
                 aria-valuemin={0}
@@ -218,8 +218,8 @@ const ControlBar = memo(
               className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-none px-1 -mx-1"
               title="CorpsCoin wallet — history and how to earn"
             >
-              <Coins className="w-3.5 h-3.5 text-yellow-500" />
-              <span className="text-xs font-bold text-yellow-500 font-data tabular-nums">
+              <Coins className="w-3.5 h-3.5 text-brand" />
+              <span className="text-xs font-bold text-brand font-data tabular-nums">
                 {corpsCoin.toLocaleString()}
               </span>
             </button>
@@ -232,7 +232,7 @@ const ControlBar = memo(
                   className={`min-h-touch px-3 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors press-feedback ${
                     nextUnlock.meetsLevel
                       ? 'bg-green-600 hover:bg-green-500 text-white'
-                      : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                      : 'bg-interactive hover:bg-interactive-hover text-white'
                   }`}
                   title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)`}
                 >

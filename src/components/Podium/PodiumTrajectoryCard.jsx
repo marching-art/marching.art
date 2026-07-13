@@ -62,7 +62,7 @@ export default function PodiumTrajectoryCard({ podium }) {
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-2">
+    <div className="bg-surface-card border border-line rounded-none p-4 space-y-2">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <TrendingUp className="w-3 h-3" /> Trajectory vs. history
@@ -164,7 +164,7 @@ export default function PodiumTrajectoryCard({ podium }) {
           <span className="inline-block w-3 h-0.5 bg-[#4d9fff]" /> {state.corpsName || 'Your corps'}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-px bg-gray-500" /> historical shadows
+          <span className="inline-block w-3 h-px bg-charcoal-500" /> historical shadows
         </span>
         {history.length === 0 && (
           <span className="text-muted">Your line starts after your first scored show.</span>

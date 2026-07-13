@@ -24,6 +24,7 @@ import {
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
+import { Heading } from '../components/ui';
 
 const PAGE_FAQ = [
   {
@@ -48,12 +49,12 @@ const FAQ_SCHEMA = {
 };
 
 const SectionHeading = ({ icon: Icon, children }) => (
-  <h2 className="flex items-center gap-3 text-xl font-bold text-white mb-4">
-    <span className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center flex-shrink-0">
-      <Icon className="w-4 h-4 text-[#0057B8]" />
+  <Heading level="title" as="h2" className="flex items-center gap-3 mb-4">
+    <span className="w-8 h-8 bg-interactive/20 rounded-none flex items-center justify-center flex-shrink-0">
+      <Icon className="w-4 h-4 text-interactive" />
     </span>
     {children}
-  </h2>
+  </Heading>
 );
 
 const HowToPlayPublic = () => {
@@ -66,7 +67,7 @@ const HowToPlayPublic = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
@@ -75,19 +76,16 @@ const HowToPlayPublic = () => {
       {/* Top bar */}
       <header className="border-b border-white/10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            to="/"
-            className="text-sm font-bold text-white hover:text-yellow-500 transition-colors"
-          >
-            marching<span className="text-yellow-500">.art</span>
+          <Link to="/" className="text-sm font-bold text-white hover:text-brand transition-colors">
+            marching<span className="text-brand">.art</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm">
-            <Link to="/login" className="text-gray-400 hover:text-white transition-colors">
+            <Link to="/login" className="text-muted hover:text-white transition-colors">
               Sign In
             </Link>
             <Link
               to="/register"
-              className="px-3 py-1.5 bg-[#0057B8] text-white font-bold text-xs uppercase tracking-wider rounded-none hover:bg-[#0066d6] transition-colors"
+              className="px-3 py-1.5 bg-interactive text-white font-bold text-xs uppercase tracking-wider rounded-none hover:bg-interactive-hover transition-colors"
             >
               Create Your Corps
             </Link>
@@ -97,13 +95,13 @@ const HowToPlayPublic = () => {
 
       <main className="max-w-3xl mx-auto px-4 py-10">
         {/* Intro */}
-        <p className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-2">
+        <p className="text-xs font-bold uppercase tracking-wider text-interactive mb-2">
           The Fantasy Drum Corps Game
         </p>
-        <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight mb-4">
+        <Heading level="display" className="leading-tight mb-4">
           How to Play Fantasy Drum Corps
-        </h1>
-        <p className="text-lg text-gray-300 mb-4">
+        </Heading>
+        <p className="text-lg text-secondary mb-4">
           Fantasy drum corps works like fantasy football for the marching arts. Instead of drafting
           quarterbacks and running backs, you draft{' '}
           <strong className="text-white">caption performances</strong> — General Effect, Visual,
@@ -111,7 +109,7 @@ const HowToPlayPublic = () => {
           history. Your fantasy corps earns points from real competition scores, and you climb
           leaderboards against directors worldwide.
         </p>
-        <p className="text-gray-400 mb-8">
+        <p className="text-muted mb-8">
           marching.art is free to play, runs year-round, and takes about two minutes to get started.
         </p>
 
@@ -134,12 +132,12 @@ const HowToPlayPublic = () => {
               ],
             ].map(([title, desc], i) => (
               <li key={title} className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                <span className="w-6 h-6 bg-interactive text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                   {i + 1}
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-white">{title}</p>
-                  <p className="text-sm text-gray-400">{desc}</p>
+                  <p className="text-sm text-muted">{desc}</p>
                 </div>
               </li>
             ))}
@@ -149,16 +147,19 @@ const HowToPlayPublic = () => {
         {/* Captions */}
         <section className="mb-10">
           <SectionHeading icon={Target}>The 8 Captions You Draft</SectionHeading>
-          <p className="text-sm text-gray-300 mb-4">
+          <p className="text-sm text-secondary mb-4">
             Your lineup mirrors how real DCI judging works: one selection in each of the eight
             scoring captions. Each caption comes from a real historical corps performance and costs
             1–25 points based on how that corps actually scored.
           </p>
           <div className="grid sm:grid-cols-2 gap-2">
             {CAPTIONS.map((cap) => (
-              <div key={cap.abbr} className="bg-[#111] border border-white/10 rounded-none p-3">
+              <div
+                key={cap.abbr}
+                className="bg-surface-sunken border border-white/10 rounded-none p-3"
+              >
                 <p className="text-sm text-white">
-                  <span className="font-bold text-[#0057B8] mr-2">{cap.abbr}</span>
+                  <span className="font-bold text-interactive mr-2">{cap.abbr}</span>
                   {cap.name}
                 </p>
                 <p className="text-xs text-muted mt-1">{cap.desc}</p>
@@ -170,7 +171,7 @@ const HowToPlayPublic = () => {
         {/* Classes */}
         <section className="mb-10">
           <SectionHeading icon={TrendingUp}>Four Competitive Classes</SectionHeading>
-          <p className="text-sm text-gray-300 mb-4">
+          <p className="text-sm text-secondary mb-4">
             Classes set your drafting budget. Everyone starts in SoundSport; unlock the rest —
             permanently — three ways, any one is enough: complete seasons (1 / 2 / 3), reach the
             required director level (3 / 5 / 10), or spend CorpsCoin earned in-game.
@@ -179,14 +180,14 @@ const HowToPlayPublic = () => {
             {CLASSES.map((cls) => (
               <div
                 key={cls.id}
-                className="bg-[#111] border border-white/10 rounded-none p-3 flex items-center justify-between gap-3"
+                className="bg-surface-sunken border border-white/10 rounded-none p-3 flex items-center justify-between gap-3"
               >
                 <div>
                   <p className="text-sm font-bold text-white">{cls.name}</p>
                   <p className="text-xs text-muted">{cls.desc}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-bold text-[#0057B8]">{cls.points} pts</p>
+                  <p className="text-sm font-bold text-interactive">{cls.points} pts</p>
                   <p className="text-xs text-muted">{cls.unlock}</p>
                 </div>
               </div>
@@ -198,22 +199,21 @@ const HowToPlayPublic = () => {
         <section className="mb-10">
           <SectionHeading icon={Calendar}>Seasons Run Year-Round</SectionHeading>
           <div className="space-y-3">
-            <div className="bg-[#111] border border-[#0057B8]/30 rounded-none p-4">
+            <div className="bg-surface-sunken border border-interactive/30 rounded-none p-4">
               <p className="text-sm font-bold text-white mb-1">
                 Live Season{' '}
                 <span className="text-xs font-normal text-muted ml-2">June – August</span>
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted">
                 Runs alongside the real DCI summer tour. Your fantasy scores track actual
                 competition results night by night, through Finals in August.
               </p>
             </div>
-            <div className="bg-[#111] border border-purple-500/30 rounded-none p-4">
+            <div className="bg-surface-sunken border border-purple-500/30 rounded-none p-4">
               <p className="text-sm font-bold text-white mb-1">
-                Off-Season{' '}
-                <span className="text-xs font-normal text-muted ml-2">August – May</span>
+                Off-Season <span className="text-xs font-normal text-muted ml-2">August – May</span>
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted">
                 Six 7-week seasons scored with historical DCI data, so there is always a leaderboard
                 to climb. XP, levels, unlocked classes, and CorpsCoin carry over between seasons.
               </p>
@@ -224,7 +224,7 @@ const HowToPlayPublic = () => {
         {/* Scoring */}
         <section className="mb-10">
           <SectionHeading icon={Clock}>How Scoring Works</SectionHeading>
-          <p className="text-sm text-gray-300 mb-4">
+          <p className="text-sm text-secondary mb-4">
             Each night your corps earns a score out of 100 — built the same 40/30/30 way real DCI
             builds it. Your two General Effect captions count at full value, while your Visual and
             Music captions are each summed and halved into a 30-point block. The score comes
@@ -232,20 +232,23 @@ const HowToPlayPublic = () => {
           </p>
           <div className="grid sm:grid-cols-3 gap-2 mb-4">
             {SCORING_MODEL.map((g) => (
-              <div key={g.group} className="bg-[#111] border border-white/10 rounded-none p-3">
+              <div
+                key={g.group}
+                className="bg-surface-sunken border border-white/10 rounded-none p-3"
+              >
                 <p className="text-sm font-bold text-white">{g.group}</p>
                 <p className="text-xs text-muted">{g.captions}</p>
-                <p className="text-sm font-bold text-[#0057B8] mt-1">up to {g.max} pts</p>
+                <p className="text-sm font-bold text-interactive mt-1">up to {g.max} pts</p>
                 <p className="text-[11px] text-muted">{g.note}</p>
               </div>
             ))}
           </div>
-          <p className="text-sm text-gray-300 mb-3">
+          <p className="text-sm text-secondary mb-3">
             Lineup changes are unlimited for the first two weeks, then tighten as finals approach —
             3 per week mid-season, none on Days 43-44, and just 2 total during Championship Week —
             so timing your moves is part of the strategy.
           </p>
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-secondary">
             Along the way you earn XP and CorpsCoin from daily check-ins, competition results,
             achievements, and streaks.
           </p>
@@ -254,16 +257,19 @@ const HowToPlayPublic = () => {
         {/* SoundSport ratings */}
         <section className="mb-10">
           <SectionHeading icon={Medal}>SoundSport Earns Ratings, Not Ranks</SectionHeading>
-          <p className="text-sm text-gray-300 mb-4">
+          <p className="text-sm text-secondary mb-4">
             SoundSport is the entry class, and the one class that never ranks. Instead of a
             leaderboard slot, your out-of-100 score earns a medal rating — a low-pressure way to
             learn the game while still being recognized for a great show.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {RATINGS.map((r) => (
-              <div key={r.tier} className="bg-[#111] border border-white/10 rounded-none p-3">
+              <div
+                key={r.tier}
+                className="bg-surface-sunken border border-white/10 rounded-none p-3"
+              >
                 <p className="text-sm font-bold text-white">{r.tier}</p>
-                <p className="text-sm font-bold text-[#0057B8]">
+                <p className="text-sm font-bold text-interactive">
                   {r.min === 0 ? 'Any score' : `${r.min}+`}
                 </p>
                 <p className="text-[11px] text-muted mt-1">{r.blurb}</p>
@@ -275,7 +281,7 @@ const HowToPlayPublic = () => {
         {/* Podium Class */}
         <section className="mb-10">
           <SectionHeading icon={Trophy}>Prefer to Run a Corps? Try Podium Class</SectionHeading>
-          <p className="text-sm text-gray-300 mb-4">
+          <p className="text-sm text-secondary mb-4">
             Podium Class flips the game. Instead of drafting caption performances, you found your
             own drum corps and earn every point — running rehearsals day by day, routing a summer
             tour, managing money and morale, and climbing from Community Corps all the way to
@@ -283,7 +289,7 @@ const HowToPlayPublic = () => {
           </p>
           <Link
             to="/podium-guide"
-            className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-[#c9a227]/50 text-[#c9a227] font-bold text-sm uppercase tracking-wider rounded-none hover:bg-[#c9a227]/10 transition-colors"
+            className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-interactive/50 text-interactive font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive/10 transition-colors"
           >
             Read the Podium Guide
             <ChevronRight className="w-4 h-4" />
@@ -293,18 +299,18 @@ const HowToPlayPublic = () => {
         {/* Leagues */}
         <section className="mb-10">
           <SectionHeading icon={Users}>Leagues and Leaderboards</SectionHeading>
-          <ul className="space-y-2 text-sm text-gray-300">
+          <ul className="space-y-2 text-sm text-secondary">
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
               Create public or private leagues with join codes and compete head-to-head with
               friends.
             </li>
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
               Global leaderboards for every class, updated as scores come in.
             </li>
             <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
+              <ChevronRight className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
               Field a separate corps in each class you have unlocked, each with its own lineup and
               ranking.
             </li>
@@ -316,9 +322,12 @@ const HowToPlayPublic = () => {
           <SectionHeading icon={Book}>New to Drum Corps? Key Terms</SectionHeading>
           <dl className="space-y-3">
             {GLOSSARY.map((item) => (
-              <div key={item.term} className="bg-[#111] border border-white/10 rounded-none p-3">
-                <dt className="text-sm font-bold text-[#0057B8]">{item.term}</dt>
-                <dd className="text-sm text-gray-400 mt-1">{item.def}</dd>
+              <div
+                key={item.term}
+                className="bg-surface-sunken border border-white/10 rounded-none p-3"
+              >
+                <dt className="text-sm font-bold text-interactive">{item.term}</dt>
+                <dd className="text-sm text-muted mt-1">{item.def}</dd>
               </div>
             ))}
           </dl>
@@ -331,29 +340,31 @@ const HowToPlayPublic = () => {
             {PAGE_FAQ.map((item) => (
               <div key={item.q}>
                 <h3 className="text-sm font-bold text-white mb-1">{item.q}</h3>
-                <p className="text-sm text-gray-400">{item.a}</p>
+                <p className="text-sm text-muted">{item.a}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* CTA */}
-        <section className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none p-6 text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Ready to Direct Your Own Corps?</h2>
-          <p className="text-sm text-gray-400 mb-4">
+        <section className="bg-interactive/10 border border-interactive/30 rounded-none p-6 text-center">
+          <Heading level="title" className="mb-2">
+            Ready to Direct Your Own Corps?
+          </Heading>
+          <p className="text-sm text-muted mb-4">
             Join directors worldwide playing fantasy drum corps — free, year-round, no downloads.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 min-h-[44px] px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider rounded-none hover:bg-[#0066d6] transition-colors"
+              className="inline-flex items-center gap-2 min-h-[44px] px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive-hover transition-colors"
             >
               Create Your Corps
               <ChevronRight className="w-4 h-4" />
             </Link>
             <Link
               to="/preview"
-              className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-yellow-500/50 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-none hover:bg-yellow-500/10 transition-colors"
+              className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-interactive/50 text-interactive font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive/10 transition-colors"
             >
               <Play className="w-4 h-4" />
               Try the Demo

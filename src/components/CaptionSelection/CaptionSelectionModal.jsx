@@ -26,6 +26,7 @@ import {
   CaptionButton,
 } from './CaptionSelectionParts';
 import { generateQuickFillLineup } from './quickFillLineup';
+import { Heading } from '../ui';
 
 const CaptionSelectionModal = ({
   onClose,
@@ -114,7 +115,7 @@ const CaptionSelectionModal = ({
 
   const categoryColors = {
     'General Effect': 'bg-yellow-500',
-    Visual: 'bg-[#0057B8]',
+    Visual: 'bg-interactive',
     Music: 'bg-purple-400',
   };
 
@@ -462,18 +463,18 @@ const CaptionSelectionModal = ({
         aria-labelledby="modal-title-caption-selection"
       >
         <div
-          className="w-full max-w-5xl max-h-[95dvh] bg-[#1a1a1a] border border-[#333] rounded-none flex flex-col"
+          className="w-full max-w-5xl max-h-[95dvh] bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
+          <div className="px-4 py-3 border-b border-line bg-surface-raised flex-shrink-0">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 {/* Mobile back button when viewing selection */}
                 {mobileView === 'selection' && (
                   <button
                     onClick={handleBackToLineup}
-                    className="lg:hidden min-w-touch min-h-touch -ml-2 flex items-center justify-center text-gray-400 hover:text-white active:text-white press-feedback"
+                    className="lg:hidden min-w-touch min-h-touch -ml-2 flex items-center justify-center text-muted hover:text-white active:text-white press-feedback"
                     aria-label="Back to lineup"
                   >
                     <ArrowLeft className="w-5 h-5" />
@@ -482,7 +483,7 @@ const CaptionSelectionModal = ({
                 <div>
                   <h2
                     id="modal-title-caption-selection"
-                    className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                    className="text-xs font-bold uppercase tracking-wider text-secondary"
                   >
                     {mobileView === 'selection' && activeCaptionData
                       ? `Select for ${activeCaptionData.name}`
@@ -509,7 +510,7 @@ const CaptionSelectionModal = ({
                 </button>
                 <button
                   onClick={() => setShowTemplateModal(true)}
-                  className="min-h-touch px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase hover:border-[#444] hover:text-white active:text-white flex items-center gap-1 press-feedback"
+                  className="min-h-touch px-3 border border-line text-muted text-xs font-bold uppercase hover:border-line-strong hover:text-white active:text-white flex items-center gap-1 press-feedback"
                 >
                   <Save className="w-3 h-3" /> Templates
                 </button>
@@ -525,13 +526,13 @@ const CaptionSelectionModal = ({
           </div>
 
           {/* Budget Bar */}
-          <div className="px-4 py-3 bg-[#0a0a0a] border-b border-[#333] flex-shrink-0">
+          <div className="px-4 py-3 bg-background border-b border-line flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <Target className="w-4 h-4 text-[#0057B8]" />
-                <span className="text-sm text-gray-400">Budget:</span>
+                <Target className="w-4 h-4 text-interactive" />
+                <span className="text-sm text-muted">Budget:</span>
                 <span
-                  className={`text-lg font-data font-bold ${isOverLimit ? 'text-red-500' : remainingPoints < 10 ? 'text-yellow-500' : 'text-[#0057B8]'}`}
+                  className={`text-lg font-data font-bold ${isOverLimit ? 'text-red-500' : remainingPoints < 10 ? 'text-warning' : 'text-interactive'}`}
                 >
                   {totalPoints} / {pointLimit}
                 </span>
@@ -554,9 +555,9 @@ const CaptionSelectionModal = ({
                 )}
               </div>
             </div>
-            <div className="h-2 bg-[#333] overflow-hidden rounded-none">
+            <div className="h-2 bg-line overflow-hidden rounded-none">
               <div
-                className={`h-full transition-all ${isOverLimit ? 'bg-red-500' : 'bg-[#0057B8]'}`}
+                className={`h-full transition-all ${isOverLimit ? 'bg-red-500' : 'bg-interactive'}`}
                 style={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }}
               />
             </div>
@@ -587,14 +588,14 @@ const CaptionSelectionModal = ({
           <div className="flex-1 flex flex-col overflow-hidden min-h-0">
             {loading ? (
               <div className="text-center py-12">
-                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-none animate-spin mx-auto mb-3" />
+                <div className="w-8 h-8 border-2 border-interactive border-t-transparent rounded-none animate-spin mx-auto mb-3" />
                 <p className="text-xs text-muted uppercase tracking-wider">Loading corps...</p>
               </div>
             ) : (
               <div className="flex-1 flex min-h-0">
                 {/* Left Panel - Your Lineup (hidden on mobile when viewing selection) */}
                 <div
-                  className={`w-full lg:w-80 flex-shrink-0 border-r border-[#333] overflow-y-auto min-h-0 ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}
+                  className={`w-full lg:w-80 flex-shrink-0 border-r border-line overflow-y-auto min-h-0 ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}
                 >
                   <div className="p-4 space-y-4">
                     {/* Draft Helper */}
@@ -610,8 +611,8 @@ const CaptionSelectionModal = ({
                     />
 
                     {/* Your Lineup - Caption List */}
-                    <div className="bg-[#0a0a0a] border border-[#333]">
-                      <div className="p-3 border-b border-[#333] flex items-center justify-between">
+                    <div className="bg-background border border-line">
+                      <div className="p-3 border-b border-line flex items-center justify-between">
                         <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
                           <Award className="w-3 h-3" /> Your Lineup
                         </h3>
@@ -652,7 +653,7 @@ const CaptionSelectionModal = ({
                   {activeCaption && activeCaptionData ? (
                     <>
                       {/* Caption Header */}
-                      <div className="px-4 py-3 bg-[#222] border-b border-[#333] flex-shrink-0">
+                      <div className="px-4 py-3 bg-surface-raised border-b border-line flex-shrink-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div
@@ -662,9 +663,7 @@ const CaptionSelectionModal = ({
                               <h3 className="text-sm font-bold text-white">
                                 {activeCaptionData.name}
                               </h3>
-                              <p className="text-[10px] text-muted">
-                                {activeCaptionData.category}
-                              </p>
+                              <p className="text-[10px] text-muted">{activeCaptionData.category}</p>
                             </div>
                           </div>
                           {activeCaptionSelection && (
@@ -696,7 +695,9 @@ const CaptionSelectionModal = ({
                     <div className="flex-1 flex items-center justify-center text-center p-8">
                       <div>
                         <Award className="w-12 h-12 text-muted mx-auto mb-3" />
-                        <h3 className="text-lg font-bold text-gray-400 mb-1">Select a Caption</h3>
+                        <Heading level="title" as="h3" className="text-muted mb-1">
+                          Select a Caption
+                        </Heading>
                         <p className="text-sm text-muted">
                           Click on a caption from Your Lineup to see available corps
                         </p>
@@ -709,7 +710,7 @@ const CaptionSelectionModal = ({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
             <p className="text-[10px] text-muted leading-snug min-w-0 hidden sm:block">
               Locked lineups are scored nightly at 2 AM ET — next run in{' '}
               <span className="text-cyan-400 font-bold font-data tabular-nums">
@@ -720,7 +721,7 @@ const CaptionSelectionModal = ({
               <button
                 onClick={onClose}
                 disabled={saving}
-                className="min-h-touch px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50 press-feedback"
+                className="min-h-touch px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50 press-feedback"
               >
                 Cancel
               </button>
@@ -732,7 +733,7 @@ const CaptionSelectionModal = ({
                     ? 'Caption changes are currently closed — see the change-window indicator above'
                     : undefined
                 }
-                className="min-h-touch px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] active:bg-[#004a9e] disabled:opacity-50 flex items-center gap-2 press-feedback-strong"
+                className="min-h-touch px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover active:bg-interactive-subtle disabled:opacity-50 flex items-center gap-2 press-feedback-strong"
               >
                 {saving ? (
                   <>

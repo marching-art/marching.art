@@ -1,5 +1,5 @@
 // =============================================================================
-// CREATE LEAGUE MODAL - ESPN DATA STYLE
+// CREATE LEAGUE MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useState } from 'react';
@@ -105,14 +105,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
       >
         <div className="w-full max-w-md my-auto" onClick={(e) => e.stopPropagation()}>
           {step === 'create' ? (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
+            <div className="bg-surface-card border border-line rounded-none">
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
                 <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-[#0057B8]" />
+                  <Trophy className="w-4 h-4 text-interactive" />
                   <h2
                     id="modal-title-create-league"
-                    className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                    className="text-xs font-bold uppercase tracking-wider text-secondary"
                   >
                     Create League
                   </h2>
@@ -138,7 +138,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       required
                       maxLength={40}
                       autoFocus
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                     />
                   </div>
 
@@ -153,11 +153,11 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                         onClick={() => setFormData({ ...formData, isPublic: true })}
                         className={`p-3 border text-left transition-colors ${
                           formData.isPublic
-                            ? 'border-[#0057B8] bg-[#0057B8]/10'
-                            : 'border-[#333] hover:border-[#444]'
+                            ? 'border-interactive bg-interactive/10'
+                            : 'border-line hover:border-line-strong'
                         }`}
                       >
-                        <Users className="w-4 h-4 text-gray-300 mb-1" />
+                        <Users className="w-4 h-4 text-secondary mb-1" />
                         <p className="text-sm font-bold text-white">Public</p>
                         <p className="text-[10px] text-muted">Anyone can find</p>
                       </button>
@@ -166,11 +166,11 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                         onClick={() => setFormData({ ...formData, isPublic: false })}
                         className={`p-3 border text-left transition-colors ${
                           !formData.isPublic
-                            ? 'border-[#0057B8] bg-[#0057B8]/10'
-                            : 'border-[#333] hover:border-[#444]'
+                            ? 'border-interactive bg-interactive/10'
+                            : 'border-line hover:border-line-strong'
                         }`}
                       >
-                        <Lock className="w-4 h-4 text-gray-300 mb-1" />
+                        <Lock className="w-4 h-4 text-secondary mb-1" />
                         <p className="text-sm font-bold text-white">Private</p>
                         <p className="text-[10px] text-muted">Invite only</p>
                       </button>
@@ -195,8 +195,8 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                           }
                           className={`py-2 text-[10px] font-bold border transition-colors ${
                             (formData.settings.entryFee || 0) === fee
-                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
-                              : 'border-[#333] text-muted hover:border-[#444]'
+                              ? 'border-interactive bg-interactive/10 text-interactive'
+                              : 'border-line text-muted hover:border-line-strong'
                           }`}
                         >
                           {fee === 0 ? 'Free' : fee.toLocaleString()}
@@ -215,7 +215,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       <label className="text-[10px] font-bold text-muted uppercase tracking-wider">
                         Max Members
                       </label>
-                      <span className="text-sm font-data font-bold text-[#0057B8]">
+                      <span className="text-sm font-data font-bold text-interactive">
                         {formData.maxMembers}
                       </span>
                     </div>
@@ -227,7 +227,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       onChange={(e) =>
                         setFormData({ ...formData, maxMembers: parseInt(e.target.value) })
                       }
-                      className="w-full h-2 bg-[#333] rounded-none appearance-none cursor-pointer accent-[#0057B8]"
+                      className="w-full h-2 bg-line rounded-none appearance-none cursor-pointer accent-interactive"
                     />
                     <div className="flex justify-between text-[10px] text-muted mt-1">
                       <span>4</span>
@@ -238,19 +238,19 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+                <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={onClose}
                     disabled={processing}
-                    className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+                    className="h-9 px-4 border border-line text-muted text-sm font-bold uppercase tracking-wider hover:border-line-strong hover:text-white disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={processing || !formData.name.trim()}
-                    className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50"
+                    className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50"
                   >
                     {processing ? 'Creating...' : 'Create'}
                   </button>
@@ -258,9 +258,9 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               </form>
             </div>
           ) : (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
+            <div className="bg-surface-card border border-line rounded-none">
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-raised">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2">
                   <Check className="w-4 h-4" />
                   League Created
@@ -274,12 +274,12 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                   <Check className="w-6 h-6 text-green-500" />
                 </div>
 
-                <p className="text-sm text-gray-400 mb-4">Share the invite code with friends</p>
+                <p className="text-sm text-muted mb-4">Share the invite code with friends</p>
 
                 {/* League Info */}
-                <div className="bg-[#0a0a0a] border border-[#333] p-3 mb-4">
+                <div className="bg-background border border-line p-3 mb-4">
                   <div className="flex items-center justify-center gap-2 mb-1">
-                    <Trophy className="w-4 h-4 text-[#0057B8]" />
+                    <Trophy className="w-4 h-4 text-interactive" />
                     <span className="font-bold text-white">{formData.name}</span>
                   </div>
                   <div className="flex items-center justify-center gap-2 text-xs text-muted">
@@ -305,14 +305,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                     Invite Code
                   </label>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-[#0a0a0a] border-2 border-dashed border-[#0057B8]/30 p-3">
-                      <code className="text-xl font-data font-bold text-[#0057B8] tracking-widest">
+                    <div className="flex-1 bg-background border-2 border-dashed border-interactive/30 p-3">
+                      <code className="text-xl font-data font-bold text-interactive tracking-widest">
                         {createdLeague?.inviteCode || '------'}
                       </code>
                     </div>
                     <button
                       onClick={copyInviteCode}
-                      className="h-12 w-12 bg-[#0057B8]/10 border border-[#0057B8]/30 text-[#0057B8] hover:bg-[#0057B8]/20 flex items-center justify-center"
+                      className="h-12 w-12 bg-interactive/10 border border-interactive/30 text-interactive hover:bg-interactive/20 flex items-center justify-center"
                     >
                       {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                     </button>
@@ -323,14 +323,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <button
                     onClick={copyInviteLink}
-                    className="flex items-center justify-center gap-2 p-2 bg-[#0a0a0a] border border-[#333] text-gray-300 hover:border-[#444] text-sm font-bold"
+                    className="flex items-center justify-center gap-2 p-2 bg-background border border-line text-secondary hover:border-line-strong text-sm font-bold"
                   >
                     <Link2 className="w-4 h-4" />
                     Copy Link
                   </button>
                   <button
                     onClick={shareInvite}
-                    className="flex items-center justify-center gap-2 p-2 bg-[#0057B8]/10 border border-[#0057B8]/30 text-[#0057B8] hover:bg-[#0057B8]/20 text-sm font-bold"
+                    className="flex items-center justify-center gap-2 p-2 bg-interactive/10 border border-interactive/30 text-interactive hover:bg-interactive/20 text-sm font-bold"
                   >
                     <Share2 className="w-4 h-4" />
                     Share
@@ -339,10 +339,10 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end">
+              <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end">
                 <button
                   onClick={onClose}
-                  className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+                  className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover"
                 >
                   Go to League
                 </button>

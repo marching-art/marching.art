@@ -7,6 +7,7 @@ import { Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight } fr
 import { getSeasonSettings, getDciDataDoc, getHistoricalScoresMap } from '../../api/admin';
 import { getCaptionLabel } from '../../utils/captionUtils';
 import { CAPTION_IDS } from '../../data/captions';
+import { Heading } from '../ui';
 
 // Caption tabs (canonical caption set)
 const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
@@ -67,7 +68,7 @@ const getCellBgColor = (value, maxPossible) => {
   const percentage = value / maxPossible;
   if (percentage >= 0.9) return 'bg-green-900/30';
   if (percentage >= 0.8) return 'bg-green-900/20';
-  if (percentage >= 0.7) return 'bg-yellow-900/20';
+  if (percentage >= 0.7) return 'bg-warning/20';
   if (percentage < 0.5) return 'bg-red-900/20';
   return '';
 };
@@ -258,8 +259,8 @@ const ScoresSpreadsheet = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-yellow-500 animate-spin" />
-        <span className="ml-3 text-gray-300">Loading scores data...</span>
+        <RefreshCw className="w-8 h-8 text-secondary animate-spin" />
+        <span className="ml-3 text-secondary">Loading scores data...</span>
       </div>
     );
   }
@@ -278,11 +279,11 @@ const ScoresSpreadsheet = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-yellow-500/20 rounded-none">
-            <Table className="w-4 h-4 text-yellow-500" />
+          <div className="p-1.5 bg-surface-raised rounded-none">
+            <Table className="w-4 h-4 text-secondary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Scores Reference Spreadsheet</h2>
+            <Heading level="title">Scores Reference Spreadsheet</Heading>
             <p className="text-xs text-muted">
               {seasonData?.name} • {corpsValues.length} corps • {allDates.length} days
             </p>
@@ -306,8 +307,8 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(caption)}
             className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === caption
-                ? 'bg-amber-400 text-neutral-900 font-bold'
-                : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                ? 'bg-interactive text-white font-bold'
+                : 'text-muted hover:text-white hover:bg-charcoal-800'
             }`}
           >
             {caption}
@@ -324,8 +325,8 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === tab.id
-                ? 'bg-amber-400 text-neutral-900 font-bold'
-                : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
+                ? 'bg-interactive text-white font-bold'
+                : 'text-muted hover:text-white hover:bg-charcoal-800'
             }`}
           >
             {tab.label}
@@ -340,7 +341,7 @@ const ScoresSpreadsheet = () => {
           disabled={!canScrollLeft}
           className={`p-1 rounded-none transition-all ${
             canScrollLeft
-              ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+              ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
               : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
           }`}
         >
@@ -355,7 +356,7 @@ const ScoresSpreadsheet = () => {
           disabled={!canScrollRight}
           className={`p-1 rounded-none transition-all ${
             canScrollRight
-              ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+              ? 'bg-charcoal-800 text-secondary hover:bg-charcoal-700'
               : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
           }`}
         >
@@ -369,23 +370,21 @@ const ScoresSpreadsheet = () => {
           {/* Header Row */}
           <thead>
             <tr className="bg-charcoal-900/80 border-b border-white/20">
-              <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-yellow-400 border-r border-white/20 w-[90px]">
+              <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-secondary border-r border-white/20 w-[90px]">
                 {INDIVIDUAL_CAPTIONS.includes(activeTab)
                   ? getCaptionLabel(activeTab)
                   : AGGREGATE_TABS.find((t) => t.id === activeTab)?.label || activeTab}
               </th>
-              <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-yellow-400 border-r border-white/20 w-6">
+              <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-secondary border-r border-white/20 w-6">
                 Pts
               </th>
               {visibleDates.map((dateInfo) => (
                 <th
                   key={dateInfo.day}
-                  className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
+                  className="px-0 py-1.5 text-center font-mono text-muted w-[38px] border-r border-white/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[10px] text-muted/70 leading-none">
-                    {dateInfo.dateLabel}
-                  </div>
+                  <div className="text-[10px] text-muted/70 leading-none">{dateInfo.dateLabel}</div>
                 </th>
               ))}
             </tr>
@@ -416,11 +415,11 @@ const ScoresSpreadsheet = () => {
                   <span
                     className={`font-mono text-[11px] font-bold ${
                       corps.points >= 20
-                        ? 'text-yellow-400'
+                        ? 'text-main'
                         : corps.points >= 15
-                          ? 'text-gray-200'
+                          ? 'text-secondary'
                           : corps.points >= 10
-                            ? 'text-gray-400'
+                            ? 'text-muted'
                             : 'text-muted'
                     }`}
                   >
@@ -455,7 +454,7 @@ const ScoresSpreadsheet = () => {
                     >
                       {score !== null ? (
                         <span
-                          className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'}`}
+                          className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-secondary'}`}
                         >
                           {score.toFixed(3)}
                         </span>
@@ -481,7 +480,7 @@ const ScoresSpreadsheet = () => {
           <span className="w-2.5 h-2.5 rounded-none bg-green-900/20" /> 80-90%
         </span>
         <span className="flex items-center gap-0.5">
-          <span className="w-2.5 h-2.5 rounded-none bg-yellow-900/20" /> 70-80%
+          <span className="w-2.5 h-2.5 rounded-none bg-warning/20" /> 70-80%
         </span>
         <span className="flex items-center gap-0.5">
           <span className="w-2.5 h-2.5 rounded-none bg-red-900/20" /> &lt;50%

@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
+import { Heading } from './ui';
 
 // Lazy-loaded confetti module (only loaded when celebration triggers)
 let confettiModule = null;
@@ -146,7 +147,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
           <div className="relative">
             {/* Glow effect - static on mobile */}
             <div
-              className={`absolute inset-0 bg-yellow-500/30 blur-3xl rounded-none ${shouldReduceMotion ? '' : 'animate-pulse'}`}
+              className={`absolute inset-0 bg-brand/30 blur-3xl rounded-none ${shouldReduceMotion ? '' : 'animate-pulse'}`}
             />
 
             {/* Message - no wiggle animation on mobile */}
@@ -168,11 +169,11 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
                       repeatType: 'reverse',
                     }
               }
-              className="relative bg-gradient-gold rounded-none px-12 py-8 border-4 border-yellow-300"
+              className="relative bg-brand rounded-none px-12 py-8 border-4 border-brand-strong"
             >
-              <h2 className="text-5xl md:text-6xl font-black text-charcoal-900 text-center">
+              <Heading level="display" as="h2" className="text-charcoal-900 text-center">
                 {message}
-              </h2>
+              </Heading>
             </m.div>
 
             {/* Sparkles - skip on mobile for performance */}
@@ -196,7 +197,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
                   className="absolute top-1/2 left-1/2 w-4 h-4"
                   style={{ transformOrigin: 'center' }}
                 >
-                  <div className="w-full h-full bg-yellow-400 rounded-none blur-sm" />
+                  <div className="w-full h-full bg-brand rounded-none blur-sm" />
                 </m.div>
               ))}
           </div>

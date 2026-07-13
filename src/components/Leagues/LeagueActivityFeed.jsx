@@ -59,7 +59,7 @@ const colorMap = {
     bg: 'bg-purple-500/10',
     border: 'border-purple-500/30',
   },
-  new_champion: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  new_champion: { text: 'text-brand', bg: 'bg-brand/10', border: 'border-brand/30' },
   standings_change: { text: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
   new_message: { text: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/30' },
   trade_proposal: {
@@ -70,20 +70,20 @@ const colorMap = {
   trade_response: { text: 'text-teal-500', bg: 'bg-teal-500/10', border: 'border-teal-500/30' },
   member_joined: { text: 'text-cyan-500', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
   rivalry_matchup: { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' },
-  show_result: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  show_result: { text: 'text-secondary', bg: 'bg-surface-raised', border: 'border-line' },
   week_start: { text: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
   week_end: { text: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/30' },
   // New transaction log event types
   lineup_update: {
-    text: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
+    text: 'text-secondary',
+    bg: 'bg-surface-raised',
+    border: 'border-line',
   },
-  season_high: { text: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+  season_high: { text: 'text-brand', bg: 'bg-brand/10', border: 'border-brand/30' },
   commissioner_action: {
-    text: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
+    text: 'text-secondary',
+    bg: 'bg-surface-raised',
+    border: 'border-line',
   },
   achievement_unlocked: {
     text: 'text-emerald-500',
@@ -126,13 +126,13 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       onClick={handleClick}
       className={`
         relative flex items-start gap-3 p-3 rounded-none cursor-pointer transition-all
-        ${isNotification && !activity.read ? 'bg-[#222] border border-yellow-500/30' : 'bg-[#1a1a1a] border border-[#333]'}
-        hover:border-[#555]
+        ${isNotification && !activity.read ? 'bg-surface-raised border border-warning/30' : 'bg-surface-card border border-line'}
+        hover:border-line-strong
       `}
     >
       {/* Unread indicator */}
       {isNotification && !activity.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-none bg-yellow-500 animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-none bg-warning animate-pulse" />
       )}
 
       {/* Icon */}
@@ -146,7 +146,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
           <h4 className="font-bold text-sm text-white truncate">{activity.title}</h4>
           <span className="text-xs text-muted whitespace-nowrap">{timeAgo}</span>
         </div>
-        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
+        <p className="text-xs text-muted mt-0.5 line-clamp-2">
           {activity.message || activity.description}
         </p>
 
@@ -170,12 +170,12 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
               </span>
             )}
             {activity.metadata.week && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-[#333] text-gray-400">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-line text-muted">
                 Week {activity.metadata.week}
               </span>
             )}
             {activity.metadata.score && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-yellow-500/10 text-yellow-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-surface-raised text-secondary flex items-center gap-1">
                 <Target className="w-3 h-3" />
                 {activity.metadata.score.toFixed(1)}
               </span>
@@ -186,7 +186,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
               </span>
             )}
             {activity.metadata.seasonHigh && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-amber-500/10 text-amber-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-brand/10 text-brand flex items-center gap-1">
                 <Star className="w-3 h-3" />
                 Season High!
               </span>
@@ -199,7 +199,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       {isNotification && !activity.read && onMarkRead && (
         <button
           onClick={handleMarkRead}
-          className="p-1.5 rounded-none hover:bg-[#333] transition-colors"
+          className="p-1.5 rounded-none hover:bg-line transition-colors"
           title="Mark as read"
         >
           <CheckCircle className="w-4 h-4 text-muted hover:text-green-500" />
@@ -221,7 +221,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
     onClick={onClick}
     className={`
       relative px-3 py-1.5 rounded-none text-xs font-bold transition-all
-      ${active ? 'bg-yellow-500 text-black' : 'bg-[#222] text-gray-400 hover:bg-[#333]'}
+      ${active ? 'bg-interactive text-white' : 'bg-surface-raised text-muted hover:bg-line'}
     `}
   >
     {children}
@@ -229,7 +229,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
       <span
         className={`
         absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-none text-[10px] flex items-center justify-center
-        ${active ? 'bg-black text-yellow-500' : 'bg-yellow-500 text-black'}
+        ${active ? 'bg-black text-interactive' : 'bg-interactive text-white'}
       `}
       >
         {count > 99 ? '99+' : count}
@@ -321,12 +321,12 @@ const LeagueActivityFeed = ({
 
   if (isLoading && filteredItems.length === 0) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4">
+      <div className="bg-surface-card border border-line rounded-none p-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-none bg-[#333] animate-pulse" />
+          <div className="w-8 h-8 rounded-none bg-line animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 bg-[#333] rounded-none animate-pulse" />
-            <div className="h-3 w-48 bg-[#333] rounded-none animate-pulse" />
+            <div className="h-4 w-32 bg-line rounded-none animate-pulse" />
+            <div className="h-3 w-48 bg-line rounded-none animate-pulse" />
           </div>
         </div>
       </div>
@@ -334,14 +334,14 @@ const LeagueActivityFeed = ({
   }
 
   return (
-    <div className={`bg-[#1a1a1a] border border-[#333] rounded-none ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`bg-surface-card border border-line rounded-none ${compact ? 'p-3' : 'p-4'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-yellow-500" />
+          <Bell className="w-4 h-4 text-secondary" />
           <h3 className="text-sm font-bold text-white">Activity Feed</h3>
           {leagueUnreadCount > 0 && (
-            <span className="px-2 py-0.5 rounded-none bg-yellow-500/10 text-yellow-500 text-xs font-bold">
+            <span className="px-2 py-0.5 rounded-none bg-warning/10 text-warning text-xs font-bold">
               {leagueUnreadCount} new
             </span>
           )}
@@ -350,7 +350,7 @@ const LeagueActivityFeed = ({
         {leagueUnreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-xs text-muted hover:text-gray-300 transition-colors flex items-center gap-1"
+            className="text-xs text-muted hover:text-secondary transition-colors flex items-center gap-1"
           >
             <Eye className="w-3 h-3" />
             Mark all read
@@ -360,7 +360,7 @@ const LeagueActivityFeed = ({
 
       {/* Filters */}
       {showFilters && (
-        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-[#333]">
+        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-line">
           <FilterTab
             active={activeFilter === 'all'}
             onClick={() => setActiveFilter('all')}
@@ -419,7 +419,7 @@ const LeagueActivityFeed = ({
       {hasMore && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full mt-3 py-2 text-sm text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+          className="w-full mt-3 py-2 text-sm text-muted hover:text-white transition-colors flex items-center justify-center gap-2"
         >
           Show all activity
           <ChevronRight className="w-4 h-4" />
@@ -429,7 +429,7 @@ const LeagueActivityFeed = ({
       {showAll && (
         <button
           onClick={() => setShowAll(false)}
-          className="w-full mt-3 py-2 text-sm text-muted hover:text-gray-400 transition-colors"
+          className="w-full mt-3 py-2 text-sm text-muted hover:text-muted transition-colors"
         >
           Show less
         </button>
@@ -455,26 +455,26 @@ export const NotificationDropdown = ({
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
-      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-[#1a1a1a] border border-[#333] rounded-none z-50"
+      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-surface-card border border-line rounded-none z-50"
     >
       {/* Header */}
-      <div className="sticky top-0 bg-[#1a1a1a] p-3 border-b border-[#333] flex items-center justify-between">
+      <div className="sticky top-0 bg-surface-card p-3 border-b border-line flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-yellow-500" />
+          <Bell className="w-4 h-4 text-secondary" />
           <span className="font-bold text-white">Notifications</span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.5 rounded-none bg-yellow-500 text-black text-xs font-bold">
+            <span className="px-1.5 py-0.5 rounded-none bg-warning text-black text-xs font-bold">
               {unreadCount}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <button onClick={onMarkAllRead} className="text-xs text-muted hover:text-gray-300">
+            <button onClick={onMarkAllRead} className="text-xs text-muted hover:text-secondary">
               Mark all read
             </button>
           )}
-          <button onClick={onClose} className="p-1 hover:bg-[#333] rounded-none">
+          <button onClick={onClose} className="p-1 hover:bg-line rounded-none">
             <X className="w-4 h-4 text-muted" />
           </button>
         </div>
@@ -553,10 +553,10 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
         </div>
       </div>
 
-      <div className="mt-2 h-1 rounded-none bg-[#222] overflow-hidden">
+      <div className="mt-2 h-1 rounded-none bg-surface-raised overflow-hidden">
         <div
           className={`h-full rounded-none transition-all ${
-            userLeading ? 'bg-green-500' : tied ? 'bg-gray-500' : 'bg-red-500'
+            userLeading ? 'bg-green-500' : tied ? 'bg-charcoal-500' : 'bg-red-500'
           }`}
           style={{
             width: `${(rivalry.userWins / (rivalry.userWins + rivalry.rivalWins + rivalry.ties)) * 100}%`,

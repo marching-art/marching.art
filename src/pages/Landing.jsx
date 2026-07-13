@@ -197,9 +197,9 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* FIXED HEADER */}
-      <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
+      <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line">
         <div className="h-full flex items-center px-4 lg:px-6">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-none overflow-hidden">
@@ -220,13 +220,13 @@ const Landing = () => {
               <Link
                 to="/dashboard"
                 aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
-                className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-[#333] active:scale-95 transition-all duration-150 press-feedback"
+                className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-line active:scale-95 transition-all duration-150 press-feedback"
               >
-                <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data tabular-nums">
+                <span className="flex items-center gap-1 text-sm font-bold text-brand font-data tabular-nums">
                   <Coins className="w-3.5 h-3.5" />
                   {(profile.corpsCoin || 0).toLocaleString()}
                 </span>
-                <span className="flex items-center gap-1 text-sm font-bold text-purple-400 font-data tabular-nums pl-2 border-l border-[#333]">
+                <span className="flex items-center gap-1 text-sm font-bold text-purple-400 font-data tabular-nums pl-2 border-l border-line">
                   <Zap className="w-3.5 h-3.5" />
                   {profile.xpLevel || 1}
                 </span>
@@ -254,7 +254,7 @@ const Landing = () => {
                   href="https://discord.gg/YvFRJ97A5H"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
+                  className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                   title="Join our Discord"
                   aria-label="Join our Discord"
                 >
@@ -262,13 +262,13 @@ const Landing = () => {
                 </a>
                 <Link
                   to="/privacy"
-                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-secondary active:text-white transition-colors press-feedback flex items-center"
                 >
                   Privacy
                 </Link>
                 <Link
                   to="/terms"
-                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-secondary active:text-white transition-colors press-feedback flex items-center"
                 >
                   Terms
                 </Link>
@@ -283,7 +283,7 @@ const Landing = () => {
                 href="https://discord.gg/YvFRJ97A5H"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
+                className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                 title="Join our Discord"
                 aria-label="Join our Discord"
               >
@@ -296,7 +296,7 @@ const Landing = () => {
             {user && (
               <Link
                 to="/guide"
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
+                className="p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                 title="Game Guide"
                 aria-label="Game Guide"
               >
@@ -339,19 +339,19 @@ const Landing = () => {
                 {/* ------------------------------------------------------- */}
                 {user ? (
                   /* AUTHENTICATED USER WIDGET */
-                  <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
+                  <div className="bg-surface-card border border-line rounded-none">
                     {/* User Header */}
-                    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-[#0057B8]" />
+                    <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                      <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                        <User className="w-3.5 h-3.5 text-interactive" />
                         My Fantasy
                       </h3>
                     </div>
 
                     {/* User Info */}
-                    <div className="p-4 border-b border-[#333]">
+                    <div className="p-4 border-b border-line">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#0057B8] flex items-center justify-center text-white font-bold text-sm">
+                        <div className="w-10 h-10 rounded-full bg-interactive flex items-center justify-center text-white font-bold text-sm">
                           {profile?.displayName?.[0]?.toUpperCase() ||
                             user.email?.[0]?.toUpperCase() ||
                             'D'}
@@ -369,17 +369,17 @@ const Landing = () => {
                           would just repeat them; the card stays a slim identity
                           strip on phones. */}
                       {profile && (
-                        <div className="hidden lg:grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-[#333]/50">
+                        <div className="hidden lg:grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-line/50">
                           <div className="flex items-center gap-1.5">
                             <Zap className="w-3.5 h-3.5 text-purple-500" />
-                            <span className="text-xs text-gray-400">Level</span>
+                            <span className="text-xs text-muted">Level</span>
                             <span className="text-sm font-bold text-white">
                               {profile.xpLevel || 1}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
-                            <span className="text-xs text-gray-400">XP</span>
+                            <Trophy className="w-3.5 h-3.5 text-interactive" />
+                            <span className="text-xs text-muted">XP</span>
                             <span className="text-sm font-bold text-white font-data tabular-nums">
                               {profile.xp?.toLocaleString() || 0}
                             </span>
@@ -387,16 +387,16 @@ const Landing = () => {
                           {profile.engagement?.loginStreak > 0 && (
                             <div className="flex items-center gap-1.5">
                               <Flame className="w-3.5 h-3.5 text-orange-500" />
-                              <span className="text-xs text-gray-400">Streak</span>
+                              <span className="text-xs text-muted">Streak</span>
                               <span className="text-sm font-bold text-orange-500 font-data tabular-nums">
                                 {profile.engagement.loginStreak}
                               </span>
                             </div>
                           )}
                           <div className="flex items-center gap-1.5">
-                            <Coins className="w-3.5 h-3.5 text-yellow-500" />
-                            <span className="text-xs text-gray-400">Coins</span>
-                            <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                            <Coins className="w-3.5 h-3.5 text-brand" />
+                            <span className="text-xs text-muted">Coins</span>
+                            <span className="text-sm font-bold text-brand font-data tabular-nums">
                               {(profile.corpsCoin || 0).toLocaleString()}
                             </span>
                           </div>
@@ -410,7 +410,7 @@ const Landing = () => {
                         nav intentionally doesn't carry it. */}
 
                     {/* Sign Out - hidden on mobile (accessible from Dashboard), show on desktop */}
-                    <div className="hidden lg:block px-2 py-2 border-t border-[#333] bg-[#111]">
+                    <div className="hidden lg:block px-2 py-2 border-t border-line bg-surface-sunken">
                       <button
                         onClick={handleSignOut}
                         className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-muted hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-none"
@@ -422,11 +422,11 @@ const Landing = () => {
                   </div>
                 ) : (
                   /* LOGIN/REGISTER WIDGET */
-                  <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
+                  <div className="bg-surface-card border border-line rounded-none">
                     {/* Card Header */}
-                    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                        <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                    <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                      <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                        <Trophy className="w-3.5 h-3.5 text-secondary" />
                         Play Now
                       </h3>
                     </div>
@@ -451,7 +451,7 @@ const Landing = () => {
                           onChange={(e) => setEmail(e.target.value)}
                           required
                           disabled={loading}
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
                         />
                       </div>
 
@@ -465,7 +465,7 @@ const Landing = () => {
                           onChange={(e) => setPassword(e.target.value)}
                           required
                           disabled={loading}
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
                         />
                       </div>
 
@@ -474,13 +474,13 @@ const Landing = () => {
                         <button
                           type="submit"
                           disabled={loading}
-                          className="flex-1 min-h-[44px] h-11 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+                          className="flex-1 min-h-[44px] h-11 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-interactive-hover active:bg-interactive-subtle active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
                         >
                           {loading ? '...' : 'Sign In'}
                         </button>
                         <Link
                           to="/register"
-                          className="flex-1 min-h-[44px] h-11 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-none"
+                          className="flex-1 min-h-[44px] h-11 border border-line text-muted font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-line-strong hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-none"
                         >
                           Register
                         </Link>
@@ -497,7 +497,7 @@ const Landing = () => {
                       {/* Try Demo Link */}
                       <Link
                         to="/preview"
-                        className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-none text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
+                        className="flex items-center justify-center gap-2 py-2.5 border border-interactive/30 rounded-none text-interactive hover:bg-interactive/10 hover:border-interactive/50 transition-colors"
                       >
                         <Play className="w-4 h-4" />
                         <span className="text-sm font-medium">Try Demo First</span>
@@ -507,7 +507,7 @@ const Landing = () => {
                       <div className="flex items-center justify-center text-xs text-muted pt-1">
                         <Link
                           to="/forgot-password"
-                          className="hover:text-[#0057B8] transition-colors"
+                          className="hover:text-interactive transition-colors"
                         >
                           Forgot password?
                         </Link>
@@ -567,7 +567,7 @@ const Landing = () => {
                 <span className="text-xs font-bold text-muted uppercase tracking-wider">
                   Latest News
                 </span>
-                <div className="flex-1 h-px bg-[#333]" />
+                <div className="flex-1 h-px bg-line" />
               </div>
               {/* Dynamic News Feed powered by Gemini AI */}
               <NewsFeed maxItems={5} />

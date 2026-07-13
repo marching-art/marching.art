@@ -1,5 +1,5 @@
 // =============================================================================
-// DATA TABLE - ESPN SPREADSHEET STYLE
+// DATA TABLE - SPREADSHEET STYLE
 // =============================================================================
 // The heart of the app. Excel, not SaaS.
 // Laws: Dense cells (px-2), no rounded corners, zebra striping, sticky header
@@ -108,16 +108,16 @@ const TableRowComponent = <T extends Record<string, unknown>>({
   );
 
   // Determine background for zebra and sticky cells
-  const rowBg = zebraStripes && rowIndex % 2 === 1 ? 'bg-[#1f1f1f]' : 'bg-[#1a1a1a]';
+  const rowBg = zebraStripes && rowIndex % 2 === 1 ? 'bg-surface-sunken' : 'bg-surface-card';
 
   return (
     <tr
       role="row"
       className={`
-        h-11 border-b border-[#333]/50
+        h-11 border-b border-line/50
         ${rowBg}
-        ${onRowClick ? 'cursor-pointer hover:bg-[#252525]' : ''}
-        ${isHighlighted ? '!bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
+        ${onRowClick ? 'cursor-pointer hover:bg-surface-raised' : ''}
+        ${isHighlighted ? '!bg-interactive/10 border-l-2 border-l-interactive' : ''}
       `.trim()}
       onClick={onRowClick ? handleClick : undefined}
       onKeyDown={onRowClick ? handleKeyDown : undefined}
@@ -135,7 +135,7 @@ const TableRowComponent = <T extends Record<string, unknown>>({
             key={column.key}
             className={`
               px-3 py-1.5 text-sm
-              ${isRankColumn ? 'font-bold text-center text-gray-300 w-12' : 'font-data text-gray-100'}
+              ${isRankColumn ? 'font-bold text-center text-secondary w-12' : 'font-data text-main'}
               ${alignStyles[column.align || 'left']}
               ${column.sticky ? `sticky left-0 ${rowBg} z-10` : ''}
               ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
@@ -162,14 +162,14 @@ interface SkeletonRowProps<T> {
 }
 
 const SkeletonRow = <T,>({ columns }: SkeletonRowProps<T>) => (
-  <tr className="h-10 border-b border-[#333]/50">
+  <tr className="h-10 border-b border-line/50">
     {columns.map((column) => (
       <td
         key={column.key}
         className={`
           px-2 py-1
           ${alignStyles[column.align || 'left']}
-          ${column.sticky ? 'sticky left-0 bg-[#1a1a1a] z-10' : ''}
+          ${column.sticky ? 'sticky left-0 bg-surface-card z-10' : ''}
           ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
         `.trim()}
         style={column.width ? { width: column.width, minWidth: column.width } : undefined}
@@ -237,7 +237,7 @@ export const DataTable = <T extends Record<string, unknown>>({
   // Loading state
   if (isLoading) {
     return (
-      <div className={`bg-[#1a1a1a] border border-[#333] ${className}`}>
+      <div className={`bg-surface-card border border-line ${className}`}>
         <div
           ref={scrollContainerRef}
           className="overflow-x-auto"
@@ -245,14 +245,14 @@ export const DataTable = <T extends Record<string, unknown>>({
         >
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-[#1a1a1a] border-b border-[#333]">
+              <tr className="bg-surface-card border-b border-line">
                 {columns.map((column) => (
                   <th
                     key={column.key}
                     scope="col"
                     className={`
                       px-2 py-2 text-[10px] font-bold text-muted uppercase tracking-wider
-                      sticky top-0 bg-[#1a1a1a] z-20
+                      sticky top-0 bg-surface-card z-20
                       ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
                       ${alignStyles[column.align || 'left']}
                       ${column.sticky ? 'sticky left-0 z-30' : ''}
@@ -281,14 +281,14 @@ export const DataTable = <T extends Record<string, unknown>>({
   // Empty state
   if (data.length === 0) {
     return (
-      <div className={`bg-[#1a1a1a] border border-[#333] ${className}`}>
+      <div className={`bg-surface-card border border-line ${className}`}>
         {emptyState || <DefaultEmptyState />}
       </div>
     );
   }
 
   return (
-    <div className={`relative bg-[#0a0a0a] border border-[#333] ${className}`}>
+    <div className={`relative bg-background border border-line ${className}`}>
       {/* Scrollable container */}
       <div
         ref={scrollContainerRef}
@@ -298,7 +298,7 @@ export const DataTable = <T extends Record<string, unknown>>({
         <table className="w-full border-collapse">
           {/* Header - Sticky */}
           <thead>
-            <tr className="bg-[#1a1a1a] border-b border-[#333]">
+            <tr className="bg-surface-card border-b border-line">
               {columns.map((column) => {
                 const isRankColumn = column.isRank || column.key === 'rank';
                 return (
@@ -307,7 +307,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                     scope="col"
                     className={`
                       px-2 py-2 text-[10px] font-bold text-muted uppercase tracking-wider
-                      sticky top-0 bg-[#1a1a1a] z-20
+                      sticky top-0 bg-surface-card z-20
                       ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
                       ${isRankColumn ? 'text-center w-12' : alignStyles[column.align || 'left']}
                       ${column.sticky ? 'sticky left-0 z-30' : ''}

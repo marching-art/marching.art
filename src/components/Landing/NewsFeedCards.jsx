@@ -19,6 +19,7 @@ import {
   ShareButton,
 } from './NewsFeedBadges';
 import { NewsFeedSkeleton } from './NewsFeedSkeletons';
+import { Heading } from '../ui';
 
 function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) {
   return (
@@ -27,8 +28,10 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Newspaper className="w-6 h-6 text-[#0057B8]" />
-            <h1 className="text-lg font-black text-white uppercase tracking-wide">News Hub</h1>
+            <Newspaper className="w-6 h-6 text-interactive" />
+            <Heading level="section" as="h1">
+              News Hub
+            </Heading>
           </div>
           {isLive && (
             <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30">
@@ -43,7 +46,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
       </div>
 
       {/* Category Tabs - Segmented Control */}
-      <div className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] overflow-x-auto">
+      <div className="flex items-center gap-1 p-1 bg-surface-sunken border border-line overflow-x-auto">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat.id;
@@ -53,8 +56,8 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
               onClick={() => onCategoryChange(cat.id)}
               className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                 isActive
-                  ? 'bg-[#0057B8] text-white'
-                  : 'text-muted hover:text-gray-300 hover:bg-white/5'
+                  ? 'bg-interactive text-white'
+                  : 'text-muted hover:text-secondary hover:bg-white/5'
               }`}
             >
               <Icon className="w-3 h-3" />
@@ -84,11 +87,11 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
 
   return (
     <article
-      className="mb-6 bg-[#1a1a1a] border border-[#333] overflow-hidden cursor-pointer hover:border-[#444] transition-colors group"
+      className="mb-6 bg-surface-card border border-line overflow-hidden cursor-pointer hover:border-line-strong transition-colors group"
       onClick={() => onClick?.(story)}
     >
       {/* Hero Image */}
-      <div className="aspect-[21/9] bg-[#0a0a0a] relative overflow-hidden">
+      <div className="aspect-[21/9] bg-background relative overflow-hidden">
         {showImage ? (
           <img
             src={story.imageUrl}
@@ -99,8 +102,8 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0057B8]/10 to-transparent">
-            <Icon className="w-20 h-20 text-[#0057B8]/30" />
+          <div className="absolute inset-0 flex items-center justify-center bg-interactive/10">
+            <Icon className="w-20 h-20 text-interactive/30" />
           </div>
         )}
         {/* Gradient overlay */}
@@ -108,7 +111,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
 
         {/* Story number badge */}
         {storyNumber && (
-          <div className="absolute top-4 left-4 w-8 h-8 bg-[#0057B8] flex items-center justify-center">
+          <div className="absolute top-4 left-4 w-8 h-8 bg-interactive flex items-center justify-center">
             <span className="text-sm font-black text-white">{storyNumber}</span>
           </div>
         )}
@@ -140,7 +143,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
               {readingTime}
             </span>
             {(story.authorUsername || story.authorName) && (
-              <span className="flex items-center gap-1 text-gray-400">
+              <span className="flex items-center gap-1 text-muted">
                 By {story.authorUsername || story.authorName}
               </span>
             )}
@@ -148,12 +151,15 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
         </div>
 
         {/* Headline */}
-        <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black text-white leading-[1.1] mb-4 group-hover:text-gray-100 transition-colors">
+        <Heading
+          level="display"
+          className="leading-[1.1] mb-4 group-hover:text-main transition-colors"
+        >
           {safeString(story.headline)}
-        </h1>
+        </Heading>
 
         {/* Summary */}
-        <p className="text-base lg:text-lg text-gray-400 leading-relaxed mb-5">
+        <p className="text-base lg:text-lg text-muted leading-relaxed mb-5">
           {safeString(story.summary)}
         </p>
 
@@ -180,10 +186,10 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-[#333]/50">
+        <div className="flex items-center justify-between pt-4 border-t border-line/50">
           <div className="flex items-center gap-3 flex-wrap">
             {story.trendingCorps?.slice(0, 2).map((corp, idx) => (
-              <span key={idx} className="flex items-center gap-1.5 text-xs text-gray-400">
+              <span key={idx} className="flex items-center gap-1.5 text-xs text-muted">
                 <TrendingBadge direction={corp.direction} />
                 <span className="text-white font-medium">{corp.corps}</span>
                 {corp.weeklyChange !== undefined && (
@@ -209,7 +215,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
             <ShareButton story={story} />
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-muted uppercase">marching.art</span>
-              <ChevronRight className="w-4 h-4 text-[#0057B8] group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className="w-4 h-4 text-interactive group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         </div>
@@ -224,7 +230,7 @@ const TextStoryRow = memo(({ story, onClick, engagement }) => {
 
   return (
     <article
-      className="py-4 border-b border-[#333]/60 break-inside-avoid cursor-pointer group"
+      className="py-4 border-b border-line/60 break-inside-avoid cursor-pointer group"
       onClick={() => onClick?.(story)}
     >
       {/* Kicker: category + urgency */}
@@ -236,12 +242,15 @@ const TextStoryRow = memo(({ story, onClick, engagement }) => {
       </div>
 
       {/* Headline */}
-      <h2 className="text-lg font-bold text-white leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]">
+      <Heading
+        level="title"
+        className="leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]"
+      >
         {safeString(story.headline)}
-      </h2>
+      </Heading>
 
       {/* Summary line */}
-      <p className="text-sm text-gray-400 leading-relaxed line-clamp-2 mb-2">
+      <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-2">
         {safeString(story.summary)}
       </p>
 
@@ -250,7 +259,7 @@ const TextStoryRow = memo(({ story, onClick, engagement }) => {
         <span className="text-[10px] text-muted uppercase tracking-wide">
           {formatTimestamp(story.createdAt)}
           {(story.authorUsername || story.authorName) && (
-            <span className="text-gray-400"> · By {story.authorUsername || story.authorName}</span>
+            <span className="text-muted"> · By {story.authorUsername || story.authorName}</span>
           )}
         </span>
         {engagement && (
@@ -277,7 +286,7 @@ function ErrorState({ onRetry }) {
       <p className="text-sm mb-4">Unable to load news feed</p>
       <button
         onClick={onRetry}
-        className="px-4 py-2 text-sm font-bold text-[#0057B8] border border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors"
+        className="px-4 py-2 text-sm font-bold text-interactive border border-interactive hover:bg-interactive/10 transition-colors"
       >
         Try Again
       </button>

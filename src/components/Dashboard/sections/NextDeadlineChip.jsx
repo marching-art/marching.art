@@ -60,7 +60,7 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
   const countdown = (
     <>
       <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
-      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 whitespace-nowrap">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-muted whitespace-nowrap">
         Scores in{' '}
         <span className="text-cyan-400 font-data tabular-nums">{formatCountdown(scoresInMs)}</span>
       </span>
@@ -72,7 +72,7 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     // Tap to expand the full deadline details — title tooltips are
     // hover-only, which touch devices never see.
     return (
-      <div className="border-t border-[#333] bg-[#111]">
+      <div className="border-t border-line bg-surface-sunken">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
@@ -104,7 +104,7 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
 
   return (
     <div
-      className="flex items-center gap-1.5 px-2 py-1 border border-[#333] bg-[#111] rounded-none"
+      className="flex items-center gap-1.5 px-2 py-1 border border-line bg-surface-sunken rounded-none"
       title={tooltipLines.join('\n')}
     >
       {countdown}

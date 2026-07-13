@@ -31,10 +31,10 @@ const INSIGHT_CONFIG = {
     title: 'Music Captions',
     subtitle: 'Brass, MA & Percussion',
     icon: Music2,
-    bgClass: 'bg-amber-500/10',
-    borderClass: 'border-amber-500/30',
-    iconClass: 'text-amber-400',
-    titleClass: 'text-amber-400',
+    bgClass: 'bg-surface-raised',
+    borderClass: 'border-line',
+    iconClass: 'text-secondary',
+    titleClass: 'text-secondary',
   },
 };
 
@@ -56,7 +56,7 @@ function InsightCard({ type, content }) {
             <h4 className={`text-sm font-bold ${config.titleClass}`}>{config.title}</h4>
             <span className="text-xs text-muted">{config.subtitle}</span>
           </div>
-          <p className="text-sm text-gray-300 leading-relaxed">{content}</p>
+          <p className="text-sm text-secondary leading-relaxed">{content}</p>
         </div>
       </div>
     </div>
@@ -77,7 +77,7 @@ export default function CaptionInsightsCards({ captionInsights }) {
 
   return (
     <div className="mb-8">
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4 flex items-center gap-2">
         <Target className="w-4 h-4 text-purple-400" />
         Caption Analysis
       </h3>

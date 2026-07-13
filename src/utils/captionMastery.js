@@ -16,7 +16,7 @@ export const CAPTION_MASTERY_TIERS = [
 
 export const MASTERY_TIER_STYLES = {
   bronze: { text: 'text-orange-400', bar: 'bg-orange-400' },
-  silver: { text: 'text-gray-300', bar: 'bg-gray-300' },
+  silver: { text: 'text-secondary', bar: 'bg-charcoal-300' },
   gold: { text: 'text-yellow-500', bar: 'bg-yellow-500' },
   platinum: { text: 'text-cyan-300', bar: 'bg-cyan-300' },
 };
