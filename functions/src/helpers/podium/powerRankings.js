@@ -35,9 +35,14 @@ function noteFor(entry, index, previousByUid, biggestRiserUid) {
  *   by lastTotal (the processor's ranking order).
  * @param {object|null} previous last week's column doc ({entries}) or null.
  * @param {number} week competition week (1-7).
- * @returns {{week, entries: Array}} entries capped at 10 (the column), with
- *   fieldSize recording the full count.
+ * @returns {{week, entries: Array}} entries capped at COLUMN_SIZE (the column),
+ *   with fieldSize recording the full count.
  */
+// The column now rides on its own sub-view under the Podium tab (not stacked
+// above the recap sheets), so it has room for a deeper field than the original
+// top-10 — everyone in the upper third of a 100-corps field can find their line.
+const COLUMN_SIZE = 25;
+
 function buildPowerRankings(standings, previous, week) {
   const previousByUid = new Map(
     ((previous && previous.entries) || []).map((entry) => [entry.uid, entry])
@@ -56,7 +61,7 @@ function buildPowerRankings(standings, previous, week) {
     }
   });
 
-  const entries = standings.slice(0, 10).map((entry, index) => {
+  const entries = standings.slice(0, COLUMN_SIZE).map((entry, index) => {
     const prev = previousByUid.get(entry.uid);
     return {
       rank: index + 1,
@@ -73,4 +78,4 @@ function buildPowerRankings(standings, previous, week) {
   return { week, fieldSize: standings.length, entries };
 }
 
-module.exports = { buildPowerRankings };
+module.exports = { buildPowerRankings, COLUMN_SIZE };

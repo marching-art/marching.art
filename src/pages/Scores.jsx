@@ -28,10 +28,12 @@ import { lazyWithRetry } from '../utils/lazyWithRetry';
 // Lazy-load Hall of Champions — only loaded if the user opens that tab.
 // lazyWithRetry recovers from stale-chunk 404s after a deploy (see utils/lazyWithRetry).
 const HallOfChampions = lazyWithRetry(() => import('./HallOfChampions'), 'HallOfChampionsTab');
-// Podium Class recap sheets (flag-gated tab) — full-caption DCI-style box scores.
-const PodiumRecapSheet = lazyWithRetry(
-  () => import('../components/Podium/PodiumRecapSheet'),
-  'PodiumRecapSheet'
+// Podium Class tab (flag-gated) — a sub-tabbed panel: the DCI-style recap box
+// scores and The Podium Report (weekly power rankings), split into two
+// sub-views so the two dense surfaces no longer stack on one page.
+const PodiumScoresPanel = lazyWithRetry(
+  () => import('../components/Podium/PodiumScoresPanel'),
+  'PodiumScoresPanel'
 );
 
 // =============================================================================
@@ -419,12 +421,13 @@ const Scores = () => {
                 </div>
               )}
 
-              {/* PODIUM CLASS TAB — full-caption recap sheets (flag-gated) */}
+              {/* PODIUM CLASS TAB — sub-tabbed: recap box scores + The Podium
+                  Report power rankings (flag-gated) */}
               {activeTab === 'podium' && (
                 <Suspense
                   fallback={<div className="p-8 text-center text-xs text-muted">Loading…</div>}
                 >
-                  <PodiumRecapSheet
+                  <PodiumScoresPanel
                     seasonUid={currentSeasonUid}
                     seasonName={formatSeasonName?.(displayedSeasonId) || undefined}
                     userCorpsName={profile?.corps?.podiumClass?.corpsName}
@@ -622,15 +625,16 @@ const Scores = () => {
                         </div>
                       )}
 
-                      {/* Podium View — recap sheets persist in podium-recaps
-                          per seasonUid, so archived seasons render directly */}
+                      {/* Podium View — recap sheets + report persist in
+                          podium-recaps per seasonUid, so archived seasons render
+                          directly */}
                       {archiveViewTab === 'podium' && podiumEnabled && (
                         <Suspense
                           fallback={
                             <div className="p-8 text-center text-xs text-muted">Loading…</div>
                           }
                         >
-                          <PodiumRecapSheet
+                          <PodiumScoresPanel
                             seasonUid={selectedArchiveSeason}
                             seasonName={displayedSeasonName}
                             userCorpsName={profile?.corps?.podiumClass?.corpsName}
