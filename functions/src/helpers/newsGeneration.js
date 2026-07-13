@@ -52,6 +52,7 @@ const {
   fetchShowContext,
   calculateTotal,
   calculateCaptionSubtotals,
+  filterPlayablePool,
   getScoresForDay,
   applyScheduleLocations,
   calculateTrendData,
@@ -75,6 +76,11 @@ const {
   generateFantasyDailyArticle,
   generateFantasyRecapArticle,
 } = require("./newsFantasyArticles");
+const { generateSeasonSummaryArticle } = require("./newsSeasonSummary");
+const {
+  SEASON_SUMMARY_MIN_DAY,
+  SEASON_SUMMARY_MAX_DAY,
+} = require("./newsSeasonSummaryTrigger");
 
 
 
@@ -123,13 +129,21 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
   try {
     // Fetch all data
     const rawActiveCorps = await fetchActiveCorps(db, dataDocId);
-    // In a live season every roster corps competes with current-year material,
-    // so override their prior-year sourceYear to the current year. This makes the
-    // downstream score/trend/caption/show-context lookups read the scraped
-    // current-year data instead of the prior season the roster was selected from.
+    // Restrict to the playable World Class field. A pool corps' `points` is its
+    // fantasy caption value (1–25 for playable corps); a value of 99 marks a corps
+    // that is inactive that season or is Open Class. The live-season roster is the
+    // full prior-year ranking, so it carries those 99-value corps — drop them here
+    // so they never anchor a DCI article and a night raced only by 99-value corps
+    // reads as "no relevant DCI corps performed" (→ Season Summary fallback).
+    // In a live season every remaining roster corps competes with current-year
+    // material, so override their prior-year sourceYear to the current year. This
+    // makes the downstream score/trend/caption/show-context lookups read the
+    // scraped current-year data instead of the prior season the roster was
+    // selected from.
+    const playablePool = filterPlayablePool(rawActiveCorps);
     const activeCorps = isLiveSeason
-      ? rawActiveCorps.map(c => ({ ...c, sourceYear: currentSeasonYear }))
-      : rawActiveCorps;
+      ? playablePool.map(c => ({ ...c, sourceYear: currentSeasonYear }))
+      : playablePool;
     const yearsToFetch = [...new Set(activeCorps.map(c => c.sourceYear))];
     const historicalData = await fetchTimeLockednScores(db, yearsToFetch, reportDay);
     const fantasyData = await fetchFantasyRecaps(db, seasonId, reportDay);
@@ -156,15 +170,26 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
       (fantasyData.current.shows || []).some(s => (s.results || []).length > 0)
     );
 
-    // Nothing to write about at all — no DCI field AND no fantasy results. Bail
-    // cleanly and let the caller fall back to legacy generation instead of
-    // crashing downstream on an undefined top/feature corps.
-    if (!hasDciScores && !hasFantasyResults) {
+    // When no relevant DCI corps performed (an empty field, or a field made up
+    // solely of placeholder-99 "did not perform" rows that were filtered out),
+    // the four DCI-sourced articles can't run. Fill that gap with a season-to-
+    // date Season Summary (Article 6) so the day still gets analytical coverage.
+    // Gated to the 15–49 window — there isn't enough season to summarize before
+    // day 15 — and generateSeasonSummaryArticle self-gates on recap availability,
+    // returning null when there's nothing to summarize yet.
+    const wantSeasonSummary = !hasDciScores &&
+      reportDay >= SEASON_SUMMARY_MIN_DAY &&
+      reportDay <= SEASON_SUMMARY_MAX_DAY;
+
+    // Nothing to write about at all — no DCI field, no fantasy results, and no
+    // season to summarize. Bail cleanly and let the caller fall back to legacy
+    // generation instead of crashing downstream on an undefined top/feature corps.
+    if (!hasDciScores && !hasFantasyResults && !wantSeasonSummary) {
       logger.warn(`No DCI scores or fantasy results for Day ${reportDay}; skipping article generation.`);
       return { success: false, error: `No scores for day ${reportDay}` };
     }
     if (!hasDciScores) {
-      logger.warn(`No DCI scores for Day ${reportDay}; generating the fantasy-results article only (DCI-sourced articles 1–4 skipped).`);
+      logger.warn(`No relevant DCI corps performed on Day ${reportDay}; skipping DCI-sourced articles 1–4${wantSeasonSummary ? " and publishing a season summary instead" : ""}${hasFantasyResults ? " (fantasy-results article still runs)" : ""}.`);
     }
 
     // Trend/caption/brief data is derived entirely from the DCI day scores and is
@@ -209,7 +234,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
     // timing out with nothing written. Persisting incrementally guarantees that
     // whatever finished before a timeout is still visible on the news feed/admin.
     // Articles 1–4 are DCI-sourced; Article 5 is the fantasy-results piece.
-    const expectedArticleCount = (hasDciScores ? 4 : 0) + (hasFantasyResults ? 1 : 0);
+    const expectedArticleCount = (hasDciScores ? 4 : 0) + (hasFantasyResults ? 1 : 0) + (wantSeasonSummary ? 1 : 0);
     const metadata = {
       reportDay,
       currentDay,
@@ -296,6 +321,33 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
       await persist(await generateFantasyDailyArticle({
         reportDay, fantasyData, showContext, competitionContext, db, dataDocId, ledger
       }));
+    }
+
+    // Article 6: SEASON SUMMARY — the DCI-content fallback for a day on which no
+    // relevant DCI corps performed. Built entirely from fantasy_recaps already on
+    // record; returns null when there isn't enough season to summarize, in which
+    // case the day simply has no season summary.
+    if (wantSeasonSummary) {
+      try {
+        const summary = await generateSeasonSummaryArticle({
+          db, seasonId, dataDocId, throughDay: reportDay, isLiveSeason,
+        });
+        if (summary) {
+          await persist(summary);
+        } else {
+          logger.info(`Season summary produced no article for Day ${reportDay} (not enough season on record).`);
+        }
+      } catch (summaryError) {
+        logger.error(`Season summary generation failed for Day ${reportDay}:`, summaryError);
+      }
+    }
+
+    // Guard: never report success with an empty batch. An empty articles array
+    // would let callers fall through to the legacy single-article save with an
+    // empty {} payload; returning failure keeps that path clean.
+    if (articles.length === 0) {
+      logger.warn(`No articles produced for Day ${reportDay}.`);
+      return { success: false, error: `No articles produced for day ${reportDay}` };
     }
 
     return {
