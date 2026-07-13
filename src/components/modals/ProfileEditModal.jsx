@@ -315,7 +315,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                   </Field>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="Years Directing">
+                    <Field label="Years Fantasy Directing">
                       <TextInput
                         type="number"
                         min="0"
