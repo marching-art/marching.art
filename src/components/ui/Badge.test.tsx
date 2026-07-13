@@ -143,7 +143,7 @@ describe('StatusBadge', () => {
 
     it('applies correct color for offline status', () => {
       const { container } = render(<StatusBadge status="offline" />);
-      const dot = container.querySelector('.bg-gray-500');
+      const dot = container.querySelector('.bg-charcoal-500');
       expect(dot).toBeInTheDocument();
     });
 
@@ -155,7 +155,7 @@ describe('StatusBadge', () => {
 
     it('applies correct color for away status', () => {
       const { container } = render(<StatusBadge status="away" />);
-      const dot = container.querySelector('.bg-yellow-500');
+      const dot = container.querySelector('.bg-warning');
       expect(dot).toBeInTheDocument();
     });
   });

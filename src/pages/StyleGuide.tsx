@@ -98,7 +98,10 @@ const StyleGuide: React.FC = () => (
       <Section title="Type scale">
         <div className="space-y-4">
           {typeSamples.map(({ level, sample }) => (
-            <div key={level} className="flex flex-col gap-1 border-b border-line pb-3 last:border-0">
+            <div
+              key={level}
+              className="flex flex-col gap-1 border-b border-line pb-3 last:border-0"
+            >
               <span className="text-xs text-muted">
                 &lt;Heading level=&quot;{level}&quot;&gt; · {headingRecipes[level]}
               </span>
@@ -148,7 +151,9 @@ const StyleGuide: React.FC = () => (
               <Medal className="h-5 w-5" />
               <span className="font-bold">Champion · #1 · 1,200 CorpsCoin</span>
             </div>
-            <p className="mt-2 text-xs text-muted">Reward &amp; identity — gold earns its meaning.</p>
+            <p className="mt-2 text-xs text-muted">
+              Reward &amp; identity — gold earns its meaning.
+            </p>
           </div>
           <div className="border border-line bg-surface-raised p-4">
             <div className="mb-2 text-xs font-bold uppercase tracking-wider text-error">Don't</div>

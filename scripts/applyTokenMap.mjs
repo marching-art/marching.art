@@ -70,7 +70,9 @@ for (const rel of files) {
   }
 }
 
-console.log(`${DRY ? '[dry run] ' : ''}${totalReplacements} replacements across ${filesChanged} files.\n`);
+console.log(
+  `${DRY ? '[dry run] ' : ''}${totalReplacements} replacements across ${filesChanged} files.\n`
+);
 const rows = Object.entries(perRule).sort((a, b) => b[1] - a[1]);
 for (const [from, n] of rows) console.log(`${String(n).padStart(5)}  ${from} → ${MAP[from]}`);
 console.log(`\n${rows.length} of ${rules.length} rules matched.`);

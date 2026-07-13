@@ -14,9 +14,7 @@ const ChartSkeleton = ({ height = '100%' }) => (
     className="animate-pulse bg-charcoal-800/50 rounded-none flex items-center justify-center"
     style={{ height }}
   >
-    <div className="text-muted/40 text-xs font-mono uppercase tracking-wide">
-      Loading chart...
-    </div>
+    <div className="text-muted/40 text-xs font-mono uppercase tracking-wide">Loading chart...</div>
   </div>
 );
 
