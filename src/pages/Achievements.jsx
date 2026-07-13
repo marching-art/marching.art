@@ -180,7 +180,8 @@ const Achievements = () => {
   }, [evaluated, filter]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <div className="h-full overflow-y-auto scroll-momentum">
+      <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Back link */}
       <Link
         to="/dashboard"
@@ -269,6 +270,7 @@ const Achievements = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };
