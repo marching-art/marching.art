@@ -621,3 +621,36 @@ export const triggerSeasonSummary = createCallable<
   { seasonId: string; dataDocId?: string; throughDay: number },
   { success: boolean; throughDay?: number; headline?: string; hasImage?: boolean; error?: string }
 >('triggerSeasonSummary', { timeout: 300000 });
+
+// =============================================================================
+// BUY ME A COFFEE SUPPORTERS
+// =============================================================================
+// Link the email a supporter paid BMAC with to their account, then grant flair.
+export const linkBmacSupport = createCallable<
+  { email: string },
+  { success: boolean; tier: string }
+>('linkBmacSupport');
+// Opt out of (or back into) being named on the public Supporters wall.
+export const setSupporterVisibility = createCallable<
+  { anonymous: boolean },
+  { success: boolean; anonymous: boolean }
+>('setSupporterVisibility');
+// Set the short message shown beside a Corps Angel on the wall.
+export const setSupporterMessage = createCallable<{ message: string }, { success: boolean }>(
+  'setSupporterMessage'
+);
+export interface SupportersWallEntry {
+  uid: string;
+  tier: string;
+  displayName: string;
+  username: string | null;
+  message: string | null;
+}
+export const getSupportersWall = createCallable<
+  void,
+  {
+    supporters: SupportersWallEntry[];
+    anonymousCount: number;
+    tiers: Array<{ id: string; name: string; minAmount: number }>;
+  }
+>('getSupportersWall');

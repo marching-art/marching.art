@@ -42,6 +42,12 @@ const Privacy = () => {
                 <li>Account information (email address, display name)</li>
                 <li>Profile information (location, bio)</li>
                 <li>Game data (corps names, scores, achievements)</li>
+                <li>
+                  Supporter information — if you support us through Buy Me a Coffee, we receive the
+                  email address and name associated with your payment so we can grant supporter
+                  recognition. Payment card details are handled entirely by Buy Me a Coffee and are
+                  never seen or stored by us.
+                </li>
               </ul>
               <p className="mt-2 text-sm">We automatically collect:</p>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
@@ -58,6 +64,10 @@ const Privacy = () => {
                 <li>To provide and maintain the game service</li>
                 <li>To personalize your experience</li>
                 <li>To display leaderboards and public profiles</li>
+                <li>
+                  To recognize supporters (profile flair and the public Supporters wall, which you
+                  can opt out of at any time)
+                </li>
                 <li>To communicate updates and announcements</li>
                 <li>To improve our service</li>
               </ul>
@@ -109,6 +119,10 @@ const Privacy = () => {
               <ul className="list-disc list-inside space-y-1 text-sm ml-2 mt-2">
                 <li>Publicly (display names, scores, achievements on leaderboards)</li>
                 <li>With service providers who assist our operations</li>
+                <li>
+                  With Buy Me a Coffee, our donation processor, when you choose to support us
+                  (governed by their own privacy policy)
+                </li>
                 <li>When required by law</li>
               </ul>
             </section>
@@ -153,7 +167,11 @@ const Privacy = () => {
               <p className="text-sm">You may:</p>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>Access and update your account information</li>
-                <li>Request deletion of your account</li>
+                <li>
+                  Request deletion of your account (which also unlinks and removes your supporter
+                  record from the Supporters wall)
+                </li>
+                <li>Opt out of being named on the public Supporters wall</li>
                 <li>Opt out of non-essential communications</li>
               </ul>
             </section>

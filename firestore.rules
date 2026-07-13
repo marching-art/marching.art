@@ -41,6 +41,10 @@ function touchesProtectedProfileFields() {
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
     'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
     'retiredCorps', 'captionStats',
+    // Buy Me a Coffee supporter flair (tier + link). Granted only by the
+    // BMAC webhook / linkBmacSupport callable after payment is verified; a
+    // client write would let anyone forge a supporter badge for free.
+    'supporter',
     // Hosting resume (hosting.byTier) gates the venue ladder — written only
     // by the nightly hosted-event payout pass; a client write would unlock
     // the NFL Stadium for free.
@@ -224,6 +228,15 @@ match /{path=**}/private/{docId} {
 // Collection group query for profiles (needed for leaderboards/dashboard)
 match /{path=**}/profile/{docId} {
   allow read: if isAuthenticated();
+}
+
+// --- BUY ME A COFFEE SUPPORTERS ---
+// Fully locked: these docs hold PII (payer email + name) and are written only
+// by the BMAC webhook / reconcile job / supporter callables via the Admin SDK.
+// The public Supporters wall is served by the getSupportersWall callable, which
+// redacts emails and honors the anonymous opt-out — so no client read/write.
+match /artifacts/{appId}/supporters/{emailHash} {
+  allow read, write: if false; // Backend only (see getSupportersWall)
 }
 
 // --- LEADERBOARD DATA ---
