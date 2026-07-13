@@ -1,5 +1,5 @@
 /**
- * Runtime feature flags (Phase 1.5, PODIUM_CLASS_DESIGN.md).
+ * Runtime feature flags (Phase 1.5, PODIUM.md).
  *
  * Flags live in the Firestore doc `game-settings/features` so a rollout or
  * rollback is a config write, never a deploy. A missing doc or missing field

@@ -1,5 +1,5 @@
 {
-  "_note": "Ratchet ceiling for the visual-identity unification (docs/VISUAL_IDENTITY_UNIFICATION.md §4). Counts may only fall. After lowering a count, run `npm run census -- --write` to lock the new floor. Never edit these upward by hand.",
+  "_note": "Ratchet ceiling for the visual-identity unification (docs/DESIGN_SYSTEM.md). Counts may only fall. After lowering a count, run `npm run census -- --write` to lock the new floor. Never edit these upward by hand.",
   "filesScanned": 329,
   "invariants": {
     "arbitrary-hex": 25,

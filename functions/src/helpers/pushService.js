@@ -144,36 +144,6 @@ async function sendPushNotification(userId, { title, body, url }, pushType, data
 }
 
 /**
- * Send push notification to multiple users
- * @param {string[]} userIds - Array of user IDs
- * @param {Object} notification - Notification payload
- * @param {string} pushType - Type of push notification
- * @param {Object} data - Additional data payload
- * @returns {Promise<Object>} Results summary
- */
-async function sendPushToMultipleUsers(userIds, notification, pushType, data = {}) {
-  const results = {
-    success: 0,
-    failed: 0,
-    skipped: 0,
-  };
-
-  await Promise.all(
-    userIds.map(async (userId) => {
-      const sent = await sendPushNotification(userId, notification, pushType, data);
-      if (sent) {
-        results.success++;
-      } else {
-        results.skipped++;
-      }
-    })
-  );
-
-  logger.info(`Batch push notification results: ${JSON.stringify(results)}`);
-  return results;
-}
-
-/**
  * Remove invalid FCM token from user profile
  * @param {string} userId - User ID
  */
@@ -213,41 +183,6 @@ async function sendMatchupStartPush(userId, opponentName, leagueName) {
 }
 
 /**
- * Send matchup result notification
- */
-async function sendMatchupResultPush(userId, won, opponentName, score, opponentScore) {
-  const emoji = won ? "W" : "L";
-  return sendPushNotification(
-    userId,
-    {
-      title: `Matchup ${emoji}: ${score.toFixed(1)} - ${opponentScore.toFixed(1)}`,
-      body: won
-        ? `You defeated ${opponentName}!`
-        : `${opponentName} won this round. Get them next time!`,
-      url: "/leagues",
-    },
-    PUSH_TYPES.MATCHUP_RESULT,
-    { won: String(won), opponentName, score: String(score), opponentScore: String(opponentScore) }
-  );
-}
-
-/**
- * Send score update notification
- */
-async function sendScoreUpdatePush(userId, message, newRank) {
-  return sendPushNotification(
-    userId,
-    {
-      title: "Score Update",
-      body: message,
-      url: "/leaderboard",
-    },
-    PUSH_TYPES.SCORE_UPDATE,
-    { newRank: String(newRank) }
-  );
-}
-
-/**
  * Send league activity notification
  */
 async function sendLeagueActivityPush(userId, leagueName, activityType, message) {
@@ -260,22 +195,6 @@ async function sendLeagueActivityPush(userId, leagueName, activityType, message)
     },
     PUSH_TYPES.LEAGUE_ACTIVITY,
     { leagueName, activityType }
-  );
-}
-
-/**
- * Send trade proposal notification
- */
-async function sendTradeProposalPush(userId, fromUsername, leagueName) {
-  return sendPushNotification(
-    userId,
-    {
-      title: "Trade Proposal Received",
-      body: `${fromUsername} sent you a trade proposal in ${leagueName}`,
-      url: "/leagues",
-    },
-    PUSH_TYPES.TRADE_PROPOSAL,
-    { fromUsername, leagueName }
   );
 }
 
@@ -305,15 +224,11 @@ module.exports = {
 
   // Core functions
   sendPushNotification,
-  sendPushToMultipleUsers,
   getUserPushConfig,
   isPushTypeEnabled,
 
   // Notification senders
   sendMatchupStartPush,
-  sendMatchupResultPush,
-  sendScoreUpdatePush,
   sendLeagueActivityPush,
-  sendTradeProposalPush,
   sendShowReminderPush,
 };

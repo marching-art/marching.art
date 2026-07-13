@@ -1,254 +1,200 @@
-# marching.art Architecture
+# marching.art — Architecture
 
-> Last verified: December 2025
+System design reference: the stack, how the code is organized, the Firestore
+data model, the Cloud Functions surface, and the conventions that keep it
+maintainable. For the game rules themselves see [`docs/GAMEPLAY.md`](docs/GAMEPLAY.md);
+for progression/economy/engagement systems see [`docs/GAMIFICATION.md`](docs/GAMIFICATION.md).
 
-## Overview
+> This file lives at the repo root. All other docs live under `docs/`.
 
-marching.art is a fantasy drum corps game built with React 18 and Firebase. Users create virtual drum corps by selecting 8 captions from historical DCI performances, competing for points during the live DCI season.
+## Tech stack
 
-## Tech Stack
+| Layer        | Technology                                                          |
+| ------------ | ------------------------------------------------------------------- |
+| Frontend     | React 18, Vite, Tailwind CSS, Framer Motion                         |
+| State        | Zustand (client stores), React Query / TanStack Query (server cache)|
+| Backend      | Firebase — Auth, Firestore, Cloud Functions (2nd gen), Hosting, Storage |
+| AI / media   | Google Gemini (news + avatars), YouTube Data API v3                 |
+| Hosting      | Firebase Hosting (`firebase.json`, `public: build`) and Vercel (`vercel.json`) |
+| CI/CD        | GitHub Actions (`.github/workflows/{ci,deploy-functions,security,refresh-venue-gazetteer}.yml`), Node 22 |
+| Monetization | Donation-only (Buy Me a Coffee); CorpsCoin is a closed-loop in-game currency, no real-money path |
 
-| Layer        | Technology                                                 |
-| ------------ | ---------------------------------------------------------- |
-| Frontend     | React 18, Vite, Tailwind CSS, Framer Motion                |
-| State        | Zustand (client), React Query (server)                     |
-| Backend      | Firebase (Auth, Firestore, Cloud Functions, Storage)       |
-| Hosting      | Vercel (frontend), Firebase (functions)                    |
-| Monetization | Donation-based (Buy Me a Coffee) — no integrated purchases |
-
-## Project Structure
+## Project structure
 
 ```
 marching.art/
-├── src/
-│   ├── api/              # Firebase callable function wrappers
-│   ├── components/       # UI components
-│   │   └── ui/           # Design system (Button, Card, Input, etc.)
-│   ├── hooks/            # Custom React hooks
-│   ├── pages/            # Route components
-│   ├── stores/           # Zustand state stores
-│   ├── styles/           # Global CSS
-│   └── types/            # TypeScript definitions
-├── functions/
-│   └── src/
-│       ├── callable/     # Cloud Functions (HTTP callable)
-│       └── helpers/      # Shared utilities
-└── public/               # Static assets
+├── src/                     # React frontend
+│   ├── api/                 # Firebase callable wrappers + client (paths, query client)
+│   ├── components/          # UI components (feature folders + ui/ design system)
+│   ├── config/              # Client config, classRegistry.json (mirror), feature flags
+│   ├── context/             # React context providers (auth, etc.)
+│   ├── data/                # Static/reference data
+│   ├── hooks/               # Custom hooks (useDashboardData, useFeatures, usePodium, …)
+│   ├── lib/                 # Query client, low-level libs
+│   ├── pages/               # Route components
+│   ├── store/               # Zustand stores (scheduleStore, …)
+│   ├── stories/             # Storybook stories
+│   ├── types/               # TypeScript definitions
+│   └── utils/               # Pure logic (scoring, seasonClock, corps, cosmetics, …)
+├── functions/               # Firebase Cloud Functions (own package.json, Node 22)
+│   ├── src/
+│   │   ├── callable/        # HTTPS-callable endpoints (client-invoked)
+│   │   ├── scheduled/       # Cron/scheduled jobs (nightly scoring, automation)
+│   │   ├── triggers/        # Firestore/Auth triggers (scoring, news, avatars, email/push)
+│   │   ├── helpers/         # Shared domain logic (scoring, economy, schedule, podium/, …)
+│   │   ├── config/          # Runtime params (DATA_NAMESPACE, secrets)
+│   │   └── scripts/         # One-off / operational scripts (calibration, harvesting, sims)
+│   ├── dciArchiveImporter/  # Historical show-name importer (see its README)
+│   └── pressboxImporter/    # Historical scores/rankings importer (see its README)
+├── scripts/                 # Repo-level tooling (design census, class-registry sync check)
+├── e2e/                     # Playwright specs
+└── docs/                    # Documentation (this set)
 ```
 
-## Implemented Features
+## Firestore data model
 
-### Core Systems (100% Complete)
+All app data is namespaced under `artifacts/{DATA_NAMESPACE}/…` (the namespace
+is a deploy-time param; production is `marching-art`). Path construction is
+centralized — never hand-write path strings:
 
-| System                | Status   | Details                                     |
-| --------------------- | -------- | ------------------------------------------- |
-| **Authentication**    | Complete | Email/password, anonymous auth              |
-| **Draft System**      | Complete | 8-caption selection from historical corps   |
-| **Season Management** | Complete | Live/Off-season, automatic resets           |
-| **Schedule System**   | Complete | 49-day off-season calendar with shows       |
-| **Leaderboards**      | Complete | Per-class rankings, weekly/monthly/lifetime |
-| **Battle Pass**       | Complete | 50 levels, free/premium tracks              |
-| **XP/Levels**         | Complete | Daily XP check-in, level progression        |
-| **Class Unlocking**   | Complete | SoundSport → A → Open → World Class         |
+- Backend: `functions/src/helpers/paths.js`
+- Frontend: `src/api/client.ts`
 
-### Partial/In-Progress
+### Namespaced collections (`artifacts/{ns}/…`)
 
-| System                | Status | Notes                                 |
-| --------------------- | ------ | ------------------------------------- |
-| **Leagues**           | 90%    | Core functions work, chat coming soon |
-| **CorpsCoin Economy** | 60%    | Class unlocks work, cosmetics planned |
+```
+users/{uid}/profile/data          # The main profile: xp, level, corpsCoin, unlockedClasses,
+                                  #   cosmetics, trophies, lifetimeStats, seasonLadder, streak…
+users/{uid}/private/data          # Private user data
+users/{uid}/corps/{class}         # Registered corps per fantasy class (lineup, selectedShows)
+users/{uid}/corpsCoinHistory/{id} # CorpsCoin ledger (subcollection — every transaction, typed)
+users/{uid}/podium/{state,career} # Podium simulation state + career
+users/{uid}/notifications/…       # In-app + league notifications
+leagues/{leagueId}                # League config
+leagues/{leagueId}/standings/current
+leagues/{leagueId}/matchups/week-{n}
+leagues/{leagueId}/activity/{id}  # League feed events
+leagues/{leagueId}/recaps/week-{n}
+leagueInvitations/{id}
+leaderboard/lifetime_{view}       # Precomputed lifetime leaderboards
+leaderboard/season_rankings/data  # Precomputed current-season global rankings
+```
 
-### Not Implemented
+### Top-level collections
 
-These systems have TypeScript types defined but NO backend support:
+```
+game-settings/season              # Current season: name, status, seasonUid, currentPointCap,
+                                  #   dataDocId, schedule{startDate,endDate}
+game-settings/features            # Runtime feature kill-switches (e.g. podiumClass)
+game-settings/config              # Operational config (e.g. heritageSchedulesEnabled)
+schedules/{seasonId}              # The generated competition schedule (competitions[] array)
+historical_scores/{year}          # Source DCI results that drive scoring & schedule generation
+game-records/records              # The all-time Records Book (updated nightly + at archival)
+seasons/{seasonId}                # Archived season history (champions, results)
+youtubeCache/{id}                 # Cached YouTube search results (see docs/INTEGRATIONS.md)
+```
 
-- Equipment system (condition, repair, upgrades)
-- Execution multiplier (readiness, morale)
-- Daily operations beyond XP check-in
+> Note: the schedule is stored at **`schedules/{seasonId}` as a `competitions[]`
+> array**, not on `game-settings/season`. See [`docs/SCHEDULE_SYSTEM.md`](docs/SCHEDULE_SYSTEM.md).
 
 ## Cloud Functions
 
-Located in `functions/src/callable/`:
+Functions are organized by invocation model. Callables are client-invoked;
+scheduled jobs run on cron; triggers fire on Firestore/Auth events. The bulk of
+the domain logic lives in `helpers/` so it can be shared and unit-tested.
 
-| File            | Functions                | Purpose                 |
-| --------------- | ------------------------ | ----------------------- |
-| `users.js`      | User CRUD, XP management | Core user operations    |
-| `economy.js`    | CorpsCoin transactions   | Class unlocking         |
-| `battlePass.js` | Level claims, XP awards  | Full Battle Pass system |
-| `leagues.js`    | League CRUD, invites     | League management       |
-| `lineups.js`    | Caption selection        | Draft system            |
-| `corps.js`      | Corps registration       | Season registration     |
-| `dailyOps.js`   | Daily rehearsal          | XP bonus system         |
-| `admin.js`      | Admin operations         | Staff management        |
-| `comments.js`   | League comments          | Social features         |
-| `profile.js`    | Profile operations       | User profiles           |
+### Callable groups (`functions/src/callable/`)
 
-## Database Collections
+| Area              | Files                                                                 |
+| ----------------- | --------------------------------------------------------------------- |
+| Users & profile   | `users.js`, `profile.js`                                              |
+| Corps & lineups   | `corps.js`, `registerCorps.js`, `lineups.js`, `corpsDuplicates.js`   |
+| Economy & shop    | `economy.js`, `shop.js`, `prestige.js`, `seasonLadder.js`            |
+| Daily loop        | `dailyOps.js`, `dailyChallenges.js`, `dailyPredictions.js`, `journey.js` |
+| Leagues           | `leagues.js`, `leagueInvitations.js`, `leaguePools.js`, `rookieLeague.js` |
+| Social / content  | `comments.js`, `articleComments.js`, `commentModeration.js`          |
+| Podium            | `podium.js`, `podiumStaff.js`, `podiumRoute.js`, `podiumJoint.js`, `podiumFan.js`, `podiumHost.js` |
+| Integrations      | `youtube.js`                                                          |
+| Admin             | `admin.js`                                                            |
 
-### Primary Collections
+### Scheduled jobs (`functions/src/scheduled/`)
 
-```
-users/{uid}                    # User profiles, stats, settings
-corps/{corpId}                 # Registered corps data
-leagues/{leagueId}             # League configuration
-seasons/{seasonId}             # Historical season data
-game-settings/season           # Current season config + schedule
-historical_scores/{year}       # DCI historical data
-```
+`dailyProcessors.js` / `nightlyStages.js` (the nightly scoring run),
+`seasonScheduler.js` (season rollover), `leagueAutomation.js`,
+`liveScraper.js` (live DCI score scraping), `lifetimeLeaderboard.js`,
+`economyStats.js` (mint-vs-sink instrumentation), `rivalsComputation.js`,
+`emailNotifications.js`, `pushNotifications.js`, `newsAutoPublish.js`.
 
-### User Sub-collections
+### Triggers (`functions/src/triggers/`)
 
-```
-users/{uid}/corps/{corpId}     # User's corps for each class
-users/{uid}/battle-pass        # Battle Pass progress
-users/{uid}/achievements       # Unlocked achievements
-```
+`scoreProcessing.js`, `scheduleProcessing.js`, `avatarGeneration.js`,
+`newsGeneration.js` / `newsFeed.js` / `newsSubmissions.js` / `newsAdmin.js`,
+`emailTriggers.js`, `pushTriggers.js`.
 
-## Design System
+Every function is registered in `functions/index.js`.
 
-Based on a data-terminal aesthetic (see `docs/VISUAL_IDENTITY_UNIFICATION.md`):
+## Design system
 
-### Colors (tailwind.config.cjs)
+The UI is built on a token-driven "data-terminal" design system (charcoal
+surfaces, gold for brand/reward, azure for interaction, green/red for trend),
+enforced by a CI census. Full spec, tokens, and contributor rules in
+[`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md). The design primitives live in
+`src/components/ui/`.
 
-Role-based tokens (see `docs/VISUAL_IDENTITY_UNIFICATION.md`). Gold is identity
-and reward only; azure is interaction and self; green/red/amber are data status;
-everything else is a charcoal ramp.
+## Code conventions
 
-```javascript
-colors: {
-  brand: { DEFAULT: '#EAB308', strong: '#CA8A04', subtle: '#A16207' }, // gold
-  interactive: { DEFAULT: '#3B82F6', hover: '#2563EB', subtle: '#1D4ED8' }, // azure
-  background: '#0A0A0A',
-  surface: { sunken: '#111', card: '#1A1A1A', raised: '#222', elevated: '#2A2A2A' },
-  line: { subtle: '#242424', DEFAULT: '#333', strong: '#444' },
-  trend: { up: '#00C853', down: '#FF5252', neutral: '#9E9E9E' },
-  success: '#00C853', warning: '#FF9800', error: '#FF5252',
-  // charcoal: 50…950 fine-grained neutral ramp
-}
-```
-
-### Component Library
-
-Located in `src/components/ui/`:
-
-- Button, Card, Input, Modal, Badge, Spinner
-- DataTable, Tabs, Tooltip
-- All components have Storybook stories and tests
-
-## Season Structure
-
-### Live Season (10 weeks)
-
-- June through second Saturday of August
-- Real DCI scores drive fantasy competition
-- Limited lineup changes as season progresses
-
-### Off-Season (42 weeks / 49 game days)
-
-- September through May
-- 7 weeks of simulated competition
-- Historical show data creates realistic schedule
-
-### Caption Change Rules
-
-| Days                  | Changes Allowed                       |
-| --------------------- | ------------------------------------- |
-| 1-14                  | Unlimited (until 8 PM ET on Day 14)   |
-| 15-42                 | 3 per week per class                  |
-| 43-44                 | None                                  |
-| 45-49 (Championships) | 2 total per class, lock 8 PM ET daily |
-
-Changes always lock from Saturday 8:00 PM ET until scores are processed
-(nightly run at 2:00 AM ET). Enforced by `functions/src/helpers/captionWindows.js`
-(mirrored client-side in `src/utils/seasonClock.js`).
-
-## Class System
-
-| Class       | Point Limit | Unlock Requirement          |
-| ----------- | ----------- | --------------------------- |
-| SoundSport  | 90          | Default                     |
-| A Class     | 60          | Level 3 OR 1,000 CorpsCoin  |
-| Open Class  | 120         | Level 5 OR 2,500 CorpsCoin  |
-| World Class | 150         | Level 10 OR 5,000 CorpsCoin |
-
-## Code Conventions
-
-These conventions keep the codebase maintainable as it grows. They are enforced
-softly (ESLint warnings + CI visibility) rather than as hard gates, so they guide
+These are enforced softly (ESLint warnings + CI visibility) so they guide
 without blocking.
 
 ### File size / "god-files"
 
 - **Target: keep files under ~700 lines.** ESLint's `max-lines` rule warns past
-  that threshold (blank lines and comments excluded). The warning is intentional
-  tech-debt signal, not a build failure.
-- **When a file trips the warning, split it** rather than growing it further:
-  - Extract **pure logic** (data transforms, formatting, calculations) into a
-    module under `src/utils/` (or co-located `*Utils.ts`) — and add unit tests.
-    Pure functions are the easiest thing to test and the riskiest thing to leave
-    untested.
-  - Extract **self-contained sub-components** (modals, panels, rows) into their
-    own files.
-  - Extract **stateful logic** into custom hooks under `src/hooks/`.
-- Examples of this pattern already in the tree: `src/utils/dashboardScoring.ts`,
-  `src/utils/scoresUtils.ts`, `src/components/Landing/newsFeedUtils.ts`,
+  that threshold (blanks/comments excluded) — an intentional tech-debt signal,
+  not a build failure.
+- When a file trips the warning, **split it**: extract pure logic into a
+  `src/utils/` (or co-located `*Utils.ts`) module with unit tests; extract
+  self-contained sub-components into their own files; extract stateful logic into
+  a hook under `src/hooks/`. Examples already in the tree:
+  `src/utils/dashboardScoring.ts`, `src/utils/scoresUtils.ts`,
   `src/components/Profile/SettingsModal.jsx`.
 
 ### TypeScript migration
 
-The codebase is migrating from JS/JSX to TS/TSX incrementally (`allowJs` is on,
-so the two coexist).
-
-- **Write new files in TypeScript** (`.ts` / `.tsx`).
-- **When you extract logic out of a `.jsx` file, put the extracted module in
-  `.ts`** — this advances the migration for free on code that's already being
-  touched and reviewed.
-- Prefer explicit types on exported functions and module boundaries.
+The codebase migrates from JS/JSX to TS/TSX incrementally (`allowJs` on, so both
+coexist). **Write new files in TypeScript.** When you extract logic out of a
+`.jsx` file, put the extracted module in `.ts`. Prefer explicit types on exported
+functions and module boundaries.
 
 ### Testing extracted logic
 
-Anything extracted into a `utils`/`*Utils` module should ship with Vitest unit
-tests (frontend) or `node:test` tests (Cloud Functions). Make time-dependent
-helpers testable by accepting an injectable clock (e.g. `now: Date = new Date()`)
-instead of reading the wall clock internally.
+Anything extracted into a `utils`/`*Utils` module ships with Vitest unit tests
+(frontend) or `node:test` / vitest tests (Cloud Functions — see the many
+`*.test.js` files under `functions/src/`). Make time-dependent helpers testable
+by accepting an injectable clock (e.g. `now: Date = new Date()`) instead of
+reading the wall clock internally.
 
-## Known Issues
+### The class registry must stay in sync
 
-See `CODE_AUDIT_REPORT.md` for current issues:
+`src/config/classRegistry.json` and `functions/src/helpers/classRegistry.js`
+(the JSON mirror) are the single source of truth for per-class policy (point
+caps, unlock gates, participation rewards, capabilities). Functions cannot import
+outside their deploy root, hence the copy — they **must stay byte-identical**.
+CI enforces it via `node scripts/checkClassRegistrySync.js --check`.
 
-- Security: Credentials in .env.production need rotation
-- Performance: Missing React.memo in some components
-- Accessibility: ~60% WCAG compliance
-- Cloud Functions not deployed to production
+### Design-system census
+
+`npm run census` reports design-token violations; `npm run census:check` is the
+CI ratchet that fails any PR raising a frozen count. See
+[`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
 
 ## Development
 
 ```bash
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-
-# Run tests
-npm test
-
-# Build for production
-npm run build
-
-# Deploy functions
-cd functions && npm run deploy
+npm install          # frontend deps
+npm run dev          # dev server
+npm test             # unit tests
+npm run build        # production build → build/
+# Cloud Functions
+cd functions && npm install && npm test
+# Functions deploy via .github/workflows/deploy-functions.yml (or deploy-functions.sh)
 ```
-
-## Documentation Index
-
-| Document                                | Purpose                                    |
-| --------------------------------------- | ------------------------------------------ |
-| `README.md`                             | Project overview and setup                 |
-| `ARCHITECTURE.md`                       | This file - system design                  |
-| `SCHEDULE_SYSTEM.md`                    | Schedule generation details                |
-| `docs/LIFELONG_GAMIFICATION_ROADMAP.md` | Gamification strategy (current)            |
-| `docs/ENGAGEMENT_ECONOMY_REVIEW.md`     | CorpsCoin/XP economy plan (current)        |
-| `CODE_AUDIT_REPORT.md`                  | Security/code audit (Dec 2025, historical) |
-| `docs/VISUAL_IDENTITY_UNIFICATION.md`   | Visual identity spec + tokens (current)    |
-| `scripts/README_STAFF_IMPORT.md`        | Staff data import guide                    |

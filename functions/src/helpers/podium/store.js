@@ -2,7 +2,7 @@
  * Podium Class Firestore layout + state hydration (Phase 2).
  *
  * Competitive state lives in a server-only subcollection
- * (`.../users/{uid}/podium/state`) per PODIUM_CLASS_DESIGN.md §14.2.5 —
+ * (`.../users/{uid}/podium/state`) per PODIUM.md §14.2.5 —
  * firestore.rules denies all client writes there and restricts reads to the
  * owner (challenge levels and caption state are competitive intel). The
  * profile's `corps.podiumClass` entry carries only display copies written by

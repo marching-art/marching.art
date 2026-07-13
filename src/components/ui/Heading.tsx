@@ -2,7 +2,7 @@
 // HEADING — the canonical type scale
 // =============================================================================
 // One place that defines every heading recipe, so sizes/weights/tracking/case
-// stop being improvised per module (docs/VISUAL_IDENTITY_UNIFICATION.md Step 4).
+// stop being improvised per module (docs/DESIGN_SYSTEM.md).
 //
 // Typeface: Inter throughout — a single grotesque used at varied weights, the
 // Swiss/architect posture that pairs with the sharp corners and flat surfaces.

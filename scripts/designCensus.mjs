@@ -3,7 +3,7 @@
 // DESIGN-SYSTEM CENSUS + RATCHET
 // =============================================================================
 // Scans src/ for the visual-identity violations defined in
-// docs/VISUAL_IDENTITY_UNIFICATION.md §4 and either prints the census
+// docs/DESIGN_SYSTEM.md and either prints the census
 // (default) or enforces the ratchet against the committed baseline (--check).
 //
 // The ratchet rule: no invariant count may EXCEED its baseline. Counts may
@@ -170,7 +170,7 @@ if (arg === '--write') {
   const { files, totals } = census();
   const payload = {
     _note:
-      'Ratchet ceiling for the visual-identity unification (docs/VISUAL_IDENTITY_UNIFICATION.md §4). ' +
+      'Ratchet ceiling for the visual-identity unification (docs/DESIGN_SYSTEM.md). ' +
       'Counts may only fall. After lowering a count, run `npm run census -- --write` to lock the new floor. ' +
       'Never edit these upward by hand.',
     filesScanned: files,

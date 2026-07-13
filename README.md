@@ -1,243 +1,87 @@
-# marching.art - Ultimate Fantasy Drum Corps Game 🎺🏆
+# marching.art — Fantasy Drum Corps 🎺🏆
 
-## Overview
+marching.art is a year-round fantasy drum corps game. Directors build a virtual
+corps by drafting captions from real historical DCI performances, register for a
+weekly schedule of shows, and compete on nightly-scored leaderboards — season
+after season, as a decades-long director career.
 
-marching.art is a modern, award-winning fantasy drum corps game that brings the excitement of DCI (Drum Corps International) to the digital world. Build your dream corps, select legendary captions from historical performances, and compete with directors worldwide in this immersive fantasy sports experience.
+The game runs two alternating season types back-to-back all year:
 
-## 🎯 Features
+- **Live Season** — fantasy competition driven by _real_ DCI scores during the
+  summer touring season.
+- **Off-Season** — the same fantasy format driven by _historical_ DCI results,
+  so the game never stops between summers.
 
-### Core Gameplay
+Both run on an identical **49-day / 7-week** competition calendar. See
+[`docs/GAMEPLAY.md`](docs/GAMEPLAY.md) for the full ruleset.
 
-- **Two-Season Model**: Alternating between Off-Season (Director Sim) and Live Season (Classic Fantasy)
-- **Corps Management**: Create and manage your fantasy drum corps with unique names, locations, and show concepts
-- **Caption Selection**: Choose 8 captions from 25 available historical corps performances
-- **Real-Time Scoring**: Track live scores during the DCI season
-- **Progressive Unlocking**: Start with SoundSport and unlock higher classes through XP
+## The five classes
 
-### Modern Design
+| Class          | Format          | Point cap | Notes                                              |
+| -------------- | --------------- | --------- | -------------------------------------------------- |
+| **SoundSport** | Fantasy lineup  | 90        | Open to everyone; unranked (participation-focused) |
+| **A Class**    | Fantasy lineup  | 60        | Unlock by completing 1 season / Level 3 / 1,000 CC |
+| **Open Class** | Fantasy lineup  | 120       | Unlock by completing 2 seasons / Level 5 / 2,500 CC |
+| **World Class**| Fantasy lineup  | 150       | Unlock by completing 3 seasons / Level 10 / 5,000 CC |
+| **Podium**     | Director sim    | —         | A separate simulation game (rehearsals, divisions, staff). See [`docs/PODIUM.md`](docs/PODIUM.md) |
 
-- **Responsive UI**: Fully optimized for mobile and desktop devices
-- **Dark Theme**: Premium cream, black, and gold color scheme
-- **Smooth Animations**: Framer Motion powered transitions and effects
-- **Real-time Updates**: Firebase-powered live data synchronization
-- **PWA Support**: Install as a native app on any device
+The four fantasy classes share one lineup-and-scoring engine (draft 8 captions,
+score nightly). **Podium** is a distinct director-simulation mode with its own
+rules, launched mid-2026.
 
-### Social Features
+## Tech stack
 
-- **League System**: Create or join private/public leagues
-- **Leaderboards**: Compete across different classes (World, Open, A, SoundSport)
-- **Director Profiles**: Track achievements, stats, and season history
-- **Hall of Champions**: Celebrate past winners and achievements
+| Layer        | Technology                                                          |
+| ------------ | ------------------------------------------------------------------- |
+| Frontend     | React 18, Vite, Tailwind CSS, Framer Motion                         |
+| State        | Zustand (client), React Query / TanStack Query (server cache)       |
+| Backend      | Firebase — Auth, Firestore, Cloud Functions, Hosting, Storage       |
+| AI           | Google Gemini (news generation, corps avatars) · YouTube Data API   |
+| Hosting      | Firebase Hosting (`firebase.json`) and Vercel (`vercel.json`)       |
+| CI/CD        | GitHub Actions (`.github/workflows/`) · Node 22                     |
+| Monetization | Donation-only (Buy Me a Coffee). CorpsCoin is a closed-loop, in-game currency — no real-money purchases |
 
-## 🚀 Tech Stack
+## Getting started
 
-### Frontend
-
-- **React 18**: Modern React with hooks and Suspense
-- **React Router v6**: Client-side routing with protected routes
-- **Tailwind CSS**: Utility-first CSS with custom theme
-- **Framer Motion**: Professional animations and transitions
-- **Lucide Icons**: Beautiful, consistent icon system
-- **React Hot Toast**: Elegant notification system
-
-### Backend (Firebase)
-
-- **Authentication**: Email/password, anonymous, and custom token auth
-- **Firestore**: Real-time NoSQL database
-- **Cloud Functions**: Serverless backend logic
-- **Storage**: File storage for uniforms and media
-- **Analytics**: User tracking and engagement metrics
-
-### Deployment
-
-- **Vercel**: Production hosting with automatic deployments
-- **GitHub**: Version control and CI/CD
-- **Node 22**: Runtime environment
-
-## 📦 Installation
-
-### Prerequisites
-
-- Node.js 22+
-- npm or yarn
-- Firebase project setup
-
-### Setup Steps
-
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/yourusername/marching-art.git
-cd marching-art
-```
-
-2. **Install dependencies**
+Prerequisites: **Node 22+**, npm, and a Firebase project.
 
 ```bash
 npm install
+cp .env.local.example .env.local   # fill in your Firebase + API credentials
+npm run dev                        # start the Vite dev server
 ```
 
-3. **Configure environment variables**
+Common scripts:
 
 ```bash
-cp .env.example .env.local
-# Edit .env.local with your Firebase credentials
+npm run dev          # dev server
+npm run build        # production build (outputs to build/)
+npm test             # Vitest unit tests
+npm run test:e2e     # Playwright end-to-end tests
+npm run lint         # ESLint
+npm run format       # Prettier
+npm run census       # design-system token census (see docs/DESIGN_SYSTEM.md)
 ```
 
-4. **Start development server**
+Cloud Functions live in `functions/` with their own `package.json`; they deploy
+via the `deploy-functions.yml` GitHub Actions workflow (or `deploy-functions.sh`).
 
-```bash
-npm start
-```
+## Documentation
 
-5. **Build for production**
+| Doc | What it covers |
+| --- | --- |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design: stack, project structure, Firestore data model, Cloud Functions & scheduled jobs, code conventions |
+| [`docs/GAMEPLAY.md`](docs/GAMEPLAY.md) | The rules of play: seasons, classes, caption selection & scoring, change windows, show registration, championships |
+| [`docs/PODIUM.md`](docs/PODIUM.md) | The Podium director-simulation class — full design |
+| [`docs/SCHEDULE_SYSTEM.md`](docs/SCHEDULE_SYSTEM.md) | Season & schedule engine: generation, the heritage running-order model, calibration, operator runbook |
+| [`docs/GAMIFICATION.md`](docs/GAMIFICATION.md) | Progression, economy & engagement: XP/levels, CorpsCoin, the Shop, achievements, streaks, the daily loop, leagues, records, live-ops |
+| [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) | Visual identity (the data-terminal token system), typography, motion, and mobile-UX rules |
+| [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) | External integrations: YouTube embeds, Gemini AI news/media, and the historical-data importers |
 
-```bash
-npm run build
-```
+## License
 
-## 🎮 Game Rules
-
-### Season Structure
-
-- **Live Season**: 10 weeks (ending second Saturday of August)
-- **Off-Season**: 42 weeks (6 periods of 7 weeks each)
-- **Automatic Reset**: Seasons reset at 3 AM after finals
-
-### Caption Selection
-
-- Select 8 captions: GE1, GE2, VP, VA, CG, B, MA, P
-- Each caption from different historical corps
-- No duplicate lineups allowed (first submitted keeps it)
-- Dynamic cost system based on historical performance
-
-### Caption Changes
-
-- Days 1-14: unlimited changes (until 8:00 PM ET on Day 14)
-- Days 15-42: 3 changes per week per class, usable one at a time or all at once
-- Every Saturday 8:00 PM ET: changes lock until scores are processed (~2:00 AM ET)
-- Days 43-44: no changes allowed
-- Days 45-49 (Championship Week): 2 changes total per class; changes lock at 8:00 PM ET each day until scores are processed
-
-### Progression System
-
-- **SoundSport**: Available to all users
-- **A Class**: Unlocked at Level 3
-- **Open Class**: Unlocked at Level 5
-- **World Class**: Unlocked at Level 10
-
-## 📁 Project Structure
-
-```
-marching-art/
-├── public/
-│   ├── index.html          # Main HTML template
-│   └── manifest.json       # PWA manifest
-├── src/
-│   ├── components/         # Reusable UI components
-│   │   ├── Navigation.jsx  # Desktop navigation
-│   │   ├── MobileNav.jsx   # Mobile navigation
-│   │   └── LoadingScreen.jsx
-│   ├── pages/              # Page components
-│   │   ├── Dashboard.jsx   # Main dashboard
-│   │   ├── Landing.jsx     # Landing page
-│   │   ├── Login.jsx       # Authentication
-│   │   ├── Register.jsx
-│   │   ├── Leaderboard.jsx
-│   │   └── ...
-│   ├── firebase.js         # Firebase configuration
-│   ├── App.jsx             # Main app component
-│   ├── index.js            # App entry point
-│   └── index.css           # Global styles
-├── tailwind.config.js      # Tailwind configuration
-├── package.json            # Dependencies
-└── README.md               # Documentation
-```
-
-## 🔐 Security
-
-### Firebase Rules
-
-- Authenticated users can read public data
-- Users can only modify their own data
-- Admin-only access for system operations
-- Rate limiting on API calls
-
-### Best Practices
-
-- Environment variables for sensitive data
-- Secure authentication flow
-- Input validation and sanitization
-- XSS and CSRF protection
-
-## 🎨 Design System
-
-### Colors
-
-- **Primary**: Gold (#FFD44D)
-- **Secondary**: Cream (#E5D396)
-- **Background**: Charcoal (#1A1A1A)
-
-### Typography
-
-- **Display**: Montserrat (headings)
-- **Body**: Inter (content)
-- **Mono**: Fira Code (code)
-
-### Components
-
-- Glass morphism effects
-- Gradient accents
-- Shadow elevation system
-- Responsive grid layouts
-
-## 📈 Performance
-
-### Optimizations
-
-- Code splitting with React.lazy()
-- Image lazy loading
-- Bundle size optimization
-- PWA caching strategies
-- Firebase offline persistence
-
-### Metrics
-
-- First Contentful Paint: < 1.5s
-- Time to Interactive: < 3s
-- Lighthouse Score: 90+
-- Bundle Size: < 500KB (gzipped)
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Write/update tests
-5. Submit a pull request
-
-## 📄 License
-
-This project is proprietary software. All rights reserved.
-
-## 🆘 Support
-
-- **Documentation**: [docs.marching.art](https://docs.marching.art)
-- **Support**: [support@marching.art](mailto:support@marching.art)
-- **Discord**: [Join our community](https://discord.gg/marchingart)
-
-## 🙏 Acknowledgments
-
-- DCI (Drum Corps International) for inspiration
-- The drum corps community
-- All our beta testers and contributors
+Proprietary. All rights reserved.
 
 ---
 
-**Built with ❤️ for the drum corps community**
-
-_marching.art - Where legends are made_
+_marching.art — where legends are made._

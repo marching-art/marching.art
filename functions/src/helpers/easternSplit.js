@@ -1,6 +1,6 @@
 /**
  * Eastern Classic two-night split for the fantasy classes (Phase 6.1,
- * PODIUM_CLASS_DESIGN.md §5.11).
+ * PODIUM.md §5.11).
  *
  * The Eastern Classic is ONE event placed on days 41 and 42
  * (`multiNight: { nights: [41, 42] }`). Registering once covers both nights;

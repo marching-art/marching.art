@@ -6,7 +6,7 @@
  * scraped schedule (pre-2019) and for the pool-driven championship stages.
  *
  * The constants and the ordering rule are FIT from the 2019-2026 scraped archive
- * (see src/scripts/calibrateSchedule.js and docs/SCHEDULE_MODEL_CALIBRATION.md),
+ * (see src/scripts/calibrateSchedule.js and docs/SCHEDULE_SYSTEM.md),
  * not guessed:
  *   - Performance order tracks reverse standings: across 24 sampled events the
  *     Spearman correlation between performance order and final score had a median

@@ -1,5 +1,5 @@
 /**
- * Director Rating (Phase 7.5, PODIUM_CLASS_DESIGN.md §7) — lifetime,
+ * Director Rating (Phase 7.5, PODIUM.md §7) — lifetime,
  * placements-only, cross-class.
  *
  * DCI-style placement points per archived season: 1st = 25, 2nd = 24, …

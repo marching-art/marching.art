@@ -2,7 +2,7 @@
 // STYLE GUIDE — living reference for the unified visual identity
 // =============================================================================
 // Renders the actual design tokens and primitives so the system stays in sync
-// with the code (docs/VISUAL_IDENTITY_UNIFICATION.md §7). Route: /styleguide.
+// with the code (docs/DESIGN_SYSTEM.md). Route: /styleguide.
 // Token-only by construction — it is its own conformance test.
 
 import React from 'react';
@@ -171,7 +171,7 @@ const StyleGuide: React.FC = () => (
       </Section>
 
       <footer className="border-t border-line pt-4 text-xs text-muted">
-        Reference for docs/VISUAL_IDENTITY_UNIFICATION.md. Enforced by{' '}
+        Reference for docs/DESIGN_SYSTEM.md. Enforced by{' '}
         <span className="text-secondary">npm run census:check</span>.
       </footer>
     </div>

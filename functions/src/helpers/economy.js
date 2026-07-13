@@ -35,24 +35,6 @@ function getHistoryCollection(db, uid) {
 }
 
 /**
- * Add a CorpsCoin history entry to the subcollection.
- * Use this after a transaction has already updated the corpsCoin balance.
- *
- * @param {Object} db - Firestore instance
- * @param {string} uid - User ID
- * @param {Object} entry - History entry data
- * @returns {Promise<DocumentReference>}
- */
-async function addCoinHistoryEntry(db, uid, entry) {
-  const historyRef = getHistoryCollection(db, uid).doc();
-  await historyRef.set({
-    ...entry,
-    timestamp: entry.timestamp || admin.firestore.FieldValue.serverTimestamp(),
-  });
-  return historyRef;
-}
-
-/**
  * Add a CorpsCoin history entry within a Firestore batch.
  * Used when coin updates are batched with other writes (e.g., scoring).
  *
@@ -168,7 +150,6 @@ const getSeasonBonusAmount = (finalRank) => {
 module.exports = {
   // History subcollection helpers
   getHistoryCollection,
-  addCoinHistoryEntry,
   addCoinHistoryEntryToBatch,
   addCoinHistoryEntryToTransaction,
 

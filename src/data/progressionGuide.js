@@ -34,8 +34,8 @@ export const LEVEL_TITLES = {
   30: 'Eternal',
 };
 
-/** Class-unlock requirements — every path (PROGRESSION_ECONOMY_REDESIGN.md
- *  Decision 1: unlocks are earned by completing seasons, unlocked early by
+/** Class-unlock requirements — every path (GAMIFICATION.md:
+ *  unlocks are earned by completing seasons, unlocked early by
  *  XP level, or skipped with CorpsCoin; the old calendar path is gone). */
 export const CLASS_UNLOCK_PATHS = {
   aClass: { level: 3, seasons: 1, coin: CLASS_UNLOCK_COSTS.aClass },

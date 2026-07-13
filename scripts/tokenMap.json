@@ -1,5 +1,5 @@
 {
-  "_note": "Authoritative raw-value → token class map for the visual-identity sweep (docs/VISUAL_IDENTITY_UNIFICATION.md §5, Step 7). Every mechanical decision lives here ONCE so applyTokenMap.mjs stays 100% consistent. Hex keys match case-insensitively. Golds (#c9a227/#F5A623/#8a6d1a/#EAB308, yellow-*/amber-*) and Discord blurple (#5865F2) are intentionally absent — those are judgment calls handled per-context, not mechanical renames.",
+  "_note": "Authoritative raw-value → token class map for the visual-identity sweep (docs/DESIGN_SYSTEM.md). Every mechanical decision lives here ONCE so applyTokenMap.mjs stays 100% consistent. Hex keys match case-insensitively. Golds (#c9a227/#F5A623/#8a6d1a/#EAB308, yellow-*/amber-*) and Discord blurple (#5865F2) are intentionally absent — those are judgment calls handled per-context, not mechanical renames.",
 
   "bg-[#0a0a0a]": "bg-background",
   "bg-[#0f0f0f]": "bg-surface-sunken",

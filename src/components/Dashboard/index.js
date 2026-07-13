@@ -14,8 +14,6 @@ export {
 export { default as OnboardingTour } from './OnboardingTour';
 export { default as QuickStartGuide, QuickStartButton } from './QuickStartGuide';
 
-// SoundSport welcome component
-export { default as SoundSportWelcome, SoundSportBanner } from './SoundSportWelcome';
 
 // OPTIMIZATION #4: Dashboard section components extracted from Dashboard.jsx
 // These reduce the main file from 1600+ lines to ~400 lines and isolate renders

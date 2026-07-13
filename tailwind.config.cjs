@@ -30,7 +30,7 @@ module.exports = {
         // ===========================================
         // BRAND — permanent gold. The anchor of the visual identity:
         // logo, wordmark, and reward/achievement moments only. Per the
-        // unification plan (docs/VISUAL_IDENTITY_UNIFICATION.md), gold is
+        // unification plan (docs/DESIGN_SYSTEM.md), gold is
         // NEVER a generic UI accent — that job belongs to `interactive`.
         // ===========================================
         brand: {

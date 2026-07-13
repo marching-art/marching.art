@@ -2,7 +2,7 @@
  * Podium Phase 0.2 — Curve miner.
  *
  * Processes every completed year of historical_scores into the Podium
- * scoring engine's calibration data (docs/PODIUM_CLASS_DESIGN.md §4.1):
+ * scoring engine's calibration data (docs/PODIUM.md §4.1):
  *
  *   1. Day-indexed percentile bands per caption (p5/p25/p50/p75/p95/max)
  *      over offSeasonDay 1-49 — the realism envelope. Sparse days are

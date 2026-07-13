@@ -6,7 +6,7 @@
 // Two-column on desktop: gameplay pitch on the left, sign-in / create-account
 // card on the right. Authenticated users are bounced to the dashboard by the
 // route guard in App.jsx, so this page only ever renders for signed-out
-// visitors. Content is distilled from docs/PODIUM_CLASS_DESIGN.md and mirrors
+// visitors. Content is distilled from docs/PODIUM.md and mirrors
 // the public /podium-guide.
 
 import React, { useState, startTransition } from 'react';

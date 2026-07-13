@@ -26,6 +26,14 @@ starting grant and sweeps stale CorpsCoin references to Corps Budget; v2.4 settl
 model — one currency, CC spendable in Podium up to a division-equal cap, free floor guaranteed
 — the design is complete and build-ready
 
+> **This is the consolidated Podium reference.** It absorbs the former Phase 0
+> calibration notes; those early figures (a 13-year corpus, 412 venues, 0.58
+> attainment, older reputation-tier percentiles) are **superseded** by the
+> 24-year (2000–2025, ex-COVID) survivorship-corrected rebuild. Current runtime
+> constants live in `functions/src/helpers/podium/balanceConfig.json` (e.g.
+> `scoring.totalCap` 99.70, reputation-tier percentiles in §5.13); treat that
+> file as authoritative over any number quoted narratively below.
+
 ---
 
 ## 1. Executive Summary
@@ -835,7 +843,7 @@ builder (`correctSurvivorship`). Without the correction the finals floor sat at 
 debut Community Corps season "maxed" at a finalist-level 91 — impossible against the real
 trajectories of Jersey Surf, Genesis, Seattle Cascades, or Pioneer, whose seasons end in the
 60s-70s (2026-07 calibration report, ChrisRohn). The committed
-`src/scripts/podiumPacingHarness.js` asserts the ladder every run: debut ≈ 76, Finalist ≈ 91,
+`functions/src/scripts/podiumPacingHarness.js` asserts the ladder every run: debut ≈ 76, Finalist ≈ 91,
 Elite ≈ 97.9, Champion ≈ 99.3, Champion Status at season ~13, and a flawless Elite beats a
 half-absent Champion ~20% of the time.
 
@@ -963,7 +971,7 @@ When `activeCorpsClass === 'podiumClass'`, `Dashboard.jsx` Zone C swaps
 2. **`CorpsConditionPanel`** _(compact strip)_
    Stamina + morale meters, food-plan setting, this week's travel route with costs, decay warnings
    ("Percussion: 3 days unrehearsed").
-3. **`CaptionTrajectoryPanel`** _(replaces LineupSimulatorPanel — the analyzer analogue)_
+3. **`PodiumTrajectoryCard` / `PodiumCaptionPanel`** _(replaces LineupSimulatorPanel — the analyzer analogue)_
    Eight sparkline curves of the season so far, each drawn over its historical percentile band
    (p25–p75 shaded, p95 dashed) for the current day — "your VA is 74th percentile for Day 31."
    Weak-spot callouts mirror the Lineup Analyzer's swap suggestions: "Visual Ensemble has the best
@@ -1029,7 +1037,13 @@ lesson).
 
 ## 8. Cloud Functions
 
-### New: `functions/src/callable/podium.js`
+### Callable surface: `functions/src/callable/podium.js` (+ split modules)
+
+> The callable surface has since been split across
+> `podium.js` + `podiumStaff.js` / `podiumRoute.js` / `podiumJoint.js` /
+> `podiumFan.js` / `podiumHost.js`; the implementation modules live under
+> `functions/src/helpers/podium/`. The table below lists callables by function,
+> not by file.
 
 | Callable                                                     | Does                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1171,7 +1185,7 @@ yields, diminishing returns, neglect decay, envelope + reputation-ceiling scorin
 the itemized "Action Complete" panel.
 2.4 Nightly Podium stage v1: recovery/decay → score performing corps → recap entries
 (`corpsClass: 'podiumClass'`) → `computePodiumRankings` → ranks on corps map.
-2.5 Zone C UI swap: `RehearsalPlanner` (block allocator, ≤3 taps), `CaptionTrajectoryPanel`
+2.5 Zone C UI swap: `RehearsalPlanner` (block allocator, ≤3 taps), `PodiumTrajectoryCard`
 (curves over percentile bands + historical shadows). ControlBar tab, flag-gated. Podium
 recap sheet (full 8-caption, division-sectioned, §5.4) added to the Scores tab.
 2.6 `selectUserShows`: `multiNight` counts-as-one validation + server-injected major
@@ -1446,7 +1460,7 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     (`correctSurvivorship`, applied to the committed curveData), and the tier ceilings were
     retuned against the repaired band to the DCI shape — debut ≈ 76, Regional ≈ 82,
     Semifinalist ≈ 87, Finalist ≈ 91, Medalist ≈ 94.5, Elite ≈ 97.9, Champion ≈ 99.3 (§5.13
-    table). The pacing harness (`src/scripts/podiumPacingHarness.js`) is now COMMITTED and
+    table). The pacing harness (`functions/src/scripts/podiumPacingHarness.js`) is now COMMITTED and
     asserts the ladder, the ~13-season climb, the no-100s cap, and the upset window on every
     run. The same pass wired the long-promised runtime tuning path: `podium-config/balance`
     overrides now actually merge over the committed defaults at runtime

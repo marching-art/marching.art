@@ -4,7 +4,7 @@
  * No Firebase imports, no I/O, no Date.now(), no Math.random(): every
  * function is deterministic in its inputs so the Phase 0 simulation harness
  * (src/scripts/podiumSim.js) exercises exactly the code the Phase 2
- * callables and nightly processor will ship. Design: docs/PODIUM_CLASS_DESIGN.md
+ * callables and nightly processor will ship. Design: docs/PODIUM.md
  * §4.2 (scoring), §5.2 (blocks), §5.3 (condition), §5.13 (reputation).
  *
  * Data dependencies (passed in, never required here):

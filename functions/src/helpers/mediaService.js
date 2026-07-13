@@ -271,98 +271,6 @@ function buildOptimizedUrl(publicId, options = {}, version = null) {
 }
 
 /**
- * Upload an image buffer to Cloudinary
- * @param {Buffer} imageBuffer - Image data as Buffer
- * @param {Object} options - Upload options
- * @param {string} options.folder - Cloudinary folder path
- * @param {string} options.publicId - Custom public ID (optional)
- * @param {string} options.category - Image category for fallback
- * @returns {Promise<Object>} Upload result with URL
- */
-async function uploadImage(imageBuffer, options = {}) {
-  const {
-    folder = "marching-art/news",
-    publicId,
-    category = "default",
-    headline = "",
-  } = options;
-
-  // Upload using base64 data URI
-  const base64Data = imageBuffer.toString("base64");
-  const dataUri = `data:image/jpeg;base64,${base64Data}`;
-
-  // Check if Cloudinary is configured
-  if (!initializeCloudinary()) {
-    logger.info("Cloudinary not configured, trying Firebase Storage fallback");
-
-    // Try Firebase Storage as fallback
-    const storageResult = await uploadToFirebaseStorage(dataUri, {
-      folder,
-      publicId,
-    });
-
-    if (storageResult.success) {
-      logger.info("Image uploaded to Firebase Storage (Cloudinary fallback)");
-      return storageResult;
-    }
-
-    logger.warn("Firebase Storage fallback also failed:", storageResult.error);
-    return {
-      success: false,
-      url: getContextualPlaceholder({ newsCategory: category, headline }),
-      isPlaceholder: true,
-    };
-  }
-
-  try {
-    // Generate unique public ID if not provided
-    const finalPublicId = publicId || `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    const uploadResult = await cloudinary.uploader.upload(dataUri, {
-      folder,
-      public_id: finalPublicId,
-      resource_type: "image",
-      overwrite: true,
-      // Apply default transformations on upload
-      transformation: [
-        { fetch_format: "auto", quality: "auto" },
-      ],
-    });
-
-    logger.info("Image uploaded successfully:", {
-      publicId: uploadResult.public_id,
-      url: uploadResult.secure_url,
-      bytes: uploadResult.bytes,
-      version: uploadResult.version,
-    });
-
-    // Return optimized URL with version for cache-busting
-    return {
-      success: true,
-      url: buildOptimizedUrl(uploadResult.public_id, {}, uploadResult.version),
-      publicId: uploadResult.public_id,
-      originalUrl: uploadResult.secure_url,
-      width: uploadResult.width,
-      height: uploadResult.height,
-      format: uploadResult.format,
-      bytes: uploadResult.bytes,
-      version: uploadResult.version,
-      isPlaceholder: false,
-    };
-  } catch (error) {
-    logger.error("Cloudinary upload failed:", error);
-
-    // Return fallback placeholder
-    return {
-      success: false,
-      url: getContextualPlaceholder({ newsCategory: category, headline }),
-      error: error.message,
-      isPlaceholder: true,
-    };
-  }
-}
-
-/**
  * Upload image from URL to Cloudinary
  * @param {string} imageUrl - Source image URL
  * @param {Object} options - Upload options
@@ -495,66 +403,17 @@ async function uploadFromUrl(imageUrl, options = {}) {
   }
 }
 
-/**
- * Delete an image from Cloudinary
- * @param {string} publicId - Cloudinary public ID to delete
- * @returns {Promise<boolean>} Success status
- */
-async function deleteImage(publicId) {
-  if (!initializeCloudinary()) {
-    return false;
-  }
-
-  try {
-    await cloudinary.uploader.destroy(publicId);
-    logger.info("Image deleted:", publicId);
-    return true;
-  } catch (error) {
-    logger.error("Failed to delete image:", error);
-    return false;
-  }
-}
-
-/**
- * Generate responsive image URLs for different sizes
- * @param {string} publicId - Cloudinary public ID
- * @returns {Object} Object with URLs for different sizes
- */
-function getResponsiveUrls(publicId) {
-  if (!publicId) {
-    const placeholder = getPlaceholderImage("full_corps");
-    return {
-      thumbnail: placeholder,
-      small: placeholder,
-      medium: placeholder,
-      large: placeholder,
-      original: placeholder,
-    };
-  }
-
-  return {
-    thumbnail: buildOptimizedUrl(publicId, { width: 150, height: 150, crop: "fill" }),
-    small: buildOptimizedUrl(publicId, { width: 400 }),
-    medium: buildOptimizedUrl(publicId, { width: 800 }),
-    large: buildOptimizedUrl(publicId, { width: 1200 }),
-    original: buildOptimizedUrl(publicId, {}),
-  };
-}
-
 // =============================================================================
 // EXPORTS
 // =============================================================================
 
 module.exports = {
   // Core upload functions
-  uploadImage,
   uploadFromUrl,
   uploadToFirebaseStorage,
-  deleteImage,
 
   // URL builders
   buildOptimizedUrl,
-  getResponsiveUrls,
 
   // Placeholder functions
   getPlaceholderImage,

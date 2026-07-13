@@ -8,7 +8,7 @@
 //   3. CorpsCoin — the explicit skip lane (1,000/2,500/5,000 CC)
 // The old calendar path (5/12/19 weeks since registration, granted whether or
 // not you played) was removed per the owner-approved redesign
-// (docs/PROGRESSION_ECONOMY_REDESIGN.md Decision 1). A distant, silent
+// (docs/GAMIFICATION.md). A distant, silent
 // account-age backstop exists server-side only (functions xpCalculations.js).
 //
 // This module replaces utils/classUnlockTime.ts, keeping its canonical-key

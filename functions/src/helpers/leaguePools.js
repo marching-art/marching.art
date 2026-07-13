@@ -1,6 +1,6 @@
 /**
  * League Prediction Pools — the flagship social CC sink
- * (LIFELONG_GAMIFICATION_ROADMAP.md Step 6; LEAGUES_ENGAGEMENT_STRATEGY.md).
+ * (GAMIFICATION.md).
  *
  * Mechanics (v1): each game day, league members may buy into their league's
  * daily pool for a fixed ante. Entrants who post a PERFECT prediction day
