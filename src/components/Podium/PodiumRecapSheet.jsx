@@ -255,67 +255,14 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
   );
 }
 
-// The Podium Report (Phase 7.3): the latest week's deterministic
-// power-rankings column, rendered above the recap sheets.
-function PodiumReport({ column, userCorpsName }) {
-  if (!column || !(column.entries || []).length) return null;
-  return (
-    <div className="bg-surface-card border border-line rounded-none p-4 space-y-2">
-      <div className="flex items-baseline justify-between border-b border-line pb-2">
-        <div>
-          <div className="text-sm font-bold text-white">The Podium Report</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted">
-            Power Rankings · Week {column.week} · {column.fieldSize} corps
-          </div>
-        </div>
-        <span className="text-[9px] uppercase tracking-wider text-secondary font-bold">Column</span>
-      </div>
-      <div className="space-y-1">
-        {column.entries.map((entry) => {
-          const isMine = userCorpsName && entry.corpsName === userCorpsName;
-          const move =
-            entry.delta == null ? (
-              <span className="text-muted">·</span>
-            ) : entry.delta > 0 ? (
-              <span className="text-green-400">▲{entry.delta}</span>
-            ) : entry.delta < 0 ? (
-              <span className="text-red-400">▼{-entry.delta}</span>
-            ) : (
-              <span className="text-muted">—</span>
-            );
-          return (
-            <div
-              key={entry.uid}
-              className={`flex items-center gap-2 text-[11px] tabular-nums ${
-                isMine ? 'bg-interactive/10 -mx-1 px-1 rounded-none' : ''
-              }`}
-            >
-              <span className="w-5 text-right text-muted font-bold">{entry.rank}.</span>
-              <span className="w-7 text-[10px]">{move}</span>
-              <span
-                className={`flex-1 min-w-0 truncate font-bold ${isMine ? 'text-interactive' : 'text-white'}`}
-              >
-                {entry.corpsName}
-              </span>
-              <span className="text-muted text-[10px] italic truncate hidden sm:block">
-                {entry.note}
-              </span>
-              <span className="text-white font-bold">
-                {typeof entry.total === 'number' ? entry.total.toFixed(3) : '—'}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// The Podium Report (the weekly power-rankings column) now lives on its own
+// Scores tab — see components/Podium/PodiumReportSheet. This sheet renders only
+// the per-show recap box scores.
 
 export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName }) {
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState([]); // [{day, recap}]
   const [selectedDay, setSelectedDay] = useState(null);
-  const [report, setReport] = useState(null); // latest power-rankings column
   const [sortBy, setSortBy] = useState('total');
   const [copied, setCopied] = useState(false);
 
@@ -335,18 +282,6 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
           .sort((a, b) => a.day - b.day);
         setDays(loaded);
         setSelectedDay(loaded.length > 0 ? loaded[loaded.length - 1].day : null);
-        // Latest power-rankings column (best-effort; the sheet stands alone).
-        try {
-          const power = await getDocs(collection(db, 'podium-recaps', seasonUid, 'power'));
-          if (!cancelled && !power.empty) {
-            const weeks = power.docs
-              .map((doc) => doc.data())
-              .sort((a, b) => (b.week || 0) - (a.week || 0));
-            setReport(weeks[0]);
-          }
-        } catch {
-          /* column is decorative */
-        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -378,9 +313,6 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
 
   return (
     <div className="p-3 md:p-4 space-y-3">
-      {/* The Podium Report — latest weekly power rankings */}
-      <PodiumReport column={report} userCorpsName={userCorpsName} />
-
       {/* Day selector */}
       <div className="flex gap-1 overflow-x-auto scrollbar-hide">
         {days.map(({ day }) => (

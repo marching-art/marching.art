@@ -1,11 +1,11 @@
 // Tests for The Podium Report (Phase 7.3): deterministic weekly power
-// rankings — movement math, note templates, and the top-10 cap.
+// rankings — movement math, note templates, and the column-size cap.
 //
 // Uses Node's built-in test runner (node:test). Run with `npm test`.
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildPowerRankings } = require("./powerRankings");
+const { buildPowerRankings, COLUMN_SIZE } = require("./powerRankings");
 
 const corps = (uid, lastTotal) => ({ uid, corpsName: `Corps ${uid}`, lastTotal, repTier: 3 });
 
@@ -40,13 +40,13 @@ describe("buildPowerRankings", () => {
     assert.equal(column.entries[3].delta, -1);
   });
 
-  test("deterministic and capped at 10 with the true field size recorded", () => {
-    const field = Array.from({ length: 14 }, (_, i) => corps(`u${i}`, 90 - i));
+  test("deterministic and capped at COLUMN_SIZE with the true field size recorded", () => {
+    const field = Array.from({ length: COLUMN_SIZE + 12 }, (_, i) => corps(`u${i}`, 90 - i));
     const a = buildPowerRankings(field, null, 3);
     const b = buildPowerRankings(field, null, 3);
     assert.deepEqual(a, b);
-    assert.equal(a.entries.length, 10);
-    assert.equal(a.fieldSize, 14);
+    assert.equal(a.entries.length, COLUMN_SIZE);
+    assert.equal(a.fieldSize, COLUMN_SIZE + 12);
   });
 
   test("steady note for an unmoved mid-table corps", () => {
