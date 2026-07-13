@@ -7,10 +7,10 @@
  * Surf, Pioneer).
  *
  * Reads the committed local corpus (pressboxImporter/output/
- * historical_scores_*.json — per-corps, per-day totals normalized to
- * competition days 1-49), picks each corps' DENSEST season, linearly
- * interpolates the gaps, and writes src/data/historicalShadows.json for the
- * client chart. Pure local data; no Firestore.
+ * historical_scores_*.json, 2000-2025 — per-corps, per-day totals normalized
+ * to competition days 1-49), picks each corps' densest representative season,
+ * linearly interpolates the gaps, and writes src/data/historicalShadows.json
+ * for the client chart. Pure local data; no Firestore.
  *
  * Run:  cd functions && node src/scripts/buildHistoricalShadows.js
  */
@@ -21,16 +21,25 @@ const path = require("path");
 const LOCAL_DATA_DIR = path.join(__dirname, "../../pressboxImporter/output");
 const OUTPUT_PATH = path.join(__dirname, "../../../src/data/historicalShadows.json");
 
-// The cast: 8 arcs across the competitive spectrum. `pick` chooses the
-// corps' best season (elite icons) or its MEDIAN season (typical year) —
-// median also filters out Division II/III sheet seasons, whose inflated
-// scores would otherwise masquerade as a community corps hitting 95.
-// `minYear` fences off years a corps spent on the Div II/III sheet.
+// The cast: 8 arcs across the competitive spectrum, drawn from the full
+// 2000-2025 corpus. `pick` chooses the corps' best season (elite icons) or
+// its MEDIAN season (typical year) — median also filters out Division II/III
+// sheet seasons, whose inflated scores would otherwise masquerade as a
+// community corps hitting 95. `minYear` fences off years a corps spent on the
+// Div II/III sheet.
+//
+// The tier a corps anchors is its historical identity, not necessarily where
+// it finished in 2025: Boston Crusaders and Blue Stars both climbed to the
+// elite in the modern era, so `max` would collapse them into a third and
+// fourth line clustered against Crown/Bluecoats at ~98 and erase the finalist
+// and mid-pack bands. `median` holds each corps in its representative tier so
+// the ghosts stay spread from the low-70s to ~99 — the whole point of the
+// chart is a ghost to chase at every level.
 const CAST = [
   { corps: "Carolina Crown", tierLabel: "Elite climb", pick: "max" },
   { corps: "Bluecoats", tierLabel: "Elite climb", pick: "max" },
-  { corps: "Boston Crusaders", tierLabel: "Finalist", pick: "max" },
-  { corps: "Blue Stars", tierLabel: "Finalist", pick: "max", minYear: 2008 },
+  { corps: "Boston Crusaders", tierLabel: "Finalist", pick: "median" },
+  { corps: "Blue Stars", tierLabel: "Finalist", pick: "median", minYear: 2008 },
   { corps: "Mandarins", tierLabel: "Mid-pack", pick: "median" },
   { corps: "Seattle Cascades", tierLabel: "Mid-pack", pick: "median" },
   { corps: "Jersey Surf", tierLabel: "Community", pick: "median", minYear: 2010 },
@@ -137,8 +146,8 @@ function main() {
         meta: {
           note:
             "Historical shadow trajectories (design decision 29) — real corps season " +
-            "arcs from the 2000-2012 local corpus, densest season per corps, linearly " +
-            "interpolated to competition days 1-49. Regenerate with " +
+            "arcs from the 2000-2025 local corpus, densest representative season per " +
+            "corps, linearly interpolated to competition days 1-49. Regenerate with " +
             "functions/src/scripts/buildHistoricalShadows.js.",
           generatedFrom: "pressboxImporter/output",
         },

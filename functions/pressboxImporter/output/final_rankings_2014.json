@@ -1,0 +1,154 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "Blue Devils",
+   "points": 25,
+   "originalScore": 99.65
+  },
+  {
+   "rank": 2,
+   "corps": "Bluecoats",
+   "points": 24,
+   "originalScore": 97.175
+  },
+  {
+   "rank": 3,
+   "corps": "The Cadets",
+   "points": 23,
+   "originalScore": 96.875
+  },
+  {
+   "rank": 4,
+   "corps": "Santa Clara Vanguard",
+   "points": 22,
+   "originalScore": 96.075
+  },
+  {
+   "rank": 5,
+   "corps": "Carolina Crown",
+   "points": 21,
+   "originalScore": 95.675
+  },
+  {
+   "rank": 6,
+   "corps": "The Cavaliers",
+   "points": 20,
+   "originalScore": 93.675
+  },
+  {
+   "rank": 7,
+   "corps": "Phantom Regiment",
+   "points": 19,
+   "originalScore": 91.425
+  },
+  {
+   "rank": 8,
+   "corps": "Blue Knights",
+   "points": 18,
+   "originalScore": 91.15
+  },
+  {
+   "rank": 9,
+   "corps": "Blue Stars",
+   "points": 17,
+   "originalScore": 89.6
+  },
+  {
+   "rank": 10,
+   "corps": "Boston Crusaders",
+   "points": 16,
+   "originalScore": 88.95
+  },
+  {
+   "rank": 11,
+   "corps": "Madison Scouts",
+   "points": 15,
+   "originalScore": 87.575
+  },
+  {
+   "rank": 12,
+   "corps": "Crossmen",
+   "points": 14,
+   "originalScore": 86.225
+  },
+  {
+   "rank": 13,
+   "corps": "Colts",
+   "points": 13,
+   "originalScore": 85.35
+  },
+  {
+   "rank": 14,
+   "corps": "Troopers",
+   "points": 12,
+   "originalScore": 84.775
+  },
+  {
+   "rank": 15,
+   "corps": "Blue Devils B",
+   "points": 11,
+   "originalScore": 82.325
+  },
+  {
+   "rank": 16,
+   "corps": "The Academy",
+   "points": 10,
+   "originalScore": 81.875
+  },
+  {
+   "rank": 17,
+   "corps": "Spirit of Atlanta",
+   "points": 9,
+   "originalScore": 81.55
+  },
+  {
+   "rank": 18,
+   "corps": "Vanguard Cadets",
+   "points": 8,
+   "originalScore": 80.2
+  },
+  {
+   "rank": 19,
+   "corps": "Oregon Crusaders",
+   "points": 7,
+   "originalScore": 80.1
+  },
+  {
+   "rank": 20,
+   "corps": "Pacific Crest",
+   "points": 6,
+   "originalScore": 78.9
+  },
+  {
+   "rank": 21,
+   "corps": "Mandarins",
+   "points": 5,
+   "originalScore": 78.15
+  },
+  {
+   "rank": 22,
+   "corps": "Jersey Surf",
+   "points": 4,
+   "originalScore": 75.8
+  },
+  {
+   "rank": 23,
+   "corps": "Genesis",
+   "points": 3,
+   "originalScore": 74.075
+  },
+  {
+   "rank": 24,
+   "corps": "Spartans",
+   "points": 2,
+   "originalScore": 74.05
+  },
+  {
+   "rank": 25,
+   "corps": "7th Regiment",
+   "points": 1,
+   "originalScore": 71.475
+  }
+ ]
+}

@@ -1,9 +1,19 @@
-# From The Pressbox historical recap importer (DCI 2000-2012)
+# From The Pressbox historical recap importer (DCI 2000-2025)
 
 Backfills `historical_scores/{year}` and `final_rankings/{year}` for
-2000-2012 from the month-long recap workbooks published at
+2000-2025 from the recap workbooks published at
 [fromthepressbox.com/dca-dcihistory](https://www.fromthepressbox.com/dca-dcihistory),
-in exactly the shape the existing 2013+ data (scraped from dci.org) uses.
+in exactly the shape the dci.org scrape pipeline uses. 2000-2024 seasons are
+published as month-long workbooks (`{year}junerecaps.htm`, etc.); 2025 is
+published as one workbook per event (`2025mmdd{city}.htm`). The parser reads
+both the same way. The parsed `output/*.json` feeds the client Podium
+"trajectory vs history" chart (via `buildHistoricalShadows.js`), which spans
+the full range.
+
+The archive has three genuine gaps: **2020** (no DCI tour — the page 404s),
+**2021** (the page carries DCA senior-corps recaps only, no DCI), and **2023**
+(its season page mislinks the 2022 workbooks, which `harvest.js` skips as
+wrong-year).
 
 ## Usage
 
@@ -16,7 +26,9 @@ node import.js           # upload (needs functions/serviceAccountKey.json)
 ```
 
 `import.js` is add-only by default: it never touches a year that already has a
-`historical_scores` or `final_rankings` document. `--merge` appends missing
+`historical_scores` or `final_rankings` document — so 2013+ (already scraped
+from dci.org into Firestore) is left untouched on import; the parsed output is
+still regenerated locally for the shadows chart. `--merge` appends missing
 events (matched on eventName + date, same rule as `processDciScores`);
 `--replace` overwrites; `--years 2000,2001` limits scope.
 
@@ -101,7 +113,9 @@ Finals -> Semifinals -> Quarterfinals events.
 - **DCA sections** (this is senior-corps data the game doesn't use) and the
   2000-2003 Division II/III "Execution/Ensemble" sheets, whose caption system
   has no modern equivalent. Counts appear in `output/report.json`.
-- **2013**: already in Firestore from the dci.org scrape.
+- **2013+ on import**: already in Firestore from the dci.org scrape, so
+  `import.js` (add-only) leaves those years alone. They are still parsed into
+  `output/*.json` locally for the trajectory-vs-history shadows.
 
 ### Source link quirks
 

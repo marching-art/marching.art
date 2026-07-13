@@ -1496,10 +1496,11 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     recoups the remainder. Retraining moves a person to a new specialty for life (half boost for
     the rest of that season). The 3-day clinician stays as-is.
 29. **Historical shadows ship as a CAST, not just Crown**: 8 committed real season arcs from the
-    2000-2012 corpus (Crown '12, Bluecoats '10, Boston '02, Blue Stars '10, Mandarins '08,
-    Cascades '05, Surf '12, Pioneer '07 — best season for the elite cast, median season for the
-    mid/community cast, which also filters Div II sheet artifacts). Rendered as muted ghost
-    lines under the corps' own score line (state.scoreHistory) in the Podium zone.
+    2000-2025 corpus (Crown '13, Bluecoats '24, Boston '13, Blue Stars '09, Mandarins '14,
+    Cascades '16, Surf '13, Pioneer '04 — best season for the two elite icons, median season for
+    the rest, which also filters Div II sheet artifacts and holds each corps in its historical
+    tier even where it has since climbed to the elite). Rendered as muted ghost lines under the
+    corps' own score line (state.scoreHistory) in the Podium zone.
 30. **Fan Favorite is a two-level ballot** (resolves gap §14.1.5): prelims at each major (3-day
     window, one vote per signed-in user — fans included — for a Podium corps that performed),
     top 3 per major advance; the finals ballot runs Championship Week; the winner is crowned at

@@ -1,0 +1,154 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "Carolina Crown",
+   "points": 25,
+   "originalScore": 98.3
+  },
+  {
+   "rank": 2,
+   "corps": "Blue Devils",
+   "points": 24,
+   "originalScore": 98.05
+  },
+  {
+   "rank": 3,
+   "corps": "The Cadets",
+   "points": 23,
+   "originalScore": 96.95
+  },
+  {
+   "rank": 4,
+   "corps": "Santa Clara Vanguard",
+   "points": 22,
+   "originalScore": 96.85
+  },
+  {
+   "rank": 5,
+   "corps": "Bluecoats",
+   "points": 21,
+   "originalScore": 93.35
+  },
+  {
+   "rank": 6,
+   "corps": "Phantom Regiment",
+   "points": 20,
+   "originalScore": 93.25
+  },
+  {
+   "rank": 7,
+   "corps": "The Cavaliers",
+   "points": 19,
+   "originalScore": 90.5
+  },
+  {
+   "rank": 8,
+   "corps": "Boston Crusaders",
+   "points": 18,
+   "originalScore": 90.4
+  },
+  {
+   "rank": 9,
+   "corps": "Madison Scouts",
+   "points": 17,
+   "originalScore": 90.1
+  },
+  {
+   "rank": 10,
+   "corps": "Blue Knights",
+   "points": 16,
+   "originalScore": 87.75
+  },
+  {
+   "rank": 11,
+   "corps": "Spirit of Atlanta",
+   "points": 15,
+   "originalScore": 86.4
+  },
+  {
+   "rank": 12,
+   "corps": "Troopers",
+   "points": 14,
+   "originalScore": 86.05
+  },
+  {
+   "rank": 13,
+   "corps": "Blue Stars",
+   "points": 13,
+   "originalScore": 85.45
+  },
+  {
+   "rank": 14,
+   "corps": "Crossmen",
+   "points": 12,
+   "originalScore": 84.85
+  },
+  {
+   "rank": 15,
+   "corps": "Colts",
+   "points": 11,
+   "originalScore": 82.45
+  },
+  {
+   "rank": 16,
+   "corps": "Pacific Crest",
+   "points": 10,
+   "originalScore": 82.3
+  },
+  {
+   "rank": 17,
+   "corps": "Oregon Crusaders",
+   "points": 9,
+   "originalScore": 81.05
+  },
+  {
+   "rank": 18,
+   "corps": "Mandarins",
+   "points": 8,
+   "originalScore": 79.75
+  },
+  {
+   "rank": 19,
+   "corps": "The Academy",
+   "points": 7,
+   "originalScore": 78.2
+  },
+  {
+   "rank": 20,
+   "corps": "Blue Devils B",
+   "points": 6,
+   "originalScore": 77.95
+  },
+  {
+   "rank": 21,
+   "corps": "Vanguard Cadets",
+   "points": 5,
+   "originalScore": 77.7
+  },
+  {
+   "rank": 22,
+   "corps": "Jersey Surf",
+   "points": 4,
+   "originalScore": 75.4
+  },
+  {
+   "rank": 23,
+   "corps": "Genesis",
+   "points": 3,
+   "originalScore": 74.65
+  },
+  {
+   "rank": 24,
+   "corps": "Spartans",
+   "points": 2,
+   "originalScore": 72.85
+  },
+  {
+   "rank": 25,
+   "corps": "Music City",
+   "points": 1,
+   "originalScore": 72.75
+  }
+ ]
+}

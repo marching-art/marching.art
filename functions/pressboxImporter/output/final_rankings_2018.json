@@ -1,0 +1,76 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "Santa Clara Vanguard",
+   "points": 25,
+   "originalScore": 98.625
+  },
+  {
+   "rank": 2,
+   "corps": "Blue Devils",
+   "points": 24,
+   "originalScore": 97.35
+  },
+  {
+   "rank": 3,
+   "corps": "Bluecoats",
+   "points": 23,
+   "originalScore": 96.95
+  },
+  {
+   "rank": 4,
+   "corps": "Carolina Crown",
+   "points": 22,
+   "originalScore": 95.5
+  },
+  {
+   "rank": 5,
+   "corps": "Boston Crusaders",
+   "points": 21,
+   "originalScore": 94.3125
+  },
+  {
+   "rank": 6,
+   "corps": "The Cavaliers",
+   "points": 20,
+   "originalScore": 93.2125
+  },
+  {
+   "rank": 7,
+   "corps": "The Cadets",
+   "points": 19,
+   "originalScore": 92.225
+  },
+  {
+   "rank": 8,
+   "corps": "Blue Stars",
+   "points": 18,
+   "originalScore": 90.05
+  },
+  {
+   "rank": 9,
+   "corps": "Blue Knights",
+   "points": 17,
+   "originalScore": 88.925
+  },
+  {
+   "rank": 10,
+   "corps": "Mandarins",
+   "points": 16,
+   "originalScore": 88.15
+  },
+  {
+   "rank": 11,
+   "corps": "Phantom Regiment",
+   "points": 15,
+   "originalScore": 86.95
+  },
+  {
+   "rank": 12,
+   "corps": "Crossmen",
+   "points": 14,
+   "originalScore": 86.75
+  }
+ ]
+}

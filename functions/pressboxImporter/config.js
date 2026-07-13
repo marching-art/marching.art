@@ -6,9 +6,11 @@
 
 const path = require("path");
 
-// 2013+ already exists in historical_scores via the dci.org scrape pipeline,
-// so this importer covers 2000-2012 only.
-const YEARS = Array.from({ length: 13 }, (_, i) => (2000 + i).toString());
+// Covers the full 2000-2025 archive published on the season pages. 2013+ also
+// lives in historical_scores via the dci.org scrape pipeline, so import.js
+// (add-only) skips those years in Firestore; the parsed output/*.json for the
+// whole range still feeds the local Podium "trajectory vs history" shadows.
+const YEARS = Array.from({ length: 26 }, (_, i) => (2000 + i).toString());
 
 const SEASON_PAGE_URL = (year) => `https://www.fromthepressbox.com/${year}season`;
 const DOCUMENT_BASE_URL = "https://storage.googleapis.com/wzukusers/user-29900967/documents/";

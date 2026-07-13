@@ -1,0 +1,154 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "Boston Crusaders",
+   "points": 25,
+   "originalScore": 98.425
+  },
+  {
+   "rank": 2,
+   "corps": "Bluecoats",
+   "points": 24,
+   "originalScore": 98.25
+  },
+  {
+   "rank": 3,
+   "corps": "Santa Clara Vanguard",
+   "points": 23,
+   "originalScore": 96.7
+  },
+  {
+   "rank": 4,
+   "corps": "Blue Devils",
+   "points": 22,
+   "originalScore": 95.788
+  },
+  {
+   "rank": 5,
+   "corps": "Carolina Crown",
+   "points": 21,
+   "originalScore": 94.8
+  },
+  {
+   "rank": 6,
+   "corps": "Phantom Regiment",
+   "points": 20,
+   "originalScore": 94.3
+  },
+  {
+   "rank": 7,
+   "corps": "Mandarins",
+   "points": 19,
+   "originalScore": 92.825
+  },
+  {
+   "rank": 8,
+   "corps": "Blue Stars",
+   "points": 18,
+   "originalScore": 91.175
+  },
+  {
+   "rank": 9,
+   "corps": "The Cavaliers",
+   "points": 17,
+   "originalScore": 90.8
+  },
+  {
+   "rank": 10,
+   "corps": "Troopers",
+   "points": 16,
+   "originalScore": 90.05
+  },
+  {
+   "rank": 11,
+   "corps": "Colts",
+   "points": 15,
+   "originalScore": 88.05
+  },
+  {
+   "rank": 12,
+   "corps": "Blue Knights",
+   "points": 14,
+   "originalScore": 87.45
+  },
+  {
+   "rank": 13,
+   "corps": "Spirit of Atlanta",
+   "points": 13,
+   "originalScore": 86.8
+  },
+  {
+   "rank": 14,
+   "corps": "Madison Scouts",
+   "points": 12,
+   "originalScore": 85.35
+  },
+  {
+   "rank": 15,
+   "corps": "Pacific Crest",
+   "points": 11,
+   "originalScore": 84.825
+  },
+  {
+   "rank": 16,
+   "corps": "Music City",
+   "points": 10,
+   "originalScore": 83.838
+  },
+  {
+   "rank": 17,
+   "corps": "The Academy",
+   "points": 9,
+   "originalScore": 83.313
+  },
+  {
+   "rank": 18,
+   "corps": "Spartans",
+   "points": 8,
+   "originalScore": 82.275
+  },
+  {
+   "rank": 19,
+   "corps": "Crossmen",
+   "points": 7,
+   "originalScore": 82.225
+  },
+  {
+   "rank": 20,
+   "corps": "Gold",
+   "points": 6,
+   "originalScore": 79.9
+  },
+  {
+   "rank": 21,
+   "corps": "Battalion",
+   "points": 5,
+   "originalScore": 79.125
+  },
+  {
+   "rank": 22,
+   "corps": "Genesis",
+   "points": 4,
+   "originalScore": 77.7
+  },
+  {
+   "rank": 23,
+   "corps": "Seattle Cascades",
+   "points": 3,
+   "originalScore": 77.05
+  },
+  {
+   "rank": 24,
+   "corps": "Calgary Stampe de Showband",
+   "points": 2,
+   "originalScore": 75.25
+  },
+  {
+   "rank": 25,
+   "corps": "Columbians",
+   "points": 1,
+   "originalScore": 74.5
+  }
+ ]
+}
