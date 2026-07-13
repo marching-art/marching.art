@@ -108,6 +108,7 @@ The generated schedule is saved as the `events` array:
    - Week 2 = Days 8-14
    - etc.
 4. Flattens the schedule structure:
+
    ```javascript
    // Backend structure
    { offSeasonDay: 15, shows: [show1, show2, show3] }
@@ -119,6 +120,7 @@ The generated schedule is saved as the `events` array:
      { ...show3, day: 15, offSeasonDay: 15 }
    ]
    ```
+
 5. Displays available shows for the current week
 6. Allows user to select up to 4 shows
 
@@ -249,6 +251,7 @@ To verify schedule generation is working:
    - Confirm selection saves to user profile
 
 3. **Verify Structure:**
+
    ```javascript
    // Backend: events array structure
    events[0] = {

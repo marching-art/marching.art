@@ -182,94 +182,96 @@ const Achievements = () => {
   return (
     <div className="h-full overflow-y-auto scroll-momentum">
       <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Back link */}
-      <Link
-        to="/dashboard"
-        className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-secondary mb-3"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
-      </Link>
+        {/* Back link */}
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-secondary mb-3"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+        </Link>
 
-      {/* Header / overall progress */}
-      <div className="bg-surface-card border border-line mb-4">
-        <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center gap-3">
-          <Award className="w-5 h-5 text-brand" />
-          <div className="flex-1">
-            <h1 className="text-sm font-bold uppercase tracking-wider text-white">Achievements</h1>
-            <p className="text-[11px] text-muted">
-              Every award in the game — earned, in progress, and locked
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-white font-data tabular-nums leading-none">
-              {earnedCount}
-              <span className="text-muted">/{totalCount}</span>
+        {/* Header / overall progress */}
+        <div className="bg-surface-card border border-line mb-4">
+          <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center gap-3">
+            <Award className="w-5 h-5 text-brand" />
+            <div className="flex-1">
+              <h1 className="text-sm font-bold uppercase tracking-wider text-white">
+                Achievements
+              </h1>
+              <p className="text-[11px] text-muted">
+                Every award in the game — earned, in progress, and locked
+              </p>
             </div>
-            <div className="text-[10px] text-muted">earned</div>
-          </div>
-        </div>
-        <div className="h-1.5 bg-surface-raised">
-          <div
-            className="h-full bg-brand transition-all duration-500"
-            style={{ width: `${overallPct}%` }}
-          />
-        </div>
-        {ccEarned > 0 && (
-          <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-muted">
-            <Coins className="w-3.5 h-3.5 text-brand" />
-            <span className="text-brand font-bold font-data">{ccEarned.toLocaleString()} CC</span>
-            <span>earned from achievements</span>
-          </div>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border transition-colors ${
-              filter === f.id
-                ? 'bg-interactive border-interactive text-white'
-                : 'bg-surface-card border-line text-muted hover:text-white'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Categories */}
-      {grouped.length === 0 ? (
-        <div className="bg-surface-card border border-line px-4 py-12 text-center">
-          <Award className="w-10 h-10 text-muted mx-auto mb-3" />
-          <p className="text-sm text-muted">Nothing here yet for this filter.</p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {grouped.map((cat) => (
-            <section key={cat.id} className="bg-surface-card border border-line">
-              <div className="px-4 py-3 border-b border-line bg-surface-raised">
-                <div className="flex items-center justify-between mb-1">
-                  <h2 className="text-[11px] font-bold uppercase tracking-wider text-secondary">
-                    {cat.label}
-                  </h2>
-                  <span className="text-[10px] font-bold text-muted font-data tabular-nums">
-                    {cat.earned}/{cat.total}
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted leading-snug">{cat.hint}</p>
+            <div className="text-right">
+              <div className="text-lg font-bold text-white font-data tabular-nums leading-none">
+                {earnedCount}
+                <span className="text-muted">/{totalCount}</span>
               </div>
-              <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-                {cat.shown.map((a) => (
-                  <AchievementCard key={a.id} a={a} />
-                ))}
-              </div>
-            </section>
+              <div className="text-[10px] text-muted">earned</div>
+            </div>
+          </div>
+          <div className="h-1.5 bg-surface-raised">
+            <div
+              className="h-full bg-brand transition-all duration-500"
+              style={{ width: `${overallPct}%` }}
+            />
+          </div>
+          {ccEarned > 0 && (
+            <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-muted">
+              <Coins className="w-3.5 h-3.5 text-brand" />
+              <span className="text-brand font-bold font-data">{ccEarned.toLocaleString()} CC</span>
+              <span>earned from achievements</span>
+            </div>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border transition-colors ${
+                filter === f.id
+                  ? 'bg-interactive border-interactive text-white'
+                  : 'bg-surface-card border-line text-muted hover:text-white'
+              }`}
+            >
+              {f.label}
+            </button>
           ))}
         </div>
-      )}
+
+        {/* Categories */}
+        {grouped.length === 0 ? (
+          <div className="bg-surface-card border border-line px-4 py-12 text-center">
+            <Award className="w-10 h-10 text-muted mx-auto mb-3" />
+            <p className="text-sm text-muted">Nothing here yet for this filter.</p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {grouped.map((cat) => (
+              <section key={cat.id} className="bg-surface-card border border-line">
+                <div className="px-4 py-3 border-b border-line bg-surface-raised">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-[11px] font-bold uppercase tracking-wider text-secondary">
+                      {cat.label}
+                    </h2>
+                    <span className="text-[10px] font-bold text-muted font-data tabular-nums">
+                      {cat.earned}/{cat.total}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted leading-snug">{cat.hint}</p>
+                </div>
+                <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {cat.shown.map((a) => (
+                    <AchievementCard key={a.id} a={a} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
