@@ -7,7 +7,8 @@
 
 import React from 'react';
 import { Trophy, Link2, AlertTriangle, Medal } from 'lucide-react';
-import { Heading, headingRecipes, type HeadingLevel } from '../components/ui/Heading';
+import { Heading, type HeadingLevel } from '../components/ui/Heading';
+import { headingRecipes } from '../components/ui/headingRecipes';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 

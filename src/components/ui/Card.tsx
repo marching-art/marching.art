@@ -5,7 +5,7 @@
 // Laws: No padding in body (p-0), let child content define spacing
 
 import React, { forwardRef } from 'react';
-import { headingRecipes } from './Heading';
+import { headingRecipes } from './headingRecipes';
 
 // =============================================================================
 // TYPES
@@ -160,12 +160,24 @@ CardContent.displayName = 'CardContent';
 // COMPOUND COMPONENT EXPORT
 // =============================================================================
 
-export const Card = Object.assign(CardRoot, {
-  Header: CardHeader,
-  Title: CardTitle,
-  Body: CardBody,
-  Footer: CardFooter,
-});
+// Attach the sub-components as properties on the CardRoot forwardRef itself
+// rather than exporting an `Object.assign(...)` result. React Fast Refresh only
+// recognizes the direct component as a component export; the Object.assign form
+// reads as a non-component export and disables Fast Refresh for the file.
+type CardComponent = typeof CardRoot & {
+  Header: typeof CardHeader;
+  Title: typeof CardTitle;
+  Body: typeof CardBody;
+  Footer: typeof CardFooter;
+};
+
+const CardWithSlots = CardRoot as CardComponent;
+CardWithSlots.Header = CardHeader;
+CardWithSlots.Title = CardTitle;
+CardWithSlots.Body = CardBody;
+CardWithSlots.Footer = CardFooter;
+
+export const Card = CardWithSlots;
 
 // Named exports for backwards compatibility
 export { CardHeader, CardTitle, CardContent, CardFooter, CardBody };
