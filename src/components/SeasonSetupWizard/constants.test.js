@@ -129,4 +129,9 @@ describe('formatSeasonName', () => {
   test('handles already capitalized names', () => {
     expect(formatSeasonName('Summer 2024')).toBe('Summer 2024');
   });
+
+  test('collapses live season two-year suffix to the single competition year', () => {
+    expect(formatSeasonName('live_2026-26')).toBe('LIVE 2026');
+    expect(formatSeasonName('live_2025-26')).toBe('LIVE 2025');
+  });
 });
