@@ -9,7 +9,7 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
-const { submitPrediction, resolvePredictions } = require("./dailyOps");
+const { submitPrediction, resolvePredictions } = require("./dailyPredictions");
 const { getGameDay } = require("../helpers/dailyChallenges");
 
 const NS = process.env.DATA_NAMESPACE;

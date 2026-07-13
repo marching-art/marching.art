@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { headingRecipes } from './Heading';
+import { headingRecipes } from './headingRecipes';
 
 // =============================================================================
 // PAGE HEADER COMPONENT

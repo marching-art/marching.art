@@ -53,26 +53,31 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor chunks for better caching
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-firebase': [
-            'firebase/app',
-            'firebase/auth',
-            'firebase/firestore',
-            'firebase/functions',
-            'firebase/storage',
-            'firebase/analytics',
-          ],
+        // Split vendor chunks for better caching. Vite 8 (Rolldown) only
+        // accepts the function form of manualChunks — the object form throws
+        // "manualChunks is not a function" at build time — so we match each
+        // module's node_modules path to a vendor group by hand.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          const inPackage = (name) => id.includes(`/node_modules/${name}/`);
+          if (inPackage('react') || inPackage('react-dom') || inPackage('react-router-dom')) {
+            return 'vendor-react';
+          }
+          if (inPackage('firebase') || id.includes('/node_modules/@firebase/')) {
+            return 'vendor-firebase';
+          }
           // UI utilities - lightweight, loaded immediately
-          'vendor-ui': ['lucide-react', 'react-hot-toast'],
-          'vendor-query': ['@tanstack/react-query', 'zustand', 'date-fns'],
+          if (inPackage('lucide-react') || inPackage('react-hot-toast')) return 'vendor-ui';
+          if (inPackage('@tanstack/react-query') || inPackage('zustand') || inPackage('date-fns')) {
+            return 'vendor-query';
+          }
           // Framer Motion - now uses LazyMotion with async feature loading
           // Features are lazy-loaded after initial render via dynamic import
           // See src/components/MotionProvider.jsx for implementation
-          'vendor-motion': ['framer-motion'],
+          if (inPackage('framer-motion')) return 'vendor-motion';
           // Lazy-loaded chart library - only loaded when charts are rendered
-          'vendor-charts': ['chart.js', 'react-chartjs-2'],
+          if (inPackage('chart.js') || inPackage('react-chartjs-2')) return 'vendor-charts';
+          return undefined;
         },
       },
     },

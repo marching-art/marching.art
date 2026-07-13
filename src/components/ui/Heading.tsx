@@ -15,17 +15,13 @@
 //   eyebrow — micro label above content (tiny, UPPERCASE, muted)
 
 import React from 'react';
+import { headingRecipes, type HeadingLevel } from './headingRecipes';
 
-export type HeadingLevel = 'display' | 'title' | 'section' | 'eyebrow';
-
-// The recipes ARE the scale. Import `headingRecipes` anywhere you need the
-// exact classes without the component (e.g. inside another primitive).
-export const headingRecipes: Record<HeadingLevel, string> = {
-  display: 'text-2xl sm:text-3xl font-bold tracking-tight text-main',
-  title: 'text-lg font-bold tracking-tight text-main',
-  section: 'text-sm font-bold uppercase tracking-wider text-main',
-  eyebrow: 'text-xs font-bold uppercase tracking-wider text-muted',
-};
+// `headingRecipes` (a value) now lives in ./headingRecipes so this file only
+// exports components (keeps Fast Refresh working). The type is re-exported here
+// — type-only exports don't trip react-refresh — so existing
+// `import { type HeadingLevel } from './Heading'` sites keep working.
+export type { HeadingLevel };
 
 const defaultTag: Record<HeadingLevel, 'h1' | 'h2' | 'h3' | 'p'> = {
   display: 'h1',

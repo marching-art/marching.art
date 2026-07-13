@@ -34,7 +34,8 @@ export { StatCard, type StatCardProps, type TrendDirection } from './StatCard';
 export { PageHeader, type PageHeaderProps, type PageHeaderStat } from './PageHeader';
 
 // Heading — the canonical type scale
-export { Heading, headingRecipes, type HeadingLevel, type HeadingProps } from './Heading';
+export { Heading, type HeadingProps } from './Heading';
+export { headingRecipes, type HeadingLevel } from './headingRecipes';
 
 // Modal Components
 export {

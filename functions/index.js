@@ -118,11 +118,13 @@ const {
 const {
   claimDailyLogin,
   completeDailyChallenge,
-  submitPrediction,
-  resolvePredictions,
   purchaseStreakFreeze,
   getStreakStatus,
 } = require("./src/callable/dailyOps");
+const {
+  submitPrediction,
+  resolvePredictions,
+} = require("./src/callable/dailyPredictions");
 const {
   startNewOffSeason,
   startNewLiveSeason,

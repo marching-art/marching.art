@@ -251,12 +251,26 @@ function getSeasonCompletionXP(rank, totalParticipants) {
   return XP_SOURCES.seasonCompletion.completed;
 }
 
+/**
+ * Season-ladder baseline for accounts that predate the ladder: returns a
+ * one-time { xpAtSeasonStart } stamp (the profile's pre-award XP) when the
+ * baseline is missing, else {}. Merged into every daily XP callable's update
+ * so the ladder starts counting on a player's first XP event after deploy —
+ * new seasons stamp the baseline properly at rollover.
+ */
+function seasonBaselineStamp(profileData) {
+  return typeof profileData.xpAtSeasonStart === "number"
+    ? {}
+    : { xpAtSeasonStart: profileData.xp || 0 };
+}
+
 module.exports = {
   calculateXPUpdates,
   calculateLevel,
   getLevelTitle,
   getSeasonCompletionXP,
   getWeeksSinceRegistration,
+  seasonBaselineStamp,
   XP_CONFIG,
   XP_SOURCES,
   LEVEL_TITLES,
