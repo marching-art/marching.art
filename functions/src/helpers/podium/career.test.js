@@ -12,9 +12,25 @@ const {
   applyDormancy,
   finalsPercentile,
   buildFinalStandings,
+  applyBudgetRefund,
 } = require("./career");
 const balance = require("./balanceConfig.json");
 const curves = require("./curveData.json");
+
+// Records the writes a transaction receives so the refund's coin credit + the
+// history row it logs can be asserted without an emulator.
+function fakeTransaction() {
+  const updates = [];
+  const sets = [];
+  return {
+    updates,
+    sets,
+    update: (ref, data) => updates.push({ ref, data }),
+    set: (ref, data) => sets.push({ ref, data }),
+  };
+}
+const profileSnap = (corpsCoin) => ({ exists: true, data: () => ({ corpsCoin }) });
+const report = (refunded) => ({ refunded, corpsName: "Cavaliers" });
 
 /** A finished-season state posting `total` at day 49. */
 const finishedState = (total, name = "Test Corps") => ({
@@ -125,5 +141,47 @@ describe("finalsPercentile", () => {
     assert.equal(finalsPercentile({ lastTotal: null, lastScoredDay: null }), null);
     const pct = finalsPercentile({ lastTotal: 92, lastScoredDay: 49 });
     assert.ok(pct > 0 && pct <= 100);
+  });
+});
+
+describe("applyBudgetRefund (end-of-season CC sweep)", () => {
+  // economy.addCoinHistoryEntryToTransaction resolves a history collection ref;
+  // the stub only needs to return a doc handle for transaction.set to record.
+  const db = { doc: () => ({}), collection: () => ({ doc: () => ({}) }) };
+
+  test("credits the leftover balance and logs a refund history row", () => {
+    const txn = fakeTransaction();
+    const refunded = applyBudgetRefund(txn, db, "u1", profileSnap(1000), report(400), "s5");
+    assert.equal(refunded, 400);
+    // Wallet credited: 1000 + 400.
+    assert.equal(txn.updates.length, 1);
+    assert.equal(txn.updates[0].data.corpsCoin, 1400);
+    // One coin-history row, positive, tagged as a podium budget refund.
+    assert.equal(txn.sets.length, 1);
+    assert.equal(txn.sets[0].data.type, "podium_budget_refund");
+    assert.equal(txn.sets[0].data.amount, 400);
+    assert.equal(txn.sets[0].data.balance, 1400);
+    assert.equal(txn.sets[0].data.seasonUid, "s5");
+  });
+
+  test("a zero (or negative) refund is a no-op — no wallet write, no history", () => {
+    const txn = fakeTransaction();
+    assert.equal(applyBudgetRefund(txn, db, "u1", profileSnap(1000), report(0), "s5"), 0);
+    assert.equal(txn.updates.length, 0);
+    assert.equal(txn.sets.length, 0);
+  });
+
+  test("a missing profile skips the credit rather than throwing", () => {
+    const txn = fakeTransaction();
+    const refunded = applyBudgetRefund(
+      txn,
+      db,
+      "u1",
+      { exists: false },
+      report(400),
+      "s5"
+    );
+    assert.equal(refunded, 0);
+    assert.equal(txn.updates.length, 0);
   });
 });

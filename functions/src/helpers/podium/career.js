@@ -21,6 +21,7 @@
 
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("../paths");
+const economy = require("../economy");
 const engine = require("./engine");
 const store = require("./store");
 const divisions = require("./divisions");
@@ -234,6 +235,33 @@ function buildFinalStandings(entries) {
 }
 
 /**
+ * Sweep a finished season's unspent Corps Budget back to the primary CorpsCoin
+ * wallet inside `transaction` (a corps operating account never lets funds
+ * vanish — it settles up with its parent at archival, design §14.2.1). Credits
+ * the leftover balance, logs a `podium_budget_refund` coin-history row, and
+ * returns the amount refunded (0 when nothing is owed or the profile is
+ * missing). Reads must already have happened — pass the profile snapshot in.
+ */
+function applyBudgetRefund(transaction, db, uid, profileSnapshot, report, seasonUid) {
+  if (!report || !(report.refunded > 0)) return 0;
+  if (!profileSnapshot.exists) {
+    logger.warn(`[podium] budget refund skipped for ${uid}: no profile document.`);
+    return 0;
+  }
+  const corpsCoin = profileSnapshot.data().corpsCoin || 0;
+  const newBalance = corpsCoin + report.refunded;
+  transaction.update(store.profileRef(db, uid), { corpsCoin: newBalance });
+  economy.addCoinHistoryEntryToTransaction(transaction, db, uid, {
+    type: economy.TRANSACTION_TYPES.PODIUM_BUDGET_REFUND,
+    amount: report.refunded,
+    balance: newBalance,
+    description: `Corps Budget refund — ${report.corpsName || "Podium corps"} (${seasonUid})`,
+    seasonUid,
+  });
+  return report.refunded;
+}
+
+/**
  * Archive every corps of a just-ended season into careers, then freeze the
  * season's champion + final standings into the public recap parent doc
  * (`podium-recaps/{seasonUid}`) — the permanent record the Scores archive and
@@ -254,12 +282,17 @@ async function archivePodiumSeason(db, previousSeason) {
       // sweep never clobbers a just-committed registration (both sides are
       // idempotent via the lastSeasonUid / seasonUid guards).
       const { state, career } = await db.runTransaction(async (transaction) => {
-        const stateSnapshot = await transaction.get(store.stateRef(db, uid));
+        // Profile read joins the txn so the budget refund credits corpsCoin
+        // atomically with the career archival that gates it.
+        const [stateSnapshot, careerSnapshot, profileSnapshot] = await Promise.all([
+          transaction.get(store.stateRef(db, uid)),
+          transaction.get(careerRef(db, uid)),
+          transaction.get(store.profileRef(db, uid)),
+        ]);
         const txnState =
           stateSnapshot.exists && stateSnapshot.data().seasonUid === previousSeason.seasonUid
             ? stateSnapshot.data()
             : null;
-        const careerSnapshot = await transaction.get(careerRef(db, uid));
         const txnCareer = careerSnapshot.exists ? careerSnapshot.data() : initCareer();
         if (txnState && txnCareer.lastSeasonUid !== previousSeason.seasonUid) {
           const updated = applySeasonResult(
@@ -268,6 +301,20 @@ async function archivePodiumSeason(db, previousSeason) {
             store.balance
           );
           updated.updatedAt = new Date().toISOString();
+          // End-of-season financial settlement: bank the line-item report and
+          // sweep any unspent budget back to the wallet. The lastRefundedSeasonUid
+          // marker moves in lock-step with lastSeasonUid, so a re-sweep (or a
+          // director who re-registered first and already refunded) never
+          // double-pays — the archival branch itself is once-only.
+          if (txnCareer.lastRefundedSeasonUid !== previousSeason.seasonUid) {
+            const report = store.buildSeasonFinancialReport(txnState, {
+              seasonUid: previousSeason.seasonUid,
+              seasonIndex: previousSeason.index,
+            });
+            applyBudgetRefund(transaction, db, uid, profileSnapshot, report, previousSeason.seasonUid);
+            updated.lastRefundedSeasonUid = previousSeason.seasonUid;
+            updated.lastSeasonReport = report;
+          }
           transaction.set(careerRef(db, uid), updated);
           return { state: txnState, career: txnCareer, didArchive: true };
         }
@@ -521,5 +568,6 @@ module.exports = {
   applyDormancy,
   buildFinalStandings,
   appendProfileSeasonHistory,
+  applyBudgetRefund,
   archivePodiumSeason,
 };

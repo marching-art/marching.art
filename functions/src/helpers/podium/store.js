@@ -370,9 +370,40 @@ function recapDayRef(db, seasonUid, competitionDay) {
 
 const BUDGET_LOG_LIMIT = 40;
 
-/** Initialize an empty ledger. */
+/**
+ * Normalize a ledger `reason` into the coarse line-item category the
+ * end-of-season financial report groups by. Debit reasons are namespaced
+ * (`staff:brass`, `food:standard`, `staffRetrain:guard`); credits carry a flat
+ * source key. Anything unrecognized falls under "other" so the report always
+ * balances against the aggregate `spent`/`earned` totals.
+ */
+function budgetCategoryOf(reason) {
+  const key = String(reason || "");
+  if (key.startsWith("staff")) return "staff"; // staff:*, staffRetrain:*
+  if (key === "travel" || key === "jointTravel") return "travel";
+  if (key.startsWith("food")) return "food";
+  if (key === "camp") return "camp"; // spring-training housing/food
+  if (key === "clinician") return "clinician";
+  if (key === "commitment") return "commitment"; // CC dedicated from the wallet
+  if (key === "showPayout" || key === "fundraiser") return "earnings"; // in-class income
+  return "other";
+}
+
+/**
+ * Initialize an empty ledger. `byCategory` accumulates lifetime totals per
+ * line-item category (income keys positive, spend keys positive) so the
+ * end-of-season report is exact even though `log` is capped at the most recent
+ * BUDGET_LOG_LIMIT entries — a busy 49-day tour easily overruns the log.
+ */
 function initBudget() {
-  return { balance: 0, committed: 0, earned: 0, spent: 0, log: [] };
+  return { balance: 0, committed: 0, earned: 0, spent: 0, byCategory: {}, log: [] };
+}
+
+/** Add `amount` to the running per-category total (mutates the ledger). */
+function accrueCategory(budget, reason, amount) {
+  if (!budget.byCategory) budget.byCategory = {};
+  const category = budgetCategoryOf(reason);
+  budget.byCategory[category] = (budget.byCategory[category] || 0) + amount;
 }
 
 /** Credit the ledger (earnings/commitments). Mutates state. */
@@ -381,6 +412,7 @@ function creditBudget(state, amount, reason, day) {
   state.budget.balance += amount;
   state.budget.earned += reason === "commitment" ? 0 : amount;
   if (reason === "commitment") state.budget.committed += amount;
+  accrueCategory(state.budget, reason, amount);
   state.budget.log = [...(state.budget.log || []).slice(-(BUDGET_LOG_LIMIT - 1)), { day, amount, reason }];
 }
 
@@ -394,11 +426,92 @@ function debitBudget(state, amount, reason, day) {
   if (!state.budget || state.budget.balance < amount) return false;
   state.budget.balance -= amount;
   state.budget.spent += amount;
+  accrueCategory(state.budget, reason, amount);
   state.budget.log = [
     ...(state.budget.log || []).slice(-(BUDGET_LOG_LIMIT - 1)),
     { day, amount: -amount, reason },
   ];
   return true;
+}
+
+// The spend categories a season's operating costs fall into, in the order the
+// financial report and estimated-budget lists render them. Staff is tracked
+// separately in the estimate (next season's payroll is known exactly), so it
+// leads; the rest are the recurring tour costs.
+const SPEND_CATEGORIES = Object.freeze(["staff", "travel", "food", "camp", "clinician", "other"]);
+const SPEND_CATEGORY_LABELS = Object.freeze({
+  staff: "Staff salaries",
+  travel: "Travel",
+  food: "Food & housing",
+  camp: "Spring training",
+  clinician: "Clinicians",
+  other: "Other",
+});
+
+/**
+ * Per-category spend for a finished season. Prefers the exact `byCategory`
+ * accumulator; falls back to reconstructing from the (capped) `log` for
+ * pre-migration states that predate the accumulator. Returns { [category]:
+ * amount } including only categories with a positive total.
+ */
+function spendByCategory(budget) {
+  const out = {};
+  const fromAccumulator =
+    budget && budget.byCategory && Object.keys(budget.byCategory).length > 0;
+  if (fromAccumulator) {
+    for (const category of SPEND_CATEGORIES) {
+      const amount = budget.byCategory[category] || 0;
+      if (amount > 0) out[category] = amount;
+    }
+    return out;
+  }
+  for (const entry of (budget && budget.log) || []) {
+    if (!entry || entry.amount >= 0) continue; // credits are income, not spend
+    const category = budgetCategoryOf(entry.reason);
+    out[category] = (out[category] || 0) - entry.amount; // -amount = positive spend
+  }
+  return out;
+}
+
+/**
+ * Build the director-facing end-of-season financial report from a finished
+ * corps' budget ledger (pure). The leftover `balance` is what the refund
+ * returns to the primary CorpsCoin wallet — a corps operating account is swept
+ * back to its parent at archival, never left to vanish. Line items reconcile:
+ * committed + earned - spent === refunded.
+ */
+function buildSeasonFinancialReport(state, { seasonUid, seasonIndex } = {}) {
+  const budget = (state && state.budget) || initBudget();
+  const committed = Math.max(0, budget.committed || 0);
+  const earned = Math.max(0, budget.earned || 0);
+  const spent = Math.max(0, budget.spent || 0);
+  const refunded = Math.max(0, budget.balance || 0);
+  const byCategory = spendByCategory(budget);
+  const lineItems = SPEND_CATEGORIES.filter((category) => byCategory[category] > 0).map(
+    (category) => ({
+      category,
+      label: SPEND_CATEGORY_LABELS[category],
+      amount: byCategory[category],
+    })
+  );
+  return {
+    seasonUid: seasonUid || state.seasonUid || null,
+    seasonIndex: seasonIndex ?? null,
+    corpsName: (state && state.corpsName) || null,
+    committed,
+    earned,
+    spent,
+    refunded,
+    lineItems,
+    // Operating spend (everything except staff salaries) — the basis for next
+    // season's estimate, since staff payroll is re-derived exactly at re-reg.
+    operatingSpend: SPEND_CATEGORIES.filter((c) => c !== "staff").reduce(
+      (sum, c) => sum + (byCategory[c] || 0),
+      0
+    ),
+    staffSpend: byCategory.staff || 0,
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 /**
@@ -460,6 +573,11 @@ module.exports = {
   initBudget,
   creditBudget,
   debitBudget,
+  budgetCategoryOf,
+  spendByCategory,
+  buildSeasonFinancialReport,
+  SPEND_CATEGORIES,
+  SPEND_CATEGORY_LABELS,
   applyBalanceOverrides,
   applyCurveOverrides,
   curvesShapeValid,

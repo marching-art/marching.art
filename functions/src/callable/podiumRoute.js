@@ -173,6 +173,30 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     store.balance
   );
 
+  // Last season's financial report + refund. Prefer the banked report (the
+  // nightly sweep already settled and refunded); otherwise project it from the
+  // still-present prior-season state, whose unspent budget this registration
+  // will refund on submit. Either way the director sees the settlement — and
+  // the refund it frees up — BEFORE committing next season's CC.
+  const bankedReport =
+    careerData && careerData.lastSeasonReport ? careerData.lastSeasonReport : null;
+  const lastSeasonReport =
+    bankedReport ||
+    (hasCarried
+      ? store.buildSeasonFinancialReport(staleSnapshot.data(), {
+        seasonUid: staleSnapshot.data().seasonUid,
+      })
+      : null);
+  // Estimated budget for a comparable next season: last season's operating
+  // spend (travel/food/camp/clinicians) plus next season's exact aged staff
+  // payroll — staff is re-derived precisely at re-registration, the rest is
+  // approximated by what it actually cost. Rounded up to the commit step,
+  // clamped to the division cap. Null with no prior season to learn from.
+  const roundUpToStep = (value) => Math.ceil(Math.max(0, value) / 50) * 50;
+  const estimatedSeasonBudget = lastSeasonReport
+    ? Math.min(commitmentCap, roundUpToStep((lastSeasonReport.operatingSpend || 0) + projection.payroll))
+    : null;
+
   return {
     success: true,
     hasCarriedStaff: projection.staff.length > 0,
@@ -182,6 +206,11 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     corpsCoin,
     payroll: projection.payroll,
     affordable: projection.affordable,
+    // Between-seasons financial settlement (design §14.2.1): the just-ended
+    // season's line-item report, the refund swept back to the wallet, and a
+    // data-driven estimate to fund the next one.
+    lastSeasonReport,
+    estimatedSeasonBudget,
     staff: projection.staff.map((s) => ({
       specialty: s.specialty,
       id: s.id,

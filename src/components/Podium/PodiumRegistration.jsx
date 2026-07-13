@@ -3,7 +3,7 @@
 // audition presets), 4) march. No payments anywhere.
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, ChevronLeft, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
 import {
   PODIUM_CAPTIONS,
   CAPTION_LABELS,
@@ -45,12 +45,14 @@ export default function PodiumRegistration({ podium }) {
         setPreview(data);
         const active = (data.staff || []).filter((s) => !s.retiring);
         setKeptStaff(new Set(active.map((s) => s.specialty)));
-        // Pre-fund to cover the whole payroll when the director can afford it,
-        // so an affordable roster needs no intervention; otherwise offer the
-        // most they could commit and let them choose who to shed.
+        // Pre-fund from the data-driven estimate (last season's operating spend
+        // + this season's aged payroll) when the director can afford it, so a
+        // returning corps starts at a realistic budget; fall back to covering
+        // payroll, then clamp to the most they could commit.
         const maxCommit = Math.min(data.commitmentCap || 0, data.corpsCoin || 0);
         if (data.hasCarriedStaff) {
-          setBudgetCommitment(Math.min(maxCommit, data.payroll || 0));
+          const suggested = data.estimatedSeasonBudget || data.payroll || 0;
+          setBudgetCommitment(Math.min(maxCommit, suggested));
         }
       })
       .catch(() => {
@@ -69,6 +71,12 @@ export default function PodiumRegistration({ podium }) {
   const hasCarried = Boolean(preview?.hasCarriedStaff);
   const activeStaff = useMemo(() => (preview?.staff || []).filter((s) => !s.retiring), [preview]);
   const retiringStaff = useMemo(() => (preview?.staff || []).filter((s) => s.retiring), [preview]);
+  // Prior season's financial settlement — shown at the funding step so the
+  // director sees the refund freed up (and last season's costs) before deciding
+  // how much CC to commit next season.
+  const lastSeasonReport = preview?.lastSeasonReport || null;
+  const estimatedBudget = preview?.estimatedSeasonBudget || 0;
+  const fmt = (n) => (n ?? 0).toLocaleString();
   const maxCommit = preview ? Math.min(preview.commitmentCap || 0, preview.corpsCoin || 0) : 2500;
   // A carried-staff director can commit at most what they hold; a first-time
   // corps is bounded only by the division cap (the wallet debit is enforced
@@ -140,6 +148,13 @@ export default function PodiumRegistration({ podium }) {
           <span className="text-white font-bold">Day {done.easternNight}</span> (night lineups
           publish Day 39). First rehearsal block is waiting below.
         </div>
+        {done.budgetRefund > 0 && (
+          <div className="text-[11px] text-green-400">
+            Last season&apos;s unspent Corps Budget —{' '}
+            <span className="font-bold tabular-nums">+{fmt(done.budgetRefund)} CC</span> — was
+            refunded to your wallet.
+          </div>
+        )}
         {(retained.length > 0 || lapsed.length > 0) && (
           <div className="text-[11px] text-muted pt-1">
             {retained.length > 0 && (
@@ -306,6 +321,57 @@ export default function PodiumRegistration({ podium }) {
               35), the Eastern Classic, and Championship Week.
             </div>
           </div>
+
+          {/* Prior season's financial report — the operating account swept
+              back to the wallet at season end (unspent Corps Budget never
+              vanishes), with the line items behind the refund. */}
+          {lastSeasonReport && (
+            <div className="pt-2 border-t border-line space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  Last season&apos;s books
+                  {lastSeasonReport.corpsName ? ` — ${lastSeasonReport.corpsName}` : ''}
+                </label>
+                <span className="text-[11px] font-bold tabular-nums text-green-400">
+                  +{fmt(lastSeasonReport.refunded)} CC refunded
+                </span>
+              </div>
+              <div className="space-y-1 text-[11px]">
+                <div className="flex justify-between text-muted">
+                  <span>
+                    Committed{lastSeasonReport.earned > 0 ? ' + earned' : ''}
+                  </span>
+                  <span className="tabular-nums text-secondary">
+                    {fmt(lastSeasonReport.committed + lastSeasonReport.earned)} CC
+                  </span>
+                </div>
+                {lastSeasonReport.lineItems.map((item) => (
+                  <div key={item.category} className="flex justify-between text-muted">
+                    <span>· {item.label}</span>
+                    <span className="tabular-nums">−{fmt(item.amount)} CC</span>
+                  </div>
+                ))}
+                <div className="flex justify-between font-bold text-white border-t border-line-subtle pt-1">
+                  <span>Refunded to your wallet</span>
+                  <span className="tabular-nums text-green-400">
+                    +{fmt(lastSeasonReport.refunded)} CC
+                  </span>
+                </div>
+              </div>
+              {estimatedBudget > 0 && (
+                <div className="flex items-start gap-2 text-[10px] text-muted pt-1">
+                  <TrendingUp className="w-3.5 h-3.5 shrink-0 mt-0.5 text-interactive" />
+                  <span>
+                    Based on last season, a comparable run costs about{' '}
+                    <span className="text-secondary font-bold tabular-nums">
+                      {fmt(estimatedBudget)} CC
+                    </span>
+                    . We&apos;ve pre-filled your commitment there — adjust below.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Optional CC -> Corps Budget commitment (decision 24: capped,
               buys margin — food, travel, staff — never caption points).
