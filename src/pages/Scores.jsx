@@ -41,10 +41,7 @@ const PodiumScoresPanel = lazyWithRetry(
 // =============================================================================
 
 const TABS = [
-  { id: 'latest', label: 'Latest' },
-  { id: 'world', label: 'World' },
-  { id: 'open', label: 'Open' },
-  { id: 'aclass', label: 'A Class' },
+  { id: 'fantasy', label: 'Fantasy' },
   { id: 'soundsport', label: 'SoundSport', accent: 'green' },
   { id: 'archive', label: 'Archive', accent: 'yellow' },
   { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
@@ -55,6 +52,19 @@ const TABS = [
 // fantasy tabs stay condensed to GE/VIS/MUS — the anti-lineup-harvesting
 // rule (design §5.4).
 const PODIUM_TAB = { id: 'podium', label: 'Podium', accent: 'yellow' };
+
+// Sub-tabs nested under the Fantasy tab — the DCI-style fantasy recaps plus the
+// three class standings. Mirrors the Podium tab's sub-tab pattern so all of the
+// live-season fantasy views live under one primary tab. 'latest' keeps its id
+// (the "Recaps" view) for continuity with the archive sub-tabs and old deep
+// links; World/Open/A Class moved here from their former top-level tabs.
+const FANTASY_SUB_TABS = [
+  { id: 'latest', label: 'Recaps' },
+  { id: 'world', label: 'World' },
+  { id: 'open', label: 'Open' },
+  { id: 'aclass', label: 'A Class' },
+];
+const FANTASY_SUB_IDS = FANTASY_SUB_TABS.map((t) => t.id);
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -85,16 +95,29 @@ const Scores = () => {
     return [...TABS.slice(0, archiveIndex), PODIUM_TAB, ...TABS.slice(archiveIndex)];
   }, [podiumEnabled]);
   const validTabIds = useMemo(() => tabs.map((t) => t.id), [tabs]);
-  const [activeTab, setActiveTab] = useState(() =>
-    validTabIds.includes(targetTab) ? targetTab : 'latest'
+  const [activeTab, setActiveTab] = useState(() => {
+    if (validTabIds.includes(targetTab)) return targetTab;
+    // Back-compat: old ?tab=world|open|aclass|latest deep links now live as
+    // sub-tabs under Fantasy, so land on the Fantasy tab.
+    if (FANTASY_SUB_IDS.includes(targetTab)) return 'fantasy';
+    return 'fantasy';
+  });
+  // Which view is showing inside the Fantasy tab (Recaps / World / Open / A Class)
+  const [fantasyViewTab, setFantasyViewTab] = useState(() =>
+    FANTASY_SUB_IDS.includes(targetTab) && targetTab !== 'fantasy' ? targetTab : 'latest'
   );
 
   // React to ?tab= changes when navigating within the app.
   // Intentionally excludes `activeTab`: including it would re-sync to the URL
   // param whenever the user manually switches tabs, overriding their choice.
   useEffect(() => {
-    if (targetTab && validTabIds.includes(targetTab) && targetTab !== activeTab) {
+    if (!targetTab) return;
+    if (validTabIds.includes(targetTab) && targetTab !== activeTab) {
       setActiveTab(targetTab);
+    } else if (FANTASY_SUB_IDS.includes(targetTab)) {
+      // Old world/open/aclass/latest deep link → open Fantasy on that sub-view
+      setActiveTab('fantasy');
+      setFantasyViewTab(targetTab);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetTab, validTabIds]);
@@ -165,7 +188,8 @@ const Scores = () => {
 
   useEffect(() => {
     if (targetShowName) {
-      setActiveTab('latest');
+      setActiveTab('fantasy');
+      setFantasyViewTab('latest');
     }
   }, [targetShowName]);
 
@@ -355,62 +379,92 @@ const Scores = () => {
             <div className="p-8 text-center text-red-500 text-sm">{error}</div>
           ) : (
             <>
-              {/* LATEST RECAPS TAB */}
-              {activeTab === 'latest' && (
-                <div className="p-3 md:p-4 space-y-3">
-                  {/* Eastern Classic combined standings — appears once both
-                      nights (days 41-42) have processed (§5.11) */}
-                  <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
-                  {latestShows.length > 0 ? (
-                    latestShows.map((show, idx) => (
-                      <RecapDataGrid
-                        key={idx}
-                        scores={show.scores}
-                        eventName={show.eventName}
-                        location={show.location}
-                        date={show.date}
-                        userCorpsName={userCorpsName}
-                      />
-                    ))
-                  ) : (
-                    <div className="p-8 text-center">
-                      <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
-                      <p className="text-muted text-sm">No recent shows</p>
+              {/* FANTASY TAB — sub-tabbed: Recaps + the three class standings.
+                  Mirrors the Podium tab's nested sub-tab pattern. */}
+              {activeTab === 'fantasy' && (
+                <div>
+                  {/* Sub-tab strip — same styling as the archive/Podium nested
+                      controls so it reads as a control under the Fantasy tab. */}
+                  <div className="bg-surface-sunken border-b border-line px-4 py-2">
+                    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+                      {FANTASY_SUB_TABS.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            haptic('light');
+                            setFantasyViewTab(tab.id);
+                          }}
+                          aria-pressed={fantasyViewTab === tab.id}
+                          className={`px-2.5 py-1.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all rounded-none whitespace-nowrap flex-shrink-0 ${
+                            fantasyViewTab === tab.id
+                              ? 'bg-line text-white'
+                              : 'text-muted hover:text-secondary'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Recaps View */}
+                  {fantasyViewTab === 'latest' && (
+                    <div className="p-3 md:p-4 space-y-3">
+                      {/* Eastern Classic combined standings — appears once both
+                          nights (days 41-42) have processed (§5.11) */}
+                      <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
+                      {latestShows.length > 0 ? (
+                        latestShows.map((show, idx) => (
+                          <RecapDataGrid
+                            key={idx}
+                            scores={show.scores}
+                            eventName={show.eventName}
+                            location={show.location}
+                            date={show.date}
+                            userCorpsName={userCorpsName}
+                          />
+                        ))
+                      ) : (
+                        <div className="p-8 text-center">
+                          <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
+                          <p className="text-muted text-sm">No recent shows</p>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* WORLD CLASS TAB */}
-              {activeTab === 'world' && (
-                <div className="p-3 md:p-4">
-                  <ClassStandingsGrid
-                    standings={worldStandings}
-                    className="World Class"
-                    userCorpsName={userCorpsName}
-                  />
-                </div>
-              )}
+                  {/* World Class View */}
+                  {fantasyViewTab === 'world' && (
+                    <div className="p-3 md:p-4">
+                      <ClassStandingsGrid
+                        standings={worldStandings}
+                        className="World Class"
+                        userCorpsName={userCorpsName}
+                      />
+                    </div>
+                  )}
 
-              {/* OPEN CLASS TAB */}
-              {activeTab === 'open' && (
-                <div className="p-3 md:p-4">
-                  <ClassStandingsGrid
-                    standings={openStandings}
-                    className="Open Class"
-                    userCorpsName={userCorpsName}
-                  />
-                </div>
-              )}
+                  {/* Open Class View */}
+                  {fantasyViewTab === 'open' && (
+                    <div className="p-3 md:p-4">
+                      <ClassStandingsGrid
+                        standings={openStandings}
+                        className="Open Class"
+                        userCorpsName={userCorpsName}
+                      />
+                    </div>
+                  )}
 
-              {/* CLASS A TAB */}
-              {activeTab === 'aclass' && (
-                <div className="p-3 md:p-4">
-                  <ClassStandingsGrid
-                    standings={aClassStandings}
-                    className="A Class"
-                    userCorpsName={userCorpsName}
-                  />
+                  {/* A Class View */}
+                  {fantasyViewTab === 'aclass' && (
+                    <div className="p-3 md:p-4">
+                      <ClassStandingsGrid
+                        standings={aClassStandings}
+                        className="A Class"
+                        userCorpsName={userCorpsName}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
