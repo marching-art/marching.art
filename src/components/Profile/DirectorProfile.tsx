@@ -512,7 +512,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                         <span className="font-bold font-data tabular-nums">
                           {info!.yearsDirecting}
                         </span>
-                        <span className="text-muted">yrs directing</span>
+                        <span className="text-muted">yrs fantasy directing</span>
                       </span>
                     )}
                     {hasSpecialties &&
