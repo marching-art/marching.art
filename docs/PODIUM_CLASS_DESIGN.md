@@ -1430,7 +1430,8 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     funded by an optional CC commitment at registration (**hard-capped at a division-equal
     maximum** — the anti-stockpile guard: a veteran's 50k wallet fills the cap effortlessly but
     never exceeds what a solvent rookie can field) plus in-class earnings; it resets at
-    archival. **Near-0-CC players always play**: rehearsal, rest, baseline food, and show
+    archival, with the unspent balance refunded to the wallet and reported line-by-line (v2.5 —
+    see the economy note above). **Near-0-CC players always play**: rehearsal, rest, baseline food, and show
     attendance are free (unaffordable travel legs auto-downgrade to a stamina cost instead of
     blocking); money buys the condition-management edge — food tiers, camp days, staff,
     clinicians — never access, never caption points. Supersedes the dual-currency
@@ -1601,10 +1602,18 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    A Class _or_ fund their first Podium tour — that choice is the intended day-one decision).
    The **Corps Budget** survives as the per-season operating _ledger_, funded two ways: an
    optional CorpsCoin commitment made at registration, **hard-capped at a division-equal
-   maximum**, plus in-class earnings (show payouts, fundraiser blocks, hosting). It resets at
-   archival; commitments are non-refundable (the tour spends them). The cap is the anti-stockpile
-   guard: a veteran's 50k wallet can fill the cap effortlessly, but never exceed what any
-   solvent rookie can also field — earned in-game wealth buys convenience, not headroom. Real
+   maximum**, plus in-class earnings (show payouts, fundraiser blocks, hosting). **At archival the
+   unspent balance is swept back to the primary CorpsCoin wallet (v2.5) — a corps operating account
+   never lets funds vanish; it settles up with its parent.** The refund fires wherever the season is
+   first banked (the nightly rollover sweep, or lazy self-archival at re-registration), gated
+   strictly once by a `lastRefundedSeasonUid` career marker, and a line-item financial report
+   (`career.lastSeasonReport`: committed + earned − spent = refunded, spend broken out by category)
+   is banked alongside it. The between-seasons registration preview surfaces that report, the refund,
+   and a data-driven **estimated season budget** (last season's operating spend + next season's aged
+   staff payroll) so the director funds the new tour from evidence, and can re-commit straight out of
+   the refund. Only the _act of spending_ is irreversible — leftover CC is not. The cap is the
+   anti-stockpile guard: a veteran's 50k wallet can fill the cap effortlessly, but never exceed what
+   any solvent rookie can also field — earned in-game wealth buys convenience, not headroom. Real
    money never converts into CC or Budget (decision 14), so the no-pay-for-score covenant holds
    where it matters.
 2. **Lineup-assumption coupling.** Large parts of the code assume every class has a lineup and a

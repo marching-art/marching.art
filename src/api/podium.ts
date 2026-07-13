@@ -83,6 +83,29 @@ export interface PodiumLapsedStaff {
   reason: 'unaffordable' | 'released' | 'retired';
 }
 
+// End-of-season financial settlement (design §14.2.1). A corps' operating
+// account is swept back to the primary CorpsCoin wallet at season end — unspent
+// Corps Budget never vanishes. `refunded` = committed + earned - spent.
+export interface PodiumSeasonReportLineItem {
+  category: string;
+  label: string;
+  amount: number;
+}
+
+export interface PodiumSeasonReport {
+  seasonUid: string | null;
+  seasonIndex: number | null;
+  corpsName: string | null;
+  committed: number; // CC dedicated from the wallet (registration + top-ups)
+  earned: number; // in-class income that flowed into the budget
+  spent: number; // total spent across the season
+  refunded: number; // leftover balance returned to the wallet
+  operatingSpend: number; // spend excluding staff salaries
+  staffSpend: number;
+  lineItems: PodiumSeasonReportLineItem[];
+  generatedAt?: string;
+}
+
 export const registerPodiumCorps = createCallable<
   PodiumRegistration,
   {
@@ -91,6 +114,10 @@ export const registerPodiumCorps = createCallable<
     division: string;
     divisionLabel: string;
     easternNight: number;
+    // Prior season's Corps Budget refund swept back to the wallet at founding
+    // (0 when nothing was left or the nightly rollover already settled it).
+    budgetRefund: number;
+    lastSeasonReport: PodiumSeasonReport | null;
     retainedStaff: string[];
     lapsedStaff: PodiumLapsedStaff[];
   }
@@ -121,6 +148,11 @@ export const getPodiumRegistrationPreview = createCallable<
     corpsCoin: number;
     payroll: number;
     affordable: boolean;
+    // Last season's line-item report + the refund it swept back, and a
+    // data-driven estimate to fund a comparable next season (null for a
+    // first-time corps with no prior season to learn from).
+    lastSeasonReport: PodiumSeasonReport | null;
+    estimatedSeasonBudget: number | null;
     staff: PodiumStaffProjection[];
   }
 >('getPodiumRegistrationPreview');

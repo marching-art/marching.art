@@ -122,6 +122,10 @@ const TRANSACTION_TYPES = {
   CLASS_UNLOCK: "class_unlock",
   LEAGUE_ENTRY: "league_entry",
   COSMETIC_PURCHASE: "cosmetic_purchase",
+  // Podium Class Corps Budget: CC committed from the wallet into a season's
+  // operating ledger, and the end-of-season sweep of the unspent balance back.
+  PODIUM_BUDGET_COMMIT: "podium_budget_commit",
+  PODIUM_BUDGET_REFUND: "podium_budget_refund",
 };
 
 /**

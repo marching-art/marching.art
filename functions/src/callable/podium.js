@@ -11,6 +11,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
+const economy = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const { isPodiumEnabled } = require("../helpers/features");
 const { getActiveCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
@@ -72,23 +73,71 @@ function validateStaffPriority(value) {
 /**
  * Inside a transaction: debit profile CorpsCoin for a budget commitment.
  * Reads MUST have happened already (Firestore txn rule) — pass the profile
- * snapshot in.
+ * snapshot in. Used by the mid-season top-up (commitPodiumBudget); registration
+ * nets its commitment against any prior-season refund via
+ * applyRegistrationCoinDelta instead.
  */
 function applyCommitmentDebit(transaction, db, uid, profileSnapshot, amount) {
   const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
   if (corpsCoin < amount) {
     throw new HttpsError("failed-precondition", `Not enough CorpsCoin (have ${corpsCoin}, need ${amount}).`);
   }
-  transaction.update(store.profileRef(db, uid), { corpsCoin: corpsCoin - amount });
-  const historyRef = db
-    .collection(`artifacts/${require("../config").dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`)
-    .doc();
-  transaction.set(historyRef, {
-    type: "podium_budget_commit",
+  const newBalance = corpsCoin - amount;
+  transaction.update(store.profileRef(db, uid), { corpsCoin: newBalance });
+  economy.addCoinHistoryEntryToTransaction(transaction, db, uid, {
+    type: economy.TRANSACTION_TYPES.PODIUM_BUDGET_COMMIT,
     amount: -amount,
+    balance: newBalance,
     description: "Corps Budget commitment (Podium Class)",
-    timestamp: new Date(),
   });
+}
+
+/**
+ * Registration coin settlement inside a transaction: first sweep the prior
+ * season's unspent Corps Budget back to the wallet (refund), then debit the new
+ * season's commitment from the combined balance — so a director can re-fund
+ * next season straight out of last season's leftover. A single corpsCoin write
+ * nets both, with one coin-history row per leg. Reads MUST have happened — pass
+ * the profile snapshot in. Returns the amount refunded.
+ */
+function applyRegistrationCoinDelta(
+  transaction,
+  db,
+  uid,
+  profileSnapshot,
+  { commitment = 0, refund = 0, refundSeasonUid = null, refundCorpsName = null }
+) {
+  const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
+  const available = corpsCoin + refund;
+  if (available < commitment) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Not enough CorpsCoin (have ${corpsCoin}${refund > 0 ? ` plus a ${refund} refund` : ""}, ` +
+        `need ${commitment}).`
+    );
+  }
+  const finalBalance = available - commitment;
+  if (refund > 0 || commitment > 0) {
+    transaction.update(store.profileRef(db, uid), { corpsCoin: finalBalance });
+  }
+  if (refund > 0) {
+    economy.addCoinHistoryEntryToTransaction(transaction, db, uid, {
+      type: economy.TRANSACTION_TYPES.PODIUM_BUDGET_REFUND,
+      amount: refund,
+      balance: available, // wallet after the refund credit, before the new commitment
+      description: `Corps Budget refund — ${refundCorpsName || "Podium corps"} (${refundSeasonUid})`,
+      seasonUid: refundSeasonUid,
+    });
+  }
+  if (commitment > 0) {
+    economy.addCoinHistoryEntryToTransaction(transaction, db, uid, {
+      type: economy.TRANSACTION_TYPES.PODIUM_BUDGET_COMMIT,
+      amount: -commitment,
+      balance: finalBalance,
+      description: "Corps Budget commitment (Podium Class)",
+    });
+  }
+  return refund;
 }
 
 const AUDITION_POOL = 100;
@@ -271,21 +320,28 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // into the career yet (registering before the nightly rollover sweep),
   // apply it now — idempotent with the sweep via lastSeasonUid.
   const staleStateSnapshot = await store.stateRef(db, uid).get();
-  if (
-    staleStateSnapshot.exists &&
-    staleStateSnapshot.data().seasonUid !== seasonUid &&
-    careerData.lastSeasonUid !== staleStateSnapshot.data().seasonUid
-  ) {
+  const hasStalePriorSeason =
+    staleStateSnapshot.exists && staleStateSnapshot.data().seasonUid !== seasonUid;
+  // Resolved for both the lazy archival and the end-of-season financial report,
+  // and captured before applySeasonResult mutates the career. willLazyArchive
+  // scopes the budget refund to the season THIS registration is banking, so a
+  // season the nightly sweep already settled is never re-refunded here.
+  let staleSeasonIndex = null;
+  let willLazyArchive = false;
+  if (hasStalePriorSeason) {
     const staleState = staleStateSnapshot.data();
-    const oldIndex =
+    staleSeasonIndex =
       (await career.seasonIndexFor(db, staleState.seasonUid)) ?? seasonIndex.index - 1;
-    careerData = career.applySeasonResult(
-      careerData,
-      { seasonUid: staleState.seasonUid, seasonIndex: oldIndex, state: staleState },
-      store.balance
-    );
-    // Profile résumé row for the finished season (idempotent with the sweep).
-    await career.appendProfileSeasonHistory(db, uid, staleState.seasonUid, staleState);
+    willLazyArchive = careerData.lastSeasonUid !== staleState.seasonUid;
+    if (willLazyArchive) {
+      careerData = career.applySeasonResult(
+        careerData,
+        { seasonUid: staleState.seasonUid, seasonIndex: staleSeasonIndex, state: staleState },
+        store.balance
+      );
+      // Profile résumé row for the finished season (idempotent with the sweep).
+      await career.appendProfileSeasonHistory(db, uid, staleState.seasonUid, staleState);
+    }
   }
   let missedSeasons = 0;
   if (freshStart && careerData.seasonsPlayed > 0) {
@@ -354,11 +410,12 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const nameRef = db.doc(`corpsnames/${seasonUid}_${normalizedName}`);
   const sRef = store.stateRef(db, uid);
 
-  await db.runTransaction(async (transaction) => {
-    const [existingState, existingName, profileSnapshot] = await Promise.all([
+  const txnResult = await db.runTransaction(async (transaction) => {
+    const [existingState, existingName, profileSnapshot, careerTxnSnapshot] = await Promise.all([
       transaction.get(sRef),
       transaction.get(nameRef),
       transaction.get(store.profileRef(db, uid)),
+      transaction.get(career.careerRef(db, uid)),
     ]);
     if (existingState.exists && existingState.data().seasonUid === seasonUid) {
       throw new HttpsError("already-exists", "You already field a Podium corps this season.");
@@ -366,9 +423,36 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     if (existingName.exists && existingName.data().uid !== uid) {
       throw new HttpsError("already-exists", "That corps name is taken this season.");
     }
-    if (budgetCommitment > 0) {
-      applyCommitmentDebit(transaction, db, uid, profileSnapshot, budgetCommitment);
-    }
+
+    // End-of-season settlement for the season this registration retires: sweep
+    // its unspent Corps Budget back to the wallet and bank the line-item report.
+    // existingState (when it exists with a different seasonUid) IS last season's
+    // finished state, read transactionally so the refunded amount matches what
+    // this same write is about to overwrite. The career's refund marker — read
+    // in this txn — makes it strictly once-only against a concurrent sweep.
+    const staleForRefund =
+      willLazyArchive && existingState.exists && existingState.data().seasonUid !== seasonUid
+        ? existingState.data()
+        : null;
+    const alreadyRefunded =
+      staleForRefund &&
+      careerTxnSnapshot.exists &&
+      careerTxnSnapshot.data().lastRefundedSeasonUid === staleForRefund.seasonUid;
+    const seasonReport =
+      staleForRefund && !alreadyRefunded
+        ? store.buildSeasonFinancialReport(staleForRefund, {
+          seasonUid: staleForRefund.seasonUid,
+          seasonIndex: staleSeasonIndex,
+        })
+        : null;
+    const refundAmount = seasonReport ? seasonReport.refunded : 0;
+
+    applyRegistrationCoinDelta(transaction, db, uid, profileSnapshot, {
+      commitment: budgetCommitment,
+      refund: refundAmount,
+      refundSeasonUid: seasonReport ? staleForRefund.seasonUid : null,
+      refundCorpsName: seasonReport ? staleForRefund.corpsName : null,
+    });
 
 
     // Mid-season joiners start from the corpus catch-up baseline: the engine
@@ -437,6 +521,12 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       ...careerData,
       corpsName: trimmedName,
       division,
+      // Bank the refund marker + report alongside the archived career so the
+      // between-seasons preview can show last season's settlement and the sweep
+      // never re-refunds this season.
+      ...(seasonReport
+        ? { lastRefundedSeasonUid: staleForRefund.seasonUid, lastSeasonReport: seasonReport }
+        : {}),
       updatedAt: new Date().toISOString(),
     });
     transaction.set(store.rosterRef(db, seasonUid, uid), {
@@ -465,11 +555,13 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       },
       { merge: true }
     );
+    return { refund: refundAmount, seasonReport };
   });
 
   logger.info(
     `Podium corps registered: ${trimmedName} (${uid}) season ${seasonUid} — ` +
-      `${divisions.DIVISION_LABELS[division]}`
+      `${divisions.DIVISION_LABELS[division]}` +
+      (txnResult.refund > 0 ? ` (refunded ${txnResult.refund} CC from last season)` : "")
   );
   const easternAssignments = await store.loadEasternAssignments(db, seasonUid);
   return {
@@ -478,13 +570,17 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
     easternNight: store.easternNightFor(uid, seasonUid, easternAssignments),
+    // The prior season's Corps Budget refund (0 when nothing was left or already
+    // swept by the nightly rollover), with the line-item report behind it.
+    budgetRefund: txnResult.refund || 0,
+    lastSeasonReport: txnResult.seasonReport || null,
     // Confirm the staffing outcome so the UI can say exactly who stayed and
     // who left (and why: unaffordable, released, or retired after 30 seasons).
     retainedStaff: staffPlan ? staffPlan.kept : [],
     lapsedStaff: staffPlan
       ? staffPlan.staff
-          .filter((s) => !s.kept)
-          .map((s) => ({ specialty: s.specialty, reason: s.lapseReason }))
+        .filter((s) => !s.kept)
+        .map((s) => ({ specialty: s.specialty, reason: s.lapseReason }))
       : [],
   };
 });
@@ -673,8 +769,8 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
       throw new HttpsError(
         "failed-precondition",
         `You've already rehearsed ${usedToday} blocks today — a show day allows only ${showDayBudget}. ` +
-          `You can't register for a show on a day you've already over-rehearsed. ` +
-          `Register this show before rehearsing next time, or pick a different day.`
+          "You can't register for a show on a day you've already over-rehearsed. " +
+          "Register this show before rehearsing next time, or pick a different day."
       );
     }
     state.selectedShows = { ...keep, ...validated };
