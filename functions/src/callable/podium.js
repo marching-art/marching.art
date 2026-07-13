@@ -1,5 +1,5 @@
 /**
- * Podium Class callables (Phase 2, PODIUM_CLASS_DESIGN.md).
+ * Podium Class callables (Phase 2, PODIUM.md).
  *
  * Every mutation is server-validated: "today" is always derived from the
  * shared 2 AM ET game clock (never client-supplied), state lives in the

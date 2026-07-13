@@ -108,7 +108,7 @@ jobs:
       # Design-system ratchet: the visual-identity unification may only
       # converge. Fails if any violation count rose above the committed
       # baseline (scripts/design-census.baseline.json). See
-      # docs/VISUAL_IDENTITY_UNIFICATION.md §4.
+      # docs/DESIGN_SYSTEM.md.
       - name: Design-system ratchet
         run: npm run census:check
 

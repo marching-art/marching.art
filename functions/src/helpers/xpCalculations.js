@@ -23,8 +23,7 @@ const XP_CONFIG = {
    * "play = earning" path: finish a season, graduate a class. The old
    * calendar path (5/12/19 weeks since registration, granted whether or not
    * you played) is gone — it out-ran active play and made the XP path
-   * decorative. Owner-approved redesign: docs/PROGRESSION_ECONOMY_REDESIGN.md
-   * Decision 1.
+   * decorative. Owner-approved redesign: docs/GAMIFICATION.md.
    */
   classUnlockSeasons: {
     aClass: 1,       // complete 1 season

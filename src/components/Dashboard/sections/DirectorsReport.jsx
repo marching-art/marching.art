@@ -1,5 +1,5 @@
 // DirectorsReport — the unified "what do I do right now?" card at the top of
-// Zone B (DASHBOARD_UNIFICATION.md Part 3, Zone B; LIFELONG roadmap Step 3).
+// Zone B (GAMIFICATION.md).
 //
 // Before this card, the daily loop was scattered: login feedback in the HUD,
 // challenges in the sidebar, predictions in the main column — the returning

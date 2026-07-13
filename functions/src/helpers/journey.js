@@ -90,7 +90,7 @@ const JOURNEY_STEPS = [
 ];
 
 /**
- * Podium Rookie Journey (Phase 7.2, PODIUM_CLASS_DESIGN.md §7) — a separate
+ * Podium Rookie Journey (Phase 7.2, PODIUM.md §7) — a separate
  * quest line walking a new Podium director through the daily loop: found,
  * rehearse, delegate, route, perform, shake hands, survive. Verified against
  * the profile display copy AND the server-only podium/state doc (passed as

@@ -112,7 +112,7 @@ function getCurrentSeasonWeek(seasonData, now = new Date()) {
  * rehearsal block allocation) act on the active one — always exactly
  * completed + 1 because both share the 2 AM ET boundary. Server-side
  * validation for "today" MUST use this, never client-supplied days
- * (PODIUM_CLASS_DESIGN.md §14.2.4).
+ * (PODIUM.md §14.2.4).
  *
  * @param {Date} seasonStartDate - Season start (UTC midnight).
  * @param {Date} [now] - Injectable clock for tests; defaults to now.

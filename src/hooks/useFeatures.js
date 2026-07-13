@@ -1,5 +1,5 @@
 /**
- * Runtime feature flags — client hook (Phase 1.5, PODIUM_CLASS_DESIGN.md).
+ * Runtime feature flags — client hook (Phase 1.5, PODIUM.md).
  *
  * Mirrors functions/src/helpers/features.js: flags live in the Firestore doc
  * `game-settings/features`, a missing doc or field means OFF, and flipping a

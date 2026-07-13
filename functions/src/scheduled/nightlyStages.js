@@ -11,7 +11,7 @@
  * also runs during live-season spring training (calendar days 1-21), which
  * the fantasy processor skips entirely — recovery, decay, camp economics and
  * assistant-director autoplay happen on days with no scoring
- * (PODIUM_CLASS_DESIGN.md §5.9, §14.2.3).
+ * (PODIUM.md §5.9, §14.2.3).
  *
  * Phase 1 ships the stage as a structural no-op behind the
  * game-settings/features.podiumClass flag; Phase 2 lands processPodiumDay

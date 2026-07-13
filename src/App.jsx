@@ -433,7 +433,7 @@ function App() {
                         </Suspense>
                       }
                     />
-                    {/* Living design-system reference (docs/VISUAL_IDENTITY_UNIFICATION.md) */}
+                    {/* Living design-system reference (docs/DESIGN_SYSTEM.md) */}
                     <Route
                       path="/styleguide"
                       element={

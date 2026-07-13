@@ -224,7 +224,7 @@ export const getEarningOpportunities = createCallable<
 
 // NOTE: the "execution system" client stubs (dailyRehearsal, repairEquipment,
 // upgradeEquipment, setShowDifficulty, boostMorale, getExecutionStatus) were
-// removed — the backend was intentionally cut (see PRIORITIES.md) and none of
+// removed — the backend was intentionally cut (see GAMIFICATION.md, "Removed / out of scope") and none of
 // the stubs had a server function or a component caller.
 
 // =============================================================================

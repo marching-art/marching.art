@@ -1,5 +1,5 @@
 // LeaguePoolCard — the league's daily prediction pool (the flagship social
-// CorpsCoin sink, LIFELONG_GAMIFICATION_ROADMAP.md Step 6). Members buy in
+// CorpsCoin sink, GAMIFICATION.md). Members buy in
 // for a fixed ante; entrants who post a perfect prediction day split the pot
 // when the nightly run settles it, otherwise the pot carries to the next
 // pool. Zero-sum and escrowed — every coin paid out was staked by a member.

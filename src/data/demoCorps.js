@@ -110,7 +110,7 @@ export const DEMO_CORPS = {
   },
 
   // Registered shows, keyed by `week{n}` to match the real schedule structure
-  // (see SCHEDULE_SYSTEM.md). Directors pick up to 4 shows per week.
+  // (see docs/SCHEDULE_SYSTEM.md). Directors pick up to 4 shows per week.
   selectedShows: {
     week4: [
       {
@@ -227,7 +227,7 @@ export const DEMO_PROFILE = {
 // DEMO SEASON DATA
 // =============================================================================
 // The off-season runs a 49-day / 7-week fantasy calendar built from historical
-// DCI data (see SCHEDULE_SYSTEM.md). getSeasonProgress() caps the day at 49 and
+// DCI data (see docs/SCHEDULE_SYSTEM.md). getSeasonProgress() caps the day at 49 and
 // the week at 7, so those bounds must hold here too.
 
 export const DEMO_SEASON = {
@@ -337,7 +337,7 @@ export const DEMO_RIVALS = [
 // =============================================================================
 // SoundSport corps compete at regular off-season shows and are auto-enrolled in
 // the SoundSport International Music & Food Festival on Day 49 (see
-// SCHEDULE_SYSTEM.md).
+// docs/SCHEDULE_SYSTEM.md).
 
 export const DEMO_UPCOMING_SHOWS = [
   {

@@ -2,7 +2,7 @@
 // now a DECISION with a server-verified outcome (make a prediction, register
 // for a show, set a show concept, review your lineup) — the old pool of
 // "visit page X" rows that auto-completed on navigation is retired
-// (DASHBOARD_UNIFICATION.md Part 4: a task with no agency has no value).
+// (GAMIFICATION.md: a task with no agency has no value).
 //
 // Completion flow: rows point the player at the thing to do; once the
 // verifying profile state appears (a pick saved, a show registered, ...) the

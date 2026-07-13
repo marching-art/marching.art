@@ -1,7 +1,6 @@
 /**
  * Economy instrumentation — total CorpsCoin minted vs. sunk per window,
- * broken down by transaction type (LIFELONG_GAMIFICATION_ROADMAP.md Step 10;
- * ENGAGEMENT_ECONOMY_REVIEW.md Part 5 "Instrument it").
+ * broken down by transaction type (GAMIFICATION.md "Instrument it").
  *
  * This is the one dashboard the closed-loop economy needs: every coin in
  * circulation was earned by playing, so if minted consistently outruns sunk,

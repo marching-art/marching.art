@@ -1,5 +1,5 @@
 /**
- * Nightly Podium processor (Phase 2.4, PODIUM_CLASS_DESIGN.md §5.4-§5.5).
+ * Nightly Podium processor (Phase 2.4, PODIUM.md §5.4-§5.5).
  *
  * For the completed game day, for every rostered Podium corps:
  *   1. apply end-of-day condition/decay via the engine (using the day's

@@ -20,7 +20,7 @@
  * completeDailyChallenge, so a challenge can only be claimed when the thing
  * was actually done. (The previous pool was six "visit page X" rows that
  * auto-completed on navigation — clicks, not choices; retired per
- * DASHBOARD_UNIFICATION.md Part 4.)
+ * GAMIFICATION.md.)
  */
 const CHALLENGE_POOL = [
   {

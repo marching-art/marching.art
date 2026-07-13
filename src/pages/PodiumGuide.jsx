@@ -1,7 +1,7 @@
 // PodiumGuide — the public Podium Class guide (Phase 7.6, design §7).
 // FMA-style: short numbered sections, plain language, everything a new
 // director needs and nothing they don't. Public and crawlable, like
-// /how-to-play. Content is distilled from docs/PODIUM_CLASS_DESIGN.md.
+// /how-to-play. Content is distilled from docs/PODIUM.md.
 
 import React from 'react';
 import { Link } from 'react-router-dom';

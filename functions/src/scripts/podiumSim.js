@@ -5,7 +5,7 @@
  * (helpers/podium/engine.js) with the REAL calibration data
  * (helpers/podium/curveData.json) and tunables
  * (helpers/podium/balanceConfig.json), then asserts the design's promises
- * (docs/PODIUM_CLASS_DESIGN.md §9, §5.13):
+ * (docs/PODIUM.md §9, §5.13):
  *
  *   A. Envelope containment — every simulated show total sits inside the
  *      historical TOTAL band for its day.
