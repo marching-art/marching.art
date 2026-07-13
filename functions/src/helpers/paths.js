@@ -52,6 +52,14 @@ const paths = {
   // --- League invitations ---
   leagueInvitations: () => `artifacts/${ns()}/leagueInvitations`,
   leagueInvitation: (invitationId) => `artifacts/${ns()}/leagueInvitations/${invitationId}`,
+
+  // --- Buy Me a Coffee supporters ---
+  // Keyed by SHA-256 of the payer email (never the raw email). Server-only:
+  // holds PII (email, payer name), so the collection is locked in
+  // firestore.rules and the public wall is served via the getSupportersWall
+  // callable.
+  supporters: () => `artifacts/${ns()}/supporters`,
+  supporter: (emailHash) => `artifacts/${ns()}/supporters/${emailHash}`,
 };
 
 module.exports = { paths };

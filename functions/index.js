@@ -214,6 +214,14 @@ const {
   generateCorpsAvatar,
   regenerateAllAvatars,
 } = require("./src/triggers/avatarGeneration");
+const {
+  bmacWebhook,
+  linkBmacSupport,
+  setSupporterVisibility,
+  setSupporterMessage,
+  getSupportersWall,
+} = require("./src/callable/supporters");
+const { reconcileSupporters } = require("./src/scheduled/supporterReconcile");
 
 // Export all functions for deployment
 module.exports = {
@@ -409,4 +417,12 @@ module.exports = {
 
   // YouTube Search
   searchYoutubeVideo,
+
+  // Buy Me a Coffee supporters
+  bmacWebhook,
+  linkBmacSupport,
+  setSupporterVisibility,
+  setSupporterMessage,
+  getSupportersWall,
+  reconcileSupporters,
 };

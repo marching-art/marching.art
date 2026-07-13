@@ -86,6 +86,18 @@ export interface UserProfile {
     equipped?: Record<string, string | null>;
   };
 
+  // Buy Me a Coffee supporter flair (server-only; granted by the BMAC webhook /
+  // linkBmacSupport callable after payment is verified). Cosmetic recognition
+  // only — never a competitive advantage.
+  supporter?: {
+    tier: 'rookie' | 'veteran' | 'staff' | 'corps_angel';
+    source: 'bmac';
+    emailHash: string;
+    since?: Timestamp | null;
+    anonymous?: boolean;
+    message?: string | null;
+  } | null;
+
   // Unlocks
   unlockedClasses: CorpsClass[];
 

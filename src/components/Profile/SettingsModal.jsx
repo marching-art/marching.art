@@ -11,13 +11,13 @@ import {
   AlertCircle,
   Bell,
   Trash2,
-  Heart,
   LogOut,
   X,
   Download,
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import SupporterPanel from './SupporterPanel';
 import { getProfile, updateProfile } from '../../api/profile';
 import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';
@@ -130,6 +130,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [supporter, setSupporter] = useState(null);
 
   // Check push notification support
   useEffect(() => {
@@ -157,6 +158,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     try {
       const data = await getProfile(user.uid);
       if (data) {
+        setSupporter(data.supporter || null);
+
         // Load account data
         const loadedAccountData = {
           username: data.username || '',
@@ -510,15 +513,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 </div>
               )}
 
-              <a
-                href="https://buymeacoffee.com/marching.art"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 min-h-[44px] bg-interactive/10 border border-interactive/30 text-interactive text-sm font-bold hover:bg-interactive/20 active:bg-interactive/30 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
-              >
-                <Heart className="w-4 h-4" />
-                Support marching.art
-              </a>
+              <SupporterPanel supporter={supporter} onRefresh={loadSettings} />
 
               <button
                 onClick={handleSignOut}
