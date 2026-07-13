@@ -492,7 +492,9 @@ const GamingHeader = () => {
 // src/components/Celebration.jsx
 const launchConfetti = async () => {
   const confetti = await import('canvas-confetti');
-  confetti.default({/* options */});
+  confetti.default({
+    /* options */
+  });
 };
 ```
 
