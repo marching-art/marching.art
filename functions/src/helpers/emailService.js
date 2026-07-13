@@ -714,32 +714,6 @@ async function sendWinBackEmail(email, username, daysMissed, streakLost, corpsCo
 }
 
 /**
- * Send lineup reminder email
- */
-async function sendLineupReminderEmail(email, username, corpsName, showName, deadline) {
-  const html = lineupReminderEmailTemplate({ username, corpsName, showName, deadline });
-  return sendEmail({
-    to: email,
-    subject: `⏰ Set your lineup for ${showName}!`,
-    html,
-    emailType: EMAIL_TYPES.LINEUP_REMINDER,
-  });
-}
-
-/**
- * Send league activity email
- */
-async function sendLeagueActivityEmail(email, username, leagueName, activityType, activityDetails) {
-  const html = leagueActivityEmailTemplate({ username, leagueName, activityType, activityDetails });
-  return sendEmail({
-    to: email,
-    subject: `${leagueName}: New activity`,
-    html,
-    emailType: EMAIL_TYPES.LEAGUE_ACTIVITY,
-  });
-}
-
-/**
  * Send milestone achieved email
  */
 async function sendMilestoneEmail(email, username, milestoneType, milestoneValue, xpReward, coinReward) {
@@ -831,8 +805,6 @@ module.exports = {
   sendStreakBrokenEmail,
   sendRivalContextEmail,
   sendWinBackEmail,
-  sendLineupReminderEmail,
-  sendLeagueActivityEmail,
   sendMilestoneEmail,
   sendAdminArticleSubmissionEmail,
   sendAdminCommentReportEmail,

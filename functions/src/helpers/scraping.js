@@ -164,23 +164,6 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
   }
 }
 
-const testScraper = onCall({ cors: true }, async (request) => {
-  assertAdmin(request);
-
-  logger.info("Running scraper test...");
-
-  // Test URL - using a known DCI recap page
-  const testUrl = "https://www.dci.org/scores/recap/2024-07-13-dci-southwestern-championship-san-antonio-tx";
-  
-  try {
-    await scrapeDciScoresLogic(testUrl, "dci-scores-topic");
-    return { success: true, message: "Scraper test completed successfully. Check logs for details." };
-  } catch (error) {
-    logger.error("Scraper test failed:", error);
-    return { success: false, message: `Scraper test failed: ${error.message}` };
-  }
-});
-
 /**
  * Discover every event URL across all years from dci.org's Yoast "competition"
  * sitemaps. Returns the derived recap URLs (deduped).
@@ -405,7 +388,6 @@ module.exports = {
   finalScoresToRecapUrl,
   discoverAllRecapUrls,
   discoverAllEventUrls,
-  testScraper,
   discoverAndQueueUrls,
   discoverAndQueueEventUrls,
 };

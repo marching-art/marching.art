@@ -299,32 +299,6 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('[SW] Background sync:', event.tag);
-
-  switch (event.tag) {
-    case 'sync-lineups':
-      event.waitUntil(syncLineups());
-      break;
-    case 'sync-scores':
-      event.waitUntil(syncScores());
-      break;
-  }
-});
-
-// Placeholder for syncing lineups when back online
-async function syncLineups() {
-  console.log('[SW] Syncing lineups...');
-  // Implementation would sync pending lineup changes from IndexedDB to Firestore
-}
-
-// Placeholder for syncing scores when back online
-async function syncScores() {
-  console.log('[SW] Syncing scores...');
-  // Implementation would fetch latest scores and update cache
-}
-
 // Push notification handling
 self.addEventListener('push', (event) => {
   if (!event.data) return;

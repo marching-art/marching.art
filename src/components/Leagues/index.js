@@ -2,7 +2,6 @@
 export { default as CreateLeagueModal } from './CreateLeagueModal';
 export { default as LeagueDetailView } from './LeagueDetailView';
 export { default as MatchupDetailView } from './MatchupDetailView';
-export { default as VersusCard } from './VersusCard';
 export {
   default as LeagueActivityFeed,
   RivalryBadge,
