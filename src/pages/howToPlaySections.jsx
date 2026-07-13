@@ -478,12 +478,14 @@ const SeasonSection = () => (
       <DataRow label="Days 1–14" value="Unlimited" accent />
       <DataRow label="Days 15–42 (Weeks 3–6)" value="3 per week" />
       <DataRow label="Days 43–44" value="Closed" />
-      <DataRow label="Championship Week (45–49)" value="2 total" />
+      <DataRow label="Championship Week (45–49)" value="2 per day" />
     </Card>
     <p className="text-[11px] text-muted leading-relaxed">
       Changes lock every Saturday at 8:00 PM ET and reopen once scores process (around 2:00 AM ET).
-      During Championship Week they lock at 8:00 PM ET each day. Weekly changes are per class and
-      can be spent one at a time or all at once. You can register for up to 4 shows a week.
+      During Championship Week each competing class gets 2 changes per day, resetting nightly at
+      8:00 PM ET — only Open and A Class compete Days 45–46, all classes Day 47, and World Class and
+      SoundSport the Days 48–49 Finals. Weekly changes are per class and can be spent one at a time
+      or all at once. You can register for up to 4 shows a week.
     </p>
   </>
 );

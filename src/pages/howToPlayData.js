@@ -160,7 +160,7 @@ export const FAQ = [
   },
   {
     q: 'Can I change my lineup?',
-    a: 'Yes! Caption changes are unlimited for the first two weeks, through Day 14 at 8:00 PM ET. From Week 3 on you get 3 changes per week per class — use them one at a time or all at once. Changes always lock from Saturday 8:00 PM ET until scores are processed (around 2:00 AM ET). No changes are allowed on Days 43-44, and during Championship Week (Days 45-49) you get 2 changes total per class, with changes locking at 8:00 PM ET each day.',
+    a: 'Yes! Caption changes are unlimited for the first two weeks, through Day 14 at 8:00 PM ET. From Week 3 on you get 3 changes per week per class — use them one at a time or all at once. Changes always lock from Saturday 8:00 PM ET until scores are processed (around 2:00 AM ET). No changes are allowed on Days 43-44. During Championship Week (Days 45-49) each competing class gets 2 changes per day, resetting nightly at 8:00 PM ET — only Open and A Class compete on Days 45-46, all classes on Day 47, and World Class and SoundSport in the Days 48-49 Finals.',
   },
   {
     q: 'What happens when a season ends?',

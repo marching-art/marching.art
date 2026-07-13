@@ -76,14 +76,17 @@ const CaptionSelectionModal = ({
   // Lineup) plus the current caption-change window (unlimited / weekly /
   // championship / lockouts). `trade` mirrors the backend rules in
   // functions/src/helpers/captionWindows.js and ticks with the clock.
-  const { scoresInMs, trade: changeInfo } = useSeasonDeadlines();
+  const { scoresInMs, trade: changeInfo } = useSeasonDeadlines(30000, corpsClass);
   const seasonUid = useSeasonStore((s) => s.seasonData?.seasonUid);
 
-  // Changes remaining in the current allotment (weekly 3 / championship 2)
+  // Changes remaining in the current allotment (weekly 3 / championship 2 per
+  // day). The stored counter's `week` field holds changeInfo.periodKey — the
+  // week number for weekly limits, the competition day during Championship
+  // Week (so the per-day allotment resets nightly).
   const tradesRemaining = useMemo(() => {
     if (!changeInfo || !Number.isFinite(changeInfo.tradeLimit)) return Infinity;
     const used =
-      weeklyTrades && weeklyTrades.seasonUid === seasonUid && weeklyTrades.week === changeInfo.week
+      weeklyTrades && weeklyTrades.seasonUid === seasonUid && weeklyTrades.week === changeInfo.periodKey
         ? weeklyTrades.used
         : 0;
     return Math.max(0, changeInfo.tradeLimit - used);
@@ -384,6 +387,10 @@ const CaptionSelectionModal = ({
       } else if (changeInfo.phase === 'blackout') {
         setSaveError(
           'Caption changes are closed on Days 43-44. Championship changes open on Day 45 once scores are processed.'
+        );
+      } else if (changeInfo.phase === 'championship') {
+        setSaveError(
+          'This class has finished competing for the season — its caption changes are closed.'
         );
       } else {
         setSaveError('The season has ended — caption changes are closed until next season.');

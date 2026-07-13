@@ -245,8 +245,8 @@ const HowToPlayPublic = () => {
           </div>
           <p className="text-sm text-secondary mb-3">
             Lineup changes are unlimited for the first two weeks, then tighten as finals approach —
-            3 per week mid-season, none on Days 43-44, and just 2 total during Championship Week —
-            so timing your moves is part of the strategy.
+            3 per week mid-season, none on Days 43-44, and 2 per day for each competing class during
+            Championship Week — so timing your moves is part of the strategy.
           </p>
           <p className="text-sm text-secondary">
             Along the way you earn XP and CorpsCoin from daily check-ins, competition results,

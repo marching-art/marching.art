@@ -20,6 +20,8 @@ const season = (springTrainingDays) => ({
 
 const at = (iso) => new Date(iso);
 const win = (nowIso, springDays) => getCaptionChangeWindow(season(springDays), at(nowIso));
+const winClass = (nowIso, corpsClass) =>
+  getCaptionChangeWindow(season(), at(nowIso), corpsClass);
 
 test("days 1-14 are unlimited, ending at the day-14 boundary (Sat 8 PM ET)", () => {
   const w = win("2026-06-23T12:00:00Z"); // day 3
@@ -71,7 +73,7 @@ test("days 43-44 are fully closed", () => {
   assert.equal(w.reopensAt.toISOString(), "2026-08-04T06:00:00.000Z");
 });
 
-test("championship days give 2 total changes and lock nightly at the 8 PM ET boundary", () => {
+test("championship days give 2 changes per day and lock nightly at the 8 PM ET boundary", () => {
   // Day 45 begins 2026-08-04T00:00:00Z (Mon 8 PM EDT). Before 2 AM ET: locked.
   const lockedW = win("2026-08-04T01:00:00Z");
   assert.equal(lockedW.phase, "championship");
@@ -79,12 +81,43 @@ test("championship days give 2 total changes and lock nightly at the 8 PM ET bou
   assert.equal(lockedW.reopensAt.toISOString(), "2026-08-04T06:00:00.000Z");
 
   // Tuesday afternoon: open, 2-change limit, closes at the next day boundary.
+  // periodKey is the competition day, so the allotment resets each day.
   const openW = win("2026-08-04T18:00:00Z");
   assert.equal(openW.status, "open");
   assert.equal(openW.tradeLimit, 2);
   assert.equal(openW.week, 7);
+  assert.equal(openW.periodKey, 45);
   assert.equal(openW.locksAt.toISOString(), "2026-08-05T00:00:00.000Z");
   assert.equal(openW.pendingScoresDay, 44);
+
+  // Next day (46) keys on a new period, so the 2-change limit is fresh.
+  assert.equal(win("2026-08-05T18:00:00Z").periodKey, 46);
+});
+
+test("championship per-day bracket gates which classes may change", () => {
+  // Days 45-46: only Open Class and A Class compete.
+  const day45Open = winClass("2026-08-04T18:00:00Z", "openClass");
+  assert.equal(day45Open.status, "open");
+  assert.equal(day45Open.tradeLimit, 2);
+  const day45World = winClass("2026-08-04T18:00:00Z", "worldClass");
+  assert.equal(day45World.status, "closed");
+  assert.equal(day45World.tradeLimit, 0);
+  assert.equal(winClass("2026-08-04T18:00:00Z", "soundSport").status, "closed");
+
+  // Day 47: all classes compete.
+  assert.equal(winClass("2026-08-06T18:00:00Z", "worldClass").status, "open");
+  assert.equal(winClass("2026-08-06T18:00:00Z", "openClass").status, "open");
+  assert.equal(winClass("2026-08-06T18:00:00Z", "soundSport").status, "open");
+
+  // Days 48-49 (Finals): only World Class and SoundSport compete.
+  assert.equal(winClass("2026-08-07T18:00:00Z", "worldClass").status, "open");
+  assert.equal(winClass("2026-08-07T18:00:00Z", "soundSport").status, "open");
+  assert.equal(winClass("2026-08-07T18:00:00Z", "openClass").status, "closed");
+  assert.equal(winClass("2026-08-08T18:00:00Z", "aClass").status, "closed");
+  assert.equal(winClass("2026-08-08T18:00:00Z", "worldClass").status, "open");
+
+  // Class-agnostic call (no corpsClass) reports the general open window.
+  assert.equal(win("2026-08-07T18:00:00Z").status, "open");
 });
 
 test("after day 49 the season is complete and changes are closed", () => {

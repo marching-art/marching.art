@@ -118,7 +118,7 @@ describe('getCaptionChangeInfo', () => {
     expect(w.nextLimit).toBe(2);
   });
 
-  it('gives 2 total changes during championships with nightly 8 PM ET locks', () => {
+  it('gives 2 changes per day during championships with nightly 8 PM ET locks', () => {
     // Day 45 begins 2026-08-04T00:00:00Z (Mon 8 PM EDT). Before 2 AM ET: locked.
     const locked = info('2026-08-04T01:00:00Z');
     expect(locked.phase).toBe('championship');
@@ -126,12 +126,38 @@ describe('getCaptionChangeInfo', () => {
     expect(locked.reopensAt.toISOString()).toBe('2026-08-04T06:00:00.000Z');
 
     // Tuesday afternoon: open with the championship limit, closing at the
-    // next day boundary (8 PM ET).
+    // next day boundary (8 PM ET). periodKey is the day, so it resets nightly.
     const open = info('2026-08-04T18:00:00Z');
     expect(open.status).toBe('open');
     expect(open.tradeLimit).toBe(2);
     expect(open.week).toBe(7);
+    expect(open.periodKey).toBe(45);
     expect(open.locksAt.toISOString()).toBe('2026-08-05T00:00:00.000Z');
+    // The next day keys on a new period (fresh 2 changes).
+    expect(info('2026-08-05T18:00:00Z').periodKey).toBe(46);
+  });
+
+  it('gates championship changes by the per-day competing-class bracket', () => {
+    const infoClass = (nowIso, corpsClass) =>
+      getCaptionChangeInfo(season(), new Date(nowIso), corpsClass);
+
+    // Days 45-46: only Open Class and A Class compete.
+    expect(infoClass('2026-08-04T18:00:00Z', 'openClass').status).toBe('open');
+    expect(infoClass('2026-08-04T18:00:00Z', 'worldClass').status).toBe('closed');
+    expect(infoClass('2026-08-04T18:00:00Z', 'worldClass').tradeLimit).toBe(0);
+
+    // Day 47: all classes compete.
+    expect(infoClass('2026-08-06T18:00:00Z', 'worldClass').status).toBe('open');
+    expect(infoClass('2026-08-06T18:00:00Z', 'aClass').status).toBe('open');
+
+    // Days 48-49 (Finals): only World Class and SoundSport compete.
+    expect(infoClass('2026-08-07T18:00:00Z', 'worldClass').status).toBe('open');
+    expect(infoClass('2026-08-07T18:00:00Z', 'soundSport').status).toBe('open');
+    expect(infoClass('2026-08-07T18:00:00Z', 'openClass').status).toBe('closed');
+    expect(infoClass('2026-08-08T18:00:00Z', 'aClass').status).toBe('closed');
+
+    // Class-agnostic call reports the general open window.
+    expect(info('2026-08-07T18:00:00Z').status).toBe('open');
   });
 
   it('closes after the season ends', () => {
