@@ -10,6 +10,14 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Tailwind v4 is a ground-up rewrite: the PostCSS plugin moved to a
+      # separate @tailwindcss/postcss package and config went CSS-first, so a
+      # bare version bump breaks the build (the old `tailwindcss: {}` PostCSS
+      # plugin no longer exists). We stay on v3 deliberately; v4 is a planned
+      # migration, not an automated bump. Closed PR #1121.
+      - dependency-name: tailwindcss
+        update-types: [version-update:semver-major]
     groups:
       production-dependencies:
         dependency-type: production
