@@ -102,9 +102,31 @@ jobs:
           #    redeploy of every function (e.g. a runtime bump) fans out ~2
           #    run.googleapis.com regional writes per function at once, which can
           #    exceed the "Write requests per minute per region" quota
-          #    (INSUFFICIENT_TOKENS) and leave functions half-deployed; re-run
-          #    the workflow to finish any that failed.
-          firebase deploy --only functions --force --project marching-art
+          #    (INSUFFICIENT_TOKENS) and leave functions half-deployed. Cloud
+          #    Build also occasionally fails a single function with a transient
+          #    "An unexpected error occurred" build error. Both cases leave the
+          #    deploy partially done and exit non-zero.
+          #
+          #    Retry the deploy a few times to self-heal these transient
+          #    partial failures instead of requiring a manual re-run. This is
+          #    safe: `firebase deploy` re-diffs the source on every attempt and
+          #    skips functions already up to date, so each retry only re-attempts
+          #    whatever failed last time. Only a failure that persists across all
+          #    attempts fails the job.
+          MAX_ATTEMPTS=3
+          attempt=1
+          until firebase deploy --only functions --force --project marching-art; do
+            if [ "$attempt" -ge "$MAX_ATTEMPTS" ]; then
+              echo "::error::firebase deploy --only functions failed after $MAX_ATTEMPTS attempts."
+              exit 1
+            fi
+            # Back off before retrying so any per-minute write quota refills and
+            # transient Cloud Build failures have time to clear.
+            backoff=$((attempt * 60))
+            echo "::warning::functions deploy attempt $attempt failed; retrying in ${backoff}s (already-deployed functions are skipped)..."
+            sleep "$backoff"
+            attempt=$((attempt + 1))
+          done
 
           echo "All functions and Firestore rules deployed successfully!"
 
