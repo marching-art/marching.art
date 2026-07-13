@@ -1,7 +1,7 @@
 // PodiumTrajectoryCard — historical shadows (design §6, decision 29): your
-// season score line drawn against real corps arcs (Crown '12, Bluecoats '10,
-// Boston '02, Blue Stars '10, Mandarins, Cascades, Surf, Pioneer) from the
-// committed 2000-2012 corpus. Shadows are muted context lines identified by
+// season score line drawn against real corps arcs (Crown '13, Bluecoats '24,
+// Boston '13, Blue Stars '09, Mandarins, Cascades, Surf, Pioneer) from the
+// committed 2000-2025 corpus. Shadows are muted context lines identified by
 // direct end-labels, never by color; your corps is the single emphasized
 // series. Chasing a named ghost is the point.
 
@@ -68,7 +68,7 @@ export default function PodiumTrajectoryCard({ podium }) {
           <TrendingUp className="w-3 h-3" /> Trajectory vs. history
         </span>
         <span className="text-[9px] text-muted">
-          Real DCI season arcs (2000&ndash;2012) · gray lines are the ghosts
+          Real DCI season arcs (2000&ndash;2025) · gray lines are the ghosts
         </span>
       </div>
 

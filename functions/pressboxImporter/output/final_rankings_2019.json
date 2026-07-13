@@ -1,0 +1,154 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "Blue Devils",
+   "points": 25,
+   "originalScore": 98.325
+  },
+  {
+   "rank": 2,
+   "corps": "Bluecoats",
+   "points": 24,
+   "originalScore": 98.2375
+  },
+  {
+   "rank": 3,
+   "corps": "Santa Clara Vanguard",
+   "points": 23,
+   "originalScore": 96.6
+  },
+  {
+   "rank": 4,
+   "corps": "Carolina Crown",
+   "points": 22,
+   "originalScore": 96.5625
+  },
+  {
+   "rank": 5,
+   "corps": "The Cavaliers",
+   "points": 21,
+   "originalScore": 95.4
+  },
+  {
+   "rank": 6,
+   "corps": "Boston Crusaders",
+   "points": 20,
+   "originalScore": 94.4875
+  },
+  {
+   "rank": 7,
+   "corps": "Blue Knights",
+   "points": 19,
+   "originalScore": 92.05
+  },
+  {
+   "rank": 8,
+   "corps": "Blue Stars",
+   "points": 18,
+   "originalScore": 91.225
+  },
+  {
+   "rank": 9,
+   "corps": "The Cadets",
+   "points": 17,
+   "originalScore": 89.8375
+  },
+  {
+   "rank": 10,
+   "corps": "Mandarins",
+   "points": 16,
+   "originalScore": 89.3
+  },
+  {
+   "rank": 11,
+   "corps": "Crossmen",
+   "points": 15,
+   "originalScore": 87.55
+  },
+  {
+   "rank": 12,
+   "corps": "Phantom Regiment",
+   "points": 14,
+   "originalScore": 87.2375
+  },
+  {
+   "rank": 13,
+   "corps": "Spirit of Atlanta",
+   "points": 13,
+   "originalScore": 85.5875
+  },
+  {
+   "rank": 14,
+   "corps": "Pacific Crest",
+   "points": 12,
+   "originalScore": 85.35
+  },
+  {
+   "rank": 15,
+   "corps": "The Academy",
+   "points": 11,
+   "originalScore": 84.3
+  },
+  {
+   "rank": 16,
+   "corps": "Colts",
+   "points": 10,
+   "originalScore": 84.225
+  },
+  {
+   "rank": 17,
+   "corps": "Madison Scouts",
+   "points": 9,
+   "originalScore": 82.1375
+  },
+  {
+   "rank": 18,
+   "corps": "Troopers",
+   "points": 8,
+   "originalScore": 81.6625
+  },
+  {
+   "rank": 19,
+   "corps": "Spartans",
+   "points": 7,
+   "originalScore": 80.35
+  },
+  {
+   "rank": 20,
+   "corps": "Genesis",
+   "points": 6,
+   "originalScore": 78.725
+  },
+  {
+   "rank": 21,
+   "corps": "Legends",
+   "points": 5,
+   "originalScore": 78.4
+  },
+  {
+   "rank": 22,
+   "corps": "Gold",
+   "points": 4,
+   "originalScore": 76.65
+  },
+  {
+   "rank": 23,
+   "corps": "Music City",
+   "points": 3,
+   "originalScore": 76.65
+  },
+  {
+   "rank": 24,
+   "corps": "Jersey Surf",
+   "points": 2,
+   "originalScore": 75.9
+  },
+  {
+   "rank": 25,
+   "corps": "Seattle Cascades",
+   "points": 1,
+   "originalScore": 73.275
+  }
+ ]
+}

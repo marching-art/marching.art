@@ -44,4 +44,15 @@ describe('PodiumTrajectoryCard', () => {
       expect(shadow.totals).toHaveLength(49);
     }
   });
+
+  it('draws on the full 2000-2025 corpus, not just the 2000-2012 backfill', () => {
+    const years = shadowData.shadows.map((s) => s.year);
+    for (const year of years) {
+      expect(year).toBeGreaterThanOrEqual(2000);
+      expect(year).toBeLessThanOrEqual(2025);
+    }
+    // At least one arc must come from the modern (post-2012) era the wider
+    // corpus unlocked — otherwise the chart quietly regressed to 2000-2012.
+    expect(years.some((y) => y > 2012)).toBe(true);
+  });
 });

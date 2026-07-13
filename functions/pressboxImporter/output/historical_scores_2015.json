@@ -1,0 +1,10182 @@
+{
+ "data": [
+  {
+   "eventName": "DCI Competition - Indianapolis, Indiana",
+   "date": "2015-06-17T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 69.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.9,
+      "CG": 13.6,
+      "B": 13.7,
+      "MA": 14.6,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 68.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 14.2,
+      "CG": 13.8,
+      "B": 13.8,
+      "MA": 14,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 68.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 13.6,
+      "CG": 14.1,
+      "B": 13.9,
+      "MA": 14.2,
+      "P": 12
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 63.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.3,
+      "CG": 11.2,
+      "B": 12.8,
+      "MA": 13.6,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 61.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 12.8,
+      "CG": 12.1,
+      "B": 12.4,
+      "MA": 13.4,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 60.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.6,
+      "CG": 11.6,
+      "B": 12.7,
+      "MA": 12.9,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Clovis, California",
+   "date": "2015-06-19T00:00:00.000Z",
+   "location": "Clovis, California",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 72.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.9,
+      "CG": 14.6,
+      "B": 14.1,
+      "MA": 15.2,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 70.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 14.4,
+      "CG": 14.4,
+      "B": 13.7,
+      "MA": 14.7,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 66.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 13.7,
+      "CG": 13.8,
+      "B": 13.3,
+      "MA": 14.3,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 65.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.3,
+      "CG": 12.9,
+      "B": 12.7,
+      "MA": 14,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 58.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12,
+      "CG": 11,
+      "B": 11.8,
+      "MA": 12.3,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 55.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 11,
+      "CG": 9.1,
+      "B": 11.3,
+      "MA": 12.7,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 55.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 12.7,
+      "CG": 10.3,
+      "B": 11.9,
+      "MA": 12.5,
+      "P": 10.7
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 55.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.2,
+      "VA": 11.3,
+      "CG": 9.9,
+      "B": 11.5,
+      "MA": 11.5,
+      "P": 11.2
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 48.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.5,
+      "VA": 9.7,
+      "CG": 8.8,
+      "B": 10.7,
+      "MA": 9.4,
+      "P": 9.2
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 37.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.5,
+      "VA": 7.3,
+      "CG": 6.4,
+      "B": 7.9,
+      "MA": 7.1,
+      "P": 6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Akron, Ohio",
+   "date": "2015-06-20T00:00:00.000Z",
+   "location": "Akron, Ohio",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 73.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14,
+      "CG": 14.7,
+      "B": 14.8,
+      "MA": 14.6,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 73.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.3,
+      "CG": 14.4,
+      "B": 14.7,
+      "MA": 14.5,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 71.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13,
+      "CG": 15.1,
+      "B": 14.9,
+      "MA": 14.3,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 66.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 12.9,
+      "CG": 13.1,
+      "B": 14.1,
+      "MA": 13.9,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 63.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 12.5,
+      "CG": 12.8,
+      "B": 13.8,
+      "MA": 13,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 61.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 11.8,
+      "CG": 12.1,
+      "B": 13,
+      "MA": 12.2,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 59.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 11.4,
+      "CG": 11.6,
+      "B": 12.3,
+      "MA": 12.4,
+      "P": 12.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI West",
+   "date": "2015-06-20T00:00:00.000Z",
+   "location": "Stanford, California",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 73.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 15,
+      "CG": 13.8,
+      "B": 14.6,
+      "MA": 15.1,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 71.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.3,
+      "CG": 14,
+      "B": 14,
+      "MA": 14.5,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 68.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.9,
+      "CG": 13.2,
+      "B": 13.4,
+      "MA": 13.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 66.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.4,
+      "CG": 12.7,
+      "B": 13,
+      "MA": 13.8,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 61,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12.7,
+      "CG": 11.4,
+      "B": 11.8,
+      "MA": 11.7,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 59.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 12.4,
+      "CG": 11.1,
+      "B": 11.2,
+      "MA": 11.9,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 57.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 10.4,
+      "CG": 10.6,
+      "B": 11.5,
+      "MA": 11.1,
+      "P": 11.7
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 56.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 11.4,
+      "CG": 10.1,
+      "B": 12,
+      "MA": 11.5,
+      "P": 10.9
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 48.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10,
+      "VA": 9.6,
+      "CG": 9.5,
+      "B": 10.4,
+      "MA": 9.2,
+      "P": 9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Sacramento, California",
+   "date": "2015-06-21T00:00:00.000Z",
+   "location": "Sacramento, California",
+   "offSeasonDay": 1,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 75.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15,
+      "CG": 14.8,
+      "B": 15.4,
+      "MA": 15,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 73.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.7,
+      "CG": 14.5,
+      "B": 14.8,
+      "MA": 14.7,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 68.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.3,
+      "CG": 13.5,
+      "B": 12.8,
+      "MA": 14.4,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 66.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.8,
+      "CG": 12.9,
+      "B": 13,
+      "MA": 14,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 59.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 11,
+      "CG": 11.1,
+      "B": 11.9,
+      "MA": 12.6,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 58.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 10.7,
+      "CG": 9.5,
+      "B": 11.6,
+      "MA": 12.3,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 57.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 11.3,
+      "CG": 10.5,
+      "B": 10.9,
+      "MA": 12.1,
+      "P": 11.4
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 56.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.5,
+      "CG": 10,
+      "B": 11.2,
+      "MA": 11.8,
+      "P": 11.9
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 49.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 9,
+      "CG": 8.5,
+      "B": 10.2,
+      "MA": 10.9,
+      "P": 9.1
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 38.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 7.8,
+      "VA": 6.1,
+      "CG": 6.8,
+      "B": 8.8,
+      "MA": 8.3,
+      "P": 7.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Oceanside, California",
+   "date": "2015-06-26T00:00:00.000Z",
+   "location": "Oceanside, California",
+   "offSeasonDay": 6,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 75.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.1,
+      "CG": 15,
+      "B": 15.6,
+      "MA": 15.4,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 72.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.5,
+      "CG": 14.3,
+      "B": 14.9,
+      "MA": 14.3,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 71.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.1,
+      "CG": 13.7,
+      "B": 15,
+      "MA": 14.7,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 65.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 13.5,
+      "CG": 12.9,
+      "B": 14,
+      "MA": 13.3,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 63.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 13.2,
+      "CG": 12.6,
+      "B": 13.6,
+      "MA": 12.6,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 61.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 11.8,
+      "CG": 11.3,
+      "B": 12.8,
+      "MA": 12.8,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 50.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.4,
+      "VA": 9.1,
+      "CG": 9.1,
+      "B": 9.6,
+      "MA": 11.3,
+      "P": 9.7
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 49.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.1,
+      "VA": 9.9,
+      "CG": 9.6,
+      "B": 9.8,
+      "MA": 11.1,
+      "P": 9.3
+     }
+    },
+    {
+     "corps": "Watchmen",
+     "score": 44.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.6,
+      "VA": 9,
+      "CG": 9.4,
+      "B": 7.8,
+      "MA": 8.6,
+      "P": 8.9
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 43.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 7.2,
+      "VA": 8.2,
+      "CG": 8.4,
+      "B": 7.5,
+      "MA": 9,
+      "P": 8.2
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 34.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 6.5,
+      "VA": 7,
+      "CG": 6.5,
+      "B": 6.8,
+      "MA": 6.5,
+      "P": 7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Pasadena, California",
+   "date": "2015-06-27T00:00:00.000Z",
+   "location": "Pasadena, California",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 79.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16,
+      "CG": 15.7,
+      "B": 15.6,
+      "MA": 16,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 77.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.7,
+      "CG": 15.4,
+      "B": 15,
+      "MA": 15.5,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 73.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.7,
+      "CG": 14.4,
+      "B": 14.3,
+      "MA": 14.8,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 72.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.8,
+      "CG": 14,
+      "B": 14.4,
+      "MA": 14.5,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 67.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.6,
+      "CG": 13.5,
+      "B": 13.1,
+      "MA": 13.3,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 65.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 13.1,
+      "CG": 13.2,
+      "B": 12.6,
+      "MA": 12.8,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 62.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.3,
+      "CG": 12,
+      "B": 12.1,
+      "MA": 12.6,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 51.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.4,
+      "VA": 11.1,
+      "CG": 9.1,
+      "B": 10.4,
+      "MA": 10,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 49.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.6,
+      "VA": 10.4,
+      "CG": 9.6,
+      "B": 9.8,
+      "MA": 9.1,
+      "P": 11.1
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 46,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.8,
+      "VA": 9.5,
+      "CG": 7.9,
+      "B": 10,
+      "MA": 8.1,
+      "P": 10.9
+     }
+    },
+    {
+     "corps": "Watchmen",
+     "score": 44.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.1,
+      "VA": 8.4,
+      "CG": 8.8,
+      "B": 8.6,
+      "MA": 8.4,
+      "P": 9.7
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 36,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 7.2,
+      "VA": 7.2,
+      "CG": 7.3,
+      "B": 6.4,
+      "MA": 6.7,
+      "P": 8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Riverside, California",
+   "date": "2015-06-28T00:00:00.000Z",
+   "location": "Riverside, California",
+   "offSeasonDay": 8,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 79.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.2,
+      "CG": 15.9,
+      "B": 16.2,
+      "MA": 15.9,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 78.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.6,
+      "B": 15.6,
+      "MA": 15.7,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 72.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.7,
+      "CG": 14.6,
+      "B": 14.6,
+      "MA": 14.8,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 72.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.5,
+      "CG": 14.1,
+      "B": 14.5,
+      "MA": 14.6,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 65.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.6,
+      "CG": 13,
+      "B": 13.3,
+      "MA": 13.2,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 64.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13,
+      "CG": 13.1,
+      "B": 12.9,
+      "MA": 13.4,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 63.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 13.2,
+      "CG": 12.2,
+      "B": 12.5,
+      "MA": 13,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 50.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.4,
+      "VA": 10.6,
+      "CG": 9.6,
+      "B": 10.3,
+      "MA": 10.7,
+      "P": 9.6
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 50.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 10.2,
+      "CG": 9.3,
+      "B": 10,
+      "MA": 10.3,
+      "P": 10.1
+     }
+    },
+    {
+     "corps": "Watchmen",
+     "score": 44.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.8,
+      "VA": 8.4,
+      "CG": 8.7,
+      "B": 9.4,
+      "MA": 8.9,
+      "P": 8.7
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 43.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.4,
+      "VA": 8.8,
+      "CG": 7,
+      "B": 9.2,
+      "MA": 8.7,
+      "P": 9
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 36.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 7.7,
+      "VA": 7,
+      "CG": 7.5,
+      "B": 6.8,
+      "MA": 6.8,
+      "P": 7.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Foxboro, Massachusetts",
+   "date": "2015-07-02T00:00:00.000Z",
+   "location": "Foxboro, Massachusetts",
+   "offSeasonDay": 12,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 81.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.4,
+      "CG": 16.5,
+      "B": 16.1,
+      "MA": 16.1,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 80.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 16.1,
+      "CG": 16,
+      "B": 16.3,
+      "MA": 16.3,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 79.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16,
+      "CG": 16.2,
+      "B": 15.9,
+      "MA": 15.8,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 71.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.1,
+      "CG": 14.8,
+      "B": 14.7,
+      "MA": 13.6,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 71.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.7,
+      "CG": 14.4,
+      "B": 14.5,
+      "MA": 13.8,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 68.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.3,
+      "CG": 13.2,
+      "B": 13.5,
+      "MA": 13.9,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 60.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 11.6,
+      "CG": 12.6,
+      "B": 11.9,
+      "MA": 11.9,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 55.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 11,
+      "CG": 11,
+      "B": 10.1,
+      "MA": 11,
+      "P": 10.8
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 54.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 10.2,
+      "CG": 11.3,
+      "B": 10.3,
+      "MA": 11.2,
+      "P": 10
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Clifton, New Jersey",
+   "date": "2015-07-05T00:00:00.000Z",
+   "location": "Clifton, New Jersey",
+   "offSeasonDay": 15,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 82.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 17,
+      "CG": 16.6,
+      "B": 16.3,
+      "MA": 16.6,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 82.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.6,
+      "CG": 16.5,
+      "B": 16.5,
+      "MA": 16.3,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 81.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.7,
+      "CG": 16.7,
+      "B": 16.1,
+      "MA": 16.4,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 75.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 15,
+      "CG": 15.3,
+      "B": 15.4,
+      "MA": 15,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 61.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.7,
+      "CG": 12.7,
+      "B": 13.4,
+      "MA": 12.1,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 58.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 11.6,
+      "CG": 11.3,
+      "B": 12.7,
+      "MA": 10.8,
+      "P": 11.9
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 56.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 11.3,
+      "CG": 11.6,
+      "B": 12.3,
+      "MA": 11,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 43.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.3,
+      "VA": 9.1,
+      "CG": 9.3,
+      "B": 10.4,
+      "MA": 8.7,
+      "P": 10.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Whitewater, Wisconsin",
+   "date": "2015-07-05T00:00:00.000Z",
+   "location": "Whitewater, Wisconsin",
+   "offSeasonDay": 15,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 79.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 16.1,
+      "CG": 15.8,
+      "B": 15.8,
+      "MA": 16.2,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 79,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.7,
+      "CG": 15.4,
+      "B": 15.9,
+      "MA": 16,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 75.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.6,
+      "CG": 15.2,
+      "B": 15.1,
+      "MA": 15.4,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 73.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.5,
+      "CG": 14.9,
+      "B": 15.2,
+      "MA": 14.8,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 71.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 14.3,
+      "CG": 15,
+      "B": 14.5,
+      "MA": 14.3,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 71,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 14,
+      "CG": 14.7,
+      "B": 14.7,
+      "MA": 14.5,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 68.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 13,
+      "CG": 14.4,
+      "B": 13.6,
+      "MA": 14.1,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 57.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 11.3,
+      "CG": 11,
+      "B": 11.5,
+      "MA": 12.3,
+      "P": 11.2
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 57.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 11.4,
+      "CG": 11.4,
+      "B": 12.2,
+      "MA": 11.9,
+      "P": 11.6
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 56.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.2,
+      "VA": 10.8,
+      "CG": 10.2,
+      "B": 11.9,
+      "MA": 11.5,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 55.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 10.7,
+      "CG": 11.1,
+      "B": 11.4,
+      "MA": 11,
+      "P": 10.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 48.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 9.3,
+      "CG": 9.4,
+      "B": 10.6,
+      "MA": 9.6,
+      "P": 9.4
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 36,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8,
+      "VA": 7,
+      "CG": 6.5,
+      "B": 8.6,
+      "MA": 7.3,
+      "P": 7.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Dubuque, Iowa",
+   "date": "2015-07-07T00:00:00.000Z",
+   "location": "Dubuque, Iowa",
+   "offSeasonDay": 17,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 80.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 16.5,
+      "CG": 16.3,
+      "B": 15.8,
+      "MA": 16.5,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 75.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.6,
+      "CG": 15.1,
+      "B": 15.3,
+      "MA": 15.1,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 70.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14.4,
+      "CG": 14.2,
+      "B": 14.2,
+      "MA": 14.6,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 69.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 14.9,
+      "CG": 15,
+      "B": 13.9,
+      "MA": 14.4,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 68.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 13.9,
+      "CG": 13.6,
+      "B": 13.7,
+      "MA": 13.7,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 50.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.3,
+      "VA": 10.4,
+      "CG": 10.1,
+      "B": 11,
+      "MA": 9.8,
+      "P": 9.7
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 36.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 6.6,
+      "VA": 7.2,
+      "CG": 7.2,
+      "B": 6.9,
+      "MA": 7.8,
+      "P": 8.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Fort Wayne, Indiana",
+   "date": "2015-07-08T00:00:00.000Z",
+   "location": "Fort Wayne, Indiana",
+   "offSeasonDay": 18,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 83.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17.4,
+      "CG": 16.6,
+      "B": 16.5,
+      "MA": 16.6,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 82.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.9,
+      "CG": 16.9,
+      "B": 16.4,
+      "MA": 16.4,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 73.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.1,
+      "CG": 15.2,
+      "B": 15,
+      "MA": 14.3,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 62.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 13.2,
+      "CG": 12.4,
+      "B": 12.6,
+      "MA": 12.8,
+      "P": 11.7
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 58.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 10.4,
+      "CG": 10.6,
+      "B": 12.9,
+      "MA": 12.6,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 53.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.8,
+      "VA": 9.6,
+      "CG": 9.4,
+      "B": 11,
+      "MA": 10.4,
+      "P": 11.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - LaCrosse, Wisconsin",
+   "date": "2015-07-09T00:00:00.000Z",
+   "location": "LaCrosse, Wisconsin",
+   "offSeasonDay": 19,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 82.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.4,
+      "CG": 16.1,
+      "B": 16.2,
+      "MA": 16,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 78,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.5,
+      "CG": 15.8,
+      "B": 15.6,
+      "MA": 15.6,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 74.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 14.9,
+      "CG": 15.1,
+      "B": 15.2,
+      "MA": 15.1,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 74,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14.6,
+      "CG": 14.7,
+      "B": 15.4,
+      "MA": 14.8,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 61.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 12.1,
+      "CG": 11.2,
+      "B": 13.1,
+      "MA": 12.8,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 59.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.2,
+      "VA": 12.5,
+      "CG": 9.5,
+      "B": 13,
+      "MA": 12.6,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 58.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 11.4,
+      "CG": 9.3,
+      "B": 12.1,
+      "MA": 12.1,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Bakersfield, California",
+   "date": "2015-07-10T00:00:00.000Z",
+   "location": "Bakersfield, California",
+   "offSeasonDay": 20,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 63.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12.8,
+      "CG": 11.6,
+      "B": 12.7,
+      "MA": 13.1,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 63.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.2,
+      "VA": 12.4,
+      "CG": 11.9,
+      "B": 12.6,
+      "MA": 13.2,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 53.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 8.4,
+      "CG": 9.9,
+      "B": 10.8,
+      "MA": 12,
+      "P": 10.8
+     }
+    },
+    {
+     "corps": "Watchmen",
+     "score": 51.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.6,
+      "VA": 8.9,
+      "CG": 10.1,
+      "B": 10.1,
+      "MA": 10.6,
+      "P": 11.2
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 50.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 8.5,
+      "CG": 9.2,
+      "B": 10.4,
+      "MA": 10.5,
+      "P": 11.1
+     }
+    },
+    {
+     "corps": "Thunder",
+     "score": 48.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 9.3,
+      "CG": 8.8,
+      "B": 9.8,
+      "MA": 12,
+      "P": 9.2
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 45.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.2,
+      "VA": 7.9,
+      "CG": 9,
+      "B": 9.4,
+      "MA": 9,
+      "P": 8.9
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 39.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8,
+      "VA": 7.4,
+      "CG": 8,
+      "B": 8.5,
+      "MA": 8.6,
+      "P": 8.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums Along The Rockies",
+   "date": "2015-07-11T00:00:00.000Z",
+   "location": "Denver, Colorado",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 83.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.8,
+      "CG": 16.5,
+      "B": 16.4,
+      "MA": 16.5,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 79.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 16,
+      "CG": 15.7,
+      "B": 15.8,
+      "MA": 16.1,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 75.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15,
+      "CG": 15.1,
+      "B": 15,
+      "MA": 15,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 73.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.8,
+      "CG": 14.4,
+      "B": 14.7,
+      "MA": 14.6,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 73.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.3,
+      "CG": 14.1,
+      "B": 14.8,
+      "MA": 14.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 71.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 13.8,
+      "CG": 14.3,
+      "B": 14.5,
+      "MA": 14.2,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 69.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.2,
+      "CG": 13.3,
+      "B": 13.7,
+      "MA": 13,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 69.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 13.1,
+      "CG": 13.6,
+      "B": 14.2,
+      "MA": 13.4,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 69.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.3,
+      "CG": 13.1,
+      "B": 13.9,
+      "MA": 13.3,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 64.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 12.8,
+      "CG": 12.6,
+      "B": 12.9,
+      "MA": 12.6,
+      "P": 12.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Minnesota",
+   "date": "2015-07-11T00:00:00.000Z",
+   "location": "Minneapolis, Minnesota",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 82.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.9,
+      "CG": 16,
+      "B": 17,
+      "MA": 16.4,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 82.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.7,
+      "CG": 16.7,
+      "B": 16.6,
+      "MA": 16.5,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 81.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 17.2,
+      "CG": 16.2,
+      "B": 15.6,
+      "MA": 16.1,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 80.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.2,
+      "CG": 16.5,
+      "B": 16.8,
+      "MA": 15.9,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 77.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16.4,
+      "CG": 14.6,
+      "B": 15.9,
+      "MA": 15.4,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 76.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.3,
+      "CG": 15.5,
+      "B": 15.5,
+      "MA": 14.8,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 73.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.4,
+      "CG": 14.9,
+      "B": 14.8,
+      "MA": 14.7,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 73.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 13.8,
+      "CG": 15,
+      "B": 14.9,
+      "MA": 14.9,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 72.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.2,
+      "CG": 15.3,
+      "B": 14.5,
+      "MA": 14.2,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 71.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.6,
+      "CG": 14.7,
+      "B": 14.2,
+      "MA": 13.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 63.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 12.6,
+      "CG": 11.7,
+      "B": 13.4,
+      "MA": 12.6,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 59.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12,
+      "CG": 11.9,
+      "B": 13.1,
+      "MA": 12.1,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 58.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 11.4,
+      "CG": 11.5,
+      "B": 12.9,
+      "MA": 11.8,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 54.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 10,
+      "CG": 11,
+      "B": 11.9,
+      "MA": 10.6,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 52.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.5,
+      "VA": 10.9,
+      "CG": 10.9,
+      "B": 11.7,
+      "MA": 10.5,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 45.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.6,
+      "VA": 9.2,
+      "CG": 8.1,
+      "B": 9.8,
+      "MA": 8.7,
+      "P": 11
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 40.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.8,
+      "VA": 9.6,
+      "CG": 7.9,
+      "B": 7.9,
+      "MA": 6.9,
+      "P": 9
+     }
+    },
+    {
+     "corps": "Blue Saints",
+     "score": 40.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.1,
+      "VA": 8.9,
+      "CG": 6.5,
+      "B": 9.2,
+      "MA": 7.2,
+      "P": 8.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - San Marcos, California",
+   "date": "2015-07-11T00:00:00.000Z",
+   "location": "San Marcos, California",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 66.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 12.8,
+      "CG": 12.9,
+      "B": 13.2,
+      "MA": 13.9,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 65.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 12.5,
+      "CG": 13,
+      "B": 13,
+      "MA": 13.6,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 59.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 11.7,
+      "CG": 11.2,
+      "B": 11.1,
+      "MA": 11.7,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 58.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.3,
+      "VA": 11.6,
+      "CG": 11,
+      "B": 11.4,
+      "MA": 12.2,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Watchmen",
+     "score": 54.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 11.1,
+      "CG": 10.3,
+      "B": 10.7,
+      "MA": 11.4,
+      "P": 10.8
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 53.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.8,
+      "VA": 10.7,
+      "CG": 9.8,
+      "B": 10.9,
+      "MA": 11.2,
+      "P": 10.9
+     }
+    },
+    {
+     "corps": "Thunder",
+     "score": 49.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.1,
+      "VA": 10.4,
+      "CG": 8.9,
+      "B": 9.6,
+      "MA": 11,
+      "P": 10
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 46.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.4,
+      "VA": 8.8,
+      "CG": 9.1,
+      "B": 9.1,
+      "MA": 9.2,
+      "P": 9.1
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 40.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 7.7,
+      "VA": 8.3,
+      "CG": 8.6,
+      "B": 8.7,
+      "MA": 8.3,
+      "P": 8.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2015-07-12T00:00:00.000Z",
+   "location": "DeKalb, Illinois",
+   "offSeasonDay": 22,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 83.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.1,
+      "CG": 16.8,
+      "B": 16.3,
+      "MA": 16.7,
+      "P": 17
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 83.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.4,
+      "CG": 16.3,
+      "B": 16.2,
+      "MA": 16.6,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 82.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17.3,
+      "CG": 16.9,
+      "B": 16.4,
+      "MA": 16.1,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 82.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.7,
+      "CG": 16.6,
+      "B": 15.7,
+      "MA": 16.3,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 77.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.6,
+      "CG": 15.9,
+      "B": 15.4,
+      "MA": 15.6,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 77.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 15.7,
+      "CG": 14.8,
+      "B": 15.2,
+      "MA": 15.2,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 74,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.8,
+      "CG": 15,
+      "B": 14.3,
+      "MA": 14.8,
+      "P": 15.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Muscatine, Iowa",
+   "date": "2015-07-12T00:00:00.000Z",
+   "location": "Muscatine, Iowa",
+   "offSeasonDay": 22,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 75.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 14.9,
+      "CG": 15.3,
+      "B": 15,
+      "MA": 15,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 75.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.2,
+      "CG": 15,
+      "B": 15.2,
+      "MA": 15.2,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.6,
+      "CG": 14.9,
+      "B": 14.8,
+      "MA": 14.1,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 63.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 12.4,
+      "CG": 12.1,
+      "B": 12.7,
+      "MA": 13,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 56.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.7,
+      "VA": 10.9,
+      "CG": 11.4,
+      "B": 11,
+      "MA": 12.3,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 60.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 12.1,
+      "CG": 11.6,
+      "B": 12.2,
+      "MA": 12.2,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 59.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 11.7,
+      "CG": 12,
+      "B": 11.3,
+      "MA": 11.9,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 56.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 11.1,
+      "CG": 11.4,
+      "B": 11.8,
+      "MA": 11,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 52.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.3,
+      "VA": 10.3,
+      "CG": 10.2,
+      "B": 10.8,
+      "MA": 10.7,
+      "P": 10
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Bellflower, California",
+   "date": "2015-07-12T00:00:00.000Z",
+   "location": "Bellflower, California",
+   "offSeasonDay": 22,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 66.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.2,
+      "CG": 12.4,
+      "B": 13.4,
+      "MA": 13,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 64.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.7,
+      "CG": 12.9,
+      "B": 13.2,
+      "MA": 12.8,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 57.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 12.2,
+      "CG": 11.2,
+      "B": 11.4,
+      "MA": 12,
+      "P": 11.4
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 57.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.7,
+      "CG": 10.8,
+      "B": 11.8,
+      "MA": 11.7,
+      "P": 11.9
+     }
+    },
+    {
+     "corps": "Watchmen",
+     "score": 55.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.2,
+      "VA": 11,
+      "CG": 11.1,
+      "B": 11,
+      "MA": 11.4,
+      "P": 11.7
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 54.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 10.4,
+      "CG": 9.9,
+      "B": 11.2,
+      "MA": 10.4,
+      "P": 11.2
+     }
+    },
+    {
+     "corps": "Thunder",
+     "score": 50.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 10.6,
+      "CG": 9.5,
+      "B": 9.8,
+      "MA": 9.8,
+      "P": 9.7
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 46.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.3,
+      "VA": 9,
+      "CG": 8.4,
+      "B": 9.6,
+      "MA": 9.7,
+      "P": 9.1
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 43.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.1,
+      "VA": 8.6,
+      "CG": 8.3,
+      "B": 9.1,
+      "MA": 9.4,
+      "P": 8.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Fremont, Nebraska",
+   "date": "2015-07-13T00:00:00.000Z",
+   "location": "Fremont, Nebraska",
+   "offSeasonDay": 23,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 80.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.1,
+      "CG": 16.5,
+      "B": 16,
+      "MA": 15.5,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 75.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 15.2,
+      "CG": 15.3,
+      "B": 15,
+      "MA": 14.9,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 74.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.6,
+      "CG": 14.9,
+      "B": 14.5,
+      "MA": 14.3,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 70.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14,
+      "CG": 14.3,
+      "B": 14.3,
+      "MA": 13.7,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 70.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.5,
+      "CG": 13.6,
+      "B": 14,
+      "MA": 13.9,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 69.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.7,
+      "CG": 13.9,
+      "B": 13.7,
+      "MA": 13.4,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 63.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 12.9,
+      "CG": 12.6,
+      "B": 12.8,
+      "MA": 12.3,
+      "P": 12.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2015-07-13T00:00:00.000Z",
+   "location": "Warrensburg, Missouri",
+   "offSeasonDay": 23,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 84.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.4,
+      "CG": 16.3,
+      "B": 16.4,
+      "MA": 17.2,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 84.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17,
+      "CG": 17.2,
+      "B": 16.6,
+      "MA": 16.9,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 83.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.8,
+      "CG": 17,
+      "B": 16.3,
+      "MA": 16.5,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 82.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17.2,
+      "CG": 16.6,
+      "B": 16.1,
+      "MA": 16.4,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 82.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.6,
+      "CG": 16.8,
+      "B": 16.5,
+      "MA": 16.7,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 79.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16.3,
+      "CG": 15.8,
+      "B": 15.4,
+      "MA": 16.1,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 77.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.9,
+      "CG": 16,
+      "B": 15.7,
+      "MA": 15.8,
+      "P": 15.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Bentonville, Arkansas",
+   "date": "2015-07-14T00:00:00.000Z",
+   "location": "Bentonville, Arkansas",
+   "offSeasonDay": 24,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 85.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.4,
+      "CG": 17.2,
+      "B": 16.7,
+      "MA": 16.9,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 84.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.1,
+      "CG": 17,
+      "B": 16.6,
+      "MA": 17.1,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 76.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.3,
+      "CG": 15.8,
+      "B": 14.8,
+      "MA": 15.2,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 72.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.2,
+      "CG": 14,
+      "B": 14,
+      "MA": 14.5,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 71.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.3,
+      "CG": 13.9,
+      "B": 14.2,
+      "MA": 14.7,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 63.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.3,
+      "CG": 11.1,
+      "B": 11.9,
+      "MA": 12.8,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 58.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 10.9,
+      "CG": 11.6,
+      "B": 10.7,
+      "MA": 12.3,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 62.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 11.3,
+      "CG": 10.9,
+      "B": 12.4,
+      "MA": 13.3,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 62.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 11.5,
+      "CG": 10.6,
+      "B": 12,
+      "MA": 13.2,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 61.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 11.8,
+      "CG": 11.8,
+      "B": 11.2,
+      "MA": 12.9,
+      "P": 12.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Great Bend, Kansas",
+   "date": "2015-07-14T00:00:00.000Z",
+   "location": "Great Bend, Kansas",
+   "offSeasonDay": 24,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 82,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.2,
+      "CG": 16.7,
+      "B": 16.2,
+      "MA": 16,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 76.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.5,
+      "CG": 15.9,
+      "B": 14.8,
+      "MA": 14.9,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 76.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.4,
+      "CG": 15.9,
+      "B": 15.1,
+      "MA": 14.4,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 76.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.1,
+      "CG": 15.6,
+      "B": 15,
+      "MA": 15.1,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 74.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.6,
+      "CG": 15.3,
+      "B": 14.7,
+      "MA": 14.6,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 69.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.2,
+      "CG": 14,
+      "B": 14.4,
+      "MA": 14,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 57.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 10.8,
+      "CG": 11.7,
+      "B": 12,
+      "MA": 11.3,
+      "P": 11
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Mustang, Oklahoma",
+   "date": "2015-07-15T00:00:00.000Z",
+   "location": "Mustang, Oklahoma",
+   "offSeasonDay": 25,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 86.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.3,
+      "CG": 16.7,
+      "B": 16.8,
+      "MA": 17.3,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 83.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.4,
+      "CG": 16.3,
+      "B": 16.2,
+      "MA": 16.5,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 78.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.5,
+      "CG": 15.1,
+      "B": 15.5,
+      "MA": 15.7,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 76.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.9,
+      "CG": 14.4,
+      "B": 14.9,
+      "MA": 15.2,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 72.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.8,
+      "CG": 14.2,
+      "B": 14,
+      "MA": 14.7,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 72,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.2,
+      "CG": 13.6,
+      "B": 14.5,
+      "MA": 13.6,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 71.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14,
+      "CG": 13.3,
+      "B": 14.2,
+      "MA": 13.8,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 65.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.2,
+      "CG": 11.8,
+      "B": 13.2,
+      "MA": 13.1,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 59.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 11.4,
+      "CG": 12,
+      "B": 11.7,
+      "MA": 12.1,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 62.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 11.7,
+      "CG": 11.9,
+      "B": 12.5,
+      "MA": 12.7,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Belton, Texas",
+   "date": "2015-07-16T00:00:00.000Z",
+   "location": "Belton, Texas",
+   "offSeasonDay": 26,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 83.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16,
+      "CG": 16.2,
+      "B": 16.4,
+      "MA": 16.5,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 80.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.1,
+      "CG": 16,
+      "B": 16.2,
+      "MA": 16.7,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 79.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 15.4,
+      "CG": 15.1,
+      "B": 15.2,
+      "MA": 16.1,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 78.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.7,
+      "CG": 15.6,
+      "B": 15.4,
+      "MA": 14.7,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 78.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.2,
+      "CG": 15.8,
+      "B": 14.6,
+      "MA": 16.3,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 77,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 14.8,
+      "CG": 15.3,
+      "B": 15,
+      "MA": 15.4,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 76.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.9,
+      "CG": 14.7,
+      "B": 14.4,
+      "MA": 15,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 76.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.6,
+      "CG": 14.4,
+      "B": 14.7,
+      "MA": 15.2,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 71.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 14.4,
+      "CG": 14.1,
+      "B": 14.3,
+      "MA": 13.9,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 60.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12.6,
+      "CG": 12.8,
+      "B": 11.5,
+      "MA": 11.6,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 64.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 13.5,
+      "CG": 13.6,
+      "B": 12.5,
+      "MA": 13,
+      "P": 13.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Denton, Texas",
+   "date": "2015-07-16T00:00:00.000Z",
+   "location": "Denton, Texas",
+   "offSeasonDay": 26,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 85.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.1,
+      "CG": 16.6,
+      "B": 17.2,
+      "MA": 17.2,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 85.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.7,
+      "CG": 17.1,
+      "B": 16.8,
+      "MA": 16.9,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 84.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17.3,
+      "CG": 17.3,
+      "B": 17,
+      "MA": 16.6,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 84.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17,
+      "CG": 16.9,
+      "B": 16.5,
+      "MA": 16.4,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 80.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16,
+      "CG": 15.9,
+      "B": 15.7,
+      "MA": 16,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 74.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15,
+      "CG": 14.8,
+      "B": 14.3,
+      "MA": 14.9,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 72.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.8,
+      "CG": 14.3,
+      "B": 14.4,
+      "MA": 14.6,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 69.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.4,
+      "CG": 13.8,
+      "B": 14.6,
+      "MA": 14.4,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 64.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 12.8,
+      "CG": 12,
+      "B": 12.9,
+      "MA": 13,
+      "P": 10.3
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 62.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 12.2,
+      "CG": 12.6,
+      "B": 13.1,
+      "MA": 12.8,
+      "P": 10.1
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 54.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.4,
+      "VA": 10.6,
+      "CG": 11.4,
+      "B": 10.6,
+      "MA": 10,
+      "P": 10.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2015-07-17T00:00:00.000Z",
+   "location": "Houston, Texas",
+   "offSeasonDay": 27,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 87.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.4,
+      "CG": 17.1,
+      "B": 17.7,
+      "MA": 17.4,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 86.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.6,
+      "CG": 17.4,
+      "B": 17.3,
+      "MA": 17.3,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 85.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.9,
+      "CG": 17.2,
+      "B": 17.1,
+      "MA": 17,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 84.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17.1,
+      "CG": 17.5,
+      "B": 17.5,
+      "MA": 16.7,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 84.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.3,
+      "CG": 16.9,
+      "B": 16.8,
+      "MA": 16.5,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 81.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.9,
+      "CG": 15.9,
+      "B": 16.6,
+      "MA": 16.1,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 80.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 15.6,
+      "CG": 16.3,
+      "B": 16.5,
+      "MA": 15.9,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 77.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 16.1,
+      "CG": 15.7,
+      "B": 15.5,
+      "MA": 14.7,
+      "P": 14.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Southwestern",
+   "date": "2015-07-18T00:00:00.000Z",
+   "location": "San Antonio, Texas",
+   "offSeasonDay": 28,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 87.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.2,
+      "CG": 16.9,
+      "B": 17.5,
+      "MA": 17.6,
+      "P": 17.35
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 87.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.6,
+      "CG": 17.4,
+      "B": 17.3,
+      "MA": 17.2,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 86.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.9,
+      "CG": 17.5,
+      "B": 17.4,
+      "MA": 17.4,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 85.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17.3,
+      "CG": 17,
+      "B": 16.9,
+      "MA": 17,
+      "P": 16.95
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 84.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 16.7,
+      "CG": 16.8,
+      "B": 16.6,
+      "MA": 16.8,
+      "P": 17.25
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 81.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.7,
+      "CG": 15.9,
+      "B": 16.2,
+      "MA": 16.5,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 81.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16,
+      "CG": 16.4,
+      "B": 16.4,
+      "MA": 16.3,
+      "P": 16.25
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 80.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16.2,
+      "CG": 16.3,
+      "B": 16,
+      "MA": 16.1,
+      "P": 15.45
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 79.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.8,
+      "CG": 15.2,
+      "B": 15.8,
+      "MA": 15.6,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 77.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.2,
+      "CG": 15.8,
+      "B": 15,
+      "MA": 15.2,
+      "P": 15.55
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 77.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.3,
+      "B": 15.1,
+      "MA": 15.4,
+      "P": 14.95
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 77.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.8,
+      "CG": 15.7,
+      "B": 15.6,
+      "MA": 15.8,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 76.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.6,
+      "CG": 14.7,
+      "B": 15.4,
+      "MA": 15.3,
+      "P": 14.95
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 75.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.3,
+      "CG": 15,
+      "B": 14.8,
+      "MA": 15,
+      "P": 14.95
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 74.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15,
+      "CG": 14.9,
+      "B": 14.3,
+      "MA": 14.7,
+      "P": 14.55
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 71.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.1,
+      "CG": 14.2,
+      "B": 14.6,
+      "MA": 14.5,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 69.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.1,
+      "CG": 13.9,
+      "B": 14.4,
+      "MA": 14.2,
+      "P": 14.15
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 69.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.5,
+      "CG": 13.4,
+      "B": 13.8,
+      "MA": 13.5,
+      "P": 14.35
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 67.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 13.7,
+      "CG": 13.7,
+      "B": 14.1,
+      "MA": 13.3,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 64.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13,
+      "CG": 12,
+      "B": 13,
+      "MA": 13.2,
+      "P": 11
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 63.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.8,
+      "CG": 12.4,
+      "B": 13.7,
+      "MA": 12.8,
+      "P": 11.6
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 57.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 12.5,
+      "CG": 12.1,
+      "B": 12,
+      "MA": 11.7,
+      "P": 11.15
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 61.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 11.7,
+      "CG": 11.4,
+      "B": 13.2,
+      "MA": 12.3,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 56.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 10.8,
+      "CG": 11.6,
+      "B": 12.3,
+      "MA": 11.3,
+      "P": 11
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 54.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 10,
+      "CG": 11.3,
+      "B": 11.8,
+      "MA": 10.7,
+      "P": 11.2
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 53.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.3,
+      "CG": 10.3,
+      "B": 12.7,
+      "MA": 10,
+      "P": 9.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Dallas, Texas",
+   "date": "2015-07-20T00:00:00.000Z",
+   "location": "Dallas, Texas",
+   "offSeasonDay": 30,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 87.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.7,
+      "CG": 17.8,
+      "B": 17,
+      "MA": 17.6,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 85.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.2,
+      "CG": 17.3,
+      "B": 16.8,
+      "MA": 17.2,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 82.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16,
+      "CG": 16.2,
+      "B": 16.3,
+      "MA": 16.9,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 78.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15,
+      "CG": 16.1,
+      "B": 15.7,
+      "MA": 15.8,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 78.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.4,
+      "B": 15.1,
+      "MA": 15.5,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 76,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.7,
+      "CG": 14.6,
+      "B": 15.4,
+      "MA": 15,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 75.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.4,
+      "CG": 15.1,
+      "B": 15,
+      "MA": 14.9,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 70.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14,
+      "CG": 13.9,
+      "B": 14.6,
+      "MA": 14.3,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 64.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12,
+      "CG": 13.5,
+      "B": 13.9,
+      "MA": 13.1,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 56.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 10,
+      "CG": 12.5,
+      "B": 12.5,
+      "MA": 10.5,
+      "P": 10.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Lafayette, Louisiana",
+   "date": "2015-07-20T00:00:00.000Z",
+   "location": "Lafayette, Louisiana",
+   "offSeasonDay": 30,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 86.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.1,
+      "CG": 17.4,
+      "B": 17.3,
+      "MA": 17.8,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 86.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.4,
+      "CG": 17.1,
+      "B": 16.9,
+      "MA": 17.6,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 81.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.5,
+      "CG": 16.4,
+      "B": 16.2,
+      "MA": 16.2,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 79.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16,
+      "CG": 15.1,
+      "B": 15.7,
+      "MA": 16,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 78.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.5,
+      "CG": 15.8,
+      "B": 15,
+      "MA": 15.6,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 72.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 15,
+      "CG": 14.8,
+      "B": 14.7,
+      "MA": 14.2,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 65.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 14.5,
+      "CG": 12.4,
+      "B": 13.2,
+      "MA": 12.6,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 61.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.2,
+      "VA": 13.9,
+      "CG": 12,
+      "B": 12.1,
+      "MA": 11.2,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 60.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 13.2,
+      "CG": 11.8,
+      "B": 12.5,
+      "MA": 11.6,
+      "P": 11.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Broken Arrow, Oklahoma",
+   "date": "2015-07-21T00:00:00.000Z",
+   "location": "Broken Arrow, Oklahoma",
+   "offSeasonDay": 31,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 88.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.6,
+      "CG": 17.7,
+      "B": 17.3,
+      "MA": 17.9,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 83.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.3,
+      "CG": 16.4,
+      "B": 16.5,
+      "MA": 16.7,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 79.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.1,
+      "CG": 15.9,
+      "B": 15.6,
+      "MA": 15.7,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 79.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.9,
+      "CG": 16.1,
+      "B": 15.9,
+      "MA": 15.9,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 76.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.7,
+      "CG": 15.4,
+      "B": 15.4,
+      "MA": 15.2,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 71.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 13.5,
+      "CG": 15,
+      "B": 15.1,
+      "MA": 14.4,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 71.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.3,
+      "CG": 14.1,
+      "B": 14.8,
+      "MA": 13.8,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 70,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.8,
+      "CG": 14.5,
+      "B": 14.7,
+      "MA": 13.7,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 65.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.3,
+      "CG": 13.3,
+      "B": 14.2,
+      "MA": 13,
+      "P": 12.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Ocean Springs, Mississippi",
+   "date": "2015-07-21T00:00:00.000Z",
+   "location": "Ocean Springs, Mississippi",
+   "offSeasonDay": 31,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 88.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.6,
+      "CG": 17.5,
+      "B": 17.4,
+      "MA": 18.1,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 87.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.8,
+      "CG": 17.2,
+      "B": 17.2,
+      "MA": 17.9,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 82.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.5,
+      "CG": 16.2,
+      "B": 16.8,
+      "MA": 16.2,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 78.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.9,
+      "CG": 15.9,
+      "B": 15.1,
+      "MA": 15.9,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 75.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 15.3,
+      "CG": 15.2,
+      "B": 14.7,
+      "MA": 15.4,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 65.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.8,
+      "CG": 12.5,
+      "B": 13.5,
+      "MA": 13.1,
+      "P": 11.7
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 62.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13,
+      "CG": 12.7,
+      "B": 12.6,
+      "MA": 12.4,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 53.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 11,
+      "CG": 10.6,
+      "B": 10.9,
+      "MA": 11.7,
+      "P": 9.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Hattiesburg, Mississippi",
+   "date": "2015-07-22T00:00:00.000Z",
+   "location": "Hattiesburg, Mississippi",
+   "offSeasonDay": 32,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 88.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 18.3,
+      "CG": 17.8,
+      "B": 17.7,
+      "MA": 17.9,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 87.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.9,
+      "CG": 17.4,
+      "B": 17.6,
+      "MA": 17.4,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 83.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 17.1,
+      "CG": 16.7,
+      "B": 17,
+      "MA": 16.8,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 81.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.5,
+      "CG": 16,
+      "B": 16.1,
+      "MA": 16.4,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 78,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 14.6,
+      "B": 15.5,
+      "MA": 15,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 76.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 14.8,
+      "CG": 15,
+      "B": 15.1,
+      "MA": 15.2,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 73.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 15.5,
+      "CG": 15.4,
+      "B": 14.5,
+      "MA": 14.8,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 63.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 14,
+      "CG": 12.4,
+      "B": 12.6,
+      "MA": 12.8,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 56.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 11.7,
+      "CG": 10.5,
+      "B": 11.7,
+      "MA": 10.5,
+      "P": 11.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Little Rock, Arkansas",
+   "date": "2015-07-22T00:00:00.000Z",
+   "location": "Little Rock, Arkansas",
+   "offSeasonDay": 32,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 88.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.1,
+      "CG": 17.5,
+      "B": 17.2,
+      "MA": 17.6,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 84.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.3,
+      "CG": 16.3,
+      "B": 16.6,
+      "MA": 17,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 80.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.3,
+      "CG": 16.7,
+      "B": 16.3,
+      "MA": 16.3,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 79.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.1,
+      "CG": 16,
+      "B": 16,
+      "MA": 15.8,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 77.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.9,
+      "CG": 15.4,
+      "B": 15.7,
+      "MA": 15.4,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 72.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 13.6,
+      "CG": 13.9,
+      "B": 15.1,
+      "MA": 14.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 72.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14,
+      "CG": 14.2,
+      "B": 14.8,
+      "MA": 13.9,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 71.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.4,
+      "CG": 14.8,
+      "B": 14.6,
+      "MA": 14.2,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 66.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.8,
+      "CG": 13.3,
+      "B": 14,
+      "MA": 13,
+      "P": 13
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Huntsville, Alabama",
+   "date": "2015-07-23T00:00:00.000Z",
+   "location": "Huntsville, Alabama",
+   "offSeasonDay": 33,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 89.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 18,
+      "CG": 17.6,
+      "B": 17.9,
+      "MA": 18.1,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 82.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.3,
+      "CG": 16.2,
+      "B": 16.5,
+      "MA": 16.1,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 80.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16.4,
+      "CG": 15.4,
+      "B": 16.1,
+      "MA": 15.8,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 78.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16,
+      "CG": 15.9,
+      "B": 15.7,
+      "MA": 15.6,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 74.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.6,
+      "CG": 14.8,
+      "B": 15.3,
+      "MA": 15,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 14.3,
+      "CG": 14.5,
+      "B": 15.2,
+      "MA": 14.6,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 67.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 12.9,
+      "CG": 13.1,
+      "B": 14.1,
+      "MA": 13.2,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 66.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 13.4,
+      "CG": 13.8,
+      "B": 13.6,
+      "MA": 13.5,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 63.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 12.8,
+      "CG": 12.9,
+      "B": 12.3,
+      "MA": 12.9,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.5,
+      "VA": 11.2,
+      "CG": 11,
+      "B": 11.5,
+      "MA": 11.9,
+      "P": 11.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Masters",
+   "date": "2015-07-24T00:00:00.000Z",
+   "location": "Murfreesboro, Tennessee",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 89.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 18,
+      "CG": 18.1,
+      "B": 18,
+      "MA": 17.2,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 89.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.5,
+      "CG": 17.9,
+      "B": 17.9,
+      "MA": 17.5,
+      "P": 18
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 88.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.6,
+      "CG": 17.4,
+      "B": 18.1,
+      "MA": 17.6,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 88.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.7,
+      "CG": 17.5,
+      "B": 17.7,
+      "MA": 17,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 87.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.1,
+      "CG": 17.6,
+      "B": 17.5,
+      "MA": 16.8,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 84.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.6,
+      "CG": 16.9,
+      "B": 17.3,
+      "MA": 16.4,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 83.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.3,
+      "CG": 16.5,
+      "B": 17.1,
+      "MA": 16.2,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 83.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.2,
+      "CG": 16.6,
+      "B": 16.9,
+      "MA": 16.3,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 65.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.4,
+      "CG": 13.1,
+      "B": 12.5,
+      "MA": 13,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Opelika, Arkansas",
+   "date": "2015-07-24T00:00:00.000Z",
+   "location": "Opelika, Arkansas",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Madison Scouts",
+     "score": 82.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.5,
+      "CG": 16.5,
+      "B": 16.8,
+      "MA": 16.1,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 81.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 16,
+      "CG": 17.1,
+      "B": 16.2,
+      "MA": 16.4,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 80.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.2,
+      "CG": 16.9,
+      "B": 16,
+      "MA": 16,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 78,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.7,
+      "CG": 15.7,
+      "B": 15.2,
+      "MA": 15.6,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 75.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 15.4,
+      "CG": 14.8,
+      "B": 15,
+      "MA": 14.9,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 74.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.6,
+      "CG": 14.9,
+      "B": 15.4,
+      "MA": 15.1,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 54.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.7,
+      "VA": 11.5,
+      "CG": 11.2,
+      "B": 11,
+      "MA": 11.7,
+      "P": 10.5
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 52.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 10.2,
+      "CG": 9.8,
+      "B": 11.4,
+      "MA": 10.8,
+      "P": 12.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Southeastern",
+   "date": "2015-07-25T00:00:00.000Z",
+   "location": "Atlanta, Georgia",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 91.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.3,
+      "CG": 18.1,
+      "B": 18.4,
+      "MA": 18.2,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 91.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.6,
+      "CG": 17.9,
+      "B": 18.2,
+      "MA": 17.7,
+      "P": 18.45
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 90.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 18.5,
+      "CG": 17.6,
+      "B": 18.3,
+      "MA": 18.3,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 89.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.8,
+      "CG": 17.4,
+      "B": 17.7,
+      "MA": 18.1,
+      "P": 18.15
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 89.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 18.2,
+      "CG": 17.7,
+      "B": 17.8,
+      "MA": 17.8,
+      "P": 18.35
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 86.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.7,
+      "CG": 17.2,
+      "B": 17.3,
+      "MA": 17.2,
+      "P": 17.35
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 84.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17.2,
+      "CG": 16.7,
+      "B": 17,
+      "MA": 16.7,
+      "P": 16.35
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 83.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17.1,
+      "CG": 16.4,
+      "B": 16.5,
+      "MA": 16.4,
+      "P": 16.65
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 81.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.5,
+      "CG": 16.8,
+      "B": 16,
+      "MA": 16.1,
+      "P": 16.55
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 81.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.9,
+      "CG": 16.5,
+      "B": 16.2,
+      "MA": 15.3,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 80.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.4,
+      "CG": 16.1,
+      "B": 15.8,
+      "MA": 15.6,
+      "P": 15.95
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 79,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 16.6,
+      "CG": 15.7,
+      "B": 15.4,
+      "MA": 15.7,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 78.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 16.1,
+      "CG": 15.5,
+      "B": 15.5,
+      "MA": 15.5,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 77.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.9,
+      "CG": 15.1,
+      "B": 15.3,
+      "MA": 16,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 75.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 15.1,
+      "CG": 14.7,
+      "B": 14.7,
+      "MA": 15.8,
+      "P": 14.95
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 73.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.7,
+      "CG": 14.3,
+      "B": 15.1,
+      "MA": 15.1,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 73.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 15.4,
+      "CG": 13.7,
+      "B": 14.9,
+      "MA": 15,
+      "P": 15.05
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 73.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.8,
+      "CG": 14.2,
+      "B": 14.5,
+      "MA": 14.5,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 69,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 14,
+      "CG": 12,
+      "B": 14.3,
+      "MA": 14.2,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 68.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 13.2,
+      "CG": 12.8,
+      "B": 14.1,
+      "MA": 14.1,
+      "P": 12.95
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 64.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.5,
+      "CG": 12.2,
+      "B": 13.5,
+      "MA": 12.7,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 57.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 11.1,
+      "CG": 11.6,
+      "B": 12.3,
+      "MA": 11.2,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 53.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 10.5,
+      "CG": 10.4,
+      "B": 11.1,
+      "MA": 10.3,
+      "P": 10
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Hamilton, Ohio",
+   "date": "2015-07-25T00:00:00.000Z",
+   "location": "Hamilton, Ohio",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 69.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.3,
+      "CG": 12.8,
+      "B": 14.4,
+      "MA": 13.7,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 67,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.8,
+      "CG": 13.2,
+      "B": 13.9,
+      "MA": 12.8,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 65.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.1,
+      "CG": 12.9,
+      "B": 13.8,
+      "MA": 12.6,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 65.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.2,
+      "CG": 12.4,
+      "B": 14.2,
+      "MA": 13.5,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 58.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 10.9,
+      "CG": 10.3,
+      "B": 11.7,
+      "MA": 10.7,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 53.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.8,
+      "VA": 8.3,
+      "CG": 10.7,
+      "B": 11,
+      "MA": 10,
+      "P": 10.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Oregon, Wisconsin",
+   "date": "2015-07-25T00:00:00.000Z",
+   "location": "Oregon, Wisconsin",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 73.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.7,
+      "CG": 13.7,
+      "B": 15,
+      "MA": 14.2,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 69.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.1,
+      "CG": 13.4,
+      "B": 14,
+      "MA": 13.7,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 59,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12.2,
+      "CG": 11.6,
+      "B": 11.8,
+      "MA": 10.5,
+      "P": 10.3
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 48.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.7,
+      "VA": 9.4,
+      "CG": 10.2,
+      "B": 9.4,
+      "MA": 9.7,
+      "P": 8.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2015-07-26T00:00:00.000Z",
+   "location": "Winston-Salem, North Carolina",
+   "offSeasonDay": 36,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 91.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.5,
+      "CG": 18,
+      "B": 18.1,
+      "MA": 17.8,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 91.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 18,
+      "CG": 18.2,
+      "B": 18.5,
+      "MA": 18.1,
+      "P": 18
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 90.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 18.2,
+      "CG": 17.5,
+      "B": 18.4,
+      "MA": 18.3,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 89.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 18.1,
+      "CG": 17.4,
+      "B": 17.8,
+      "MA": 17.9,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 89.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 18.3,
+      "CG": 17.6,
+      "B": 17.6,
+      "MA": 17.7,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 85.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17.1,
+      "CG": 17,
+      "B": 16.8,
+      "MA": 16.7,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 83.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.5,
+      "CG": 16.6,
+      "B": 16.4,
+      "MA": 16.5,
+      "P": 16.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Charleston, West Virginia",
+   "date": "2015-07-27T00:00:00.000Z",
+   "location": "Charleston, West Virginia",
+   "offSeasonDay": 37,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 86.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.3,
+      "CG": 17.6,
+      "B": 17.5,
+      "MA": 17.5,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 84.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17,
+      "CG": 16.5,
+      "B": 17.4,
+      "MA": 17.1,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 81.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.2,
+      "CG": 16.7,
+      "B": 16.1,
+      "MA": 16.3,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 74.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.5,
+      "CG": 15.2,
+      "B": 14.9,
+      "MA": 15.5,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 74.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.8,
+      "CG": 14.6,
+      "B": 15.1,
+      "MA": 15.1,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 70.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 13.8,
+      "CG": 12.6,
+      "B": 14.6,
+      "MA": 14.4,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Dublin, Ohio",
+   "date": "2015-07-27T00:00:00.000Z",
+   "location": "Dublin, Ohio",
+   "offSeasonDay": 37,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 91.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 19.1,
+      "CG": 18.4,
+      "B": 18.1,
+      "MA": 18,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 90.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.6,
+      "CG": 18,
+      "B": 17.9,
+      "MA": 18.2,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 83.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.7,
+      "CG": 17,
+      "B": 16.5,
+      "MA": 16.3,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 83.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.3,
+      "CG": 16.7,
+      "B": 16.1,
+      "MA": 16,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 79.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16.9,
+      "CG": 16,
+      "B": 15.5,
+      "MA": 15.5,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 79.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 16.3,
+      "CG": 15.3,
+      "B": 16,
+      "MA": 15.8,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 65.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.5,
+      "CG": 12.3,
+      "B": 13.6,
+      "MA": 13,
+      "P": 13.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Cedar Rapids, Iowa",
+   "date": "2015-07-27T00:00:00.000Z",
+   "location": "Cedar Rapids, Iowa",
+   "offSeasonDay": 37,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 72.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 14.6,
+      "CG": 13.8,
+      "B": 15.2,
+      "MA": 14.2,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 68.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 13.8,
+      "CG": 13.5,
+      "B": 14.1,
+      "MA": 13.5,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 58.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 11.7,
+      "CG": 12.2,
+      "B": 12.1,
+      "MA": 12.2,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 58.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 10.8,
+      "CG": 10.6,
+      "B": 12.6,
+      "MA": 11.6,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 55.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 10.4,
+      "CG": 11.1,
+      "B": 11.2,
+      "MA": 10.5,
+      "P": 10.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Waukesha, Wisconsin",
+   "date": "2015-07-27T00:00:00.000Z",
+   "location": "Waukesha, Wisconsin",
+   "offSeasonDay": 37,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 71.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.6,
+      "CG": 13.7,
+      "B": 13.8,
+      "MA": 14.3,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 69.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.9,
+      "CG": 13.5,
+      "B": 14.2,
+      "MA": 13.9,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 67.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 12.9,
+      "CG": 13.8,
+      "B": 14,
+      "MA": 13.4,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 67.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.5,
+      "CG": 13.2,
+      "B": 14.5,
+      "MA": 13.7,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 66.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.1,
+      "CG": 13.3,
+      "B": 13.5,
+      "MA": 13.5,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 58.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.2,
+      "VA": 11,
+      "CG": 11.1,
+      "B": 12.2,
+      "MA": 12.6,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 49.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.5,
+      "VA": 9.5,
+      "CG": 10,
+      "B": 9.7,
+      "MA": 9.3,
+      "P": 10.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Erie, Pennsylvania",
+   "date": "2015-07-28T00:00:00.000Z",
+   "location": "Erie, Pennsylvania",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 87.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.3,
+      "CG": 17.5,
+      "B": 17.6,
+      "MA": 17.7,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 84.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 16.7,
+      "CG": 16.8,
+      "B": 16.6,
+      "MA": 16.7,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 83.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.2,
+      "CG": 17,
+      "B": 16.3,
+      "MA": 16.6,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 81.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.3,
+      "CG": 16.1,
+      "B": 15.7,
+      "MA": 16.1,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 80.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.5,
+      "CG": 15.3,
+      "B": 16.1,
+      "MA": 16.3,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 14.9,
+      "CG": 13.4,
+      "B": 15.1,
+      "MA": 15.5,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 74.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.4,
+      "CG": 13.3,
+      "B": 15.4,
+      "MA": 15.8,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 66.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 13.6,
+      "CG": 12.2,
+      "B": 13.8,
+      "MA": 13.1,
+      "P": 13.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Salem, Virginia",
+   "date": "2015-07-28T00:00:00.000Z",
+   "location": "Salem, Virginia",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 91.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.2,
+      "CG": 18.2,
+      "B": 18.7,
+      "MA": 18.6,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 84.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.8,
+      "CG": 16.5,
+      "B": 16.7,
+      "MA": 17.1,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 80.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.5,
+      "B": 15.6,
+      "MA": 16.3,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 76.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.6,
+      "CG": 15.3,
+      "B": 14.8,
+      "MA": 16,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 70.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.7,
+      "CG": 12.5,
+      "B": 14.5,
+      "MA": 14.5,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 69.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 12.8,
+      "CG": 13,
+      "B": 14.2,
+      "MA": 14,
+      "P": 13
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Kalamazoo, Michigan",
+   "date": "2015-07-28T00:00:00.000Z",
+   "location": "Kalamazoo, Michigan",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 73.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.6,
+      "CG": 14.2,
+      "B": 15,
+      "MA": 13.7,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 71.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.3,
+      "CG": 13.5,
+      "B": 14.6,
+      "MA": 13.8,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 71.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.2,
+      "CG": 14.5,
+      "B": 14.1,
+      "MA": 14.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 69.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.5,
+      "CG": 13.9,
+      "B": 14.3,
+      "MA": 12.9,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 68.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.8,
+      "CG": 13.2,
+      "B": 13.5,
+      "MA": 13.9,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 49.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.5,
+      "VA": 9.5,
+      "CG": 9.3,
+      "B": 10.2,
+      "MA": 9.3,
+      "P": 9.8
+     }
+    },
+    {
+     "corps": "Blue Saints",
+     "score": 48.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.1,
+      "VA": 8.4,
+      "CG": 8.1,
+      "B": 10,
+      "MA": 9.4,
+      "P": 10.2
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 61.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.3,
+      "CG": 11,
+      "B": 12.7,
+      "MA": 11.9,
+      "P": 12.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Annapolis, Maryland",
+   "date": "2015-07-29T00:00:00.000Z",
+   "location": "Annapolis, Maryland",
+   "offSeasonDay": 39,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 92.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.4,
+      "CG": 17.9,
+      "B": 18.6,
+      "MA": 18.4,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 85.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 17.2,
+      "CG": 17.2,
+      "B": 17.2,
+      "MA": 17.1,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 84.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.6,
+      "CG": 16.9,
+      "B": 17.1,
+      "MA": 17.5,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 81.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.2,
+      "CG": 15.8,
+      "B": 15.9,
+      "MA": 17,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 78.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.7,
+      "CG": 14.9,
+      "B": 15.4,
+      "MA": 16.6,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 76.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.3,
+      "CG": 15,
+      "B": 15.1,
+      "MA": 15.2,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 70.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.1,
+      "CG": 14,
+      "B": 14,
+      "MA": 14.2,
+      "P": 13.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Rome, New York",
+   "date": "2015-07-29T00:00:00.000Z",
+   "location": "Rome, New York",
+   "offSeasonDay": 39,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 88.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.4,
+      "CG": 17.4,
+      "B": 18.1,
+      "MA": 17.6,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 85.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 16.5,
+      "CG": 17.2,
+      "B": 17,
+      "MA": 16.8,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 84.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 16.1,
+      "CG": 16.8,
+      "B": 16.5,
+      "MA": 16.5,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 81.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.2,
+      "CG": 16,
+      "B": 15.9,
+      "MA": 15.9,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 81.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.4,
+      "CG": 15.5,
+      "B": 16.3,
+      "MA": 16.3,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 14.7,
+      "CG": 14.1,
+      "B": 15.2,
+      "MA": 15.1,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 74.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.1,
+      "CG": 13.7,
+      "B": 15.6,
+      "MA": 15.6,
+      "P": 16.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2015-07-30T00:00:00.000Z",
+   "location": "Chester, Pennsylvania",
+   "offSeasonDay": 40,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 93.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 19.3,
+      "CG": 18.7,
+      "B": 19.1,
+      "MA": 18.5,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 93.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.5,
+      "CG": 18.5,
+      "B": 18.9,
+      "MA": 18.9,
+      "P": 18
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 93.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 19,
+      "CG": 17.9,
+      "B": 18.7,
+      "MA": 18.8,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 93.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 18.8,
+      "CG": 18.1,
+      "B": 18.5,
+      "MA": 18.7,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 90.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.3,
+      "CG": 18.3,
+      "B": 18,
+      "MA": 18,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 86.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.8,
+      "CG": 17,
+      "B": 17.4,
+      "MA": 17.7,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 86.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17,
+      "CG": 17.4,
+      "B": 17.2,
+      "MA": 17.4,
+      "P": 17.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Quincy, Massachusetts",
+   "date": "2015-07-30T00:00:00.000Z",
+   "location": "Quincy, Massachusetts",
+   "offSeasonDay": 40,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 84.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.7,
+      "CG": 17,
+      "B": 16.7,
+      "MA": 16.6,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 82.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.8,
+      "CG": 16.5,
+      "B": 16,
+      "MA": 16.1,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 81.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.5,
+      "CG": 15.5,
+      "B": 16.3,
+      "MA": 16.5,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 77.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.4,
+      "CG": 15.4,
+      "B": 15.1,
+      "MA": 15.5,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 76.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.9,
+      "CG": 15,
+      "B": 15.5,
+      "MA": 15.8,
+      "P": 15.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Johnsonburg, Pennsylvania",
+   "date": "2015-07-30T00:00:00.000Z",
+   "location": "Johnsonburg, Pennsylvania",
+   "offSeasonDay": 40,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 75.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.2,
+      "CG": 14.2,
+      "B": 14.9,
+      "MA": 15,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 71.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.6,
+      "CG": 13.4,
+      "B": 14.5,
+      "MA": 14.3,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 70.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.5,
+      "CG": 14,
+      "B": 14.1,
+      "MA": 13.2,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 70.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 14.4,
+      "CG": 13.1,
+      "B": 13.9,
+      "MA": 14.2,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Blue Saints",
+     "score": 50.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.3,
+      "VA": 10.2,
+      "CG": 8.3,
+      "B": 10.2,
+      "MA": 9.9,
+      "P": 10.7
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 63.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 13.3,
+      "CG": 13,
+      "B": 13.2,
+      "MA": 12.2,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Avon Lake, Ohio",
+   "date": "2015-07-31T00:00:00.000Z",
+   "location": "Avon Lake, Ohio",
+   "offSeasonDay": 41,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 74.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 14.1,
+      "CG": 14.7,
+      "B": 15.1,
+      "MA": 15.1,
+      "P": 15.15
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 71.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.2,
+      "CG": 14.1,
+      "B": 14.5,
+      "MA": 14.9,
+      "P": 14.65
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 71.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 13.5,
+      "CG": 13.8,
+      "B": 14.7,
+      "MA": 14.7,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 71,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 13.6,
+      "CG": 14.5,
+      "B": 14.5,
+      "MA": 14.4,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 69.575,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 12.9,
+      "CG": 13.2,
+      "B": 14.1,
+      "MA": 13.8,
+      "P": 14.25
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 54.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 10.2,
+      "CG": 11.5,
+      "B": 10.3,
+      "MA": 10,
+      "P": 11.65
+     }
+    },
+    {
+     "corps": "Blue Saints",
+     "score": 49.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10,
+      "VA": 9.1,
+      "CG": 8.7,
+      "B": 10.5,
+      "MA": 9.7,
+      "P": 10.1
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 64.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 12.6,
+      "CG": 12.8,
+      "B": 13.8,
+      "MA": 12.5,
+      "P": 12.65
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Saint Paul, Minnesota",
+   "date": "2015-07-31T00:00:00.000Z",
+   "location": "Saint Paul, Minnesota",
+   "offSeasonDay": 41,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 75.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 14.8,
+      "CG": 14.6,
+      "B": 15.7,
+      "MA": 15.7,
+      "P": 17.917
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 69.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.8,
+      "CG": 13.5,
+      "B": 14.6,
+      "MA": 14.6,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 66.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.3,
+      "CG": 12.2,
+      "B": 13.8,
+      "MA": 13.8,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 62.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 11.5,
+      "CG": 12.6,
+      "B": 13.1,
+      "MA": 13.1,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 61.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 11.2,
+      "CG": 11.9,
+      "B": 12.4,
+      "MA": 12.4,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 61.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12.1,
+      "CG": 12.1,
+      "B": 12.9,
+      "MA": 12.9,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 56.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 10.6,
+      "CG": 11.7,
+      "B": 11.6,
+      "MA": 11.6,
+      "P": 10.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI East",
+   "date": "2015-07-31T00:00:00.000Z",
+   "location": "Allentown, Pennsylvania",
+   "offSeasonDay": 41,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 93.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 18.7,
+      "CG": 18.7,
+      "B": 18.5,
+      "MA": 18.6,
+      "P": 19.05
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 90.575,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 17.7,
+      "CG": 18.1,
+      "B": 17.4,
+      "MA": 18.3,
+      "P": 18.95
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 87.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17,
+      "CG": 17,
+      "B": 17.6,
+      "MA": 17.9,
+      "P": 17.95
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 85.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.8,
+      "CG": 16.7,
+      "B": 16.6,
+      "MA": 17.3,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 83.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.5,
+      "CG": 17.3,
+      "B": 16.2,
+      "MA": 17.1,
+      "P": 17
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 80.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16,
+      "CG": 15.9,
+      "B": 15.9,
+      "MA": 16.9,
+      "P": 15.55
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 77.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.6,
+      "CG": 15.4,
+      "B": 15.1,
+      "MA": 16.5,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 75.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.1,
+      "CG": 14.9,
+      "B": 14.8,
+      "MA": 15.3,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 70.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.3,
+      "CG": 14.1,
+      "B": 13.5,
+      "MA": 15.1,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 65.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 14.1,
+      "CG": 13,
+      "B": 12.3,
+      "MA": 12.3,
+      "P": 13.45
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI East",
+   "date": "2015-08-01T00:00:00.000Z",
+   "location": "Allentown, Pennsylvania",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 93.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.5,
+      "CG": 18.9,
+      "B": 19,
+      "MA": 19,
+      "P": 18.55
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 93.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 18.4,
+      "CG": 18.2,
+      "B": 18.8,
+      "MA": 19.1,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 93.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.3,
+      "CG": 18.3,
+      "B": 18.2,
+      "MA": 18.9,
+      "P": 18.75
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 87.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.3,
+      "CG": 16.5,
+      "B": 17.5,
+      "MA": 17.6,
+      "P": 17.25
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 85.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.5,
+      "CG": 16.8,
+      "B": 16.3,
+      "MA": 17.4,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 84.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.3,
+      "CG": 16.9,
+      "B": 16.8,
+      "MA": 17.2,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 83.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.7,
+      "CG": 17.4,
+      "B": 16.1,
+      "MA": 16.4,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 81.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 17.1,
+      "CG": 16.2,
+      "B": 15.7,
+      "MA": 16.2,
+      "P": 15.75
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 80.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.4,
+      "CG": 15.6,
+      "B": 16.5,
+      "MA": 16,
+      "P": 16.25
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 75.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 14.7,
+      "CG": 14.5,
+      "B": 15.5,
+      "MA": 15.6,
+      "P": 15.95
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.8,
+      "CG": 14.6,
+      "B": 15,
+      "MA": 14.9,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 70.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.8,
+      "CG": 13.9,
+      "B": 13.8,
+      "MA": 14.5,
+      "P": 14.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Forest City, Iowa",
+   "date": "2015-08-01T00:00:00.000Z",
+   "location": "Forest City, Iowa",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 77.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 14.9,
+      "CG": 14.9,
+      "B": 15.8,
+      "MA": 15.8,
+      "P": 15.45
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 13.8,
+      "CG": 14.2,
+      "B": 14.8,
+      "MA": 14.7,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 67.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.6,
+      "CG": 12.7,
+      "B": 14.1,
+      "MA": 13.5,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 63.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12.2,
+      "CG": 12.2,
+      "B": 12.9,
+      "MA": 13,
+      "P": 12.95
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 63.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 13,
+      "CG": 12.4,
+      "B": 13.2,
+      "MA": 12.7,
+      "P": 11.95
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 56.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 10.4,
+      "CG": 12,
+      "B": 11.8,
+      "MA": 9.6,
+      "P": 10.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Racine, Wisconsin",
+   "date": "2015-08-01T00:00:00.000Z",
+   "location": "Racine, Wisconsin",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 76.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 14.6,
+      "CG": 14.6,
+      "B": 15.6,
+      "MA": 15.6,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 73.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 13.7,
+      "CG": 14.4,
+      "B": 14.8,
+      "MA": 15.3,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 72.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.2,
+      "CG": 14.2,
+      "B": 14.9,
+      "MA": 15,
+      "P": 14.45
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 72.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.1,
+      "CG": 14.9,
+      "B": 14.5,
+      "MA": 14.8,
+      "P": 14.35
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 69.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.3,
+      "CG": 13.3,
+      "B": 14.4,
+      "MA": 14,
+      "P": 14.55
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 51.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 10.6,
+      "CG": 10.5,
+      "B": 10.5,
+      "MA": 10.1,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Blue Saints",
+     "score": 49.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.3,
+      "VA": 9.2,
+      "CG": 9.8,
+      "B": 11.1,
+      "MA": 9.8,
+      "P": 10.7
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 65.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 12.9,
+      "CG": 12.7,
+      "B": 14.1,
+      "MA": 12.7,
+      "P": 12.95
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2015-08-02T00:00:00.000Z",
+   "location": "Buffalo, New York",
+   "offSeasonDay": 43,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 95.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.3,
+      "VA": 18.9,
+      "CG": 19.1,
+      "B": 18.9,
+      "MA": 18.9,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 94.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 18.3,
+      "CG": 19,
+      "B": 19.1,
+      "MA": 19.1,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 94.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.7,
+      "CG": 17.7,
+      "B": 19,
+      "MA": 19.3,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 93.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.4,
+      "CG": 18.6,
+      "B": 18.6,
+      "MA": 18.8,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 91.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 17.6,
+      "CG": 18,
+      "B": 18.1,
+      "MA": 18.5,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 87.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17,
+      "CG": 16.4,
+      "B": 17.9,
+      "MA": 17.8,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 87.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 16.9,
+      "CG": 17.1,
+      "B": 17.3,
+      "MA": 18,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 85.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 16.6,
+      "CG": 16.9,
+      "B": 17.2,
+      "MA": 17.3,
+      "P": 17.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Pittsburgh, Pennsylvania",
+   "date": "2015-08-02T00:00:00.000Z",
+   "location": "Pittsburgh, Pennsylvania",
+   "offSeasonDay": 43,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 88.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 18.2,
+      "CG": 17,
+      "B": 17.7,
+      "MA": 18,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 85.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.1,
+      "CG": 17.1,
+      "B": 17.1,
+      "MA": 17.3,
+      "P": 17
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 81.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.5,
+      "CG": 15.8,
+      "B": 16.3,
+      "MA": 16.7,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 78.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.8,
+      "CG": 15.4,
+      "B": 16.1,
+      "MA": 16.4,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 76.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.1,
+      "CG": 14.8,
+      "B": 15.7,
+      "MA": 15.8,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 69.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.3,
+      "CG": 14,
+      "B": 13.7,
+      "MA": 14.7,
+      "P": 10.8
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 65.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 13.9,
+      "CG": 13.1,
+      "B": 12.9,
+      "MA": 13,
+      "P": 11.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Centerville, Ohio",
+   "date": "2015-08-03T00:00:00.000Z",
+   "location": "Centerville, Ohio",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Madison Scouts",
+     "score": 87.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 18.2,
+      "CG": 17,
+      "B": 17.5,
+      "MA": 17.6,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 86.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.5,
+      "CG": 17.8,
+      "B": 16.9,
+      "MA": 16.9,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 86.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.2,
+      "CG": 17.2,
+      "B": 17,
+      "MA": 17.4,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 83.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17.1,
+      "CG": 16.5,
+      "B": 16.5,
+      "MA": 16.4,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 82.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 17.7,
+      "CG": 16,
+      "B": 17.1,
+      "MA": 16.2,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 78.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 16.3,
+      "CG": 15.1,
+      "B": 15,
+      "MA": 15.5,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 76.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.2,
+      "CG": 15.2,
+      "B": 15.2,
+      "MA": 15.1,
+      "P": 15.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2015-08-03T00:00:00.000Z",
+   "location": "Massillon, Ohio",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 95.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 18.9,
+      "CG": 19.2,
+      "B": 19,
+      "MA": 19.1,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 94.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 19.1,
+      "CG": 19.1,
+      "B": 18.5,
+      "MA": 19,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 94.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.2,
+      "CG": 18.7,
+      "B": 19.1,
+      "MA": 19.3,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 91.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.4,
+      "CG": 18.3,
+      "B": 18.4,
+      "MA": 18.7,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 89.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 18.1,
+      "CG": 17.2,
+      "B": 18.5,
+      "MA": 18.2,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 88.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.7,
+      "CG": 16.8,
+      "B": 17.8,
+      "MA": 17.7,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 87.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.2,
+      "CG": 17.6,
+      "B": 17.2,
+      "MA": 17.9,
+      "P": 18.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Open Class World Championship Semi-Finals",
+   "date": "2015-08-03T00:00:00.000Z",
+   "location": "Michigan City, Indiana",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 80.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.4,
+      "CG": 15.5,
+      "B": 15.9,
+      "MA": 16.4,
+      "P": 15.95
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 79.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.6,
+      "B": 15.7,
+      "MA": 16.1,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 74.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.2,
+      "CG": 15.2,
+      "B": 14.7,
+      "MA": 14.8,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 74.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 14.5,
+      "CG": 15.1,
+      "B": 14.8,
+      "MA": 15.7,
+      "P": 14.65
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 74.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.8,
+      "CG": 14.4,
+      "B": 15.2,
+      "MA": 15.4,
+      "P": 14.45
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 73.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.9,
+      "CG": 14.3,
+      "B": 15,
+      "MA": 14.5,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 71.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.3,
+      "CG": 13.8,
+      "B": 14.5,
+      "MA": 14.1,
+      "P": 14.55
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 66.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 13,
+      "CG": 13.7,
+      "B": 13.8,
+      "MA": 12.6,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 66.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.8,
+      "CG": 13,
+      "B": 14.1,
+      "MA": 12.3,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 63.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 13.1,
+      "CG": 12.5,
+      "B": 13.3,
+      "MA": 12.2,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 63.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 12.9,
+      "CG": 12.4,
+      "B": 13.6,
+      "MA": 12.8,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 60.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 11.1,
+      "CG": 13.1,
+      "B": 12.5,
+      "MA": 11.1,
+      "P": 11.45
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 55.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 10.2,
+      "CG": 10.9,
+      "B": 10.7,
+      "MA": 10.9,
+      "P": 11.65
+     }
+    },
+    {
+     "corps": "Blue Saints",
+     "score": 50.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.2,
+      "VA": 10,
+      "CG": 9.9,
+      "B": 11,
+      "MA": 10.5,
+      "P": 10.85
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 67.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 14.1,
+      "CG": 13.6,
+      "B": 14.6,
+      "MA": 13.3,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Gita Surosowan Banten",
+     "score": 64.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 14.4,
+      "CG": 13.4,
+      "B": 13.9,
+      "MA": 12.1,
+      "P": 12.45
+     }
+    },
+    {
+     "corps": "Chien Kuo",
+     "score": 62.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.2,
+      "VA": 12.8,
+      "CG": 13.5,
+      "B": 13.5,
+      "MA": 12.5,
+      "P": 11.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Open Class World Championship Finals",
+   "date": "2015-08-04T00:00:00.000Z",
+   "location": "Michigan City, Indiana",
+   "offSeasonDay": 45,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 81.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.3,
+      "CG": 16,
+      "B": 16.3,
+      "MA": 16.6,
+      "P": 16.05
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 80.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 15.7,
+      "CG": 15.7,
+      "B": 16.1,
+      "MA": 16.4,
+      "P": 15.95
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 76.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.1,
+      "CG": 15.5,
+      "B": 15,
+      "MA": 15.3,
+      "P": 15.05
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 75.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.3,
+      "CG": 15,
+      "B": 15.2,
+      "MA": 15.9,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 75.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.8,
+      "CG": 14.8,
+      "B": 15.5,
+      "MA": 15.6,
+      "P": 15.35
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 74.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.1,
+      "CG": 14.9,
+      "B": 14.8,
+      "MA": 14.8,
+      "P": 14.65
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 71.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.5,
+      "CG": 14.5,
+      "B": 14.4,
+      "MA": 14,
+      "P": 14.45
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 67.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 14,
+      "CG": 13.6,
+      "B": 13.8,
+      "MA": 12.6,
+      "P": 13.25
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 67.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 12.9,
+      "CG": 14.2,
+      "B": 14,
+      "MA": 13.1,
+      "P": 13.55
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 64.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 12.8,
+      "CG": 13.4,
+      "B": 13.5,
+      "MA": 12.4,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 63.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 12.4,
+      "CG": 12.9,
+      "B": 13.3,
+      "MA": 12.9,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 60.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 11.4,
+      "CG": 13.2,
+      "B": 12.3,
+      "MA": 11,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 68.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.3,
+      "CG": 13.9,
+      "B": 14.7,
+      "MA": 13.6,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Gita Surosowan Banten",
+     "score": 66.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 13.9,
+      "CG": 13.6,
+      "B": 13.9,
+      "MA": 12.3,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Chien Kuo",
+     "score": 64.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 12.8,
+      "CG": 13.4,
+      "B": 13.6,
+      "MA": 12.8,
+      "P": 12.75
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Prelims",
+   "date": "2015-08-06T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 47,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 96.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 19.2,
+      "CG": 19.2,
+      "B": 19.2,
+      "MA": 19.4,
+      "P": 18.65
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 95.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.1,
+      "CG": 18.6,
+      "B": 19.1,
+      "MA": 19.5,
+      "P": 19.25
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 95.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 19.6,
+      "CG": 18.8,
+      "B": 18.7,
+      "MA": 19,
+      "P": 19.15
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 95.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.3,
+      "CG": 19,
+      "B": 19,
+      "MA": 18.8,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 93.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.4,
+      "CG": 18.4,
+      "B": 18.6,
+      "MA": 18.6,
+      "P": 19.5
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 90.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.1,
+      "CG": 17.4,
+      "B": 18.3,
+      "MA": 18.4,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 89.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 17.9,
+      "CG": 16.8,
+      "B": 18,
+      "MA": 18,
+      "P": 18.25
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 88.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 18.2,
+      "CG": 17.1,
+      "B": 17.5,
+      "MA": 17.6,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 88.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 17.7,
+      "CG": 16.7,
+      "B": 17.7,
+      "MA": 17.4,
+      "P": 18.05
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 86.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17,
+      "CG": 17.5,
+      "B": 17.1,
+      "MA": 17.2,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 85.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.4,
+      "CG": 17.3,
+      "B": 16.7,
+      "MA": 17,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 84.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 16.6,
+      "CG": 17.7,
+      "B": 16.6,
+      "MA": 16.4,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 83.575,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 17.3,
+      "CG": 15.6,
+      "B": 16.8,
+      "MA": 16.1,
+      "P": 17.25
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 82.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17.4,
+      "CG": 16.3,
+      "B": 16.3,
+      "MA": 16.7,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 81.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.5,
+      "CG": 15.1,
+      "B": 16.1,
+      "MA": 16.5,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 78.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.9,
+      "CG": 15.9,
+      "B": 15.7,
+      "MA": 15.9,
+      "P": 15.95
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 78.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 15.6,
+      "CG": 15,
+      "B": 15.9,
+      "MA": 15.7,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 77.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 16.2,
+      "CG": 14.8,
+      "B": 15.6,
+      "MA": 15.4,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 77.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.7,
+      "CG": 15.4,
+      "B": 15.3,
+      "MA": 15.5,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 77.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.2,
+      "CG": 15.2,
+      "B": 15.5,
+      "MA": 15.2,
+      "P": 15.75
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.1,
+      "CG": 14.2,
+      "B": 15.1,
+      "MA": 15,
+      "P": 15.15
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 73.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.7,
+      "CG": 13.9,
+      "B": 14.9,
+      "MA": 14.3,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 71.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.2,
+      "CG": 14.4,
+      "B": 14.3,
+      "MA": 14.4,
+      "P": 14.25
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 71.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.7,
+      "CG": 13.3,
+      "B": 14.4,
+      "MA": 14.8,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 70.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.3,
+      "CG": 13.8,
+      "B": 14.6,
+      "MA": 15.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 70.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.6,
+      "CG": 14.5,
+      "B": 14.2,
+      "MA": 14.5,
+      "P": 14.85
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 69.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14.1,
+      "CG": 14,
+      "B": 14.1,
+      "MA": 13.9,
+      "P": 14.05
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 68.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.1,
+      "CG": 13,
+      "B": 13.8,
+      "MA": 14.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 66.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 13.8,
+      "CG": 12.6,
+      "B": 13.3,
+      "MA": 12.2,
+      "P": 14.05
+     }
+    },
+    {
+     "corps": "Jubal",
+     "score": 65.575,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.2,
+      "CG": 13.2,
+      "B": 13.5,
+      "MA": 13.1,
+      "P": 13.25
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 62.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12,
+      "CG": 12.8,
+      "B": 13.1,
+      "MA": 12.6,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Gita Surosowan Banten",
+     "score": 61.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.9,
+      "CG": 12.4,
+      "B": 12.6,
+      "MA": 10,
+      "P": 12.75
+     }
+    },
+    {
+     "corps": "Chien Kuo",
+     "score": 60.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12.6,
+      "CG": 11.9,
+      "B": 12.5,
+      "MA": 11.6,
+      "P": 12.55
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 60.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 12.4,
+      "CG": 12.1,
+      "B": 12.4,
+      "MA": 11,
+      "P": 12.85
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 57.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.2,
+      "VA": 11.4,
+      "CG": 11.4,
+      "B": 12.2,
+      "MA": 10.9,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 56.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 11.1,
+      "CG": 11.2,
+      "B": 11.9,
+      "MA": 11.3,
+      "P": 12.85
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 52.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 10.9,
+      "CG": 10.5,
+      "B": 11.3,
+      "MA": 9.5,
+      "P": 11.15
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 49.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 9.9,
+      "CG": 10,
+      "B": 10.6,
+      "MA": 9.2,
+      "P": 10.9
+     }
+    },
+    {
+     "corps": "Blue Saints",
+     "score": 46.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10,
+      "VA": 9.2,
+      "CG": 8.1,
+      "B": 10.8,
+      "MA": 8.7,
+      "P": 10.35
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Semi-Finals",
+   "date": "2015-08-07T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 48,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 96.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.6,
+      "VA": 19,
+      "CG": 19.3,
+      "B": 19.6,
+      "MA": 19.4,
+      "P": 18.95
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 96.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.6,
+      "CG": 19.4,
+      "B": 19.3,
+      "MA": 19.1,
+      "P": 19.45
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 95.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 19.4,
+      "CG": 19,
+      "B": 19,
+      "MA": 19.3,
+      "P": 19.35
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 95.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 18.9,
+      "CG": 18.8,
+      "B": 19.7,
+      "MA": 19.2,
+      "P": 19.6
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 93.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 18.6,
+      "CG": 18.4,
+      "B": 18.7,
+      "MA": 18.9,
+      "P": 19.35
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 91.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 17.8,
+      "CG": 17.8,
+      "B": 18.5,
+      "MA": 18.6,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 89.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.2,
+      "CG": 16.7,
+      "B": 18.3,
+      "MA": 18.3,
+      "P": 18.35
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 88.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 17.9,
+      "CG": 16.8,
+      "B": 18,
+      "MA": 17.7,
+      "P": 17.95
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 88.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.3,
+      "CG": 17.3,
+      "B": 17.9,
+      "MA": 17.8,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 86.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.8,
+      "CG": 17.6,
+      "B": 17.6,
+      "MA": 17.4,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 85.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.4,
+      "CG": 17,
+      "B": 17.4,
+      "MA": 17.1,
+      "P": 18.05
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 83.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.1,
+      "CG": 17.7,
+      "B": 17,
+      "MA": 16.7,
+      "P": 17.15
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 83.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.5,
+      "CG": 15.6,
+      "B": 17.2,
+      "MA": 16.3,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 83.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 17,
+      "CG": 17.2,
+      "B": 16.7,
+      "MA": 16.6,
+      "P": 16.55
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 81.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.2,
+      "CG": 15.9,
+      "B": 16.4,
+      "MA": 16.8,
+      "P": 16.65
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 79.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16,
+      "CG": 15.8,
+      "B": 15.8,
+      "MA": 15.9,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Oregon Crusaders",
+     "score": 78.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.5,
+      "CG": 14.4,
+      "B": 16.2,
+      "MA": 16,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 78.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.1,
+      "CG": 14.9,
+      "B": 16.3,
+      "MA": 15.6,
+      "P": 16.25
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 77.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.4,
+      "CG": 15.5,
+      "B": 15.4,
+      "MA": 15.8,
+      "P": 15.95
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 76.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.9,
+      "CG": 15,
+      "B": 15.6,
+      "MA": 15.5,
+      "P": 15.65
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.6,
+      "CG": 14.6,
+      "B": 15.2,
+      "MA": 15.3,
+      "P": 15.35
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 73.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.3,
+      "CG": 14.2,
+      "B": 14.7,
+      "MA": 14.6,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 71.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.5,
+      "CG": 14.7,
+      "B": 14.2,
+      "MA": 14.4,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 71.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.8,
+      "CG": 12.8,
+      "B": 14.5,
+      "MA": 14.9,
+      "P": 14.65
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 70.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.1,
+      "CG": 13.3,
+      "B": 14.9,
+      "MA": 15.2,
+      "P": 14.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Finals",
+   "date": "2015-08-08T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 49,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 97.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.7,
+      "VA": 19.4,
+      "CG": 19.7,
+      "B": 19.5,
+      "MA": 19.6,
+      "P": 19.7
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 97.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.6,
+      "VA": 18.8,
+      "CG": 19.5,
+      "B": 19.7,
+      "MA": 19.7,
+      "P": 18.95
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 96.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.2,
+      "CG": 19.3,
+      "B": 19.4,
+      "MA": 19.3,
+      "P": 19.55
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 95.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 18.9,
+      "CG": 18.8,
+      "B": 19.8,
+      "MA": 19.2,
+      "P": 19.5
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 93.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 18.4,
+      "CG": 19,
+      "B": 19,
+      "MA": 18.8,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 91.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 17.6,
+      "CG": 18.2,
+      "B": 18.5,
+      "MA": 18.9,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 90.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18,
+      "CG": 18.4,
+      "B": 18.2,
+      "MA": 17.7,
+      "P": 18.15
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 88.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.7,
+      "CG": 17.6,
+      "B": 17.6,
+      "MA": 17.5,
+      "P": 18
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 88.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 17.2,
+      "CG": 18.3,
+      "B": 17.4,
+      "MA": 17.4,
+      "P": 17.85
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 86.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 16.8,
+      "CG": 18.1,
+      "B": 17.5,
+      "MA": 17,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 85.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.5,
+      "CG": 17.3,
+      "B": 16.7,
+      "MA": 16.6,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 85.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17,
+      "CG": 17.4,
+      "B": 16.9,
+      "MA": 16.8,
+      "P": 16.95
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,8937 @@
+{
+ "data": [
+  {
+   "eventName": "DCI Competition - Shelton, Connecticut-Barnum Festival Champions On Parade",
+   "date": "2025-06-28T00:00:00.000Z",
+   "location": "Shelton, Connecticut-Barnum Festival Champions On Parade",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "7th Regiment",
+     "score": 51.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.2,
+      "VA": 9.5,
+      "CG": 10,
+      "B": 10.4,
+      "MA": 9.5,
+      "P": 10.6
+     }
+    },
+    {
+     "corps": "Reading Buccaneers",
+     "score": 81.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 17.1,
+      "CG": 15.1,
+      "B": 16.4,
+      "MA": 15.8,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Hawthorne Caballeros",
+     "score": 77.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.9,
+      "CG": 14.9,
+      "B": 15.9,
+      "MA": 15,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 76.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.4,
+      "CG": 15,
+      "B": 15.7,
+      "MA": 14.6,
+      "P": 15.47
+     }
+    },
+    {
+     "corps": "Connecticut Hurricanes",
+     "score": 71.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.7,
+      "CG": 14.4,
+      "B": 14.3,
+      "MA": 14.5,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 66.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 12.4,
+      "CG": 14,
+      "B": 13.9,
+      "MA": 13.6,
+      "P": 13.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums Along The Rockies",
+   "date": "2025-06-28T00:00:00.000Z",
+   "location": "Fort Collins, Colorado",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 76.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.41,
+      "VA": 15.3,
+      "CG": 15.2,
+      "B": 15.6,
+      "MA": 15.3,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 75.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15,
+      "CG": 15.1,
+      "B": 15.4,
+      "MA": 15.5,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 68.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.9,
+      "CG": 13.7,
+      "B": 14.1,
+      "MA": 13.5,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 67.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.4,
+      "CG": 13.2,
+      "B": 13.7,
+      "MA": 14.1,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 65.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.36,
+      "VA": 13.3,
+      "CG": 13,
+      "B": 13.3,
+      "MA": 13.9,
+      "P": 13.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Corps Encore",
+   "date": "2025-06-30T00:00:00.000Z",
+   "location": "Ogdem, Utah",
+   "offSeasonDay": 9,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 77.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.5,
+      "CG": 15.4,
+      "B": 15.9,
+      "MA": 15.6,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 67.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.4,
+      "CG": 13.1,
+      "B": 13.9,
+      "MA": 13.5,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 62.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 13,
+      "CG": 11.9,
+      "B": 12.4,
+      "MA": 12.5,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 60,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.9,
+      "CG": 12.4,
+      "B": 11.8,
+      "MA": 11.9,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 54.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.4,
+      "VA": 11.2,
+      "CG": 11.3,
+      "B": 10.9,
+      "MA": 11.3,
+      "P": 10.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Seattle, Washington-Northwest Youth Summer Music Games Seattle",
+   "date": "2025-07-02T00:00:00.000Z",
+   "location": "Seattle, Washington-Northwest Youth Summer Music Games Seattle",
+   "offSeasonDay": 11,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 76.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.8,
+      "CG": 15.3,
+      "B": 15.5,
+      "MA": 14.9,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 73.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.2,
+      "CG": 13.4,
+      "B": 15,
+      "MA": 14.6,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 67.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 13.7,
+      "CG": 13.1,
+      "B": 14.5,
+      "MA": 13.9,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 62.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 13,
+      "CG": 11.8,
+      "B": 12.8,
+      "MA": 12.8,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 55.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.5,
+      "VA": 11.1,
+      "CG": 10.6,
+      "B": 11.4,
+      "MA": 11.2,
+      "P": 10.6
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 55.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 11.4,
+      "CG": 11.4,
+      "B": 11.1,
+      "MA": 10.7,
+      "P": 11.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Cedarburg, Wisconsin-Rotary Music Festival",
+   "date": "2025-07-02T00:00:00.000Z",
+   "location": "Cedarburg, Wisconsin-Rotary Music Festival",
+   "offSeasonDay": 11,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 74.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.6,
+      "CG": 15.4,
+      "B": 15.3,
+      "MA": 14.7,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 70.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14,
+      "CG": 14.4,
+      "B": 14.6,
+      "MA": 14.1,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 70.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.4,
+      "CG": 14,
+      "B": 13.6,
+      "MA": 13.6,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 69.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 12.9,
+      "CG": 14.6,
+      "B": 14.2,
+      "MA": 13.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 69.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.6,
+      "CG": 13.6,
+      "B": 14.4,
+      "MA": 13.8,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 66.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13,
+      "CG": 13.3,
+      "B": 14.9,
+      "MA": 13.3,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.1,
+      "VA": 10.1,
+      "CG": 11.1,
+      "B": 10.7,
+      "MA": 11.2,
+      "P": 10.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Portland, Oregon-Northwest Youth Summer Music Games Portland",
+   "date": "2025-07-03T00:00:00.000Z",
+   "location": "Portland, Oregon-Northwest Youth Summer Music Games Portland",
+   "offSeasonDay": 12,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 77.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.8,
+      "CG": 15.4,
+      "B": 15.5,
+      "MA": 15.4,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 74.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.2,
+      "CG": 15,
+      "B": 15.1,
+      "MA": 14.5,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 69.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.8,
+      "CG": 13.6,
+      "B": 14.2,
+      "MA": 14,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 63.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13,
+      "CG": 12.2,
+      "B": 13.2,
+      "MA": 12.3,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 57,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 11.6,
+      "CG": 10.9,
+      "B": 11.6,
+      "MA": 11.3,
+      "P": 10.8
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 56.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 11.1,
+      "CG": 11,
+      "B": 11,
+      "MA": 10.7,
+      "P": 11.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Show of Shows",
+   "date": "2025-07-03T00:00:00.000Z",
+   "location": "Rockford, Illinois",
+   "offSeasonDay": 12,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 76.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15,
+      "CG": 15.3,
+      "B": 15.7,
+      "MA": 14.9,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 73,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.2,
+      "CG": 14.5,
+      "B": 15.2,
+      "MA": 14.6,
+      "P": 14
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 71.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 14.1,
+      "CG": 15.1,
+      "B": 14.5,
+      "MA": 14,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 71,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.8,
+      "CG": 13.8,
+      "B": 14.7,
+      "MA": 14.3,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 68.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 12.8,
+      "CG": 13.5,
+      "B": 15,
+      "MA": 13.8,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 66.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 12.5,
+      "CG": 12.6,
+      "B": 14,
+      "MA": 13.3,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Columbus Saints",
+     "score": 55.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 9.8,
+      "CG": 11.5,
+      "B": 14,
+      "MA": 12.8,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "River City Rhapsody",
+   "date": "2025-07-06T00:00:00.000Z",
+   "location": "LaCrosse, Wisconsin",
+   "offSeasonDay": 15,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 83.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.5,
+      "CG": 16.8,
+      "B": 15.7,
+      "MA": 17,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 75.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.3,
+      "CG": 15,
+      "B": 14.8,
+      "MA": 15.3,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 74.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.9,
+      "CG": 14.9,
+      "B": 14.3,
+      "MA": 14.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 72.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.8,
+      "CG": 13.9,
+      "B": 14.4,
+      "MA": 15.2,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 72.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.6,
+      "CG": 13.3,
+      "B": 14.5,
+      "MA": 14.7,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 69.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.2,
+      "CG": 13.2,
+      "B": 13.6,
+      "MA": 14.5,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 59.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.2,
+      "VA": 11.6,
+      "CG": 11.6,
+      "B": 11.5,
+      "MA": 12.4,
+      "P": 11.2
+     }
+    },
+    {
+     "corps": "Govenaires",
+     "score": 71.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 14.7,
+      "CG": 14.5,
+      "B": 15.9,
+      "MA": 13.5,
+      "P": 13.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI West",
+   "date": "2025-07-06T00:00:00.000Z",
+   "location": "Stanford, California",
+   "offSeasonDay": 15,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 82.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.4,
+      "CG": 16.6,
+      "B": 16.5,
+      "MA": 17.1,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 81.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16,
+      "CG": 16.5,
+      "B": 16.2,
+      "MA": 17,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 81,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.2,
+      "CG": 16.1,
+      "B": 15.7,
+      "MA": 16.8,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 77.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.6,
+      "CG": 15.3,
+      "B": 15.8,
+      "MA": 15.5,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 73.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 15,
+      "CG": 14,
+      "B": 15,
+      "MA": 15.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 69.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.6,
+      "CG": 13,
+      "B": 14,
+      "MA": 14.5,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 66.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.8,
+      "CG": 12.3,
+      "B": 13.4,
+      "MA": 13.9,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 68,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.9,
+      "CG": 12.7,
+      "B": 13.8,
+      "MA": 14.2,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 63.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.4,
+      "CG": 12,
+      "B": 12.9,
+      "MA": 12.7,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 59.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 12.1,
+      "CG": 12.4,
+      "B": 11.6,
+      "MA": 11.3,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 58.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 11.6,
+      "CG": 11.1,
+      "B": 11.8,
+      "MA": 11.5,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 52.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.7,
+      "VA": 11.4,
+      "CG": 9.3,
+      "B": 9.8,
+      "MA": 10,
+      "P": 10.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums Across The Smokies",
+   "date": "2025-07-07T00:00:00.000Z",
+   "location": "Sevierville, Tennessee",
+   "offSeasonDay": 16,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 81.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.4,
+      "CG": 16.5,
+      "B": 16.4,
+      "MA": 16.5,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 80.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.1,
+      "CG": 16.1,
+      "B": 16.3,
+      "MA": 16.1,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 73.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.5,
+      "CG": 14.2,
+      "B": 14.7,
+      "MA": 15.1,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 72.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.8,
+      "CG": 14.6,
+      "B": 13.8,
+      "MA": 14.3,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 68.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.1,
+      "CG": 12.7,
+      "B": 14.1,
+      "MA": 13.2,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 67.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.4,
+      "CG": 13.8,
+      "B": 13.7,
+      "MA": 13.3,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Memphis Blues",
+     "score": 62.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 12.8,
+      "CG": 12.6,
+      "B": 12.6,
+      "MA": 12.4,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 54.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 10.7,
+      "CG": 11.1,
+      "B": 10.7,
+      "MA": 10.8,
+      "P": 10.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Resound",
+   "date": "2025-07-08T00:00:00.000Z",
+   "location": "Bakersfield, California",
+   "offSeasonDay": 17,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 70.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.4,
+      "CG": 13.5,
+      "B": 14.6,
+      "MA": 14.4,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 61.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 12.9,
+      "CG": 12,
+      "B": 12,
+      "MA": 11.7,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 60.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 12,
+      "CG": 12.5,
+      "B": 11.4,
+      "MA": 12,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 54.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.3,
+      "VA": 11.8,
+      "CG": 10.7,
+      "B": 10.9,
+      "MA": 10.3,
+      "P": 10.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums Across America",
+   "date": "2025-07-08T00:00:00.000Z",
+   "location": "Newnan, Georgia",
+   "offSeasonDay": 17,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 82.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.4,
+      "CG": 16.4,
+      "B": 16.6,
+      "MA": 16.3,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 73.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.8,
+      "CG": 14.5,
+      "B": 14.9,
+      "MA": 14.4,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 73.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15,
+      "CG": 14.8,
+      "B": 14.3,
+      "MA": 14.6,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 69.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.2,
+      "CG": 13.2,
+      "B": 14.5,
+      "MA": 13.6,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 69.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.7,
+      "CG": 14.2,
+      "B": 14,
+      "MA": 13.4,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Memphis Blues",
+     "score": 63.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 13,
+      "CG": 12.8,
+      "B": 13,
+      "MA": 12.1,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 54.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.6,
+      "VA": 10.8,
+      "CG": 11.5,
+      "B": 11.1,
+      "MA": 11.2,
+      "P": 11.4
+     }
+    },
+    {
+     "corps": "Atlanta CV",
+     "score": 76.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.4,
+      "CG": 15.7,
+      "B": 16.3,
+      "MA": 14.8,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Kiwanis Thunder of Drums",
+   "date": "2025-07-08T00:00:00.000Z",
+   "location": "Mankato, Minnesota",
+   "offSeasonDay": 17,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 77.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.4,
+      "CG": 16,
+      "B": 15,
+      "MA": 15.4,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 75.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 13.9,
+      "CG": 15,
+      "B": 14.6,
+      "MA": 16,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.1,
+      "CG": 15.5,
+      "B": 14.4,
+      "MA": 15.7,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 71.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.1,
+      "CG": 14.4,
+      "B": 14.8,
+      "MA": 14.9,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 70.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.3,
+      "CG": 14,
+      "B": 14.2,
+      "MA": 14.8,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 62.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 11.4,
+      "CG": 11.3,
+      "B": 12.6,
+      "MA": 12.3,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Minnesota Brass",
+     "score": 69.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 11.2,
+      "CG": 15,
+      "B": 14.7,
+      "MA": 14.1,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Govenaires",
+     "score": 73.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 13.2,
+      "CG": 14.8,
+      "B": 16.3,
+      "MA": 15.3,
+      "P": 15.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Celebration in Brass",
+   "date": "2025-07-09T00:00:00.000Z",
+   "location": "Ankeny, Iowa",
+   "offSeasonDay": 18,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 79.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.6,
+      "CG": 16.1,
+      "B": 15.3,
+      "MA": 16.3,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 79.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 15.9,
+      "CG": 16,
+      "B": 15.1,
+      "MA": 15.7,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 77.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.1,
+      "CG": 15.2,
+      "B": 15.5,
+      "MA": 16.1,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 77.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.5,
+      "CG": 15.4,
+      "B": 14.9,
+      "MA": 15.8,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 74.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.6,
+      "CG": 14.8,
+      "B": 14.7,
+      "MA": 15.4,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 73.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14,
+      "CG": 15,
+      "B": 14.5,
+      "MA": 15.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 63.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 12.7,
+      "CG": 11.8,
+      "B": 12.6,
+      "MA": 12.9,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 61.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.2,
+      "CG": 11.3,
+      "B": 12.2,
+      "MA": 12.7,
+      "P": 12.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Gold Showcase",
+   "date": "2025-07-09T00:00:00.000Z",
+   "location": "Santa Clarita, California",
+   "offSeasonDay": 18,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 84.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.6,
+      "CG": 17.1,
+      "B": 16.9,
+      "MA": 16.8,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 82.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.9,
+      "CG": 16.5,
+      "B": 16.5,
+      "MA": 16.6,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 79,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.2,
+      "CG": 15.7,
+      "B": 16.2,
+      "MA": 15.9,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 75.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.7,
+      "CG": 14.3,
+      "B": 15.4,
+      "MA": 14.9,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 72.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 15.2,
+      "CG": 13.7,
+      "B": 14.4,
+      "MA": 14.8,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 71.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.9,
+      "CG": 13.3,
+      "B": 14.8,
+      "MA": 14.4,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 67.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14,
+      "CG": 12.5,
+      "B": 14.2,
+      "MA": 13.7,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 71.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.9,
+      "CG": 13.9,
+      "B": 14.6,
+      "MA": 14.2,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 67.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 14.3,
+      "CG": 12.3,
+      "B": 13.3,
+      "MA": 12.8,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 55.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11,
+      "CG": 10.7,
+      "B": 11.4,
+      "MA": 10.1,
+      "P": 11
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Western Corps Connection",
+   "date": "2025-07-11T00:00:00.000Z",
+   "location": "Walnut, California",
+   "offSeasonDay": 20,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 85.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.8,
+      "CG": 17.5,
+      "B": 17,
+      "MA": 17.5,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 84.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.7,
+      "CG": 17.2,
+      "B": 17.1,
+      "MA": 17.4,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 83.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.6,
+      "CG": 16.8,
+      "B": 16.5,
+      "MA": 17.3,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 80.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.1,
+      "CG": 15.9,
+      "B": 15.9,
+      "MA": 16.6,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 76.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.3,
+      "CG": 14.7,
+      "B": 15.5,
+      "MA": 15.3,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 73.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.8,
+      "CG": 14.8,
+      "B": 15,
+      "MA": 15.8,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 72.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.3,
+      "CG": 13.9,
+      "B": 14.9,
+      "MA": 15,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 68.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 14,
+      "CG": 13,
+      "B": 14,
+      "MA": 14.1,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 76.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.5,
+      "CG": 13.8,
+      "B": 14.8,
+      "MA": 14.6,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 68.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.9,
+      "CG": 12.7,
+      "B": 13.8,
+      "MA": 13.8,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 63.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12.8,
+      "CG": 13.6,
+      "B": 12.3,
+      "MA": 13,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 63.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 12.7,
+      "CG": 12.2,
+      "B": 12.6,
+      "MA": 13.4,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 55.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.4,
+      "CG": 11.1,
+      "B": 10.6,
+      "MA": 10.8,
+      "P": 10.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Little Rock",
+   "date": "2025-07-12T00:00:00.000Z",
+   "location": "Little Rock, Arkansas",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 84.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.7,
+      "CG": 16.8,
+      "B": 16.7,
+      "MA": 16.5,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 84.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.8,
+      "CG": 17.1,
+      "B": 17.1,
+      "MA": 16.8,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 75.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.7,
+      "CG": 14.9,
+      "B": 15,
+      "MA": 15.8,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.9,
+      "CG": 14.7,
+      "B": 15.4,
+      "MA": 14.6,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 74.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.1,
+      "CG": 15.2,
+      "B": 14.4,
+      "MA": 14.9,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 70.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.4,
+      "CG": 13.9,
+      "B": 14.6,
+      "MA": 13.2,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 70.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.1,
+      "CG": 14.4,
+      "B": 14.1,
+      "MA": 13.5,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Memphis Blues",
+     "score": 65.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.3,
+      "CG": 13,
+      "B": 13.5,
+      "MA": 12.2,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Zephyrus",
+     "score": 64.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 12,
+      "CG": 13.3,
+      "B": 12.9,
+      "MA": 12.3,
+      "P": 12.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Calvalcade of Brass",
+   "date": "2025-07-12T00:00:00.000Z",
+   "location": "Lisle, Illinois",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 86.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.9,
+      "CG": 17.9,
+      "B": 17.1,
+      "MA": 17.2,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 81,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.3,
+      "CG": 16.8,
+      "B": 15.6,
+      "MA": 16.2,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 79.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.9,
+      "CG": 16.7,
+      "B": 15.8,
+      "MA": 15.8,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 78,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.6,
+      "CG": 15.8,
+      "B": 14.8,
+      "MA": 15.7,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 76.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15,
+      "CG": 15,
+      "B": 15,
+      "MA": 15.2,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 64.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.8,
+      "CG": 13.4,
+      "B": 12.9,
+      "MA": 13,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Rogues Hollow Regiment",
+     "score": 74.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.9,
+      "CG": 15.1,
+      "B": 15.3,
+      "MA": 15.3,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Northern Lights",
+     "score": 67.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.8,
+      "CG": 14.5,
+      "B": 12.6,
+      "MA": 13.8,
+      "P": 12.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drum Corps Grand Prix",
+   "date": "2025-07-12T00:00:00.000Z",
+   "location": "Clifton, New Jersey",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "7th Regiment",
+     "score": 59.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 11.7,
+      "CG": 11.3,
+      "B": 12,
+      "MA": 10.5,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 59.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 12.4,
+      "CG": 10.2,
+      "B": 12.4,
+      "MA": 12.3,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Reading Buccaneers",
+     "score": 84.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.7,
+      "CG": 16.4,
+      "B": 17.6,
+      "MA": 17,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Hawthorne Caballeros",
+     "score": 80.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.2,
+      "CG": 15.2,
+      "B": 17,
+      "MA": 16.5,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 78.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.7,
+      "CG": 15.6,
+      "B": 16.5,
+      "MA": 16.2,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Connecticut Hurricanes",
+     "score": 75.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15,
+      "CG": 15.8,
+      "B": 13.8,
+      "MA": 15.3,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 67.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 13.3,
+      "CG": 14.8,
+      "B": 12.7,
+      "MA": 14.2,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drum Corps At The Rose Bowl",
+   "date": "2025-07-12T00:00:00.000Z",
+   "location": "Pasadena, California",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 86.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.8,
+      "CG": 17.7,
+      "B": 17.8,
+      "MA": 17.4,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 85.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17,
+      "CG": 17.3,
+      "B": 17.7,
+      "MA": 17,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.9,
+      "CG": 16.8,
+      "B": 17.6,
+      "MA": 17.1,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 81.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.1,
+      "CG": 16.2,
+      "B": 17,
+      "MA": 16.2,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 78.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.6,
+      "CG": 14.8,
+      "B": 16,
+      "MA": 15.6,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.5,
+      "CG": 15.2,
+      "B": 14.9,
+      "MA": 15.2,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 73.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.7,
+      "CG": 14.2,
+      "B": 15.2,
+      "MA": 14.8,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 69.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.3,
+      "CG": 12.9,
+      "B": 14.4,
+      "MA": 14.6,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 73.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.7,
+      "CG": 13.9,
+      "B": 15.4,
+      "MA": 15,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 68.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 13.8,
+      "CG": 12.7,
+      "B": 14.2,
+      "MA": 14.1,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 65.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.5,
+      "CG": 13.6,
+      "B": 13.4,
+      "MA": 12.6,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 63.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 13.3,
+      "CG": 12.5,
+      "B": 13.2,
+      "MA": 12.2,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 56.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 11.6,
+      "CG": 11.5,
+      "B": 11.8,
+      "MA": 10.6,
+      "P": 11.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums Across The Desert",
+   "date": "2025-07-13T00:00:00.000Z",
+   "location": "Mesa, Arizona",
+   "offSeasonDay": 22,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 87.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17,
+      "CG": 17.6,
+      "B": 18,
+      "MA": 17.5,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 82.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.2,
+      "CG": 17.3,
+      "B": 17.2,
+      "MA": 16.4,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 79.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16,
+      "CG": 15.7,
+      "B": 16.1,
+      "MA": 15.7,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 73.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.8,
+      "CG": 14.7,
+      "B": 15.4,
+      "MA": 15.2,
+      "P": 15
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 72.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.7,
+      "CG": 15.2,
+      "B": 15,
+      "MA": 15,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 70.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.3,
+      "CG": 14,
+      "B": 14.5,
+      "MA": 14.8,
+      "P": 14
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "SoCal Classic Open Classic Pacific Finals",
+   "date": "2025-07-13T00:00:00.000Z",
+   "location": "Buena Park, California",
+   "offSeasonDay": 22,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 73.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.8,
+      "CG": 13,
+      "B": 15.6,
+      "MA": 14.4,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 69.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.6,
+      "CG": 13.1,
+      "B": 14.8,
+      "MA": 13.7,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 66.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.5,
+      "CG": 13.3,
+      "B": 13.6,
+      "MA": 13.3,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 13.4,
+      "CG": 12.6,
+      "B": 13.5,
+      "MA": 12.7,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 58.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 12,
+      "CG": 11.5,
+      "B": 12,
+      "MA": 11.6,
+      "P": 11.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Broken Arrow",
+   "date": "2025-07-15T00:00:00.000Z",
+   "location": "Broken Arrow, Oklahoma",
+   "offSeasonDay": 24,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 88.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.5,
+      "CG": 17.6,
+      "B": 17.6,
+      "MA": 17.6,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 85.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 16.7,
+      "CG": 16.9,
+      "B": 17.4,
+      "MA": 17.1,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 85.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 16.9,
+      "CG": 17.2,
+      "B": 16.9,
+      "MA": 17,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 77.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 14.9,
+      "CG": 14.6,
+      "B": 15.8,
+      "MA": 15.7,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 76.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.8,
+      "CG": 15.2,
+      "B": 15,
+      "MA": 15.2,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 74.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.2,
+      "CG": 15.1,
+      "B": 14.1,
+      "MA": 15,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 71.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.1,
+      "CG": 14.4,
+      "B": 14.7,
+      "MA": 14,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Zephrus",
+     "score": 65.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.8,
+      "CG": 13.9,
+      "B": 13.1,
+      "MA": 13.1,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI New Mexico",
+   "date": "2025-07-15T00:00:00.000Z",
+   "location": "Albuquerque, New Mexico",
+   "offSeasonDay": 24,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Mandarins",
+     "score": 84.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.5,
+      "CG": 16.9,
+      "B": 17.5,
+      "MA": 16.8,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 80.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.1,
+      "CG": 15.8,
+      "B": 16.1,
+      "MA": 16.1,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 75.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.8,
+      "CG": 15.3,
+      "B": 15.8,
+      "MA": 15.4,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 74.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.5,
+      "CG": 15,
+      "B": 15.2,
+      "MA": 15.1,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 71.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.1,
+      "CG": 14.2,
+      "B": 14.6,
+      "MA": 14.6,
+      "P": 14.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Brass Impact",
+   "date": "2025-07-15T00:00:00.000Z",
+   "location": "Olathe, Kansas",
+   "offSeasonDay": 24,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 82.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.4,
+      "CG": 17.3,
+      "B": 15.8,
+      "MA": 16.7,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 81.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 16.1,
+      "CG": 16.8,
+      "B": 16.2,
+      "MA": 16.6,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 81.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.2,
+      "CG": 16.9,
+      "B": 16,
+      "MA": 16.5,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 79.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.6,
+      "CG": 16.1,
+      "B": 15.1,
+      "MA": 16.2,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 77.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.1,
+      "CG": 15.8,
+      "B": 15.3,
+      "MA": 15.7,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 70.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.1,
+      "CG": 15,
+      "B": 14.3,
+      "MA": 13.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 67.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 12.8,
+      "CG": 14.3,
+      "B": 13.6,
+      "MA": 14.1,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 63.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 12.2,
+      "CG": 13.6,
+      "B": 13.1,
+      "MA": 13.3,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI West Texas",
+   "date": "2025-07-16T00:00:00.000Z",
+   "location": "Canyon, Texas",
+   "offSeasonDay": 25,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 89.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 17.4,
+      "CG": 17.4,
+      "B": 18.6,
+      "MA": 17.9,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 76.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.1,
+      "CG": 14.9,
+      "B": 16.2,
+      "MA": 15.4,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 74.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 14.6,
+      "CG": 15.5,
+      "B": 15.4,
+      "MA": 15.1,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 71.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.1,
+      "CG": 14.4,
+      "B": 14.8,
+      "MA": 14.3,
+      "P": 14.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Waco",
+   "date": "2025-07-17T00:00:00.000Z",
+   "location": "Waco, Texas",
+   "offSeasonDay": 26,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Mandarins",
+     "score": 86.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.8,
+      "CG": 18,
+      "B": 17.6,
+      "MA": 17.5,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 83.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.4,
+      "CG": 17.7,
+      "B": 16.5,
+      "MA": 16.9,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 82.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.3,
+      "CG": 17.3,
+      "B": 16.3,
+      "MA": 16.3,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 82,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.1,
+      "CG": 16.8,
+      "B": 16.1,
+      "MA": 16.1,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 79.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.7,
+      "CG": 16.3,
+      "B": 15.9,
+      "MA": 15.6,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 71.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.1,
+      "CG": 14.6,
+      "B": 15.2,
+      "MA": 14.2,
+      "P": 15.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Denton",
+   "date": "2025-07-17T00:00:00.000Z",
+   "location": "Denton, Texas",
+   "offSeasonDay": 26,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 90.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 18,
+      "CG": 17.8,
+      "B": 18.1,
+      "MA": 17.7,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 90.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.6,
+      "CG": 17.7,
+      "B": 18.3,
+      "MA": 17.8,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 88.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.5,
+      "CG": 17.1,
+      "B": 17.9,
+      "MA": 17.1,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 86.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17,
+      "CG": 17.2,
+      "B": 17.6,
+      "MA": 17,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 78.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.3,
+      "CG": 15,
+      "B": 16,
+      "MA": 14.9,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 77.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.7,
+      "CG": 15.6,
+      "B": 16.3,
+      "MA": 15.3,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 72.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14,
+      "CG": 14.6,
+      "B": 14.9,
+      "MA": 14.1,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 71.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.2,
+      "CG": 14.4,
+      "B": 14.8,
+      "MA": 13.2,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Zephryus",
+     "score": 65.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.3,
+      "CG": 13.6,
+      "B": 13.4,
+      "MA": 12.2,
+      "P": 13.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Houston",
+   "date": "2025-07-18T00:00:00.000Z",
+   "location": "Houston, Texas",
+   "offSeasonDay": 27,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 91.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.8,
+      "CG": 18.1,
+      "B": 18.3,
+      "MA": 18.3,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 89.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.6,
+      "CG": 18,
+      "B": 18.1,
+      "MA": 18,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 88.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.2,
+      "CG": 17.6,
+      "B": 17.6,
+      "MA": 17.6,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 87.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.3,
+      "CG": 17.5,
+      "B": 17.7,
+      "MA": 17.5,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 84.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.6,
+      "CG": 17,
+      "B": 16.8,
+      "MA": 16.6,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 83.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16,
+      "CG": 17.1,
+      "B": 16,
+      "MA": 16.7,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 77.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15,
+      "CG": 15.8,
+      "B": 15.4,
+      "MA": 15.6,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 75.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.3,
+      "CG": 15.4,
+      "B": 14.8,
+      "MA": 15,
+      "P": 16.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "March On!",
+   "date": "2025-07-19T00:00:00.000Z",
+   "location": "Champlin, Minnesota",
+   "offSeasonDay": 28,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 72.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.5,
+      "CG": 14.7,
+      "B": 13.8,
+      "MA": 13.8,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 69.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 13.5,
+      "CG": 14.3,
+      "B": 13.3,
+      "MA": 13.3,
+      "P": 14
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 66.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 13,
+      "CG": 12.4,
+      "B": 12.9,
+      "MA": 12.9,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Minnesota Brass",
+     "score": 73.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.3,
+      "CG": 15.6,
+      "B": 14.1,
+      "MA": 14.1,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Govenaires",
+     "score": 74.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.3,
+      "CG": 15.1,
+      "B": 13.9,
+      "MA": 13.9,
+      "P": 15.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Southwestern",
+   "date": "2025-07-19T00:00:00.000Z",
+   "location": "San Antonio, Texas",
+   "offSeasonDay": 28,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 93.213,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.4,
+      "CG": 18.4,
+      "B": 18.9,
+      "MA": 18.625,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 92.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.6,
+      "CG": 18.5,
+      "B": 18.4,
+      "MA": 18.55,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 90.913,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.2,
+      "CG": 17.1,
+      "B": 18.6,
+      "MA": 18.225,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 90.838,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.1,
+      "CG": 18.2,
+      "B": 18.2,
+      "MA": 17.875,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 89.263,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.7,
+      "CG": 17.9,
+      "B": 17.7,
+      "MA": 17.775,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 88.788,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.6,
+      "CG": 17.2,
+      "B": 17.85,
+      "MA": 18.075,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 87.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.15,
+      "CG": 17.4,
+      "B": 17.8,
+      "MA": 17.25,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 85.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.05,
+      "VA": 16.95,
+      "CG": 17.25,
+      "B": 17.4,
+      "MA": 16.75,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 84.813,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.9,
+      "CG": 16.8,
+      "B": 15.95,
+      "MA": 17.025,
+      "P": 17.45
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 84.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.6,
+      "CG": 17.05,
+      "B": 17.2,
+      "MA": 17.05,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 82.963,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.4,
+      "CG": 16,
+      "B": 16.9,
+      "MA": 16.425,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 82.188,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.45,
+      "CG": 16.3,
+      "B": 16.4,
+      "MA": 16.475,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 80.738,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16,
+      "CG": 16.4,
+      "B": 16.2,
+      "MA": 16.025,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 79.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.2,
+      "CG": 15.3,
+      "B": 16,
+      "MA": 16.35,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 78.963,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 15.55,
+      "CG": 16.1,
+      "B": 16.6,
+      "MA": 15.475,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 78.113,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.6,
+      "CG": 15.7,
+      "B": 15.6,
+      "MA": 15.925,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 76.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.4,
+      "CG": 15.4,
+      "B": 15.2,
+      "MA": 15.55,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 76.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.45,
+      "CG": 15.2,
+      "B": 15.4,
+      "MA": 15.3,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 73.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 14.7,
+      "CG": 14.5,
+      "B": 14.7,
+      "MA": 15.2,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 72.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.4,
+      "CG": 14.4,
+      "B": 14.8,
+      "MA": 14.9,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 72.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.1,
+      "CG": 14.7,
+      "B": 14.3,
+      "MA": 14.7,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Zephryus",
+     "score": 67.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13,
+      "CG": 13.7,
+      "B": 13.8,
+      "MA": 13.75,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "The Buccaneer Classic",
+   "date": "2025-07-19T00:00:00.000Z",
+   "location": "Landisville, Pennsylvania",
+   "offSeasonDay": 28,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Raiders",
+     "score": 65.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 12.8,
+      "CG": 12.5,
+      "B": 13.3,
+      "MA": 13.2,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 58.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 11.4,
+      "CG": 12.1,
+      "B": 10.4,
+      "MA": 11.6,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Reading Buccaneers",
+     "score": 88.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.9,
+      "CG": 17.1,
+      "B": 18,
+      "MA": 17.5,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 85.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17,
+      "CG": 16.4,
+      "B": 17.4,
+      "MA": 17,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Hawthorne Caballeros",
+     "score": 84.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.9,
+      "CG": 17,
+      "B": 17.2,
+      "MA": 16.8,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "White Sabers",
+     "score": 79.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.7,
+      "CG": 15.3,
+      "B": 16.3,
+      "MA": 16,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Rogues Hollow Regiment",
+     "score": 77.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.6,
+      "CG": 15.6,
+      "B": 15.1,
+      "MA": 15.3,
+      "P": 12.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Dallas",
+   "date": "2025-07-20T00:00:00.000Z",
+   "location": "Bedford, Texas",
+   "offSeasonDay": 29,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 92.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.9,
+      "CG": 18.5,
+      "B": 18.7,
+      "MA": 18.7,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 85.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.1,
+      "CG": 17.2,
+      "B": 16.6,
+      "MA": 16.8,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 84.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.4,
+      "CG": 17.3,
+      "B": 17.3,
+      "MA": 16.9,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 83.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.5,
+      "CG": 16,
+      "B": 17,
+      "MA": 16.5,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 83.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.7,
+      "CG": 17.6,
+      "B": 16.7,
+      "MA": 16.3,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 80.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.1,
+      "CG": 16.6,
+      "B": 16.2,
+      "MA": 16,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 79.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.7,
+      "CG": 16.5,
+      "B": 16.75,
+      "MA": 15.8,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 79.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 15.2,
+      "CG": 15.4,
+      "B": 16.3,
+      "MA": 15.6,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 77,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.4,
+      "CG": 15.5,
+      "B": 15.5,
+      "MA": 15,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 73,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.6,
+      "CG": 14.4,
+      "B": 15,
+      "MA": 14.4,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 72.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.7,
+      "CG": 14.8,
+      "B": 14.9,
+      "MA": 14,
+      "P": 14.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI McKinney",
+   "date": "2025-07-21T00:00:00.000Z",
+   "location": "McKinney, Texas",
+   "offSeasonDay": 30,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 91.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.6,
+      "CG": 17.6,
+      "B": 18.7,
+      "MA": 18.4,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 90.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 18.3,
+      "CG": 18,
+      "B": 18.5,
+      "MA": 18,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 89.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18,
+      "CG": 17.5,
+      "B": 18.1,
+      "MA": 18.2,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 88.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.4,
+      "CG": 17.3,
+      "B": 18.3,
+      "MA": 17.6,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 86.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.1,
+      "CG": 17.4,
+      "B": 17.5,
+      "MA": 17.2,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 78.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.8,
+      "CG": 15.4,
+      "B": 16.1,
+      "MA": 15.6,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 77.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16,
+      "CG": 15.5,
+      "B": 15.8,
+      "MA": 15.7,
+      "P": 16
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Beats In The Brook",
+   "date": "2025-07-22T00:00:00.000Z",
+   "location": "Bellbrook, Ohio",
+   "offSeasonDay": 31,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 75.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.2,
+      "CG": 15.5,
+      "B": 14.7,
+      "MA": 14.7,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 72.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.6,
+      "CG": 14.8,
+      "B": 13.7,
+      "MA": 14.4,
+      "P": 14
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 66,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.7,
+      "CG": 13.8,
+      "B": 13.2,
+      "MA": 12.7,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Cincinnati Tradition",
+     "score": 82.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.3,
+      "CG": 16.7,
+      "B": 16.1,
+      "MA": 15.8,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Columbus Saints",
+     "score": 63.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.2,
+      "CG": 12.6,
+      "B": 13.8,
+      "MA": 10.6,
+      "P": 12
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Saint Louis",
+   "date": "2025-07-22T00:00:00.000Z",
+   "location": "Belleville, Illinois",
+   "offSeasonDay": 31,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 93.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.4,
+      "CG": 18.8,
+      "B": 18.7,
+      "MA": 18.8,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 86.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.1,
+      "CG": 17.5,
+      "B": 17.3,
+      "MA": 17.1,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 86.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.8,
+      "CG": 16.3,
+      "B": 16.6,
+      "MA": 16.9,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 83.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.9,
+      "CG": 16.9,
+      "B": 16.8,
+      "MA": 16.8,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 80.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.1,
+      "CG": 16.4,
+      "B": 16.3,
+      "MA": 16.3,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 78.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 15.4,
+      "CG": 16.6,
+      "B": 15.5,
+      "MA": 16.1,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 72.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.8,
+      "CG": 15.1,
+      "B": 14.1,
+      "MA": 14.6,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 72.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14,
+      "CG": 14.9,
+      "B": 14.3,
+      "MA": 14.8,
+      "P": 14.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums On The Ohio",
+   "date": "2025-07-23T00:00:00.000Z",
+   "location": "Evansville, Indiana",
+   "offSeasonDay": 32,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 94.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 18.7,
+      "CG": 18.7,
+      "B": 18.9,
+      "MA": 18.9,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 92.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.4,
+      "CG": 17.8,
+      "B": 18.7,
+      "MA": 18.7,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Phatom Regiment",
+     "score": 91.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.5,
+      "CG": 18.3,
+      "B": 18.5,
+      "MA": 18.1,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 80.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.7,
+      "CG": 16.9,
+      "B": 16.3,
+      "MA": 16.4,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 73.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.2,
+      "CG": 15,
+      "B": 14.7,
+      "MA": 15.1,
+      "P": 15
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Northern Ohio",
+   "date": "2025-07-23T00:00:00.000Z",
+   "location": "Brunswick, Ohio",
+   "offSeasonDay": 32,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 76.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.5,
+      "CG": 15.5,
+      "B": 15.2,
+      "MA": 15.2,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 73.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15,
+      "CG": 15,
+      "B": 14.7,
+      "MA": 14.7,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 67.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.2,
+      "CG": 13,
+      "B": 13.4,
+      "MA": 13.8,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Cincinnati Tradition",
+     "score": 84.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.6,
+      "CG": 17.2,
+      "B": 15.9,
+      "MA": 16.2,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Columbus Saints",
+     "score": 65.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.2,
+      "CG": 12.8,
+      "B": 13.6,
+      "MA": 12.9,
+      "P": 12.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "White Rose Classic",
+   "date": "2025-07-25T00:00:00.000Z",
+   "location": "Dover, Pennsylvania",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 77.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.2,
+      "CG": 15.8,
+      "B": 15.7,
+      "MA": 15.5,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 75.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.8,
+      "CG": 15.3,
+      "B": 15,
+      "MA": 15,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 68.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.7,
+      "CG": 13.9,
+      "B": 14.4,
+      "MA": 13.7,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "7th",
+     "score": 67.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.6,
+      "CG": 15.1,
+      "B": 12.7,
+      "MA": 13.3,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 62.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 13.1,
+      "CG": 13.8,
+      "B": 11.3,
+      "MA": 12.3,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums On Parade",
+   "date": "2025-07-25T00:00:00.000Z",
+   "location": "Madison, Wisconsin",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 92.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.7,
+      "CG": 18.4,
+      "B": 18.6,
+      "MA": 18.7,
+      "P": 19
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 86.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.2,
+      "CG": 17.4,
+      "B": 17,
+      "MA": 17.1,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 84.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.1,
+      "CG": 16.8,
+      "B": 16.8,
+      "MA": 17.2,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 82,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.2,
+      "CG": 16.2,
+      "B": 16.2,
+      "MA": 16.5,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 81.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16,
+      "CG": 16.3,
+      "B": 15.8,
+      "MA": 16.6,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 68.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 14.1,
+      "CG": 13.4,
+      "B": 13.8,
+      "MA": 13.9,
+      "P": 13.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Nashville",
+   "date": "2025-07-25T00:00:00.000Z",
+   "location": "Nashville, Tennessee",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 94.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 19.1,
+      "CG": 18.9,
+      "B": 18.6,
+      "MA": 18.5,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 92.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.9,
+      "CG": 18.6,
+      "B": 18.3,
+      "MA": 17.7,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 90.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.6,
+      "CG": 17.4,
+      "B": 18,
+      "MA": 18.2,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 89.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18,
+      "CG": 17.5,
+      "B": 17.7,
+      "MA": 17.2,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 86.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.6,
+      "CG": 17.3,
+      "B": 17.3,
+      "MA": 17,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 85.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.2,
+      "CG": 17,
+      "B": 17.2,
+      "MA": 17.5,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 77.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.5,
+      "CG": 15.5,
+      "B": 15.4,
+      "MA": 15.2,
+      "P": 15.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Birmingham",
+   "date": "2025-07-25T00:00:00.000Z",
+   "location": "Birmingham, Alabama",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 85.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17,
+      "CG": 16.9,
+      "B": 17.3,
+      "MA": 16.7,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 82.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.3,
+      "CG": 16.3,
+      "B": 16.8,
+      "MA": 16.5,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 80.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16,
+      "CG": 15.9,
+      "B": 16.6,
+      "MA": 16.1,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 75.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.8,
+      "CG": 14.9,
+      "B": 15.1,
+      "MA": 15.2,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 73.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.9,
+      "CG": 14.8,
+      "B": 15,
+      "MA": 14.8,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 62,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.3,
+      "VA": 12.8,
+      "CG": 12.1,
+      "B": 12.5,
+      "MA": 12.9,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Atlanta CV",
+     "score": 83.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.8,
+      "CG": 16.7,
+      "B": 16.5,
+      "MA": 16.6,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Fusion Core",
+     "score": 73.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 15,
+      "CG": 15.3,
+      "B": 14.6,
+      "MA": 14.9,
+      "P": 14.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Bushwackers Invitational",
+   "date": "2025-07-26T00:00:00.000Z",
+   "location": "Succasunna, New Jersey",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Reading Buccaneers",
+     "score": 92.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.3,
+      "CG": 17.7,
+      "B": 18.5,
+      "MA": 18.1,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Hawthorne Caballeros",
+     "score": 89.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.7,
+      "CG": 17.4,
+      "B": 17.8,
+      "MA": 17.7,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 88.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.2,
+      "CG": 16.8,
+      "B": 17.6,
+      "MA": 17.4,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Connecticut Hurricanes",
+     "score": 84.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17,
+      "CG": 16.9,
+      "B": 17,
+      "MA": 16.5,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "White Sabers",
+     "score": 81.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.3,
+      "CG": 15.8,
+      "B": 16.7,
+      "MA": 16.5,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 77.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15,
+      "CG": 15.7,
+      "B": 15.6,
+      "MA": 15.7,
+      "P": 14.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Southeastern",
+   "date": "2025-07-26T00:00:00.000Z",
+   "location": "Atlanta, Georgia",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 95.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 19.2,
+      "CG": 18.8,
+      "B": 18.8,
+      "MA": 18.95,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 92.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 19,
+      "CG": 18.5,
+      "B": 18.4,
+      "MA": 18.25,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 90.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.6,
+      "CG": 17.5,
+      "B": 18.2,
+      "MA": 18.55,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 87.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17,
+      "CG": 17.6,
+      "B": 17.55,
+      "MA": 17.7,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 86.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.2,
+      "CG": 17.1,
+      "B": 17.4,
+      "MA": 17.8,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 85.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17.5,
+      "CG": 17,
+      "B": 17.1,
+      "MA": 17.1,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 82.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16,
+      "CG": 15.7,
+      "B": 16.6,
+      "MA": 16.65,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 79.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.3,
+      "CG": 16,
+      "B": 16.5,
+      "MA": 16.15,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 78.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.5,
+      "CG": 16.2,
+      "B": 15.6,
+      "MA": 16.25,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 78.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.8,
+      "CG": 15.5,
+      "B": 15.7,
+      "MA": 15.6,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 75.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 15.3,
+      "CG": 15.6,
+      "B": 14.6,
+      "MA": 15.5,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 62.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 13,
+      "CG": 12.6,
+      "B": 11.4,
+      "MA": 12.55,
+      "P": 11.6
+     }
+    },
+    {
+     "corps": "Atlanta CV",
+     "score": 83.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 17.2,
+      "CG": 17,
+      "B": 15.3,
+      "MA": 16.75,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Fusion Core",
+     "score": 74.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 15.5,
+      "CG": 15,
+      "B": 14,
+      "MA": 15.6,
+      "P": 14.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Midwest Classic",
+   "date": "2025-07-26T00:00:00.000Z",
+   "location": "DeKalb, Illinois",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 93.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.6,
+      "CG": 18.8,
+      "B": 18.8,
+      "MA": 18.95,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 92.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.74,
+      "CG": 17.8,
+      "B": 18.6,
+      "MA": 18.55,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 91.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.1,
+      "CG": 18.4,
+      "B": 18.3,
+      "MA": 18.45,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 87.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.4,
+      "CG": 17.1,
+      "B": 17.4,
+      "MA": 17.35,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 85.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17,
+      "CG": 16.8,
+      "B": 17.1,
+      "MA": 17.2,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 82.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.3,
+      "CG": 16.3,
+      "B": 16.6,
+      "MA": 16.25,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 81.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16,
+      "CG": 16.7,
+      "B": 16.3,
+      "MA": 15.95,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 70.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 14.1,
+      "CG": 14.6,
+      "B": 13.3,
+      "MA": 14.15,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 69.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.8,
+      "CG": 14.1,
+      "B": 14.4,
+      "MA": 13.5,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 66.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13,
+      "CG": 13.9,
+      "B": 13.7,
+      "MA": 12.5,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Govenaires",
+     "score": 76.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.2,
+      "CG": 16,
+      "B": 15.5,
+      "MA": 14.95,
+      "P": 15.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI In Norton",
+   "date": "2025-07-27T00:00:00.000Z",
+   "location": "Norton, Ohio",
+   "offSeasonDay": 36,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Gold",
+     "score": 76.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.1,
+      "CG": 15.4,
+      "B": 15,
+      "MA": 15.6,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 71.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.1,
+      "CG": 14.8,
+      "B": 13.6,
+      "MA": 14.9,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 67.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.4,
+      "CG": 14.6,
+      "B": 13,
+      "MA": 14.2,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Cincinnati Tradition",
+     "score": 84.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.9,
+      "CG": 17.3,
+      "B": 16.3,
+      "MA": 17.4,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Rogues Hollow Regiment",
+     "score": 78.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.5,
+      "CG": 16.7,
+      "B": 15.3,
+      "MA": 16.2,
+      "P": 14.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "NightBEAT",
+   "date": "2025-07-27T00:00:00.000Z",
+   "location": "Winston-Salem, North Carolina",
+   "offSeasonDay": 36,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 94.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 19.1,
+      "CG": 18.5,
+      "B": 18.8,
+      "MA": 19,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 92.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.8,
+      "CG": 18.2,
+      "B": 18.7,
+      "MA": 18.4,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 91.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.6,
+      "CG": 17.8,
+      "B": 18.5,
+      "MA": 18.5,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 89,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.2,
+      "CG": 17.6,
+      "B": 17.5,
+      "MA": 18,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 87.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.6,
+      "CG": 17.5,
+      "B": 17.4,
+      "MA": 17.8,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 86.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.4,
+      "CG": 17.2,
+      "B": 17.8,
+      "MA": 17.4,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 84.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17.3,
+      "CG": 16.9,
+      "B": 16.8,
+      "MA": 17,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 82.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.5,
+      "CG": 16.6,
+      "B": 17.1,
+      "MA": 16.6,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 79.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.7,
+      "CG": 16.2,
+      "B": 15.5,
+      "MA": 16.1,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 78.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.6,
+      "CG": 16.1,
+      "B": 15.3,
+      "MA": 15.6,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 77.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.8,
+      "CG": 15.8,
+      "B": 15.8,
+      "MA": 16,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 74.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.7,
+      "CG": 15.2,
+      "B": 14.9,
+      "MA": 15.2,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.9,
+      "CG": 14.9,
+      "B": 14.6,
+      "MA": 15,
+      "P": 14.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Summer Music Games in Cincinnati",
+   "date": "2025-07-28T00:00:00.000Z",
+   "location": "Mason, Ohio",
+   "offSeasonDay": 37,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusasders",
+     "score": 94.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.8,
+      "CG": 18.6,
+      "B": 18.8,
+      "MA": 18.9,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 93.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.5,
+      "CG": 18.1,
+      "B": 18.6,
+      "MA": 18.6,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 86.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.6,
+      "CG": 17.2,
+      "B": 17,
+      "MA": 17.2,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 83.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.5,
+      "CG": 16.5,
+      "B": 16.5,
+      "MA": 16.4,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 69.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.6,
+      "CG": 14.2,
+      "B": 14.1,
+      "MA": 12.6,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 67.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.9,
+      "CG": 14.1,
+      "B": 13.6,
+      "MA": 12.1,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Cincinnati Tradition",
+     "score": 85.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.6,
+      "CG": 16.7,
+      "B": 17.2,
+      "MA": 16.6,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Columbus Saints",
+     "score": 66.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.3,
+      "CG": 13.4,
+      "B": 14,
+      "MA": 12.5,
+      "P": 13.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Brass At The Beach",
+   "date": "2025-07-29T00:00:00.000Z",
+   "location": "Myrtle Beach, South Carolina",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 92.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.8,
+      "CG": 17.7,
+      "B": 18.7,
+      "MA": 19.2,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 84.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.6,
+      "CG": 16.4,
+      "B": 17,
+      "MA": 17,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 81,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.1,
+      "CG": 16.5,
+      "B": 16.1,
+      "MA": 15.8,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 80.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16,
+      "CG": 16.3,
+      "B": 16.5,
+      "MA": 16.6,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 80.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 15.9,
+      "CG": 15.8,
+      "B": 15.8,
+      "MA": 16.3,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 75.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15,
+      "CG": 15.2,
+      "B": 15.1,
+      "MA": 15.2,
+      "P": 15.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Delaware",
+   "date": "2025-07-29T00:00:00.000Z",
+   "location": "Newark, Delaware",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 93.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 19,
+      "CG": 19.1,
+      "B": 18.9,
+      "MA": 18.7,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 88.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.8,
+      "CG": 17.7,
+      "B": 18,
+      "MA": 17.7,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 86.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.1,
+      "CG": 17.5,
+      "B": 17.5,
+      "MA": 17.5,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 79.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.8,
+      "CG": 16.2,
+      "B": 15.8,
+      "MA": 16,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 77.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.7,
+      "CG": 15.5,
+      "B": 16.1,
+      "MA": 15.6,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 71.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.5,
+      "CG": 14.8,
+      "B": 14.5,
+      "MA": 14.1,
+      "P": 14.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Soaring Sounds",
+   "date": "2025-07-29T00:00:00.000Z",
+   "location": "Centerville, Ohio",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 93.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.5,
+      "CG": 18.7,
+      "B": 18.6,
+      "MA": 18.6,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 90.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.1,
+      "CG": 18,
+      "B": 17.6,
+      "MA": 18,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 88.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.5,
+      "CG": 17.7,
+      "B": 17.7,
+      "MA": 17.8,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 82.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.2,
+      "CG": 16.9,
+      "B": 16.5,
+      "MA": 16.4,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 76.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.4,
+      "CG": 15.2,
+      "B": 14.8,
+      "MA": 15.7,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 70.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.4,
+      "CG": 14,
+      "B": 13.3,
+      "MA": 14.5,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 64.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.8,
+      "CG": 11.9,
+      "B": 11.6,
+      "MA": 13,
+      "P": 14
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Huntington",
+   "date": "2025-07-30T00:00:00.000Z",
+   "location": "Huntington, West Virginia",
+   "offSeasonDay": 39,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 94.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.9,
+      "CG": 18.7,
+      "B": 18.9,
+      "MA": 18.9,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 91.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.4,
+      "CG": 18.4,
+      "B": 18.3,
+      "MA": 18.4,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 88.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.5,
+      "CG": 18.1,
+      "B": 18,
+      "MA": 18.1,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 82.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.3,
+      "CG": 16.9,
+      "B": 16.6,
+      "MA": 16.5,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 76.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 15.4,
+      "CG": 15.2,
+      "B": 15.3,
+      "MA": 16,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 75.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 15.1,
+      "CG": 15.5,
+      "B": 15.1,
+      "MA": 15.6,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 71.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 14.4,
+      "CG": 14.3,
+      "B": 13.9,
+      "MA": 15.2,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 64.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.3,
+      "CG": 12.5,
+      "B": 12.4,
+      "MA": 13.6,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Central Ohio",
+   "date": "2025-07-31T00:00:00.000Z",
+   "location": "Marion, Ohio",
+   "offSeasonDay": 40,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Gold",
+     "score": 78,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.9,
+      "CG": 15.5,
+      "B": 15.8,
+      "MA": 15.8,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 77.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.6,
+      "CG": 15.8,
+      "B": 15.4,
+      "MA": 15.6,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 73.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 14.7,
+      "CG": 14.6,
+      "B": 14.6,
+      "MA": 14.8,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 71.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.4,
+      "CG": 14.2,
+      "B": 14.8,
+      "MA": 14.6,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 71.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.3,
+      "CG": 14.8,
+      "B": 13.8,
+      "MA": 14.2,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 69.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.7,
+      "CG": 14.4,
+      "B": 14.2,
+      "MA": 13.6,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 66.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.3,
+      "CG": 13.8,
+      "B": 13,
+      "MA": 13.1,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Northern Lights",
+     "score": 69.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 14.2,
+      "CG": 14.4,
+      "B": 13,
+      "MA": 14.5,
+      "P": 14.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI East",
+   "date": "2025-08-01T00:00:00.000Z",
+   "location": "Allentown, Pennsylvania",
+   "offSeasonDay": 41,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 96.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.3,
+      "VA": 19.5,
+      "CG": 19.1,
+      "B": 19.2,
+      "MA": 19.35,
+      "P": 19.4
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 94.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 19.2,
+      "CG": 18.8,
+      "B": 19,
+      "MA": 18.8,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 93.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.8,
+      "CG": 18.2,
+      "B": 18.6,
+      "MA": 18.65,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 88.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.9,
+      "CG": 18,
+      "B": 17.9,
+      "MA": 18,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 88.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.4,
+      "CG": 17.35,
+      "B": 18,
+      "MA": 17.7,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 87.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.6,
+      "CG": 17.5,
+      "B": 17.3,
+      "MA": 17.25,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 86.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17,
+      "CG": 17.8,
+      "B": 17.5,
+      "MA": 17.4,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 83.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17.1,
+      "CG": 17.1,
+      "B": 16.9,
+      "MA": 16.5,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 81.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.2,
+      "CG": 16.6,
+      "B": 16.3,
+      "MA": 16.2,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 79.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.7,
+      "CG": 16.7,
+      "B": 15.6,
+      "MA": 15.9,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 76.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.2,
+      "CG": 15.9,
+      "B": 15.1,
+      "MA": 15.4,
+      "P": 16.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Williamsport",
+   "date": "2025-08-02T00:00:00.000Z",
+   "location": "Williamsport, Pennsylvania",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 93.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.9,
+      "CG": 18.3,
+      "B": 18.7,
+      "MA": 18.7,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 89.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.5,
+      "CG": 17.5,
+      "B": 18.1,
+      "MA": 17.9,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 89.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 18,
+      "CG": 18.2,
+      "B": 18.3,
+      "MA": 18.1,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 81.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.5,
+      "CG": 16.9,
+      "B": 16.4,
+      "MA": 16.3,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Hawthorne Caballeros",
+     "score": 91.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 17.9,
+      "CG": 18,
+      "B": 18.2,
+      "MA": 18.6,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 90.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.3,
+      "CG": 18.2,
+      "B": 18,
+      "MA": 18.2,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Connecticut Hurricanes",
+     "score": 86.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.8,
+      "CG": 17.3,
+      "B": 16.7,
+      "MA": 17.2,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "White Sabers",
+     "score": 83.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.8,
+      "CG": 16.9,
+      "B": 16.9,
+      "MA": 16.5,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Rogues Hollow Regiment",
+     "score": 81.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.4,
+      "CG": 16.5,
+      "B": 16.4,
+      "MA": 16.7,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 80.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.2,
+      "CG": 16.8,
+      "B": 16.1,
+      "MA": 15.9,
+      "P": 15
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Allendale, Michigan",
+   "date": "2025-08-02T00:00:00.000Z",
+   "location": "Allendale, Michigan",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Gold",
+     "score": 79.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.2,
+      "CG": 15.9,
+      "B": 15.5,
+      "MA": 16.2,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 78.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16.1,
+      "CG": 15.8,
+      "B": 15.6,
+      "MA": 15.9,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 75.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 15.3,
+      "CG": 15.5,
+      "B": 14.7,
+      "MA": 15.3,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 73.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.7,
+      "CG": 14.7,
+      "B": 14.4,
+      "MA": 14.9,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 72.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.9,
+      "CG": 15.1,
+      "B": 15,
+      "MA": 15,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 72.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.4,
+      "CG": 15.6,
+      "B": 13.9,
+      "MA": 14.5,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 70.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.3,
+      "CG": 14.6,
+      "B": 14.1,
+      "MA": 13.9,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 67.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.7,
+      "CG": 14.2,
+      "B": 13,
+      "MA": 13.3,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Northern Lights",
+     "score": 70.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.3,
+      "CG": 14.6,
+      "B": 13.3,
+      "MA": 14.3,
+      "P": 15.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI East",
+   "date": "2025-08-02T00:00:00.000Z",
+   "location": "Allentown, Pennsylvania",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 96.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.4,
+      "VA": 19.35,
+      "CG": 19.05,
+      "B": 19.55,
+      "MA": 19.15,
+      "P": 19.55
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 95.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 19.45,
+      "CG": 18.75,
+      "B": 19.35,
+      "MA": 18.85,
+      "P": 19.35
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 93.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.65,
+      "CG": 18.3,
+      "B": 19.25,
+      "MA": 19.25,
+      "P": 18.85
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 91.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.5,
+      "CG": 18.35,
+      "B": 18.1,
+      "MA": 18.35,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 89.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.8,
+      "CG": 18.15,
+      "B": 17.65,
+      "MA": 17.8,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 84.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.7,
+      "CG": 17.2,
+      "B": 17.35,
+      "MA": 16.95,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 84.638,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17.15,
+      "CG": 16.9,
+      "B": 16.95,
+      "MA": 17.075,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 81.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.75,
+      "CG": 16.5,
+      "B": 16,
+      "MA": 16.15,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 81.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16,
+      "CG": 16.8,
+      "B": 16.6,
+      "MA": 16.35,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 77.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15,
+      "CG": 16.3,
+      "B": 15.3,
+      "MA": 15.7,
+      "P": 15.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Big Sounds In Motion",
+   "date": "2025-08-03T00:00:00.000Z",
+   "location": "Downingtown, Pennsylvania",
+   "offSeasonDay": 43,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 96.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.4,
+      "VA": 19.3,
+      "CG": 19.2,
+      "B": 19.3,
+      "MA": 19.1,
+      "P": 19.65
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 94.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.9,
+      "CG": 18.5,
+      "B": 19.1,
+      "MA": 19.3,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 87.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.6,
+      "CG": 18.1,
+      "B": 17.4,
+      "MA": 17.5,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Reading Buccaneers",
+     "score": 94.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 18.5,
+      "CG": 18.7,
+      "B": 18.9,
+      "MA": 18.4,
+      "P": 19.6
+     }
+    },
+    {
+     "corps": "Connecticut Hurricanes",
+     "score": 87.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.4,
+      "CG": 18,
+      "B": 17.1,
+      "MA": 17.3,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "White Sabers",
+     "score": 84.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.9,
+      "CG": 17.1,
+      "B": 16.9,
+      "MA": 17,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 80.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 15.3,
+      "CG": 16.7,
+      "B": 16.2,
+      "MA": 16.1,
+      "P": 16
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Lake Erie",
+   "date": "2025-08-04T00:00:00.000Z",
+   "location": "Edinboro, PA",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Mandarins",
+     "score": 92.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.7,
+      "CG": 18.5,
+      "B": 18.4,
+      "MA": 18.25,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 90.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.9,
+      "CG": 18.3,
+      "B": 17.9,
+      "MA": 18.1,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 86.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17,
+      "CG": 17,
+      "B": 17.3,
+      "MA": 17.95,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 83.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.1,
+      "CG": 16.4,
+      "B": 16.7,
+      "MA": 16.8,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 82.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.6,
+      "CG": 16.5,
+      "B": 16.2,
+      "MA": 17.1,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 82.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.2,
+      "CG": 16.6,
+      "B": 16.6,
+      "MA": 17.05,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 80.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.2,
+      "CG": 15.8,
+      "B": 16.3,
+      "MA": 16,
+      "P": 16.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Open Class World Championship Prelims",
+   "date": "2025-08-04T00:00:00.000Z",
+   "location": "Marion, Indiana",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 81.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16,
+      "CG": 16.5,
+      "B": 16.4,
+      "MA": 16.55,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 79.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.4,
+      "CG": 16,
+      "B": 15.9,
+      "MA": 16.35,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 79.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.9,
+      "CG": 15.5,
+      "B": 16.1,
+      "MA": 16.15,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 76.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.3,
+      "CG": 15.4,
+      "B": 15.1,
+      "MA": 15.65,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 75.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.9,
+      "CG": 14.7,
+      "B": 15.4,
+      "MA": 15.45,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 73.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.8,
+      "CG": 14.9,
+      "B": 14.2,
+      "MA": 14.55,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 72.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.2,
+      "CG": 14.2,
+      "B": 14.8,
+      "MA": 14.95,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 71.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.4,
+      "CG": 14.4,
+      "B": 14.5,
+      "MA": 14.3,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 67.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.7,
+      "CG": 14,
+      "B": 13.3,
+      "MA": 13.6,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Calgary Stampede Showband",
+     "score": 76.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15,
+      "CG": 16,
+      "B": 14.9,
+      "MA": 14.45,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Calgary Stetson Showband",
+     "score": 66.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 13.2,
+      "CG": 13.6,
+      "B": 13.3,
+      "MA": 12.8,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "High",
+     "score": 63.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13,
+      "CG": 13,
+      "B": 12.6,
+      "MA": 12.3,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Calgary Roundup Band",
+     "score": 62.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 12,
+      "CG": 12.6,
+      "B": 12.9,
+      "MA": 12.4,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "High School Affiliated to BIT",
+     "score": 59.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 12.4,
+      "CG": 11,
+      "B": 12,
+      "MA": 12.1,
+      "P": 12
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Pittsburgh",
+   "date": "2025-08-04T00:00:00.000Z",
+   "location": "Pittsburgh, Pennsylvania",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 95.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.2,
+      "CG": 18.9,
+      "B": 19.3,
+      "MA": 18.9,
+      "P": 19.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 91.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18,
+      "CG": 18.6,
+      "B": 18.5,
+      "MA": 18,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 79.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.2,
+      "CG": 16.6,
+      "B": 16.2,
+      "MA": 15.7,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 78.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.4,
+      "CG": 16.1,
+      "B": 15.7,
+      "MA": 15.9,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 90.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 18.1,
+      "CG": 18.2,
+      "B": 18.1,
+      "MA": 17.8,
+      "P": 17.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Open Class World Championship Finals",
+   "date": "2025-08-05T00:00:00.000Z",
+   "location": "Marion, Indiana",
+   "offSeasonDay": 45,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 82.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16,
+      "CG": 16,
+      "B": 16.5,
+      "MA": 16.6,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 80.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.8,
+      "CG": 15.9,
+      "B": 16.2,
+      "MA": 16.45,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 79.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 15.9,
+      "CG": 15,
+      "B": 16.1,
+      "MA": 16.15,
+      "P": 16.45
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 77.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.5,
+      "CG": 15.2,
+      "B": 15.4,
+      "MA": 15.45,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 76.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15,
+      "CG": 14.7,
+      "B": 15.5,
+      "MA": 15.2,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 74.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.1,
+      "CG": 14.9,
+      "B": 14.7,
+      "MA": 14.7,
+      "P": 15.05
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 73.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.8,
+      "CG": 14.2,
+      "B": 14.8,
+      "MA": 14.9,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 71.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.4,
+      "CG": 13.6,
+      "B": 14.3,
+      "MA": 14.2,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 68.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 13.8,
+      "CG": 13.9,
+      "B": 13.1,
+      "MA": 13.5,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Calgary Stampede Showband",
+     "score": 76.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.2,
+      "CG": 15.7,
+      "B": 15,
+      "MA": 14.5,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Calgary Stetson Showband",
+     "score": 66.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13,
+      "CG": 13.2,
+      "B": 13.3,
+      "MA": 12.85,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "High",
+     "score": 65.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 12.8,
+      "CG": 12.8,
+      "B": 12.9,
+      "MA": 12.7,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "Calgary Roundup Band",
+     "score": 62.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 11.8,
+      "CG": 12.3,
+      "B": 12.6,
+      "MA": 12.1,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "High School Affiliated to BIT",
+     "score": 60.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12,
+      "CG": 11.5,
+      "B": 12.1,
+      "MA": 12.35,
+      "P": 12.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Prelims",
+   "date": "2025-08-07T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 47,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 97.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.3,
+      "VA": 19.35,
+      "CG": 19.2,
+      "B": 19.55,
+      "MA": 19.35,
+      "P": 19.8
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 97.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.35,
+      "VA": 19.6,
+      "CG": 19.1,
+      "B": 19.35,
+      "MA": 19.55,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 95.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.4,
+      "VA": 19.5,
+      "CG": 18.8,
+      "B": 19,
+      "MA": 19.15,
+      "P": 19.45
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 95.588,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 19.4,
+      "CG": 18.65,
+      "B": 19.2,
+      "MA": 18.975,
+      "P": 19.25
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 94.638,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.6,
+      "CG": 18.6,
+      "B": 19.3,
+      "MA": 19.575,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 93.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 19,
+      "CG": 18.25,
+      "B": 18.8,
+      "MA": 18.55,
+      "P": 18.95
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 92.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.7,
+      "CG": 18.3,
+      "B": 18.55,
+      "MA": 18.75,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 91.163,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.2,
+      "CG": 18.2,
+      "B": 18.5,
+      "MA": 17.875,
+      "P": 18.75
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 90.488,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 18.05,
+      "CG": 18.35,
+      "B": 18.3,
+      "MA": 18.175,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 90.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.9,
+      "CG": 17.85,
+      "B": 18.1,
+      "MA": 18.1,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 88.038,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.4,
+      "CG": 18,
+      "B": 17.6,
+      "MA": 17.775,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 87.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.6,
+      "CG": 17.75,
+      "B": 17.55,
+      "MA": 17.2,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 86.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17,
+      "CG": 17.25,
+      "B": 18,
+      "MA": 17.65,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 85.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 17.15,
+      "CG": 17.35,
+      "B": 17.3,
+      "MA": 17,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 83.863,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.05,
+      "CG": 17.2,
+      "B": 16.85,
+      "MA": 16.325,
+      "P": 16.75
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 83.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.45,
+      "VA": 16.8,
+      "CG": 16.6,
+      "B": 16.6,
+      "MA": 16.6,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 82.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.6,
+      "CG": 16.35,
+      "B": 17,
+      "MA": 16.6,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 82.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.35,
+      "CG": 16.5,
+      "B": 16.55,
+      "MA": 16.5,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 81.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.5,
+      "CG": 16.7,
+      "B": 16.3,
+      "MA": 16.1,
+      "P": 15.85
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 79.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16,
+      "CG": 15.9,
+      "B": 16.1,
+      "MA": 16.05,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 78.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.8,
+      "B": 15.7,
+      "MA": 15.5,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 78.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 15.05,
+      "CG": 15.45,
+      "B": 16.5,
+      "MA": 15.4,
+      "P": 15.45
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 77.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.4,
+      "CG": 15.3,
+      "B": 15.5,
+      "MA": 15.75,
+      "P": 15.55
+     }
+    },
+    {
+     "corps": "Calgary Stamped e Showband",
+     "score": 76.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.5,
+      "CG": 16.1,
+      "B": 15.3,
+      "MA": 15.2,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 74.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.2,
+      "CG": 14.7,
+      "B": 14.3,
+      "MA": 14.8,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 73.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 14.7,
+      "CG": 14.2,
+      "B": 14.6,
+      "MA": 14.5,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 72.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14,
+      "CG": 15.2,
+      "B": 15,
+      "MA": 14.15,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 72.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.1,
+      "CG": 14.6,
+      "B": 14.4,
+      "MA": 14,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 70.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.1,
+      "CG": 14.4,
+      "B": 14.7,
+      "MA": 14,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 67.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.9,
+      "CG": 14,
+      "B": 13.3,
+      "MA": 13.45,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Calgary Stetson Showband",
+     "score": 66.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 13.1,
+      "CG": 13.6,
+      "B": 13.4,
+      "MA": 12.85,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Bejing High",
+     "score": 65.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 12.7,
+      "CG": 13.4,
+      "B": 13.2,
+      "MA": 12.5,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Calgary Roundu p Band",
+     "score": 62,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 12.1,
+      "CG": 12.9,
+      "B": 11.7,
+      "MA": 11.9,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "High School Affiliated to BIT",
+     "score": 61.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.4,
+      "CG": 12.6,
+      "B": 11.9,
+      "MA": 12.1,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI All Age Class - World Championship Class Finals",
+   "date": "2025-08-08T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 48,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Reading Buccaneers",
+     "score": 96.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.4,
+      "VA": 19,
+      "CG": 18.9,
+      "B": 19.3,
+      "MA": 19.15,
+      "P": 19.7
+     }
+    },
+    {
+     "corps": "Hawthorne Caballeros",
+     "score": 93.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 18.5,
+      "CG": 18.5,
+      "B": 18.8,
+      "MA": 18.65,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 92.575,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.4,
+      "CG": 18.4,
+      "B": 18.1,
+      "MA": 18.45,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Atlanta CV",
+     "score": 90.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 17.8,
+      "CG": 18.1,
+      "B": 18.3,
+      "MA": 17.4,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Connecticut Hurricanes",
+     "score": 87.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.4,
+      "CG": 17.9,
+      "B": 16.4,
+      "MA": 17.35,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Cincinnati Tradition",
+     "score": 90.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 18,
+      "CG": 17.7,
+      "B": 17.8,
+      "MA": 17.65,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "White Sabers",
+     "score": 85.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.9,
+      "CG": 17.1,
+      "B": 17.4,
+      "MA": 16.55,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Rogues Hollow Regiment",
+     "score": 83.41,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.1,
+      "CG": 16.8,
+      "B": 17.1,
+      "MA": 16.7,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 83.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.6,
+      "CG": 17.2,
+      "B": 16.6,
+      "MA": 16.25,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Minnesota Brass",
+     "score": 79.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16,
+      "CG": 16.3,
+      "B": 15.2,
+      "MA": 16.2,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Northern Lights",
+     "score": 76.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15,
+      "CG": 15.2,
+      "B": 15.6,
+      "MA": 15.55,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Govenaires",
+     "score": 80.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 16.2,
+      "CG": 16.6,
+      "B": 16.2,
+      "MA": 15.75,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Fusion Core",
+     "score": 77.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 15.9,
+      "CG": 15.5,
+      "B": 15.4,
+      "MA": 15.55,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Columbus Saints",
+     "score": 69.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 14.3,
+      "CG": 13.9,
+      "B": 14.5,
+      "MA": 13.65,
+      "P": 14.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Semi-Finals",
+   "date": "2025-08-08T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 48,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 97.763,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.7,
+      "VA": 19.6,
+      "CG": 19.4,
+      "B": 19.5,
+      "MA": 19.475,
+      "P": 19.45
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 97.575,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.2,
+      "CG": 19.6,
+      "B": 19.65,
+      "MA": 19.5,
+      "P": 19.7
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 96.063,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.6,
+      "VA": 19.1,
+      "CG": 18.5,
+      "B": 19.45,
+      "MA": 19.175,
+      "P": 19.5
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 95.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.4,
+      "CG": 19.1,
+      "B": 18.95,
+      "MA": 19.1,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 94.238,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 18.45,
+      "CG": 18.6,
+      "B": 19.3,
+      "MA": 19.425,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 93.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.6,
+      "CG": 18.9,
+      "B": 18.45,
+      "MA": 18.85,
+      "P": 18.85
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 92.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.2,
+      "CG": 18.3,
+      "B": 18.85,
+      "MA": 18.55,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 90.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 17.8,
+      "CG": 17.55,
+      "B": 17.95,
+      "MA": 18.15,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 90.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.85,
+      "VA": 17.5,
+      "CG": 17.8,
+      "B": 18.5,
+      "MA": 18.2,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 90.063,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 18,
+      "CG": 17.3,
+      "B": 18.7,
+      "MA": 18.025,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 88.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.6,
+      "CG": 17.9,
+      "B": 18.05,
+      "MA": 17.75,
+      "P": 17.85
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 88.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.3,
+      "CG": 17,
+      "B": 18.2,
+      "MA": 17.5,
+      "P": 18.35
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 86.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.85,
+      "CG": 16.6,
+      "B": 18.4,
+      "MA": 17.6,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 85.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.85,
+      "VA": 17,
+      "CG": 16.45,
+      "B": 17.7,
+      "MA": 17.2,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 84.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.55,
+      "VA": 16.7,
+      "CG": 17.15,
+      "B": 17.8,
+      "MA": 16.85,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 83.838,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.6,
+      "CG": 16.3,
+      "B": 17.05,
+      "MA": 16.775,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 83.313,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.5,
+      "CG": 16,
+      "B": 17.4,
+      "MA": 16.825,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 82.275,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.2,
+      "CG": 16.5,
+      "B": 17,
+      "MA": 16.35,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 82.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.45,
+      "CG": 15.8,
+      "B": 16.9,
+      "MA": 16.55,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 79.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 16,
+      "CG": 15.6,
+      "B": 16.4,
+      "MA": 16.1,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 79.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.6,
+      "CG": 15.2,
+      "B": 16.6,
+      "MA": 16.1,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 77.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 15.7,
+      "CG": 14.9,
+      "B": 16,
+      "MA": 15.8,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Seattle Cascades",
+     "score": 77.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.4,
+      "CG": 14.8,
+      "B": 15.3,
+      "MA": 15.55,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Calgary Stampe de Showband",
+     "score": 75.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.3,
+      "CG": 15.4,
+      "B": 15.6,
+      "MA": 15.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 74.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.9,
+      "CG": 14.5,
+      "B": 15.1,
+      "MA": 15,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 73.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.8,
+      "CG": 14.2,
+      "B": 14.6,
+      "MA": 14.65,
+      "P": 14.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI All Age Class World Championship Finals",
+   "date": "2025-08-09T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 49,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Reading Buccaneers",
+     "score": 97.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 19.5,
+      "CG": 19.5,
+      "B": 19.2,
+      "MA": 77.35,
+      "P": 19.8
+     }
+    },
+    {
+     "corps": "Hawthorne Caballeros",
+     "score": 95.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 19.2,
+      "CG": 19.4,
+      "B": 19,
+      "MA": 19.05,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Bushwackers",
+     "score": 94.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.8,
+      "CG": 18.9,
+      "B": 18.7,
+      "MA": 18.6,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Atlanta CV",
+     "score": 91.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 18.05,
+      "CG": 18.7,
+      "B": 18.4,
+      "MA": 18.35,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Cincinnati Tradition",
+     "score": 90.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 17.8,
+      "CG": 18.5,
+      "B": 18.1,
+      "MA": 18,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Connecticut Hurricanes",
+     "score": 89.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 18.1,
+      "CG": 18.6,
+      "B": 17.2,
+      "MA": 17.3,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "White Sabers",
+     "score": 87.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.1,
+      "CG": 17.9,
+      "B": 17.5,
+      "MA": 17.45,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Rogues Hollow Regiment",
+     "score": 85.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.5,
+      "CG": 17.6,
+      "B": 17,
+      "MA": 16.95,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Sunrisers",
+     "score": 83.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.8,
+      "CG": 17.4,
+      "B": 16.7,
+      "MA": 15.7,
+      "P": 17.45
+     }
+    },
+    {
+     "corps": "Govenaires",
+     "score": 83.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 17.2,
+      "CG": 16.3,
+      "B": 16.2,
+      "MA": 16.35,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Minnesota Brass",
+     "score": 80.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 16.2,
+      "CG": 16.8,
+      "B": 15.5,
+      "MA": 16.2,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Fusion Core",
+     "score": 78.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 16.1,
+      "CG": 16.1,
+      "B": 15.7,
+      "MA": 16.05,
+      "P": 15.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Finals",
+   "date": "2025-08-09T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 49,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 98.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.55,
+      "VA": 19.6,
+      "CG": 19.8,
+      "B": 19.8,
+      "MA": 19.75,
+      "P": 20
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 98.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.7,
+      "VA": 19.7,
+      "CG": 19.5,
+      "B": 19.85,
+      "MA": 19.5,
+      "P": 19.7
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 96.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.4,
+      "CG": 18.9,
+      "B": 19.4,
+      "MA": 19.3,
+      "P": 19.45
+     }
+    },
+    {
+     "corps": "Blue Devils",
+     "score": 95.788,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.3,
+      "VA": 19.2,
+      "CG": 19.3,
+      "B": 19.2,
+      "MA": 18.825,
+      "P": 19.4
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 94.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 18.9,
+      "CG": 18.5,
+      "B": 19.6,
+      "MA": 19.4,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 94.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 19,
+      "CG": 18.4,
+      "B": 18.7,
+      "MA": 18.95,
+      "P": 18.95
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 92.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.6,
+      "CG": 18.6,
+      "B": 18.4,
+      "MA": 18.65,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 91.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 18.3,
+      "CG": 18,
+      "B": 18.6,
+      "MA": 18.35,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 90.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.2,
+      "CG": 17.9,
+      "B": 17.6,
+      "MA": 18,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 90.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.9,
+      "CG": 17.3,
+      "B": 18.1,
+      "MA": 18.3,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 88.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.5,
+      "CG": 17.8,
+      "B": 17.5,
+      "MA": 17.6,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 87.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17.2,
+      "CG": 17.2,
+      "B": 17.8,
+      "MA": 17.6,
+      "P": 17.9
+     }
+    }
+   ]
+  }
+ ]
+}

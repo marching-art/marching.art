@@ -1,0 +1,9072 @@
+{
+ "data": [
+  {
+   "eventName": "DCI Competition - Vista, California",
+   "date": "2022-06-24T00:00:00.000Z",
+   "location": "Vista, California",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 69.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.9,
+      "CG": 13.9,
+      "B": 14.2,
+      "MA": 13.9,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 65.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.3,
+      "CG": 12.8,
+      "B": 13.1,
+      "MA": 13.1,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 61.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 12.5,
+      "CG": 12,
+      "B": 12.5,
+      "MA": 12.3,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 57.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 11,
+      "CG": 10.6,
+      "B": 12.2,
+      "MA": 12.1,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 53,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10,
+      "VA": 10.7,
+      "CG": 10.1,
+      "B": 10.5,
+      "MA": 10.8,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 46.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.1,
+      "VA": 9.8,
+      "CG": 8.2,
+      "B": 9.1,
+      "MA": 9.7,
+      "P": 10.6
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 33.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 7.8,
+      "VA": 7.8,
+      "CG": 0,
+      "B": 8.3,
+      "MA": 7.4,
+      "P": 9.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Pasadena, California",
+   "date": "2022-06-25T00:00:00.000Z",
+   "location": "Pasadena, California",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 72.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.6,
+      "CG": 14.3,
+      "B": 14.6,
+      "MA": 14.4,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 70.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.2,
+      "CG": 13.9,
+      "B": 14.3,
+      "MA": 14.2,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 66.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.4,
+      "CG": 13.3,
+      "B": 13.4,
+      "MA": 12.8,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 62.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 12.4,
+      "CG": 12,
+      "B": 12.6,
+      "MA": 12.9,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 57.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 10.7,
+      "CG": 10.4,
+      "B": 12.1,
+      "MA": 11.8,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 54.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 10.6,
+      "CG": 10.2,
+      "B": 11.2,
+      "MA": 11.7,
+      "P": 10.8
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 46.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.4,
+      "VA": 9.6,
+      "CG": 8.5,
+      "B": 10.1,
+      "MA": 9.3,
+      "P": 9.8
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 37.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.3,
+      "VA": 9.2,
+      "CG": 2.1,
+      "B": 8.2,
+      "MA": 8.5,
+      "P": 8.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - San Bernardino, California",
+   "date": "2022-06-26T00:00:00.000Z",
+   "location": "San Bernardino, California",
+   "offSeasonDay": 1,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 73.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.9,
+      "CG": 14.6,
+      "B": 14.8,
+      "MA": 14.5,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 71.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.4,
+      "CG": 14.5,
+      "B": 14.2,
+      "MA": 14.1,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 67.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.7,
+      "CG": 13.6,
+      "B": 13.4,
+      "MA": 13.4,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 63.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 12.8,
+      "CG": 12.7,
+      "B": 12.6,
+      "MA": 12.6,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 58.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.7,
+      "VA": 11.1,
+      "CG": 11.2,
+      "B": 11.6,
+      "MA": 11.9,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 56.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.6,
+      "VA": 11.2,
+      "CG": 10.7,
+      "B": 11.2,
+      "MA": 11,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 47.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.4,
+      "VA": 10,
+      "CG": 9.1,
+      "B": 9,
+      "MA": 9.7,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 38.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 8.2,
+      "VA": 8.8,
+      "CG": 3,
+      "B": 7.4,
+      "MA": 7.6,
+      "P": 9.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Detroit, Michigan",
+   "date": "2022-06-28T00:00:00.000Z",
+   "location": "Detroit, Michigan",
+   "offSeasonDay": 3,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 71.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.2,
+      "CG": 14.8,
+      "B": 14.5,
+      "MA": 13.6,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 69.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.8,
+      "CG": 14.7,
+      "B": 14.2,
+      "MA": 12.8,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 67.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 13.3,
+      "CG": 12.8,
+      "B": 13.8,
+      "MA": 13.2,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 65.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 12.9,
+      "CG": 13.2,
+      "B": 13.3,
+      "MA": 12.9,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 65.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 12.5,
+      "CG": 13.3,
+      "B": 13.9,
+      "MA": 12.2,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 63.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 12,
+      "CG": 12.5,
+      "B": 13.5,
+      "MA": 11.8,
+      "P": 13.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Muncie, Indiana",
+   "date": "2022-07-01T00:00:00.000Z",
+   "location": "Muncie, Indiana",
+   "offSeasonDay": 6,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 73.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.7,
+      "CG": 14.9,
+      "B": 15,
+      "MA": 14.4,
+      "P": 15
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 70.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.4,
+      "CG": 13.2,
+      "B": 14.7,
+      "MA": 13.5,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 67.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.6,
+      "CG": 13.3,
+      "B": 13.9,
+      "MA": 13.1,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 67.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13,
+      "CG": 13.6,
+      "B": 14.3,
+      "MA": 12.6,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 63.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 12.3,
+      "CG": 12.6,
+      "B": 13.4,
+      "MA": 12.3,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 62.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.7,
+      "CG": 12.3,
+      "B": 12.9,
+      "MA": 11.7,
+      "P": 13
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Kent, Ohio",
+   "date": "2022-07-02T00:00:00.000Z",
+   "location": "Kent, Ohio",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 74.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.8,
+      "CG": 15.1,
+      "B": 14.8,
+      "MA": 15,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 73.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.9,
+      "CG": 15,
+      "B": 14.4,
+      "MA": 14.7,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 60.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 12.5,
+      "CG": 11.9,
+      "B": 11.2,
+      "MA": 12.4,
+      "P": 11.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Quincy, Massachusetts",
+   "date": "2022-07-02T00:00:00.000Z",
+   "location": "Quincy, Massachusetts",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 72.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.5,
+      "CG": 14.8,
+      "B": 14.9,
+      "MA": 14.1,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 69.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.5,
+      "CG": 14.4,
+      "B": 13.7,
+      "MA": 14,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 57,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.7,
+      "VA": 11.9,
+      "CG": 11.7,
+      "B": 10.9,
+      "MA": 11.2,
+      "P": 10.8
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 58.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.6,
+      "VA": 11.3,
+      "CG": 12.3,
+      "B": 10.9,
+      "MA": 12,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 46.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.6,
+      "VA": 9.8,
+      "CG": 9.3,
+      "B": 9.4,
+      "MA": 9,
+      "P": 8.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Madison, Wisconsin",
+   "date": "2022-07-02T00:00:00.000Z",
+   "location": "Madison, Wisconsin",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 72.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.9,
+      "CG": 13.7,
+      "B": 14.8,
+      "MA": 14.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 70,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 13.4,
+      "CG": 13.6,
+      "B": 14.4,
+      "MA": 14.2,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 65.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 12.9,
+      "CG": 12.4,
+      "B": 13.3,
+      "MA": 13,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 64.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 12.8,
+      "CG": 11.9,
+      "B": 14,
+      "MA": 13.6,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 48.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.8,
+      "VA": 8.1,
+      "CG": 8.2,
+      "B": 11.9,
+      "MA": 12,
+      "P": 11.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 47.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.7,
+      "VA": 8.6,
+      "CG": 7.6,
+      "B": 10.7,
+      "MA": 10.2,
+      "P": 11.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Tempe, Arizona",
+   "date": "2022-07-02T00:00:00.000Z",
+   "location": "Tempe, Arizona",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 75.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.2,
+      "CG": 14.9,
+      "B": 15.2,
+      "MA": 14.9,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 74.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.8,
+      "CG": 14.8,
+      "B": 14.8,
+      "MA": 14.6,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 66.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.4,
+      "CG": 12.9,
+      "B": 13.3,
+      "MA": 13.2,
+      "P": 14
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 63.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 13.1,
+      "CG": 12.8,
+      "B": 12.7,
+      "MA": 12.7,
+      "P": 11.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 59.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.4,
+      "VA": 12,
+      "CG": 11.7,
+      "B": 11.8,
+      "MA": 12.2,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Lynn, Massachusetts",
+   "date": "2022-07-03T00:00:00.000Z",
+   "location": "Lynn, Massachusetts",
+   "offSeasonDay": 8,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 74.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 15,
+      "CG": 15,
+      "B": 15,
+      "MA": 14.5,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 71.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.3,
+      "CG": 14.2,
+      "B": 14,
+      "MA": 14.1,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 59.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 12.7,
+      "CG": 11.3,
+      "B": 11.8,
+      "MA": 11.3,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 60.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 12,
+      "CG": 11.9,
+      "B": 11.7,
+      "MA": 12.4,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 48.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.3,
+      "VA": 9.8,
+      "CG": 10.5,
+      "B": 8.8,
+      "MA": 9.6,
+      "P": 11.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Cedarburg, Wisconsin",
+   "date": "2022-07-03T00:00:00.000Z",
+   "location": "Cedarburg, Wisconsin",
+   "offSeasonDay": 8,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 72.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.4,
+      "CG": 14.6,
+      "B": 14.6,
+      "MA": 14.9,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.3,
+      "CG": 11.6,
+      "B": 13.6,
+      "MA": 13.9,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 49.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.9,
+      "VA": 10.9,
+      "CG": 7.9,
+      "B": 10.1,
+      "MA": 8.8,
+      "P": 10.1
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 49.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.5,
+      "VA": 9.7,
+      "CG": 8.5,
+      "B": 11.4,
+      "MA": 9.5,
+      "P": 9.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Lisle, Illinois",
+   "date": "2022-07-03T00:00:00.000Z",
+   "location": "Lisle, Illinois",
+   "offSeasonDay": 8,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 73.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.1,
+      "CG": 14.1,
+      "B": 14.6,
+      "MA": 14.7,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 68.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 13.4,
+      "CG": 13.5,
+      "B": 13.7,
+      "MA": 13.9,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 65.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 12.8,
+      "CG": 13.1,
+      "B": 13.4,
+      "MA": 13.3,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 64.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.5,
+      "CG": 12.6,
+      "B": 12.6,
+      "MA": 13,
+      "P": 12.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Fresno, California",
+   "date": "2022-07-05T00:00:00.000Z",
+   "location": "Fresno, California",
+   "offSeasonDay": 10,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 77.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.3,
+      "CG": 15.8,
+      "B": 15.4,
+      "MA": 14.8,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 75.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.1,
+      "CG": 15,
+      "B": 15.2,
+      "MA": 14.5,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 71.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 15,
+      "CG": 14.7,
+      "B": 13.6,
+      "MA": 13.5,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 68.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.6,
+      "CG": 14,
+      "B": 13.4,
+      "MA": 13.3,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 65.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13,
+      "CG": 13.8,
+      "B": 13.2,
+      "MA": 12.7,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 61.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 11.9,
+      "CG": 12.2,
+      "B": 11.4,
+      "MA": 11.7,
+      "P": 12
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 60.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 12,
+      "CG": 11.7,
+      "B": 12,
+      "MA": 12.2,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 56.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 10.5,
+      "CG": 11.4,
+      "B": 11.8,
+      "MA": 11.8,
+      "P": 10.9
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 49.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.5,
+      "VA": 10.2,
+      "CG": 11.8,
+      "B": 9,
+      "MA": 10.1,
+      "P": 10
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Mason, Ohio",
+   "date": "2022-07-06T00:00:00.000Z",
+   "location": "Mason, Ohio",
+   "offSeasonDay": 11,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 76.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.5,
+      "CG": 15.5,
+      "B": 14.9,
+      "MA": 15.2,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 69.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.1,
+      "CG": 13.7,
+      "B": 14.2,
+      "MA": 14.3,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 65.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.4,
+      "CG": 12.8,
+      "B": 13.3,
+      "MA": 13.8,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Dover, Delaware",
+   "date": "2022-07-06T00:00:00.000Z",
+   "location": "Dover, Delaware",
+   "offSeasonDay": 11,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 78.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.4,
+      "CG": 15.6,
+      "B": 15.4,
+      "MA": 15.3,
+      "P": 16
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 74.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.8,
+      "CG": 14.7,
+      "B": 14.9,
+      "MA": 14.5,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 63.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 13.1,
+      "CG": 11.7,
+      "B": 12.7,
+      "MA": 11.8,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 61.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 11.6,
+      "CG": 12.2,
+      "B": 12.3,
+      "MA": 11.3,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 43.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.1,
+      "VA": 9.1,
+      "CG": 8.9,
+      "B": 5.5,
+      "MA": 8.7,
+      "P": 7.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Ankeny, Iowa",
+   "date": "2022-07-06T00:00:00.000Z",
+   "location": "Ankeny, Iowa",
+   "offSeasonDay": 11,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 74.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 15.1,
+      "CG": 13.7,
+      "B": 15.1,
+      "MA": 15.1,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.8,
+      "CG": 14.6,
+      "B": 14.8,
+      "MA": 15,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 68.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.2,
+      "CG": 13,
+      "B": 13.4,
+      "MA": 13.9,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 65.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 12.7,
+      "CG": 12.1,
+      "B": 13.8,
+      "MA": 14,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 52.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 11.3,
+      "CG": 7.8,
+      "B": 11.3,
+      "MA": 9.6,
+      "P": 10.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Evansville, Indiana",
+   "date": "2022-07-07T00:00:00.000Z",
+   "location": "Evansville, Indiana",
+   "offSeasonDay": 12,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 78.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.4,
+      "B": 15.7,
+      "MA": 15.9,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 74.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.9,
+      "CG": 14.7,
+      "B": 15,
+      "MA": 15.3,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 70.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 14,
+      "CG": 14.3,
+      "B": 14.3,
+      "MA": 14.5,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 66.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 12.8,
+      "CG": 13,
+      "B": 13.5,
+      "MA": 14.2,
+      "P": 13.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Dubuque, Iowa",
+   "date": "2022-07-08T00:00:00.000Z",
+   "location": "Dubuque, Iowa",
+   "offSeasonDay": 13,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 75.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15,
+      "CG": 15.3,
+      "B": 15.1,
+      "MA": 15.1,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 68.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13,
+      "CG": 13.8,
+      "B": 13.7,
+      "MA": 14,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 67.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 13.4,
+      "CG": 13.3,
+      "B": 14.1,
+      "MA": 13.6,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 56.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 11.8,
+      "CG": 10.1,
+      "B": 10.8,
+      "MA": 10.8,
+      "P": 10.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Camas, Washington",
+   "date": "2022-07-08T00:00:00.000Z",
+   "location": "Camas, Washington",
+   "offSeasonDay": 13,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 69.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 14.5,
+      "CG": 14.6,
+      "B": 13,
+      "MA": 13,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 67.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 14.1,
+      "CG": 13.8,
+      "B": 13.5,
+      "MA": 13.5,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 65.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.8,
+      "CG": 12.6,
+      "B": 12.5,
+      "MA": 12.5,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 54.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.2,
+      "VA": 12.1,
+      "CG": 11.1,
+      "B": 11,
+      "MA": 11,
+      "P": 10
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Sacramento, California",
+   "date": "2022-07-08T00:00:00.000Z",
+   "location": "Sacramento, California",
+   "offSeasonDay": 13,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 79.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16.1,
+      "CG": 16.3,
+      "B": 15.2,
+      "MA": 15.6,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 77.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.7,
+      "CG": 16.1,
+      "B": 14.9,
+      "MA": 15.2,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.5,
+      "CG": 15.6,
+      "B": 13.6,
+      "MA": 13.8,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 62.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 12.5,
+      "CG": 11.7,
+      "B": 12.7,
+      "MA": 13,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 60.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.1,
+      "CG": 12.4,
+      "B": 11.6,
+      "MA": 12.1,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 60.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12.4,
+      "CG": 12,
+      "B": 12.2,
+      "MA": 12.6,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 58.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.3,
+      "VA": 12,
+      "CG": 11.9,
+      "B": 11.9,
+      "MA": 12.4,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 41.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9,
+      "VA": 9.3,
+      "CG": 8.3,
+      "B": 7.5,
+      "MA": 8.6,
+      "P": 7.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Lexington, South Carolina",
+   "date": "2022-07-09T00:00:00.000Z",
+   "location": "Lexington, South Carolina",
+   "offSeasonDay": 14,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 81.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.5,
+      "CG": 16.2,
+      "B": 16.3,
+      "MA": 16.4,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 80.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16.2,
+      "CG": 16.3,
+      "B": 15.8,
+      "MA": 16.1,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 76.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.4,
+      "CG": 15.3,
+      "B": 15.5,
+      "MA": 15.2,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 73.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 15,
+      "CG": 14.7,
+      "B": 14.2,
+      "MA": 14.8,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 68.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 13.8,
+      "CG": 13,
+      "B": 13.5,
+      "MA": 14.1,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 62.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 13.3,
+      "CG": 12.5,
+      "B": 11.6,
+      "MA": 12.3,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 52.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.7,
+      "VA": 11.2,
+      "CG": 10.1,
+      "B": 9.7,
+      "MA": 10.8,
+      "P": 9.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2022-07-09T00:00:00.000Z",
+   "location": "DeKalb, Illinois",
+   "offSeasonDay": 14,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 80.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16,
+      "CG": 15.6,
+      "B": 16,
+      "MA": 16.3,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 75.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.2,
+      "CG": 15.5,
+      "B": 15.4,
+      "MA": 15,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 73.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 15,
+      "CG": 15,
+      "B": 15.2,
+      "MA": 14.8,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 70.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 14,
+      "CG": 14.2,
+      "B": 14,
+      "MA": 14,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 68.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 14.1,
+      "CG": 13.4,
+      "B": 14.2,
+      "MA": 13.8,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 57.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.6,
+      "VA": 12.6,
+      "CG": 12.1,
+      "B": 11.3,
+      "MA": 12.3,
+      "P": 11.4
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 55.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.9,
+      "VA": 11.9,
+      "CG": 10.3,
+      "B": 10.9,
+      "MA": 11.8,
+      "P": 10.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Renton, Washington",
+   "date": "2022-07-09T00:00:00.000Z",
+   "location": "Renton, Washington",
+   "offSeasonDay": 14,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Knights",
+     "score": 71.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.1,
+      "CG": 14.7,
+      "B": 13.8,
+      "MA": 14.1,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 68.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.7,
+      "CG": 13.9,
+      "B": 13.1,
+      "MA": 13.6,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 65.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 13.6,
+      "CG": 13.5,
+      "B": 13.2,
+      "MA": 12.9,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 56.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 11.3,
+      "CG": 11.6,
+      "B": 11.3,
+      "MA": 10.6,
+      "P": 11.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - LaCrosse, Wisconsin",
+   "date": "2022-07-10T00:00:00.000Z",
+   "location": "LaCrosse, Wisconsin",
+   "offSeasonDay": 15,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 75.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.5,
+      "CG": 15.4,
+      "B": 14.1,
+      "MA": 15.4,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 73,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.8,
+      "CG": 14.4,
+      "B": 14.4,
+      "MA": 15,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 70.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.3,
+      "CG": 13.9,
+      "B": 13.4,
+      "MA": 14.3,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 69.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 14.5,
+      "CG": 13.6,
+      "B": 13.6,
+      "MA": 14.1,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 56.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 11.6,
+      "CG": 12,
+      "B": 9.9,
+      "MA": 11.7,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 55.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.3,
+      "VA": 12,
+      "CG": 10.5,
+      "B": 10.3,
+      "MA": 11.2,
+      "P": 11.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI West",
+   "date": "2022-07-10T00:00:00.000Z",
+   "location": "Stanford, California",
+   "offSeasonDay": 15,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 82.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.6,
+      "CG": 16.8,
+      "B": 15.9,
+      "MA": 16.6,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 79.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.1,
+      "CG": 16.3,
+      "B": 15.4,
+      "MA": 15.4,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 76.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.5,
+      "CG": 15.8,
+      "B": 14.4,
+      "MA": 15.1,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 63.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 12.8,
+      "CG": 11.1,
+      "B": 13.1,
+      "MA": 12.6,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 62.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 11.8,
+      "CG": 11.7,
+      "B": 12.7,
+      "MA": 12.3,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 62.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.9,
+      "CG": 12.2,
+      "B": 12,
+      "MA": 12.8,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 60.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 11.3,
+      "CG": 12.4,
+      "B": 12.4,
+      "MA": 11.9,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 44.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9,
+      "VA": 9,
+      "CG": 9,
+      "B": 7.8,
+      "MA": 9.5,
+      "P": 8.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Atlanta, Georgia",
+   "date": "2022-07-12T00:00:00.000Z",
+   "location": "Atlanta, Georgia",
+   "offSeasonDay": 17,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 83.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.9,
+      "CG": 16.4,
+      "B": 16.6,
+      "MA": 16.7,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 79.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16,
+      "CG": 15.6,
+      "B": 15.8,
+      "MA": 15.5,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 73.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.8,
+      "CG": 14.9,
+      "B": 14.5,
+      "MA": 14.7,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 69.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 14.5,
+      "CG": 13.1,
+      "B": 13.9,
+      "MA": 12.6,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 52.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 11.2,
+      "CG": 10.2,
+      "B": 10.1,
+      "MA": 10.4,
+      "P": 10.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Mankato, Minnesota",
+   "date": "2022-07-12T00:00:00.000Z",
+   "location": "Mankato, Minnesota",
+   "offSeasonDay": 17,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 76.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 15.3,
+      "CG": 15.7,
+      "B": 15.3,
+      "MA": 15.3,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 71.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.3,
+      "CG": 13.8,
+      "B": 14.1,
+      "MA": 14.3,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 69.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 13.7,
+      "CG": 13.9,
+      "B": 14.3,
+      "MA": 14.1,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 59.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 11.9,
+      "CG": 11.5,
+      "B": 11,
+      "MA": 11.9,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 57.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.8,
+      "CG": 10.8,
+      "B": 11.2,
+      "MA": 11.8,
+      "P": 11.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Boise, Idaho",
+   "date": "2022-07-12T00:00:00.000Z",
+   "location": "Boise, Idaho",
+   "offSeasonDay": 17,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Mandarins",
+     "score": 77.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.6,
+      "CG": 16,
+      "B": 14.8,
+      "MA": 16.2,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 73.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.3,
+      "CG": 15,
+      "B": 14.2,
+      "MA": 14.9,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 69.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.8,
+      "CG": 14.3,
+      "B": 13.9,
+      "MA": 13.4,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 68.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.6,
+      "CG": 13.8,
+      "B": 13.7,
+      "MA": 13.9,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 61.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.9,
+      "VA": 12,
+      "CG": 11.8,
+      "B": 11.8,
+      "MA": 12.1,
+      "P": 11.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Eau Claire, Wisconsin",
+   "date": "2022-07-13T00:00:00.000Z",
+   "location": "Eau Claire, Wisconsin",
+   "offSeasonDay": 18,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 79.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.1,
+      "CG": 16.6,
+      "B": 15.5,
+      "MA": 15.5,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 77.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.4,
+      "CG": 15.8,
+      "B": 15,
+      "MA": 15.7,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 73.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.8,
+      "CG": 14.2,
+      "B": 14.4,
+      "MA": 14.7,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 70.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.1,
+      "CG": 14.1,
+      "B": 14.2,
+      "MA": 14.3,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 60.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12.7,
+      "CG": 11.9,
+      "B": 11.5,
+      "MA": 11.9,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 58.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 12,
+      "CG": 10.6,
+      "B": 11.1,
+      "MA": 12,
+      "P": 11.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Ogden, Utah",
+   "date": "2022-07-13T00:00:00.000Z",
+   "location": "Ogden, Utah",
+   "offSeasonDay": 18,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 84.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 16.5,
+      "CG": 16.8,
+      "B": 17.4,
+      "MA": 17.3,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 82.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16,
+      "CG": 16.2,
+      "B": 16.9,
+      "MA": 16.9,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 78.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 15.1,
+      "CG": 15.7,
+      "B": 16.5,
+      "MA": 16.2,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 74.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.8,
+      "CG": 15,
+      "B": 15.1,
+      "MA": 15.7,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 70.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 13.9,
+      "CG": 14,
+      "B": 14.1,
+      "MA": 15.3,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 69.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 12.8,
+      "CG": 13.6,
+      "B": 14.5,
+      "MA": 15,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 62.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.7,
+      "CG": 12.6,
+      "B": 12.3,
+      "MA": 14.5,
+      "P": 11.6
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 60.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12,
+      "VA": 11.8,
+      "CG": 12.4,
+      "B": 12.1,
+      "MA": 12.5,
+      "P": 11.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Tupelo, Mississippi",
+   "date": "2022-07-14T00:00:00.000Z",
+   "location": "Tupelo, Mississippi",
+   "offSeasonDay": 19,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 84,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.9,
+      "CG": 16.9,
+      "B": 16.9,
+      "MA": 16.9,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 81.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.5,
+      "CG": 16.1,
+      "B": 16.5,
+      "MA": 16.4,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 75.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.1,
+      "CG": 15.4,
+      "B": 15.1,
+      "MA": 15,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 71.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.2,
+      "CG": 14.2,
+      "B": 14.6,
+      "MA": 14.2,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 57.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 12.5,
+      "CG": 11.8,
+      "B": 10.4,
+      "MA": 11,
+      "P": 10.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Riverside, California",
+   "date": "2022-07-15T00:00:00.000Z",
+   "location": "Riverside, California",
+   "offSeasonDay": 20,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils B",
+     "score": 68.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.3,
+      "CG": 13.9,
+      "B": 13.7,
+      "MA": 14.4,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 64.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 12.7,
+      "CG": 13.2,
+      "B": 12.5,
+      "MA": 13.2,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 61.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 11.5,
+      "CG": 12,
+      "B": 11.1,
+      "MA": 12.8,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 54.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.8,
+      "VA": 10.7,
+      "CG": 11.2,
+      "B": 9.7,
+      "MA": 11.5,
+      "P": 10
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 50.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.4,
+      "VA": 10,
+      "CG": 10.5,
+      "B": 9.1,
+      "MA": 11.1,
+      "P": 9.2
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 49.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.2,
+      "VA": 10.4,
+      "CG": 0.2,
+      "B": 10,
+      "MA": 11.7,
+      "P": 10.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Whitewater, Wisconsin",
+   "date": "2022-07-16T00:00:00.000Z",
+   "location": "Whitewater, Wisconsin",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.2,
+      "CG": 16.8,
+      "B": 17,
+      "MA": 17.2,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 81.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.6,
+      "CG": 16.7,
+      "B": 16.1,
+      "MA": 16.2,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 79.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.9,
+      "CG": 15.7,
+      "B": 15.8,
+      "MA": 15.8,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 75.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.1,
+      "CG": 14.9,
+      "B": 14.8,
+      "MA": 15,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 73.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.7,
+      "CG": 14.1,
+      "B": 14.6,
+      "MA": 14.5,
+      "P": 14.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Memphis, Tennessee",
+   "date": "2022-07-16T00:00:00.000Z",
+   "location": "Memphis, Tennessee",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 86.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.7,
+      "CG": 16.9,
+      "B": 16.9,
+      "MA": 17.2,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 85.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.3,
+      "CG": 17.1,
+      "B": 16.4,
+      "MA": 16.8,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 82.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.6,
+      "CG": 16.3,
+      "B": 16.1,
+      "MA": 16.2,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 75.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.4,
+      "CG": 15.5,
+      "B": 14.8,
+      "MA": 15.3,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 72.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.2,
+      "CG": 14.3,
+      "B": 14.4,
+      "MA": 14.7,
+      "P": 13.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Drums Along The Rockies",
+   "date": "2022-07-16T00:00:00.000Z",
+   "location": "Fort Collins, Colorado",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 85.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.1,
+      "CG": 17.2,
+      "B": 17.1,
+      "MA": 17.7,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 83.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.7,
+      "CG": 16.6,
+      "B": 16.4,
+      "MA": 17.3,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 79.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16,
+      "CG": 16.3,
+      "B": 15.5,
+      "MA": 16.8,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 75.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.2,
+      "CG": 14.9,
+      "B": 15.4,
+      "MA": 15.6,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 72.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.5,
+      "CG": 14.2,
+      "B": 14.5,
+      "MA": 14.6,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 70.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14,
+      "CG": 13.5,
+      "B": 14.3,
+      "MA": 15,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 65.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.4,
+      "VA": 12.9,
+      "CG": 12.4,
+      "B": 13.4,
+      "MA": 13.6,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 60,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.1,
+      "CG": 11.9,
+      "B": 11.9,
+      "MA": 12.4,
+      "P": 11.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Vista, California",
+   "date": "2022-07-16T00:00:00.000Z",
+   "location": "Vista, California",
+   "offSeasonDay": 21,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 71.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 14.8,
+      "CG": 14.2,
+      "B": 14,
+      "MA": 14.4,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 71.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.9,
+      "CG": 13.6,
+      "B": 14.4,
+      "MA": 14.2,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 66.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 13.9,
+      "CG": 12.6,
+      "B": 13.5,
+      "MA": 13.1,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 62.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 12.9,
+      "CG": 12.8,
+      "B": 11.3,
+      "MA": 12.5,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 55.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 12,
+      "CG": 11.7,
+      "B": 10,
+      "MA": 10.7,
+      "P": 9.6
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 52.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 9.6,
+      "VA": 10.9,
+      "CG": 10.3,
+      "B": 9.3,
+      "MA": 10.3,
+      "P": 9.7
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 49.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.4,
+      "VA": 11.8,
+      "CG": 0.2,
+      "B": 10.2,
+      "MA": 11,
+      "P": 10.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Bellflower, California",
+   "date": "2022-07-17T00:00:00.000Z",
+   "location": "Bellflower, California",
+   "offSeasonDay": 22,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 72.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.1,
+      "CG": 14.5,
+      "B": 14.4,
+      "MA": 14.8,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 71.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.3,
+      "CG": 13.8,
+      "B": 13.9,
+      "MA": 14.6,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 67.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 13.6,
+      "CG": 12.8,
+      "B": 12.7,
+      "MA": 13.8,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 64.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 13.5,
+      "CG": 12.9,
+      "B": 12.3,
+      "MA": 13.1,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 57.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.6,
+      "CG": 11.9,
+      "B": 11.6,
+      "MA": 12,
+      "P": 10
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 52.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.3,
+      "VA": 10,
+      "CG": 10.7,
+      "B": 9.5,
+      "MA": 11.3,
+      "P": 9.7
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 51.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 10.4,
+      "CG": 0.2,
+      "B": 11.5,
+      "MA": 12.2,
+      "P": 11.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Canyon, Texas",
+   "date": "2022-07-18T00:00:00.000Z",
+   "location": "Canyon, Texas",
+   "offSeasonDay": 23,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Mandarins",
+     "score": 81.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.4,
+      "CG": 16.5,
+      "B": 14.9,
+      "MA": 16,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 76.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.5,
+      "CG": 14.9,
+      "B": 14.5,
+      "MA": 15.6,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 74.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15,
+      "CG": 14.5,
+      "B": 13,
+      "MA": 14.6,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 72.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.8,
+      "CG": 13.9,
+      "B": 13.7,
+      "MA": 15.3,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 70.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.9,
+      "CG": 13.1,
+      "B": 14,
+      "MA": 14.9,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 67.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 13.6,
+      "CG": 12.8,
+      "B": 13.3,
+      "MA": 13.4,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 60.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 12.8,
+      "CG": 11.4,
+      "B": 12.2,
+      "MA": 11.8,
+      "P": 12.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Olathe, Kansas",
+   "date": "2022-07-18T00:00:00.000Z",
+   "location": "Olathe, Kansas",
+   "offSeasonDay": 23,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 82.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.4,
+      "CG": 16.7,
+      "B": 16.2,
+      "MA": 16.8,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 80.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.3,
+      "CG": 16,
+      "B": 16,
+      "MA": 16.4,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 80.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 17,
+      "CG": 15.7,
+      "B": 15.2,
+      "MA": 17.2,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 77.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15,
+      "CG": 14.9,
+      "B": 15,
+      "MA": 16.1,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 73.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.7,
+      "CG": 14.3,
+      "B": 14.8,
+      "MA": 14.8,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 60.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 12,
+      "CG": 11.7,
+      "B": 11.6,
+      "MA": 12.3,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2022-07-19T00:00:00.000Z",
+   "location": "Broken Arrow, Oklahoma",
+   "offSeasonDay": 24,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 89.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 18.2,
+      "CG": 17.2,
+      "B": 17.8,
+      "MA": 17.5,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 87.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 18,
+      "CG": 17.1,
+      "B": 17.7,
+      "MA": 17.4,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 87.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.8,
+      "CG": 16.9,
+      "B": 17.15,
+      "MA": 17.1,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 86.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.3,
+      "CG": 17.4,
+      "B": 17.3,
+      "MA": 16.9,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 85.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17,
+      "CG": 16.6,
+      "B": 16.8,
+      "MA": 17,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 82.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.9,
+      "CG": 16.8,
+      "B": 16.2,
+      "MA": 15.8,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 80.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.6,
+      "CG": 15.8,
+      "B": 16,
+      "MA": 16.3,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 77.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.5,
+      "CG": 15.1,
+      "B": 15.5,
+      "MA": 15.5,
+      "P": 15.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Denton, Texas",
+   "date": "2022-07-21T00:00:00.000Z",
+   "location": "Denton, Texas",
+   "offSeasonDay": 26,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 88.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.4,
+      "CG": 17.8,
+      "B": 18.1,
+      "MA": 18.1,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 88.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.6,
+      "CG": 18.1,
+      "B": 17.9,
+      "MA": 17.9,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 87.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.7,
+      "CG": 17.5,
+      "B": 17.75,
+      "MA": 17.75,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 87.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 17.2,
+      "CG": 17.4,
+      "B": 17.95,
+      "MA": 17.95,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 84.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.8,
+      "CG": 16.9,
+      "B": 17.1,
+      "MA": 17.1,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 82.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 16.5,
+      "CG": 17,
+      "B": 16.7,
+      "MA": 16.7,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 81.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 16.4,
+      "CG": 16,
+      "B": 16.4,
+      "MA": 16.4,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 77.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 15.5,
+      "CG": 15.6,
+      "B": 15.9,
+      "MA": 15.9,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 77.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 15.4,
+      "CG": 15.3,
+      "B": 15.8,
+      "MA": 15.8,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 73.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.6,
+      "CG": 14.8,
+      "B": 15.5,
+      "MA": 15.5,
+      "P": 14.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Round Rock, Texas",
+   "date": "2022-07-21T00:00:00.000Z",
+   "location": "Round Rock, Texas",
+   "offSeasonDay": 26,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 82.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.7,
+      "CG": 16,
+      "B": 15.8,
+      "MA": 17.2,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 77.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.6,
+      "CG": 15.8,
+      "B": 15.4,
+      "MA": 15.7,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 74.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.1,
+      "CG": 14.9,
+      "B": 14.4,
+      "MA": 14.8,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 73.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 15.3,
+      "CG": 13.8,
+      "B": 15,
+      "MA": 15,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 71.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.3,
+      "CG": 13.6,
+      "B": 14.6,
+      "MA": 14.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 70.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14,
+      "CG": 13.9,
+      "B": 14.3,
+      "MA": 14.6,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 68.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.8,
+      "CG": 13,
+      "B": 13.6,
+      "MA": 13.8,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 62.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 12.6,
+      "CG": 12.5,
+      "B": 11.9,
+      "MA": 12.2,
+      "P": 12.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Bakersfield, California",
+   "date": "2022-07-22T00:00:00.000Z",
+   "location": "Bakersfield, California",
+   "offSeasonDay": 27,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 74.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.7,
+      "CG": 15,
+      "B": 14.8,
+      "MA": 14.5,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 74,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.2,
+      "CG": 14.7,
+      "B": 15,
+      "MA": 14.2,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 69.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.4,
+      "CG": 13.9,
+      "B": 13.9,
+      "MA": 13.2,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 65.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.2,
+      "VA": 13.1,
+      "CG": 13.8,
+      "B": 12.4,
+      "MA": 12.7,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 57.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11,
+      "VA": 11.5,
+      "CG": 12.8,
+      "B": 10.2,
+      "MA": 11.7,
+      "P": 10.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Houston, Texas",
+   "date": "2022-07-22T00:00:00.000Z",
+   "location": "Houston, Texas",
+   "offSeasonDay": 27,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 91.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.1,
+      "CG": 18.3,
+      "B": 18.3,
+      "MA": 18.5,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 90.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.5,
+      "CG": 18,
+      "B": 18.1,
+      "MA": 18.3,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 89.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.6,
+      "CG": 17.7,
+      "B": 17.7,
+      "MA": 17.9,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 84.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.4,
+      "CG": 17.2,
+      "B": 16.6,
+      "MA": 17.5,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 84.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 15.3,
+      "CG": 17.3,
+      "B": 16.4,
+      "MA": 16.8,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 83.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16,
+      "CG": 15.7,
+      "B": 16.1,
+      "MA": 17.2,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 83.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.2,
+      "CG": 17.1,
+      "B": 15.5,
+      "MA": 16.9,
+      "P": 16.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Sewell, New Jersey",
+   "date": "2022-07-23T00:00:00.000Z",
+   "location": "Sewell, New Jersey",
+   "offSeasonDay": 28,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Jersey Surf",
+     "score": 69,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.9,
+      "CG": 13.5,
+      "B": 13.2,
+      "MA": 13.2,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 70.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.6,
+      "CG": 13.6,
+      "B": 13.8,
+      "MA": 13.7,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 63.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.4,
+      "CG": 12.8,
+      "B": 11.6,
+      "MA": 11.9,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 58.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.1,
+      "CG": 11.8,
+      "B": 10.6,
+      "MA": 11.4,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 57.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12,
+      "CG": 12.2,
+      "B": 10.8,
+      "MA": 10.2,
+      "P": 10.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Southwestern",
+   "date": "2022-07-23T00:00:00.000Z",
+   "location": "San Antonio, Texas",
+   "offSeasonDay": 28,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 92.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.35,
+      "VA": 18.6,
+      "CG": 18.3,
+      "B": 18.7,
+      "MA": 18.35,
+      "P": 18.45
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 90.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.1,
+      "CG": 18.4,
+      "B": 18.25,
+      "MA": 18.05,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 90.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.05,
+      "VA": 17.9,
+      "CG": 17.9,
+      "B": 18.4,
+      "MA": 18.2,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 89.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.15,
+      "VA": 18.3,
+      "CG": 17.8,
+      "B": 18.1,
+      "MA": 17.65,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 88.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.6,
+      "CG": 17.3,
+      "B": 17.8,
+      "MA": 18,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 86.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.2,
+      "CG": 16.9,
+      "B": 17.3,
+      "MA": 17.15,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 84.6125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 17.1,
+      "CG": 17.1,
+      "B": 16.8,
+      "MA": 17.025,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 83.8125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.4,
+      "CG": 17,
+      "B": 17.1,
+      "MA": 16.725,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 83.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.6,
+      "CG": 16.1,
+      "B": 16.95,
+      "MA": 16.95,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 82.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.5,
+      "CG": 16.5,
+      "B": 16.4,
+      "MA": 16.45,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 79.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.7,
+      "CG": 15.5,
+      "B": 16,
+      "MA": 15.95,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 78.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.3,
+      "CG": 15.2,
+      "B": 16.2,
+      "MA": 15.7,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 78.3125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 16.1,
+      "CG": 15.7,
+      "B": 15.6,
+      "MA": 15.725,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 77.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.6,
+      "CG": 14.9,
+      "B": 15.8,
+      "MA": 15.35,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 75.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15,
+      "CG": 14,
+      "B": 15.2,
+      "MA": 15.3,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 73.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.9,
+      "CG": 14.8,
+      "B": 14.5,
+      "MA": 14.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 72.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.4,
+      "CG": 13.7,
+      "B": 14.8,
+      "MA": 14.15,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 70.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14.1,
+      "CG": 14.2,
+      "B": 14,
+      "MA": 14.2,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 69.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 13.8,
+      "CG": 13.4,
+      "B": 14.2,
+      "MA": 14.1,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 64.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.9,
+      "CG": 12.6,
+      "B": 13.2,
+      "MA": 13.15,
+      "P": 13
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Fresno, California",
+   "date": "2022-07-23T00:00:00.000Z",
+   "location": "Fresno, California",
+   "offSeasonDay": 28,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 75.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.2,
+      "CG": 15.1,
+      "B": 14.9,
+      "MA": 14.8,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 74.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.8,
+      "CG": 14.9,
+      "B": 15.1,
+      "MA": 14.1,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 70.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 14,
+      "CG": 14.1,
+      "B": 13.9,
+      "MA": 13.8,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 65.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 13.4,
+      "CG": 13.4,
+      "B": 13.1,
+      "MA": 12.9,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 59.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 11.6,
+      "CG": 13.2,
+      "B": 12,
+      "MA": 12,
+      "P": 10.7
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 53.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 10.7,
+      "VA": 11.2,
+      "CG": 11.5,
+      "B": 10,
+      "MA": 11.2,
+      "P": 10.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Nashua, New Hampshire",
+   "date": "2022-07-24T00:00:00.000Z",
+   "location": "Nashua, New Hampshire",
+   "offSeasonDay": 29,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 71.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.2,
+      "CG": 12.9,
+      "B": 14.3,
+      "MA": 14.3,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 67,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.3,
+      "CG": 13.2,
+      "B": 12.4,
+      "MA": 13.2,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 61.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.7,
+      "VA": 12.8,
+      "CG": 11.9,
+      "B": 11,
+      "MA": 12.1,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 59.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 12.2,
+      "CG": 11.4,
+      "B": 11.7,
+      "MA": 10.7,
+      "P": 11.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Union City, California",
+   "date": "2022-07-24T00:00:00.000Z",
+   "location": "Union City, California",
+   "offSeasonDay": 29,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 75.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.4,
+      "CG": 15.3,
+      "B": 14.8,
+      "MA": 14.8,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 74.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.1,
+      "CG": 14.9,
+      "B": 15,
+      "MA": 14.7,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Columbians",
+     "score": 70,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.1,
+      "CG": 14,
+      "B": 14,
+      "MA": 13.7,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Golden Empire",
+     "score": 67.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 13.3,
+      "CG": 13.4,
+      "B": 13.3,
+      "MA": 13.3,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 60.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12,
+      "CG": 12.6,
+      "B": 11.9,
+      "MA": 12.2,
+      "P": 11.7
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 55.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.5,
+      "VA": 11.3,
+      "CG": 11,
+      "B": 10.1,
+      "MA": 11.2,
+      "P": 10.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Corpus Christi, TX",
+   "date": "2022-07-25T00:00:00.000Z",
+   "location": "Corpus Christi, TX",
+   "offSeasonDay": 30,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 91.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.6,
+      "CG": 18.3,
+      "B": 18.3,
+      "MA": 18.5,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 87.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.5,
+      "CG": 17.3,
+      "B": 17.5,
+      "MA": 17.9,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 80,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.6,
+      "CG": 16.1,
+      "B": 15.8,
+      "MA": 16,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 74.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.4,
+      "CG": 15,
+      "B": 14.5,
+      "MA": 14.9,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15,
+      "CG": 14.4,
+      "B": 14.9,
+      "MA": 14.5,
+      "P": 15.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Mesquite, Texas",
+   "date": "2022-07-25T00:00:00.000Z",
+   "location": "Mesquite, Texas",
+   "offSeasonDay": 30,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 90.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 17.9,
+      "CG": 18.1,
+      "B": 18.5,
+      "MA": 18.1,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 86,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.9,
+      "CG": 16.8,
+      "B": 17.5,
+      "MA": 17.4,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 85.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.4,
+      "CG": 17.1,
+      "B": 17.3,
+      "MA": 16.5,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 80.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16.3,
+      "CG": 15.8,
+      "B": 16.1,
+      "MA": 16.2,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 80.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.5,
+      "VA": 15.7,
+      "CG": 15.5,
+      "B": 17,
+      "MA": 15.3,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 79.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 16.5,
+      "CG": 15.2,
+      "B": 15.8,
+      "MA": 15.5,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 75.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.5,
+      "CG": 14.4,
+      "B": 15.4,
+      "MA": 15,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 75.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.3,
+      "CG": 14.3,
+      "B": 14.6,
+      "MA": 14.5,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 68.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 13.8,
+      "CG": 13.4,
+      "B": 14.3,
+      "MA": 14.2,
+      "P": 13.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - McKinney, Texas",
+   "date": "2022-07-26T00:00:00.000Z",
+   "location": "McKinney, Texas",
+   "offSeasonDay": 31,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 91.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.3,
+      "CG": 18.3,
+      "B": 18.5,
+      "MA": 18,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 89.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.8,
+      "CG": 18,
+      "B": 18,
+      "MA": 17.8,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 85.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.7,
+      "CG": 17.3,
+      "B": 17.2,
+      "MA": 17.2,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 84.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.9,
+      "CG": 16.7,
+      "B": 17.3,
+      "MA": 16.6,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 80.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16.1,
+      "CG": 15.7,
+      "B": 17,
+      "MA": 16.8,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 70.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.3,
+      "CG": 13.6,
+      "B": 14.5,
+      "MA": 14.6,
+      "P": 14.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Hattiesburg, Mississippi",
+   "date": "2022-07-27T00:00:00.000Z",
+   "location": "Hattiesburg, Mississippi",
+   "offSeasonDay": 32,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 92.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.7,
+      "CG": 18.5,
+      "B": 18.3,
+      "MA": 18.3,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 92.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.2,
+      "VA": 18.3,
+      "CG": 18.6,
+      "B": 18.1,
+      "MA": 18.1,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 88.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.7,
+      "CG": 17.6,
+      "B": 17.7,
+      "MA": 17.7,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 85.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17.2,
+      "CG": 17.3,
+      "B": 17.2,
+      "MA": 17.2,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 85.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17,
+      "CG": 16.8,
+      "B": 17.3,
+      "MA": 17.3,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 81.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16.4,
+      "CG": 16.4,
+      "B": 16.2,
+      "MA": 16.2,
+      "P": 16.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Little Rock, Arkansas",
+   "date": "2022-07-27T00:00:00.000Z",
+   "location": "Little Rock, Arkansas",
+   "offSeasonDay": 32,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 86.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.4,
+      "CG": 18,
+      "B": 17.2,
+      "MA": 17.2,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 85.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.1,
+      "CG": 16.7,
+      "B": 17.5,
+      "MA": 16.9,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 81.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 17.2,
+      "CG": 15.9,
+      "B": 16.4,
+      "MA": 16.3,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 77.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.7,
+      "CG": 14.4,
+      "B": 15.7,
+      "MA": 15.1,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 70.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.2,
+      "CG": 13.3,
+      "B": 14.8,
+      "MA": 14.2,
+      "P": 14.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Sheffield, Pennsylvania",
+   "date": "2022-07-29T00:00:00.000Z",
+   "location": "Sheffield, Pennsylvania",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 72.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.1,
+      "CG": 13.6,
+      "B": 14.5,
+      "MA": 14.4,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 68,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.3,
+      "CG": 13.9,
+      "B": 13.7,
+      "MA": 13.6,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 67.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 12.8,
+      "CG": 12.9,
+      "B": 13,
+      "MA": 13.3,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 59.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.1,
+      "VA": 12,
+      "CG": 11.9,
+      "B": 12,
+      "MA": 11.8,
+      "P": 11.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Masters/Tour of Champions",
+   "date": "2022-07-29T00:00:00.000Z",
+   "location": "Murfreebro, Tennessee",
+   "offSeasonDay": 34,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 93.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 18.9,
+      "CG": 18.4,
+      "B": 18.9,
+      "MA": 18.2,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 92.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.5,
+      "CG": 18.7,
+      "B": 18.7,
+      "MA": 18,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 91.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.3,
+      "CG": 18.2,
+      "B": 18.65,
+      "MA": 18.1,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 91.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.7,
+      "CG": 18.5,
+      "B": 18.45,
+      "MA": 18.3,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 87.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.2,
+      "CG": 17.7,
+      "B": 17.3,
+      "MA": 17.2,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 86.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.3,
+      "VA": 17,
+      "CG": 16,
+      "B": 17.5,
+      "MA": 17.4,
+      "P": 17.8
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 82,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.5,
+      "CG": 15.7,
+      "B": 16.7,
+      "MA": 16.3,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 76.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.1,
+      "CG": 14.8,
+      "B": 15.3,
+      "MA": 15,
+      "P": 15.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - White Lake, Michigan",
+   "date": "2022-07-30T00:00:00.000Z",
+   "location": "White Lake, Michigan",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 72.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.3,
+      "CG": 13.6,
+      "B": 14.5,
+      "MA": 14.4,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 68.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 13.5,
+      "CG": 14,
+      "B": 13.4,
+      "MA": 13.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 68.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.7,
+      "CG": 13.1,
+      "B": 13,
+      "MA": 13.3,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 60.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.4,
+      "VA": 12.1,
+      "CG": 12.1,
+      "B": 11.5,
+      "MA": 12,
+      "P": 11.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Normal, Illinois",
+   "date": "2022-07-30T00:00:00.000Z",
+   "location": "Normal, Illinois",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Guardians",
+     "score": 72.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 14,
+      "CG": 14.4,
+      "B": 13.2,
+      "MA": 13.4,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 69.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 14.5,
+      "CG": 13.7,
+      "B": 13.5,
+      "MA": 14.1,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 67.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 12.9,
+      "CG": 13.4,
+      "B": 12.7,
+      "MA": 13.3,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 66.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 13.2,
+      "CG": 13.5,
+      "B": 12.8,
+      "MA": 12.7,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 62.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.8,
+      "VA": 12.3,
+      "CG": 12.2,
+      "B": 12.2,
+      "MA": 12.2,
+      "P": 12.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Southeastern",
+   "date": "2022-07-30T00:00:00.000Z",
+   "location": "Atlanta, Georgia",
+   "offSeasonDay": 35,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 94.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 19,
+      "CG": 18.5,
+      "B": 18.3,
+      "MA": 18.95,
+      "P": 18.65
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 93.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 18.95,
+      "CG": 18.85,
+      "B": 18.5,
+      "MA": 18.9,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 93.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.6,
+      "CG": 18.6,
+      "B": 18.7,
+      "MA": 19,
+      "P": 18.25
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 92.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.3,
+      "CG": 18.55,
+      "B": 17.9,
+      "MA": 18.8,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 90.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.2,
+      "CG": 18,
+      "B": 18,
+      "MA": 18.2,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 87.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.6,
+      "CG": 17.9,
+      "B": 17.3,
+      "MA": 17.7,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 86.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 17.4,
+      "CG": 16.9,
+      "B": 17.1,
+      "MA": 17.8,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 85.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17,
+      "CG": 17.1,
+      "B": 17.6,
+      "MA": 17.3,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 85.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.3,
+      "CG": 17.2,
+      "B": 16.9,
+      "MA": 16.7,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 77.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.5,
+      "CG": 15,
+      "B": 15.6,
+      "MA": 15.4,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 76.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 14.9,
+      "CG": 14.7,
+      "B": 15.1,
+      "MA": 16,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 75.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 14.4,
+      "CG": 14.5,
+      "B": 15,
+      "MA": 15.2,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 72.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 14.5,
+      "CG": 13.6,
+      "B": 14.4,
+      "MA": 14.7,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 70.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.6,
+      "CG": 13.1,
+      "B": 14.3,
+      "MA": 14.1,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Heat Wave",
+     "score": 59.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.2,
+      "VA": 12,
+      "CG": 12,
+      "B": 12,
+      "MA": 10,
+      "P": 11.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "Tour of Champions",
+   "date": "2022-07-31T00:00:00.000Z",
+   "location": "Winston-Salem, North Carolina",
+   "offSeasonDay": 36,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 93.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 18.85,
+      "CG": 28.33,
+      "B": 18.5,
+      "MA": 18.9,
+      "P": 18.65
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 92.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.5,
+      "CG": 18.65,
+      "B": 18.3,
+      "MA": 18.6,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 91.575,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.4,
+      "CG": 18.1,
+      "B": 17.7,
+      "MA": 18.75,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 88.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 18.1,
+      "CG": 17.7,
+      "B": 17.9,
+      "MA": 18,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 87.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.5,
+      "VA": 17.9,
+      "CG": 17,
+      "B": 17.4,
+      "MA": 17.8,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 83.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.6,
+      "CG": 16.5,
+      "B": 17.2,
+      "MA": 16.8,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 83.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.3,
+      "CG": 16.7,
+      "B": 16.7,
+      "MA": 16.7,
+      "P": 16.7
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 82.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.7,
+      "CG": 16.2,
+      "B": 16.4,
+      "MA": 16.55,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 78.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 16,
+      "CG": 13.7,
+      "B": 16,
+      "MA": 16,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 73.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.5,
+      "CG": 14.2,
+      "B": 14.9,
+      "MA": 14.85,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 67.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.3,
+      "VA": 13.7,
+      "CG": 13.8,
+      "B": 13.5,
+      "MA": 13,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Huntington, West Virginia",
+   "date": "2022-08-01T00:00:00.000Z",
+   "location": "Huntington, West Virginia",
+   "offSeasonDay": 37,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 87.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.5,
+      "CG": 17,
+      "B": 17.8,
+      "MA": 17.2,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 85.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.7,
+      "CG": 16.8,
+      "B": 17.1,
+      "MA": 16.7,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 82.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.6,
+      "CG": 16.1,
+      "B": 16.4,
+      "MA": 16.6,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 73.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.3,
+      "CG": 14.8,
+      "B": 15,
+      "MA": 14.9,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 70,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 13.7,
+      "CG": 13.7,
+      "B": 14.4,
+      "MA": 14.3,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 67.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14.2,
+      "CG": 14,
+      "B": 13.8,
+      "MA": 13.5,
+      "P": 13.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Sun Prairie, Wisconsin",
+   "date": "2022-08-01T00:00:00.000Z",
+   "location": "Sun Prairie, Wisconsin",
+   "offSeasonDay": 37,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 74.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14.8,
+      "CG": 14.3,
+      "B": 15.1,
+      "MA": 14.8,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 72.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.7,
+      "CG": 13.4,
+      "B": 14.3,
+      "MA": 14.4,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 68.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 14.1,
+      "CG": 14,
+      "B": 13.5,
+      "MA": 13.6,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 68.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.6,
+      "CG": 13.6,
+      "B": 13.9,
+      "MA": 13.9,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 66.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 13.3,
+      "CG": 13,
+      "B": 13.7,
+      "MA": 13.4,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 62.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.5,
+      "CG": 11.4,
+      "B": 12.6,
+      "MA": 12.3,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 61.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.1,
+      "VA": 12.7,
+      "CG": 12.6,
+      "B": 12.8,
+      "MA": 12.4,
+      "P": 10.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Annapolis, Maryland",
+   "date": "2022-08-02T00:00:00.000Z",
+   "location": "Annapolis, Maryland",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 94.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 19.2,
+      "CG": 18.9,
+      "B": 18.6,
+      "MA": 19.05,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 93.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 18.8,
+      "CG": 18.6,
+      "B": 18.4,
+      "MA": 18.7,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 90.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18,
+      "CG": 17.8,
+      "B": 18.1,
+      "MA": 18.1,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 83.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 16.7,
+      "CG": 16.4,
+      "B": 16.4,
+      "MA": 16.4,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 80.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.4,
+      "CG": 15.4,
+      "B": 15.7,
+      "MA": 16.2,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 76.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.6,
+      "CG": 14.5,
+      "B": 15.2,
+      "MA": 15.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 73.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 15.1,
+      "CG": 14.7,
+      "B": 14.6,
+      "MA": 14.7,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 68.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 14.1,
+      "CG": 13.6,
+      "B": 13.7,
+      "MA": 14,
+      "P": 12.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Lima, Ohio",
+   "date": "2022-08-02T00:00:00.000Z",
+   "location": "Lima, Ohio",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Gold",
+     "score": 74.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 15,
+      "CG": 14.9,
+      "B": 14.6,
+      "MA": 14.8,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 71.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.2,
+      "CG": 15.1,
+      "B": 14,
+      "MA": 14.2,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 69.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 14,
+      "CG": 14.3,
+      "B": 14.2,
+      "MA": 13.4,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 67.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.3,
+      "CG": 13.4,
+      "B": 13.4,
+      "MA": 13.7,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 64.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 13.2,
+      "CG": 12.9,
+      "B": 12.7,
+      "MA": 12.6,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Salem, Virginia",
+   "date": "2022-08-02T00:00:00.000Z",
+   "location": "Salem, Virginia",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 94.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.2,
+      "CG": 18.7,
+      "B": 18.7,
+      "MA": 18.9,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 92.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.7,
+      "CG": 18.3,
+      "B": 18,
+      "MA": 18.6,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 84.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.8,
+      "CG": 17,
+      "B": 16.7,
+      "MA": 17.3,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 74.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.7,
+      "CG": 15,
+      "B": 15.1,
+      "MA": 15.3,
+      "P": 15.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Sevierville, Tennessee",
+   "date": "2022-08-02T00:00:00.000Z",
+   "location": "Sevierville, Tennessee",
+   "offSeasonDay": 38,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 89.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 17.9,
+      "CG": 17.9,
+      "B": 17.6,
+      "MA": 18,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 88.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.2,
+      "CG": 17.3,
+      "B": 17.5,
+      "MA": 18.2,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 87.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 17.4,
+      "CG": 17.4,
+      "B": 17.2,
+      "MA": 17.1,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 78.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 15.7,
+      "CG": 15.6,
+      "B": 15.6,
+      "MA": 15.7,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 77.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 14.6,
+      "CG": 15.1,
+      "B": 15.3,
+      "MA": 15.4,
+      "P": 16.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Apple Valley, Minnesota",
+   "date": "2022-08-03T00:00:00.000Z",
+   "location": "Apple Valley, Minnesota",
+   "offSeasonDay": 39,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Guardians",
+     "score": 73.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 14.9,
+      "CG": 14,
+      "B": 14.8,
+      "MA": 14.8,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 70.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14.1,
+      "CG": 13.9,
+      "B": 14.2,
+      "MA": 14.2,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 70,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.1,
+      "VA": 14.4,
+      "CG": 13.8,
+      "B": 14.3,
+      "MA": 14.3,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 64.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 11.6,
+      "VA": 13,
+      "CG": 13.2,
+      "B": 12.5,
+      "MA": 12.5,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 64,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 12.6,
+      "CG": 12,
+      "B": 12.8,
+      "MA": 12.8,
+      "P": 13.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Centerville, Ohio",
+   "date": "2022-08-03T00:00:00.000Z",
+   "location": "Centerville, Ohio",
+   "offSeasonDay": 39,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Stars",
+     "score": 90.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.3,
+      "CG": 18.2,
+      "B": 18.2,
+      "MA": 18.3,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 89.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 18,
+      "CG": 17.7,
+      "B": 17.7,
+      "MA": 18,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 88.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.7,
+      "VA": 17.7,
+      "CG": 17.9,
+      "B": 17,
+      "MA": 17.7,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 81.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.2,
+      "CG": 16.4,
+      "B": 16.6,
+      "MA": 16,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 77.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.7,
+      "CG": 15.6,
+      "B": 15.5,
+      "MA": 15.4,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 75.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 15.2,
+      "CG": 15.1,
+      "B": 14.8,
+      "MA": 14.9,
+      "P": 15.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Glassboro, New Jersey",
+   "date": "2022-08-03T00:00:00.000Z",
+   "location": "Glassboro, New Jersey",
+   "offSeasonDay": 39,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Boston Crusaders",
+     "score": 95.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 19.3,
+      "CG": 19.2,
+      "B": 18.8,
+      "MA": 18.7,
+      "P": 19.1
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 93.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 19,
+      "CG": 18.9,
+      "B": 18.6,
+      "MA": 18.2,
+      "P": 19
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 90.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.3,
+      "CG": 18,
+      "B": 18.2,
+      "MA": 18.4,
+      "P": 18.2
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 84.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 17,
+      "CG": 16.4,
+      "B": 17,
+      "MA": 17.6,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 84.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 16.5,
+      "CG": 17,
+      "B": 16.8,
+      "MA": 17.2,
+      "P": 17.3
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 80.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16,
+      "CG": 15.3,
+      "B": 16.2,
+      "MA": 16.5,
+      "P": 17
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 76.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 15.5,
+      "CG": 14.3,
+      "B": 16,
+      "MA": 15.4,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 69,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.5,
+      "VA": 14.4,
+      "CG": 12.6,
+      "B": 14.3,
+      "MA": 13.9,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Portage, Michigan",
+   "date": "2022-08-05T00:00:00.000Z",
+   "location": "Portage, Michigan",
+   "offSeasonDay": 41,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 77.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.5,
+      "CG": 15.1,
+      "B": 15.3,
+      "MA": 15.3,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 73.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 14.5,
+      "CG": 15.2,
+      "B": 14.8,
+      "MA": 14.8,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 72.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.4,
+      "CG": 14.8,
+      "B": 14.1,
+      "MA": 14.1,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 70.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 13.2,
+      "CG": 13.1,
+      "B": 14.2,
+      "MA": 14.2,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 66.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.1,
+      "CG": 13.8,
+      "B": 13.3,
+      "MA": 13.3,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 64.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.6,
+      "VA": 13.3,
+      "CG": 12.6,
+      "B": 12.5,
+      "MA": 12.5,
+      "P": 12.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Cedar Rapids, Iowa",
+   "date": "2022-08-05T00:00:00.000Z",
+   "location": "Cedar Rapids, Iowa",
+   "offSeasonDay": 41,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 78.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15.8,
+      "CG": 15.6,
+      "B": 15.7,
+      "MA": 15.9,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 78.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.7,
+      "CG": 15.5,
+      "B": 15.5,
+      "MA": 15.1,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 76.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.8,
+      "CG": 15.7,
+      "B": 15.2,
+      "MA": 15.4,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 72.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 14.4,
+      "CG": 14.3,
+      "B": 14.4,
+      "MA": 14.8,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 71.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.3,
+      "CG": 14.2,
+      "B": 14.2,
+      "MA": 14.4,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 65.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13,
+      "VA": 13.4,
+      "CG": 13.3,
+      "B": 13.2,
+      "MA": 12.9,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 65.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.8,
+      "VA": 13.2,
+      "CG": 13.1,
+      "B": 13.3,
+      "MA": 13.4,
+      "P": 13.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI East",
+   "date": "2022-08-05T00:00:00.000Z",
+   "location": "Allentown, Pennsylvania",
+   "offSeasonDay": 41,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 96.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.3,
+      "VA": 19.4,
+      "CG": 19.25,
+      "B": 19.2,
+      "MA": 18.95,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 94.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 18.9,
+      "CG": 19.4,
+      "B": 19,
+      "MA": 18.65,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 94.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.9,
+      "VA": 19,
+      "CG": 18.95,
+      "B": 18.7,
+      "MA": 18.7,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 88.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.5,
+      "CG": 18.3,
+      "B": 17.5,
+      "MA": 17.7,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 88.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.4,
+      "CG": 17.6,
+      "B": 17.9,
+      "MA": 17.4,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 84.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.3,
+      "CG": 17.1,
+      "B": 16.8,
+      "MA": 16.6,
+      "P": 17
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 84.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17.1,
+      "CG": 16.6,
+      "B": 17.1,
+      "MA": 17.2,
+      "P": 17.1
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 78.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 15.4,
+      "CG": 15.6,
+      "B": 16.2,
+      "MA": 15.8,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 78,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 14.6,
+      "CG": 15.1,
+      "B": 15.8,
+      "MA": 15.1,
+      "P": 16.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI East",
+   "date": "2022-08-06T00:00:00.000Z",
+   "location": "Allentown, Pennsylvania",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Carolina Crown",
+     "score": 95.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.4,
+      "VA": 19.2,
+      "CG": 19.15,
+      "B": 19.1,
+      "MA": 19,
+      "P": 18.45
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 93.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.85,
+      "CG": 18.35,
+      "B": 18.4,
+      "MA": 18.55,
+      "P": 19.05
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 91.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.25,
+      "VA": 17.85,
+      "CG": 18.1,
+      "B": 18.6,
+      "MA": 18.15,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 90.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 17.95,
+      "CG": 18.2,
+      "B": 18.05,
+      "MA": 18.2,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 89.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 18.05,
+      "CG": 17.4,
+      "B": 18.2,
+      "MA": 18.05,
+      "P": 18.6
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 86.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.05,
+      "VA": 17.4,
+      "CG": 16.7,
+      "B": 17.65,
+      "MA": 17.3,
+      "P": 17.65
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 84.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.7,
+      "CG": 16.3,
+      "B": 17.3,
+      "MA": 17.05,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 80.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 15.4,
+      "CG": 15.4,
+      "B": 16.4,
+      "MA": 16.5,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 77.1,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 14.8,
+      "CG": 15.7,
+      "B": 15.5,
+      "MA": 16.3,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 75.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.2,
+      "CG": 14.8,
+      "B": 15.3,
+      "MA": 15.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 72.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.9,
+      "VA": 14.4,
+      "CG": 13.7,
+      "B": 14.8,
+      "MA": 14.5,
+      "P": 13.7
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Charleston, Illinois",
+   "date": "2022-08-06T00:00:00.000Z",
+   "location": "Charleston, Illinois",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Gold",
+     "score": 80.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16.2,
+      "CG": 16,
+      "B": 16.1,
+      "MA": 16,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 80.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.1,
+      "CG": 15.7,
+      "B": 15.9,
+      "MA": 16.2,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 78.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 15.5,
+      "CG": 15.3,
+      "B": 15.5,
+      "MA": 16.3,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 76.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 15.6,
+      "CG": 15.6,
+      "B": 15,
+      "MA": 15.8,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.6,
+      "CG": 14.8,
+      "B": 14.2,
+      "MA": 14.8,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 72.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.8,
+      "VA": 14.5,
+      "CG": 14.4,
+      "B": 14.1,
+      "MA": 15.1,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 65.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 13,
+      "CG": 13.8,
+      "B": 13.1,
+      "MA": 12.4,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 65.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.5,
+      "VA": 12.9,
+      "CG": 13.2,
+      "B": 13.3,
+      "MA": 13.1,
+      "P": 13.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Avon Lake, Ohio",
+   "date": "2022-08-06T00:00:00.000Z",
+   "location": "Avon Lake, Ohio",
+   "offSeasonDay": 42,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Spartans",
+     "score": 79.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 16,
+      "CG": 16,
+      "B": 15.6,
+      "MA": 15.1,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 75.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.3,
+      "CG": 16.1,
+      "B": 15,
+      "MA": 14.6,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 74.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.9,
+      "CG": 15.8,
+      "B": 14.7,
+      "MA": 14.3,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 72.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 14,
+      "CG": 15.4,
+      "B": 14.6,
+      "MA": 14.1,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 70.4,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.9,
+      "VA": 13.9,
+      "CG": 14.5,
+      "B": 14.2,
+      "MA": 12.9,
+      "P": 13.4
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 68.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 14.2,
+      "CG": 13.2,
+      "B": 13.9,
+      "MA": 12.7,
+      "P": 13.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Pittsburgh, Pennsylvania",
+   "date": "2022-08-07T00:00:00.000Z",
+   "location": "Pittsburgh, Pennsylvania",
+   "offSeasonDay": 43,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 92.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.3,
+      "CG": 18.4,
+      "B": 18.6,
+      "MA": 18.3,
+      "P": 18.7
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 88.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 17.8,
+      "CG": 18.3,
+      "B": 17.6,
+      "MA": 17.6,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 84.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17.2,
+      "CG": 16.6,
+      "B": 17.2,
+      "MA": 17.3,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 83.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.9,
+      "CG": 15.9,
+      "B": 16.3,
+      "MA": 16.8,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 76.65,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.4,
+      "CG": 15,
+      "B": 15.4,
+      "MA": 16,
+      "P": 15.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Cincinnati, Ohio",
+   "date": "2022-08-08T00:00:00.000Z",
+   "location": "Cincinnati, Ohio",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 93.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.8,
+      "CG": 18.4,
+      "B": 18.2,
+      "MA": 18.6,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 91.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.4,
+      "CG": 18.2,
+      "B": 18.3,
+      "MA": 18.3,
+      "P": 18.1
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 84.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17.1,
+      "CG": 16.7,
+      "B": 17.4,
+      "MA": 17.3,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 84.8,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.1,
+      "VA": 16.9,
+      "CG": 16.5,
+      "B": 17.2,
+      "MA": 16.9,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 78.85,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.9,
+      "CG": 15.7,
+      "B": 16,
+      "MA": 15.2,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 73.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.5,
+      "CG": 14.4,
+      "B": 14.8,
+      "MA": 14.6,
+      "P": 13.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Open Class World Championship Prelims",
+   "date": "2022-08-08T00:00:00.000Z",
+   "location": "Marion, Indiana",
+   "offSeasonDay": 44,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 82.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 16.6,
+      "CG": 16.4,
+      "B": 16.4,
+      "MA": 16.25,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 81.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 16.5,
+      "CG": 16,
+      "B": 16.2,
+      "MA": 16.25,
+      "P": 15.8
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 81.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.9,
+      "CG": 16.2,
+      "B": 15.7,
+      "MA": 16.4,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 81.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.1,
+      "CG": 16.3,
+      "B": 15.9,
+      "MA": 16.15,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 78.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.8,
+      "CG": 15,
+      "B": 15.5,
+      "MA": 15.8,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 76.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.1,
+      "CG": 15.4,
+      "B": 15.2,
+      "MA": 15.45,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 75.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15,
+      "CG": 14.7,
+      "B": 15,
+      "MA": 15.1,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 75.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 14.8,
+      "CG": 14.3,
+      "B": 14.8,
+      "MA": 15.35,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 73.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.3,
+      "CG": 14.6,
+      "B": 14.4,
+      "MA": 14.7,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Louisana Stars",
+     "score": 72.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 13.5,
+      "CG": 13.5,
+      "B": 14.5,
+      "MA": 14.45,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 70.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.6,
+      "CG": 13.6,
+      "B": 14.3,
+      "MA": 13.2,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 68.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.2,
+      "VA": 13.2,
+      "CG": 13.8,
+      "B": 13.4,
+      "MA": 12.95,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 67.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.7,
+      "VA": 13.7,
+      "CG": 13.3,
+      "B": 13.9,
+      "MA": 13.15,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 67.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 12.9,
+      "VA": 13,
+      "CG": 13,
+      "B": 13.3,
+      "MA": 13.1,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Calgary Stampede Band",
+     "score": 76.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 16,
+      "CG": 16,
+      "B": 14.6,
+      "MA": 14.95,
+      "P": 14.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Open Class World Championship Finals",
+   "date": "2022-08-09T00:00:00.000Z",
+   "location": "Marion, Indiana",
+   "offSeasonDay": 45,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Vanguard Cadets",
+     "score": 83.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 17,
+      "CG": 16.8,
+      "B": 16.5,
+      "MA": 16.5,
+      "P": 16.5
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 81.9,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.4,
+      "VA": 16.55,
+      "CG": 16.2,
+      "B": 16.05,
+      "MA": 16,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 81.5875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.2,
+      "CG": 16.6,
+      "B": 16,
+      "MA": 16.525,
+      "P": 16.15
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 81.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 16.7,
+      "CG": 16.1,
+      "B": 16.1,
+      "MA": 16.25,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 79.2125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.6,
+      "VA": 16,
+      "CG": 15.7,
+      "B": 15.7,
+      "MA": 15.925,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 77.6375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.3,
+      "VA": 15.5,
+      "CG": 15.6,
+      "B": 15.3,
+      "MA": 15.725,
+      "P": 15.05
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 75.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.1,
+      "VA": 15.4,
+      "CG": 14.7,
+      "B": 14.9,
+      "MA": 15.2,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 74.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.6,
+      "VA": 14.9,
+      "CG": 15.1,
+      "B": 15.1,
+      "MA": 15,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Louisana Stars",
+     "score": 74.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.5,
+      "VA": 15.3,
+      "CG": 14.3,
+      "B": 14.5,
+      "MA": 15,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 73.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.7,
+      "CG": 15,
+      "B": 14.2,
+      "MA": 15.05,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 70.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.1,
+      "VA": 14.5,
+      "CG": 14,
+      "B": 13.9,
+      "MA": 13.75,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 69.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.7,
+      "VA": 13.6,
+      "CG": 14.1,
+      "B": 13.5,
+      "MA": 13.6,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Calgary Stampede Band",
+     "score": 78.475,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.7,
+      "CG": 16.1,
+      "B": 15.3,
+      "MA": 15.35,
+      "P": 15.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Prelims",
+   "date": "2022-08-11T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 47,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 97.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.6,
+      "CG": 19,
+      "B": 19.6,
+      "MA": 19.55,
+      "P": 19.65
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 96.5,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.4,
+      "VA": 19.3,
+      "CG": 19.2,
+      "B": 19.45,
+      "MA": 19.35,
+      "P": 19.25
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 95.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.55,
+      "VA": 19.25,
+      "CG": 18.7,
+      "B": 19.1,
+      "MA": 19.2,
+      "P": 19.55
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 95.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.4,
+      "CG": 18.65,
+      "B": 19.5,
+      "MA": 19.35,
+      "P": 19.05
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 94.075,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 19.1,
+      "CG": 18.4,
+      "B": 18.7,
+      "MA": 18.95,
+      "P": 19.35
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 92.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.65,
+      "VA": 18.9,
+      "CG": 18,
+      "B": 18.9,
+      "MA": 18.65,
+      "P": 18.75
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 91.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.6,
+      "CG": 17.7,
+      "B": 18.3,
+      "MA": 18.5,
+      "P": 18.55
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 91.1375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.6,
+      "VA": 18.65,
+      "CG": 17.6,
+      "B": 18.5,
+      "MA": 18.225,
+      "P": 19
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 89.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.1,
+      "CG": 17.3,
+      "B": 18.05,
+      "MA": 17.8,
+      "P": 18.25
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 89.175,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 18.3,
+      "CG": 17.4,
+      "B": 17.8,
+      "MA": 18.05,
+      "P": 17.9
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 87.2125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.9,
+      "CG": 16.9,
+      "B": 17.65,
+      "MA": 17.025,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 86.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.2,
+      "VA": 17.5,
+      "CG": 16.5,
+      "B": 18,
+      "MA": 16.85,
+      "P": 18.5
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 86.625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.4,
+      "CG": 16.7,
+      "B": 18.35,
+      "MA": 16.95,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 85.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17,
+      "VA": 17.6,
+      "CG": 16.35,
+      "B": 17.6,
+      "MA": 17.1,
+      "P": 17.45
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 83.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.8,
+      "VA": 17.1,
+      "CG": 16.2,
+      "B": 17.2,
+      "MA": 16.55,
+      "P": 17.7
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 82.4875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.9,
+      "CG": 15.8,
+      "B": 16.65,
+      "MA": 15.925,
+      "P": 17.25
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 81.7125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.1,
+      "VA": 16.45,
+      "CG": 16.1,
+      "B": 17.1,
+      "MA": 16.025,
+      "P": 17.2
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 81.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.6,
+      "VA": 16.75,
+      "CG": 15.75,
+      "B": 16.7,
+      "MA": 16,
+      "P": 16.8
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 79.8125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 15.7,
+      "CG": 15,
+      "B": 17.4,
+      "MA": 15.525,
+      "P": 16.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 79.7125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.2,
+      "VA": 16.05,
+      "CG": 15.9,
+      "B": 16.9,
+      "MA": 15.625,
+      "P": 15.95
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 79.2625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.8,
+      "VA": 16.2,
+      "CG": 15.5,
+      "B": 16.45,
+      "MA": 15.725,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 78.8125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 16.5,
+      "CG": 15.15,
+      "B": 15.9,
+      "MA": 15.675,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 77.55,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.8,
+      "CG": 15.25,
+      "B": 16.3,
+      "MA": 15.5,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 76.2125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.2,
+      "VA": 15.3,
+      "CG": 15.1,
+      "B": 15.8,
+      "MA": 15.025,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 74.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15,
+      "CG": 14.55,
+      "B": 15.9,
+      "MA": 14.9,
+      "P": 14.35
+     }
+    },
+    {
+     "corps": "Calgary Stampede Band",
+     "score": 74.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.65,
+      "VA": 15.6,
+      "CG": 14.8,
+      "B": 14.9,
+      "MA": 14.55,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Battalion",
+     "score": 73.1625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 14.7,
+      "CG": 14.2,
+      "B": 15,
+      "MA": 14.825,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Southwind",
+     "score": 73.125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.7,
+      "VA": 14.9,
+      "CG": 14.9,
+      "B": 14.6,
+      "MA": 14.9,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Legends",
+     "score": 72.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 14.6,
+      "CG": 14,
+      "B": 15.2,
+      "MA": 14.8,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Louisiana Stars",
+     "score": 70.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14,
+      "VA": 14.3,
+      "CG": 13.6,
+      "B": 14.7,
+      "MA": 14.45,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "River City Rhythm",
+     "score": 69.95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.3,
+      "VA": 13.9,
+      "CG": 13.9,
+      "B": 13.9,
+      "MA": 14.2,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Les Stentors",
+     "score": 67.525,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.8,
+      "VA": 13.3,
+      "CG": 14.3,
+      "B": 13.6,
+      "MA": 13.35,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 66.1875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 14.4,
+      "VA": 13.5,
+      "CG": 13.4,
+      "B": 14.2,
+      "MA": 13.475,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 65.825,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.6,
+      "VA": 14,
+      "CG": 13,
+      "B": 13.1,
+      "MA": 13.25,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Colts Cadets",
+     "score": 62.225,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 13.3,
+      "VA": 13.4,
+      "CG": 12.6,
+      "B": 13.3,
+      "MA": 13.05,
+      "P": 13.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Semi-Finals",
+   "date": "2022-08-12T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 48,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 98.3,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.7,
+      "VA": 19.7,
+      "CG": 19.5,
+      "B": 19.65,
+      "MA": 19.55,
+      "P": 19.5
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 96.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.4,
+      "CG": 19.7,
+      "B": 19.15,
+      "MA": 19.05,
+      "P": 19.3
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 96.975,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.5,
+      "CG": 19.1,
+      "B": 19.3,
+      "MA": 19.35,
+      "P": 19.55
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 95.8125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.1,
+      "VA": 19.1,
+      "CG": 19.2,
+      "B": 19.4,
+      "MA": 19.225,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 95.15,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19,
+      "VA": 18.9,
+      "CG": 18.6,
+      "B": 19,
+      "MA": 18.85,
+      "P": 19.6
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 93.2875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.75,
+      "VA": 18.7,
+      "CG": 18.3,
+      "B": 18.9,
+      "MA": 18.625,
+      "P": 18.8
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 92.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.3,
+      "VA": 18.6,
+      "CG": 18.5,
+      "B": 18.7,
+      "MA": 18.45,
+      "P": 18.05
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 91.8625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.5,
+      "VA": 18.3,
+      "CG": 17.8,
+      "B": 18.5,
+      "MA": 18.275,
+      "P": 19.2
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 90.7,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.2,
+      "CG": 17.6,
+      "B": 18.35,
+      "MA": 17.95,
+      "P": 18.3
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 89.5375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.1,
+      "CG": 18.2,
+      "B": 18.05,
+      "MA": 17.825,
+      "P": 17.25
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 87.45,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.8,
+      "VA": 17.6,
+      "CG": 17,
+      "B": 17.75,
+      "MA": 17.45,
+      "P": 17.5
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 87.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.35,
+      "VA": 17.5,
+      "CG": 16.8,
+      "B": 18,
+      "MA": 17.15,
+      "P": 18
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 86.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.6,
+      "VA": 17.7,
+      "CG": 17.1,
+      "B": 17.5,
+      "MA": 16.95,
+      "P": 17.6
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 85.7875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.3,
+      "CG": 16.7,
+      "B": 17.35,
+      "MA": 17.225,
+      "P": 17.4
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 83.725,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17,
+      "CG": 16,
+      "B": 17.2,
+      "MA": 16.65,
+      "P": 16.55
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 82.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.5,
+      "VA": 16.65,
+      "CG": 15.7,
+      "B": 16.85,
+      "MA": 16,
+      "P": 16.25
+     }
+    },
+    {
+     "corps": "Music City",
+     "score": 81.7625,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.3,
+      "VA": 16.4,
+      "CG": 15.3,
+      "B": 17,
+      "MA": 16.325,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 81.05,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.55,
+      "VA": 16.5,
+      "CG": 15.5,
+      "B": 16.6,
+      "MA": 16.2,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 80.25,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.7,
+      "VA": 16,
+      "CG": 15.9,
+      "B": 16.7,
+      "MA": 15.6,
+      "P": 16.4
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 79.025,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.05,
+      "VA": 16.3,
+      "CG": 15.1,
+      "B": 16.3,
+      "MA": 16,
+      "P": 15.3
+     }
+    },
+    {
+     "corps": "Genesis",
+     "score": 78.8125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.7,
+      "VA": 15.7,
+      "CG": 14.5,
+      "B": 16.55,
+      "MA": 15.675,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 78.375,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.9,
+      "VA": 15.6,
+      "CG": 14.9,
+      "B": 16.1,
+      "MA": 15.55,
+      "P": 16
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 76.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16,
+      "VA": 15.4,
+      "CG": 14.7,
+      "B": 15.4,
+      "MA": 15.2,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Guardians",
+     "score": 73.925,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15,
+      "VA": 15.3,
+      "CG": 14.3,
+      "B": 14.7,
+      "MA": 14.95,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Jersey Surf",
+     "score": 73.875,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 15.4,
+      "VA": 15,
+      "CG": 14.1,
+      "B": 15,
+      "MA": 14.75,
+      "P": 14.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI World Class World Championship Finals",
+   "date": "2022-08-13T00:00:00.000Z",
+   "location": "Indianapolis, Indiana",
+   "offSeasonDay": 49,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 98.75,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 20,
+      "VA": 19.9,
+      "CG": 19.7,
+      "B": 19.6,
+      "MA": 19.65,
+      "P": 19.65
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 97.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.5,
+      "VA": 19.4,
+      "CG": 19.65,
+      "B": 19.75,
+      "MA": 19.35,
+      "P": 19.45
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 97.325,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.4,
+      "VA": 19.6,
+      "CG": 19.1,
+      "B": 19.45,
+      "MA": 19.25,
+      "P": 19.75
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 96.35,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 19.2,
+      "VA": 19.05,
+      "CG": 19.25,
+      "B": 19.8,
+      "MA": 19.55,
+      "P": 19.05
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 95,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.8,
+      "VA": 19,
+      "CG": 18.65,
+      "B": 19.1,
+      "MA": 19.05,
+      "P": 19.7
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 92.9125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.4,
+      "VA": 18.4,
+      "CG": 18.25,
+      "B": 18.9,
+      "MA": 18.875,
+      "P": 18.95
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 92.775,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.7,
+      "VA": 18.35,
+      "CG": 18.75,
+      "B": 18.65,
+      "MA": 18.6,
+      "P": 18.55
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 90.675,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18,
+      "VA": 18.3,
+      "CG": 18.05,
+      "B": 18.45,
+      "MA": 18.1,
+      "P": 18.4
+     }
+    },
+    {
+     "corps": "The Cavaliers",
+     "score": 90.6,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 18.1,
+      "VA": 17.8,
+      "CG": 17.8,
+      "B": 18.3,
+      "MA": 18.4,
+      "P": 18.9
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 90.0125,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.9,
+      "VA": 18,
+      "CG": 18.45,
+      "B": 18.15,
+      "MA": 18.025,
+      "P": 18.45
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 87.2,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 17.4,
+      "VA": 17.5,
+      "CG": 17.5,
+      "B": 17.95,
+      "MA": 17.45,
+      "P": 18.15
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 86.425,
+     "captions": {
+      "GE1": 0,
+      "GE2": 0,
+      "VP": 16.9,
+      "VA": 17,
+      "CG": 16.5,
+      "B": 17.7,
+      "MA": 17.25,
+      "P": 18.3
+     }
+    }
+   ]
+  }
+ ]
+}
