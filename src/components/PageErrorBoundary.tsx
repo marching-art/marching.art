@@ -74,14 +74,24 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
             </button>
           )}
           <button
-            onClick={() => startTransition(() => navigate(-1))}
+            onClick={() =>
+              startTransition(() => {
+                // react-router v7's navigate() returns a Promise; discard it so
+                // the transition callback stays void (React 18 startTransition).
+                navigate(-1);
+              })
+            }
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-transparent border border-white/20 text-white hover:bg-white/5 hover:border-white/40 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Go Back
           </button>
           <button
-            onClick={() => startTransition(() => navigate('/dashboard'))}
+            onClick={() =>
+              startTransition(() => {
+                navigate('/dashboard');
+              })
+            }
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-transparent border border-line text-secondary hover:bg-white/5 hover:border-line-strong transition-colors"
           >
             <Home className="w-5 h-5" />
