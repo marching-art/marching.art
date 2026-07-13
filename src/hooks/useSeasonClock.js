@@ -23,6 +23,9 @@ export function useNow(intervalMs = 30000) {
 /**
  * The player-facing deadlines that matter right now.
  * @param {number} [intervalMs] - Tick interval (default 30s)
+ * @param {string|null} [corpsClass] - Canonical class id. When provided, the
+ *   Championship-day class lockout is reflected in `trade`; omit for a
+ *   class-agnostic window.
  * @returns {{
  *   now: Date,
  *   scoresAt: Date,
@@ -30,7 +33,7 @@ export function useNow(intervalMs = 30000) {
  *   trade: ReturnType<typeof getCaptionChangeInfo>,
  * }}
  */
-export function useSeasonDeadlines(intervalMs = 30000) {
+export function useSeasonDeadlines(intervalMs = 30000, corpsClass = null) {
   const seasonData = useSeasonStore((s) => s.seasonData);
   const now = useNow(intervalMs);
   return useMemo(() => {
@@ -39,7 +42,7 @@ export function useSeasonDeadlines(intervalMs = 30000) {
       now,
       scoresAt,
       scoresInMs: scoresAt.getTime() - now.getTime(),
-      trade: getCaptionChangeInfo(seasonData, now),
+      trade: getCaptionChangeInfo(seasonData, now, corpsClass),
     };
-  }, [seasonData, now]);
+  }, [seasonData, now, corpsClass]);
 }

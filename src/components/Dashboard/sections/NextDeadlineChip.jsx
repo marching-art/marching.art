@@ -34,12 +34,12 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     tradeLabel = `Changes closed until ${formatEtShort(trade.reopensAt)}`;
     tooltipLines.push(
       'No caption changes on Days 43-44',
-      `Championship changes (${trade.nextLimit} total) open ${formatEtDayTime(trade.reopensAt)}`
+      `Championship changes (${trade.nextLimit} per day) open ${formatEtDayTime(trade.reopensAt)}`
     );
   } else if (trade?.phase === 'championship') {
     tradeLabel = `Championship changes lock ${formatEtShort(trade.locksAt)}`;
     tooltipLines.push(
-      `${trade.tradeLimit} caption changes total for Championship Week (Days 45-49)`,
+      `${trade.tradeLimit} caption changes per day during Championship Week (Days 45-49)`,
       `Changes lock nightly at ${formatEtDayTime(trade.locksAt)} until scores process`
     );
   } else if (trade?.isUnlimited && trade.unlimitedEndsAt) {

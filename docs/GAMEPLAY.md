@@ -102,7 +102,26 @@ in competition days (1–49):
 | **1–14**                    | **Unlimited**, ending when Day 14 ends (8:00 PM ET in summer)     |
 | **15–42**                   | **3 per week per class** — spend one at a time or all at once; the counter resets each week |
 | **43–44**                   | **No changes** at all                                             |
-| **45–49** (Championship Wk) | **2 per class total** for the whole stretch                       |
+| **45–49** (Championship Wk) | **2 per class per day**, for each class still competing that day — resets nightly |
+
+Championship Week follows the DCI Finals bracket — only the classes still
+competing on a given day may change captions:
+
+| Day | Classes that may change      |
+| --- | ---------------------------- |
+| 45  | Open Class, A Class          |
+| 46  | Open Class, A Class          |
+| 47  | All classes                  |
+| 48  | World Class, SoundSport      |
+| 49  | World Class, SoundSport      |
+
+A class not competing that day is done for the season and locked out (Open/A
+after Day 47, World/SoundSport after Day 49). This keeps it fair: every class
+gets the same **6 total changes** across the days it is guaranteed to compete
+(2 per day × 3 days — Open/A on Days 45–47, World/SoundSport on Days 47–49).
+An Open or A Class corps that advances to Semifinals or Finals still competes
+on Days 48–49 with its locked-in lineup; it simply can't spend extra changes
+beyond its guaranteed window.
 
 Additional locks:
 
@@ -110,7 +129,7 @@ Additional locks:
   **lock** until that night's scores are processed (the 2:00 AM ET nightly run;
   if a day had no events, changes reopen at 2:00 AM ET).
 - During Championship Week, changes close at **8:00 PM ET each day** and reopen
-  once scores are processed.
+  once scores are processed; each competing class gets a fresh 2 changes each day.
 
 The client display (`src/utils/seasonClock.js`) is kept exactly in sync with
 what the server (`captionWindows.js`) enforces on save, so the countdown you see

@@ -16,9 +16,21 @@
  *                 (nightly processor runs at 2:00 AM ET; if the day had no
  *                 events, changes reopen at 2:00 AM ET).
  *   - Days 43-44: no caption changes at all.
- *   - Days 45-49 (Championship Week): 2 changes per class TOTAL for the
- *                 whole stretch; changes close at 8:00 PM ET each day (the
- *                 day boundary) and reopen once scores are processed.
+ *   - Days 45-49 (Championship Week): 2 changes PER DAY for each class that
+ *                 still competes that day; the allotment resets every
+ *                 competition day. Changes close at 8:00 PM ET each day (the
+ *                 day boundary) and reopen once scores are processed. Which
+ *                 classes compete each day (CHAMPIONSHIP_CLASS_DAYS):
+ *                   Day 45: Open Class, A Class
+ *                   Day 46: Open Class, A Class
+ *                   Day 47: all classes
+ *                   Day 48: World Class, SoundSport
+ *                   Day 49: World Class, SoundSport
+ *                 A class not competing that day is locked out of changes.
+ *                 This is symmetric — every class gets the same 6 total
+ *                 changes (2/day x 3 days) across the days it is guaranteed to
+ *                 compete, so it stays fair even if an Open/A corps advances to
+ *                 Finals (it competes Days 48-49 with its locked-in lineup).
  *
  * Day boundaries are startDate + N * 24h. The admin tool writes startDate at
  * midnight UTC, so boundaries land at 8:00 PM ET during EDT (7:00 PM during
@@ -34,7 +46,7 @@ const SCORES_PROCESS_HOUR_ET = 2;
 /** Changes allowed per week per class once weekly limits apply (days 15-42). */
 const WEEKLY_TRADE_LIMIT = 3;
 
-/** Changes allowed per class across all of Championship Week (days 45-49). */
+/** Changes allowed per class per day during Championship Week (days 45-49). */
 const CHAMPIONSHIP_TRADE_LIMIT = 2;
 
 /** Last competition day with unlimited caption changes. */
@@ -45,6 +57,22 @@ const BLACKOUT_DAYS = [43, 44];
 
 /** First day of Championship Week. */
 const CHAMPIONSHIP_START_DAY = 45;
+
+/**
+ * Which classes still compete — and may therefore change captions — on each
+ * Championship Week day. A class absent from its day's list is done for the
+ * season and locked out. Mirrors the DCI Finals-week bracket:
+ *   - Days 45-46: Open Class & A Class prelims/finals.
+ *   - Day 47:     all classes compete.
+ *   - Days 48-49: World Class & SoundSport finals only.
+ */
+const CHAMPIONSHIP_CLASS_DAYS = {
+  45: ["openClass", "aClass"],
+  46: ["openClass", "aClass"],
+  47: ["worldClass", "openClass", "aClass", "soundSport"],
+  48: ["worldClass", "soundSport"],
+  49: ["worldClass", "soundSport"],
+};
 
 /** Final competition day of a season. */
 const SEASON_FINAL_DAY = 49;
@@ -119,22 +147,30 @@ function nextScoresProcessingAfter(after) {
  * @param {Object} seasonData - Season doc (needs schedule.startDate; optional
  *   schedule.springTrainingDays and status)
  * @param {Date} [now]
+ * @param {string|null} [corpsClass] - Canonical class id. When provided, the
+ *   Finals-day (48-49) lockout for classes that no longer compete is applied;
+ *   omit for a class-agnostic window.
  * @returns {{
  *   day: number,
  *   week: number,
  *   phase: 'unlimited'|'weekly'|'blackout'|'championship'|'complete',
  *   status: 'open'|'locked'|'closed',
  *   tradeLimit: number,
+ *   periodKey: number,
  *   unlimitedEndsAt: Date|null,
  *   locksAt: Date|null,
  *   reopensAt: Date|null,
  *   pendingScoresDay: number|null,
- * }|null} null when the season has no start date. `pendingScoresDay` is set
+ * }|null} null when the season has no start date. `periodKey` identifies the
+ *   allotment window the counter resets on: the week number for weekly limits,
+ *   the competition day during Championship Week (per-day reset). Callers store
+ *   it with the trade count and treat a mismatch as a fresh allotment.
+ *   `pendingScoresDay` is set
  *   when the window only counts as open once that day's scores have been
  *   processed — callers with Firestore access must verify via
  *   isDayScoresProcessed() before allowing a change.
  */
-function getCaptionChangeWindow(seasonData, now = new Date()) {
+function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null) {
   const startTs = seasonData?.schedule?.startDate;
   if (!startTs) return null;
   const startDate = typeof startTs.toDate === "function" ? startTs.toDate() : new Date(startTs);
@@ -152,6 +188,7 @@ function getCaptionChangeWindow(seasonData, now = new Date()) {
     day,
     week,
     tradeLimit: WEEKLY_TRADE_LIMIT,
+    periodKey: week,
     unlimitedEndsAt: null,
     locksAt: null,
     reopensAt: null,
@@ -173,8 +210,26 @@ function getCaptionChangeWindow(seasonData, now = new Date()) {
   }
 
   if (day >= CHAMPIONSHIP_START_DAY) {
-    // Championship Week: locked from the 8 PM ET day boundary until scores
-    // from the previous day are processed (nightly run at 2 AM ET).
+    // Championship Week: 2 changes per class PER DAY. The counter keys on the
+    // competition day (periodKey), so the allotment resets every day. Locked
+    // from the 8 PM ET day boundary until scores from the previous day are
+    // processed (nightly run at 2 AM ET).
+    //
+    // Only classes competing that day may change (CHAMPIONSHIP_CLASS_DAYS).
+    // A class that's finished for the season is closed out; the class-agnostic
+    // call (no corpsClass) reports the general window instead.
+    const competingClasses = CHAMPIONSHIP_CLASS_DAYS[day] || [];
+    const classClosed = corpsClass != null && !competingClasses.includes(corpsClass);
+    if (classClosed) {
+      return {
+        ...base,
+        phase: "championship",
+        status: "closed",
+        tradeLimit: 0,
+        periodKey: day,
+      };
+    }
+
     const opensAt = reopenAfter(day);
     const locked = now.getTime() < opensAt.getTime();
     return {
@@ -182,6 +237,7 @@ function getCaptionChangeWindow(seasonData, now = new Date()) {
       phase: "championship",
       status: locked ? "locked" : "open",
       tradeLimit: CHAMPIONSHIP_TRADE_LIMIT,
+      periodKey: day,
       reopensAt: locked ? opensAt : null,
       locksAt: locked ? null : dayStart(day + 1),
       pendingScoresDay: locked ? null : day - 1,
@@ -242,5 +298,6 @@ module.exports = {
   UNLIMITED_THROUGH_DAY,
   BLACKOUT_DAYS,
   CHAMPIONSHIP_START_DAY,
+  CHAMPIONSHIP_CLASS_DAYS,
   SEASON_FINAL_DAY,
 };

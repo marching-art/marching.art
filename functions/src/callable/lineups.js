@@ -147,18 +147,25 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
           // Caption-change rules (mirrored in src/utils/seasonClock.js):
           // days 1-14 unlimited; days 15-42 three per week; every Saturday
           // 8 PM ET through scores processing locked; days 43-44 closed;
-          // days 45-49 two total, locking nightly at the 8 PM ET boundary.
-          const window = getCaptionChangeWindow(seasonData, new Date());
+          // days 45-49 two per day for each class still competing that day,
+          // locking nightly at the 8 PM ET boundary.
+          const window = getCaptionChangeWindow(seasonData, new Date(), corpsClass);
 
           if (window) {
             if (window.phase === "blackout") {
               throw new HttpsError("failed-precondition",
-                "Caption changes are closed on Days 43-44. Championship changes (2 per corps) " +
+                "Caption changes are closed on Days 43-44. Championship changes (2 per corps per day) " +
                 "open on Day 45 once scores are processed (~2:00 AM ET).");
             }
             if (window.phase === "complete") {
               throw new HttpsError("failed-precondition",
                 "The season has ended — caption changes are closed until the next season begins.");
+            }
+            if (window.phase === "championship" && window.status === "closed") {
+              // This class has finished competing for the season (Finals-week
+              // bracket): Open/A wrap after Day 47, World/SoundSport after 49.
+              throw new HttpsError("failed-precondition",
+                "This class has finished competing for the season — its caption changes are closed.");
             }
             if (window.status === "locked") {
               throw new HttpsError("failed-precondition",
@@ -174,14 +181,17 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
             }
 
             if (window.tradeLimit !== Infinity) {
+              // The `week` field on the stored counter holds window.periodKey —
+              // the week number for weekly limits, the competition day during
+              // Championship Week (so the 2-per-day allotment resets nightly).
               const weeklyTrades = currentCorpsData.weeklyTrades || { week: 0, used: 0 };
               const tradesAlreadyUsed = (weeklyTrades.seasonUid === activeSeasonId &&
-                weeklyTrades.week === window.week) ? weeklyTrades.used : 0;
+                weeklyTrades.week === window.periodKey) ? weeklyTrades.used : 0;
 
               if (tradesAlreadyUsed + newTrades > window.tradeLimit) {
                 const remaining = Math.max(0, window.tradeLimit - tradesAlreadyUsed);
                 const scope = window.phase === "championship"
-                  ? "for Championship Week (Days 45-49)"
+                  ? "today"
                   : "this week";
                 const plural = remaining === 1 ? "" : "s";
                 throw new HttpsError("failed-precondition",
@@ -190,7 +200,7 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
 
               profileUpdateData[`corps.${corpsClass}.weeklyTrades`] = {
                 seasonUid: activeSeasonId,
-                week: window.week,
+                week: window.periodKey,
                 used: tradesAlreadyUsed + newTrades,
               };
             }

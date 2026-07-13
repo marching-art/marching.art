@@ -404,18 +404,29 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
 
   if (changeInfo.status === 'closed') {
     const isBlackout = changeInfo.phase === 'blackout';
+    // Championship + closed means this class has finished competing for the
+    // season (Open/A wrap after Day 47, World/SoundSport after Day 49).
+    const isClassDone = changeInfo.phase === 'championship';
+    let title;
+    let label;
+    if (isBlackout) {
+      title = `No caption changes on Days 43-44. Championship changes (${changeInfo.nextLimit}) open ${formatEtDayTime(changeInfo.reopensAt)}`;
+      label = 'Changes Closed (Days 43-44)';
+    } else if (isClassDone) {
+      title = 'This class has finished competing for the season — its caption changes are closed.';
+      label = 'Class Season Complete';
+    } else {
+      title = 'The season has ended — changes reopen next season';
+      label = 'Season Complete';
+    }
     return (
       <div
         className="flex items-center gap-1.5 px-2 py-1 bg-red-500/10 border border-red-500/30 rounded-none"
-        title={
-          isBlackout
-            ? `No caption changes on Days 43-44. Championship changes (${changeInfo.nextLimit}) open ${formatEtDayTime(changeInfo.reopensAt)}`
-            : 'The season has ended — changes reopen next season'
-        }
+        title={title}
       >
         <Lock className="w-3 h-3 text-red-400" />
         <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">
-          {isBlackout ? 'Changes Closed (Days 43-44)' : 'Season Complete'}
+          {label}
         </span>
         {isBlackout && (
           <span className="text-[9px] text-red-400/70 normal-case whitespace-nowrap">
@@ -459,7 +470,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
     return (
       <div
         className={`flex items-center gap-1.5 px-2 py-1 border rounded-none ${colorClass}`}
-        title={`${changeInfo.tradeLimit} caption changes total for Championship Week (Days 45-49). Changes lock nightly at ${formatEtDayTime(changeInfo.locksAt)} until scores process.`}
+        title={`${changeInfo.tradeLimit} caption changes per day during Championship Week (Days 45-49). Changes lock nightly at ${formatEtDayTime(changeInfo.locksAt)} until scores process.`}
       >
         <RefreshCw className="w-3 h-3" />
         <span className="text-[10px] font-bold uppercase tracking-wider">

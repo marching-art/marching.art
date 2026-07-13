@@ -25,7 +25,7 @@ export const TOTAL_SEASON_WEEKS = 7;
 /** Caption changes allowed per week per class on days 15-42 (backend tradeLimit). */
 export const WEEKLY_TRADE_LIMIT = 3;
 
-/** Caption changes allowed per class across all of Championship Week (days 45-49). */
+/** Caption changes allowed per class per day during Championship Week (days 45-49). */
 export const CHAMPIONSHIP_TRADE_LIMIT = 2;
 
 /** Last competition day with unlimited caption changes. */
@@ -36,6 +36,22 @@ export const BLACKOUT_DAYS = [43, 44];
 
 /** First day of Championship Week. */
 export const CHAMPIONSHIP_START_DAY = 45;
+
+/**
+ * Which classes still compete — and may therefore change captions — on each
+ * Championship Week day (mirrors functions/src/helpers/captionWindows.js).
+ * A class absent from its day's list is done for the season and locked out.
+ *   - Days 45-46: Open Class & A Class.
+ *   - Day 47:     all classes.
+ *   - Days 48-49: World Class & SoundSport (Finals).
+ */
+export const CHAMPIONSHIP_CLASS_DAYS = {
+  45: ['openClass', 'aClass'],
+  46: ['openClass', 'aClass'],
+  47: ['worldClass', 'openClass', 'aClass', 'soundSport'],
+  48: ['worldClass', 'soundSport'],
+  49: ['worldClass', 'soundSport'],
+};
 
 /** Final competition day of a season. */
 export const SEASON_FINAL_DAY = 49;
@@ -131,8 +147,12 @@ export function getShowRegistrationDeadline(eventDate) {
  *   - Every Saturday 8 PM ET (end of days 7/14/21/28/35/42): changes lock
  *     until scores process (nightly run at 2 AM ET).
  *   - Days 43-44: no changes at all.
- *   - Days 45-49 (Championship Week): 2 changes total per class; changes
+ *   - Days 45-49 (Championship Week): 2 changes per day for each class still
+ *     competing that day (the allotment resets every competition day); changes
  *     close at the 8 PM ET boundary each day and reopen after scores process.
+ *     Only Open/A compete Days 45-46, all classes Day 47, and World/SoundSport
+ *     the Days 48-49 Finals — a class not competing is locked out (pass
+ *     corpsClass to surface that; omit for a class-agnostic window).
  *
  * Days are 24h blocks measured in raw milliseconds from schedule.startDate,
  * with spring-training days excluded before competition Day 1. The client
@@ -141,12 +161,16 @@ export function getShowRegistrationDeadline(eventDate) {
  *
  * @param {Object} seasonData - Season doc (needs schedule.startDate)
  * @param {Date} [now]
+ * @param {string|null} [corpsClass] - Canonical class id. When provided, the
+ *   Championship-day class lockout (a class that no longer competes) is
+ *   applied; omit for a class-agnostic window.
  * @returns {{
  *   day: number,
  *   week: number,
  *   phase: 'unlimited'|'weekly'|'blackout'|'championship'|'complete',
  *   status: 'open'|'locked'|'closed',
  *   tradeLimit: number,
+ *   periodKey: number,
  *   isUnlimited: boolean,
  *   unlimitedEndsAt: Date|null,
  *   locksAt: Date|null,
@@ -155,7 +179,7 @@ export function getShowRegistrationDeadline(eventDate) {
  *   nextLimit: number|null,
  * }|null} null when the season has no start date
  */
-export function getCaptionChangeInfo(seasonData, now = new Date()) {
+export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = null) {
   const startTs = seasonData?.schedule?.startDate;
   if (!startTs) return null;
   const startDate = typeof startTs.toDate === 'function' ? startTs.toDate() : new Date(startTs);
@@ -172,6 +196,7 @@ export function getCaptionChangeInfo(seasonData, now = new Date()) {
     day,
     week,
     tradeLimit: WEEKLY_TRADE_LIMIT,
+    periodKey: week,
     isUnlimited: false,
     unlimitedEndsAt: null,
     locksAt: null,
@@ -198,6 +223,21 @@ export function getCaptionChangeInfo(seasonData, now = new Date()) {
   }
 
   if (day >= CHAMPIONSHIP_START_DAY) {
+    // Only classes competing that day may change (per CHAMPIONSHIP_CLASS_DAYS).
+    // A class that's finished for the season is closed out; the class-agnostic
+    // call (no corpsClass) reports the general window instead.
+    const competingClasses = CHAMPIONSHIP_CLASS_DAYS[day] || [];
+    const classClosed = corpsClass != null && !competingClasses.includes(corpsClass);
+    if (classClosed) {
+      return {
+        ...base,
+        phase: 'championship',
+        status: 'closed',
+        tradeLimit: 0,
+        periodKey: day,
+      };
+    }
+
     const opensAt = reopenAfter(day);
     const locked = now.getTime() < opensAt.getTime();
     return {
@@ -205,6 +245,7 @@ export function getCaptionChangeInfo(seasonData, now = new Date()) {
       phase: 'championship',
       status: locked ? 'locked' : 'open',
       tradeLimit: CHAMPIONSHIP_TRADE_LIMIT,
+      periodKey: day,
       reopensAt: locked ? opensAt : null,
       locksAt: locked ? null : dayStart(day + 1),
     };

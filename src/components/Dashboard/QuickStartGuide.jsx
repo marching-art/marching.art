@@ -39,7 +39,7 @@ const QUICK_START_STEPS = [
     tips: [
       'Each caption needs one corps selection',
       'Stronger corps cost more of your budget',
-      `Changes are unlimited through Day 14, then limited to ${WEEKLY_TRADE_LIMIT} per week (${CHAMPIONSHIP_TRADE_LIMIT} total during Championship Week)`,
+      `Changes are unlimited through Day 14, then limited to ${WEEKLY_TRADE_LIMIT} per week (${CHAMPIONSHIP_TRADE_LIMIT} per day during Championship Week)`,
     ],
   },
   {
