@@ -473,7 +473,8 @@ interface PodiumCorpsShape {
 
 export function getPodiumMedalTrophies(profile: UserProfile): TrophyData[] {
   const podiumCorps = (profile.corps as Record<string, unknown> | undefined)?.podiumClass as
-    PodiumCorpsShape | undefined;
+    | PodiumCorpsShape
+    | undefined;
   if (!podiumCorps) return [];
 
   const lifetime: Required<PodiumMedalCounts> = { gold: 0, silver: 0, bronze: 0 };
