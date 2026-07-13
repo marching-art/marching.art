@@ -116,7 +116,12 @@ competing on a given day may change captions:
 | 49  | World Class, SoundSport      |
 
 A class not competing that day is done for the season and locked out (Open/A
-after Day 47, World/SoundSport after Day 49).
+after Day 47, World/SoundSport after Day 49). This keeps it fair: every class
+gets the same **6 total changes** across the days it is guaranteed to compete
+(2 per day × 3 days — Open/A on Days 45–47, World/SoundSport on Days 47–49).
+An Open or A Class corps that advances to Semifinals or Finals still competes
+on Days 48–49 with its locked-in lineup; it simply can't spend extra changes
+beyond its guaranteed window.
 
 Additional locks:
 

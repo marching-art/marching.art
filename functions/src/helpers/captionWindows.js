@@ -27,6 +27,10 @@
  *                   Day 48: World Class, SoundSport
  *                   Day 49: World Class, SoundSport
  *                 A class not competing that day is locked out of changes.
+ *                 This is symmetric — every class gets the same 6 total
+ *                 changes (2/day x 3 days) across the days it is guaranteed to
+ *                 compete, so it stays fair even if an Open/A corps advances to
+ *                 Finals (it competes Days 48-49 with its locked-in lineup).
  *
  * Day boundaries are startDate + N * 24h. The admin tool writes startDate at
  * midnight UTC, so boundaries land at 8:00 PM ET during EDT (7:00 PM during

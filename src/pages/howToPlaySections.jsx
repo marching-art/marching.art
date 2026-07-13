@@ -484,8 +484,10 @@ const SeasonSection = () => (
       Changes lock every Saturday at 8:00 PM ET and reopen once scores process (around 2:00 AM ET).
       During Championship Week each competing class gets 2 changes per day, resetting nightly at
       8:00 PM ET — only Open and A Class compete Days 45–46, all classes Day 47, and World Class and
-      SoundSport the Days 48–49 Finals. Weekly changes are per class and can be spent one at a time
-      or all at once. You can register for up to 4 shows a week.
+      SoundSport the Days 48–49 Finals. That's the same 6 total changes for every class across the
+      days it's guaranteed to compete, so it stays fair even if an Open or A Class corps advances to
+      Finals. Weekly changes are per class and can be spent one at a time or all at once. You can
+      register for up to 4 shows a week.
     </p>
   </>
 );
