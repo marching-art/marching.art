@@ -3,7 +3,7 @@
  *
  * Collapsible hero section that explains the value proposition to new visitors.
  * Hidden for authenticated users and returning visitors (via useFirstVisit hook).
- * Matches the ESPN-style dark theme without marketing fluff.
+ * Matches the data-terminal dark theme without marketing fluff.
  */
 
 import React from 'react';

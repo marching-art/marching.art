@@ -1,5 +1,5 @@
 // =============================================================================
-// DASHBOARD - TEAM OVERVIEW (ESPN Fantasy Style)
+// DASHBOARD - TEAM OVERVIEW (data-terminal style)
 // =============================================================================
 // Hero: Active Lineup Roster Table. Sidebar: Season Scorecard + Recent Results.
 // Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow

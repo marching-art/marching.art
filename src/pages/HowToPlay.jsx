@@ -11,7 +11,7 @@
 // bodies live in howToPlaySections.jsx.
 //
 // Design laws: no glow, no shadow, dense data, sharp corners (rounded-none),
-// ESPN data-terminal palette (#0057B8 blue, #c9a227 Podium gold).
+// data-terminal palette (azure interactive, gold brand/Podium).
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {

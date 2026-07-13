@@ -1,6 +1,6 @@
 // src/pages/NotFound.jsx
-// 404 page styled to match the ESPN-style professional dark design system:
-// charcoal surfaces, ESPN-blue primary actions, no gradients / glow / shadow.
+// 404 page styled to match the data-terminal dark design system:
+// charcoal surfaces, azure primary actions, no gradients / glow / shadow.
 import React, { startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';

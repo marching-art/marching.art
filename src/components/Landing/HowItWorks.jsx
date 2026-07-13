@@ -3,7 +3,7 @@
  *
  * Explains the core game loop in 3 simple steps. Collapsed by default
  * so users can skip past it. Only shown to first-time visitors.
- * Matches the ESPN-style dark theme.
+ * Matches the data-terminal dark theme.
  */
 
 import React, { useState } from 'react';

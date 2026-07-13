@@ -2,7 +2,7 @@
 // SCHEDULE - SHOW REGISTRATION & BROWSING
 // =============================================================================
 // Browse all shows by week, register corps for competitions
-// Laws: Dense data, ESPN aesthetic, mobile-optimized touch targets
+// Laws: Dense data, data-terminal aesthetic, mobile-optimized touch targets
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calendar, Clock } from 'lucide-react';

@@ -1,5 +1,5 @@
 // =============================================================================
-// CLASS UNLOCK MODAL - ESPN DATA STYLE
+// CLASS UNLOCK MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useEffect } from 'react';

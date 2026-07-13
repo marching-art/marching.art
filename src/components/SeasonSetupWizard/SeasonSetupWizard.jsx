@@ -1,5 +1,5 @@
 // =============================================================================
-// CORPS REGISTRATION - ESPN PRO DATA STYLE
+// CORPS REGISTRATION - DATA-TERMINAL STYLE
 // =============================================================================
 // A rigid registration form, not a game tutorial.
 // Laws: No slider animations, tabbed layout, utilitarian design

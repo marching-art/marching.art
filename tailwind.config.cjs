@@ -19,7 +19,7 @@ module.exports = {
     extend: {
       colors: {
         // ===========================================
-        // ESPN FANTASY - PROFESSIONAL DATA DESIGN SYSTEM
+        // DATA-TERMINAL DESIGN SYSTEM
         // High density, no blooms, no gradients, high contrast
         // ===========================================
 
@@ -52,9 +52,8 @@ module.exports = {
           subtle: '#1D4ED8',
         },
 
-        // Legacy aliases — repointed to azure; migrated away by the sweep.
-        'espn-blue': '#3B82F6',
-        'dci-blue': '#3B82F6',
+        // `primary` maps to azure (the interactive color) for back-compat with
+        // components that use bg-primary/text-primary.
         primary: '#3B82F6',
         'primary-content': '#FFFFFF',
 

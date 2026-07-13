@@ -1,8 +1,8 @@
 // =============================================================================
-// INPUT COMPONENTS - ESPN PRO DATA STYLE
+// INPUT COMPONENTS - DATA-TERMINAL STYLE
 // =============================================================================
 // Dense, utilitarian form controls. No floating labels, no material design.
-// Laws: bg-background, border-line, focus:border-espn-blue, rounded-none
+// Laws: bg-background, border-line, focus:border-interactive, rounded-none
 
 import React, { forwardRef, useId } from 'react';
 import { LucideIcon } from 'lucide-react';

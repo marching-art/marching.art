@@ -1,5 +1,5 @@
 // =============================================================================
-// CARD COMPONENT - ESPN RIGID BOX STYLE
+// CARD COMPONENT - RIGID BOX STYLE
 // =============================================================================
 // Rigid boxes, not floating bubbles. No shadows, no glow.
 // Laws: No padding in body (p-0), let child content define spacing

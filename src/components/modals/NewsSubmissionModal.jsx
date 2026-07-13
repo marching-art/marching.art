@@ -1,5 +1,5 @@
 // =============================================================================
-// NEWS SUBMISSION MODAL - ESPN DATA STYLE
+// NEWS SUBMISSION MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 // Allows directors to submit news articles for admin approval
 

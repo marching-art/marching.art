@@ -5,7 +5,7 @@ import { headingRecipes } from './Heading';
 // =============================================================================
 // PAGE HEADER COMPONENT
 // =============================================================================
-// Shared fixed header for GameShell pages. Matches the ESPN-terminal look
+// Shared fixed header for GameShell pages. Matches the data-terminal look
 // established by the Schedule and Scores pages so every page reads as one
 // system: tight #1a1a1a bar, an accent icon, an uppercase title, an optional
 // subtitle, and up to a few right-aligned stats.

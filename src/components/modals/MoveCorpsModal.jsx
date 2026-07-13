@@ -1,5 +1,5 @@
 // =============================================================================
-// MOVE CORPS MODAL - ESPN DATA STYLE
+// MOVE CORPS MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useState } from 'react';

@@ -1,5 +1,5 @@
 // =============================================================================
-// RETIRE CORPS MODAL - ESPN DATA STYLE
+// RETIRE CORPS MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React from 'react';

@@ -1,4 +1,4 @@
-// VersusCard - ESPN/Sleeper Fantasy Style Head-to-Head Matchup Card
+// VersusCard - Fantasy head-to-head matchup card
 // Features: Side-by-side scores, Win Probability bar, live/projected indicators
 
 import React, { useMemo } from 'react';

@@ -1,5 +1,5 @@
 // =============================================================================
-// CREATE LEAGUE MODAL - ESPN DATA STYLE
+// CREATE LEAGUE MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useState } from 'react';

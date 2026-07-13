@@ -218,7 +218,7 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns 
 
 /**
  * Dashboard Page Skeleton
- * Matches the ESPN data grid layout with stats, corps table, and recent shows
+ * Matches the data-grid layout with stats, corps table, and recent shows
  * Works inside GameShell layout
  */
 export const DashboardSkeleton: React.FC = () => (
@@ -268,7 +268,7 @@ export const DashboardSkeleton: React.FC = () => (
 
 /**
  * Scores Page Skeleton
- * Matches the ESPN spreadsheet view with tabs and data table
+ * Matches the spreadsheet view with tabs and data table
  * Works inside GameShell layout
  */
 export const ScoresPageSkeleton: React.FC = () => (
@@ -296,7 +296,7 @@ export const ScoresPageSkeleton: React.FC = () => (
 
 /**
  * Leagues Page Skeleton
- * Matches the ESPN league office style with standings and matchups
+ * Matches the league-office style with standings and matchups
  * Works inside GameShell layout
  */
 export const LeaguesPageSkeleton: React.FC = () => (

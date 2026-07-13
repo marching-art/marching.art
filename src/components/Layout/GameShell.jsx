@@ -1,5 +1,5 @@
 // =============================================================================
-// GAME SHELL - ESPN DATA GRID LAYOUT
+// GAME SHELL - DATA-GRID LAYOUT
 // =============================================================================
 // Strict data terminal layout: fixed headers, scrollable content
 // Laws enforced: No glow, no shadow, tight spacing

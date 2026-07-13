@@ -1,5 +1,5 @@
 // =============================================================================
-// DATA TABLE - ESPN SPREADSHEET STYLE
+// DATA TABLE - SPREADSHEET STYLE
 // =============================================================================
 // The heart of the app. Excel, not SaaS.
 // Laws: Dense cells (px-2), no rounded corners, zebra striping, sticky header

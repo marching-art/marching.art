@@ -376,7 +376,7 @@ Write a Day ${offSeasonDay} fantasy sports recap article for these top-performin
 TOP FANTASY ENSEMBLES (user-created teams):
 ${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" from ${r.location || 'Unknown'} (Director: ${r.displayName || 'Unknown'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
 
-Write like ESPN fantasy sports coverage. Focus on:
+Write like professional fantasy sports coverage. Focus on:
 - Which fantasy ensembles scored the most points
 - Celebrate the top directors' success
 - General strategy tips (without revealing specific lineup picks)

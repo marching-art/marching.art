@@ -1,5 +1,5 @@
 // =============================================================================
-// ACHIEVEMENT MODAL - ESPN DATA STYLE
+// ACHIEVEMENT MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useEffect } from 'react';

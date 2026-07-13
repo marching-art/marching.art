@@ -1,5 +1,5 @@
 // =============================================================================
-// CORPS REGISTRATION MODAL - ESPN DATA STYLE
+// CORPS REGISTRATION MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
 import React, { useState } from 'react';

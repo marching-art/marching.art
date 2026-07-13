@@ -47,9 +47,9 @@ marching.art is caught between **two complete design systems**:
 
 - **The "Stadium HUD" era** (pre-Oct 2025): rounded cards, gradients, gold
   glow, atmospheric backgrounds. Warm, marketing-flavored.
-- **The "ESPN data terminal" era** (the redesign ~10 months ago, per
-  `docs/ESPN_REDESIGN_PROMPTS.md`): sharp corners, flat fills, DCI blue,
-  monospace stats, dense tables. Cool, broadcast-flavored.
+- **The "data-terminal" era** (the redesign ~10 months ago): sharp corners,
+  flat fills, blue accents, monospace stats, dense tables. Cool,
+  broadcast-flavored.
 
 The redesign was recorded as "✅ completed," but in practice it reached only
 the **shared primitives** (`Card`, `Button`, `PageHeader`, `DataTable`) and a
@@ -101,7 +101,7 @@ loader. The permanent rule is violated by the component that owns the logo.
 
 ### C. Corner-radius schism (the biggest "two eras" tell)
 
-The ESPN primitives use `rounded-none` (sharp). The rest of the app uses
+The redesign's primitives use `rounded-none` (sharp). The rest of the app uses
 `rounded-lg` / `rounded-xl` / `rounded-2xl` — **965 rounded-\* uses across 165
 files.** Sharp-cornered flagship pages sit directly beside soft-cornered
 feature modules. This single inconsistency does more to betray the "assembled

@@ -3,7 +3,7 @@
 // - Live season: ranks the real current-year DCI corps as they compete, using the
 //   live-scraped scores in historical_scores/{seasonYear}.
 // - Off-season: ranks the fantasy lineup corps using their historical DCI scores,
-//   similar to how ESPN Fantasy shows actual game results.
+//   similar to how fantasy sports show real game results.
 //
 // Reads go through the api/season service and react-query: the corps pool and
 // per-year historical docs share cache entries with the Dashboard lineup table

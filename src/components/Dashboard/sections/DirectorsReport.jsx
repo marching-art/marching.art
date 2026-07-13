@@ -110,7 +110,7 @@ const DirectorsReport = memo(
 
     return (
       /* Focal card: while the day still has open items this is the primary
-         action on the dashboard, so it carries the ESPN-blue accent frame that
+         action on the dashboard, so it carries the azure accent frame that
          lifts it above the flat #333 sibling panels. Once everything is done
          it recedes to the neutral chrome — the eye should move on. Border-only
          accent keeps it within the no-glow/no-gradient design laws. */

@@ -106,25 +106,24 @@ users/{uid}/achievements       # Unlocked achievements
 
 ## Design System
 
-Based on ESPN Fantasy Sports aesthetic (see `docs/ESPN_REDESIGN_PROMPTS.md`):
+Based on a data-terminal aesthetic (see `docs/VISUAL_IDENTITY_UNIFICATION.md`):
 
 ### Colors (tailwind.config.cjs)
 
+Role-based tokens (see `docs/VISUAL_IDENTITY_UNIFICATION.md`). Gold is identity
+and reward only; azure is interaction and self; green/red/amber are data status;
+everything else is a charcoal ramp.
+
 ```javascript
 colors: {
-  espn: {
-    red: '#d00',
-    blue: '#006BB7',
-  },
-  charcoal: {
-    900: '#0a0a0a',
-    800: '#1a1a1a',
-    // ... scale to 50
-  },
-  trend: {
-    up: '#16a34a',
-    down: '#dc2626',
-  }
+  brand: { DEFAULT: '#EAB308', strong: '#CA8A04', subtle: '#A16207' }, // gold
+  interactive: { DEFAULT: '#3B82F6', hover: '#2563EB', subtle: '#1D4ED8' }, // azure
+  background: '#0A0A0A',
+  surface: { sunken: '#111', card: '#1A1A1A', raised: '#222', elevated: '#2A2A2A' },
+  line: { subtle: '#242424', DEFAULT: '#333', strong: '#444' },
+  trend: { up: '#00C853', down: '#FF5252', neutral: '#9E9E9E' },
+  success: '#00C853', warning: '#FF9800', error: '#FF5252',
+  // charcoal: 50…950 fine-grained neutral ramp
 }
 ```
 
@@ -243,13 +242,13 @@ cd functions && npm run deploy
 
 ## Documentation Index
 
-| Document                                | Purpose                                       |
-| --------------------------------------- | --------------------------------------------- |
-| `README.md`                             | Project overview and setup                    |
-| `ARCHITECTURE.md`                       | This file - system design                     |
-| `SCHEDULE_SYSTEM.md`                    | Schedule generation details                   |
-| `docs/LIFELONG_GAMIFICATION_ROADMAP.md` | Gamification strategy (current)               |
-| `docs/ENGAGEMENT_ECONOMY_REVIEW.md`     | CorpsCoin/XP economy plan (current)           |
-| `CODE_AUDIT_REPORT.md`                  | Security/code audit (Dec 2025, historical)    |
-| `docs/ESPN_REDESIGN_PROMPTS.md`         | ESPN redesign prompts (completed, historical) |
-| `scripts/README_STAFF_IMPORT.md`        | Staff data import guide                       |
+| Document                                | Purpose                                    |
+| --------------------------------------- | ------------------------------------------ |
+| `README.md`                             | Project overview and setup                 |
+| `ARCHITECTURE.md`                       | This file - system design                  |
+| `SCHEDULE_SYSTEM.md`                    | Schedule generation details                |
+| `docs/LIFELONG_GAMIFICATION_ROADMAP.md` | Gamification strategy (current)            |
+| `docs/ENGAGEMENT_ECONOMY_REVIEW.md`     | CorpsCoin/XP economy plan (current)        |
+| `CODE_AUDIT_REPORT.md`                  | Security/code audit (Dec 2025, historical) |
+| `docs/VISUAL_IDENTITY_UNIFICATION.md`   | Visual identity spec + tokens (current)    |
+| `scripts/README_STAFF_IMPORT.md`        | Staff data import guide                    |

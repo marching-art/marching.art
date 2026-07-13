@@ -1,5 +1,5 @@
 // src/pages/HallOfChampions.jsx
-// Championship record book — ESPN-style data terminal layout
+// Championship record book — data-terminal layout
 // Sidebar (Seasons) + Main Stage (Champion plaque + finalists table)
 import React, { useState, useEffect, useMemo } from 'react';
 import { m } from 'framer-motion';

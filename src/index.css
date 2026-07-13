@@ -16,7 +16,6 @@
   /* Identity tokens (docs/VISUAL_IDENTITY_UNIFICATION.md) */
   --brand: #eab308; /* permanent gold — logo / reward */
   --interactive: #3b82f6; /* azure — links / focus / self */
-  --espn-blue: #3b82f6; /* deprecated alias → --interactive */
 
   /* Touch & Interaction */
   --touch-target-min: 44px;
@@ -103,7 +102,7 @@
   /* Focus-visible styles for keyboard navigation (WCAG 2.4.7) */
   /* Only shows focus ring when navigating with keyboard, not mouse */
   :focus-visible {
-    outline: 2px solid var(--espn-blue);
+    outline: 2px solid var(--interactive);
     outline-offset: 2px;
   }
 
@@ -117,7 +116,7 @@
   select:focus,
   textarea:focus {
     outline: none;
-    border-color: var(--espn-blue) !important;
+    border-color: var(--interactive) !important;
   }
 }
 

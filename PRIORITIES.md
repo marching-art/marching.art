@@ -88,7 +88,7 @@
   - ✅ Added focus restoration on modal close
   - ✅ Fixed ShowDetailModal with role="dialog", aria-modal, ESC key support
 
-### 3.4 Complete ESPN Redesign
+### 3.4 Complete the data-terminal redesign
 
 - **Status**: **COMPLETE**
   - ✅ Badge integration in navigation (already implemented)
@@ -175,7 +175,7 @@ Week 2: Core Features (P2)
 Week 3-4: Quality (P3)
 ├── Performance fixes
 ├── Accessibility
-└── ESPN redesign completion
+└── data-terminal redesign completion
 
 Ongoing: Technical Debt (P4)
 ├── TypeScript migration

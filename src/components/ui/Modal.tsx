@@ -1,5 +1,5 @@
 // =============================================================================
-// MODAL COMPONENT - ESPN DATA STYLE
+// MODAL COMPONENT - DATA-TERMINAL STYLE
 // =============================================================================
 // Rigid system modal. Bottom sheet on mobile, dead-center on sm+.
 // High contrast overlay. No glow.
