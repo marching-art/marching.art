@@ -352,13 +352,22 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
     const profileRef = db.doc(paths.userProfile(userId));
     const profileDoc = await profileRef.get();
     const username = profileDoc.exists ? profileDoc.data().username : null;
+    // Buy Me a Coffee supporter link (if any) — unlinked below so the deleted
+    // account drops off the Supporters wall.
+    const supporterEmailHash = profileDoc.exists
+      ? profileDoc.data().supporter?.emailHash || null
+      : null;
+    const supporterRef = supporterEmailHash
+      ? db.doc(paths.supporter(supporterEmailHash))
+      : null;
 
     const userDocRef = db.doc(paths.user(userId));
 
     // OPTIMIZATION: Fetch subcollections in parallel instead of sequentially
-    const [corpsSnapshot, notificationsSnapshot] = await Promise.all([
+    const [corpsSnapshot, notificationsSnapshot, supporterSnap] = await Promise.all([
       userDocRef.collection('corps').get(),
       userDocRef.collection('notifications').get(),
+      supporterRef ? supporterRef.get() : Promise.resolve(null),
     ]);
 
     // OPTIMIZATION: Single batch for all deletions instead of 3 separate commits
@@ -387,6 +396,18 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
     notificationsSnapshot.docs.forEach(doc => {
       batch.delete(doc.ref);
     });
+
+    // Unlink the Buy Me a Coffee supporter record from the deleted account:
+    // strips the account association + wall identity (uid/displayName/username)
+    // so they no longer appear on the Supporters wall, while leaving the
+    // membership record intact for BMAC reconcile consistency.
+    if (supporterRef && supporterSnap && supporterSnap.exists) {
+      batch.update(supporterRef, {
+        uid: null,
+        displayName: null,
+        username: null,
+      });
+    }
 
     // Single atomic commit for all Firestore deletions
     await batch.commit();

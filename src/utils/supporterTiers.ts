@@ -55,6 +55,17 @@ export const SUPPORTER_TIERS: SupporterTier[] = [
   },
 ];
 
+// Corps Angel is a prestige/reward surface where gold is on-role (like medals
+// and champions). These surface class strings live here — with the tier color
+// palette, in this design-census-allowlisted util — rather than as raw page
+// chrome, so the page consumes them as categorical data.
+export const ANGEL_STYLES = {
+  card: 'border-yellow-500/50 bg-yellow-500/5',
+  heading: 'text-yellow-400',
+  message: 'text-yellow-200/90',
+};
+export const DEFAULT_CARD = 'border-line bg-surface-sunken';
+
 const BY_ID: Record<string, SupporterTier> = SUPPORTER_TIERS.reduce(
   (acc, t) => {
     acc[t.id] = t;
@@ -70,7 +81,7 @@ export function supporterTierRank(id?: string | null): number {
 
 /** Look up tier display metadata by id. */
 export function getSupporterTier(id?: string | null): SupporterTier | null {
-  return id ? BY_ID[id] ?? null : null;
+  return id ? (BY_ID[id] ?? null) : null;
 }
 
 /** Mirror of the server's tier-from-amount mapping (for previews only). */

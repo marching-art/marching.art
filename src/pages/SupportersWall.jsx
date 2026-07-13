@@ -9,20 +9,21 @@ import React, { useEffect, useState } from 'react';
 import { Heart, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getSupportersWall } from '../api/functions';
-import { BMAC_URL, SUPPORTER_TIERS, getSupporterTier } from '../utils/supporterTiers';
+import {
+  BMAC_URL,
+  SUPPORTER_TIERS,
+  getSupporterTier,
+  ANGEL_STYLES,
+  DEFAULT_CARD,
+} from '../utils/supporterTiers';
+import { Heading } from '../components/ui';
 import LoadingScreen from '../components/LoadingScreen';
 
 function SupporterCard({ entry }) {
   const tier = getSupporterTier(entry.tier);
   const isAngel = entry.tier === 'corps_angel';
   return (
-    <div
-      className={`border p-3 rounded-none ${
-        isAngel
-          ? 'border-yellow-500/50 bg-yellow-500/5'
-          : 'border-line bg-surface-sunken'
-      }`}
-    >
+    <div className={`border p-3 rounded-none ${isAngel ? ANGEL_STYLES.card : DEFAULT_CARD}`}>
       <div className={`text-sm font-bold ${tier?.color || 'text-white'}`}>
         {tier?.coffees}{' '}
         {entry.uid ? (
@@ -37,7 +38,7 @@ function SupporterCard({ entry }) {
         {tier?.name || 'Supporter'}
       </div>
       {isAngel && entry.message && (
-        <p className="text-sm text-yellow-200/90 italic mt-2">“{entry.message}”</p>
+        <p className={`text-sm italic mt-2 ${ANGEL_STYLES.message}`}>“{entry.message}”</p>
       )}
     </div>
   );
@@ -74,11 +75,13 @@ function SupportersWall() {
       <header className="text-center mb-8">
         <div className="flex items-center justify-center gap-2 text-interactive mb-2">
           <Heart className="w-5 h-5" />
-          <h1 className="text-2xl font-black tracking-tight">Supporters</h1>
+          <Heading level="title" as="h1">
+            Supporters
+          </Heading>
         </div>
         <p className="text-muted text-sm max-w-lg mx-auto">
-          Directors whose monthly support keeps marching.art scored, running,
-          and marching year-round. Thank you.
+          Directors whose monthly support keeps marching.art scored, running, and marching
+          year-round. Thank you.
         </p>
         <a
           href={BMAC_URL}
@@ -94,7 +97,9 @@ function SupportersWall() {
 
       {angels.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-[10px] font-bold text-yellow-400 uppercase tracking-wider mb-2">
+          <h2
+            className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${ANGEL_STYLES.heading}`}
+          >
             Corps Angels
           </h2>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -132,8 +137,8 @@ function SupportersWall() {
       )}
 
       <p className="text-center text-[10px] text-muted/70 mt-8">
-        Supporter perks are cosmetic recognition only — no competitive
-        advantage. Tiers: {SUPPORTER_TIERS.map((t) => t.name).join(' · ')}.
+        Supporter perks are cosmetic recognition only — no competitive advantage. Tiers:{' '}
+        {SUPPORTER_TIERS.map((t) => t.name).join(' · ')}.
       </p>
     </div>
   );

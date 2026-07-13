@@ -13,16 +13,8 @@ import React, { useState } from 'react';
 import { Heart, ExternalLink, Loader2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import {
-  linkBmacSupport,
-  setSupporterVisibility,
-  setSupporterMessage,
-} from '../../api/functions';
-import {
-  BMAC_URL,
-  SUPPORTER_TIERS,
-  getSupporterTier,
-} from '../../utils/supporterTiers';
+import { linkBmacSupport, setSupporterVisibility, setSupporterMessage } from '../../api/functions';
+import { BMAC_URL, SUPPORTER_TIERS, getSupporterTier } from '../../utils/supporterTiers';
 
 const boxClass = 'bg-surface-sunken border border-line p-3 rounded-none';
 
@@ -164,7 +156,11 @@ function SupporterPanel({ supporter, onRefresh }) {
                   disabled={msgSaving}
                   className="text-xs font-bold text-interactive hover:underline disabled:opacity-50 flex items-center gap-1"
                 >
-                  {msgSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  {msgSaving ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Check className="w-3 h-3" />
+                  )}
                   Save
                 </button>
               </div>
@@ -200,8 +196,8 @@ function SupporterPanel({ supporter, onRefresh }) {
             ) : (
               <div className="space-y-2">
                 <label className="text-xs text-muted block">
-                  Enter the email you paid Buy Me a Coffee with (it may differ
-                  from your login email).
+                  Enter the email you paid Buy Me a Coffee with (it may differ from your login
+                  email).
                 </label>
                 <input
                   type="email"
