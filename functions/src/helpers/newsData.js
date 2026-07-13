@@ -347,6 +347,23 @@ function calculateTotal(captions) {
   return ge + vis + mus;
 }
 
+// A pool corps' `points` is its fantasy caption value. Playable World Class corps
+// carry a value of 1–25; a value of 99 is the sentinel the pool uses for a corps
+// that is inactive that season or is Open Class — i.e. NOT part of the playable
+// World Class fantasy field. Those corps must never anchor a DCI article, and a
+// day whose only competitors are 99-value corps counts as "no relevant DCI corps
+// performed" (which is what triggers the Season Summary fallback).
+const NON_PLAYABLE_POINTS = 99;
+function isPlayablePoolCorps(corps) {
+  return Number(corps?.points) !== NON_PLAYABLE_POINTS;
+}
+
+// Restrict a raw corps pool (dci-data corpsValues) to the playable World Class
+// field the articles cover, dropping the inactive / Open Class (points 99) corps.
+function filterPlayablePool(corps) {
+  return (corps || []).filter(isPlayablePoolCorps);
+}
+
 function calculateCaptionSubtotals(captions) {
   return {
     ge: (captions.GE1 || 0) + (captions.GE2 || 0),
@@ -654,6 +671,8 @@ module.exports = {
   fetchShowContext,
   calculateTotal,
   calculateCaptionSubtotals,
+  isPlayablePoolCorps,
+  filterPlayablePool,
   getScoresForDay,
   applyScheduleLocations,
   calculateTrendData,
