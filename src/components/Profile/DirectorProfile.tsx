@@ -28,7 +28,6 @@ import {
   Share2,
   UserPlus,
   Settings,
-  Heart,
 } from 'lucide-react';
 import type { UserProfile, CorpsClass } from '../../types';
 import {
@@ -429,13 +428,6 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" /> Since {memberSince}
                 </span>
-                <Link
-                  to="/supporters"
-                  className="flex items-center gap-1 hover:text-interactive transition-colors"
-                  title="Supporters wall"
-                >
-                  <Heart className="w-3 h-3" /> Supporters
-                </Link>
               </div>
             </div>
 

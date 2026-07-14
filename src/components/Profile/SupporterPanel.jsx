@@ -109,7 +109,7 @@ function SupporterPanel({ supporter, onRefresh }) {
               )}
             </div>
             <Link
-              to="/supporters"
+              to="/scores?tab=supporters"
               className="text-xs text-interactive hover:underline whitespace-nowrap"
             >
               Supporters wall →

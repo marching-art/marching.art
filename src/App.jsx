@@ -70,7 +70,6 @@ const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
 const HowToPlayPublic = lazyWithRetry(() => import('./pages/HowToPlayPublic'), 'HowToPlayPublic');
 const PodiumGuide = lazyWithRetry(() => import('./pages/PodiumGuide'), 'PodiumGuide');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
-const SupportersWall = lazyWithRetry(() => import('./pages/SupportersWall'), 'SupportersWall');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
 
 // Helper component to wrap pages with error boundaries
@@ -523,14 +522,10 @@ function App() {
                         </Suspense>
                       }
                     />
-                    {/* Public Supporters wall — recognition for BMAC members */}
+                    {/* Supporters wall now lives as a tab on the Scores page. */}
                     <Route
                       path="/supporters"
-                      element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
-                          <SupportersWall />
-                        </Suspense>
-                      }
+                      element={<Navigate to="/scores?tab=supporters" replace />}
                     />
 
                     {/* Redirect old routes */}

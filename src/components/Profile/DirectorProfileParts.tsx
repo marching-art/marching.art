@@ -653,7 +653,7 @@ const SupporterFlair = ({ tier }: { tier?: string | null }) => {
   if (!info) return null;
   return (
     <Link
-      to="/supporters"
+      to="/scores?tab=supporters"
       title={`${info.name} supporter — thank you!`}
       className={`text-[11px] font-bold ${info.color} hover:underline`}
     >
