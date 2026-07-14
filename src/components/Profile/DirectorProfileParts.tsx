@@ -35,6 +35,7 @@ import { formatSeasonName } from '../../utils/season';
 import { describeConceptStyle, getConceptTitle } from '../../utils/showConcept';
 import { toCanonicalClassKey } from '../../utils/classUnlocks';
 import { getSoundSportRating } from '../../utils/scoresUtils';
+import { getSupporterTier } from '../../utils/supporterTiers';
 import {
   STATUS_INDICATORS,
   getClassDisplay,
@@ -643,6 +644,24 @@ const ShopTitleFlair = ({ item }: { item: { name: string; textClass?: string } }
   </span>
 );
 
+// Buy Me a Coffee supporter flair — always shown while support is active,
+// alongside any equipped title. Links to the Supporters wall. Cosmetic
+// recognition only. The tier color/label come from the census-allowlisted
+// supporterTiers util, so no gold literals live in this component.
+const SupporterFlair = ({ tier }: { tier?: string | null }) => {
+  const info = getSupporterTier(tier);
+  if (!info) return null;
+  return (
+    <Link
+      to="/supporters"
+      title={`${info.name} supporter — thank you!`}
+      className={`text-[11px] font-bold ${info.color} hover:underline`}
+    >
+      {info.coffees} {info.name}
+    </Link>
+  );
+};
+
 export {
   StatusIndicator,
   StatPill,
@@ -657,4 +676,5 @@ export {
   EmptyWithCTA,
   AvatarActions,
   ShopTitleFlair,
+  SupporterFlair,
 };

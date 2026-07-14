@@ -28,6 +28,7 @@ import {
   Share2,
   UserPlus,
   Settings,
+  Heart,
 } from 'lucide-react';
 import type { UserProfile, CorpsClass } from '../../types';
 import {
@@ -47,8 +48,10 @@ import {
   EmptyWithCTA,
   AvatarActions,
   ShopTitleFlair,
+  SupporterFlair,
 } from './DirectorProfileParts';
 import type { AvatarAction } from './DirectorProfileParts';
+import { getSupporterTier } from '../../utils/supporterTiers';
 import {
   getClassDisplay,
   getDirectorStatus,
@@ -110,6 +113,13 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   const corpsWithAvatars = useMemo(() => getCorpsWithAvatars(profile), [profile]);
   const equippedTitle = getEquippedCosmetic(profile, 'title');
   const equippedFrame = getEquippedCosmetic(profile, 'frame');
+  // Supporter flair is always-on while active. An equipped shop frame wins the
+  // avatar ring (the director's choice); otherwise the supporter tier's ring
+  // shows, so the gift is visible without clobbering earned cosmetics.
+  const supporterTier = getSupporterTier(profile.supporter?.tier);
+  const avatarRingClass = equippedFrame
+    ? equippedFrame.frameClass
+    : supporterTier?.frameClass || '';
 
   const handleSelectAvatar = async (corpsClass: CorpsClass) => {
     if (!onSelectAvatarCorps) return;
@@ -218,7 +228,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         <div className="flex">
           {/* LEFT: Avatar/Uniform - Large (equipped shop frame renders as ring) */}
           <div
-            className={`flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-background border-r border-line relative group ${equippedFrame ? equippedFrame.frameClass : ''}`}
+            className={`flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-background border-r border-line relative group ${avatarRingClass}`}
           >
             {/* OPTIMIZATION #7: Added lazy loading for profile avatar */}
             <div className="aspect-square w-full">
@@ -407,6 +417,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   </span>
                 </span>
                 {equippedTitle && <ShopTitleFlair item={equippedTitle} />}
+                {profile.supporter?.tier && <SupporterFlair tier={profile.supporter.tier} />}
               </div>
 
               <div className="flex items-center gap-3 text-[10px] text-muted">
@@ -418,6 +429,13 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" /> Since {memberSince}
                 </span>
+                <Link
+                  to="/supporters"
+                  className="flex items-center gap-1 hover:text-interactive transition-colors"
+                  title="Supporters wall"
+                >
+                  <Heart className="w-3 h-3" /> Supporters
+                </Link>
               </div>
             </div>
 

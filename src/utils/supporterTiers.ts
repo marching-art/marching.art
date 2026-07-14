@@ -3,7 +3,8 @@
 // derives the tier from the monthly amount and is authoritative; this mirror
 // only drives display (settings panel, Supporters wall, profile flair).
 
-export type SupporterTierId = 'rookie' | 'veteran' | 'staff' | 'corps_angel';
+// 'friend' is the one-time-donation recognition (not amount-mapped, permanent).
+export type SupporterTierId = 'friend' | 'rookie' | 'veteran' | 'staff' | 'corps_angel';
 
 export interface SupporterTier {
   id: SupporterTierId;
@@ -16,10 +17,14 @@ export interface SupporterTier {
   blurb: string;
   /** Tailwind text color for the flair/badge. */
   color: string;
+  /** Avatar-ring class applied as always-on flair (empty = no ring). */
+  frameClass: string;
 }
 
 export const BMAC_URL = 'https://buymeacoffee.com/marching.art';
 
+// The paid recurring ladder (amount-mapped). 'friend' is intentionally NOT here
+// so it stays out of tierFromMonthlyAmount and the settings price ladder.
 export const SUPPORTER_TIERS: SupporterTier[] = [
   {
     id: 'rookie',
@@ -28,6 +33,7 @@ export const SUPPORTER_TIERS: SupporterTier[] = [
     coffees: '☕',
     blurb: 'Buy the corps a coffee and keep the game marching.',
     color: 'text-amber-400',
+    frameClass: '',
   },
   {
     id: 'veteran',
@@ -36,6 +42,7 @@ export const SUPPORTER_TIERS: SupporterTier[] = [
     coffees: '☕☕',
     blurb: 'The everyday-fan tier — a coffee-cup frame and a spot on the wall.',
     color: 'text-cyan-400',
+    frameClass: 'ring-2 ring-cyan-400',
   },
   {
     id: 'staff',
@@ -44,6 +51,7 @@ export const SUPPORTER_TIERS: SupporterTier[] = [
     coffees: '☕☕☕',
     blurb: 'For the die-hard who would show up at 6am. Rare animated badge.',
     color: 'text-purple-400',
+    frameClass: 'ring-2 ring-purple-400',
   },
   {
     id: 'corps_angel',
@@ -52,8 +60,20 @@ export const SUPPORTER_TIERS: SupporterTier[] = [
     coffees: '☕✨',
     blurb: 'The patron who keeps the lights on. Pinned in gold with your message.',
     color: 'text-yellow-400',
+    frameClass: 'ring-4 ring-yellow-400',
   },
 ];
+
+// One-time supporters: a small, permanent thank-you. Not in the paid ladder.
+export const FRIEND_TIER: SupporterTier = {
+  id: 'friend',
+  name: 'Supporter',
+  minAmount: 0,
+  coffees: '☕',
+  blurb: 'Bought a coffee — thank you.',
+  color: 'text-secondary',
+  frameClass: '',
+};
 
 // Corps Angel is a prestige/reward surface where gold is on-role (like medals
 // and champions). These surface class strings live here — with the tier color
@@ -66,7 +86,7 @@ export const ANGEL_STYLES = {
 };
 export const DEFAULT_CARD = 'border-line bg-surface-sunken';
 
-const BY_ID: Record<string, SupporterTier> = SUPPORTER_TIERS.reduce(
+const BY_ID: Record<string, SupporterTier> = [FRIEND_TIER, ...SUPPORTER_TIERS].reduce(
   (acc, t) => {
     acc[t.id] = t;
     return acc;
@@ -74,9 +94,14 @@ const BY_ID: Record<string, SupporterTier> = SUPPORTER_TIERS.reduce(
   {} as Record<string, SupporterTier>
 );
 
-/** Rank a tier for sorting (higher = more support). -1 for unknown ids. */
+/**
+ * Rank a tier for sorting (higher = more support). One-time 'friend' ranks
+ * below the paid ladder; unknown/null rank lowest.
+ */
 export function supporterTierRank(id?: string | null): number {
-  return id ? SUPPORTER_TIERS.findIndex((t) => t.id === id) : -1;
+  if (!id) return -2;
+  if (id === 'friend') return -1;
+  return SUPPORTER_TIERS.findIndex((t) => t.id === id);
 }
 
 /** Look up tier display metadata by id. */

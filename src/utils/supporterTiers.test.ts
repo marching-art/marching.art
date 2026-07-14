@@ -31,9 +31,16 @@ describe('supporterTiers', () => {
 
   it('resolves tier metadata and rank by id', () => {
     expect(getSupporterTier('veteran')?.name).toBe('Veteran');
+    expect(getSupporterTier('friend')?.name).toBe('Supporter');
     expect(getSupporterTier('nope')).toBeNull();
     expect(supporterTierRank('corps_angel')).toBe(3);
     expect(supporterTierRank('rookie')).toBe(0);
-    expect(supporterTierRank(null)).toBe(-1);
+    expect(supporterTierRank('friend')).toBe(-1);
+    expect(supporterTierRank(null)).toBe(-2);
+  });
+
+  it('one-time friend tier is not part of the paid amount ladder', () => {
+    expect(SUPPORTER_TIERS.some((t) => t.id === 'friend')).toBe(false);
+    expect(tierFromMonthlyAmount(0.5)).toBeNull();
   });
 });

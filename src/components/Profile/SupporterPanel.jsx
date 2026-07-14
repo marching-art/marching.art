@@ -20,6 +20,12 @@ const boxClass = 'bg-surface-sunken border border-line p-3 rounded-none';
 
 function SupporterPanel({ supporter, onRefresh }) {
   const tier = supporter?.tier ? getSupporterTier(supporter.tier) : null;
+  const isFriend = supporter?.tier === 'friend';
+  // supporter.until is a Firestore Timestamp for one-time supporters.
+  const untilDate = supporter?.until?.toDate ? supporter.until.toDate() : null;
+  const untilLabel = untilDate
+    ? untilDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
 
   const [email, setEmail] = useState('');
   const [linking, setLinking] = useState(false);
@@ -93,11 +99,14 @@ function SupporterPanel({ supporter, onRefresh }) {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
-                Your Membership
+                {isFriend ? 'One-Time Supporter' : 'Your Membership'}
               </div>
               <div className={`text-sm font-bold ${tier.color}`}>
-                {tier.coffees} {tier.name} Supporter
+                {tier.coffees} {isFriend ? 'Supporter' : `${tier.name} Supporter`}
               </div>
+              {isFriend && untilLabel && (
+                <div className="text-[10px] text-muted mt-0.5">Active through {untilLabel}</div>
+              )}
             </div>
             <Link
               to="/supporters"

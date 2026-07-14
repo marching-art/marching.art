@@ -28,6 +28,13 @@ and the **REST** `/subscriptions` record used by the nightly reconcile
 | Staff | $12 | + rarer badge |
 | Corps Angel | $25 | + pinned in gold with a custom wall message |
 
+**One-time donations** earn a temporary `friend` recognition (a generic
+"Supporter" heart, no ring) that lasts **7 days per $1 donated** (min 1 week,
+capped at 1 year), stacking if they donate again. It's tuned so recurring stays
+the better deal — $3 one-time = 21 days of the lesser badge vs. a $3/mo
+membership's 30 renewing days of the higher Rookie badge. Constants live in
+`functions/src/helpers/supporterStore.js` (`ONE_TIME_DAYS_PER_DOLLAR`).
+
 ## Architecture
 
 ```
@@ -65,10 +72,12 @@ firebase functions:secrets:set BMAC_WEBHOOK_SECRET
 firebase deploy --only functions:bmacWebhook,functions:linkBmacSupport,functions:setSupporterVisibility,functions:setSupporterMessage,functions:getSupportersWall,functions:reconcileSupporters
 ```
 
-Copy the deployed `bmacWebhook` URL and add it in **BMAC → Settings →
-Webhooks**, subscribed to at least:
+Copy the deployed `bmacWebhook` URL and add it in **BMAC → Integrations →
+Webhooks**, subscribed to:
 `membership.started`, `membership.updated`, `membership.cancelled`,
-`membership.paused` (and the `recurring_donation.*` equivalents).
+`membership.paused`, the `recurring_donation.*` equivalents, and
+`donation.created` + `donation.refunded` (for the one-time `friend`
+recognition).
 
 ### 3. Configure the membership levels
 
