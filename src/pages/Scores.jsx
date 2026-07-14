@@ -28,6 +28,8 @@ import { lazyWithRetry } from '../utils/lazyWithRetry';
 // Lazy-load Hall of Champions — only loaded if the user opens that tab.
 // lazyWithRetry recovers from stale-chunk 404s after a deploy (see utils/lazyWithRetry).
 const HallOfChampions = lazyWithRetry(() => import('./HallOfChampions'), 'HallOfChampionsTab');
+// Supporters wall — nested here beside Hall of Champions (only loaded on open).
+const SupportersWall = lazyWithRetry(() => import('./SupportersWall'), 'SupportersWallTab');
 // Podium Class tab (flag-gated) — a sub-tabbed panel: the DCI-style recap box
 // scores and The Podium Report (weekly power rankings), split into two
 // sub-views so the two dense surfaces no longer stack on one page.
@@ -45,6 +47,7 @@ const TABS = [
   { id: 'soundsport', label: 'SoundSport', accent: 'green' },
   { id: 'archive', label: 'Archive', accent: 'yellow' },
   { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
+  { id: 'supporters', label: 'Supporters', accent: 'yellow' },
 ];
 
 // Inserted after SoundSport when game-settings/features.podiumClass is on.
@@ -721,6 +724,21 @@ const Scores = () => {
                     }
                   >
                     <HallOfChampions />
+                  </Suspense>
+                </div>
+              )}
+
+              {/* SUPPORTERS TAB */}
+              {activeTab === 'supporters' && (
+                <div className="min-h-[calc(100vh-180px)] flex flex-col">
+                  <Suspense
+                    fallback={
+                      <div className="p-8 text-center text-muted text-sm">
+                        Loading Supporters...
+                      </div>
+                    }
+                  >
+                    <SupportersWall />
                   </Suspense>
                 </div>
               )}

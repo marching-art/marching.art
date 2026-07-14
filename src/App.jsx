@@ -27,6 +27,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthContext, useAuth } from './context/AuthContext';
+import { BMAC_URL } from './utils/supporterTiers';
 import { MotionProvider } from './components/MotionProvider';
 import { useSeasonStore } from './store/seasonStore';
 import { useScheduleStore } from './store/scheduleStore';
@@ -70,7 +71,6 @@ const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
 const HowToPlayPublic = lazyWithRetry(() => import('./pages/HowToPlayPublic'), 'HowToPlayPublic');
 const PodiumGuide = lazyWithRetry(() => import('./pages/PodiumGuide'), 'PodiumGuide');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
-const SupportersWall = lazyWithRetry(() => import('./pages/SupportersWall'), 'SupportersWall');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
 
 // Helper component to wrap pages with error boundaries
@@ -121,6 +121,22 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
   }
 
   return children;
+};
+
+// /supporters entry point: logged-in directors go to the in-app Supporters wall
+// tab; logged-out visitors (e.g. a shared link) are sent to the Buy Me a Coffee
+// page. External redirects can't use React Router's <Navigate>, so we use
+// window.location for that leg.
+const SupportersEntry = () => {
+  const { user, loading } = useAuth();
+  useEffect(() => {
+    if (!loading && !user) {
+      window.location.replace(BMAC_URL);
+    }
+  }, [loading, user]);
+  if (loading) return <LoadingScreen fullScreen />;
+  if (user) return <Navigate to="/scores?tab=supporters" replace />;
+  return <LoadingScreen fullScreen />; // brief, while the external redirect fires
 };
 
 // Main App Component
@@ -523,15 +539,9 @@ function App() {
                         </Suspense>
                       }
                     />
-                    {/* Public Supporters wall — recognition for BMAC members */}
-                    <Route
-                      path="/supporters"
-                      element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
-                          <SupportersWall />
-                        </Suspense>
-                      }
-                    />
+                    {/* Supporters wall lives as a Scores tab for signed-in
+                        directors; logged-out visitors are sent to Buy Me a Coffee. */}
+                    <Route path="/supporters" element={<SupportersEntry />} />
 
                     {/* Redirect old routes */}
                     <Route path="/hub" element={<Navigate to="/dashboard" replace />} />

@@ -17,7 +17,6 @@ import {
   DEFAULT_CARD,
 } from '../utils/supporterTiers';
 import { Heading } from '../components/ui';
-import LoadingScreen from '../components/LoadingScreen';
 
 function SupporterCard({ entry }) {
   const tier = getSupporterTier(entry.tier);
@@ -65,7 +64,9 @@ function SupportersWall() {
     };
   }, []);
 
-  if (loading) return <LoadingScreen fullScreen />;
+  if (loading) {
+    return <div className="p-8 text-center text-muted text-sm">Loading supporters…</div>;
+  }
 
   const angels = data.supporters.filter((s) => s.tier === 'corps_angel');
   const rest = data.supporters.filter((s) => s.tier !== 'corps_angel');
