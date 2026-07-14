@@ -163,9 +163,12 @@ const FREE_IMAGE_MODEL = "gemini-2.5-flash-image";
  * This context helps distinguish DCI/drum corps from rock concerts, marching bands, etc.
  */
 const DRUM_CORPS_VISUAL_CONTEXT = `
-CRITICAL CONTEXT - DRUM AND BUGLE CORPS (NOT A CONCERT):
+CRITICAL CONTEXT - DRUM AND BUGLE CORPS (NOT A CONCERT, NOT A SPORTS TEAM):
 
-This is DCI (Drum Corps International) - competitive marching arts performed on football fields.
+This is DCI (Drum Corps International) - competitive marching arts. Performers are
+MUSICIANS, not athletes in sports gear. They perform on an American football field,
+but that is only the venue: they are NOT football players, they wear NO football
+helmets, shoulder pads, jerseys, or any sports/athletic protective helmet of any kind.
 
 CRITICAL RULE - ONE INSTRUMENT PER PERFORMER:
 Each performer carries ONLY ONE type of equipment. A performer is EITHER:
@@ -181,7 +184,11 @@ WHAT MODERN DCI PERFORMERS LOOK LIKE:
   - Fitted athletic cut, often asymmetric or avant-garde styling
   - Corps-specific colors and design themes matching their show
 - HEADWEAR: Most modern corps have NO headwear or minimal headwear.
-  Traditional shakos with plumes are rare. Some corps use modern caps or helmets.
+  When headwear IS worn it is marching-arts headwear ONLY - a shako (tall marching
+  band hat), busby, Aussie/campaign hat, beret, or a sleek themed marching helmet
+  worn with a plume. It is NEVER a football helmet, hockey helmet, motorcycle helmet,
+  or any sports/protective helmet. If uniform details say "helmet," interpret it as a
+  decorative marching-band helmet/shako, not athletic headgear.
   Only include headwear if specifically described in the uniform details.
 - GLOVES: White marching gloves on all performers.
 - BRASS PLAYERS: Hold brass instruments (mellophones, baritones, contras, trumpets).
@@ -214,6 +221,9 @@ THIS IS NOT:
 const IMAGE_NEGATIVE_PROMPT = `
 
 MUST AVOID (these will make the image incorrect):
+- Football helmets, sports helmets, hockey/motorcycle/protective helmets of ANY kind
+- Football players, shoulder pads, jerseys, or any American football / sports uniform
+- Any hard athletic headgear with a face mask, chin strap, or ear holes
 - Performers holding multiple instruments (a drummer cannot also play trumpet)
 - Brass players with drums attached - this is physically impossible
 - Traditional military band uniforms with brass buttons and epaulettes (unless specified)
@@ -271,13 +281,14 @@ async function generateImageWithImagen(prompt, options = {}) {
 
 ---
 CRITICAL RULES FOR THIS IMAGE:
-- This is DCI drum corps on a football field, NOT a rock concert or orchestra
+- This is DCI drum corps - marching MUSICIANS, NOT a rock concert, orchestra, or sports team
+- Performers wear marching-arts uniforms and (if any) marching band headwear. NEVER football helmets, sports helmets, shoulder pads, or any athletic protective gear
 - Each performer holds ONLY ONE instrument type (brass OR drums OR flag - never multiple)
 - Use the EXACT uniform colors and details specified above - do not substitute generic designs
 - CLOSE-UP ONLY: Show 2-6 performers maximum, filling the frame. Do NOT show the full corps or wide formation.
 - FIELD-LEVEL CAMERA: Shoot from eye level on the field, NOT from elevated, aerial, or press box positions.
 - SHALLOW DEPTH OF FIELD: Performers in sharp focus, background (stadium, crowd, field) as soft bokeh.
-${referenceImages.length > 0 ? "- REFERENCE IMAGES: The attached photo(s) show this corps' actual uniform, colors, and instrumentation. Match the uniform design, helmet/plume, and instrument types in the reference exactly — the references define ground truth, not your priors." : ""}
+${referenceImages.length > 0 ? "- REFERENCE IMAGES: The attached photo(s) show this corps' actual uniform, colors, and instrumentation. Match the uniform design, marching headwear/plume, and instrument types in the reference exactly — the references define ground truth, not your priors." : ""}
 ${IMAGE_NEGATIVE_PROMPT}`;
 
     // Build system instruction with drum corps context
