@@ -90,12 +90,16 @@ export interface UserProfile {
   // linkBmacSupport callable after payment is verified). Cosmetic recognition
   // only — never a competitive advantage.
   supporter?: {
-    tier: 'rookie' | 'veteran' | 'staff' | 'corps_angel';
+    // 'friend' = a temporary one-time-donation recognition; the rest are the
+    // recurring paid tiers.
+    tier: 'friend' | 'rookie' | 'veteran' | 'staff' | 'corps_angel';
     source: 'bmac';
     emailHash: string;
     since?: Timestamp | null;
     anonymous?: boolean;
     message?: string | null;
+    /** When one-time 'friend' recognition expires (null for recurring tiers). */
+    until?: Timestamp | null;
   } | null;
 
   // Unlocks

@@ -19,6 +19,7 @@ const { assertAuth } = require("../helpers/callableGuards");
 const {
   hashEmail,
   parseSupporterEvent,
+  parseOneTimeEvent,
   verifyWebhookSignature,
   SUPPORTER_TIERS,
   TIER_RANK,
@@ -26,6 +27,8 @@ const {
 const {
   applyActiveSupport,
   applyInactiveSupport,
+  applyOneTimeSupport,
+  revokeOneTimeSupport,
   buildProfileSupporter,
 } = require("../helpers/supporterStore");
 const { sanitizeBannerMessage } = require("../helpers/prestigeCatalog");
@@ -73,30 +76,40 @@ exports.bmacWebhook = onRequest(
     }
 
     const parsed = parseSupporterEvent(body);
-    if (!parsed) {
-      // Verified but not a recurring-support lifecycle event we act on.
+    const oneTime = parsed ? null : parseOneTimeEvent(body);
+    if (!parsed && !oneTime) {
+      // Verified but not a support lifecycle event we act on.
       res.status(200).send("Ignored");
       return;
     }
 
     try {
       const db = getDb();
-      if (parsed.active) {
-        if (!parsed.tier) {
-          // Active membership below the lowest tier floor — record inactive so
-          // no flair is granted, but don't error the webhook.
-          await applyInactiveSupport(db, parsed.emailHash);
-        } else {
+      if (parsed) {
+        // Recurring membership / monthly support.
+        if (parsed.active && parsed.tier) {
           await applyActiveSupport(db, parsed);
+        } else {
+          // Cancelled/paused, or an active plan below the lowest tier floor.
+          await applyInactiveSupport(db, parsed.emailHash);
         }
+        logger.info("BMAC webhook processed", {
+          type: parsed.type,
+          tier: parsed.tier,
+          active: parsed.active,
+        });
       } else {
-        await applyInactiveSupport(db, parsed.emailHash);
+        // One-time donation → permanent 'friend' recognition.
+        if (oneTime.active) {
+          await applyOneTimeSupport(db, oneTime);
+        } else {
+          await revokeOneTimeSupport(db, oneTime.emailHash);
+        }
+        logger.info("BMAC webhook processed", {
+          type: oneTime.type,
+          oneTime: oneTime.active,
+        });
       }
-      logger.info("BMAC webhook processed", {
-        type: parsed.type,
-        tier: parsed.tier,
-        active: parsed.active,
-      });
       res.status(200).send("OK");
     } catch (err) {
       logger.error("BMAC webhook: processing error", err);

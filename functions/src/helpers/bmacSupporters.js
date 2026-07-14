@@ -209,15 +209,64 @@ function parseSupporterEvent(body) {
   };
 }
 
+// One-time donation events (a single "buy me a coffee", not a subscription).
+const ONE_TIME_CREATE_EVENTS = new Set(["donation.created"]);
+const ONE_TIME_REFUND_EVENTS = new Set(["donation.refunded"]);
+
+/**
+ * Normalize a one-time donation event. One-time donors earn a small permanent
+ * "friend" recognition (no tier ladder, never revoked by the recurring
+ * reconcile), so we only need identity + whether this granted or refunded it.
+ * @returns {null | { type, active, email, emailHash, payerName, eventId, currency }}
+ */
+function parseOneTimeEvent(body) {
+  if (!body || typeof body !== "object") return null;
+  const type = body.type;
+  const created = ONE_TIME_CREATE_EVENTS.has(type);
+  const refunded = ONE_TIME_REFUND_EVENTS.has(type);
+  if (!created && !refunded) return null;
+
+  const data = body.data || {};
+  // A donation that arrives already refunded shouldn't grant recognition.
+  if (created && (data.refunded === "true" || data.status === "refunded")) {
+    return null;
+  }
+  const email = extractEmail(data);
+  const emailHash = hashEmail(email);
+  if (!emailHash) return null;
+
+  // Total donated — drives how long the one-time recognition lasts.
+  let amount = Number(data.amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    const price = Number(data.coffee_price);
+    const count = Number(data.coffee_count);
+    amount = Number.isFinite(price) && Number.isFinite(count) ? price * count : 0;
+  }
+
+  return {
+    type,
+    active: created,
+    email,
+    emailHash,
+    payerName: extractPayerName(data),
+    amount: amount > 0 ? amount : 0,
+    eventId: Number.isFinite(Number(body.event_id)) ? Number(body.event_id) : null,
+    currency: typeof data.currency === "string" ? data.currency.toUpperCase() : "USD",
+  };
+}
+
 module.exports = {
   SUPPORTER_TIERS,
   TIER_RANK,
   ACTIVE_EVENTS,
   ENDED_EVENTS,
+  ONE_TIME_CREATE_EVENTS,
+  ONE_TIME_REFUND_EVENTS,
   tierFromMonthlyAmount,
   normalizeEmail,
   hashEmail,
   verifyWebhookSignature,
   extractMonthlyAmount,
   parseSupporterEvent,
+  parseOneTimeEvent,
 };

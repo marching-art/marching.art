@@ -12,6 +12,7 @@ const {
   verifyWebhookSignature,
   extractMonthlyAmount,
   parseSupporterEvent,
+  parseOneTimeEvent,
 } = require("./bmacSupporters");
 
 describe("tierFromMonthlyAmount", () => {
@@ -216,5 +217,67 @@ describe("parseSupporterEvent", () => {
     });
     assert.equal(parsed.active, true);
     assert.equal(parsed.tier, "staff");
+  });
+
+  test("subscription parser ignores one-time donation events", () => {
+    assert.equal(
+      parseSupporterEvent({ type: "donation.created", data: { supporter_email: "a@b.com" } }),
+      null
+    );
+  });
+});
+
+describe("parseOneTimeEvent", () => {
+  test("parses a one-time donation as an active grant", () => {
+    const parsed = parseOneTimeEvent({
+      type: "donation.created",
+      event_id: 9,
+      data: {
+        supporter_email: "Tipper@Example.com",
+        supporter_name: "Tipper",
+        amount: 15,
+        coffee_count: 3,
+        coffee_price: 5,
+        currency: "usd",
+      },
+    });
+    assert.equal(parsed.active, true);
+    assert.equal(parsed.email, "tipper@example.com");
+    assert.equal(parsed.payerName, "Tipper");
+    assert.equal(parsed.amount, 15);
+    assert.equal(parsed.eventId, 9);
+    assert.equal(parsed.currency, "USD");
+  });
+
+  test("falls back to coffee_price × coffee_count for the amount", () => {
+    const parsed = parseOneTimeEvent({
+      type: "donation.created",
+      data: { supporter_email: "a@b.com", coffee_price: 5, coffee_count: 2 },
+    });
+    assert.equal(parsed.amount, 10);
+  });
+
+  test("a refund is an inactive (revoke) event", () => {
+    const parsed = parseOneTimeEvent({
+      type: "donation.refunded",
+      data: { supporter_email: "tipper@example.com" },
+    });
+    assert.equal(parsed.active, false);
+  });
+
+  test("an already-refunded donation does not grant", () => {
+    assert.equal(
+      parseOneTimeEvent({
+        type: "donation.created",
+        data: { supporter_email: "a@b.com", refunded: "true" },
+      }),
+      null
+    );
+  });
+
+  test("ignores non-donation events and missing email", () => {
+    assert.equal(parseOneTimeEvent({ type: "membership.started", data: {} }), null);
+    assert.equal(parseOneTimeEvent({ type: "donation.created", data: {} }), null);
+    assert.equal(parseOneTimeEvent(null), null);
   });
 });
