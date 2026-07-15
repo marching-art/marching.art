@@ -37,9 +37,20 @@ const ShowSelectionStep = ({
     (dayNumber) => {
       if (!seasonData?.schedule?.startDate) return null;
       const startDate = seasonData.schedule.startDate.toDate();
-      const actualDate = new Date(startDate);
-      actualDate.setDate(startDate.getDate() + dayNumber);
-      return actualDate;
+      // Competition Day N falls on the Nth competition day, which starts AFTER the
+      // spring-training period: startDate + springTrainingDays + (N - 1). Omitting
+      // this offset dated every show ~3 weeks early, so still-upcoming shows read as
+      // past and the "Register at least one corps" gate could never be satisfied.
+      // Mirrors src/pages/Schedule.jsx getActualDate — keep the two in sync.
+      const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+      // startDate is stored at UTC midnight; build a LOCAL-midnight date from its UTC
+      // calendar parts so weekday/day formatting reflects the intended calendar date
+      // in every timezone (getDate()/setDate() would shift a day early in NA zones).
+      return new Date(
+        startDate.getUTCFullYear(),
+        startDate.getUTCMonth(),
+        startDate.getUTCDate() + springTrainingDays + dayNumber - 1
+      );
     },
     [seasonData]
   );
@@ -73,6 +84,14 @@ const ShowSelectionStep = ({
       .map(Number)
       .sort((a, b) => a - b);
   }, [showsByDay]);
+
+  // Whether any show this week is still upcoming (registrable). If every show
+  // has already been performed, the "register at least one corps" gate can
+  // never be satisfied — so we explain that and let the director proceed rather
+  // than leaving them stuck on this step.
+  const hasUpcomingShows = useMemo(() => {
+    return sortedDays.some((day) => !isEventPast(getActualDate(day)));
+  }, [sortedDays, getActualDate]);
 
   // Check if a corps is registered for a show
   const isCorpsRegisteredForShow = useCallback(
@@ -340,14 +359,22 @@ const ShowSelectionStep = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-line flex justify-between items-center">
-          {currentWeek !== 7 && totalWeekRegistrations === 0 && (
-            <p className="text-[10px] text-muted">Register at least one corps to continue</p>
-          )}
+        <div className="px-4 py-3 border-t border-line flex justify-between items-center gap-3">
+          {currentWeek !== 7 &&
+            totalWeekRegistrations === 0 &&
+            (hasUpcomingShows ? (
+              <p className="text-[10px] text-muted">Register at least one corps to continue</p>
+            ) : (
+              <p className="text-[10px] text-warning">
+                Every show this week has already been performed, so there's nothing left to register
+                for. That's expected when you join mid-season — you can register for upcoming shows
+                from your dashboard once setup is done. Tap Continue to finish.
+              </p>
+            ))}
           <div className="ml-auto">
             <button
               onClick={() => setStep(5)}
-              disabled={currentWeek !== 7 && totalWeekRegistrations === 0}
+              disabled={currentWeek !== 7 && totalWeekRegistrations === 0 && hasUpcomingShows}
               className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-interactive-hover"
             >
               Continue
