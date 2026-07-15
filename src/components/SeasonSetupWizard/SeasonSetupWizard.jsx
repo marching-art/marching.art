@@ -46,11 +46,26 @@ const SeasonSetupWizard = ({
   // Auth and global store data
   const { user } = useAuth();
   const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
+  // Per-class registration-lock rule (calendar limit): a class stops accepting
+  // new corps a set number of weeks before finals. Measured from the season end,
+  // so it already accounts for the spring-training period at the start.
+  const isRegistrationLocked = useSeasonStore((state) => state.isRegistrationLocked);
+  const weeksRemaining = useSeasonStore((state) => state.weeksRemaining);
 
   // Check if user has existing corps that need decisions (computed early for initial step)
   const hasExistingCorps = Object.keys(existingCorps).some((c) => existingCorps[c]?.corpsName);
   const eligibleNewClasses = ALL_CLASSES.filter(
     (c) => unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
+  );
+
+  // Unlocked classes a director still can't join because registration has
+  // closed for the season (the calendar limit). Surfaced so a locked class
+  // reads as "Registration Closed" with an explanation instead of a dead end.
+  const registrationLockedClasses = CLASS_DATA.filter(
+    (cls) =>
+      unlockedClasses.includes(cls.id) &&
+      !existingCorps[cls.id]?.corpsName &&
+      isRegistrationLocked(cls.id)
   );
 
   // Check if corps are already active in the current season (auto-continued)
@@ -411,19 +426,21 @@ const SeasonSetupWizard = ({
                       const isUnlocked = unlockedClasses.includes(cls.id);
                       const isSelected = formData.selectedClass === cls.id;
                       const hasExisting = existingCorps[cls.id]?.corpsName;
+                      // Registration for this class has closed for the season
+                      // (calendar limit) — an unlocked class you still can't join.
+                      const regLocked = isUnlocked && !hasExisting && isRegistrationLocked(cls.id);
+                      const selectable = isUnlocked && !hasExisting && !regLocked;
 
                       return (
                         <tr
                           key={cls.id}
                           onClick={() =>
-                            isUnlocked &&
-                            !hasExisting &&
-                            setFormData({ ...formData, selectedClass: cls.id })
+                            selectable && setFormData({ ...formData, selectedClass: cls.id })
                           }
                           className={`
                             border-b border-line/50 h-12
                             ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}
-                            ${isUnlocked && !hasExisting ? 'cursor-pointer hover:bg-white/5' : 'opacity-50'}
+                            ${selectable ? 'cursor-pointer hover:bg-white/5' : 'opacity-50'}
                             ${isSelected ? 'bg-interactive/10 border-l-2 border-l-interactive' : ''}
                           `}
                         >
@@ -464,6 +481,8 @@ const SeasonSetupWizard = ({
                           <td className="px-4 py-2 text-center">
                             {hasExisting ? (
                               <span className="text-xs text-muted">Active</span>
+                            ) : regLocked ? (
+                              <span className="text-xs text-warning">Registration Closed</span>
                             ) : isUnlocked ? (
                               <span className="text-xs text-green-500">Available</span>
                             ) : (
@@ -478,6 +497,22 @@ const SeasonSetupWizard = ({
                   </tbody>
                 </table>
               </div>
+              {registrationLockedClasses.length > 0 && (
+                <div className="px-4 py-3 border-t border-line bg-warning/5">
+                  <p className="text-[11px] text-warning leading-relaxed">
+                    <span className="font-bold">
+                      {registrationLockedClasses.map((c) => c.name).join(', ')} closed for the
+                      season.
+                    </span>{' '}
+                    Each class stops taking new corps a set number of weeks before finals (World 6,
+                    Open 5, A 4) so a new corps has enough season left to compete
+                    {typeof weeksRemaining === 'number'
+                      ? ` — only ${weeksRemaining} week${weeksRemaining === 1 ? '' : 's'} remain`
+                      : ''}
+                    . You can set these up when the next season opens.
+                  </p>
+                </div>
+              )}
               <div className="px-4 py-3 border-t border-line flex justify-between">
                 <button
                   onClick={() => setStep(1)}

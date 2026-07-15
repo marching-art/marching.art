@@ -12,6 +12,7 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
 import { ShowRegistrationModal, HostEventCard } from '../components/Schedule';
 import { formatCountdown } from '../utils/seasonClock';
+import { competitionDayToDate } from '../utils/competitionCalendar';
 import { useSeasonDeadlines } from '../hooks/useSeasonClock';
 import { usePodiumEnabled } from '../hooks/useFeatures';
 import { usePodium } from '../hooks/usePodium';
@@ -79,27 +80,10 @@ const Schedule = () => {
     }
   }, [seasonLoading, scheduleLoading, profileLoading, user]);
 
-  // Get actual date from day number
+  // Get actual date from day number — spring-training aware, shared with the
+  // setup wizard and scores views via utils/competitionCalendar.
   const getActualDate = useCallback(
-    (dayNumber) => {
-      if (!seasonData?.schedule?.startDate) return null;
-      const startDate = seasonData.schedule.startDate.toDate();
-      // Competition Day N falls on the Nth competition day, which starts after the
-      // spring-training period: startDate + springTrainingDays + (N - 1).
-      // Off-seasons have no spring training (field absent -> 0).
-      const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-      // startDate is stored at UTC midnight. Read its UTC calendar date and build a
-      // LOCAL-midnight date for the target day so weekday/day formatting (which uses
-      // local time) reflects the intended calendar date in every timezone. Using
-      // getDate()/setDate() here would read UTC-midnight as the previous evening in
-      // any negative-UTC-offset (e.g. North American) timezone, shifting every show
-      // one day early and making weeks appear to start on Saturday instead of Sunday.
-      return new Date(
-        startDate.getUTCFullYear(),
-        startDate.getUTCMonth(),
-        startDate.getUTCDate() + springTrainingDays + dayNumber - 1
-      );
-    },
+    (dayNumber) => competitionDayToDate(seasonData?.schedule, dayNumber),
     [seasonData]
   );
 

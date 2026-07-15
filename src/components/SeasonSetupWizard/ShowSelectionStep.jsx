@@ -9,6 +9,7 @@ import { useScheduleStore } from '../../store/scheduleStore';
 import { Heading } from '../ui';
 import { compareCorpsClasses } from '../../utils/corps';
 import { isEventPast } from '../../utils/scheduleUtils';
+import { competitionDayToDate } from '../../utils/competitionCalendar';
 
 // Class config for badges
 const CLASS_CONFIG = {
@@ -32,26 +33,12 @@ const ShowSelectionStep = ({
 
   const availableShows = getWeekShows(currentWeek);
 
-  // Helper to get actual date from day number
+  // Actual calendar date for a competition day — spring-training aware. Shared
+  // with Schedule.jsx and the scores views via utils/competitionCalendar so the
+  // wizard can never drift back to dating shows ~3 weeks early (which made
+  // still-upcoming shows read as past and blocked the registration gate).
   const getActualDate = useCallback(
-    (dayNumber) => {
-      if (!seasonData?.schedule?.startDate) return null;
-      const startDate = seasonData.schedule.startDate.toDate();
-      // Competition Day N falls on the Nth competition day, which starts AFTER the
-      // spring-training period: startDate + springTrainingDays + (N - 1). Omitting
-      // this offset dated every show ~3 weeks early, so still-upcoming shows read as
-      // past and the "Register at least one corps" gate could never be satisfied.
-      // Mirrors src/pages/Schedule.jsx getActualDate — keep the two in sync.
-      const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-      // startDate is stored at UTC midnight; build a LOCAL-midnight date from its UTC
-      // calendar parts so weekday/day formatting reflects the intended calendar date
-      // in every timezone (getDate()/setDate() would shift a day early in NA zones).
-      return new Date(
-        startDate.getUTCFullYear(),
-        startDate.getUTCMonth(),
-        startDate.getUTCDate() + springTrainingDays + dayNumber - 1
-      );
-    },
+    (dayNumber) => competitionDayToDate(seasonData?.schedule, dayNumber),
     [seasonData]
   );
 

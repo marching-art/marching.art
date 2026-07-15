@@ -7,6 +7,7 @@ import { Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight } fr
 import { getSeasonSettings, getDciDataDoc, getHistoricalScoresMap } from '../../api/admin';
 import { getCaptionLabel } from '../../utils/captionUtils';
 import { CAPTION_IDS } from '../../data/captions';
+import { competitionDayToDate } from '../../utils/competitionCalendar';
 import { Heading } from '../ui';
 
 // Caption tabs (canonical caption set)
@@ -37,15 +38,10 @@ const AGGREGATE_TABS = [
 ];
 
 /**
- * Calculate the fantasy date for a given competition day number
- * Uses UTC to interpret the start date to avoid timezone issues
- * (Firestore timestamps are stored in UTC, so we use UTC to read them)
- *
- * Competition Day N falls on the Nth competition day, which starts AFTER the
- * spring-training period: startDate + springTrainingDays + (N - 1). Live
- * seasons carry 21 days of spring training before Day 1; off-seasons have
- * none (field absent -> 0). This mirrors getActualDate in Schedule.jsx and
- * the dayStart math in utils/seasonClock.js — keep the three in sync.
+ * Format a competition day number as the "D-Mon" label used in the header row.
+ * Date math (including the spring-training offset) is delegated to the shared
+ * utils/competitionCalendar helper so this view can't drift from the Schedule
+ * page and scores views.
  *
  * @param {Date} seasonStartDate - The start date of the fantasy season
  * @param {number} dayNumber - The competition day number (1-49)
@@ -53,20 +49,8 @@ const AGGREGATE_TABS = [
  * @returns {string} The formatted date string (e.g., "4-Jan")
  */
 const getFantasyDateFormatted = (seasonStartDate, dayNumber, springTrainingDays = 0) => {
-  if (!seasonStartDate || !dayNumber) return `Day ${dayNumber}`;
-
-  // Get the start date in UTC (Firestore stores dates as UTC)
-  // This avoids timezone conversion issues where UTC midnight becomes previous day in local time
-  const startYear = seasonStartDate.getUTCFullYear();
-  const startMonth = seasonStartDate.getUTCMonth();
-  const startDay = seasonStartDate.getUTCDate();
-
-  // Create a new date and add days (using local Date for formatting),
-  // offsetting past spring training so Day 1 lands on the first competition day
-  const date = new Date(startYear, startMonth, startDay);
-  date.setDate(date.getDate() + springTrainingDays + dayNumber - 1);
-
-  // Format as "D-Mon"
+  const date = competitionDayToDate({ startDate: seasonStartDate, springTrainingDays }, dayNumber);
+  if (!date) return `Day ${dayNumber}`;
   const monthStr = date.toLocaleString('en-US', { month: 'short' });
   return `${date.getDate()}-${monthStr}`;
 };
