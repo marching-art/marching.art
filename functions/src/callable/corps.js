@@ -6,6 +6,7 @@ const { logger } = require("firebase-functions/v2");
 const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
 const { assertAuth } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
+const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
 const {
   VALID_CLASSES,
   CORPS_NAME_CLASSES,
@@ -142,6 +143,28 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
         if (existing?.mustRename && decision.action !== "new") {
           throw new HttpsError("failed-precondition",
             `"${existing.corpsName}" conflicts with another director's corps and must be renamed before any further actions.`);
+        }
+      }
+
+      // Enforce the per-class registration-lock calendar limit for any decision
+      // that newly occupies a class this late in the season — the same rule
+      // registerCorps applies. "continue" is exempt (an existing corps carrying
+      // on is never blocked); only fresh entries are gated. The lock is measured
+      // from the season end, so it already accounts for spring training.
+      for (const decision of decisions) {
+        const targetClass =
+          decision.action === "new" || decision.action === "unretire"
+            ? decision.corpsClass
+            : decision.action === "move"
+              ? decision.targetClass
+              : null;
+        if (!targetClass) continue;
+        const { locked, lockWeeks, weeksRemaining } = getRegistrationLock(seasonData, targetClass);
+        if (locked) {
+          throw new HttpsError(
+            "failed-precondition",
+            registrationLockMessage(targetClass, lockWeeks, weeksRemaining)
+          );
         }
       }
 

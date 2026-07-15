@@ -8,32 +8,22 @@ import { getSeasonRecaps, getSeasonChampions } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay } from '../utils/dashboardScoring';
+import { competitionDayToDate } from '../utils/competitionCalendar';
 
 /**
  * Resolve the display date for a recap day.
  *
  * When the season schedule is known (the live/current season), derive the date
- * from the competition day: startDate + springTrainingDays + (offSeasonDay - 1).
- * This matches the Schedule page's getActualDate and corrects live-season recaps
- * whose stored `date` was written without the spring-training offset (competition
- * day 1 falls 21 calendar days after startDate, not on startDate). Off-season and
- * archived recaps have no spring training and a correct stored date, so they fall
- * back to the value persisted on the recap. startDate is stored at UTC midnight,
- * so all math and formatting use UTC to keep the calendar date stable.
+ * from the competition day via the shared spring-training-aware helper. This
+ * corrects live-season recaps whose stored `date` was written without the
+ * spring-training offset (competition day 1 falls 21 calendar days after
+ * startDate, not on startDate). Off-season and archived recaps have no spring
+ * training and a correct stored date, so they fall back to the persisted value.
  */
 export const formatRecapDate = (recap, seasonSchedule) => {
-  const startTs = seasonSchedule?.startDate;
-  const startDate = startTs?.toDate?.() || (startTs ? new Date(startTs) : null);
-  if (startDate && !isNaN(startDate) && typeof recap?.offSeasonDay === 'number') {
-    const springTrainingDays = seasonSchedule.springTrainingDays || 0;
-    const eventDate = new Date(
-      Date.UTC(
-        startDate.getUTCFullYear(),
-        startDate.getUTCMonth(),
-        startDate.getUTCDate() + springTrainingDays + (recap.offSeasonDay - 1)
-      )
-    );
-    return eventDate.toLocaleDateString('en-US', { timeZone: 'UTC' });
+  if (typeof recap?.offSeasonDay === 'number') {
+    const eventDate = competitionDayToDate(seasonSchedule, recap.offSeasonDay);
+    if (eventDate) return eventDate.toLocaleDateString('en-US');
   }
   return recap?.date?.toDate?.().toLocaleDateString('en-US', { timeZone: 'UTC' }) || 'TBD';
 };

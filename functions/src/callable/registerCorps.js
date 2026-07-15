@@ -4,7 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { assertAuth } = require("../helpers/callableGuards");
-const { REGISTRATION_LOCK_WEEKS } = require("../helpers/classRegistry");
+const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
 
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 
@@ -35,25 +35,18 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     const profileData = profileDoc.data();
 
     // --- 2. Check Registration Locks Based on Weeks Remaining ---
+    // The window is measured backward from the season end, so it already
+    // accounts for the spring-training period at the front of the season.
     const seasonDoc = await db.doc("game-settings/season").get();
     const seasonData = seasonDoc.exists ? seasonDoc.data() : null;
 
     if (seasonData) {
-      const now = new Date();
-      const endDate = seasonData.schedule?.endDate?.toDate();
-
-      if (endDate) {
-        const millisRemaining = endDate.getTime() - now.getTime();
-        const weeksRemaining = Math.ceil(millisRemaining / (7 * 24 * 60 * 60 * 1000));
-
-        // Locks come from the class-capability registry (Phase 1.1).
-        const lockWeeks = REGISTRATION_LOCK_WEEKS[corpsClass] || 0;
-        if (weeksRemaining < lockWeeks) {
-          throw new HttpsError(
-            "failed-precondition",
-            `Registration for ${corpsClass} is closed (locks at ${lockWeeks} weeks remaining, currently ${weeksRemaining} weeks left).`
-          );
-        }
+      const { locked, lockWeeks, weeksRemaining } = getRegistrationLock(seasonData, corpsClass);
+      if (locked) {
+        throw new HttpsError(
+          "failed-precondition",
+          registrationLockMessage(corpsClass, lockWeeks, weeksRemaining)
+        );
       }
     }
 

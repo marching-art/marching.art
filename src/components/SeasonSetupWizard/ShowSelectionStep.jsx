@@ -9,6 +9,7 @@ import { useScheduleStore } from '../../store/scheduleStore';
 import { Heading } from '../ui';
 import { compareCorpsClasses } from '../../utils/corps';
 import { isEventPast } from '../../utils/scheduleUtils';
+import { competitionDayToDate } from '../../utils/competitionCalendar';
 
 // Class config for badges
 const CLASS_CONFIG = {
@@ -32,15 +33,12 @@ const ShowSelectionStep = ({
 
   const availableShows = getWeekShows(currentWeek);
 
-  // Helper to get actual date from day number
+  // Actual calendar date for a competition day — spring-training aware. Shared
+  // with Schedule.jsx and the scores views via utils/competitionCalendar so the
+  // wizard can never drift back to dating shows ~3 weeks early (which made
+  // still-upcoming shows read as past and blocked the registration gate).
   const getActualDate = useCallback(
-    (dayNumber) => {
-      if (!seasonData?.schedule?.startDate) return null;
-      const startDate = seasonData.schedule.startDate.toDate();
-      const actualDate = new Date(startDate);
-      actualDate.setDate(startDate.getDate() + dayNumber);
-      return actualDate;
-    },
+    (dayNumber) => competitionDayToDate(seasonData?.schedule, dayNumber),
     [seasonData]
   );
 
@@ -73,6 +71,14 @@ const ShowSelectionStep = ({
       .map(Number)
       .sort((a, b) => a - b);
   }, [showsByDay]);
+
+  // Whether any show this week is still upcoming (registrable). If every show
+  // has already been performed, the "register at least one corps" gate can
+  // never be satisfied — so we explain that and let the director proceed rather
+  // than leaving them stuck on this step.
+  const hasUpcomingShows = useMemo(() => {
+    return sortedDays.some((day) => !isEventPast(getActualDate(day)));
+  }, [sortedDays, getActualDate]);
 
   // Check if a corps is registered for a show
   const isCorpsRegisteredForShow = useCallback(
@@ -340,14 +346,22 @@ const ShowSelectionStep = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-line flex justify-between items-center">
-          {currentWeek !== 7 && totalWeekRegistrations === 0 && (
-            <p className="text-[10px] text-muted">Register at least one corps to continue</p>
-          )}
+        <div className="px-4 py-3 border-t border-line flex justify-between items-center gap-3">
+          {currentWeek !== 7 &&
+            totalWeekRegistrations === 0 &&
+            (hasUpcomingShows ? (
+              <p className="text-[10px] text-muted">Register at least one corps to continue</p>
+            ) : (
+              <p className="text-[10px] text-warning">
+                Every show this week has already been performed, so there's nothing left to register
+                for. That's expected when you join mid-season — you can register for upcoming shows
+                from your dashboard once setup is done. Tap Continue to finish.
+              </p>
+            ))}
           <div className="ml-auto">
             <button
               onClick={() => setStep(5)}
-              disabled={currentWeek !== 7 && totalWeekRegistrations === 0}
+              disabled={currentWeek !== 7 && totalWeekRegistrations === 0 && hasUpcomingShows}
               className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-interactive-hover"
             >
               Continue
