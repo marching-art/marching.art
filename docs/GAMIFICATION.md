@@ -44,17 +44,17 @@ your biography passes.
 
 ### XP sources (`XP_SOURCES` in `xpCalculations.js`)
 
-| Source                    | XP                                      | Notes                                            |
-| ------------------------- | --------------------------------------- | ------------------------------------------------ |
-| Daily login               | 25                                      | ~175/wk if daily (`claimDailyLogin`)             |
-| Compete in a show         | 25 / show (≤4/wk → ≤100)                | The core act, paid in the nightly run            |
-| Weekly participation      | 150                                     | Compete in ≥1 show in a week, once per class/week |
-| League matchup win        | 100                                     | Byes and ties award nothing                      |
-| Daily prediction          | 15 / correct                            | + a perfect-day bonus                            |
-| Daily challenges          | 10 each, 3/day                          | + a 100 XP / 100 CC weekly-loop bonus            |
-| Streak milestones         | 50–1,000                                | At 3/7/14/30/60/100 days                         |
-| Season completion         | 200 / 300 / 400 / 500 by final rank     | Guaranteed 200 for finishing                     |
-| First Season Journey      | 425 one-time                            | The onboarding questline                         |
+| Source               | XP                                  | Notes                                             |
+| -------------------- | ----------------------------------- | ------------------------------------------------- |
+| Daily login          | 25                                  | ~175/wk if daily (`claimDailyLogin`)              |
+| Compete in a show    | 25 / show (≤4/wk → ≤100)            | The core act, paid in the nightly run             |
+| Weekly participation | 150                                 | Compete in ≥1 show in a week, once per class/week |
+| League matchup win   | 100                                 | Byes and ties award nothing                       |
+| Daily prediction     | 15 / correct                        | + a perfect-day bonus                             |
+| Daily challenges     | 10 each, 3/day                      | + a 100 XP / 100 CC weekly-loop bonus             |
+| Streak milestones    | 50–1,000                            | At 3/7/14/30/60/100 days                          |
+| Season completion    | 200 / 300 / 400 / 500 by final rank | Guaranteed 200 for finishing                      |
+| First Season Journey | 425 one-time                        | The onboarding questline                          |
 
 Design intent: **competing out-earns logging in** — the biggest recurring
 earners are participation and league wins, not passive check-ins.
@@ -109,35 +109,35 @@ instrumented weekly by `scheduled/economyStats.js` (mint vs. sink).
 
 ### Faucets (earning)
 
-| Source                        | Amount                                    |
-| ----------------------------- | ----------------------------------------- |
-| New-account grant             | 1,000 CC                                  |
-| Show participation (nightly)  | 50 / 100 / 150 / 200 CC by class (+175 Podium) |
-| Weekly league win             | 100 CC                                    |
-| Level-up stipend              | 100 CC / level                            |
-| Streak milestones             | 50–1,000 CC (3→100 days)                  |
-| Prediction accuracy           | 10 CC / correct + 25 CC perfect day       |
-| Daily challenge weekly loop   | 100 CC                                    |
-| Season finish bonus           | 1,000 / 750 / 500 / 350 / 250 CC by rank  |
-| Season reward ladder          | up to 1,650 CC across 12 tiers            |
-| League prize pool (champion)  | commissioner-funded                       |
+| Source                       | Amount                                         |
+| ---------------------------- | ---------------------------------------------- |
+| New-account grant            | 1,000 CC                                       |
+| Show participation (nightly) | 50 / 100 / 150 / 200 CC by class (+175 Podium) |
+| Weekly league win            | 100 CC                                         |
+| Level-up stipend             | 100 CC / level                                 |
+| Streak milestones            | 50–1,000 CC (3→100 days)                       |
+| Prediction accuracy          | 10 CC / correct + 25 CC perfect day            |
+| Daily challenge weekly loop  | 100 CC                                         |
+| Season finish bonus          | 1,000 / 750 / 500 / 350 / 250 CC by rank       |
+| Season reward ladder         | up to 1,650 CC across 12 tiers                 |
+| League prize pool (champion) | commissioner-funded                            |
 
 An active World Class director earns roughly **800–1,200 CC/week**; a SoundSport
 rookie roughly 300–500.
 
 ### Sinks (spending)
 
-| Sink                     | Cost                             | Where                                    |
-| ------------------------ | -------------------------------- | ---------------------------------------- |
-| Class unlocks (skip lane)| 1,000 / 2,500 / 5,000 CC         | `unlockClassWithCorpsCoin`               |
-| Streak freeze            | 300 CC                           | Shop / streak modal                      |
-| Director titles          | 1,000 / 2,500 / 5,000 / 10,000 CC| Shop (`shopCatalog.js`) — flair on profile |
-| Profile frames           | 750 / 1,500 / 3,000 / 7,500 CC   | Shop — avatar border                     |
-| Corps card themes        | 1,500 / 3,500 / 5,000 CC (seasonal 2,500) | Shop — dashboard scorecard accent |
-| League prediction pools  | small buy-in (e.g. 25 CC)        | `leaguePools.js` — escrowed, zero-sum    |
-| Retirement plaques       | 2,500 / 7,500 / 15,000 CC        | Prestige (`prestigeCatalog.js`) — dresses a retired-corps card |
-| Hall of Champions banner | 10,000 CC                        | Prestige — champion's message on their Hall entry |
-| Show sponsorship         | 10,000 / 15,000 / 25,000 CC      | Prestige status sink                     |
+| Sink                      | Cost                                      | Where                                                          |
+| ------------------------- | ----------------------------------------- | -------------------------------------------------------------- |
+| Class unlocks (skip lane) | 1,000 / 2,500 / 5,000 CC                  | `unlockClassWithCorpsCoin`                                     |
+| Streak freeze             | 300 CC                                    | Shop / streak modal                                            |
+| Director titles           | 1,000 / 2,500 / 5,000 / 10,000 CC         | Shop (`shopCatalog.js`) — flair on profile                     |
+| Profile frames            | 750 / 1,500 / 3,000 / 7,500 CC            | Shop — avatar border                                           |
+| Corps card themes         | 1,500 / 3,500 / 5,000 CC (seasonal 2,500) | Shop — dashboard scorecard accent                              |
+| League prediction pools   | small buy-in (e.g. 25 CC)                 | `leaguePools.js` — escrowed, zero-sum                          |
+| Retirement plaques        | 2,500 / 7,500 / 15,000 CC                 | Prestige (`prestigeCatalog.js`) — dresses a retired-corps card |
+| Hall of Champions banner  | 10,000 CC                                 | Prestige — champion's message on their Hall entry              |
+| Show sponsorship          | 10,000 / 15,000 / 25,000 CC               | Prestige status sink                                           |
 
 Pricing is anchored to weekly income: consumables ~¼–½ a week, cosmetics 1–3
 weeks, prestige items 10–25 weeks (to drain long-term hoards). A closed-loop

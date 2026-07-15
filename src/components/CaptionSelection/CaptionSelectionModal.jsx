@@ -86,7 +86,9 @@ const CaptionSelectionModal = ({
   const tradesRemaining = useMemo(() => {
     if (!changeInfo || !Number.isFinite(changeInfo.tradeLimit)) return Infinity;
     const used =
-      weeklyTrades && weeklyTrades.seasonUid === seasonUid && weeklyTrades.week === changeInfo.periodKey
+      weeklyTrades &&
+      weeklyTrades.seasonUid === seasonUid &&
+      weeklyTrades.week === changeInfo.periodKey
         ? weeklyTrades.used
         : 0;
     return Math.max(0, changeInfo.tradeLimit - used);

@@ -44,7 +44,7 @@ Historical data is populated by the importers under `functions/pressboxImporter/
    - Day 47 — World Championship Prelims
    - Day 48 — World Championship Semifinals
    - Day 49 — World Championship Finals + the SoundSport Championship
-   Championship auto-enrollment/advancement rules are in [`GAMEPLAY.md`](GAMEPLAY.md).
+     Championship auto-enrollment/advancement rules are in [`GAMEPLAY.md`](GAMEPLAY.md).
 3. Fill the remaining days with shows, avoiding duplicate event names/locations.
 
 The larger season pipeline (`startNewOffSeason` in `season.js`): build a
@@ -64,12 +64,15 @@ The generated schedule is written to a **dedicated top-level document
 
 ```javascript
 {
-  id, name, location, date,
-  day,               // 1–49
-  week,              // ceil(day / 7)
-  type,              // e.g. "championship" for marquee events
-  allowedClasses,    // which classes may register
-  mandatory          // true for auto-enrolled championship events
+  (id,
+    name,
+    location,
+    date,
+    day, // 1–49
+    week, // ceil(day / 7)
+    type, // e.g. "championship" for marquee events
+    allowedClasses, // which classes may register
+    mandatory); // true for auto-enrolled championship events
 }
 ```
 
@@ -109,14 +112,14 @@ intermission, score-announcement time) so a show feels like a real event.
 The timing model is empirically calibrated (`scheduleModel.js`,
 `MODEL_VERSION = "2026.07"`):
 
-| Constant                  | Value | Meaning                                    |
-| ------------------------- | ----- | ------------------------------------------ |
-| `defaultStartLocalMinutes`| 1150  | 7:10 PM local first-corps start            |
-| `gatesOffsetMin`          | 80    | Gates open before start                    |
-| `scoresOffsetMin`         | 23    | Scores announced after last corps          |
-| `intervalMin`             | 17    | Minutes between corps                      |
-| `intermissionMin`         | 34    | Intermission length                        |
-| `intermissionPosition`    | 0.43  | Fractional point in the field for the break|
+| Constant                   | Value | Meaning                                     |
+| -------------------------- | ----- | ------------------------------------------- |
+| `defaultStartLocalMinutes` | 1150  | 7:10 PM local first-corps start             |
+| `gatesOffsetMin`           | 80    | Gates open before start                     |
+| `scoresOffsetMin`          | 23    | Scores announced after last corps           |
+| `intervalMin`              | 17    | Minutes between corps                       |
+| `intermissionMin`          | 34    | Intermission length                         |
+| `intermissionPosition`     | 0.43  | Fractional point in the field for the break |
 
 The empirical basis for these values is derived from the historical corpus; if
 you re-derive them, bump `MODEL_VERSION`.

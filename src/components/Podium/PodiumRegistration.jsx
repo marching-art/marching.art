@@ -338,9 +338,7 @@ export default function PodiumRegistration({ podium }) {
               </div>
               <div className="space-y-1 text-[11px]">
                 <div className="flex justify-between text-muted">
-                  <span>
-                    Committed{lastSeasonReport.earned > 0 ? ' + earned' : ''}
-                  </span>
+                  <span>Committed{lastSeasonReport.earned > 0 ? ' + earned' : ''}</span>
                   <span className="tabular-nums text-secondary">
                     {fmt(lastSeasonReport.committed + lastSeasonReport.earned)} CC
                   </span>

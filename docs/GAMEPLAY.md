@@ -33,12 +33,12 @@ The schedule engine that builds each 49-day calendar is documented separately in
 There are four fantasy classes plus Podium. Each fantasy class has a **point
 cap** — the maximum total cost of your 8 drafted captions.
 
-| Class          | Point cap | Fantasy-ranked | Unlock (any one path)                              |
-| -------------- | --------- | -------------- | -------------------------------------------------- |
-| **SoundSport** | 90        | No             | Default — open to everyone                          |
-| **A Class**    | 60        | Yes            | Complete **1** season · or Level **3** · or **1,000** CC |
-| **Open Class** | 120       | Yes            | Complete **2** seasons · or Level **5** · or **2,500** CC |
-| **World Class**| 150       | Yes            | Complete **3** seasons · or Level **10** · or **5,000** CC |
+| Class           | Point cap | Fantasy-ranked | Unlock (any one path)                                      |
+| --------------- | --------- | -------------- | ---------------------------------------------------------- |
+| **SoundSport**  | 90        | No             | Default — open to everyone                                 |
+| **A Class**     | 60        | Yes            | Complete **1** season · or Level **3** · or **1,000** CC   |
+| **Open Class**  | 120       | Yes            | Complete **2** seasons · or Level **5** · or **2,500** CC  |
+| **World Class** | 150       | Yes            | Complete **3** seasons · or Level **10** · or **5,000** CC |
 
 The lower cap on A Class (60) makes it a distinct tighter-budget puzzle, not a
 "weaker World Class." SoundSport is unranked by design — it's the on-ramp and the
@@ -62,16 +62,16 @@ Unlocks are additive and never revoked.
 A corps lineup is **8 captions**, each drafted from a different real historical
 corps performance:
 
-| Slot  | Caption            |
-| ----- | ------------------ |
-| GE1   | General Effect 1   |
-| GE2   | General Effect 2   |
-| VP    | Visual Proficiency |
-| VA    | Visual Analysis    |
-| CG    | Color Guard        |
-| B     | Brass              |
-| MA    | Music Analysis     |
-| P     | Percussion         |
+| Slot | Caption            |
+| ---- | ------------------ |
+| GE1  | General Effect 1   |
+| GE2  | General Effect 2   |
+| VP   | Visual Proficiency |
+| VA   | Visual Analysis    |
+| CG   | Color Guard        |
+| B    | Brass              |
+| MA   | Music Analysis     |
+| P    | Percussion         |
 
 Rules:
 
@@ -97,23 +97,23 @@ you set a lineup, register for shows, and wake up to results and rank changes.
 How often you can change your lineup tightens as the season progresses. Rules,
 in competition days (1–49):
 
-| Days                        | Changes allowed                                                   |
-| --------------------------- | ----------------------------------------------------------------- |
-| **1–14**                    | **Unlimited**, ending when Day 14 ends (8:00 PM ET in summer)     |
+| Days                        | Changes allowed                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| **1–14**                    | **Unlimited**, ending when Day 14 ends (8:00 PM ET in summer)                               |
 | **15–42**                   | **3 per week per class** — spend one at a time or all at once; the counter resets each week |
-| **43–44**                   | **No changes** at all                                             |
-| **45–49** (Championship Wk) | **2 per class per day**, for each class still competing that day — resets nightly |
+| **43–44**                   | **No changes** at all                                                                       |
+| **45–49** (Championship Wk) | **2 per class per day**, for each class still competing that day — resets nightly           |
 
 Championship Week follows the DCI Finals bracket — only the classes still
 competing on a given day may change captions:
 
-| Day | Classes that may change      |
-| --- | ---------------------------- |
-| 45  | Open Class, A Class          |
-| 46  | Open Class, A Class          |
-| 47  | All classes                  |
-| 48  | World Class, SoundSport      |
-| 49  | World Class, SoundSport      |
+| Day | Classes that may change |
+| --- | ----------------------- |
+| 45  | Open Class, A Class     |
+| 46  | Open Class, A Class     |
+| 47  | All classes             |
+| 48  | World Class, SoundSport |
+| 49  | World Class, SoundSport |
 
 A class not competing that day is done for the season and locked out (Open/A
 after Day 47, World/SoundSport after Day 49). This keeps it fair: every class
@@ -151,14 +151,14 @@ The final week's marquee events use **automatic enrollment** based on class and
 advancement — you don't manually register for these; they're filtered out of the
 show-selection UI and placed by the schedule engine.
 
-| Day | Event                                   | Eligible / advancement                                   |
-| --- | --------------------------------------- | -------------------------------------------------------- |
-| 45  | Open & A Class Prelims                  | All Open + A Class corps                                 |
-| 46  | Open & A Class Finals                   | Top 8 Open + Top 4 A Class from Day 45                   |
-| 47  | World Championship Prelims              | All World + Open + A Class corps                         |
-| 48  | World Championship Semifinals           | Top 25 from Day 47 (ties at 25th all advance)           |
-| 49  | World Championship Finals               | Top 12 from Day 48 (ties at 12th all advance)           |
-| 49  | SoundSport Championship (festival)      | All SoundSport corps                                     |
+| Day | Event                              | Eligible / advancement                        |
+| --- | ---------------------------------- | --------------------------------------------- |
+| 45  | Open & A Class Prelims             | All Open + A Class corps                      |
+| 46  | Open & A Class Finals              | Top 8 Open + Top 4 A Class from Day 45        |
+| 47  | World Championship Prelims         | All World + Open + A Class corps              |
+| 48  | World Championship Semifinals      | Top 25 from Day 47 (ties at 25th all advance) |
+| 49  | World Championship Finals          | Top 12 from Day 48 (ties at 12th all advance) |
+| 49  | SoundSport Championship (festival) | All SoundSport corps                          |
 
 Class restrictions: World/Open/A cannot enter the SoundSport festival, and
 SoundSport cannot enter the World Championship (Days 47–49) or Open/A events

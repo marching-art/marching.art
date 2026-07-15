@@ -9,15 +9,15 @@ for progression/economy/engagement systems see [`docs/GAMIFICATION.md`](docs/GAM
 
 ## Tech stack
 
-| Layer        | Technology                                                          |
-| ------------ | ------------------------------------------------------------------- |
-| Frontend     | React 18, Vite, Tailwind CSS, Framer Motion                         |
-| State        | Zustand (client stores), React Query / TanStack Query (server cache)|
-| Backend      | Firebase — Auth, Firestore, Cloud Functions (2nd gen), Hosting, Storage |
-| AI / media   | Google Gemini (news + avatars), YouTube Data API v3                 |
-| Hosting      | Firebase Hosting (`firebase.json`, `public: build`) and Vercel (`vercel.json`) |
+| Layer        | Technology                                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| Frontend     | React 18, Vite, Tailwind CSS, Framer Motion                                                              |
+| State        | Zustand (client stores), React Query / TanStack Query (server cache)                                     |
+| Backend      | Firebase — Auth, Firestore, Cloud Functions (2nd gen), Hosting, Storage                                  |
+| AI / media   | Google Gemini (news + avatars), YouTube Data API v3                                                      |
+| Hosting      | Firebase Hosting (`firebase.json`, `public: build`) and Vercel (`vercel.json`)                           |
 | CI/CD        | GitHub Actions (`.github/workflows/{ci,deploy-functions,security,refresh-venue-gazetteer}.yml`), Node 22 |
-| Monetization | Donation-only (Buy Me a Coffee); CorpsCoin is a closed-loop in-game currency, no real-money path |
+| Monetization | Donation-only (Buy Me a Coffee); CorpsCoin is a closed-loop in-game currency, no real-money path         |
 
 ## Project structure
 
@@ -105,17 +105,17 @@ the domain logic lives in `helpers/` so it can be shared and unit-tested.
 
 ### Callable groups (`functions/src/callable/`)
 
-| Area              | Files                                                                 |
-| ----------------- | --------------------------------------------------------------------- |
-| Users & profile   | `users.js`, `profile.js`                                              |
-| Corps & lineups   | `corps.js`, `registerCorps.js`, `lineups.js`, `corpsDuplicates.js`   |
-| Economy & shop    | `economy.js`, `shop.js`, `prestige.js`, `seasonLadder.js`            |
-| Daily loop        | `dailyOps.js`, `dailyChallenges.js`, `dailyPredictions.js`, `journey.js` |
-| Leagues           | `leagues.js`, `leagueInvitations.js`, `leaguePools.js`, `rookieLeague.js` |
-| Social / content  | `comments.js`, `articleComments.js`, `commentModeration.js`          |
-| Podium            | `podium.js`, `podiumStaff.js`, `podiumRoute.js`, `podiumJoint.js`, `podiumFan.js`, `podiumHost.js` |
-| Integrations      | `youtube.js`                                                          |
-| Admin             | `admin.js`                                                            |
+| Area             | Files                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| Users & profile  | `users.js`, `profile.js`                                                                           |
+| Corps & lineups  | `corps.js`, `registerCorps.js`, `lineups.js`, `corpsDuplicates.js`                                 |
+| Economy & shop   | `economy.js`, `shop.js`, `prestige.js`, `seasonLadder.js`                                          |
+| Daily loop       | `dailyOps.js`, `dailyChallenges.js`, `dailyPredictions.js`, `journey.js`                           |
+| Leagues          | `leagues.js`, `leagueInvitations.js`, `leaguePools.js`, `rookieLeague.js`                          |
+| Social / content | `comments.js`, `articleComments.js`, `commentModeration.js`                                        |
+| Podium           | `podium.js`, `podiumStaff.js`, `podiumRoute.js`, `podiumJoint.js`, `podiumFan.js`, `podiumHost.js` |
+| Integrations     | `youtube.js`                                                                                       |
+| Admin            | `admin.js`                                                                                         |
 
 ### Scheduled jobs (`functions/src/scheduled/`)
 
