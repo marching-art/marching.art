@@ -425,9 +425,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
         title={title}
       >
         <Lock className="w-3 h-3 text-red-400" />
-        <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">
-          {label}
-        </span>
+        <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">{label}</span>
         {isBlackout && (
           <span className="text-[9px] text-red-400/70 normal-case whitespace-nowrap">
             reopen {formatEtShort(changeInfo.reopensAt)}

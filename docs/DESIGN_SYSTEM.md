@@ -19,12 +19,12 @@ Tokens live in `tailwind.config.cjs` + `src/index.css`; primitives in
 Two brand colors, each with one job. A user should learn these four meanings in
 the first minute and have them hold on every screen.
 
-| Role                   | Color                                             | Used for                                                                                     | Never for                          |
-| ---------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------- |
-| **Brand / reward**     | Gold `#EAB308`                                    | Logo, wordmark, #1 / podium & medal ranks, achievement unlocks, level-ups, currency, "you won"| General buttons, links, arbitrary icons |
-| **Interactive / self** | Azure `#3B82F6`                                   | Links, primary buttons, active nav, focus rings, "your row," selected states                 | Decoration, celebration, status    |
-| **Trend / status**     | Green `#00C853` / Red `#FF5252` / Amber `#FF9800` | Score deltas, win/loss, live, warnings                                                        | Branding or navigation             |
-| **Neutral**            | One charcoal ramp + one border scale + one muted gray | All surfaces, structure, secondary text                                                   | —                                  |
+| Role                   | Color                                                 | Used for                                                                                       | Never for                               |
+| ---------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **Brand / reward**     | Gold `#EAB308`                                        | Logo, wordmark, #1 / podium & medal ranks, achievement unlocks, level-ups, currency, "you won" | General buttons, links, arbitrary icons |
+| **Interactive / self** | Azure `#3B82F6`                                       | Links, primary buttons, active nav, focus rings, "your row," selected states                   | Decoration, celebration, status         |
+| **Trend / status**     | Green `#00C853` / Red `#FF5252` / Amber `#FF9800`     | Score deltas, win/loss, live, warnings                                                         | Branding or navigation                  |
+| **Neutral**            | One charcoal ramp + one border scale + one muted gray | All surfaces, structure, secondary text                                                        | —                                       |
 
 Mental model: **gold = who we are and when you win; azure = what you can touch and
 where you are; green/red = how the numbers moved; everything else is quiet
@@ -106,13 +106,13 @@ rest are review conventions.
 
 Every text token clears AA (≥ 4.5:1) on `background` and `surface-card`:
 
-| token               | on `#0a0a0a` | on `surface-card` | on `surface-raised` |
-| ------------------- | ------------ | ----------------- | ------------------- |
-| text-main           | 19.8         | 17.4              | 15.9                |
-| text-secondary      | 9.4          | 8.3               | 7.6                 |
-| text-muted          | 6.9          | 6.1               | 5.6                 |
+| token               | on `#0a0a0a` | on `surface-card` | on `surface-raised`           |
+| ------------------- | ------------ | ----------------- | ----------------------------- |
+| text-main           | 19.8         | 17.4              | 15.9                          |
+| text-secondary      | 9.4          | 8.3               | 7.6                           |
+| text-muted          | 6.9          | 6.1               | 5.6                           |
 | interactive (azure) | 5.4          | 4.7               | 4.3 ⚠ (avoid small body text) |
-| brand (gold)        | 10.3         | 9.1               | 8.3                 |
+| brand (gold)        | 10.3         | 9.1               | 8.3                           |
 
 Recompute with the relative-luminance ratio if a token value changes.
 

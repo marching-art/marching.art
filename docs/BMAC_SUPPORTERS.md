@@ -21,12 +21,12 @@ The parser reads both payload shapes: the **webhook** subscription event
 and the **REST** `/subscriptions` record used by the nightly reconcile
 (`payer_email`, `subscription_coffee_price` × `subscription_coffee_num`).
 
-| Tier | Monthly | Flair |
-| --- | --- | --- |
-| Rookie | $3 | Supporter heart + listed on the wall |
-| Veteran | $6 | + coffee-cup accent |
-| Staff | $12 | + rarer badge |
-| Corps Angel | $25 | + pinned in gold with a custom wall message |
+| Tier        | Monthly | Flair                                       |
+| ----------- | ------- | ------------------------------------------- |
+| Rookie      | $3      | Supporter heart + listed on the wall        |
+| Veteran     | $6      | + coffee-cup accent                         |
+| Staff       | $12     | + rarer badge                               |
+| Corps Angel | $25     | + pinned in gold with a custom wall message |
 
 **One-time donations** earn a temporary `friend` recognition (a generic
 "Supporter" heart, no ring) that lasts **7 days per $1 donated** (min 1 week,

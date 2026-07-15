@@ -55,10 +55,10 @@ that drives both **scoring** (Off-Season) and **schedule generation**
 follows a **harvest → parse → import** flow with `--dry-run` and year-range
 flags, and keeps its own detailed README:
 
-| Importer | Purpose | README |
-| --- | --- | --- |
-| **pressboxImporter** | "From The Pressbox" historical recaps — scores & rankings (2000–2025) | [`functions/pressboxImporter/README.md`](../functions/pressboxImporter/README.md) |
-| **dciArchiveImporter** | archive.org event-name enrichment — show titles (2000–2012) | [`functions/dciArchiveImporter/README.md`](../functions/dciArchiveImporter/README.md) |
+| Importer               | Purpose                                                               | README                                                                                |
+| ---------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **pressboxImporter**   | "From The Pressbox" historical recaps — scores & rankings (2000–2025) | [`functions/pressboxImporter/README.md`](../functions/pressboxImporter/README.md)     |
+| **dciArchiveImporter** | archive.org event-name enrichment — show titles (2000–2012)           | [`functions/dciArchiveImporter/README.md`](../functions/dciArchiveImporter/README.md) |
 
 Both can be run against Firestore (`--firestore` / `--merge` / `--replace`) and
 are invoked in CI via the `run_historical_import` path in
