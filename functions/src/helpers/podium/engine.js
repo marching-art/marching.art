@@ -244,14 +244,27 @@ function endOfDay(state, day, opts, cfg) {
   }
 }
 
-/** Blocks available today given day type and condition. */
-function blocksAvailable(state, { isShowDay, isSpringTraining }, cfg) {
+/**
+ * Blocks available today given day type and condition.
+ *
+ * The low-stamina penalty is a START-OF-DAY property — a corps that woke up
+ * tired rehearses fewer blocks. It must be judged against the stamina the day
+ * BEGAN with, not the live value: blocks drain stamina, so keying the cap off
+ * live stamina let it shrink mid-day and strand a player who had already used
+ * more blocks than the shrunken cap ("All 8 blocks are used" while 10 showed as
+ * done). Within-day fatigue is modeled separately by the yieldByStamina tiers,
+ * not by the cap. Callers that hold a start-of-day snapshot pass it as
+ * `staminaForCap`; the nightly processor omits it (its cap is computed once,
+ * before any of the day's blocks run, so live stamina already IS start-of-day).
+ */
+function blocksAvailable(state, { isShowDay, isSpringTraining, staminaForCap }, cfg) {
   let blocks = isShowDay
     ? cfg.rehearsal.blocksOnShowDay
     : isSpringTraining
       ? cfg.rehearsal.blocksPerDaySpringTraining
       : cfg.rehearsal.blocksPerDay;
-  if (state.condition.stamina < cfg.condition.lowStaminaThreshold) {
+  const stamina = typeof staminaForCap === "number" ? staminaForCap : state.condition.stamina;
+  if (stamina < cfg.condition.lowStaminaThreshold) {
     blocks = Math.max(1, blocks - cfg.condition.lowStaminaBlockPenalty);
   }
   return blocks;

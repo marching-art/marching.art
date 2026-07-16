@@ -290,7 +290,17 @@ function rollToday(state, calendarDay) {
   if (state.today && state.today.calendarDay < calendarDay) {
     state.pendingEndOfDay = { ...state.today };
   }
-  state.today = { calendarDay, blocksUsed: 0, blocks: [], restDay: false, warmupUsed: false };
+  // Snapshot the stamina the day begins with: the daily block cap's low-stamina
+  // penalty is judged against this, so draining stamina across the day can never
+  // shrink the cap below blocks already used (see engine.blocksAvailable).
+  state.today = {
+    calendarDay,
+    blocksUsed: 0,
+    blocks: [],
+    restDay: false,
+    warmupUsed: false,
+    startStamina: state.condition ? state.condition.stamina : undefined,
+  };
   return state;
 }
 
@@ -619,7 +629,20 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
     }
     const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
     const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
-    const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
+    // Base the daily block cap on the stamina the day BEGAN with, not the live
+    // (already-drained) value, so the cap stays fixed as blocks are used. A day
+    // rolled before this snapshot existed lacks startStamina; treat it as rested
+    // (== threshold ⇒ no penalty) so an in-progress day is never stranded below
+    // the blocks already played instead of applying today's depleted stamina.
+    const staminaForCap =
+      typeof state.today.startStamina === "number"
+        ? state.today.startStamina
+        : store.balance.condition.lowStaminaThreshold;
+    const maxBlocks = engine.blocksAvailable(
+      state,
+      { isShowDay, isSpringTraining, staminaForCap },
+      store.balance
+    );
 
     if (state.today.blocksUsed >= maxBlocks) {
       throw new HttpsError("resource-exhausted", `All ${maxBlocks} blocks are used for today.`);
