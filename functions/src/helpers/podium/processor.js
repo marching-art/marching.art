@@ -190,7 +190,19 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         isShowDay = false;
       }
       const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
-      const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
+      // When the day was played interactively it carries the stamina it began
+      // with; base the cap on that so the grind-fatigue max-day check matches
+      // the cap the player actually faced (blocks drain stamina, so live stamina
+      // would understate an interactively-played day's true cap). A never-played
+      // day has no snapshot — live stamina here already IS its start-of-day
+      // value, so it falls back to the prior behavior unchanged.
+      const staminaForCap =
+        typeof dayInfo.startStamina === "number" ? dayInfo.startStamina : state.condition.stamina;
+      const maxBlocks = engine.blocksAvailable(
+        state,
+        { isShowDay, isSpringTraining, staminaForCap },
+        store.balance
+      );
 
       // --- Funnel instrumentation (Phase 8.2): "simple like FMA" is
       // measured, not asserted. Counted BEFORE assistant autoplay so

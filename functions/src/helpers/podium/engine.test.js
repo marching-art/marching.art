@@ -183,3 +183,41 @@ describe("realism guardrails", () => {
     }
   });
 });
+
+describe("blocksAvailable — the daily cap is a start-of-day property", () => {
+  const day = { isShowDay: false, isSpringTraining: false };
+
+  test("rested corps gets the full rehearsal-day cap", () => {
+    const c = corps(4, 1);
+    c.condition.stamina = 100;
+    assert.equal(engine.blocksAvailable(c, day, cfg), cfg.rehearsal.blocksPerDay);
+  });
+
+  test("a corps that woke tired gets the low-stamina penalty", () => {
+    const c = corps(4, 1);
+    c.condition.stamina = cfg.condition.lowStaminaThreshold - 1;
+    assert.equal(
+      engine.blocksAvailable(c, day, cfg),
+      cfg.rehearsal.blocksPerDay - cfg.condition.lowStaminaBlockPenalty
+    );
+  });
+
+  test("draining stamina mid-day does NOT shrink the cap when a start-of-day snapshot is supplied", () => {
+    // The launch bug: a corps starts the day rested (cap 12), rehearses enough
+    // blocks to drop live stamina below the threshold, then the cap recomputed
+    // to 8 — stranding a player who had already used 10 blocks with
+    // "All 8 blocks are used". staminaForCap pins the cap to the day's start.
+    const c = corps(4, 1);
+    c.condition.stamina = cfg.condition.lowStaminaThreshold - 1; // tired NOW
+    const startStamina = 100; // but rested when the day began
+    assert.equal(
+      engine.blocksAvailable(c, { ...day, staminaForCap: startStamina }, cfg),
+      cfg.rehearsal.blocksPerDay
+    );
+    // Without the snapshot it falls back to live stamina — the old behavior.
+    assert.equal(
+      engine.blocksAvailable(c, day, cfg),
+      cfg.rehearsal.blocksPerDay - cfg.condition.lowStaminaBlockPenalty
+    );
+  });
+});
