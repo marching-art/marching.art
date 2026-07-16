@@ -5,8 +5,11 @@ journey from first visit through a multi-season career, followed by five
 game-design recommendations. Findings are grounded in the implemented code
 (file references throughout), not just the docs.
 
-Scope: the four fantasy classes (SoundSport / A / Open / World) and the systems
-around them. Podium is treated as context, not the subject of this review.
+Scope: Part I covers the four fantasy classes (SoundSport / A / Open / World)
+and the systems around them. Part II covers the Podium Class director sim with
+its own findings and recommendations.
+
+# Part I — The Fantasy Classes
 
 ---
 
@@ -248,3 +251,209 @@ add a visible, career-feeding expression of season-long quality:
 - Week-7 registration allows 7 shows but championship events auto-enroll;
   make the distinction visible earlier so Week 6 players understand what
   they do and don't control in the finale.
+
+---
+
+# Part II — Podium Class
+
+Podium is reviewed here as what it is: a second, orthogonal game (a
+management sim beside a drafting game) sharing one calendar, one economy, one
+identity layer, and one nightly moment. The engine
+(`functions/src/helpers/podium/engine.js`) is code-complete, unit-tested,
+registry-enabled, and gated only by the `game-settings/features.podiumClass`
+runtime flag.
+
+## 6. The Podium player journey as implemented
+
+### Discovery and setup
+
+The acquisition funnel is as strong as the fantasy one: a public recruiting
+page (`/podium`), a no-signup interactive demo of the daily loop
+(`/podium/preview`, with a registration gate after ~6 interactions), and a
+15-section plain-language guide (`/podium-guide`). Existing players see a
+dashed-gold Podium tab in the ControlBar as a standing recruiting affordance.
+Registration is a 4-step flow (corps → show concept → challenge sliders +
+audition presets → budget commitment), with a between-seasons financial
+preview and carried-staff payroll editor for returning directors
+(`src/components/Podium/PodiumRegistration.jsx`).
+
+### The daily loop
+
+Each day a director allocates rehearsal blocks — 12 on a rehearsal day, 20 in
+spring training, 8 (at half yield) on show days — across 7 block types plus a
+fundraiser, managing stamina, morale, warmup efficiency, repeat diminishing
+returns, and neglect decay (`balanceConfig.json`,
+`src/components/Podium/RehearsalPlanner.jsx`). Show nights are scored by the
+nightly processor on a trajectory-anchored model: each corps rides its own
+logistic potential curve (fitted from 1,338 real corps-seasons, 2000–2025),
+attainment comes from rehearsed content × cleanliness, and the result is
+placed in an envelope between a reputation-independent floor and a
+**reputation-gated ceiling** (tier 1 = 0.78 of potential, tier 7 = 1.0). All
+randomness is seeded and bounded (mean-reverting form walk ±4%, judge noise
+from real day-over-day deltas), so outcomes are reproducible and re-roll-proof.
+
+### The long game
+
+The multi-season spine is genuinely built: reputation attached to the corps
+lineage with a climb threshold and dormancy decay, divisions seeded purely
+from prior Podium results with published percentile cutoffs, a staff labor
+market where Veteran → Legend tiers can only be *earned by retention* across
+seasons (3/8/15/22), a hosting ladder (High School → College Bowl → NFL
+Stadium), joint rehearsals with private scrimmage reports, the Fan Favorite
+ballot, and the deterministic weekly Podium Report column.
+
+## 7. What's working (keep and protect)
+
+- **Calibrated realism** — every score the engine emits is one that could
+  plausibly appear on a real recap for that day; the historical envelope is a
+  ceiling guardrail, never a shared floor.
+- **The free floor** — an unaffordable cost degrades (longer bus ride, gas
+  station food) but never blocks play. This is the right answer to
+  free-to-play fairness and it's honored throughout `processor.js`.
+- **Punishment-light absence** — the assistant director autoplays a saved
+  plan at 85% yield; a missed day is opportunity cost, never a recorded loss.
+- **The challenge-slider peak-timing meta** — higher challenge buys a higher,
+  later-blooming ceiling that installs slower; the season's dramatic shape is
+  a real strategic commitment, faithfully implemented.
+- **Ops discipline** — funnel metrics (self-play vs. autopilot, D1/D7
+  return) are written nightly, and balance/curves are runtime-overridable
+  via `podium-config/balance` without a deploy.
+
+## 8. Findings — where the Podium experience falls short
+
+### 8.1 The daily verb is a grind, not a decision
+
+The design doc promises a 2–5 minute daily loop: "allocate today's rehearsal
+blocks — **one decision**, real consequences." The implementation is **one
+server round-trip per block** (`allocateRehearsalBlock`, one tap each, the
+whole grid disabled during each call — `RehearsalPlanner.jsx`). A routine
+rehearsal day is 12 sequential taps-with-latency; spring training is 20. On
+mobile this is the single largest gap between design intent and shipped feel.
+The interesting choices (rest timing, warmup ordering, when to fundraise,
+clinician timing) are buried inside a rote block-spam ritual whose
+near-optimal allocation is computable — the depth lives at season scale, not
+in intraday click order, yet intraday clicks are where the player's time goes.
+
+### 8.2 The receipts didn't ship
+
+The retention thesis (PODIUM.md §11.4) is "skill expression with receipts":
+the trajectory-vs-percentile view lets a player *see* they out-directed the
+field. In the live app there is **no projected score and no percentile band**
+in the daily loop — `PodiumCaptionPanel.jsx` carries a comment deferring the
+band chart to a "Phase 6" redesign that never landed; players see raw
+content%/clean% bars and their last score. Ironically the *pre-signup demo*
+shows a live projected box score while the real game does not. The
+`PodiumTrajectoryCard` ghost chart only starts after your first scored show,
+so the first week — the highest-churn window — is flying blind.
+
+### 8.3 The reputation ceiling is invisible, and rookies will misread it
+
+A first-season corps is capped at 0.78 of potential: a *perfectly played*
+rookie season tops out in the mid/upper 70s while established corps post
+90s. This is intentional and load-bearing (it makes the multi-season climb
+real and blocks smurf domination), but the UI never says so — the tier name
+sits quietly in a panel footer. A rookie who plays optimally for two weeks
+and plateaus at 74 with no explanation has every reason to conclude the game
+is broken or rigged. The mitigation (you compete within your division, and
+divisions are seeded from Podium results only) is also under-communicated in
+the nightly surfaces.
+
+### 8.4 The season's biggest decision is made at minute one, blind, and locked
+
+Challenge levels (1–8 per caption) shape the entire season's trajectory and
+are **locked at registration** — no update callable exists. Audition presets
+exist, but challenge has no presets, no projected-curve preview, and no
+plain-language framing of the trade-off at the moment of choice. A
+first-time director setting eight sliders in a game they haven't played yet
+is making the campaign's most consequential commitment with the least
+information they will ever have. FMA veterans loved the lock — the lock is
+right — but the *information asymmetry at commit time* is not.
+
+### 8.5 The safety net is opt-in, and a no-plan day is a lost day
+
+With no assistant-director plan saved, a missed day yields nothing (decay
+still applies via `pendingEndOfDay`). The plan editor exists
+(`CorpsConditionPanel.jsx`) but nothing in registration or the Podium rookie
+journey requires or seeds one. In a habit game whose audience includes
+players juggling a fantasy corps *and* a sim corps, the default state of the
+biggest anti-churn mechanic is "off."
+
+## 9. Five Podium recommendations
+
+### P1 — Make the daily loop one decision: batch day-planning
+
+Add a compose-then-commit mode: the player arranges today's blocks
+client-side (the demo already works this way) and submits once
+(`allocateRehearsalDay` taking an ordered block list), with two accelerators
+— "Run my plan" (execute the saved day-type template at full yield when
+manually confirmed) and "Repeat yesterday." Keep per-block allocation for
+tinkerers. This closes the 12–20 round-trip grind to 1–2 taps on routine
+days, honors the doc's "one decision" promise, and — because it makes the
+saved plan the center of the daily UI — directly raises assistant-plan
+adoption (P5). Validation stays server-side; nothing about the engine
+changes.
+
+### P2 — Ship the receipts: projection + percentile bands in the live loop
+
+Bring the deferred trajectory work back as the core progress surface: a
+projected show score under the current plan ("if tonight were a show:
+~71.2"), caption curves plotted against the historical percentile bands for
+this day of season ("brass tracking 78th percentile of Day-24 brass"), and a
+decay forecast on neglected captions. Every input already exists server-side
+(`curveData.json` bands, `scoreCorps` is a pure function that can run in
+preview mode, `scoreHistory`). This is the difference between "number goes
+up" and *seeing yourself out-direct the field* — the game's own stated
+retention pillar — and it fills the blind first week before any show has
+been scored.
+
+### P3 — Make the ceiling legible; frame everything division-first
+
+State the envelope where the player looks every day: "Season ceiling:
+**78.4** (Community Corps) — finish top of your tier to raise it." Show
+climb progress (tier performance vs. the 82 threshold) as a season-long
+meter, and make nightly recap surfaces lead with division-relative placement
+("2nd of 11 in A Division") before absolute score. The reputation system is
+one of the best-designed pieces of the game; right now it reads as an
+unexplained handicap. A rookie who *knows* they're climbing a published
+ladder will accept a 74; one who doesn't will churn.
+
+### P4 — De-risk the locked challenge decision at registration
+
+Three additions to step 3 of registration, all information, no mechanics
+changes: (a) challenge presets alongside the audition presets (Safe Opener /
+Balanced Book / Boom-or-Bust) that set all eight sliders coherently; (b) a
+live projected-curve preview per setting, drawn against the historical bands
+— show the player the early-safe curve vs. the late-blooming one *before*
+they commit; (c) for a director's **first** Podium season only, a one-time
+challenge re-tune allowed through Day 7 (the sim's equivalent of the fantasy
+side's unlimited early trade window — the veterans' lock stays intact from
+season two onward).
+
+### P5 — Default the safety net on
+
+Seed an assistant-director plan automatically at registration from the
+chosen audition/challenge presets, add "review your assistant's plan" as an
+explicit Podium rookie-journey step, and send a gentle notification the
+first time autopilot runs ("your assistant ran a 12-block day — here's what
+they did"). The 15% assistant penalty already prices the trade-off
+correctly; the problem is only that the net doesn't exist until a player
+builds it by hand. This is the cheapest churn-prevention item in this
+review.
+
+## 10. Smaller Podium observations
+
+- The class is enabled in `classRegistry.json` but dark until
+  `game-settings/features.podiumClass` is set — a missing doc reads as OFF.
+  Document the flag flip in the operator runbook as the single launch
+  switch, and alarm if registry and flag disagree for more than a season.
+- Fantasy and Podium corps share the Schedule modal but obey different pick
+  rules (4/wk vs. 4-3-2 with auto-attended majors); the modal explains
+  Podium rows well, but the weekly Director's Report should surface "Podium:
+  N picks remaining this week" alongside the fantasy count.
+- The Champions Invitational hosted event is design-only (PODIUM.md notes it
+  post-launch) — fine, but remove it from player-facing guide text until it
+  exists.
+- Joint rehearsals are a standout social mechanic with zero discovery path
+  outside the condition panel; one league-feed line ("A and B scrimmaged in
+  Dayton") already exists — add a journey step or challenge that prompts a
+  first proposal.
