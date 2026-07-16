@@ -53,45 +53,63 @@ function touchesProtectedProfileFields() {
 }
 
 // The corps map itself stays client-writable because cosmetic fields
-// (location, uniform design) are edited from the dashboard and onboarding
-// creates the soundSport corps client-side — but the subfields the scoring
-// engine and leaderboards trust must only change through Cloud Functions:
-// lineups/trade counters via the saveLineup callable, season scores via the
-// scoring processors, and mustRename via renameCorps. corpsName is guarded
-// too: corps identity is permanent (retire and restart instead of renaming),
-// so names are set only at registration (registerCorps callable) and changed
-// only by the admin duplicate-rename flow.
+// (location, uniform design, ensemble identity) are edited from the dashboard
+// and profile, and onboarding creates the soundSport corps client-side — but
+// the subfields the scoring engine and leaderboards trust must only change
+// through Cloud Functions:
+//  - lineup/lineupKey/weeklyTrades via the saveLineup callable
+//  - totalSeasonScore and seasonRank/seasonRankOf (nightly class standing,
+//    "World Class · #14") via the scoring processors — a client-forged score
+//    or rank would display on public profiles
+//  - mustRename via renameCorps; corpsName is guarded too: corps identity is
+//    permanent (retire and restart instead of renaming), so names are set
+//    only at registration (registerCorps callable) and changed only by the
+//    admin duplicate-rename flow
+//  - seasonHistory and medals via season archival / the nightly processors:
+//    archived placements feed the public resume AND the lifetime Director
+//    Rating leaderboard, medals feed the trophy case — a client-forged
+//    placement would mint leaderboard rank
+//  - division (Podium A/Open/World seat) via season-boundary assessment —
+//    a client-forged seat would display a stolen rise
+//  - selectedShows via selectUserShows: show registrations drive competitive
+//    score AND CorpsCoin payouts (the nightly scorer adds each attended
+//    show's score to totalSeasonScore and mints SHOW_PARTICIPATION_REWARDS
+//    coin per show), and the per-week/per-day caps live ONLY in the
+//    callable — a direct client write would let a director "attend" every
+//    show every day, forging rank and farming coin.
+//
+// PERF — EXPRESSION BUDGET: these guards run on EVERY owner update to
+// profile/data. An earlier version compared each guarded subfield with its
+// own request-vs-resource get() pair (12 pairs per class across four
+// classes), and on fully built-out mid-season profiles (all classes
+// registered, selectedShows/seasonHistory populated) the total evaluation
+// exceeded Firestore's per-request rules evaluation budget. Firestore
+// surfaces that as a plain PERMISSION_DENIED, so affected owners could not
+// save ANY profile edit ("Failed to update profile"). The MapDiff form
+// below (one diff + hasAny per class) enforces the same protection at a
+// fraction of the cost. Do not revert to per-field get() pairs, and keep
+// the corps short-circuit in touchesProtectedCorpsFields().
+
+// A corps.{class} entry as a map for diffing. Missing and explicitly-null
+// entries both normalize to {}: get()'s default only applies when the key is
+// absent, and a director may have nulled out a class (deletion), so the
+// explicit null has to be mapped too or diff() would error out.
+function corpsEntry(data, corpsClass) {
+  return data.get(['corps', corpsClass], null) == null
+    ? {}
+    : data.get(['corps', corpsClass], {});
+}
+
 // Deleting a whole class entry (setting it to null) stays allowed; a
 // director can only zero out their own corps that way, not forge scores.
 function corpsClassUntouched(corpsClass) {
   return request.resource.data.get(['corps', corpsClass], null) == null ||
-    (request.resource.data.get(['corps', corpsClass, 'lineup'], null) == resource.data.get(['corps', corpsClass, 'lineup'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'lineupKey'], null) == resource.data.get(['corps', corpsClass, 'lineupKey'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) == resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'mustRename'], null) == resource.data.get(['corps', corpsClass, 'mustRename'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'corpsName'], null) == resource.data.get(['corps', corpsClass, 'corpsName'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null) == resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null) &&
-     // Nightly class standing ("World Class · #14") — written only by the
-     // scoring run; a client-forged rank would display on public profiles.
-     request.resource.data.get(['corps', corpsClass, 'seasonRank'], null) == resource.data.get(['corps', corpsClass, 'seasonRank'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) == resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) &&
-     // Archived season history feeds the public resume AND the lifetime
-     // Director Rating leaderboard (placements-only); medals feed the trophy
-     // case. Both are written only by season archival / the nightly
-     // processors — a client-forged placement would mint leaderboard rank.
-     request.resource.data.get(['corps', corpsClass, 'seasonHistory'], null) == resource.data.get(['corps', corpsClass, 'seasonHistory'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null) &&
-     // Podium division seat (A/Open/World) — assessed at season boundaries
-     // by archival; a client-forged seat would display a stolen rise.
-     request.resource.data.get(['corps', corpsClass, 'division'], null) == resource.data.get(['corps', corpsClass, 'division'], null) &&
-     // Show registrations drive competitive score AND CorpsCoin payouts: the
-     // nightly scorer (helpers/scoring.js) adds each attended show's score to
-     // totalSeasonScore and mints SHOW_PARTICIPATION_REWARDS coin per show. The
-     // per-week/per-day caps (max 4 shows/week, 7 in finals, one per day) live
-     // ONLY in the selectUserShows callable, so selectedShows must be
-     // server-write-only — a direct client write here would let a director
-     // "attend" every show every day, forging rank and farming coin.
-     request.resource.data.get(['corps', corpsClass, 'selectedShows'], null) == resource.data.get(['corps', corpsClass, 'selectedShows'], null));
+    !request.resource.data.get(['corps', corpsClass], {})
+      .diff(corpsEntry(resource.data, corpsClass))
+      .affectedKeys()
+      .hasAny(['lineup', 'lineupKey', 'weeklyTrades', 'mustRename', 'corpsName',
+               'totalSeasonScore', 'seasonRank', 'seasonRankOf', 'seasonHistory',
+               'medals', 'division', 'selectedShows']);
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
@@ -110,18 +128,22 @@ function podiumStateUntouched() {
 // podiumClass gets the standard class guard (name/score/rank) plus the
 // podium-state guard above.
 function touchesProtectedCorpsFields() {
-  return !corpsClassUntouched('worldClass') ||
-    !corpsClassUntouched('openClass') ||
-    !corpsClassUntouched('aClass') ||
-    !corpsClassUntouched('podiumClass') ||
-    !podiumStateUntouched() ||
-    request.resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null)
-      != resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null) ||
-    // soundSport is scored from show attendance too (the scorer iterates every
-    // class on the profile), so its selectedShows must be server-only as well;
-    // corpsClassUntouched only covers the three competitive classes + podium.
-    request.resource.data.get(['corps', 'soundSport', 'selectedShows'], null)
-      != resource.data.get(['corps', 'soundSport', 'selectedShows'], null);
+  // Short-circuit (see PERF note above): writes that don't touch the corps
+  // map at all — display name, director bio, settings, most profile writes —
+  // skip every per-class guard.
+  return request.resource.data.diff(resource.data).affectedKeys().hasAny(['corps']) &&
+    (!corpsClassUntouched('worldClass') ||
+     !corpsClassUntouched('openClass') ||
+     !corpsClassUntouched('aClass') ||
+     !corpsClassUntouched('podiumClass') ||
+     !podiumStateUntouched() ||
+     request.resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null)
+       != resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null) ||
+     // soundSport is scored from show attendance too (the scorer iterates every
+     // class on the profile), so its selectedShows must be server-only as well;
+     // corpsClassUntouched only covers the three competitive classes + podium.
+     request.resource.data.get(['corps', 'soundSport', 'selectedShows'], null)
+       != resource.data.get(['corps', 'soundSport', 'selectedShows'], null));
 }
 
 // --- USER DATA ---

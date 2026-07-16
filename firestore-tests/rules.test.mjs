@@ -312,6 +312,90 @@ await check(
   )
 );
 
+// =============================================================================
+// EXPRESSION-BUDGET REGRESSION — a profile with ALL FIVE corps classes present
+// (worldClass, openClass, aClass, soundSport, podiumClass) must still accept
+// owner writes. The pre-MapDiff guards compared 12 request-vs-resource get()
+// pairs per class; with every class registered none of the per-class branches
+// short-circuited and the total evaluation exceeded Firestore's per-request
+// rules budget, which surfaces as a blanket PERMISSION_DENIED. In production
+// that locked fully built-out directors out of EVERY profile edit ("Failed to
+// update profile"), while profiles with fewer classes were fine — so the
+// standard two-class seed above can never catch a regression here.
+// =============================================================================
+const guardedCorps = (name) => ({
+  corpsName: name,
+  lineup: { GE1: 'Blue Devils' },
+  lineupKey: 'k',
+  weeklyTrades: { used: 1 },
+  totalSeasonScore: 10,
+  seasonRank: 1,
+  seasonRankOf: 2,
+  seasonHistory: [{ seasonId: 's1', placement: 1 }],
+  medals: { gold: 0, silver: 0, bronze: 0 },
+  division: 'World',
+  selectedShows: { week1: [{ eventName: 'Show', day: 1 }] },
+});
+const fullPortfolioProfile = {
+  ...seedProfile,
+  corps: {
+    worldClass: guardedCorps('W Corps'),
+    openClass: guardedCorps('O Corps'),
+    aClass: guardedCorps('A Corps'),
+    soundSport: guardedCorps('S Corps'),
+    podiumClass: { ...guardedCorps('P Corps'), podium: { captions: { GE1: 1 } } },
+  },
+};
+async function freshFullPortfolioSeed() {
+  await testEnv.clearFirestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), profilePath), fullPortfolioProfile);
+  });
+}
+
+await freshFullPortfolioSeed();
+await check(
+  'owner with all five classes can still update display name (budget regression)',
+  assertSucceeds(updateDoc(doc(authed(), profilePath), { displayName: 'New Name' }))
+);
+
+// The exact shape the profile edit modal saves: top-level identity fields plus
+// per-class ensembleInfo via dotted paths.
+await freshFullPortfolioSeed();
+await check(
+  'owner with all five classes can save the profile-edit-modal payload',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      displayName: 'New Name',
+      location: 'Elsewhere',
+      directorInfo: { bio: 'hello', specialties: ['Brass'], socialLinks: {} },
+      'corps.worldClass.ensembleInfo': { mission: 'm', notableShows: [] },
+      'corps.openClass.ensembleInfo': { mission: 'm', notableShows: [] },
+      'corps.aClass.ensembleInfo': { mission: 'm', notableShows: [] },
+      'corps.soundSport.ensembleInfo': { mission: 'm', notableShows: [] },
+      'corps.podiumClass.ensembleInfo': { mission: 'm', notableShows: [] },
+    })
+  )
+);
+
+// The guards must still bite on the same five-class doc — the budget fix must
+// not have traded enforcement for cost.
+await freshFullPortfolioSeed();
+await check(
+  'owner with all five classes still cannot forge a lineup',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), { 'corps.worldClass.lineup': { GE1: 'Illegal' } })
+  )
+);
+
+await freshFullPortfolioSeed();
+await check(
+  'owner with all five classes still cannot forge Podium state',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), { 'corps.podiumClass.podium': { captions: { GE1: 99 } } })
+  )
+);
+
 // --- other users still blocked entirely ---
 await freshSeed();
 await check(
