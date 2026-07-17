@@ -225,6 +225,26 @@ export function onForegroundMessage(
 }
 
 /**
+ * Ask for push permission (browser prompt if still 'default') and register
+ * the token on the profile. The contextual opt-in path — called at moments
+ * of intent (e.g. right after a first show registration: "scores drop
+ * tonight — want a heads-up?"), never on page load.
+ * @param userId - The user's UID
+ * @returns true when a token was obtained and saved
+ */
+export async function promptAndEnablePush(userId: string): Promise<boolean> {
+  if (!isPushSupported()) return false;
+  if (Notification.permission === 'denied') return false;
+  // requestPushPermission triggers the browser prompt when permission is
+  // still 'default', then fetches the FCM token.
+  const token = await requestPushPermission();
+  if (!token) return false;
+  // A saved token with no explicit preferences means enabled: the server's
+  // isPushTypeEnabled defaults every type on unless allPush === false.
+  return saveFcmToken(userId, token);
+}
+
+/**
  * Initialize push notifications for a user
  * Call this after the user logs in
  * @param userId - The user's UID

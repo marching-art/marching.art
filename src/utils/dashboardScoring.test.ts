@@ -30,6 +30,14 @@ describe('getEffectiveDay', () => {
     expect(getEffectiveDay(10, at3amET)).toBe(9);
   });
 
+  it('off-season: always returns currentDay - 1 (the day rolls at the 9 PM drop)', () => {
+    const at1amET = new Date('2026-07-10T05:00:00Z'); // 1 AM EDT
+    const at10pmET = new Date('2026-07-10T02:00:00Z'); // 10 PM EDT July 9
+    expect(getEffectiveDay(10, at1amET, 'off-season')).toBe(9);
+    expect(getEffectiveDay(10, at10pmET, 'off-season')).toBe(9);
+    expect(getEffectiveDay(1, at1amET, 'off-season')).toBeNull();
+  });
+
   it('returns currentDay - 2 before 2 AM ET', () => {
     expect(getEffectiveDay(10, at1amET)).toBe(8);
   });

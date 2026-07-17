@@ -2,8 +2,17 @@ import { describe, it, expect } from 'vitest';
 import { getSeasonProgress } from './seasonProgress';
 
 // Off-season starts are written at midnight UTC (scheduleGeneration.js), so the
-// canonical day count normalizes the start on the UTC calendar.
-const OFFSEASON = { schedule: { startDate: new Date('2026-01-04T00:00:00Z') } };
+// canonical day count normalizes the start on the UTC calendar. Real season
+// docs carry status: off-season game days END at the 9 PM ET score drop;
+// live-season (or status-less legacy) days reset at 2 AM ET.
+const OFFSEASON = {
+  status: 'off-season',
+  schedule: { startDate: new Date('2026-01-04T00:00:00Z') },
+};
+const LIVE = {
+  status: 'live-season',
+  schedule: { startDate: new Date('2026-01-04T00:00:00Z') },
+};
 
 // Helper: an explicit ET wall-clock instant. January is EST (UTC-05:00).
 const etWinter = (iso: string) => new Date(`${iso}-05:00`);
@@ -27,20 +36,28 @@ describe('getSeasonProgress', () => {
     expect(getSeasonProgress(OFFSEASON, etWinter('2026-01-04T07:00:00')).currentDay).toBe(1);
   });
 
-  // The core fix: the day must roll over at the backend's 2 AM ET game-day
-  // reset — not at midnight UTC (8 PM ET summer / 7 PM ET winter), which the
-  // old raw-millisecond math used. At 8 PM ET the old code already showed the
-  // next day; the fantasy scores for that day don't post until 2 AM ET.
+  // The day must roll over at the backend's season-aware game-day boundary —
+  // not at midnight UTC (8 PM ET summer / 7 PM ET winter), which the old
+  // raw-millisecond math used. Off-season: the day ends at the 9 PM ET score
+  // drop; live season: 2 AM ET.
   it('does NOT advance the day at 8 PM ET (the old midnight-UTC boundary)', () => {
     expect(getSeasonProgress(OFFSEASON, etWinter('2026-01-04T20:00:00')).currentDay).toBe(1);
+    expect(getSeasonProgress(LIVE, etWinter('2026-01-04T20:00:00')).currentDay).toBe(1);
   });
 
-  it('does NOT advance the day between midnight and 2 AM ET', () => {
-    expect(getSeasonProgress(OFFSEASON, etWinter('2026-01-05T01:00:00')).currentDay).toBe(1);
+  it('off-season: advances the day at the 9 PM ET score drop', () => {
+    expect(getSeasonProgress(OFFSEASON, etWinter('2026-01-04T20:59:00')).currentDay).toBe(1);
+    expect(getSeasonProgress(OFFSEASON, etWinter('2026-01-04T21:05:00')).currentDay).toBe(2);
+    // The following morning still belongs to the day opened at 9 PM.
+    expect(getSeasonProgress(OFFSEASON, etWinter('2026-01-05T10:00:00')).currentDay).toBe(2);
   });
 
-  it('advances the day just after the 2 AM ET reset', () => {
-    expect(getSeasonProgress(OFFSEASON, etWinter('2026-01-05T02:05:00')).currentDay).toBe(2);
+  it('live season: does NOT advance the day between midnight and 2 AM ET', () => {
+    expect(getSeasonProgress(LIVE, etWinter('2026-01-05T01:00:00')).currentDay).toBe(1);
+  });
+
+  it('live season: advances the day just after the 2 AM ET reset', () => {
+    expect(getSeasonProgress(LIVE, etWinter('2026-01-05T02:05:00')).currentDay).toBe(2);
   });
 
   it('computes the week from the (1-based) competition day', () => {

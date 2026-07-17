@@ -4,14 +4,16 @@
  *
  * This mirrors the backend authority in functions/src/helpers/gameDay.js
  * EXACTLY so the day the UI shows never disagrees with the day the nightly
- * scoring processors actually score. Two rules make it correct where the
- * previous ad-hoc computations were not:
+ * scoring processors actually score. The rules that make it correct:
  *
- *   1. Game days reset at 2 AM Eastern, not midnight and not 8 PM. A raw
- *      `(now - startDate) / 24h` count rolls the day over at midnight UTC —
- *      which is 8 PM ET in summer and 7 PM in winter — so it advanced the day
- *      hours early and its boundary drifted with DST. Counting ET calendar
- *      days with a 2 AM reset fixes both.
+ *   1. The game-day boundary is SEASON-TYPE-AWARE. Live season: days reset at
+ *      2 AM Eastern (the nightly run scores "yesterday" — West Coast DCI
+ *      shows post after 1 AM ET). Off-season: days END at 9 PM Eastern, when
+ *      the prime-time score drop processes THAT evening's day; at 9 PM the
+ *      next game day begins. A raw `(now - startDate) / 24h` count rolls the
+ *      day at midnight UTC — 8 PM ET in summer, 7 PM in winter — advancing
+ *      the day hours early and drifting with DST; counting ET calendar days
+ *      with the season's reset shift fixes both.
  *   2. The season start is normalized on the UTC calendar. seasonStartDate is
  *      stored at midnight UTC (see scheduleGeneration.getNextOffSeasonWindow);
  *      reading it in ET would shift winter UTC-midnight dates back a day and
@@ -23,9 +25,17 @@
  */
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-// Game days roll over at 2 AM ET, not midnight, so the 12–2 AM window still
-// belongs to the previous game day (matches gameDay.GAME_DAY_RESET_HOURS).
-const GAME_DAY_RESET_HOURS = 2;
+// Live season: shift back 2h then take the previous date — the 12–2 AM window
+// still belongs to the previous game day (gameDay.LIVE_RESET_SHIFT_HOURS).
+const LIVE_RESET_SHIFT_HOURS = 2;
+// Off-season: shift FORWARD 3h — at/after 9 PM ET the evening's day has been
+// scored and the next one has begun (gameDay.OFF_SEASON_RESET_SHIFT_HOURS).
+const OFF_SEASON_RESET_SHIFT_HOURS = -3;
+
+/** Reset shift for a season status (mirrors gameDay.resetShiftHours). */
+export function resetShiftHours(seasonStatus: string | null | undefined): number {
+  return seasonStatus === 'off-season' ? OFF_SEASON_RESET_SHIFT_HOURS : LIVE_RESET_SHIFT_HOURS;
+}
 
 const SEASON_FINAL_DAY = 49;
 const TOTAL_SEASON_WEEKS = 7;
@@ -34,6 +44,7 @@ const TOTAL_SEASON_WEEKS = 7;
 type TimestampLike = Date | { toDate: () => Date };
 
 export interface SeasonProgressInput {
+  status?: string;
   schedule?: {
     startDate?: TimestampLike | null;
     springTrainingDays?: number;
@@ -56,10 +67,15 @@ function toDate(value: TimestampLike | null | undefined): Date | null {
 
 /**
  * The calendar day currently in progress, counted 1-based from the season's
- * (UTC-midnight) start date, using a 2 AM ET reset. Ported verbatim from
+ * (UTC-midnight) start date, using the season-aware reset shift (2 AM ET
+ * live, 9 PM ET off-season). Ported verbatim from
  * functions/src/helpers/gameDay.js (getCompletedGameDayET + getActiveCalendarDay).
  */
-function getActiveCalendarDay(seasonStartDate: Date, now: Date): number {
+function getActiveCalendarDay(
+  seasonStartDate: Date,
+  now: Date,
+  seasonStatus?: string | null
+): number {
   const etParts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
     year: 'numeric',
@@ -86,9 +102,9 @@ function getActiveCalendarDay(seasonStartDate: Date, now: Date): number {
     )
   );
 
-  // Shift back by the 2 AM reset so 1 AM Jan 5 still belongs to Jan 4's game
-  // day, then take that day's completed value; the active day is the next one.
-  const gameTimeET = new Date(nowET.getTime() - GAME_DAY_RESET_HOURS * 60 * 60 * 1000);
+  // Shift by the season's reset offset (back 2h live, forward 3h off-season),
+  // then take that day's completed value; the active day is the next one.
+  const gameTimeET = new Date(nowET.getTime() - resetShiftHours(seasonStatus) * 60 * 60 * 1000);
   const completedGameDay = new Date(gameTimeET);
   completedGameDay.setUTCDate(completedGameDay.getUTCDate() - 1);
   completedGameDay.setUTCHours(0, 0, 0, 0);
@@ -129,7 +145,8 @@ export function getSeasonProgress(
   }
 
   const springTrainingDays = seasonData?.schedule?.springTrainingDays || 0;
-  const competitionDay = getActiveCalendarDay(startDate, now) - springTrainingDays;
+  const competitionDay =
+    getActiveCalendarDay(startDate, now, seasonData?.status) - springTrainingDays;
 
   const currentDay = Math.max(1, Math.min(competitionDay, SEASON_FINAL_DAY));
   const currentWeek = Math.max(1, Math.min(Math.ceil(currentDay / 7), TOTAL_SEASON_WEEKS));

@@ -37,7 +37,7 @@ export function useSeasonDeadlines(intervalMs = 30000, corpsClass = null) {
   const seasonData = useSeasonStore((s) => s.seasonData);
   const now = useNow(intervalMs);
   return useMemo(() => {
-    const scoresAt = getNextScoresProcessingTime(now);
+    const scoresAt = getNextScoresProcessingTime(now, seasonData);
     return {
       now,
       scoresAt,

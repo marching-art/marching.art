@@ -4,6 +4,7 @@ const { getDb } = require("../config");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { runPodiumStage } = require("./nightlyStages");
+const { announceScoreDrop } = require("../helpers/scoreDropAnnounce");
 
 /**
  * Run the flag-gated Podium stage after fantasy scoring (Phase 1.2). Fully
@@ -23,12 +24,30 @@ async function runPodiumStageIsolated(db) {
   }
 }
 
+/**
+ * The off-season score drop runs at 9:00 PM ET and scores THAT evening's game
+ * day (the season-aware boundary in helpers/gameDay.js) — a prime-time reveal
+ * the whole player base experiences together, instead of a 2 AM background
+ * job. Live season keeps its own 2 AM processor below: real West Coast DCI
+ * shows post scores after 1 AM ET, so its run can't move.
+ */
 exports.dailyOffSeasonProcessor = onSchedule({
-  schedule: "every day 02:00",
+  schedule: "every day 21:00",
   timeZone: "America/New_York",
 }, async () => {
-  await processAndArchiveOffSeasonScoresLogic();
-  await runPodiumStageIsolated(getDb());
+  const db = getDb();
+  const result = await processAndArchiveOffSeasonScoresLogic();
+  await runPodiumStageIsolated(db);
+
+  // Announce the drop (push + optional Discord webhook) only on nights that
+  // actually scored shows — never on dark days, skips, or re-claimed runs.
+  // Isolated inside announceScoreDrop: a failed announcement can't fail the run.
+  if (result?.status === "processed" && !result.note) {
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (seasonDoc.exists) {
+      await announceScoreDrop(db, seasonDoc.data(), result.scoredDay);
+    }
+  }
 });
 
 /**
@@ -53,7 +72,7 @@ async function runLiveFantasyStage(db) {
 
   // "Yesterday" in Eastern time with the 2 AM game-day reset, as a 1-based
   // calendar day from the season start (see helpers/gameDay.js).
-  const calendarDay = getCompletedCalendarDay(seasonStartDate);
+  const calendarDay = getCompletedCalendarDay(seasonStartDate, new Date(), "live-season");
 
   // Spring training offset: first 21 days are setup, no scoring
   // Calendar days 22-70 map to scored days 1-49

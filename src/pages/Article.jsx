@@ -30,6 +30,7 @@ import {
 } from '../components/Sidebar';
 import { getArticleEngagement } from '../api/functions';
 import { useSeasonStore } from '../store/seasonStore';
+import { getEffectiveDay } from '../utils/dashboardScoring';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import {
   getCategoryConfig,
@@ -229,9 +230,11 @@ const Article = () => {
   };
 
   // Day-gate: prevent viewing articles for days whose scores aren't visible yet.
+  // Scores process at the season's drop time (9 PM ET off-season, 2 AM ET live).
   // When currentDay reaches the season maximum (49), the season is over or ending — lift the
-  // gate after 2 AM so all season articles remain accessible during the off-season.
+  // gate once the final drop has run so season articles remain accessible into the break.
   const currentDay = useSeasonStore((state) => state.currentDay);
+  const seasonStatus = useSeasonStore((state) => state.seasonData?.status);
   // The active season's UID matches the `seasonId` on its articles. A prior
   // season's article carries a different seasonId and is never day-gated, so a
   // direct link to last season's finals recap stays readable after a reset.
@@ -245,12 +248,16 @@ const Article = () => {
         hour12: false,
       }).format(new Date())
     );
+    const isOffSeason = seasonStatus === 'off-season';
     if (currentDay >= 49) {
+      // currentDay is clamped at 49, so the hour is the only signal the final
+      // drop has happened (9 PM ET off-season, 2 AM ET live).
+      if (isOffSeason) return etHour >= 21 || etHour < 2 ? null : Math.max(currentDay - 1, 1);
       return etHour < 2 ? Math.max(currentDay - 2, 1) : null;
     }
-    const day = etHour < 2 ? currentDay - 2 : currentDay - 1;
-    return day >= 1 ? day : null;
-  }, [currentDay]);
+    const day = getEffectiveDay(currentDay, undefined, seasonStatus);
+    return day && day >= 1 ? day : null;
+  }, [currentDay, seasonStatus]);
   const isPriorSeasonArticle = seasonUid && article?.seasonId && article.seasonId !== seasonUid;
   const isDayGated =
     article && effectiveDay && !isPriorSeasonArticle && article.reportDay > effectiveDay;

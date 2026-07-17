@@ -112,6 +112,15 @@ describe("completedGameDayString", () => {
   test("names the game day whose results this run posted", () => {
     assert.equal(completedGameDayString(NOW), GAME_DAY);
   });
+
+  test("off-season: the 9 PM ET drop settles THAT evening's pool", () => {
+    // 9:05 PM EST Jan 14 = 02:05 UTC Jan 15 — the drop scores Jan 14 itself,
+    // so it settles Jan 14's pool (with the live 2 AM rule this instant would
+    // still name Jan 13).
+    const dropTime = new Date("2026-01-15T02:05:00Z");
+    assert.equal(completedGameDayString(dropTime, "off-season"), GAME_DAY);
+    assert.equal(completedGameDayString(dropTime), "Tue Jan 13 2026");
+  });
 });
 
 describe("entrantHadPerfectDay", () => {

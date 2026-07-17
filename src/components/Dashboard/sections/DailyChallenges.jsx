@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { Target, Check, ChevronRight, Flame, CalendarCheck } from 'lucide-react';
 import { useHaptic } from '../../../hooks/useHaptic';
 import { useProfileStore } from '../../../store/profileStore';
+import { useSeasonStore } from '../../../store/seasonStore';
 import {
   getGameDay,
   getWeekKey,
@@ -34,8 +35,9 @@ const DailyChallenges = memo(
     const { trigger: haptic } = useHaptic();
     const profile = useProfileStore((state) => state.profile);
     const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
+    const seasonStatus = useSeasonStore((state) => state.seasonData?.status);
 
-    const gameDay = getGameDay();
+    const gameDay = getGameDay(new Date(), seasonStatus);
     const challenges = useMemo(
       () =>
         getChallengesForGameDay(gameDay).filter(

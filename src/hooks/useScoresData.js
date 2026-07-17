@@ -275,7 +275,9 @@ export const useScoresData = (options = {}) => {
     if (recaps.length === 0) return [];
 
     const isCurrentSeason = targetSeasonId === currentSeasonUid;
-    const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
+    const effectiveDay = isCurrentSeason
+      ? getEffectiveDay(currentDay, undefined, currentSeasonData?.status)
+      : null;
     // Only the current season's schedule is loaded here; use it to derive accurate
     // event dates. Archived seasons fall back to their stored (correct) recap date.
     const seasonSchedule = isCurrentSeason ? currentSeasonData?.schedule : null;

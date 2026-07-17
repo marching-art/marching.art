@@ -101,13 +101,14 @@ export const useTickerData = ({ enabled = true } = {}) => {
   const allRecaps = useMemo(() => allRecapsData || [], [allRecapsData]);
   const error = queryError?.message || null;
 
-  // The day to show is the most recent day with processed scores
-  // At 2 AM ET, scores for the current day are processed, so we can show them
+  // The day to show is the most recent day with processed scores (the
+  // season-aware boundary: the 9 PM ET off-season drop shows same-evening,
+  // live-season scores appear after the 2 AM ET run).
   const displayDay = useMemo(() => {
     if (allRecaps.length === 0) return null;
 
-    // Guard: null on Day 1 (or Day 2 before 2 AM ET) — no processed scores yet
-    const effectiveDay = getEffectiveDay(currentDay);
+    // Guard: null on Day 1 — no processed scores yet
+    const effectiveDay = getEffectiveDay(currentDay, undefined, seasonData?.status);
     if (!effectiveDay || effectiveDay < 1) return null;
 
     // Find the most recent day that has scores up to and including effective day
@@ -117,7 +118,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
       .sort((a, b) => b - a);
 
     return availableDays[0] || null;
-  }, [allRecaps, currentDay]);
+  }, [allRecaps, currentDay, seasonData?.status]);
 
   // Process the previous day's data - separated by class
   // OPTIMIZED: Single-pass processing to reduce array iterations from O(5n) to O(n)

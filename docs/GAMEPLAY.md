@@ -86,11 +86,23 @@ Rules:
 
 ## Scoring
 
-Scores are processed in a **nightly run at ~2:00 AM ET** (the nightly
-processors). Each night a corps competed, its captions are scored from the
-underlying DCI data (real, in Live Season; historical, in Off-Season) and its
-fantasy total updates. The nightly "score drop" is the game's core daily beat —
-you set a lineup, register for shows, and wake up to results and rank changes.
+Scores are processed in a nightly run — the **score drop**, the game's core
+daily beat. Its time is season-aware:
+
+- **Off-Season: 9:00 PM ET**, scoring that same evening's game day. The drop
+  is a prime-time communal event: a push notification announces it, the
+  dashboard opens with the Nightly Reveal ceremony, and the whole player base
+  experiences results together (historical data is available all day, so
+  nothing forces an overnight run).
+- **Live Season: ~2:00 AM ET**, scoring "yesterday." Real West Coast DCI
+  shows post scores after 1:00 AM ET, so the run cannot be earlier — you set
+  a lineup, register for shows, and wake up to results and rank changes.
+
+Each night a corps competed, its captions are scored from the underlying DCI
+data (real, in Live Season; historical, in Off-Season) and its fantasy total
+updates. The game-day boundary follows the drop (`helpers/gameDay.js`):
+off-season days end at 9 PM ET, live-season days at 2 AM ET — challenges,
+predictions, and league pools all roll over with it.
 
 ## Caption-change windows
 
@@ -126,8 +138,9 @@ beyond its guaranteed window.
 Additional locks:
 
 - Every **Saturday at 8:00 PM ET** (the end of days 7/14/21/28/35/42), changes
-  **lock** until that night's scores are processed (the 2:00 AM ET nightly run;
-  if a day had no events, changes reopen at 2:00 AM ET).
+  **lock** until that night's scores are processed — a one-hour lock in the
+  off-season (9:00 PM ET drop) or overnight in live season (~2:00 AM ET run);
+  if a day had no events, changes reopen at the processing hour.
 - During Championship Week, changes close at **8:00 PM ET each day** and reopen
   once scores are processed; each competing class gets a fresh 2 changes each day.
 

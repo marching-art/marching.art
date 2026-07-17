@@ -2,12 +2,13 @@
  * Season Clock
  *
  * Single source of truth for every player-facing deadline:
- *   - When scores process (nightly Cloud Function, 02:00 America/New_York —
+ *   - When scores process (nightly Cloud Function — 21:00 America/New_York
+ *     in the off-season, the prime-time score drop; 02:00 in live season —
  *     see functions/src/scheduled/dailyProcessors.js)
  *   - When caption changes open, lock, and reset — mirrors the backend
  *     rules in functions/src/helpers/captionWindows.js
- *   - When show registration effectively closes (scores processing the
- *     night after the show)
+ *   - When show registration effectively closes (the score processing run
+ *     that scores the show)
  *
  * All UI surfaces that display a deadline must derive it from here so the
  * times can never drift apart between screens.
@@ -16,8 +17,23 @@
 const ET_ZONE = 'America/New_York';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Hour of day (ET) when the nightly score processors run. */
+/** Hour of day (ET) when the live-season nightly score processors run. */
 export const SCORES_PROCESS_HOUR_ET = 2;
+
+/** Hour of day (ET) of the off-season score drop (scores THAT evening). */
+export const OFF_SEASON_SCORES_PROCESS_HOUR_ET = 21;
+
+/**
+ * The processing hour for a season — 9 PM ET off-season, 2 AM ET live.
+ * Mirrors functions/src/helpers/captionWindows.js scoresProcessHourET.
+ * @param {Object|null} [seasonData] - game-settings/season doc (needs status)
+ * @returns {number}
+ */
+export function scoresProcessHourET(seasonData) {
+  return seasonData?.status === 'off-season'
+    ? OFF_SEASON_SCORES_PROCESS_HOUR_ET
+    : SCORES_PROCESS_HOUR_ET;
+}
 
 /** Competition weeks in a season. */
 export const TOTAL_SEASON_WEEKS = 7;
@@ -100,39 +116,45 @@ function easternWallTimeToDate(year, month, day, hour) {
 }
 
 /**
- * Next instant the nightly score processors run (02:00 ET).
+ * Next instant the nightly score processors run (21:00 ET off-season,
+ * 02:00 ET live season).
  * @param {Date} [now]
+ * @param {Object|null} [seasonData] - game-settings/season doc (for status);
+ *   omitted = live-season hour.
  * @returns {Date}
  */
-export function getNextScoresProcessingTime(now = new Date()) {
+export function getNextScoresProcessingTime(now = new Date(), seasonData = undefined) {
+  const hour = scoresProcessHourET(seasonData);
   const today = easternParts(now);
-  let target = easternWallTimeToDate(today.year, today.month, today.day, SCORES_PROCESS_HOUR_ET);
+  let target = easternWallTimeToDate(today.year, today.month, today.day, hour);
   if (target.getTime() <= now.getTime()) {
     const tomorrow = easternParts(new Date(now.getTime() + DAY_MS));
-    target = easternWallTimeToDate(
-      tomorrow.year,
-      tomorrow.month,
-      tomorrow.day,
-      SCORES_PROCESS_HOUR_ET
-    );
+    target = easternWallTimeToDate(tomorrow.year, tomorrow.month, tomorrow.day, hour);
   }
   return target;
 }
 
 /**
- * The instant show registration effectively closes: scores processing at
- * 02:00 ET the day after the show. Until then, attendance can still change.
+ * The instant show registration effectively closes: the score-processing run
+ * that scores the show. Live season: 02:00 ET the day after the show.
+ * Off-season: 21:00 ET on the show's own calendar day (the same-evening
+ * score drop). Until then, attendance can still change.
  * @param {Date|null} eventDate - Local-midnight Date for the show's calendar day
  *   (as produced by Schedule's getActualDate)
+ * @param {Object|null} [seasonData] - game-settings/season doc (for status);
+ *   omitted = live-season behavior.
  * @returns {Date|null}
  */
-export function getShowRegistrationDeadline(eventDate) {
+export function getShowRegistrationDeadline(eventDate, seasonData = undefined) {
   if (!eventDate || Number.isNaN(eventDate.getTime())) return null;
-  const next = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate() + 1);
-  const year = String(next.getFullYear());
-  const month = String(next.getMonth() + 1).padStart(2, '0');
-  const day = String(next.getDate()).padStart(2, '0');
-  return easternWallTimeToDate(year, month, day, SCORES_PROCESS_HOUR_ET);
+  const offSeason = seasonData?.status === 'off-season';
+  const target = offSeason
+    ? eventDate
+    : new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate() + 1);
+  const year = String(target.getFullYear());
+  const month = String(target.getMonth() + 1).padStart(2, '0');
+  const day = String(target.getDate()).padStart(2, '0');
+  return easternWallTimeToDate(year, month, day, scoresProcessHourET(seasonData));
 }
 
 /**
@@ -145,7 +167,7 @@ export function getShowRegistrationDeadline(eventDate) {
  *   - Days 15-42: 3 changes per week per class, spendable one at a time or
  *     all at once.
  *   - Every Saturday 8 PM ET (end of days 7/14/21/28/35/42): changes lock
- *     until scores process (nightly run at 2 AM ET).
+ *     until scores process (9 PM ET off-season, 2 AM ET live season).
  *   - Days 43-44: no changes at all.
  *   - Days 45-49 (Championship Week): 2 changes per day for each class still
  *     competing that day (the allotment resets every competition day); changes
@@ -156,8 +178,9 @@ export function getShowRegistrationDeadline(eventDate) {
  *
  * Days are 24h blocks measured in raw milliseconds from schedule.startDate,
  * with spring-training days excluded before competition Day 1. The client
- * treats a lockout as ending at the 2 AM ET processing run; the backend
- * additionally waits for the day's recap to actually exist.
+ * treats a lockout as ending at the season's processing run (9 PM ET
+ * off-season, 2 AM ET live); the backend additionally waits for the day's
+ * recap to actually exist.
  *
  * @param {Object} seasonData - Season doc (needs schedule.startDate)
  * @param {Date} [now]
@@ -189,8 +212,9 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
   const dayStart = (d) => new Date(startDate.getTime() + (springTrainingDays + d - 1) * DAY_MS);
   const day = Math.floor((now.getTime() - startDate.getTime()) / DAY_MS) + 1 - springTrainingDays;
   const week = Math.max(1, Math.ceil(day / 7));
-  // Lockouts end at the nightly 2 AM ET score-processing run after a boundary.
-  const reopenAfter = (d) => getNextScoresProcessingTime(dayStart(d));
+  // Lockouts end at the score-processing run after a boundary (9 PM ET
+  // off-season — a one-hour lock after the 8 PM close — 2 AM ET live).
+  const reopenAfter = (d) => getNextScoresProcessingTime(dayStart(d), seasonData);
 
   const base = {
     day,
@@ -252,8 +276,8 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
   }
 
   // Days 1-42 (day < 1 is spring training / pre-season: unlimited, no lock).
-  // Weeks begin on days 8, 15, 22, 29, 36 — the morning after a Saturday
-  // 8 PM ET close — and stay locked until scores process at 2 AM ET.
+  // Weeks begin on days 8, 15, 22, 29, 36 — after a Saturday 8 PM ET close —
+  // and stay locked until scores process (9 PM ET off-season, 2 AM ET live).
   const isWeekStartDay = day > 1 && day % 7 === 1;
   const opensAt = isWeekStartDay ? reopenAfter(day) : null;
   const locked = opensAt !== null && now.getTime() < opensAt.getTime();

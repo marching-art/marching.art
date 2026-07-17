@@ -456,7 +456,9 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
   const seasonStartDate = seasonData.schedule.startDate.toDate();
 
   // Off-season has no spring training, so the calendar day IS the scored day.
-  const scoredDay = getCompletedCalendarDay(seasonStartDate);
+  // Off-season game days end at 9 PM ET: the 21:00 run scores THIS evening's
+  // day (same calendar date), not yesterday's — the prime-time score drop.
+  const scoredDay = getCompletedCalendarDay(seasonStartDate, new Date(), "off-season");
 
   if (scoredDay < 1 || scoredDay > 49) {
     logger.info(`Scored day (${scoredDay}) is outside the 1-49 range. Exiting.`);

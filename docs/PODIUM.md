@@ -141,7 +141,8 @@ From the architecture survey — this class was designed against the actual code
   breakdowns (`GE1, GE2, VP, VA, CG, B, MA, P`, each 0–20) with `offSeasonDay` 1–49 — exactly the
   training corpus the scoring engine needs. The regression machinery in
   `functions/src/helpers/scoringMath.js` already fits historical curves.
-- **Nightly pipeline:** `dailyOffSeasonProcessor` / `processDailyLiveScores` (02:00 ET) +
+- **Nightly pipeline:** `dailyOffSeasonProcessor` (21:00 ET, the off-season
+  prime-time score drop) / `processDailyLiveScores` (02:00 ET) +
   `scoringRunGuard.js` idempotency + `chunkedWriter.js`. Podium scoring is a new stage in the same
   run.
 - **Economy:** CorpsCoin earn/spend (`functions/src/callable/economy.js`), XP levels, shop and

@@ -15,6 +15,16 @@ vi.mock('../api/season', () => ({
   getPodiumSeasonRecaps: vi.fn(),
 }));
 
+// The hook reads the season status from the season store, whose module
+// imports api/client.ts (Firebase init) — mock the api barrel so importing
+// the store never touches Firebase in tests.
+vi.mock('../api', () => ({ db: {}, functions: {} }));
+vi.mock('firebase/firestore', () => ({
+  Timestamp: class {},
+  doc: vi.fn(() => ({})),
+  onSnapshot: vi.fn(() => () => {}),
+}));
+
 vi.mock('../utils/dashboardScoring', () => ({
   getEffectiveDay: vi.fn(),
   processCaptionScores: vi.fn(),

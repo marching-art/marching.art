@@ -12,9 +12,12 @@
  *   - Days 15-42: 3 changes per week per class. Changes can be spent one at
  *                 a time or all at once; the counter resets each week.
  *   - Every Saturday at 8:00 PM ET (the end of days 7/14/21/28/35/42):
- *                 changes lock until that night's scores are processed
- *                 (nightly processor runs at 2:00 AM ET; if the day had no
- *                 events, changes reopen at 2:00 AM ET).
+ *                 changes lock until that night's scores are processed.
+ *                 The nightly processor runs at 9:00 PM ET in the off-season
+ *                 (the prime-time score drop — a one-hour lock) and at
+ *                 2:00 AM ET in live season (real West Coast DCI scores post
+ *                 after 1 AM ET). If the day had no events, changes reopen at
+ *                 the processing hour.
  *   - Days 43-44: no caption changes at all.
  *   - Days 45-49 (Championship Week): 2 changes PER DAY for each class that
  *                 still competes that day; the allotment resets every
@@ -40,8 +43,22 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ET_ZONE = "America/New_York";
 
-/** Hour of day (ET) when the nightly score processors run. */
+/** Hour of day (ET) when the live-season nightly score processors run. */
 const SCORES_PROCESS_HOUR_ET = 2;
+
+/** Hour of day (ET) when the off-season score drop runs (same evening). */
+const OFF_SEASON_SCORES_PROCESS_HOUR_ET = 21;
+
+/**
+ * The processing hour for a season doc — 9 PM ET off-season, 2 AM ET live.
+ * @param {Object} seasonData - game-settings/season doc data (needs status)
+ * @returns {number}
+ */
+function scoresProcessHourET(seasonData) {
+  return seasonData?.status === "off-season"
+    ? OFF_SEASON_SCORES_PROCESS_HOUR_ET
+    : SCORES_PROCESS_HOUR_ET;
+}
 
 /** Changes allowed per week per class once weekly limits apply (days 15-42). */
 const WEEKLY_TRADE_LIMIT = 3;
@@ -121,21 +138,24 @@ function easternWallTimeToDate(year, month, day, hour) {
 }
 
 /**
- * Next 2:00 AM ET strictly after the given instant — when the nightly score
- * processors will next run.
+ * Next score-processing instant strictly after the given one — 9:00 PM ET in
+ * the off-season, 2:00 AM ET in live season.
  * @param {Date} after
+ * @param {Object} [seasonData] - game-settings/season doc data (for status);
+ *   omitted = live-season hour.
  * @returns {Date}
  */
-function nextScoresProcessingAfter(after) {
+function nextScoresProcessingAfter(after, seasonData = undefined) {
+  const hour = scoresProcessHourET(seasonData);
   const today = easternParts(after);
-  let target = easternWallTimeToDate(today.year, today.month, today.day, SCORES_PROCESS_HOUR_ET);
+  let target = easternWallTimeToDate(today.year, today.month, today.day, hour);
   if (target.getTime() <= after.getTime()) {
     const tomorrow = easternParts(new Date(after.getTime() + DAY_MS));
     target = easternWallTimeToDate(
       tomorrow.year,
       tomorrow.month,
       tomorrow.day,
-      SCORES_PROCESS_HOUR_ET,
+      hour,
     );
   }
   return target;
@@ -182,7 +202,7 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
   const day =
     Math.floor((now.getTime() - startDate.getTime()) / DAY_MS) + 1 - springTrainingDays;
   const week = Math.max(1, Math.ceil(day / 7));
-  const reopenAfter = (d) => nextScoresProcessingAfter(dayStart(d));
+  const reopenAfter = (d) => nextScoresProcessingAfter(dayStart(d), seasonData);
 
   const base = {
     day,
@@ -213,7 +233,7 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
     // Championship Week: 2 changes per class PER DAY. The counter keys on the
     // competition day (periodKey), so the allotment resets every day. Locked
     // from the 8 PM ET day boundary until scores from the previous day are
-    // processed (nightly run at 2 AM ET).
+    // processed (9 PM ET off-season, 2 AM ET live).
     //
     // Only classes competing that day may change (CHAMPIONSHIP_CLASS_DAYS).
     // A class that's finished for the season is closed out; the class-agnostic
@@ -268,8 +288,9 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
 /**
  * Have the given competition day's scores been processed (or was there
  * nothing to process)? Used to end the Saturday-night / championship-night
- * lockouts: changes stay closed after 2 AM ET until the nightly processor
- * has actually written the day's recap.
+ * lockouts: changes stay closed after the processing hour (9 PM ET
+ * off-season, 2 AM ET live) until the nightly processor has actually
+ * written the day's recap.
  *
  * @param {Object} db - Firestore instance
  * @param {Object} seasonData - Season doc (needs seasonUid)
@@ -293,6 +314,8 @@ async function isDayScoresProcessed(db, seasonData, day) {
 module.exports = {
   getCaptionChangeWindow,
   isDayScoresProcessed,
+  scoresProcessHourET,
+  OFF_SEASON_SCORES_PROCESS_HOUR_ET,
   WEEKLY_TRADE_LIMIT,
   CHAMPIONSHIP_TRADE_LIMIT,
   UNLIMITED_THROUGH_DAY,

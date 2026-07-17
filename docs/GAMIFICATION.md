@@ -22,7 +22,8 @@ Three concentric engagement loops, each serving a different motivation:
 ```
 THE CAREER  (meta / lifetime)  — purpose & identity; never flattens
   └ THE SEASON  (macro / 49 days)  — autonomy, mastery, relatedness; a chapter
-      └ THE NIGHT  (micro / daily)  — competence & habit; the 2 AM score drop
+      └ THE NIGHT  (micro / daily)  — competence & habit; the nightly score drop
+                                      (9 PM ET off-season · ~2 AM ET live)
 ```
 
 The design test for any feature: **does it feed the Career?** XP that vanishes

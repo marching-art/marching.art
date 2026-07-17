@@ -37,10 +37,13 @@ const POOL_ANTE = 25;
 /**
  * Game-day string (Date.toDateString format, same as prediction/challenge
  * buckets) for the game day that just ended — the day whose results this
- * scoring run posted, and therefore the pool it settles.
+ * scoring run posted, and therefore the pool it settles. Season-aware: the
+ * off-season game day ends at 9 PM ET (same-evening scoring), the live one
+ * at 2 AM ET — pass the season status so pools settle the bucket players
+ * actually anted into.
  */
-function completedGameDayString(now = new Date()) {
-  const g = getCompletedGameDayET(now);
+function completedGameDayString(now = new Date(), seasonStatus = undefined) {
+  const g = getCompletedGameDayET(now, seasonStatus);
   return new Date(g.getUTCFullYear(), g.getUTCMonth(), g.getUTCDate()).toDateString();
 }
 
@@ -91,7 +94,7 @@ function entrantHadPerfectDay(uid, profileData, gameDay, recaps) {
  * @param {Date} [now] - Injectable clock for tests
  */
 async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
-  const gameDay = completedGameDayString(now);
+  const gameDay = completedGameDayString(now, seasonData?.status);
   const ns = dataNamespaceParam.value();
 
   const leaguesSnapshot = await db.collection(`artifacts/${ns}/leagues`).limit(500).get();

@@ -1,5 +1,6 @@
 // PredictionGamePanel - Daily prediction questions that resolve when new scores arrive
-// Creates a natural "check back tomorrow" engagement loop between 2 AM scoring cycles.
+// Creates a natural "check back tomorrow" engagement loop between scoring
+// cycles (the 9 PM ET off-season drop / 2 AM ET live run).
 //
 // Picks and their outcomes are persisted server-side on the profile's
 // `predictions` ledger (mirrors DailyChallenges). submitPrediction saves each
@@ -12,6 +13,7 @@ import React, { memo, useEffect, useMemo, useCallback } from 'react';
 import { Crosshair, Check, X, Trophy } from 'lucide-react';
 import { useHaptic } from '../../../hooks/useHaptic';
 import { useProfileStore } from '../../../store/profileStore';
+import { useSeasonStore } from '../../../store/seasonStore';
 import { getGameDay } from '../../../utils/dailyChallenges';
 import { buildQuestions } from '../../../utils/dailyPredictions';
 
@@ -22,8 +24,9 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false 
   const profile = useProfileStore((state) => state.profile);
   const submitPrediction = useProfileStore((state) => state.submitPrediction);
   const resolvePredictions = useProfileStore((state) => state.resolvePredictions);
+  const seasonStatus = useSeasonStore((state) => state.seasonData?.status);
 
-  const gameDay = getGameDay();
+  const gameDay = getGameDay(new Date(), seasonStatus);
 
   const bucket = profile?.predictions?.[gameDay] || {};
   const picks = bucket.picks || {};

@@ -52,6 +52,30 @@ describe("getCompletedGameDayET", () => {
     const day = getCompletedGameDayET(new Date("2026-03-08T07:00:00Z"));
     assert.equal(day.toISOString().slice(0, 10), "2026-03-07");
   });
+
+  test("off-season: at the 9 PM ET drop the just-ended game day is TODAY", () => {
+    // 2026-07-05T01:00Z = 9:00 PM EDT July 4 → the drop scores July 4 itself.
+    const day = getCompletedGameDayET(new Date("2026-07-05T01:00:00Z"), "off-season");
+    assert.equal(day.toISOString().slice(0, 10), "2026-07-04");
+  });
+
+  test("off-season: before 9 PM ET today's game day has not ended yet", () => {
+    // 8:59 PM EDT July 4 → last completed game day is July 3.
+    const day = getCompletedGameDayET(new Date("2026-07-05T00:59:00Z"), "off-season");
+    assert.equal(day.toISOString().slice(0, 10), "2026-07-03");
+  });
+
+  test("off-season: the evening after the drop still reports today as completed", () => {
+    // 11:30 PM EDT July 4 (post-drop) → completed game day is still July 4.
+    const day = getCompletedGameDayET(new Date("2026-07-05T03:30:00Z"), "off-season");
+    assert.equal(day.toISOString().slice(0, 10), "2026-07-04");
+  });
+
+  test("off-season: EST winter evenings use the same 9 PM boundary", () => {
+    // 2026-01-10T02:00Z = 9:00 PM EST Jan 9 → completed game day Jan 9.
+    const day = getCompletedGameDayET(new Date("2026-01-10T02:00:00Z"), "off-season");
+    assert.equal(day.toISOString().slice(0, 10), "2026-01-09");
+  });
 });
 
 describe("getCompletedCalendarDay", () => {

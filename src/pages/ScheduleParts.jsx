@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, ChevronRight, Trophy } from 'lucide-react';
 import { isEventPast } from '../utils/scheduleUtils';
+import { useSeasonStore } from '../store/seasonStore';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 
 // =============================================================================
@@ -297,11 +298,12 @@ const ShowCard = ({
 // =============================================================================
 
 const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
+  const seasonData = useSeasonStore((s) => s.seasonData);
   if (!date) return null;
 
   const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
   const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const isPast = isEventPast(date);
+  const isPast = isEventPast(date, seasonData);
 
   return (
     <div
@@ -351,8 +353,9 @@ const DayRow = ({
   seasonUid,
   podiumAttendance,
 }) => {
+  const seasonData = useSeasonStore((s) => s.seasonData);
   const date = getActualDate(day);
-  const isPast = isEventPast(date);
+  const isPast = isEventPast(date, seasonData);
   const isMajorDay = shows.some((show) => show.eventTier === 'regional');
 
   return (
@@ -451,8 +454,9 @@ const ChampionshipEventCard = ({
   seasonUid: _seasonUid,
   podiumAttendance,
 }) => {
+  const seasonData = useSeasonStore((s) => s.seasonData);
   const date = getActualDate(event.day);
-  const isPast = isEventPast(date);
+  const isPast = isEventPast(date, seasonData);
   const formattedDate = date
     ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : `Day ${event.day}`;
@@ -592,6 +596,7 @@ const ChampionshipWeekDisplay = ({
   onRegister,
   podiumAttendance,
 }) => {
+  const seasonData = useSeasonStore((s) => s.seasonData);
   // Group championship events by day
   const eventsByDay = useMemo(() => {
     const grouped = {};
@@ -630,7 +635,7 @@ const ChampionshipWeekDisplay = ({
         <>
           {regularDays.map((day) => {
             const date = getActualDate(day);
-            const isPast = isEventPast(date);
+            const isPast = isEventPast(date, seasonData);
             return (
               <div key={day} className="flex gap-3 items-stretch">
                 <DayIndicator date={date} dayNumber={day} />

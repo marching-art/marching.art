@@ -31,8 +31,14 @@ const joinLeaguePool = onCall({ cors: true }, async (request) => {
   const profileRef = db.doc(`artifacts/${ns}/users/${uid}/profile/data`);
 
   try {
+    // The pool day key must share the season-aware game-day boundary the
+    // settlement run uses (9 PM ET off-season, 2 AM ET live), so an ante
+    // placed right after the score drop lands in TOMORROW's pool.
+    const seasonSnap = await db.doc("game-settings/season").get();
+    const seasonStatus = seasonSnap.exists ? seasonSnap.data().status : undefined;
+
     const result = await db.runTransaction(async (transaction) => {
-      const gameDay = getGameDay();
+      const gameDay = getGameDay(new Date(), seasonStatus);
       const poolRef = leagueRef.collection("pools").doc(gameDay);
 
       const [leagueDoc, poolDoc, profileDoc] = await Promise.all([

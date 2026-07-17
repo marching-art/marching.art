@@ -127,24 +127,42 @@ export function getEasternHour(now: Date = new Date()): number {
 }
 
 /**
- * Get the effective current day for score filtering.
+ * Get the effective current day for score filtering — the most recent day
+ * whose scores have been processed.
  *
- * Scores for day N are processed at 2 AM ET and become available after that:
+ * Live season: scores for day N are processed at 2 AM ET on day N+1, so
  * - After 2 AM ET: the previous day's scores were just processed (currentDay - 1)
  * - Before 2 AM ET: scores are only available up to currentDay - 2
+ *
+ * Off-season: the game day itself rolls at the 9 PM ET score drop (see
+ * utils/seasonProgress), so the just-scored day is ALWAYS currentDay - 1 —
+ * no hour branch. Passing the season status is what makes the 9 PM reveal
+ * visible immediately instead of hidden until 2 AM.
  *
  * This is the single implementation shared by the Scores page, Dashboard,
  * ticker, and Live Scores box (it previously existed as four near-identical
  * copies, one of which wrongly read the browser-local hour).
  *
- * @param currentDay The current season day.
+ * @param currentDay The current season day (the season-aware ACTIVE day from
+ *   utils/seasonProgress via the season store).
  * @param now Injectable clock for testing; defaults to the real time.
+ * @param seasonStatus game-settings/season status; anything other than
+ *   'off-season' uses the live-season hour branch.
  * @returns The effective day, or null if no scores are available yet.
  */
-export function getEffectiveDay(currentDay: number, now: Date = new Date()): number | null {
+export function getEffectiveDay(
+  currentDay: number,
+  now: Date = new Date(),
+  seasonStatus?: string | null
+): number | null {
   if (!currentDay) return null;
-  const hour = getEasternHour(now);
-  const effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+  let effectiveDay: number;
+  if (seasonStatus === 'off-season') {
+    effectiveDay = currentDay - 1;
+  } else {
+    const hour = getEasternHour(now);
+    effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+  }
   return effectiveDay >= 1 ? effectiveDay : null;
 }
 

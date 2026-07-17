@@ -40,12 +40,12 @@ describe('NextDeadlineChip', () => {
   });
 
   it('shows the change-limit reset once changes are locked', () => {
-    // Freeze time at 1:30 AM ET Sunday and start the season 14.5 days
-    // earlier: competition day 15, inside the lockout that ends when scores
-    // process at 2 AM ET.
+    // Freeze time at 8:30 PM ET Saturday and start the season 14.5 days
+    // earlier: competition day 15, inside the off-season lockout that ends
+    // at the 9 PM ET score drop.
     vi.useFakeTimers();
     try {
-      vi.setSystemTime(new Date('2026-07-05T05:30:00Z'));
+      vi.setSystemTime(new Date('2026-07-05T00:30:00Z'));
       seedSeason('off-season', new Date(Date.now() - 14.5 * 24 * 3600e3));
       render(<NextDeadlineChip />);
       expect(screen.getByText(/Changes reset/i)).toBeInTheDocument();

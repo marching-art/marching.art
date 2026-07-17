@@ -63,6 +63,10 @@ const SeasonRecapModal = lazyWithRetry(
   () => import('../components/modals/SeasonRecapModal'),
   'SeasonRecapModal'
 );
+const NightlyRevealModal = lazyWithRetry(
+  () => import('../components/modals/NightlyRevealModal'),
+  'NightlyRevealModal'
+);
 const ShowConceptModal = lazyWithRetry(
   () => import('../components/modals/ShowConceptModal'),
   'ShowConceptModal'
@@ -143,12 +147,16 @@ const Dashboard = () => {
   const { weeksRemaining, isRegistrationLocked, currentDay } = useSeasonStore();
 
   // Calculate if scores are available (for hiding Last Score/Trend columns on Day 1)
-  const scoresAvailable = currentDay ? getEffectiveDay(currentDay) !== null : false;
+  const scoresAvailable = currentDay
+    ? getEffectiveDay(currentDay, undefined, seasonData?.status) !== null
+    : false;
 
   // Modal state, modal-queue effects, and modal action handlers
   // (extracted to src/hooks/useDashboardModals.js)
   const {
     modalQueue,
+    nightlyReveal,
+    handleNightlyRevealClose,
     showRegistration,
     setShowRegistration,
     registrationDefaultClass,
@@ -747,6 +755,13 @@ const Dashboard = () => {
       {modalQueue.isActive('seasonRecap') && profile?.pendingSeasonRecap && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <SeasonRecapModal recap={profile.pendingSeasonRecap} onClose={handleSeasonRecapClose} />
+        </Suspense>
+      )}
+
+      {/* Nightly "scores are up" reveal ceremony (once per game day) */}
+      {modalQueue.isActive('nightlyReveal') && nightlyReveal && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <NightlyRevealModal reveal={nightlyReveal} onClose={handleNightlyRevealClose} />
         </Suspense>
       )}
 

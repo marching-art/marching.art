@@ -25,6 +25,14 @@ vi.mock('../../../store/profileStore', () => ({
     }),
 }));
 
+// The season store supplies the season status for the game-day boundary; its
+// module imports api/client.ts (Firebase init), so mock it with a bare store
+// shape (status undefined = live-season/default boundary, matching the
+// getGameDay() calls in this file's fixtures).
+vi.mock('../../../store/seasonStore', () => ({
+  useSeasonStore: (selector) => selector({ seasonData: null }),
+}));
+
 import DirectorsReport from './DirectorsReport';
 import { getGameDay } from '../../../utils/dailyChallenges';
 

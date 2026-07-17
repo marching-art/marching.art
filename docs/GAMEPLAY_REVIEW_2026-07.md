@@ -219,7 +219,7 @@ Three concrete steps:
 
 ### R5 — Make the full tour count, and de-RNG the margins
 
-Keep last-night-is-your-score as the *placement* rule — it's authentic — but
+Keep last-night-is-your-score as the _placement_ rule — it's authentic — but
 add a visible, career-feeding expression of season-long quality:
 
 - A **Tour Average** (or best-N-of-M nights) stat per corps per season, shown
@@ -297,7 +297,7 @@ from real day-over-day deltas), so outcomes are reproducible and re-roll-proof.
 The multi-season spine is genuinely built: reputation attached to the corps
 lineage with a climb threshold and dormancy decay, divisions seeded purely
 from prior Podium results with published percentile cutoffs, a staff labor
-market where Veteran → Legend tiers can only be *earned by retention* across
+market where Veteran → Legend tiers can only be _earned by retention_ across
 seasons (3/8/15/22), a hosting ladder (High School → College Bowl → NFL
 Stadium), joint rehearsals with private scrimmage reports, the Fan Favorite
 ballot, and the deterministic weekly Podium Report column.
@@ -337,18 +337,18 @@ in intraday click order, yet intraday clicks are where the player's time goes.
 ### 8.2 The receipts didn't ship
 
 The retention thesis (PODIUM.md §11.4) is "skill expression with receipts":
-the trajectory-vs-percentile view lets a player *see* they out-directed the
+the trajectory-vs-percentile view lets a player _see_ they out-directed the
 field. In the live app there is **no projected score and no percentile band**
 in the daily loop — `PodiumCaptionPanel.jsx` carries a comment deferring the
 band chart to a "Phase 6" redesign that never landed; players see raw
-content%/clean% bars and their last score. Ironically the *pre-signup demo*
+content%/clean% bars and their last score. Ironically the _pre-signup demo_
 shows a live projected box score while the real game does not. The
 `PodiumTrajectoryCard` ghost chart only starts after your first scored show,
 so the first week — the highest-churn window — is flying blind.
 
 ### 8.3 The reputation ceiling is invisible, and rookies will misread it
 
-A first-season corps is capped at 0.78 of potential: a *perfectly played*
+A first-season corps is capped at 0.78 of potential: a _perfectly played_
 rookie season tops out in the mid/upper 70s while established corps post
 90s. This is intentional and load-bearing (it makes the multi-season climb
 real and blocks smurf domination), but the UI never says so — the tier name
@@ -367,7 +367,7 @@ plain-language framing of the trade-off at the moment of choice. A
 first-time director setting eight sliders in a game they haven't played yet
 is making the campaign's most consequential commitment with the least
 information they will ever have. FMA veterans loved the lock — the lock is
-right — but the *information asymmetry at commit time* is not.
+right — but the _information asymmetry at commit time_ is not.
 
 ### 8.5 The safety net is opt-in, and a no-plan day is a lost day
 
@@ -375,7 +375,7 @@ With no assistant-director plan saved, a missed day yields nothing (decay
 still applies via `pendingEndOfDay`). The plan editor exists
 (`CorpsConditionPanel.jsx`) but nothing in registration or the Podium rookie
 journey requires or seeds one. In a habit game whose audience includes
-players juggling a fantasy corps *and* a sim corps, the default state of the
+players juggling a fantasy corps _and_ a sim corps, the default state of the
 biggest anti-churn mechanic is "off."
 
 ## 9. Five Podium recommendations
@@ -402,7 +402,7 @@ this day of season ("brass tracking 78th percentile of Day-24 brass"), and a
 decay forecast on neglected captions. Every input already exists server-side
 (`curveData.json` bands, `scoreCorps` is a pure function that can run in
 preview mode, `scoreHistory`). This is the difference between "number goes
-up" and *seeing yourself out-direct the field* — the game's own stated
+up" and _seeing yourself out-direct the field_ — the game's own stated
 retention pillar — and it fills the blind first week before any show has
 been scored.
 
@@ -414,7 +414,7 @@ climb progress (tier performance vs. the 82 threshold) as a season-long
 meter, and make nightly recap surfaces lead with division-relative placement
 ("2nd of 11 in A Division") before absolute score. The reputation system is
 one of the best-designed pieces of the game; right now it reads as an
-unexplained handicap. A rookie who *knows* they're climbing a published
+unexplained handicap. A rookie who _knows_ they're climbing a published
 ladder will accept a 74; one who doesn't will churn.
 
 ### P4 — De-risk the locked challenge decision at registration
@@ -423,7 +423,7 @@ Three additions to step 3 of registration, all information, no mechanics
 changes: (a) challenge presets alongside the audition presets (Safe Opener /
 Balanced Book / Boom-or-Bust) that set all eight sliders coherently; (b) a
 live projected-curve preview per setting, drawn against the historical bands
-— show the player the early-safe curve vs. the late-blooming one *before*
+— show the player the early-safe curve vs. the late-blooming one _before_
 they commit; (c) for a director's **first** Podium season only, a one-time
 challenge re-tune allowed through Day 7 (the sim's equivalent of the fantasy
 side's unlimited early trade window — the veterans' lock stays intact from

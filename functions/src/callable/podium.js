@@ -269,7 +269,11 @@ async function podiumContext(request) {
     throw new HttpsError("failed-precondition", "There is no active season.");
   }
   const seasonData = seasonDoc.data();
-  const calendarDay = getActiveCalendarDay(seasonData.schedule.startDate.toDate());
+  const calendarDay = getActiveCalendarDay(
+    seasonData.schedule.startDate.toDate(),
+    new Date(),
+    seasonData.status,
+  );
   const competitionDay = toCompetitionDay(calendarDay, seasonData);
   // Beta tuning path: merge podium-config/balance overrides over the
   // committed defaults, and swap in the full-archive curve rebuild when

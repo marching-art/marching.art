@@ -14,6 +14,7 @@ export const MODAL_PRIORITY = {
   CLASS_UNLOCK: 3, // Medium - celebration
   ACHIEVEMENT: 4, // Medium - celebration
   SOUNDSPORT_WELCOME: 5, // Low - informational
+  NIGHTLY_REVEAL: 6, // Lowest - the nightly "scores are up" ceremony
 } as const;
 
 export type ModalPriority = (typeof MODAL_PRIORITY)[keyof typeof MODAL_PRIORITY];

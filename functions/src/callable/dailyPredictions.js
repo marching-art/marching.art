@@ -66,10 +66,17 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
     // Canonical question context, derived outside the transaction (recaps
     // are immutable). Same season source as resolvePredictions so the
     // threshold saved here and the resolution later read identical data.
-    const preSnap = await profileRef.get();
+    // The bucket day key rolls with the season-aware game-day boundary
+    // (9 PM ET off-season, 2 AM ET live) so tomorrow's picks open the
+    // moment tonight's score drop lands.
+    const [preSnap, seasonSnap] = await Promise.all([
+      profileRef.get(),
+      db.doc("game-settings/season").get(),
+    ]);
     if (!preSnap.exists) {
       throw new HttpsError("not-found", "User profile not found.");
     }
+    const seasonStatus = seasonSnap.exists ? seasonSnap.data().status : undefined;
     const seasonUid = preSnap.data().activeSeasonId;
     // Class-aware: Podium reads its own recap collection, fantasy classes read
     // fantasy_recaps. Reading the wrong source yields no results → a null
@@ -86,7 +93,7 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
       }
       const profileData = profileDoc.data();
 
-      const gameDay = getGameDay();
+      const gameDay = getGameDay(new Date(), seasonStatus);
       const allBuckets = profileData.predictions || {};
       const bucket = allBuckets[gameDay] || {
         picks: {},

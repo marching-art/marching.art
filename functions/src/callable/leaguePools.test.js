@@ -31,6 +31,12 @@ function makeFakeDb(docs = new Map()) {
         },
       };
     },
+    // Non-transactional read (the callable pre-fetches game-settings/season
+    // for the season-aware game-day key).
+    async get() {
+      const data = docs.get(path);
+      return { exists: data !== undefined, data: () => data };
+    },
   });
   const db = {
     doc(path) {

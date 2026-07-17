@@ -206,7 +206,7 @@ const Schedule = () => {
                 <span className="font-bold font-data tabular-nums">
                   {formatCountdown(scoresInMs)}
                 </span>{' '}
-                (nightly at 2 AM ET)
+                (nightly at {seasonData?.status === 'off-season' ? '9 PM ET' : '2 AM ET'})
               </p>
             </div>
           </div>

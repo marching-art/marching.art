@@ -46,14 +46,18 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   const liveSeasonYear = seasonData?.seasonYear != null ? String(seasonData.seasonYear) : null;
   const dataDocId = seasonData?.dataDocId;
 
-  // Track whether we're past the 2 AM ET score processing time
-  // This state updates every minute to ensure we react to the 2 AM boundary
-  const [isPastProcessingTime, setIsPastProcessingTime] = useState(() => getEasternHour() >= 2);
+  // Track whether we're past the score-processing boundary (9 PM ET in the
+  // off-season, 2 AM ET in live season). This state updates every minute so
+  // the landing scores react the moment the drop lands.
+  const processingHour = seasonData?.status === 'off-season' ? 21 : 2;
+  const [isPastProcessingTime, setIsPastProcessingTime] = useState(
+    () => getEasternHour() >= processingHour
+  );
 
-  // Set up interval to check if we've crossed the 2 AM boundary
+  // Set up interval to check if we've crossed the processing boundary
   useEffect(() => {
     const checkProcessingTime = () => {
-      const nowPastProcessingTime = getEasternHour() >= 2;
+      const nowPastProcessingTime = getEasternHour() >= processingHour;
       setIsPastProcessingTime((prev) => {
         // Only update if the value actually changed to avoid unnecessary re-renders
         return prev !== nowPastProcessingTime ? nowPastProcessingTime : prev;
@@ -64,17 +68,16 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     const interval = setInterval(checkProcessingTime, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [processingHour]);
 
-  // Max day of scores to display, accounting for the 2 AM ET processing window:
-  // scores for day N are processed at 2 AM ET on day N+1, so before 2 AM only
-  // day N-2 is available and after 2 AM day N-1 is. Recalculates when the day
-  // changes OR when we cross the 2 AM boundary.
+  // Max day of scores to display, accounting for the season-aware processing
+  // window (see utils/dashboardScoring.getEffectiveDay). Recalculates when
+  // the day changes OR when we cross the processing boundary.
   const maxScoreDay = useMemo(() => {
     if (!currentDay) return null;
-    return getEffectiveDay(currentDay);
+    return getEffectiveDay(currentDay, undefined, seasonData?.status);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentDay, isPastProcessingTime]);
+  }, [currentDay, isPastProcessingTime, seasonData?.status]);
 
   // Fantasy pool corps (dci-data doc). Needed in both modes: it defines the
   // off-season ranking list, and in live season it filters the scraped corps

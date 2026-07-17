@@ -13,15 +13,18 @@ import { queryKeys } from '../lib/queryClient';
 import { CAPTIONS } from '../components/Dashboard';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
 import { formatRecapDate } from './useScoresData';
+import { useSeasonStore } from '../store/seasonStore';
 
 const SCORES_STALE_TIME = 5 * 60 * 1000;
 
 export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   const hasLineup = !!lineup && Object.keys(lineup).length > 0;
+  const seasonStatus = useSeasonStore((s) => s.seasonData?.status);
 
-  // Effective day accounting for 2 AM ET score processing. Guard: if null or
-  // < 1 no scores should be visible (Day 1, or Day 2 before 2 AM).
-  const effectiveDay = currentDay ? getEffectiveDay(currentDay) : null;
+  // Effective day accounting for the season-aware score processing boundary
+  // (9 PM ET off-season, 2 AM ET live). Guard: if null or < 1 no scores
+  // should be visible yet.
+  const effectiveDay = currentDay ? getEffectiveDay(currentDay, undefined, seasonStatus) : null;
   const shouldFetch = hasLineup && !!effectiveDay && effectiveDay >= 1;
 
   // Unique source years referenced by the lineup ("corpsName|sourceYear")
@@ -110,8 +113,9 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
   return useMemo(() => {
     if (!enabled || !recaps || recaps.length === 0) return [];
 
-    // Only show scores from days that have been processed (2 AM ET boundary).
-    const effectiveDay = getEffectiveDay(currentDay);
+    // Only show scores from days that have been processed (season-aware
+    // boundary: 9 PM ET off-season, 2 AM ET live).
+    const effectiveDay = getEffectiveDay(currentDay, undefined, seasonData?.status);
     if (effectiveDay === null) return [];
 
     const results = [];
@@ -143,7 +147,15 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
     }
 
     return results;
-  }, [enabled, recaps, user?.uid, activeCorpsClass, currentDay, seasonData?.schedule]);
+  }, [
+    enabled,
+    recaps,
+    user?.uid,
+    activeCorpsClass,
+    currentDay,
+    seasonData?.schedule,
+    seasonData?.status,
+  ]);
 }
 
 /**
@@ -170,8 +182,8 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
   return useMemo(() => {
     if (!active || !recaps || recaps.length === 0) return [];
 
-    // Only surface days that have been processed (2 AM ET boundary).
-    const effectiveDay = getEffectiveDay(currentDay);
+    // Only surface days that have been processed (season-aware boundary).
+    const effectiveDay = getEffectiveDay(currentDay, undefined, seasonData?.status);
     if (effectiveDay === null) return [];
 
     const results = [];
@@ -200,7 +212,7 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
     }
 
     return results;
-  }, [active, recaps, user?.uid, currentDay, seasonData?.schedule]);
+  }, [active, recaps, user?.uid, currentDay, seasonData?.schedule, seasonData?.status]);
 }
 
 export function useBestInShowCount(activeCorps, activeCorpsClass, allShows) {

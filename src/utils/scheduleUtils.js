@@ -260,13 +260,15 @@ export function showCalendarDay(comp) {
 
 /**
  * Check if an event date is considered "past" for display purposes.
- * Events are considered past only once the nightly score processing after
- * show day has run (2 AM ET — the same instant registration closes), via
- * the shared season clock.
+ * Events are considered past only once the score processing that scores the
+ * show has run (9 PM ET show night in the off-season, 2 AM ET the next
+ * morning in live season — the same instant registration closes), via the
+ * shared season clock.
  * @param {Date|null} eventDate - The date of the event
+ * @param {Object|null} [seasonData] - game-settings/season doc (for status)
  * @returns {boolean} True if the event is past
  */
-export function isEventPast(eventDate) {
-  const deadline = getShowRegistrationDeadline(eventDate);
+export function isEventPast(eventDate, seasonData = undefined) {
+  const deadline = getShowRegistrationDeadline(eventDate, seasonData);
   return deadline ? new Date() >= deadline : false;
 }

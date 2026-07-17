@@ -78,6 +78,10 @@ const CaptionSelectionModal = ({
   // functions/src/helpers/captionWindows.js and ticks with the clock.
   const { scoresInMs, trade: changeInfo } = useSeasonDeadlines(30000, corpsClass);
   const seasonUid = useSeasonStore((s) => s.seasonData?.seasonUid);
+  const seasonStatus = useSeasonStore((s) => s.seasonData?.status);
+  // Player-facing label for the season's score-drop time (9 PM ET off-season,
+  // 2 AM ET live) — keep in sync with utils/seasonClock scoresProcessHourET.
+  const scoreDropLabel = seasonStatus === 'off-season' ? '9:00 PM ET' : '2:00 AM ET';
 
   // Changes remaining in the current allotment (weekly 3 / championship 2 per
   // day). The stored counter's `week` field holds changeInfo.periodKey — the
@@ -384,7 +388,7 @@ const CaptionSelectionModal = ({
       // Mirrors the saveLineup enforcement messages.
       if (changeInfo.status === 'locked') {
         setSaveError(
-          'Caption changes are locked while scores are processed. They reopen around 2:00 AM ET.'
+          `Caption changes are locked while scores are processed. They reopen around ${scoreDropLabel}.`
         );
       } else if (changeInfo.phase === 'blackout') {
         setSaveError(
@@ -721,7 +725,7 @@ const CaptionSelectionModal = ({
           {/* Footer */}
           <div className="px-4 py-3 border-t border-line bg-surface-sunken flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
             <p className="text-[10px] text-muted leading-snug min-w-0 hidden sm:block">
-              Locked lineups are scored nightly at 2 AM ET — next run in{' '}
+              Locked lineups are scored nightly at {scoreDropLabel} — next run in{' '}
               <span className="text-cyan-400 font-bold font-data tabular-nums">
                 {formatCountdown(scoresInMs)}
               </span>

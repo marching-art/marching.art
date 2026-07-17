@@ -1,19 +1,21 @@
 // NextDeadlineChip - always-visible countdown to the next game deadline.
-// Scores process nightly at 2 AM ET; caption-change windows (unlimited /
-// weekly / championship / lockouts) come from the shared season clock.
+// Scores process nightly at the season's drop time (9 PM ET off-season,
+// 2 AM ET live season); caption-change windows (unlimited / weekly /
+// championship / lockouts) come from the shared season clock.
 
 import React, { useState } from 'react';
 import { Clock, ChevronDown } from 'lucide-react';
 import { useSeasonDeadlines } from '../../../hooks/useSeasonClock';
+import { useSeasonStore } from '../../../store/seasonStore';
 import { formatCountdown, formatEtShort, formatEtDayTime } from '../../../utils/seasonClock';
 
 const NextDeadlineChip = ({ variant = 'chip' }) => {
   const { scoresAt, scoresInMs, trade } = useSeasonDeadlines();
+  const seasonStatus = useSeasonStore((s) => s.seasonData?.status);
   const [expanded, setExpanded] = useState(false);
 
-  const tooltipLines = [
-    `Scores process nightly at 2:00 AM ET — next: ${formatEtDayTime(scoresAt)}`,
-  ];
+  const dropLabel = seasonStatus === 'off-season' ? '9:00 PM ET' : '2:00 AM ET';
+  const tooltipLines = [`Scores drop nightly at ${dropLabel} — next: ${formatEtDayTime(scoresAt)}`];
   let tradeLabel = null;
   if (trade?.status === 'locked') {
     if (trade.phase === 'weekly') {

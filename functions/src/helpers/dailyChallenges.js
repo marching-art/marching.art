@@ -10,6 +10,8 @@
  * fixed-date expectations in their tests to catch drift.
  */
 
+const { resetShiftHours } = require("./gameDay");
+
 /**
  * The full pool of rotating challenges. Three are offered per game day.
  * XP values are intentionally small next to dailyLogin (25 XP) so the
@@ -121,15 +123,19 @@ function advanceWeeklyLoop(prevLoop, gameDay, setComplete) {
 const MAX_CHALLENGE_DAYS_KEPT = 30;
 
 /**
- * Get the "game day" string — resets at 2 AM Eastern, together with the
- * nightly score processing. Port of the client getGameDay in
- * src/utils/dailyChallenges.js; both emit Date.toDateString() format
- * (e.g. "Wed Jan 14 2026").
+ * Get the "game day" string — the ACTIVE game day, rolling together with the
+ * nightly score processing (helpers/gameDay.js boundary): 2 AM ET in live
+ * season, 9 PM ET in the off-season (the prime-time score drop — a fresh
+ * challenge/prediction day opens the moment the reveal lands). Port of the
+ * client getGameDay in src/utils/dailyChallenges.js; both emit
+ * Date.toDateString() format (e.g. "Wed Jan 14 2026").
  *
  * @param {Date} [now]
+ * @param {string} [seasonStatus] - game-settings/season `status`; anything
+ *   other than "off-season" uses the live 2 AM ET boundary.
  * @returns {string}
  */
-function getGameDay(now = new Date()) {
+function getGameDay(now = new Date(), seasonStatus = undefined) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     year: "numeric",
@@ -151,10 +157,11 @@ function getGameDay(now = new Date()) {
     )
   );
 
-  // Before 2 AM Eastern, the previous game day is still in progress
-  if (et.getUTCHours() < 2) {
-    et.setUTCDate(et.getUTCDate() - 1);
-  }
+  // The active game day's calendar date is the ET wall clock shifted by the
+  // season's reset offset (gameDay.resetShiftHours): back 2h live (before
+  // 2 AM the previous day is still in progress), forward 3h off-season
+  // (at/after 9 PM the NEXT day has begun — scores just dropped).
+  et.setUTCHours(et.getUTCHours() - resetShiftHours(seasonStatus));
 
   return new Date(et.getUTCFullYear(), et.getUTCMonth(), et.getUTCDate()).toDateString();
 }

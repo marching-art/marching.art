@@ -37,11 +37,39 @@ describe('getNextScoresProcessingTime', () => {
   });
 });
 
+describe('getNextScoresProcessingTime (off-season 9 PM ET drop)', () => {
+  const offSeason = { status: 'off-season' };
+
+  it('returns tonight 9 PM ET when it is still afternoon', () => {
+    // 2026-07-03 12:00 EDT → next drop 2026-07-03 21:00 EDT = 2026-07-04T01:00Z
+    const now = new Date('2026-07-03T16:00:00Z');
+    expect(getNextScoresProcessingTime(now, offSeason).toISOString()).toBe(
+      '2026-07-04T01:00:00.000Z'
+    );
+  });
+
+  it('rolls to tomorrow 9 PM ET once tonight’s drop has passed', () => {
+    // 10 PM EDT July 3 → next drop July 4 21:00 EDT
+    const now = new Date('2026-07-04T02:00:00Z');
+    expect(getNextScoresProcessingTime(now, offSeason).toISOString()).toBe(
+      '2026-07-05T01:00:00.000Z'
+    );
+  });
+});
+
 describe('getShowRegistrationDeadline', () => {
-  it('is 2 AM ET the day after the show', () => {
+  it('is 2 AM ET the day after the show (live season / default)', () => {
     const eventDate = new Date(2026, 6, 10); // July 10, local midnight
     // Deadline: July 11 02:00 EDT = 06:00 UTC
     expect(getShowRegistrationDeadline(eventDate).toISOString()).toBe('2026-07-11T06:00:00.000Z');
+  });
+
+  it('is 9 PM ET on the show’s own day in the off-season', () => {
+    const eventDate = new Date(2026, 6, 10); // July 10, local midnight
+    // Deadline: July 10 21:00 EDT = July 11 01:00 UTC — the same-evening drop
+    expect(getShowRegistrationDeadline(eventDate, { status: 'off-season' }).toISOString()).toBe(
+      '2026-07-11T01:00:00.000Z'
+    );
   });
 
   it('returns null for missing dates', () => {
@@ -70,22 +98,31 @@ describe('getCaptionChangeInfo', () => {
     expect(w.status).toBe('open');
     expect(w.tradeLimit).toBe(Infinity);
     expect(w.unlimitedEndsAt.toISOString()).toBe('2026-07-05T00:00:00.000Z');
-    // Weekly limits become usable after day 15 begins + the 2 AM ET run
-    expect(w.resetsAt.toISOString()).toBe('2026-07-05T06:00:00.000Z');
+    // Weekly limits become usable after day 15 begins + the 9 PM ET drop
+    // (off-season scores process the same evening).
+    expect(w.resetsAt.toISOString()).toBe('2026-07-05T01:00:00.000Z');
     expect(w.nextLimit).toBe(3);
   });
 
   it('locks on Saturday night even during the unlimited weeks', () => {
-    // Day 8 begins 2026-06-28T00:00:00Z (Sat June 27, 8 PM EDT); 9 PM EDT:
-    const w = info('2026-06-28T01:00:00Z');
+    // Day 8 begins 2026-06-28T00:00:00Z (Sat June 27, 8 PM EDT); 8:30 PM EDT:
+    const w = info('2026-06-28T00:30:00Z');
+    expect(w.day).toBe(8);
+    expect(w.status).toBe('locked');
+    expect(w.reopensAt.toISOString()).toBe('2026-06-28T01:00:00.000Z'); // 9 PM EDT drop
+
+    // After the 9 PM ET drop it reopens, still unlimited
+    const reopened = info('2026-06-28T01:30:00Z');
+    expect(reopened.status).toBe('open');
+    expect(reopened.phase).toBe('unlimited');
+  });
+
+  it('keeps the overnight 2 AM ET reopen in live season', () => {
+    const liveSeason = { ...season(), status: 'live-season' };
+    const w = getCaptionChangeInfo(liveSeason, new Date('2026-06-28T01:00:00Z'));
     expect(w.day).toBe(8);
     expect(w.status).toBe('locked');
     expect(w.reopensAt.toISOString()).toBe('2026-06-28T06:00:00.000Z'); // 2 AM EDT
-
-    // After 2 AM ET it reopens, still unlimited
-    const reopened = info('2026-06-28T07:00:00Z');
-    expect(reopened.status).toBe('open');
-    expect(reopened.phase).toBe('unlimited');
   });
 
   it('allows 3 changes per week on days 15-42', () => {
@@ -96,16 +133,16 @@ describe('getCaptionChangeInfo', () => {
     expect(w.tradeLimit).toBe(3);
     // Locks at the Saturday 8 PM ET boundary ending week 3 (day 21)
     expect(w.locksAt.toISOString()).toBe('2026-07-12T00:00:00.000Z');
-    // Fresh allotment once week 4 opens after the 2 AM ET run
-    expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    // Fresh allotment once week 4 opens after the 9 PM ET drop
+    expect(w.resetsAt.toISOString()).toBe('2026-07-12T01:00:00.000Z');
   });
 
-  it('locks week-start days until the 2 AM ET score run', () => {
-    // Day 22 begins 2026-07-12T00:00:00Z (Sat 8 PM EDT); 9 PM EDT:
-    const w = info('2026-07-12T01:00:00Z');
+  it('locks week-start days until the 9 PM ET score drop', () => {
+    // Day 22 begins 2026-07-12T00:00:00Z (Sat 8 PM EDT); 8:30 PM EDT:
+    const w = info('2026-07-12T00:30:00Z');
     expect(w.day).toBe(22);
     expect(w.status).toBe('locked');
-    expect(w.reopensAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    expect(w.reopensAt.toISOString()).toBe('2026-07-12T01:00:00.000Z');
   });
 
   it('closes changes entirely on days 43-44', () => {
@@ -113,17 +150,18 @@ describe('getCaptionChangeInfo', () => {
     expect(w.phase).toBe('blackout');
     expect(w.status).toBe('closed');
     expect(w.tradeLimit).toBe(0);
-    // Championship changes open after day 45 begins + the 2 AM ET run
-    expect(w.reopensAt.toISOString()).toBe('2026-08-04T06:00:00.000Z');
+    // Championship changes open after day 45 begins + the 9 PM ET drop
+    expect(w.reopensAt.toISOString()).toBe('2026-08-04T01:00:00.000Z');
     expect(w.nextLimit).toBe(2);
   });
 
   it('gives 2 changes per day during championships with nightly 8 PM ET locks', () => {
-    // Day 45 begins 2026-08-04T00:00:00Z (Mon 8 PM EDT). Before 2 AM ET: locked.
-    const locked = info('2026-08-04T01:00:00Z');
+    // Day 45 begins 2026-08-04T00:00:00Z (Mon 8 PM EDT). Before the 9 PM ET
+    // drop: locked.
+    const locked = info('2026-08-04T00:30:00Z');
     expect(locked.phase).toBe('championship');
     expect(locked.status).toBe('locked');
-    expect(locked.reopensAt.toISOString()).toBe('2026-08-04T06:00:00.000Z');
+    expect(locked.reopensAt.toISOString()).toBe('2026-08-04T01:00:00.000Z');
 
     // Tuesday afternoon: open with the championship limit, closing at the
     // next day boundary (8 PM ET). periodKey is the day, so it resets nightly.

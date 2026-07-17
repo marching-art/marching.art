@@ -108,9 +108,10 @@ export const useSeasonStore = create<SeasonState>()((set, get) => ({
 
           // Derived day/week come from the single canonical source
           // (utils/seasonProgress), which mirrors the backend game-day math in
-          // functions/src/helpers/gameDay.js exactly — 2 AM ET reset, start
-          // normalized on the UTC calendar. Keeps the day the UI shows in sync
-          // with the day the nightly scoring processors actually score.
+          // functions/src/helpers/gameDay.js exactly — season-aware reset
+          // (2 AM ET live, 9 PM ET off-season), start normalized on the UTC
+          // calendar. Keeps the day the UI shows in sync with the day the
+          // nightly scoring processors actually score.
           const { currentDay, currentWeek } = data.schedule?.startDate
             ? getSeasonProgress(data)
             : { currentDay: 1, currentWeek: 1 };

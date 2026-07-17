@@ -4,17 +4,45 @@
  * (dailyProcessors.js, scoring.js, admin.js), so a DST or boundary fix had to
  * be made three times. It lives here once now.
  *
- * Game days reset at 2 AM Eastern: the scheduler fires at 2 AM ET and scores
- * the game day that just ended ("yesterday"). We use Intl.DateTimeFormat to
- * reliably get the current Eastern wall-clock time, which correctly handles
- * DST transitions (unlike a toLocaleString round-trip, which loses timezone
- * context when re-parsed by new Date()).
+ * The game-day boundary is SEASON-TYPE-AWARE (the "score drop" redesign):
+ *
+ *   - Live season: game days reset at 2 AM ET. The scheduler fires at 2 AM
+ *     and scores the game day that just ended ("yesterday") — real West Coast
+ *     DCI shows post scores after 1 AM ET, so the run can't be earlier.
+ *   - Off-season: game days end at 9 PM ET and scores run the SAME evening
+ *     (the 21:00 processor scores that calendar date's shows). Historical
+ *     data is available all day, so the drop moves to prime time and becomes
+ *     the nightly reveal event.
+ *
+ * Everything keyed to "the game day" (scoring, Podium rehearsal days,
+ * challenge/prediction buckets, league pools) shares this boundary via the
+ * helpers below — pass the season status so all of them roll together.
+ * Callers that omit the status get the live-season behavior, which matches
+ * every pre-redesign call site.
+ *
+ * We use Intl.DateTimeFormat to reliably get the current Eastern wall-clock
+ * time, which correctly handles DST transitions (unlike a toLocaleString
+ * round-trip, which loses timezone context when re-parsed by new Date()).
  */
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-// Game days roll over at 2 AM ET, not midnight, so a run in the 12-2 AM
-// window still belongs to the previous game day.
-const GAME_DAY_RESET_HOURS = 2;
+// Live season: shift back 2h then take the previous calendar date — a run in
+// the 12-2 AM window still belongs to the previous game day.
+const LIVE_RESET_SHIFT_HOURS = 2;
+// Off-season: shift FORWARD 3h then take the previous calendar date — at/after
+// 9 PM ET the just-ended game day is TODAY's date (scored this evening), and
+// before 9 PM it is yesterday's.
+const OFF_SEASON_RESET_SHIFT_HOURS = -3;
+
+/**
+ * The reset shift for a season status. Exported for the mirrors' tests.
+ * @param {string|null|undefined} seasonStatus - game-settings/season `status`
+ *   ("live-season" | "off-season"); anything else behaves like live season.
+ * @returns {number} hours to shift back before taking the calendar date
+ */
+function resetShiftHours(seasonStatus) {
+  return seasonStatus === "off-season" ? OFF_SEASON_RESET_SHIFT_HOURS : LIVE_RESET_SHIFT_HOURS;
+}
 
 /**
  * The game day that just ended, as a Date at UTC midnight whose calendar
@@ -22,9 +50,11 @@ const GAME_DAY_RESET_HOURS = 2;
  * arithmetic against a UTC-midnight season start date.)
  *
  * @param {Date} [now] - Injectable clock for tests; defaults to now.
+ * @param {string} [seasonStatus] - "off-season" ends game days at 9 PM ET
+ *   (same-evening scoring); anything else uses the live 2 AM ET reset.
  * @returns {Date}
  */
-function getCompletedGameDayET(now = new Date()) {
+function getCompletedGameDayET(now = new Date(), seasonStatus = undefined) {
   const etParts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     year: "numeric",
@@ -49,8 +79,9 @@ function getCompletedGameDayET(now = new Date()) {
     parseInt(etValues.second),
   ));
 
-  // Shift by the reset offset so e.g. 1 AM on Jan 5 is still Jan 4's game day.
-  const gameTimeET = new Date(nowET.getTime() - GAME_DAY_RESET_HOURS * 60 * 60 * 1000);
+  // Shift by the reset offset so e.g. 1 AM on Jan 5 is still Jan 4's game day
+  // (live), or so 9:30 PM on Jan 5 has already completed Jan 5 (off-season).
+  const gameTimeET = new Date(nowET.getTime() - resetShiftHours(seasonStatus) * 60 * 60 * 1000);
   const yesterday = new Date(gameTimeET);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   yesterday.setUTCHours(0, 0, 0, 0);
@@ -70,10 +101,11 @@ function getCompletedGameDayET(now = new Date()) {
  *
  * @param {Date} seasonStartDate - Season start (UTC midnight).
  * @param {Date} [now] - Injectable clock for tests; defaults to now.
+ * @param {string} [seasonStatus] - See getCompletedGameDayET.
  * @returns {number}
  */
-function getCompletedCalendarDay(seasonStartDate, now = new Date()) {
-  const completedGameDay = getCompletedGameDayET(now);
+function getCompletedCalendarDay(seasonStartDate, now = new Date(), seasonStatus = undefined) {
+  const completedGameDay = getCompletedGameDayET(now, seasonStatus);
   const seasonStartNormalized = new Date(Date.UTC(
     seasonStartDate.getUTCFullYear(),
     seasonStartDate.getUTCMonth(),
@@ -110,16 +142,17 @@ function getCurrentSeasonWeek(seasonData, now = new Date()) {
  * 1-based calendar day of the game day currently IN PROGRESS (Phase 1.3).
  * The nightly processors score the completed day; interactive verbs (Podium
  * rehearsal block allocation) act on the active one — always exactly
- * completed + 1 because both share the 2 AM ET boundary. Server-side
- * validation for "today" MUST use this, never client-supplied days
- * (PODIUM.md §14.2.4).
+ * completed + 1 because both share the same season-aware boundary (2 AM ET
+ * live, 9 PM ET off-season). Server-side validation for "today" MUST use
+ * this, never client-supplied days (PODIUM.md §14.2.4).
  *
  * @param {Date} seasonStartDate - Season start (UTC midnight).
  * @param {Date} [now] - Injectable clock for tests; defaults to now.
+ * @param {string} [seasonStatus] - See getCompletedGameDayET.
  * @returns {number}
  */
-function getActiveCalendarDay(seasonStartDate, now = new Date()) {
-  return getCompletedCalendarDay(seasonStartDate, now) + 1;
+function getActiveCalendarDay(seasonStartDate, now = new Date(), seasonStatus = undefined) {
+  return getCompletedCalendarDay(seasonStartDate, now, seasonStatus) + 1;
 }
 
 /**
@@ -143,4 +176,5 @@ module.exports = {
   getActiveCalendarDay,
   toCompetitionDay,
   getCurrentSeasonWeek,
+  resetShiftHours,
 };

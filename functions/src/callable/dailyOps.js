@@ -310,6 +310,12 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
   const profileRef = db.doc(paths.userProfile(uid));
 
   try {
+    // Challenge buckets roll with the season-aware game-day boundary (9 PM ET
+    // off-season, 2 AM ET live) so a fresh challenge set opens the moment the
+    // nightly score drop lands.
+    const seasonSnap = await db.doc("game-settings/season").get();
+    const seasonStatus = seasonSnap.exists ? seasonSnap.data().status : undefined;
+
     // Weekly-arc fairness for brand-new directors: with fewer than two
     // scored results there are NO prediction questions (buildQuestions
     // returns [] and submitPrediction rejects), so on days whose rotation
@@ -319,7 +325,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
     // drops out of the required set. Recaps are immutable, so this is
     // safely computed outside the transaction; it only costs a recap read
     // when the answer could matter (rotation includes it, no picks yet).
-    const gameDayPre = getGameDay();
+    const gameDayPre = getGameDay(new Date(), seasonStatus);
     const rotationIds = getChallengesForGameDay(gameDayPre).map((c) => c.id);
     let predictionAvailable = true;
     if (rotationIds.includes("make-prediction")) {
@@ -355,7 +361,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
       }
       const profileData = profileDoc.data();
 
-      const gameDay = getGameDay();
+      const gameDay = getGameDay(new Date(), seasonStatus);
       const challenge = getChallengesForGameDay(gameDay).find((c) => c.id === challengeId);
       if (!challenge) {
         // Valid challenge, but not in today's rotation — a soft no-op so

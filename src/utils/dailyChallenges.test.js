@@ -47,6 +47,17 @@ describe('getGameDay', () => {
     vi.setSystemTime(new Date('2026-07-15T06:30:00Z'));
     expect(getGameDay()).toBe(new Date('2026-07-15T12:00:00Z').toDateString());
   });
+
+  test('off-season: a new game day opens at the 9 PM ET score drop', () => {
+    // 9:30 PM EDT July 4 — the drop just ran, so the ACTIVE day is July 5.
+    expect(getGameDay(new Date('2026-07-05T01:30:00Z'), 'off-season')).toBe(
+      new Date('2026-07-05T12:00:00Z').toDateString()
+    );
+    // 8:30 PM EDT July 4 — still July 4's game day.
+    expect(getGameDay(new Date('2026-07-05T00:30:00Z'), 'off-season')).toBe(
+      new Date('2026-07-04T12:00:00Z').toDateString()
+    );
+  });
 });
 
 describe('getChallengesForGameDay', () => {

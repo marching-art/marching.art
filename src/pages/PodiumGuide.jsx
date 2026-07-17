@@ -42,7 +42,7 @@ const SECTIONS = [
   {
     n: 7,
     title: 'Scoring',
-    body: `Your 8 captions score against the real historical envelope of DCI results for that day of the season — how much show you have installed, how clean it is, and your corps condition decide where in the band you land. Recaps drop nightly around 2 AM ET as a full-caption box score (Podium is the only class that shows all 8 captions). No corps ever scores 100; the all-time ceiling is 99.70 and it is meant to be a once-in-a-generation feat.`,
+    body: `Your 8 captions score against the real historical envelope of DCI results for that day of the season — how much show you have installed, how clean it is, and your corps condition decide where in the band you land. Recaps drop nightly (9 PM ET in the off-season, overnight during the live summer season) as a full-caption box score (Podium is the only class that shows all 8 captions). No corps ever scores 100; the all-time ceiling is 99.70 and it is meant to be a once-in-a-generation feat.`,
   },
   {
     n: 8,

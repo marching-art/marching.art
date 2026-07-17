@@ -145,7 +145,7 @@ export const GAME_CONFIG = {
     /** Total weeks in a season */
     totalWeeks: 7,
 
-    /** Game day reset hour (2 AM) */
+    /** Live-season game day reset hour (2 AM ET; off-season days end at 9 PM ET — see utils/seasonProgress) */
     resetHour: 2,
 
     /** Shows per week (regular weeks) */

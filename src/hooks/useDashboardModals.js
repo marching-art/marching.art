@@ -18,6 +18,8 @@ import {
 } from '../api/functions';
 import { CLASS_DISPLAY_NAMES } from '../components/Dashboard/sections/constants';
 import { useModalQueue, MODAL_PRIORITY } from './useModalQueue';
+import { useSeasonStore } from '../store/seasonStore';
+import { useNightlyReveal } from './useNightlyReveal';
 
 export function useDashboardModals(user, dashboardData) {
   const location = useLocation();
@@ -100,6 +102,23 @@ export function useDashboardModals(user, dashboardData) {
       });
     }
   }, [newlyUnlockedClass, enqueueModal]);
+
+  // Nightly reveal — "scores are up." Enqueued at the lowest priority so
+  // celebrations, setup, and onboarding always come first; the eligibility
+  // hook enforces once-per-game-day via a localStorage marker.
+  const currentDay = useSeasonStore((s) => s.currentDay);
+  const nightlyReveal = useNightlyReveal(user, seasonData, currentDay, profile);
+  useEffect(() => {
+    if (nightlyReveal) {
+      enqueueModal('nightlyReveal', MODAL_PRIORITY.NIGHTLY_REVEAL);
+    }
+  }, [nightlyReveal, enqueueModal]);
+
+  const handleNightlyRevealClose = useCallback(() => {
+    nightlyReveal?.markSeen();
+    modalQueue.dequeue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nightlyReveal, modalQueue.dequeue]);
 
   useEffect(() => {
     if (newAchievement) {
@@ -352,6 +371,9 @@ export function useDashboardModals(user, dashboardData) {
 
   return {
     modalQueue,
+    // Nightly reveal ("scores are up" ceremony)
+    nightlyReveal,
+    handleNightlyRevealClose,
     // Modal state
     showRegistration,
     setShowRegistration,

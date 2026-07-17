@@ -14,6 +14,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { ClipboardList, Check, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../../../store/profileStore';
+import { useSeasonStore } from '../../../store/seasonStore';
 import { getGameDay, getChallengesForGameDay } from '../../../utils/dailyChallenges';
 import { buildQuestions } from '../../../utils/dailyPredictions';
 import { claimLadderTier } from '../../../api/functions';
@@ -32,13 +33,14 @@ const toDate = (value) => {
 const DirectorsReport = memo(
   ({ recentResults, corpsClass, seasonUid, onLineupClick, onConceptClick }) => {
     const profile = useProfileStore((state) => state.profile);
+    const seasonStatus = useSeasonStore((state) => state.seasonData?.status);
     const [claimingTier, setClaimingTier] = useState(null);
 
-    const gameDay = getGameDay();
+    const gameDay = getGameDay(new Date(), seasonStatus);
 
     // --- Login row: claimed automatically on app load (claimDailyLogin) ---
     const lastLogin = toDate(profile?.engagement?.lastLogin);
-    const loginDone = !!lastLogin && getGameDay(lastLogin) === gameDay;
+    const loginDone = !!lastLogin && getGameDay(lastLogin, seasonStatus) === gameDay;
     const streak = profile?.engagement?.loginStreak || 0;
 
     // --- Predictions: picked or resolved both count as "done for today" ---

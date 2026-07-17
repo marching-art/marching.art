@@ -43,7 +43,11 @@ async function runPodiumStage(db) {
   const seasonData = seasonDoc.data();
   if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
 
-  const calendarDay = getCompletedCalendarDay(seasonData.schedule.startDate.toDate());
+  const calendarDay = getCompletedCalendarDay(
+    seasonData.schedule.startDate.toDate(),
+    new Date(),
+    seasonData.status,
+  );
   const springTrainingDays =
     seasonData.status === "live-season"
       ? seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS_DEFAULT

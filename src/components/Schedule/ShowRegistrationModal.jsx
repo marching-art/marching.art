@@ -18,6 +18,8 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { getShowRegistrationDeadline, formatEtDayTime } from '../../utils/seasonClock';
 import { compareCorpsClasses } from '../../utils/corps';
+import { useSeasonStore } from '../../store/seasonStore';
+import { maybeOfferScoreDropPush } from './scoreDropPushPrompt';
 import RunningOrder from './RunningOrder';
 import CorpsSelectionItem from './ShowRegistrationModalParts';
 import {
@@ -42,12 +44,17 @@ const ShowRegistrationModal = ({
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
   const { trigger: haptic } = useHaptic();
+  const seasonData = useSeasonStore((s) => s.seasonData);
 
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
   const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
 
-  // Registration stays open until the nightly score processing after show day
-  const registrationDeadline = useMemo(() => getShowRegistrationDeadline(eventDate), [eventDate]);
+  // Registration stays open until the score processing run that scores the
+  // show (9 PM ET show night off-season, 2 AM ET the next morning live)
+  const registrationDeadline = useMemo(
+    () => getShowRegistrationDeadline(eventDate, seasonData),
+    [eventDate, seasonData]
+  );
 
   // Check if this is a championship show with auto-enrollment
   const isChampionship = show.isChampionship === true;
@@ -288,6 +295,9 @@ const ShowRegistrationModal = ({
 
       haptic('success');
       toast.success('Registration updated!');
+      // Contextual push opt-in — one-time offer at the moment of maximum
+      // intent (see scoreDropPushPrompt.jsx).
+      maybeOfferScoreDropPush(seasonData);
       onSuccess();
     } catch (error) {
       console.error('Error updating registration:', error);

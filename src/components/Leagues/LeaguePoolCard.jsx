@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { db, paths } from '../../api/client';
 import { joinLeaguePool } from '../../api/functions';
 import { getGameDay } from '../../utils/dailyChallenges';
+import { useSeasonStore } from '../../store/seasonStore';
 
 // Mirrors POOL_ANTE in functions/src/helpers/leaguePools.js — the server
 // validates the real amount; this only drives display.
@@ -19,7 +20,8 @@ const POOL_ANTE = 25;
 const LeaguePoolCard = memo(({ league, userProfile }) => {
   const [pool, setPool] = useState(null);
   const [joining, setJoining] = useState(false);
-  const gameDay = getGameDay();
+  const seasonStatus = useSeasonStore((state) => state.seasonData?.status);
+  const gameDay = getGameDay(new Date(), seasonStatus);
 
   useEffect(() => {
     if (!league?.id) return undefined;

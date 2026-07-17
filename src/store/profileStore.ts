@@ -5,6 +5,7 @@ import { db, functions, paths } from '../api';
 import { AUTH_CONFIG } from '../config';
 import { normalizeUnlockedClasses } from '../utils/classUnlocks';
 import { getGameDay } from '../utils/dailyChallenges';
+import { useSeasonStore } from './seasonStore';
 import {
   completeDailyChallenge as completeDailyChallengeFn,
   submitPrediction as submitPredictionFn,
@@ -284,7 +285,10 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
     if (!_currentUid || !profile) return false;
 
     // Skip the round trip when today's bucket already shows completion
-    const todayBucket = profile.challenges?.[getGameDay()] || [];
+    // (season-aware game day — the server computes its own key and stays
+    // authoritative; this is only a shortcut)
+    const seasonStatus = useSeasonStore.getState().seasonData?.status;
+    const todayBucket = profile.challenges?.[getGameDay(new Date(), seasonStatus)] || [];
     if (todayBucket.some((c) => c.id === challengeId && c.completed)) {
       return false;
     }
@@ -322,7 +326,8 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
     if (!_currentUid || !profile) return false;
 
     // Skip the round trip when the day is closed or the question is answered.
-    const bucket = profile.predictions?.[getGameDay()];
+    const seasonStatus = useSeasonStore.getState().seasonData?.status;
+    const bucket = profile.predictions?.[getGameDay(new Date(), seasonStatus)];
     if (bucket?.resolved || bucket?.picks?.[questionId]) {
       return false;
     }

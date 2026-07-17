@@ -1,17 +1,26 @@
 // Daily challenge helpers, shared by the profile store.
 // Extracted from the retired userStore so the challenge feature has one home.
 
+import { resetShiftHours } from './seasonProgress';
+
 /**
- * Get the "game day" string — resets at 2 AM Eastern (after nightly score
- * processing) so challenges roll over together with posted scores rather
- * than at local midnight.
+ * Get the "game day" string — rolls together with the nightly score
+ * processing (the season-aware boundary in utils/seasonProgress /
+ * functions/src/helpers/gameDay.js): 2 AM Eastern in live season, 9 PM
+ * Eastern in the off-season, so a fresh challenge/prediction day opens the
+ * moment the score drop lands rather than at local midnight.
  *
  * Uses Intl with the America/New_York zone (same approach as the backend
  * scoring scheduler) so DST is handled correctly and the result does not
- * depend on the viewer's local timezone. The previous hand-rolled offset
- * math had an inverted sign and rolled the day over ~10 hours late.
+ * depend on the viewer's local timezone.
+ *
+ * MUST STAY IN SYNC with functions/src/helpers/dailyChallenges.js getGameDay.
+ *
+ * @param {Date} [date]
+ * @param {string} [seasonStatus] - game-settings/season status; anything
+ *   other than 'off-season' uses the live 2 AM boundary.
  */
-export const getGameDay = (date = new Date()) => {
+export const getGameDay = (date = new Date(), seasonStatus = undefined) => {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
     year: 'numeric',
@@ -34,10 +43,10 @@ export const getGameDay = (date = new Date()) => {
     )
   );
 
-  // Before 2 AM Eastern, the previous game day is still in progress
-  if (et.getUTCHours() < 2) {
-    et.setUTCDate(et.getUTCDate() - 1);
-  }
+  // Shift by the season's reset offset: back 2h live (before 2 AM the
+  // previous game day is still in progress), forward 3h off-season (at/after
+  // 9 PM the next game day has begun — scores just dropped).
+  et.setUTCHours(et.getUTCHours() - resetShiftHours(seasonStatus));
 
   // Emit the same Date.toDateString() format the stored challenge buckets
   // have always used (e.g. "Wed Jan 14 2026")

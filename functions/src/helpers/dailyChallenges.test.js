@@ -31,6 +31,15 @@ describe("getGameDay", () => {
     // 1:30 AM ET Jan 10 = 06:30 UTC (EST) — still Jan 9's game day
     assert.equal(getGameDay(new Date("2026-01-10T06:30:00Z")), "Fri Jan 09 2026");
   });
+
+  test("off-season: a new game day opens at the 9 PM ET score drop", () => {
+    // 9:30 PM EDT July 4 — the drop just ran, so the ACTIVE day is July 5.
+    assert.equal(getGameDay(new Date("2026-07-05T01:30:00Z"), "off-season"), "Sun Jul 05 2026");
+    // 8:30 PM EDT July 4 — still July 4's game day.
+    assert.equal(getGameDay(new Date("2026-07-05T00:30:00Z"), "off-season"), "Sat Jul 04 2026");
+    // The following morning still belongs to the day opened at 9 PM.
+    assert.equal(getGameDay(new Date("2026-07-05T14:00:00Z"), "off-season"), "Sun Jul 05 2026");
+  });
 });
 
 describe("getChallengesForGameDay", () => {

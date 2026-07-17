@@ -178,7 +178,7 @@ const StartSection = () => (
         ],
         [
           'Compete & level up',
-          'Scores drop nightly around 2:00 AM ET. Earn XP, unlock higher classes, and climb the leaderboards.',
+          'Scores drop nightly — 9:00 PM ET in the off-season, overnight (~2:00 AM ET) during the live summer season. Earn XP, unlock higher classes, and climb the leaderboards.',
         ],
       ].map(([title, desc], i) => (
         <div key={title} className="flex items-start gap-3">
@@ -481,13 +481,13 @@ const SeasonSection = () => (
       <DataRow label="Championship Week (45–49)" value="2 per day" />
     </Card>
     <p className="text-[11px] text-muted leading-relaxed">
-      Changes lock every Saturday at 8:00 PM ET and reopen once scores process (around 2:00 AM ET).
-      During Championship Week each competing class gets 2 changes per day, resetting nightly at
-      8:00 PM ET — only Open and A Class compete Days 45–46, all classes Day 47, and World Class and
-      SoundSport the Days 48–49 Finals. That's the same 6 total changes for every class across the
-      days it's guaranteed to compete, so it stays fair even if an Open or A Class corps advances to
-      Finals. Weekly changes are per class and can be spent one at a time or all at once. You can
-      register for up to 4 shows a week.
+      Changes lock every Saturday at 8:00 PM ET and reopen once scores process (9:00 PM ET in the
+      off-season, around 2:00 AM ET in live season). During Championship Week each competing class
+      gets 2 changes per day, resetting nightly at 8:00 PM ET — only Open and A Class compete Days
+      45–46, all classes Day 47, and World Class and SoundSport the Days 48–49 Finals. That's the
+      same 6 total changes for every class across the days it's guaranteed to compete, so it stays
+      fair even if an Open or A Class corps advances to Finals. Weekly changes are per class and can
+      be spent one at a time or all at once. You can register for up to 4 shows a week.
     </p>
   </>
 );
