@@ -2,11 +2,12 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { startNewOffSeason, startNewLiveSeason, scraperInvokeKey } = require("../helpers/season");
+const { scraperApiKey } = require("../helpers/dciFetch");
 
 exports.seasonScheduler = onSchedule({
   schedule: "every day 03:00",
   timeZone: "America/New_York",
-  secrets: [scraperInvokeKey],
+  secrets: [scraperInvokeKey, scraperApiKey],
   timeoutSeconds: 540,
   memory: "512MiB",
 }, async () => {

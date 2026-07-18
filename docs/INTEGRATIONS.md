@@ -47,6 +47,43 @@ The game's editorial voice and corps imagery are AI-generated via Gemini.
 
 ---
 
+## Live DCI scraping (scores & schedule)
+
+The nightly live-score scrape (`scrapeDciScores`, 1:30 AM ET), the admin
+"Scrape DCI Scores Now" button, the all-years deep scrapes
+(`discoverAndQueueUrls` / `discoverAndQueueEventUrls`), and the schedule
+enrichment/archive path all pull from **dci.org**.
+
+- **Cloudflare challenge:** dci.org now fronts its **entire zone** with a
+  Cloudflare *managed challenge* (the "Just a moment…" interstitial). A plain
+  `axios`/`cheerio` GET — any User-Agent — gets **HTTP 403** and the challenge
+  page instead of the scores HTML/sitemap XML. This broke the nightly scrape.
+- **Fix — one fetch choke point:** every dci.org request goes through
+  [`functions/src/helpers/dciFetch.js`](../functions/src/helpers/dciFetch.js).
+  When `SCRAPER_API_KEY` is set it routes the request through a JS-rendering
+  scraping API that solves the challenge and returns the final page body; all
+  existing parsing is unchanged. When the key is **unset** it falls back to a
+  direct GET (keeps local dev/tests working, and lets us drop the paid service
+  instantly if DCI later allowlists our egress).
+- **Config:**
+
+  | Setting | Kind | Purpose |
+  | --- | --- | --- |
+  | `SCRAPER_API_KEY` | secret | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY` |
+  | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingbee` (default) · `zenrows` · `scraperapi` · `custom` |
+  | `SCRAPER_API_ENDPOINT` | param | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders |
+
+  Any function that fetches dci.org declares `secrets: [scraperApiKey]` — if you
+  add a new one, declare it too or the key won't be readable at runtime.
+- **Volume & etiquette:** the live scrape hits ~1–4 URLs/night; keep it that way.
+  The durable fix is an allowlist/data arrangement with DCI (a shared-secret
+  header or a static-IP Cloudflare skip rule), which lets us drop the scraping
+  API entirely.
+- **Still affected:** the upcoming-events scrape (`functions-scraper`, Puppeteer
+  against `dci.org/events/`) hits the same Cloudflare wall and is **not** routed
+  through `dciFetch` yet — it needs its own bypass (stealth browser or the
+  scraping API's JS-scenario paging).
+
 ## Historical-data importers
 
 Two Node CLI tools under `functions/` populate the `historical_scores` corpus

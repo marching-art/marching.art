@@ -2,6 +2,7 @@ const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { scrapeDciScoresLogic } = require("../helpers/scraping");
+const { scraperApiKey } = require("../helpers/dciFetch");
 const { calculateOffSeasonDay } = require("../helpers/season");
 const { mergeEventIntoHistoricalScores } = require("../helpers/historicalScores");
 
@@ -94,6 +95,7 @@ exports.processDciRecap = onMessagePublished({
   maxInstances: 3,
   timeoutSeconds: 120,
   memory: "512MiB",
+  secrets: [scraperApiKey],
 }, async (message) => {
   let url;
   try {

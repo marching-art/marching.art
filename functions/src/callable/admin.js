@@ -14,6 +14,7 @@ const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, pr
 const { reconcileSelectedShows } = require("../helpers/scheduleAudit");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
+const { scraperApiKey } = require("../helpers/dciFetch");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
 const { assertAdmin } = require("../helpers/callableGuards");
@@ -56,7 +57,7 @@ exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
 
 exports.startNewLiveSeason = onCall({
   cors: true,
-  secrets: [scraperInvokeKey],
+  secrets: [scraperInvokeKey, scraperApiKey],
   timeoutSeconds: 540,
   memory: "512MiB",
 }, async (request) => {
@@ -74,7 +75,7 @@ exports.startNewLiveSeason = onCall({
 
 exports.manualTrigger = onCall({
   cors: true,
-  secrets: [scraperInvokeKey],
+  secrets: [scraperInvokeKey, scraperApiKey],
   timeoutSeconds: 540,
   memory: "512MiB",
 }, async (request) => {
@@ -545,8 +546,9 @@ exports.manualTrigger = onCall({
  */
 exports.scrapeLiveScoresNow = onCall({
   cors: true,
-  timeoutSeconds: 120,
+  timeoutSeconds: 300,
   memory: "512MiB",
+  secrets: [scraperApiKey],
 }, async (request) => {
   assertAdmin(request);
 

@@ -1,52 +1,11 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const axios = require("axios");
 const cheerio = require("cheerio");
 const { scrapeDciScoresLogic, finalScoresToRecapUrl } = require("../helpers/scraping");
+const { dciFetch, scraperApiKey } = require("../helpers/dciFetch");
 
 const LIVE_SCORES_TOPIC = "live-scores-topic";
-
-/**
- * Fetch with retry logic and exponential backoff
- * @param {string} url - URL to fetch
- * @param {number} maxRetries - Maximum number of retry attempts
- * @returns {Promise<object>} - Axios response data
- */
-async function fetchWithRetry(url, maxRetries = 3) {
-  let lastError;
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await axios.get(url, {
-        timeout: 30000, // 30 second timeout
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; MarchingArtBot/1.0)",
-        },
-      });
-      return response.data;
-    } catch (error) {
-      lastError = error;
-      const isRetryable =
-        error.code === "ECONNRESET" ||
-        error.code === "ETIMEDOUT" ||
-        error.code === "ENOTFOUND" ||
-        error.response?.status >= 500;
-
-      if (!isRetryable || attempt === maxRetries) {
-        logger.error(`Fetch failed after ${attempt} attempts: ${error.message}`);
-        throw error;
-      }
-
-      // Exponential backoff: 2s, 4s, 8s
-      const backoffMs = Math.pow(2, attempt) * 1000;
-      logger.warn(`Fetch attempt ${attempt} failed, retrying in ${backoffMs}ms...`);
-      await new Promise((resolve) => setTimeout(resolve, backoffMs));
-    }
-  }
-
-  throw lastError;
-}
 
 /**
  * Core live-score scrape routine, shared by the nightly scheduler and the
@@ -95,7 +54,7 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
   }
 
   const listUrl = "https://www.dci.org/scores/";
-  const data = await fetchWithRetry(listUrl);
+  const data = await dciFetch(listUrl);
   const $ = cheerio.load(data);
 
   // dci.org renders one ".tbl-row" per event, each containing the event date in
@@ -184,6 +143,9 @@ exports.scrapeLatestLiveScores = scrapeLatestLiveScores;
 exports.scrapeDciScores = onSchedule({
   schedule: "every day 01:30",
   timeZone: "America/New_York",
+  timeoutSeconds: 300,
+  memory: "512MiB",
+  secrets: [scraperApiKey],
 }, async () => {
   try {
     await scrapeLatestLiveScores({ force: false });
