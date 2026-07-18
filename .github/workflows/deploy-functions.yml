@@ -53,6 +53,11 @@ on:
         required: false
         default: ''
         type: string
+      set_scraper_api_key:
+        description: 'One-off: push the SCRAPER_API_KEY repo secret into Google Secret Manager (check when first adding or rotating the ScrapingBee key, then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy-all:
@@ -78,6 +83,31 @@ jobs:
         run: |
           cd functions && npm ci
           cd ../functions-scraper && npm ci
+
+      # Push the ScrapingBee key into Google Secret Manager before deploying, so
+      # the functions that declare `secrets: [scraperApiKey]` bind the new value
+      # on the deploy below. Firebase v2 secrets live in Secret Manager (not
+      # .env), and a changed value only takes effect after a redeploy — which is
+      # why this is gated on deploy_target=all. Runs only when the box is checked;
+      # leave it unchecked on normal deploys. The value is piped via stdin so it
+      # never lands in the logs or process list, and GitHub masks the secret too.
+      - name: Set SCRAPER_API_KEY in Secret Manager
+        if: ${{ inputs.set_scraper_api_key }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SCRAPER_API_KEY: ${{ secrets.SCRAPER_API_KEY }}
+        run: |
+          if [ -z "$SCRAPER_API_KEY" ]; then
+            echo "::error::set_scraper_api_key was checked but the SCRAPER_API_KEY repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
+            exit 1
+          fi
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          printf '%s' "$SCRAPER_API_KEY" | \
+            firebase functions:secrets:set SCRAPER_API_KEY --data-file - --project marching-art
+          echo "SCRAPER_API_KEY written to Secret Manager; the deploy below will bind it to the functions."
 
       - name: Deploy Firestore rules + all functions
         env:
