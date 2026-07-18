@@ -374,28 +374,54 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   return schedule;
 }
 
-function calculateOffSeasonDay(eventDate, year) {
-  if (!eventDate || isNaN(eventDate.getTime())) return null;
+const MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
 
+/**
+ * DCI World Championship Finals date (UTC) for a given finals year: the SECOND
+ * Saturday of August. This is the single anchor that both the forward mapping
+ * (date -> competition day, `calculateOffSeasonDay`) and the inverse
+ * (`competitionDayToDateUTC`) derive from, so they can never drift apart.
+ * @param {number} year - Finals year.
+ * @returns {Date} UTC-midnight Date of finals (competition day 49).
+ */
+function computeFinalsDateUTC(year) {
   const firstOfAugust = new Date(Date.UTC(year, 7, 1));
   const dayOfWeek = firstOfAugust.getUTCDay();
   const daysUntilFirstSaturday = (6 - dayOfWeek + 7) % 7;
   const firstSaturdayDate = 1 + daysUntilFirstSaturday;
-  const finalsDay = firstSaturdayDate + 7;
-  const finalsDateUTC = new Date(Date.UTC(year, 7, finalsDay));
+  const finalsDay = firstSaturdayDate + 7; // second Saturday
+  return new Date(Date.UTC(year, 7, finalsDay));
+}
 
+function calculateOffSeasonDay(eventDate, year) {
+  if (!eventDate || isNaN(eventDate.getTime())) return null;
+
+  const finalsDateUTC = computeFinalsDateUTC(year);
   const seasonEndDate = new Date(finalsDateUTC);
-  const millisIn48Days = 48 * 24 * 60 * 60 * 1000;
-  const seasonStartDate = new Date(finalsDateUTC.getTime() - millisIn48Days);
+  const seasonStartDate = new Date(finalsDateUTC.getTime() - 48 * MILLIS_IN_DAY);
   const eventDateUTC = new Date(Date.UTC(eventDate.getUTCFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate()));
 
   if (eventDateUTC < seasonStartDate || eventDateUTC > seasonEndDate) return null;
 
   const diffInMillis = eventDateUTC.getTime() - seasonStartDate.getTime();
-  const millisInDay = 1000 * 60 * 60 * 24;
-  const diffInDays = Math.round(diffInMillis / millisInDay);
+  const diffInDays = Math.round(diffInMillis / MILLIS_IN_DAY);
 
   return diffInDays + 1;
+}
+
+/**
+ * Inverse of `calculateOffSeasonDay`: the UTC calendar date a given competition
+ * day (1-49) falls on for a finals year. Day 1 is finals - 48 days; day 49 is
+ * finals. Returns null for days outside 1-49.
+ * @param {number} day - Competition day, 1-49.
+ * @param {number} finalsYear - Finals year (season's `seasonYear`).
+ * @returns {Date|null} UTC-midnight Date for that competition day.
+ */
+function competitionDayToDateUTC(day, finalsYear) {
+  if (!Number.isInteger(day) || day < 1 || day > 49) return null;
+  const finalsDateUTC = computeFinalsDateUTC(finalsYear);
+  const seasonStartDate = new Date(finalsDateUTC.getTime() - 48 * MILLIS_IN_DAY);
+  return new Date(seasonStartDate.getTime() + (day - 1) * MILLIS_IN_DAY);
 }
 
 function getThematicOffSeasonName(seasonType, finalsYear) {
@@ -459,6 +485,8 @@ module.exports = {
   generateLiveSeasonSchedule,
   generateOffSeasonSchedule,
   calculateOffSeasonDay,
+  competitionDayToDateUTC,
+  computeFinalsDateUTC,
   getThematicOffSeasonName,
   getNextOffSeasonWindow,
 };

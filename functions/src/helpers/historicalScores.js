@@ -12,9 +12,15 @@ const { logger } = require("firebase-functions/v2");
  *                                 blank/zero captions on existing corps. If
  *                                 nothing changed, skip the write.
  *
+ * Overwrite mode (`newEventData.overwrite === true`, used only by the admin
+ * day-range backfill to CORRECT bad data): an existing corps' total score and
+ * every caption are REPLACED with the freshly scraped values rather than only
+ * filling blanks. New corps are still appended. Never enabled by the nightly or
+ * deep-scrape paths, which omit the flag.
+ *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string|number} year - Calendar year; used as the document id.
- * @param {Object} newEventData - { eventName, date, location, scores, headerMap, offSeasonDay }
+ * @param {Object} newEventData - { eventName, date, location, scores, headerMap, offSeasonDay, overwrite? }
  * @returns {Promise<void>}
  */
 async function mergeEventIntoHistoricalScores(db, year, newEventData) {
@@ -54,6 +60,13 @@ async function mergeEventIntoHistoricalScores(db, year, newEventData) {
         eventToUpdate.scores.push(newScore);
         hasBeenUpdated = true;
         logger.info(`Adding missing corps entry for ${newScore.corps}.`);
+      } else if (newEventData.overwrite) {
+        // Backfill/correct mode: replace the existing total + captions outright.
+        const existingScore = eventToUpdate.scores[existingScoreIndex];
+        existingScore.score = newScore.score;
+        existingScore.captions = { ...newScore.captions };
+        hasBeenUpdated = true;
+        logger.info(`Overwrote score + captions for ${newScore.corps}.`);
       } else {
         const existingScore = eventToUpdate.scores[existingScoreIndex];
         let captionsUpdated = false;

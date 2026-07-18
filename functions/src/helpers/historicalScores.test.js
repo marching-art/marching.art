@@ -114,4 +114,37 @@ describe("mergeEventIntoHistoricalScores", () => {
     assert.equal(writes[0].type, "update");
     assert.equal(writes[0].data.data.length, 2);
   });
+
+  test("overwrite=true replaces existing total + captions outright", async () => {
+    const existing = event({
+      scores: [{ corps: "Blue Devils", score: 80, captions: { GE1: 18, B: 17 } }],
+    });
+    const incoming = event({
+      overwrite: true,
+      scores: [{ corps: "Blue Devils", score: 95.5, captions: { GE1: 19, B: 18 } }],
+    });
+    const { db, writes } = makeDb({ data: [existing] });
+    await mergeEventIntoHistoricalScores(db, 2024, incoming);
+
+    const s = writes[0].data.data[0].scores[0];
+    assert.equal(s.score, 95.5); // total replaced (fill-mode would never touch it)
+    assert.equal(s.captions.GE1, 19); // existing non-zero value replaced
+    assert.equal(s.captions.B, 18);
+  });
+
+  test("overwrite=true still appends brand-new corps", async () => {
+    const existing = event({ scores: [{ corps: "Blue Devils", score: 80, captions: { GE1: 18 } }] });
+    const incoming = event({
+      overwrite: true,
+      scores: [
+        { corps: "Blue Devils", score: 81, captions: { GE1: 18 } },
+        { corps: "Bluecoats", score: 79, captions: { GE1: 17 } },
+      ],
+    });
+    const { db, writes } = makeDb({ data: [existing] });
+    await mergeEventIntoHistoricalScores(db, 2024, incoming);
+
+    const corpsNames = writes[0].data.data[0].scores.map((s) => s.corps);
+    assert.deepEqual(corpsNames, ["Blue Devils", "Bluecoats"]);
+  });
 });

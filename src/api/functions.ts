@@ -588,6 +588,10 @@ export const fixProfileFields = createCallable<void, { message: string }>('fixPr
 export const scrapeLiveScoresNow = createCallable<void, { success?: boolean; message?: string }>(
   'scrapeLiveScoresNow'
 );
+export const backfillLiveScoresForDayRange = createCallable<
+  { startDay: number; endDay: number; overwrite?: boolean },
+  { success?: boolean; message?: string; count?: number; eventCount?: number }
+>('backfillLiveScoresForDayRange');
 export const discoverAndQueueUrls = createCallable<void, { success?: boolean; message?: string }>(
   'discoverAndQueueUrls'
 );
