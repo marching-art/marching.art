@@ -1,9 +1,9 @@
 const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { PubSub } = require("@google-cloud/pubsub");
-const axios = require("axios");
 const cheerio = require("cheerio");
 const { assertAdmin } = require("./callableGuards");
+const { dciFetch, scraperApiKey } = require("./dciFetch");
 
 // NOTE: Puppeteer/Chromium scraping has been moved to functions-scraper codebase
 // to reduce cold start time for all other functions (~800ms-1.2s improvement)
@@ -16,7 +16,6 @@ const DCI_RECAP_TOPIC = "dci-recap-topic";
 const DCI_EVENT_TOPIC = "dci-event-topic";
 const DCI_BASE_URL = "https://www.dci.org";
 const SITEMAP_INDEX_URL = `${DCI_BASE_URL}/sitemap_index.xml`;
-const SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; MarchingArtBot/1.0)";
 
 // dci.org's /events/ detail pages carry running-order + performance times only
 // from 2019 on (2018 and earlier 404). We still discover from the sitemap, which
@@ -61,7 +60,7 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
   }
 
   try {
-    const { data } = await axios.get(urlToScrape);
+    const data = await dciFetch(urlToScrape);
     const $ = cheerio.load(data);
     const scoresData = [];
 
@@ -176,9 +175,7 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
  * @returns {Promise<string[]>} Array of unique recap URLs.
  */
 async function discoverAllRecapUrls() {
-  const headers = { "User-Agent": SCRAPER_USER_AGENT };
-
-  const { data: indexXml } = await axios.get(SITEMAP_INDEX_URL, { timeout: 30000, headers });
+  const indexXml = await dciFetch(SITEMAP_INDEX_URL);
   const competitionSitemaps = extractSitemapLocs(indexXml)
     .filter((u) => /competition-sitemap\d*\.xml/.test(u));
 
@@ -191,7 +188,7 @@ async function discoverAllRecapUrls() {
   const recapUrls = new Set();
   for (const sitemapUrl of competitionSitemaps) {
     try {
-      const { data: xml } = await axios.get(sitemapUrl, { timeout: 30000, headers });
+      const xml = await dciFetch(sitemapUrl);
       for (const loc of extractSitemapLocs(xml)) {
         if (loc.includes("/scores/final-scores/")) {
           recapUrls.add(finalScoresToRecapUrl(loc));
@@ -223,6 +220,7 @@ const discoverAndQueueUrls = onCall({
   cors: true,
   timeoutSeconds: 300,
   memory: "512MiB",
+  secrets: [scraperApiKey],
 }, async (request) => {
   assertAdmin(request);
   // Lazy initialize the client
@@ -286,9 +284,7 @@ const discoverAndQueueUrls = onCall({
  * @returns {Promise<string[]>} Array of unique event detail URLs.
  */
 async function discoverAllEventUrls() {
-  const headers = { "User-Agent": SCRAPER_USER_AGENT };
-
-  const { data: indexXml } = await axios.get(SITEMAP_INDEX_URL, { timeout: 30000, headers });
+  const indexXml = await dciFetch(SITEMAP_INDEX_URL);
   // Match event-sitemap.xml / event-sitemap2.xml, but NOT tribe_events-sitemap.xml.
   const eventSitemaps = extractSitemapLocs(indexXml)
     .filter((u) => /(^|\/)event-sitemap\d*\.xml/.test(u));
@@ -302,7 +298,7 @@ async function discoverAllEventUrls() {
   const eventUrls = new Set();
   for (const sitemapUrl of eventSitemaps) {
     try {
-      const { data: xml } = await axios.get(sitemapUrl, { timeout: 30000, headers });
+      const xml = await dciFetch(sitemapUrl);
       for (const loc of extractSitemapLocs(xml)) {
         const match = loc.match(/\/events\/(\d{4})-/);
         if (match && parseInt(match[1], 10) >= EARLIEST_SCHEDULE_YEAR) {
@@ -336,6 +332,7 @@ const discoverAndQueueEventUrls = onCall({
   cors: true,
   timeoutSeconds: 300,
   memory: "512MiB",
+  secrets: [scraperApiKey],
 }, async (request) => {
   assertAdmin(request);
   if (!pubsubClient) {

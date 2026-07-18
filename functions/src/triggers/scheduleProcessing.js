@@ -2,6 +2,7 @@ const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { fetchEventForArchive } = require("../helpers/eventDetails");
+const { scraperApiKey } = require("../helpers/dciFetch");
 const { archiveScheduleEvents } = require("../helpers/historicalSchedules");
 
 const DCI_EVENT_TOPIC = "dci-event-topic";
@@ -20,6 +21,7 @@ exports.processDciEvent = onMessagePublished({
   maxInstances: 3,
   timeoutSeconds: 120,
   memory: "512MiB",
+  secrets: [scraperApiKey],
 }, async (message) => {
   let url;
   try {

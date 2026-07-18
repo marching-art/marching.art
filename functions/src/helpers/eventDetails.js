@@ -10,8 +10,9 @@
  *   - The running order: every corps, its hometown, and the exact minute it
  *     takes the field.
  *
- * This helper fetches each detail page with axios + cheerio (no Puppeteer/Chromium
- * needed — kept out of the main codebase on purpose) and parses that data into
+ * This helper fetches each detail page via dciFetch + cheerio (no Puppeteer/Chromium
+ * needed — kept out of the main codebase on purpose; dciFetch handles the
+ * Cloudflare challenge on dci.org) and parses that data into
  * absolute ISO instants plus a structured lineup, so the rest of the app can show
  * honest "live now" messaging and an interactive running order.
  *
@@ -33,10 +34,8 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const axios = require("axios");
 const cheerio = require("cheerio");
-
-const SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; MarchingArtBot/1.0)";
+const { dciFetch } = require("./dciFetch");
 
 // Rows in the lineup table that are ceremony/logistics markers, not performing
 // corps. Matched case-insensitively against the row's bold label.
@@ -328,10 +327,7 @@ function parseEventLocation(html) {
 async function fetchEventForArchive(url) {
   if (!url) return null;
   try {
-    const { data: html } = await axios.get(url, {
-      timeout: 20000,
-      headers: { "User-Agent": SCRAPER_USER_AGENT },
-    });
+    const html = await dciFetch(url);
     const date = parseEventDate(html);
     const eventName = parseEventName(html);
     const location = parseEventLocation(html);
@@ -364,10 +360,7 @@ async function fetchEventForArchive(url) {
 async function fetchEventDetail(event) {
   if (!event?.url) return null;
   try {
-    const { data } = await axios.get(event.url, {
-      timeout: 20000,
-      headers: { "User-Agent": SCRAPER_USER_AGENT },
-    });
+    const data = await dciFetch(event.url);
     const parsed = parseEventDetail(data, event);
     // Only consider it "enriched" if we actually found timing or a lineup.
     if (!parsed.startsAt && parsed.lineup.length === 0) return null;
