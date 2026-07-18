@@ -131,6 +131,7 @@ const {
   manualTrigger,
   sendTestEmail,
   scrapeLiveScoresNow,
+  backfillLiveScoresForDayRange,
 } = require("./src/callable/admin");
 const { searchYoutubeVideo } = require("./src/callable/youtube");
 
@@ -286,6 +287,7 @@ module.exports = {
   startNewLiveSeason,
   sendTestEmail,
   scrapeLiveScoresNow,
+  backfillLiveScoresForDayRange,
   fixProfileFields,
   unlockClassWithCorpsCoin,
   getCorpsCoinHistory,

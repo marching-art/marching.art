@@ -47,7 +47,7 @@ function extractSitemapLocs(xml) {
   return locs;
 }
 
-async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
+async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", extraPayload = {}) {
   // Lazy initialize the client if it hasn't been already
   if (!pubsubClient) {
     pubsubClient = new PubSub();
@@ -152,7 +152,13 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
       return { eventName, eventLocation, eventDate: eventDate.toISOString(), year, count: 0 };
     }
 
-    const payload = { scores: scoresData, eventName, eventLocation, eventDate: eventDate.toISOString(), year };
+    // extraPayload carries opt-in flags for the consumer (e.g. { overwrite: true }
+    // from an admin backfill). Spread first so it can never clobber the real
+    // scraped fields below.
+    const payload = {
+      ...extraPayload,
+      scores: scoresData, eventName, eventLocation, eventDate: eventDate.toISOString(), year,
+    };
     const dataBuffer = Buffer.from(JSON.stringify(payload));
     await pubsubClient.topic(topic).publishMessage({ data: dataBuffer });
     logger.info(`Successfully published ${scoresData.length} corps scores from ${eventName}.`);

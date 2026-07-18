@@ -47,7 +47,7 @@ exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (mes
 
   try {
     const payloadBuffer = Buffer.from(message.data.message.data, "base64").toString("utf-8");
-    const { eventName, scores, eventDate, location } = JSON.parse(payloadBuffer);
+    const { eventName, scores, eventDate, location, overwrite } = JSON.parse(payloadBuffer);
 
     // Validate required data
     if (!scores || scores.length === 0 || !eventDate) {
@@ -70,6 +70,9 @@ exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (mes
       scores: scores,
       headerMap: {},
       offSeasonDay: offSeasonDay,
+      // Opt-in from the admin day-range backfill; replaces existing values
+      // instead of only filling blanks. Absent on nightly/deep-scrape runs.
+      overwrite: overwrite === true,
     };
 
     await mergeEventIntoHistoricalScores(db, year, newEventData);

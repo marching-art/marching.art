@@ -28,7 +28,7 @@ import {
   Radio,
 } from 'lucide-react';
 import { getSeasonSettings, getHistoricalScoresForYear, getScoredRecapDays } from '../../api/admin';
-import { scrapeLiveScoresNow } from '../../api/functions';
+import { scrapeLiveScoresNow, backfillLiveScoresForDayRange } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { getCaptionLabel } from '../../utils/captionUtils';
 import { CAPTION_IDS } from '../../data/captions';
@@ -87,6 +87,10 @@ const LiveScoresVerification = () => {
   const [activeTab, setActiveTab] = useState('total');
   const [scrollPosition, setScrollPosition] = useState(0);
   const [scraping, setScraping] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillStart, setBackfillStart] = useState('');
+  const [backfillEnd, setBackfillEnd] = useState('');
+  const [backfillOverwrite, setBackfillOverwrite] = useState(false);
 
   const currentYear = new Date().getFullYear();
 
@@ -151,6 +155,41 @@ const LiveScoresVerification = () => {
       toast.error(err.message || 'Failed to scrape DCI scores');
     } finally {
       setScraping(false);
+    }
+  };
+
+  const handleBackfill = async () => {
+    const startDay = parseInt(backfillStart, 10);
+    const endDay = parseInt(backfillEnd, 10);
+    if (
+      !Number.isInteger(startDay) || !Number.isInteger(endDay) ||
+      startDay < 1 || endDay > 49 || startDay > endDay
+    ) {
+      toast.error('Enter a valid day range: 1 ≤ start ≤ end ≤ 49.');
+      return;
+    }
+    if (backfillOverwrite &&
+      !window.confirm(
+        `Overwrite existing scores for days ${startDay}-${endDay}? ` +
+        'This replaces any archived values for those days with a fresh scrape.'
+      )
+    ) {
+      return;
+    }
+    setBackfilling(true);
+    try {
+      const result = await backfillLiveScoresForDayRange({ startDay, endDay, overwrite: backfillOverwrite });
+      const data = result.data || {};
+      if (data.success) {
+        toast.success(data.message || 'Backfill triggered.');
+        setTimeout(fetchData, 2500);
+      } else {
+        toast.error(data.message || 'Backfill did not run.');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to backfill DCI scores');
+    } finally {
+      setBackfilling(false);
     }
   };
 
@@ -336,6 +375,53 @@ const LiveScoresVerification = () => {
             {scraping ? 'Scraping…' : 'Scrape DCI Scores Now'}
           </button>
         </div>
+      </div>
+
+      {/* Targeted backfill: scrape a specific competition-day range (e.g. 22-24)
+          instead of just the latest night. Fills days the nightly scrape missed;
+          "Overwrite existing" replaces already-archived values to fix bad data. */}
+      <div className="flex flex-wrap items-center gap-2 px-1 text-[11px] text-muted">
+        <span className="font-semibold uppercase tracking-wide">Backfill days</span>
+        <input
+          type="number"
+          min="1"
+          max="49"
+          value={backfillStart}
+          onChange={(e) => setBackfillStart(e.target.value)}
+          placeholder="start"
+          className="w-16 bg-surface-raised border border-line px-1.5 py-1 text-center rounded-none focus:ring-interactive"
+        />
+        <span>–</span>
+        <input
+          type="number"
+          min="1"
+          max="49"
+          value={backfillEnd}
+          onChange={(e) => setBackfillEnd(e.target.value)}
+          placeholder="end"
+          className="w-16 bg-surface-raised border border-line px-1.5 py-1 text-center rounded-none focus:ring-interactive"
+        />
+        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={backfillOverwrite}
+            onChange={(e) => setBackfillOverwrite(e.target.checked)}
+            className="w-3.5 h-3.5 bg-line border-line-strong rounded-none focus:ring-interactive"
+          />
+          Overwrite existing
+        </label>
+        <button
+          onClick={handleBackfill}
+          disabled={backfilling || !isLiveSeason}
+          className="btn-outline flex items-center gap-1.5 text-xs px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {backfilling ? (
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Radio className="w-3.5 h-3.5" />
+          )}
+          {backfilling ? 'Backfilling…' : 'Backfill days'}
+        </button>
       </div>
 
       {!isLiveSeason && (

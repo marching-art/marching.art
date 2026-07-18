@@ -13,7 +13,7 @@ const {
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { reconcileSelectedShows } = require("../helpers/scheduleAudit");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
-const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
+const { scrapeLatestLiveScores, scrapeLiveScoresForDayRange } = require("../scheduled/liveScraper");
 const { scraperApiKey } = require("../helpers/dciFetch");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
@@ -583,6 +583,70 @@ exports.scrapeLiveScoresNow = onCall({
     logger.error("Manual live score scrape failed:", error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "Live score scrape failed.");
+  }
+});
+
+/**
+ * Admin-only: backfill live DCI scores for a specific competition-day range
+ * (e.g. days 22-24) rather than just the latest night. Maps each day to its
+ * calendar date and scrapes every dci.org event on those dates into
+ * historical_scores/{year}. Use to fill days the nightly scrape missed, or —
+ * with overwrite=true — to correct days that archived bad scores.
+ */
+exports.backfillLiveScoresForDayRange = onCall({
+  cors: true,
+  timeoutSeconds: 300,
+  memory: "512MiB",
+  secrets: [scraperApiKey],
+}, async (request) => {
+  assertAdmin(request);
+
+  const startDay = Number(request.data?.startDay);
+  const endDay = Number(request.data?.endDay);
+  const overwrite = request.data?.overwrite === true;
+
+  if (!Number.isInteger(startDay) || !Number.isInteger(endDay) ||
+    startDay < 1 || endDay > 49 || startDay > endDay) {
+    throw new HttpsError(
+      "invalid-argument",
+      "startDay and endDay must be integers with 1 <= startDay <= endDay <= 49."
+    );
+  }
+
+  logger.info(
+    `Admin ${request.auth.uid} triggered a day-range score backfill: ` +
+    `days ${startDay}-${endDay} (overwrite=${overwrite}).`
+  );
+
+  try {
+    const result = await scrapeLiveScoresForDayRange({ startDay, endDay, overwrite });
+
+    if (!result.scraped) {
+      const reasonMessages = {
+        "no-live-season": "No active live season — backfill only runs during a live DCI season.",
+        "no-recap-found": "No recap rows were found on the DCI scores page.",
+        "no-events-in-range": `No DCI events are listed for days ${startDay}-${endDay} ` +
+          "(they may not be posted yet, or have scrolled off dci.org's listing).",
+        "invalid-day-range": "That day range mapped to no valid competition dates.",
+      };
+      return {
+        success: false,
+        message: reasonMessages[result.reason] || `Backfill did not run (${result.reason}).`,
+        ...result,
+      };
+    }
+
+    const mode = overwrite ? "overwrote" : "backfilled";
+    return {
+      success: true,
+      message: `${result.count > 0 ? `${mode} ${result.count} corps scores across ` : "Found "}` +
+        `${result.eventCount} event(s) for days ${startDay}-${endDay}. Scores are being archived now.`,
+      ...result,
+    };
+  } catch (error) {
+    logger.error("Day-range score backfill failed:", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Day-range score backfill failed.");
   }
 });
 
