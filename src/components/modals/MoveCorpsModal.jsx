@@ -126,9 +126,10 @@ const MoveCorpsModal = ({
                 {/* Info */}
                 <div className="bg-warning/10 border border-warning/30 p-3 mt-4">
                   <p className="text-xs text-warning">
-                    <strong>Note:</strong> Your corps name and identity will be preserved, but
-                    season-specific data (lineup, show selections, scores) will be reset. Each corps
-                    can only transfer once per season.
+                    <strong>Note:</strong> Your corps name, identity, and full season history travel
+                    with it — past seasons keep the class they were competed in. Current-season data
+                    (lineup, show selections, scores) will be reset. Each corps can only transfer
+                    once per season.
                   </p>
                 </div>
 

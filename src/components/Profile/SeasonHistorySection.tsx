@@ -7,10 +7,14 @@
 // each corps' story reads as its own timeline.
 
 import React, { useMemo, useState } from 'react';
-import { Swords, Calendar } from 'lucide-react';
+import { Swords, Calendar, ChevronRight, TrendingUp } from 'lucide-react';
 import type { CorpsClass } from '../../types';
 import { SeasonRow, EmptyWithCTA } from './DirectorProfileParts';
-import { getClassDisplay, type SeasonHistoryEntry } from './directorProfileHelpers';
+import {
+  getClassDisplay,
+  type SeasonHistoryEntry,
+  type CorpsJourney,
+} from './directorProfileHelpers';
 
 const CLASS_TAB_ORDER: CorpsClass[] = [
   'worldClass',
@@ -20,7 +24,50 @@ const CLASS_TAB_ORDER: CorpsClass[] = [
   'podiumClass',
 ];
 
-const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) => {
+// One corps' climb through the classes, rendered as a chain of class badges
+// (SS → A → WC). Corps that moved up get a rising-trend mark next to the name.
+const JourneyStrip = ({ journeys }: { journeys: CorpsJourney[] }) => {
+  if (journeys.length === 0) return null;
+  return (
+    <div className="px-3 py-2 border-b border-line bg-surface-sunken space-y-1.5">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
+        Class Journey
+      </span>
+      {journeys.map((journey) => (
+        <div key={journey.corpsName} className="flex items-center gap-1.5 flex-wrap">
+          {journey.climbed && (
+            <TrendingUp className="w-3 h-3 text-brand flex-shrink-0" aria-label="Moved up" />
+          )}
+          <span className="text-[10px] font-bold text-white truncate">{journey.corpsName}</span>
+          <span className="flex items-center gap-1">
+            {journey.classes.map((cls, i) => {
+              const config = getClassDisplay(cls);
+              return (
+                <React.Fragment key={`${cls}-${i}`}>
+                  {i > 0 && <ChevronRight className="w-2.5 h-2.5 text-muted flex-shrink-0" />}
+                  <span
+                    className={`text-[9px] font-bold px-1 ${config.bg} ${config.color}`}
+                    title={config.name}
+                  >
+                    {config.short}
+                  </span>
+                </React.Fragment>
+              );
+            })}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const SeasonHistorySection = ({
+  seasons,
+  journeys = [],
+}: {
+  seasons: SeasonHistoryEntry[];
+  journeys?: CorpsJourney[];
+}) => {
   const [classFilter, setClassFilter] = useState<CorpsClass | 'all'>('all');
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
 
@@ -48,6 +95,9 @@ const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) =>
           {visibleSeasons.length} season{visibleSeasons.length === 1 ? '' : 's'}
         </span>
       </div>
+
+      {/* Corps that climbed through the classes — celebrate the progression */}
+      <JourneyStrip journeys={journeys} />
 
       {/* Class tabs (only when there is history in more than one class) */}
       {classesWithHistory.length > 1 && (
