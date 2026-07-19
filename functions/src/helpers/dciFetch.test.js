@@ -7,18 +7,25 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildProxiedUrl } = require("./dciFetch");
+const { buildProxiedUrl, looksLikeChallenge } = require("./dciFetch");
 
 const TARGET = "https://www.dci.org/scores/recap/2025-dci-world-championship-finals/";
 const ENC = encodeURIComponent(TARGET);
 
 describe("buildProxiedUrl", () => {
-  test("scrapingbee: renders JS through a premium (Cloudflare-capable) proxy", () => {
+  test("scrapingbee: defaults to stealth_proxy (Cloudflare mode) with JS render", () => {
     const url = buildProxiedUrl(TARGET, { key: "abc123", provider: "scrapingbee" });
     assert.ok(url.startsWith("https://app.scrapingbee.com/api/v1/?api_key=abc123&url="));
     assert.ok(url.includes(`url=${ENC}`));
     assert.ok(url.includes("render_js=true"));
+    assert.ok(url.includes("stealth_proxy=true"));
+    assert.ok(!url.includes("premium_proxy=true"));
+  });
+
+  test("scrapingbee: stealth=false falls back to premium_proxy", () => {
+    const url = buildProxiedUrl(TARGET, { key: "abc123", provider: "scrapingbee", stealth: false });
     assert.ok(url.includes("premium_proxy=true"));
+    assert.ok(!url.includes("stealth_proxy=true"));
   });
 
   test("zenrows: js_render + premium proxy", () => {
@@ -77,5 +84,26 @@ describe("buildProxiedUrl", () => {
   test("the API key is URL-encoded", () => {
     const url = buildProxiedUrl(TARGET, { key: "a b/c+d", provider: "scrapingbee" });
     assert.ok(url.includes(`api_key=${encodeURIComponent("a b/c+d")}`));
+  });
+});
+
+describe("looksLikeChallenge", () => {
+  test("detects the Cloudflare interstitial", () => {
+    assert.equal(looksLikeChallenge("<html><head><title>Just a moment...</title>"), true);
+    assert.equal(looksLikeChallenge("...window._cf_chl_opt={cRay:'abc'}..."), true);
+    assert.equal(looksLikeChallenge("<script src='https://challenges.cloudflare.com/x'>"), true);
+    assert.equal(looksLikeChallenge("<noscript>Enable JavaScript and cookies to continue</noscript>"), true);
+  });
+
+  test("passes real score/sitemap content through", () => {
+    assert.equal(looksLikeChallenge("<table id='effect-table-0'><tr class='table-top'>"), false);
+    assert.equal(looksLikeChallenge("<urlset><url><loc>https://www.dci.org/scores/final-scores/x</loc>"), false);
+    assert.equal(looksLikeChallenge(""), false);
+  });
+
+  test("ignores non-string bodies (e.g. parsed JSON)", () => {
+    assert.equal(looksLikeChallenge(null), false);
+    assert.equal(looksLikeChallenge({ scores: [] }), false);
+    assert.equal(looksLikeChallenge(undefined), false);
   });
 });
