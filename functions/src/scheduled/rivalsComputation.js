@@ -9,6 +9,11 @@
  * so users in adjacent classes can still appear as rivals when their class is sparse.
  * Within a bucket, same-class rivals are preferred and the bucket is only opened up
  * when the user has fewer than RIVAL_TARGET in-class candidates.
+ *
+ * Podium Class is its own bucket: Podium and fantasy scores are never compared or
+ * cross-ranked (PODIUM.md §5.5). Inside the bucket, same-division rivals (Podium's
+ * internal World/Open/A, §5.7) are preferred the same way the competitive bucket
+ * prefers same-class.
  */
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -18,11 +23,14 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
-const { FANTASY_CLASSES } = require("../helpers/classRegistry");
+const { ENABLED_CLASSES } = require("../helpers/classRegistry");
 
-const ALL_CLASSES = FANTASY_CLASSES;
+// Every enabled class competes for rivals — including podiumClass, which has
+// no lineup (hasLineup: false) and so is absent from FANTASY_CLASSES.
+const ALL_CLASSES = ENABLED_CLASSES;
 const SOUNDSPORT_BUCKET = new Set(["soundSport"]);
 const COMPETITIVE_BUCKET = new Set(["worldClass", "openClass", "aClass"]);
+const PODIUM_BUCKET = new Set(["podiumClass"]);
 const RIVAL_TARGET = 3;
 
 // SoundSport scores are never revealed to users — only medal designations.
@@ -44,7 +52,18 @@ function medalForScore(score) {
 function bucketFor(corpsClass) {
   if (SOUNDSPORT_BUCKET.has(corpsClass)) return "soundSport";
   if (COMPETITIVE_BUCKET.has(corpsClass)) return "competitive";
+  if (PODIUM_BUCKET.has(corpsClass)) return "podium";
   return null;
+}
+
+/**
+ * Preference group for rival picking. The competitive bucket prefers same-class
+ * neighbors; the Podium bucket is single-class but multi-division, so the
+ * analogous preference is the corps' division inside Podium.
+ */
+function rivalGroupOf(entry) {
+  if (entry.corpsClass === "podiumClass") return `division:${entry.division || "aClass"}`;
+  return entry.corpsClass;
 }
 
 /**
@@ -52,7 +71,7 @@ function bucketFor(corpsClass) {
  * Skips entries with no totalSeasonScore (corps not yet competing).
  */
 function indexCorpsByBucket(profileDocs, userIds) {
-  const byBucket = { soundSport: [], competitive: [] };
+  const byBucket = { soundSport: [], competitive: [], podium: [] };
 
   profileDocs.forEach((profileDoc, idx) => {
     if (!profileDoc.exists) return;
@@ -77,19 +96,24 @@ function indexCorpsByBucket(profileDocs, userIds) {
         corpsName: corpsData.corpsName || corpsData.name || "Unnamed Corps",
         score,
         avatarUrl: corpsData.avatarUrl || null,
+        // Podium's internal division (worldClass/openClass/aClass), written by
+        // the nightly Podium processor onto the corps display copy.
+        division: corpsClass === "podiumClass" ? corpsData.division || "aClass" : null,
       });
     }
   });
 
   // Pre-sort each bucket by score descending so rank-finding is a linear scan.
-  byBucket.soundSport.sort((a, b) => b.score - a.score);
-  byBucket.competitive.sort((a, b) => b.score - a.score);
+  for (const bucket of Object.keys(byBucket)) {
+    byBucket[bucket].sort((a, b) => b.score - a.score);
+  }
   return byBucket;
 }
 
 /**
- * Pick rivals for a single corps entry. Prefers same-class neighbors; falls back
- * to bucket-mates only if needed to reach RIVAL_TARGET.
+ * Pick rivals for a single corps entry. Prefers same-group neighbors (class in
+ * the competitive bucket, division in the Podium bucket); falls back to
+ * bucket-mates only if needed to reach RIVAL_TARGET.
  */
 function pickRivalsForEntry(entry, bucketEntries) {
   const others = bucketEntries.filter(
@@ -97,19 +121,20 @@ function pickRivalsForEntry(entry, bucketEntries) {
   );
   if (others.length === 0) return [];
 
-  const sameClass = others.filter((e) => e.corpsClass === entry.corpsClass);
-  const otherClass = others.filter((e) => e.corpsClass !== entry.corpsClass);
+  const entryGroup = rivalGroupOf(entry);
+  const sameGroup = others.filter((e) => rivalGroupOf(e) === entryGroup);
+  const otherGroup = others.filter((e) => rivalGroupOf(e) !== entryGroup);
 
   const byCloseness = (a, b) =>
     Math.abs(a.score - entry.score) - Math.abs(b.score - entry.score);
 
   const picks = [];
-  for (const candidate of [...sameClass].sort(byCloseness)) {
+  for (const candidate of [...sameGroup].sort(byCloseness)) {
     if (picks.length >= RIVAL_TARGET) break;
     picks.push(candidate);
   }
   if (picks.length < RIVAL_TARGET) {
-    for (const candidate of [...otherClass].sort(byCloseness)) {
+    for (const candidate of [...otherGroup].sort(byCloseness)) {
       if (picks.length >= RIVAL_TARGET) break;
       picks.push(candidate);
     }
@@ -129,6 +154,7 @@ function pickRivalsForEntry(entry, bucketEntries) {
       avatarUrl: rival.avatarUrl,
       bucketRank: bucketRankByUid.get(`${rival.uid}:${rival.corpsClass}`) || null,
       userBucketRank: userRank,
+      ...(rival.division ? { division: rival.division } : {}),
     };
 
     // SoundSport never reveals raw scores. Surface medal tier and the user's
@@ -188,7 +214,7 @@ async function updateRivalsLogic() {
 
   const byBucket = indexCorpsByBucket(profileDocs, userIds);
   logger.info(
-    `Indexed corps: soundSport=${byBucket.soundSport.length}, competitive=${byBucket.competitive.length}`,
+    `Indexed corps: soundSport=${byBucket.soundSport.length}, competitive=${byBucket.competitive.length}, podium=${byBucket.podium.length}`,
   );
 
   // Per-class ranks for the daily snapshot. Buckets mix classes (competitive
@@ -292,4 +318,8 @@ exports.updateRivalsNow = onCall({ cors: true }, async (request) => {
 module.exports = {
   scheduledRivalsUpdate: exports.scheduledRivalsUpdate,
   updateRivalsNow: exports.updateRivalsNow,
+  // Exported for unit tests.
+  bucketFor,
+  indexCorpsByBucket,
+  pickRivalsForEntry,
 };

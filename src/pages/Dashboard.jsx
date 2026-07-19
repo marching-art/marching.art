@@ -551,7 +551,11 @@ const Dashboard = () => {
                   />
 
                   {/* Rivals - closest competitors in the active corps's class */}
-                  <RivalsPanel rivals={activeCorpsRivals} corpsClass={activeCorpsClass} />
+                  <RivalsPanel
+                    rivals={activeCorpsRivals}
+                    corpsClass={activeCorpsClass}
+                    division={activeCorps?.division}
+                  />
 
                   <div data-tour="recent-results">
                     <RecentResultsFeed
