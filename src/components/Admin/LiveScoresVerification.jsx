@@ -162,23 +162,31 @@ const LiveScoresVerification = () => {
     const startDay = parseInt(backfillStart, 10);
     const endDay = parseInt(backfillEnd, 10);
     if (
-      !Number.isInteger(startDay) || !Number.isInteger(endDay) ||
-      startDay < 1 || endDay > 49 || startDay > endDay
+      !Number.isInteger(startDay) ||
+      !Number.isInteger(endDay) ||
+      startDay < 1 ||
+      endDay > 49 ||
+      startDay > endDay
     ) {
       toast.error('Enter a valid day range: 1 ≤ start ≤ end ≤ 49.');
       return;
     }
-    if (backfillOverwrite &&
+    if (
+      backfillOverwrite &&
       !window.confirm(
         `Overwrite existing scores for days ${startDay}-${endDay}? ` +
-        'This replaces any archived values for those days with a fresh scrape.'
+          'This replaces any archived values for those days with a fresh scrape.'
       )
     ) {
       return;
     }
     setBackfilling(true);
     try {
-      const result = await backfillLiveScoresForDayRange({ startDay, endDay, overwrite: backfillOverwrite });
+      const result = await backfillLiveScoresForDayRange({
+        startDay,
+        endDay,
+        overwrite: backfillOverwrite,
+      });
       const data = result.data || {};
       if (data.success) {
         toast.success(data.message || 'Backfill triggered.');

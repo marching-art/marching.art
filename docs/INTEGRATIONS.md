@@ -55,7 +55,7 @@ The nightly live-score scrape (`scrapeDciScores`, 1:30 AM ET), the admin
 enrichment/archive path all pull from **dci.org**.
 
 - **Cloudflare challenge:** dci.org now fronts its **entire zone** with a
-  Cloudflare *managed challenge* (the "Just a moment…" interstitial). A plain
+  Cloudflare _managed challenge_ (the "Just a moment…" interstitial). A plain
   `axios`/`cheerio` GET — any User-Agent — gets **HTTP 403** and the challenge
   page instead of the scores HTML/sitemap XML. This broke the nightly scrape.
 - **Fix — one fetch choke point:** every dci.org request goes through
@@ -67,12 +67,12 @@ enrichment/archive path all pull from **dci.org**.
   instantly if DCI later allowlists our egress).
 - **Config:**
 
-  | Setting | Kind | Purpose |
-  | --- | --- | --- |
-  | `SCRAPER_API_KEY` | secret | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY` |
-  | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingbee` (default) · `zenrows` · `scraperapi` · `custom` |
-  | `SCRAPER_API_ENDPOINT` | param | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders |
-  | `SCRAPER_API_STEALTH` | param | scrapingbee only: `true` (default) uses `stealth_proxy` (its Cloudflare mode); `false` uses `premium_proxy` (for plans without stealth) |
+  | Setting                | Kind                       | Purpose                                                                                                                                 |
+  | ---------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+  | `SCRAPER_API_KEY`      | secret                     | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY`                                                     |
+  | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingbee` (default) · `zenrows` · `scraperapi` · `custom`                                                                           |
+  | `SCRAPER_API_ENDPOINT` | param                      | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders                                                          |
+  | `SCRAPER_API_STEALTH`  | param                      | scrapingbee only: `true` (default) uses `stealth_proxy` (its Cloudflare mode); `false` uses `premium_proxy` (for plans without stealth) |
 
   `dciFetch` also treats a Cloudflare challenge page returned as HTTP 200 (a
   proxy that failed to solve the challenge) as a **retryable** failure, so it
@@ -82,6 +82,7 @@ enrichment/archive path all pull from **dci.org**.
 
   Any function that fetches dci.org declares `secrets: [scraperApiKey]` — if you
   add a new one, declare it too or the key won't be readable at runtime.
+
 - **Volume & etiquette:** the live scrape hits ~1–4 URLs/night; keep it that way.
   The durable fix is an allowlist/data arrangement with DCI (a shared-secret
   header or a static-IP Cloudflare skip rule), which lets us drop the scraping

@@ -59,9 +59,10 @@ import {
   getCorpsAvatarUrl,
   getCorpsWithAvatars,
   getCompetitionTrophies,
+  getCorpsJourneys,
+  getSeasonHistory,
   getShowTitle,
 } from './directorProfileHelpers';
-import type { SeasonHistoryEntry } from './directorProfileHelpers';
 import { getEquippedCosmetic } from '../../utils/cosmetics';
 import { getXPProgress } from '../../utils/captionPricing';
 import CaptionMasteryPanel from './CaptionMasteryPanel';
@@ -171,34 +172,12 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   const achievements = profile.achievements || [];
   const [showAllAchievements, setShowAllAchievements] = useState(false);
 
-  // Season history
-  const seasonHistory = useMemo((): SeasonHistoryEntry[] => {
-    if (!profile.corps) return [];
-    const history: SeasonHistoryEntry[] = [];
-    const seen = new Set<string>();
+  // Season history — every archived season, labeled with the class it was
+  // competed in (see getSeasonHistory)
+  const seasonHistory = useMemo(() => getSeasonHistory(profile), [profile]);
 
-    Object.entries(profile.corps).forEach(([classKey, corps]) => {
-      if (!corps) return;
-      const corpsAny = corps as { seasonHistory?: SeasonHistoryEntry[] };
-      if (corpsAny.seasonHistory) {
-        corpsAny.seasonHistory.forEach((season) => {
-          const key = `${classKey}-${season.seasonId || season.seasonName}`;
-          if (seen.has(key)) return;
-          seen.add(key);
-          history.push({
-            ...season,
-            corpsName:
-              season.corpsName || corps.corpsName || (corps as { name?: string }).name || 'Unknown',
-            classKey: classKey as CorpsClass,
-          });
-        });
-      }
-    });
-
-    return history.sort((a, b) =>
-      (b.seasonId || b.seasonName || '').localeCompare(a.seasonId || a.seasonName || '')
-    );
-  }, [profile.corps]);
+  // Corps that have competed in more than one class get their climb celebrated
+  const corpsJourneys = useMemo(() => getCorpsJourneys(profile), [profile]);
 
   const memberSince = useMemo(() => {
     if (!profile.createdAt) return 'Unknown';
@@ -767,7 +746,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* SEASON HISTORY - Full Width (corps history archive, tabbed by class) */}
       {/* ================================================================== */}
       <div className="px-3 pb-3">
-        <SeasonHistorySection seasons={seasonHistory} />
+        <SeasonHistorySection seasons={seasonHistory} journeys={corpsJourneys} />
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import {
   CORPS_CLASS_LABELS,
   resolveCorpsForClass,
   isCorpsClassUnlocked,
+  getCorpsClassOrderIndex,
 } from '../../utils/corps';
 import { toCanonicalClassKey } from '../../utils/classUnlocks';
 import { formatSeasonName } from '../../utils/season';
@@ -22,6 +23,11 @@ export interface SeasonHistoryEntry {
   seasonName?: string;
   corpsName: string;
   classKey: CorpsClass;
+  /** Class the corps actually competed in that season (from the archive record).
+   * Distinct from classKey resolution order: a corps that climbs classes keeps
+   * each season's record labeled with the class it was earned in. */
+  corpsClass?: string;
+  archivedAt?: { seconds?: number };
   placement?: number;
   finalScore?: number;
   totalSeasonScore?: number;
@@ -84,6 +90,94 @@ export type ClassDisplayConfig = (typeof CLASS_DISPLAY)[keyof typeof CLASS_DISPL
 export function getClassDisplay(classKey: string): ClassDisplayConfig {
   const canonical = toCanonicalClassKey(classKey) as keyof typeof CLASS_DISPLAY;
   return CLASS_DISPLAY[canonical] || CLASS_DISPLAY.soundSport;
+}
+
+// =============================================================================
+// CLASS JOURNEY
+// =============================================================================
+// A corps carries its full seasonHistory with it when it moves between classes,
+// and each archived season records the class it was competed in. A "journey" is
+// that chronological path (e.g. SoundSport → A Class → World Class) — the
+// climb worth celebrating on the profile.
+
+/**
+ * Flatten every corps' seasonHistory into one newest-first list for the
+ * profile's Season History section. Each entry is labeled with the class it
+ * was actually competed in (the archived corpsClass), not the corps' current
+ * slot — a corps that climbed classes keeps its history under the classes it
+ * earned it in.
+ */
+export function getSeasonHistory(profile: UserProfile): SeasonHistoryEntry[] {
+  if (!profile.corps) return [];
+  const history: SeasonHistoryEntry[] = [];
+  const seen = new Set<string>();
+
+  Object.entries(profile.corps).forEach(([classKey, corps]) => {
+    if (!corps) return;
+    const corpsAny = corps as { seasonHistory?: SeasonHistoryEntry[] };
+    if (!corpsAny.seasonHistory) return;
+    corpsAny.seasonHistory.forEach((season) => {
+      const historicalClass = toCanonicalClassKey(season.corpsClass || classKey) as CorpsClass;
+      const key = `${historicalClass}-${season.seasonId || season.seasonName}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      history.push({
+        ...season,
+        corpsName:
+          season.corpsName || corps.corpsName || (corps as { name?: string }).name || 'Unknown',
+        classKey: historicalClass,
+      });
+    });
+  });
+
+  return history.sort((a, b) =>
+    (b.seasonId || b.seasonName || '').localeCompare(a.seasonId || a.seasonName || '')
+  );
+}
+
+export interface CorpsJourney {
+  corpsName: string;
+  /** Chronological distinct classes competed in, ending at the current class */
+  classes: CorpsClass[];
+  /** True when the corps now sits in a higher class than where it started */
+  climbed: boolean;
+}
+
+export function getCorpsJourneys(profile: UserProfile): CorpsJourney[] {
+  if (!profile.corps) return [];
+  const journeys: CorpsJourney[] = [];
+
+  Object.entries(profile.corps).forEach(([classKey, corps]) => {
+    if (!corps) return;
+    const history = ((corps as { seasonHistory?: SeasonHistoryEntry[] }).seasonHistory || [])
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.archivedAt?.seconds || 0) - (b.archivedAt?.seconds || 0) ||
+          (a.seasonId || a.seasonName || '').localeCompare(b.seasonId || b.seasonName || '')
+      );
+
+    const classes: CorpsClass[] = [];
+    const pushClass = (key: string | undefined) => {
+      if (!key) return;
+      const canonical = toCanonicalClassKey(key) as CorpsClass;
+      if (classes[classes.length - 1] !== canonical) classes.push(canonical);
+    };
+    history.forEach((season) => pushClass(season.corpsClass || classKey));
+    pushClass(classKey); // where the corps competes today
+
+    if (classes.length >= 2) {
+      journeys.push({
+        corpsName: corps.corpsName || 'Unknown',
+        classes,
+        climbed:
+          getCorpsClassOrderIndex(classes[classes.length - 1]) <
+          getCorpsClassOrderIndex(classes[0]),
+      });
+    }
+  });
+
+  return journeys;
 }
 
 export const TIER_STYLES = {
