@@ -29,7 +29,7 @@ const MEDAL_COLORS = {
   Participation: 'text-muted',
 };
 
-const RivalsPanel = memo(({ rivals, corpsClass }) => {
+const RivalsPanel = memo(({ rivals, corpsClass, division }) => {
   if (!corpsClass) return null;
   const list = Array.isArray(rivals) ? rivals : [];
 
@@ -55,6 +55,11 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
           {list.map((rival) => {
             const isSoundSport = corpsClass === 'soundSport' || rival.corpsClass === 'soundSport';
             const crossClass = rival.corpsClass && rival.corpsClass !== corpsClass;
+            // Podium rivals can come from another division inside Podium
+            // (World/Open/A, PODIUM.md §5.7) — surface it like a cross-class
+            // rival surfaces its class. Division keys reuse the class keys, so
+            // CLASS_SHORT_LABELS covers them.
+            const crossDivision = rival.division && division && rival.division !== division;
 
             // SoundSport: render medal tier instead of numeric score, and a
             // relative arrow based on medal rank rather than score delta.
@@ -125,6 +130,11 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
                     {crossClass && (
                       <span className="ml-1 text-muted">
                         · {CLASS_SHORT_LABELS[rival.corpsClass] || rival.corpsClass}
+                      </span>
+                    )}
+                    {crossDivision && (
+                      <span className="ml-1 text-muted">
+                        · {CLASS_SHORT_LABELS[rival.division] || rival.division}
                       </span>
                     )}
                   </div>
