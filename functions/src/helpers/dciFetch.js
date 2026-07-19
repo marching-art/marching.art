@@ -35,6 +35,12 @@ const { defineSecret, defineString } = require("firebase-functions/params");
 const scraperApiKey = defineSecret("SCRAPER_API_KEY");
 const scraperApiProvider = defineString("SCRAPER_API_PROVIDER", { default: "scrapingbee" });
 const scraperApiEndpoint = defineString("SCRAPER_API_ENDPOINT", { default: "" });
+// For provider=scrapingbee: use the "stealth proxy" — ScrapingBee's documented
+// mode for Cloudflare-protected sites — instead of the plain premium proxy.
+// dci.org's managed challenge intermittently beats premium_proxy (500s, or a
+// challenge page returned as 200). Default "true"; set "false" only if your
+// ScrapingBee plan lacks stealth_proxy.
+const scraperApiStealth = defineString("SCRAPER_API_STEALTH", { default: "true" });
 
 const DIRECT_USER_AGENT = "Mozilla/5.0 (compatible; MarchingArtBot/1.0)";
 
@@ -53,9 +59,11 @@ const MAX_PAYLOAD_BYTES = 50 * 1024 * 1024; // recap/sitemap bodies can be large
  * @param {string} cfg.key - Provider API key.
  * @param {string} cfg.provider - scrapingbee | zenrows | scraperapi | custom.
  * @param {string} [cfg.endpoint] - Template for provider=custom.
+ * @param {boolean} [cfg.stealth=true] - scrapingbee only: use stealth_proxy
+ *   (Cloudflare mode) instead of premium_proxy.
  * @returns {string} The fully-formed provider request URL.
  */
-function buildProxiedUrl(rawUrl, { key, provider, endpoint = "" }) {
+function buildProxiedUrl(rawUrl, { key, provider, endpoint = "", stealth = true }) {
   const enc = encodeURIComponent(rawUrl);
   const k = encodeURIComponent(key);
   switch ((provider || "scrapingbee").toLowerCase()) {
@@ -74,9 +82,25 @@ function buildProxiedUrl(rawUrl, { key, provider, endpoint = "" }) {
   }
   case "scrapingbee":
   default:
-    return `https://app.scrapingbee.com/api/v1/?api_key=${k}&url=${enc}` +
-      "&render_js=true&premium_proxy=true&country_code=us";
+    // stealth_proxy is ScrapingBee's Cloudflare-bypass mode; premium_proxy is the
+    // cheaper fallback for plans without stealth. Both imply render_js.
+    return `https://app.scrapingbee.com/api/v1/?api_key=${k}&url=${enc}&render_js=true&` +
+      `${stealth ? "stealth_proxy=true" : "premium_proxy=true"}&country_code=us`;
   }
+}
+
+/**
+ * True when a proxied response body is a Cloudflare challenge/interstitial rather
+ * than the real page — i.e. the scraping API failed to solve the challenge and
+ * handed back the "Just a moment..." page (often as HTTP 200). Treated as a
+ * retryable failure so we don't silently parse a challenge page as "no results".
+ * @param {*} body
+ * @returns {boolean}
+ */
+function looksLikeChallenge(body) {
+  if (typeof body !== "string") return false;
+  const markers = /Just a moment\.\.\.|challenges\.cloudflare\.com|_cf_chl_opt|cf-chl-|Enable JavaScript and cookies/i;
+  return markers.test(body);
 }
 
 /**
@@ -103,7 +127,7 @@ function readApiKey() {
  * @param {number} [options.maxRetries=3]
  * @returns {Promise<string>} The response body (HTML or XML).
  */
-async function dciFetch(url, { maxRetries = 3 } = {}) {
+async function dciFetch(url, { maxRetries = 4 } = {}) {
   if (!url) throw new Error("dciFetch requires a URL.");
 
   const key = readApiKey();
@@ -113,6 +137,7 @@ async function dciFetch(url, { maxRetries = 3 } = {}) {
       key,
       provider: scraperApiProvider.value(),
       endpoint: scraperApiEndpoint.value(),
+      stealth: (scraperApiStealth.value() || "true").toLowerCase() !== "false",
     })
     : url;
 
@@ -129,11 +154,22 @@ async function dciFetch(url, { maxRetries = 3 } = {}) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await axios.get(requestUrl, config);
+      // A challenge page returned as HTTP 200 would otherwise parse to "no
+      // results". Treat it as a retryable failure so we retry (and ultimately
+      // surface a clear error) instead of silently succeeding on junk.
+      if (useProxy && looksLikeChallenge(response.data)) {
+        const challengeError = new Error(
+          "Scraping proxy returned a Cloudflare challenge page instead of the target content."
+        );
+        challengeError.isChallenge = true;
+        throw challengeError;
+      }
       return response.data;
     } catch (error) {
       lastError = error;
       const status = error.response?.status;
       const isRetryable =
+        error.isChallenge === true ||
         error.code === "ECONNRESET" ||
         error.code === "ETIMEDOUT" ||
         error.code === "ENOTFOUND" ||
@@ -164,5 +200,6 @@ async function dciFetch(url, { maxRetries = 3 } = {}) {
 module.exports = {
   dciFetch,
   buildProxiedUrl,
+  looksLikeChallenge,
   scraperApiKey,
 };

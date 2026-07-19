@@ -72,6 +72,13 @@ enrichment/archive path all pull from **dci.org**.
   | `SCRAPER_API_KEY` | secret | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY` |
   | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingbee` (default) · `zenrows` · `scraperapi` · `custom` |
   | `SCRAPER_API_ENDPOINT` | param | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders |
+  | `SCRAPER_API_STEALTH` | param | scrapingbee only: `true` (default) uses `stealth_proxy` (its Cloudflare mode); `false` uses `premium_proxy` (for plans without stealth) |
+
+  `dciFetch` also treats a Cloudflare challenge page returned as HTTP 200 (a
+  proxy that failed to solve the challenge) as a **retryable** failure, so it
+  retries and surfaces a clear error instead of silently parsing junk as "no
+  scores". The dci.org **listing** page (`/scores/`) is the heaviest to render
+  and the most likely to need `stealth_proxy`; recap pages are lighter.
 
   Any function that fetches dci.org declares `secrets: [scraperApiKey]` — if you
   add a new one, declare it too or the key won't be readable at runtime.

@@ -413,12 +413,12 @@ const LiveScoresVerification = () => {
         <button
           onClick={handleBackfill}
           disabled={backfilling || !isLiveSeason}
-          className="btn-outline flex items-center gap-1.5 text-xs px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-none border border-interactive bg-interactive/20 text-interactive font-bold hover:bg-interactive/30 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {backfilling ? (
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <Radio className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5" />
           )}
           {backfilling ? 'Backfilling…' : 'Backfill days'}
         </button>
