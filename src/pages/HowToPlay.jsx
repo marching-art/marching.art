@@ -29,7 +29,8 @@ import {
   HelpCircle,
   Search,
 } from 'lucide-react';
-import { GuideSection, SearchResults } from './howToPlaySections';
+import { GuideSection } from './howToPlaySections';
+import { SearchResults } from './howToPlaySearch';
 
 // Section order + labels + icons. Ids must match SECTION_CONTENT keys.
 const SECTIONS = [
