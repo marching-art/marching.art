@@ -5,6 +5,7 @@
 // stay in one place without breaking React fast refresh.
 
 import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
+import { REGISTRATION_LOCK_WEEKS } from '../utils/classRegistry';
 
 // The guide labels each caption by id + full name (from the canonical source)
 // with its own longer explanatory copy.
@@ -57,6 +58,64 @@ export const CLASSES = [
     unlock: '3 seasons or Level 10',
     color: 'yellow',
     desc: 'Elite competition, maximum flexibility',
+  },
+];
+
+// New-corps registration windows. Each class stops accepting NEW corps a fixed
+// number of weeks before finals so a late entry still has season left to
+// compete. The weeks are canonical in src/config/classRegistry.json
+// (registrationLockWeeks) and enforced server-side by registerCorps and
+// processCorpsDecisions — derived here so the guide can never drift.
+export const REGISTRATION_WINDOWS = CLASSES.map((c) => ({
+  id: c.id,
+  name: c.name,
+  lockWeeks: REGISTRATION_LOCK_WEEKS[c.id] ?? 0,
+}));
+
+// The per-class choices the Season Setup Wizard offers when a new season
+// opens — mirrors the decision actions handled by processCorpsDecisions
+// (continue / new / unretire / move / skip / retire).
+export const SEASON_START_OPTIONS = [
+  {
+    action: 'Continue',
+    desc: 'Bring the same corps back. Season stats reset; its name, location, and history carry over.',
+  },
+  {
+    action: 'Start new',
+    desc: 'Found a fresh corps in the class. Any corps already there retires to your alumni list, and the new name must be unique for the season.',
+  },
+  {
+    action: 'Unretire',
+    desc: 'Bring a corps back from your retired list with its identity and history intact.',
+  },
+  {
+    action: 'Move',
+    desc: 'Carry a corps into a different class you have unlocked, keeping its name and history. The destination class must not already have an active corps.',
+  },
+  {
+    action: 'Skip',
+    desc: 'Sit the class out this season. The corps stays yours and can return when the next season opens.',
+  },
+  {
+    action: 'Retire',
+    desc: 'Send the corps to your retired list. You can unretire it in a future season.',
+  },
+];
+
+// What is (and is not) allowed once the season is underway — mirrors the
+// server rules in registerCorps, transferCorps, and retireCorps.
+export const MIDSEASON_CORPS_RULES = [
+  {
+    title: 'Founding a new corps',
+    desc: 'Allowed while the class is still open (see the windows above). You also need the class unlocked, no active corps already in it, and a corps name nobody has claimed this season.',
+  },
+  {
+    title: 'Changing class',
+    desc: "Only before your corps competes — once it has a score on the board, it's locked into its class until the season ends. A corps that hasn't competed can move once per season to an unlocked class with no active corps; its lineup and show registrations reset on the move.",
+  },
+  {
+    title: 'Retiring',
+    desc: 'Same cutoff: a corps that has competed this season cannot retire until the season ends.',
   },
 ];
 
@@ -177,5 +236,17 @@ export const FAQ = [
   {
     q: 'Can I compete in multiple classes?',
     a: 'Yes! You can have a separate corps in each unlocked class, each with its own lineup and rankings.',
+  },
+  {
+    q: 'What are my options when a new season begins?',
+    a: 'The Season Setup Wizard walks through each of your classes with a fresh decision: continue your corps (stats reset, identity and history carry over), found a new one (the current corps retires to your alumni list), unretire a past corps, move a corps to a different unlocked class, skip the class for the season, or retire the corps. Decisions are per class, so you can continue in one class while starting fresh in another.',
+  },
+  {
+    q: 'Can I create a new corps after the season has started?',
+    a: 'Yes, as long as that class is still open. Each ranked class stops accepting new corps a set number of weeks before finals so a late entry still has time to compete: World Class locks 6 weeks out, Open Class 5, and A Class 4, while SoundSport stays open all season. You also need the class unlocked, no active corps already in it, and a corps name nobody has claimed this season.',
+  },
+  {
+    q: 'Can I move my corps to a different class mid-season?',
+    a: "Only before it competes. Once your corps has a score on the board, it's locked into its class until the season ends — the same cutoff applies to retiring it. A corps that hasn't competed yet can move once per season to any class you've unlocked that doesn't already have an active corps; its name and history come along, but its lineup and show registrations reset. When the next season opens, the Season Setup Wizard lets you move any corps freely again.",
   },
 ];

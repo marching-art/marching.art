@@ -37,6 +37,9 @@ import {
   SCORING_MODEL,
   JOURNEY,
   REP_TIERS,
+  REGISTRATION_WINDOWS,
+  SEASON_START_OPTIONS,
+  MIDSEASON_CORPS_RULES,
 } from './howToPlayData';
 import {
   XP_PER_LEVEL,
@@ -489,6 +492,52 @@ const SeasonSection = () => (
       Finals. Weekly changes are per class and can be spent one at a time or all at once. You can
       register for up to 4 shows a week.
     </p>
+
+    {/* Season-start corps decisions */}
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mt-5 mb-2">
+      Registering your corps at season start
+    </p>
+    <p className="text-[11px] text-muted leading-relaxed mb-2">
+      When a new season opens, the Season Setup Wizard offers a fresh decision for every class you
+      have unlocked — each class decides independently:
+    </p>
+    <div className="grid gap-2 sm:grid-cols-2 mb-5">
+      {SEASON_START_OPTIONS.map((opt) => (
+        <div key={opt.action} className="bg-black/30 border border-white/10 rounded-none p-3">
+          <p className="text-xs font-bold text-secondary">{opt.action}</p>
+          <p className="text-[11px] text-muted leading-snug">{opt.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    {/* Mid-season registration windows + restrictions */}
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
+      After the season starts
+    </p>
+    <p className="text-[11px] text-muted leading-relaxed mb-2">
+      You can still found a corps mid-season, but each class closes to new corps a set number of
+      weeks before finals so a late entry has enough season left to compete:
+    </p>
+    <Card className="mb-3">
+      {REGISTRATION_WINDOWS.map((w) => (
+        <DataRow
+          key={w.id}
+          label={w.name}
+          value={
+            w.lockWeeks === 0 ? 'Open all season' : `Locks ${w.lockWeeks} weeks before finals`
+          }
+          accent={w.lockWeeks === 0}
+        />
+      ))}
+    </Card>
+    <div className="space-y-2">
+      {MIDSEASON_CORPS_RULES.map((rule) => (
+        <div key={rule.title} className="bg-black/30 border border-white/10 rounded-none p-3">
+          <p className="text-xs font-bold text-secondary">{rule.title}</p>
+          <p className="text-[11px] text-muted leading-snug">{rule.desc}</p>
+        </div>
+      ))}
+    </div>
   </>
 );
 
@@ -673,76 +722,4 @@ const SECTION_CONTENT = {
 export const GuideSection = ({ id }) => {
   const Content = SECTION_CONTENT[id];
   return Content ? <Content /> : null;
-};
-
-// =============================================================================
-// SEARCH — flat index across the guide's data; each result jumps to a section
-// =============================================================================
-
-const SEARCH_SOURCES = [
-  ...CAPTIONS.map((c) => ({
-    id: 'captions',
-    section: 'Captions',
-    title: `${c.abbr} — ${c.name}`,
-    text: c.desc,
-  })),
-  ...CLASSES.map((c) => ({
-    id: 'classes',
-    section: 'Classes',
-    title: c.name,
-    text: `${c.desc}. Budget: ${c.points} points. Unlock: ${c.unlock}.`,
-  })),
-  ...RATINGS.map((r) => ({
-    id: 'classes',
-    section: 'SoundSport Ratings',
-    title: `${r.tier} rating`,
-    text: `${r.min === 0 ? 'Any score' : `${r.min}+ points`}. ${r.blurb}`,
-  })),
-  ...PROGRESSION_AXES.map((a) => ({
-    id: 'progression',
-    section: 'Progression',
-    title: a.label,
-    text: a.meaning,
-  })),
-  ...XP_SOURCE_GUIDE.map((s) => ({
-    id: 'progression',
-    section: 'Earning XP',
-    title: s.label,
-    text: `${typeof s.xp === 'number' ? `${s.xp} XP` : s.xp}. ${s.cadence}`,
-  })),
-  ...GLOSSARY.map((g) => ({ id: 'glossary', section: 'Glossary', title: g.term, text: g.def })),
-  ...FAQ.map((f) => ({ id: 'faq', section: 'FAQ', title: f.q, text: f.a })),
-];
-
-export const SearchResults = ({ query, onNavigate }) => {
-  const q = query.toLowerCase();
-  const results = SEARCH_SOURCES.filter(
-    (e) => e.title.toLowerCase().includes(q) || e.text.toLowerCase().includes(q)
-  );
-
-  if (results.length === 0) {
-    return (
-      <p className="text-sm text-muted text-center py-12">
-        No results for &ldquo;{query}&rdquo; — try the section list instead.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-2 max-w-2xl">
-      {results.map((r) => (
-        <button
-          key={`${r.id}-${r.title}`}
-          onClick={() => onNavigate(r.id)}
-          className="w-full text-left bg-surface-sunken border border-white/10 rounded-none px-4 py-3 hover:bg-white/5 transition-colors"
-        >
-          <span className="text-[10px] font-bold uppercase tracking-wider text-interactive">
-            {r.section}
-          </span>
-          <p className="text-sm font-bold text-white mt-0.5">{r.title}</p>
-          <p className="text-xs text-muted mt-0.5 line-clamp-2">{r.text}</p>
-        </button>
-      ))}
-    </div>
-  );
 };
