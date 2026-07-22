@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSeasonProgress } from './seasonProgress';
+import { getMaxVisibleArticleDay, getSeasonProgress } from './seasonProgress';
 
 // Off-season starts are written at midnight UTC (scheduleGeneration.js), so the
 // canonical day count normalizes the start on the UTC calendar.
@@ -85,5 +85,45 @@ describe('getSeasonProgress', () => {
     // Exactly one day per ET calendar day — no skipped or duplicated day.
     expect(day8).toBe(day7 + 1);
     expect(day9).toBe(day8 + 1);
+  });
+});
+
+describe('getMaxVisibleArticleDay', () => {
+  it('is off (null) when no season info is available', () => {
+    expect(getMaxVisibleArticleDay(0)).toBeNull();
+  });
+
+  it('is off on day 1, when no articles exist yet to gate', () => {
+    expect(getMaxVisibleArticleDay(1)).toBeNull();
+  });
+
+  it('hides only the active (still unscored) day mid-season', () => {
+    expect(getMaxVisibleArticleDay(2)).toBe(1);
+    expect(getMaxVisibleArticleDay(25)).toBe(24);
+    expect(getMaxVisibleArticleDay(48)).toBe(47);
+  });
+
+  it('is off once the season reaches its final day, keeping the whole season visible off-season', () => {
+    expect(getMaxVisibleArticleDay(49)).toBeNull();
+  });
+
+  // Regression: the gate must not depend on the wall clock. currentDay already
+  // rolls at the 2 AM ET reset, so an extra pre-2AM subtraction (the old
+  // NewsFeed/Article logic) made day N-1's articles vanish from midnight to
+  // 2 AM every night. The gate for a given currentDay is one fixed value.
+  it('yields the same gate all night for the same currentDay', () => {
+    const beforeMidnight = getMaxVisibleArticleDay(
+      getSeasonProgress(
+        { schedule: { startDate: new Date('2026-01-04T00:00:00Z') } },
+        new Date('2026-01-10T23:30:00-05:00')
+      ).currentDay
+    );
+    const afterMidnight = getMaxVisibleArticleDay(
+      getSeasonProgress(
+        { schedule: { startDate: new Date('2026-01-04T00:00:00Z') } },
+        new Date('2026-01-11T00:30:00-05:00')
+      ).currentDay
+    );
+    expect(afterMidnight).toBe(beforeMidnight);
   });
 });
