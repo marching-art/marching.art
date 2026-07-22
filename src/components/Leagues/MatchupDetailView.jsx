@@ -5,6 +5,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Swords, Trophy, Flame, Calendar, BarChart3 } from 'lucide-react';
 import { getSeasonData, getSeasonRecaps } from '../../api/season';
+import { queryClient, queryKeys } from '../../lib/queryClient';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
 import RivalryHistoryCard from './RivalryHistoryCard';
@@ -67,10 +68,15 @@ const MatchupDetailView = ({
         let recaps = recapsProp;
 
         if (!recaps || recaps.length === 0) {
-          // Fallback: fetch recaps if not provided (backwards compatibility)
+          // Fallback: fetch recaps if not provided (backwards compatibility).
+          // Read through the shared react-query cache entry so this reuses
+          // the Scores/Dashboard/League archive instead of re-downloading it.
           const sData = await getSeasonData();
           if (sData) {
-            recaps = await getSeasonRecaps(sData.seasonUid);
+            recaps = await queryClient.fetchQuery({
+              queryKey: queryKeys.fantasyRecaps(sData.seasonUid),
+              queryFn: () => getSeasonRecaps(sData.seasonUid),
+            });
           }
         }
 
