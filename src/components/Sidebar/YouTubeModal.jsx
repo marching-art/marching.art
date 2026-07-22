@@ -1,10 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import { X, Loader2, RefreshCw, ChevronRight } from 'lucide-react';
+import { X, Loader2, RefreshCw, RotateCcw, ChevronRight } from 'lucide-react';
 import YouTubeIcon from '../YouTubeIcon';
+import { useAuth } from '../../context/AuthContext';
+import { adminHelpers } from '../../api';
 
-const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
+const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
   useEscapeKey(onClose, !!videoModal.show);
+
+  // Admin check gates the Reset button (UI-only; the backend re-verifies the
+  // admin claim before touching the nope list).
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (user) {
+      adminHelpers.isAdmin().then(setIsAdmin);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   if (!videoModal.show) return null;
 
@@ -74,6 +88,17 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
             Search: "{videoModal.searchQuery}"
           </p>
           <div className="flex items-center gap-3 flex-shrink-0">
+            {isAdmin && onReset && (
+              <button
+                onClick={onReset}
+                disabled={videoModal.loading || !videoModal.videoId}
+                className="text-[10px] text-amber-500 hover:text-amber-400 font-bold uppercase tracking-wider transition-colors flex items-center gap-1 disabled:opacity-50"
+                title="Admin: reject this video and search for a replacement"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset
+              </button>
+            )}
             <button
               onClick={onRetry}
               disabled={videoModal.loading}
