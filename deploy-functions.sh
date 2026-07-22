@@ -72,6 +72,20 @@ else
 fi
 
 # =============================================================================
+# TEST GATE: never ship untested function code (mirrors the test-functions
+# job in .github/workflows/deploy-functions.yml). Set SKIP_TESTS=1 only for
+# a break-glass redeploy of a known-good ref.
+# =============================================================================
+
+if [ "${SKIP_TESTS:-}" = "1" ]; then
+    echo "WARNING: SKIP_TESTS=1 — deploying without running the functions test suite."
+else
+    echo "Running functions test suite before deploy..."
+    (cd functions && npm test)
+    echo "Tests passed."
+fi
+
+# =============================================================================
 # FUNCTION LIST: derived from functions/index.js exports
 # =============================================================================
 
