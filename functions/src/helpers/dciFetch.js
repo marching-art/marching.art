@@ -7,9 +7,9 @@
  * sitemap-based deep scrapes, and the event-detail archive.
  *
  * To get past it we route requests through a rendering scraping API that solves
- * the challenge and returns the final page body (ScrapingBee / ZenRows /
- * ScraperAPI, or a custom endpoint). All existing cheerio/XML parsing is
- * unchanged — only the fetch is swapped.
+ * the challenge and returns the final page body (ScrapingAnt / ScrapingBee /
+ * ZenRows / ScraperAPI, or a custom endpoint). All existing cheerio/XML parsing
+ * is unchanged — only the fetch is swapped.
  *
  * Configuration:
  *   - SCRAPER_API_KEY   (secret)  API key for the provider. Set with:
@@ -18,8 +18,8 @@
  *                                 axios GET. That keeps local/dev and tests
  *                                 working and lets us drop the paid service
  *                                 instantly if dci.org later allowlists us.
- *   - SCRAPER_API_PROVIDER (str)  scrapingbee | zenrows | scraperapi | custom.
- *                                 Defaults to scrapingbee.
+ *   - SCRAPER_API_PROVIDER (str)  scrapingant | scrapingbee | zenrows |
+ *                                 scraperapi | custom. Defaults to scrapingbee.
  *   - SCRAPER_API_ENDPOINT (str)  Only for provider=custom: a URL template with
  *                                 {key} and {url} placeholders, e.g.
  *                                   https://host/api?token={key}&url={url}&render=true
@@ -35,11 +35,14 @@ const { defineSecret, defineString } = require("firebase-functions/params");
 const scraperApiKey = defineSecret("SCRAPER_API_KEY");
 const scraperApiProvider = defineString("SCRAPER_API_PROVIDER", { default: "scrapingbee" });
 const scraperApiEndpoint = defineString("SCRAPER_API_ENDPOINT", { default: "" });
-// For provider=scrapingbee: use the "stealth proxy" — ScrapingBee's documented
-// mode for Cloudflare-protected sites — instead of the plain premium proxy.
-// dci.org's managed challenge intermittently beats premium_proxy (500s, or a
-// challenge page returned as 200). Default "true"; set "false" only if your
-// ScrapingBee plan lacks stealth_proxy.
+// Heavy-tier toggle for providers that have a cheap and an anti-bot proxy mode.
+//   scrapingbee: "true" uses stealth_proxy (its Cloudflare mode), "false" the
+//     plain premium proxy. dci.org's managed challenge intermittently beats
+//     premium_proxy (500s, or a challenge page returned as 200), so stay "true"
+//     unless your plan lacks stealth_proxy.
+//   scrapingant: "true" ALLOWS escalation to residential proxies (125 credits)
+//     when the challenge beats the default datacenter tier (10 credits) — see
+//     buildAttemptPlan. "false" pins the cheap datacenter tier, never escalating.
 const scraperApiStealth = defineString("SCRAPER_API_STEALTH", { default: "true" });
 
 const DIRECT_USER_AGENT = "Mozilla/5.0 (compatible; MarchingArtBot/1.0)";
@@ -57,16 +60,24 @@ const MAX_PAYLOAD_BYTES = 50 * 1024 * 1024; // recap/sitemap bodies can be large
  * @param {string} rawUrl - The dci.org URL to fetch.
  * @param {object} cfg
  * @param {string} cfg.key - Provider API key.
- * @param {string} cfg.provider - scrapingbee | zenrows | scraperapi | custom.
+ * @param {string} cfg.provider - scrapingant | scrapingbee | zenrows |
+ *   scraperapi | custom.
  * @param {string} [cfg.endpoint] - Template for provider=custom.
- * @param {boolean} [cfg.stealth=true] - scrapingbee only: use stealth_proxy
- *   (Cloudflare mode) instead of premium_proxy.
+ * @param {boolean} [cfg.stealth=true] - Use the provider's heavy anti-bot tier
+ *   for THIS request: scrapingbee stealth_proxy (vs premium_proxy), scrapingant
+ *   residential proxies (vs datacenter).
  * @returns {string} The fully-formed provider request URL.
  */
 function buildProxiedUrl(rawUrl, { key, provider, endpoint = "", stealth = true }) {
   const enc = encodeURIComponent(rawUrl);
   const k = encodeURIComponent(key);
   switch ((provider || "scrapingbee").toLowerCase()) {
+  case "scrapingant":
+    // browser=true is ScrapingAnt's JS-rendering mode (10 credits on the
+    // default datacenter proxies; free tier is 10k credits/month). Residential
+    // proxies are its Cloudflare-grade tier at 125 credits per request.
+    return `https://api.scrapingant.com/v2/general?x-api-key=${k}&url=${enc}&browser=true&` +
+      `proxy_type=${stealth ? "residential" : "datacenter"}&proxy_country=US`;
   case "zenrows":
     return `https://api.zenrows.com/v1/?apikey=${k}&url=${enc}` +
       "&js_render=true&premium_proxy=true&proxy_country=us";
@@ -87,6 +98,31 @@ function buildProxiedUrl(rawUrl, { key, provider, endpoint = "", stealth = true 
     return `https://app.scrapingbee.com/api/v1/?api_key=${k}&url=${enc}&render_js=true&` +
       `${stealth ? "stealth_proxy=true" : "premium_proxy=true"}&country_code=us`;
   }
+}
+
+/**
+ * Decide which provider URL(s) a fetch should use. Pure (no param reads) so it
+ * can be unit-tested directly.
+ *
+ * For scrapingant with stealth enabled, the first attempt uses the cheap
+ * datacenter tier (10 credits) and `escalationUrl` carries the residential tier
+ * (125 credits) to switch to if Cloudflare beats the cheap one — datacenter IPs
+ * pass often enough that always paying 12.5x would waste most of the free tier.
+ * Every other provider gets a single URL and no escalation (ScrapingBee's cheap
+ * tier loses to dci.org intermittently, so it stays pinned to stealth_proxy).
+ *
+ * @param {string} rawUrl - The dci.org URL to fetch.
+ * @param {object} cfg - Same shape as buildProxiedUrl's cfg.
+ * @returns {{primaryUrl: string, escalationUrl: (string|null)}}
+ */
+function buildAttemptPlan(rawUrl, cfg) {
+  if ((cfg.provider || "").toLowerCase() === "scrapingant" && cfg.stealth !== false) {
+    return {
+      primaryUrl: buildProxiedUrl(rawUrl, { ...cfg, stealth: false }),
+      escalationUrl: buildProxiedUrl(rawUrl, { ...cfg, stealth: true }),
+    };
+  }
+  return { primaryUrl: buildProxiedUrl(rawUrl, cfg), escalationUrl: null };
 }
 
 /**
@@ -132,14 +168,15 @@ async function dciFetch(url, { maxRetries = 4 } = {}) {
 
   const key = readApiKey();
   const useProxy = key.length > 0;
-  const requestUrl = useProxy
-    ? buildProxiedUrl(url, {
+  const plan = useProxy
+    ? buildAttemptPlan(url, {
       key,
       provider: scraperApiProvider.value(),
       endpoint: scraperApiEndpoint.value(),
       stealth: (scraperApiStealth.value() || "true").toLowerCase() !== "false",
     })
-    : url;
+    : { primaryUrl: url, escalationUrl: null };
+  let requestUrl = plan.primaryUrl;
 
   const config = {
     timeout: useProxy ? PROXY_TIMEOUT_MS : DIRECT_TIMEOUT_MS,
@@ -186,6 +223,14 @@ async function dciFetch(url, { maxRetries = 4 } = {}) {
         throw error;
       }
 
+      if (error.isChallenge === true && plan.escalationUrl && requestUrl !== plan.escalationUrl) {
+        requestUrl = plan.escalationUrl;
+        logger.warn(
+          `[dciFetch] Cloudflare challenge beat the cheap proxy tier for ${url}; ` +
+          "escalating retries to the residential tier."
+        );
+      }
+
       const backoffMs = Math.pow(2, attempt) * 1000;
       logger.warn(
         `[dciFetch] Attempt ${attempt} for ${url} failed (${error.message}); retrying in ${backoffMs}ms.`
@@ -200,6 +245,7 @@ async function dciFetch(url, { maxRetries = 4 } = {}) {
 module.exports = {
   dciFetch,
   buildProxiedUrl,
+  buildAttemptPlan,
   looksLikeChallenge,
   scraperApiKey,
 };

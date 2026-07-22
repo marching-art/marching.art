@@ -7,7 +7,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildProxiedUrl, looksLikeChallenge } = require("./dciFetch");
+const { buildProxiedUrl, buildAttemptPlan, looksLikeChallenge } = require("./dciFetch");
 
 const TARGET = "https://www.dci.org/scores/recap/2025-dci-world-championship-finals/";
 const ENC = encodeURIComponent(TARGET);
@@ -26,6 +26,21 @@ describe("buildProxiedUrl", () => {
     const url = buildProxiedUrl(TARGET, { key: "abc123", provider: "scrapingbee", stealth: false });
     assert.ok(url.includes("premium_proxy=true"));
     assert.ok(!url.includes("stealth_proxy=true"));
+  });
+
+  test("scrapingant: stealth uses residential proxies with browser rendering", () => {
+    const url = buildProxiedUrl(TARGET, { key: "abc123", provider: "scrapingant" });
+    assert.ok(url.startsWith("https://api.scrapingant.com/v2/general?x-api-key=abc123&url="));
+    assert.ok(url.includes(`url=${ENC}`));
+    assert.ok(url.includes("browser=true"));
+    assert.ok(url.includes("proxy_type=residential"));
+  });
+
+  test("scrapingant: stealth=false uses the cheap datacenter tier", () => {
+    const url = buildProxiedUrl(TARGET, { key: "abc123", provider: "scrapingant", stealth: false });
+    assert.ok(url.includes("proxy_type=datacenter"));
+    assert.ok(!url.includes("proxy_type=residential"));
+    assert.ok(url.includes("browser=true"));
   });
 
   test("zenrows: js_render + premium proxy", () => {
@@ -84,6 +99,37 @@ describe("buildProxiedUrl", () => {
   test("the API key is URL-encoded", () => {
     const url = buildProxiedUrl(TARGET, { key: "a b/c+d", provider: "scrapingbee" });
     assert.ok(url.includes(`api_key=${encodeURIComponent("a b/c+d")}`));
+  });
+});
+
+describe("buildAttemptPlan", () => {
+  test("scrapingant with stealth: starts on datacenter, escalates to residential", () => {
+    const plan = buildAttemptPlan(TARGET, { key: "k", provider: "scrapingant", stealth: true });
+    assert.ok(plan.primaryUrl.includes("proxy_type=datacenter"));
+    assert.ok(plan.escalationUrl.includes("proxy_type=residential"));
+  });
+
+  test("scrapingant with stealth=false: pinned to datacenter, no escalation", () => {
+    const plan = buildAttemptPlan(TARGET, { key: "k", provider: "scrapingant", stealth: false });
+    assert.ok(plan.primaryUrl.includes("proxy_type=datacenter"));
+    assert.equal(plan.escalationUrl, null);
+  });
+
+  test("scrapingbee: single URL, never escalates", () => {
+    const plan = buildAttemptPlan(TARGET, { key: "k", provider: "scrapingbee", stealth: true });
+    assert.equal(plan.primaryUrl, buildProxiedUrl(TARGET, { key: "k", provider: "scrapingbee", stealth: true }));
+    assert.equal(plan.escalationUrl, null);
+  });
+
+  test("custom: single URL from the endpoint template, never escalates", () => {
+    const cfg = {
+      key: "k",
+      provider: "custom",
+      endpoint: "https://proxy.example.com/get?token={key}&target={url}",
+    };
+    const plan = buildAttemptPlan(TARGET, cfg);
+    assert.equal(plan.primaryUrl, buildProxiedUrl(TARGET, cfg));
+    assert.equal(plan.escalationUrl, null);
   });
 });
 

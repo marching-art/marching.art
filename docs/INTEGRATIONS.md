@@ -72,18 +72,31 @@ enrichment/archive path all pull from **dci.org**.
   instantly if DCI later allowlists our egress).
 - **Config:**
 
-  | Setting                | Kind                       | Purpose                                                                                                                                 |
-  | ---------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-  | `SCRAPER_API_KEY`      | secret                     | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY`                                                     |
-  | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingbee` (default) · `zenrows` · `scraperapi` · `custom`                                                                           |
-  | `SCRAPER_API_ENDPOINT` | param                      | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders                                                          |
-  | `SCRAPER_API_STEALTH`  | param                      | scrapingbee only: `true` (default) uses `stealth_proxy` (its Cloudflare mode); `false` uses `premium_proxy` (for plans without stealth) |
+  | Setting                | Kind                       | Purpose                                                                                                                                                                                            |
+  | ---------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `SCRAPER_API_KEY`      | secret                     | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY`                                                                                                                |
+  | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingant` (production) · `scrapingbee` (code default) · `zenrows` · `scraperapi` · `custom`                                                                                                    |
+  | `SCRAPER_API_ENDPOINT` | param                      | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders                                                                                                                     |
+  | `SCRAPER_API_STEALTH`  | param                      | heavy anti-bot tier toggle — scrapingant: `true` (default) allows escalation to residential proxies, `false` pins datacenter; scrapingbee: `true` uses `stealth_proxy`, `false` uses `premium_proxy` |
+
+- **Cost / provider choice:** production uses **ScrapingAnt**, whose free tier
+  (10,000 credits/month, no card) comfortably covers our volume. A JS-rendered
+  request costs **10 credits** on its datacenter proxies and **125 credits** on
+  residential; `dciFetch` starts every URL on the cheap datacenter tier and only
+  **escalates to residential** (via `buildAttemptPlan`) when the response comes
+  back as a Cloudflare challenge, so a typical night costs ~10–40 credits. Watch
+  for the `escalating retries to the residential tier` log line — if it becomes
+  the norm, datacenter IPs have stopped passing and budget accordingly (the paid
+  Enthusiast plan is $19/mo for 100k credits). ScrapingAnt's free tier allows
+  **1 concurrent request**, which is fine — `dciFetch` callers fetch
+  sequentially; keep it that way.
 
   `dciFetch` also treats a Cloudflare challenge page returned as HTTP 200 (a
   proxy that failed to solve the challenge) as a **retryable** failure, so it
-  retries and surfaces a clear error instead of silently parsing junk as "no
-  scores". The dci.org **listing** page (`/scores/`) is the heaviest to render
-  and the most likely to need `stealth_proxy`; recap pages are lighter.
+  retries (escalating as above) and surfaces a clear error instead of silently
+  parsing junk as "no scores". The dci.org **listing** page (`/scores/`) is the
+  heaviest to render and the most likely to need the residential tier; recap
+  pages are lighter.
 
   Any function that fetches dci.org declares `secrets: [scraperApiKey]` — if you
   add a new one, declare it too or the key won't be readable at runtime.

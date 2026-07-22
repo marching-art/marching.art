@@ -54,7 +54,7 @@ on:
         default: ''
         type: string
       set_scraper_api_key:
-        description: 'One-off: push the SCRAPER_API_KEY repo secret into Google Secret Manager (check when first adding or rotating the ScrapingBee key, then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
+        description: 'One-off: push the SCRAPER_API_KEY repo secret into Google Secret Manager (check when first adding or rotating the scraping-provider key, e.g. ScrapingAnt, then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
         required: false
         default: false
         type: boolean
