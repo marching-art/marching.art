@@ -72,11 +72,11 @@ enrichment/archive path all pull from **dci.org**.
   instantly if DCI later allowlists our egress).
 - **Config:**
 
-  | Setting                | Kind                       | Purpose                                                                                                                                                                                            |
-  | ---------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | `SCRAPER_API_KEY`      | secret                     | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY`                                                                                                                |
-  | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingant` (production) · `scrapingbee` (code default) · `zenrows` · `scraperapi` · `custom`                                                                                                    |
-  | `SCRAPER_API_ENDPOINT` | param                      | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders                                                                                                                     |
+  | Setting                | Kind                       | Purpose                                                                                                                                                                                              |
+  | ---------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `SCRAPER_API_KEY`      | secret                     | API key for the scraping provider. `firebase functions:secrets:set SCRAPER_API_KEY`                                                                                                                  |
+  | `SCRAPER_API_PROVIDER` | param (`functions/.env.*`) | `scrapingant` (production) · `scrapingbee` (code default) · `zenrows` · `scraperapi` · `custom`                                                                                                      |
+  | `SCRAPER_API_ENDPOINT` | param                      | only for `provider=custom`: URL template with `{key}` and `{url}` placeholders                                                                                                                       |
   | `SCRAPER_API_STEALTH`  | param                      | heavy anti-bot tier toggle — scrapingant: `true` (default) allows escalation to residential proxies, `false` pins datacenter; scrapingbee: `true` uses `stealth_proxy`, `false` uses `premium_proxy` |
 
 - **Cost / provider choice:** production uses **ScrapingAnt**, whose free tier

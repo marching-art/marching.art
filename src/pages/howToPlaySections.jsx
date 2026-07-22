@@ -523,9 +523,7 @@ const SeasonSection = () => (
         <DataRow
           key={w.id}
           label={w.name}
-          value={
-            w.lockWeeks === 0 ? 'Open all season' : `Locks ${w.lockWeeks} weeks before finals`
-          }
+          value={w.lockWeeks === 0 ? 'Open all season' : `Locks ${w.lockWeeks} weeks before finals`}
           accent={w.lockWeeks === 0}
         />
       ))}
