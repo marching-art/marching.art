@@ -414,6 +414,19 @@ match /schedules/{docId} {
 // --- LEAGUES ---
 // Updated to support new league features
 match /artifacts/{appId}/leagues/{leagueId} {
+  // DELIBERATE TRADEOFF: list stays open to any signed-in user even though
+  // get is member-only. The landing/community widgets run UNCONSTRAINED
+  // queries over this collection — src/api/community.ts issues
+  // orderBy(createdAt) limit(5) (CommunityPulse recent-league feed) and a
+  // getCountFromServer over the whole collection (SocialProofBar league
+  // count) — so any rule that scopes list (e.g. to isPublic == true or
+  // members array-contains uid) would break those features. Consequence:
+  // full league docs, including private leagues' member UID arrays and
+  // settings, are enumerable by any authenticated user. If the community
+  // widgets are ever changed to filter (e.g. where isPublic == true),
+  // tighten this to match. Join secrets do NOT live here: invite codes are
+  // in /leagueInvites (client access closed below) and joining goes through
+  // callables.
   allow list: if isAuthenticated(); // Allows querying for leagues
   allow get: if isAuthenticated() &&
     (request.auth.uid in resource.data.members || isAdmin());
@@ -479,20 +492,31 @@ match /artifacts/{appId}/leagues/{leagueId} {
   }
 }
 
+// League invite codes. Doc IDs ARE the secret join codes and docs carry the
+// target leagueId; the joinLeagueByCode callable reads them with the Admin
+// SDK, so no client access is needed. The previous
+// `allow read: if isAuthenticated()` included LIST, letting any signed-in
+// user enumerate every code and join any private league.
 match /leagueInvites/{code} {
-  allow read: if isAuthenticated();
+  allow read: if false; // Backend only (joinLeagueByCode callable)
   allow write: if false; // Backend only
 }
 
-// Per-director league invitations. Invitee can read/list their own invitations;
-// inviter can read invitations they sent. Writes go through callables.
+// Per-director league invitations. Invitee can read/list their own
+// invitations; inviter can read/list invitations they sent. Writes go
+// through callables. `read` covers both get and list: a get is checked
+// against the fetched doc, and a list is only allowed when the query
+// provably constrains results to the caller (the client must filter with
+// where('inviteeUid'=='me') or where('inviterUid'=='me') — see
+// getPendingInvitations in src/api/leagues.ts). The previous unconditional
+// `allow list: if isAuthenticated()` let any signed-in user dump everyone's
+// invitations, defeating the per-doc checks.
 match /artifacts/{appId}/leagueInvitations/{invitationId} {
   allow read: if isAuthenticated() && (
     request.auth.uid == resource.data.inviteeUid ||
     request.auth.uid == resource.data.inviterUid ||
     isAdmin()
   );
-  allow list: if isAuthenticated();
   allow write: if false; // Backend only
 }
 

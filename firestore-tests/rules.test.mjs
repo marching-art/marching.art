@@ -12,7 +12,17 @@ import {
   assertFails,
 } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'node:fs';
-import { doc, getDoc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
 
 const APP = 'marching-art';
 const ALICE = 'alice-uid';
@@ -537,6 +547,141 @@ await check(
 );
 
 await check('non-admin cannot read reports', assertFails(getDoc(doc(mallory(), 'reports/nope'))));
+
+// =============================================================================
+// LEAGUE INVITES / INVITATIONS / LEAGUES — enumeration lockdowns.
+// /leagueInvites doc IDs ARE the secret join codes (docs carry the leagueId);
+// the old `allow read: if isAuthenticated()` included list, so any signed-in
+// user could dump every code and join any private league. leagueInvitations
+// had careful per-doc invitee/inviter read checks that were nullified by an
+// unconditional `allow list: if isAuthenticated()`. These tests pin both
+// lockdowns, plus the DELIBERATELY-open leagues list (the community widgets
+// run unconstrained queries over the leagues collection — see the tradeoff
+// comment in firestore.rules).
+// =============================================================================
+const BOB = 'bob-uid'; // league member + invitation sender
+const invitePath = 'leagueInvites/SECRET-CODE-1';
+const invitationsPath = `artifacts/${APP}/leagueInvitations`;
+const leaguesPath = `artifacts/${APP}/leagues`;
+
+async function freshLeagueSeed() {
+  await testEnv.clearFirestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), invitePath), {
+      leagueId: 'league-1',
+      createdAt: new Date(),
+    });
+    await setDoc(doc(ctx.firestore(), `${invitationsPath}/inv-1`), {
+      inviteeUid: ALICE,
+      inviterUid: BOB,
+      leagueId: 'league-1',
+      status: 'pending',
+      invitedAt: new Date(),
+    });
+    await setDoc(doc(ctx.firestore(), `${leaguesPath}/league-1`), {
+      name: 'Private League',
+      isPublic: false,
+      members: [BOB],
+      creatorId: BOB,
+      createdAt: new Date(),
+    });
+  });
+}
+
+// --- leagueInvites: backend-only, even with a known code ---
+await freshLeagueSeed();
+await check(
+  'signed-in user cannot get a leagueInvites doc even knowing the code (regression)',
+  assertFails(getDoc(doc(mallory(), invitePath)))
+);
+
+await freshLeagueSeed();
+await check(
+  'signed-in user cannot list/enumerate leagueInvites codes (regression)',
+  assertFails(getDocs(collection(mallory(), 'leagueInvites')))
+);
+
+// --- leagueInvitations: list only with an owning filter ---
+await freshLeagueSeed();
+await check(
+  'signed-in user cannot list leagueInvitations without an owning filter (regression)',
+  assertFails(getDocs(collection(mallory(), invitationsPath)))
+);
+
+await freshLeagueSeed();
+await check(
+  "user cannot list ANOTHER user's leagueInvitations even with their inviteeUid filter",
+  assertFails(getDocs(query(collection(mallory(), invitationsPath), where('inviteeUid', '==', ALICE))))
+);
+
+// The exact query the client runs (getPendingInvitations in src/api/leagues.ts)
+await freshLeagueSeed();
+await check(
+  'invitee CAN list their own invitations with the inviteeUid+status filter',
+  assertSucceeds(
+    getDocs(
+      query(
+        collection(authed(), invitationsPath),
+        where('inviteeUid', '==', ALICE),
+        where('status', '==', 'pending')
+      )
+    )
+  )
+);
+
+await freshLeagueSeed();
+await check(
+  'inviter CAN list invitations they sent with the inviterUid filter',
+  assertSucceeds(
+    getDocs(
+      query(
+        collection(testEnv.authenticatedContext(BOB).firestore(), invitationsPath),
+        where('inviterUid', '==', BOB)
+      )
+    )
+  )
+);
+
+await freshLeagueSeed();
+await check(
+  'invitee can get their own invitation doc',
+  assertSucceeds(getDoc(doc(authed(), `${invitationsPath}/inv-1`)))
+);
+
+await freshLeagueSeed();
+await check(
+  "third party cannot get someone else's invitation doc",
+  assertFails(getDoc(doc(mallory(), `${invitationsPath}/inv-1`)))
+);
+
+// --- leagues: get is member-only; list is deliberately open (see rules) ---
+await freshLeagueSeed();
+await check(
+  'non-member cannot get a private league doc',
+  assertFails(getDoc(doc(mallory(), `${leaguesPath}/league-1`)))
+);
+
+await freshLeagueSeed();
+await check(
+  'member can get their league doc',
+  assertSucceeds(getDoc(doc(testEnv.authenticatedContext(BOB).firestore(), `${leaguesPath}/league-1`)))
+);
+
+// Pins the documented tradeoff: the community widgets (src/api/community.ts)
+// issue unconstrained queries over the leagues collection, so list must stay
+// open to any signed-in user. If this test starts failing because list was
+// tightened, those widgets must be updated in the same change.
+await freshLeagueSeed();
+await check(
+  'any signed-in user can list leagues (deliberate tradeoff for community widgets)',
+  assertSucceeds(getDocs(collection(mallory(), leaguesPath)))
+);
+
+await freshLeagueSeed();
+await check(
+  'unauthenticated visitor cannot list leagues',
+  assertFails(getDocs(collection(testEnv.unauthenticatedContext().firestore(), leaguesPath)))
+);
 
 await testEnv.cleanup();
 console.log(`\n${passed} passed, ${failed} failed`);

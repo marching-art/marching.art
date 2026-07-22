@@ -187,6 +187,22 @@ CI enforces it via `node scripts/checkClassRegistrySync.js --check`.
 CI ratchet that fails any PR raising a frozen count. See
 [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
 
+## Security
+
+Access control is enforced by `firestore.rules` and `storage.rules` (both
+deployed via `firebase.json`), with regression tests in
+`firestore-tests/rules.test.mjs`. Privileged mutations go through callables
+(Admin SDK bypasses rules).
+
+**App Check is not currently enabled.** Firestore, Functions, and Storage
+accept requests from any client that can authenticate; abuse resistance relies
+on security rules and callable-side validation. Enabling it would require
+registering the web app with an attestation provider (reCAPTCHA
+Enterprise/v3) in the Firebase console, shipping the site key and App Check
+initialization in the client, a monitor-only rollout before enforcement, and
+debug tokens for local/emulator development — do not flip enforcement on
+without those steps or all production clients break.
+
 ## Development
 
 ```bash

@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Firebase Storage rules — default deny for the client SDK.
+//
+// Audit of actual usage (2026-07):
+//   - The frontend lazy-loads the Storage SDK (src/api/client.ts
+//     getStorageInstance) but NO client code calls uploadBytes/ref/
+//     getDownloadURL — there are no direct client reads or writes.
+//   - All uploads happen server-side in functions/src/helpers/mediaService.js
+//     via the Admin SDK, which bypasses these rules entirely.
+//   - Uploaded media is served through firebasestorage.googleapis.com
+//     download-token URLs (?alt=media&token=...), which are authorized by the
+//     token itself and are NOT affected by these rules.
+//
+// Therefore nothing legitimate is blocked by denying everything. Before the
+// Storage deploy target existed the bucket ran on whatever rules were last set
+// in the console (historically the permissive defaults), so this file both
+// pins the posture in source control and closes that gap.
+//
+// If a client-side upload feature is ever added (e.g. avatar upload), scope it
+// narrowly instead of reopening the bucket, e.g.:
+//   match /avatars/{uid}/{fileName} {
+//     allow read: if true;
+//     allow write: if request.auth != null
+//       && request.auth.uid == uid
+//       && request.resource.size < 5 * 1024 * 1024
+//       && request.resource.contentType.matches('image/.*');
+//   }
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false; // Backend (Admin SDK) + token URLs only
+    }
+  }
+}
