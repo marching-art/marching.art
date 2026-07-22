@@ -30,6 +30,7 @@ import {
 } from '../components/Sidebar';
 import { getArticleEngagement } from '../api/functions';
 import { useSeasonStore } from '../store/seasonStore';
+import { getMaxVisibleArticleDay } from '../utils/seasonProgress';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import {
   getCategoryConfig,
@@ -228,29 +229,15 @@ const Article = () => {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Day-gate: prevent viewing articles for days whose scores aren't visible yet.
-  // When currentDay reaches the season maximum (49), the season is over or ending — lift the
-  // gate after 2 AM so all season articles remain accessible during the off-season.
+  // Day-gate: prevent viewing articles for days whose scores aren't visible
+  // yet. currentDay rolls at the same 2 AM ET reset that processes scores, so
+  // hiding just the active (still unscored) day is sufficient.
   const currentDay = useSeasonStore((state) => state.currentDay);
   // The active season's UID matches the `seasonId` on its articles. A prior
   // season's article carries a different seasonId and is never day-gated, so a
   // direct link to last season's finals recap stays readable after a reset.
   const seasonUid = useSeasonStore((state) => state.seasonUid);
-  const effectiveDay = useMemo(() => {
-    if (!currentDay) return null;
-    const etHour = parseInt(
-      new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/New_York',
-        hour: '2-digit',
-        hour12: false,
-      }).format(new Date())
-    );
-    if (currentDay >= 49) {
-      return etHour < 2 ? Math.max(currentDay - 2, 1) : null;
-    }
-    const day = etHour < 2 ? currentDay - 2 : currentDay - 1;
-    return day >= 1 ? day : null;
-  }, [currentDay]);
+  const effectiveDay = getMaxVisibleArticleDay(currentDay);
   const isPriorSeasonArticle = seasonUid && article?.seasonId && article.seasonId !== seasonUid;
   const isDayGated =
     article && effectiveDay && !isPriorSeasonArticle && article.reportDay > effectiveDay;

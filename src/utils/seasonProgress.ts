@@ -136,3 +136,28 @@ export function getSeasonProgress(
 
   return { currentDay, currentWeek };
 }
+
+/**
+ * Day-gate for news articles: the highest reportDay whose articles may be
+ * shown, or null when nothing should be gated.
+ *
+ * Articles for a game day are generated when that day's scores are processed
+ * at the 2 AM ET reset, so only days strictly before the active one are safe
+ * to show. Because currentDay itself already rolls at 2 AM ET (see
+ * getSeasonProgress), no extra wall-clock adjustment belongs here —
+ * subtracting an additional day before 2 AM double-counts the reset and hides
+ * the newest articles between midnight and 2 AM.
+ *
+ * @param currentDay - Active competition day from getSeasonProgress (0 when
+ *   no season info is available).
+ * @returns Highest visible reportDay, or null when the gate is off: no season
+ *   info, day 1 (nothing published yet to gate), or the season has reached
+ *   its final day — during the off-season every article of the finished
+ *   season stays visible.
+ */
+export function getMaxVisibleArticleDay(currentDay: number): number | null {
+  if (!currentDay) return null;
+  if (currentDay >= SEASON_FINAL_DAY) return null;
+  const day = currentDay - 1;
+  return day >= 1 ? day : null;
+}
