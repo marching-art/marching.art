@@ -12,7 +12,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
+const { paths } = require("../helpers/paths");
 const { assertAuth } = require("../helpers/callableGuards");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { getGameDay } = require("../helpers/dailyChallenges");
@@ -26,9 +27,8 @@ const joinLeaguePool = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const ns = dataNamespaceParam.value();
-  const leagueRef = db.doc(`artifacts/${ns}/leagues/${leagueId}`);
-  const profileRef = db.doc(`artifacts/${ns}/users/${uid}/profile/data`);
+  const leagueRef = db.doc(paths.league(leagueId));
+  const profileRef = db.doc(paths.userProfile(uid));
 
   try {
     const result = await db.runTransaction(async (transaction) => {

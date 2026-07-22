@@ -15,7 +15,7 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("./paths");
 
 const STATS_DOC = "admin-stats/economy";
 const DEFAULT_WINDOW_DAYS = 7;
@@ -29,10 +29,9 @@ const DEFAULT_WINDOW_DAYS = 7;
  *   transactions:number, activeWallets:number, byType:Object}>}
  */
 async function computeEconomyStats(db, { days = DEFAULT_WINDOW_DAYS, now = new Date() } = {}) {
-  const ns = dataNamespaceParam.value();
   const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-  const userDocRefs = await db.collection(`artifacts/${ns}/users`).listDocuments();
+  const userDocRefs = await db.collection(paths.users()).listDocuments();
 
   let minted = 0;
   let sunk = 0;

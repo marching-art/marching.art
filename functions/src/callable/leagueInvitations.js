@@ -1,7 +1,8 @@
 // Per-director league invitation callables. Extracted from callable/leagues.js.
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
+const { paths } = require("../helpers/paths");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers");
@@ -34,12 +35,11 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   const trimmedMessage = typeof message === 'string' ? message.trim().slice(0, 280) : '';
 
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
-  const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
-  const inviterRef = db.doc(`artifacts/${namespace}/users/${inviterUid}/profile/data`);
-  const inviteeRef = db.doc(`artifacts/${namespace}/users/${inviteeUid}/profile/data`);
+  const leagueRef = db.doc(paths.league(leagueId));
+  const inviterRef = db.doc(paths.userProfile(inviterUid));
+  const inviteeRef = db.doc(paths.userProfile(inviteeUid));
   const invitationRef = db.doc(
-    `artifacts/${namespace}/leagueInvitations/${invitationId(leagueId, inviteeUid)}`
+    paths.leagueInvitation(invitationId(leagueId, inviteeUid))
   );
 
   const [leagueDoc, inviterDoc, inviteeDoc] = await Promise.all([
@@ -102,9 +102,8 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
   const invitationRef = db.doc(
-    `artifacts/${namespace}/leagueInvitations/${invitationId(leagueId, uid)}`
+    paths.leagueInvitation(invitationId(leagueId, uid))
   );
 
   const invitationDoc = await invitationRef.get();
@@ -126,8 +125,8 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   }
 
   // Accept: join the league using the same logic as joinLeagueByCode.
-  const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
-  const userProfileRef = db.doc(`artifacts/${namespace}/users/${uid}/profile/data`);
+  const leagueRef = db.doc(paths.league(leagueId));
+  const userProfileRef = db.doc(paths.userProfile(uid));
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
@@ -179,7 +178,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   });
 
   // Activity event outside transaction
-  const userProfileDoc = await db.doc(`artifacts/${namespace}/users/${uid}/profile/data`).get();
+  const userProfileDoc = await db.doc(paths.userProfile(uid)).get();
   const userDisplayName = userProfileDoc.exists
     ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
     : 'New Member';
@@ -202,10 +201,9 @@ exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
-  const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
+  const leagueRef = db.doc(paths.league(leagueId));
   const invitationRef = db.doc(
-    `artifacts/${namespace}/leagueInvitations/${invitationId(leagueId, inviteeUid)}`
+    paths.leagueInvitation(invitationId(leagueId, inviteeUid))
   );
 
   const leagueDoc = await leagueRef.get();

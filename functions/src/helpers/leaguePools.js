@@ -20,7 +20,7 @@
 
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("./paths");
 const {
   fetchRecentRecaps,
   findLatestResultForCorps,
@@ -92,9 +92,8 @@ function entrantHadPerfectDay(uid, profileData, gameDay, recaps) {
  */
 async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
   const gameDay = completedGameDayString(now);
-  const ns = dataNamespaceParam.value();
 
-  const leaguesSnapshot = await db.collection(`artifacts/${ns}/leagues`).limit(500).get();
+  const leaguesSnapshot = await db.collection(paths.leagues()).limit(500).get();
   if (leaguesSnapshot.empty) return;
 
   // One recap read per source serves every league's settlement. Podium and
@@ -128,7 +127,7 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
     }
 
     const profileRefs = entrants.map((uid) =>
-      db.doc(`artifacts/${ns}/users/${uid}/profile/data`)
+      db.doc(paths.userProfile(uid))
     );
     const profileDocs = await db.getAll(...profileRefs);
     const winners = entrants.filter((uid, i) => {
@@ -153,11 +152,11 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
     }
     for (const uid of winners) {
       batch.set(
-        db.doc(`artifacts/${ns}/users/${uid}/profile/data`),
+        db.doc(paths.userProfile(uid)),
         { corpsCoin: admin.firestore.FieldValue.increment(perWinner) },
         { merge: true }
       );
-      const historyRef = db.collection(`artifacts/${ns}/users/${uid}/corpsCoinHistory`).doc();
+      const historyRef = db.collection(paths.userCorpsCoinHistory(uid)).doc();
       batch.set(historyRef, {
         type: "league_pool_win",
         amount: perWinner,

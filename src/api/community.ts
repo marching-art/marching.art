@@ -8,7 +8,13 @@
 // NOTE: The 'artifacts/fantasy_drum_corps_v1/...' paths are kept as literals
 // (rather than the paths.* helpers) because paths.* is built from
 // DATA_CONFIG.namespace, which defaults to 'marching-art' — swapping helpers
-// in would silently change the collections these widgets read.
+// in would silently change the collections these widgets read. This module
+// INTENTIONALLY reads the frozen legacy 'fantasy_drum_corps_v1' namespace:
+// the landing-page social-proof stats (user/league counts, top score) come
+// from the original game's archived data, which is never written anymore.
+// It is a registered known exception in the path-literal ratchet
+// (scripts/checkPathLiterals.mjs / scripts/path-literals.baseline.json);
+// do not migrate it to paths.* without an explicit product decision.
 
 import {
   collection,

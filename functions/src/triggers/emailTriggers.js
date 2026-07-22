@@ -6,7 +6,7 @@
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("../helpers/paths");
 const {
   sendWelcomeEmail,
   sendMilestoneEmail,
@@ -95,10 +95,9 @@ exports.onStreakMilestoneReached = onDocumentCreated(
     }
 
     // Get profile for username
-    const namespace = dataNamespaceParam.value();
     const profileDoc = await admin
       .firestore()
-      .doc(`artifacts/${namespace}/users/${userId}/profile/data`)
+      .doc(paths.userProfile(userId))
       .get();
 
     const profile = profileDoc.data() || {};

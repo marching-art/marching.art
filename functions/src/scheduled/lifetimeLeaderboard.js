@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
 const { computeDirectorRating } = require("../helpers/directorRating");
 const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRankings");
@@ -157,9 +157,13 @@ async function updateLifetimeLeaderboardLogic() {
         })
         .slice(0, 100); // Top 100
 
-      // Store in leaderboard collection
+      // Store in leaderboard collection. NOTE: this preserves the historical
+      // path byte-for-byte, including the trailing `/data` segment. That
+      // makes it a 5-segment (odd) path, which db.doc() rejects — and the
+      // frontend reads the 4-segment doc paths.lifetimeLeaderboard(view)
+      // directly. Pre-existing divergence; do not silently "fix" here.
       const leaderboardRef = db.doc(
-        `artifacts/${dataNamespaceParam.value()}/leaderboard/lifetime_${metric.id}/data`
+        `${paths.lifetimeLeaderboard(metric.id)}/data`
       );
 
       batch.set(leaderboardRef, {

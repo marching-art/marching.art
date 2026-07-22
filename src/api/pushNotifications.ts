@@ -4,9 +4,8 @@
  */
 
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
-import { app, db } from './client';
+import { app, db, paths } from './client';
 import { doc, updateDoc } from 'firebase/firestore';
-import { DATA_NAMESPACE } from './client';
 
 // FCM configuration
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
@@ -172,7 +171,7 @@ export async function requestPushPermission(): Promise<string | null> {
  */
 export async function saveFcmToken(userId: string, token: string): Promise<boolean> {
   try {
-    const profileRef = doc(db, `artifacts/${DATA_NAMESPACE}/users/${userId}/profile/data`);
+    const profileRef = doc(db, paths.userProfile(userId));
     await updateDoc(profileRef, {
       'settings.fcmToken': token,
       'settings.fcmTokenUpdatedAt': new Date().toISOString(),
@@ -190,7 +189,7 @@ export async function saveFcmToken(userId: string, token: string): Promise<boole
  */
 export async function removeFcmToken(userId: string): Promise<boolean> {
   try {
-    const profileRef = doc(db, `artifacts/${DATA_NAMESPACE}/users/${userId}/profile/data`);
+    const profileRef = doc(db, paths.userProfile(userId));
     await updateDoc(profileRef, {
       'settings.fcmToken': null,
       'settings.fcmTokenUpdatedAt': new Date().toISOString(),

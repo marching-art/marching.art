@@ -5,7 +5,7 @@
 
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("./paths");
 
 // Push notification types
 const PUSH_TYPES = {
@@ -34,10 +34,9 @@ const PUSH_PREFERENCE_MAP = {
  */
 async function getUserPushConfig(userId) {
   try {
-    const namespace = dataNamespaceParam.value();
     const profileDoc = await admin
       .firestore()
-      .doc(`artifacts/${namespace}/users/${userId}/profile/data`)
+      .doc(paths.userProfile(userId))
       .get();
 
     if (!profileDoc.exists) {
@@ -149,10 +148,9 @@ async function sendPushNotification(userId, { title, body, url }, pushType, data
  */
 async function removeInvalidToken(userId) {
   try {
-    const namespace = dataNamespaceParam.value();
     await admin
       .firestore()
-      .doc(`artifacts/${namespace}/users/${userId}/profile/data`)
+      .doc(paths.userProfile(userId))
       .update({
         "settings.fcmToken": null,
         "settings.fcmTokenInvalidatedAt": new Date().toISOString(),

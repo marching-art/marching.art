@@ -112,6 +112,19 @@ jobs:
       - name: Design-system ratchet
         run: npm run census:check
 
+      # The class registry ships as two committed copies (functions cannot
+      # import outside their deploy root); they must stay byte-identical.
+      # Fails if src/config/classRegistry.json drifts from the canonical
+      # functions/src/config/classRegistry.json.
+      - name: Class-registry mirror check
+        run: node scripts/checkClassRegistrySync.js
+
+      # Firestore-path ratchet: hand-written `artifacts/...` string literals
+      # may only decrease (use the paths helpers instead). Fails if any file
+      # rose above scripts/path-literals.baseline.json.
+      - name: Firestore path-literal ratchet
+        run: node scripts/checkPathLiterals.mjs
+
   functions:
     name: Functions check + tests
     runs-on: ubuntu-latest

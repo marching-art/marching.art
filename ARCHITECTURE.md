@@ -179,7 +179,9 @@ reading the wall clock internally.
 (the JSON mirror) are the single source of truth for per-class policy (point
 caps, unlock gates, participation rewards, capabilities). Functions cannot import
 outside their deploy root, hence the copy — they **must stay byte-identical**.
-CI enforces it via `node scripts/checkClassRegistrySync.js --check`.
+The CI lint job enforces it via `node scripts/checkClassRegistrySync.js`
+(checking is the script's default mode; there is no `--check` flag — pass
+`--fix` to copy the canonical functions copy over the client mirror).
 
 ### Design-system census
 

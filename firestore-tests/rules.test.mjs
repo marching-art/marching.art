@@ -611,7 +611,9 @@ await check(
 await freshLeagueSeed();
 await check(
   "user cannot list ANOTHER user's leagueInvitations even with their inviteeUid filter",
-  assertFails(getDocs(query(collection(mallory(), invitationsPath), where('inviteeUid', '==', ALICE))))
+  assertFails(
+    getDocs(query(collection(mallory(), invitationsPath), where('inviteeUid', '==', ALICE)))
+  )
 );
 
 // The exact query the client runs (getPendingInvitations in src/api/leagues.ts)
@@ -664,7 +666,9 @@ await check(
 await freshLeagueSeed();
 await check(
   'member can get their league doc',
-  assertSucceeds(getDoc(doc(testEnv.authenticatedContext(BOB).firestore(), `${leaguesPath}/league-1`)))
+  assertSucceeds(
+    getDoc(doc(testEnv.authenticatedContext(BOB).firestore(), `${leaguesPath}/league-1`))
+  )
 );
 
 // Pins the documented tradeoff: the community widgets (src/api/community.ts)

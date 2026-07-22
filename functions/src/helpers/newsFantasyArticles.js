@@ -31,7 +31,6 @@ const {
   formatBriefForArticle,
 } = require("./newsEditorial");
 const { describeShowConcept } = require("./showConceptSynergy");
-const { dataNamespaceParam } = require("../config");
 
 /**
  * Article 4: marching.art Fantasy Results
@@ -263,10 +262,9 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     // Profiles live under the DATA_NAMESPACE artifacts root, not the per-season
     // dci-data doc id (dataDocId). Using dataDocId here missed every profile, so
     // real, director-designed concepts never reached the article.
-    const namespace = dataNamespaceParam.value();
     for (const target of conceptTargets) {
       try {
-        const profileDoc = await db.doc(`artifacts/${namespace}/users/${target.uid}/profile/data`).get();
+        const profileDoc = await db.doc(paths.userProfile(target.uid)).get();
         const concept = profileDoc.exists
           ? describeShowConcept(profileDoc.data()?.corps?.[target.corpsClass]?.showConcept)
           : null;

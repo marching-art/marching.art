@@ -1,6 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = require("../helpers/leagueHelpers");
@@ -274,7 +274,6 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
 
   // Look up the league by invite code
   const inviteRef = db.doc(`leagueInvites/${inviteCode.toUpperCase()}`);
@@ -286,8 +285,8 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
 
   const { leagueId } = inviteDoc.data();
 
-  const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
-  const userProfileRef = db.doc(`artifacts/${namespace}/users/${uid}/profile/data`);
+  const leagueRef = db.doc(paths.league(leagueId));
+  const userProfileRef = db.doc(paths.userProfile(uid));
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
@@ -349,7 +348,7 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
   });
 
   // Create activity event for member joining
-  const userProfileDoc = await db.doc(`artifacts/${namespace}/users/${uid}/profile/data`).get();
+  const userProfileDoc = await db.doc(paths.userProfile(uid)).get();
   const userDisplayName = userProfileDoc.exists
     ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
     : 'New Member';
@@ -428,8 +427,7 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
-  const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
+  const leagueRef = db.doc(paths.league(leagueId));
 
   const leagueDoc = await leagueRef.get();
   if (!leagueDoc.exists) {
@@ -454,12 +452,12 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
 
   // Batch fetch all member profiles to get their corps classes
   const profileRefs = members.map(memberId =>
-    db.doc(`artifacts/${namespace}/users/${memberId}/profile/data`)
+    db.doc(paths.userProfile(memberId))
   );
   const profileDocs = members.length > 0 ? await db.getAll(...profileRefs) : [];
 
   // Fetch current standings for smart pairing
-  const standingsDoc = await db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get();
+  const standingsDoc = await db.doc(paths.leagueStandings(leagueId)).get();
   const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
   const standings = {};
   standingsData.forEach((s, idx) => {
@@ -551,8 +549,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
-  const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
+  const leagueRef = db.doc(paths.league(leagueId));
   const matchupRef = leagueRef.collection('matchups').doc(`week-${week}`);
 
   const matchupDoc = await matchupRef.get();
@@ -577,7 +574,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   // Batch fetch all player profiles
   const playerIds = [...allPlayerIds];
   const profileRefs = playerIds.map(uid =>
-    db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
+    db.doc(paths.userProfile(uid))
   );
   const profileDocs = playerIds.length > 0 ? await db.getAll(...profileRefs) : [];
 
