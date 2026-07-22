@@ -14,7 +14,7 @@ const {
   validateCommitment,
   validateStaffPriority,
   maxBlocksForPlanType,
-} = require("./podium");
+} = require("./podiumValidation");
 const store = require("../helpers/podium/store");
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];

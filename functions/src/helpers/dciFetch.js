@@ -148,7 +148,7 @@ function looksLikeChallenge(body) {
 function readApiKey() {
   try {
     return (scraperApiKey.value() || "").trim();
-  } catch (_e) {
+  } catch {
     return "";
   }
 }

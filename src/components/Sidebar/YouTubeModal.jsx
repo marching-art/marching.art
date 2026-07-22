@@ -92,7 +92,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
               <button
                 onClick={onReset}
                 disabled={videoModal.loading || !videoModal.videoId}
-                className="text-[10px] text-amber-500 hover:text-amber-400 font-bold uppercase tracking-wider transition-colors flex items-center gap-1 disabled:opacity-50"
+                className="text-[10px] text-warning hover:text-white font-bold uppercase tracking-wider transition-colors flex items-center gap-1 disabled:opacity-50"
                 title="Admin: reject this video and search for a replacement"
               >
                 <RotateCcw className="w-3 h-3" />
