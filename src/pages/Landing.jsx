@@ -123,7 +123,7 @@ const Landing = () => {
   const [showStandingsModal, setShowStandingsModal] = useState(false);
 
   // YouTube search hook
-  const { videoModal, handleYoutubeSearch, handleRetrySearch, closeVideoModal } =
+  const { videoModal, handleYoutubeSearch, handleRetrySearch, handleResetVideo, closeVideoModal } =
     useYoutubeSearch();
 
   // Compute trending players from movers across all classes
@@ -586,7 +586,12 @@ const Landing = () => {
       />
 
       {/* YOUTUBE VIDEO MODAL */}
-      <YouTubeModal videoModal={videoModal} onClose={closeVideoModal} onRetry={handleRetrySearch} />
+      <YouTubeModal
+        videoModal={videoModal}
+        onClose={closeVideoModal}
+        onRetry={handleRetrySearch}
+        onReset={handleResetVideo}
+      />
 
       {/* PERSISTENT MOBILE NAV — the home screen previously had none, which is
           why it leaned on an oversized DASHBOARD button. Signed-in users get the

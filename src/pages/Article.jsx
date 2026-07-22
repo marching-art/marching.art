@@ -73,7 +73,7 @@ const Article = () => {
   const [showStandingsModal, setShowStandingsModal] = useState(false);
 
   // YouTube search hook
-  const { videoModal, handleYoutubeSearch, handleRetrySearch, closeVideoModal } =
+  const { videoModal, handleYoutubeSearch, handleRetrySearch, handleResetVideo, closeVideoModal } =
     useYoutubeSearch();
 
   // Fetch article if not in navigation state (direct link access)
@@ -553,7 +553,12 @@ const Article = () => {
       />
 
       {/* YOUTUBE VIDEO MODAL */}
-      <YouTubeModal videoModal={videoModal} onClose={closeVideoModal} onRetry={handleRetrySearch} />
+      <YouTubeModal
+        videoModal={videoModal}
+        onClose={closeVideoModal}
+        onRetry={handleRetrySearch}
+        onReset={handleResetVideo}
+      />
 
       {/* PERSISTENT MOBILE NAV - same auth-aware pattern as the home screen:
           signed-in users get the app's 5-tab BottomNav, signed-out visitors get

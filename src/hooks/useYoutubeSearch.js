@@ -105,6 +105,44 @@ export const useYoutubeSearch = () => {
     }
   };
 
+  // Admin-only: put the current video on the server-side nope list and show
+  // the replacement the fresh search returns. The backend enforces the admin
+  // claim; this just wires the round trip.
+  const handleResetVideo = async () => {
+    const { searchQuery, videoId } = videoModal;
+    if (!searchQuery || !videoId) return;
+
+    setVideoModal((prev) => ({ ...prev, loading: true, videoId: null, error: null }));
+
+    try {
+      const functions = getFunctions();
+      const resetYoutube = httpsCallable(functions, 'resetYoutubeVideo');
+      const result = await resetYoutube({ query: searchQuery, videoId });
+
+      if (result.data.success && result.data.found) {
+        setVideoModal((prev) => ({
+          ...prev,
+          loading: false,
+          videoId: result.data.videoId,
+          title: result.data.title || searchQuery,
+        }));
+      } else {
+        setVideoModal((prev) => ({
+          ...prev,
+          loading: false,
+          error: result.data.message || 'No replacement video found',
+        }));
+      }
+    } catch (err) {
+      console.error('YouTube reset error:', err);
+      setVideoModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to reset video',
+      }));
+    }
+  };
+
   // Retry with next fallback or search
   const handleRetrySearch = () => {
     if (videoModal.year && videoModal.corpsName) {
@@ -128,6 +166,7 @@ export const useYoutubeSearch = () => {
     videoModal,
     handleYoutubeSearch,
     handleRetrySearch,
+    handleResetVideo,
     closeVideoModal,
   };
 };

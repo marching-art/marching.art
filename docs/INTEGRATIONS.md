@@ -14,6 +14,11 @@ with a Firestore cache to stay well under quota.
 - **Backend:** `exports.searchYoutubeVideo` (`functions/src/callable/youtube.js`)
   — searches the Data API and caches results in the **`youtubeCache`**
   collection so repeat lookups don't spend quota.
+- **Admin reset:** `exports.resetYoutubeVideo` (same file, admin-only) — puts a
+  bad pick's video ID on the **`youtubeNopeList`** collection (excluded from
+  all future searches), deletes the stale `youtubeCache` entry, and re-searches
+  immediately. Surfaced as a "Reset" button in the player modal, visible only
+  to admins.
 - **Frontend:** `src/components/Sidebar/YouTubeModal.jsx`,
   `src/hooks/useYoutubeSearch.js`, `src/components/YouTubeIcon.jsx`. Wired into
   `Landing.jsx` and `Article.jsx`.

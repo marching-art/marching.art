@@ -14,7 +14,7 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
-const { searchYoutubeVideo } = require("./youtube");
+const { searchYoutubeVideo, resetYoutubeVideo } = require("./youtube");
 
 /** Fake Firestore exposing only the youtubeCache collection. */
 function makeCacheDb(cache = new Map()) {
@@ -110,5 +110,191 @@ describe("searchYoutubeVideo quota protection", () => {
     });
 
     assert.equal(result.videoId, "hit-id");
+  });
+});
+
+/**
+ * Multi-collection fake Firestore for the nope-list tests. Docs live in a
+ * Map keyed "collection/docId"; deletes are recorded for assertions.
+ */
+function makeDb(initial = new Map()) {
+  const docs = new Map(initial);
+  const deletes = [];
+  const db = {
+    collection(name) {
+      return {
+        doc(key) {
+          const path = `${name}/${key}`;
+          return {
+            async get() {
+              const data = docs.get(path);
+              return { exists: data !== undefined, data: () => data };
+            },
+            async set(data) {
+              docs.set(path, data);
+            },
+            async delete() {
+              deletes.push(path);
+              docs.delete(path);
+            },
+          };
+        },
+      };
+    },
+  };
+  return { db, docs, deletes };
+}
+
+/**
+ * Stub global fetch with canned YouTube API responses. Returns a restore
+ * function; call it in a finally block.
+ */
+function stubYoutubeApi(searchItems) {
+  const originalFetch = global.fetch;
+  global.fetch = async (url) => {
+    const body = url.includes("/search")
+      ? { items: searchItems }
+      : {
+          // Every candidate gets a valid 10-minute duration.
+          items: searchItems.map((item) => ({
+            id: item.id.videoId,
+            contentDetails: { duration: "PT10M0S" },
+          })),
+        };
+    return { ok: true, json: async () => body };
+  };
+  return () => { global.fetch = originalFetch; };
+}
+
+function searchItem(videoId, title) {
+  return {
+    id: { videoId },
+    snippet: {
+      title,
+      channelTitle: "Test Channel",
+      thumbnails: { high: { url: `https://img/${videoId}.jpg` } },
+    },
+  };
+}
+
+const ADMIN_AUTH = { uid: "admin-1", token: { admin: true } };
+
+describe("resetYoutubeVideo admin gating", () => {
+  beforeEach(() => setDbForTesting(null));
+
+  test("rejects unauthenticated callers", async () => {
+    await assert.rejects(
+      resetYoutubeVideo.run({
+        data: { query: "2018 Corps", videoId: "abc12345678" },
+        auth: null,
+      }),
+      /logged in/
+    );
+  });
+
+  test("rejects signed-in callers without the admin claim", async () => {
+    await assert.rejects(
+      resetYoutubeVideo.run({
+        data: { query: "2018 Corps", videoId: "abc12345678" },
+        auth: { uid: "u1", token: {} },
+      }),
+      /admin/
+    );
+  });
+
+  test("rejects a malformed video ID before touching Firestore", async () => {
+    const { db, docs } = makeDb();
+    setDbForTesting(db);
+
+    await assert.rejects(
+      resetYoutubeVideo.run({
+        data: { query: "2018 Corps", videoId: "not a valid id!" },
+        auth: ADMIN_AUTH,
+      }),
+      /valid video ID/
+    );
+    assert.equal(docs.size, 0, "must not write anything");
+  });
+});
+
+describe("resetYoutubeVideo nope list", () => {
+  beforeEach(() => setDbForTesting(null));
+
+  test("nopes the video, clears the cache, and returns a fresh pick", async () => {
+    const { db, docs, deletes } = makeDb(
+      new Map([
+        ["youtubeCache/2018_corps", { success: true, found: true, videoId: "bad-video-01" }],
+      ])
+    );
+    setDbForTesting(db);
+
+    const restore = stubYoutubeApi([
+      searchItem("bad-video-01", "2018 Corps Finals"),
+      searchItem("good-video-02", "2018 Corps Finals Performance"),
+    ]);
+    try {
+      const result = await resetYoutubeVideo.run({
+        data: { query: "2018 Corps", videoId: "bad-video-01" },
+        auth: ADMIN_AUTH,
+      });
+
+      // The rejected ID is on the nope list with an audit trail.
+      const nopeDoc = docs.get("youtubeNopeList/bad-video-01");
+      assert.ok(nopeDoc, "nope-list doc must be written");
+      assert.equal(nopeDoc.nopedBy, "admin-1");
+      assert.equal(nopeDoc.cacheKey, "2018_corps");
+
+      // The stale cache entry was deleted before re-searching.
+      assert.ok(deletes.includes("youtubeCache/2018_corps"));
+
+      // The fresh search skipped the noped ID and cached the replacement.
+      assert.equal(result.found, true);
+      assert.equal(result.videoId, "good-video-02");
+      assert.equal(docs.get("youtubeCache/2018_corps")?.videoId, "good-video-02");
+    } finally {
+      restore();
+    }
+  });
+
+  test("returns found:false when every result is noped", async () => {
+    const { db } = makeDb(
+      new Map([["youtubeNopeList/only-video-1", { videoId: "only-video-1" }]])
+    );
+    setDbForTesting(db);
+
+    const restore = stubYoutubeApi([
+      searchItem("only-video-1", "2018 Corps Finals"),
+    ]);
+    try {
+      const result = await resetYoutubeVideo.run({
+        data: { query: "2018 Corps", videoId: "only-video-1" },
+        auth: ADMIN_AUTH,
+      });
+      assert.equal(result.success, true);
+      assert.equal(result.found, false);
+    } finally {
+      restore();
+    }
+  });
+
+  test("searchYoutubeVideo also excludes noped videos on a fresh search", async () => {
+    const { db } = makeDb(
+      new Map([["youtubeNopeList/bad-video-01", { videoId: "bad-video-01" }]])
+    );
+    setDbForTesting(db);
+
+    const restore = stubYoutubeApi([
+      searchItem("bad-video-01", "2018 Corps Finals"),
+      searchItem("good-video-02", "2018 Corps Semifinals"),
+    ]);
+    try {
+      const result = await searchYoutubeVideo.run({
+        data: { query: "2018 Corps" },
+        auth: { uid: "u1", token: {} },
+      });
+      assert.equal(result.videoId, "good-video-02");
+    } finally {
+      restore();
+    }
   });
 });
