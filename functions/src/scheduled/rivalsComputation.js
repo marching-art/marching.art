@@ -21,7 +21,7 @@ const { paths } = require("../helpers/paths");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
 const { ENABLED_CLASSES } = require("../helpers/classRegistry");
 
@@ -182,10 +182,9 @@ function pickRivalsForEntry(entry, bucketEntries) {
 
 async function updateRivalsLogic() {
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
   logger.info("Computing rivals for all users…");
 
-  const usersRef = db.collection(`artifacts/${namespace}/users`);
+  const usersRef = db.collection(paths.users());
   // The users/{uid} documents are "missing ancestors": createUserProfile only
   // writes the profile/ and private/ subcollection docs, never the users/{uid}
   // doc itself, so those docs have no fields of their own. A collection query
@@ -256,7 +255,7 @@ async function updateRivalsLogic() {
   const updatedAt = admin.firestore.FieldValue.serverTimestamp();
 
   for (const [uid, rivals] of rivalsByUid.entries()) {
-    const ref = db.doc(`artifacts/${namespace}/users/${uid}/profile/data`);
+    const ref = db.doc(paths.userProfile(uid));
     const prevRanks = prevClassRanksByUid.get(uid) || {};
     const classRanks = {};
     for (const corpsClass of Object.keys(rivals)) {

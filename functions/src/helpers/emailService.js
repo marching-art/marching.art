@@ -7,7 +7,8 @@ const admin = require("firebase-admin");
 const brevo = require("@getbrevo/brevo");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
+const { paths } = require("./paths");
 
 // Define secrets for Brevo (set via `firebase functions:secrets:set`)
 const brevoApiKey = defineSecret("BREVO_API_KEY");
@@ -741,7 +742,6 @@ async function sendMilestoneEmail(email, username, milestoneType, milestoneValue
  */
 async function getAdminEmails() {
   const db = getDb();
-  const namespace = dataNamespaceParam.value();
   const snapshot = await db
     .collectionGroup("profile")
     .where("role", "==", "admin")
@@ -754,7 +754,7 @@ async function getAdminEmails() {
     // Profile docs live at artifacts/<ns>/users/<uid>/profile/data.
     const userPath = doc.ref.parent.parent;
     if (!userPath) continue;
-    if (!userPath.path.startsWith(`artifacts/${namespace}/users/`)) continue;
+    if (!userPath.path.startsWith(`${paths.users()}/`)) continue;
     const uid = userPath.id;
     try {
       const userRecord = await admin.auth().getUser(uid);

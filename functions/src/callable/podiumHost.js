@@ -9,6 +9,7 @@ const { logger } = require("firebase-functions/v2");
 const store = require("../helpers/podium/store");
 const hostedEvents = require("../helpers/podium/hostedEvents");
 const { podiumContext } = require("./podium");
+const { paths } = require("../helpers/paths");
 
 exports.hostEvent = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
@@ -83,11 +84,7 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
       );
     }
     transaction.update(store.profileRef(db, uid), { corpsCoin: corpsCoin - tier.rentalCC });
-    const historyRef = db
-      .collection(
-        `artifacts/${require("../config").dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`
-      )
-      .doc();
+    const historyRef = db.collection(paths.userCorpsCoinHistory(uid)).doc();
     transaction.set(historyRef, {
       type: "hosted_event_rental",
       amount: -tier.rentalCC,

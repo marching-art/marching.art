@@ -6,7 +6,8 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
+const { paths } = require("../helpers/paths");
 const {
   sendStreakBrokenEmail,
   sendRivalContextEmail,
@@ -64,8 +65,7 @@ async function getUserEmail(uid) {
  * Track that an email was sent to prevent duplicates
  */
 async function trackEmailSent(db, uid, emailType, metadata = {}) {
-  const namespace = dataNamespaceParam.value();
-  const emailLogRef = db.collection(`artifacts/${namespace}/users/${uid}/email_log`).doc();
+  const emailLogRef = db.collection(paths.userEmailLog(uid)).doc();
 
   await emailLogRef.set({
     emailType,
@@ -78,11 +78,10 @@ async function trackEmailSent(db, uid, emailType, metadata = {}) {
  * Check if email was recently sent (within cooldown period)
  */
 async function wasEmailRecentlySent(db, uid, emailType, cooldownHours = 24) {
-  const namespace = dataNamespaceParam.value();
   const cooldownTime = new Date(Date.now() - cooldownHours * 60 * 60 * 1000);
 
   const recentEmails = await db
-    .collection(`artifacts/${namespace}/users/${uid}/email_log`)
+    .collection(paths.userEmailLog(uid))
     .where("emailType", "==", emailType)
     .where("sentAt", ">=", cooldownTime)
     .limit(1)

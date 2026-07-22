@@ -31,22 +31,7 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "A complete 8-caption lineup is required.");
   }
 
-  // 2. --- Validate Points Cap ---
-  // Caps come from the class-capability registry (Phase 1.1).
-  const pointCap = POINT_CAPS[corpsClass];
-
-  const totalPoints = Object.values(lineup).reduce((sum, selection) => {
-    if (!selection || typeof selection !== 'string') return sum;
-    const parts = selection.split("|");
-    // Use parts.length-1 to get the last part, which is the points
-    return sum + (Number(parts[parts.length - 1]) || 0);
-  }, 0);
-
-  if (totalPoints > pointCap) {
-    throw new HttpsError("invalid-argument", `Lineup exceeds ${pointCap} point limit for ${corpsClass}. Total: ${totalPoints}`);
-  }
-
-  // 3. --- Get Season & Profile Data ---
+  // 2. --- Get Season Data ---
   const db = getDb();
   const seasonSettingsRef = db.doc("game-settings/season");
   const seasonDoc = await seasonSettingsRef.get();
@@ -56,7 +41,15 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   const seasonData = seasonDoc.data();
   const activeSeasonId = seasonData.seasonUid;
 
-  // 3b. --- Validate all selections are from current season's corps list ---
+  // 3. --- Validate selections & points cap against the season corps registry ---
+  // Caps come from the class-capability registry (Phase 1.1). Point COSTS are
+  // server-authoritative: each selection's cost is resolved from the season's
+  // dci-data registry, never from the client-supplied points segment — a
+  // tampered "Blue Devils|2025|1" string must not field an elite corps at 1
+  // point. The trailing segment is display-only sugar for the frontend; if
+  // present it must agree with the registry so stored lineup strings never
+  // carry a falsified cost.
+  const pointCap = POINT_CAPS[corpsClass];
   const dataDocId = seasonData.dataDocId;
   const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
   if (!corpsDataDoc.exists) {
@@ -64,11 +57,12 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   }
 
   const validCorps = corpsDataDoc.data().corpsValues || [];
-  const validCorpsSet = new Set(
-    validCorps.map(c => `${c.corpsName}|${c.sourceYear}`)
+  const corpsPointsMap = new Map(
+    validCorps.map(c => [`${c.corpsName}|${c.sourceYear}`, Number(c.points) || 0])
   );
 
-  // Check each lineup selection
+  // Check each lineup selection and total the registry cost
+  let totalPoints = 0;
   for (const [caption, selection] of Object.entries(lineup)) {
     if (!selection || typeof selection !== 'string') {
       throw new HttpsError("invalid-argument", `Invalid selection for caption ${caption}.`);
@@ -83,10 +77,22 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
     const sourceYear = parts[1];
     const corpsKey = `${corpsName}|${sourceYear}`;
 
-    if (!validCorpsSet.has(corpsKey)) {
+    if (!corpsPointsMap.has(corpsKey)) {
       throw new HttpsError("invalid-argument",
         `${corpsName} (${sourceYear}) is not available this season. Please select from current season's corps.`);
     }
+
+    const registryPoints = corpsPointsMap.get(corpsKey);
+    if (parts.length >= 3 && Number(parts[2]) !== registryPoints) {
+      throw new HttpsError("invalid-argument",
+        `Point value for ${corpsName} (${sourceYear}) does not match this season's cost. Please refresh and rebuild your lineup.`);
+    }
+
+    totalPoints += registryPoints;
+  }
+
+  if (totalPoints > pointCap) {
+    throw new HttpsError("invalid-argument", `Lineup exceeds ${pointCap} point limit for ${corpsClass}. Total: ${totalPoints}`);
   }
 
   // 4. --- Create Unique Lineup Key ---
@@ -716,9 +722,12 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
     }
 
     const validCorps = corpsDataDoc.data().corpsValues || [];
-    // Build a Set of valid "corpsName|sourceYear" combinations for O(1) lookup
-    const validCorpsSet = new Set(
-      validCorps.map(c => `${c.corpsName}|${c.sourceYear}`)
+    // Build a Map of "corpsName|sourceYear" -> registry points for O(1)
+    // lookup. Mirrors saveLineup: point costs are server-authoritative, so a
+    // stored selection whose trailing points segment disagrees with the
+    // registry (tampered or stale) is treated as invalid too.
+    const corpsPointsMap = new Map(
+      validCorps.map(c => [`${c.corpsName}|${c.sourceYear}`, Number(c.points) || 0])
     );
 
     // Get user's current lineup
@@ -738,8 +747,10 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
       return { success: true, isValid: true, invalidSelections: [] };
     }
 
-    // Check each lineup selection against valid corps
+    // Check each lineup selection against valid corps and total the
+    // registry cost
     const invalidSelections = [];
+    let totalPoints = 0;
     for (const [caption, selection] of Object.entries(lineup)) {
       if (!selection || typeof selection !== 'string') continue;
 
@@ -750,17 +761,25 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
       const sourceYear = parts[1];
       const corpsKey = `${corpsName}|${sourceYear}`;
 
-      if (!validCorpsSet.has(corpsKey)) {
+      const registryPoints = corpsPointsMap.get(corpsKey);
+      if (!corpsPointsMap.has(corpsKey) ||
+          (parts.length >= 3 && Number(parts[2]) !== registryPoints)) {
         invalidSelections.push({
           caption,
           corpsName,
           sourceYear,
           fullSelection: selection
         });
+        continue;
       }
+
+      totalPoints += registryPoints;
     }
 
-    const isValid = invalidSelections.length === 0;
+    // A lineup that no longer fits under the class point cap (registry
+    // prices, never the stored segments) also requires a forced update.
+    const isValid = invalidSelections.length === 0 &&
+      totalPoints <= POINT_CAPS[corpsClass];
 
     // If lineup is invalid, mark it on the profile for UI to show warning
     if (!isValid) {

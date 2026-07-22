@@ -6,7 +6,7 @@
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("../helpers/paths");
 const {
   sendLeagueActivityPush,
 } = require("../helpers/pushService");
@@ -35,12 +35,11 @@ exports.onLeagueMemberJoined = onDocumentUpdated(
 
     logger.info(`New member ${newMemberId} joined league ${event.params.leagueId}`);
 
-    const namespace = dataNamespaceParam.value();
 
     // Get new member's username
     const newMemberProfile = await admin
       .firestore()
-      .doc(`artifacts/${namespace}/users/${newMemberId}/profile/data`)
+      .doc(paths.userProfile(newMemberId))
       .get();
     const newMemberName = newMemberProfile.data()?.username || "A new director";
 
@@ -86,12 +85,11 @@ exports.onLeagueChatMessage = onDocumentCreated(
 
     logger.info(`Chat message with mentions: ${mentions.join(", ")}`);
 
-    const namespace = dataNamespaceParam.value();
 
     // Get league info
     const leagueDoc = await admin
       .firestore()
-      .doc(`artifacts/${namespace}/leagues/${event.params.leagueId}`)
+      .doc(paths.league(event.params.leagueId))
       .get();
     const league = leagueDoc.data();
     if (!league) return;
@@ -99,7 +97,7 @@ exports.onLeagueChatMessage = onDocumentCreated(
     // Get sender username
     const senderProfile = await admin
       .firestore()
-      .doc(`artifacts/${namespace}/users/${senderId}/profile/data`)
+      .doc(paths.userProfile(senderId))
       .get();
     const senderName = senderProfile.data()?.username || "Someone";
 
@@ -109,7 +107,7 @@ exports.onLeagueChatMessage = onDocumentCreated(
     // Get all league members' profiles to find matches
     const memberProfiles = await Promise.all(
       league.members.map((memberId) =>
-        admin.firestore().doc(`artifacts/${namespace}/users/${memberId}/profile/data`).get()
+        admin.firestore().doc(paths.userProfile(memberId)).get()
       )
     );
 

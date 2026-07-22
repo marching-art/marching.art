@@ -66,7 +66,7 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
 
   for (const profileDoc of snapshot.docs) {
     // Only count profile docs from the marching-art users collection
-    if (!profileDoc.ref.path.includes('artifacts/marching-art/users')) continue;
+    if (!profileDoc.ref.path.includes(paths.users())) continue;
 
     totalUsers++;
     const data = profileDoc.data();
@@ -121,7 +121,7 @@ export async function getUserEngagementStats(): Promise<UserEngagementStats> {
 
   for (const profileDoc of snapshot.docs) {
     // Only count profile docs from the marching-art users collection
-    if (!profileDoc.ref.path.includes('artifacts/marching-art/users')) continue;
+    if (!profileDoc.ref.path.includes(paths.users())) continue;
 
     totalUsers++;
     const data = profileDoc.data();
@@ -194,19 +194,19 @@ export async function getAllUserProfiles(): Promise<AdminUserProfile[]> {
 
   const emailByUid: Record<string, string> = {};
   privateSnapshot.docs.forEach((privateDoc) => {
-    if (!privateDoc.ref.path.includes('artifacts/marching-art/users')) return;
+    if (!privateDoc.ref.path.includes(paths.users())) return;
     const uid = privateDoc.ref.path.split('/')[3];
     const email = privateDoc.data()?.email;
     if (uid && email) emailByUid[uid] = email;
   });
 
   const userList = snapshot.docs
-    .filter((profileDoc) => profileDoc.ref.path.includes('artifacts/marching-art/users'))
+    .filter((profileDoc) => profileDoc.ref.path.includes(paths.users()))
     .map((profileDoc) => {
       const data = profileDoc.data();
 
       // Extract user ID from the doc path
-      // Path format: artifacts/marching-art/users/{userId}/profile/data
+      // Path format: paths.userProfile(userId) = artifacts/{ns}/users/{userId}/profile/data
       const pathParts = profileDoc.ref.path.split('/');
       const uid = pathParts[3];
 

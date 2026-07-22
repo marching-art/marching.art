@@ -141,6 +141,7 @@ const {
   dailyOffSeasonProcessor,
   processDailyLiveScores,
 } = require("./src/scheduled/dailyProcessors");
+const { scoringWatchdog } = require("./src/scheduled/scoringWatchdog");
 const {
   generateWeeklyMatchups,
   generateWeeklyRecaps,
@@ -334,6 +335,7 @@ module.exports = {
   seasonScheduler,
   dailyOffSeasonProcessor,
   processDailyLiveScores,
+  scoringWatchdog,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
   economyStatsJob,

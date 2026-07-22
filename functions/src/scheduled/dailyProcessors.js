@@ -26,6 +26,13 @@ async function runPodiumStageIsolated(db) {
 exports.dailyOffSeasonProcessor = onSchedule({
   schedule: "every day 02:00",
   timeZone: "America/New_York",
+  // The scoring run guard's stale-lease math (helpers/scoringRunGuard.js)
+  // assumes scoring jobs run with 540s timeouts — keep these in sync.
+  timeoutSeconds: 540,
+  memory: "512MiB",
+  // A thrown scoring error is retried by Cloud Scheduler; the scoring run
+  // guard makes reruns safe (a completed day is never re-claimed).
+  retryCount: 2,
 }, async () => {
   await processAndArchiveOffSeasonScoresLogic();
   await runPodiumStageIsolated(getDb());
@@ -84,6 +91,10 @@ async function runLiveFantasyStage(db) {
 exports.processDailyLiveScores = onSchedule({
   schedule: "every day 02:00",
   timeZone: "America/New_York",
+  // Same config rationale as dailyOffSeasonProcessor above.
+  timeoutSeconds: 540,
+  memory: "512MiB",
+  retryCount: 2,
 }, async () => {
   const db = getDb();
   await runLiveFantasyStage(db);

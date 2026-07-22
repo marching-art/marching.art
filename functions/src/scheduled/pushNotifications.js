@@ -6,7 +6,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("../helpers/paths");
 const {
   sendShowReminderPush,
   sendMatchupStartPush,
@@ -137,7 +137,6 @@ exports.weeklyMatchupPushJob = onSchedule(
     logger.info("Running weekly matchup push notification job");
 
     const db = admin.firestore();
-    const namespace = dataNamespaceParam.value();
     const CORPS_CLASSES = FANTASY_CLASSES;
 
     try {
@@ -158,7 +157,7 @@ exports.weeklyMatchupPushJob = onSchedule(
 
       // Get all active leagues
       const leaguesSnapshot = await db
-        .collection(`artifacts/${namespace}/leagues`)
+        .collection(paths.leagues())
         .get();
 
       if (leaguesSnapshot.empty) {
@@ -175,7 +174,7 @@ exports.weeklyMatchupPushJob = onSchedule(
 
         // Get this week's matchups document
         const matchupDoc = await db
-          .doc(`artifacts/${namespace}/leagues/${leagueDoc.id}/matchups/week-${currentWeek}`)
+          .doc(paths.leagueMatchupWeek(leagueDoc.id, currentWeek))
           .get();
 
         if (!matchupDoc.exists) continue;
@@ -215,7 +214,7 @@ exports.weeklyMatchupPushJob = onSchedule(
       // Batch fetch all profiles
       const userIdsArray = [...allUserIds];
       const profileRefs = userIdsArray.map((uid) =>
-        db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
+        db.doc(paths.userProfile(uid))
       );
       const profileDocs = await db.getAll(...profileRefs);
 

@@ -14,7 +14,8 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
+const { paths } = require("../helpers/paths");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
@@ -304,7 +305,6 @@ exports.generateWeeklyMatchups = onSchedule(
     logger.info("Starting automated weekly matchup generation for all leagues");
 
     const db = getDb();
-    const namespace = dataNamespaceParam.value();
 
     try {
       // Get current week
@@ -319,7 +319,7 @@ exports.generateWeeklyMatchups = onSchedule(
 
       // Page through every league so growth past a single query's 500-doc cap
       // doesn't silently drop leagues (see helpers/firestorePaging).
-      const leaguesRef = db.collection(`artifacts/${namespace}/leagues`);
+      const leaguesRef = db.collection(paths.leagues());
       const leagueResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
         try {
           const league = leagueDoc.data();
@@ -332,7 +332,7 @@ exports.generateWeeklyMatchups = onSchedule(
           }
 
           // Check if matchups already exist for this week
-          const matchupRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}/matchups/week-${nextWeek}`);
+          const matchupRef = db.doc(paths.leagueMatchupWeek(leagueId, nextWeek));
           const existingMatchup = await matchupRef.get();
 
           if (existingMatchup.exists) {
@@ -343,9 +343,9 @@ exports.generateWeeklyMatchups = onSchedule(
           // Fetch member profiles and standings in parallel
           const [profileDocs, standingsDoc] = await Promise.all([
             db.getAll(...members.map(memberId =>
-              db.doc(`artifacts/${namespace}/users/${memberId}/profile/data`)
+              db.doc(paths.userProfile(memberId))
             )),
-            db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get()
+            db.doc(paths.leagueStandings(leagueId)).get()
           ]);
 
           const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
@@ -446,7 +446,6 @@ exports.generateWeeklyRecaps = onSchedule(
     logger.info("Starting weekly recap generation for all leagues");
 
     const db = getDb();
-    const namespace = dataNamespaceParam.value();
 
     try {
       const currentWeek = await getCurrentWeek(db);
@@ -461,7 +460,7 @@ exports.generateWeeklyRecaps = onSchedule(
       let recapsGenerated = 0;
 
       // Page through every league (see helpers/firestorePaging) — no silent cap.
-      const leaguesRef = db.collection(`artifacts/${namespace}/leagues`);
+      const leaguesRef = db.collection(paths.leagues());
       const recapResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
         try {
           const leagueId = leagueDoc.id;
@@ -469,7 +468,7 @@ exports.generateWeeklyRecaps = onSchedule(
           const members = league.members || [];
 
           // Check if matchups exist before fetching the rest
-          const matchupRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}/matchups/week-${currentWeek}`);
+          const matchupRef = db.doc(paths.leagueMatchupWeek(leagueId, currentWeek));
           const matchupDoc = await matchupRef.get();
 
           if (!matchupDoc.exists) {
@@ -480,13 +479,13 @@ exports.generateWeeklyRecaps = onSchedule(
 
           // Fetch standings, profiles, and matchup history in parallel
           const [standingsDoc, profileDocs, matchupHistorySnapshot] = await Promise.all([
-            db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get(),
+            db.doc(paths.leagueStandings(leagueId)).get(),
             members.length > 0
               ? db.getAll(...members.map(uid =>
-                  db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
+                  db.doc(paths.userProfile(uid))
                 ))
               : Promise.resolve([]),
-            db.collection(`artifacts/${namespace}/leagues/${leagueId}/matchups`).get()
+            db.collection(paths.leagueMatchups(leagueId)).get()
           ]);
 
           const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
@@ -517,7 +516,7 @@ exports.generateWeeklyRecaps = onSchedule(
           recap.rivalries = rivalries.slice(0, 5); // Top 5 rivalries
 
           // Save recap
-          await db.doc(`artifacts/${namespace}/leagues/${leagueId}/recaps/week-${currentWeek}`).set(recap);
+          await db.doc(paths.leagueWeekRecap(leagueId, currentWeek)).set(recap);
 
           logger.info(`Generated recap for league ${leagueId}: ${recap.highlights.length} highlights`);
           return { generated: 1 };
@@ -552,13 +551,12 @@ exports.updateLeagueRivalries = onSchedule(
     logger.info("Starting league rivalry update");
 
     const db = getDb();
-    const namespace = dataNamespaceParam.value();
 
     try {
       let rivalriesUpdated = 0;
 
       // Page through every league (see helpers/firestorePaging) — no silent cap.
-      const leaguesRef = db.collection(`artifacts/${namespace}/leagues`);
+      const leaguesRef = db.collection(paths.leagues());
       const rivalryResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
         try {
           const leagueId = leagueDoc.id;
@@ -569,7 +567,7 @@ exports.updateLeagueRivalries = onSchedule(
 
           // Fetch all matchup history
           const matchupHistorySnapshot = await db
-            .collection(`artifacts/${namespace}/leagues/${leagueId}/matchups`)
+            .collection(paths.leagueMatchups(leagueId))
             .get();
 
           const matchupHistory = {};
@@ -582,7 +580,7 @@ exports.updateLeagueRivalries = onSchedule(
 
           // Store rivalries
           if (rivalries.length > 0) {
-            await db.doc(`artifacts/${namespace}/leagues/${leagueId}/meta/rivalries`).set({
+            await db.doc(paths.leagueMeta(leagueId, "rivalries")).set({
               rivalries,
               updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
@@ -624,10 +622,9 @@ exports.triggerMatchupGeneration = onCall(
     }
 
     const db = getDb();
-    const namespace = dataNamespaceParam.value();
 
     // Check if user is commissioner
-    const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
+    const leagueRef = db.doc(paths.league(leagueId));
     const leagueDoc = await leagueRef.get();
 
     if (!leagueDoc.exists) {
@@ -641,7 +638,7 @@ exports.triggerMatchupGeneration = onCall(
     }
 
     const targetWeek = week || (await getCurrentWeek(db)) + 1;
-    const matchupRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}/matchups/week-${targetWeek}`);
+    const matchupRef = db.doc(paths.leagueMatchupWeek(leagueId, targetWeek));
 
     const existingMatchup = await matchupRef.get();
     if (existingMatchup.exists && !forceRegenerate) {
@@ -655,12 +652,12 @@ exports.triggerMatchupGeneration = onCall(
 
     // Fetch member profiles
     const profileRefs = members.map(memberId =>
-      db.doc(`artifacts/${namespace}/users/${memberId}/profile/data`)
+      db.doc(paths.userProfile(memberId))
     );
     const profileDocs = await db.getAll(...profileRefs);
 
     // Build standings
-    const standingsDoc = await db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get();
+    const standingsDoc = await db.doc(paths.leagueStandings(leagueId)).get();
     const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
     const standings = {};
     standingsData.forEach((s, idx) => {

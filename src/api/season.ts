@@ -6,12 +6,15 @@ import {
   getDoc,
   getDocs,
   collection,
+  query,
+  orderBy,
+  limit,
   onSnapshot,
   DocumentData,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, paths, withErrorHandling } from './client';
-import type { SeasonData, Show, ShowResult, CorpsClass } from '../types';
+import type { SeasonData, Show, CorpsClass, DayRecap, ShowWithResults } from '../types';
 
 // =============================================================================
 // SEASON DATA
@@ -62,17 +65,10 @@ export function subscribeToSeason(
 // FANTASY RECAPS
 // =============================================================================
 
-export interface DayRecap {
-  offSeasonDay: number;
-  date: Date;
-  shows: ShowWithResults[];
-}
-
-export interface ShowWithResults {
-  eventName: string;
-  location: string;
-  results: ShowResult[];
-}
+// Canonical recap types now live in src/types/recap.ts (single source of
+// truth shared with the score-pipeline hooks); re-exported here so existing
+// imports from the api layer keep working.
+export type { DayRecap, ShowWithResults, RecapResult } from '../types/recap';
 
 /**
  * Get fantasy recaps for a season
@@ -109,12 +105,51 @@ export async function getSeasonRecaps(seasonUid: string): Promise<DayRecap[]> {
   }
 
   // Fallback to legacy single-document format
+  return getLegacySeasonRecaps(seasonUid);
+}
+
+/** Read the legacy single-document `recaps` array (pre-subcollection format). */
+async function getLegacySeasonRecaps(seasonUid: string): Promise<DayRecap[]> {
   const legacyDocRef = doc(db, paths.fantasyRecaps(seasonUid));
   const legacyDoc = await getDoc(legacyDocRef);
   if (legacyDoc.exists()) {
     return (legacyDoc.data().recaps || []) as DayRecap[];
   }
   return [];
+}
+
+/**
+ * Number of most-recent recap days fetched by bounded consumers (the
+ * always-mounted ticker and the Dashboard recent-results box). Shared so both
+ * hooks read through a single react-query cache entry. Large enough for
+ * trend/mover windows (a corps typically performs every 2-3 days), small
+ * enough that the 5-minute stale refetch no longer re-downloads the whole
+ * season on every authenticated page.
+ */
+export const RECENT_RECAP_DAYS = 10;
+
+/**
+ * Get the most recent `days` daily recap documents for a season, ascending by
+ * day. Uses an orderBy(offSeasonDay desc) + limit query so only the tail of
+ * the season is downloaded (single-field orderBy — no composite index
+ * needed). Falls back to the legacy single-document format (sliced to the
+ * same window) when the per-day subcollection is empty. Errors propagate to
+ * the caller unchanged, mirroring getSeasonRecaps.
+ */
+export async function getRecentSeasonRecaps(seasonUid: string, days: number): Promise<DayRecap[]> {
+  const recapsCollectionRef = collection(db, paths.fantasyRecapsDays(seasonUid));
+  const recentQuery = query(recapsCollectionRef, orderBy('offSeasonDay', 'desc'), limit(days));
+  const recapsSnapshot = await getDocs(recentQuery);
+
+  if (!recapsSnapshot.empty) {
+    return recapsSnapshot.docs
+      .map((d) => d.data() as DayRecap)
+      .sort((a, b) => a.offSeasonDay - b.offSeasonDay);
+  }
+
+  // Fallback to legacy single-document format: keep the most recent `days`
+  const legacyRecaps = await getLegacySeasonRecaps(seasonUid);
+  return legacyRecaps.sort((a, b) => a.offSeasonDay - b.offSeasonDay).slice(-days);
 }
 
 // =============================================================================

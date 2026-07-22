@@ -1,14 +1,104 @@
-// src/hooks/useScoresData.js
+// src/hooks/useScoresData.ts
 // Centralized hook for fetching and processing scores data
 // Supports both current season and archived seasons
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getSeasonRecaps, getSeasonChampions } from '../api/season';
+import { getSeasonRecaps, getSeasonChampions, type SeasonChampions } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay } from '../utils/dashboardScoring';
 import { competitionDayToDate } from '../utils/competitionCalendar';
+import { getScoreValue, normalizeShowResult } from '../utils/recap';
+import type {
+  CaptionAggregates,
+  CaptionRanks,
+  NormalizedScore,
+  NormalizedShow,
+  RecapDate,
+} from '../types/recap';
+import type { CaptionScores, CorpsClass } from '../types';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+/**
+ * Minimal shape accepted by the caption/score helpers. Covers raw recap
+ * results, normalized score entries, and aggregated leaderboard entries —
+ * the legacy field fallbacks themselves live in utils/recap.ts
+ * (getScoreValue) and in calculateCaptionAggregates below.
+ */
+export interface ScoreLike {
+  score?: number;
+  totalScore?: number;
+  geScore?: number;
+  visualScore?: number;
+  musicScore?: number;
+  captions?: CaptionScores | null;
+}
+
+export interface TrendResult {
+  trend: 'up' | 'down' | 'stable';
+  values: number[];
+  direction: number;
+}
+
+export interface ColumnStats {
+  avg: number;
+  top10: number;
+  bottom10: number;
+}
+
+/** A normalized score entry annotated with the show it came from. */
+export type AggregatedScoreEntry = NormalizedScore & {
+  eventName: string;
+  date: string;
+  offSeasonDay: number;
+};
+
+/** One corps' leaderboard row on the Scores page. */
+export type LeaderboardEntry = {
+  corps: string;
+  corpsName: string;
+  corpsClass: CorpsClass;
+  uid: string;
+  displayName?: string;
+  avatarUrl: string | null;
+  scores: AggregatedScoreEntry[];
+  totalScore: number;
+  showCount: number;
+  rank: number;
+  score: number;
+  trend: TrendResult;
+} & CaptionAggregates;
+
+export interface ScoresStats {
+  recentShows: number;
+  topScore: string;
+  corpsActive: number;
+  avgScore: string;
+}
+
+export interface UseScoresDataOptions {
+  seasonId?: string | null;
+  classFilter?: string;
+  disableArchiveFallback?: boolean;
+}
+
+/** Recap-ish input for formatRecapDate (also accepts the Podium day shim). */
+interface RecapDateSource {
+  offSeasonDay?: number | null;
+  date?: RecapDate | null;
+}
+
+/** `game-settings/season`'s schedule object as competitionDayToDate reads it. */
+type SeasonScheduleLike =
+  { startDate?: unknown; springTrainingDays?: number; [key: string]: unknown } | null | undefined;
+
+// =============================================================================
+// HELPERS
+// =============================================================================
 
 /**
  * Resolve the display date for a recap day.
@@ -20,19 +110,31 @@ import { competitionDayToDate } from '../utils/competitionCalendar';
  * startDate, not on startDate). Off-season and archived recaps have no spring
  * training and a correct stored date, so they fall back to the persisted value.
  */
-export const formatRecapDate = (recap, seasonSchedule) => {
+export const formatRecapDate = (
+  recap: RecapDateSource | null | undefined,
+  seasonSchedule: SeasonScheduleLike
+): string => {
   if (typeof recap?.offSeasonDay === 'number') {
     const eventDate = competitionDayToDate(seasonSchedule, recap.offSeasonDay);
     if (eventDate) return eventDate.toLocaleDateString('en-US');
   }
-  return recap?.date?.toDate?.().toLocaleDateString('en-US', { timeZone: 'UTC' }) || 'TBD';
+  // Only Timestamp-bearing recaps carry a usable stored date here (legacy
+  // string/Date values fall through to 'TBD', matching the original
+  // `date?.toDate?.()` chain).
+  const stored = recap?.date;
+  if (stored && typeof stored === 'object' && 'toDate' in stored) {
+    return stored.toDate().toLocaleDateString('en-US', { timeZone: 'UTC' });
+  }
+  return 'TBD';
 };
 
 /**
  * Calculate caption aggregates from a score sheet
  * Returns GE_Total, VIS_Total, MUS_Total, and Total_Score
  */
-export const calculateCaptionAggregates = (scoreSheet) => {
+export const calculateCaptionAggregates = (
+  scoreSheet: ScoreLike | null | undefined
+): CaptionAggregates => {
   if (!scoreSheet) {
     return { GE_Total: 0, VIS_Total: 0, MUS_Total: 0, Total_Score: 0 };
   }
@@ -50,9 +152,8 @@ export const calculateCaptionAggregates = (scoreSheet) => {
     // Music: B + MA + P (max 30 points, averaged to ~15 for display)
     const MUS_Total = (captions.B || 0) + (captions.MA || 0) + (captions.P || 0);
 
-    // Total score
-    const Total_Score =
-      scoreSheet.score || scoreSheet.totalScore || GE_Total + VIS_Total + MUS_Total;
+    // Total score (legacy score/totalScore fallback via getScoreValue)
+    const Total_Score = getScoreValue(scoreSheet) || GE_Total + VIS_Total + MUS_Total;
 
     return { GE_Total, VIS_Total, MUS_Total, Total_Score };
   }
@@ -62,7 +163,7 @@ export const calculateCaptionAggregates = (scoreSheet) => {
     GE_Total: scoreSheet.geScore || 0,
     VIS_Total: scoreSheet.visualScore || 0,
     MUS_Total: scoreSheet.musicScore || 0,
-    Total_Score: scoreSheet.score || scoreSheet.totalScore || 0,
+    Total_Score: getScoreValue(scoreSheet),
   };
 };
 
@@ -70,7 +171,10 @@ export const calculateCaptionAggregates = (scoreSheet) => {
  * Calculate statistics for a column of scores
  * Returns average, percentile thresholds for heatmap coloring
  */
-export const calculateColumnStats = (scores, key) => {
+export const calculateColumnStats = (
+  scores: ScoreLike[] | null | undefined,
+  key: keyof CaptionAggregates
+): ColumnStats => {
   if (!scores || scores.length === 0) {
     return { avg: 0, top10: 0, bottom10: 0 };
   }
@@ -101,7 +205,7 @@ export const calculateColumnStats = (scores, key) => {
 /**
  * Determine heatmap color class based on score deviation
  */
-export const getHeatmapColor = (value, stats) => {
+export const getHeatmapColor = (value: number, stats: ColumnStats | null | undefined): string => {
   if (!stats || value === 0) return '';
 
   if (value >= stats.top10) {
@@ -116,14 +220,17 @@ export const getHeatmapColor = (value, stats) => {
  * Calculate trend from most recent N scores (for sparkline)
  * Note: scoreHistory is ordered with most recent first (index 0 = newest)
  */
-export const calculateTrend = (scoreHistory, count = 5) => {
+export const calculateTrend = (
+  scoreHistory: ScoreLike[] | null | undefined,
+  count = 5
+): TrendResult => {
   if (!scoreHistory || scoreHistory.length < 2) {
     return { trend: 'stable', values: [], direction: 0 };
   }
 
   // Get the most recent N scores (first N elements since array is newest-first)
   const recent = scoreHistory.slice(0, count);
-  const values = recent.map((s) => s.score || s.totalScore || 0);
+  const values = recent.map((s) => getScoreValue(s));
 
   // values[0] = most recent, values[length-1] = oldest in this window
   const newest = values[0];
@@ -132,7 +239,7 @@ export const calculateTrend = (scoreHistory, count = 5) => {
   // Calculate trend: positive if scores are improving (newest > oldest)
   const direction = oldest > 0 ? (newest - oldest) / oldest : 0;
 
-  let trend = 'stable';
+  let trend: TrendResult['trend'] = 'stable';
   if (direction > 0.02) trend = 'up';
   else if (direction < -0.02) trend = 'down';
 
@@ -143,7 +250,11 @@ export const calculateTrend = (scoreHistory, count = 5) => {
 /**
  * Generate sparkline SVG path from values
  */
-export const generateSparklinePath = (values, width = 60, height = 20) => {
+export const generateSparklinePath = (
+  values: number[] | null | undefined,
+  width = 60,
+  height = 20
+): string => {
   if (!values || values.length < 2) return '';
 
   const min = Math.min(...values);
@@ -169,16 +280,18 @@ export const generateSparklinePath = (values, width = 60, height = 20) => {
  * Memory improvement: Sorts lightweight tuples instead of full score objects
  * Speed improvement: Direct index assignment vs Map creation + lookups
  */
-export const calculateCaptionRanks = (scores) => {
+export const calculateCaptionRanks = <T extends CaptionAggregates>(
+  scores: T[] | null | undefined
+): Array<T & CaptionRanks> => {
   if (!scores || scores.length === 0) return [];
 
   const n = scores.length;
 
   // Create lightweight [value, originalIndex] tuples for sorting
   // Much more memory-efficient than copying full score objects
-  const geIndices = new Array(n);
-  const visIndices = new Array(n);
-  const musIndices = new Array(n);
+  const geIndices: Array<[number, number]> = new Array(n);
+  const visIndices: Array<[number, number]> = new Array(n);
+  const musIndices: Array<[number, number]> = new Array(n);
 
   // Single pass to extract all caption values with their indices
   for (let i = 0; i < n; i++) {
@@ -190,14 +303,14 @@ export const calculateCaptionRanks = (scores) => {
 
   // Sort by value descending (higher score = better rank)
   // Sorting small tuples is faster than sorting objects with many properties
-  const compareDesc = (a, b) => b[0] - a[0];
+  const compareDesc = (a: [number, number], b: [number, number]) => b[0] - a[0];
   geIndices.sort(compareDesc);
   visIndices.sort(compareDesc);
   musIndices.sort(compareDesc);
 
   // Create result array once, then assign all ranks directly
   // Avoids creating intermediate Maps and doing Map lookups
-  const results = scores.map((s) => ({ ...s }));
+  const results = scores.map((s) => ({ ...s })) as Array<T & CaptionRanks>;
 
   // Assign ranks via direct index access (O(1) per assignment)
   for (let rank = 0; rank < n; rank++) {
@@ -212,15 +325,15 @@ export const calculateCaptionRanks = (scores) => {
 /**
  * Main hook for scores data
  */
-export const useScoresData = (options = {}) => {
+export const useScoresData = (options: UseScoresDataOptions = {}) => {
   const { seasonId = null, classFilter = 'all', disableArchiveFallback = false } = options;
 
   const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
   const currentSeasonData = useSeasonStore((state) => state.seasonData);
   const currentDay = useSeasonStore((state) => state.currentDay);
 
-  const [error, setError] = useState(null);
-  const [fallbackSeasonId, setFallbackSeasonId] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fallbackSeasonId, setFallbackSeasonId] = useState<string | null>(null);
 
   // Determine which season to fetch (fallbackSeasonId takes precedence when set)
   const targetSeasonId = seasonId || fallbackSeasonId || currentSeasonUid;
@@ -229,21 +342,22 @@ export const useScoresData = (options = {}) => {
     (fallbackSeasonId && fallbackSeasonId !== currentSeasonUid);
 
   // Fetch available archived seasons (shared cache with Hall of Champions)
-  const { data: archivedSeasons = [] } = useQuery({
+  const { data: archivedSeasons = [] } = useQuery<SeasonChampions[]>({
     queryKey: queryKeys.archivedSeasons(),
     queryFn: getSeasonChampions,
   });
 
   // Fetch all recap days for the target season; React Query de-duplicates in-session refetches
-  // so navigating away and back to the Scores page costs zero extra Firestore reads. The
-  // ticker and Dashboard recent-results hooks share this exact cache entry.
+  // so navigating away and back to the Scores page costs zero extra Firestore reads. (The
+  // always-mounted ticker and the Dashboard recent-results box use the bounded
+  // fantasyRecapsRecent variant; this full-archive fetch backs the Scores page history.)
   const {
     data: rawRecaps,
     isLoading: loading,
     error: queryError,
   } = useQuery({
-    queryKey: queryKeys.fantasyRecaps(targetSeasonId),
-    queryFn: () => getSeasonRecaps(targetSeasonId),
+    queryKey: queryKeys.fantasyRecaps(targetSeasonId ?? ''),
+    queryFn: () => getSeasonRecaps(targetSeasonId ?? ''),
     enabled: !!targetSeasonId,
     staleTime: 5 * 60 * 1000,
   });
@@ -270,7 +384,7 @@ export const useScoresData = (options = {}) => {
   }, [rawRecaps, seasonId, fallbackSeasonId, archivedSeasons, disableArchiveFallback]);
 
   // Derive allShows from query data (replaces manual setState)
-  const allShows = useMemo(() => {
+  const allShows = useMemo<NormalizedShow[]>(() => {
     const recaps = rawRecaps || [];
     if (recaps.length === 0) return [];
 
@@ -281,7 +395,7 @@ export const useScoresData = (options = {}) => {
     const seasonSchedule = isCurrentSeason ? currentSeasonData?.schedule : null;
 
     return recaps
-      .flatMap((recap) => {
+      .flatMap((recap): NormalizedShow[] => {
         if (isCurrentSeason) {
           if (!effectiveDay || effectiveDay < 1) return [];
           if (recap.offSeasonDay > effectiveDay) return [];
@@ -293,23 +407,10 @@ export const useScoresData = (options = {}) => {
             location: show.location,
             date: recapDate,
             offSeasonDay: recap.offSeasonDay,
-            seasonId: targetSeasonId,
+            seasonId: targetSeasonId ?? '',
             scores:
               show.results
-                ?.map((result) => ({
-                  corps: result.corpsName,
-                  corpsName: result.corpsName,
-                  uid: result.uid,
-                  displayName: result.displayName,
-                  avatarUrl: result.avatarUrl || null,
-                  score: result.totalScore || 0,
-                  totalScore: result.totalScore || 0,
-                  geScore: result.geScore || 0,
-                  visualScore: result.visualScore || 0,
-                  musicScore: result.musicScore || 0,
-                  corpsClass: result.corpsClass,
-                  captions: result.captions || {},
-                }))
+                ?.map((result) => normalizeShowResult(result))
                 .sort((a, b) => b.score - a.score) || [],
           })) || []
         );
@@ -330,7 +431,7 @@ export const useScoresData = (options = {}) => {
 
   // OPTIMIZATION #8: Derive stats from allShows with useMemo instead of state
   // Eliminates redundant state updates and ensures stats stay in sync with data
-  const stats = useMemo(() => {
+  const stats = useMemo<ScoresStats>(() => {
     if (allShows.length === 0) {
       return { recentShows: 0, topScore: '-', corpsActive: 0, avgScore: '0.000' };
     }
@@ -340,8 +441,8 @@ export const useScoresData = (options = {}) => {
     // surfaced, so exclude them from the top/avg score stats (they would
     // otherwise leak an exact SoundSport score via the "High" figure). Corps
     // still count toward the active-corps tally.
-    const allScores = [];
-    const uniqueCorps = new Set();
+    const allScores: number[] = [];
+    const uniqueCorps = new Set<string>();
 
     for (const show of allShows) {
       for (const s of show.scores) {
@@ -366,7 +467,7 @@ export const useScoresData = (options = {}) => {
   }, [allShows]);
 
   // Filter shows by class
-  const filteredShows = useMemo(() => {
+  const filteredShows = useMemo<NormalizedShow[]>(() => {
     if (classFilter === 'all') {
       return allShows
         .map((show) => ({
@@ -376,7 +477,7 @@ export const useScoresData = (options = {}) => {
         .filter((show) => show.scores.length > 0);
     }
 
-    const classMap = {
+    const classMap: Record<string, string> = {
       world: 'worldClass',
       open: 'openClass',
       a: 'aClass',
@@ -393,13 +494,25 @@ export const useScoresData = (options = {}) => {
 
   // Aggregate all scores for leaderboard view
   const aggregatedScores = useMemo(() => {
-    const corpsScores = new Map();
+    interface CorpsAggregate {
+      corps: string;
+      corpsName: string;
+      corpsClass: CorpsClass;
+      uid: string;
+      displayName?: string;
+      avatarUrl: string | null;
+      scores: AggregatedScoreEntry[];
+      totalScore: number;
+      showCount: number;
+    }
+    const corpsScores = new Map<string, CorpsAggregate>();
 
     filteredShows.forEach((show) => {
       show.scores.forEach((score) => {
         const corps = score.corps || score.corpsName;
-        if (!corpsScores.has(corps)) {
-          corpsScores.set(corps, {
+        let entry = corpsScores.get(corps);
+        if (!entry) {
+          entry = {
             corps,
             corpsName: corps,
             corpsClass: score.corpsClass,
@@ -409,10 +522,10 @@ export const useScoresData = (options = {}) => {
             scores: [],
             totalScore: 0,
             showCount: 0,
-          });
+          };
+          corpsScores.set(corps, entry);
         }
 
-        const entry = corpsScores.get(corps);
         entry.scores.push({
           ...score,
           eventName: show.eventName,
@@ -428,7 +541,7 @@ export const useScoresData = (options = {}) => {
     });
 
     // Convert to array and sort by most recent score
-    const leaderboard = Array.from(corpsScores.values())
+    const leaderboard: LeaderboardEntry[] = Array.from(corpsScores.values())
       .sort((a, b) => b.totalScore - a.totalScore)
       .map((entry, index) => ({
         ...entry,
@@ -456,7 +569,7 @@ export const useScoresData = (options = {}) => {
 
   // Allow manual season selection
   const selectSeason = useCallback(
-    (newSeasonId) => {
+    (newSeasonId: string) => {
       if (newSeasonId === currentSeasonUid) {
         // Clear fallback to return to current season
         setFallbackSeasonId(null);

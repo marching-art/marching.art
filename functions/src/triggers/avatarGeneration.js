@@ -12,6 +12,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
+const { paths } = require("../helpers/paths");
 const {
   buildCorpsAvatarPrompt,
   generateImageWithImagen,
@@ -51,6 +52,11 @@ const CORPS_CLASSES = [
  */
 exports.onUniformDesignUpdated = onDocumentWritten(
   {
+    // Trigger document patterns are static deploy-time strings, so this one
+    // cannot call paths.* / dataNamespaceParam (params are runtime-only).
+    // Unlike pushTriggers/emailTriggers it pins the production namespace
+    // rather than a {namespace} wildcard; all RUNTIME reads/writes below go
+    // through paths.* so they respect DATA_NAMESPACE.
     document: "artifacts/marching-art/users/{userId}/profile/data",
     timeoutSeconds: 120,
     memory: "512MiB",
@@ -220,7 +226,7 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
   }
 
   // Save avatar URL back to the user's profile
-  const profileRef = db.doc(`artifacts/marching-art/users/${userId}/profile/data`);
+  const profileRef = db.doc(paths.userProfile(userId));
 
   await profileRef.update({
     [`corps.${corpsClass}.avatarUrl`]: avatarUrl,
@@ -264,9 +270,7 @@ exports.generateCorpsAvatar = onCall(
     const userId = request.auth.uid;
 
     // Fetch user's profile
-    const profileDoc = await db
-      .doc(`artifacts/marching-art/users/${userId}/profile/data`)
-      .get();
+    const profileDoc = await db.doc(paths.userProfile(userId)).get();
 
     if (!profileDoc.exists) {
       throw new HttpsError("not-found", "User profile not found");
@@ -323,7 +327,7 @@ exports.regenerateAllAvatars = onCall(
 
     try {
       // Get users with corps that have uniform designs
-      const usersRef = db.collection("artifacts/marching-art/users");
+      const usersRef = db.collection(paths.users());
       const profileDocs = await usersRef.listDocuments();
 
       let processed = 0;

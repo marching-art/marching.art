@@ -3,7 +3,7 @@
 
 const admin = require("firebase-admin");
 const crypto = require("crypto");
-const { dataNamespaceParam } = require("../config");
+const { paths } = require("./paths");
 
 /**
  * OPTIMIZATION #2: Generate a deterministic unique invite code based on UID and timestamp.
@@ -78,8 +78,7 @@ function smartPairMembers(members, standings) {
 
 // Helper function to create league activity events
 async function createLeagueActivity(db, leagueId, activityData) {
-  const namespace = dataNamespaceParam.value();
-  const activityRef = db.collection(`artifacts/${namespace}/leagues/${leagueId}/activity`).doc();
+  const activityRef = db.collection(paths.leagueActivity(leagueId)).doc();
 
   await activityRef.set({
     ...activityData,

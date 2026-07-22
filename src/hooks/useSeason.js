@@ -10,7 +10,8 @@ import { useSeasonStore } from '../store/seasonStore';
  * game-day math). Consuming currentDay/currentWeek from here guarantees every
  * screen agrees on the season clock instead of recomputing it locally.
  *
- * @returns {Object} { seasonData, loading, error, weeksRemaining, currentDay, currentWeek }
+ * Returns seasonData, loading, error, weeksRemaining, currentDay, and
+ * currentWeek (types are inferred from the store's selectors).
  */
 export const useSeason = () => {
   const seasonData = useSeasonStore((state) => state.seasonData);
