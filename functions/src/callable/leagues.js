@@ -21,8 +21,23 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
   } = request.data;
   const uid = request.auth.uid;
 
-  if (!name || name.trim().length < 3) {
+  if (typeof name !== 'string' || name.trim().length < 3) {
     throw new HttpsError("invalid-argument", "League name must be at least 3 characters long.");
+  }
+  if (name.trim().length > 50) {
+    throw new HttpsError("invalid-argument", "League name must be 50 characters or fewer.");
+  }
+
+  if (typeof description !== 'string' || description.length > 500) {
+    throw new HttpsError("invalid-argument", "League description must be text of 500 characters or fewer.");
+  }
+
+  if (!Number.isInteger(maxMembers) || maxMembers < 2 || maxMembers > 50) {
+    throw new HttpsError("invalid-argument", "Max members must be a whole number between 2 and 50.");
+  }
+
+  if (typeof settings !== 'object' || settings === null || Array.isArray(settings)) {
+    throw new HttpsError("invalid-argument", "League settings must be an object.");
   }
 
   // Commissioner-set entry fee: validated here, charged to every joiner
@@ -77,10 +92,13 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       maxMembers,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       settings: {
+        // Whitelisted keys only — never spread arbitrary client-supplied
+        // settings into the stored doc.
         matchupType: settings.matchupType || 'weekly', // weekly, h2h
         playoffSize: settings.playoffSize || 4,
-        ...settings,
-        // After the spread so client values can't override the validated fee
+        scoringFormat: settings.scoringFormat || 'circuit',
+        finalsSize: settings.finalsSize || 12,
+        // Applied last so client values can't override the validated fee
         // or the pool. The prize pool is PURE ESCROW: it holds only entry
         // fees actually debited from members (creator's fee here, joiners'
         // via helpers/leagueEconomy.js) and is paid out + zeroed at season
