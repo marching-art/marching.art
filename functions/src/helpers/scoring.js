@@ -34,6 +34,7 @@ const {
   markScoringRunFailed,
 } = require("./scoringRunGuard");
 const { settleLeaguePoolsForDay } = require("./leaguePools");
+const { processAllInPages } = require("./firestorePaging");
 const { publishSeasonSummaryRequest } = require("./newsSeasonSummaryTrigger");
 const {
   isTwoNightShow,
@@ -63,6 +64,38 @@ function hasCompleteLineup(lineup) {
   return LINEUP_CAPTIONS.every(
     (caption) => typeof lineup[caption] === "string" && lineup[caption].length > 0
   );
+}
+
+// Nightly profile fetch: documents per page (also the max held in one query
+// response). The full doc list is accumulated in memory, but the select()
+// projection keeps each doc to ~2KB, so even tens of thousands of profiles
+// stay well within a 512MiB scoring job.
+const PROFILE_PAGE_SIZE = 1000;
+
+/**
+ * Fetch EVERY active-season profile, paging past any single query's cap.
+ *
+ * Replaces the old `.limit(5000)` fetch, which silently never scored profile
+ * 5,001+. Pages via firestorePaging.processAllInPages (stable __name__
+ * ordering; the equality filter + implicit __name__ order is served by the
+ * existing collection-group index on activeSeasonId, so no new index is
+ * needed). Keeps the field projection: only 'corps', 'username' and
+ * 'displayName' are fetched (~87% less data than full profile docs).
+ *
+ * Returns a QuerySnapshot-shaped object ({ docs, size, empty }) so the
+ * downstream scoring core, Eastern-split and rankings code — which only use
+ * those three members — is unchanged.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid - The active season's uid (activeSeasonId filter).
+ * @returns {Promise<{docs: FirebaseFirestore.QueryDocumentSnapshot[], size: number, empty: boolean}>}
+ */
+async function fetchAllActiveProfiles(db, seasonUid) {
+  const profilesQuery = db.collectionGroup("profile")
+    .where("activeSeasonId", "==", seasonUid)
+    .select("corps", "username", "displayName");
+  const docs = await processAllInPages(profilesQuery, PROFILE_PAGE_SIZE, async (doc) => doc);
+  return { docs, size: docs.length, empty: docs.length === 0 };
 }
 
 // =============================================================================
@@ -479,22 +512,12 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     // Fetch day data from subcollection instead of season document
     const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
 
-    // Field projection: Only fetch 'corps' field to reduce data transfer by ~87%
-    // Full profile docs are ~15KB each; with projection ~2KB each
-    // OPTIMIZATION #8: Added limit to prevent runaway memory usage
-    // Note: For true pagination at scale (10K+ users), implement cursor-based batching
-    const PROFILE_FETCH_LIMIT = 5000;
-    const profilesQuery = db.collectionGroup("profile")
-      .where("activeSeasonId", "==", seasonData.seasonUid)
-      .select("corps", "username", "displayName")
-      .limit(PROFILE_FETCH_LIMIT);
-    const profilesSnapshot = await profilesQuery.get();
+    // Cursor-paged fetch of ALL active profiles (projected fields only) — the
+    // old .limit(5000) fetch silently never scored profile 5,001+.
+    const profilesSnapshot = await fetchAllActiveProfiles(db, seasonData.seasonUid);
     if (profilesSnapshot.empty) {
       await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no active profiles" });
       return { status: "processed", scoredDay, note: "no active profiles" };
-    }
-    if (profilesSnapshot.size === PROFILE_FETCH_LIMIT) {
-      logger.warn(`OPTIMIZATION WARNING: Profile fetch hit limit of ${PROFILE_FETCH_LIMIT}. Consider implementing pagination for larger user bases.`);
     }
 
     const week = Math.ceil(scoredDay / 7);
@@ -644,16 +667,9 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force 
 async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
   const week = Math.ceil(scoredDay / 7);
 
-  // OPTIMIZATION #8: Added limit and field projection to prevent runaway memory usage
-  const PROFILE_FETCH_LIMIT = 5000;
-  const profilesQuery = db.collectionGroup("profile")
-    .where("activeSeasonId", "==", seasonData.seasonUid)
-    .select("corps", "username", "displayName")
-    .limit(PROFILE_FETCH_LIMIT);
-  const profilesSnapshot = await profilesQuery.get();
-  if (profilesSnapshot.size === PROFILE_FETCH_LIMIT) {
-    logger.warn(`OPTIMIZATION WARNING: Live season profile fetch hit limit of ${PROFILE_FETCH_LIMIT}. Consider implementing pagination.`);
-  }
+  // Cursor-paged fetch of ALL active profiles (projected fields only) — the
+  // old .limit(5000) fetch silently never scored profile 5,001+.
+  const profilesSnapshot = await fetchAllActiveProfiles(db, seasonData.seasonUid);
   if (profilesSnapshot.empty) {
     logger.info("No active profiles found for the live season.");
     await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no active profiles" });
@@ -928,4 +944,5 @@ module.exports = {
   scoreShowsForDay,
   hasCompleteLineup,
   computeSeasonRankings,
+  fetchAllActiveProfiles,
 };
