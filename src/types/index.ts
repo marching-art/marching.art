@@ -7,6 +7,7 @@
 export * from './user';
 export * from './corps';
 export * from './season';
+export * from './recap';
 export * from './league';
 export * from './challenges';
 export * from './api';

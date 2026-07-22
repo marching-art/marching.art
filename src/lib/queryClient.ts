@@ -72,6 +72,11 @@ export const queryKeys = {
   // Season queries
   season: () => ['season'] as const,
   fantasyRecaps: (seasonUid: string) => ['fantasyRecaps', seasonUid] as const,
+  // Bounded variant: the N most recent recap days (ticker / Dashboard recent
+  // results). Nested under the 'fantasyRecaps' prefix so invalidating
+  // ['fantasyRecaps', seasonUid] hits both the full archive and this entry.
+  fantasyRecapsRecent: (seasonUid: string, days: number) =>
+    ['fantasyRecaps', seasonUid, 'recent', days] as const,
   // Podium Class recaps live in a separate collection (podium-recaps), never
   // in fantasy_recaps, so they get their own cache key.
   podiumRecaps: (seasonUid: string) => ['podiumRecaps', seasonUid] as const,

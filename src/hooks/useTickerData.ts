@@ -1,24 +1,134 @@
-// src/hooks/useTickerData.js
+// src/hooks/useTickerData.ts
 // Hook for fetching real-time ticker data from all corps' most recent scores across the season
 // Displays data like a sports stats ticker, separated by class
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getSeasonRecaps } from '../api/season';
+import { getRecentSeasonRecaps, RECENT_RECAP_DAYS } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay } from '../utils/dashboardScoring';
+import { toRecapDate } from '../utils/recap';
 import { calculateCaptionAggregates, calculateTrend } from './useScoresData';
+import type { CaptionAggregates, DayRecap, RecapResult } from '../types/recap';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+type TickerClassKey = 'worldClass' | 'openClass' | 'aClass';
+
+/** A corps' most recent result, annotated with display metadata. */
+type MostRecentEntry = RecapResult &
+  CaptionAggregates & {
+    abbr: string;
+    eventName: string;
+    location: string;
+    day: number;
+  };
+
+interface TickerScoreItem {
+  name: string;
+  fullName: string;
+  score: string;
+  eventName: string;
+}
+
+interface CaptionLeaderItem {
+  name: string;
+  fullName: string;
+  score: string;
+}
+
+interface CombinedLeaderItem {
+  name: string;
+  fullName: string;
+  corpsClass: string;
+  score: string | number;
+  _score: number;
+}
+
+interface MoverItem {
+  name: string;
+  fullName: string;
+  change: string;
+  direction: 'up' | 'down';
+  currentScore: string;
+  previousScore: string;
+  daysSince: number;
+  _absChange: number;
+}
+
+interface LeaderItem {
+  name: string;
+  fullName: string;
+  score: string;
+  trend: string;
+  showCount: number;
+  _score: number;
+}
+
+interface SoundSportMedal {
+  name: string;
+  fullName: string;
+  medal: string | null;
+  eventName: string;
+  _order: number;
+}
+
+interface TickerClassData {
+  scores: TickerScoreItem[];
+  captionLeaders: {
+    ge: CaptionLeaderItem | null;
+    visual: CaptionLeaderItem | null;
+    music: CaptionLeaderItem | null;
+  };
+  movers: MoverItem[];
+  leaders: LeaderItem[];
+  label?: string;
+}
+
+interface CombinedCaptionLeaders {
+  ge: Array<Omit<CombinedLeaderItem, '_score'>>;
+  visual: Array<Omit<CombinedLeaderItem, '_score'>>;
+  music: Array<Omit<CombinedLeaderItem, '_score'>>;
+}
+
+interface TickerData {
+  byClass: Record<string, TickerClassData>;
+  combinedCaptionLeaders?: CombinedCaptionLeaders;
+  soundSportMedals: SoundSportMedal[];
+  dayLabel: string;
+  showCount: number;
+  date?: Date;
+  availableClasses: TickerClassKey[];
+  displayDay?: number | null;
+}
+
+interface CorpsCaptionStat {
+  name: string;
+  abbr: string;
+  corpsClass: string;
+  latestGE: number;
+  latestVisual: number;
+  latestMusic: number;
+  latestDay: number;
+}
 
 // Class display names and order
-const CLASS_CONFIG = {
+const CLASS_CONFIG: Record<TickerClassKey, { label: string; order: number }> = {
   worldClass: { label: 'World Class', order: 1 },
   openClass: { label: 'Open Class', order: 2 },
   aClass: { label: 'A Class', order: 3 },
 };
 
+const TICKER_CLASS_KEYS = Object.keys(CLASS_CONFIG) as TickerClassKey[];
+
+const isTickerClass = (corpsClass: string): corpsClass is TickerClassKey =>
+  Object.prototype.hasOwnProperty.call(CLASS_CONFIG, corpsClass);
+
 // Medal types for SoundSport
-const getMedalFromPlacement = (placement) => {
+const getMedalFromPlacement = (placement: number): string | null => {
   if (placement === 1) return 'Gold';
   if (placement === 2) return 'Silver';
   if (placement === 3) return 'Bronze';
@@ -28,8 +138,8 @@ const getMedalFromPlacement = (placement) => {
 /**
  * Get abbreviated corps name for ticker display
  */
-const getCorpsAbbreviation = (name) => {
-  const abbreviations = {
+const getCorpsAbbreviation = (name: string): string => {
+  const abbreviations: Record<string, string> = {
     'Blue Devils': 'BD',
     'Carolina Crown': 'CC',
     'Boston Crusaders': 'BAC',
@@ -48,7 +158,6 @@ const getCorpsAbbreviation = (name) => {
     Mandarins: 'MAN',
     'Music City': 'MC',
     'Pacific Crest': 'PC',
-    'Phantom Regiment': 'PR',
     Spartans: 'SPA',
     'Spirit of Atlanta': 'SOA',
     Troopers: 'TROOP',
@@ -80,30 +189,33 @@ const getCorpsAbbreviation = (name) => {
 /**
  * Hook to fetch ticker data showing each corps' most recent score across the season
  */
-export const useTickerData = ({ enabled = true } = {}) => {
+export const useTickerData = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const seasonUid = useSeasonStore((state) => state.seasonUid);
   const currentDay = useSeasonStore((state) => state.currentDay);
   const seasonData = useSeasonStore((state) => state.seasonData);
 
-  // Season recaps come from the shared react-query cache (same key as the
-  // Scores page and Dashboard recent-results), so mounting the ticker costs
-  // no extra Firestore reads when another surface already fetched them.
+  // The ticker is mounted on every authenticated page, so it uses the bounded
+  // recent-days recap query (shared cache entry with the Dashboard
+  // recent-results hook) instead of re-downloading the whole season's recap
+  // archive on every 5-minute stale refetch. Every ticker stat is a
+  // "most recent"/short-window figure, so the RECENT_RECAP_DAYS tail is all
+  // it needs.
   const {
     data: allRecapsData,
     isPending: loading,
     error: queryError,
   } = useQuery({
-    queryKey: queryKeys.fantasyRecaps(seasonUid),
-    queryFn: () => getSeasonRecaps(seasonUid),
+    queryKey: queryKeys.fantasyRecapsRecent(seasonUid ?? '', RECENT_RECAP_DAYS),
+    queryFn: () => getRecentSeasonRecaps(seasonUid ?? '', RECENT_RECAP_DAYS),
     enabled: !!seasonUid && enabled,
     staleTime: 5 * 60 * 1000,
   });
-  const allRecaps = useMemo(() => allRecapsData || [], [allRecapsData]);
+  const allRecaps = useMemo<DayRecap[]>(() => allRecapsData || [], [allRecapsData]);
   const error = queryError?.message || null;
 
   // The day to show is the most recent day with processed scores
   // At 2 AM ET, scores for the current day are processed, so we can show them
-  const displayDay = useMemo(() => {
+  const displayDay = useMemo<number | null>(() => {
     if (allRecaps.length === 0) return null;
 
     // Guard: null on Day 1 (or Day 2 before 2 AM ET) — no processed scores yet
@@ -121,15 +233,15 @@ export const useTickerData = ({ enabled = true } = {}) => {
 
   // Process the previous day's data - separated by class
   // OPTIMIZED: Single-pass processing to reduce array iterations from O(5n) to O(n)
-  const tickerData = useMemo(() => {
-    const emptyClassData = {
+  const tickerData = useMemo<TickerData>(() => {
+    const emptyClassData: TickerClassData = {
       scores: [],
       captionLeaders: { ge: null, visual: null, music: null },
       movers: [],
       leaders: [],
     };
 
-    const emptyData = {
+    const emptyData: TickerData = {
       byClass: {
         worldClass: { ...emptyClassData },
         openClass: { ...emptyClassData },
@@ -156,8 +268,9 @@ export const useTickerData = ({ enabled = true } = {}) => {
 
     // Track the most recent score for each corps across all days
     // Key: corpsName, Value: { result, show, day } with most recent data
-    const mostRecentByCorps = new Map();
-    const soundSportMedals = [];
+    // (SoundSport corps get a `true` marker under a prefixed key instead)
+    const mostRecentByCorps = new Map<string, MostRecentEntry | true>();
+    const soundSportMedals: SoundSportMedal[] = [];
     let totalShowCount = 0;
 
     // Process all recaps to find most recent score per corps
@@ -180,7 +293,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
                 });
               }
             }
-          } else if (CLASS_CONFIG[result.corpsClass]) {
+          } else if (isTickerClass(result.corpsClass)) {
             // For regular corps, keep only the most recent score
             if (!mostRecentByCorps.has(result.corpsName)) {
               const aggregates = calculateCaptionAggregates(result);
@@ -199,18 +312,18 @@ export const useTickerData = ({ enabled = true } = {}) => {
     }
 
     // Group the most recent scores by class
-    const resultsByClass = {
+    const resultsByClass: Record<TickerClassKey, MostRecentEntry[]> = {
       worldClass: [],
       openClass: [],
       aClass: [],
     };
-    const allScoredResults = [];
+    const allScoredResults: MostRecentEntry[] = [];
 
     for (const [corpsName, result] of mostRecentByCorps.entries()) {
       // Skip soundsport tracking entries
-      if (corpsName.startsWith('soundsport_')) continue;
+      if (corpsName.startsWith('soundsport_') || result === true) continue;
 
-      if (CLASS_CONFIG[result.corpsClass]) {
+      if (isTickerClass(result.corpsClass)) {
         resultsByClass[result.corpsClass].push(result);
         allScoredResults.push(result);
       }
@@ -220,14 +333,25 @@ export const useTickerData = ({ enabled = true } = {}) => {
     soundSportMedals.sort((a, b) => a._order - b._order);
 
     // Sort each class by score (needed for rankings)
-    for (const classKey of Object.keys(resultsByClass)) {
+    for (const classKey of TICKER_CLASS_KEYS) {
       resultsByClass[classKey].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
     }
 
     // SINGLE PASS over historical recaps: Build both previous scores AND season scores
     // Previously: Two separate loops over allRecaps
-    const corpsPreviousScores = new Map();
-    const corpsSeasonScores = new Map();
+    const corpsPreviousScores = new Map<
+      string,
+      { score: number; corpsClass: string; day: number }
+    >();
+    const corpsSeasonScores = new Map<
+      string,
+      {
+        name: string;
+        abbr: string;
+        scores: Array<{ score: number; day: number }>;
+        corpsClass: string;
+      }
+    >();
 
     // Sort recaps once, then process
     const sortedRecaps = [...allRecaps].sort((a, b) => b.offSeasonDay - a.offSeasonDay);
@@ -256,15 +380,17 @@ export const useTickerData = ({ enabled = true } = {}) => {
           }
 
           // Build season scores (for leaders) - up to and including display day
-          if (!corpsSeasonScores.has(corps)) {
-            corpsSeasonScores.set(corps, {
+          let seasonEntry = corpsSeasonScores.get(corps);
+          if (!seasonEntry) {
+            seasonEntry = {
               name: corps,
               abbr: getCorpsAbbreviation(corps),
               scores: [],
               corpsClass: result.corpsClass,
-            });
+            };
+            corpsSeasonScores.set(corps, seasonEntry);
           }
-          corpsSeasonScores.get(corps).scores.push({
+          seasonEntry.scores.push({
             score,
             day: recap.offSeasonDay,
           });
@@ -275,21 +401,21 @@ export const useTickerData = ({ enabled = true } = {}) => {
     // OPTIMIZED: Build class-separated data with single-pass caption leader tracking
     // Previously: 3 sorts per class (9 total) + 3 sorts for combined = 12 sort operations
     // Now: Track leaders during iteration, only sort when needed
-    const byClass = {};
-    const availableClasses = [];
+    const byClass: Record<string, TickerClassData> = {};
+    const availableClasses: TickerClassKey[] = [];
 
     // Track combined caption leaders across all classes during iteration
-    const combinedLeaders = {
+    const combinedLeaders: Record<'ge' | 'visual' | 'music', CombinedLeaderItem[]> = {
       ge: [], // Will hold top 8
       visual: [],
       music: [],
     };
 
-    for (const classKey of Object.keys(CLASS_CONFIG)) {
+    for (const classKey of TICKER_CLASS_KEYS) {
       const classResults = resultsByClass[classKey] || [];
 
       // Scores for this class (already sorted by total score)
-      const scores = classResults.slice(0, 10).map((result) => ({
+      const scores: TickerScoreItem[] = classResults.slice(0, 10).map((result) => ({
         name: result.abbr,
         fullName: result.corpsName,
         score: (result.totalScore || 0).toFixed(3),
@@ -297,10 +423,10 @@ export const useTickerData = ({ enabled = true } = {}) => {
       }));
 
       // SINGLE PASS: Find caption leaders and calculate movers simultaneously
-      let geLeader = null;
-      let visualLeader = null;
-      let musicLeader = null;
-      const movers = [];
+      let geLeader: { result: MostRecentEntry; score: number } | null = null;
+      let visualLeader: { result: MostRecentEntry; score: number } | null = null;
+      let musicLeader: { result: MostRecentEntry; score: number } | null = null;
+      const movers: MoverItem[] = [];
 
       for (const result of classResults) {
         const geScore = result.GE_Total || 0;
@@ -350,7 +476,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
       // Sort movers by absolute change
       movers.sort((a, b) => b._absChange - a._absChange);
 
-      const captionLeaders = {
+      const captionLeaders: TickerClassData['captionLeaders'] = {
         ge: geLeader
           ? {
               name: geLeader.result.abbr,
@@ -375,7 +501,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
       };
 
       // Season leaders for this class - optimized with pre-grouped data
-      const classSeasonData = [];
+      const classSeasonData: LeaderItem[] = [];
       for (const entry of corpsSeasonScores.values()) {
         if (entry.corpsClass !== classKey) continue;
 
@@ -416,7 +542,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
     combinedLeaders.visual.sort((a, b) => b._score - a._score);
     combinedLeaders.music.sort((a, b) => b._score - a._score);
 
-    const combinedCaptionLeaders = {
+    const combinedCaptionLeaders: CombinedCaptionLeaders = {
       ge: combinedLeaders.ge.slice(0, 8).map((r) => ({
         name: r.name,
         fullName: r.fullName,
@@ -446,9 +572,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
       soundSportMedals,
       dayLabel: `Season`,
       showCount: totalShowCount,
-      date:
-        mostRecentRecap?.date?.toDate?.() ||
-        (mostRecentRecap?.date ? new Date(mostRecentRecap.date) : new Date()),
+      date: toRecapDate(mostRecentRecap?.date) || new Date(),
       availableClasses,
       displayDay, // Include for reference if needed
     };
@@ -469,7 +593,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
     }
 
     // Get aggregate caption leaders across all shows up to display day
-    const corpsStats = new Map();
+    const corpsStats = new Map<string, CorpsCaptionStat>();
 
     allRecaps
       .filter((r) => r.offSeasonDay <= displayDay)
@@ -481,8 +605,9 @@ export const useTickerData = ({ enabled = true } = {}) => {
             const corps = result.corpsName;
             const aggregates = calculateCaptionAggregates(result);
 
-            if (!corpsStats.has(corps)) {
-              corpsStats.set(corps, {
+            let entry = corpsStats.get(corps);
+            if (!entry) {
+              entry = {
                 name: corps,
                 abbr: getCorpsAbbreviation(corps),
                 corpsClass: result.corpsClass,
@@ -490,10 +615,10 @@ export const useTickerData = ({ enabled = true } = {}) => {
                 latestVisual: 0,
                 latestMusic: 0,
                 latestDay: 0,
-              });
+              };
+              corpsStats.set(corps, entry);
             }
 
-            const entry = corpsStats.get(corps);
             if (recap.offSeasonDay >= entry.latestDay) {
               entry.latestGE = aggregates.GE_Total;
               entry.latestVisual = aggregates.VIS_Total;
@@ -507,8 +632,11 @@ export const useTickerData = ({ enabled = true } = {}) => {
     const allStats = Array.from(corpsStats.values());
 
     // Build class-separated caption stats
-    const byClass = {};
-    for (const classKey of Object.keys(CLASS_CONFIG)) {
+    const byClass: Record<
+      string,
+      { topGE: CorpsCaptionStat[]; topVisual: CorpsCaptionStat[]; topMusic: CorpsCaptionStat[] }
+    > = {};
+    for (const classKey of TICKER_CLASS_KEYS) {
       const classStats = allStats.filter((s) => s.corpsClass === classKey);
       byClass[classKey] = {
         topGE: [...classStats].sort((a, b) => b.latestGE - a.latestGE).slice(0, 5),

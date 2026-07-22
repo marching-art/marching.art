@@ -3,8 +3,9 @@
 //
 // All Firestore reads go through the api/season service and react-query, so
 // the historical-score years are shared with the Live Scores box and the
-// recap days are shared with the Scores page and ticker (same query keys) —
-// mounting the Dashboard costs no extra reads when those are already cached.
+// recap days are shared with the Scores page (same query key; the ticker and
+// useDashboardData use the bounded fantasyRecapsRecent variant) — mounting
+// the Dashboard costs no extra reads when those are already cached.
 
 import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
@@ -99,7 +100,8 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
   const seasonUid = seasonData?.seasonUid;
   const enabled = !!user?.uid && !!seasonUid && !!activeCorpsClass && !!currentDay;
 
-  // Same cache entry as the Scores page and ticker
+  // Same cache entry as the Scores page's full-archive fetch (which the
+  // Dashboard already mounts via useScoresData, so this costs no extra reads)
   const { data: recaps } = useQuery({
     queryKey: queryKeys.fantasyRecaps(seasonUid),
     queryFn: () => getSeasonRecaps(seasonUid),

@@ -1,14 +1,52 @@
-// src/hooks/useDashboardData.js
+// src/hooks/useDashboardData.ts
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { DocumentData } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { getSeasonRecaps, getCorpsValues } from '../api/season';
+import { getRecentSeasonRecaps, getCorpsValues, RECENT_RECAP_DAYS } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeason } from './useSeason';
-import { useProfileStore } from '../store/profileStore';
+import { useProfileStore, type Engagement, type ProfileDoc } from '../store/profileStore';
 import toast from 'react-hot-toast';
 import { getCorpsClassName, getCorpsClassColor } from '../utils/corps';
 import { formatSeasonName } from '../utils/season';
+import { getRecapEventName, recapHasEvent } from '../utils/recap';
+import type { RecapDate } from '../types/recap';
+
+// =============================================================================
+// LOCAL TYPES
+// =============================================================================
+
+/** Per-class corps entry on the profile, as this hook reads it. */
+interface DashboardCorpsData {
+  corpsName?: string;
+  lineup?: Record<string, string>;
+  selectedShows?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+type CorpsMap = Record<string, DashboardCorpsData>;
+
+interface Achievement {
+  id: string;
+  [key: string]: unknown;
+}
+
+/** Profile fields this hook reads beyond the base ProfileDoc index signature. */
+type DashboardProfile = ProfileDoc & {
+  classUnlockPaths?: Record<string, string>;
+  initialSetupComplete?: string;
+  retiredCorps?: unknown[];
+  achievements?: Achievement[];
+};
+
+/** A row in the Dashboard's recent-scores list. */
+interface RecentScoreRow {
+  showName: string;
+  date: RecapDate | '';
+  totalScore: string;
+  rank: number | string | null;
+}
 
 /**
  * Custom hook that centralizes all dashboard data fetching and state management.
@@ -34,9 +72,9 @@ export const useDashboardData = () => {
   const storeIsAdmin = useProfileStore((state) => state.isAdmin);
 
   // Core state - profile and corps now come from store
-  const profile = storeProfile;
+  const profile = storeProfile as DashboardProfile | null;
   const loading = storeLoading;
-  const corps = storeCorps;
+  const corps = storeCorps as CorpsMap | null;
   const isAdmin = storeIsAdmin;
   // Compute unlocked classes directly (admins get all classes)
   // Must compute here rather than using store method so React tracks the isAdmin dependency
@@ -50,17 +88,17 @@ export const useDashboardData = () => {
   );
 
   // Additional local state
-  const [availableCorps, setAvailableCorps] = useState([]);
-  const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
+  const [availableCorps, setAvailableCorps] = useState<DocumentData[]>([]);
+  const [selectedCorpsClass, setSelectedCorpsClass] = useState<string | null>(null);
 
   // Class unlock tracking - use ref to avoid re-render loops
-  const [newlyUnlockedClass, setNewlyUnlockedClass] = useState(null);
-  const previousUnlockedClassesRef = useRef([]);
+  const [newlyUnlockedClass, setNewlyUnlockedClass] = useState<string | null>(null);
+  const previousUnlockedClassesRef = useRef<string[]>([]);
 
   // Guard to prevent duplicate milestone Firestore writes within same session
 
   // Engagement data
-  const [engagementData, setEngagementData] = useState({
+  const [engagementData, setEngagementData] = useState<Engagement>({
     loginStreak: 0,
     lastLogin: null,
     totalLogins: 0,
@@ -70,10 +108,10 @@ export const useDashboardData = () => {
 
   // Season setup
   const [showSeasonSetupWizard, setShowSeasonSetupWizard] = useState(false);
-  const [corpsNeedingSetup, setCorpsNeedingSetup] = useState([]);
+  const [corpsNeedingSetup, setCorpsNeedingSetup] = useState<string[]>([]);
 
   // Achievement state
-  const [newAchievement, setNewAchievement] = useState(null);
+  const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
 
   // Derived values
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -184,7 +222,7 @@ export const useDashboardData = () => {
         }
       }
 
-      const needSetup = [];
+      const needSetup: string[] = [];
       const hasCorps = corps && Object.keys(corps).length > 0;
       const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
       // Use unlockedClasses from store (already computed, handles admin override)
@@ -235,7 +273,7 @@ export const useDashboardData = () => {
   // surface the newest one in the celebration modal. The initial snapshot
   // seeds the baseline without firing, so returning users aren't re-shown
   // old achievements.
-  const achievementIdsRef = useRef(null);
+  const achievementIdsRef = useRef<Set<string> | null>(null);
   useEffect(() => {
     const list = profile?.achievements;
     if (!list) return;
@@ -243,10 +281,11 @@ export const useDashboardData = () => {
       achievementIdsRef.current = new Set(list.map((a) => a.id));
       return;
     }
-    const added = list.filter((a) => !achievementIdsRef.current.has(a.id));
+    const knownIds = achievementIdsRef.current;
+    const added = list.filter((a) => !knownIds.has(a.id));
     if (added.length > 0) {
       setNewAchievement(added[added.length - 1]);
-      added.forEach((a) => achievementIdsRef.current.add(a.id));
+      added.forEach((a) => knownIds.add(a.id));
     }
   }, [profile?.achievements]);
 
@@ -272,27 +311,27 @@ export const useDashboardData = () => {
     }
   }, [seasonData?.seasonUid]);
 
-  // Season recaps from the shared react-query cache. Dashboard already fetches
-  // the full recap set via useScoresData/useRecentResults under this same key,
-  // so this costs no extra Firestore reads (a previous version ran a separate
-  // limit(5) query alongside the full fetch — pure redundancy on this page).
-  // The recentScores memo below slices to the 5 most recent days itself.
+  // Recent season recaps via the bounded most-recent-days query (shared cache
+  // entry with the always-mounted ticker, so this usually costs no extra
+  // Firestore reads). The recentScores memo below only needs the 5 most
+  // recent days with shows, so fetching the full season archive here — as a
+  // previous version did via the shared full-archive key — was pure excess.
   const { data: rawRecentRecaps } = useQuery({
-    queryKey: queryKeys.fantasyRecaps(seasonData?.seasonUid),
-    queryFn: () => getSeasonRecaps(seasonData.seasonUid),
+    queryKey: queryKeys.fantasyRecapsRecent(seasonData?.seasonUid ?? '', RECENT_RECAP_DAYS),
+    queryFn: () => getRecentSeasonRecaps(seasonData?.seasonUid ?? '', RECENT_RECAP_DAYS),
     enabled: !!seasonData?.seasonUid,
     staleTime: 5 * 60 * 1000,
   });
 
-  const recentScores = useMemo(() => {
+  const recentScores = useMemo<RecentScoreRow[]>(() => {
     if (!rawRecentRecaps?.length) return [];
     const isSoundSport = activeCorpsClass === 'soundSport';
     return rawRecentRecaps
-      .filter((r) => r.showName || r.eventName || r.name || r.shows?.length > 0)
+      .filter((r) => recapHasEvent(r))
       .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0))
       .slice(0, 5)
       .map((r) => ({
-        showName: r.showName || r.eventName || r.name || r.shows?.[0]?.eventName || 'Show',
+        showName: getRecapEventName(r),
         date: r.date || '',
         totalScore: isSoundSport
           ? 'Complete'
@@ -311,7 +350,7 @@ export const useDashboardData = () => {
   }, [seasonData?.seasonUid, fetchAvailableCorps]);
 
   // Corps switching handler
-  const handleCorpsSwitch = (classId) => {
+  const handleCorpsSwitch = (classId: string) => {
     setSelectedCorpsClass(classId);
     toast.success(`Switched to ${getCorpsClassName(classId)}`);
   };
