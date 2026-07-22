@@ -33,6 +33,9 @@ function isOwner(userId) {
 // debits CorpsCoin for them), so a client-writable array would make plaques
 // forgeable for free; every retire/unretire mutation already goes through
 // callables.
+// role is trusted server-side (admin email fan-out and the manual
+// leaderboard/rivals refresh callables gate on it), so a client-writable
+// role would be privilege escalation.
 function touchesProtectedProfileFields() {
   return request.resource.data.diff(resource.data).affectedKeys().hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
@@ -40,7 +43,7 @@ function touchesProtectedProfileFields() {
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
     'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
-    'retiredCorps', 'captionStats',
+    'retiredCorps', 'captionStats', 'role',
     // Buy Me a Coffee supporter flair (tier + link). Granted only by the
     // BMAC webhook / linkBmacSupport callable after payment is verified; a
     // client write would let anyone forge a supporter badge for free.
@@ -228,15 +231,25 @@ match /artifacts/{appId}/users/{userId} {
   // subcollection added under a user is world-readable-to-authenticated by
   // default here — add it to this read exclusion (or give it its own stricter
   // match above) if it carries anything private.
+  // `notifications` is excluded from the catch-all read for the same reason:
+  // it carries private league/trade/matchup messages and already has its own
+  // owner-only rule above — without the exclusion here, the additive
+  // catch-all silently made every user's notification feed readable by any
+  // signed-in account. `comments` is excluded from the owner write below:
+  // comment creation is backend-only (`allow create: if false` above), and
+  // the owner-write catch-all let the profile OWNER forge comment docs on
+  // their own profile attributed to any authorUid.
   match /{subcollection}/{document=**} {
     allow read: if isAuthenticated() &&
       subcollection != 'private' &&
       subcollection != 'podium' &&
+      subcollection != 'notifications' &&
       subcollection != 'corpsCoinHistory';
     allow write: if isAdmin() ||
       (isOwner(userId) &&
         subcollection != 'corpsCoinHistory' &&
         subcollection != 'profile' &&
+        subcollection != 'comments' &&
         subcollection != 'podium');
   }
 }

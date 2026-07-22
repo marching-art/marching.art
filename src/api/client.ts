@@ -236,6 +236,7 @@ export const paths = {
   users: () => `artifacts/${DATA_NAMESPACE}/users`,
   user: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}`,
   userProfile: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`,
+  userPrivate: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/private/data`,
   userCorps: (uid: string, corpsClass: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/corps/${corpsClass}`,
 
