@@ -18,11 +18,11 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { paths } = require("../helpers/paths");
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAdmin } = require("../helpers/callableGuards");
 const { ENABLED_CLASSES } = require("../helpers/classRegistry");
 
 // Every enabled class competes for rivals — including podiumClass, which has
@@ -302,14 +302,10 @@ exports.scheduledRivalsUpdate = onSchedule(
 );
 
 exports.updateRivalsNow = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-  const db = getDb();
-  const callerProfile = await db
-    .doc(paths.userProfile(request.auth.uid))
-    .get();
-  if (!callerProfile.exists || callerProfile.data().role !== "admin") {
-    throw new HttpsError("permission-denied", "Admin access required");
-  }
+  // Admin custom claim, like every other privileged callable. This used to
+  // gate on profile.role — a profile field, i.e. a client-adjacent input —
+  // instead of the claim only the Admin SDK can set.
+  assertAdmin(request);
   const result = await updateRivalsLogic();
   return { success: true, ...result };
 });

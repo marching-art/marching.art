@@ -1,9 +1,9 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAdmin } = require("../helpers/callableGuards");
 const { computeDirectorRating } = require("../helpers/directorRating");
 const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRankings");
 
@@ -12,16 +12,10 @@ const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRank
  * Can be called by admins or scheduled
  */
 exports.updateLifetimeLeaderboard = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-
-  // Check if user is admin - only fetch the role field
-  const db = getDb();
-  const userDoc = await db.doc(paths.userProfile(request.auth.uid)).get();
-  // Note: Single doc reads don't support select() in Admin SDK, but this is a small doc read for auth
-
-  if (!userDoc.exists || userDoc.data().role !== 'admin') {
-    throw new HttpsError("permission-denied", "Admin access required");
-  }
+  // Admin custom claim, like every other privileged callable. This used to
+  // gate on profile.role — a profile field, i.e. a client-adjacent input —
+  // instead of the claim only the Admin SDK can set.
+  assertAdmin(request);
 
   await updateLifetimeLeaderboardLogic();
   return { success: true, message: "Lifetime leaderboard updated" };

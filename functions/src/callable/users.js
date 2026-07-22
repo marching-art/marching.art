@@ -76,26 +76,30 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
 
     const userProfileRef = db.doc(paths.userProfile(uid));
     const userPrivateRef = db.doc(paths.userPrivate(uid));
-
-    // Idempotent: if this user already has a profile, treat as success so the
-    // onboarding/guard flow can safely retry without erroring out.
-    const existingProfile = await userProfileRef.get();
-    if (existingProfile.exists) {
-      logger.info(`createUserProfile: profile already exists for ${uid}, treating as no-op.`);
-      return { success: true, message: "User profile already exists.", alreadyExists: true };
-    }
-
     const usernameRef = db.doc(`usernames/${trimmedUsername.toLowerCase()}`);
-    const usernameDoc = await usernameRef.get();
 
-    // Allow the reservation only if it's free or already owned by this user.
-    if (usernameDoc.exists && usernameDoc.data().uid !== uid) {
-      throw new HttpsError("already-exists", "This username is already taken.");
-    }
+    // The whole reservation runs in ONE transaction. The old
+    // check-then-batch flow let two concurrent claims of the same name both
+    // pass the read: the loser's batch.set silently overwrote the winner's
+    // reservation while both profiles kept the username — a duplicate
+    // display identity on leaderboards. Inside a transaction the second
+    // commit conflicts and retries, re-reads the reservation, and fails
+    // cleanly with already-exists.
+    const alreadyExists = await db.runTransaction(async (t) => {
+      // Idempotent: if this user already has a profile, treat as success so
+      // the onboarding/guard flow can safely retry without erroring out.
+      const existingProfile = await t.get(userProfileRef);
+      if (existingProfile.exists) {
+        return true;
+      }
 
-    const batch = db.batch();
+      const usernameDoc = await t.get(usernameRef);
+      // Allow the reservation only if it's free or already owned by this user.
+      if (usernameDoc.exists && usernameDoc.data().uid !== uid) {
+        throw new HttpsError("already-exists", "This username is already taken.");
+      }
 
-    batch.set(userProfileRef, {
+      t.set(userProfileRef, {
       uid: uid,
       username: trimmedUsername,
       displayName: cleanDisplayName,
@@ -128,17 +132,23 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
         topTenFinishes: 0,
         leagueWins: 0,
       },
-      trophies: { championships: [], regionals: [], finalistMedals: [] },
-      seasons: [],
+        trophies: { championships: [], regionals: [], finalistMedals: [] },
+        seasons: [],
+      });
+
+      t.set(userPrivateRef, {
+        email: email,
+      });
+
+      t.set(usernameRef, { uid: uid });
+      return false;
     });
 
-    batch.set(userPrivateRef, {
-      email: email,
-    });
+    if (alreadyExists) {
+      logger.info(`createUserProfile: profile already exists for ${uid}, treating as no-op.`);
+      return { success: true, message: "User profile already exists.", alreadyExists: true };
+    }
 
-    batch.set(usernameRef, { uid: uid });
-
-    await batch.commit();
     logger.info(`Successfully created profile for user ${uid} with username ${trimmedUsername}`);
     return { success: true, message: "User profile created successfully." };
 

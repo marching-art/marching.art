@@ -10,20 +10,28 @@
  * and folds them into the league's standings/current doc (records map +
  * sorted standings array the frontend reads).
  *
- * NOT idempotent per pair — callers must ensure each pair is folded in
- * exactly once (the automatic path runs inside the scoringRunGuard claim;
- * the callable skips already-completed matchups).
+ * The fold is NOT idempotent per pair — each pair must be counted exactly
+ * once. That is why every write path is transactional: the old get-then-
+ * update flow let two concurrent folds (a commissioner call racing the
+ * nightly run, or two commissioner calls) read the same base records and
+ * double-count the same week into wins/losses/streaks.
  */
 
 const admin = require("firebase-admin");
 
-async function updateStandings(db, leagueRef, pairs) {
-  const standingsRef = leagueRef.collection('standings').doc('current');
-  const standingsDoc = await standingsRef.get();
-
-  if (!standingsDoc.exists) return;
-
-  const records = { ...standingsDoc.data().records };
+/**
+ * Pure fold: applies resolved pairs to a records map and derives the sorted
+ * standings array. Mutates nothing — returns fresh objects.
+ *
+ * @param {Object} baseRecords records map from standings/current
+ * @param {Array} pairs resolved matchup pairs (see module header)
+ * @returns {{records: Object, standings: Array}}
+ */
+function foldPairsIntoStandings(baseRecords, pairs) {
+  const records = {};
+  for (const [uid, data] of Object.entries(baseRecords || {})) {
+    records[uid] = { ...data };
+  }
 
   pairs.forEach(pair => {
     if (!pair.completed || pair.winner === null) return;
@@ -97,11 +105,42 @@ async function updateStandings(db, leagueRef, pairs) {
       return b.totalPoints - a.totalPoints;
     });
 
-  await standingsRef.update({
+  return { records, standings };
+}
+
+/**
+ * Fold pairs into standings/current inside an existing transaction. The
+ * standings doc MUST have been read through the same transaction (Firestore
+ * requires all reads before writes) and is passed in as standingsDoc.
+ *
+ * @param {FirebaseFirestore.Transaction} t
+ * @param {FirebaseFirestore.DocumentSnapshot} standingsDoc snapshot of
+ *   standings/current read via t.get()
+ * @param {Array} pairs resolved matchup pairs
+ */
+function applyStandingsInTransaction(t, standingsDoc, pairs) {
+  if (!standingsDoc.exists) return;
+
+  const { records, standings } = foldPairsIntoStandings(standingsDoc.data().records, pairs);
+
+  t.update(standingsDoc.ref, {
     records,
     standings, // Array format for frontend API
     lastUpdated: admin.firestore.FieldValue.serverTimestamp()
   });
 }
 
-module.exports = { updateStandings };
+/**
+ * Standalone transactional fold — reads standings/current and applies the
+ * pairs atomically. Used by the nightly weekly resolution, whose matchup
+ * docs are committed separately under the scoringRunGuard lease.
+ */
+async function updateStandings(db, leagueRef, pairs) {
+  const standingsRef = leagueRef.collection('standings').doc('current');
+  await db.runTransaction(async (t) => {
+    const standingsDoc = await t.get(standingsRef);
+    applyStandingsInTransaction(t, standingsDoc, pairs);
+  });
+}
+
+module.exports = { foldPairsIntoStandings, applyStandingsInTransaction, updateStandings };
