@@ -23,16 +23,11 @@ const FIREBASE_ERROR_MESSAGES: Record<string, ErrorInfo> = {
     message: 'Please enter a valid email address.',
     recoverable: true,
   },
-  'auth/user-not-found': {
-    title: 'Account Not Found',
-    message: 'No account exists with this email. Would you like to create one?',
-    actionLabel: 'Create Account',
-    action: '/register',
-    recoverable: true,
-  },
-  'auth/wrong-password': {
-    title: 'Incorrect Password',
-    message: 'The password you entered is incorrect. Please try again.',
+  // Email enumeration protection collapses user-not-found and wrong-password
+  // into a single invalid-credential error
+  'auth/invalid-credential': {
+    title: 'Incorrect Email or Password',
+    message: 'The email or password you entered is incorrect. Please try again.',
     recoverable: true,
   },
   'auth/too-many-requests': {

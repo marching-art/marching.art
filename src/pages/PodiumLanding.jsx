@@ -171,10 +171,8 @@ const PodiumLanding = () => {
         case 'auth/email-already-in-use':
           setError('An account already exists with this email address');
           break;
-        case 'auth/user-not-found':
-          setError('No account found with this email');
-          break;
-        case 'auth/wrong-password':
+        // Email enumeration protection collapses user-not-found and
+        // wrong-password into a single invalid-credential error
         case 'auth/invalid-credential':
           setError('Incorrect email or password');
           break;

@@ -57,11 +57,10 @@ const ArticleSidebarAuth = () => {
     } catch (err) {
       console.error('Login error:', err);
       switch (err.code) {
-        case 'auth/user-not-found':
-          setAuthError('No account found with this email');
-          break;
-        case 'auth/wrong-password':
-          setAuthError('Incorrect password');
+        // Email enumeration protection collapses user-not-found and
+        // wrong-password into a single invalid-credential error
+        case 'auth/invalid-credential':
+          setAuthError('Incorrect email or password');
           break;
         case 'auth/invalid-email':
           setAuthError('Invalid email address');
