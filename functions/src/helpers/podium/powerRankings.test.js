@@ -5,7 +5,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildPowerRankings, COLUMN_SIZE } = require("./powerRankings");
+const { buildPowerRankings, buildDailyStandings, COLUMN_SIZE } = require("./powerRankings");
 
 const corps = (uid, lastTotal) => ({ uid, corpsName: `Corps ${uid}`, lastTotal, repTier: 3 });
 
@@ -66,5 +66,41 @@ describe("buildPowerRankings", () => {
     const column = buildPowerRankings([corps("a", 82), corps("b", 80), corps("c", 78)], previous, 2);
     assert.equal(column.entries[1].note, "Steady.");
     assert.equal(column.entries[1].delta, 0);
+  });
+});
+
+describe("buildDailyStandings", () => {
+  test("keys on day, includes the FULL field (no COLUMN_SIZE cap)", () => {
+    const field = Array.from({ length: COLUMN_SIZE + 12 }, (_, i) => corps(`u${i}`, 90 - i));
+    const sheet = buildDailyStandings(field, null, 12);
+    assert.equal(sheet.day, 12);
+    assert.equal(sheet.fieldSize, COLUMN_SIZE + 12);
+    // Unlike the weekly column, the daily sheet is not truncated.
+    assert.equal(sheet.entries.length, COLUMN_SIZE + 12);
+  });
+
+  test("movement is measured against the previous day's sheet, with day-phrased notes", () => {
+    const day1 = buildDailyStandings(
+      [corps("a", 80), corps("b", 78), corps("c", 76), corps("d", 74)],
+      null,
+      1
+    );
+    const day2 = buildDailyStandings(
+      [corps("a", 84), corps("d", 83), corps("b", 80), corps("c", 79)],
+      day1,
+      2
+    );
+    assert.equal(day2.entries[1].uid, "d");
+    assert.equal(day2.entries[1].delta, 2);
+    assert.equal(day2.entries[1].note, "Up 2 — the day's biggest move.");
+  });
+
+  test("carries the GE/VIS/MUS breakdown onto each entry", () => {
+    const withCaptions = { uid: "a", corpsName: "Corps a", lastTotal: 80, lastGe: 30.1, lastVis: 25.2, lastMus: 24.7 };
+    const sheet = buildDailyStandings([withCaptions, corps("b", 78)], null, 3);
+    assert.equal(sheet.entries[0].ge, 30.1);
+    assert.equal(sheet.entries[0].vis, 25.2);
+    assert.equal(sheet.entries[0].mus, 24.7);
+    assert.equal(sheet.entries[1].ge, null);
   });
 });

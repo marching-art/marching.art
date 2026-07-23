@@ -804,7 +804,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
 
     // --- 5. The Podium Report (Phase 7.3): weekly power-rankings column ------
     // Deterministic, data-driven, published at each week boundary. Isolated:
-    // a column failure never fails the run.
+    // a column failure never fails the run. This feeds the WEEKLY news article.
     if (competitionDay >= 7 && competitionDay % 7 === 0 && standings.length > 0) {
       try {
         const { buildPowerRankings } = require("./powerRankings");
@@ -827,6 +827,36 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         logger.info(`[podium] Podium Report week ${week}: ${column.entries.length} entries.`);
       } catch (error) {
         logger.error(`[podium] power rankings failed (run unaffected): ${error.message}`);
+      }
+    }
+
+    // --- 5b. Daily Podium standings sheet -----------------------------------
+    // The Scores-tab standings view is DAILY (full field), so publish a
+    // standings doc every processing day with movement vs the previous day's
+    // sheet. Isolated: a standings failure never fails the run.
+    if (standings.length > 0) {
+      try {
+        const { buildDailyStandings } = require("./powerRankings");
+        // Previous scored day for day-over-day movement — scan back a few days
+        // in case a day had no processing run.
+        let previous = null;
+        for (let d = competitionDay - 1; d >= Math.max(1, competitionDay - 7); d--) {
+          const snap = await db.doc(`podium-recaps/${seasonUid}/standings/${d}`).get();
+          if (snap.exists) {
+            previous = snap.data();
+            break;
+          }
+        }
+        const sheet = buildDailyStandings(standings, previous, competitionDay);
+        await db.doc(`podium-recaps/${seasonUid}/standings/${competitionDay}`).set({
+          ...sheet,
+          seasonUid,
+          competitionDay,
+          publishedAt: new Date().toISOString(),
+        });
+        logger.info(`[podium] daily standings day ${competitionDay}: ${sheet.entries.length} corps.`);
+      } catch (error) {
+        logger.error(`[podium] daily standings failed (run unaffected): ${error.message}`);
       }
     }
 

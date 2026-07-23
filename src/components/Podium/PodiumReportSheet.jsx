@@ -1,17 +1,20 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
-// PodiumReportSheet — the Podium Class standings sheet (Phase 7.3, design §7).
+// PodiumReportSheet — the Podium Class standings sheet (design §7).
 //
-// This is the weekly standings the nightly processor already computes, now
-// rendered with the SAME box-score layout as the Fantasy class standings
-// (pages/ScoresParts → ClassStandingsGrid): a sheet card, sort pills, GE/VIS/MUS
+// The Scores-tab standings view is DAILY: the nightly processor publishes a
+// full-field standings doc every processing day to
+// `podium-recaps/{seasonUid}/standings/{day}`, and this sheet renders the
+// selected day with a day selector (D#), matching the recap sheet's cadence.
+// It uses the SAME box-score layout as the Fantasy class standings
+// (pages/ScoresParts → ClassStandingsGrid): sheet card, sort pills, GE/VIS/MUS
 // caption columns, box-toppers in gold, a movement arrow per row, share, and a
-// wordmark footer. It replaces the old bespoke "power-rankings column" so every
-// scoring surface reads as one system.
+// wordmark footer — so every scoring surface reads as one system.
 //
-// The narrative weekly write-up (who's peaking, who's slipping, biggest mover)
-// is NOT lost — it ships as the auto-generated "The Podium Report" news article
-// (functions/src/helpers/newsPodiumArticle.js), which embeds this same ranked
-// field. Reads the public `podium-recaps/{seasonUid}/power` collection.
+// The WEEKLY narrative write-up (who's peaking, who's slipping, biggest mover)
+// stays separate: it ships as the auto-generated "The Podium Report" news
+// article (functions/src/helpers/newsPodiumArticle.js), which reads the weekly
+// `power` column. Archived seasons that predate daily standings fall back to
+// that weekly `power` collection so their standings view still renders.
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
@@ -29,16 +32,17 @@ import { SHEET_CARD, TOTAL_W, STANDINGS_SORTS, captionTops } from '../scores/she
 import { formatStandingsAsText } from '../../utils/scoresUtils';
 import { useHorizontalTabSlide } from './useHorizontalTabSlide';
 
-// GE/VIS/MUS for one power-doc entry. Columns populate for weeks scored after
-// the processor started persisting captions; earlier weeks render "—".
+// GE/VIS/MUS for one standings entry. Columns populate for days scored after the
+// processor started persisting captions; earlier ones render "—".
 const captionsOf = (entry) => ({
   ge: entry?.ge ?? null,
   vis: entry?.vis ?? null,
   mus: entry?.mus ?? null,
 });
 
-// The Podium Class standings sheet for one week.
-function PodiumStandings({ column, seasonName, userCorpsName }) {
+// The Podium Class standings sheet for one snapshot (a day, or a week for
+// archived seasons on the weekly fallback). `periodLabel` is e.g. "Day 12".
+function PodiumStandings({ column, periodLabel, seasonName, userCorpsName }) {
   const [sortBy, setSortBy] = useState('total');
 
   const rows = useMemo(() => {
@@ -57,11 +61,12 @@ function PodiumStandings({ column, seasonName, userCorpsName }) {
 
   const activeCap = sortBy === 'total' ? null : sortBy;
   const title =
-    sortBy === 'total' ? 'Podium Class · Season Standings' : `Podium Class · ${sortBy} Leaders`;
+    sortBy === 'total' ? 'Podium Class · Standings' : `Podium Class · ${sortBy} Leaders`;
+  const subtitle = `${periodLabel} · ${column.fieldSize} corps`;
 
   const shareText = () =>
     formatStandingsAsText(
-      { title, subtitle: `Week ${column.week} · ${column.fieldSize} corps`, seasonName },
+      { title, subtitle, seasonName },
       rows.map(({ entry, captions }, idx) => ({
         place: sortBy === 'total' ? entry.rank : idx + 1,
         corpsName: entry.corpsName,
@@ -78,9 +83,7 @@ function PodiumStandings({ column, seasonName, userCorpsName }) {
           <span className="text-[11px] font-bold uppercase tracking-wider text-white truncate block">
             {title}
           </span>
-          <span className="text-[9px] uppercase tracking-wider text-muted">
-            Week {column.week} · {column.fieldSize} corps
-          </span>
+          <span className="text-[9px] uppercase tracking-wider text-muted">{subtitle}</span>
         </div>
         <SortPills options={STANDINGS_SORTS} value={sortBy} onChange={setSortBy} />
       </div>
@@ -95,7 +98,7 @@ function PodiumStandings({ column, seasonName, userCorpsName }) {
         {rows.map(({ entry, captions }, idx) => {
           const isUserCorps =
             userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
-          // Week-over-week movement → the same trend arrow as the fantasy grids.
+          // Day-over-day movement → the same trend arrow as the fantasy grids.
           const trend = entry.delta == null ? 0 : entry.delta;
 
           return (
@@ -148,42 +151,67 @@ function PodiumStandings({ column, seasonName, userCorpsName }) {
       </div>
 
       <SheetFooter
-        note="Weekly standings · box-toppers in gold · full column in the news"
+        note="Daily standings · box-toppers in gold · weekly column in the news"
         action={<ShareButton getText={shareText} />}
       />
     </div>
   );
 }
 
+/**
+ * Load the daily standings snapshots for a season. Prefers the daily
+ * `standings` collection; archived seasons that predate it fall back to the
+ * weekly `power` column so their standings view still renders. Returns a
+ * normalized, chronologically-ascending list of snapshots.
+ */
+async function loadStandingsSnapshots(seasonUid) {
+  const normalize = (docs, keyField, prefix, word) =>
+    docs
+      .map((doc) => doc.data())
+      .filter((d) => d && (d.entries || []).length)
+      .map((d) => ({
+        key: d[keyField] ?? 0,
+        tabLabel: `${prefix}${d[keyField] ?? 0}`,
+        periodLabel: `${word} ${d[keyField] ?? 0}`,
+        column: d,
+      }))
+      .sort((a, b) => a.key - b.key);
+
+  const daily = await getDocs(collection(db, 'podium-recaps', seasonUid, 'standings'));
+  const dailyItems = normalize(daily.docs, 'day', 'D', 'Day');
+  if (dailyItems.length) return dailyItems;
+
+  // Fallback for archived seasons: the weekly power column.
+  const power = await getDocs(collection(db, 'podium-recaps', seasonUid, 'power'));
+  return normalize(power.docs, 'week', 'W', 'Week');
+}
+
 export default function PodiumReportSheet({ seasonUid, seasonName, userCorpsName }) {
   const [loading, setLoading] = useState(true);
-  const [weeks, setWeeks] = useState([]); // all published columns, newest first
-  const [selectedWeek, setSelectedWeek] = useState(null);
-  // Keep the highlighted week visible when many weeks have posted.
-  const { containerRef: weekStripRef, selectedRef: selectedWeekRef } = useHorizontalTabSlide(
-    `${selectedWeek}:${weeks.length}`
+  const [snapshots, setSnapshots] = useState([]); // ascending by day/week
+  const [selectedKey, setSelectedKey] = useState(null);
+  // Keep the highlighted day visible on mobile (the strip runs oldest→newest
+  // and the latest defaults selected, so without this it sits off the edge).
+  const { containerRef: stripRef, selectedRef } = useHorizontalTabSlide(
+    `${selectedKey}:${snapshots.length}`
   );
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (!seasonUid) {
-        setWeeks([]);
+        setSnapshots([]);
         setLoading(false);
         return;
       }
       setLoading(true);
       try {
-        const power = await getDocs(collection(db, 'podium-recaps', seasonUid, 'power'));
+        const items = await loadStandingsSnapshots(seasonUid);
         if (cancelled) return;
-        const loaded = power.docs
-          .map((doc) => doc.data())
-          .filter((w) => w && (w.entries || []).length)
-          .sort((a, b) => (b.week || 0) - (a.week || 0));
-        setWeeks(loaded);
-        setSelectedWeek(loaded.length ? loaded[0].week : null);
+        setSnapshots(items);
+        setSelectedKey(items.length ? items[items.length - 1].key : null);
       } catch {
-        if (!cancelled) setWeeks([]);
+        if (!cancelled) setSnapshots([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -194,8 +222,8 @@ export default function PodiumReportSheet({ seasonUid, seasonName, userCorpsName
   }, [seasonUid]);
 
   const selected = useMemo(
-    () => weeks.find((w) => w.week === selectedWeek) || weeks[0] || null,
-    [weeks, selectedWeek]
+    () => snapshots.find((s) => s.key === selectedKey) || snapshots[snapshots.length - 1] || null,
+    [snapshots, selectedKey]
   );
 
   if (loading) {
@@ -209,35 +237,40 @@ export default function PodiumReportSheet({ seasonUid, seasonName, userCorpsName
   if (!selected) {
     return (
       <div className="p-8 text-center text-xs text-muted">
-        No Podium standings yet this season — the first weekly standings sheet posts after the
-        opening competition week.
+        No Podium standings yet this season — the first daily standings sheet posts after the next
+        scored show.
       </div>
     );
   }
 
   return (
     <div className="p-3 md:p-4 space-y-3">
-      {/* Week selector — auto-slides so the highlighted week stays visible */}
-      {weeks.length > 1 && (
-        <div ref={weekStripRef} className="flex gap-1 overflow-x-auto scrollbar-hide">
-          {weeks.map((w) => (
+      {/* Day selector — auto-slides so the highlighted day stays visible */}
+      {snapshots.length > 1 && (
+        <div ref={stripRef} className="flex gap-1 overflow-x-auto scrollbar-hide">
+          {snapshots.map((s) => (
             <button
-              key={w.week}
-              ref={w.week === selected.week ? selectedWeekRef : null}
-              onClick={() => setSelectedWeek(w.week)}
+              key={s.key}
+              ref={s.key === selected.key ? selectedRef : null}
+              onClick={() => setSelectedKey(s.key)}
               className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-none tabular-nums transition-colors press-feedback ${
-                w.week === selected.week
+                s.key === selected.key
                   ? 'bg-interactive text-white'
                   : 'text-muted hover:text-white hover:bg-white/5 border border-line'
               }`}
             >
-              W{w.week}
+              {s.tabLabel}
             </button>
           ))}
         </div>
       )}
 
-      <PodiumStandings column={selected} seasonName={seasonName} userCorpsName={userCorpsName} />
+      <PodiumStandings
+        column={selected.column}
+        periodLabel={selected.periodLabel}
+        seasonName={seasonName}
+        userCorpsName={userCorpsName}
+      />
     </div>
   );
 }
