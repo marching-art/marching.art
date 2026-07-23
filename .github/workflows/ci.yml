@@ -121,6 +121,13 @@ jobs:
       - name: Class-registry mirror check
         run: node scripts/checkClassRegistrySync.js
 
+      # The site ships from two hosts (Firebase Hosting + Vercel) whose
+      # hand-maintained configs duplicate the same headers and function
+      # rewrites. Fails if firebase.json and vercel.json disagree — this
+      # exact drift once broke /api/news on Vercel.
+      - name: Hosting-config parity check
+        run: node scripts/checkHostingParity.mjs
+
       # Firestore-path ratchet: hand-written `artifacts/...` string literals
       # may only decrease (use the paths helpers instead). Fails if any file
       # rose above scripts/path-literals.baseline.json.

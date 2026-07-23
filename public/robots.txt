@@ -16,14 +16,14 @@ Disallow: /schedule
 Disallow: /scores
 Disallow: /guide
 Disallow: /onboarding
-Disallow: /hall-of-champions
 Disallow: /retired-corps
 Disallow: /corps-history
 Disallow: /soundsport
 
 # Legacy redirect routes — duplicates of the canonical paths above.
 # Note: /how-to-play is intentionally crawlable — it is the public
-# fantasy drum corps guide.
+# fantasy drum corps guide. /hall-of-champions is also crawlable: it is
+# not auth-walled and its data (seasons, champions) is world-readable.
 Disallow: /hub
 Disallow: /hud
 Disallow: /leaderboard

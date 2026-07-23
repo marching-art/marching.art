@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/((?!.*\\.).*)", "destination": "/index.html" }],
+  "rewrites": [
+    {
+      "source": "/api/news",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getNewsFeedHttp"
+    },
+    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
