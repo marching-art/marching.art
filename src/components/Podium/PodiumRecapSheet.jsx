@@ -16,7 +16,7 @@ import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
 import { TeamAvatar } from '../ui/TeamAvatar';
 import { ShareButton } from '../scores/SheetPrimitives';
-import { useHorizontalTabSlide } from './useHorizontalTabSlide';
+import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
 const MAJOR_MASTHEADS = {

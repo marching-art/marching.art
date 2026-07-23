@@ -7,7 +7,7 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar, Activity, Archive } from 'lucide-react';
+import { Activity, Archive } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
@@ -17,8 +17,7 @@ import { useHaptic } from '../hooks/useHaptic';
 import { usePodiumEnabled } from '../hooks/useFeatures';
 import {
   PillTabControl,
-  RecapDataGrid,
-  EasternCombinedSheet,
+  FantasyRecapsView,
   SoundSportMedalList,
   ClassStandingsGrid,
 } from './ScoresParts';
@@ -318,9 +317,6 @@ const Scores = () => {
       .filter((show) => show.scores.length > 0);
   }, [unfilteredShows]);
 
-  // Latest Recaps - most recent 10 shows for the live-season "Latest" tab
-  const latestShows = useMemo(() => recapShows.slice(0, 10), [recapShows]);
-
   // =============================================================================
   // RENDER
   // =============================================================================
@@ -404,30 +400,11 @@ const Scores = () => {
                     </div>
                   </div>
 
-                  {/* Recaps View */}
+                  {/* Recaps View — day tabs + sort, mirroring the Podium sheet.
+                      The Eastern Classic combined standings surface on the two-
+                      night days (41-42) inside the view (§5.11). */}
                   {fantasyViewTab === 'latest' && (
-                    <div className="p-3 md:p-4 space-y-3">
-                      {/* Eastern Classic combined standings — appears once both
-                          nights (days 41-42) have processed (§5.11) */}
-                      <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
-                      {latestShows.length > 0 ? (
-                        latestShows.map((show, idx) => (
-                          <RecapDataGrid
-                            key={idx}
-                            scores={show.scores}
-                            eventName={show.eventName}
-                            location={show.location}
-                            date={show.date}
-                            userCorpsName={userCorpsName}
-                          />
-                        ))
-                      ) : (
-                        <div className="p-8 text-center">
-                          <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
-                          <p className="text-muted text-sm">No recent shows</p>
-                        </div>
-                      )}
-                    </div>
+                    <FantasyRecapsView shows={recapShows} userCorpsName={userCorpsName} />
                   )}
 
                   {/* World Class View */}
@@ -612,28 +589,9 @@ const Scores = () => {
                   {/* Archive Content */}
                   {selectedArchiveSeason && !loading && (
                     <>
-                      {/* Recaps View */}
+                      {/* Recaps View — same day-tabbed, sortable view as live */}
                       {archiveViewTab === 'latest' && (
-                        <div className="p-3 md:p-4 space-y-3">
-                          <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
-                          {recapShows.length > 0 ? (
-                            recapShows.map((show, idx) => (
-                              <RecapDataGrid
-                                key={idx}
-                                scores={show.scores}
-                                eventName={show.eventName}
-                                location={show.location}
-                                date={show.date}
-                                userCorpsName={userCorpsName}
-                              />
-                            ))
-                          ) : (
-                            <div className="p-8 text-center">
-                              <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
-                              <p className="text-muted text-sm">No recaps found for this season</p>
-                            </div>
-                          )}
-                        </div>
+                        <FantasyRecapsView shows={recapShows} userCorpsName={userCorpsName} />
                       )}
 
                       {/* World Class View */}
