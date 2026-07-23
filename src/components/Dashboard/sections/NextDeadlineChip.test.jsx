@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Render tests for the deadline countdown chip. Firebase modules are mocked;
 // the season store is seeded directly. Time-dependent output is asserted
 // loosely (a countdown exists) since the chip reads the real clock.

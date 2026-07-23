@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueDashboard - Visual stat cards and league overview
 // Design System: Card-based dashboard with engaging visualizations
 

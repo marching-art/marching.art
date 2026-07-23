@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // The daily-login payoff surfacing: claimDailyLogin's response used to be
 // discarded entirely, so these tests pin that every reward in the response
 // becomes a visible event (XP/coin pills, milestone celebration, level-up).

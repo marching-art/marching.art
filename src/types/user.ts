@@ -232,6 +232,9 @@ export interface UserSettings {
   soundEffects: boolean;
   emailPreferences?: EmailPreferences;
   pushPreferences?: PushPreferences;
+  /** @deprecated Legacy location only — profile/data is world-readable, so
+   * the FCM token now lives on users/{uid}/private/data (saveFcmToken).
+   * Backend readers fall back to this field for tokens saved pre-move. */
   fcmToken?: string;
 }
 

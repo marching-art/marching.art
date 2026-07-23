@@ -3,7 +3,9 @@
 // fact-check guard, and drum-corps-grounded image generation. Extracted
 // verbatim from newsGeneration.js.
 
-const { GoogleGenAI } = require("@google/genai");
+// @google/genai is required lazily inside the client init: every function in
+// the deploy unit loads this module at cold start (index.js requires all
+// modules), and only the news/avatar paths ever construct the client.
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const {
@@ -30,6 +32,7 @@ function initializeGemini() {
     if (!apiKey) {
       throw new Error("GOOGLE_GENERATIVE_AI_API_KEY secret is not set");
     }
+    const { GoogleGenAI } = require("@google/genai");
     genAI = new GoogleGenAI({ apiKey });
   }
   return genAI;

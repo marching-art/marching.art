@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Prestige sinks — server-side price catalog (WS5.6).
 //
 // Pure module (no firebase imports) so the vitest client-mirror test can

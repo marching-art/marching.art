@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // DailyChallenges — the day's three rotating objectives. Every challenge is
 // now a DECISION with a server-verified outcome (make a prediction, register
 // for a show, set a show concept, review your lineup) — the old pool of

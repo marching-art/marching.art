@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useState, useEffect } from 'react';
 import { Clock, Star } from 'lucide-react';
 import { getRunningOrderStatus } from '../../utils/scheduleUtils';

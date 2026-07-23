@@ -123,11 +123,46 @@ exports.bmacWebhook = onRequest(
 // Link an account to a BMAC support (manual claim)
 // ---------------------------------------------------------------------------
 
+// Attempt budget for claiming a DIFFERENT email than the caller's own
+// verified login email. Knowledge of the donation email is the only proof in
+// that flow, so unthrottled attempts would let an attacker enumerate likely
+// emails and steal a donor's flair. Claims of the caller's own verified
+// email are exempt (nothing to guess). Attempt docs live in a server-only
+// collection keyed by uid — no client rule matches it.
+const LINK_ATTEMPTS_COLLECTION = "bmacLinkAttempts";
+const LINK_ATTEMPTS_MAX_PER_WINDOW = 5;
+const LINK_ATTEMPTS_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+async function consumeLinkAttempt(db, uid) {
+  const ref = db.collection(LINK_ATTEMPTS_COLLECTION).doc(uid);
+  const snap = await ref.get();
+  const now = Date.now();
+  const data = snap.exists ? snap.data() : {};
+  const inWindow =
+    typeof data.windowStart === "number" && now - data.windowStart < LINK_ATTEMPTS_WINDOW_MS;
+  const count = inWindow ? data.count || 0 : 0;
+
+  if (count >= LINK_ATTEMPTS_MAX_PER_WINDOW) return false;
+
+  await ref.set({
+    windowStart: inWindow ? data.windowStart : now,
+    count: count + 1,
+    updatedAt: new Date().toISOString(),
+  });
+  return true;
+}
+
 /**
  * Bind the signed-in user to the supporter record for the email they donated
  * with (often a PayPal email that differs from their login), then grant flair.
  * Snapshots displayName/username onto the supporter doc so the wall needs no
  * per-row profile reads.
+ *
+ * A claim of the caller's own verified login email links freely. A claim of
+ * any OTHER email is rate-limited (see consumeLinkAttempt), recorded on the
+ * supporter doc as claimEmailMatched:false, and reported to the admins — the
+ * mismatch flow is legitimate (PayPal emails differ) but is the only path an
+ * email-guessing attacker can use, so it stays auditable and throttled.
  */
 exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
@@ -141,8 +176,20 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
   const supporterRef = db.doc(paths.supporter(emailHash));
   const profileRef = db.doc(paths.userProfile(uid));
 
+  const callerEmailHash =
+    request.auth.token?.email_verified === true ? hashEmail(request.auth.token.email) : null;
+  const emailMatchesCaller = !!callerEmailHash && callerEmailHash === emailHash;
+
+  if (!emailMatchesCaller && !(await consumeLinkAttempt(db, uid))) {
+    throw new HttpsError(
+      "resource-exhausted",
+      "Too many link attempts — wait an hour and try again, and double-check " +
+        "the email you supported with."
+    );
+  }
+
   try {
-    return await db.runTransaction(async (tx) => {
+    const result = await db.runTransaction(async (tx) => {
       const [supporterSnap, profileSnap] = await Promise.all([
         tx.get(supporterRef),
         tx.get(profileRef),
@@ -169,7 +216,15 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
 
       tx.set(
         supporterRef,
-        { uid, displayName, username },
+        {
+          uid,
+          displayName,
+          username,
+          // Audit trail: false marks a link claimed with an email that is
+          // not the caller's verified login email (the guessable path).
+          claimEmailMatched: emailMatchesCaller,
+          claimedAt: new Date().toISOString(),
+        },
         { merge: true }
       );
       tx.set(
@@ -186,9 +241,30 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
         { merge: true }
       );
 
-      logger.info("BMAC support linked", { uid, tier: supporter.tier });
+      logger.info("BMAC support linked", { uid, tier: supporter.tier, emailMatchesCaller });
       return { success: true, tier: supporter.tier };
     });
+
+    // Mismatched-email links are legitimate but auditable: tell the admins
+    // so a stolen-flair claim can be spotted and reversed. Never let the
+    // notification fail the link itself.
+    if (!emailMatchesCaller) {
+      try {
+        const { fanOutToAdmins, sendAdminGenericAlertEmail } = require("../helpers/emailService");
+        await fanOutToAdmins(sendAdminGenericAlertEmail, {
+          subject: "BMAC support linked with a mismatched email",
+          body:
+            `User ${uid} linked supporter flair using an email that differs ` +
+            `from their verified login email. If a donor reports missing ` +
+            `flair, this link may need to be reversed (supporter hash ` +
+            `${emailHash.slice(0, 12)}…).`,
+        });
+      } catch (notifyErr) {
+        logger.warn("BMAC mismatched-email link admin notification failed", notifyErr);
+      }
+    }
+
+    return result;
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     logger.error("linkBmacSupport error", err);

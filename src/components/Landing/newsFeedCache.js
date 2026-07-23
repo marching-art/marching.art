@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // News feed SWR cache + prefetch cache. Extracted from NewsFeed.jsx.
 // Module-level singletons that persist across mounts for instant perceived loads.
 

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueDetailView - Command Center for league competition
 // Design System: App Shell layout with fixed header, sticky tabs, scrollable content
 
@@ -26,6 +27,8 @@ import {
   getLeagueMatchups,
 } from '../../api/leagues';
 import { getSeasonData, getSeasonRecaps } from '../../api/season';
+import { getSeasonProgress } from '../../utils/seasonProgress';
+import { queryClient, queryKeys } from '../../lib/queryClient';
 import toast from 'react-hot-toast';
 
 // Import tab components
@@ -115,16 +118,22 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         let week = 1;
 
         if (sData) {
-          const startDate = sData.schedule?.startDate?.toDate();
-          if (startDate) {
-            const now = new Date();
-            const diffInDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-            week = Math.max(1, Math.ceil((diffInDays + 1) / 7));
-          }
+          // Shared 2AM-ET/UTC-normalized week math (utils/seasonProgress) —
+          // a raw (now - startDate)/24h count here used to roll the week
+          // over at midnight UTC (8 PM ET in summer), disagreeing with the
+          // seasonStore and the nightly scorer every evening.
+          week = Math.max(1, getSeasonProgress(sData).currentWeek);
           setCurrentWeek(week);
 
-          // Subcollection format with legacy single-document fallback
-          const recapsData = await getSeasonRecaps(sData.seasonUid);
+          // Subcollection format with legacy single-document fallback.
+          // Read through the shared react-query cache entry (same key as the
+          // Scores page / Dashboard full-archive fetch) so opening a league
+          // reuses the already-downloaded season archive instead of
+          // re-reading every day-doc on each league visit.
+          const recapsData = await queryClient.fetchQuery({
+            queryKey: queryKeys.fantasyRecaps(sData.seasonUid),
+            queryFn: () => getSeasonRecaps(sData.seasonUid),
+          });
 
           if (recapsData.length > 0) {
             setRecaps(recapsData); // Store for useLeagueStats hook

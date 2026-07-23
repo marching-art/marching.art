@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Small helper components for LeagueDetailView: the inline smack-talk input
 // and the leave-league confirmation modal. Extracted verbatim from
 // LeagueDetailView.jsx.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumRegistration — the four-step FMA-style setup (design §5.13):
 // 1) corps identity, 2) show concept, 3) design (challenge sliders + one-tap
 // audition presets), 4) march. No payments anywhere.

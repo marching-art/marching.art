@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumStaffPanel — the staff labor catalog: your roster of up to 10 seats
 // (8 caption techs + Tour Manager + Program Coordinator) and the always-
 // available hiring catalog.

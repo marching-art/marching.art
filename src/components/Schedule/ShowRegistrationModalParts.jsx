@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Show registration sub-parts: the per-corps selection row. Extracted from
 // ShowRegistrationModal.jsx for file-size hygiene.
 

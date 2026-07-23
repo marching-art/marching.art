@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Supporter section of the settings modal.
 //
 // Non-supporters see the "buy me a coffee" pitch (the tier ladder + the BMAC

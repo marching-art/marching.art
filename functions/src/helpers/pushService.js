@@ -34,18 +34,25 @@ const PUSH_PREFERENCE_MAP = {
  */
 async function getUserPushConfig(userId) {
   try {
-    const profileDoc = await admin
-      .firestore()
-      .doc(paths.userProfile(userId))
-      .get();
+    const db = admin.firestore();
+    // The FCM token lives on the owner-only private doc — profile/data is
+    // world-readable and must not carry device identifiers. Tokens saved
+    // before the move still sit at profile settings.fcmToken, so fall back
+    // to that until the client re-registers (every enable/refresh writes to
+    // the private doc now).
+    const [privateDoc, profileDoc] = await db.getAll(
+      db.doc(paths.userPrivate(userId)),
+      db.doc(paths.userProfile(userId))
+    );
 
-    if (!profileDoc.exists) {
+    if (!profileDoc.exists && !privateDoc.exists) {
       return { token: null, preferences: null };
     }
 
     const settings = profileDoc.data()?.settings || {};
+    const privateData = privateDoc.data() || {};
     return {
-      token: settings.fcmToken || null,
+      token: privateData.fcmToken || settings.fcmToken || null,
       preferences: settings.pushPreferences || null,
     };
   } catch (error) {
@@ -148,13 +155,20 @@ async function sendPushNotification(userId, { title, body, url }, pushType, data
  */
 async function removeInvalidToken(userId) {
   try {
-    await admin
-      .firestore()
-      .doc(paths.userProfile(userId))
-      .update({
-        "settings.fcmToken": null,
-        "settings.fcmTokenInvalidatedAt": new Date().toISOString(),
-      });
+    const db = admin.firestore();
+    // Clear both homes of the token: the private doc (current) and the
+    // legacy profile settings field (pre-migration fallback read above).
+    await db.doc(paths.userPrivate(userId)).set(
+      {
+        fcmToken: null,
+        fcmTokenInvalidatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    await db.doc(paths.userProfile(userId)).update({
+      "settings.fcmToken": null,
+      "settings.fcmTokenInvalidatedAt": new Date().toISOString(),
+    });
   } catch (error) {
     logger.error(`Error removing invalid token for user ${userId}:`, error);
   }

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Show concept option lists — client mirror of the backend's SHOW_THEMES /
 // MUSIC_SOURCES / DRILL_STYLES in functions/src/helpers/showConceptSynergy.js
 // (keep values in sync; the server validates saves against its own lists).

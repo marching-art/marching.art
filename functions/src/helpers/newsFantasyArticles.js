@@ -1,7 +1,7 @@
 // The two nightly fantasy (marching.art) articles: daily results and the
 // caption-analysis market report. Extracted verbatim from newsGeneration.js.
 
-const { Type } = require("@google/genai");
+const { Type } = require("./newsArticleShared");
 const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
 const {

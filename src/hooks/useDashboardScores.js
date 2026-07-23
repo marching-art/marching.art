@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Dashboard data hooks: per-caption lineup scores from historical_scores,
 // recent results from fantasy_recaps, and the SoundSport Best in Show tally.
 //

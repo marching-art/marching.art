@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * useUrgencyTriggers Hook - Urgency and Timing Data for Landing Page
  *

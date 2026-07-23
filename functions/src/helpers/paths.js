@@ -38,6 +38,14 @@ const paths = {
   // reads one doc instead of scanning every profile per call.
   seasonRankings: () => `artifacts/${ns()}/leaderboard/season_rankings/data`,
 
+  // --- Show registrations (materialized "who's attending" index) ---
+  // One doc per (week, eventName, date) event; see helpers/showRegistrations.js.
+  // Server-only: no firestore.rules match — read via the getShowRegistrations
+  // callable, written by selectUserShows + the nightly rebuild.
+  showRegistrationEvents: (seasonUid) => `artifacts/${ns()}/show_registrations/${seasonUid}/events`,
+  showRegistrationEvent: (seasonUid, eventKey) =>
+    `artifacts/${ns()}/show_registrations/${seasonUid}/events/${eventKey}`,
+
   // --- Leagues ---
   leagues: () => `artifacts/${ns()}/leagues`,
   league: (leagueId) => `artifacts/${ns()}/leagues/${leagueId}`,

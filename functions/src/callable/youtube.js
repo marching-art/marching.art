@@ -14,6 +14,50 @@ const CACHE_COLLECTION = "youtubeCache";
 // A video on this list is excluded from every future search result.
 const NOPE_COLLECTION = "youtubeNopeList";
 
+// Per-user budget for QUOTA-SPENDING searches (cache misses and skipCache
+// retries — cache hits are free and unmetered). The YouTube Data API quota
+// is a single daily pool shared by every user; without a per-user ceiling,
+// one account looping skipCache searches could exhaust it for the whole
+// site. 30/hour is far above any legitimate browsing session. Budget docs
+// live in their own server-only collection, keyed by uid (no client rule
+// matches it, so it is unreadable/unwritable from the app).
+const QUOTA_COLLECTION = "youtubeSearchQuota";
+const QUOTA_MAX_SEARCHES_PER_WINDOW = 30;
+const QUOTA_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * Consume one unit of the caller's hourly search budget. Plain
+ * read-then-write (not a transaction) is deliberate: an interleaved pair of
+ * calls can at worst over-admit by one, which is fine for abuse throttling
+ * and keeps the hot path at one small doc read.
+ *
+ * @returns {Promise<boolean>} true if the search may proceed.
+ */
+async function consumeSearchBudget(db, uid) {
+  try {
+    const ref = db.collection(QUOTA_COLLECTION).doc(uid);
+    const snap = await ref.get();
+    const now = Date.now();
+    const data = snap.exists ? snap.data() : {};
+    const inWindow =
+      typeof data.windowStart === "number" && now - data.windowStart < QUOTA_WINDOW_MS;
+    const count = inWindow ? data.count || 0 : 0;
+
+    if (count >= QUOTA_MAX_SEARCHES_PER_WINDOW) return false;
+
+    await ref.set({
+      windowStart: inWindow ? data.windowStart : now,
+      count: count + 1,
+      updatedAt: new Date().toISOString(),
+    });
+    return true;
+  } catch (error) {
+    // Never let the throttle's own bookkeeping break the feature.
+    logger.warn("Search-budget check failed, allowing search:", error);
+    return true;
+  }
+}
+
 // Words to filter out from video titles (partial performances, warmups, vlogs, etc.)
 const TITLE_BLACKLIST = [
   "lot",
@@ -360,6 +404,16 @@ exports.searchYoutubeVideo = onCall(
         found: false,
         message: "Sign in to search for this performance video.",
       };
+    }
+
+    // Signed-in and about to spend billed quota — enforce the per-user
+    // hourly budget so one account can't drain the shared daily API pool.
+    if (!(await consumeSearchBudget(db, request.auth.uid))) {
+      logger.warn("Search budget exhausted:", { uid: request.auth.uid, query });
+      throw new HttpsError(
+        "resource-exhausted",
+        "You've searched for a lot of videos in the last hour — try again a bit later."
+      );
     }
 
     return performYoutubeSearch(db, query, apiKey);

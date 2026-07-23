@@ -1,27 +1,25 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAdmin } = require("../helpers/callableGuards");
 const { computeDirectorRating } = require("../helpers/directorRating");
 const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRankings");
+const {
+  collectRegistrationsFromProfile,
+  buildEventDocs,
+} = require("../helpers/showRegistrations");
 
 /**
  * Manually callable function to update lifetime leaderboard
  * Can be called by admins or scheduled
  */
 exports.updateLifetimeLeaderboard = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-
-  // Check if user is admin - only fetch the role field
-  const db = getDb();
-  const userDoc = await db.doc(paths.userProfile(request.auth.uid)).get();
-  // Note: Single doc reads don't support select() in Admin SDK, but this is a small doc read for auth
-
-  if (!userDoc.exists || userDoc.data().role !== 'admin') {
-    throw new HttpsError("permission-denied", "Admin access required");
-  }
+  // Admin custom claim, like every other privileged callable. This used to
+  // gate on profile.role — a profile field, i.e. a client-adjacent input —
+  // instead of the claim only the Admin SDK can set.
+  assertAdmin(request);
 
   await updateLifetimeLeaderboardLogic();
   return { success: true, message: "Lifetime leaderboard updated" };
@@ -59,6 +57,7 @@ async function updateLifetimeLeaderboardLogic() {
     const seasonDoc = await db.doc("game-settings/season").get();
     const activeSeasonId = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
     const seasonRankEntries = [];
+    const registrationPairs = [];
 
     // Get all user document references.
     // The users/{uid} docs are "missing ancestors": createUserProfile only
@@ -112,6 +111,7 @@ async function updateLifetimeLeaderboardLogic() {
         // full profileData already fetched here, so no extra reads.
         if (activeSeasonId && profileData.activeSeasonId === activeSeasonId) {
           seasonRankEntries.push({ uid: userId, totalScore: sumSeasonScore(profileData) });
+          registrationPairs.push(...collectRegistrationsFromProfile(userId, profileData));
         }
       }
     });
@@ -127,6 +127,45 @@ async function updateLifetimeLeaderboardLogic() {
         updatedAt: new Date(),
       });
       logger.info(`Materialized season rankings for ${totalPlayers} players`);
+    }
+
+    // Rebuild the show-registrations index from the same profile pass (zero
+    // extra reads — profiles are the source of truth). Full replace: delete
+    // every existing event doc, then write the freshly derived set, so
+    // entries removed since the last rebuild (or missed by the best-effort
+    // selectUserShows write-through) never linger.
+    if (activeSeasonId) {
+      const eventsRef = db.collection(paths.showRegistrationEvents(activeSeasonId));
+      const existingRefs = await eventsRef.listDocuments();
+      const eventDocs = buildEventDocs(registrationPairs);
+
+      let regBatch = db.batch();
+      let regBatchCount = 0;
+      const flushIfFull = async () => {
+        regBatchCount++;
+        if (regBatchCount >= 400) {
+          await regBatch.commit();
+          regBatch = db.batch();
+          regBatchCount = 0;
+        }
+      };
+      for (const ref of existingRefs) {
+        if (!eventDocs.has(ref.id)) {
+          regBatch.delete(ref);
+          await flushIfFull();
+        }
+      }
+      for (const [eventKey, docData] of eventDocs) {
+        regBatch.set(eventsRef.doc(eventKey), { ...docData, rebuiltAt: new Date() });
+        await flushIfFull();
+      }
+      if (regBatchCount > 0) {
+        await regBatch.commit();
+      }
+      logger.info(
+        `Rebuilt show-registration index: ${eventDocs.size} events from ` +
+          `${registrationPairs.length} registrations`
+      );
     }
 
     if (lifetimeData.length === 0) {

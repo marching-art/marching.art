@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // ARTICLE COMMENTS - Comment System with Moderation
 // =============================================================================

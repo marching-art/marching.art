@@ -1,11 +1,13 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // MatchupsTab - Season overview with matchup brackets and history
 // Design System: Week cards, head-to-head tracking, schedule overview
 
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { m } from 'framer-motion';
 import { Swords, Calendar, Radio, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
-import { getLeagueMatchupWeek } from '../../../api/leagues';
+import { getLeagueMatchups } from '../../../api/leagues';
 import { getSeasonData } from '../../../api/season';
+import { getSeasonProgress } from '../../../utils/seasonProgress';
 import { GAME_CONFIG } from '../../../config';
 import {
   SeasonScheduleOverview,
@@ -58,33 +60,30 @@ const MatchupsTab = ({
       }
 
       try {
-        // Get current week from season data
+        // Get current week from season data — shared 2AM-ET/UTC-normalized
+        // math (utils/seasonProgress). The raw (now - startDate)/24h count
+        // used here before rolled the week over at midnight UTC (8 PM ET in
+        // summer), highlighting the wrong "live" week every evening.
         const sData = await getSeasonData();
-
-        let week = 1;
-        if (sData) {
-          const startDate = sData.schedule?.startDate?.toDate();
-          if (startDate) {
-            const now = new Date();
-            const diffInDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-            week = Math.max(1, Math.ceil((diffInDays + 1) / 7));
-          }
-        }
+        const week = sData ? Math.max(1, getSeasonProgress(sData).currentWeek) : 1;
         setCurrentWeek(week);
         setSelectedWeek(week);
 
-        // Fetch matchups for all weeks up to current + 1
+        // One collection read for every generated week — this was a serial
+        // per-week getDoc waterfall (up to 8 round-trips).
         const matchupsData = {};
         const weeksFound = new Set();
+        const maxWeek = Math.min(week + 1, GAME_CONFIG.season.totalWeeks);
 
-        for (let w = 1; w <= Math.min(week + 1, GAME_CONFIG.season.totalWeeks); w++) {
-          const data = await getLeagueMatchupWeek(league.id, w);
-
-          if (data) {
-            matchupsData[w] = data;
-            weeksFound.add(w);
-          }
-        }
+        const matchupDocs = await getLeagueMatchups(league.id);
+        matchupDocs.forEach((matchupDoc) => {
+          const weekMatch = matchupDoc.id.match(/^week-(\d+)$/);
+          if (!weekMatch) return;
+          const w = parseInt(weekMatch[1]);
+          if (w < 1 || w > maxWeek) return;
+          matchupsData[w] = matchupDoc;
+          weeksFound.add(w);
+        });
 
         setMatchupsByClass(matchupsData);
         setWeeksWithMatchups(weeksFound);

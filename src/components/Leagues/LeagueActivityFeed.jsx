@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueActivityFeed - Shows recent league events and notifications
 // Keeps users engaged with real-time activity updates
 

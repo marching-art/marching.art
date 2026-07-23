@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Shared pick-highlight logic for running orders, used identically by the live
 // and off-season views. A director's caption pick ("CorpsName|Year") highlights
 // a corps in a show's running order when the brand is present, in two tiers:

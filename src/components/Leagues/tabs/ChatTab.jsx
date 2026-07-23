@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // ChatTab - Dark-mode messenger styling
 // Design System: #111 received bubbles, #0057B8 sent bubbles, Commissioner badge
 

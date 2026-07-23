@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Import the guest-preview draft into the onboarding lineup, fulfilling the
 // registration gate's "your preview progress will be saved" promise.
 //

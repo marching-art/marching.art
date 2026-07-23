@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/charts/BarChartImpl.jsx
 // Lazily loaded Bar chart implementation with Chart.js
 import { Bar } from 'react-chartjs-2';

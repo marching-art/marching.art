@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // FanFavoriteCard — the community's ballot (decision 30): prelims at each
 // major, finals in championship week, winner's banner at season end. Purely
 // cosmetic; any signed-in user can vote, corps or not.

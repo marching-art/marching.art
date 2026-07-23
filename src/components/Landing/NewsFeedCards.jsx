@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // News feed presentational cards + state views. Extracted from NewsFeed.jsx.
 
 import { memo, useState } from 'react';

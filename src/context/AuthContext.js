@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/context/AuthContext.js
 // Auth context + hook live outside App.jsx so that file only exports
 // components, which keeps Vite's fast refresh working for App.jsx

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SETTINGS MODAL
 // =============================================================================
@@ -278,11 +279,13 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       const permission = await Notification.requestPermission();
       setPushPermission(permission);
       if (permission === 'granted') {
-        const { requestPushPermission } = await import('../../api/pushNotifications');
+        const { requestPushPermission, saveFcmToken } = await import('../../api/pushNotifications');
         const token = await requestPushPermission();
         if (token) {
+          // Token goes to the owner-only private doc (it's a device
+          // identifier); only the preference toggle lives on the profile.
+          await saveFcmToken(user.uid, token);
           await updateProfile(user.uid, {
-            'settings.fcmToken': token,
             'settings.pushPreferences.allPush': true,
           });
           setPushPrefs((prev) => ({ ...prev, allPush: true }));

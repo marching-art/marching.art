@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // STREAK MODAL - streak status, next milestone, and streak freeze purchase
 // =============================================================================

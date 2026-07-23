@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Onboarding step-1/step-2 panels and the completion celebration modal.
 // Extracted verbatim from Onboarding.jsx; all state stays in the parent and
 // is passed down as props. The step components are rendered as direct

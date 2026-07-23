@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // AchievementTrackerPanel - Compact sidebar widget showing achievement progress
 // Surfaces the 3 achievements closest to being unlocked to drive goal-oriented
 // play, plus a link to the full Achievements page for the complete list.

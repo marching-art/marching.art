@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Runtime feature flags — client hook (Phase 1.5, PODIUM.md).
  *

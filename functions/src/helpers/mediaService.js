@@ -14,9 +14,19 @@
  */
 
 const crypto = require("crypto");
-const cloudinary = require("cloudinary").v2;
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
+
+// The cloudinary SDK is required lazily: every function in the deploy unit
+// loads this module at cold start (index.js requires all modules), and only
+// the news/avatar image paths ever upload media.
+let cloudinaryClient = null;
+function getCloudinary() {
+  if (!cloudinaryClient) {
+    cloudinaryClient = require("cloudinary").v2;
+  }
+  return cloudinaryClient;
+}
 
 // =============================================================================
 // CLOUDINARY CONFIGURATION
@@ -40,7 +50,7 @@ function initializeCloudinary() {
     return false;
   }
 
-  cloudinary.config({
+  getCloudinary().config({
     cloud_name: cloudName,
     api_key: apiKey,
     api_secret: apiSecret,
@@ -267,7 +277,7 @@ function buildOptimizedUrl(publicId, options = {}, version = null) {
     urlOptions.version = version;
   }
 
-  return cloudinary.url(publicId, urlOptions);
+  return getCloudinary().url(publicId, urlOptions);
 }
 
 /**
@@ -349,7 +359,7 @@ async function uploadFromUrl(imageUrl, options = {}) {
   try {
     const finalPublicId = publicId || `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    const uploadResult = await cloudinary.uploader.upload(imageUrl, {
+    const uploadResult = await getCloudinary().uploader.upload(imageUrl, {
       folder,
       public_id: finalPublicId,
       resource_type: "image",

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational sections for the Scores page: pill tabs, recap box scores,
 // SoundSport medal list, and class standings. Styled to match the Podium Class
 // recap sheet (PodiumRecapSheet) — sheet cards, gold box-toppers, per-show

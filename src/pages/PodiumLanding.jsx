@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PODIUM LANDING — SIGNUP / LOGIN PAGE FOCUSED ON THE PODIUM CLASS
 // =============================================================================

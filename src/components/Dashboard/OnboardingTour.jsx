@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Dashboard/OnboardingTour.jsx
 // Contextual tooltips for first-time dashboard visitors
 import React, { useState, useEffect } from 'react';

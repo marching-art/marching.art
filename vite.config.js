@@ -64,6 +64,19 @@ export default defineConfig({
             return 'vendor-react';
           }
           if (inPackage('firebase') || id.includes('/node_modules/@firebase/')) {
+            // Messaging and Storage are only reached through dynamic imports
+            // (App.jsx / SettingsModal lazy-load pushNotifications;
+            // api/client.ts defers storage). Forcing them into the eager
+            // vendor-firebase chunk silently undid those deferrals — leave
+            // them out so Rolldown gives each its own lazy chunk.
+            if (
+              id.includes('/node_modules/@firebase/messaging') ||
+              id.includes('/node_modules/firebase/messaging') ||
+              id.includes('/node_modules/@firebase/storage') ||
+              id.includes('/node_modules/firebase/storage')
+            ) {
+              return undefined;
+            }
             return 'vendor-firebase';
           }
           // UI utilities - lightweight, loaded immediately
@@ -75,8 +88,13 @@ export default defineConfig({
           // Features are lazy-loaded after initial render via dynamic import
           // See src/components/MotionProvider.jsx for implementation
           if (inPackage('framer-motion')) return 'vendor-motion';
-          // Lazy-loaded chart library - only loaded when charts are rendered
-          if (inPackage('chart.js') || inPackage('react-chartjs-2')) return 'vendor-charts';
+          // chart.js / react-chartjs-2 intentionally get NO manual group:
+          // they are only imported behind React.lazy (LazyCharts), and a
+          // manual 'vendor-charts' group forced that whole library — plus a
+          // duplicated React runtime Rolldown hoisted with it — into the
+          // eager first-paint payload (~61 KB gzip). With no group, the
+          // dynamic-import boundary splits them into a lazy chunk fetched
+          // only when a chart actually renders.
           return undefined;
         },
       },

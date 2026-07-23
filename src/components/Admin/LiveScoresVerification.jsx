@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/LiveScoresVerification.jsx
 // =============================================================================
 // LIVE SEASON SCORE VERIFICATION

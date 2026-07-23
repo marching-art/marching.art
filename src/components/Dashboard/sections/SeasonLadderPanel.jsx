@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // SeasonLadderPanel - free seasonal reward ladder
 // Progress = XP earned this season (profile.xp - profile.xpAtSeasonStart,
 // baseline stamped at rollover / first daily claim). Tier claims are

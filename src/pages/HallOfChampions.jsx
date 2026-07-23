@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/HallOfChampions.jsx
 // Championship record book — data-terminal layout
 // Sidebar (Seasons) + Main Stage (Champion plaque + finalists table)

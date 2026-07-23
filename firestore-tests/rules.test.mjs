@@ -413,6 +413,15 @@ await check(
   assertFails(updateDoc(doc(mallory(), profilePath), { bio: 'hax' }))
 );
 
+// role is trusted server-side: the admin email fan-out queries
+// profile.role == 'admin', and the manual leaderboard/rivals refresh
+// callables gate on it. A client-writable role was privilege escalation.
+await freshSeed();
+await check(
+  'owner cannot grant themselves role admin (privilege escalation regression)',
+  assertFails(updateDoc(doc(authed(), profilePath), { role: 'admin' }))
+);
+
 // =============================================================================
 // PROFILE COMMENTS — creation is backend-only. The old rule
 // (`allow create: if isAuthenticated()`) let any signed-in user create a
@@ -478,6 +487,83 @@ await freshCommentSeed();
 await check(
   'profile owner can delete a comment on their profile',
   assertSucceeds(deleteDoc(doc(authed(), commentPath)))
+);
+
+// The user-subcollection catch-all grants owners write access to
+// unrecognized subcollections — before `comments` was excluded from it, the
+// PROFILE OWNER could bypass `allow create: if false` and forge comments on
+// their own profile attributed to any authorUid (fake praise from real
+// users). Rules are additive, so the exclusion must live on the catch-all.
+await freshCommentSeed();
+await check(
+  'profile owner cannot forge a comment on their own profile (catch-all regression)',
+  assertFails(
+    setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/comments/comment-4`), {
+      authorUid: 'mallory-uid', // forged attribution
+      text: 'alice is the greatest director ever',
+    })
+  )
+);
+
+// =============================================================================
+// NOTIFICATIONS — private per-user league/trade/matchup messages with an
+// owner-only rule. The user-subcollection catch-all read did not exclude
+// `notifications`, and rules are additive, so any signed-in user could read
+// any other user's entire notification feed until the exclusion landed.
+// =============================================================================
+const notificationPath = `artifacts/${APP}/users/${ALICE}/notifications/notif-1`;
+async function freshNotificationSeed() {
+  await testEnv.clearFirestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), notificationPath), {
+      type: 'matchup_result',
+      title: 'You lost to Bob',
+      message: 'Bob beat you 87.5 to 82.1',
+      createdAt: new Date(),
+    });
+  });
+}
+
+await freshNotificationSeed();
+await check(
+  'owner can read their own notifications',
+  assertSucceeds(getDoc(doc(authed(), notificationPath)))
+);
+
+await freshNotificationSeed();
+await check(
+  "another user cannot read someone else's notifications (catch-all regression)",
+  assertFails(getDoc(doc(mallory(), notificationPath)))
+);
+
+await freshNotificationSeed();
+await check(
+  "another user cannot list someone else's notification feed (catch-all regression)",
+  assertFails(getDocs(collection(mallory(), `artifacts/${APP}/users/${ALICE}/notifications`)))
+);
+
+// =============================================================================
+// PRIVATE DOC — home of the FCM token (a stable device identifier that must
+// never sit on the world-readable profile doc). Owner-only read/write.
+// =============================================================================
+const privatePath = `artifacts/${APP}/users/${ALICE}/private/data`;
+async function freshPrivateSeed() {
+  await testEnv.clearFirestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), privatePath), { email: 'alice@example.com' });
+  });
+}
+
+await freshPrivateSeed();
+await check(
+  'owner can save their FCM token to private/data',
+  assertSucceeds(setDoc(doc(authed(), privatePath), { fcmToken: 'token-123' }, { merge: true }))
+);
+
+await freshPrivateSeed();
+await check(
+  "another user cannot read someone else's private doc (FCM token home)",
+  assertFails(getDoc(doc(mallory(), privatePath)))
 );
 
 // =============================================================================

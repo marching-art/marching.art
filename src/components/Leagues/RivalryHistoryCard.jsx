@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // RivalryHistoryCard - Head-to-Head Rivalry History Display
 // Shows historical matchup data, caption domination, streaks, and all past matchups
 

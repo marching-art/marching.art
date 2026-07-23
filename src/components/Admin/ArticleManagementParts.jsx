@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Article management sub-components: list row, editor modal, and section
 // editor. Extracted verbatim from ArticleManagement.jsx.
 

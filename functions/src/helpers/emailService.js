@@ -4,7 +4,9 @@
  */
 
 const admin = require("firebase-admin");
-const brevo = require("@getbrevo/brevo");
+// @getbrevo/brevo is required lazily inside the client/send paths: every
+// function in the deploy unit loads this module at cold start, and only the
+// email senders touch Brevo.
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
@@ -35,6 +37,7 @@ const EMAIL_TYPES = {
   MILESTONE_ACHIEVED: "milestone_achieved",
   ADMIN_ARTICLE_SUBMISSION: "admin_article_submission",
   ADMIN_COMMENT_REPORT: "admin_comment_report",
+  ADMIN_GENERIC_ALERT: "admin_generic_alert",
 };
 
 // Cached Brevo API instance - reused across requests in same instance
@@ -52,6 +55,7 @@ function getBrevoClient() {
     if (!apiKey) {
       throw new Error("Brevo API key not configured");
     }
+    const brevo = require("@getbrevo/brevo");
     cachedBrevoClient = new brevo.TransactionalEmailsApi();
     cachedBrevoClient.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
   }
@@ -72,6 +76,7 @@ async function sendEmail({ to, subject, html, text, emailType }) {
   try {
     const apiInstance = getBrevoClient();
 
+    const brevo = require("@getbrevo/brevo");
     const sendSmtpEmail = new brevo.SendSmtpEmail();
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = html;
@@ -638,6 +643,24 @@ async function sendAdminCommentReportEmail(email, data) {
 }
 
 /**
+ * Notify a single admin with a free-form operational alert (plain text body,
+ * HTML-escaped). Used for security/audit events that have no dedicated
+ * template — e.g. a supporter link claimed with a mismatched email.
+ */
+async function sendAdminGenericAlertEmail(email, { subject, body }) {
+  const escaped = String(body || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return sendEmail({
+    to: email,
+    subject: `[Admin] ${subject || "marching.art alert"}`,
+    html: `<p style="font-family:sans-serif;white-space:pre-wrap;">${escaped}</p>`,
+    emailType: EMAIL_TYPES.ADMIN_GENERIC_ALERT,
+  });
+}
+
+/**
  * Send win-back campaign email
  */
 async function sendWinBackEmail(email, username, daysMissed, streakLost, corpsCoinBalance) {
@@ -744,6 +767,7 @@ module.exports = {
   sendMilestoneEmail,
   sendAdminArticleSubmissionEmail,
   sendAdminCommentReportEmail,
+  sendAdminGenericAlertEmail,
 
   // Admin fan-out helpers
   getAdminEmails,

@@ -72,12 +72,9 @@ export {
   getFantasyRecaps,
   getShowsByDay,
   getAllShows,
-  calculateSeasonProgress,
   isRegistrationOpen,
   getSeasonTypeInfo,
   formatSeasonDisplayName,
-  getGameDay,
-  getGameDayDate,
 } from './season';
 export type { DayRecap, ShowWithResults } from './season';
 

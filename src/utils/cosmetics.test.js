@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Catalog invariants + helper behavior for the Corps Identity Shop client
 // mirror. The server validates every purchase against its own catalog
 // (functions/src/helpers/shopCatalog.js); these tests keep the display mirror

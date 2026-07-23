@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/ArticleManagement.jsx
 // Admin article management - list, edit, archive articles
 // Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/ScoresSpreadsheet.jsx
 // Admin spreadsheet view of reference scores for the current season
 // Shows selected corps by point value (25-1) with scores across dates

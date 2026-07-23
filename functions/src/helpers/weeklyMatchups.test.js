@@ -102,6 +102,42 @@ function makeFakeDb({ leagues = [], docs = new Map() } = {}) {
         async commit() {},
       };
     },
+    // updateStandings folds standings inside a transaction now (the fold is
+    // not idempotent, so concurrent folds must conflict). The fake runs the
+    // callback once with no retries and records writes with the same types
+    // as the direct doc methods.
+    async runTransaction(fn) {
+      const snapshot = (ref) => ({
+        ref,
+        exists: docs.has(ref.path),
+        data: () => docs.get(ref.path),
+      });
+      return fn({
+        async get(ref) {
+          return snapshot(ref);
+        },
+        async getAll(...refs) {
+          return refs.map(snapshot);
+        },
+        set(ref, data, options) {
+          docs.set(ref.path, options?.merge ? { ...(docs.get(ref.path) || {}), ...data } : data);
+          writes.push({ type: "docSet", path: ref.path, data, options });
+        },
+        update(ref, data) {
+          docs.set(ref.path, { ...(docs.get(ref.path) || {}), ...data });
+          writes.push({ type: "docUpdate", path: ref.path, data });
+        },
+        create(ref, data) {
+          if (docs.has(ref.path)) throw new Error(`already exists: ${ref.path}`);
+          docs.set(ref.path, data);
+          writes.push({ type: "docCreate", path: ref.path, data });
+        },
+        delete(ref) {
+          docs.delete(ref.path);
+          writes.push({ type: "docDelete", path: ref.path });
+        },
+      });
+    },
   };
 
   return { db, writes };

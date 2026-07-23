@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // BattleBreakdown - Visual breakdown of head-to-head battle points
 // Shows caption battles, total score, high single, and momentum battles
 

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // ActiveLineupTable - Main roster table for dashboard
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 

@@ -9,7 +9,7 @@
 // uses. The (slow, image-generating) article build then happens off the
 // scoring path in processNewsGeneration.
 
-const { PubSub } = require("@google-cloud/pubsub");
+// PubSub is required lazily inside the publish path (cold-start weight).
 const { logger } = require("firebase-functions/v2");
 
 const NEWS_GENERATION_TOPIC = "news-generation-topic";
@@ -42,7 +42,10 @@ async function publishSeasonSummaryRequest({ seasonId, dataDocId, scoredDay }) {
   }
 
   try {
-    if (!pubsubClient) pubsubClient = new PubSub();
+    if (!pubsubClient) {
+      const { PubSub } = require("@google-cloud/pubsub");
+      pubsubClient = new PubSub();
+    }
     const payload = {
       type: "season_summary",
       data: { seasonId, dataDocId: dataDocId || seasonId, throughDay: scoredDay },

@@ -118,49 +118,55 @@ exports.updateUsername = onCall({ cors: true }, async (request) => {
     const profileRef = db.doc(paths.userProfile(userId));
     const newUsernameRef = db.doc(`usernames/${trimmedUsername.toLowerCase()}`);
 
-    // Get current profile to check old username
-    const profileDoc = await profileRef.get();
-    if (!profileDoc.exists) {
-      throw new HttpsError("not-found", "User profile not found.");
-    }
+    // Check availability and swap the reservation in ONE transaction. The
+    // old check-then-batch flow raced: two users claiming the same name both
+    // passed the availability read, and the loser's batch.set overwrote the
+    // winner's reservation — and a later rename by the loser then DELETED a
+    // reservation that belonged to someone else, freeing a name still shown
+    // on their profile. transaction.create() makes the losing claim fail.
+    const { unchanged, oldUsername } = await db.runTransaction(async (t) => {
+      // Get current profile to check old username
+      const profileDoc = await t.get(profileRef);
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
 
-    const currentProfile = profileDoc.data();
-    const oldUsername = currentProfile.username;
+      const oldUsername = profileDoc.data().username;
 
-    // Check if username is the same
-    if (oldUsername && oldUsername.toLowerCase() === trimmedUsername.toLowerCase()) {
+      // Check if username is the same
+      if (oldUsername && oldUsername.toLowerCase() === trimmedUsername.toLowerCase()) {
+        return { unchanged: true, oldUsername };
+      }
+
+      // Delete old username reservation if it exists AND still belongs to
+      // this user — never delete a reservation another account holds.
+      if (oldUsername) {
+        const oldUsernameRef = db.doc(`usernames/${oldUsername.toLowerCase()}`);
+        const oldUsernameDoc = await t.get(oldUsernameRef);
+        if (oldUsernameDoc.exists && oldUsernameDoc.data().uid === userId) {
+          t.delete(oldUsernameRef);
+        }
+      }
+
+      // Reserve new username — create() (not set) fails atomically if a
+      // concurrent claim got there first.
+      t.create(newUsernameRef, { uid: userId });
+
+      // Update profile
+      t.update(profileRef, {
+        username: trimmedUsername,
+        updatedAt: FieldValue.serverTimestamp()
+      });
+      return { unchanged: false, oldUsername };
+    });
+
+    if (unchanged) {
       return {
         success: true,
         message: "Username unchanged",
         username: trimmedUsername
       };
     }
-
-    // Check if new username is available
-    const newUsernameDoc = await newUsernameRef.get();
-    if (newUsernameDoc.exists) {
-      throw new HttpsError("already-exists", "This username is already taken.");
-    }
-
-    // Use batch to atomically update
-    const batch = db.batch();
-
-    // Delete old username reservation if exists
-    if (oldUsername) {
-      const oldUsernameRef = db.doc(`usernames/${oldUsername.toLowerCase()}`);
-      batch.delete(oldUsernameRef);
-    }
-
-    // Reserve new username
-    batch.set(newUsernameRef, { uid: userId });
-
-    // Update profile
-    batch.update(profileRef, {
-      username: trimmedUsername,
-      updatedAt: FieldValue.serverTimestamp()
-    });
-
-    await batch.commit();
 
     logger.info(`Successfully updated username for user ${userId} from "${oldUsername}" to "${trimmedUsername}"`);
 
@@ -175,6 +181,12 @@ exports.updateUsername = onCall({ cors: true }, async (request) => {
 
     if (error instanceof HttpsError) {
       throw error;
+    }
+
+    // transaction.create() rejects with gRPC ALREADY_EXISTS (code 6) when a
+    // concurrent claim reserved the name between this call's read and commit.
+    if (error?.code === 6) {
+      throw new HttpsError("already-exists", "This username is already taken.");
     }
 
     throw new HttpsError("internal", "Failed to update username. Please try again.");

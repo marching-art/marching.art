@@ -13,7 +13,7 @@
 
 // Consolidated to single @google/genai SDK (removes duplicate @google/generative-ai)
 // Type replaces SchemaType for JSON schema definitions
-const { Type } = require("@google/genai");
+const { Type } = require("./newsArticleShared");
 const { logger } = require("firebase-functions/v2");
 const { getContextualPlaceholder } = require("./mediaService");
 const {

@@ -34,7 +34,8 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const cheerio = require("cheerio");
+// cheerio is required lazily (cold-start weight; only scrape paths parse HTML).
+const loadHtml = (html) => require("cheerio").load(html);
 const { dciFetch } = require("./dciFetch");
 
 // Rows in the lineup table that are ceremony/logistics markers, not performing
@@ -168,7 +169,7 @@ function parseClock(text) {
  * @returns {object} Enrichment fields (may be mostly null if no lineup found).
  */
 function parseEventDetail(html, event) {
-  const $ = cheerio.load(html);
+  const $ = loadHtml(html);
   const result = {
     timezone: null,
     startsAt: null,
@@ -266,7 +267,7 @@ function parseEventDetail(html, event) {
  * @returns {string|null} ISO date at UTC midnight, or null if none found.
  */
 function parseEventDate(html) {
-  const $ = cheerio.load(html);
+  const $ = loadHtml(html);
   const heroText = $(".inner-hero-inner p").first().text().trim();
   const dateRe =
     /(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),\s+(\d{4})/i;
@@ -286,7 +287,7 @@ function parseEventDate(html) {
  * @returns {string|null}
  */
 function parseEventName(html) {
-  const $ = cheerio.load(html);
+  const $ = loadHtml(html);
   const h1 = $(".inner-hero-inner h1").first().text().trim() || $("h1").first().text().trim();
   return h1 || null;
 }
@@ -300,7 +301,7 @@ function parseEventName(html) {
  * @returns {string|null}
  */
 function parseEventLocation(html) {
-  const $ = cheerio.load(html);
+  const $ = loadHtml(html);
   const addressHtml = $(".event-location address").first().html();
   if (!addressHtml) return null;
   const lines = addressHtml

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/CorpsHistory.jsx
 // Fixed Height Split Layout: Top Stats + Bottom Split (Chart/Timeline)
 import React, { useState, useEffect, useMemo } from 'react';

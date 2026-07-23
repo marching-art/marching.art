@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useState, useEffect } from 'react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { X, Loader2, RefreshCw, RotateCcw, ChevronRight } from 'lucide-react';

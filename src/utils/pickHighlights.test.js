@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import { describe, test, expect } from 'vitest';
 import { buildShowHighlights, parsePick, highlightLabel } from './pickHighlights';
 

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // RehearsalPlanner — the Podium Class daily verb (Phase 2, design §6.1).
 // One screen: pick today's rehearsal blocks (12 on a normal day, 20 in spring
 // training, 8 on a show day at half value each), watch the Action Complete

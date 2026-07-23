@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Client mirror of the prestige-sink catalog (WS5.6). Prices and limits are
 // display-only here — the purchaseRetirementPlaque / purchaseHallBanner
 // callables validate against functions/src/helpers/prestigeCatalog.js, and

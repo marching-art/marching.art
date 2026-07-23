@@ -1,7 +1,8 @@
 const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
-const { PubSub } = require("@google-cloud/pubsub");
-const cheerio = require("cheerio");
+// PubSub and cheerio are required lazily inside the scrape paths: every
+// function in the deploy unit loads this module at cold start (index.js
+// requires all modules), and only the scraping jobs use them.
 const { assertAdmin } = require("./callableGuards");
 const { dciFetch, scraperApiKey } = require("./dciFetch");
 
@@ -50,6 +51,7 @@ function extractSitemapLocs(xml) {
 async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", extraPayload = {}) {
   // Lazy initialize the client if it hasn't been already
   if (!pubsubClient) {
+    const { PubSub } = require("@google-cloud/pubsub");
     pubsubClient = new PubSub();
   }
 
@@ -61,7 +63,7 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", ext
 
   try {
     const data = await dciFetch(urlToScrape);
-    const $ = cheerio.load(data);
+    const $ = require("cheerio").load(data);
     const scoresData = [];
 
     const eventNameSelector = "div[data-widget_type=\"theme-post-title.default\"] h1.elementor-heading-title";
@@ -231,6 +233,7 @@ const discoverAndQueueUrls = onCall({
   assertAdmin(request);
   // Lazy initialize the client
   if (!pubsubClient) {
+    const { PubSub } = require("@google-cloud/pubsub");
     pubsubClient = new PubSub();
   }
 
@@ -342,6 +345,7 @@ const discoverAndQueueEventUrls = onCall({
 }, async (request) => {
   assertAdmin(request);
   if (!pubsubClient) {
+    const { PubSub } = require("@google-cloud/pubsub");
     pubsubClient = new PubSub();
   }
 

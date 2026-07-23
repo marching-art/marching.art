@@ -5,7 +5,7 @@
 
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
 import { app, db, paths } from './client';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 // FCM configuration
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
@@ -165,17 +165,24 @@ export async function requestPushPermission(): Promise<string | null> {
 }
 
 /**
- * Save the FCM token to the user's profile
+ * Save the FCM token to the user's PRIVATE doc (users/{uid}/private/data).
+ * The token must never live on profile/data: that document is world-readable
+ * (leaderboards/public profiles), and an FCM registration token is a stable
+ * device identifier. private/data is owner/admin-only in firestore.rules.
  * @param userId - The user's UID
  * @param token - The FCM token
  */
 export async function saveFcmToken(userId: string, token: string): Promise<boolean> {
   try {
-    const profileRef = doc(db, paths.userProfile(userId));
-    await updateDoc(profileRef, {
-      'settings.fcmToken': token,
-      'settings.fcmTokenUpdatedAt': new Date().toISOString(),
-    });
+    const privateRef = doc(db, paths.userPrivate(userId));
+    await setDoc(
+      privateRef,
+      {
+        fcmToken: token,
+        fcmTokenUpdatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.error('Error saving FCM token:', error);
@@ -184,16 +191,20 @@ export async function saveFcmToken(userId: string, token: string): Promise<boole
 }
 
 /**
- * Remove the FCM token from the user's profile
+ * Remove the FCM token from the user's private doc
  * @param userId - The user's UID
  */
 export async function removeFcmToken(userId: string): Promise<boolean> {
   try {
-    const profileRef = doc(db, paths.userProfile(userId));
-    await updateDoc(profileRef, {
-      'settings.fcmToken': null,
-      'settings.fcmTokenUpdatedAt': new Date().toISOString(),
-    });
+    const privateRef = doc(db, paths.userPrivate(userId));
+    await setDoc(
+      privateRef,
+      {
+        fcmToken: null,
+        fcmTokenUpdatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
     return true;
   } catch (error) {
     console.error('Error removing FCM token:', error);

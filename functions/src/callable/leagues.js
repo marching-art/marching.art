@@ -4,8 +4,8 @@ const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = require("../helpers/leagueHelpers");
-const { updateStandings } = require("../helpers/leagueStandings");
-const { assertAuth } = require("../helpers/callableGuards");
+const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
+const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
@@ -551,122 +551,133 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   const db = getDb();
   const leagueRef = db.doc(paths.league(leagueId));
   const matchupRef = leagueRef.collection('matchups').doc(`week-${week}`);
+  const standingsRef = leagueRef.collection('standings').doc('current');
 
-  const matchupDoc = await matchupRef.get();
-  if (!matchupDoc.exists) {
-    throw new HttpsError("not-found", "No matchups found for this week.");
+  // Commissioner-only, like generateWeeklyMatchups: this call freezes the
+  // week (completed matchups never re-resolve) and folds it into standings.
+  // It used to be open to ANY signed-in user for ANY league, letting a
+  // stranger lock in mid-week partial scores for leagues they weren't in.
+  const leagueDoc = await leagueRef.get();
+  if (!leagueDoc.exists) {
+    throw new HttpsError("not-found", "League not found.");
+  }
+  if (leagueDoc.data().creatorId !== uid && !hasAdminClaim(request)) {
+    throw new HttpsError("permission-denied", "Only the commissioner can update matchup results.");
   }
 
-  const matchupData = matchupDoc.data();
   const corpsClasses = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
-  // Collect all unique player IDs across all class matchups
-  const allPlayerIds = new Set();
-  for (const corpsClass of corpsClasses) {
-    const matchups = matchupData[`${corpsClass}Matchups`] || [];
-    for (const matchup of matchups) {
-      if (matchup.pair) {
-        matchup.pair.filter(Boolean).forEach(id => allPlayerIds.add(id));
-      }
+  // Resolve the week and fold standings in ONE transaction. The old flow
+  // (plain read → plain matchup update → get-then-update standings) let two
+  // concurrent calls — or a call racing the nightly weekly resolution — both
+  // observe completed:false and fold the same pairs into standings twice,
+  // permanently corrupting W/L records and streaks (which feed matchup
+  // pairing and season-finish payouts).
+  const { updatedMatchupData, allUpdatedPairs } = await db.runTransaction(async (t) => {
+    const matchupDoc = await t.get(matchupRef);
+    if (!matchupDoc.exists) {
+      throw new HttpsError("not-found", "No matchups found for this week.");
     }
-  }
 
-  // Batch fetch all player profiles
-  const playerIds = [...allPlayerIds];
-  const profileRefs = playerIds.map(uid =>
-    db.doc(paths.userProfile(uid))
-  );
-  const profileDocs = playerIds.length > 0 ? await db.getAll(...profileRefs) : [];
+    const matchupData = matchupDoc.data();
 
-  // Build a map of userId -> profile data
-  const profileMap = new Map();
-  profileDocs.forEach((doc, index) => {
-    if (doc.exists) {
-      profileMap.set(playerIds[index], doc.data());
-    }
-  });
-
-  // Process matchups for each corps class
-  const updatedMatchupData = { ...matchupData };
-  const allUpdatedPairs = []; // For standings update
-
-  for (const corpsClass of corpsClasses) {
-    const matchupArrayKey = `${corpsClass}Matchups`;
-    const matchups = matchupData[matchupArrayKey] || [];
-    const updatedMatchups = [];
-
-    for (const matchup of matchups) {
-      // Idempotency: a matchup that is already resolved (by the automatic
-      // weekly resolution in the nightly scoring run, or by a previous call)
-      // must not be re-folded into standings — that double-counts wins.
-      if (matchup.completed) {
-        updatedMatchups.push(matchup);
-        continue;
-      }
-
-      // Handle bye weeks (null opponent)
-      if (!matchup.pair || matchup.pair[1] === null) {
-        updatedMatchups.push(matchup);
-        if (matchup.pair && matchup.pair[0]) {
-          allUpdatedPairs.push({
-            player1: matchup.pair[0],
-            player2: null,
-            winner: matchup.pair[0],
-            completed: true,
-            corpsClass
-          });
+    // Collect all unique player IDs across all class matchups
+    const allPlayerIds = new Set();
+    for (const corpsClass of corpsClasses) {
+      const matchups = matchupData[`${corpsClass}Matchups`] || [];
+      for (const matchup of matchups) {
+        if (matchup.pair) {
+          matchup.pair.filter(Boolean).forEach(id => allPlayerIds.add(id));
         }
-        continue;
       }
-
-      const [p1_uid, p2_uid] = matchup.pair;
-      const p1_profile = profileMap.get(p1_uid);
-      const p2_profile = profileMap.get(p2_uid);
-
-      // Get score for the SPECIFIC corps class
-      const p1_score = p1_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
-      const p2_score = p2_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
-
-      let winner = null;
-      if (p1_score > p2_score) {
-        winner = p1_uid;
-      } else if (p2_score > p1_score) {
-        winner = p2_uid;
-      } else {
-        winner = 'tie';
-      }
-
-      const updatedMatchup = {
-        ...matchup,
-        scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-        winner,
-        completed: true
-      };
-      updatedMatchups.push(updatedMatchup);
-
-      // Convert to format for standings update
-      allUpdatedPairs.push({
-        player1: p1_uid,
-        player2: p2_uid,
-        player1Score: p1_score,
-        player2Score: p2_score,
-        winner,
-        completed: true,
-        corpsClass
-      });
     }
 
-    updatedMatchupData[matchupArrayKey] = updatedMatchups;
-  }
+    // Batch fetch all player profiles through the transaction (all reads
+    // must precede writes)
+    const playerIds = [...allPlayerIds];
+    const profileRefs = playerIds.map(playerUid => db.doc(paths.userProfile(playerUid)));
+    const profileDocs = playerIds.length > 0 ? await t.getAll(...profileRefs) : [];
+    const standingsDoc = await t.get(standingsRef);
 
-  // Update matchups
-  await matchupRef.update({
-    ...updatedMatchupData,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    // Build a map of userId -> profile data
+    const profileMap = new Map();
+    profileDocs.forEach((doc, index) => {
+      if (doc.exists) {
+        profileMap.set(playerIds[index], doc.data());
+      }
+    });
+
+    // Process matchups for each corps class
+    const updated = { ...matchupData };
+    const resolvedPairs = []; // For standings update
+
+    for (const corpsClass of corpsClasses) {
+      const matchupArrayKey = `${corpsClass}Matchups`;
+      const matchups = matchupData[matchupArrayKey] || [];
+      const updatedMatchups = [];
+
+      for (const matchup of matchups) {
+        // Idempotency: a matchup that is already resolved (by the automatic
+        // weekly resolution in the nightly scoring run, or by a previous
+        // call) must not be re-folded into standings — that double-counts
+        // wins. Byes are never folded here at all: the generator creates
+        // them already completed, and the guarded nightly weekly resolution
+        // is their single standings counting point (see scoringAwards.js) —
+        // the old code folded a not-yet-completed bye WITHOUT marking it
+        // completed, so every repeat call counted it again.
+        if (matchup.completed || !matchup.pair || matchup.pair[1] === null) {
+          updatedMatchups.push(matchup);
+          continue;
+        }
+
+        const [p1_uid, p2_uid] = matchup.pair;
+        const p1_profile = profileMap.get(p1_uid);
+        const p2_profile = profileMap.get(p2_uid);
+
+        // Get score for the SPECIFIC corps class
+        const p1_score = p1_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
+        const p2_score = p2_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
+
+        let winner = null;
+        if (p1_score > p2_score) {
+          winner = p1_uid;
+        } else if (p2_score > p1_score) {
+          winner = p2_uid;
+        } else {
+          winner = 'tie';
+        }
+
+        const updatedMatchup = {
+          ...matchup,
+          scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
+          winner,
+          completed: true
+        };
+        updatedMatchups.push(updatedMatchup);
+
+        // Convert to format for standings update
+        resolvedPairs.push({
+          player1: p1_uid,
+          player2: p2_uid,
+          player1Score: p1_score,
+          player2Score: p2_score,
+          winner,
+          completed: true,
+          corpsClass
+        });
+      }
+
+      updated[matchupArrayKey] = updatedMatchups;
+    }
+
+    t.update(matchupRef, {
+      ...updated,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    applyStandingsInTransaction(t, standingsDoc, resolvedPairs);
+
+    return { updatedMatchupData: updated, allUpdatedPairs: resolvedPairs };
   });
-
-  // Update standings
-  await updateStandings(db, leagueRef, allUpdatedPairs);
 
   // Create activity events for matchup results
   const completedMatchups = allUpdatedPairs.filter(p => p.completed && p.player2 !== null);

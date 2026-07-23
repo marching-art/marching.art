@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Admin > Jobs tab. Extracted from pages/Admin.jsx.
 
 import { useState, useEffect } from 'react';

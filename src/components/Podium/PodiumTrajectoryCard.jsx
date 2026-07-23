@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumTrajectoryCard — historical shadows (design §6, decision 29): your
 // season score line drawn against real corps arcs (Crown '13, Bluecoats '24,
 // Boston '13, Blue Stars '09, Mandarins, Cascades, Surf, Pioneer) from the

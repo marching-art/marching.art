@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // MotionProvider - LazyMotion wrapper for reduced bundle size + reduced motion
 // OPTIMIZATION: Defers framer-motion features from initial bundle
 // ACCESSIBILITY: Respects prefers-reduced-motion user preference

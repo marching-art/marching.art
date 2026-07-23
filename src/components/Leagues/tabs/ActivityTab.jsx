@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // ActivityTab - League insights dashboard with stats, achievements, and activity feed
 // Design System: Card-based dashboard with engaging visualizations
 

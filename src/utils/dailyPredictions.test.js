@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Client question builder for the daily prediction game, including the
 // SoundSport placement-only variant (its numeric scores must never appear in
 // prompts). Ids must stay in sync with the server catalog — the equality

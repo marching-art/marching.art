@@ -70,6 +70,17 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-empty-object-type': 'warn',
+      // checkJs is on with `// @ts-nocheck -- grandfathered…` headers on the
+      // pre-existing JS/JSX files. Allow ts-nocheck only WITH a description
+      // (the grandfather marker); bare suppressions stay banned so new files
+      // can't quietly opt out of the type-checker.
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-nocheck': 'allow-with-description',
+          minimumDescriptionLength: 10,
+        },
+      ],
       'no-empty': ['warn', { allowEmptyCatch: true }],
       // Guardrail: keep files from growing back into "god-files". A warning
       // (not an error) so it flags tech debt without blocking work. When a file
@@ -80,11 +91,13 @@ export default tseslint.config(
 
   // --- Plain JS/JSX: catch undefined identifiers as errors ---
   // tseslint's recommended config turns no-undef off (the type-checker is
-  // supposed to catch it), but .js/.jsx files are NOT type-checked (allowJs
-  // without checkJs) and esbuild doesn't resolve free identifiers — so an
-  // unimported identifier ships and throws ReferenceError at runtime (see:
-  // the ADMIN_TABS incident). Re-enable no-undef for plain JS/JSX, plus
-  // react/jsx-no-undef so undefined JSX component tags are errors too.
+  // supposed to catch it), but most .js/.jsx files still carry the
+  // grandfathered `@ts-nocheck` header (checkJs is on, but pre-existing
+  // files opted out until they're cleaned up) and esbuild doesn't resolve
+  // free identifiers — so an unimported identifier ships and throws
+  // ReferenceError at runtime (see: the ADMIN_TABS incident). Re-enable
+  // no-undef for plain JS/JSX, plus react/jsx-no-undef so undefined JSX
+  // component tags are errors too.
   {
     files: ['src/**/*.{js,jsx}'],
     plugins: { react },

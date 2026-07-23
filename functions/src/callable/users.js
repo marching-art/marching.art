@@ -6,6 +6,10 @@ const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 const { sumSeasonScore } = require("../helpers/seasonRankings");
+const {
+  showRegistrationEventKey,
+  registrationEntryKey,
+} = require("../helpers/showRegistrations");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
@@ -76,26 +80,30 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
 
     const userProfileRef = db.doc(paths.userProfile(uid));
     const userPrivateRef = db.doc(paths.userPrivate(uid));
-
-    // Idempotent: if this user already has a profile, treat as success so the
-    // onboarding/guard flow can safely retry without erroring out.
-    const existingProfile = await userProfileRef.get();
-    if (existingProfile.exists) {
-      logger.info(`createUserProfile: profile already exists for ${uid}, treating as no-op.`);
-      return { success: true, message: "User profile already exists.", alreadyExists: true };
-    }
-
     const usernameRef = db.doc(`usernames/${trimmedUsername.toLowerCase()}`);
-    const usernameDoc = await usernameRef.get();
 
-    // Allow the reservation only if it's free or already owned by this user.
-    if (usernameDoc.exists && usernameDoc.data().uid !== uid) {
-      throw new HttpsError("already-exists", "This username is already taken.");
-    }
+    // The whole reservation runs in ONE transaction. The old
+    // check-then-batch flow let two concurrent claims of the same name both
+    // pass the read: the loser's batch.set silently overwrote the winner's
+    // reservation while both profiles kept the username — a duplicate
+    // display identity on leaderboards. Inside a transaction the second
+    // commit conflicts and retries, re-reads the reservation, and fails
+    // cleanly with already-exists.
+    const alreadyExists = await db.runTransaction(async (t) => {
+      // Idempotent: if this user already has a profile, treat as success so
+      // the onboarding/guard flow can safely retry without erroring out.
+      const existingProfile = await t.get(userProfileRef);
+      if (existingProfile.exists) {
+        return true;
+      }
 
-    const batch = db.batch();
+      const usernameDoc = await t.get(usernameRef);
+      // Allow the reservation only if it's free or already owned by this user.
+      if (usernameDoc.exists && usernameDoc.data().uid !== uid) {
+        throw new HttpsError("already-exists", "This username is already taken.");
+      }
 
-    batch.set(userProfileRef, {
+      t.set(userProfileRef, {
       uid: uid,
       username: trimmedUsername,
       displayName: cleanDisplayName,
@@ -128,17 +136,23 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
         topTenFinishes: 0,
         leagueWins: 0,
       },
-      trophies: { championships: [], regionals: [], finalistMedals: [] },
-      seasons: [],
+        trophies: { championships: [], regionals: [], finalistMedals: [] },
+        seasons: [],
+      });
+
+      t.set(userPrivateRef, {
+        email: email,
+      });
+
+      t.set(usernameRef, { uid: uid });
+      return false;
     });
 
-    batch.set(userPrivateRef, {
-      email: email,
-    });
+    if (alreadyExists) {
+      logger.info(`createUserProfile: profile already exists for ${uid}, treating as no-op.`);
+      return { success: true, message: "User profile already exists.", alreadyExists: true };
+    }
 
-    batch.set(usernameRef, { uid: uid });
-
-    await batch.commit();
     logger.info(`Successfully created profile for user ${uid} with username ${trimmedUsername}`);
     return { success: true, message: "User profile created successfully." };
 
@@ -166,7 +180,30 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
     throw new HttpsError("not-found", "Active season UID is not configured.");
   }
 
+  // Fast path: the materialized index (helpers/showRegistrations.js) answers
+  // in ONE doc read. The previous implementation ran the collectionGroup
+  // scan below on EVERY show-detail page view — O(all active players)
+  // full-corps-map reads per call, the same pattern getUserRankings had
+  // before seasonRankings was materialized.
+  const eventKey = showRegistrationEventKey(week, eventName, date);
+  const indexRef = db.doc(paths.showRegistrationEvent(activeSeasonId, eventKey));
+  const indexSnap = await indexRef.get();
+  if (indexSnap.exists) {
+    const registrations = Object.values(indexSnap.data().registrations || {}).map((entry) => ({
+      corpsName: entry.corpsName || "Unnamed Corps",
+      corpsClass: entry.corpsClass,
+      username: entry.username,
+    }));
+    return { registrations };
+  }
+
+  // Legacy fallback (index doc absent — e.g. selections that predate the
+  // index and haven't been rebuilt yet): scan profiles, then materialize the
+  // result so this event pays the scan at most once. The nightly rebuild in
+  // the lifetime-leaderboard job replaces the doc from source-of-truth
+  // profiles regardless.
   const registrations = [];
+  const indexEntries = {};
   // Field projection: Only fetch fields needed for registration display
   const q = db.collectionGroup("profile")
     .where("activeSeasonId", "==", activeSeasonId)
@@ -176,6 +213,7 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   querySnapshot.forEach((doc) => {
     const profile = doc.data();
     const userCorps = profile.corps || {};
+    const uid = doc.ref.parent.parent?.id;
 
     for (const corpsClass in userCorps) {
       const corps = userCorps[corpsClass];
@@ -187,9 +225,23 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
           corpsClass: corpsClass,
           username: profile.username,
         });
+        if (uid) {
+          indexEntries[registrationEntryKey(uid, corpsClass)] = {
+            uid,
+            corpsClass,
+            corpsName: corps.corpsName || "Unnamed Corps",
+            username: profile.username || null,
+          };
+        }
       }
     }
   });
+
+  try {
+    await indexRef.set({ week, eventName, date, registrations: indexEntries });
+  } catch (indexError) {
+    logger.warn("Could not materialize show-registration index doc:", indexError);
+  }
 
   return { registrations: registrations };
 });

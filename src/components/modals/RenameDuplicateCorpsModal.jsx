@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';

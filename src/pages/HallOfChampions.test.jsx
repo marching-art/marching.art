@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Verifies the two behaviors changed for the SoundSport / mobile-nav work:
 //   1. A SoundSport "Best in Show" division is surfaced in the Hall of Champions.
 //   2. The season list stays reachable — selecting a season and then going

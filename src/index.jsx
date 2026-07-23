@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';

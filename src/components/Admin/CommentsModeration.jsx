@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/CommentsModeration.jsx
 // Admin interface for moderating article comments
 // Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised
