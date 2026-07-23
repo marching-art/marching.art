@@ -58,6 +58,11 @@ on:
         required: false
         default: false
         type: boolean
+      set_discord_webhook_url:
+        description: 'One-off: push the DISCORD_SCORES_WEBHOOK_URL repo secret into Google Secret Manager (check on the FIRST deploy after the Discord score-drop stage landed — the scoring functions declare the secret and will not deploy until it exists — and when rotating the webhook; then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # Gate: every deploy path that ships function code must pass the functions
@@ -175,6 +180,29 @@ jobs:
           printf '%s' "$SCRAPER_API_KEY" | \
             firebase functions:secrets:set SCRAPER_API_KEY --data-file - --project marching-art
           echo "SCRAPER_API_KEY written to Secret Manager; the deploy below will bind it to the functions."
+
+      # Same mechanism for the Discord score-drop webhook (helpers/scoreDrop.js).
+      # The nightly scoring functions declare `secrets: [discordScoresWebhookUrl]`,
+      # so this secret MUST exist in Secret Manager before the first deploy that
+      # includes the Discord stage — check this box on that deploy. Afterwards
+      # it's only needed again to rotate the webhook URL.
+      - name: Set DISCORD_SCORES_WEBHOOK_URL in Secret Manager
+        if: ${{ inputs.set_discord_webhook_url }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DISCORD_SCORES_WEBHOOK_URL: ${{ secrets.DISCORD_SCORES_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_SCORES_WEBHOOK_URL" ]; then
+            echo "::error::set_discord_webhook_url was checked but the DISCORD_SCORES_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
+            exit 1
+          fi
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          printf '%s' "$DISCORD_SCORES_WEBHOOK_URL" | \
+            firebase functions:secrets:set DISCORD_SCORES_WEBHOOK_URL --data-file - --project marching-art
+          echo "DISCORD_SCORES_WEBHOOK_URL written to Secret Manager; the deploy below will bind it to the scoring functions."
 
       - name: Deploy Firestore rules + all functions
         env:
