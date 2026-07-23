@@ -15,7 +15,7 @@
 // already stores as geScore/visualScore/musicScore/totalScore — are ever
 // exposed here. The DATA block is built to contain nothing finer than that.
 
-const { Type } = require("@google/genai");
+const { Type } = require("./newsArticleShared");
 const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,

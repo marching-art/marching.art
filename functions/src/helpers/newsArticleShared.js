@@ -10,6 +10,23 @@ const { uploadFromUrl, getContextualPlaceholder } = require("./mediaService");
 // CONSTANTS
 // =============================================================================
 
+// Mirror of @google/genai's Type enum (plain strings, verified by a unit
+// test against the real SDK). The article schema literals reference these
+// dozens of times at module load; importing the enum from the SDK pulled the
+// entire @google/genai package into EVERY function's cold start, since
+// index.js loads all modules. Only the generation calls need the SDK itself
+// (required lazily in geminiService).
+const Type = {
+  TYPE_UNSPECIFIED: "TYPE_UNSPECIFIED",
+  STRING: "STRING",
+  NUMBER: "NUMBER",
+  INTEGER: "INTEGER",
+  BOOLEAN: "BOOLEAN",
+  ARRAY: "ARRAY",
+  OBJECT: "OBJECT",
+  NULL: "NULL",
+};
+
 const ARTICLE_TYPES = {
   // The 5 daily articles - aligned with DCI.org style
   DCI_DAILY: "dci_daily",             // Article 1: DCI scores analysis from the day (with score breakdown)
@@ -230,6 +247,7 @@ function getCategoryFromType(articleType) {
 module.exports = {
   NEWS_CATEGORIES,
   getCategoryFromType,
+  Type,
   ARTICLE_TYPES,
   NEWS_INTEGRITY_RULES,
   formatFantasyEventName,

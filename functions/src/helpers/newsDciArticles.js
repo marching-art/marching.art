@@ -1,7 +1,7 @@
 // The three nightly DCI articles: scores analysis, corps feature, and the
 // weekly caption recap. Extracted verbatim from newsGeneration.js.
 
-const { Type } = require("@google/genai");
+const { Type } = require("./newsArticleShared");
 const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,

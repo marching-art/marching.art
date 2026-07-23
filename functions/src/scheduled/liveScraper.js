@@ -1,7 +1,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const cheerio = require("cheerio");
+// cheerio is required lazily (cold-start weight; only the scrape path parses HTML).
 const { scrapeDciScoresLogic, finalScoresToRecapUrl } = require("../helpers/scraping");
 const { dciFetch, scraperApiKey } = require("../helpers/dciFetch");
 const { competitionDayToDateUTC } = require("../helpers/scheduleGeneration");
@@ -19,7 +19,7 @@ const SCORES_LIST_URL = "https://www.dci.org/scores/";
  */
 async function fetchScoresListing() {
   const data = await dciFetch(SCORES_LIST_URL);
-  const $ = cheerio.load(data);
+  const $ = require("cheerio").load(data);
 
   const listedEvents = [];
   $("a[href*=\"/scores/final-scores/\"]").each((_i, el) => {
