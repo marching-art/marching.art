@@ -1,5 +1,13 @@
 name: Deploy Cloud Functions
 
+# ROLLBACK: every successful full/single deploy pushes a `functions-deploy/*`
+# tag pointing at the exact deployed ref. To roll back a bad deploy, run this
+# workflow again with "Use workflow from" set to the previous
+# functions-deploy/* tag (workflow_dispatch accepts tags as the ref) and
+# deploy_target=all — the test gates run against that ref like any deploy,
+# and `firebase deploy` re-diffs source so only the changed functions
+# redeploy. List tags: `git tag -l 'functions-deploy/*' | sort | tail`.
+
 on:
   # Manual trigger from GitHub UI with options
   workflow_dispatch:
@@ -134,6 +142,9 @@ jobs:
   deploy-all:
     if: inputs.deploy_target == 'all'
     needs: [test-functions, test-rules]
+    # contents: write is for the functions-deploy/* rollback tag push only.
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     # Batched function deploys are paced to stay under the Cloud Run
     # write-per-minute quota, so a full deploy of every changed function can
@@ -255,9 +266,24 @@ jobs:
 
           echo "All functions and Firestore rules deployed successfully!"
 
+      # Rollback affordance: tag the exact ref that just shipped so "the last
+      # known-good deploy" is always discoverable. See the ROLLBACK note at
+      # the top of this file.
+      - name: Tag deployed ref
+        run: |
+          TAG="functions-deploy/$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Full functions deploy (run ${{ github.run_id }})"
+          git push origin "$TAG"
+          echo "Tagged this deploy as $TAG. To roll back, re-run the workflow from the previous functions-deploy/* tag."
+
   deploy-single:
     if: inputs.deploy_target == 'single' && inputs.function_names != ''
     needs: test-functions
+    # contents: write is for the functions-deploy/* rollback tag push only.
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -287,6 +313,17 @@ jobs:
 
           echo "Deploying functions: ${{ inputs.function_names }}"
           firebase deploy --only "$FUNCTIONS" --force --project marching-art
+
+      # Single deploys get tagged too — a bad hotfix needs the same paper
+      # trail. The tag message records which functions shipped.
+      - name: Tag deployed ref
+        run: |
+          TAG="functions-deploy/$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Single-function deploy: ${{ inputs.function_names }} (run ${{ github.run_id }})"
+          git push origin "$TAG"
+          echo "Tagged this deploy as $TAG."
 
           rm -f /tmp/sa-key.json
           echo "Deployment successful!"
