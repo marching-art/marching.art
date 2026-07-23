@@ -34,6 +34,7 @@ const CLASS_LABELS = {
   openClass: "Open Class",
   aClass: "A Class",
   soundSport: "SoundSport",
+  podiumClass: "Podium",
 };
 
 const SCORES_URL = "https://marching.art/scores";

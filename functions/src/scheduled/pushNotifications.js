@@ -16,6 +16,7 @@ const {
 const { getCurrentSeasonWeek, getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { buildScoreDropPushes } = require("../helpers/scoreDrop");
+const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
 
 /**
  * Send show reminder push notifications
@@ -346,6 +347,84 @@ exports.scoreDropPushJob = onSchedule(
       );
     } catch (error) {
       logger.error("Error in score-drop push job:", error);
+    }
+  }
+);
+
+/**
+ * Send lineup-deadline reminder push notifications.
+ *
+ * Runs daily at 4:00 PM ET; helpers/lineupReminders.js decides whether a
+ * caption-change lock lands tonight (the ~8 PM ET day boundary) and, if so,
+ * which directors still have changes to lose: the end of Day 14's unlimited
+ * period, the Saturday closes of days 21-42, and each Championship Week
+ * day's close for the classes still competing. Directors with no changes
+ * left are never pinged, and on non-lock days the job exits before touching
+ * any profile.
+ */
+exports.lineupLockReminderPushJob = onSchedule(
+  {
+    schedule: "every day 16:00",
+    timeZone: "America/New_York",
+    // Scans every in-season profile on lock nights — same scaling rationale
+    // as showReminderPushJob above.
+    timeoutSeconds: 540,
+    memory: "256MiB",
+  },
+  async () => {
+    logger.info("Running lineup lock reminder push job");
+
+    try {
+      const db = admin.firestore();
+
+      const seasonDoc = await db.doc("game-settings/season").get();
+      const season = seasonDoc.exists ? seasonDoc.data() : null;
+      if (!season?.seasonUid || !season?.schedule?.startDate) {
+        logger.info("No active season, skipping lineup reminders");
+        return;
+      }
+
+      const context = getLineupLockContext(season);
+      if (!context) {
+        logger.info("No caption-change lock tonight, skipping lineup reminders");
+        return;
+      }
+
+      const profilesSnapshot = await db
+        .collectionGroup("profile")
+        .where("activeSeasonId", "==", season.seasonUid)
+        .get();
+
+      const profiles = profilesSnapshot.docs.map((doc) => ({
+        uid: doc.ref.parent.parent?.id,
+        corps: doc.data().corps || {},
+      }));
+
+      const pushes = buildLineupLockPushes(context, profiles, season.seasonUid);
+
+      const PARALLEL_LIMIT = 25;
+      let totalSent = 0;
+      for (let i = 0; i < pushes.length; i += PARALLEL_LIMIT) {
+        const chunk = pushes.slice(i, i + PARALLEL_LIMIT);
+        const results = await Promise.allSettled(
+          chunk.map((push) =>
+            sendPushNotification(
+              push.uid,
+              { title: push.title, body: push.body, url: push.url },
+              PUSH_TYPES.LINEUP_REMINDER,
+              push.data
+            )
+          )
+        );
+        totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
+      }
+
+      logger.info(
+        `Lineup lock reminder job complete (${context.phase}, locks ${context.lockTimeLabel}): ` +
+          `sent ${totalSent} of ${pushes.length} candidate notifications.`
+      );
+    } catch (error) {
+      logger.error("Error in lineup lock reminder push job:", error);
     }
   }
 );

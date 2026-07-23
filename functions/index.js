@@ -166,6 +166,7 @@ const {
   showReminderPushJob,
   weeklyMatchupPushJob,
   scoreDropPushJob,
+  lineupLockReminderPushJob,
 } = require("./src/scheduled/pushNotifications");
 const {
   autoPublishScheduledSubmissions,
@@ -411,6 +412,7 @@ module.exports = {
   showReminderPushJob,
   weeklyMatchupPushJob,
   scoreDropPushJob,
+  lineupLockReminderPushJob,
 
   // Push Triggers
   onLeagueMemberJoined,

@@ -15,6 +15,7 @@ const PUSH_TYPES = {
   LEAGUE_ACTIVITY: "league_activity",
   TRADE_PROPOSAL: "trade_proposal",
   SHOW_REMINDER: "show_reminder",
+  LINEUP_REMINDER: "lineup_reminder",
 };
 
 // Preference field mapping
@@ -25,6 +26,7 @@ const PUSH_PREFERENCE_MAP = {
   [PUSH_TYPES.LEAGUE_ACTIVITY]: "leagueActivity",
   [PUSH_TYPES.TRADE_PROPOSAL]: "tradeProposal",
   [PUSH_TYPES.SHOW_REMINDER]: "showReminder",
+  [PUSH_TYPES.LINEUP_REMINDER]: "lineupReminder",
 };
 
 /**

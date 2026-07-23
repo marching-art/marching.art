@@ -270,6 +270,7 @@ export interface PushPreferences {
   leagueActivity?: boolean;
   tradeProposal?: boolean;
   showReminder?: boolean;
+  lineupReminder?: boolean;
 }
 
 export type PushNotificationType =
@@ -278,4 +279,5 @@ export type PushNotificationType =
   | 'score_update'
   | 'league_activity'
   | 'trade_proposal'
-  | 'show_reminder';
+  | 'show_reminder'
+  | 'lineup_reminder';

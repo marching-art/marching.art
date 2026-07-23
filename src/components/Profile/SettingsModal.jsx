@@ -121,6 +121,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     leagueActivity: true,
     tradeProposal: true,
     showReminder: true,
+    lineupReminder: true,
   });
   const [pushSupported, setPushSupported] = useState(false);
   const [pushPermission, setPushPermission] = useState('default');
@@ -196,6 +197,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
           leagueActivity: push.leagueActivity ?? true,
           tradeProposal: push.tradeProposal ?? true,
           showReminder: push.showReminder ?? true,
+          lineupReminder: push.lineupReminder ?? true,
         });
       }
     } catch (error) {
@@ -654,6 +656,22 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                         description="When results are posted"
                         checked={pushPrefs.matchupResult}
                         onChange={(e) => updatePushPref('matchupResult', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Score Drop"
+                        description="Morning after your corps performs"
+                        checked={pushPrefs.scoreUpdate}
+                        onChange={(e) => updatePushPref('scoreUpdate', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Lineup Deadline"
+                        description="Before caption changes lock"
+                        checked={pushPrefs.lineupReminder}
+                        onChange={(e) => updatePushPref('lineupReminder', e.target.checked)}
                       />
                     </div>
                     <div className="px-3">
