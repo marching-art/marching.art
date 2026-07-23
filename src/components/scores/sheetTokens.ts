@@ -1,5 +1,5 @@
 // Style tokens + pure helpers for the shared score sheets. Kept separate from
-// SheetPrimitives.jsx (which exports the React components) so each file exports
+// SheetPrimitives.tsx (which exports the React components) so each file exports
 // a single kind of thing — this keeps React Fast Refresh happy and gives the
 // non-component constants a stable, dependency-free home.
 
@@ -17,24 +17,39 @@ export const TOTAL_W = 'w-[52px]';
 // placement count (e.g. "▲12") without wrapping.
 export const TREND_W = 'w-8';
 
+export interface SortOption {
+  id: string;
+  label: string;
+}
+
 // Caption Leaders sorting (§5.4): the fantasy classes sort by the CONDENSED
 // captions only (GE/VIS/MUS) — per-caption detail stays Podium-exclusive so
 // lineups can't be harvested from the sheet.
-export const STANDINGS_SORTS = [
+export const STANDINGS_SORTS: SortOption[] = [
   { id: 'total', label: 'Score' },
   { id: 'GE', label: 'GE' },
   { id: 'VIS', label: 'VIS' },
   { id: 'MUS', label: 'MUS' },
 ];
 
+export interface CaptionTriple {
+  ge: number | null;
+  vis: number | null;
+  mus: number | null;
+}
+
 // Highest GE/VIS/MUS across a set of caption breakdowns (box-toppers).
-export const captionTops = (list) => {
-  const tops = { ge: null, vis: null, mus: null };
+export const captionTops = (
+  list: Array<Partial<CaptionTriple> | null | undefined>
+): CaptionTriple => {
+  const tops: CaptionTriple = { ge: null, vis: null, mus: null };
   for (const caps of list) {
     if (!caps) continue;
-    for (const key of ['ge', 'vis', 'mus']) {
-      if (caps[key] != null && (tops[key] == null || caps[key] > tops[key])) {
-        tops[key] = caps[key];
+    for (const key of ['ge', 'vis', 'mus'] as const) {
+      const value = caps[key];
+      const current = tops[key];
+      if (value != null && (current == null || value > current)) {
+        tops[key] = value;
       }
     }
   }

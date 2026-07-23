@@ -8,7 +8,7 @@
 // can flash a transient "Copied" state. A native share (or a dismissed/blocked
 // share sheet) returns `false` — there is nothing to acknowledge.
 
-export async function shareOrCopy(text) {
+export async function shareOrCopy(text: string): Promise<boolean> {
   if (!text) return false;
   try {
     if (typeof navigator !== 'undefined' && navigator.share && /Mobi/i.test(navigator.userAgent)) {

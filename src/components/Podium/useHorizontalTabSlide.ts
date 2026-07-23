@@ -12,9 +12,9 @@ import { useEffect, useRef } from 'react';
  * the strip re-centers. Only `scrollLeft` is touched, so the page never jumps
  * vertically.
  */
-export function useHorizontalTabSlide(dep) {
-  const containerRef = useRef(null);
-  const selectedRef = useRef(null);
+export function useHorizontalTabSlide(dep: unknown) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const selectedRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;

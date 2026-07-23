@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed
 // Shared score-sheet primitives — the single source of truth for the DCI-style
 // box-score look used by BOTH the Fantasy sheets (pages/ScoresParts) and the
 // Podium Class sheets (components/Podium/*). Promoted out of ScoresParts so the
@@ -10,14 +9,16 @@
 // across every row and card while the corps column flexes and truncates — the
 // key to a box-score look that never forces horizontal scroll on mobile.
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Share2, Check, MapPin } from 'lucide-react';
 import { TeamAvatar } from '../ui/TeamAvatar';
 import { shareOrCopy } from '../../utils/shareSheet';
 import { CAP_W, TOTAL_W, GOLD } from './sheetTokens';
+import type { SortOption } from './sheetTokens';
 
-export const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
+export const BlueRibbonIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     {/* Ribbon circle/badge */}
     <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
@@ -35,7 +36,15 @@ export const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
 );
 
 // Per-sheet masthead — event name left, location/date right, hairline underline.
-export const SheetMasthead = ({ title, location, date }) => (
+export const SheetMasthead = ({
+  title,
+  location,
+  date,
+}: {
+  title?: ReactNode;
+  location?: string | null;
+  date?: string | null;
+}) => (
   <div className="flex items-baseline justify-between gap-2 border-b border-line-muted pb-1.5">
     <div className="text-[13px] font-bold text-white truncate min-w-0">{title}</div>
     {(location || date) && (
@@ -54,7 +63,15 @@ export const SheetMasthead = ({ title, location, date }) => (
 
 // Column-header row for the flex box scores. `active` gold-highlights the
 // caption currently being sorted on.
-export const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) => (
+export const BoxScoreHead = ({
+  active,
+  totalLabel = 'Total',
+  trailing = null,
+}: {
+  active?: string | null;
+  totalLabel?: string;
+  trailing?: ReactNode;
+}) => (
   <div className="flex items-center gap-2 px-1 pb-1.5 border-b border-line text-[9px] uppercase tracking-wider">
     <span className="flex-1 min-w-0 text-muted">Pl · Corps</span>
     <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -70,7 +87,23 @@ export const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) 
 );
 
 // Place · avatar · corps name · director credit (linked).
-export const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }) => (
+export const CorpsIdentity = ({
+  place,
+  name,
+  isMine,
+  displayName,
+  uid,
+  tag,
+  avatarUrl,
+}: {
+  place?: ReactNode;
+  name?: string | null;
+  isMine?: boolean;
+  displayName?: string | null;
+  uid?: string | null;
+  tag?: ReactNode;
+  avatarUrl?: string | null;
+}) => (
   <div className="flex-1 min-w-0 flex items-center gap-2">
     <span className="text-[11px] text-muted tabular-nums flex-shrink-0">{place}.</span>
     <TeamAvatar name={name} logoUrl={avatarUrl} size="xs" />
@@ -100,7 +133,17 @@ export const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avat
 
 // A single GE/VIS/MUS value — gold + bold when it's the box-topper for its
 // column, white when it's the active sort, muted otherwise.
-export const CaptionValue = ({ value, isTop, active, width = CAP_W }) => (
+export const CaptionValue = ({
+  value,
+  isTop,
+  active,
+  width = CAP_W,
+}: {
+  value?: number | null;
+  isTop?: boolean;
+  active?: boolean;
+  width?: string;
+}) => (
   <span
     className={`${width} text-right tabular-nums ${
       isTop ? `font-bold ${GOLD}` : active ? 'text-white' : 'text-secondary'
@@ -113,7 +156,7 @@ export const CaptionValue = ({ value, isTop, active, width = CAP_W }) => (
 // Wordmark / legend footer — every screenshot is an advertisement. `action`
 // renders on the right (the Share button lives here, so every sheet places it
 // in the same spot).
-export const SheetFooter = ({ note, action }) => (
+export const SheetFooter = ({ note, action }: { note?: ReactNode; action?: ReactNode }) => (
   <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-muted">
     <span className="truncate">{note}</span>
     <div className="flex items-center gap-2 flex-shrink-0">
@@ -127,7 +170,7 @@ export const SheetFooter = ({ note, action }) => (
 // places moved, or a muted dash when unchanged/unknown. Replaces the old
 // line-chart trend glyphs so every standings sheet reads the same. `delta` is
 // signed: positive = moved up.
-export const TrendIndicator = ({ delta }) => {
+export const TrendIndicator = ({ delta }: { delta?: number | null }) => {
   const d = typeof delta === 'number' ? delta : 0;
   if (!d) {
     return (
@@ -154,7 +197,15 @@ export const TrendIndicator = ({ delta }) => {
 };
 
 // Podium-style gold sort pills (shared by the standings grids).
-export const SortPills = ({ options, value, onChange }) => (
+export const SortPills = ({
+  options,
+  value,
+  onChange,
+}: {
+  options: SortOption[];
+  value: string;
+  onChange: (id: string) => void;
+}) => (
   <div className="flex items-center gap-1 flex-shrink-0">
     {options.map((opt) => (
       <button
@@ -176,7 +227,13 @@ export const SortPills = ({ options, value, onChange }) => (
 // Share/copy button — native share sheet on mobile, Discord-ready text copied to
 // the clipboard elsewhere (see utils/shareSheet). `getText` is called lazily on
 // click so the (sometimes expensive) formatting only runs when the user shares.
-export const ShareButton = ({ getText, title = 'Copy the sheet as Discord-ready text' }) => {
+export const ShareButton = ({
+  getText,
+  title = 'Copy the sheet as Discord-ready text',
+}: {
+  getText: () => string;
+  title?: string;
+}) => {
   const [copied, setCopied] = useState(false);
   return (
     <button
