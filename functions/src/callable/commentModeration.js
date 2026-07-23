@@ -5,7 +5,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { assertAdmin } = require("../helpers/callableGuards");
+const { assertAdmin, clampLimit } = require("../helpers/callableGuards");
 
 // =============================================================================
 // ADMIN MODERATION FUNCTIONS
@@ -24,7 +24,10 @@ exports.listCommentsForModeration = onCall(
     assertAdmin(request);
 
     const db = getDb();
-    const { status = "pending", limit = 50, startAfter } = request.data || {};
+    const { status = "pending", startAfter } = request.data || {};
+    // Clamp the client-supplied page size so even an admin call can't request
+    // an oversized (billable) read.
+    const limit = clampLimit(request.data?.limit, { fallback: 50, max: 100 });
 
     try {
       // Build query with where() before orderBy() for Firestore best practices

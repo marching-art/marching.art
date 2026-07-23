@@ -3,7 +3,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { assertAuth, assertAdmin, hasAdminClaim } = require("./callableGuards");
+const { assertAuth, assertAdmin, hasAdminClaim, clampLimit } = require("./callableGuards");
 
 describe("assertAuth", () => {
   test("throws unauthenticated when there is no auth context", () => {
@@ -63,5 +63,35 @@ describe("hasAdminClaim", () => {
     assert.equal(hasAdminClaim({ auth: null }), false);
     assert.equal(hasAdminClaim({}), false);
     assert.equal(hasAdminClaim({ auth: { uid: "a" } }), false);
+  });
+});
+
+describe("clampLimit", () => {
+  test("passes through an in-range integer", () => {
+    assert.equal(clampLimit(25), 25);
+  });
+
+  test("caps above max and floors below min", () => {
+    assert.equal(clampLimit(5_000_000), 100);
+    assert.equal(clampLimit(0), 1);
+    assert.equal(clampLimit(-10), 1);
+  });
+
+  test("respects custom bounds", () => {
+    assert.equal(clampLimit(9999, { max: 500 }), 500);
+    assert.equal(clampLimit(3, { min: 5 }), 5);
+  });
+
+  test("floors non-integers and coerces numeric strings", () => {
+    assert.equal(clampLimit(12.9), 12);
+    assert.equal(clampLimit("30"), 30);
+  });
+
+  test("falls back on absent / non-numeric / NaN / Infinity input", () => {
+    assert.equal(clampLimit(undefined), 50);
+    assert.equal(clampLimit(null, { fallback: 20 }), 20);
+    assert.equal(clampLimit("abc"), 50);
+    assert.equal(clampLimit(NaN), 50);
+    assert.equal(clampLimit(Infinity), 50);
   });
 });

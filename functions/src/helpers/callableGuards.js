@@ -52,4 +52,28 @@ function hasAdminClaim(request) {
   return request.auth?.token?.admin === true;
 }
 
-module.exports = { assertAuth, assertAdmin, hasAdminClaim };
+/**
+ * Coerce a client-supplied query limit into a safe integer within [1, max].
+ *
+ * Client `limit` values flow straight into Firestore `.limit()`; unvalidated,
+ * a caller can request an oversized page (a large, billable read + bloated
+ * response) or a non-integer/negative value that throws deep in the query.
+ * Non-numeric/NaN input falls back to `fallback`.
+ *
+ * @param {unknown} value - Raw request.data.limit (any type).
+ * @param {Object} [opts]
+ * @param {number} [opts.fallback=50] - Used when value is absent/invalid.
+ * @param {number} [opts.max=100] - Upper bound.
+ * @param {number} [opts.min=1] - Lower bound.
+ * @returns {number} An integer in [min, max].
+ */
+function clampLimit(value, { fallback = 50, max = 100, min = 1 } = {}) {
+  // null/undefined mean "not provided" — Number() would coerce them to 0/NaN,
+  // so short-circuit to the fallback before the numeric check.
+  if (value === null || value === undefined) return fallback;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(Math.floor(n), min), max);
+}
+
+module.exports = { assertAuth, assertAdmin, hasAdminClaim, clampLimit };

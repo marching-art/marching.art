@@ -13,7 +13,7 @@ const {
 } = require("../helpers/economy");
 const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, clampLimit } = require("../helpers/callableGuards");
 
 // =============================================================================
 // SPENDING FUNCTIONS
@@ -166,7 +166,9 @@ const syncClassUnlocks = onCall({ cors: true }, async (request) => {
  */
 const getCorpsCoinHistory = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
-  const { limit: queryLimit = 50 } = request.data || {};
+  // Clamp the client-supplied limit: unbounded, it flows into Firestore
+  // .limit() and lets a caller request an oversized (billable) page.
+  const queryLimit = clampLimit(request.data?.limit, { fallback: 50, max: 100 });
 
   const db = getDb();
   const profileRef = db.doc(paths.userProfile(uid));

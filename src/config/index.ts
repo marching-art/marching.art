@@ -101,6 +101,20 @@ export const FIREBASE_CONFIG = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 } as const;
 
+// App Check (reCAPTCHA v3/Enterprise) attestation. Entirely opt-in: App Check
+// initializes ONLY when a site key is provided, so builds without the key
+// behave exactly as before. This enables a safe, monitor-only rollout — ship
+// the key, watch the App Check metrics in the Firebase console, and flip
+// enforcement on the backend only once legitimate traffic is verified.
+// VITE_APPCHECK_DEBUG_TOKEN registers a debug token for local/emulator dev.
+export const APP_CHECK_CONFIG = {
+  recaptchaSiteKey: import.meta.env.VITE_APPCHECK_RECAPTCHA_SITE_KEY || '',
+  debugToken: import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || '',
+  get enabled(): boolean {
+    return this.recaptchaSiteKey.length > 0;
+  },
+} as const;
+
 // =============================================================================
 // GAME CONFIGURATION
 // =============================================================================
