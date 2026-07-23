@@ -63,6 +63,7 @@
     "lint:fix": "eslint . --fix",
     "census": "node scripts/designCensus.mjs",
     "census:check": "node scripts/designCensus.mjs --check",
+    "audit:check": "node scripts/auditRatchet.mjs",
     "ts-nocheck:check": "node scripts/tsNocheckCensus.mjs --check",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

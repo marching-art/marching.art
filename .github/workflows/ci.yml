@@ -133,6 +133,14 @@ jobs:
       - name: ts-nocheck ratchet
         run: npm run ts-nocheck:check
 
+      # Dependency-audit ratchet: per-manifest high+critical PRODUCTION-dep
+      # advisory counts may only fall. Fails if a PR introduces a new one, so
+      # supply-chain regressions are caught pre-merge instead of a week later by
+      # the report-only security.yml job — without sitting red on the existing
+      # debt Dependabot is already working down. Reads committed lockfiles only.
+      - name: Dependency-audit ratchet
+        run: npm run audit:check
+
   functions:
     name: Functions check + tests
     runs-on: ubuntu-latest
@@ -152,10 +160,14 @@ jobs:
       - name: Syntax-check function sources
         run: cd functions && node --check index.js && find src -name '*.js' -print0 | xargs -0 -n1 node --check
 
-      # Coverage instead of plain `npm test`: same node --test suite, plus an
-      # --experimental-test-coverage summary printed to the job log. This is
-      # informational only — no thresholds, nothing gates on it.
-      - name: Run function unit tests with coverage
+      # Coverage instead of plain `npm test`: same node --test suite, now with
+      # ratcheted minimum thresholds (--test-coverage-lines/branches/functions in
+      # the test:coverage script). The job FAILS if backend coverage drops below
+      # the floor, so an untested new branch in the scoring/economy/league code —
+      # exactly the regression class the rules suite was created to prevent — can
+      # no longer merge green. Floors sit just under current numbers; raise them
+      # when a PR lifts coverage meaningfully.
+      - name: Run function unit tests with coverage (gated)
         run: cd functions && npm run test:coverage
 
   # Firestore security-rules regression suite against the emulator. This suite
