@@ -31,7 +31,7 @@ import {
 } from '../scores/SheetPrimitives';
 import { SHEET_CARD, TOTAL_W, TREND_W, STANDINGS_SORTS, captionTops } from '../scores/sheetTokens';
 import { formatStandingsAsText } from '../../utils/scoresUtils';
-import { useHorizontalTabSlide } from './useHorizontalTabSlide';
+import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 
 // GE/VIS/MUS for one standings entry. Columns populate for days scored after the
 // processor started persisting captions; earlier ones render "—".

@@ -12,7 +12,7 @@
 
 import React, { useMemo, memo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Music, ChevronRight, MapPin, Medal, Users } from 'lucide-react';
+import { Trophy, Music, ChevronRight, MapPin, Medal, Users, Calendar } from 'lucide-react';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { formatEventName } from '../utils/season';
 import {
@@ -24,7 +24,9 @@ import {
   formatBoxScoreAsText,
   formatStandingsAsText,
   computeRankDeltas,
+  TWO_NIGHT_DAYS,
 } from '../utils/scoresUtils';
+import { useHorizontalTabSlide } from '../components/scores/useHorizontalTabSlide';
 // Shared box-score primitives — the single source of truth for the sheet look,
 // used by both these Fantasy sheets and the Podium Class sheets.
 import {
@@ -114,72 +116,98 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
 // RECAP BOX SCORE - one card per show (memoized: sibling recaps don't re-render)
 // =============================================================================
 
-const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }) => {
-  // Pre-compute all caption breakdowns once (real data only, no synthetic values)
-  const rows = useMemo(() => {
-    if (!scores || scores.length === 0) return [];
-    return scores.map((score) => ({ score, captions: getCaptionBreakdown(score) }));
-  }, [scores]);
-  const tops = useMemo(() => captionTops(rows.map((r) => r.captions)), [rows]);
+const RecapDataGrid = memo(
+  ({ scores, eventName, location, date, userCorpsName, sortBy = 'total' }) => {
+    // Pre-compute caption breakdowns + the finishing place once. `scores` arrive
+    // sorted by total desc, so index+1 is the corps's finishing place — it stays
+    // fixed even when the caller re-sorts the rows by a caption (parity with the
+    // Podium recap sheet, where the place never renumbers under a sort).
+    const rows = useMemo(() => {
+      if (!scores || scores.length === 0) return [];
+      const withPlace = scores.map((score, i) => ({
+        score,
+        captions: getCaptionBreakdown(score),
+        place: i + 1,
+      }));
+      if (sortBy === 'total') return withPlace;
+      const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
+      if (!key) return withPlace;
+      return [...withPlace].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
+    }, [scores, sortBy]);
+    const tops = useMemo(() => captionTops(rows.map((r) => r.captions)), [rows]);
+    const activeCap = sortBy === 'total' ? null : sortBy;
 
-  const shareText = () =>
-    formatBoxScoreAsText(
-      { title: formatEventName(eventName), location, date },
-      rows.map(({ score, captions }, idx) => ({
-        place: idx + 1,
-        corpsName: score.corpsName || score.corps,
-        total: score.score ?? score.totalScore ?? 0,
-        captions,
-      }))
-    );
+    const shareText = () =>
+      formatBoxScoreAsText(
+        { title: formatEventName(eventName), location, date },
+        rows.map(({ score, captions, place }) => ({
+          place,
+          corpsName: score.corpsName || score.corps,
+          total: score.score ?? score.totalScore ?? 0,
+          captions,
+        }))
+      );
 
-  if (!scores || scores.length === 0) return null;
+    if (!scores || scores.length === 0) return null;
 
-  return (
-    <div className={`${SHEET_CARD} space-y-2.5`}>
-      <SheetMasthead title={formatEventName(eventName)} location={location} date={date} />
-      <BoxScoreHead />
-      <div>
-        {rows.map(({ score, captions }, idx) => {
-          const isUserCorps =
-            userCorpsName &&
-            (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
-              score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
+    return (
+      <div className={`${SHEET_CARD} space-y-2.5`}>
+        <SheetMasthead title={formatEventName(eventName)} location={location} date={date} />
+        <BoxScoreHead active={activeCap} />
+        <div>
+          {rows.map(({ score, captions, place }) => {
+            const isUserCorps =
+              userCorpsName &&
+              (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
+                score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
 
-          return (
-            <div
-              key={idx}
-              className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
-                isUserCorps ? 'bg-interactive/10' : ''
-              }`}
-            >
-              <CorpsIdentity
-                place={idx + 1}
-                name={score.corpsName || score.corps}
-                isMine={isUserCorps}
-                displayName={score.displayName}
-                uid={score.uid}
-                avatarUrl={score.avatarUrl}
-              />
-              <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
-                <CaptionValue value={captions?.ge} isTop={captions?.ge === tops.ge} />
-                <CaptionValue value={captions?.vis} isTop={captions?.vis === tops.vis} />
-                <CaptionValue value={captions?.mus} isTop={captions?.mus === tops.mus} />
-                <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
-                  {(score.score || score.totalScore || 0).toFixed(3)}
-                </span>
+            return (
+              <div
+                key={score.uid || score.corpsName || place}
+                className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
+                  isUserCorps ? 'bg-interactive/10' : ''
+                }`}
+              >
+                <CorpsIdentity
+                  place={place}
+                  name={score.corpsName || score.corps}
+                  isMine={isUserCorps}
+                  displayName={score.displayName}
+                  uid={score.uid}
+                  avatarUrl={score.avatarUrl}
+                />
+                <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
+                  <CaptionValue
+                    value={captions?.ge}
+                    isTop={captions?.ge === tops.ge}
+                    active={activeCap === 'GE'}
+                  />
+                  <CaptionValue
+                    value={captions?.vis}
+                    isTop={captions?.vis === tops.vis}
+                    active={activeCap === 'VIS'}
+                  />
+                  <CaptionValue
+                    value={captions?.mus}
+                    isTop={captions?.mus === tops.mus}
+                    active={activeCap === 'MUS'}
+                  />
+                  <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
+                    {(score.score || score.totalScore || 0).toFixed(3)}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        <SheetFooter
+          note="GE/VIS/MUS shown · box-toppers in gold"
+          action={<ShareButton getText={shareText} />}
+        />
       </div>
-      <SheetFooter
-        note="GE/VIS/MUS shown · box-toppers in gold"
-        action={<ShareButton getText={shareText} />}
-      />
-    </div>
-  );
-});
+    );
+  }
+);
 
 // =============================================================================
 // TWO-NIGHT COMBINED STANDINGS — the Eastern Classic (days 41-42, §5.11).
@@ -309,6 +337,115 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
     </div>
   );
 });
+
+// =============================================================================
+// FANTASY RECAPS VIEW — day tabs + one sort control, mirroring the Podium Class
+// recap sheet. Shows are grouped by competition day; a day selector (auto-
+// sliding to the latest, like Podium) picks the day, and a single sort bar
+// (Score/GE/VIS/MUS) reorders every box score on that day at once.
+// =============================================================================
+
+const FantasyRecapsView = ({ shows, userCorpsName }) => {
+  const [sortBy, setSortBy] = useState('total');
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  // Distinct competition days present in the data, oldest → newest (the tab
+  // order). Shows carry `offSeasonDay`; guard against any that don't.
+  const days = useMemo(() => {
+    const set = new Set();
+    (shows || []).forEach((s) => {
+      if (typeof s.offSeasonDay === 'number') set.add(s.offSeasonDay);
+    });
+    return [...set].sort((a, b) => a - b);
+  }, [shows]);
+
+  // Default to the latest day; fall back if the selected day drops out of the
+  // data (e.g. switching seasons). Derived (not stored) so there's no empty
+  // first frame — mirrors PodiumRecapSheet's `selected` handling.
+  const activeDay =
+    selectedDay != null && days.includes(selectedDay)
+      ? selectedDay
+      : (days[days.length - 1] ?? null);
+
+  const { containerRef: dayStripRef, selectedRef: selectedDayRef } = useHorizontalTabSlide(
+    `${activeDay}:${days.length}`
+  );
+
+  const dayShows = useMemo(
+    () => (shows || []).filter((s) => s.offSeasonDay === activeDay),
+    [shows, activeDay]
+  );
+
+  if (!shows || days.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
+        <p className="text-muted text-sm">No recent shows</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 md:p-4 space-y-3">
+      {/* Day selector — auto-slides so the highlighted day stays visible */}
+      {days.length > 1 && (
+        <div ref={dayStripRef} className="flex gap-1 overflow-x-auto scrollbar-hide">
+          {days.map((day) => (
+            <button
+              key={day}
+              ref={day === activeDay ? selectedDayRef : null}
+              onClick={() => setSelectedDay(day)}
+              className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-none tabular-nums transition-colors press-feedback ${
+                day === activeDay
+                  ? 'bg-interactive text-white'
+                  : 'text-muted hover:text-white hover:bg-white/5 border border-line'
+              }`}
+            >
+              D{day}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* One sort control for the day's box scores (parity with the Podium sheet) */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+          <span className="text-[9px] uppercase tracking-wider text-muted pr-1 flex-shrink-0">
+            Sort
+          </span>
+          <SortPills options={STANDINGS_SORTS} value={sortBy} onChange={setSortBy} />
+        </div>
+        <div className="text-[9px] uppercase tracking-wider text-secondary font-bold flex-shrink-0">
+          Recaps
+        </div>
+      </div>
+
+      {/* Eastern Classic combined standings — only on the two-night days */}
+      {TWO_NIGHT_DAYS.includes(activeDay) && (
+        <EasternCombinedSheet shows={shows} userCorpsName={userCorpsName} />
+      )}
+
+      {dayShows.length > 0 ? (
+        dayShows.map((show, idx) => (
+          <RecapDataGrid
+            key={show.eventName || idx}
+            scores={show.scores}
+            eventName={show.eventName}
+            location={show.location}
+            date={show.date}
+            userCorpsName={userCorpsName}
+            sortBy={sortBy}
+          />
+        ))
+      ) : (
+        <div className="p-8 text-center">
+          <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
+          <p className="text-muted text-sm">No shows on this day</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // =============================================================================
 // SOUNDSPORT MEDAL LIST - GROUPED BY EVENT (rating-based, no numeric scores)
@@ -634,6 +771,7 @@ export {
   PillTabControl,
   RecapDataGrid,
   EasternCombinedSheet,
+  FantasyRecapsView,
   SoundSportMedalList,
   ClassStandingsGrid,
 };
