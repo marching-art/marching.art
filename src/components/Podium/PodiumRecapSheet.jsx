@@ -16,6 +16,7 @@ import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
 import { TeamAvatar } from '../ui/TeamAvatar';
 import { ShareButton } from '../scores/SheetPrimitives';
+import { SHEET_CARD } from '../scores/sheetTokens';
 import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
@@ -62,25 +63,23 @@ function sortResults(results, sortBy) {
 }
 
 /**
- * Format a recap day as a monospace text sheet — pastes cleanly into Discord
- * (wrap in a code block) and group chats, the way FMA recaps circulated.
+ * Format a single show as a monospace text sheet — pastes cleanly into Discord
+ * (wrap in a code block) and group chats, the way FMA recaps circulated. One
+ * block per show, matching the per-show cards on screen.
  */
-function formatRecapAsText(recap, day, seasonName) {
+function formatShowAsText(show, day, seasonName) {
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
-  const lines = [];
-  for (const show of showsOf(recap)) {
-    const head = fallbackMasthead(day);
+  const head = fallbackMasthead(day);
+  const lines = [
+    `${show.eventName || head.name}${show.location ? ` — ${show.location}` : ''} · Day ${day} of 49`,
+    '',
+  ];
+  for (const row of [...(show.results || [])].sort((a, b) => a.place - b.place)) {
     lines.push(
-      `${show.eventName || head.name}${show.location ? ` — ${show.location}` : ''} · Day ${day} of 49`
+      `${String(row.place).padStart(2)}. ${(row.corpsName || 'Unknown').padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
     );
-    lines.push('');
-    for (const row of [...(show.results || [])].sort((a, b) => a.place - b.place)) {
-      lines.push(
-        `${String(row.place).padStart(2)}. ${(row.corpsName || 'Unknown').padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
-      );
-    }
-    lines.push('');
   }
+  lines.push('');
   lines.push(`marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Class`);
   return '```\n' + lines.join('\n') + '\n```';
 }
@@ -126,7 +125,10 @@ function SortBar({ sortBy, onChange }) {
   );
 }
 
-function ShowTable({ show, day, sortBy, userCorpsName }) {
+// One show = one card (matching the fantasy recap cards): its own frame,
+// masthead, box score, and footer/share. The day's sort control lives above
+// the cards, so a card is a pure box score.
+function ShowCard({ show, day, sortBy, seasonName, userCorpsName }) {
   const results = useMemo(() => sortResults(show.results || [], sortBy), [show.results, sortBy]);
   const tops = useBoxToppers(results);
   const showDivisionTag = useMemo(
@@ -137,7 +139,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
   const head = fallbackMasthead(day);
 
   return (
-    <div className="space-y-2">
+    <div className={`${SHEET_CARD} space-y-2.5`}>
       {/* Per-show masthead */}
       <div className="flex items-baseline justify-between border-b border-line-muted pb-1.5">
         <div className="text-[13px] font-bold text-white truncate">
@@ -254,6 +256,20 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
           </tbody>
         </table>
       </div>
+
+      {/* Wordmark footer + per-show share — same spot as the fantasy cards */}
+      <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-muted">
+        <span className="truncate">
+          Box-toppers in <span className="text-brand font-bold">gold</span> · full captions — Podium
+          Class only
+        </span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <ShareButton getText={() => formatShowAsText(show, day, seasonName)} />
+          <span className="font-bold text-muted">
+            marching.art{seasonName ? ` · ${seasonName}` : ''}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -338,55 +354,47 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
         ))}
       </div>
 
-      {/* The sheet — one box score per show */}
-      <div className="bg-surface-card border border-line rounded-none p-4 space-y-4">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <SortBar sortBy={sortBy} onChange={setSortBy} />
-          <div className="text-[9px] uppercase tracking-wider text-secondary font-bold flex-shrink-0">
-            Official Recap
-          </div>
-        </div>
-
-        {shows.length === 0 ? (
-          <div className="text-[11px] text-muted">No shows scored on Day {selected.day}.</div>
-        ) : (
-          shows.map((show, idx) => (
-            <ShowTable
-              key={show.eventName || idx}
-              show={show}
-              day={selected.day}
-              sortBy={sortBy}
-              userCorpsName={userCorpsName}
-            />
-          ))
-        )}
-
-        {/* Joint-rehearsal feed lines (§5.12): public smoke, private fire —
-            who shared a floor, never the scrimmage numbers. */}
-        {(selected.recap.jointRehearsals || []).map((item, idx) => (
-          <div key={idx} className="text-[10px] text-muted italic">
-            {item.corpsA} and {item.corpsB} held a joint rehearsal
-            {item.city ? ` in ${item.city}` : ''}.
-          </div>
-        ))}
-
-        {/* Wordmark footer — every screenshot is an advertisement. Share lives
-            here (same spot as the fantasy sheets) for a uniform experience. */}
-        <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-muted">
-          <span className="truncate">
-            Box-toppers in <span className="text-brand font-bold">gold</span> · full captions —
-            Podium Class only
-          </span>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <ShareButton
-              getText={() => formatRecapAsText(selected.recap, selected.day, seasonName)}
-            />
-            <span className="font-bold text-muted">
-              marching.art{seasonName ? ` · ${seasonName}` : ''}
-            </span>
-          </div>
+      {/* Sort control — outside the frames, like the fantasy tab */}
+      <div className="flex items-center justify-between gap-2">
+        <SortBar sortBy={sortBy} onChange={setSortBy} />
+        <div className="text-[9px] uppercase tracking-wider text-secondary font-bold flex-shrink-0">
+          Official Recap
         </div>
       </div>
+
+      {/* One framed card per show (matching the fantasy recap cards) */}
+      {shows.length === 0 ? (
+        <div className="p-8 text-center text-[11px] text-muted">
+          No shows scored on Day {selected.day}.
+        </div>
+      ) : (
+        shows.map((show, idx) => (
+          <ShowCard
+            key={show.eventName || idx}
+            show={show}
+            day={selected.day}
+            sortBy={sortBy}
+            seasonName={seasonName}
+            userCorpsName={userCorpsName}
+          />
+        ))
+      )}
+
+      {/* Joint-rehearsal feed (§5.12): public smoke, private fire — who shared a
+          floor, never the scrimmage numbers. Its own frame, below the shows. */}
+      {(selected.recap.jointRehearsals || []).length > 0 && (
+        <div className={`${SHEET_CARD} space-y-1`}>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-muted">
+            Joint Rehearsals
+          </div>
+          {selected.recap.jointRehearsals.map((item, idx) => (
+            <div key={idx} className="text-[10px] text-muted italic">
+              {item.corpsA} and {item.corpsB} held a joint rehearsal
+              {item.city ? ` in ${item.city}` : ''}.
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
