@@ -1,25 +1,28 @@
 // @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 const admin = require("firebase-admin");
 const { setGlobalOptions } = require("firebase-functions/v2");
-const { defineBoolean } = require("firebase-functions/params");
 admin.initializeApp();
 
 // Configure Firestore to ignore undefined properties
 const db = admin.firestore();
 db.settings({ ignoreUndefinedProperties: true });
 
-// App Check enforcement for every callable, as a deploy-time parameter. The
-// client already attests (src/api/client.ts initializes reCAPTCHA v3 App
-// Check "IfConfigured") but no callable verified the token, so any script
-// holding a Firebase auth token could invoke the full callable surface.
-// Rollout is deliberately a config flip, not a code change: set
-// ENFORCE_APP_CHECK=true in functions/.env.<project> (or at deploy) once the
-// Firebase console's App Check metrics show clients attesting cleanly —
-// flipping it blind would lock out users on stale cached bundles. The
-// runtime resolves this params Expression per request; onRequest endpoints
-// (news feed, webhooks, scraper) and event triggers are unaffected.
-const enforceAppCheckParam = defineBoolean("ENFORCE_APP_CHECK", { default: false });
-setGlobalOptions({ enforceAppCheck: enforceAppCheckParam });
+// App Check enforcement for every callable. `false` = current behavior:
+// callables require auth but do not verify App Check attestation. The client
+// already attests (src/api/client.ts initializes reCAPTCHA v3 App Check
+// "IfConfigured"), so the rollout is: watch the Firebase console's App Check
+// metrics for Functions until real traffic shows as verified, then change
+// this literal to `true` and run a full deploy — flipping it blind would
+// lock out users on stale cached bundles. onRequest endpoints (news feed,
+// webhooks, scraper) and event triggers are unaffected either way.
+//
+// NOTE: deliberately a plain literal, NOT a defineBoolean param. The SDK
+// resolves enforceAppCheck during deploy DISCOVERY (params.X.value()
+// warnings, once per callable), and the CLI then hard-fails non-interactive
+// deploys unless the param has a dotenv value — a params-based flip broke
+// the deploy workflow exactly that way. A one-line literal is just as easy
+// to flip and can never fail a deploy.
+setGlobalOptions({ enforceAppCheck: false });
 
 // Callable Functions
 const {
