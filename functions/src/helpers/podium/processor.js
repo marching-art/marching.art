@@ -710,6 +710,24 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     }
     standings.sort((a, b) => b.lastTotal - a.lastTotal);
 
+    // Credit the director + attach the corps avatar on every standings row
+    // (username preferred, mirroring the fantasy `displayName` shape), so the
+    // standings sheet can name, link, and picture each corps exactly like the
+    // recap rows and the fantasy classes. One batched getAll over the field —
+    // never a read per row, and never fails the night.
+    if (standings.length > 0) {
+      try {
+        const snaps = await db.getAll(...standings.map((s) => store.profileRef(db, s.uid)));
+        snaps.forEach((snap, i) => {
+          const data = snap.exists ? snap.data() : null;
+          standings[i].displayName = (data && (data.username || data.displayName)) || null;
+          standings[i].avatarUrl = (data && data.corps?.podiumClass?.avatarUrl) || null;
+        });
+      } catch (error) {
+        logger.warn(`[podium] standings director-name enrichment skipped: ${error.message}`);
+      }
+    }
+
     // --- 4a. Eastern Classic night snake (design §5.11) ----------------------
     // Published once, at the end of Day 38 (players wake to lineups on Day
     // 39): within each division, current standings snake across the two

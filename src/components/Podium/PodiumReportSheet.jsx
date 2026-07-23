@@ -18,7 +18,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
 import {
   BoxScoreHead,
@@ -27,8 +27,9 @@ import {
   SheetFooter,
   SortPills,
   ShareButton,
+  TrendIndicator,
 } from '../scores/SheetPrimitives';
-import { SHEET_CARD, TOTAL_W, STANDINGS_SORTS, captionTops } from '../scores/sheetTokens';
+import { SHEET_CARD, TOTAL_W, TREND_W, STANDINGS_SORTS, captionTops } from '../scores/sheetTokens';
 import { formatStandingsAsText } from '../../utils/scoresUtils';
 import { useHorizontalTabSlide } from './useHorizontalTabSlide';
 
@@ -91,15 +92,13 @@ function PodiumStandings({ column, periodLabel, seasonName, userCorpsName }) {
       <BoxScoreHead
         active={activeCap}
         totalLabel="Score"
-        trailing={<span className="w-4" aria-hidden="true" />}
+        trailing={<span className={TREND_W} aria-hidden="true" />}
       />
 
       <div>
         {rows.map(({ entry, captions }, idx) => {
           const isUserCorps =
             userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
-          // Day-over-day movement → the same trend arrow as the fantasy grids.
-          const trend = entry.delta == null ? 0 : entry.delta;
 
           return (
             <div
@@ -108,13 +107,15 @@ function PodiumStandings({ column, periodLabel, seasonName, userCorpsName }) {
                 isUserCorps ? 'bg-interactive/10' : ''
               }`}
             >
-              {/* The movement note rides the secondary line (the fantasy grids
-                  use it for the director credit — Podium has no director here). */}
+              {/* Username + profile link + avatar under the corps name, exactly
+                  like the recap rows and the fantasy standings. */}
               <CorpsIdentity
                 place={sortBy === 'total' ? entry.rank : idx + 1}
                 name={entry.corpsName}
                 isMine={isUserCorps}
-                displayName={entry.note}
+                displayName={entry.displayName}
+                uid={entry.uid}
+                avatarUrl={entry.avatarUrl}
               />
               <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                 <CaptionValue
@@ -135,14 +136,8 @@ function PodiumStandings({ column, periodLabel, seasonName, userCorpsName }) {
                 <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
                   {typeof entry.total === 'number' ? entry.total.toFixed(3) : '—'}
                 </span>
-                <span className="w-4 flex items-center justify-center flex-shrink-0">
-                  {trend > 0 ? (
-                    <TrendingUp className="w-3.5 h-3.5 text-green-500" />
-                  ) : trend < 0 ? (
-                    <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-                  ) : (
-                    <span className="text-muted text-xs">-</span>
-                  )}
+                <span className={`${TREND_W} flex items-center justify-center flex-shrink-0`}>
+                  <TrendIndicator delta={entry.delta} />
                 </span>
               </div>
             </div>
