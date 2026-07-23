@@ -55,6 +55,9 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [memberProfiles, setMemberProfiles] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  // Bumping this re-runs the data effect; the retry button uses it.
+  const [reloadKey, setReloadKey] = useState(0);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -111,14 +114,21 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
     const fetchData = async () => {
       if (!league?.members?.length) return;
       setLoading(true);
+      setLoadError(false);
 
       try {
-        // Fetch member profiles
-        const profiles = await getMemberProfiles(league.members);
+        // These three reads are independent — member profiles and season data
+        // have no dependency on each other, and league matchups need only
+        // league.id — so run them concurrently instead of as a serial
+        // waterfall. Opening a league now costs the SLOWEST of the three round
+        // trips, not their sum.
+        const [profiles, sData, matchupDocs] = await Promise.all([
+          getMemberProfiles(league.members),
+          getSeasonData(),
+          getLeagueMatchups(league.id),
+        ]);
         setMemberProfiles(profiles);
 
-        // Fetch season data
-        const sData = await getSeasonData();
         let week = 1;
 
         if (sData) {
@@ -179,12 +189,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               });
             });
 
-            // Fetch ACTUAL matchups from Firestore instead of generating client-side
+            // ACTUAL matchups from Firestore (fetched concurrently above)
+            // instead of generating them client-side.
             const matchupsPerWeek = {};
             const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
-
-            // Fetch all matchup documents for this league
-            const matchupDocs = await getLeagueMatchups(league.id);
 
             matchupDocs.forEach((matchupData) => {
               const weekMatch = matchupData.id.match(/^week-(\d+)$/);
@@ -340,7 +348,12 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
           }
         }
       } catch (error) {
+        // Previously swallowed to console only, leaving the league rendered
+        // blank with no way to tell it had failed. Surface it: flag an error
+        // state (retry banner) and toast, so the member knows to retry.
         console.error('Error fetching league data:', error);
+        setLoadError(true);
+        toast.error('Could not load league data. Tap retry.');
       } finally {
         setLoading(false);
       }
@@ -383,7 +396,8 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
       unsubMessages();
       unsubStandings();
     };
-  }, [league]);
+    // reloadKey is a manual retry trigger — bumping it re-runs the fetch.
+  }, [league, reloadKey]);
 
   // Fallback: Generate round-robin matchups client-side
   // Only used if no matchups exist in Firestore (backwards compatibility)
@@ -609,13 +623,17 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         </div>
 
         {/* STICKY TABS */}
-        <div className="flex border-t border-line-subtle">
+        <div className="flex border-t border-line-subtle" role="tablist" aria-label="League sections">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                id={`league-tab-${tab.id}`}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="league-tabpanel"
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 font-bold text-sm transition-all relative ${
                   isActive
@@ -635,7 +653,27 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
       </div>
 
       {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto min-h-0 scroll-smooth">
+      <div
+        className="flex-1 overflow-y-auto min-h-0 scroll-smooth"
+        id="league-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`league-tab-${activeTab}`}
+      >
+        {/* Load failure: previously the league just rendered blank. Give the
+            member a clear error + retry instead of silent empty standings. */}
+        {loadError && !loading && (
+          <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/30 text-center">
+            <p className="text-sm text-red-300 mb-3">
+              We couldn't load this league's data.
+            </p>
+            <button
+              onClick={() => setReloadKey((k) => k + 1)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-interactive text-white font-semibold text-sm hover:bg-interactive/90 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         {/* Daily prediction pool — the league's social side-pot, on the
             default tab where every member lands */}
         {activeTab === 'standings' && (
