@@ -277,6 +277,52 @@ describe("resetYoutubeVideo nope list", () => {
     }
   });
 
+  test("a user over the hourly search budget is throttled before the API call", async () => {
+    const { db } = makeDb(
+      new Map([
+        [
+          "youtubeSearchQuota/u1",
+          { windowStart: Date.now(), count: 30 }, // budget spent this hour
+        ],
+      ])
+    );
+    setDbForTesting(db);
+
+    // No fetch stub: if the handler reached the YouTube API the call would
+    // reject with a fetch error instead of the throttle message.
+    await assert.rejects(
+      searchYoutubeVideo.run({
+        data: { query: "2018 Corps", skipCache: true },
+        auth: { uid: "u1", token: {} },
+      }),
+      /searched for a lot of videos/
+    );
+  });
+
+  test("a stale budget window resets instead of throttling", async () => {
+    const { db, docs } = makeDb(
+      new Map([
+        [
+          "youtubeSearchQuota/u1",
+          { windowStart: Date.now() - 2 * 60 * 60 * 1000, count: 30 }, // old window
+        ],
+      ])
+    );
+    setDbForTesting(db);
+
+    const restore = stubYoutubeApi([searchItem("fresh-video-01", "2018 Corps Finals")]);
+    try {
+      const result = await searchYoutubeVideo.run({
+        data: { query: "2018 Corps" },
+        auth: { uid: "u1", token: {} },
+      });
+      assert.equal(result.videoId, "fresh-video-01");
+      assert.equal(docs.get("youtubeSearchQuota/u1").count, 1, "window restarts at 1");
+    } finally {
+      restore();
+    }
+  });
+
   test("searchYoutubeVideo also excludes noped videos on a fresh search", async () => {
     const { db } = makeDb(
       new Map([["youtubeNopeList/bad-video-01", { videoId: "bad-video-01" }]])
