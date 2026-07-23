@@ -19,7 +19,8 @@ export interface League {
   members: string[];
   maxMembers: number;
   isPublic: boolean;
-  inviteCode: string;
+  /** Legacy only — new leagues keep the code in meta/private (see useLeagueInviteCode). */
+  inviteCode?: string;
 
   // Settings
   settings: LeagueSettings;

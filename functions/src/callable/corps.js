@@ -18,6 +18,37 @@ const {
 
 
 /**
+ * Sanitize a season-setup "new" decision's show concept to the exact shape
+ * saveShowConcept (callable/lineups.js) stores: a structured
+ * {showName?, theme, musicSource, drillStyle} object. Anything else —
+ * missing pieces, free-text strings, arbitrary extra keys — is dropped to
+ * the empty-concept default ("") instead of being stored verbatim.
+ *
+ * @param {*} showConcept - Client-supplied decision.showConcept.
+ * @returns {Object|string} The sanitized concept object, or "" when dropped.
+ */
+function sanitizeDecisionShowConcept(showConcept) {
+  if (!showConcept || typeof showConcept !== "object" || Array.isArray(showConcept)) {
+    return "";
+  }
+  const { theme, musicSource, drillStyle } = showConcept;
+  const isUsableValue = (v) => typeof v === "string" && v && v.length <= 100;
+  if (!isUsableValue(theme) || !isUsableValue(musicSource) || !isUsableValue(drillStyle)) {
+    return "";
+  }
+
+  // Show title: same normalization as saveShowConcept — trimmed,
+  // single-line, capped at 60 chars, at least 2 chars or omitted.
+  let showName = null;
+  if (typeof showConcept.showName === "string") {
+    const normalized = showConcept.showName.replace(/\s+/g, " ").trim().slice(0, 60);
+    if (normalized.length >= 2) showName = normalized;
+  }
+
+  return { showName, theme, musicSource, drillStyle, updatedAt: new Date() };
+}
+
+/**
  * Process corps decisions during season reset
  * Handles continue/retire/unretire/new/skip/move decisions for all classes atomically
  */
@@ -34,6 +65,13 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
   const validClasses = FANTASY_CLASSES;
   const validActions = ["continue", "retire", "unretire", "new", "skip", "move"];
 
+  // One decision per fantasy class at most — an oversized array is either a
+  // bug or an abuse attempt (each "new" decision costs reads/writes).
+  if (decisions.length > validClasses.length) {
+    throw new HttpsError("invalid-argument",
+      `Too many decisions: a maximum of ${validClasses.length} (one per class) is allowed.`);
+  }
+
   // Validate all decisions
   for (const decision of decisions) {
     if (!decision.corpsClass || !validClasses.includes(decision.corpsClass)) {
@@ -42,8 +80,27 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
     if (!decision.action || !validActions.includes(decision.action)) {
       throw new HttpsError("invalid-argument", `Invalid action for ${decision.corpsClass}: ${decision.action}`);
     }
-    if (decision.action === "new" && (!decision.corpsName || !decision.location)) {
-      throw new HttpsError("invalid-argument", `New corps requires name and location for ${decision.corpsClass}`);
+    if (decision.action === "new") {
+      // Same name/location rules as registerCorps and renameCorps — this
+      // wizard path used to store both verbatim, skipping the length and
+      // profanity checks every other naming path enforces.
+      if (typeof decision.corpsName !== "string" || !decision.corpsName.trim() ||
+          typeof decision.location !== "string" || !decision.location.trim()) {
+        throw new HttpsError("invalid-argument", `New corps requires name and location for ${decision.corpsClass}`);
+      }
+      decision.corpsName = decision.corpsName.trim();
+      decision.location = decision.location.trim();
+      if (decision.corpsName.length > 50 || decision.location.length > 50) {
+        throw new HttpsError("invalid-argument", "Corps name and location cannot exceed 50 characters.");
+      }
+      if (isProfaneCorpsName(decision.corpsName) || isProfaneCorpsName(decision.location)) {
+        throw new HttpsError("invalid-argument", "Profane language is not allowed.");
+      }
+      // Show concept: same shape saveShowConcept accepts (structured
+      // theme/musicSource/drillStyle plus an optional length-capped title).
+      // Anything else — including the legacy free-text string — is dropped
+      // rather than stored verbatim.
+      decision.showConcept = sanitizeDecisionShowConcept(decision.showConcept);
     }
     if (decision.action === "unretire" && decision.retiredIndex === undefined) {
       throw new HttpsError("invalid-argument", `Unretire requires retiredIndex for ${decision.corpsClass}`);
@@ -829,3 +886,7 @@ exports.renameCorps = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "An error occurred while renaming the corps.");
   }
 });
+
+// Pure sanitizer exported for unit tests (never registered as a function —
+// index.js destructures specific callables only).
+module.exports.sanitizeDecisionShowConcept = sanitizeDecisionShowConcept;

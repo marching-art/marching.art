@@ -22,6 +22,7 @@ import {
   Star,
 } from 'lucide-react';
 import { getLeagueMatchupWeek } from '../../../api/leagues';
+import { useLeagueInviteCode } from '../../../hooks/useLeagues';
 import { generateMatchups } from '../../../api/functions';
 import { GAME_CONFIG } from '../../../config';
 import toast from 'react-hot-toast';
@@ -41,6 +42,7 @@ const CORPS_CLASS_CONFIG = {
 };
 
 const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBack }) => {
+  const inviteCode = useLeagueInviteCode(league);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
   const [generating, setGenerating] = useState(false);
@@ -75,12 +77,12 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
 
   const handleCopyInvite = async () => {
     try {
-      await navigator.clipboard.writeText(league.inviteCode);
+      await navigator.clipboard.writeText(inviteCode);
       setInviteCopied(true);
       toast.success('Invite code copied!');
       setTimeout(() => setInviteCopied(false), 2000);
     } catch {
-      toast.success(`Code: ${league.inviteCode}`);
+      toast.success(`Code: ${inviteCode}`);
     }
   };
 
@@ -357,7 +359,7 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
           <div className="flex items-center gap-3">
             <div className="flex-1 px-4 py-3 bg-surface-raised border border-line">
               <code className="text-xl font-mono font-bold text-interactive tracking-wider">
-                {league.inviteCode}
+                {inviteCode || '——'}
               </code>
             </div>
             <button

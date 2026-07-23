@@ -95,6 +95,7 @@ export const queryKeys = {
   publicLeagues: () => ['publicLeagues'] as const,
   league: (leagueId: string) => ['league', leagueId] as const,
   leagueStandings: (leagueId: string) => ['leagueStandings', leagueId] as const,
+  leagueInviteCode: (leagueId: string) => ['leagueInviteCode', leagueId] as const,
   leagueChat: (leagueId: string) => ['leagueChat', leagueId] as const,
   leagueTrades: (leagueId: string) => ['leagueTrades', leagueId] as const,
   leagueActivity: (leagueId: string) => ['leagueActivity', leagueId] as const,

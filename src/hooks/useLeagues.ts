@@ -47,6 +47,24 @@ export function useLeague(leagueId: string | undefined) {
 }
 
 /**
+ * Hook to resolve a league's invite code. Legacy league docs carry the code
+ * directly; new leagues store it in the member-only meta/private doc, so fall
+ * back to fetching that when the doc field is absent.
+ */
+export function useLeagueInviteCode(
+  league: { id?: string; inviteCode?: string } | null | undefined
+) {
+  const legacyCode = league?.inviteCode;
+  const { data } = useQuery({
+    queryKey: queryKeys.leagueInviteCode(league?.id || ''),
+    queryFn: () => leaguesApi.getLeagueInviteCode(league!.id!),
+    enabled: !!league?.id && !legacyCode,
+    staleTime: Infinity, // Codes are immutable once created
+  });
+  return legacyCode ?? data ?? null;
+}
+
+/**
  * Hook to subscribe to real-time league updates
  * This updates the React Query cache when league data changes
  */

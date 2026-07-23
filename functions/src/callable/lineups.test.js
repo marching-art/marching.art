@@ -19,9 +19,11 @@ const assert = require("node:assert/strict");
 const { setDbForTesting } = require("../config");
 const {
   validateShowSelection,
+  resolveShowsAgainstSchedule,
   getMaxShowsForWeek,
   saveLineup,
   validateLineup,
+  selectUserShows,
 } = require("./lineups");
 
 describe("getMaxShowsForWeek", () => {
@@ -49,6 +51,24 @@ describe("validateShowSelection", () => {
     assert.throws(
       () => validateShowSelection(2, [{}, {}, {}, {}, {}], 4),
       /maximum of 4/
+    );
+  });
+
+  test("rejects non-integer and out-of-range week numbers", () => {
+    assert.throws(() => validateShowSelection("2", [], 4), /week number/);
+    assert.throws(() => validateShowSelection(2.5, [], 4), /week number/);
+    assert.throws(() => validateShowSelection(8, [], 4), /week number/);
+    assert.throws(() => validateShowSelection(-1, [], 4), /week number/);
+  });
+
+  test("rejects a show without an eventName", () => {
+    assert.throws(
+      () => validateShowSelection(2, [{ day: 9 }], 4),
+      /event name/
+    );
+    assert.throws(
+      () => validateShowSelection(2, [null], 4),
+      /event name/
     );
   });
 
@@ -88,6 +108,88 @@ describe("validateShowSelection", () => {
 });
 
 // =============================================================================
+// resolveShowsAgainstSchedule — server-authoritative day/date/location
+// =============================================================================
+
+describe("resolveShowsAgainstSchedule", () => {
+  // Week 2 spans days 8-14
+  const week2Competitions = [
+    { name: "Show A", day: 9, date: "2026-07-01", location: "Anytown, USA" },
+    { name: "Show B", day: 9, date: "2026-07-01", location: "Elsewhere, USA" },
+    { name: "Show C", day: 12, date: "2026-07-04", location: "Somewhere, USA" },
+    { name: "Other Week Show", day: 20, date: "2026-07-12", location: "Faraway, USA" },
+  ];
+
+  // Week 6 spans days 36-42; the Eastern Classic is ONE event on nights 41+42
+  const week6Competitions = [
+    { name: "Eastern Classic", day: 41, date: "2026-08-01", location: "Allentown, PA",
+      multiNight: { nights: [41, 42] } },
+    { name: "Eastern Classic", day: 42, date: "2026-08-02", location: "Allentown, PA",
+      multiNight: { nights: [41, 42] } },
+    { name: "Show D", day: 42, date: "2026-08-02", location: "Reading, PA" },
+    { name: "Show E", day: 38, date: "2026-07-29", location: "Hershey, PA" },
+  ];
+
+  test("rejects an event that is not on the requested week's schedule", () => {
+    assert.throws(
+      () => resolveShowsAgainstSchedule(2, [{ eventName: "Invented Show" }], week2Competitions),
+      /not on the week 2 schedule/
+    );
+    // On the schedule, but in a different week
+    assert.throws(
+      () => resolveShowsAgainstSchedule(2, [{ eventName: "Other Week Show" }], week2Competitions),
+      /not on the week 2 schedule/
+    );
+  });
+
+  test("derives day/date/location from the schedule, ignoring client values", () => {
+    const resolved = resolveShowsAgainstSchedule(2, [
+      { eventName: "Show A", day: 999, date: "1999-01-01", location: "Faked", hax: true },
+    ], week2Competitions);
+
+    assert.deepEqual(resolved, [
+      { eventName: "Show A", day: 9, date: "2026-07-01", location: "Anytown, USA" },
+    ]);
+  });
+
+  test("rejects two shows on the same schedule day even when the client omits day", () => {
+    // Shows A and B are both on day 9; without the schedule lookup a client
+    // omitting `day` slipped both past the dedupe and scoring accumulated
+    // two scores for the day.
+    assert.throws(
+      () => resolveShowsAgainstSchedule(2, [
+        { eventName: "Show A" },
+        { eventName: "Show B" },
+      ], week2Competitions),
+      /one show per day/
+    );
+  });
+
+  test("a multi-night event occupies every one of its nights", () => {
+    // Scoring assigns exactly one of nights 41/42 via the snake split, which
+    // is unknowable at selection time — so the Eastern Classic must conflict
+    // with a single-night show on EITHER night.
+    assert.throws(
+      () => resolveShowsAgainstSchedule(6, [
+        { eventName: "Eastern Classic" },
+        { eventName: "Show D" },
+      ], week6Competitions),
+      /one show per day/
+    );
+
+    // Alone (or with shows on other days) it resolves once, to its first night
+    const resolved = resolveShowsAgainstSchedule(6, [
+      { eventName: "Eastern Classic" },
+      { eventName: "Show E" },
+    ], week6Competitions);
+    assert.deepEqual(resolved, [
+      { eventName: "Eastern Classic", day: 41, date: "2026-08-01", location: "Allentown, PA" },
+      { eventName: "Show E", day: 38, date: "2026-07-29", location: "Hershey, PA" },
+    ]);
+  });
+});
+
+// =============================================================================
 // saveLineup / validateLineup — server-authoritative point costs
 // =============================================================================
 
@@ -98,8 +200,9 @@ const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
 /**
  * Minimal fake Firestore covering exactly what the lineup callables use:
- * db.doc().get()/.update(), db.collection().doc(), and db.runTransaction()
- * with transaction.get/set/update/delete. Records every write for assertions.
+ * db.doc().get()/.update()/.set(), db.collection().doc(), db.batch(), and
+ * db.runTransaction() with transaction.get/set/update/delete. Records every
+ * write for assertions.
  */
 function makeFakeDb(docs = new Map()) {
   const writes = [];
@@ -113,12 +216,22 @@ function makeFakeDb(docs = new Map()) {
     update(data) {
       writes.push({ type: "update", path, data });
     },
+    set(data) {
+      docs.set(path, data);
+      writes.push({ type: "set", path, data });
+    },
   });
 
   const db = {
     doc: (path) => makeRef(path),
     collection: (path) => ({
       doc: (id) => makeRef(`${path}/${id}`),
+    }),
+    batch: () => ({
+      set(ref, data, opts) {
+        writes.push({ type: "batchSet", path: ref.path, data, opts });
+      },
+      async commit() {},
     }),
     async runTransaction(fn) {
       const transaction = {
@@ -300,5 +413,121 @@ describe("validateLineup registry pricing", () => {
     assert.equal(result.requiresUpdate, false);
     assert.deepEqual(result.invalidSelections, []);
     assert.equal(writes.length, 0);
+  });
+});
+
+// =============================================================================
+// selectUserShows — schedule-resolved, whitelisted storage
+// =============================================================================
+
+describe("selectUserShows schedule enforcement", () => {
+  beforeEach(() => setDbForTesting(null));
+
+  const competitions = [
+    { name: "Show A", day: 9, date: "2026-07-01", location: "Anytown, USA" },
+    { name: "Show B", day: 9, date: "2026-07-01", location: "Elsewhere, USA" },
+    { name: "Show C", day: 12, date: "2026-07-04", location: "Somewhere, USA" },
+  ];
+
+  function makeShowDocs() {
+    // No schedule.startDate on the season doc, so the past-week guard is
+    // skipped (off-season style) and the schedule checks run in isolation.
+    return new Map([
+      ["game-settings/season", { seasonUid: "season-1" }],
+      ["schedules/season-1", { competitions }],
+      [profilePath("u1"), {
+        username: "alice",
+        corps: { worldClass: { corpsName: "Alice Corps", selectedShows: {} } },
+      }],
+    ]);
+  }
+
+  test("rejects a week that is not an integer in range", async () => {
+    const { db } = makeFakeDb(makeShowDocs());
+    setDbForTesting(db);
+
+    for (const week of ["2", 0, 9, 2.5]) {
+      await assert.rejects(
+        selectUserShows.run(authedRequest("u1", {
+          week, shows: [{ eventName: "Show A" }], corpsClass: "worldClass",
+        })),
+        /week number/
+      );
+    }
+  });
+
+  test("rejects an event that is not on the week's schedule", async () => {
+    const { db, writes } = makeFakeDb(makeShowDocs());
+    setDbForTesting(db);
+
+    await assert.rejects(
+      selectUserShows.run(authedRequest("u1", {
+        week: 2, shows: [{ eventName: "Invented Show", day: 8 }], corpsClass: "worldClass",
+      })),
+      /not on the week 2 schedule/
+    );
+    assert.equal(writes.length, 0);
+  });
+
+  test("rejects two same-day shows even when the client omits/fakes day", async () => {
+    const { db, writes } = makeFakeDb(makeShowDocs());
+    setDbForTesting(db);
+
+    // Shows A and B are both day 9 on the schedule; the client claims
+    // different days to dodge the dedupe (scoring would score both, doubling
+    // the day's total).
+    await assert.rejects(
+      selectUserShows.run(authedRequest("u1", {
+        week: 2,
+        shows: [
+          { eventName: "Show A", day: 8 },
+          { eventName: "Show B", day: 10 },
+        ],
+        corpsClass: "worldClass",
+      })),
+      /one show per day/
+    );
+    assert.equal(writes.length, 0);
+  });
+
+  test("stores only whitelisted fields derived from the schedule", async () => {
+    const { db, writes } = makeFakeDb(makeShowDocs());
+    setDbForTesting(db);
+
+    const result = await selectUserShows.run(authedRequest("u1", {
+      week: 2,
+      shows: [
+        // Client-supplied day/date/location/extras must all be discarded
+        { eventName: "Show A", day: 999, date: "1999-01-01", location: "Faked", hax: true },
+        { eventName: "Show C" },
+      ],
+      corpsClass: "worldClass",
+    }));
+
+    assert.equal(result.success, true);
+
+    const update = writes.find((w) => w.type === "update" && w.path === profilePath("u1"));
+    assert.deepEqual(update.data["corps.worldClass.selectedShows.week2"], [
+      { eventName: "Show A", day: 9, date: "2026-07-01", location: "Anytown, USA" },
+      { eventName: "Show C", day: 12, date: "2026-07-04", location: "Somewhere, USA" },
+    ]);
+
+    // The registration-index write-through keys on the schedule's date too
+    const indexWrites = writes.filter((w) => w.type === "batchSet");
+    assert.equal(indexWrites.length, 2);
+    assert.equal(indexWrites[0].data.date, "2026-07-01");
+  });
+
+  test("clearing a week with an empty selection still works", async () => {
+    const { db, writes } = makeFakeDb(makeShowDocs());
+    setDbForTesting(db);
+
+    const result = await selectUserShows.run(authedRequest("u1", {
+      week: 2, shows: [], corpsClass: "worldClass",
+    }));
+
+    assert.equal(result.success, true);
+    const update = writes.find((w) => w.type === "update" && w.path === profilePath("u1"));
+    assert.deepEqual(update.data["corps.worldClass.selectedShows.week2"], []);
   });
 });

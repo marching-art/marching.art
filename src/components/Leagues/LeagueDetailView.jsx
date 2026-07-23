@@ -40,6 +40,7 @@ import SettingsTab from './tabs/SettingsTab';
 // OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
 const MatchupDetailView = lazy(() => import('./MatchupDetailView'));
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
+import { useLeagueInviteCode } from '../../hooks/useLeagues';
 import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeaguePoolCard from './LeaguePoolCard';
@@ -74,14 +75,17 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
     }
   };
 
+  const inviteCode = useLeagueInviteCode(league);
+
   const handleCopyInvite = async () => {
+    if (!inviteCode) return;
     try {
-      await navigator.clipboard.writeText(league.inviteCode);
+      await navigator.clipboard.writeText(inviteCode);
       setInviteCopied(true);
       toast.success('Invite code copied!');
       setTimeout(() => setInviteCopied(false), 2000);
     } catch {
-      toast.success(`Code: ${league.inviteCode}`);
+      toast.success(`Code: ${inviteCode}`);
     }
   };
 
@@ -517,7 +521,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             >
               <div className="text-right">
                 <p className="text-[10px] uppercase tracking-wider text-muted">Invite Code</p>
-                <p className="text-sm font-bold font-mono text-interactive">{league.inviteCode}</p>
+                <p className="text-sm font-bold font-mono text-interactive">{inviteCode || '——'}</p>
               </div>
               {inviteCopied ? (
                 <Check className="w-4 h-4 text-green-500" />
@@ -598,7 +602,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 className="flex-1 px-2 py-1.5 bg-surface-raised text-center"
               >
                 <p className="text-[10px] uppercase tracking-wider text-muted">Code</p>
-                <p className="text-sm font-bold font-mono text-interactive">{league.inviteCode}</p>
+                <p className="text-sm font-bold font-mono text-interactive">{inviteCode || '——'}</p>
               </button>
             </div>
           )}

@@ -19,6 +19,7 @@ import {
   Medal,
 } from 'lucide-react';
 import { getSoundSportRating } from '../../../utils/scoresUtils';
+import { useLeagueInviteCode } from '../../../hooks/useLeagues';
 import { Heading } from '../../ui';
 
 // Corps class display configuration
@@ -362,6 +363,7 @@ const HeadToHeadSection = ({
 
 // Empty State Component
 const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner }) => {
+  const inviteCode = useLeagueInviteCode(league);
   const isPastWeek = selectedWeek < currentWeek;
   const isCurrentWeek = selectedWeek === currentWeek;
   const isFutureWeek = selectedWeek > currentWeek;
@@ -428,9 +430,9 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
                   {2 - (league?.members?.length || 0) !== 1 ? 's' : ''} to start
                 </span>
               </div>
-              {league?.inviteCode && (
+              {inviteCode && (
                 <p className="text-xs text-muted">
-                  Share code: <span className="font-mono text-muted">{league.inviteCode}</span>
+                  Share code: <span className="font-mono text-muted">{inviteCode}</span>
                 </p>
               )}
             </div>

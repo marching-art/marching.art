@@ -1,10 +1,11 @@
 {
   "_note": "Ratchet ceiling for hand-written artifacts/ Firestore path literals (use the paths helpers: functions/src/helpers/paths.js, src/api/client.ts). Counts may only fall. After lowering a count, run `node scripts/checkPathLiterals.mjs --write` to lock the new floor. Never edit these upward by hand. Remaining entries are the known exceptions documented in scripts/checkPathLiterals.mjs.",
-  "total": 14,
+  "total": 15,
   "files": {
     "src/api/community.ts": 4,
     "src/api/leaderboard.ts": 4,
     "functions/src/scripts/cleanupLeakedProfileEmails.js": 1,
+    "functions/src/scripts/stripLeagueInviteCodes.js": 1,
     "functions/src/triggers/avatarGeneration.js": 1,
     "functions/src/triggers/emailTriggers.js": 2,
     "functions/src/triggers/pushTriggers.js": 2

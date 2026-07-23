@@ -3,7 +3,13 @@ const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
-const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = require("../helpers/leagueHelpers");
+const {
+  generateUniqueInviteCode,
+  smartPairMembers,
+  createLeagueActivity,
+  invitationId,
+} = require("../helpers/leagueHelpers");
+const { consumeRateBudget } = require("../helpers/rateLimit");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
 const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
@@ -60,6 +66,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
 
   const leagueRef = db.collection(paths.leagues()).doc();
   const inviteRef = db.doc(`leagueInvites/${inviteCode}`);
+  const metaPrivateRef = leagueRef.collection('meta').doc('private');
   const userProfileRef = db.doc(paths.userProfile(uid));
   const standingsRef = leagueRef.collection('standings').doc('current');
 
@@ -80,14 +87,18 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       }
     }
 
-    // Create league
+    // Create league. The invite code is a JOIN SECRET and must never live on
+    // this doc: firestore.rules deliberately leaves `list` over leagues open
+    // to any signed-in user (community widgets), so any field here is
+    // enumerable by every authenticated account. The code lives in
+    // /leagueInvites/{code} (backend-only mapping, for joinLeagueByCode) and
+    // in leagues/{id}/meta/private (member-only read, for the share-code UI).
     transaction.set(leagueRef, {
       name: name.trim(),
       description: description.trim(),
       creatorId: uid,
       seasonId: seasonUid,
       members: [uid],
-      inviteCode,
       isPublic,
       maxMembers,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -150,8 +161,10 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       lastUpdated: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // Create invite code
+    // Create invite code mapping (code -> league) and the member-only copy
+    // of the code for the commissioner/member share UI.
     transaction.set(inviteRef, { leagueId: leagueRef.id });
+    transaction.set(metaPrivateRef, { inviteCode });
 
     // Add to user profile
     transaction.update(userProfileRef, {
@@ -177,6 +190,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
   const db = getDb();
   const leagueRef = db.doc(paths.league(leagueId));
   const userProfileRef = db.doc(paths.userProfile(uid));
+  const invitationRef = db.doc(paths.leagueInvitation(invitationId(leagueId, uid)));
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
@@ -194,6 +208,20 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     // Check if already a member
     if (leagueData.members.includes(uid)) {
       throw new HttpsError("already-exists", "You are already a member of this league.");
+    }
+
+    // Private leagues are invitation-only through this endpoint. League IDs
+    // are enumerable (the leagues collection is listable by any signed-in
+    // user), so knowing an ID must never be enough to join: without this
+    // check anyone could walk into any private league, bypassing both the
+    // invite code and per-director invitations.
+    let invitationDoc = null;
+    if (leagueData.isPublic !== true) {
+      invitationDoc = await transaction.get(invitationRef);
+      if (!invitationDoc.exists || invitationDoc.data().status !== 'pending') {
+        throw new HttpsError("permission-denied",
+          "This league is private. You need an invitation or an invite code to join.");
+      }
     }
 
     // Check if league is full
@@ -215,6 +243,14 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
       leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
       ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
     });
+
+    // Consume the invitation that admitted us so it can't linger as pending.
+    if (invitationDoc && invitationDoc.exists) {
+      transaction.update(invitationRef, {
+        status: 'accepted',
+        respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
 
     // Initialize standings for new member
     if (standingsDoc.exists) {
@@ -384,14 +420,24 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
         throw new HttpsError("not-found", "This league does not exist.");
       }
 
+      // The invite code lives in the member-only meta/private doc (legacy
+      // docs may still carry it on the league doc until the migration runs).
+      const metaPrivateRef = leagueRef.collection('meta').doc('private');
+      const metaPrivateDoc = await transaction.get(metaPrivateRef);
+
       const leagueData = leagueDoc.data();
 
       if (leagueData.creatorId === uid && leagueData.members.length === 1) {
         logger.info(`Creator ${uid} is the last member of league ${leagueId}. Deleting league.`);
         transaction.delete(leagueRef);
-        if (leagueData.inviteCode) {
-          const inviteRef = db.doc(`leagueInvites/${leagueData.inviteCode}`);
+        const inviteCode = (metaPrivateDoc.exists && metaPrivateDoc.data().inviteCode) ||
+          leagueData.inviteCode;
+        if (inviteCode) {
+          const inviteRef = db.doc(`leagueInvites/${inviteCode}`);
           transaction.delete(inviteRef);
+        }
+        if (metaPrivateDoc.exists) {
+          transaction.delete(metaPrivateRef);
         }
       } else {
         transaction.update(leagueRef, {
@@ -717,14 +763,29 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
 
 
 // Post a message to league chat
+// Chat messages are stored verbatim and rendered to every league member, so
+// both the size and the rate of writes are server-capped: 1000 chars (same as
+// article comments' MAX_COMMENT_LENGTH) and 10 messages per minute per user.
+// Budget docs live in a server-only collection (no client rule matches it).
+const MAX_LEAGUE_MESSAGE_LENGTH = 1000;
+const CHAT_RATE_COLLECTION = "leagueChatRateLimits";
+const CHAT_MAX_MESSAGES_PER_WINDOW = 10;
+const CHAT_RATE_WINDOW_MS = 60 * 1000; // 1 minute
+
 exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
   assertAuth(request);
 
   const { leagueId, message } = request.data;
   const uid = request.auth.uid;
 
-  if (!leagueId || !message || !message.trim()) {
+  if (!leagueId || typeof message !== 'string' || !message.trim()) {
     throw new HttpsError("invalid-argument", "League ID and message are required.");
+  }
+
+  const trimmedMessage = message.trim();
+  if (trimmedMessage.length > MAX_LEAGUE_MESSAGE_LENGTH) {
+    throw new HttpsError("invalid-argument",
+      `Message too long (max ${MAX_LEAGUE_MESSAGE_LENGTH} characters).`);
   }
 
   const db = getDb();
@@ -741,10 +802,18 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
     throw new HttpsError("permission-denied", "You must be a league member to post.");
   }
 
+  const allowed = await consumeRateBudget(
+    db, CHAT_RATE_COLLECTION, uid, CHAT_MAX_MESSAGES_PER_WINDOW, CHAT_RATE_WINDOW_MS
+  );
+  if (!allowed) {
+    throw new HttpsError("resource-exhausted",
+      "You're posting too quickly. Please wait a moment and try again.");
+  }
+
   const messageRef = leagueRef.collection('chat').doc();
   await messageRef.set({
     userId: uid,
-    message: message.trim(),
+    message: trimmedMessage,
     createdAt: admin.firestore.FieldValue.serverTimestamp()
   });
 

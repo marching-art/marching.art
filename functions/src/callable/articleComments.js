@@ -19,6 +19,13 @@ const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
 
+// Maximum report-reason length
+const MAX_REPORT_REASON_LENGTH = 500;
+
+// getArticleComments page-size clamp (the client's `limit` is a suggestion)
+const DEFAULT_COMMENTS_PAGE_SIZE = 20;
+const MAX_COMMENTS_PAGE_SIZE = 50;
+
 // Valid emoji reactions
 const VALID_REACTIONS = ['👏', '🔥', '💯', '🎺', '❤️', '🤔', '🏳️', '🥁'];
 
@@ -293,10 +300,21 @@ exports.getArticleComments = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { articleId, status = "approved", limit = 20, startAfter } = request.data || {};
+    const { articleId, status = "approved", limit, startAfter } = request.data || {};
 
     if (!articleId || typeof articleId !== "string") {
       throw new HttpsError("invalid-argument", "Article ID is required");
+    }
+
+    // Page size is client-suggested but server-clamped: an unbounded limit
+    // would let one call read (and bill) an arbitrarily large result set.
+    const parsedLimit = parseInt(limit, 10);
+    const pageSize = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), MAX_COMMENTS_PAGE_SIZE)
+      : DEFAULT_COMMENTS_PAGE_SIZE;
+
+    if (startAfter !== undefined && startAfter !== null && typeof startAfter !== "string") {
+      throw new HttpsError("invalid-argument", "startAfter must be a comment ID string");
     }
 
     try {
@@ -323,12 +341,12 @@ exports.getArticleComments = onCall(
         }
       }
 
-      query = query.limit(limit + 1);
+      query = query.limit(pageSize + 1);
 
       const snapshot = await query.get();
 
       const comments = [];
-      const docs = snapshot.docs.slice(0, limit);
+      const docs = snapshot.docs.slice(0, pageSize);
 
       for (const doc of docs) {
         const data = doc.data();
@@ -372,7 +390,7 @@ exports.getArticleComments = onCall(
       return {
         success: true,
         comments,
-        hasMore: snapshot.docs.length > limit,
+        hasMore: snapshot.docs.length > pageSize,
         total: countQuery.data().count,
       };
     } catch (error) {
@@ -542,6 +560,13 @@ exports.reportArticleComment = onCall(
 
     if (!reason || typeof reason !== "string" || reason.trim().length < 5) {
       throw new HttpsError("invalid-argument", "Please provide a reason for the report");
+    }
+
+    if (reason.trim().length > MAX_REPORT_REASON_LENGTH) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Report reason too long (max ${MAX_REPORT_REASON_LENGTH} characters)`
+      );
     }
 
     try {
