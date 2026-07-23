@@ -3,10 +3,11 @@
 // =============================================================================
 // Allows directors to spend CorpsCoin to unlock a class before reaching the XP level
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Coins, ShoppingCart, X, AlertTriangle, Loader2, Calendar, Clock } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // =============================================================================
 // TYPES
@@ -79,6 +80,10 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
 
   useEscapeKey(onClose);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
+
   const handleConfirm = async () => {
     setIsPurchasing(true);
     setError(null);
@@ -100,6 +105,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
         aria-labelledby="modal-title-class-purchase"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-md bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >

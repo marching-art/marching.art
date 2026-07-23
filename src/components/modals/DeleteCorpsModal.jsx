@@ -3,10 +3,11 @@
 // DELETE CORPS MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Trash2, X, AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -18,6 +19,9 @@ const CLASS_NAMES = {
 const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
   // Close on Escape key
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   return (
     <Portal>
@@ -29,6 +33,7 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
         aria-labelledby="modal-title-delete-corps"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-sm bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >

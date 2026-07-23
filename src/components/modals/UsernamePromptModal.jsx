@@ -5,6 +5,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AtSign, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Portal from '../Portal';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useProfileStore } from '../../store/profileStore';
 import { useAuth } from '../../context/AuthContext';
 import { checkUsername, updateUsername } from '../../api/functions';
@@ -26,6 +27,10 @@ const UsernamePromptModal = () => {
 
   // Determine if modal should show - username is mandatory, cannot be dismissed
   const shouldShow = !loading && profile && !profile.username && user;
+
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef, !!shouldShow);
 
   // Username validation function
   const validateUsername = async (usernameValue) => {
@@ -143,6 +148,7 @@ const UsernamePromptModal = () => {
         aria-labelledby="username-prompt-title"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-md bg-surface-card border border-line rounded-none overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >

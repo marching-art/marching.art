@@ -5,10 +5,11 @@
 // Shown once when profile.pendingSeasonRecap exists (written by the season
 // rollover in functions/src/helpers/season.js). Dismissing clears the field.
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Trophy, Medal, Coins, Star, X } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { CLASS_DISPLAY_NAMES } from '../Dashboard/sections/constants';
 import { formatSeasonName } from '../../utils/season';
 
@@ -22,6 +23,9 @@ const placementLabel = (placement) => {
 
 const SeasonRecapModal = ({ recap, onClose }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   // Celebrate the payday — same confetti library the onboarding celebration uses
   useEffect(() => {
@@ -48,6 +52,7 @@ const SeasonRecapModal = ({ recap, onClose }) => {
         aria-labelledby="modal-title-season-recap"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-lg max-h-[85dvh] bg-surface-card border border-brand/30 rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

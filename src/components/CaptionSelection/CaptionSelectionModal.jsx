@@ -3,16 +3,17 @@
 // CAPTION SELECTION MODAL - CONSOLIDATED CAPTION-FOCUSED DESIGN
 // =============================================================================
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2 } from 'lucide-react';
-import { getProfile } from '../../api/profile';
-import { getCorpsValues } from '../../api/season';
 import { getHotCorps, getActiveLineupKeys, saveLineup } from '../../api/functions';
 import { queueLineupSave } from '../../lib/offlineLineupQueue';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../context/AuthContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useCorpsValues } from '../../hooks/useCorpsValues';
+import { useProfileStore } from '../../store/profileStore';
 import { useSeasonDeadlines } from '../../hooks/useSeasonClock';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatCountdown } from '../../utils/seasonClock';
@@ -39,16 +40,14 @@ const CaptionSelectionModal = ({
 }) => {
   const { user } = useAuth();
   const [selections, setSelections] = useState(currentLineup || {});
-  const [availableCorps, setAvailableCorps] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [draftSuggestions, setDraftSuggestions] = useState({ hot: [], value: [], history: [] });
-  const [userHistory, setUserHistory] = useState([]);
   const [hotCorpsData, setHotCorpsData] = useState({}); // Per-caption hot status
   const [activeLineupKeys, setActiveLineupKeys] = useState(new Set()); // Other users' lineup keys
+  const [extrasLoading, setExtrasLoading] = useState(true); // hot corps + lineup keys fetch
 
   // Mobile state - whether we're viewing lineup or selection list
   const [mobileView, setMobileView] = useState('lineup'); // 'lineup' or 'selection'
@@ -69,9 +68,31 @@ const CaptionSelectionModal = ({
     setCorpsSearch('');
   }, [activeCaption]);
 
-  // Change limits state
-  const [isInitialSetup, setIsInitialSetup] = useState(false);
-  const [weeklyTrades, setWeeklyTrades] = useState(null);
+  // Profile-derived state — the global profileStore already holds a live
+  // onSnapshot copy of the profile doc, so no manual getProfile fetch here.
+  const profile = useProfileStore((state) => state.profile);
+
+  // Corps the user has drafted before, across all their corps (for the
+  // history draft suggestions).
+  const userHistory = useMemo(() => {
+    const history = new Set();
+    if (profile?.corps) {
+      Object.values(profile.corps).forEach((c) => {
+        if (c?.lineup)
+          Object.values(c.lineup).forEach((sel) => {
+            if (sel) history.add(sel.split('|')[0]);
+          });
+      });
+    }
+    return Array.from(history);
+  }, [profile?.corps]);
+
+  // Change limits: initial setup (no existing lineup) is exempt; the weekly
+  // change counter ({seasonUid, week, used}) is combined with the live change
+  // window to compute changes remaining.
+  const isInitialSetup =
+    !!profile && Object.keys(profile.corps?.[corpsClass]?.lineup || {}).length === 0;
+  const weeklyTrades = profile?.corps?.[corpsClass]?.weeklyTrades || null;
 
   // Live countdown to the nightly score processing (shown next to Lock
   // Lineup) plus the current caption-change window (unlimited / weekly /
@@ -102,6 +123,9 @@ const CaptionSelectionModal = ({
 
   // Close on Escape key
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   const captions = useMemo(
     () => [
@@ -135,92 +159,56 @@ const CaptionSelectionModal = ({
     }
   }, [user?.uid, corpsClass]);
 
-  // Load user history and trade limits
+  // Available corps via the shared corpsValues cache entry (same query key as
+  // Landing/Dashboard/Onboarding), so reopening the modal costs no re-fetch.
+  const corpsQuery = useCorpsValues(seasonId);
+  const availableCorps = useMemo(() => {
+    const corps = (corpsQuery.data ?? [])
+      .filter((c) => (c.points || 0) <= 50)
+      .map((c) => ({
+        ...c,
+        performanceData: {
+          avgScore: c.avgScore || 80,
+          // Value calculation: good score per point ratio
+          isValue: (c.avgScore || 80) / c.points > 4.5,
+        },
+      }));
+    corps.sort((a, b) => b.points - a.points);
+    return corps;
+  }, [corpsQuery.data]);
+
   useEffect(() => {
-    const loadUserData = async () => {
-      if (!user?.uid) return;
-      try {
-        const data = await getProfile(user.uid);
-        if (data) {
-          const history = new Set();
-          if (data.corps) {
-            Object.values(data.corps).forEach((c) => {
-              if (c?.lineup)
-                Object.values(c.lineup).forEach((sel) => {
-                  if (sel) history.add(sel.split('|')[0]);
-                });
-            });
-          }
-          setUserHistory(Array.from(history));
+    if (corpsQuery.isError) {
+      toast.error('Failed to load corps data');
+    }
+  }, [corpsQuery.isError]);
 
-          // Check if initial setup (no existing lineup)
-          const currentCorpsData = data.corps?.[corpsClass];
-          const existingLineup = currentCorpsData?.lineup || {};
-          setIsInitialSetup(Object.keys(existingLineup).length === 0);
-
-          // Weekly change counter ({seasonUid, week, used}); combined with
-          // the live change window to compute changes remaining.
-          setWeeklyTrades(currentCorpsData?.weeklyTrades || null);
-        }
-      } catch (e) {
-        console.error('Failed to load user data:', e);
-      }
-    };
-    loadUserData();
-  }, [user?.uid, corpsClass]);
-
-  // Load available corps, hot status (per-caption), and active lineup keys
+  // Load hot status (per-caption) and other users' active lineup keys. These
+  // are dynamic across users/days, so they refresh on every open.
   useEffect(() => {
     let cancelled = false;
-    const fetchCorps = async () => {
-      if (!seasonId) {
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
+    const fetchExtras = async () => {
+      setExtrasLoading(true);
+      const [hotCorpsResult, lineupKeysResult] = await Promise.all([
+        getHotCorps().catch(() => ({ data: { hotCorps: {} } })),
+        getActiveLineupKeys({ corpsClass }).catch(() => ({ data: { lineupKeys: [] } })),
+      ]);
 
-        // Fetch corps data, hot status, and active lineup keys in parallel
-        const [corpsValues, hotCorpsResult, lineupKeysResult] = await Promise.all([
-          getCorpsValues(seasonId),
-          getHotCorps().catch(() => ({ data: { hotCorps: {} } })),
-          getActiveLineupKeys({ corpsClass }).catch(() => ({ data: { lineupKeys: [] } })),
-        ]);
-
-        if (!cancelled) {
-          // Store per-caption hot data for dynamic lookups
-          const hotData = hotCorpsResult.data?.hotCorps || {};
-          setHotCorpsData(hotData);
-
-          // Store active lineup keys as a Set for O(1) lookup
-          const lineupKeys = lineupKeysResult.data?.lineupKeys || [];
-          setActiveLineupKeys(new Set(lineupKeys));
-
-          let corps = corpsValues;
-          corps = corps.filter((c) => (c.points || 0) <= 50);
-
-          corps = corps.map((c) => ({
-            ...c,
-            performanceData: {
-              avgScore: c.avgScore || 80,
-              // Value calculation: good score per point ratio
-              isValue: (c.avgScore || 80) / c.points > 4.5,
-            },
-          }));
-          corps.sort((a, b) => b.points - a.points);
-          setAvailableCorps(corps);
-        }
-      } catch {
-        toast.error('Failed to load corps data');
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        // Store per-caption hot data for dynamic lookups
+        setHotCorpsData(hotCorpsResult.data?.hotCorps || {});
+        // Store active lineup keys as a Set for O(1) lookup
+        setActiveLineupKeys(new Set(lineupKeysResult.data?.lineupKeys || []));
+        setExtrasLoading(false);
       }
     };
-    fetchCorps();
+    fetchExtras();
     return () => {
       cancelled = true;
     };
-  }, [seasonId, corpsClass]);
+  }, [corpsClass]);
+
+  const loading = !!seasonId && (corpsQuery.isPending || extrasLoading);
 
   // Generate suggestions based on the active caption
   const generateSuggestions = useCallback(
@@ -473,6 +461,7 @@ const CaptionSelectionModal = ({
         aria-labelledby="modal-title-caption-selection"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-5xl max-h-[95dvh] bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

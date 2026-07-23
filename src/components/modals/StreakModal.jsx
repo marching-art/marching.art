@@ -4,15 +4,19 @@
 // =============================================================================
 // Backed by the getStreakStatus / purchaseStreakFreeze callables (dailyOps.js).
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Flame, Snowflake, ShieldCheck, AlertTriangle, Coins, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getStreakStatus, purchaseStreakFreeze } from '../../api/functions';
 
 const StreakModal = ({ onClose, corpsCoin = 0 }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +64,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
         aria-labelledby="modal-title-streak"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-md bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

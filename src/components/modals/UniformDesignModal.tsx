@@ -4,10 +4,11 @@
 // Allows directors to design their fantasy corps uniform appearance
 // Used by AI to generate accurate images for news articles and avatars
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Palette, Sparkles, Save, Loader2, Copy, ChevronDown } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { CorpsUniformDesign, CorpsClass } from '../../types';
 import {
   CLASS_DISPLAY,
@@ -100,6 +101,10 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
   useEscapeKey(onClose);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -169,6 +174,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
         aria-labelledby="modal-title-uniform-design"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-2xl bg-surface-card border border-line rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

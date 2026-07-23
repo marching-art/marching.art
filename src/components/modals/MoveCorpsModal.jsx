@@ -3,10 +3,11 @@
 // MOVE CORPS MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Lock, Check, X, AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -37,6 +38,10 @@ const MoveCorpsModal = ({
   // Close on Escape key
   useEscapeKey(onClose);
 
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
+
   const availableClasses = AVAILABLE_CLASSES.filter(
     (cls) => cls.id !== currentClass && unlockedClasses.includes(cls.id) && !existingCorps[cls.id]
   );
@@ -58,6 +63,7 @@ const MoveCorpsModal = ({
         aria-labelledby="modal-title-move-corps"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-md bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >

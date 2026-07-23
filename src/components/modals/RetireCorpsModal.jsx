@@ -3,10 +3,11 @@
 // RETIRE CORPS MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Archive, X, AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -25,6 +26,9 @@ const RetireCorpsModal = ({
 }) => {
   // Close on Escape key
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   return (
     <Portal>
@@ -36,6 +40,7 @@ const RetireCorpsModal = ({
         aria-labelledby="modal-title-retire-corps"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-sm bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >

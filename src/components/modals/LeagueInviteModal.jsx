@@ -4,16 +4,20 @@
 // =============================================================================
 // Lets a commissioner invite another director to one of their leagues.
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { X, Users, Check, AlertCircle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getLeaguesByCreator } from '../../api/leagues';
 import { inviteDirectorToLeague } from '../../api/functions';
 import toast from 'react-hot-toast';
 
 const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   const [leagues, setLeagues] = useState([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
@@ -93,6 +97,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
         aria-labelledby="modal-title-league-invite"
       >
         <div
+          ref={dialogRef}
           className="w-full sm:max-w-md bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none max-h-[85dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

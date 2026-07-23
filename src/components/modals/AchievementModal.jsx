@@ -3,10 +3,11 @@
 // ACHIEVEMENT MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Trophy, Star, Crown, Award, Medal, Flame, X, Coins } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const ICON_MAP = {
   flame: Flame,
@@ -47,6 +48,9 @@ const RARITY_STYLES = {
 const AchievementModal = ({ onClose, achievements, newAchievement }) => {
   // Close on Escape key
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   // A fresh unlock deserves a pop, not just a list row (lazy-loaded confetti,
   // same pattern as SeasonRecapModal/ClassUnlockModal).
@@ -78,6 +82,7 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
         aria-labelledby="modal-title-achievement"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-2xl max-h-[80dvh] bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

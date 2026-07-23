@@ -4,8 +4,8 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { Calendar, Check, ChevronRight, MapPin, Trophy } from 'lucide-react';
-import { getProfile } from '../../api/profile';
 import { ShowRegistrationModal } from '../Schedule';
+import { useProfileStore } from '../../store/profileStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 import { Heading } from '../ui';
 import { compareCorpsClasses } from '../../utils/corps';
@@ -131,17 +131,16 @@ const ShowSelectionStep = ({
     setShowModal(true);
   }, []);
 
-  // Handle modal success - refresh local profile
-  const handleModalSuccess = useCallback(async () => {
-    try {
-      if (user?.uid) {
-        const profileData = await getProfile(user.uid);
-        if (profileData) {
-          setLocalUserProfile(profileData);
-        }
+  // Handle modal success - refresh local profile from the global profileStore,
+  // which holds a live onSnapshot copy of the profile doc (no getProfile
+  // re-fetch needed; the wizard's prop-sync effect also picks up the snapshot
+  // once the registration write lands).
+  const handleModalSuccess = useCallback(() => {
+    if (user?.uid) {
+      const profileData = useProfileStore.getState().profile;
+      if (profileData) {
+        setLocalUserProfile(profileData);
       }
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
     }
     setShowModal(false);
   }, [user?.uid, setLocalUserProfile]);

@@ -8,6 +8,7 @@
 import React, { useEffect, useCallback, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // =============================================================================
 // TYPES
@@ -52,8 +53,10 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<Element | null>(null);
   const titleId = useId();
+
+  // Focus management: initial focus, Tab trap, and restore-on-close
+  useFocusTrap(modalRef, isOpen);
 
   // Handle escape key
   const handleKeyDown = useCallback(
@@ -61,50 +64,19 @@ export const Modal: React.FC<ModalProps> = ({
       if (event.key === 'Escape' && closeOnEscape) {
         onClose();
       }
-      // Focus trap - prevent tabbing outside modal
-      if (event.key === 'Tab' && modalRef.current) {
-        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (event.shiftKey && document.activeElement === firstElement) {
-          event.preventDefault();
-          lastElement?.focus();
-        } else if (!event.shiftKey && document.activeElement === lastElement) {
-          event.preventDefault();
-          firstElement?.focus();
-        }
-      }
     },
     [closeOnEscape, onClose]
   );
 
-  // Lock body scroll and manage focus when open
+  // Lock body scroll and listen for Escape while open
   useEffect(() => {
     if (isOpen) {
-      // Store the previously focused element
-      previousActiveElement.current = document.activeElement;
-
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
-
-      // Auto-focus the first focusable element in the modal
-      setTimeout(() => {
-        const focusableElement = modalRef.current?.querySelector<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        focusableElement?.focus();
-      }, 0);
     }
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
-      // Restore focus to the previously focused element
-      if (previousActiveElement.current instanceof HTMLElement) {
-        previousActiveElement.current.focus();
-      }
     };
   }, [isOpen, handleKeyDown]);
 
