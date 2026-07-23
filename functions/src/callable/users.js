@@ -6,6 +6,10 @@ const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 const { sumSeasonScore } = require("../helpers/seasonRankings");
+const {
+  showRegistrationEventKey,
+  registrationEntryKey,
+} = require("../helpers/showRegistrations");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
@@ -176,7 +180,30 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
     throw new HttpsError("not-found", "Active season UID is not configured.");
   }
 
+  // Fast path: the materialized index (helpers/showRegistrations.js) answers
+  // in ONE doc read. The previous implementation ran the collectionGroup
+  // scan below on EVERY show-detail page view — O(all active players)
+  // full-corps-map reads per call, the same pattern getUserRankings had
+  // before seasonRankings was materialized.
+  const eventKey = showRegistrationEventKey(week, eventName, date);
+  const indexRef = db.doc(paths.showRegistrationEvent(activeSeasonId, eventKey));
+  const indexSnap = await indexRef.get();
+  if (indexSnap.exists) {
+    const registrations = Object.values(indexSnap.data().registrations || {}).map((entry) => ({
+      corpsName: entry.corpsName || "Unnamed Corps",
+      corpsClass: entry.corpsClass,
+      username: entry.username,
+    }));
+    return { registrations };
+  }
+
+  // Legacy fallback (index doc absent — e.g. selections that predate the
+  // index and haven't been rebuilt yet): scan profiles, then materialize the
+  // result so this event pays the scan at most once. The nightly rebuild in
+  // the lifetime-leaderboard job replaces the doc from source-of-truth
+  // profiles regardless.
   const registrations = [];
+  const indexEntries = {};
   // Field projection: Only fetch fields needed for registration display
   const q = db.collectionGroup("profile")
     .where("activeSeasonId", "==", activeSeasonId)
@@ -186,6 +213,7 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   querySnapshot.forEach((doc) => {
     const profile = doc.data();
     const userCorps = profile.corps || {};
+    const uid = doc.ref.parent.parent?.id;
 
     for (const corpsClass in userCorps) {
       const corps = userCorps[corpsClass];
@@ -197,9 +225,23 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
           corpsClass: corpsClass,
           username: profile.username,
         });
+        if (uid) {
+          indexEntries[registrationEntryKey(uid, corpsClass)] = {
+            uid,
+            corpsClass,
+            corpsName: corps.corpsName || "Unnamed Corps",
+            username: profile.username || null,
+          };
+        }
       }
     }
   });
+
+  try {
+    await indexRef.set({ week, eventName, date, registrations: indexEntries });
+  } catch (indexError) {
+    logger.warn("Could not materialize show-registration index doc:", indexError);
+  }
 
   return { registrations: registrations };
 });

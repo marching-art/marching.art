@@ -6,6 +6,11 @@ const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
 const { FANTASY_CLASSES, ENABLED_CLASSES, POINT_CAPS } = require("../helpers/classRegistry");
+const {
+  showRegistrationEventKey,
+  registrationEntryKey,
+} = require("../helpers/showRegistrations");
+const admin = require("firebase-admin");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -345,6 +350,13 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
   const userProfileRef = db.doc(paths.userProfile(uid));
 
   try {
+    // Read the profile first: the previous week's selections drive the
+    // registration-index diff below, and corpsName/username denormalize into
+    // the index entries.
+    const profileSnap = await userProfileRef.get();
+    const profile = profileSnap.exists ? profileSnap.data() : {};
+    const previousShows = profile.corps?.[corpsClass]?.selectedShows?.[`week${week}`] || [];
+
     // Also set activeSeasonId so user is properly tracked for season resets
     const updateData = {
       [`corps.${corpsClass}.selectedShows.week${week}`]: shows,
@@ -353,6 +365,57 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
       updateData.activeSeasonId = seasonData.seasonUid;
     }
     await userProfileRef.update(updateData);
+
+    // Write-through to the materialized "who's attending" index so
+    // getShowRegistrations reads one doc instead of scanning every profile.
+    // Best-effort: the profile (source of truth) is already saved, and the
+    // nightly rebuild self-heals any miss here.
+    if (seasonData.seasonUid) {
+      try {
+        const entryKey = registrationEntryKey(uid, corpsClass);
+        const entry = {
+          uid,
+          corpsClass,
+          corpsName: profile.corps?.[corpsClass]?.corpsName || "Unnamed Corps",
+          username: profile.username || null,
+        };
+        const eventRef = (key) =>
+          db.doc(paths.showRegistrationEvent(seasonData.seasonUid, key));
+        const newKeys = new Set(
+          shows.map((s) => showRegistrationEventKey(week, s.eventName, s.date))
+        );
+
+        const batch = db.batch();
+        for (const prev of previousShows) {
+          if (!prev || typeof prev.eventName !== "string") continue;
+          const key = showRegistrationEventKey(week, prev.eventName, prev.date);
+          if (!newKeys.has(key)) {
+            batch.set(
+              eventRef(key),
+              { registrations: { [entryKey]: admin.firestore.FieldValue.delete() } },
+              { merge: true }
+            );
+          }
+        }
+        for (const show of shows) {
+          const key = showRegistrationEventKey(week, show.eventName, show.date);
+          batch.set(
+            eventRef(key),
+            {
+              week,
+              eventName: show.eventName,
+              date: show.date ?? null,
+              registrations: { [entryKey]: entry },
+            },
+            { merge: true }
+          );
+        }
+        await batch.commit();
+      } catch (indexError) {
+        logger.warn(`Show-registration index update failed for ${uid} (self-heals nightly):`, indexError);
+      }
+    }
+
     return { success: true, message: `Successfully saved selections for week ${week}.` };
   } catch (error) {
     logger.error(`Failed to save show selections for user ${uid}:`, error);
