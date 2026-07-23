@@ -90,9 +90,45 @@ jobs:
       - name: Run function unit tests
         run: cd functions && npm test
 
+  # Gate: every deploy path that ships firestore.rules must pass the
+  # security-rules regression suite (same steps as the CI "rules" job) on the
+  # exact ref being deployed. Both the rules-only fast path and the full
+  # deploy ship rules, so both need this — otherwise a workflow_dispatch from
+  # an un-CI'd branch could push a rules regression straight to production.
+  test-rules:
+    if: contains(fromJSON('["all", "rules-only"]'), inputs.deploy_target)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: firestore-tests/package-lock.json
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # The Firestore emulator JAR (~60 MB) downloads on first run; cache it.
+      - name: Cache Firestore emulator
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-${{ hashFiles('firestore-tests/package-lock.json') }}
+
+      - name: Install rules-test dependencies
+        run: cd firestore-tests && npm ci
+
+      - name: Run rules tests against the emulator
+        run: cd firestore-tests && npm test
+
   deploy-all:
     if: inputs.deploy_target == 'all'
-    needs: test-functions
+    needs: [test-functions, test-rules]
     runs-on: ubuntu-latest
     # Batched function deploys are paced to stay under the Cloud Run
     # write-per-minute quota, so a full deploy of every changed function can
@@ -369,6 +405,7 @@ jobs:
   # missing from firestore.indexes.json.
   deploy-rules-only:
     if: inputs.deploy_target == 'rules-only'
+    needs: test-rules
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
