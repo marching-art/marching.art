@@ -1,10 +1,10 @@
 // src/hooks/useDashboardData.ts
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { DocumentData } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { getRecentSeasonRecaps, getCorpsValues, RECENT_RECAP_DAYS } from '../api/season';
+import { getRecentSeasonRecaps, RECENT_RECAP_DAYS } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
+import { useCorpsValues } from './useCorpsValues';
 import { useSeason } from './useSeason';
 import { useProfileStore, type Engagement, type ProfileDoc } from '../store/profileStore';
 import toast from 'react-hot-toast';
@@ -88,7 +88,6 @@ export const useDashboardData = () => {
   );
 
   // Additional local state
-  const [availableCorps, setAvailableCorps] = useState<DocumentData[]>([]);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState<string | null>(null);
 
   // Class unlock tracking - use ref to avoid re-render loops
@@ -296,20 +295,11 @@ export const useDashboardData = () => {
   // (lifetimeStats at season archival) and personal-best callouts ride the
   // season recap.
 
-  // Fetch available corps
-  const fetchAvailableCorps = useCallback(async () => {
-    try {
-      if (!seasonData?.seasonUid) {
-        setAvailableCorps([]);
-        return;
-      }
-
-      setAvailableCorps(await getCorpsValues(seasonData.seasonUid));
-    } catch (error) {
-      console.error('Error fetching available corps:', error);
-      setAvailableCorps([]);
-    }
-  }, [seasonData?.seasonUid]);
+  // Available corps for the season via the shared corpsValues cache entry
+  // (same query key as Landing/Onboarding/Guest demo, so this usually costs
+  // no extra Firestore reads).
+  const { data: corpsValuesData } = useCorpsValues(seasonData?.seasonUid);
+  const availableCorps = useMemo(() => corpsValuesData ?? [], [corpsValuesData]);
 
   // Recent season recaps via the bounded most-recent-days query (shared cache
   // entry with the always-mounted ticker, so this usually costs no extra
@@ -341,13 +331,6 @@ export const useDashboardData = () => {
         rank: isSoundSport ? null : (r.rank ?? '-'),
       }));
   }, [rawRecentRecaps, activeCorpsClass]);
-
-  // Fetch season-specific data when seasonData is available
-  useEffect(() => {
-    if (seasonData?.seasonUid) {
-      fetchAvailableCorps();
-    }
-  }, [seasonData?.seasonUid, fetchAvailableCorps]);
 
   // Corps switching handler
   const handleCorpsSwitch = (classId: string) => {

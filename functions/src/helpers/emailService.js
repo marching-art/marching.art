@@ -11,6 +11,11 @@ const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("./paths");
+// Every user-derived string (usernames, corps names, headlines, reasons,
+// comment excerpts...) MUST pass through escapeHtml before being interpolated
+// into an email HTML template — otherwise it's stored XSS in the recipient's
+// inbox. Trusted constants (EMAIL_CONFIG URLs, literal copy) stay unescaped.
+const { escapeHtml } = require("./escapeHtml");
 
 // Define secrets for Brevo (set via `firebase functions:secrets:set`)
 const brevoApiKey = defineSecret("BREVO_API_KEY");
@@ -128,6 +133,12 @@ function stripHtml(html) {
     .replace(/<\/p>/gi, "\n\n")
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/g, " ")
+    // Decode the entities escapeHtml produces so the plain-text version stays
+    // readable. &amp; must decode last to avoid double-decoding.
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&")
     .trim();
 }
@@ -284,7 +295,7 @@ function emailWrapper(content, preheader = "") {
 function welcomeEmailTemplate({ username, corpsCoinGift = 100 }) {
   const content = `
     <div class="content">
-      <h2>Welcome to the Field, ${username}! 🎺</h2>
+      <h2>Welcome to the Field, ${escapeHtml(username)}! 🎺</h2>
       <p>
         You've joined thousands of drum corps fans in the ultimate fantasy experience.
         Build your dream corps, compete in leagues, and climb the leaderboards.
@@ -328,7 +339,7 @@ function streakBrokenEmailTemplate({ username, previousStreak }) {
     <div class="content">
       <h2>Your Streak Has Reset</h2>
       <p>
-        Hey ${username}, your ${previousStreak}-day streak has ended.
+        Hey ${escapeHtml(username)}, your ${previousStreak}-day streak has ended.
         But every champion has setbacks — what matters is getting back up.
       </p>
 
@@ -362,15 +373,19 @@ function streakBrokenEmailTemplate({ username, previousStreak }) {
  * SoundSport entries never reveal raw scores — only medal designations.
  */
 function rivalContextEmailTemplate({ username, headline, events }) {
-  const safeUsername = username || "Director";
+  const safeUsername = escapeHtml(username || "Director");
+  // Event titles/details embed rival corps names and other user-chosen strings
+  // (see emailNotifications.js) — escape every event field, including the
+  // color, which lands inside a style attribute.
+  const safeHeadline = escapeHtml(headline);
   const eventList = (events || [])
     .map((event) => {
       const detail = event.detail
-        ? `<div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">${event.detail}</div>`
+        ? `<div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">${escapeHtml(event.detail)}</div>`
         : "";
       return `
-        <li style="margin: 12px 0; padding: 12px 14px; background-color: #0f172a; border-left: 3px solid ${event.color || "#0057B8"}; border-radius: 4px;">
-          <div style="font-weight: 600; color: #f1f5f9;">${event.icon ? event.icon + " " : ""}${event.title}</div>
+        <li style="margin: 12px 0; padding: 12px 14px; background-color: #0f172a; border-left: 3px solid ${escapeHtml(event.color || "#0057B8")}; border-radius: 4px;">
+          <div style="font-weight: 600; color: #f1f5f9;">${event.icon ? escapeHtml(event.icon) + " " : ""}${escapeHtml(event.title)}</div>
           ${detail}
         </li>
       `;
@@ -379,7 +394,7 @@ function rivalContextEmailTemplate({ username, headline, events }) {
 
   const content = `
     <div class="content">
-      <h2 style="color: #ffffff; margin-bottom: 8px;">${headline}</h2>
+      <h2 style="color: #ffffff; margin-bottom: 8px;">${safeHeadline}</h2>
       <p style="color: #cbd5e1;">
         Here's what shifted in your class this week, ${safeUsername}.
       </p>
@@ -402,7 +417,7 @@ function rivalContextEmailTemplate({ username, headline, events }) {
     </div>
   `;
 
-  return emailWrapper(content, headline);
+  return emailWrapper(content, safeHeadline);
 }
 
 /**
@@ -410,19 +425,20 @@ function rivalContextEmailTemplate({ username, headline, events }) {
  */
 function adminArticleSubmissionEmailTemplate({ headline, summary, authorName, category, submissionId }) {
   const reviewUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=submissions&id=${encodeURIComponent(submissionId || "")}`;
+  const safeHeadline = escapeHtml(headline || "(no headline)");
   const content = `
     <div class="content">
       <h2 style="color: #ffffff; margin-bottom: 8px;">New article needs review</h2>
       <p style="color: #cbd5e1;">
-        <strong>${authorName || "A user"}</strong> submitted an article for approval.
+        <strong>${escapeHtml(authorName || "A user")}</strong> submitted an article for approval.
       </p>
 
       <div style="margin: 16px 0; padding: 14px; background-color: #0f172a; border-radius: 4px;">
         <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">
-          ${category || "uncategorized"}
+          ${escapeHtml(category || "uncategorized")}
         </div>
-        <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">${headline || "(no headline)"}</div>
-        <div style="font-size: 13px; color: #94a3b8;">${summary || ""}</div>
+        <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">${safeHeadline}</div>
+        <div style="font-size: 13px; color: #94a3b8;">${escapeHtml(summary || "")}</div>
       </div>
 
       <p style="text-align: center;">
@@ -430,7 +446,7 @@ function adminArticleSubmissionEmailTemplate({ headline, summary, authorName, ca
       </p>
     </div>
   `;
-  return emailWrapper(content, `New submission: ${headline || "(no headline)"}`);
+  return emailWrapper(content, `New submission: ${safeHeadline}`);
 }
 
 /**
@@ -450,21 +466,21 @@ function adminCommentReportEmailTemplate({
     <div class="content">
       <h2 style="color: #ffffff; margin-bottom: 8px;">Comment flagged for review</h2>
       <p style="color: #cbd5e1;">
-        <strong>${reporterName || "A user"}</strong> reported a comment by
-        <strong>${commentAuthor || "an unknown user"}</strong>.
+        <strong>${escapeHtml(reporterName || "A user")}</strong> reported a comment by
+        <strong>${escapeHtml(commentAuthor || "an unknown user")}</strong>.
       </p>
 
       ${reason ? `
       <div style="margin: 16px 0; padding: 12px 14px; background-color: #0f172a; border-left: 3px solid #ef4444; border-radius: 4px;">
         <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">Reason</div>
-        <div style="color: #f1f5f9;">${reason}</div>
+        <div style="color: #f1f5f9;">${escapeHtml(reason)}</div>
       </div>
       ` : ""}
 
       ${commentExcerpt ? `
       <div style="margin: 16px 0; padding: 12px 14px; background-color: #0f172a; border-radius: 4px;">
         <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">Comment</div>
-        <div style="color: #cbd5e1; font-style: italic;">"${commentExcerpt}"</div>
+        <div style="color: #cbd5e1; font-style: italic;">"${escapeHtml(commentExcerpt)}"</div>
       </div>
       ` : ""}
 
@@ -473,10 +489,10 @@ function adminCommentReportEmailTemplate({
       </p>
       ${articleUrl ? `<p style="font-size: 13px; text-align: center;"><a href="${articleUrl}" style="color: #94a3b8;">View the article in context</a></p>` : ""}
 
-      ${reportId ? `<p style="font-size: 11px; color: #64748b; margin-top: 16px;">Report ID: ${reportId}</p>` : ""}
+      ${reportId ? `<p style="font-size: 11px; color: #64748b; margin-top: 16px;">Report ID: ${escapeHtml(reportId)}</p>` : ""}
     </div>
   `;
-  return emailWrapper(content, `Comment reported: ${reason || "see admin queue"}`);
+  return emailWrapper(content, `Comment reported: ${escapeHtml(reason || "see admin queue")}`);
 }
 
 /**
@@ -485,7 +501,7 @@ function adminCommentReportEmailTemplate({
 function winBackEmailTemplate({ username, daysMissed, streakLost, corpsCoinBalance }) {
   const content = `
     <div class="content">
-      <h2>We Miss You, ${username}! 💔</h2>
+      <h2>We Miss You, ${escapeHtml(username)}! 💔</h2>
       <p>
         It's been ${daysMissed} days since your last visit to marching.art.
         The competition is heating up — don't get left behind!
@@ -536,7 +552,7 @@ function milestoneEmailTemplate({ username, milestoneType, milestoneValue, xpRew
     <div class="content">
       <h2>🎉 ${milestoneMessages[milestoneType] || 'Milestone Achieved!'}</h2>
       <p>
-        Congratulations ${username}! You've reached an incredible milestone.
+        Congratulations ${escapeHtml(username)}! You've reached an incredible milestone.
       </p>
 
       <div class="stat-box">
@@ -648,10 +664,7 @@ async function sendAdminCommentReportEmail(email, data) {
  * template — e.g. a supporter link claimed with a mismatched email.
  */
 async function sendAdminGenericAlertEmail(email, { subject, body }) {
-  const escaped = String(body || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  const escaped = escapeHtml(body || "");
   return sendEmail({
     to: email,
     subject: `[Admin] ${subject || "marching.art alert"}`,
@@ -758,6 +771,9 @@ module.exports = {
 
   // Core function
   sendEmail,
+
+  // Escaping helper (re-exported so email-adjacent code shares one impl)
+  escapeHtml,
 
   // Email senders
   sendWelcomeEmail,

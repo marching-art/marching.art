@@ -4,10 +4,11 @@
 // =============================================================================
 // Allows directors to submit news articles for admin approval
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Send, FileText, Sparkles, Image as ImageIcon } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const CATEGORIES = [
   { id: 'dci', name: 'DCI News', description: 'Corps announcements, show updates' },
@@ -39,6 +40,10 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
   const [errors, setErrors] = useState({});
 
   useEscapeKey(onClose);
+
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   const validate = () => {
     const newErrors = {};
@@ -110,6 +115,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
         aria-labelledby="modal-title-news-submission"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-2xl bg-surface-card border border-line rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import { m, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
 import { X } from 'lucide-react';
 import { triggerHaptic } from '../../hooks/useHaptic';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // =============================================================================
 // TYPES
@@ -45,7 +46,9 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 }) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
-  const previousActiveElement = useRef<Element | null>(null);
+
+  // Focus management: initial focus, Tab trap, and restore-on-close
+  useFocusTrap(sheetRef, isOpen);
 
   // Calculate heights — dvh tracks the visible viewport on iOS (the Safari
   // toolbar shrinks it below 100vh). Inline styles can't carry a fallback
@@ -57,20 +60,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   // Lock body scroll when open
   useEffect(() => {
     if (isOpen) {
-      previousActiveElement.current = document.activeElement;
       document.body.style.overflow = 'hidden';
-
-      // Focus the sheet
-      setTimeout(() => {
-        sheetRef.current?.focus();
-      }, 100);
     }
 
     return () => {
       document.body.style.overflow = '';
-      if (previousActiveElement.current instanceof HTMLElement) {
-        previousActiveElement.current.focus();
-      }
     };
   }, [isOpen]);
 

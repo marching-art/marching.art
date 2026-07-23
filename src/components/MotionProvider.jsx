@@ -8,16 +8,20 @@
 
 import { LazyMotion, MotionConfig } from 'framer-motion';
 
-// Async feature loader - defers ~80KB from initial bundle
-// Features are loaded after initial render, not blocking FCP/LCP
-const loadFeatures = () => import('framer-motion').then((mod) => mod.domMax);
+// Async feature loader - defers domMax (~40KB gzip) from the initial bundle.
+// IMPORTANT: this must import src/lib/motionFeatures, NOT 'framer-motion'
+// directly — 'framer-motion' is statically imported above, so a dynamic
+// import of the same specifier resolves to the already-eager module and the
+// split silently never happens. The re-export module gives the bundler a
+// real dynamic boundary; features load after initial render, off FCP/LCP.
+const loadFeatures = () => import('../lib/motionFeatures').then((m) => m.default);
 
 /**
  * LazyMotion provider that wraps the app with async-loaded animation features
  * and respects the user's prefers-reduced-motion OS setting.
  *
  * Benefits:
- * - Defers framer-motion features from initial bundle (~80KB savings on FCP)
+ * - Defers framer-motion features from initial bundle (~40KB gzip off FCP)
  * - Features load asynchronously after initial render
  * - Still provides full animation capabilities (domMax includes drag, layout, etc.)
  * - Automatically disables animations when the user has enabled "reduce motion"

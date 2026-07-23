@@ -1,7 +1,8 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { renameCorps } from '../../api/functions';
 import { getCorpsClassName } from '../../utils/corps';
 import toast from 'react-hot-toast';
@@ -12,6 +13,10 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
   const [index, setIndex] = useState(0);
   const [newName, setNewName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   const current = duplicates[index];
   if (!current) return null;
@@ -55,7 +60,10 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
         aria-modal="true"
         aria-labelledby="rename-duplicate-title"
       >
-        <div className="w-full max-w-md bg-surface-card border border-red-500/50 rounded-none">
+        <div
+          ref={dialogRef}
+          className="w-full max-w-md bg-surface-card border border-red-500/50 rounded-none"
+        >
           <div className="flex items-center gap-2 px-4 py-3 border-b border-red-500/30 bg-red-950/40">
             <AlertTriangle className="w-4 h-4 text-red-400" />
             <h2

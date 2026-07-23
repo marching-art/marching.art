@@ -437,9 +437,14 @@ match /artifacts/{appId}/leagues/{leagueId} {
   // full league docs, including private leagues' member UID arrays and
   // settings, are enumerable by any authenticated user. If the community
   // widgets are ever changed to filter (e.g. where isPublic == true),
-  // tighten this to match. Join secrets do NOT live here: invite codes are
-  // in /leagueInvites (client access closed below) and joining goes through
-  // callables.
+  // tighten this to match. BECAUSE list is open, join secrets must NOT live
+  // on the league doc: createLeague used to store `inviteCode` here, letting
+  // any signed-in user dump every private league's code — it now writes the
+  // code only to /leagueInvites/{code} (client access closed below) and to
+  // the member-only meta/private subcollection doc (rule further down);
+  // scripts/stripLeagueInviteCodes.js migrates legacy docs. Joining goes
+  // through callables, which also enforce invitation checks for private
+  // leagues.
   allow list: if isAuthenticated(); // Allows querying for leagues
   allow get: if isAuthenticated() &&
     (request.auth.uid in resource.data.members || isAdmin());
@@ -489,7 +494,10 @@ match /artifacts/{appId}/leagues/{leagueId} {
     allow write: if false; // Backend only
   }
 
-  // Rivalry metadata (meta/rivalries, written by the rivalry job)
+  // League metadata, member-only: meta/rivalries (written by the rivalry
+  // job) and meta/private (the league's invite code, written by createLeague
+  // — kept off the listable league doc above so non-members can never
+  // enumerate join secrets).
   match /meta/{docId} {
     allow read: if isAuthenticated() &&
       (request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/leagues/$(leagueId)).data.members || isAdmin());

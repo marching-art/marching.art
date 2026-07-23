@@ -1,0 +1,8 @@
+{
+  "_note": "Ratchet ceiling for files carrying a `// @ts-nocheck` header (grandfathered before checkJs). The count may only fall: type or clean up a file, delete its header, then run `node scripts/tsNocheckCensus.mjs --update` to lock the new floor. Never edit these upward by hand.",
+  "total": 222,
+  "perDir": {
+    "src": 213,
+    "functions/src": 9
+  }
+}

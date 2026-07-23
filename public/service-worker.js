@@ -56,7 +56,9 @@ const ROUTE_STRATEGIES = [
   { pattern: /^https:\/\/res\.cloudinary\.com/, strategy: CACHE_STRATEGIES.CACHE_FIRST, cache: IMAGE_CACHE, maxAge: 7 * 24 * 60 * 60 * 1000 },
 
   // Firebase APIs - network first for data freshness
-  { pattern: /^https:\/\/firestore\.googleapis\.com/, strategy: CACHE_STRATEGIES.NETWORK_FIRST, cache: RUNTIME_CACHE, timeout: 5000 },
+  // (firestore.googleapis.com is deliberately absent: the fetch handler
+  // bypasses it entirely — see the early return alongside the
+  // cloudfunctions.net bypass below.)
   { pattern: /^https:\/\/.*\.firebaseapp\.com/, strategy: CACHE_STRATEGIES.NETWORK_FIRST, cache: RUNTIME_CACHE, timeout: 5000 },
   { pattern: /^https:\/\/.*\.firebase\.com/, strategy: CACHE_STRATEGIES.NETWORK_FIRST, cache: RUNTIME_CACHE, timeout: 5000 },
 
@@ -124,6 +126,13 @@ self.addEventListener('fetch', (event) => {
   // Skip Firebase Cloud Functions entirely - let browser handle CORS
   // This includes callable functions which use POST with CORS preflight
   if (url.hostname.includes('cloudfunctions.net')) return;
+
+  // Skip Firestore entirely - realtime Listen long-polls are designed to hang
+  // 30s+ and a network-first 5s timeout was aborting every one of them, while
+  // each webchannel URL carries a unique SID so caching them never hits.
+  // Offline reads are already handled by persistentLocalCache in
+  // src/api/client.ts.
+  if (url.hostname.includes('firestore.googleapis.com')) return;
 
   // Skip non-GET requests (POST, OPTIONS for CORS preflight, etc.)
   if (request.method !== 'GET') return;

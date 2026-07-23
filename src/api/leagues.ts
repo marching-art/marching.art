@@ -112,6 +112,22 @@ export async function getLeague(leagueId: string): Promise<League | null> {
 }
 
 /**
+ * Get a league's invite code from the member-only meta/private doc.
+ * Legacy leagues may still carry the code on the league doc itself until the
+ * strip migration runs; callers should prefer that field when present.
+ */
+export async function getLeagueInviteCode(leagueId: string): Promise<string | null> {
+  try {
+    const metaRef = doc(db, paths.leagueMeta(leagueId, 'private'));
+    const metaDoc = await getDoc(metaRef);
+    return metaDoc.exists() ? ((metaDoc.data().inviteCode as string | undefined) ?? null) : null;
+  } catch {
+    // Non-members are denied by rules; the code simply isn't shown.
+    return null;
+  }
+}
+
+/**
  * Subscribe to league updates
  */
 export function subscribeToLeague(

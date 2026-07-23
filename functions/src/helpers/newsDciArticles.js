@@ -25,6 +25,10 @@ const {
   getWritingVariety,
   formatBriefForArticle,
 } = require("./newsEditorial");
+// Show names and locations flow in from schedule/results data that can carry
+// user-influenced strings — promptSafe() strips newlines/control chars,
+// truncates, and wraps them in «...» so they read as data, never instructions.
+const { promptSafe, UNTRUSTED_FIELD_RULE } = require("./promptSafety");
 
 /**
  * Article 1: DCI Scores Analysis
@@ -61,7 +65,7 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, season
   const multiShow = scoresByShow.length > 1;
 
   const showBlocks = scoresByShow.map(group => {
-    const header = `SHOW: ${group.name}${group.location ? ` — ${group.location}` : ''} (${group.scores.length} corps)`;
+    const header = `SHOW: ${promptSafe(group.name)}${group.location ? ` — ${promptSafe(group.location)}` : ''} (${group.scores.length} corps)`;
     const lines = group.scores.map((s, i) => {
       const trend = trendData[s.corps];
       const change = trend?.dayChange || 0;
@@ -89,7 +93,7 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, season
       const margin = sorted[1] ? (top.subtotals[cap] - sorted[1].subtotals[cap]).toFixed(2) : "N/A";
       return `• ${cap.toUpperCase()}: ${top.corps} (${top.subtotals[cap]?.toFixed(2)}) — ${margin} over ${sorted[1]?.corps || 'field'}`;
     }).filter(Boolean).join('\n');
-    return `${group.name}:\n${winners}`;
+    return `${promptSafe(group.name)}:\n${winners}`;
   }).join('\n\n');
 
   // Day-over-day movers across the whole field (identity by corps name is fine;
@@ -152,12 +156,13 @@ ACCURACY RULES (read first — violations ruin the article)
 - Every corps name, score, caption number, show name, and location you write MUST come from the DATA block below. Do not invent corps, venues, cities, dates, or statistics.
 - Only the corps listed in CORPS COMPETING TONIGHT exist in this article. Do not reference any corps not in that list.
 - The field tonight has ${dayScores.length} corps — never state any other count, and never imply corps not listed were present.
-${multiShow ? `- There are ${scoresByShow.length} separate competitions tonight at different venues. Corps at different shows did NOT compete against each other. Never imply a head-to-head result between corps that weren't at the same show. When you cite a score or placement, make the show clear from context.` : `- All corps tonight competed at a single show: ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` in ${scoresByShow[0].location}` : ''}.`}
+${multiShow ? `- There are ${scoresByShow.length} separate competitions tonight at different venues. Corps at different shows did NOT compete against each other. Never imply a head-to-head result between corps that weren't at the same show. When you cite a score or placement, make the show clear from context.` : `- All corps tonight competed at a single show: ${promptSafe(scoresByShow[0]?.name)}${scoresByShow[0]?.location ? ` in ${promptSafe(scoresByShow[0].location)}` : ''}.`}
 ${isLiveSeason
   ? `- This is the ${liveSeasonYear} live DCI season. Write about THIS season's competitions and scores as they happen now — do NOT reference a prior year's program material or tag corps with a past season year.`
   : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's program material the corps is performing. Every corps in the DATA block has a listed sourceYear; use it. After the first mention, the year can be omitted.`}
 - If a data point you want to reference isn't in the DATA block, leave it out. Do not fill gaps with plausible-sounding invention.
 - VENUE: a show's city or venue is available only when the DATA block prints one next to the show name. When a show has no location listed, refer to it by name alone ("at Drums Across the Smokies") — never write "an unknown location", "an undisclosed venue", "Competition Venue", "somewhere", or invent a city or state. A dateline (e.g., "INDIANAPOLIS —") is allowed only if that city is actually in the data. Simply omitting the venue reads as professional; naming a placeholder reads as broken.
+- ${UNTRUSTED_FIELD_RULE}
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -187,7 +192,7 @@ Day ${reportDay} — ${showContext.date}
 CORPS COMPETING TONIGHT (${dayScores.length}): ${corpsRoster}
 
 ${multiShow ? `TONIGHT'S SHOWS (${scoresByShow.length}):` : `TONIGHT'S SHOW:`}
-${scoresByShow.map(g => `- ${g.name}${g.location ? ` — ${g.location}` : ''} (${g.scores.length} corps)`).join('\n')}
+${scoresByShow.map(g => `- ${promptSafe(g.name)}${g.location ? ` — ${promptSafe(g.location)}` : ''} (${g.scores.length} corps)`).join('\n')}
 
 RESULTS BY SHOW
 ${showBlocks}
@@ -213,7 +218,7 @@ HOW TO WRITE THIS ARTICLE
 - Headline: Specific and factual. No exclamation points. Reference an actual margin, score, or storyline from the data.
 - Summary: 2-3 factual sentences — key result, the margin, and one specific storyline${multiShow ? '. If the night had multiple shows, make that clear in the summary' : ''}.
 - Narrative: 600-900 words. Every scoring corps should appear by name at least once, but let significance drive the emphasis — don't pad coverage to hit a checklist, and don't march through rank order unless that's genuinely the best frame.
-${multiShow ? `- Cover all ${scoresByShow.length} shows by name. For each score or placement you cite, make the show clear (via dateline, a phrase like "at [Show]", or section framing). Readers should never be confused about which corps competed where.` : `- This is a single-show night — ground the article in ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` (${scoresByShow[0].location})` : ''} and treat the standings as one field.`}
+${multiShow ? `- Cover all ${scoresByShow.length} shows by name. For each score or placement you cite, make the show clear (via dateline, a phrase like "at [Show]", or section framing). Readers should never be confused about which corps competed where.` : `- This is a single-show night — ground the article in ${promptSafe(scoresByShow[0]?.name)}${scoresByShow[0]?.location ? ` (${promptSafe(scoresByShow[0].location)})` : ''} and treat the standings as one field.`}
 - Weave day-over-day changes and caption details where they're relevant; don't break them out as obligatory sections.
 - Use the FIELD SHAPE data — whether the field tightened or spread, how much position churn there was, the biggest gap-closer — as a structural through-line, not just a list of who placed where. This is what separates your piece from a bare results table: the story of how the whole standings moved tonight.
 - Structure the piece with 3-4 short bolded lead-ins in Markdown (e.g., **The result.**, **The margins.**, **Movers.**, **What's next.**) at natural transitions. Keep each to 2-4 words — they render as section subheads and make the piece scannable. Don't over-segment.
@@ -383,7 +388,7 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, seas
       const prevScore = i > 0 ? arr[i-1].total : null;
       const change = prevScore ? (s.total - prevScore) : 0;
       const changeStr = prevScore ? ` (${change >= 0 ? '+' : ''}${change.toFixed(3)})` : '';
-      return `Day ${s.day}: ${s.total.toFixed(3)}${changeStr}${s.showName ? ` at ${s.showName}` : ''}${s.location ? `, ${s.location}` : ''}
+      return `Day ${s.day}: ${s.total.toFixed(3)}${changeStr}${s.showName ? ` at ${promptSafe(s.showName)}` : ''}${s.location ? `, ${promptSafe(s.location)}` : ''}
    GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
     }).join('\n') || 'Limited show history available';
 
@@ -421,6 +426,7 @@ ${isLiveSeason
   : `- The featured corps is ${featureCorps.corps} competing with ${featureCorps.sourceYear} material. Do not reference seasons or material other than ${featureCorps.sourceYear} unless it appears in the data.
 - Source-year disclosure: on the corps' FIRST mention in the narrative, render as "${featureCorps.corps} (${featureCorps.sourceYear})" so fantasy readers know which season's program they're reading about. After the first mention, omit the year unless you're explicitly contrasting seasons.`}
 - If a fact isn't in the data, leave it out — do not fill gaps with plausible-sounding invention.
+- ${UNTRUSTED_FIELD_RULE}
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -433,7 +439,7 @@ DATA RULES: Ignore total scores under 60 (incomplete). Ignore caption scores of 
 ===== DATA =====
 FEATURED CORPS: ${featureCorps.corps}
 ${isLiveSeason ? 'Live season' : 'Season material'}: ${featureCorps.sourceYear}${showTitle ? ` | Show title: "${showTitle}"` : ''}
-Tonight's competition: ${tonightShow || 'N/A'}${tonightLocation ? ` — ${tonightLocation}` : ''}
+Tonight's competition: ${tonightShow ? promptSafe(tonightShow) : 'N/A'}${tonightLocation ? ` — ${promptSafe(tonightLocation)}` : ''}
 Tonight's placement: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} of ${dayScores.length} at that show, ${featureCorps.total.toFixed(3)} (${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)} from yesterday)
 Season (${seasonShows || 'few'} shows to date): High ${seasonHigh.toFixed(3)} | Low ${seasonLow >= 60 ? seasonLow.toFixed(3) : 'N/A'}${Number.isFinite(seasonAvg) ? ` | Avg ${seasonAvg.toFixed(3)}` : ''}${Number.isFinite(seasonImprovement) ? ` | Opener-to-now ${seasonImprovement >= 0 ? '+' : ''}${seasonImprovement.toFixed(3)}` : ''} | 7-day net ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} | Momentum: ${corpsTrend.momentum || 'steady'}${corpsTrend.atSeasonBest ? ' | ★ AT SEASON HIGH TONIGHT' : ''}${corpsTrend.atSeasonWorst ? ' | ▼ SEASON LOW TONIGHT' : ''}
 ${seasonContextBlock ? `\n${seasonContextBlock}\n` : ''}
@@ -449,7 +455,7 @@ COMPETITIVE NEIGHBORHOOD (corps ranked within a few spots of the feature at toda
 ${dayScores.slice(Math.max(0, currentRank - 3), Math.min(dayScores.length, currentRank + 4)).map((s, i) => {
   const rank = Math.max(0, currentRank - 3) + i + 1;
   const gap = s.total - featureCorps.total;
-  const venueTag = s.showName && s.showName !== tonightShow ? ` @ ${s.showName}` : '';
+  const venueTag = s.showName && s.showName !== tonightShow ? ` @ ${promptSafe(s.showName)}` : '';
   return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${venueTag}${s.corps === featureCorps.corps ? ' ← FEATURED' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
 }).join('\n')}
 ${narrativeHintsBlock ? `
@@ -626,11 +632,12 @@ SCOPE (read carefully)
 ACCURACY RULES
 - Every corps name, score, caption number, and trend direction you write MUST come from the DATA block below. Do not invent corps, scores, or statistics.
 - The field being analyzed is ${dayScores.length} corps (listed below). Never state any other count, and never reference corps not in this list.
-${multiShowToday ? `- Tonight's caption numbers come from ${uniqueShows.length} different shows: ${uniqueShows.join(', ')}. Corps at different shows did NOT judge against each other tonight, so the caption rankings below are a composite across venues — frame cross-venue comparisons as such, not as a head-to-head caption duel.` : `- Tonight's caption numbers come from a single show, so the caption rankings below are a true head-to-head.`}
+${multiShowToday ? `- Tonight's caption numbers come from ${uniqueShows.length} different shows: ${uniqueShows.map(n => promptSafe(n)).join(', ')}. Corps at different shows did NOT judge against each other tonight, so the caption rankings below are a composite across venues — frame cross-venue comparisons as such, not as a head-to-head caption duel.` : `- Tonight's caption numbers come from a single show, so the caption rankings below are a true head-to-head.`}
 ${isLiveSeason
   ? `- This is the ${dayScores.find(s => s.sourceYear)?.sourceYear || String(new Date().getFullYear())} live DCI season — the caption scores below are from this season's competitions. Do NOT reference a prior year's book or tag corps with a past season year.`
   : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's book is driving the caption scores. Every corps' year is listed in CORPS SOURCE YEARS below. After the first mention, the year can be omitted.`}
 - If a fact isn't in the data, leave it out.
+- ${UNTRUSTED_FIELD_RULE}
 
 ${NEWS_INTEGRITY_RULES}
 

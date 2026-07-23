@@ -11,11 +11,12 @@
 // Option lists live in src/utils/showConcept.js (client mirror of the
 // backend lists).
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Palette, Music, Route, Sparkles, Type, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { saveShowConcept } from '../../api/functions';
 import { SHOW_THEMES, MUSIC_SOURCES, DRILL_STYLES } from '../../utils/showConcept';
 
@@ -46,6 +47,9 @@ const PickerGroup = ({ label, icon: Icon, options, value, onChange }) => (
 
 const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   // Tolerate the legacy free-text value some corps carry (a string can't
   // match the pickers, so it simply starts unselected)
@@ -85,6 +89,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
         aria-labelledby="modal-title-show-concept"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-lg max-h-[85dvh] bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

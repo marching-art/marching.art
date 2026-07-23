@@ -77,6 +77,10 @@ const MatchupDetailView = ({
             recaps = await queryClient.fetchQuery({
               queryKey: queryKeys.fantasyRecaps(sData.seasonUid),
               queryFn: () => getSeasonRecaps(sData.seasonUid),
+              // sData.seasonUid is always the *current* season here, so the
+              // 5-minute freshness window applies (archived-season reads pin
+              // staleTime: Infinity in useScoresData — past days are immutable).
+              staleTime: 5 * 60 * 1000,
             });
           }
         }

@@ -7,10 +7,11 @@
 // out of retirement. Only shown when there is at least one retired corps for
 // this class — otherwise the caller should open CorpsRegistrationModal directly.
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Plus, RotateCcw, X, Trophy } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -28,6 +29,9 @@ const NewCorpsSlotModal = ({
   processing = false,
 }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   return (
     <Portal>
@@ -39,6 +43,7 @@ const NewCorpsSlotModal = ({
         aria-labelledby="modal-title-new-slot"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-md bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >

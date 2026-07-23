@@ -5,10 +5,11 @@
 // Edit director-level profile (bio, specialties, socials) and per-ensemble
 // identity (mission, history, motto) — all preserved across seasons.
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { X, User, Music, Link as LinkIcon } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import {
   PROFILE_CORPS_CLASS_ORDER,
   resolveCorpsForClass,
@@ -85,6 +86,9 @@ const TextArea = ({ rows = 3, ...props }) => (
 
 const ProfileEditModal = ({ profile, onClose, onSave }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   const availableCorps = useMemo(() => {
     const unlocked = profile?.unlockedClasses?.length ? profile.unlockedClasses : ['soundSport'];
@@ -231,6 +235,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
         aria-labelledby="modal-title-edit-profile"
       >
         <div
+          ref={dialogRef}
           className="w-full sm:max-w-lg bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none max-h-[92dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

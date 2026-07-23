@@ -19,7 +19,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import SupporterPanel from './SupporterPanel';
-import { getProfile, updateProfile } from '../../api/profile';
+import { updateProfile } from '../../api/profile';
+import { useProfileStore } from '../../store/profileStore';
 import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { useTooltipPreference } from '../../hooks/useTooltipPreference';
@@ -157,7 +158,11 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   const loadSettings = async () => {
     try {
-      const data = await getProfile(user.uid);
+      // The global profileStore holds a live onSnapshot copy of this exact
+      // doc — read it instead of re-fetching via getProfile. Read once per
+      // open (getState, not a subscription) so a snapshot arriving while the
+      // user edits the form can't clobber their in-progress changes.
+      const data = useProfileStore.getState().profile;
       if (data) {
         setSupporter(data.supporter || null);
 

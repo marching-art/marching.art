@@ -3,10 +3,11 @@
 // CLASS UNLOCK MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Unlock, Plus } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const CLASS_INFO = {
   aClass: {
@@ -35,6 +36,10 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
   // Close on Escape key
   useEscapeKey(onDecline);
 
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
+
   // A class unlock is a major progression moment — celebrate it
   useEffect(() => {
     let cancelled = false;
@@ -58,6 +63,7 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
         aria-labelledby="modal-title-class-unlock"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-md bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >

@@ -6,11 +6,12 @@
 // (economy.js). History lives in the corpsCoinHistory subcollection written by
 // every server-side coin transaction.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Coins, TrendingUp, TrendingDown, X } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getCorpsCoinHistory, getEarningOpportunities } from '../../api/functions';
 
 // Callable results serialize Firestore Timestamps to {_seconds,...}
@@ -31,6 +32,9 @@ const CLASS_REWARD_LABELS = {
 
 const CorpsCoinModal = ({ onClose }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
 
   const [tab, setTab] = useState('history');
   const [balance, setBalance] = useState(null);
@@ -68,6 +72,7 @@ const CorpsCoinModal = ({ onClose }) => {
         aria-labelledby="modal-title-corpscoin"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-lg max-h-[80dvh] bg-surface-card border border-line rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >

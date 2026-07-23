@@ -1,14 +1,15 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/Onboarding.jsx
 // Streamlined 3-step onboarding: Welcome+Name, Create Corps, Draft Lineup
-import React, { useState, useEffect, startTransition } from 'react';
+import React, { useState, useEffect, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, ArrowLeft, Music, PartyPopper, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Heading } from '../components/ui';
 import { useBodyScroll } from '../hooks/useBodyScroll';
-import { getSeasonData, getCorpsValues } from '../api/season';
+import { getSeasonData } from '../api/season';
+import { useCorpsValues } from '../hooks/useCorpsValues';
 import { mergeProfile } from '../api/profile';
 import {
   checkUsername,
@@ -39,9 +40,8 @@ const Onboarding = () => {
     corpsName: '',
   }));
   const [loading, setLoading] = useState(false);
-  const [availableCorps, setAvailableCorps] = useState([]);
-  // 'loading' | 'ready' | 'error' — drives the step-3 corps list vs retry UI
-  const [dataStatus, setDataStatus] = useState('loading');
+  // 'loading' | 'ready' | 'error' — season-doc side of the step-3 data load
+  const [seasonStatus, setSeasonStatus] = useState('loading');
   const [lineup, setLineup] = useState({});
   const [currentCaptionIndex, setCurrentCaptionIndex] = useState(0);
   const [seasonData, setSeasonData] = useState(null);
@@ -66,11 +66,11 @@ const Onboarding = () => {
     }
   }, [user?.displayName]);
 
-  // Fetch season data and available corps (on mount, and again via the
-  // step-3 Retry button — a failure here used to strand the user on a
-  // perpetual "Loading available corps..." pulse).
+  // Fetch season data (on mount, and again via the step-3 Retry button — a
+  // failure here used to strand the user on a perpetual "Loading available
+  // corps..." pulse).
   const fetchSeasonData = React.useCallback(async () => {
-    setDataStatus('loading');
+    setSeasonStatus('loading');
     try {
       // The active season lives at game-settings/season (public read), the
       // same source the rest of the app uses (seasonStore, SeasonSetupWizard).
@@ -79,41 +79,64 @@ const Onboarding = () => {
       const season = await getSeasonData();
       if (!season || !season.seasonUid) {
         console.error('[Onboarding] No active season found in game-settings/season');
-        setDataStatus('error');
+        setSeasonStatus('error');
         return;
       }
 
       setSeasonData({ ...season, seasonUid: season.seasonUid });
-
-      // Corps values for lineup selection live in dci-data/{seasonUid}.
-      const corpsValues = await getCorpsValues(season.seasonUid);
-      if (corpsValues.length) {
-        const corps = corpsValues.filter((c) => (c.points || 0) <= 50);
-        setAvailableCorps(corps);
-        setDataStatus('ready');
-
-        // Fulfill the guest-preview promise: picks drafted in the demo
-        // carry over into this draft.
-        const guestDraft = importGuestLineup(corps, getStoredGuestLineup());
-        if (guestDraft.count > 0) {
-          setLineup((prev) => (Object.keys(prev).length > 0 ? prev : guestDraft.lineup));
-          toast.success(
-            `Imported ${guestDraft.count} pick${guestDraft.count === 1 ? '' : 's'} from your demo draft!`
-          );
-        }
-      } else {
-        console.error(`[Onboarding] dci-data/${season.seasonUid} not found or empty`);
-        setDataStatus('error');
-      }
+      setSeasonStatus('ready');
     } catch (error) {
       console.error('Error fetching season data:', error);
-      setDataStatus('error');
+      setSeasonStatus('error');
     }
   }, []);
 
   useEffect(() => {
     fetchSeasonData();
   }, [fetchSeasonData]);
+
+  // Corps values for lineup selection live in dci-data/{seasonUid} — served
+  // from the shared corpsValues cache entry (same key as Landing/Dashboard).
+  const corpsQuery = useCorpsValues(seasonData?.seasonUid);
+  const availableCorps = useMemo(
+    () => (corpsQuery.data ?? []).filter((c) => (c.points || 0) <= 50),
+    [corpsQuery.data]
+  );
+
+  // 'loading' | 'ready' | 'error' — drives the step-3 corps list vs retry UI.
+  // An empty corpsValues doc counts as an error, same as before.
+  const dataStatus =
+    seasonStatus === 'error' ||
+    corpsQuery.isError ||
+    (corpsQuery.isSuccess && corpsQuery.data.length === 0)
+      ? 'error'
+      : corpsQuery.isSuccess
+        ? 'ready'
+        : 'loading';
+
+  // Retry re-fetches whichever half failed (season doc and/or corps values).
+  const { refetch: refetchCorpsValues } = corpsQuery;
+  const retryDataLoad = React.useCallback(() => {
+    fetchSeasonData();
+    if (seasonData?.seasonUid) {
+      refetchCorpsValues();
+    }
+  }, [fetchSeasonData, seasonData?.seasonUid, refetchCorpsValues]);
+
+  // Fulfill the guest-preview promise: picks drafted in the demo carry over
+  // into this draft (once, when the corps list first arrives).
+  const guestImportDone = React.useRef(false);
+  useEffect(() => {
+    if (guestImportDone.current || availableCorps.length === 0) return;
+    guestImportDone.current = true;
+    const guestDraft = importGuestLineup(availableCorps, getStoredGuestLineup());
+    if (guestDraft.count > 0) {
+      setLineup((prev) => (Object.keys(prev).length > 0 ? prev : guestDraft.lineup));
+      toast.success(
+        `Imported ${guestDraft.count} pick${guestDraft.count === 1 ? '' : 's'} from your demo draft!`
+      );
+    }
+  }, [availableCorps]);
 
   // Username validation function
   const validateUsername = async (username) => {
@@ -489,7 +512,7 @@ const Onboarding = () => {
                           Check your connection and try again — your other answers are safe.
                         </p>
                         <button
-                          onClick={fetchSeasonData}
+                          onClick={retryDataLoad}
                           className="h-10 px-5 bg-interactive text-white text-sm font-bold uppercase tracking-wider rounded-none hover:bg-interactive-hover"
                         >
                           Try Again

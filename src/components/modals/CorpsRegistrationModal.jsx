@@ -3,10 +3,11 @@
 // CORPS REGISTRATION MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Lock, Check, X } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const CLASSES = [
   { id: 'worldClass', name: 'World Class', budget: '150 pts', reqLevel: 6 },
@@ -31,6 +32,10 @@ const CorpsRegistrationModal = ({
   // Close on Escape key
   useEscapeKey(onClose);
 
+  const dialogRef = useRef(null);
+  // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
+  useFocusTrap(dialogRef);
+
   const classes = CLASSES.map((cls) => ({
     ...cls,
     unlocked: cls.id === 'soundSport' || unlockedClasses.includes(cls.id),
@@ -51,6 +56,7 @@ const CorpsRegistrationModal = ({
         aria-labelledby="modal-title-corps-registration"
       >
         <div
+          ref={dialogRef}
           className="w-full max-w-lg bg-surface-card border border-line rounded-none"
           onClick={(e) => e.stopPropagation()}
         >

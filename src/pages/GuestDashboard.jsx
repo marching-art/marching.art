@@ -11,7 +11,7 @@
  * SoundSport lineup — carries over to the user's account on signup.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
 import {
@@ -33,7 +33,8 @@ import { useGuestPreview } from '../hooks/useGuestPreview';
 import { RegistrationGate, GuestLineupPicker } from '../components/GuestPreview';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
-import { getSeasonData, getCorpsValues } from '../api/season';
+import { useSeasonStore } from '../store/seasonStore';
+import { useCorpsValues } from '../hooks/useCorpsValues';
 import { getChallengesForGameDay } from '../utils/dailyChallenges';
 import { CORPS_CLASS_ORDER, CORPS_CLASS_LABELS, isCorpsClassUnlocked } from '../utils/corps';
 import {
@@ -377,32 +378,19 @@ const GuestDashboard = () => {
   const [gateModal, setGateModal] = useState({ isOpen: false, type: 'default' });
 
   // Real season corps list (publicly readable) — the same pool onboarding
-  // drafts from, so the guest's picks import cleanly after signup. When the
-  // load fails, availableCorps stays empty and lineup taps fall back to the
-  // registration gate.
-  const [availableCorps, setAvailableCorps] = useState([]);
+  // drafts from, so the guest's picks import cleanly after signup. Served
+  // from the shared corpsValues cache entry (seasonStore is initialized
+  // app-wide, signed in or not). When the load fails, availableCorps stays
+  // empty and lineup taps fall back to the registration gate.
+  const seasonUid = useSeasonStore((state) => state.seasonData?.seasonUid);
+  const { data: corpsValues } = useCorpsValues(seasonUid);
+  const availableCorps = useMemo(
+    // Mirror onboarding's availability filter (points <= 50)
+    () => (corpsValues ?? []).filter((c) => (c.points || 0) <= 50),
+    [corpsValues]
+  );
   const [pickerCaption, setPickerCaption] = useState(null);
   const [engagementGateShown, setEngagementGateShown] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const season = await getSeasonData();
-        if (!season?.seasonUid) return;
-        const corpsValues = await getCorpsValues(season.seasonUid);
-        if (!cancelled && corpsValues.length) {
-          // Mirror onboarding's availability filter (points <= 50)
-          setAvailableCorps(corpsValues.filter((c) => (c.points || 0) <= 50));
-        }
-      } catch {
-        // Demo stays gated-only without the corps list
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Mark preview as started on mount
   useEffect(() => {

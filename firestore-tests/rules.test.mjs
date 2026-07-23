@@ -671,6 +671,11 @@ async function freshLeagueSeed() {
       creatorId: BOB,
       createdAt: new Date(),
     });
+    // Invite code home since it moved OFF the (listable) league doc:
+    // member-only meta/private subcollection doc.
+    await setDoc(doc(ctx.firestore(), `${leaguesPath}/league-1/meta/private`), {
+      inviteCode: 'SECRET-CODE-1',
+    });
   });
 }
 
@@ -771,6 +776,32 @@ await freshLeagueSeed();
 await check(
   'unauthenticated visitor cannot list leagues',
   assertFails(getDocs(collection(testEnv.unauthenticatedContext().firestore(), leaguesPath)))
+);
+
+// --- meta/private: the invite code's new home. Because the leagues list is
+// deliberately open, the code moved off the league doc into this member-only
+// subcollection doc — a non-member must not be able to get OR list it, or the
+// enumeration hole reopens one level down.
+await freshLeagueSeed();
+await check(
+  'member can read the league invite code from meta/private',
+  assertSucceeds(
+    getDoc(
+      doc(testEnv.authenticatedContext(BOB).firestore(), `${leaguesPath}/league-1/meta/private`)
+    )
+  )
+);
+
+await freshLeagueSeed();
+await check(
+  'non-member cannot read a private league invite code from meta/private',
+  assertFails(getDoc(doc(mallory(), `${leaguesPath}/league-1/meta/private`)))
+);
+
+await freshLeagueSeed();
+await check(
+  'non-member cannot list the league meta subcollection (invite-code enumeration)',
+  assertFails(getDocs(collection(mallory(), `${leaguesPath}/league-1/meta`)))
 );
 
 await testEnv.cleanup();

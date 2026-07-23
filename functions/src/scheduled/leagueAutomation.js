@@ -299,6 +299,10 @@ exports.generateWeeklyMatchups = onSchedule(
   {
     schedule: "59 23 * * 0", // Sunday 11:59 PM
     timeZone: "America/New_York",
+    // Pages through every league with per-league profile/standings reads — the
+    // default 60s timeout would cut the job off mid-scan as leagues grow. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     memory: "512MiB",
   },
   async () => {
@@ -440,6 +444,10 @@ exports.generateWeeklyRecaps = onSchedule(
   {
     schedule: "0 22 * * 0", // Sunday 10:00 PM
     timeZone: "America/New_York",
+    // Pages through every league with per-league matchup/profile reads — the
+    // default 60s timeout would cut the job off mid-scan as leagues grow. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     memory: "512MiB",
   },
   async () => {
