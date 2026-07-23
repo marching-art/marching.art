@@ -76,4 +76,37 @@ function clampLimit(value, { fallback = 50, max = 100, min = 1 } = {}) {
   return Math.min(Math.max(Math.floor(n), min), max);
 }
 
-module.exports = { assertAuth, assertAdmin, hasAdminClaim, clampLimit };
+/**
+ * Throttle a caller's writes through a windowed per-uid budget, throwing
+ * resource-exhausted when it is spent. This is abuse/billing protection for
+ * auth-only mutation callables (economy purchases, votes, notifications) —
+ * every one is already server-authoritative, but with App Check unenforced
+ * any script holding one Firebase token could hammer them unthrottled.
+ *
+ * The budgets should be far above any human rate so legitimate players never
+ * see the error. Backed by helpers/rateLimit.consumeRateBudget (one small
+ * doc read per call, in a server-only `rate_{key}` collection with no client
+ * rules); its bookkeeping failures fail open, so this guard can never take
+ * a feature down.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} uid - The (already authenticated) caller.
+ * @param {string} key - Budget bucket, e.g. "economy" — one shared window
+ *   per bucket, so related mutations draw from the same budget.
+ * @param {Object} [opts]
+ * @param {number} [opts.max=30] - Allowed actions per window.
+ * @param {number} [opts.windowMs=600000] - Window length (default 10 min).
+ * @throws {HttpsError} resource-exhausted when the budget is spent.
+ */
+async function assertWriteBudget(db, uid, key, { max = 30, windowMs = 10 * 60 * 1000 } = {}) {
+  const { consumeRateBudget } = require("./rateLimit");
+  const allowed = await consumeRateBudget(db, `rate_${key}`, uid, max, windowMs);
+  if (!allowed) {
+    throw new HttpsError(
+      "resource-exhausted",
+      "Too many requests. Please wait a moment and try again."
+    );
+  }
+}
+
+module.exports = { assertAuth, assertAdmin, hasAdminClaim, clampLimit, assertWriteBudget };

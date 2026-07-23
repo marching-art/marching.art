@@ -4,15 +4,15 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { serverTimestamp } = require("firebase-admin/firestore");
-const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
 
 exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
   assertAuth(request);
-  const { recipientUid, commenterUsername } = request.data;
+  const { recipientUid } = request.data;
   const commenterUid = request.auth.uid;
 
-  if (!recipientUid || !commenterUsername) {
-    throw new HttpsError("invalid-argument", "Missing recipient UID or commenter username.");
+  if (!recipientUid || typeof recipientUid !== "string") {
+    throw new HttpsError("invalid-argument", "Missing recipient UID.");
   }
 
   // Prevent users from sending notifications to themselves
@@ -21,12 +21,30 @@ exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle: this callable writes into ANOTHER user's notification
+  // feed, so it was a spam/harassment vector — any auth user could push
+  // unlimited notifications at any recipient.
+  await assertWriteBudget(db, commenterUid, "commentNotifications", {
+    max: 20,
+    windowMs: 24 * 60 * 60 * 1000,
+  });
+
+  // The displayed name comes from the COMMENTER'S OWN profile, never from
+  // the request — client-supplied text used to flow straight into the
+  // recipient's notification message.
+  const commenterProfile = await db.doc(paths.userProfile(commenterUid)).get();
+  const commenterName =
+    (commenterProfile.exists &&
+      (commenterProfile.data().username || commenterProfile.data().displayName)) ||
+    "A director";
+
   const notificationRef = db.collection(paths.userNotifications(recipientUid)).doc();
 
   try {
     await notificationRef.set({
       type: "new_comment",
-      message: `${commenterUsername} left a comment on your profile.`,
+      message: `${commenterName} left a comment on your profile.`,
       link: `/profile/${commenterUid}`, // Link back to the commenter's profile
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       isRead: false,

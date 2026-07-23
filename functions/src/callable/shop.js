@@ -4,7 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getShopItem, TYPE_TO_SLOT } = require("../helpers/shopCatalog");
 
 /**
@@ -26,6 +26,8 @@ const purchaseShopItem = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+  // Abuse throttle (shared economy bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "economy");
   const profileRef = db.doc(paths.userProfile(uid));
 
   // Seasonal rotation gate (WS6.2): a seasonal item can only be bought while

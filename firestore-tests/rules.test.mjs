@@ -762,14 +762,80 @@ await check(
   )
 );
 
-// Pins the documented tradeoff: the community widgets (src/api/community.ts)
-// issue unconstrained queries over the leagues collection, so list must stay
-// open to any signed-in user. If this test starts failing because list was
-// tightened, those widgets must be updated in the same change.
+// Pins the SCOPED list (was the "deliberately open" tradeoff): the live
+// namespace requires an owning/public filter, so private leagues' member
+// arrays and settings are no longer enumerable by any signed-in user. The
+// frozen legacy namespace stays open for the community widgets
+// (src/api/community.ts) — pinned separately below.
 await freshLeagueSeed();
 await check(
-  'any signed-in user can list leagues (deliberate tradeoff for community widgets)',
-  assertSucceeds(getDocs(collection(mallory(), leaguesPath)))
+  'signed-in user can NO LONGER dump the leagues collection unfiltered (regression)',
+  assertFails(getDocs(collection(mallory(), leaguesPath)))
+);
+
+await freshLeagueSeed();
+await check(
+  "third party cannot enumerate a private league via someone else's members filter",
+  assertFails(
+    getDocs(query(collection(mallory(), leaguesPath), where('members', 'array-contains', BOB)))
+  )
+);
+
+await freshLeagueSeed();
+await check(
+  "third party cannot enumerate leagues via someone else's creatorId filter",
+  assertFails(getDocs(query(collection(mallory(), leaguesPath), where('creatorId', '==', BOB))))
+);
+
+// The exact query shapes the client runs (src/api/leagues.ts).
+await freshLeagueSeed();
+await check(
+  'public-league browse (isPublic == true) is allowed and excludes private leagues',
+  assertSucceeds(
+    getDocs(query(collection(mallory(), leaguesPath), where('isPublic', '==', true)))
+  )
+);
+
+await freshLeagueSeed();
+await check(
+  'member can list their own leagues with the members filter',
+  assertSucceeds(
+    getDocs(
+      query(
+        collection(testEnv.authenticatedContext(BOB).firestore(), leaguesPath),
+        where('members', 'array-contains', BOB)
+      )
+    )
+  )
+);
+
+await freshLeagueSeed();
+await check(
+  'creator can list leagues they created with the creatorId filter',
+  assertSucceeds(
+    getDocs(
+      query(
+        collection(testEnv.authenticatedContext(BOB).firestore(), leaguesPath),
+        where('creatorId', '==', BOB)
+      )
+    )
+  )
+);
+
+// The frozen legacy namespace the landing widgets read stays fully listable
+// (archived data, never written again — see the NOTE in src/api/community.ts).
+await freshLeagueSeed();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'artifacts/fantasy_drum_corps_v1/leagues/legacy-1'), {
+    name: 'Legacy League',
+    createdAt: new Date(),
+  });
+});
+await check(
+  'legacy-namespace leagues stay listable unfiltered (community widgets)',
+  assertSucceeds(
+    getDocs(collection(mallory(), 'artifacts/fantasy_drum_corps_v1/leagues'))
+  )
 );
 
 await freshLeagueSeed();

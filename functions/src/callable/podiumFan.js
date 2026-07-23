@@ -8,6 +8,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const store = require("../helpers/podium/store");
 const fanFavorite = require("../helpers/podium/fanFavorite");
 const { podiumContext } = require("./podium");
+const { assertWriteBudget } = require("../helpers/callableGuards");
 
 exports.getFanFavorite = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
@@ -55,6 +56,10 @@ exports.castFanFavoriteVote = onCall({ cors: true }, async (request) => {
   if (typeof corpsUid !== "string" || !corpsUid) {
     throw new HttpsError("invalid-argument", "corpsUid is required.");
   }
+
+  // Abuse throttle — voting is one-per-day server-side; this just stops
+  // unthrottled hammering from a scripted client.
+  await assertWriteBudget(db, uid, "fanVotes", { max: 60 });
   const seasonUid = seasonData.seasonUid;
   const cfg = store.balance;
 
