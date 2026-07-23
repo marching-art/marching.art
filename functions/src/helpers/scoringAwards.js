@@ -16,6 +16,14 @@ const { ChunkedWriter } = require("./chunkedWriter");
 const { updateStandings } = require("./leagueStandings");
 const { createLeagueActivity } = require("./leagueHelpers");
 const { MATCHUP_CLASSES } = require("./classRegistry");
+const {
+  showAwardToken,
+  weeklyXpToken,
+  weeklyWinToken,
+  matchupRecordToken,
+  hasAwardToken,
+  awardTokenWrite,
+} = require("./awardLedger");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -258,12 +266,28 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
  * Process coin awards in batch instead of individual transactions.
  * Aggregates by uid to minimize writes.
  *
+ * Idempotency: when `seasonUid` and `scoredDay` are supplied, each user's
+ * increment carries a per-(uid, day) token in the profile's `awardLedger` — the
+ * token and the increment ride the SAME document write, so they land together
+ * or not at all. Before writing, the target profiles are read and any user
+ * already carrying today's token is skipped, so a ChunkedWriter partial-failure
+ * retry cannot double-pay. `force` (admin reprocess) bypasses the skip. Callers
+ * that omit the season context (e.g. the Podium processor) keep the original
+ * unmarked behavior.
+ *
  * @param {Array} coinAwards - Array of { uid, corpsClass, showName, amount }
  * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Firestore} db - Firestore database instance
+ * @param {Object} [options]
+ * @param {string} [options.seasonUid] - Enables per-day idempotency markers.
+ * @param {number} [options.scoredDay] - The season day being awarded.
+ * @param {boolean} [options.force] - Re-apply even if the day's token exists.
  */
-function processCoinAwardsBatch(coinAwards, batch, db) {
+async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
   if (coinAwards.length === 0) return;
+  const { seasonUid = null, scoredDay = null, force = false } = options;
+  const idempotent = seasonUid != null && scoredDay != null;
+  const token = idempotent ? showAwardToken(seasonUid, scoredDay) : null;
 
   const coinByUser = new Map(); // uid -> { totalAmount, xpAmount, history: [] }
 
@@ -286,25 +310,47 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
     coinByUser.set(award.uid, existing);
   }
 
+  // Idempotency pre-read: skip users already paid for this day (unless forced).
+  const skip = new Set();
+  if (idempotent && !force) {
+    const uids = [...coinByUser.keys()];
+    const refs = uids.map((uid) => db.doc(paths.userProfile(uid)));
+    const snaps = refs.length > 0 ? await db.getAll(...refs) : [];
+    snaps.forEach((snap, i) => {
+      if (snap.exists && hasAwardToken(snap.data(), token)) skip.add(uids[i]);
+    });
+    if (skip.size > 0) {
+      logger.warn(
+        `Coin awards day ${scoredDay}: skipping ${skip.size} already-awarded users (idempotency).`
+      );
+    }
+  }
+
   // Add coin updates to batch (uses increment for concurrency safety)
   // History entries are written to subcollection instead of arrayUnion on profile
   // XP lands as a raw increment; xpLevel/title/unlocks recompute on the next
   // claimDailyLogin (same convention as the weekly XP payments).
+  let awarded = 0;
   for (const [uid, data] of coinByUser) {
+    if (skip.has(uid)) continue;
     const userProfileRef = db.doc(paths.userProfile(uid));
     batch.update(userProfileRef, {
       corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
       ...(data.xpAmount > 0
         ? { xp: admin.firestore.FieldValue.increment(data.xpAmount) }
         : {}),
+      // The token rides this same update op, so it commits atomically with the
+      // increment above — its presence proves the increment was applied.
+      ...(idempotent ? awardTokenWrite(token) : {}),
     });
 
     for (const entry of data.history) {
       addCoinHistoryEntryToBatch(batch, db, uid, entry);
     }
+    awarded += 1;
   }
 
-  logger.info(`Batched ${coinAwards.length} coin awards for ${coinByUser.size} users`);
+  logger.info(`Batched ${coinAwards.length} coin awards for ${awarded} users`);
 }
 
 /**
@@ -656,7 +702,7 @@ function buildEasternClassicParticipantSet(profilesSnapshot, eventName, week, sc
  * @param {Object} seasonData - Season configuration data
  * @param {Firestore} db - Firestore database instance
  */
-async function processWeeklyMatchups(week, seasonData, db) {
+async function processWeeklyMatchups(week, seasonData, db, { force = false } = {}) {
   logger.info(`End of week ${week}. Determining class-based matchup winners...`);
 
   const LEAGUE_FETCH_LIMIT = 500;
@@ -768,16 +814,40 @@ async function processWeeklyMatchups(week, seasonData, db) {
         const increment = admin.firestore.FieldValue.increment(1);
 
         if (p1_profile?.ref && p2_profile?.ref) {
+          // Idempotency: the record increment and its token ride ONE set op per
+          // participant, so a ChunkedWriter partial-failure retry (which re-runs
+          // any matchup whose `completed` flag didn't land) cannot re-increment
+          // a record that already applied. Keyed per uid so each side is
+          // independently guarded. `force` bypasses the guard for admin reprocess.
+          const p1RecToken = matchupRecordToken(seasonData.seasonUid, week, leagueDoc.id, corpsClass, p1_uid);
+          const p2RecToken = matchupRecordToken(seasonData.seasonUid, week, leagueDoc.id, corpsClass, p2_uid);
+          const writeP1 = force || !hasAwardToken(p1_profile.data, p1RecToken);
+          const writeP2 = force || !hasAwardToken(p2_profile.data, p2RecToken);
+          let p1Delta = null;
+          let p2Delta = null;
           if (winnerUid === p1_uid) {
-            winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-            winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+            p1Delta = "w";
+            p2Delta = "l";
           } else if (winnerUid === p2_uid) {
-            winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-            winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+            p1Delta = "l";
+            p2Delta = "w";
           } else {
-            // Tie
-            winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-            winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+            p1Delta = "t";
+            p2Delta = "t";
+          }
+          if (writeP1) {
+            winnerBatch.set(
+              p1_profile.ref,
+              { [seasonRecordPath]: { [p1Delta]: increment }, ...awardTokenWrite(p1RecToken) },
+              { merge: true }
+            );
+          }
+          if (writeP2) {
+            winnerBatch.set(
+              p2_profile.ref,
+              { [seasonRecordPath]: { [p2Delta]: increment }, ...awardTokenWrite(p2RecToken) },
+              { merge: true }
+            );
           }
 
           // Pay the advertised weekly-win bonus (getEarningOpportunities:
@@ -786,24 +856,31 @@ async function processWeeklyMatchups(week, seasonData, db) {
           // The XP lands as a raw increment; xpLevel/title/class unlocks
           // recompute from the stored xp total on the next claimDailyLogin,
           // where the level-up stipend also settles via lastRewardedLevel.
+          // The bonus is a SEPARATE write from the record above, so it carries
+          // its own token (win vs rec) — otherwise a retry that landed the
+          // record but not the bonus would skip the unpaid bonus.
           if (winnerUid) {
-            const winnerRef = winnerUid === p1_uid ? p1_profile.ref : p2_profile.ref;
-            winnerBatch.set(
-              winnerRef,
-              {
-                stats: { leagueWins: increment },
-                corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
-                xp: admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin),
-              },
-              { merge: true }
-            );
-            addCoinHistoryEntryToBatch(winnerBatch, db, winnerUid, {
-              type: TRANSACTION_TYPES.LEAGUE_WIN,
-              amount: WEEKLY_LEAGUE_WIN_REWARD,
-              description: `Week ${week} ${corpsClass} matchup win in ${leagueDoc.data().name || "your league"}`,
-              corpsClass,
-              timestamp: new Date(),
-            });
+            const winner = winnerUid === p1_uid ? p1_profile : p2_profile;
+            const winToken = weeklyWinToken(seasonData.seasonUid, week, leagueDoc.id, corpsClass);
+            if (force || !hasAwardToken(winner.data, winToken)) {
+              winnerBatch.set(
+                winner.ref,
+                {
+                  stats: { leagueWins: increment },
+                  corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
+                  xp: admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin),
+                  ...awardTokenWrite(winToken),
+                },
+                { merge: true }
+              );
+              addCoinHistoryEntryToBatch(winnerBatch, db, winnerUid, {
+                type: TRANSACTION_TYPES.LEAGUE_WIN,
+                amount: WEEKLY_LEAGUE_WIN_REWARD,
+                description: `Week ${week} ${corpsClass} matchup win in ${leagueDoc.data().name || "your league"}`,
+                corpsClass,
+                timestamp: new Date(),
+              });
+            }
           }
         }
 
@@ -893,7 +970,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
  * @param {Object} seasonData - Season configuration data
  * @param {Firestore} db - Firestore database instance
  */
-async function payWeeklyParticipationXP(week, seasonData, db) {
+async function payWeeklyParticipationXP(week, seasonData, db, { force = false } = {}) {
   const firstDay = week * 7 - 6;
   const lastDay = week * 7;
   const dayRefs = [];
@@ -920,19 +997,41 @@ async function payWeeklyParticipationXP(week, seasonData, db) {
     return;
   }
 
+  // Idempotency pre-read: skip directors already paid this week's XP (unless
+  // forced). The token rides the same set op as the increment below, so a torn
+  // ChunkedWriter commit cannot double-pay on retry.
+  const token = weeklyXpToken(seasonData.seasonUid, week);
+  const uids = [...classesByUid.keys()];
+  const profileRefs = uids.map((uid) => db.doc(paths.userProfile(uid)));
+  const skip = new Set();
+  if (!force) {
+    const snaps = profileRefs.length > 0 ? await db.getAll(...profileRefs) : [];
+    snaps.forEach((snap, i) => {
+      if (snap.exists && hasAwardToken(snap.data(), token)) skip.add(uids[i]);
+    });
+  }
+
   const xpBatch = new ChunkedWriter(db);
   let totalXP = 0;
+  let paid = 0;
   for (const [uid, classes] of classesByUid.entries()) {
+    if (skip.has(uid)) continue;
     const amount = XP_SOURCES.weeklyParticipation * classes.size;
     totalXP += amount;
     const profileRef = db.doc(
       paths.userProfile(uid)
     );
-    xpBatch.set(profileRef, { xp: admin.firestore.FieldValue.increment(amount) }, { merge: true });
+    xpBatch.set(
+      profileRef,
+      { xp: admin.firestore.FieldValue.increment(amount), ...awardTokenWrite(token) },
+      { merge: true }
+    );
+    paid += 1;
   }
   await xpBatch.commit();
   logger.info(
-    `Week ${week}: paid weekly-participation XP to ${classesByUid.size} directors (${totalXP} XP total).`
+    `Week ${week}: paid weekly-participation XP to ${paid} directors (${totalXP} XP total)` +
+      (skip.size > 0 ? `, skipped ${skip.size} already paid.` : ".")
   );
 }
 

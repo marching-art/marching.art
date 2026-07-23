@@ -383,6 +383,7 @@ async function commitDailyScoring({
   coinAwards,
   captionPoints,
   profilesSnapshot,
+  force = false,
 }) {
   // Update user profiles with their most recent score.
   // Note: Uses latest score (not cumulative) - drum corps rankings are based
@@ -463,8 +464,14 @@ async function commitDailyScoring({
   }
   // --- END: TROPHY AWARDING LOGIC ---
 
-  // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper
-  processCoinAwardsBatch(coinAwards, batch, db);
+  // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper.
+  // Season context enables per-(uid, day) idempotency markers so a
+  // ChunkedWriter partial-failure retry cannot double-pay (awardLedger).
+  await processCoinAwardsBatch(coinAwards, batch, db, {
+    seasonUid: seasonData.seasonUid,
+    scoredDay,
+    force,
+  });
 
   // Commit all database writes (chunked into multiple batches as needed)
   return batch.commit();
@@ -555,8 +562,8 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
       // the completed guard means no retry would ever pick them up.
       await settleLeaguePoolsForDay(db, seasonData);
       if (scoredDay % 7 === 0) {
-        await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
-        await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+        await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
+        await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
       }
       // Empty scored day (15–49): publish a season-to-date summary article so
       // the news feed has something on a day the 5-article batch can't run.
@@ -598,7 +605,7 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
 
     const { opCount, batchCount } = await commitDailyScoring({
       db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
-      profilesSnapshot,
+      profilesSnapshot, force,
     });
     logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
@@ -613,8 +620,8 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     // economy advertises (participation + league win). Both run inside the
     // scoringRunGuard claim above, so redeliveries cannot double-pay.
     if (scoredDay % 7 === 0) {
-      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
-      await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
+      await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
     }
 
     // Post-day-38 (Atlanta standings final): publish the Eastern Classic
@@ -631,6 +638,16 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });
     return { status: "processed", scoredDay };
   } catch (error) {
+    // Structured tear diagnostics: which chunks landed before the failure, so
+    // a double-award (idempotency now prevents it, but reconciliation still
+    // wants the record) is diagnosable without parsing the message string.
+    logger.error("Off-season scoring run failed", {
+      seasonUid: seasonData.seasonUid,
+      scoredDay,
+      committedChunks: error.committedBatches ?? null,
+      totalChunks: error.totalBatches ?? null,
+      message: error.message,
+    });
     // Mark failed so a retry can re-claim immediately instead of waiting out
     // the stale lease; then let the original error propagate.
     await markScoringRunFailed(db, seasonData.seasonUid, scoredDay, error);
@@ -655,8 +672,15 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force 
   }
 
   try {
-    return await scoreLiveSeasonDay(db, scoredDay, seasonData);
+    return await scoreLiveSeasonDay(db, scoredDay, seasonData, { force });
   } catch (error) {
+    logger.error("Live season scoring run failed", {
+      seasonUid: seasonData.seasonUid,
+      scoredDay,
+      committedChunks: error.committedBatches ?? null,
+      totalChunks: error.totalBatches ?? null,
+      message: error.message,
+    });
     // Mark failed so a retry can re-claim immediately instead of waiting out
     // the stale lease; then let the original error propagate.
     await markScoringRunFailed(db, seasonData.seasonUid, scoredDay, error);
@@ -664,7 +688,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force 
   }
 }
 
-async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
+async function scoreLiveSeasonDay(db, scoredDay, seasonData, { force = false } = {}) {
   const week = Math.ceil(scoredDay / 7);
 
   // Cursor-paged fetch of ALL active profiles (projected fields only) — the
@@ -732,8 +756,8 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
     // stranded pool antes and dropped week payouts with no retry possible.
     await settleLeaguePoolsForDay(db, seasonData);
     if (scoredDay % 7 === 0) {
-      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
-      await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
+      await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
     }
     // Empty scored day (15–49): publish a season-to-date summary article so the
     // news feed has something on a day the 5-article batch can't run. This is
@@ -795,7 +819,7 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
 
   const { opCount, batchCount } = await commitDailyScoring({
     db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
-    profilesSnapshot,
+    profilesSnapshot, force,
   });
   logger.info(`Successfully processed and archived scores for live season day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
@@ -811,8 +835,8 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
   // scoringRunGuard claim taken by the caller, so redeliveries cannot
   // double-pay.
   if (scoredDay % 7 === 0) {
-    await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
-    await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+    await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
+    await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
   }
 
   // Post-day-38: publish the Eastern Classic night-lineup preview (see the

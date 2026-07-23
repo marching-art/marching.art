@@ -605,7 +605,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     if (coinAwards.length > 0) {
       try {
         const coinWriter = new ChunkedWriter(db);
-        processCoinAwardsBatch(coinAwards, coinWriter, db);
+        await processCoinAwardsBatch(coinAwards, coinWriter, db);
         await coinWriter.commit();
       } catch (error) {
         logger.error(`[podium] participation coin pass failed: ${error.message}`);

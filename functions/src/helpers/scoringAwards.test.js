@@ -365,6 +365,69 @@ describe('processCoinAwardsBatch', () => {
 });
 
 // =============================================================================
+// processCoinAwardsBatch — idempotency (awardLedger)
+//
+// The nightly ChunkedWriter commits chunks non-atomically, so a mid-commit
+// failure re-runs the whole day. With season context the mint must apply at
+// most once per (uid, day): the increment carries a per-day token, and a
+// re-run skips users who already carry it.
+// =============================================================================
+
+const { showAwardToken, LEDGER_FIELD } = require('./awardLedger');
+
+describe('processCoinAwardsBatch — idempotency', () => {
+  const awards = [{ uid: 'alice', corpsClass: 'worldClass', showName: 'Show A', amount: 200 }];
+  const ctx = { seasonUid: 'season-1', scoredDay: 7 };
+  const token = showAwardToken('season-1', 7);
+
+  test('first run mints AND stamps the day token in the same update op', async () => {
+    const { db, batch, writes } = makeFakeDb();
+    await processCoinAwardsBatch(awards, batch, db, ctx);
+
+    const update = writes.find((w) => w.type === 'update' && w.path === profilePath('alice'));
+    assert.ok(update, 'alice is paid on the first run');
+    assert.ok(update.data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(200)));
+    // The token rides the SAME write as the increment — atomic witness.
+    assert.ok(
+      update.data[LEDGER_FIELD].isEqual(admin.firestore.FieldValue.arrayUnion(token)),
+      "the day token is written alongside the increment"
+    );
+  });
+
+  test('re-run skips a user who already carries the day token (no double-pay)', async () => {
+    // Simulate the state after a torn commit: alice's mint landed, so her
+    // profile already has the token. The retry must not pay her again.
+    const docs = new Map([[profilePath('alice'), { [LEDGER_FIELD]: [token] }]]);
+    const { db, batch, writes } = makeFakeDb(docs);
+    await processCoinAwardsBatch(awards, batch, db, ctx);
+
+    assert.equal(
+      writes.filter((w) => w.path === profilePath('alice')).length,
+      0,
+      'no profile update and no history write for an already-awarded user'
+    );
+  });
+
+  test('force re-applies even when the token is present (admin reprocess)', async () => {
+    const docs = new Map([[profilePath('alice'), { [LEDGER_FIELD]: [token] }]]);
+    const { db, batch, writes } = makeFakeDb(docs);
+    await processCoinAwardsBatch(awards, batch, db, { ...ctx, force: true });
+
+    const update = writes.find((w) => w.type === 'update' && w.path === profilePath('alice'));
+    assert.ok(update, 'force bypasses the idempotency skip');
+    assert.ok(update.data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(200)));
+  });
+
+  test('without season context it stays non-idempotent (unmarked, back-compat)', async () => {
+    const { db, batch, writes } = makeFakeDb();
+    await processCoinAwardsBatch(awards, batch, db);
+    const update = writes.find((w) => w.type === 'update' && w.path === profilePath('alice'));
+    assert.ok(update);
+    assert.ok(!(LEDGER_FIELD in update.data), 'no token when no season context supplied');
+  });
+});
+
+// =============================================================================
 // awardRegionalTrophies
 // =============================================================================
 

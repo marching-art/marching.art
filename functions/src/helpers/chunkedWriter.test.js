@@ -137,10 +137,15 @@ describe("ChunkedWriter", () => {
       writer.update(`ref-${i}`, { value: i });
     }
 
-    await assert.rejects(
-      () => writer.commit(),
-      /failed on chunk 2\/3 .*earlier chunks are already committed/
+    const error = await writer.commit().then(
+      () => assert.fail("commit should reject"),
+      (e) => e
     );
+    assert.match(error.message, /failed on chunk 2\/3 .*earlier chunks are already committed/);
+    // Machine-readable tear point for structured logging / reconciliation.
+    assert.equal(error.committedBatches, 1, "one chunk landed before the failure");
+    assert.equal(error.totalBatches, 3);
+    assert.equal(error.totalOps, 6);
     assert.equal(db.batches[0].committed, true);
     assert.equal(db.batches[1].committed, false);
   });
