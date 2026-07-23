@@ -103,6 +103,24 @@ Functions are organized by invocation model. Callables are client-invoked;
 scheduled jobs run on cron; triggers fire on Firestore/Auth events. The bulk of
 the domain logic lives in `helpers/` so it can be shared and unit-tested.
 
+### Abuse protection on callables
+
+- **Auth guards** — every callable goes through `assertAuth`/`assertAdmin`
+  (`helpers/callableGuards.js`); admin is the Firebase custom claim only.
+- **Write budgets** — mutation callables (economy purchases, predictions,
+  fan votes, notifications) throttle per-uid via
+  `assertWriteBudget(db, uid, bucket)` (windowed budgets far above any human
+  rate, backed by server-only `rate_*` collections; bookkeeping failures
+  fail open). Place the check **after** input validation so invalid calls
+  never burn budget and validation-only tests never touch Firestore.
+- **App Check** — enforcement for all callables is wired as the
+  `ENFORCE_APP_CHECK` deploy-time param (`functions/index.js`,
+  default `false`). The client already attests (reCAPTCHA v3,
+  `src/api/client.ts`); flip the param to `true` (e.g. in
+  `functions/.env.<project>`) once the Firebase console's App Check metrics
+  show verified traffic — flipping it blind would lock out users on stale
+  cached bundles. `onRequest` endpoints and event triggers are unaffected.
+
 ### Callable groups (`functions/src/callable/`)
 
 | Area             | Files                                                                                              |

@@ -82,6 +82,17 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      # The functions codebase has its own checkJs pass (functions/tsconfig.json)
+      # — its first run caught two production crashes (client-SDK APIs
+      # destructured from firebase-admin resolving to undefined). Functions
+      # deps must be installed so firebase-admin/firebase-functions types
+      # resolve identically to production.
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Type check functions
+        run: npx tsc -p functions
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -120,6 +131,13 @@ jobs:
       # functions/src/config/classRegistry.json.
       - name: Class-registry mirror check
         run: node scripts/checkClassRegistrySync.js
+
+      # The site ships from two hosts (Firebase Hosting + Vercel) whose
+      # hand-maintained configs duplicate the same headers and function
+      # rewrites. Fails if firebase.json and vercel.json disagree — this
+      # exact drift once broke /api/news on Vercel.
+      - name: Hosting-config parity check
+        run: node scripts/checkHostingParity.mjs
 
       # Firestore-path ratchet: hand-written `artifacts/...` string literals
       # may only decrease (use the paths helpers instead). Fails if any file

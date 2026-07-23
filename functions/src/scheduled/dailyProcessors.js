@@ -3,7 +3,8 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
-const { runPodiumStage } = require("./nightlyStages");
+const { runPodiumStage, runDiscordStage } = require("./nightlyStages");
+const { discordScoresWebhookUrl } = require("../helpers/scoreDrop");
 
 /**
  * Run the flag-gated Podium stage after fantasy scoring (Phase 1.2). Fully
@@ -23,6 +24,25 @@ async function runPodiumStageIsolated(db) {
   }
 }
 
+/**
+ * Post the nightly score drop to Discord after fantasy scoring. Fully
+ * isolated like the Podium stage: a Discord failure is logged and swallowed
+ * so it can never block or retry the fantasy pipeline. No-op while the
+ * DISCORD_SCORES_WEBHOOK_URL secret is unset/empty; the scoreDrop lease
+ * makes scheduler retries of a completed run post-at-most-once.
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function runDiscordStageIsolated(db) {
+  try {
+    const result = await runDiscordStage(db, discordScoresWebhookUrl.value());
+    if (result.status !== "disabled") {
+      logger.info(`[discord-stage] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[discord-stage] failed (fantasy scoring unaffected): ${error.message}`);
+  }
+}
+
 exports.dailyOffSeasonProcessor = onSchedule({
   schedule: "every day 02:00",
   timeZone: "America/New_York",
@@ -33,9 +53,12 @@ exports.dailyOffSeasonProcessor = onSchedule({
   // A thrown scoring error is retried by Cloud Scheduler; the scoring run
   // guard makes reruns safe (a completed day is never re-claimed).
   retryCount: 2,
+  secrets: [discordScoresWebhookUrl],
 }, async () => {
   await processAndArchiveOffSeasonScoresLogic();
-  await runPodiumStageIsolated(getDb());
+  const db = getDb();
+  await runPodiumStageIsolated(db);
+  await runDiscordStageIsolated(db);
 });
 
 /**
@@ -95,10 +118,12 @@ exports.processDailyLiveScores = onSchedule({
   timeoutSeconds: 540,
   memory: "512MiB",
   retryCount: 2,
+  secrets: [discordScoresWebhookUrl],
 }, async () => {
   const db = getDb();
   await runLiveFantasyStage(db);
   await runPodiumStageIsolated(db);
+  await runDiscordStageIsolated(db);
 });
 
 // Note: Legacy H2H matchup generation removed.

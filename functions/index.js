@@ -1,9 +1,25 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 const admin = require("firebase-admin");
+const { setGlobalOptions } = require("firebase-functions/v2");
+const { defineBoolean } = require("firebase-functions/params");
 admin.initializeApp();
 
 // Configure Firestore to ignore undefined properties
 const db = admin.firestore();
 db.settings({ ignoreUndefinedProperties: true });
+
+// App Check enforcement for every callable, as a deploy-time parameter. The
+// client already attests (src/api/client.ts initializes reCAPTCHA v3 App
+// Check "IfConfigured") but no callable verified the token, so any script
+// holding a Firebase auth token could invoke the full callable surface.
+// Rollout is deliberately a config flip, not a code change: set
+// ENFORCE_APP_CHECK=true in functions/.env.<project> (or at deploy) once the
+// Firebase console's App Check metrics show clients attesting cleanly —
+// flipping it blind would lock out users on stale cached bundles. The
+// runtime resolves this params Expression per request; onRequest endpoints
+// (news feed, webhooks, scraper) and event triggers are unaffected.
+const enforceAppCheckParam = defineBoolean("ENFORCE_APP_CHECK", { default: false });
+setGlobalOptions({ enforceAppCheck: enforceAppCheckParam });
 
 // Callable Functions
 const {
@@ -165,6 +181,8 @@ const {
 const {
   showReminderPushJob,
   weeklyMatchupPushJob,
+  scoreDropPushJob,
+  lineupLockReminderPushJob,
 } = require("./src/scheduled/pushNotifications");
 const {
   autoPublishScheduledSubmissions,
@@ -409,6 +427,8 @@ module.exports = {
   // Push Scheduled Jobs
   showReminderPushJob,
   weeklyMatchupPushJob,
+  scoreDropPushJob,
+  lineupLockReminderPushJob,
 
   // Push Triggers
   onLeagueMemberJoined,

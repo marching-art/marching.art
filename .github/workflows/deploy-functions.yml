@@ -1,5 +1,13 @@
 name: Deploy Cloud Functions
 
+# ROLLBACK: every successful full/single deploy pushes a `functions-deploy/*`
+# tag pointing at the exact deployed ref. To roll back a bad deploy, run this
+# workflow again with "Use workflow from" set to the previous
+# functions-deploy/* tag (workflow_dispatch accepts tags as the ref) and
+# deploy_target=all — the test gates run against that ref like any deploy,
+# and `firebase deploy` re-diffs source so only the changed functions
+# redeploy. List tags: `git tag -l 'functions-deploy/*' | sort | tail`.
+
 on:
   # Manual trigger from GitHub UI with options
   workflow_dispatch:
@@ -55,6 +63,11 @@ on:
         type: string
       set_scraper_api_key:
         description: 'One-off: push the SCRAPER_API_KEY repo secret into Google Secret Manager (check when first adding or rotating the scraping-provider key, e.g. ScrapingAnt, then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
+        required: false
+        default: false
+        type: boolean
+      set_discord_webhook_url:
+        description: 'One-off: push the DISCORD_SCORES_WEBHOOK_URL repo secret into Google Secret Manager (check on the FIRST deploy after the Discord score-drop stage landed — the scoring functions declare the secret and will not deploy until it exists — and when rotating the webhook; then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
         required: false
         default: false
         type: boolean
@@ -129,6 +142,9 @@ jobs:
   deploy-all:
     if: inputs.deploy_target == 'all'
     needs: [test-functions, test-rules]
+    # contents: write is for the functions-deploy/* rollback tag push only.
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     # Batched function deploys are paced to stay under the Cloud Run
     # write-per-minute quota, so a full deploy of every changed function can
@@ -175,6 +191,29 @@ jobs:
           printf '%s' "$SCRAPER_API_KEY" | \
             firebase functions:secrets:set SCRAPER_API_KEY --data-file - --project marching-art
           echo "SCRAPER_API_KEY written to Secret Manager; the deploy below will bind it to the functions."
+
+      # Same mechanism for the Discord score-drop webhook (helpers/scoreDrop.js).
+      # The nightly scoring functions declare `secrets: [discordScoresWebhookUrl]`,
+      # so this secret MUST exist in Secret Manager before the first deploy that
+      # includes the Discord stage — check this box on that deploy. Afterwards
+      # it's only needed again to rotate the webhook URL.
+      - name: Set DISCORD_SCORES_WEBHOOK_URL in Secret Manager
+        if: ${{ inputs.set_discord_webhook_url }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DISCORD_SCORES_WEBHOOK_URL: ${{ secrets.DISCORD_SCORES_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_SCORES_WEBHOOK_URL" ]; then
+            echo "::error::set_discord_webhook_url was checked but the DISCORD_SCORES_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
+            exit 1
+          fi
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          printf '%s' "$DISCORD_SCORES_WEBHOOK_URL" | \
+            firebase functions:secrets:set DISCORD_SCORES_WEBHOOK_URL --data-file - --project marching-art
+          echo "DISCORD_SCORES_WEBHOOK_URL written to Secret Manager; the deploy below will bind it to the scoring functions."
 
       - name: Deploy Firestore rules + all functions
         env:
@@ -227,9 +266,24 @@ jobs:
 
           echo "All functions and Firestore rules deployed successfully!"
 
+      # Rollback affordance: tag the exact ref that just shipped so "the last
+      # known-good deploy" is always discoverable. See the ROLLBACK note at
+      # the top of this file.
+      - name: Tag deployed ref
+        run: |
+          TAG="functions-deploy/$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Full functions deploy (run ${{ github.run_id }})"
+          git push origin "$TAG"
+          echo "Tagged this deploy as $TAG. To roll back, re-run the workflow from the previous functions-deploy/* tag."
+
   deploy-single:
     if: inputs.deploy_target == 'single' && inputs.function_names != ''
     needs: test-functions
+    # contents: write is for the functions-deploy/* rollback tag push only.
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -259,6 +313,17 @@ jobs:
 
           echo "Deploying functions: ${{ inputs.function_names }}"
           firebase deploy --only "$FUNCTIONS" --force --project marching-art
+
+      # Single deploys get tagged too — a bad hotfix needs the same paper
+      # trail. The tag message records which functions shipped.
+      - name: Tag deployed ref
+        run: |
+          TAG="functions-deploy/$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Single-function deploy: ${{ inputs.function_names }} (run ${{ github.run_id }})"
+          git push origin "$TAG"
+          echo "Tagged this deploy as $TAG."
 
           rm -f /tmp/sa-key.json
           echo "Deployment successful!"

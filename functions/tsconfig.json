@@ -1,0 +1,27 @@
+{
+  // Typecheck for the Cloud Functions codebase (plain JS via checkJs) — the
+  // most business-critical code (scoring, economy, payouts) previously had
+  // NO static checking; its first run caught a production crash
+  // (reportComment destructured a nonexistent firebase-admin export).
+  //
+  // Deliberately NON-strict to make the gate land: files failing even this
+  // baseline are grandfathered with a described `@ts-nocheck` header
+  // (ratcheted downward-only by scripts/tsNocheckCensus.mjs, same as src/).
+  // Tighten toward `strict: true` as the nocheck count falls.
+  //
+  // CI runs `npx tsc -p functions` in the typecheck job (after installing
+  // functions deps so firebase-admin/firebase-functions types resolve).
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "target": "es2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.js", "index.js"],
+  "exclude": ["node_modules", "src/**/*.test.js"]
+}

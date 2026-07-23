@@ -19,6 +19,8 @@ const { paths } = require("../helpers/paths");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
+const { buildMatchupResultPushes } = require("../helpers/matchupResults");
+const { sendPushNotification, PUSH_TYPES } = require("../helpers/pushService");
 
 // Corps class configuration — registry-derived (Phase 7.4) so Podium joins
 // automated matchup generation when its registry entry enables at launch.
@@ -525,6 +527,39 @@ exports.generateWeeklyRecaps = onSchedule(
 
           // Save recap
           await db.doc(paths.leagueWeekRecap(leagueId, currentWeek)).set(recap);
+
+          // Matchup-result pushes ride the recap: the settled matchup doc and
+          // member profiles are already in memory here. Isolated so a push
+          // failure can never fail recap generation, and preference-gated per
+          // member (pushPreferences.matchupResult).
+          try {
+            const resultPushes = buildMatchupResultPushes({
+              leagueName: league.name,
+              week: currentWeek,
+              matchupData,
+              memberProfiles,
+            });
+            const pushResults = await Promise.allSettled(
+              resultPushes.map((push) =>
+                sendPushNotification(
+                  push.uid,
+                  { title: push.title, body: push.body, url: push.url },
+                  PUSH_TYPES.MATCHUP_RESULT,
+                  push.data
+                )
+              )
+            );
+            const sent = pushResults.filter(
+              (r) => r.status === "fulfilled" && r.value === true
+            ).length;
+            if (resultPushes.length > 0) {
+              logger.info(
+                `Matchup result pushes for league ${leagueId}: sent ${sent}/${resultPushes.length}`
+              );
+            }
+          } catch (pushError) {
+            logger.error(`Matchup result pushes failed for league ${leagueId}:`, pushError);
+          }
 
           logger.info(`Generated recap for league ${leagueId}: ${recap.highlights.length} highlights`);
           return { generated: 1 };

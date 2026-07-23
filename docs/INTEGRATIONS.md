@@ -1,8 +1,52 @@
 # Integrations
 
 External services and data pipelines: YouTube video embeds, Google Gemini
-(AI news + corps avatars), and the historical-data importers that feed scoring
-and schedule generation.
+(AI news + corps avatars), the Discord score-drop webhook, and the
+historical-data importers that feed scoring and schedule generation.
+
+---
+
+## Discord (nightly score drop)
+
+After the 2 AM scoring commit, the nightly processors post one rich embed to
+the community server's scores channel: tonight's top three per ranked class,
+show count, and a link to `/scores`. SoundSport is mentioned by participation
+count only — its ratings are never revealed anywhere in the product.
+
+- **Code:** `functions/src/helpers/scoreDrop.js` (aggregation + embed + post),
+  wired as an isolated stage in `functions/src/scheduled/nightlyStages.js`
+  (`runDiscordStage`) — a Discord failure is logged and swallowed, never
+  blocking or retrying fantasy scoring.
+- **Idempotency:** a `scoring_runs` lease under `{seasonUid}_discord_day{N}`
+  guarantees at most one post per scored day even when Cloud Scheduler
+  retries a completed run.
+- **Setup:** create a webhook in the Discord channel (Channel Settings →
+  Integrations → Webhooks), then store its URL in Secret Manager **before
+  deploying the scoring functions** (they declare
+  `secrets: [discordScoresWebhookUrl]`, so deploy fails if the secret doesn't
+  exist). Two ways to do that:
+  - **Via GitHub Actions (preferred):** add the URL as a repository secret
+    named `DISCORD_SCORES_WEBHOOK_URL` (GitHub → Settings → Secrets and
+    variables → Actions), then run the **Deploy Cloud Functions** workflow
+    with `deploy_target: all` and the `set_discord_webhook_url` box checked —
+    the workflow pushes the repo secret into Secret Manager and the deploy
+    binds it. Leave the box unchecked on later deploys; re-check it only to
+    rotate the URL (same mechanism as `set_scraper_api_key`).
+  - **Via the CLI:**
+
+    ```bash
+    firebase functions:secrets:set DISCORD_SCORES_WEBHOOK_URL
+    ```
+
+  The webhook URL is a post-capability — anyone holding it can post to the
+  channel — which is why it lives in Secret Manager, never in the
+  world-readable `game-settings` docs. Setting the secret to an empty value
+  disables the stage without redeploying.
+
+The companion morning push (`scoreDropPushJob` in
+`functions/src/scheduled/pushNotifications.js`, 8 AM ET) notifies each
+director who performed last night via FCM, gated by the existing
+`pushPreferences.scoreUpdate` setting.
 
 ---
 

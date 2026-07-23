@@ -13,7 +13,7 @@ const {
 } = require("../helpers/economy");
 const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
-const { assertAuth, clampLimit } = require("../helpers/callableGuards");
+const { assertAuth, clampLimit, assertWriteBudget } = require("../helpers/callableGuards");
 
 // =============================================================================
 // SPENDING FUNCTIONS
@@ -32,6 +32,9 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
   if (!['aClass', 'openClass', 'worldClass'].includes(canonicalClass)) {
     throw new HttpsError("invalid-argument", "Invalid class specified.");
   }
+
+  // Abuse throttle (shared economy bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "economy");
 
   const cost = CLASS_UNLOCK_COSTS[canonicalClass];
   const db = getDb();

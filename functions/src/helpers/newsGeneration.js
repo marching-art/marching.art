@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * NewsGenerationService - Gemini AI + Imagen Integration for DCI Recaps
  *

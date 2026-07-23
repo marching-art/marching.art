@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Firestore write layer for Buy Me a Coffee supporters. Shared by the webhook
 // (real-time) and the nightly reconcile job so both apply state identically.
 //

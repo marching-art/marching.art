@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium pacing harness — multi-season calibration checks against the
  * committed curveData + balanceConfig (no Firestore, engine only).

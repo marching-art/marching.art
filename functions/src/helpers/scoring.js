@@ -1,7 +1,11 @@
 const { getDb } = require("../config");
 const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
-const { getDoc, FieldValue } = require("firebase-admin/firestore");
+// A ProfilesSnapshot is the query-snapshot-shaped object the scoring flow
+// passes around: the real QuerySnapshot in production, or the lite
+// {docs, size, empty} accumulator fetchAllActiveProfiles builds from its
+// cursor pages. Only .docs/.size/.empty are ever used.
+/** @typedef {{docs: Array<any>, size: number, empty: boolean}} ProfilesSnapshot */
 const { getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { SHOW_PARTICIPATION_REWARDS } = require("./economy");
@@ -121,7 +125,7 @@ async function fetchAllActiveProfiles(db, seasonUid) {
  *
  * @param {Object} params
  * @param {Object} params.dayEventData - The day's shows (from the schedule).
- * @param {FirebaseFirestore.QuerySnapshot} params.profilesSnapshot - Active profiles.
+ * @param {ProfilesSnapshot} params.profilesSnapshot - Active profiles.
  * @param {number} params.week - Competition week (ceil(scoredDay / 7)).
  * @param {number} params.scoredDay - The day being scored (1-49).
  * @param {Object|null} params.championshipConfig - Per-show championship config, or null.
@@ -152,6 +156,119 @@ function scoreShowsForDay({
   // captionStats.{caption} increments in commitDailyScoring.
   const captionPoints = new Map(); // uid -> { GE1: points, ... }
   const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0 };
+
+  // --- ONE-TIME PROFILE PRE-SCAN (OPTIMIZATION #7) ---
+  // The loop used to re-scan every profile doc for every show —
+  // O(shows × profiles) with almost all iterations being non-attendees.
+  // Scan once instead: collect every scoreable (complete-lineup) corps and
+  // index it by the regular-show eventNames it registered for this week.
+  // Plain regular shows then iterate only their registrants; championship
+  // and two-night shows keep the full corps scan because their participant
+  // sets are not derived from registrations.
+  const corpsEntries = [];
+  const registrantsByEvent = new Map(); // eventName -> corpsEntry[]
+  let corpsWithNoShowsThisWeek = 0;
+  for (const userDoc of profilesSnapshot.docs) {
+    const userProfile = userDoc.data();
+    const uid = userDoc.ref.parent.parent.id;
+    const userCorps = userProfile.corps || {};
+    for (const corpsClass of Object.keys(userCorps)) {
+      const corps = userCorps[corpsClass];
+      if (!corps || !corps.corpsName || !corps.lineup) continue;
+
+      // A corps that hasn't finished selecting its captions must not be
+      // scored at all. Without this it would otherwise "attend" any show it
+      // registered for and post a 0.000 in the recap and standings.
+      if (!hasCompleteLineup(corps.lineup)) continue;
+
+      const entry = { uid, corpsClass, corps, userProfile };
+      corpsEntries.push(entry);
+
+      const weekShows = corps.selectedShows?.[`week${week}`] || [];
+      if (weekShows.length === 0) corpsWithNoShowsThisWeek++;
+      // Match by eventName only — dates can have type mismatches
+      // (Timestamp vs string) and eventName is unique enough within a week.
+      const seen = new Set();
+      for (const sel of weekShows) {
+        if (sel?.eventName == null || seen.has(sel.eventName)) continue;
+        seen.add(sel.eventName);
+        const registrants = registrantsByEvent.get(sel.eventName) || [];
+        registrants.push(entry);
+        registrantsByEvent.set(sel.eventName, registrants);
+      }
+    }
+  }
+
+  // Score one corps at one show: caption aggregation and caps, coin awards,
+  // caption-mastery accumulation, and the recap row. Shared by the fast
+  // (registrants-only) and full-scan paths below.
+  const scoreCorpsAtShow = (entry, show, showResult) => {
+    const { uid, corpsClass, corps, userProfile } = entry;
+    stats.corpsScored++;
+    let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
+    const userCaptionPoints = captionPoints.get(uid) || {};
+
+    for (const caption in corps.lineup) {
+      const [corpsName, sourceYear] = corps.lineup[caption].split("|");
+      // Season-specific base score (regression vs. scraped-live strategy)
+      const baseCaptionScore = getBaseCaptionScore(corpsName, sourceYear, caption);
+
+      // Hard cap each caption at 20 points. Competitive scores come ONLY
+      // from the historical data — no game system (show concepts,
+      // purchases, streaks) may ever modify them.
+      const captionScore = Math.min(20, baseCaptionScore);
+
+      if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
+      else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
+      else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
+
+      // Lifetime mastery accumulation — display-only, never feeds back
+      // into competitive scoring.
+      userCaptionPoints[caption] = (userCaptionPoints[caption] || 0) + captionScore;
+    }
+    captionPoints.set(uid, userCaptionPoints);
+    const visualScore = rawVisualScore / 2;
+    const musicScore = rawMusicScore / 2;
+    // Hard cap at 100 - this is the maximum possible score
+    const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
+
+    const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
+    dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
+
+    // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
+    const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
+    if (coinAmount > 0) {
+      coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
+    }
+
+    // Show-design bonus: a structured show concept whose style matches
+    // the lineup's corps pays a small nightly CorpsCoin award — a game
+    // reward only, with zero effect on the competitive score above.
+    const { captionBonuses } = calculateLineupSynergyBonus(
+      corps.showConcept || {},
+      corps.lineup
+    );
+    const synergyTotal = Object.values(captionBonuses).reduce((sum, v) => sum + v, 0);
+    const designCoin = Math.min(15, Math.round(synergyTotal * 2));
+    if (designCoin > 0) {
+      coinAwards.push({
+        uid, corpsClass, showName: show.eventName, amount: designCoin,
+        type: 'show_design',
+        description: `Show design bonus at ${show.eventName}`,
+      });
+    }
+
+    showResult.results.push({
+      uid: uid,
+      displayName: userProfile.username || userProfile.displayName,
+      location: corps.location,
+      corpsClass: corpsClass,
+      corpsName: corps.corpsName,
+      avatarUrl: corps.avatarUrl || null,
+      totalScore: totalShowScore,
+      geScore, visualScore, musicScore,
+    });
+  };
 
   for (const show of dayEventData.shows) {
     const showResult = {
@@ -189,19 +306,22 @@ function scoreShowsForDay({
     }
     // --- END: CHAMPIONSHIP SHOW CONFIGURATION ---
 
-    for (const userDoc of profilesSnapshot.docs) {
-      const userProfile = userDoc.data();
-      const uid = userDoc.ref.parent.parent.id;
-
-      const userCorps = userProfile.corps || {};
-      for (const corpsClass of Object.keys(userCorps)) {
-        const corps = userCorps[corpsClass];
-        if (!corps || !corps.corpsName || !corps.lineup) continue;
-
-        // A corps that hasn't finished selecting its captions must not be
-        // scored at all. Without this it would otherwise "attend" any show it
-        // registered for and post a 0.000 in the recap and standings.
-        if (!hasCompleteLineup(corps.lineup)) continue;
+    if (!showConfig && !day41_42_participantSet) {
+      // FAST PATH — plain regular show: only its registrants can attend, so
+      // iterate the prebuilt registration index instead of every corps.
+      // Diagnostics keep their historical semantics (the full scan counted
+      // every complete-lineup corps per regular show, and the week's
+      // no-shows-selected corps per regular show).
+      stats.corpsProcessed += corpsEntries.length;
+      stats.corpsWithNoShowsSelected += corpsWithNoShowsThisWeek;
+      for (const entry of registrantsByEvent.get(show.eventName) || []) {
+        scoreCorpsAtShow(entry, show, showResult);
+      }
+    } else {
+      // FULL SCAN — championship and two-night shows: attendance comes from
+      // auto-enrollment configs / persisted night splits, not registrations.
+      for (const entry of corpsEntries) {
+        const { uid, corpsClass, corps } = entry;
 
         // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
         // so each registered corps competes on exactly one of the two days).
@@ -227,10 +347,8 @@ function scoreShowsForDay({
           // If we get here, the corps is eligible and has advanced (if applicable)
           attended = true;
         } else {
-          // Regular show - check manual registration
+          // Two-night show without championship config: manual registration.
           const userShows = corps.selectedShows?.[`week${week}`] || [];
-          // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-          // and eventName should be unique enough within a week
           attended = userShows.some(s => s.eventName === show.eventName);
 
           // Track statistics for diagnostics
@@ -241,70 +359,7 @@ function scoreShowsForDay({
         }
 
         if (attended) {
-          stats.corpsScored++;
-          let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
-          const userCaptionPoints = captionPoints.get(uid) || {};
-
-          for (const caption in corps.lineup) {
-            const [corpsName, sourceYear] = corps.lineup[caption].split("|");
-            // Season-specific base score (regression vs. scraped-live strategy)
-            const baseCaptionScore = getBaseCaptionScore(corpsName, sourceYear, caption);
-
-            // Hard cap each caption at 20 points. Competitive scores come ONLY
-            // from the historical data — no game system (show concepts,
-            // purchases, streaks) may ever modify them.
-            const captionScore = Math.min(20, baseCaptionScore);
-
-            if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
-            else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
-            else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
-
-            // Lifetime mastery accumulation — display-only, never feeds back
-            // into competitive scoring.
-            userCaptionPoints[caption] = (userCaptionPoints[caption] || 0) + captionScore;
-          }
-          captionPoints.set(uid, userCaptionPoints);
-          const visualScore = rawVisualScore / 2;
-          const musicScore = rawMusicScore / 2;
-          // Hard cap at 100 - this is the maximum possible score
-          const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
-
-          const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
-          dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
-
-          // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
-          const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
-          if (coinAmount > 0) {
-            coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
-          }
-
-          // Show-design bonus: a structured show concept whose style matches
-          // the lineup's corps pays a small nightly CorpsCoin award — a game
-          // reward only, with zero effect on the competitive score above.
-          const { captionBonuses } = calculateLineupSynergyBonus(
-            corps.showConcept || {},
-            corps.lineup
-          );
-          const synergyTotal = Object.values(captionBonuses).reduce((sum, v) => sum + v, 0);
-          const designCoin = Math.min(15, Math.round(synergyTotal * 2));
-          if (designCoin > 0) {
-            coinAwards.push({
-              uid, corpsClass, showName: show.eventName, amount: designCoin,
-              type: 'show_design',
-              description: `Show design bonus at ${show.eventName}`,
-            });
-          }
-
-          showResult.results.push({
-            uid: uid,
-            displayName: userProfile.username || userProfile.displayName,
-            location: corps.location,
-            corpsClass: corpsClass,
-            corpsName: corps.corpsName,
-            avatarUrl: corps.avatarUrl || null,
-            totalScore: totalShowScore,
-            geScore, visualScore, musicScore,
-          });
+          scoreCorpsAtShow(entry, show, showResult);
         }
       }
     }
@@ -328,7 +383,7 @@ const { RANKED_CLASSES } = require("./classRegistry");
  * totalSeasonScore for everyone else. Corps with no score yet are unranked.
  * Pure function so the standing math is unit-testable without Firestore.
  *
- * @param {QuerySnapshot} profilesSnapshot - Active-season profile docs
+ * @param {ProfilesSnapshot} profilesSnapshot - Active-season profile docs
  * @param {Map<string, number>} dailyScores - uid_class -> tonight's total
  * @returns {Map<string, {rank: number, of: number}>} keyed by `${uid}_${class}`
  */
@@ -358,6 +413,36 @@ function computeSeasonRankings(profilesSnapshot, dailyScores) {
 }
 
 /**
+ * Filter tonight's rankings down to the corps whose STORED
+ * seasonRank/seasonRankOf actually changed. The nightly commit used to
+ * rewrite the rank onto every ranked corps every night, so write volume
+ * scaled with the total roster; with this diff it scales with movement.
+ * Pure function so the skip logic is unit-testable without Firestore.
+ *
+ * @param {Map<string, {rank: number, of: number}>} rankings - From computeSeasonRankings
+ * @param {ProfilesSnapshot} profilesSnapshot - The same snapshot rankings came from
+ * @returns {Map<string, {rank: number, of: number}>} entries needing a write
+ */
+function diffSeasonRankings(rankings, profilesSnapshot) {
+  const stored = new Map();
+  for (const userDoc of profilesSnapshot.docs) {
+    const uid = userDoc.ref.parent.parent.id;
+    const corpsMap = userDoc.data().corps || {};
+    for (const [corpsClass, corps] of Object.entries(corpsMap)) {
+      if (corps) stored.set(`${uid}_${corpsClass}`, corps);
+    }
+  }
+
+  const changed = new Map();
+  for (const [key, ranking] of rankings.entries()) {
+    const corps = stored.get(key);
+    if (corps && corps.seasonRank === ranking.rank && corps.seasonRankOf === ranking.of) continue;
+    changed.set(key, ranking);
+  }
+  return changed;
+}
+
+/**
  * Commit a scored day: profile score updates, the recap subcollection doc,
  * trophy awards, and coin awards, all in one chunked batch.
  *
@@ -370,7 +455,8 @@ function computeSeasonRankings(profilesSnapshot, dailyScores) {
  * @param {Object} params.dailyRecap
  * @param {Array} params.coinAwards
  * @param {Map<string, Object>} [params.captionPoints] - uid -> per-caption points
- * @param {QuerySnapshot} [params.profilesSnapshot] - for nightly class standings
+ * @param {ProfilesSnapshot} [params.profilesSnapshot] - for nightly class standings
+ * @param {boolean} [params.force] - Admin reprocess escape hatch (awardLedger)
  * @returns {Promise<{ opCount: number, batchCount: number }>}
  */
 async function commitDailyScoring({
@@ -401,11 +487,12 @@ async function commitDailyScoring({
 
   // Class standings — the profile's "World Class · #14" number. Recomputed
   // for every ranked corps each night (a corps that sat out still moves
-  // when others pass it). One update per ranked corps; multiple updates to
-  // the same doc in one batch are legal and land in order.
+  // when others pass it), but only WRITTEN for corps whose stored rank
+  // actually changed — write volume scales with movement, not roster size.
   if (profilesSnapshot) {
     const rankings = computeSeasonRankings(profilesSnapshot, dailyScores);
-    for (const [uidAndClass, { rank, of }] of rankings.entries()) {
+    const changed = diffSeasonRankings(rankings, profilesSnapshot);
+    for (const [uidAndClass, { rank, of }] of changed.entries()) {
       const [uid, corpsClass] = uidAndClass.split("_");
       const ref = db.doc(paths.userProfile(uid));
       batch.update(ref, {
@@ -415,24 +502,10 @@ async function commitDailyScoring({
     }
   }
 
-  // Caption mastery (WS5.5): bank tonight's per-caption points into the
-  // lifetime captionStats counters. Increments ride the same scoring-run
-  // lease as every other award, so a repeat run can't double-bank.
-  if (captionPoints) {
-    for (const [uid, points] of captionPoints.entries()) {
-      const updates = {};
-      for (const [caption, value] of Object.entries(points)) {
-        if (value > 0) {
-          updates[`captionStats.${caption}`] =
-            FieldValue.increment(Math.round(value * 10) / 10);
-        }
-      }
-      if (Object.keys(updates).length > 0) {
-        const ref = db.doc(paths.userProfile(uid));
-        batch.update(ref, updates);
-      }
-    }
-  }
+  // Caption mastery (WS5.5) increments are applied inside
+  // processCoinAwardsBatch below, riding the same awardLedger-tokened write
+  // as the coin/XP mint — the run lease alone does NOT protect a torn
+  // multi-batch commit from re-applying them on retry (awardLedger.js).
 
   // Save the completed recap document as a per-day subcollection document.
   // OPTIMIZATION: Write directly to subcollection instead of growing an array
@@ -467,15 +540,183 @@ async function commitDailyScoring({
   // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper.
   // Season context enables per-(uid, day) idempotency markers so a
   // ChunkedWriter partial-failure retry cannot double-pay (awardLedger).
+  // captionPoints ride the same tokened write for the same protection.
   await processCoinAwardsBatch(coinAwards, batch, db, {
     seasonUid: seasonData.seasonUid,
     scoredDay,
     force,
+    captionPoints,
   });
 
   // Commit all database writes (chunked into multiple batches as needed)
   return batch.commit();
 }
+
+// =============================================================================
+// SHARED DAY ORCHESTRATION
+// =============================================================================
+// The off-season and live-season runs used to be two ~170-line near-identical
+// orchestrators (dark-day settlement, championship config, Eastern split,
+// commit, weekly payouts, day-38 preview — all duplicated), so every payout
+// or flow fix had to be made twice and could silently drift. runScoringDay
+// now holds the single flow; the two entry points differ only in the
+// season-specific strategy they pass in:
+//   - historical(seasonData): which score dataset to fetch (live adds the
+//     current year's scraped results).
+//   - recapDate(seasonData, scoredDay): the recap's calendar date (live
+//     offsets spring training and pins UTC).
+//   - baseScore({...}): the per-caption base-score strategy (off-season is
+//     pure source-year regression; live prefers tonight's scraped score).
+
+/**
+ * Score one season day, end to end, inside the CALLER'S scoringRunGuard
+ * claim: profiles, schedule, dark-day settlement, championship config,
+ * Eastern split, the scoring loop, the chunked commit, records, pools,
+ * week-boundary payouts, the day-38 preview, and the completion mark.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {number} scoredDay - Competition day 1-49 (already validated).
+ * @param {Object} seasonData - The season doc's data.
+ * @param {Object} strategy - Season-type specifics (see block comment).
+ * @param {Object} [options]
+ * @param {boolean} [options.force] - Admin reprocess escape hatch.
+ * @returns {Promise<{status: string, scoredDay: number, [k: string]: unknown}>}
+ */
+async function runScoringDay(db, scoredDay, seasonData, strategy, { force = false } = {}) {
+  const week = Math.ceil(scoredDay / 7);
+
+  // Cursor-paged fetch of ALL active profiles (projected fields only) — the
+  // old .limit(5000) fetch silently never scored profile 5,001+.
+  const profilesSnapshot = await fetchAllActiveProfiles(db, seasonData.seasonUid);
+  if (profilesSnapshot.empty) {
+    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no active profiles" });
+    return { status: "processed", scoredDay, note: "no active profiles" };
+  }
+
+  // Fetch day data from subcollection instead of season document
+  const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
+
+  if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
+    logger.info(`No shows for day ${scoredDay}. Nothing to score.`);
+    // A dark day still has obligations: members may have bought into
+    // league pools (joinLeaguePool doesn't require shows), and if the
+    // dark day lands on a week boundary the whole week's matchup and
+    // participation payouts are due. Skipping these here stranded pool
+    // antes in escrow forever and silently dropped week payouts — and
+    // the completed guard means no retry would ever pick them up.
+    await settleLeaguePoolsForDay(db, seasonData);
+    if (scoredDay % 7 === 0) {
+      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
+      await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
+    }
+    // Empty scored day (15–49): publish a season-to-date summary article so
+    // the news feed has something on a day the 5-article batch can't run.
+    // (Common on live seasons, which routinely have dark days.)
+    await publishSeasonSummaryRequest({
+      seasonId: seasonData.seasonUid,
+      dataDocId: seasonData.dataDocId,
+      scoredDay,
+    });
+    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no shows" });
+    return { status: "processed", scoredDay, note: "no shows" };
+  }
+
+  // The historical dataset is only needed when there are shows to score —
+  // dark days above return before paying for this fetch.
+  const historicalData = await strategy.historical(seasonData);
+
+  const dailyRecap = {
+    offSeasonDay: scoredDay,
+    date: strategy.recapDate(seasonData, scoredDay),
+    shows: [],
+  };
+  // ChunkedWriter: one write per scored corps plus coin/trophy/recap writes
+  // scales with the player base, so a single WriteBatch (capped per request)
+  // would eventually fail outright on a busy scoring night.
+  const batch = new ChunkedWriter(db);
+
+  // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC (Days 45-49) ---
+  // OPTIMIZATION #5: Uses shared buildChampionshipConfig helper
+  let championshipConfig = null;
+  if (scoredDay >= 45) {
+    const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
+    const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
+    const recapsByDay = new Map(allRecaps.map(r => [r.offSeasonDay, r]));
+    championshipConfig = buildChampionshipConfig(scoredDay, recapsByDay, allRecaps);
+  }
+  // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
+
+  const getBaseCaptionScore = strategy.baseScore({ seasonData, scoredDay, historicalData });
+
+  // Eastern Classic nights: resolve the persisted snake split so day 42
+  // scores the exact complement of day 41 (Phase 6.1, design §5.11). On
+  // any failure the loop falls back to the legacy in-loop split.
+  let easternNightSet = null;
+  if ([41, 42].includes(scoredDay)) {
+    try {
+      easternNightSet = await resolveEasternNightSet(
+        db, seasonData, profilesSnapshot, dayEventData, week, scoredDay
+      );
+    } catch (error) {
+      logger.error(`Eastern split resolution failed (legacy fallback in effect): ${error.message}`);
+    }
+  }
+
+  const { dailyScores, coinAwards, captionPoints, stats } = scoreShowsForDay({
+    dayEventData, profilesSnapshot, week, scoredDay,
+    championshipConfig, dailyRecap, getBaseCaptionScore, easternNightSet,
+  });
+
+  // Log scoring statistics for diagnostics
+  logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
+
+  const { opCount, batchCount } = await commitDailyScoring({
+    db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
+    profilesSnapshot, force,
+  });
+  logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
+
+  // Records Book: fold tonight's results into the all-time records doc.
+  await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
+
+  // Settle league prediction pools for the game day whose results just
+  // posted (inside the caller's guard, so redeliveries cannot double-pay).
+  await settleLeaguePoolsForDay(db, seasonData);
+
+  // Week boundary: resolve league matchups and pay the weekly XP the
+  // economy advertises (participation + league win). Both run inside the
+  // scoringRunGuard claim taken by the caller, so redeliveries cannot
+  // double-pay.
+  if (scoredDay % 7 === 0) {
+    await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
+    await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
+  }
+
+  // Post-day-38 (Atlanta standings final): publish the Eastern Classic
+  // night-lineup preview — the day-39 community moment. Isolated: the
+  // preview is decorative and must never fail the scoring run.
+  if (scoredDay === 38) {
+    try {
+      await publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay);
+    } catch (error) {
+      logger.error(`Eastern preview publication failed (scoring unaffected): ${error.message}`);
+    }
+  }
+
+  await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });
+  return { status: "processed", scoredDay };
+}
+
+/** Off-season strategy: regression on each corps' source year. */
+const OFF_SEASON_STRATEGY = {
+  historical: (seasonData) => fetchHistoricalData(seasonData.dataDocId),
+  // The actual calendar date for this off-season day (no spring training).
+  recapDate: (seasonData, scoredDay) =>
+    new Date(seasonData.schedule.startDate.toDate().getTime() + (scoredDay - 1) * 24 * 60 * 60 * 1000),
+  // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
+  baseScore: ({ scoredDay, historicalData }) => (corpsName, sourceYear, caption) =>
+    getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData),
+};
 
 async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
   const db = getDb();
@@ -514,129 +755,7 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
 
   try {
     logger.info(`Processing and archiving scores for Off-Season Day: ${scoredDay}`);
-
-    const historicalData = await fetchHistoricalData(seasonData.dataDocId);
-    // Fetch day data from subcollection instead of season document
-    const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
-
-    // Cursor-paged fetch of ALL active profiles (projected fields only) — the
-    // old .limit(5000) fetch silently never scored profile 5,001+.
-    const profilesSnapshot = await fetchAllActiveProfiles(db, seasonData.seasonUid);
-    if (profilesSnapshot.empty) {
-      await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no active profiles" });
-      return { status: "processed", scoredDay, note: "no active profiles" };
-    }
-
-    const week = Math.ceil(scoredDay / 7);
-    // Calculate the actual date for this off-season day from the season start date
-    const scoredDayDate = new Date(seasonStartDate.getTime() + (scoredDay - 1) * 24 * 60 * 60 * 1000);
-    const dailyRecap = {
-      offSeasonDay: scoredDay,
-      date: scoredDayDate,  // The actual calendar date for this off-season day
-      shows: [],
-    };
-    // ChunkedWriter: one write per scored corps plus coin/trophy/recap writes
-    // scales with the player base, so a single WriteBatch (capped per request)
-    // would eventually fail outright on a busy scoring night.
-    const batch = new ChunkedWriter(db);
-
-    // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
-    // OPTIMIZATION #5: Uses shared buildChampionshipConfig helper
-    let championshipConfig = null;
-
-    if (scoredDay >= 45) {
-      const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
-      const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
-      const recapsByDay = new Map(allRecaps.map(r => [r.offSeasonDay, r]));
-      championshipConfig = buildChampionshipConfig(scoredDay, recapsByDay, allRecaps);
-    }
-    // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
-
-    if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
-      logger.info(`No shows for day ${scoredDay}. Nothing to score.`);
-      // A dark day still has obligations: members may have bought into
-      // league pools (joinLeaguePool doesn't require shows), and if the
-      // dark day lands on a week boundary the whole week's matchup and
-      // participation payouts are due. Skipping these here stranded pool
-      // antes in escrow forever and silently dropped week payouts — and
-      // the completed guard means no retry would ever pick them up.
-      await settleLeaguePoolsForDay(db, seasonData);
-      if (scoredDay % 7 === 0) {
-        await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
-        await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
-      }
-      // Empty scored day (15–49): publish a season-to-date summary article so
-      // the news feed has something on a day the 5-article batch can't run.
-      await publishSeasonSummaryRequest({
-        seasonId: seasonData.seasonUid,
-        dataDocId: seasonData.dataDocId,
-        scoredDay,
-      });
-      await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no shows" });
-      return { status: "processed", scoredDay, note: "no shows" };
-    }
-
-    // Off-season base score: regression on the corps' source year.
-    // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
-    const getBaseCaptionScore = (corpsName, sourceYear, caption) =>
-      getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
-
-    // Eastern Classic nights: resolve the persisted snake split so day 42
-    // scores the exact complement of day 41 (Phase 6.1, design §5.11). On
-    // any failure the loop falls back to the legacy in-loop split.
-    let easternNightSet = null;
-    if ([41, 42].includes(scoredDay)) {
-      try {
-        easternNightSet = await resolveEasternNightSet(
-          db, seasonData, profilesSnapshot, dayEventData, week, scoredDay
-        );
-      } catch (error) {
-        logger.error(`Eastern split resolution failed (legacy fallback in effect): ${error.message}`);
-      }
-    }
-
-    const { dailyScores, coinAwards, captionPoints, stats } = scoreShowsForDay({
-      dayEventData, profilesSnapshot, week, scoredDay,
-      championshipConfig, dailyRecap, getBaseCaptionScore, easternNightSet,
-    });
-
-    // Log scoring statistics for diagnostics
-    logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
-
-    const { opCount, batchCount } = await commitDailyScoring({
-      db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
-      profilesSnapshot, force,
-    });
-    logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
-
-    // Records Book: fold tonight's results into the all-time records doc.
-    await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
-
-    // Settle league prediction pools for the game day whose results just
-    // posted (inside the guard, so redeliveries cannot double-pay).
-    await settleLeaguePoolsForDay(db, seasonData);
-
-    // Week boundary: resolve league matchups and pay the weekly XP the
-    // economy advertises (participation + league win). Both run inside the
-    // scoringRunGuard claim above, so redeliveries cannot double-pay.
-    if (scoredDay % 7 === 0) {
-      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
-      await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
-    }
-
-    // Post-day-38 (Atlanta standings final): publish the Eastern Classic
-    // night-lineup preview — the day-39 community moment. Isolated: the
-    // preview is decorative and must never fail the scoring run.
-    if (scoredDay === 38) {
-      try {
-        await publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay);
-      } catch (error) {
-        logger.error(`Eastern preview publication failed (scoring unaffected): ${error.message}`);
-      }
-    }
-
-    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });
-    return { status: "processed", scoredDay };
+    return await runScoringDay(db, scoredDay, seasonData, OFF_SEASON_STRATEGY, { force });
   } catch (error) {
     // Structured tear diagnostics: which chunks landed before the failure, so
     // a double-award (idempotency now prevents it, but reconciliation still
@@ -672,7 +791,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force 
   }
 
   try {
-    return await scoreLiveSeasonDay(db, scoredDay, seasonData, { force });
+    return await runScoringDay(db, scoredDay, seasonData, LIVE_SEASON_STRATEGY, { force });
   } catch (error) {
     logger.error("Live season scoring run failed", {
       seasonUid: seasonData.seasonUid,
@@ -688,170 +807,51 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force 
   }
 }
 
-async function scoreLiveSeasonDay(db, scoredDay, seasonData, { force = false } = {}) {
-  const week = Math.ceil(scoredDay / 7);
+/**
+ * Live-season strategy. Recap dates offset spring training and pin UTC
+ * (omitting the offset once shifted every live recap date 21 days early);
+ * base scores prefer tonight's actual scraped score, then current-year
+ * regression (>= 3 data points), then prior-year regression.
+ */
+const LIVE_SEASON_STRATEGY = {
+  // Corps source years (prior year) + current year for live scraped data.
+  historical: (seasonData) =>
+    fetchHistoricalData(seasonData.dataDocId, [new Date().getFullYear()]),
+  recapDate: (seasonData, scoredDay) => {
+    const seasonStartDate = seasonData.schedule.startDate.toDate();
+    const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+    return new Date(Date.UTC(
+      seasonStartDate.getUTCFullYear(),
+      seasonStartDate.getUTCMonth(),
+      seasonStartDate.getUTCDate() + springTrainingDays + (scoredDay - 1),
+    ));
+  },
+  baseScore: ({ scoredDay, historicalData }) => {
+    const currentYear = new Date().getFullYear();
+    return (corpsName, sourceYear, caption) => {
+      let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
 
-  // Cursor-paged fetch of ALL active profiles (projected fields only) — the
-  // old .limit(5000) fetch silently never scored profile 5,001+.
-  const profilesSnapshot = await fetchAllActiveProfiles(db, seasonData.seasonUid);
-  if (profilesSnapshot.empty) {
-    logger.info("No active profiles found for the live season.");
-    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no active profiles" });
-    return { status: "processed", scoredDay, note: "no active profiles" };
-  }
-
-  // Calculate the actual calendar date for this competition day.
-  // Live seasons open with a spring-training period (schedule.springTrainingDays)
-  // before scoring begins, so competition day N falls on
-  // startDate + springTrainingDays + (N - 1). Omitting this offset shifted every
-  // live-season recap date earlier by the spring-training length (21 days),
-  // producing wrong dates in the Scores and SoundSport recaps. startDate is stored
-  // at UTC midnight; build the target date in UTC so the calendar date is stable
-  // regardless of the runtime timezone.
-  const seasonStartDate = seasonData.schedule.startDate.toDate();
-  const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-  const scoreDate = new Date(Date.UTC(
-    seasonStartDate.getUTCFullYear(),
-    seasonStartDate.getUTCMonth(),
-    seasonStartDate.getUTCDate() + springTrainingDays + (scoredDay - 1),
-  ));
-
-  // Get current year for fetching live scores from historical_scores
-  const currentYear = new Date().getFullYear();
-
-  // Fetch historical data including current year's scraped live scores
-  // Corps source years (prior year) + current year for live scraped data
-  const historicalData = await fetchHistoricalData(seasonData.dataDocId, [currentYear]);
-
-  const dailyRecap = {
-    offSeasonDay: scoredDay,
-    date: scoreDate,
-    shows: [],
-  };
-  // ChunkedWriter: one write per scored corps plus coin/trophy/recap writes
-  // scales with the player base, so a single WriteBatch (capped per request)
-  // would eventually fail outright on a busy scoring night.
-  const batch = new ChunkedWriter(db);
-
-  // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC (Days 45-49) ---
-  // OPTIMIZATION #5: Uses shared buildChampionshipConfig helper
-  let championshipConfig = null;
-
-  if (scoredDay >= 45) {
-    const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
-    const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
-    const recapsByDay = new Map(allRecaps.map(r => [r.offSeasonDay, r]));
-    championshipConfig = buildChampionshipConfig(scoredDay, recapsByDay, allRecaps);
-  }
-  // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
-
-  // Fetch day data from subcollection instead of season document
-  const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
-
-  if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
-    logger.info(`No shows for day ${scoredDay}. Nothing to score.`);
-    // A dark day still has obligations — league pool settlement and, on a
-    // week boundary, the week's matchup/participation payouts (live seasons
-    // routinely have dark days, so this path is COMMON here). Skipping them
-    // stranded pool antes and dropped week payouts with no retry possible.
-    await settleLeaguePoolsForDay(db, seasonData);
-    if (scoredDay % 7 === 0) {
-      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
-      await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
-    }
-    // Empty scored day (15–49): publish a season-to-date summary article so the
-    // news feed has something on a day the 5-article batch can't run. This is
-    // the common case for the summary — live seasons routinely have dark days.
-    await publishSeasonSummaryRequest({
-      seasonId: seasonData.seasonUid,
-      dataDocId: seasonData.dataDocId,
-      scoredDay,
-    });
-    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no shows" });
-    return { status: "processed", scoredDay, note: "no shows" };
-  }
-
-  // Live-season base score:
-  //   1. Prefer an actual scraped score for the current year on this day.
-  //   2. Otherwise regress on current-year scraped data if there are enough
-  //      points (>= 3); else fall back to prior-year (sourceYear) regression.
-  const getBaseCaptionScore = (corpsName, sourceYear, caption) => {
-    let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
-
-    if (baseCaptionScore === null) {
-      const currentYearDataPoints = countDataPointsForCorps(
-        corpsName, currentYear.toString(), caption, historicalData
-      );
-
-      // OPTIMIZATION #1: Use cached regression score
-      if (currentYearDataPoints >= 3) {
-        baseCaptionScore = getCachedRegressionScore(
-          corpsName, currentYear.toString(), caption, scoredDay, historicalData
+      if (baseCaptionScore === null) {
+        const currentYearDataPoints = countDataPointsForCorps(
+          corpsName, currentYear.toString(), caption, historicalData
         );
-      } else {
-        baseCaptionScore = getCachedRegressionScore(
-          corpsName, sourceYear, caption, scoredDay, historicalData
-        );
+
+        // OPTIMIZATION #1: Use cached regression score
+        if (currentYearDataPoints >= 3) {
+          baseCaptionScore = getCachedRegressionScore(
+            corpsName, currentYear.toString(), caption, scoredDay, historicalData
+          );
+        } else {
+          baseCaptionScore = getCachedRegressionScore(
+            corpsName, sourceYear, caption, scoredDay, historicalData
+          );
+        }
       }
-    }
 
-    return baseCaptionScore;
-  };
-
-  // Eastern Classic nights: resolve the persisted snake split so day 42
-  // scores the exact complement of day 41 (Phase 6.1, design §5.11). On
-  // any failure the loop falls back to the legacy in-loop split.
-  let easternNightSet = null;
-  if ([41, 42].includes(scoredDay)) {
-    try {
-      easternNightSet = await resolveEasternNightSet(
-        db, seasonData, profilesSnapshot, dayEventData, week, scoredDay
-      );
-    } catch (error) {
-      logger.error(`Eastern split resolution failed (legacy fallback in effect): ${error.message}`);
-    }
-  }
-
-  const { dailyScores, coinAwards, captionPoints } = scoreShowsForDay({
-    dayEventData, profilesSnapshot, week, scoredDay,
-    championshipConfig, dailyRecap, getBaseCaptionScore, easternNightSet,
-  });
-
-  const { opCount, batchCount } = await commitDailyScoring({
-    db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
-    profilesSnapshot, force,
-  });
-  logger.info(`Successfully processed and archived scores for live season day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
-
-  // Records Book: fold tonight's results into the all-time records doc.
-  await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
-
-  // Settle league prediction pools for the game day whose results just
-  // posted (inside the caller's guard, so redeliveries cannot double-pay).
-  await settleLeaguePoolsForDay(db, seasonData);
-
-  // Week boundary: resolve league matchups and pay the weekly XP the
-  // economy advertises (participation + league win). Runs inside the
-  // scoringRunGuard claim taken by the caller, so redeliveries cannot
-  // double-pay.
-  if (scoredDay % 7 === 0) {
-    await payWeeklyParticipationXP(scoredDay / 7, seasonData, db, { force });
-    await processWeeklyMatchups(scoredDay / 7, seasonData, db, { force });
-  }
-
-  // Post-day-38: publish the Eastern Classic night-lineup preview (see the
-  // off-season path). Isolated — never fails the scoring run.
-  if (scoredDay === 38) {
-    try {
-      await publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay);
-    } catch (error) {
-      logger.error(`Eastern preview publication failed (scoring unaffected): ${error.message}`);
-    }
-  }
-
-  await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });
-  return { status: "processed", scoredDay };
-}
+      return baseCaptionScore;
+    };
+  },
+};
 
 async function calculateCorpsStatisticsLogic() {
   logger.info("Starting corps statistics calculation...");
@@ -867,7 +867,9 @@ async function calculateCorpsStatisticsLogic() {
   const seasonId = seasonData.seasonUid;
 
   const corpsDataRef = db.doc(`dci-data/${seasonData.dataDocId}`);
-  const corpsSnap = await getDoc(corpsDataRef);
+  // NOTE: firebase-admin has no getDoc (that is the client SDK API) — the
+  // old `getDoc(corpsDataRef)` destructured undefined and crashed here.
+  const corpsSnap = await corpsDataRef.get();
   if (!corpsSnap.exists) {
     throw new Error(`Corps data document not found: ${seasonData.dataDocId}`);
   }
@@ -968,5 +970,6 @@ module.exports = {
   scoreShowsForDay,
   hasCompleteLineup,
   computeSeasonRankings,
+  diffSeasonRankings,
   fetchAllActiveProfiles,
 };

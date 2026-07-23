@@ -3,7 +3,7 @@ const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { VALID_CLASSES, isProfaneCorpsName } = require("../helpers/corpsHelpers");
 const {
   PLAQUE_TIERS,
@@ -42,6 +42,8 @@ const purchaseRetirementPlaque = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+  // Abuse throttle (shared economy bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "economy");
   const profileRef = db.doc(paths.userProfile(uid));
 
   try {
@@ -121,6 +123,7 @@ const purchaseHallBanner = onCall({ cors: true }, async (request) => {
   if (!seasonId || typeof seasonId !== "string" || seasonId.includes("/")) {
     throw new HttpsError("invalid-argument", "A season is required.");
   }
+
   // Podium champions hang banners too (Phase 6.5). podiumClass is not in
   // VALID_CLASSES (no fantasy lineup), but its champions live in the same
   // season_champions doc — and the rank-1 ownership check below still gates.
@@ -139,6 +142,9 @@ const purchaseHallBanner = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+  // Abuse throttle (shared economy bucket) — after validation so invalid
+  // input never burns budget, and validation-only paths never touch the db.
+  await assertWriteBudget(db, uid, "economy");
   const championsRef = db.doc(`season_champions/${seasonId}`);
   const profileRef = db.doc(paths.userProfile(uid));
 

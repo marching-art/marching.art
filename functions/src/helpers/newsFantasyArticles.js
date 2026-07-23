@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // The two nightly fantasy (marching.art) articles: daily results and the
 // caption-analysis market report. Extracted verbatim from newsGeneration.js.
 

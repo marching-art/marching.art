@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Push Notification Service for marching.art Cloud Functions
  * Handles sending Firebase Cloud Messaging (FCM) push notifications
@@ -15,6 +16,7 @@ const PUSH_TYPES = {
   LEAGUE_ACTIVITY: "league_activity",
   TRADE_PROPOSAL: "trade_proposal",
   SHOW_REMINDER: "show_reminder",
+  LINEUP_REMINDER: "lineup_reminder",
 };
 
 // Preference field mapping
@@ -25,6 +27,7 @@ const PUSH_PREFERENCE_MAP = {
   [PUSH_TYPES.LEAGUE_ACTIVITY]: "leagueActivity",
   [PUSH_TYPES.TRADE_PROPOSAL]: "tradeProposal",
   [PUSH_TYPES.SHOW_REMINDER]: "showReminder",
+  [PUSH_TYPES.LINEUP_REMINDER]: "lineupReminder",
 };
 
 /**

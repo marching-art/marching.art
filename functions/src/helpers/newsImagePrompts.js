@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Image prompt builders for news generation: corps/performer avatars,
 // user-article images, scene archetypes, and the per-article-type prompt
 // builders. Extracted verbatim from newsGeneration.js. Pure string builders;

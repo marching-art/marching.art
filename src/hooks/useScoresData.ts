@@ -352,8 +352,12 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   // always-mounted ticker and the Dashboard recent-results box use the bounded
   // fantasyRecapsRecent variant; this full-archive fetch backs the Scores page history.)
   // Archived seasons are immutable — their recap days never change — so they
-  // never go stale and can sit in cache for an hour. Only the current season
-  // keeps the 5-minute staleTime (new day recaps land nightly).
+  // never go stale and can sit in cache for an hour. The current season only
+  // changes once per night (the ~2 AM scoring run), so a 60-minute staleTime
+  // is plenty — the old 5-minute window re-downloaded the whole season's
+  // recap set (up to 49 docs, every show × corps) twelve times an hour for
+  // data that wasn't changing. An explicit user refresh still bypasses
+  // staleTime (see refetch below), so "check right after the drop" works.
   const isFetchingCurrentSeason = targetSeasonId === currentSeasonUid;
   const {
     data: rawRecaps,
@@ -364,10 +368,10 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
     queryKey: queryKeys.fantasyRecaps(targetSeasonId ?? ''),
     queryFn: () => getSeasonRecaps(targetSeasonId ?? ''),
     enabled: !!targetSeasonId,
-    staleTime: isFetchingCurrentSeason ? 5 * 60 * 1000 : Infinity,
-    // 30 min matches the queryClient default; spelled out because an explicit
-    // `undefined` here would override (not inherit) that default.
-    gcTime: isFetchingCurrentSeason ? 30 * 60 * 1000 : 60 * 60 * 1000,
+    staleTime: isFetchingCurrentSeason ? 60 * 60 * 1000 : Infinity,
+    // gcTime >= staleTime so still-fresh data is never evicted while
+    // unobserved (an eviction would force a full re-read on return).
+    gcTime: 60 * 60 * 1000,
   });
 
   // Propagate query errors to the existing error state consumed by callers
