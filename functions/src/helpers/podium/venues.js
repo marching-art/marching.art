@@ -62,6 +62,21 @@ function stadiumFor(venueId) {
   return (venueId && stadiums.stadiums[venueId]) || null;
 }
 
+/**
+ * The IANA timezone for a location string (e.g. "America/Los_Angeles"), or null
+ * when the venue is unknown or was never stamped with one. Baked into the
+ * gazetteer by scripts/venueTimezones.js from each venue's coordinates; the
+ * furthest-west score-drop rule (helpers/scoreDropTime.js) consumes it. Returns
+ * null rather than a default so callers decide the fallback (live scoring
+ * assumes the latest possible zone when a show's venue can't be resolved).
+ * @param {string} locationString
+ * @returns {string|null}
+ */
+function timezoneFor(locationString) {
+  const venue = venueFor(locationString);
+  return (venue && venue.timezone) || null;
+}
+
 /** Great-circle distance in miles. */
 function haversineMiles(a, b) {
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -138,6 +153,7 @@ module.exports = {
   normalizeKey,
   venueFor,
   stadiumFor,
+  timezoneFor,
   haversineMiles,
   travelTierFor,
   travelLeg,
