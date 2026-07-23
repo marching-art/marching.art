@@ -48,9 +48,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
-    // Source maps disabled in production - no error tracking service configured
-    // Re-enable with 'hidden' if adding Sentry/Bugsnag (generates maps without linking)
-    sourcemap: false,
+    // 'hidden' emits source maps but does NOT reference them from the bundles,
+    // so they are not served to end users — an error reporter (see
+    // src/lib/errorReporter.ts) can still symbolicate stack traces by uploading
+    // the maps out of band. Flip to false only if maps must not be generated.
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         // Split vendor chunks for better caching. Vite 8 (Rolldown) only
