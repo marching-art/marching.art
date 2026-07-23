@@ -9,6 +9,21 @@ import { initErrorReporting } from './lib/errorReporter';
 // Capture uncaught errors and unhandled promise rejections in production.
 initErrorReporting();
 
+// Attach the Google Fonts stylesheet (preloaded in index.html, where the
+// comment explains why it can't be a plain render-blocking <link>). Keep
+// this URL in sync with the preload/noscript hrefs in index.html.
+const FONT_CSS_URL =
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap';
+if (
+  typeof document !== 'undefined' &&
+  !document.querySelector(`link[rel="stylesheet"][href="${FONT_CSS_URL}"]`)
+) {
+  const fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = FONT_CSS_URL;
+  document.head.appendChild(fontLink);
+}
+
 // Create root element
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

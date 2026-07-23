@@ -83,13 +83,25 @@
     <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
     <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
 
-    <!-- Google Fonts - Non-blocking load with optimized weights
-         Moved from CSS @import to <link> for better LCP (non-render-blocking)
-         Reduced from 9 weights to 6 weights (~40KB savings) -->
+    <!-- Google Fonts — truly non-render-blocking. A plain rel="stylesheet"
+         here blocked first paint on the font CSS round-trip. Instead the CSS
+         is preloaded (fetch starts immediately, no render block) and the
+         stylesheet is attached by src/index.jsx when the app boots — the CSP
+         (script-src 'self', no inline handlers) rules out the classic
+         media="print" onload swap. display=swap keeps text visible in the
+         fallback font either way. Keep this URL in sync with FONT_CSS_URL in
+         src/index.jsx. -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
-      rel="stylesheet"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      />
+    </noscript>
 
     <title>marching.art — Fantasy Drum Corps | Draft DCI Lineups &amp; Compete</title>
 
