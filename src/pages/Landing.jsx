@@ -177,11 +177,10 @@ const Landing = () => {
     } catch (err) {
       console.error('Login error:', err);
       switch (err.code) {
-        case 'auth/user-not-found':
-          setError('No account found with this email');
-          break;
-        case 'auth/wrong-password':
-          setError('Incorrect password');
+        // Email enumeration protection collapses user-not-found and
+        // wrong-password into a single invalid-credential error
+        case 'auth/invalid-credential':
+          setError('Incorrect email or password');
           break;
         case 'auth/invalid-email':
           setError('Invalid email address');

@@ -32,10 +32,9 @@ const ForgotPassword = () => {
     } catch (err) {
       console.error('Password reset error:', err);
 
+      // Email enumeration protection is enabled on the Firebase project, so
+      // unknown emails resolve successfully (no auth/user-not-found here).
       switch (err.code) {
-        case 'auth/user-not-found':
-          setError('No account found with this email address');
-          break;
         case 'auth/invalid-email':
           setError('Invalid email address');
           break;
