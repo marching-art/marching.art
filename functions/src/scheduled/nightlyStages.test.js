@@ -6,7 +6,7 @@
 const { test, describe, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { runPodiumStage } = require("./nightlyStages");
+const { runPodiumStage, runDiscordStage } = require("./nightlyStages");
 const { resetFeatureCache } = require("../helpers/features");
 
 /**
@@ -116,6 +116,71 @@ describe("nightly Podium stage", () => {
   test("no season doc: skipped safely", async () => {
     const db = fakeDb({ "game-settings/features": { podiumClass: true } });
     assert.equal((await runPodiumStage(db)).status, "no-season");
+  });
+});
+
+describe("nightly Discord score-drop stage", () => {
+  const okFetch = async () => ({ ok: true, status: 204, text: async () => "" });
+
+  test("disabled when no webhook URL is configured", async () => {
+    const db = fakeDb({});
+    assert.deepEqual(await runDiscordStage(db, ""), { status: "disabled" });
+    assert.deepEqual(await runDiscordStage(db, undefined), { status: "disabled" });
+  });
+
+  test("no season doc: skipped safely", async () => {
+    const db = fakeDb({});
+    assert.equal((await runDiscordStage(db, "https://d.test/h", okFetch)).status, "no-season");
+  });
+
+  test("live-season spring training: out of season, nothing posted", async () => {
+    const db = fakeDb({
+      "game-settings/season": {
+        status: "live-season",
+        seasonUid: "live",
+        schedule: { startDate: startDaysAgo(5), springTrainingDays: 21 },
+      },
+    });
+    const result = await runDiscordStage(db, "https://d.test/h", okFetch);
+    assert.equal(result.status, "out-of-season");
+    assert.ok(result.scoredDay < 1);
+  });
+
+  test("scored off-season day: posts the recap and completes the discord lease", async () => {
+    let posted = null;
+    const fetchImpl = async (url, options) => {
+      posted = { url, body: JSON.parse(options.body) };
+      return { ok: true, status: 204, text: async () => "" };
+    };
+    const recap = {
+      shows: [
+        {
+          eventName: "Test Show",
+          results: [
+            { uid: "u1", displayName: "d", corpsClass: "worldClass", corpsName: "X", totalScore: 80 },
+          ],
+        },
+      ],
+    };
+    const docs = {
+      "game-settings/season": {
+        status: "off-season",
+        seasonUid: "test_season",
+        name: "Offseason IX",
+        schedule: { startDate: startDaysAgo(10) },
+      },
+    };
+    // The derived completed day is 9-11 depending on the wall clock; seed
+    // every plausible recap path so the stage finds one either way.
+    for (const day of [9, 10, 11]) docs[`fantasy_recaps/test_season/days/${day}`] = recap;
+    const db = fakeDb(docs);
+
+    const result = await runDiscordStage(db, "https://d.test/h", fetchImpl);
+    assert.equal(result.status, "posted");
+    assert.ok(posted.body.embeds[0].title.includes(`Day ${result.scoredDay}`));
+    assert.match(posted.body.embeds[0].description, /Offseason IX/);
+    const leasePath = `scoring_runs/test_season_discord_day${result.scoredDay}`;
+    assert.equal(db.writes[leasePath].status, "completed");
   });
 });
 

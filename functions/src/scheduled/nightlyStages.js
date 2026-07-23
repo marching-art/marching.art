@@ -17,11 +17,16 @@
  * game-settings/features.podiumClass flag; Phase 2 lands processPodiumDay
  * with its own scoringRunGuard lease (`{seasonUid}_podium_{day}`) so podium
  * idempotency never contends with the fantasy lease.
+ *
+ * The Discord stage posts the nightly score drop to the community server's
+ * scores channel (helpers/scoreDrop.js). It only runs on scored competition
+ * days and is disabled entirely when the DISCORD_SCORES_WEBHOOK_URL secret
+ * is unset/empty.
  */
 
 const { logger } = require("firebase-functions/v2");
 const { isPodiumEnabled } = require("../helpers/features");
-const { getCompletedCalendarDay } = require("../helpers/gameDay");
+const { getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 
 const SPRING_TRAINING_DAYS_DEFAULT = 21;
 
@@ -103,4 +108,39 @@ async function runPodiumStage(db) {
   return result;
 }
 
-module.exports = { runPodiumStage };
+/**
+ * Run the nightly Discord score-drop stage. Self-contained like the Podium
+ * stage: reads the season doc, derives the scored day (with the live-season
+ * spring-training offset), and hands off to runDiscordScoreDrop, whose
+ * `{seasonUid}_discord` lease guarantees at-most-one post per day even when
+ * the scheduler retries a completed scoring run.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} webhookUrl - Discord webhook URL; falsy disables the stage.
+ * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @returns {Promise<{status: string, [key: string]: unknown}>}
+ */
+async function runDiscordStage(db, webhookUrl, fetchImpl) {
+  if (!webhookUrl) return { status: "disabled" };
+
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) return { status: "no-season" };
+  const seasonData = seasonDoc.data();
+  if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
+
+  const calendarDay = getCompletedCalendarDay(seasonData.schedule.startDate.toDate());
+  const scoredDay = toCompetitionDay(calendarDay, seasonData);
+
+  if (scoredDay < 1 || scoredDay > 49) return { status: "out-of-season", scoredDay };
+
+  const { runDiscordScoreDrop } = require("../helpers/scoreDrop");
+  return runDiscordScoreDrop(db, {
+    seasonUid: seasonData.seasonUid,
+    seasonName: seasonData.name || seasonData.seasonUid,
+    scoredDay,
+    webhookUrl,
+    fetchImpl,
+  });
+}
+
+module.exports = { runPodiumStage, runDiscordStage };

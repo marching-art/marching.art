@@ -10,9 +10,12 @@ const { paths } = require("../helpers/paths");
 const {
   sendShowReminderPush,
   sendMatchupStartPush,
+  sendPushNotification,
+  PUSH_TYPES,
 } = require("../helpers/pushService");
-const { getCurrentSeasonWeek } = require("../helpers/gameDay");
+const { getCurrentSeasonWeek, getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
+const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 
 /**
  * Send show reminder push notifications
@@ -263,6 +266,86 @@ exports.weeklyMatchupPushJob = onSchedule(
       logger.info(`Weekly matchup push job complete. Sent ${totalSent} notifications.`);
     } catch (error) {
       logger.error("Error in weekly matchup push job:", error);
+    }
+  }
+);
+
+/**
+ * Send "scores are in" push notifications for last night's score drop.
+ *
+ * Runs at 8:00 AM ET — a humane hour, not the 2 AM scoring moment — and
+ * notifies exactly the directors who performed last night (they appear in
+ * the day's fantasy_recaps doc). Ranked-class directors get their score and
+ * nightly placement; SoundSport directors get a score-free message (ratings
+ * are never revealed). Because getCompletedCalendarDay uses the 2 AM ET
+ * game-day reset, 8 AM still resolves to the day the 2 AM jobs just scored.
+ *
+ * If scoring failed or it was a dark day, the recap doc doesn't exist and
+ * the job exits without sending anything.
+ */
+exports.scoreDropPushJob = onSchedule(
+  {
+    schedule: "every day 08:00",
+    timeZone: "America/New_York",
+    // One push per director who performed last night — same scan-and-send
+    // scaling rationale as showReminderPushJob above.
+    timeoutSeconds: 540,
+    memory: "256MiB",
+  },
+  async () => {
+    logger.info("Running score-drop push notification job");
+
+    try {
+      const db = admin.firestore();
+
+      const seasonDoc = await db.doc("game-settings/season").get();
+      const season = seasonDoc.exists ? seasonDoc.data() : null;
+      if (!season?.seasonUid || !season?.schedule?.startDate) {
+        logger.info("No active season, skipping score-drop pushes");
+        return;
+      }
+
+      // Same scored-day derivation as the nightly stages: live seasons
+      // offset by spring training; off-seasons don't have one.
+      const calendarDay = getCompletedCalendarDay(season.schedule.startDate.toDate());
+      const scoredDay = toCompetitionDay(calendarDay, season);
+
+      if (scoredDay < 1 || scoredDay > 49) {
+        logger.info(`Day ${scoredDay} is outside the competition period, skipping`);
+        return;
+      }
+
+      const recapSnap = await db.doc(`fantasy_recaps/${season.seasonUid}/days/${scoredDay}`).get();
+      if (!recapSnap.exists) {
+        logger.info(`No recap for day ${scoredDay} (dark day or scoring failed), skipping`);
+        return;
+      }
+
+      const pushes = buildScoreDropPushes({ dailyRecap: recapSnap.data(), scoredDay });
+
+      const PARALLEL_LIMIT = 25;
+      let totalSent = 0;
+      for (let i = 0; i < pushes.length; i += PARALLEL_LIMIT) {
+        const chunk = pushes.slice(i, i + PARALLEL_LIMIT);
+        const results = await Promise.allSettled(
+          chunk.map((push) =>
+            sendPushNotification(
+              push.uid,
+              { title: push.title, body: push.body, url: push.url },
+              PUSH_TYPES.SCORE_UPDATE,
+              push.data
+            )
+          )
+        );
+        totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
+      }
+
+      logger.info(
+        `Score-drop push job complete. Day ${scoredDay}: sent ${totalSent} of ` +
+          `${pushes.length} candidate notifications.`
+      );
+    } catch (error) {
+      logger.error("Error in score-drop push job:", error);
     }
   }
 );

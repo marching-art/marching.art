@@ -17,7 +17,7 @@ Things that are genuinely strong and should be protected:
 - **Economy integrity (security).** All currency/XP/rank fields are server-only,
   guarded in `firestore.rules` (`touchesProtectedProfileFields`,
   `touchesProtectedCorpsFields`) and verified by a real emulator rules suite
-  (~130 assertions in `firestore-tests/rules.test.mjs`) that runs in CI *and* as
+  (~130 assertions in `firestore-tests/rules.test.mjs`) that runs in CI _and_ as
   a deploy gate. Secrets live in Secret Manager; CSP is tight; XSS surface is
   effectively nil.
 - **CI merge gate.** Seven blocking jobs (build, unit, typecheck, lint+ratchets,
@@ -32,13 +32,13 @@ Things that are genuinely strong and should be protected:
 The material problems cluster in five areas, which map to the five
 recommendations below:
 
-| Area | Problem in one line |
-| --- | --- |
-| Retention | The nightly score drop — the game's core beat — sends no notification of any kind. |
-| Growth | Every interesting page (scores, champions, profiles) is auth-walled SPA content; sitemap has 6 URLs; no share cards. No viral or organic loop exists. |
-| Scores data path | Scores page reads up to 49 unbounded recap docs and aggregates client-side; nightly job is O(all profiles × shows) with roster-wide write amplification and one real double-count bug. |
-| Abuse surface | Zero callables enforce App Check; ~40 auth-only callables (incl. economy mutations) have no rate limiting; any signed-in user can enumerate private leagues. |
-| Regression safety | Frontend coverage ~13%, e2e is unauthenticated smoke only, functions are 0% TypeScript, 213 `@ts-nocheck` files, no deploy rollback story. |
+| Area              | Problem in one line                                                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Retention         | The nightly score drop — the game's core beat — sends no notification of any kind.                                                                                                     |
+| Growth            | Every interesting page (scores, champions, profiles) is auth-walled SPA content; sitemap has 6 URLs; no share cards. No viral or organic loop exists.                                  |
+| Scores data path  | Scores page reads up to 49 unbounded recap docs and aggregates client-side; nightly job is O(all profiles × shows) with roster-wide write amplification and one real double-count bug. |
+| Abuse surface     | Zero callables enforce App Check; ~40 auth-only callables (incl. economy mutations) have no rate limiting; any signed-in user can enumerate private leagues.                           |
+| Regression safety | Frontend coverage ~13%, e2e is unauthenticated smoke only, functions are 0% TypeScript, 213 `@ts-nocheck` files, no deploy rollback story.                                             |
 
 Full per-dimension findings follow the recommendations.
 
@@ -58,6 +58,7 @@ tokens, email preferences, dedup, batching, rival-diff logic in
 `emailNotifications.js`) already exists; only the senders are missing.
 
 **What to build:**
+
 - A morning score-drop push + email: "Results are in — you're #N in World
   Class; \<rival\> passed you." Reuse the rival-context logic already in the
   weekly digest. Trigger it from the end of the nightly pipeline so it never
@@ -81,6 +82,7 @@ growth loop is players sharing standings and results, there is currently no
 shareable artifact and no organic search surface at all.
 
 **What to build:**
+
 - Public, crawlable score/recap and champion pages (prerender or a lightweight
   render service for the read-only surfaces; the data is already
   world-readable per `firestore.rules`).
@@ -94,7 +96,7 @@ shareable artifact and no organic search surface at all.
   duplicated verbatim and will silently diverge again), mirroring the existing
   class-registry mirror check.
 
-**Expected impact:** the only recommendation that creates *acquisition* rather
+**Expected impact:** the only recommendation that creates _acquisition_ rather
 than protecting existing users. SEO is compounding; share cards make every
 score drop (rec #1) a distribution event.
 
@@ -104,7 +106,7 @@ score drop (rec #1) a distribution event.
 computing per-reader/per-night what should be computed once:
 
 - **Client read side:** `getSeasonRecaps` (`src/api/season.ts:99-109`) reads
-  the *entire* recap subcollection — up to 49 day-docs, each containing every
+  the _entire_ recap subcollection — up to 49 day-docs, each containing every
   show × corps result — with no limit, then `useScoresData.ts:504-576` builds
   all standings/caption ranks client-side, re-fetching every 5 minutes for the
   current season. A nightly materialized `standings/{seasonUid}/{class}` doc
@@ -136,9 +138,10 @@ and #2) turns it into a 540-second-timeout incident.
 used in only 1 of ~19 callable files. Economy mutations
 (`unlockClassWithCorpsCoin`, `purchaseShopItem`, `submitPrediction`,
 `castFanFavoriteVote`) are invokable by any script with one valid auth token,
-unthrottled — an abuse *and* billing risk.
+unthrottled — an abuse _and_ billing risk.
 
 **What to do:**
+
 - Flip `enforceAppCheck: true` on callables (client rollout is already done).
 - Apply the existing `rateLimit.js` helper as a default guard in
   `callableGuards.js` rather than per-file opt-in.
@@ -150,7 +153,7 @@ unthrottled — an abuse *and* billing risk.
     exposing private leagues' member UID arrays — scope listing to
     `isPublic == true` or strip member arrays off the listable doc.
   - The catch-all subcollection read (`firestore.rules:242-247`) makes any
-    *future* user subcollection world-readable-to-authenticated unless
+    _future_ user subcollection world-readable-to-authenticated unless
     denylisted — invert to an allowlist.
 - Standardize admin on custom claims only (email fan-out still checks
   `profile.role === "admin"`, `helpers/emailService.js:719`).
@@ -219,9 +222,9 @@ to ship quickly.
 - State: 3 singleton Zustand realtime stores + React Query for one-shot reads;
   no competing sources of truth; `queryClient.clear()` on sign-out.
 - Weaknesses: 213 `@ts-nocheck` files; 176 `.jsx` vs 46 `.tsx`; ~39 files
-  >500 lines (8 >750, incl. `App.jsx` at 757 mixing routing + 6 global
-  side-effects); recurring `*Parts` files split by size not concern; no form
-  library across ~20 hand-validated modals.
+  > 500 lines (8 >750, incl. `App.jsx` at 757 mixing routing + 6 global
+  > side-effects); recurring `*Parts` files split by size not concern; no form
+  > library across ~20 hand-validated modals.
 - UX robustness strong: error boundaries at 3 layers, offline banner + queued
   lineup saves, aria-live toasts, skip-to-content and route-change focus.
 
