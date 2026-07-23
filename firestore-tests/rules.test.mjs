@@ -791,9 +791,7 @@ await check(
 await freshLeagueSeed();
 await check(
   'public-league browse (isPublic == true) is allowed and excludes private leagues',
-  assertSucceeds(
-    getDocs(query(collection(mallory(), leaguesPath), where('isPublic', '==', true)))
-  )
+  assertSucceeds(getDocs(query(collection(mallory(), leaguesPath), where('isPublic', '==', true))))
 );
 
 await freshLeagueSeed();
@@ -833,9 +831,7 @@ await testEnv.withSecurityRulesDisabled(async (ctx) => {
 });
 await check(
   'legacy-namespace leagues stay listable unfiltered (community widgets)',
-  assertSucceeds(
-    getDocs(collection(mallory(), 'artifacts/fantasy_drum_corps_v1/leagues'))
-  )
+  assertSucceeds(getDocs(collection(mallory(), 'artifacts/fantasy_drum_corps_v1/leagues')))
 );
 
 await freshLeagueSeed();
