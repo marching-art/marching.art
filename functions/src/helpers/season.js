@@ -251,6 +251,10 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     const updateData = {
       corps: resetCorps,
       lifetimeStats,
+      // Clear the nightly-scoring idempotency ledger (helpers/awardLedger.js):
+      // its tokens are scoped to the closing season, so a fresh season starts
+      // with an empty ledger and it never accumulates across seasons.
+      awardLedger: admin.firestore.FieldValue.delete(),
     };
 
     // Season-finish payouts (coin + XP) and the recap the client shows once.

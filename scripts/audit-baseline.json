@@ -1,0 +1,10 @@
+{
+  "_comment": "Ratchet baseline for scripts/auditRatchet.mjs. Per-manifest count of high+critical PRODUCTION-dependency advisories (npm audit --omit=dev). The PR audit gate fails only when a manifest EXCEEDS its baseline, so it catches newly introduced vulnerabilities without sitting red on the pre-existing debt Dependabot is already chipping away at. When a Dependabot PR lowers a count, run `node scripts/auditRatchet.mjs --update` and commit the new (lower) baseline.",
+  "baseline": {
+    ".": 3,
+    "functions": 10,
+    "firestore-tests": 0,
+    "functions-scraper": 3,
+    "scripts": 7
+  }
+}

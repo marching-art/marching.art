@@ -35,7 +35,7 @@ import {
 import type { FirebaseStorage } from 'firebase/storage';
 
 // Import centralized configuration
-import { FIREBASE_CONFIG, DATA_CONFIG, AUTH_CONFIG, DEV_CONFIG } from '../config';
+import { FIREBASE_CONFIG, DATA_CONFIG, AUTH_CONFIG, DEV_CONFIG, APP_CHECK_CONFIG } from '../config';
 
 // =============================================================================
 // CONFIGURATION
@@ -62,6 +62,11 @@ function initializeFirebase(): void {
   if (app) return;
 
   app = initializeApp(firebaseConfig);
+  // App Check attestation — opt-in via a reCAPTCHA site key (see
+  // APP_CHECK_CONFIG). Dynamically imported so the SDK stays out of the bundle
+  // entirely when no key is configured, and initialized right after the app so
+  // tokens attach to subsequent Firestore/Functions/Storage calls.
+  initializeAppCheckIfConfigured();
   auth = getAuth(app);
   db = initializeFirestore(app, {
     ignoreUndefinedProperties: true,
@@ -78,6 +83,33 @@ function initializeFirebase(): void {
     connectFunctionsEmulator(functions, 'localhost', emulators.functions);
     // Storage emulator connected lazily in getStorageInstance()
   }
+}
+
+/**
+ * Initialize App Check when (and only when) a reCAPTCHA site key is configured.
+ * A no-op otherwise, so builds without the key are unaffected. Fire-and-forget:
+ * a failure here must never block app startup (App Check is not enforced until
+ * the backend rollout flips it on).
+ */
+function initializeAppCheckIfConfigured(): void {
+  if (!APP_CHECK_CONFIG.enabled) return;
+  import('firebase/app-check')
+    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+      // Debug token for local/emulator dev — must be set before initialize.
+      if (APP_CHECK_CONFIG.debugToken) {
+        (globalThis as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN =
+          APP_CHECK_CONFIG.debugToken;
+      }
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.recaptchaSiteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    })
+    .catch((error) => {
+      // Never fatal: log and continue. Until enforcement is on, missing tokens
+      // only surface in the console's App Check metrics.
+      console.error('App Check initialization failed:', error);
+    });
 }
 
 /**

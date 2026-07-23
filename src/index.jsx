@@ -4,6 +4,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { initErrorReporting } from './lib/errorReporter';
+
+// Capture uncaught errors and unhandled promise rejections in production.
+initErrorReporting();
 
 // Create root element
 const root = ReactDOM.createRoot(document.getElementById('root'));

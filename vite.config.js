@@ -48,9 +48,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
-    // Source maps disabled in production - no error tracking service configured
-    // Re-enable with 'hidden' if adding Sentry/Bugsnag (generates maps without linking)
-    sourcemap: false,
+    // 'hidden' emits source maps but does NOT reference them from the bundles,
+    // so they are not served to end users — an error reporter (see
+    // src/lib/errorReporter.ts) can still symbolicate stack traces by uploading
+    // the maps out of band. Flip to false only if maps must not be generated.
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         // Split vendor chunks for better caching. Vite 8 (Rolldown) only
@@ -127,15 +129,15 @@ export default defineConfig({
       exclude: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/setupTests.jsx', 'src/types/**'],
       reporter: ['text-summary', 'lcov'],
       // Ratchet, not target: floors sit just below the current whole-tree
-      // numbers (statements 11.75 / branches 9.32 / functions 9.61 / lines
-      // 11.64 as of the season-clock, caption, and guard test additions) so
+      // numbers (statements 13.12 / branches 10.38 / functions 10.70 / lines
+      // 12.99 as of the errorReporter and Leagues-resilience test additions) so
       // coverage can only move up. When a PR raises coverage meaningfully,
       // raise the floors to just below the new numbers.
       thresholds: {
-        statements: 11.5,
-        branches: 9,
-        functions: 9,
-        lines: 11.5,
+        statements: 13,
+        branches: 10.2,
+        functions: 10.5,
+        lines: 12.8,
       },
     },
   },

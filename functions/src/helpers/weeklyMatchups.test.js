@@ -16,6 +16,7 @@ const admin = require("firebase-admin");
 const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./scoringAwards");
 const { WEEKLY_LEAGUE_WIN_REWARD } = require("./economy");
 const { XP_SOURCES } = require("./xpCalculations");
+const { matchupRecordToken, weeklyWinToken, LEDGER_FIELD } = require("./awardLedger");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
@@ -213,6 +214,61 @@ describe("processWeeklyMatchups", () => {
       (w) => w.path === profilePath("bob") && w.data?.corpsCoin !== undefined
     );
     assert.equal(loserReward, undefined);
+  });
+
+  test("idempotency: a retry does not re-increment records or re-pay a resolved matchup", async () => {
+    // Simulate a torn commit that already applied every award for this matchup:
+    // both participants carry their record token and the winner carries the win
+    // token, but the matchup doc's `completed` flag never landed (so the retry
+    // re-enters the matchup). Nothing must be paid or incremented again.
+    const winTok = weeklyWinToken("season-1", 3, "league-1", "aClass");
+    const aliceRecTok = matchupRecordToken("season-1", 3, "league-1", "aClass", "alice");
+    const bobRecTok = matchupRecordToken("season-1", 3, "league-1", "aClass", "bob");
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        { aClassMatchups: [{ pair: ["alice", "bob"] }] }, // no completed flag
+      ],
+      [
+        profilePath("alice"),
+        { corps: { aClass: { totalSeasonScore: 70 } }, [LEDGER_FIELD]: [aliceRecTok, winTok] },
+      ],
+      [
+        profilePath("bob"),
+        { corps: { aClass: { totalSeasonScore: 60 } }, [LEDGER_FIELD]: [bobRecTok] },
+      ],
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-1", data: { name: "Test League" } }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    // No record increments, no coin/xp reward, no history — every award skipped.
+    assert.equal(
+      writes.filter((w) => w.data?.["seasons.season-1.records.aClass"]).length,
+      0,
+      "records must not re-increment on retry"
+    );
+    assert.equal(
+      writes.filter((w) => w.path === profilePath("alice") && w.data?.corpsCoin !== undefined).length,
+      0,
+      "winner must not be re-paid on retry"
+    );
+    assert.equal(
+      writes.filter((w) => w.data?.type === "league_win").length,
+      0,
+      "no duplicate league_win history entry on retry"
+    );
+
+    // The idempotent standings/matchup close is still safe to re-run: the
+    // matchup doc is re-marked completed (a plain, repeatable set).
+    const matchupWrite = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1/matchups/week-3`
+    );
+    assert.ok(matchupWrite, "matchup doc is still closed out (completed) idempotently");
+    assert.equal(matchupWrite.data.aClassMatchups[0].completed, true);
   });
 
   test("ties and byes award nothing", async () => {

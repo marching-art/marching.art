@@ -109,6 +109,11 @@ class ChunkedWriter {
           `ChunkedWriter commit failed on chunk ${committedBatches + 1}/` +
           `${this._batches.length} (${this._totalOps} ops total; earlier ` +
           `chunks are already committed): ${error.message}`;
+        // Machine-readable tear point so callers can log/reconcile structurally
+        // (which chunks landed) instead of parsing the message string.
+        error.committedBatches = committedBatches;
+        error.totalBatches = this._batches.length;
+        error.totalOps = this._totalOps;
         throw error;
       }
     }

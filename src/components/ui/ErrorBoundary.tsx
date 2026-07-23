@@ -3,6 +3,7 @@ import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from './Button';
 import { Heading } from './Heading';
+import { reportError } from '../../lib/errorReporter';
 
 // =============================================================================
 // ERROR BOUNDARY COMPONENT
@@ -39,7 +40,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Report to the observability funnel (console + endpoint when configured)
+    // so production crashes are no longer invisible.
+    reportError(error, {
+      source: 'ErrorBoundary',
+      featureName: this.props.featureName,
+      componentStack: errorInfo.componentStack ?? undefined,
+    });
     this.props.onError?.(error, errorInfo);
   }
 

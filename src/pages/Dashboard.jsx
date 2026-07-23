@@ -141,7 +141,12 @@ const Dashboard = () => {
     classFilter: dashboardData.activeCorpsClass || 'all',
   });
   const { data: myLeagues } = useMyLeagues(user?.uid);
-  const { weeksRemaining, isRegistrationLocked, currentDay } = useSeasonStore();
+  // Narrow per-field selectors (not a bare useSeasonStore()) so this heavy page
+  // re-renders only when a value it actually uses changes, not on every
+  // season-store write. Matches the store's documented selector contract.
+  const weeksRemaining = useSeasonStore((s) => s.weeksRemaining);
+  const isRegistrationLocked = useSeasonStore((s) => s.isRegistrationLocked);
+  const currentDay = useSeasonStore((s) => s.currentDay);
 
   // Calculate if scores are available (for hiding Last Score/Trend columns on Day 1)
   const scoresAvailable = currentDay ? getEffectiveDay(currentDay) !== null : false;

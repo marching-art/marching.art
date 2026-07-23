@@ -15,7 +15,7 @@
     "logs": "firebase functions:log",
     "seed:dci": "node src/scripts/seedDciReference.js",
     "test": "node --test",
-    "test:coverage": "node --test --experimental-test-coverage"
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=80 --test-coverage-functions=85"
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.2.0",
