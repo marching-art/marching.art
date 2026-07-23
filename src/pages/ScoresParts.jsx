@@ -17,11 +17,11 @@ import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { formatEventName } from '../utils/season';
 import {
   RATING_CONFIG,
+  CLASS_LABELS,
   getSoundSportRating,
   seededShuffle,
   getCaptionBreakdown,
   mergeTwoNightShows,
-  formatBoxScoreAsText,
   formatStandingsAsText,
   computeRankDeltas,
   TWO_NIGHT_DAYS,
@@ -113,95 +113,148 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
 };
 
 // =============================================================================
-// RECAP BOX SCORE - one card per show (memoized: sibling recaps don't re-render)
+// RECAP BOX SCORE - one card per show, SPLIT BY CLASS (memoized: sibling recaps
+// don't re-render). Each show's field is separated into World / Open / A Class
+// sections, each independently ranked and box-topped — the fantasy recaps read
+// like the per-class standings instead of one mixed list.
 // =============================================================================
+
+// Class display order within a show (SoundSport is filtered upstream).
+const RECAP_CLASS_ORDER = ['worldClass', 'openClass', 'aClass'];
+
+// Rank a class's scores (already total-desc, so index+1 is the finishing place)
+// and apply the active caption sort — the place stays fixed under a sort, the
+// same as the Podium recap sheet.
+const buildClassRows = (classScores, sortBy) => {
+  const withPlace = classScores.map((score, i) => ({
+    score,
+    captions: getCaptionBreakdown(score),
+    place: i + 1,
+  }));
+  if (sortBy === 'total') return withPlace;
+  const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
+  if (!key) return withPlace;
+  return [...withPlace].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
+};
 
 const RecapDataGrid = memo(
   ({ scores, eventName, location, date, userCorpsName, sortBy = 'total' }) => {
-    // Pre-compute caption breakdowns + the finishing place once. `scores` arrive
-    // sorted by total desc, so index+1 is the corps's finishing place — it stays
-    // fixed even when the caller re-sorts the rows by a caption (parity with the
-    // Podium recap sheet, where the place never renumbers under a sort).
-    const rows = useMemo(() => {
+    // Group the show's corps by class, then rank/sort within each class.
+    const sections = useMemo(() => {
       if (!scores || scores.length === 0) return [];
-      const withPlace = scores.map((score, i) => ({
-        score,
-        captions: getCaptionBreakdown(score),
-        place: i + 1,
-      }));
-      if (sortBy === 'total') return withPlace;
-      const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
-      if (!key) return withPlace;
-      return [...withPlace].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
+      const byClass = new Map();
+      for (const score of scores) {
+        const cls = score.corpsClass || 'aClass';
+        if (!byClass.has(cls)) byClass.set(cls, []);
+        byClass.get(cls).push(score);
+      }
+      // Known classes first (World → Open → A), then any stragglers, so an
+      // unexpected class is still shown rather than dropped.
+      const order = [
+        ...RECAP_CLASS_ORDER.filter((cls) => byClass.has(cls)),
+        ...[...byClass.keys()].filter((cls) => !RECAP_CLASS_ORDER.includes(cls)),
+      ];
+      return order.map((cls) => {
+        const rows = buildClassRows(byClass.get(cls), sortBy);
+        return {
+          cls,
+          label: CLASS_LABELS[cls] || cls,
+          rows,
+          tops: captionTops(rows.map((r) => r.captions)),
+        };
+      });
     }, [scores, sortBy]);
-    const tops = useMemo(() => captionTops(rows.map((r) => r.captions)), [rows]);
+
     const activeCap = sortBy === 'total' ? null : sortBy;
 
+    // One share block per class, mirroring the on-screen split.
     const shareText = () =>
-      formatBoxScoreAsText(
-        { title: formatEventName(eventName), location, date },
-        rows.map(({ score, captions, place }) => ({
-          place,
-          corpsName: score.corpsName || score.corps,
-          total: score.score ?? score.totalScore ?? 0,
-          captions,
-        }))
-      );
+      sections
+        .map((section) =>
+          formatStandingsAsText(
+            {
+              title: `${formatEventName(eventName)} — ${section.label}`,
+              subtitle: [location, date].filter(Boolean).join(' · ') || null,
+            },
+            section.rows.map(({ score, captions, place }) => ({
+              place,
+              corpsName: score.corpsName || score.corps,
+              total: score.score ?? score.totalScore ?? 0,
+              captions,
+            }))
+          )
+        )
+        .join('\n\n');
 
-    if (!scores || scores.length === 0) return null;
+    if (sections.length === 0) return null;
 
     return (
-      <div className={`${SHEET_CARD} space-y-2.5`}>
+      <div className={`${SHEET_CARD} space-y-3`}>
         <SheetMasthead title={formatEventName(eventName)} location={location} date={date} />
-        <BoxScoreHead active={activeCap} />
-        <div>
-          {rows.map(({ score, captions, place }) => {
-            const isUserCorps =
-              userCorpsName &&
-              (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
-                score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
 
-            return (
-              <div
-                key={score.uid || score.corpsName || place}
-                className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
-                  isUserCorps ? 'bg-interactive/10' : ''
-                }`}
-              >
-                <CorpsIdentity
-                  place={place}
-                  name={score.corpsName || score.corps}
-                  isMine={isUserCorps}
-                  displayName={score.displayName}
-                  uid={score.uid}
-                  avatarUrl={score.avatarUrl}
-                />
-                <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
-                  <CaptionValue
-                    value={captions?.ge}
-                    isTop={captions?.ge === tops.ge}
-                    active={activeCap === 'GE'}
-                  />
-                  <CaptionValue
-                    value={captions?.vis}
-                    isTop={captions?.vis === tops.vis}
-                    active={activeCap === 'VIS'}
-                  />
-                  <CaptionValue
-                    value={captions?.mus}
-                    isTop={captions?.mus === tops.mus}
-                    active={activeCap === 'MUS'}
-                  />
-                  <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
-                    {(score.score || score.totalScore || 0).toFixed(3)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {sections.map((section) => (
+          <div key={section.cls} className="space-y-1.5">
+            {/* Per-class subheader — same shape as the Eastern combined sheet */}
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
+                {section.label}
+              </span>
+              <span className="text-[9px] text-muted tabular-nums">
+                {section.rows.length} corps
+              </span>
+            </div>
+            <BoxScoreHead active={activeCap} />
+            <div>
+              {section.rows.map(({ score, captions, place }) => {
+                const isUserCorps =
+                  userCorpsName &&
+                  (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
+                    score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
+
+                return (
+                  <div
+                    key={score.uid || score.corpsName || place}
+                    className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
+                      isUserCorps ? 'bg-interactive/10' : ''
+                    }`}
+                  >
+                    <CorpsIdentity
+                      place={place}
+                      name={score.corpsName || score.corps}
+                      isMine={isUserCorps}
+                      displayName={score.displayName}
+                      uid={score.uid}
+                      avatarUrl={score.avatarUrl}
+                    />
+                    <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
+                      <CaptionValue
+                        value={captions?.ge}
+                        isTop={captions?.ge === section.tops.ge}
+                        active={activeCap === 'GE'}
+                      />
+                      <CaptionValue
+                        value={captions?.vis}
+                        isTop={captions?.vis === section.tops.vis}
+                        active={activeCap === 'VIS'}
+                      />
+                      <CaptionValue
+                        value={captions?.mus}
+                        isTop={captions?.mus === section.tops.mus}
+                        active={activeCap === 'MUS'}
+                      />
+                      <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
+                        {(score.score || score.totalScore || 0).toFixed(3)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
         <SheetFooter
-          note="GE/VIS/MUS shown · box-toppers in gold"
+          note="Split by class · GE/VIS/MUS shown · box-toppers in gold"
           action={<ShareButton getText={shareText} />}
         />
       </div>
