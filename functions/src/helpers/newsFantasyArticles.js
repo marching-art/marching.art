@@ -31,6 +31,11 @@ const {
   formatBriefForArticle,
 } = require("./newsEditorial");
 const { describeShowConcept } = require("./showConceptSynergy");
+// User-chosen strings (corps names, director displayNames, hometowns, show
+// names/locations, show concepts) are instruction-bearing if inlined raw into
+// the prompt — promptSafe() strips newlines/control chars, truncates, and
+// wraps them in «...» so they read as data, never instructions.
+const { promptSafe, UNTRUSTED_FIELD_RULE } = require("./promptSafety");
 
 /**
  * Article 4: marching.art Fantasy Results
@@ -79,9 +84,9 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   };
   const hasCaptionSplits = competitiveResults.some(r => Number.isFinite(r.geScore));
   const captionLeadersBlock = hasCaptionSplits ? [
-    fantasyCaptionLeaders.ge ? `- General Effect: "${fantasyCaptionLeaders.ge.corpsName}" (${fantasyCaptionLeaders.ge.geScore.toFixed(2)})` : null,
-    fantasyCaptionLeaders.visual ? `- Visual: "${fantasyCaptionLeaders.visual.corpsName}" (${fantasyCaptionLeaders.visual.visualScore.toFixed(2)})` : null,
-    fantasyCaptionLeaders.music ? `- Music: "${fantasyCaptionLeaders.music.corpsName}" (${fantasyCaptionLeaders.music.musicScore.toFixed(2)})` : null,
+    fantasyCaptionLeaders.ge ? `- General Effect: ${promptSafe(fantasyCaptionLeaders.ge.corpsName)} (${fantasyCaptionLeaders.ge.geScore.toFixed(2)})` : null,
+    fantasyCaptionLeaders.visual ? `- Visual: ${promptSafe(fantasyCaptionLeaders.visual.corpsName)} (${fantasyCaptionLeaders.visual.visualScore.toFixed(2)})` : null,
+    fantasyCaptionLeaders.music ? `- Music: ${promptSafe(fantasyCaptionLeaders.music.corpsName)} (${fantasyCaptionLeaders.music.musicScore.toFixed(2)})` : null,
   ].filter(Boolean).join('\n') : '';
 
   // Return a fallback if there is genuinely no content to write about tonight.
@@ -222,32 +227,32 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   };
   const directorClassBlock = competitiveResults.length > 0
     ? competitiveResults
-        .map(r => `  • "${r.corpsName}" → director "${r.displayName || "Unknown"}" [${looksLikeHandle(r.displayName) ? "HANDLE — attribute via ensemble, not via name" : "NAME — direct attribution OK"}]`)
+        .map(r => `  • ${promptSafe(r.corpsName)} → director ${promptSafe(r.displayName || "Unknown")} [${looksLikeHandle(r.displayName) ? "HANDLE — attribute via ensemble, not via name" : "NAME — direct attribution OK"}]`)
         .join("\n")
     : "";
 
   const resultsByShowBlock = competitiveByShow.map(group => {
-    const header = `${group.name}${group.location ? ` — ${group.location}` : ''} (${group.results.length} ensemble${group.results.length === 1 ? '' : 's'})`;
+    const header = `${promptSafe(group.name)}${group.location ? ` — ${promptSafe(group.location)}` : ''} (${group.results.length} ensemble${group.results.length === 1 ? '' : 's'})`;
     const lines = group.results.map((r, i) => {
       const margin = i > 0 ? (group.results[i - 1].totalScore - r.totalScore).toFixed(3) : "-";
-      const director = r.displayName || 'Unknown';
+      const director = promptSafe(r.displayName || 'Unknown');
       // Home city = where the corps program is based. This is NOT the venue; the
       // venue is the SHOW header's location. Labeled explicitly so the writer
       // can't misread a home city as the place the ensemble performed.
-      const hometown = r.location ? ` (based in ${r.location})` : '';
+      const hometown = r.location ? ` (based in ${promptSafe(r.location)})` : '';
       const split = Number.isFinite(r.geScore)
         ? ` [GE ${r.geScore.toFixed(2)} | Vis ${r.visualScore.toFixed(2)} | Mus ${r.musicScore.toFixed(2)}]`
         : '';
-      return `  ${i + 1}. "${r.corpsName}"${hometown} (Director: ${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind the ensemble above]` : ' [SHOW WINNER]'}${split}`;
+      return `  ${i + 1}. ${promptSafe(r.corpsName)}${hometown} (Director: ${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind the ensemble above]` : ' [SHOW WINNER]'}${split}`;
     }).join('\n');
     return `SHOW: ${header}\n${lines}`;
   }).join('\n\n');
 
   const overallRankingBlock = topPerformers.map((r, i) => {
     const margin = i > 0 ? (topPerformers[i - 1].totalScore - r.totalScore).toFixed(3) : "-";
-    const director = r.displayName || 'Unknown';
-    const showTag = r.showEventName ? ` @ ${r.showEventName}` : '';
-    return `${i + 1}. "${r.corpsName}" (${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind the ensemble above]` : ' [OVERALL HIGH]'}${showTag}`;
+    const director = promptSafe(r.displayName || 'Unknown');
+    const showTag = r.showEventName ? ` @ ${promptSafe(r.showEventName)}` : '';
+    return `${i + 1}. ${promptSafe(r.corpsName)} (${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind the ensemble above]` : ' [OVERALL HIGH]'}${showTag}`;
   }).join('\n');
 
   // Director-designed show concepts for tonight's featured ensembles — the
@@ -275,7 +280,7 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     }
   }
   const programConceptsBlock = programConcepts.length > 0
-    ? programConcepts.map(p => `- "${p.corpsName}": performing ${p.concept}`).join('\n')
+    ? programConcepts.map(p => `- ${promptSafe(p.corpsName)}: performing ${promptSafe(p.concept, { maxLength: 300 })}`).join('\n')
     : '';
 
   const prompt = `You are a marching.art fantasy sports journalist writing a professional, data-grounded recap of tonight's results. These are FANTASY ensembles run by real users. You may write with an engaging sportswriter's voice and characterize the performances and the shape of the standings — but you have no interview access and no information beyond the scores and standings in the DATA block. Every factual detail — ensemble names, director names, scores, margins, competition names, locations, counts — must match the DATA block exactly. Do not state anything a reporter could not know from a scoresheet.
@@ -283,11 +288,12 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
 ACCURACY RULES (read first)
 - The field is ${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'} tonight${soundSportResults.length > 0 ? ` plus ${soundSportResults.length} SoundSport participant${soundSportResults.length === 1 ? '' : 's'}` : ''}. Never claim any other count — do not say "25 corps" or any number other than ${totalCompetitors}.
 - Only reference ensembles, directors, scores, and venues that appear in the DATA block. Do not invent ensembles, directors, venues, or scores.
-${fieldMode === 'soundsport' ? `- No competitive ensembles tonight; SoundSport is non-competitive, so do NOT describe anyone as "winning" against anyone else. Performances are appraised by rating level, not rank.` : multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : fieldMode === 'solo' ? `- Only one competitive ensemble performed tonight: "${topPerformers[0].corpsName}" at ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}. There are no opponents to frame against — do not invent rivals, runners-up, or head-to-head narratives.` : `- All ensembles tonight competed at the same fantasy show: ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}.`}
+${fieldMode === 'soundsport' ? `- No competitive ensembles tonight; SoundSport is non-competitive, so do NOT describe anyone as "winning" against anyone else. Performances are appraised by rating level, not rank.` : multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : fieldMode === 'solo' ? `- Only one competitive ensemble performed tonight: ${promptSafe(topPerformers[0].corpsName)} at ${promptSafe(competitiveByShow[0]?.name || fantasyShowName)}${competitiveByShow[0]?.location ? ` (${promptSafe(competitiveByShow[0].location)})` : ''}. There are no opponents to frame against — do not invent rivals, runners-up, or head-to-head narratives.` : `- All ensembles tonight competed at the same fantasy show: ${promptSafe(competitiveByShow[0]?.name || fantasyShowName)}${competitiveByShow[0]?.location ? ` (${promptSafe(competitiveByShow[0].location)})` : ''}.`}
 - The ranked lines give the exact gap to the ensemble directly above ("[0.041 behind the ensemble above]") — quote those verbatim and never re-derive them, and don't state a margin between two non-adjacent ensembles that the data doesn't provide.
 - HOME CITY IS NOT THE VENUE. Each ranked line may list the corps' home city as "(based in X)" — that is where the program is based, NOT where it performed. The performance venue is the SHOW location in the section header. Never write that an ensemble performed, competed, or delivered its show "in" its home city unless that city is the show venue. Refer to a home city only as the corps' base (e.g., "the Denver-based ensemble"), never as the location of tonight's performance.
 - Beyond your own analytical characterization of the results, invent nothing else: no rivalries, backstories, injuries, or biographical details. Do not reveal specific roster/lineup picks. Program/show themes may be referenced ONLY for ensembles listed in the PROGRAM CONCEPTS block, exactly as described there — never invent a theme for anyone else.
 - Director names in the DATA block are whatever each user set as their displayName — some are real names ("Sarah Jones"), some are usernames ("elithecreature", "mike_42", "BluecoatsFan"). When you refer to a director, prefer an ensemble-based reference ("Mendota DBC's director", "the director behind Stellar Vista"). Use the bare displayName only when it reads like a real name (a capitalized word with a space). For handle-style names, wrap them in the role ("director elithecreature") so the reader sees a screen name rather than a first name — never use a handle as a bare first name.
+- ${UNTRUSTED_FIELD_RULE}
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -304,15 +310,15 @@ ${directorClassBlock ? `\nDIRECTOR REFERENCE GUIDE (check this before naming any
 ${captionLeadersBlock ? `\nCAPTION LEADERS AMONG TONIGHT'S ENSEMBLES (who won each scoring caption — the winner didn't necessarily sweep):\n${captionLeadersBlock}\n` : ''}${programConceptsBlock ? `\nPROGRAM CONCEPTS (real, director-designed show concepts — the only theme information that exists; ensembles not listed have no known concept):\n${programConceptsBlock}\n` : ''}
 
 ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS (non-competitive, ratings-only showcase — NEVER reveal SoundSport scores, only rating levels):
-${soundSportBestInShow ? `Best in Show: "${soundSportBestInShow.corpsName}" (${soundSportBestInShow.displayName || 'Unknown'})` : ''}
-${soundSportByRating.gold.length > 0 ? `Gold (${soundSportByRating.gold.length}): ${soundSportByRating.gold.map(r => `"${r.corpsName}"`).join(', ')}` : ''}
-${soundSportByRating.silver.length > 0 ? `Silver (${soundSportByRating.silver.length}): ${soundSportByRating.silver.map(r => `"${r.corpsName}"`).join(', ')}` : ''}
-${soundSportByRating.bronze.length > 0 ? `Bronze (${soundSportByRating.bronze.length}): ${soundSportByRating.bronze.map(r => `"${r.corpsName}"`).join(', ')}` : ''}
-${soundSportByRating.participation.length > 0 ? `Participation (${soundSportByRating.participation.length}): ${soundSportByRating.participation.map(r => `"${r.corpsName}"`).join(', ')}` : ''}` : ''}
+${soundSportBestInShow ? `Best in Show: ${promptSafe(soundSportBestInShow.corpsName)} (${promptSafe(soundSportBestInShow.displayName || 'Unknown')})` : ''}
+${soundSportByRating.gold.length > 0 ? `Gold (${soundSportByRating.gold.length}): ${soundSportByRating.gold.map(r => promptSafe(r.corpsName)).join(', ')}` : ''}
+${soundSportByRating.silver.length > 0 ? `Silver (${soundSportByRating.silver.length}): ${soundSportByRating.silver.map(r => promptSafe(r.corpsName)).join(', ')}` : ''}
+${soundSportByRating.bronze.length > 0 ? `Bronze (${soundSportByRating.bronze.length}): ${soundSportByRating.bronze.map(r => promptSafe(r.corpsName)).join(', ')}` : ''}
+${soundSportByRating.participation.length > 0 ? `Participation (${soundSportByRating.participation.length}): ${soundSportByRating.participation.map(r => promptSafe(r.corpsName)).join(', ')}` : ''}` : ''}
 
 STATS: ${totalCompetitors === 0
   ? `No competitive ensembles | SoundSport participants: ${soundSportResults.length}`
-  : `Top ensemble: "${topPerformers[0].corpsName}" at ${topScore}${topPerformers[0].showEventName ? ` (${topPerformers[0].showEventName})` : ''} | ${totalCompetitors >= 2 ? `1st-to-2nd margin: ${(topPerformers[0].totalScore - topPerformers[1].totalScore).toFixed(3)}` : 'Solo competitor'} | Competitive ensembles: ${totalCompetitors} | Field avg: ${avgScore}${soundSportResults.length > 0 ? ` | SoundSport: ${soundSportResults.length}` : ''}`
+  : `Top ensemble: ${promptSafe(topPerformers[0].corpsName)} at ${topScore}${topPerformers[0].showEventName ? ` (${promptSafe(topPerformers[0].showEventName)})` : ''} | ${totalCompetitors >= 2 ? `1st-to-2nd margin: ${(topPerformers[0].totalScore - topPerformers[1].totalScore).toFixed(3)}` : 'Solo competitor'} | Competitive ensembles: ${totalCompetitors} | Field avg: ${avgScore}${soundSportResults.length > 0 ? ` | SoundSport: ${soundSportResults.length}` : ''}`
 }
 ===== END DATA =====
 
@@ -570,13 +576,14 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, se
 ACCURACY RULES (read first)
 - Every corps name, caption score, and trend arrow you cite MUST come from the DATA block below. Do not invent corps, captions, scores, or trend directions.
 - The field tonight has ${dayScores.length} corps (listed below). Do not reference any corps not in this list.
-${multiShowCaption ? `- The caption numbers below come from ${uniqueCaptionShows.length} separate shows tonight: ${uniqueCaptionShows.join(', ')}. Corps at different shows did NOT caption-judge against each other — the rankings are a composite across venues. Frame cross-venue picks as such.` : `- All caption numbers tonight come from a single show, so the rankings are a true head-to-head.`}
+${multiShowCaption ? `- The caption numbers below come from ${uniqueCaptionShows.length} separate shows tonight: ${uniqueCaptionShows.map(n => promptSafe(n)).join(', ')}. Corps at different shows did NOT caption-judge against each other — the rankings are a composite across venues. Frame cross-venue picks as such.` : `- All caption numbers tonight come from a single show, so the rankings are a true head-to-head.`}
 ${isLiveSeason
   ? `- This is the ${dayScores.find(s => s.sourceYear)?.sourceYear || String(new Date().getFullYear())} live DCI season — the caption scores below come from this season's real competitions. Do NOT reference a prior year's book or tag corps with a past season year.`
   : `- Source-year disclosure: on each corps' first mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy directors know which season's book they're picking against. Every corps' year is listed in CORPS SOURCE YEARS below.`}
 - If a caption shows "No data" in the DATA block, do not reference it. If a specific number isn't in the data, don't cite a number.
 ${hasCostData ? `- PURCHASE COST & VALUE: each corps carries a point price (1–50) — what a director pays to slot it into a caption. The VALUE BOARD lists caption score ÷ that cost as a pre-computed ratio (higher = more caption output per roster point). Cite costs and value ratios exactly as printed; never divide, average, or invent your own ratio.` : ''}
 ${gainBlock ? `- 10-DAY GAIN is a pre-computed points-per-day figure (already printed with its sign). Quote it verbatim (e.g., "+0.18/day"); do not recompute it or derive a different daily average.` : ''}
+- ${UNTRUSTED_FIELD_RULE}
 
 ${NEWS_INTEGRITY_RULES}
 

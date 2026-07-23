@@ -5,6 +5,14 @@
 // job (scheduled/newsAutoPublish.js) so the two paths stay in lockstep.
 
 const { logger } = require("firebase-functions/v2");
+// User-submitted article text (headline, summary, body) is instruction-bearing
+// if inlined raw into Gemini prompts — promptSafe/promptSafeBlock strip control
+// chars, truncate, and wrap the text in unambiguous «...» / ««« »»» delimiters.
+const {
+  promptSafe,
+  promptSafeBlock,
+  UNTRUSTED_FIELD_RULE,
+} = require("./promptSafety");
 
 // A user graduates to auto-publish once an admin has approved this many of
 // their articles. After that, their new submissions publish automatically at
@@ -174,10 +182,12 @@ async function extractArticleVisualDetails(submission) {
   const body = (submission.fullStory || "").substring(0, 1800);
   const prompt = `You are the art director for a marching arts (drum corps) publication, preparing a photorealistic image to illustrate a SPECIFIC article. Read the article and extract ONLY the concrete visual details it states or clearly implies. Do not invent specifics the article does not support — leave a field blank when the article gives no basis for it. Uniform colors, trim, and the described moment are the most important details to capture accurately.
 
-ARTICLE HEADLINE: ${submission.headline}
-ARTICLE SUMMARY: ${submission.summary || ""}
+${UNTRUSTED_FIELD_RULE}
+
+ARTICLE HEADLINE: ${promptSafe(submission.headline, { maxLength: 200 })}
+ARTICLE SUMMARY: ${promptSafe(submission.summary || "", { maxLength: 400 })}
 ARTICLE BODY:
-${body}`;
+${promptSafeBlock(body, { maxLength: 1800 })}`;
 
   try {
     const result = await generateStructuredContent(prompt, schema);
@@ -258,14 +268,16 @@ async function generateFantasyDailyImage(submission, reportDay, authorCorps) {
     const details = Array.isArray(visual.keyVisualDetails)
       ? visual.keyVisualDetails.map(cleanField).filter(Boolean)
       : [];
+    // Every value here was extracted from the user's article text, so it is
+    // still user-influenced — delimit each one before it reaches the prompt.
     const lines = [
       articlePrimary
-        ? `- Uniform: ${[articlePrimary, cleanField(visual.secondaryColor), cleanField(visual.accentColor)].filter(Boolean).join(", ")}${cleanField(visual.uniformDescription) ? ` (${cleanField(visual.uniformDescription)})` : ""}`
+        ? `- Uniform: ${promptSafe([articlePrimary, cleanField(visual.secondaryColor), cleanField(visual.accentColor)].filter(Boolean).join(", "))}${cleanField(visual.uniformDescription) ? ` (${promptSafe(cleanField(visual.uniformDescription), { maxLength: 300 })})` : ""}`
         : null,
-      `- Moment to depict: ${theme}`,
-      cleanField(visual.section) ? `- Featured section: ${cleanField(visual.section)}` : null,
-      cleanField(visual.mood) ? `- Mood: ${cleanField(visual.mood)}` : null,
-      details.length ? `- Must include: ${details.join("; ")}` : null,
+      `- Moment to depict: ${promptSafe(theme, { maxLength: 300 })}`,
+      cleanField(visual.section) ? `- Featured section: ${promptSafe(cleanField(visual.section))}` : null,
+      cleanField(visual.mood) ? `- Mood: ${promptSafe(cleanField(visual.mood))}` : null,
+      details.length ? `- Must include: ${details.map(d => promptSafe(d, { maxLength: 300 })).join("; ")}` : null,
     ].filter(Boolean);
 
     if (lines.length) {

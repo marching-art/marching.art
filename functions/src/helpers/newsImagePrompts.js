@@ -8,6 +8,11 @@ const {
   getFantasyUniformDetails,
   buildShowThemeContext,
 } = require("./newsUniforms");
+// User-chosen strings (fantasy corps names, locations, mascot/uniform
+// descriptions, theme keywords, submission headlines/summaries) feed paid
+// image generations — promptSafe() strips newlines/control chars, truncates,
+// and wraps them in «...» so they read as display data, never instructions.
+const { promptSafe, UNTRUSTED_FIELD_RULE } = require("./promptSafety");
 
 /**
  * Build image prompt for corps avatar/icon generation
@@ -31,11 +36,11 @@ function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null
 
   // Build mascot description
   const mascotDesc = uniformDesign?.mascotOrEmblem
-    ? uniformDesign.mascotOrEmblem
-    : `bold mascot or symbol inspired by "${corpsName}"`;
+    ? promptSafe(uniformDesign.mascotOrEmblem, { maxLength: 200 })
+    : `bold mascot or symbol inspired by ${promptSafe(corpsName)}`;
 
   // Location string
-  const locationStr = location ? ` from ${location}` : "";
+  const locationStr = location ? ` from ${promptSafe(location)}` : "";
 
   // If performer style, generate a section member image
   if (avatarStyle === "performer") {
@@ -50,7 +55,9 @@ function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null
   // ==========================================================================
   // MASTER LOGO AVATAR TEMPLATE - marching.art unified format
   // ==========================================================================
-  return `Create a professional esports-style team logo/avatar for the fantasy marching arts ensemble "${corpsName}"${locationStr}.
+  return `Create a professional esports-style team logo/avatar for the fantasy marching arts ensemble ${promptSafe(corpsName)}${locationStr}.
+
+${UNTRUSTED_FIELD_RULE}
 
 CRITICAL FORMAT REQUIREMENTS:
 - SQUARE format (1:1 aspect ratio)
@@ -83,12 +90,12 @@ TYPOGRAPHY:
 - Prioritize readability at small sizes
 
 COLOR PALETTE:
-- Primary: ${primaryColor}
-- Secondary: ${secondaryColor}${accentColor ? `\n- Accent: ${accentColor}` : ""}
+- Primary: ${promptSafe(primaryColor)}
+- Secondary: ${promptSafe(secondaryColor)}${accentColor ? `\n- Accent: ${promptSafe(accentColor)}` : ""}
 - Use gradients or textured fills to avoid flat/empty areas
 
 THEME & MOOD:
-- Keywords: ${themeKeywords.length > 0 ? themeKeywords.join(", ") : "competitive, elite, championship"}
+- Keywords: ${themeKeywords.length > 0 ? themeKeywords.map(k => promptSafe(k)).join(", ") : "competitive, elite, championship"}
 - Tone: competitive, elite, championship-ready
 - Dynamic angles, strong silhouettes, and full-frame energy
 
@@ -117,32 +124,42 @@ function buildPerformerAvatarPrompt(corpsName, locationStr, uniformDesign, secti
     hornline: {
       title: "Brass Performer",
       pose: "in playing position with horn raised, powerful stance",
-      instrument: uniformDesign?.brassDescription || "polished brass horn with bell raised",
+      instrument: uniformDesign?.brassDescription
+        ? promptSafe(uniformDesign.brassDescription, { maxLength: 200 })
+        : "polished brass horn with bell raised",
       details: "white gloves, determined expression, athletic posture",
     },
     drumline: {
       title: "Percussion Performer",
       pose: "with drums mounted, sticks ready, intense focus",
-      instrument: uniformDesign?.percussionDescription || "snare drum with matching carrier",
+      instrument: uniformDesign?.percussionDescription
+        ? promptSafe(uniformDesign.percussionDescription, { maxLength: 200 })
+        : "snare drum with matching carrier",
       details: "drumsticks in motion, powerful stance, matching hardware",
     },
     colorGuard: {
       title: "Color Guard Performer",
       pose: "mid-movement with equipment, graceful and dynamic",
       instrument: "silk flag or rifle",
-      details: uniformDesign?.guardDescription || "flowing costume, expressive movement, athletic grace",
+      details: uniformDesign?.guardDescription
+        ? promptSafe(uniformDesign.guardDescription, { maxLength: 200 })
+        : "flowing costume, expressive movement, athletic grace",
     },
   };
 
   const sectionInfo = sectionDescriptions[section] || sectionDescriptions.hornline;
   const helmetDesc = uniformDesign?.helmetStyle === "none"
     ? "no headwear"
-    : uniformDesign?.plumeDescription || `${uniformDesign?.helmetStyle || "modern"} style headwear`;
+    : uniformDesign?.plumeDescription
+      ? promptSafe(uniformDesign.plumeDescription, { maxLength: 200 })
+      : `${uniformDesign?.helmetStyle ? promptSafe(uniformDesign.helmetStyle) : "modern"} style headwear`;
 
   // ==========================================================================
   // MASTER PERFORMER AVATAR TEMPLATE - marching.art unified format
   // ==========================================================================
-  return `Create a stylized portrait avatar of a ${sectionInfo.title} from the fantasy marching arts ensemble "${corpsName}"${locationStr}.
+  return `Create a stylized portrait avatar of a ${sectionInfo.title} from the fantasy marching arts ensemble ${promptSafe(corpsName)}${locationStr}.
+
+${UNTRUSTED_FIELD_RULE}
 
 CRITICAL FORMAT REQUIREMENTS:
 - SQUARE format (1:1 aspect ratio)
@@ -170,15 +187,15 @@ SUBJECT:
 - Integrate marching arts identity into the silhouette (not floating icons)
 
 UNIFORM & COLORS:
-- Primary: ${primaryColor}
-- Secondary: ${secondaryColor}${accentColor ? `\n- Accent: ${accentColor}` : ""}
-- Style: ${uniformDesign?.style || "contemporary"} marching arts uniform
+- Primary: ${promptSafe(primaryColor)}
+- Secondary: ${promptSafe(secondaryColor)}${accentColor ? `\n- Accent: ${promptSafe(accentColor)}` : ""}
+- Style: ${uniformDesign?.style ? promptSafe(uniformDesign.style) : "contemporary"} marching arts uniform
 - Headwear: ${helmetDesc}
 - White marching gloves
 - Use team colors in background gradient
 
 THEME & MOOD:
-- Keywords: ${themeKeywords.length > 0 ? themeKeywords.join(", ") : "competitive, elite, championship"}
+- Keywords: ${themeKeywords.length > 0 ? themeKeywords.map(k => promptSafe(k)).join(", ") : "competitive, elite, championship"}
 - Tone: competitive, elite, championship-ready
 - Dramatic lighting, dynamic pose, full-frame energy
 
@@ -212,7 +229,7 @@ function buildArticleImagePrompt(category, headline, summary, options = {}) {
 - White marching gloves on all performers`;
 
   if (uniformDetails && corpsName) {
-    uniformSection = `UNIFORM - ${corpsName.toUpperCase()} - MUST MATCH EXACTLY:
+    uniformSection = `UNIFORM - ${promptSafe(corpsName.toUpperCase())} - MUST MATCH EXACTLY:
 - BODY: ${uniformDetails.uniform}
 - HEADWEAR: ${uniformDetails.helmet}
 - BRASS INSTRUMENTS: ${uniformDetails.brass}
@@ -229,8 +246,8 @@ CRITICAL: These uniform details are EXACT. Do not substitute generic uniforms.`;
   const categoryPrompts = {
     dci: `Intimate field-level photojournalism of drum corps performance. Editorial close-up style.
 
-HEADLINE CONTEXT: "${headline}"
-${corpsName ? `FEATURED CORPS: ${corpsName}` : ""}
+HEADLINE CONTEXT: ${promptSafe(headline, { maxLength: 200 })}
+${corpsName ? `FEATURED CORPS: ${promptSafe(corpsName)}` : ""}
 ${showTitle ? `SHOW: "${showTitle}"` : ""}
 
 SHOT TYPE: Close-up editorial photograph from field level
@@ -259,7 +276,7 @@ TECHNICAL: Editorial photojournalism, shallow depth of field (f/2.8 or wider), f
 
     fantasy: `Intimate close-up photograph of fantasy marching arts performers. Editorial photojournalism style.
 
-THEME: "${headline}"
+THEME: ${promptSafe(headline, { maxLength: 200 })}
 
 VISUAL APPROACH:
 - 2-4 performers in creative themed uniforms, captured in close-up
@@ -279,7 +296,7 @@ AVOID: Cartoon characters, video game imagery, wide shots, distant views`,
 
     analysis: `Close-up editorial photograph of drum corps performers with analytical, observational quality.
 
-TOPIC: "${headline}"
+TOPIC: ${promptSafe(headline, { maxLength: 200 })}
 
 VISUAL APPROACH:
 - 2-4 performers captured in precise, detailed close-up
@@ -302,8 +319,10 @@ AVOID: Cluttered compositions, wide shots, distant views`,
 
   return `${basePrompt}
 
+${UNTRUSTED_FIELD_RULE}
+
 CONTEXT FROM ARTICLE:
-"${summary?.substring(0, 200) || headline}"
+${promptSafe(summary || headline, { maxLength: 220 })}
 
 Generate an image that would work as a professional news article header at 1200x630 pixels.`;
 }
@@ -546,22 +565,24 @@ function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null,
   const details = getFantasyUniformDetails(topCorpsName, location, uniformDesign);
   const scene = selectSceneArchetype(reportDay, articleIndex);
 
-  return `Intimate field-level photograph of fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""} performers in close-up. Editorial photojournalism style.
+  return `Intimate field-level photograph of fantasy marching arts ensemble ${promptSafe(topCorpsName)}${location ? ` from ${promptSafe(location)}` : ""} performers in close-up. Editorial photojournalism style.
+
+${UNTRUSTED_FIELD_RULE}
 
 UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified)" : ""}:
-- Colors: ${details.colors}
-- Uniform: ${details.uniform}
-- Headwear: ${details.helmet}
-- Brass: ${details.brass}
-- Guard elements: ${details.guard}
-${details.additionalNotes ? `- Special notes: ${details.additionalNotes}` : ""}
+- Colors: ${promptSafe(details.colors, { maxLength: 300 })}
+- Uniform: ${promptSafe(details.uniform, { maxLength: 300 })}
+- Headwear: ${promptSafe(details.helmet, { maxLength: 300 })}
+- Brass: ${promptSafe(details.brass, { maxLength: 300 })}
+- Guard elements: ${promptSafe(details.guard, { maxLength: 300 })}
+${details.additionalNotes ? `- Special notes: ${promptSafe(details.additionalNotes, { maxLength: 300 })}` : ""}
 
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
 
-Adapt this scene concept to feature "${topCorpsName}" performers wearing the exact uniform described above.
-Context: ${theme || "Championship competition performance moment"}
-${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : ""}
+Adapt this scene concept to feature ${promptSafe(topCorpsName)} performers wearing the exact uniform described above.
+Context: ${theme ? promptSafe(theme, { maxLength: 300 }) : "Championship competition performance moment"}
+${details.performanceStyle ? `Performance style: ${promptSafe(details.performanceStyle, { maxLength: 200 })}` : ""}
 
 AUTHENTICITY:
 - Uniform is creative but still clearly a marching arts uniform (not costume)
