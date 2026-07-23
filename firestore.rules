@@ -332,8 +332,16 @@ match /podium-recaps/{seasonUid} {
     allow write: if false; // Backend only
   }
 
-  // The Podium Report — weekly power-rankings column (Phase 7.3).
+  // The Podium Report — weekly power-rankings column (Phase 7.3). Feeds the
+  // weekly Podium Report news article.
   match /power/{weekId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
+
+  // Daily Podium Class standings sheet — full-field ranking snapshotted each
+  // processing day (the Scores-tab standings view; the news column stays weekly).
+  match /standings/{dayId} {
     allow read: if true;
     allow write: if false; // Backend only
   }

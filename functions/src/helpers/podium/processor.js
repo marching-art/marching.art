@@ -462,6 +462,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         );
         state.lastScoredDay = competitionDay;
         state.lastTotal = score.total;
+        // Persist the GE/Visual/Music breakdown of the latest score so the
+        // weekly standings sheet (The Podium Report) can show caption columns,
+        // matching the Fantasy class standings.
+        state.lastGe = score.geScore;
+        state.lastVis = score.visualScore;
+        state.lastMus = score.musicScore;
         // Season trajectory for the shadows chart (idempotent per day).
         state.scoreHistory = [
           ...(state.scoreHistory || []).filter((entry) => entry.day !== competitionDay).slice(-59),
@@ -695,6 +701,9 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           repTier: data.repTier ?? null,
           division: data.division || "aClass",
           lastTotal: data.lastTotal,
+          lastGe: data.lastGe ?? null,
+          lastVis: data.lastVis ?? null,
+          lastMus: data.lastMus ?? null,
           medals: data.medals,
         });
       }
@@ -795,7 +804,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
 
     // --- 5. The Podium Report (Phase 7.3): weekly power-rankings column ------
     // Deterministic, data-driven, published at each week boundary. Isolated:
-    // a column failure never fails the run.
+    // a column failure never fails the run. This feeds the WEEKLY news article.
     if (competitionDay >= 7 && competitionDay % 7 === 0 && standings.length > 0) {
       try {
         const { buildPowerRankings } = require("./powerRankings");
@@ -818,6 +827,36 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         logger.info(`[podium] Podium Report week ${week}: ${column.entries.length} entries.`);
       } catch (error) {
         logger.error(`[podium] power rankings failed (run unaffected): ${error.message}`);
+      }
+    }
+
+    // --- 5b. Daily Podium standings sheet -----------------------------------
+    // The Scores-tab standings view is DAILY (full field), so publish a
+    // standings doc every processing day with movement vs the previous day's
+    // sheet. Isolated: a standings failure never fails the run.
+    if (standings.length > 0) {
+      try {
+        const { buildDailyStandings } = require("./powerRankings");
+        // Previous scored day for day-over-day movement — scan back a few days
+        // in case a day had no processing run.
+        let previous = null;
+        for (let d = competitionDay - 1; d >= Math.max(1, competitionDay - 7); d--) {
+          const snap = await db.doc(`podium-recaps/${seasonUid}/standings/${d}`).get();
+          if (snap.exists) {
+            previous = snap.data();
+            break;
+          }
+        }
+        const sheet = buildDailyStandings(standings, previous, competitionDay);
+        await db.doc(`podium-recaps/${seasonUid}/standings/${competitionDay}`).set({
+          ...sheet,
+          seasonUid,
+          competitionDay,
+          publishedAt: new Date().toISOString(),
+        });
+        logger.info(`[podium] daily standings day ${competitionDay}: ${sheet.entries.length} corps.`);
+      } catch (error) {
+        logger.error(`[podium] daily standings failed (run unaffected): ${error.message}`);
       }
     }
 
