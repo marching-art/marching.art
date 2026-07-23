@@ -62,7 +62,10 @@ for (const dir of dirs) {
 }
 
 if (update) {
-  writeFileSync(BASELINE_PATH, `${JSON.stringify({ ...baselineDoc, baseline: current }, null, 2)}\n`);
+  writeFileSync(
+    BASELINE_PATH,
+    `${JSON.stringify({ ...baselineDoc, baseline: current }, null, 2)}\n`
+  );
   console.log('audit-baseline.json updated:');
   for (const dir of dirs) console.log(`  ${dir}: ${current[dir]}`);
   process.exit(0);
@@ -82,12 +85,16 @@ for (const dir of dirs) {
 if (rose.length > 0) {
   console.error('\n✗ Dependency-audit ratchet FAILED — new high/critical prod advisories:');
   for (const { dir, before, after } of rose) {
-    console.error(`    ${dir}: ${before} → ${after}. Update the dependency or justify the advisory.`);
+    console.error(
+      `    ${dir}: ${before} → ${after}. Update the dependency or justify the advisory.`
+    );
   }
   process.exit(1);
 }
 
 if (fell.length > 0) {
-  console.log('\n↓ Some counts fell below baseline. Run `node scripts/auditRatchet.mjs --update` to ratchet the ceiling down.');
+  console.log(
+    '\n↓ Some counts fell below baseline. Run `node scripts/auditRatchet.mjs --update` to ratchet the ceiling down.'
+  );
 }
 console.log('\n✓ Dependency-audit ratchet passed.');

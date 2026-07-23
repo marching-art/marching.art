@@ -623,7 +623,11 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         </div>
 
         {/* STICKY TABS */}
-        <div className="flex border-t border-line-subtle" role="tablist" aria-label="League sections">
+        <div
+          className="flex border-t border-line-subtle"
+          role="tablist"
+          aria-label="League sections"
+        >
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -663,9 +667,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             member a clear error + retry instead of silent empty standings. */}
         {loadError && !loading && (
           <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/30 text-center">
-            <p className="text-sm text-red-300 mb-3">
-              We couldn't load this league's data.
-            </p>
+            <p className="text-sm text-red-300 mb-3">We couldn't load this league's data.</p>
             <button
               onClick={() => setReloadKey((k) => k + 1)}
               className="inline-flex items-center gap-2 px-4 py-2 bg-interactive text-white font-semibold text-sm hover:bg-interactive/90 transition-colors"
