@@ -131,4 +131,65 @@ describe("getCurrentSeasonWeek", () => {
       3
     );
   });
+
+  // The 8 PM ET–2 AM ET window is where the old raw-UTC week diverged from
+  // the ET game-day clock: the UTC date flips at 8 PM EDT, but the game day
+  // (and therefore the week) must not roll until 2 AM ET. Season starts
+  // Monday 2026-06-29, so day 7 (Sunday) is 2026-07-05.
+  test("week does NOT roll at the 8 PM ET UTC-date flip", () => {
+    // Sunday 11:59 PM EDT (2026-07-06T03:59Z) — the matchup generator's cron
+    // instant. UTC is already Monday; the active game day is still Sunday
+    // (day 7), so this is still week 1. The old UTC math said week 2 here.
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-06-29T00:00:00Z"), new Date("2026-07-06T03:59:00Z")),
+      1
+    );
+    // 1:59 AM EDT Monday: one minute before the game-day reset, still week 1.
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-06-29T00:00:00Z"), new Date("2026-07-06T05:59:00Z")),
+      1
+    );
+  });
+
+  test("week rolls exactly at 2 AM ET, matching the game-day boundary", () => {
+    // 2:00 AM EDT Monday (2026-07-06T06:00Z): day 8 begins → week 2. The
+    // Monday 8 AM push job therefore reads the week the generator wrote for.
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-06-29T00:00:00Z"), new Date("2026-07-06T06:00:00Z")),
+      2
+    );
+  });
+
+  test("week boundary survives the spring-forward DST transition", () => {
+    // Season starts Monday 2026-03-02; DST starts Sunday 2026-03-08 (2 AM EST
+    // jumps to 3 AM EDT). 3:00 AM EDT Sunday (07:00Z) is day 7 → still week 1.
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-03-02T00:00:00Z"), new Date("2026-03-08T07:00:00Z")),
+      1
+    );
+    // 1:59 AM EDT Monday Mar 9 (05:59Z): still week 1; 2:00 AM EDT (06:00Z)
+    // rolls to week 2.
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-03-02T00:00:00Z"), new Date("2026-03-09T05:59:00Z")),
+      1
+    );
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-03-02T00:00:00Z"), new Date("2026-03-09T06:00:00Z")),
+      2
+    );
+  });
+
+  test("week boundary survives the fall-back DST transition", () => {
+    // Season starts Monday 2026-10-26; DST ends Sunday 2026-11-01 (1-2 AM
+    // repeats). 1:30 AM EST Monday Nov 2 (06:30Z) is still day 7's week;
+    // 2:00 AM EST (07:00Z) rolls to week 2.
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-10-26T00:00:00Z"), new Date("2026-11-02T06:30:00Z")),
+      1
+    );
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-10-26T00:00:00Z"), new Date("2026-11-02T07:00:00Z")),
+      2
+    );
+  });
 });

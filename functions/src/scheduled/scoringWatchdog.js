@@ -5,15 +5,20 @@
 // collection (helpers/scoringRunGuard.js) — but nothing watched that
 // collection, so a broken night could go unnoticed until players complained.
 // This job runs after the scoring window and shouts if anything went wrong.
+// During live season it also checks last night's `scrape_runs/{date}` doc
+// (scheduled/liveScraper.js): a failed or missing 1:30 AM scrape means the
+// 2 AM scorer ran on a night with no DCI scores.
 //
-// Alerting is a loud, stably-tagged logger.error ("[scoring-watchdog]") — the
-// codebase has no admin-alert email/notification helper, so a Cloud Logging
-// alert on that tag is the intended hookup.
+// Alerting is both a loud, stably-tagged logger.error ("[scoring-watchdog]")
+// — so a Cloud Logging alert can also match on that tag — and an admin email
+// via fanOutToAdmins/sendAdminGenericAlertEmail (helpers/emailService.js),
+// the same fan-out the news-generation failure path uses.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { STALE_LEASE_MS } = require("../helpers/scoringRunGuard");
+const { brevoApiKey } = require("../helpers/emailService");
 
 // Only look at runs claimed in the last 2 days: yesterday's run plus one day
 // of slack. Bounds the query to a handful of docs (one per season-day) and
@@ -74,29 +79,114 @@ async function findUnhealthyScoringRuns(db, now = new Date()) {
   return unhealthy;
 }
 
+/**
+ * During live season, check that last night's 1:30 AM ET scrape recorded a
+ * successful run at `scrape_runs/{date}` (written by scheduled/liveScraper.js,
+ * keyed by the Eastern calendar date — the same date this 4:30 AM run sits in).
+ * A doc with status !== "completed", or no doc at all (scraper crashed before
+ * writing, or never fired), means the scorer had no fresh DCI scores.
+ *
+ * Returns null when healthy or not in live season; otherwise a problem
+ * descriptor for the alert.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Date} [now] - Injectable clock for tests.
+ * @returns {Promise<null|{date: string, status: string, lastError?: string,
+ *   attempted?: number, succeeded?: number, failed?: number}>}
+ */
+async function findScrapeRunProblem(db, now = new Date()) {
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists || seasonDoc.data().status !== "live-season") return null;
+
+  // en-CA formats as YYYY-MM-DD — same key liveScraper.js writes.
+  const date = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(now);
+  const runDoc = await db.collection("scrape_runs").doc(date).get();
+  if (!runDoc.exists) {
+    return { date, status: "missing" };
+  }
+  const run = runDoc.data();
+  if (run.status !== "completed") {
+    return {
+      date,
+      status: run.status || "unknown",
+      lastError: run.lastError,
+      attempted: run.attempted,
+      succeeded: run.succeeded,
+      failed: run.failed,
+    };
+  }
+  return null;
+}
+
 // 04:30 ET: after the 02:00 scoring runs (and their retries) have finished or
 // timed out, and past the 30-minute stale-lease window for a crashed claim.
 exports.scoringWatchdog = onSchedule({
   schedule: "every day 04:30",
   timeZone: "America/New_York",
   timeoutSeconds: 120,
+  // The admin alert email goes out through Brevo (helpers/emailService.js).
+  secrets: [brevoApiKey],
 }, async () => {
-  const unhealthy = await findUnhealthyScoringRuns(getDb());
+  const db = getDb();
+  const unhealthy = await findUnhealthyScoringRuns(db);
 
-  if (unhealthy.length === 0) {
+  // A broken scrape check must never mask (or be masked by) the scoring-run
+  // check, so its errors are contained here.
+  let scrapeProblem = null;
+  try {
+    scrapeProblem = await findScrapeRunProblem(db);
+  } catch (error) {
+    logger.error(`[scoring-watchdog] Could not check last night's scrape run: ${error.message}`);
+    scrapeProblem = { date: "unknown", status: "check-error", lastError: error.message };
+  }
+
+  if (unhealthy.length === 0 && !scrapeProblem) {
     logger.info("[scoring-watchdog] All recent scoring runs healthy.");
     return;
+  }
+
+  const problems = [];
+  if (unhealthy.length > 0) {
+    problems.push(
+      `${unhealthy.length} unhealthy scoring run(s) in the last 2 days: ` +
+      unhealthy.map((r) => `${r.id} (${r.status}${r.lastError ? `: ${r.lastError}` : ""})`).join("; "),
+    );
+  }
+  if (scrapeProblem) {
+    problems.push(
+      `Last night's DCI scrape (scrape_runs/${scrapeProblem.date}) is ${scrapeProblem.status}` +
+      (scrapeProblem.lastError ? `: ${scrapeProblem.lastError}` : "") +
+      (scrapeProblem.attempted != null
+        ? ` (${scrapeProblem.succeeded}/${scrapeProblem.attempted} recap(s) succeeded)`
+        : ""),
+    );
   }
 
   // Loud and stably tagged so a log-based alert can match on the literal
   // string "[scoring-watchdog]".
   logger.error(
-    `[scoring-watchdog] ${unhealthy.length} unhealthy scoring run(s) in the last 2 days: ` +
-    unhealthy.map((r) => `${r.id} (${r.status}${r.lastError ? `: ${r.lastError}` : ""})`).join("; "),
-    { runs: unhealthy },
+    `[scoring-watchdog] ${problems.join(" | ")}`,
+    { runs: unhealthy, scrape: scrapeProblem },
   );
+
+  // Also email the admins (same pattern as the news-generation failure path in
+  // triggers/newsGeneration.js). Best-effort: a mail failure must not throw.
+  try {
+    const { fanOutToAdmins, sendAdminGenericAlertEmail } = require("../helpers/emailService");
+    await fanOutToAdmins(sendAdminGenericAlertEmail, {
+      subject: "Nightly scoring watchdog: unhealthy run(s) detected",
+      body:
+        "The 4:30 AM scoring watchdog found problems with last night's pipeline:\n\n" +
+        problems.map((p) => `- ${p}`).join("\n") +
+        "\n\nA failed scoring run can be re-run from Admin (manual trigger); a " +
+        "failed scrape can be re-run with \"Scrape DCI Scores Now\".",
+    });
+  } catch (notifyErr) {
+    logger.warn("[scoring-watchdog] Could not send admin alert email:", notifyErr);
+  }
 });
 
 // Exported for unit tests.
 exports.findUnhealthyScoringRuns = findUnhealthyScoringRuns;
+exports.findScrapeRunProblem = findScrapeRunProblem;
 exports.LOOKBACK_MS = LOOKBACK_MS;

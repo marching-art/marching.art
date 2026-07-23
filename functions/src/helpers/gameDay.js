@@ -91,6 +91,14 @@ function getCompletedCalendarDay(seasonStartDate, now = new Date()) {
  * dead paths). Live seasons subtract spring training so competition Day 1
  * starts week 1; off-seasons have no spring training (field absent -> 0).
  *
+ * The week is derived from the game day currently IN PROGRESS
+ * (getActiveCalendarDay), so it rolls at the same 2 AM ET boundary as
+ * everything else in this file and as weekly settlement (scoring.js). It
+ * previously counted raw UTC days, which flipped at 8 PM ET (EDT) / 7 PM ET
+ * (EST) — inside the window where the Sunday 11:59 PM ET matchup generator
+ * (leagueAutomation.js) runs, making it disagree with the Monday 8 AM push
+ * job by a full week.
+ *
  * @param {Object} seasonData - game-settings/season doc data.
  * @param {Date} [now] - Injectable clock for tests; defaults to now.
  * @returns {number|null} Week number (≥1), or null if the season doc has no
@@ -102,9 +110,9 @@ function getCurrentSeasonWeek(seasonData, now = new Date()) {
     rawStart && typeof rawStart.toDate === "function" ? rawStart.toDate() : rawStart;
   if (!(startDate instanceof Date) || isNaN(startDate.getTime())) return null;
 
-  const diffInDays = Math.floor((now - startDate) / MS_PER_DAY);
+  const activeDay = getActiveCalendarDay(startDate, now);
   const springTrainingDays = seasonData?.schedule?.springTrainingDays || 0;
-  return Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
+  return Math.max(1, Math.ceil((activeDay - springTrainingDays) / 7));
 }
 
 /**

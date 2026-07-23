@@ -60,15 +60,31 @@ async function scrapeRecapsForDateKeys(listedEvents, dateKeySet, { overwrite = f
   for (const recapUrl of recapUrls) {
     try {
       const summary = await scrapeDciScoresLogic(recapUrl, LIVE_SCORES_TOPIC, extraPayload);
-      totalCount += summary?.count ?? 0;
+      const count = summary?.count ?? 0;
+      totalCount += count;
+      if (count === 0) {
+        // A 200 response that parses to zero rows is a Cloudflare interstitial
+        // or a markup change, not a published recap — record it as a failure so
+        // the night is never treated as successfully scraped on empty data.
+        logger.error(`Recap ${recapUrl} returned 0 parsed rows; treating as a failed scrape.`);
+        results.push({
+          recapUrl,
+          eventName: summary?.eventName || null,
+          eventDate: summary?.eventDate || null,
+          eventLocation: summary?.eventLocation || null,
+          error: "0 rows parsed from response",
+          count: 0,
+        });
+        continue;
+      }
       results.push({
         recapUrl,
         eventName: summary?.eventName || null,
         eventDate: summary?.eventDate || null,
         eventLocation: summary?.eventLocation || null,
-        count: summary?.count ?? 0,
+        count,
       });
-      logger.info(`Scraped "${summary?.eventName || recapUrl}" (${summary?.count ?? 0} corps).`);
+      logger.info(`Scraped "${summary?.eventName || recapUrl}" (${count} corps).`);
     } catch (error) {
       // One unpublished/broken recap shouldn't abort the rest. processLiveScoreRecap
       // archiving is idempotent, so a later re-run can backfill any event that failed.
@@ -77,6 +93,30 @@ async function scrapeRecapsForDateKeys(listedEvents, dateKeySet, { overwrite = f
     }
   }
   return { recapUrls, results, totalCount };
+}
+
+/**
+ * Write the per-night scrape status doc at `scrape_runs/{date}` (date = the
+ * Eastern calendar date the run belongs to, same key as lastScrapedDate).
+ *
+ * Backend-only collection following the `scoring_runs` conventions
+ * (helpers/scoringRunGuard.js): no client rules exist for it, status is
+ * "completed"/"failed", timestamps are plain Dates. The scoring watchdog reads
+ * it at 4:30 AM ET and alerts when a live-season night failed or is absent.
+ *
+ * Best-effort, never throws — a status write must not break the scrape result
+ * path (mirrors markScoringRunFailed).
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} date - Eastern calendar date (YYYY-MM-DD).
+ * @param {object} fields - Status fields to merge onto the doc.
+ */
+async function writeScrapeRunStatus(db, date, fields) {
+  try {
+    await db.collection("scrape_runs").doc(date).set({ date, ...fields }, { merge: true });
+  } catch (error) {
+    logger.error(`Failed to write scrape_runs/${date} status doc:`, error);
+  }
 }
 
 /**
@@ -131,6 +171,17 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
 
   if (listedEvents.length === 0) {
     logger.info("No dated final-scores rows found on the dci.org scores page.");
+    // A listing page with no rows during live season is a scrape failure
+    // (blocked or broken markup), not a quiet night — record it so the
+    // watchdog can alert instead of the night silently vanishing.
+    await writeScrapeRunStatus(db, today, {
+      status: "failed",
+      failedAt: new Date(),
+      attempted: 0,
+      succeeded: 0,
+      failed: 0,
+      lastError: "no dated final-scores rows found on the dci.org scores page",
+    });
     return { scraped: false, reason: "no-recap-found" };
   }
 
@@ -145,19 +196,53 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
   const { recapUrls, results, totalCount } =
     await scrapeRecapsForDateKeys(listedEvents, new Set([latestDateKey]));
 
-  // Stamp last scraped date once the night's events have been attempted.
-  await db.doc("game-settings/season").update({
-    lastScrapedDate: today,
+  const succeeded = results.filter((r) => !r.error && r.count > 0).length;
+  const failed = results.length - succeeded;
+  const errors = results
+    .filter((r) => r.error)
+    .map(({ recapUrl, error }) => ({ recapUrl, error }));
+  const anySucceeded = succeeded > 0;
+
+  // Record the night's outcome for the watchdog and admin diagnostics.
+  await writeScrapeRunStatus(db, today, {
+    status: anySucceeded ? "completed" : "failed",
+    ...(anySucceeded ? { completedAt: new Date() } : { failedAt: new Date() }),
+    latestDateKey,
+    attempted: recapUrls.length,
+    succeeded,
+    failed,
+    totalCount,
+    ...(errors.length > 0 ? { errors } : {}),
+    ...(anySucceeded ? {} : { lastError: errors[0]?.error || "all recaps failed" }),
   });
-  logger.info(
-    `Scraping completed for ${today}: ${recapUrls.length} event(s) on ` +
-    `${latestDateKey}, ${totalCount} total corps scores.`
-  );
+
+  // Stamp last scraped date ONLY when at least one recap actually produced
+  // rows. A night where every recap failed (Cloudflare block, markup change,
+  // unpublished recaps) must NOT be stamped — the stamp is what blocks the
+  // same-day guard above, so stamping a zero-score night would silently
+  // prevent any retry before the 2 AM scorer runs.
+  if (anySucceeded) {
+    await db.doc("game-settings/season").update({
+      lastScrapedDate: today,
+    });
+    logger.info(
+      `Scraping completed for ${today}: ${succeeded}/${recapUrls.length} event(s) on ` +
+      `${latestDateKey}, ${totalCount} total corps scores.`
+    );
+  } else {
+    logger.error(
+      `Scraping FAILED for ${today}: 0/${recapUrls.length} event(s) on ${latestDateKey} ` +
+      "produced scores. lastScrapedDate NOT stamped so a re-run can retry today."
+    );
+  }
 
   return {
     scraped: true,
     latestDate: latestDateKey,
     eventCount: recapUrls.length,
+    succeededEvents: succeeded,
+    failedEvents: failed,
+    stampedLastScrapedDate: anySucceeded,
     count: totalCount,
     events: results,
     scrapedDate: today,

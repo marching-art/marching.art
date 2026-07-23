@@ -259,6 +259,10 @@ exports.weeklyDigestEmailJob = onSchedule(
   {
     schedule: "0 10 * * 0", // Every Sunday at 10 AM
     timeZone: "America/New_York",
+    // Unbounded collection-group scan over every active profile — the default
+    // 60s timeout would cut the job off mid-scan as the user base grows. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     secrets: [brevoApiKey],
   },
   async () => {
@@ -310,7 +314,20 @@ exports.weeklyDigestEmailJob = onSchedule(
             return { status: "no_events" };
           }
 
-          const email = await getUserEmail(uid);
+          // Pre-send dedupe (same email_log guard the other jobs use): the
+          // post-send rivalsSnapshotForEmail write is only the diff baseline,
+          // so a crash/timeout between send and snapshot would otherwise
+          // resend everyone on the retry. 6 days sits safely under the weekly
+          // cadence while still allowing next Sunday's send.
+          const [recentlySent, email] = await Promise.all([
+            wasEmailRecentlySent(db, uid, EMAIL_TYPES.WEEKLY_DIGEST, 6 * 24),
+            getUserEmail(uid),
+          ]);
+
+          if (recentlySent) {
+            return { status: "skipped", reason: "recently_sent" };
+          }
+
           if (!email) {
             return { status: "skipped", reason: "no_email" };
           }
@@ -382,6 +399,10 @@ exports.winBackEmailJob = onSchedule(
   {
     schedule: "0 9 * * *", // Every day at 9 AM
     timeZone: "America/New_York",
+    // Unbounded collection-group scan over every active profile — the default
+    // 60s timeout would cut the job off mid-scan as the user base grows. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     secrets: [brevoApiKey],
   },
   async () => {
@@ -509,6 +530,10 @@ exports.streakBrokenEmailJob = onSchedule(
   {
     schedule: "0 1 * * *", // Every day at 1 AM
     timeZone: "America/New_York",
+    // Unbounded collection-group scan over every active profile — the default
+    // 60s timeout would cut the job off mid-scan as the user base grows. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     secrets: [brevoApiKey],
   },
   async () => {

@@ -22,6 +22,10 @@ exports.showReminderPushJob = onSchedule(
   {
     schedule: "every 1 hours",
     timeZone: "America/New_York",
+    // Scans every in-season profile and sends pushes one-by-one — the default
+    // 60s timeout would cut the job off mid-scan as the user base grows. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     memory: "256MiB",
   },
   async () => {

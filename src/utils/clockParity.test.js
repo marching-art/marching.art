@@ -31,10 +31,10 @@
  *   - Game day: the client clamps to [1, 49] / weeks to [1, 7] for display
  *     (day 0 / week 0 with no start date) while the backend returns raw
  *     values its callers validate. Parity is asserted on the clamped value
- *     computed from the backend's raw day.
- *   - gameDay.getCurrentSeasonWeek (raw-ms week used by league jobs) is a
- *     DIFFERENT, coarser algorithm than the 2 AM ET day-based week and is
- *     deliberately not compared.
+ *     computed from the backend's raw day. This includes
+ *     gameDay.getCurrentSeasonWeek (the week used by league jobs), which now
+ *     derives from the same 2 AM ET game-day clock — it is unclamped above
+ *     week 7, so parity is asserted on min(week, 7).
  */
 
 import { createRequire } from 'node:module';
@@ -165,6 +165,13 @@ describe('game-day parity (functions gameDay <-> client seasonProgress)', () => 
       const context = `${startIso} spring=${spring} now=${now.toISOString()}`;
       expect(progress.currentDay, `currentDay @ ${context}`).toBe(expectedDay);
       expect(progress.currentWeek, `currentWeek @ ${context}`).toBe(expectedWeek);
+
+      // The league jobs' week (getCurrentSeasonWeek) rides the same 2 AM ET
+      // clock; it is unclamped above week 7, so compare the clamped value.
+      const backendWeek = backendGameDay.getCurrentSeasonWeek(season, now);
+      expect(Math.min(backendWeek, 7), `getCurrentSeasonWeek @ ${context}`).toBe(
+        progress.currentWeek
+      );
       compared++;
     }
     expect(compared).toBeGreaterThan(300);
