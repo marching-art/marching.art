@@ -284,8 +284,9 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
  * @param {boolean} [options.force] - Re-apply even if the day's token exists.
  */
 async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
-  if (coinAwards.length === 0) return;
-  const { seasonUid = null, scoredDay = null, force = false } = options;
+  const { seasonUid = null, scoredDay = null, force = false, captionPoints = null } = options;
+  const hasCaptionPoints = captionPoints instanceof Map && captionPoints.size > 0;
+  if (coinAwards.length === 0 && !hasCaptionPoints) return;
   const idempotent = seasonUid != null && scoredDay != null;
   const token = idempotent ? showAwardToken(seasonUid, scoredDay) : null;
 
@@ -310,10 +311,19 @@ async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
     coinByUser.set(award.uid, existing);
   }
 
+  // The award universe: everyone with coins to mint or caption points to
+  // bank. Caption mastery (captionStats) increments ride the SAME guarded
+  // write as the coins — they used to be separate un-tokened updates in
+  // commitDailyScoring, so a torn ChunkedWriter commit followed by a
+  // scheduler retry double-banked them (the exact hazard awardLedger.js
+  // documents). One write op, one token, all-or-nothing together.
+  const allUids = new Set(coinByUser.keys());
+  if (hasCaptionPoints) for (const uid of captionPoints.keys()) allUids.add(uid);
+
   // Idempotency pre-read: skip users already paid for this day (unless forced).
   const skip = new Set();
   if (idempotent && !force) {
-    const uids = [...coinByUser.keys()];
+    const uids = [...allUids];
     const refs = uids.map((uid) => db.doc(paths.userProfile(uid)));
     const snaps = refs.length > 0 ? await db.getAll(...refs) : [];
     snaps.forEach((snap, i) => {
@@ -331,20 +341,36 @@ async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
   // XP lands as a raw increment; xpLevel/title/unlocks recompute on the next
   // claimDailyLogin (same convention as the weekly XP payments).
   let awarded = 0;
-  for (const [uid, data] of coinByUser) {
+  for (const uid of allUids) {
     if (skip.has(uid)) continue;
+    const data = coinByUser.get(uid) || null;
+
+    // Caption mastery (WS5.5): bank tonight's per-caption points into the
+    // lifetime captionStats counters, rounded to one decimal.
+    const captionUpdates = {};
+    if (hasCaptionPoints) {
+      for (const [caption, value] of Object.entries(captionPoints.get(uid) || {})) {
+        if (value > 0) {
+          captionUpdates[`captionStats.${caption}`] =
+            admin.firestore.FieldValue.increment(Math.round(value * 10) / 10);
+        }
+      }
+    }
+    if (!data && Object.keys(captionUpdates).length === 0) continue;
+
     const userProfileRef = db.doc(paths.userProfile(uid));
     batch.update(userProfileRef, {
-      corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
-      ...(data.xpAmount > 0
+      ...(data ? { corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount) } : {}),
+      ...(data && data.xpAmount > 0
         ? { xp: admin.firestore.FieldValue.increment(data.xpAmount) }
         : {}),
+      ...captionUpdates,
       // The token rides this same update op, so it commits atomically with the
-      // increment above — its presence proves the increment was applied.
+      // increments above — its presence proves they were applied.
       ...(idempotent ? awardTokenWrite(token) : {}),
     });
 
-    for (const entry of data.history) {
+    for (const entry of data ? data.history : []) {
       addCoinHistoryEntryToBatch(batch, db, uid, entry);
     }
     awarded += 1;

@@ -8,7 +8,12 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { scoreShowsForDay, hasCompleteLineup, computeSeasonRankings } = require("./scoring");
+const {
+  scoreShowsForDay,
+  hasCompleteLineup,
+  computeSeasonRankings,
+  diffSeasonRankings,
+} = require("./scoring");
 
 // A user profile document as produced by the collectionGroup("profile") query,
 // with the ref.parent.parent.id shape the loop reads the uid from.
@@ -400,6 +405,36 @@ describe("scoreShowsForDay", () => {
     assert.deepEqual(rankings.get("u4_aClass"), { rank: 1, of: 1 });
     // SoundSport is ratings-only — never ranked, whatever it scores.
     assert.equal(rankings.has("u1_soundSport"), false);
+  });
+
+  test("diffSeasonRankings writes only the corps whose stored rank moved", () => {
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", {
+          // Stored rank already matches tonight's computation — no write.
+          corps: { worldClass: { corpsName: "Steady", totalSeasonScore: 90, seasonRank: 1, seasonRankOf: 3 } },
+        }),
+        profileDoc("u2", {
+          // Rank changed (was 3, now 2) — must write.
+          corps: { worldClass: { corpsName: "Mover", totalSeasonScore: 80, seasonRank: 3, seasonRankOf: 3 } },
+        }),
+        profileDoc("u3", {
+          // Same rank but the field count ("of") changed — must write.
+          corps: { worldClass: { corpsName: "Held", totalSeasonScore: 70, seasonRank: 3, seasonRankOf: 4 } },
+        }),
+        profileDoc("u4", {
+          // Never had a stored rank — must write.
+          corps: { aClass: { corpsName: "Fresh", totalSeasonScore: 60 } },
+        }),
+      ],
+    };
+    const rankings = computeSeasonRankings(profilesSnapshot, new Map());
+    const changed = diffSeasonRankings(rankings, profilesSnapshot);
+
+    assert.equal(changed.has("u1_worldClass"), false, "unchanged rank is skipped");
+    assert.deepEqual(changed.get("u2_worldClass"), { rank: 2, of: 3 });
+    assert.deepEqual(changed.get("u3_worldClass"), { rank: 3, of: 3 });
+    assert.deepEqual(changed.get("u4_aClass"), { rank: 1, of: 1 });
   });
 
   test("day 41: a resolved easternNightSet gates who scores at the two-night show", () => {

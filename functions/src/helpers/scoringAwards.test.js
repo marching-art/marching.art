@@ -425,6 +425,51 @@ describe('processCoinAwardsBatch — idempotency', () => {
     assert.ok(update);
     assert.ok(!(LEDGER_FIELD in update.data), 'no token when no season context supplied');
   });
+
+  test('captionStats increments ride the SAME tokened write as the coin mint', async () => {
+    const { db, batch, writes } = makeFakeDb();
+    const captionPoints = new Map([['alice', { GE1: 2.35, MB: 0 }]]);
+    await processCoinAwardsBatch(awards, batch, db, { ...ctx, captionPoints });
+
+    const updates = writes.filter((w) => w.type === 'update' && w.path === profilePath('alice'));
+    assert.equal(updates.length, 1, 'coins, captionStats, and the token land in ONE write op');
+    const { data } = updates[0];
+    assert.ok(data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(200)));
+    assert.ok(
+      data['captionStats.GE1'].isEqual(admin.firestore.FieldValue.increment(2.4)),
+      'caption points banked (rounded to one decimal) in the same op'
+    );
+    assert.ok(!('captionStats.MB' in data), 'zero-point captions are not written');
+    assert.ok(data[LEDGER_FIELD].isEqual(admin.firestore.FieldValue.arrayUnion(token)));
+  });
+
+  test('torn-commit retry cannot double-bank captionStats (the token skips them too)', async () => {
+    // After a torn commit, alice's write (coins + captionStats + token)
+    // landed. The retry re-runs the whole day; her token must now skip the
+    // caption increments as well — this was the pre-ledger double-count bug.
+    const docs = new Map([[profilePath('alice'), { [LEDGER_FIELD]: [token] }]]);
+    const { db, batch, writes } = makeFakeDb(docs);
+    const captionPoints = new Map([['alice', { GE1: 2.35 }]]);
+    await processCoinAwardsBatch(awards, batch, db, { ...ctx, captionPoints });
+
+    assert.equal(
+      writes.filter((w) => w.path === profilePath('alice')).length,
+      0,
+      'no coin AND no captionStats writes for an already-awarded user'
+    );
+  });
+
+  test('caption points without a coin award still land, tokened, with no coin fields', async () => {
+    const { db, batch, writes } = makeFakeDb();
+    const captionPoints = new Map([['bob', { B: 1.2 }]]);
+    await processCoinAwardsBatch([], batch, db, { ...ctx, captionPoints });
+
+    const update = writes.find((w) => w.type === 'update' && w.path === profilePath('bob'));
+    assert.ok(update, 'caption-only user still gets the guarded write');
+    assert.ok(!('corpsCoin' in update.data), 'no zero coin increment is fabricated');
+    assert.ok(update.data['captionStats.B'].isEqual(admin.firestore.FieldValue.increment(1.2)));
+    assert.ok(update.data[LEDGER_FIELD].isEqual(admin.firestore.FieldValue.arrayUnion(token)));
+  });
 });
 
 // =============================================================================

@@ -1,7 +1,7 @@
 const { getDb } = require("../config");
 const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
-const { getDoc, FieldValue } = require("firebase-admin/firestore");
+const { getDoc } = require("firebase-admin/firestore");
 const { getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { SHOW_PARTICIPATION_REWARDS } = require("./economy");
@@ -153,6 +153,119 @@ function scoreShowsForDay({
   const captionPoints = new Map(); // uid -> { GE1: points, ... }
   const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0 };
 
+  // --- ONE-TIME PROFILE PRE-SCAN (OPTIMIZATION #7) ---
+  // The loop used to re-scan every profile doc for every show —
+  // O(shows × profiles) with almost all iterations being non-attendees.
+  // Scan once instead: collect every scoreable (complete-lineup) corps and
+  // index it by the regular-show eventNames it registered for this week.
+  // Plain regular shows then iterate only their registrants; championship
+  // and two-night shows keep the full corps scan because their participant
+  // sets are not derived from registrations.
+  const corpsEntries = [];
+  const registrantsByEvent = new Map(); // eventName -> corpsEntry[]
+  let corpsWithNoShowsThisWeek = 0;
+  for (const userDoc of profilesSnapshot.docs) {
+    const userProfile = userDoc.data();
+    const uid = userDoc.ref.parent.parent.id;
+    const userCorps = userProfile.corps || {};
+    for (const corpsClass of Object.keys(userCorps)) {
+      const corps = userCorps[corpsClass];
+      if (!corps || !corps.corpsName || !corps.lineup) continue;
+
+      // A corps that hasn't finished selecting its captions must not be
+      // scored at all. Without this it would otherwise "attend" any show it
+      // registered for and post a 0.000 in the recap and standings.
+      if (!hasCompleteLineup(corps.lineup)) continue;
+
+      const entry = { uid, corpsClass, corps, userProfile };
+      corpsEntries.push(entry);
+
+      const weekShows = corps.selectedShows?.[`week${week}`] || [];
+      if (weekShows.length === 0) corpsWithNoShowsThisWeek++;
+      // Match by eventName only — dates can have type mismatches
+      // (Timestamp vs string) and eventName is unique enough within a week.
+      const seen = new Set();
+      for (const sel of weekShows) {
+        if (sel?.eventName == null || seen.has(sel.eventName)) continue;
+        seen.add(sel.eventName);
+        const registrants = registrantsByEvent.get(sel.eventName) || [];
+        registrants.push(entry);
+        registrantsByEvent.set(sel.eventName, registrants);
+      }
+    }
+  }
+
+  // Score one corps at one show: caption aggregation and caps, coin awards,
+  // caption-mastery accumulation, and the recap row. Shared by the fast
+  // (registrants-only) and full-scan paths below.
+  const scoreCorpsAtShow = (entry, show, showResult) => {
+    const { uid, corpsClass, corps, userProfile } = entry;
+    stats.corpsScored++;
+    let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
+    const userCaptionPoints = captionPoints.get(uid) || {};
+
+    for (const caption in corps.lineup) {
+      const [corpsName, sourceYear] = corps.lineup[caption].split("|");
+      // Season-specific base score (regression vs. scraped-live strategy)
+      const baseCaptionScore = getBaseCaptionScore(corpsName, sourceYear, caption);
+
+      // Hard cap each caption at 20 points. Competitive scores come ONLY
+      // from the historical data — no game system (show concepts,
+      // purchases, streaks) may ever modify them.
+      const captionScore = Math.min(20, baseCaptionScore);
+
+      if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
+      else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
+      else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
+
+      // Lifetime mastery accumulation — display-only, never feeds back
+      // into competitive scoring.
+      userCaptionPoints[caption] = (userCaptionPoints[caption] || 0) + captionScore;
+    }
+    captionPoints.set(uid, userCaptionPoints);
+    const visualScore = rawVisualScore / 2;
+    const musicScore = rawMusicScore / 2;
+    // Hard cap at 100 - this is the maximum possible score
+    const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
+
+    const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
+    dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
+
+    // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
+    const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
+    if (coinAmount > 0) {
+      coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
+    }
+
+    // Show-design bonus: a structured show concept whose style matches
+    // the lineup's corps pays a small nightly CorpsCoin award — a game
+    // reward only, with zero effect on the competitive score above.
+    const { captionBonuses } = calculateLineupSynergyBonus(
+      corps.showConcept || {},
+      corps.lineup
+    );
+    const synergyTotal = Object.values(captionBonuses).reduce((sum, v) => sum + v, 0);
+    const designCoin = Math.min(15, Math.round(synergyTotal * 2));
+    if (designCoin > 0) {
+      coinAwards.push({
+        uid, corpsClass, showName: show.eventName, amount: designCoin,
+        type: 'show_design',
+        description: `Show design bonus at ${show.eventName}`,
+      });
+    }
+
+    showResult.results.push({
+      uid: uid,
+      displayName: userProfile.username || userProfile.displayName,
+      location: corps.location,
+      corpsClass: corpsClass,
+      corpsName: corps.corpsName,
+      avatarUrl: corps.avatarUrl || null,
+      totalScore: totalShowScore,
+      geScore, visualScore, musicScore,
+    });
+  };
+
   for (const show of dayEventData.shows) {
     const showResult = {
       eventName: show.eventName,
@@ -189,19 +302,22 @@ function scoreShowsForDay({
     }
     // --- END: CHAMPIONSHIP SHOW CONFIGURATION ---
 
-    for (const userDoc of profilesSnapshot.docs) {
-      const userProfile = userDoc.data();
-      const uid = userDoc.ref.parent.parent.id;
-
-      const userCorps = userProfile.corps || {};
-      for (const corpsClass of Object.keys(userCorps)) {
-        const corps = userCorps[corpsClass];
-        if (!corps || !corps.corpsName || !corps.lineup) continue;
-
-        // A corps that hasn't finished selecting its captions must not be
-        // scored at all. Without this it would otherwise "attend" any show it
-        // registered for and post a 0.000 in the recap and standings.
-        if (!hasCompleteLineup(corps.lineup)) continue;
+    if (!showConfig && !day41_42_participantSet) {
+      // FAST PATH — plain regular show: only its registrants can attend, so
+      // iterate the prebuilt registration index instead of every corps.
+      // Diagnostics keep their historical semantics (the full scan counted
+      // every complete-lineup corps per regular show, and the week's
+      // no-shows-selected corps per regular show).
+      stats.corpsProcessed += corpsEntries.length;
+      stats.corpsWithNoShowsSelected += corpsWithNoShowsThisWeek;
+      for (const entry of registrantsByEvent.get(show.eventName) || []) {
+        scoreCorpsAtShow(entry, show, showResult);
+      }
+    } else {
+      // FULL SCAN — championship and two-night shows: attendance comes from
+      // auto-enrollment configs / persisted night splits, not registrations.
+      for (const entry of corpsEntries) {
+        const { uid, corpsClass, corps } = entry;
 
         // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
         // so each registered corps competes on exactly one of the two days).
@@ -227,10 +343,8 @@ function scoreShowsForDay({
           // If we get here, the corps is eligible and has advanced (if applicable)
           attended = true;
         } else {
-          // Regular show - check manual registration
+          // Two-night show without championship config: manual registration.
           const userShows = corps.selectedShows?.[`week${week}`] || [];
-          // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-          // and eventName should be unique enough within a week
           attended = userShows.some(s => s.eventName === show.eventName);
 
           // Track statistics for diagnostics
@@ -241,70 +355,7 @@ function scoreShowsForDay({
         }
 
         if (attended) {
-          stats.corpsScored++;
-          let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
-          const userCaptionPoints = captionPoints.get(uid) || {};
-
-          for (const caption in corps.lineup) {
-            const [corpsName, sourceYear] = corps.lineup[caption].split("|");
-            // Season-specific base score (regression vs. scraped-live strategy)
-            const baseCaptionScore = getBaseCaptionScore(corpsName, sourceYear, caption);
-
-            // Hard cap each caption at 20 points. Competitive scores come ONLY
-            // from the historical data — no game system (show concepts,
-            // purchases, streaks) may ever modify them.
-            const captionScore = Math.min(20, baseCaptionScore);
-
-            if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
-            else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
-            else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
-
-            // Lifetime mastery accumulation — display-only, never feeds back
-            // into competitive scoring.
-            userCaptionPoints[caption] = (userCaptionPoints[caption] || 0) + captionScore;
-          }
-          captionPoints.set(uid, userCaptionPoints);
-          const visualScore = rawVisualScore / 2;
-          const musicScore = rawMusicScore / 2;
-          // Hard cap at 100 - this is the maximum possible score
-          const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
-
-          const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
-          dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
-
-          // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
-          const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
-          if (coinAmount > 0) {
-            coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
-          }
-
-          // Show-design bonus: a structured show concept whose style matches
-          // the lineup's corps pays a small nightly CorpsCoin award — a game
-          // reward only, with zero effect on the competitive score above.
-          const { captionBonuses } = calculateLineupSynergyBonus(
-            corps.showConcept || {},
-            corps.lineup
-          );
-          const synergyTotal = Object.values(captionBonuses).reduce((sum, v) => sum + v, 0);
-          const designCoin = Math.min(15, Math.round(synergyTotal * 2));
-          if (designCoin > 0) {
-            coinAwards.push({
-              uid, corpsClass, showName: show.eventName, amount: designCoin,
-              type: 'show_design',
-              description: `Show design bonus at ${show.eventName}`,
-            });
-          }
-
-          showResult.results.push({
-            uid: uid,
-            displayName: userProfile.username || userProfile.displayName,
-            location: corps.location,
-            corpsClass: corpsClass,
-            corpsName: corps.corpsName,
-            avatarUrl: corps.avatarUrl || null,
-            totalScore: totalShowScore,
-            geScore, visualScore, musicScore,
-          });
+          scoreCorpsAtShow(entry, show, showResult);
         }
       }
     }
@@ -358,6 +409,36 @@ function computeSeasonRankings(profilesSnapshot, dailyScores) {
 }
 
 /**
+ * Filter tonight's rankings down to the corps whose STORED
+ * seasonRank/seasonRankOf actually changed. The nightly commit used to
+ * rewrite the rank onto every ranked corps every night, so write volume
+ * scaled with the total roster; with this diff it scales with movement.
+ * Pure function so the skip logic is unit-testable without Firestore.
+ *
+ * @param {Map<string, {rank: number, of: number}>} rankings - From computeSeasonRankings
+ * @param {QuerySnapshot} profilesSnapshot - The same snapshot rankings came from
+ * @returns {Map<string, {rank: number, of: number}>} entries needing a write
+ */
+function diffSeasonRankings(rankings, profilesSnapshot) {
+  const stored = new Map();
+  for (const userDoc of profilesSnapshot.docs) {
+    const uid = userDoc.ref.parent.parent.id;
+    const corpsMap = userDoc.data().corps || {};
+    for (const [corpsClass, corps] of Object.entries(corpsMap)) {
+      if (corps) stored.set(`${uid}_${corpsClass}`, corps);
+    }
+  }
+
+  const changed = new Map();
+  for (const [key, ranking] of rankings.entries()) {
+    const corps = stored.get(key);
+    if (corps && corps.seasonRank === ranking.rank && corps.seasonRankOf === ranking.of) continue;
+    changed.set(key, ranking);
+  }
+  return changed;
+}
+
+/**
  * Commit a scored day: profile score updates, the recap subcollection doc,
  * trophy awards, and coin awards, all in one chunked batch.
  *
@@ -401,11 +482,12 @@ async function commitDailyScoring({
 
   // Class standings — the profile's "World Class · #14" number. Recomputed
   // for every ranked corps each night (a corps that sat out still moves
-  // when others pass it). One update per ranked corps; multiple updates to
-  // the same doc in one batch are legal and land in order.
+  // when others pass it), but only WRITTEN for corps whose stored rank
+  // actually changed — write volume scales with movement, not roster size.
   if (profilesSnapshot) {
     const rankings = computeSeasonRankings(profilesSnapshot, dailyScores);
-    for (const [uidAndClass, { rank, of }] of rankings.entries()) {
+    const changed = diffSeasonRankings(rankings, profilesSnapshot);
+    for (const [uidAndClass, { rank, of }] of changed.entries()) {
       const [uid, corpsClass] = uidAndClass.split("_");
       const ref = db.doc(paths.userProfile(uid));
       batch.update(ref, {
@@ -415,24 +497,10 @@ async function commitDailyScoring({
     }
   }
 
-  // Caption mastery (WS5.5): bank tonight's per-caption points into the
-  // lifetime captionStats counters. Increments ride the same scoring-run
-  // lease as every other award, so a repeat run can't double-bank.
-  if (captionPoints) {
-    for (const [uid, points] of captionPoints.entries()) {
-      const updates = {};
-      for (const [caption, value] of Object.entries(points)) {
-        if (value > 0) {
-          updates[`captionStats.${caption}`] =
-            FieldValue.increment(Math.round(value * 10) / 10);
-        }
-      }
-      if (Object.keys(updates).length > 0) {
-        const ref = db.doc(paths.userProfile(uid));
-        batch.update(ref, updates);
-      }
-    }
-  }
+  // Caption mastery (WS5.5) increments are applied inside
+  // processCoinAwardsBatch below, riding the same awardLedger-tokened write
+  // as the coin/XP mint — the run lease alone does NOT protect a torn
+  // multi-batch commit from re-applying them on retry (awardLedger.js).
 
   // Save the completed recap document as a per-day subcollection document.
   // OPTIMIZATION: Write directly to subcollection instead of growing an array
@@ -467,10 +535,12 @@ async function commitDailyScoring({
   // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper.
   // Season context enables per-(uid, day) idempotency markers so a
   // ChunkedWriter partial-failure retry cannot double-pay (awardLedger).
+  // captionPoints ride the same tokened write for the same protection.
   await processCoinAwardsBatch(coinAwards, batch, db, {
     seasonUid: seasonData.seasonUid,
     scoredDay,
     force,
+    captionPoints,
   });
 
   // Commit all database writes (chunked into multiple batches as needed)
@@ -968,5 +1038,6 @@ module.exports = {
   scoreShowsForDay,
   hasCompleteLineup,
   computeSeasonRankings,
+  diffSeasonRankings,
   fetchAllActiveProfiles,
 };
