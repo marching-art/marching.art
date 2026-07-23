@@ -12,9 +12,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
-import { Loader2, Share2, Check } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
 import { TeamAvatar } from '../ui/TeamAvatar';
+import { ShareButton } from '../scores/SheetPrimitives';
+import { useHorizontalTabSlide } from './useHorizontalTabSlide';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
 const MAJOR_MASTHEADS = {
@@ -265,7 +267,11 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
   const [days, setDays] = useState([]); // [{day, recap}]
   const [selectedDay, setSelectedDay] = useState(null);
   const [sortBy, setSortBy] = useState('total');
-  const [copied, setCopied] = useState(false);
+  // Keep the highlighted day visible on mobile (the strip runs D1→D49 and the
+  // latest day defaults selected, so without this it sits off the right edge).
+  const { containerRef: dayStripRef, selectedRef: selectedDayRef } = useHorizontalTabSlide(
+    `${selectedDay}:${days.length}`
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -314,11 +320,12 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
 
   return (
     <div className="p-3 md:p-4 space-y-3">
-      {/* Day selector */}
-      <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+      {/* Day selector — auto-slides so the highlighted day stays visible */}
+      <div ref={dayStripRef} className="flex gap-1 overflow-x-auto scrollbar-hide">
         {days.map(({ day }) => (
           <button
             key={day}
+            ref={day === selected.day ? selectedDayRef : null}
             onClick={() => setSelectedDay(day)}
             className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-none tabular-nums transition-colors press-feedback ${
               day === selected.day
@@ -335,35 +342,8 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
       <div className="bg-surface-card border border-line rounded-none p-4 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <SortBar sortBy={sortBy} onChange={setSortBy} />
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={async () => {
-                const text = formatRecapAsText(selected.recap, selected.day, seasonName);
-                try {
-                  if (navigator.share && /Mobi/i.test(navigator.userAgent)) {
-                    await navigator.share({ text });
-                  } else {
-                    await navigator.clipboard.writeText(text);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }
-                } catch {
-                  /* user dismissed the share sheet */
-                }
-              }}
-              title="Copy the sheet as Discord-ready text"
-              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-none border border-line text-muted hover:text-white hover:border-interactive press-feedback"
-            >
-              {copied ? (
-                <Check className="w-3 h-3 text-green-400" />
-              ) : (
-                <Share2 className="w-3 h-3" />
-              )}
-              {copied ? 'Copied' : 'Share'}
-            </button>
-            <div className="text-[9px] uppercase tracking-wider text-secondary font-bold">
-              Official Recap
-            </div>
+          <div className="text-[9px] uppercase tracking-wider text-secondary font-bold flex-shrink-0">
+            Official Recap
           </div>
         </div>
 
@@ -390,15 +370,21 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
           </div>
         ))}
 
-        {/* Wordmark footer — every screenshot is an advertisement */}
-        <div className="flex justify-between items-center pt-1 text-[9px] uppercase tracking-wider text-muted">
-          <span>
+        {/* Wordmark footer — every screenshot is an advertisement. Share lives
+            here (same spot as the fantasy sheets) for a uniform experience. */}
+        <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-muted">
+          <span className="truncate">
             Box-toppers in <span className="text-brand font-bold">gold</span> · full captions —
             Podium Class only
           </span>
-          <span className="font-bold text-muted">
-            marching.art{seasonName ? ` · ${seasonName}` : ''}
-          </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <ShareButton
+              getText={() => formatRecapAsText(selected.recap, selected.day, seasonName)}
+            />
+            <span className="font-bold text-muted">
+              marching.art{seasonName ? ` · ${seasonName}` : ''}
+            </span>
+          </div>
         </div>
       </div>
     </div>

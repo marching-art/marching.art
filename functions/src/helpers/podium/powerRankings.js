@@ -31,8 +31,8 @@ function noteFor(entry, index, previousByUid, biggestRiserUid) {
 /**
  * Build one week's column (pure).
  *
- * @param {Array<{uid, corpsName, lastTotal, repTier}>} standings sorted desc
- *   by lastTotal (the processor's ranking order).
+ * @param {Array<{uid, corpsName, lastTotal, lastGe, lastVis, lastMus, repTier}>}
+ *   standings sorted desc by lastTotal (the processor's ranking order).
  * @param {object|null} previous last week's column doc ({entries}) or null.
  * @param {number} week competition week (1-7).
  * @returns {{week, entries: Array}} entries capped at COLUMN_SIZE (the column),
@@ -68,6 +68,10 @@ function buildPowerRankings(standings, previous, week) {
       uid: entry.uid,
       corpsName: entry.corpsName || null,
       total: entry.lastTotal ?? null,
+      // GE/Visual/Music breakdown so the standings sheet shows caption columns.
+      ge: entry.lastGe ?? null,
+      vis: entry.lastVis ?? null,
+      mus: entry.lastMus ?? null,
       repTier: entry.repTier ?? null,
       prevRank: prev ? prev.rank : null,
       delta: prev ? prev.rank - (index + 1) : null,

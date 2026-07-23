@@ -2,9 +2,10 @@
 // PodiumScoresPanel — the Podium Class Scores tab, split into two sub-views:
 //
 //   • Recaps — the DCI-style per-show box scores (PodiumRecapSheet)
-//   • Report — The Podium Report weekly power-rankings column (PodiumReportSheet)
+//   • Standings — the weekly Podium Class standings sheet (PodiumReportSheet),
+//     rendered with the same box-score layout as the Fantasy class standings
 //
-// The report used to stack above the recap sheets on a single page; once the
+// The standings used to stack above the recap sheets on a single page; once the
 // field grows (a 100-corps season), that page got very long before you reached
 // the box scores. Keeping both under the Podium tab as sibling sub-views — the
 // user's ask — lets each surface own its scroll and grow independently.
@@ -15,7 +16,7 @@ import PodiumReportSheet from './PodiumReportSheet';
 
 const SUB_TABS = [
   { id: 'recaps', label: 'Recaps' },
-  { id: 'report', label: 'Report' },
+  { id: 'report', label: 'Standings' },
 ];
 
 export default function PodiumScoresPanel({ seasonUid, seasonName, userCorpsName }) {

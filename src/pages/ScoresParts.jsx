@@ -30,142 +30,27 @@ import {
   seededShuffle,
   getCaptionBreakdown,
   mergeTwoNightShows,
+  formatBoxScoreAsText,
+  formatStandingsAsText,
 } from '../utils/scoresUtils';
-
-// =============================================================================
-// SHARED PODIUM-SHEET STYLE TOKENS + PRIMITIVES
-// The Podium recap sheet is the reference: #1a1a1a card on a #333 border, gold
-// (#c9a227) box-toppers/accents, blue (#0057B8 / #4d9fff) for the viewer's own
-// corps, thin #242424 row dividers.
-// =============================================================================
-
-const SHEET_CARD = 'bg-surface-card border border-line rounded-none p-3 md:p-4';
-const GOLD = 'text-brand';
-
-// Fixed numeric-column widths so caption values line up across every row and
-// card while the corps column flexes and truncates — the key to a box-score
-// look that never forces horizontal scroll on mobile.
-const CAP_W = 'w-[42px]';
-const TOTAL_W = 'w-[52px]';
-
-const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
-  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-    {/* Ribbon circle/badge */}
-    <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
-    {/* Inner circle highlight */}
-    <circle cx="12" cy="9" r="4" fill="#0066d6" />
-    {/* Star in center */}
-    <path
-      d="M12 5.5l1.09 2.21 2.44.35-1.77 1.72.42 2.43L12 11.1l-2.18 1.15.42-2.43-1.77-1.72 2.44-.35L12 5.5z"
-      fill="#FFD700"
-    />
-    {/* Ribbon tails */}
-    <path d="M8 15l-2 7 4-2.5V15H8z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
-    <path d="M16 15l2 7-4-2.5V15h2z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
-  </svg>
-);
-
-// Per-sheet masthead — mirrors the Podium ShowTable header (event name left,
-// location/date right, hairline underline).
-const SheetMasthead = ({ title, location, date }) => (
-  <div className="flex items-baseline justify-between gap-2 border-b border-line-muted pb-1.5">
-    <div className="text-[13px] font-bold text-white truncate min-w-0">{title}</div>
-    {(location || date) && (
-      <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-muted">
-        {location && (
-          <span className="hidden sm:flex items-center gap-1 truncate max-w-[160px]">
-            <MapPin className="w-3 h-3" />
-            {location}
-          </span>
-        )}
-        {date && <span className="tabular-nums normal-case">{date}</span>}
-      </div>
-    )}
-  </div>
-);
-
-// Column-header row for the flex box scores. `active` gold-highlights the
-// caption currently being sorted on (parity with the Podium sheet).
-const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) => (
-  <div className="flex items-center gap-2 px-1 pb-1.5 border-b border-line text-[9px] uppercase tracking-wider">
-    <span className="flex-1 min-w-0 text-muted">Pl · Corps</span>
-    <div className="flex items-center gap-1.5 flex-shrink-0">
-      {['GE', 'VIS', 'MUS'].map((cap) => (
-        <span key={cap} className={`${CAP_W} text-right ${active === cap ? GOLD : 'text-muted'}`}>
-          {cap}
-        </span>
-      ))}
-      <span className={`${TOTAL_W} text-right text-white`}>{totalLabel}</span>
-      {trailing}
-    </div>
-  </div>
-);
-
-// Place · avatar · corps name · director credit (linked). The director line is
-// the secondary row the fantasy sheets already carried, now styled to match the
-// Podium sheet's understated credit.
-const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }) => (
-  <div className="flex-1 min-w-0 flex items-center gap-2">
-    <span className="text-[11px] text-muted tabular-nums flex-shrink-0">{place}.</span>
-    <TeamAvatar name={name} logoUrl={avatarUrl} size="xs" />
-    <div className="min-w-0">
-      <div className="flex items-baseline gap-1.5 min-w-0">
-        <span
-          className={`text-[11px] font-bold truncate ${isMine ? 'text-interactive' : 'text-white'}`}
-        >
-          {name}
-        </span>
-        {tag}
-      </div>
-      {displayName &&
-        (uid ? (
-          <Link
-            to={`/profile/${uid}`}
-            className="block text-[10px] text-muted hover:text-interactive truncate"
-          >
-            {displayName}
-          </Link>
-        ) : (
-          <span className="block text-[10px] text-muted truncate">{displayName}</span>
-        ))}
-    </div>
-  </div>
-);
-
-// A single GE/VIS/MUS value — gold + bold when it's the box-topper for its
-// column, white when it's the active sort, muted otherwise.
-const CaptionValue = ({ value, isTop, active, width = CAP_W }) => (
-  <span
-    className={`${width} text-right tabular-nums ${
-      isTop ? `font-bold ${GOLD}` : active ? 'text-white' : 'text-secondary'
-    }`}
-  >
-    {value !== null && value !== undefined ? value.toFixed(2) : '—'}
-  </span>
-);
-
-// Wordmark / legend footer — echoes the Podium sheet's "screenshots are ads"
-// footer and quietly documents why the fantasy sheets are GE/VIS/MUS only.
-const SheetFooter = ({ note }) => (
-  <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-muted">
-    <span className="truncate">{note}</span>
-    <span className="font-bold text-muted flex-shrink-0">marching.art</span>
-  </div>
-);
-
-// Highest GE/VIS/MUS across a set of caption breakdowns (box-toppers).
-const captionTops = (list) => {
-  const tops = { ge: null, vis: null, mus: null };
-  for (const caps of list) {
-    if (!caps) continue;
-    for (const key of ['ge', 'vis', 'mus']) {
-      if (caps[key] != null && (tops[key] == null || caps[key] > tops[key])) {
-        tops[key] = caps[key];
-      }
-    }
-  }
-  return tops;
-};
+// Shared box-score primitives — the single source of truth for the sheet look,
+// used by both these Fantasy sheets and the Podium Class sheets.
+import {
+  BlueRibbonIcon,
+  SheetMasthead,
+  BoxScoreHead,
+  CorpsIdentity,
+  CaptionValue,
+  SheetFooter,
+  SortPills,
+  ShareButton,
+} from '../components/scores/SheetPrimitives';
+import {
+  SHEET_CARD,
+  TOTAL_W,
+  STANDINGS_SORTS,
+  captionTops,
+} from '../components/scores/sheetTokens';
 
 // =============================================================================
 // PILL TAB CONTROL (Design System) — unchanged shell chrome
@@ -232,29 +117,6 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
 };
 
 // =============================================================================
-// SORT BAR — Podium-style gold pills (shared by the standings grid)
-// =============================================================================
-
-const SortPills = ({ options, value, onChange }) => (
-  <div className="flex items-center gap-1 flex-shrink-0">
-    {options.map((opt) => (
-      <button
-        key={opt.id}
-        onClick={() => onChange(opt.id)}
-        aria-pressed={value === opt.id}
-        className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors ${
-          value === opt.id
-            ? 'bg-interactive text-white'
-            : 'bg-surface-raised text-muted hover:text-secondary'
-        }`}
-      >
-        {opt.label}
-      </button>
-    ))}
-  </div>
-);
-
-// =============================================================================
 // RECAP BOX SCORE - one card per show (memoized: sibling recaps don't re-render)
 // =============================================================================
 
@@ -265,6 +127,17 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
     return scores.map((score) => ({ score, captions: getCaptionBreakdown(score) }));
   }, [scores]);
   const tops = useMemo(() => captionTops(rows.map((r) => r.captions)), [rows]);
+
+  const shareText = () =>
+    formatBoxScoreAsText(
+      { title: formatEventName(eventName), location, date },
+      rows.map(({ score, captions }, idx) => ({
+        place: idx + 1,
+        corpsName: score.corpsName || score.corps,
+        total: score.score ?? score.totalScore ?? 0,
+        captions,
+      }))
+    );
 
   if (!scores || scores.length === 0) return null;
 
@@ -306,6 +179,10 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
           );
         })}
       </div>
+      <SheetFooter
+        note="GE/VIS/MUS shown · box-toppers in gold"
+        action={<ShareButton getText={shareText} />}
+      />
     </div>
   );
 });
@@ -326,6 +203,24 @@ const NIGHT_BADGE = {
 const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
   const combined = useMemo(() => mergeTwoNightShows(shows || []), [shows]);
   if (!combined) return null;
+
+  const shareText = () =>
+    combined.sections
+      .map((section) =>
+        formatStandingsAsText(
+          {
+            title: `${formatEventName(combined.eventName)} — ${section.label}`,
+            subtitle: 'Combined Standings · Both Nights',
+          },
+          section.rows.map((row, idx) => ({
+            place: idx + 1,
+            corpsName: `${row.corpsName || row.corps} (N${row.night})`,
+            total: row.score ?? row.totalScore ?? 0,
+            captions: getCaptionBreakdown(row),
+          }))
+        )
+      )
+      .join('\n\n');
 
   return (
     <div className={`${SHEET_CARD} space-y-3`}>
@@ -413,7 +308,10 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
         );
       })}
 
-      <SheetFooter note="Night 2 carries one extra day of growth · box-toppers in gold" />
+      <SheetFooter
+        note="Night 2 carries one extra day of growth · box-toppers in gold"
+        action={<ShareButton getText={shareText} />}
+      />
     </div>
   );
 });
@@ -612,16 +510,6 @@ const SoundSportMedalList = ({ shows }) => {
 // STANDINGS SHEET FOR CLASS TABS
 // =============================================================================
 
-// Caption Leaders sorting (§5.4): the fantasy classes sort by the CONDENSED
-// captions only (GE/VIS/MUS) — per-caption detail stays Podium-exclusive so
-// lineups can't be harvested from the sheet.
-const STANDINGS_SORTS = [
-  { id: 'total', label: 'Score' },
-  { id: 'GE', label: 'GE' },
-  { id: 'VIS', label: 'VIS' },
-  { id: 'MUS', label: 'MUS' },
-];
-
 const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   const [sortBy, setSortBy] = useState('total');
 
@@ -650,6 +538,22 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   }
 
   const activeCap = sortBy === 'total' ? null : sortBy;
+
+  const shareText = () =>
+    formatStandingsAsText(
+      {
+        title:
+          sortBy === 'total'
+            ? `${className} · Season Standings`
+            : `${className} · ${sortBy} Leaders`,
+      },
+      sorted.map(({ entry, captions }, idx) => ({
+        place: sortBy === 'total' ? entry.rank : idx + 1,
+        corpsName: entry.corpsName,
+        total: typeof entry.score === 'number' ? entry.score : null,
+        captions,
+      }))
+    );
 
   return (
     <div className={`${SHEET_CARD} space-y-2.5`}>
@@ -725,7 +629,10 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
         })}
       </div>
 
-      <SheetFooter note="GE/VIS/MUS shown · full captions are Podium Class only" />
+      <SheetFooter
+        note="GE/VIS/MUS shown · full captions are Podium Class only"
+        action={<ShareButton getText={shareText} />}
+      />
     </div>
   );
 };

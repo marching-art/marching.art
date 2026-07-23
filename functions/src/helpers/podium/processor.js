@@ -462,6 +462,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         );
         state.lastScoredDay = competitionDay;
         state.lastTotal = score.total;
+        // Persist the GE/Visual/Music breakdown of the latest score so the
+        // weekly standings sheet (The Podium Report) can show caption columns,
+        // matching the Fantasy class standings.
+        state.lastGe = score.geScore;
+        state.lastVis = score.visualScore;
+        state.lastMus = score.musicScore;
         // Season trajectory for the shadows chart (idempotent per day).
         state.scoreHistory = [
           ...(state.scoreHistory || []).filter((entry) => entry.day !== competitionDay).slice(-59),
@@ -695,6 +701,9 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           repTier: data.repTier ?? null,
           division: data.division || "aClass",
           lastTotal: data.lastTotal,
+          lastGe: data.lastGe ?? null,
+          lastVis: data.lastVis ?? null,
+          lastMus: data.lastMus ?? null,
           medals: data.medals,
         });
       }

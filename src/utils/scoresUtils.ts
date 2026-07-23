@@ -104,6 +104,65 @@ export function getCaptionBreakdown(existingCaptions?: ExistingCaptions): Captio
 }
 
 // =============================================================================
+// SHAREABLE TEXT — Discord-ready monospace sheets (parity with the Podium sheet)
+// =============================================================================
+// The Podium recap sheet already exports a monospace text block that pastes
+// cleanly into Discord/group chats (see formatRecapAsText in PodiumRecapSheet).
+// These mirror that format for the Fantasy box scores and standings so every
+// sheet's Share button produces the same shape of text.
+
+const fmt2 = (v: number | null | undefined): string => (typeof v === 'number' ? v.toFixed(2) : '—');
+const fmt3 = (v: number | null | undefined): string => (typeof v === 'number' ? v.toFixed(3) : '—');
+const pad = (v: string, n: number): string => v.padEnd(n).slice(0, n);
+
+export interface ShareRow {
+  place: number;
+  corpsName: string;
+  total: number | null | undefined;
+  captions: CaptionBreakdown;
+}
+
+export interface ShareSheetMeta {
+  title: string;
+  location?: string | null;
+  date?: string | null;
+  subtitle?: string | null;
+  seasonName?: string | null;
+}
+
+function shareLines(rows: ShareRow[]): string[] {
+  return rows.map(
+    (row) =>
+      `${String(row.place).padStart(2)}. ${pad(row.corpsName || 'Unknown', 24)} ${fmt3(
+        row.total
+      ).padStart(8)}  (GE ${fmt2(row.captions?.ge)} · VIS ${fmt2(row.captions?.vis)} · MUS ${fmt2(
+        row.captions?.mus
+      )})`
+  );
+}
+
+/** One show's box score as a Discord-ready code block. */
+export function formatBoxScoreAsText(meta: ShareSheetMeta, rows: ShareRow[]): string {
+  const head = [meta.title, meta.location, meta.date].filter(Boolean).join(' — ');
+  const lines = [head, ''];
+  lines.push(...shareLines(rows));
+  lines.push('');
+  lines.push(`marching.art${meta.seasonName ? ` · ${meta.seasonName}` : ''}`);
+  return '```\n' + lines.join('\n') + '\n```';
+}
+
+/** A standings sheet (single class/section) as a Discord-ready code block. */
+export function formatStandingsAsText(meta: ShareSheetMeta, rows: ShareRow[]): string {
+  const lines = [meta.title];
+  if (meta.subtitle) lines.push(meta.subtitle);
+  lines.push('');
+  lines.push(...shareLines(rows));
+  lines.push('');
+  lines.push(`marching.art${meta.seasonName ? ` · ${meta.seasonName}` : ''}`);
+  return '```\n' + lines.join('\n') + '\n```';
+}
+
+// =============================================================================
 // TWO-NIGHT EVENT COMBINED STANDINGS (Eastern Classic, days 41-42 — §5.11)
 // =============================================================================
 

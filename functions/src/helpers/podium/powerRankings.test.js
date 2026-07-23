@@ -49,6 +49,18 @@ describe("buildPowerRankings", () => {
     assert.equal(a.fieldSize, COLUMN_SIZE + 12);
   });
 
+  test("carries the GE/VIS/MUS breakdown through to each entry (null when absent)", () => {
+    const withCaptions = { uid: "a", corpsName: "Corps a", lastTotal: 80, lastGe: 30.1, lastVis: 25.2, lastMus: 24.7 };
+    const column = buildPowerRankings([withCaptions, corps("b", 78)], null, 1);
+    assert.equal(column.entries[0].ge, 30.1);
+    assert.equal(column.entries[0].vis, 25.2);
+    assert.equal(column.entries[0].mus, 24.7);
+    // A corps without a persisted breakdown yields nulls, not undefined.
+    assert.equal(column.entries[1].ge, null);
+    assert.equal(column.entries[1].vis, null);
+    assert.equal(column.entries[1].mus, null);
+  });
+
   test("steady note for an unmoved mid-table corps", () => {
     const previous = buildPowerRankings([corps("a", 80), corps("b", 78), corps("c", 76)], null, 1);
     const column = buildPowerRankings([corps("a", 82), corps("b", 80), corps("c", 78)], previous, 2);
