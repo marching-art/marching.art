@@ -55,6 +55,10 @@ function toEntry(entry, index, previousByUid, biggestRiserUid, periodLabel) {
     rank: index + 1,
     uid: entry.uid,
     corpsName: entry.corpsName || null,
+    // Director credit + avatar so the standings sheet can name, link, and
+    // picture each corps like the recap rows and fantasy classes.
+    displayName: entry.displayName ?? null,
+    avatarUrl: entry.avatarUrl ?? null,
     total: entry.lastTotal ?? null,
     // GE/Visual/Music breakdown so the standings sheet shows caption columns.
     ge: entry.lastGe ?? null,

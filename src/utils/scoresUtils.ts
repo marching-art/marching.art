@@ -104,6 +104,66 @@ export function getCaptionBreakdown(existingCaptions?: ExistingCaptions): Captio
 }
 
 // =============================================================================
+// RANK MOVEMENT — places gained/lost since the previous show (for the trend
+// triangle on the standings sheets)
+// =============================================================================
+
+interface RankableEntry {
+  uid?: string;
+  corpsName?: string;
+  rank?: number;
+  score?: number;
+  // Score history, most-recent first (scores[0] is the latest show).
+  scores?: Array<{ score?: number }>;
+}
+
+const rankKey = (e: RankableEntry): string => e.uid || e.corpsName || '';
+
+// A corps's total as of the PREVIOUS show — scores[1] — falling back to its
+// current score so the previous ranking is a coherent total order.
+const previousScore = (e: RankableEntry): number => {
+  const s = e.scores;
+  if (Array.isArray(s) && s.length > 1 && typeof s[1]?.score === 'number')
+    return s[1].score as number;
+  if (Array.isArray(s) && s.length > 0 && typeof s[0]?.score === 'number')
+    return s[0].score as number;
+  return typeof e.score === 'number' ? e.score : -Infinity;
+};
+
+/**
+ * How many placements each corps moved since its previous show, keyed by
+ * uid (or corpsName). Positive = moved up. A corps with only one show has no
+ * prior standing, so its delta is null (renders as a neutral dash).
+ *
+ * Current rank comes from each entry's `rank`; the previous ranking is the same
+ * field re-sorted by each corps's previous-show score. This is a per-sheet
+ * approximation — good enough to drive the up/down triangle without threading a
+ * historical standings snapshot through the client.
+ */
+export function computeRankDeltas(standings: RankableEntry[]): Map<string, number | null> {
+  const deltas = new Map<string, number | null>();
+  if (!Array.isArray(standings) || standings.length === 0) return deltas;
+
+  const currentRank = new Map<string, number>();
+  standings.forEach((entry, index) => {
+    currentRank.set(rankKey(entry), typeof entry.rank === 'number' ? entry.rank : index + 1);
+  });
+
+  const prevOrder = [...standings].sort((a, b) => previousScore(b) - previousScore(a));
+  const previousRank = new Map<string, number>();
+  prevOrder.forEach((entry, index) => previousRank.set(rankKey(entry), index + 1));
+
+  standings.forEach((entry) => {
+    const key = rankKey(entry);
+    const hasPrev = Array.isArray(entry.scores) && entry.scores.length > 1;
+    const cur = currentRank.get(key);
+    const prev = previousRank.get(key);
+    deltas.set(key, hasPrev && cur != null && prev != null ? prev - cur : null);
+  });
+  return deltas;
+}
+
+// =============================================================================
 // SHAREABLE TEXT — Discord-ready monospace sheets (parity with the Podium sheet)
 // =============================================================================
 // The Podium recap sheet already exports a monospace text block that pastes

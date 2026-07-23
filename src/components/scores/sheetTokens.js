@@ -13,6 +13,9 @@ export const GOLD = 'text-brand';
 // look that never forces horizontal scroll on mobile.
 export const CAP_W = 'w-[42px]';
 export const TOTAL_W = 'w-[52px]';
+// Trailing movement column — wide enough for a triangle + a two-digit
+// placement count (e.g. "▲12") without wrapping.
+export const TREND_W = 'w-8';
 
 // Caption Leaders sorting (§5.4): the fantasy classes sort by the CONDENSED
 // captions only (GE/VIS/MUS) — per-caption detail stays Podium-exclusive so

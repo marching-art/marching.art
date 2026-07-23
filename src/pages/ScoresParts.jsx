@@ -12,16 +12,7 @@
 
 import React, { useMemo, memo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Trophy,
-  TrendingUp,
-  TrendingDown,
-  Music,
-  ChevronRight,
-  MapPin,
-  Medal,
-  Users,
-} from 'lucide-react';
+import { Trophy, Music, ChevronRight, MapPin, Medal, Users } from 'lucide-react';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { formatEventName } from '../utils/season';
 import {
@@ -32,6 +23,7 @@ import {
   mergeTwoNightShows,
   formatBoxScoreAsText,
   formatStandingsAsText,
+  computeRankDeltas,
 } from '../utils/scoresUtils';
 // Shared box-score primitives — the single source of truth for the sheet look,
 // used by both these Fantasy sheets and the Podium Class sheets.
@@ -44,10 +36,12 @@ import {
   SheetFooter,
   SortPills,
   ShareButton,
+  TrendIndicator,
 } from '../components/scores/SheetPrimitives';
 import {
   SHEET_CARD,
   TOTAL_W,
+  TREND_W,
   STANDINGS_SORTS,
   captionTops,
 } from '../components/scores/sheetTokens';
@@ -527,6 +521,10 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   }, [standings, sortBy]);
 
   const tops = useMemo(() => captionTops(sorted.map((s) => s.captions)), [sorted]);
+  // Placements moved since each corps's previous show — drives the trend
+  // triangle. Computed from the overall standings so it's stable regardless of
+  // the active caption sort.
+  const rankDeltas = useMemo(() => computeRankDeltas(standings), [standings]);
 
   if (!standings || standings.length === 0) {
     return (
@@ -570,14 +568,14 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
       <BoxScoreHead
         active={activeCap}
         totalLabel="Score"
-        trailing={<span className="w-4" aria-hidden="true" />}
+        trailing={<span className={TREND_W} aria-hidden="true" />}
       />
 
       <div>
         {sorted.map(({ entry, captions }, idx) => {
           const isUserCorps =
             userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
-          const trend = entry.trend?.direction || 0;
+          const rankDelta = rankDeltas.get(entry.uid || entry.corpsName || '');
 
           return (
             <div
@@ -614,14 +612,8 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                 <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
                   {typeof entry.score === 'number' ? entry.score.toFixed(3) : '-'}
                 </span>
-                <span className="w-4 flex items-center justify-center flex-shrink-0">
-                  {trend > 0 ? (
-                    <TrendingUp className="w-3.5 h-3.5 text-green-500" />
-                  ) : trend < 0 ? (
-                    <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-                  ) : (
-                    <span className="text-muted text-xs">-</span>
-                  )}
+                <span className={`${TREND_W} flex items-center justify-center flex-shrink-0`}>
+                  <TrendIndicator delta={rankDelta} />
                 </span>
               </div>
             </div>

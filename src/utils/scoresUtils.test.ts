@@ -4,6 +4,7 @@ import {
   seededShuffle,
   getCaptionBreakdown,
   mergeTwoNightShows,
+  computeRankDeltas,
   RATING_CONFIG,
 } from './scoresUtils';
 
@@ -164,5 +165,46 @@ describe('mergeTwoNightShows', () => {
     ]);
     expect(combined!.sections).toHaveLength(1);
     expect(combined!.sections[0].rows.every((r) => r.corpsClass === 'worldClass')).toBe(true);
+  });
+});
+
+describe('computeRankDeltas', () => {
+  // Two shows each: scores[0] latest, scores[1] previous. Current rank is by
+  // the latest score; previous rank is by the previous score.
+  const entry = (uid: string, rank: number, latest: number, prev: number) => ({
+    uid,
+    corpsName: uid,
+    rank,
+    score: latest,
+    scores: [{ score: latest }, { score: prev }],
+  });
+
+  it('reports placements gained (+) and lost (-) since the previous show', () => {
+    // Previous standings by prev score: a(90) b(88) c(86) d(84) -> 1,2,3,4.
+    // Latest jumps d to the top: d(95) a(91) b(89) c(87) -> ranks 1..4.
+    const standings = [
+      entry('d', 1, 95, 84),
+      entry('a', 2, 91, 90),
+      entry('b', 3, 89, 88),
+      entry('c', 4, 87, 86),
+    ];
+    const deltas = computeRankDeltas(standings);
+    expect(deltas.get('d')).toBe(3); // 4th -> 1st, up 3
+    expect(deltas.get('a')).toBe(-1); // 1st -> 2nd, down 1
+    expect(deltas.get('b')).toBe(-1);
+    expect(deltas.get('c')).toBe(-1);
+  });
+
+  it('returns null for a corps with only one show (no prior standing)', () => {
+    const deltas = computeRankDeltas([
+      { uid: 'a', corpsName: 'a', rank: 1, score: 90, scores: [{ score: 90 }] },
+      { uid: 'b', corpsName: 'b', rank: 2, score: 80, scores: [{ score: 80 }, { score: 79 }] },
+    ]);
+    expect(deltas.get('a')).toBeNull();
+    expect(deltas.get('b')).toBe(0);
+  });
+
+  it('is empty for empty input', () => {
+    expect(computeRankDeltas([]).size).toBe(0);
   });
 });

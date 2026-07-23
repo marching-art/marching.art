@@ -123,6 +123,36 @@ export const SheetFooter = ({ note, action }) => (
   </div>
 );
 
+// Rank-movement indicator — a solid green ▲ / red ▼ triangle plus the number of
+// places moved, or a muted dash when unchanged/unknown. Replaces the old
+// line-chart trend glyphs so every standings sheet reads the same. `delta` is
+// signed: positive = moved up.
+export const TrendIndicator = ({ delta }) => {
+  const d = typeof delta === 'number' ? delta : 0;
+  if (!d) {
+    return (
+      <span className="text-muted text-[11px]" aria-hidden="true">
+        —
+      </span>
+    );
+  }
+  const up = d > 0;
+  const n = Math.abs(d);
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-[10px] font-bold tabular-nums ${
+        up ? 'text-green-500' : 'text-red-500'
+      }`}
+      aria-label={`${up ? 'Up' : 'Down'} ${n} ${n === 1 ? 'place' : 'places'}`}
+    >
+      <span aria-hidden="true" className="text-[8px] leading-none">
+        {up ? '▲' : '▼'}
+      </span>
+      {n}
+    </span>
+  );
+};
+
 // Podium-style gold sort pills (shared by the standings grids).
 export const SortPills = ({ options, value, onChange }) => (
   <div className="flex items-center gap-1 flex-shrink-0">
