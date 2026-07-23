@@ -25,6 +25,43 @@ const {
 const { generateSeasonSummaryArticle } = require("../helpers/newsSeasonSummary");
 const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
 const { assertAdmin } = require("../helpers/callableGuards");
+const { brevoApiKey } = require("../helpers/emailService");
+
+/**
+ * Surface a failed nightly news generation instead of letting it die in the
+ * logs: write a marker doc (admin-visible, and greppable by day) and email
+ * the admins. A silent failure here means the site simply has no news the
+ * next morning and nobody is told why.
+ */
+async function reportNewsGenerationFailure(db, { seasonId, reportDay, error }) {
+  const message = error?.message || String(error);
+  try {
+    await db
+      .collection("news_generation_failures")
+      .doc(`${seasonId}_day_${reportDay}`)
+      .set({
+        seasonId,
+        reportDay,
+        error: message,
+        failedAt: new Date().toISOString(),
+      });
+  } catch (markerErr) {
+    logger.warn("Could not write news-generation failure marker:", markerErr);
+  }
+  try {
+    const { fanOutToAdmins, sendAdminGenericAlertEmail } = require("../helpers/emailService");
+    await fanOutToAdmins(sendAdminGenericAlertEmail, {
+      subject: `News generation failed for ${seasonId} day ${reportDay}`,
+      body:
+        `The nightly article generation for season ${seasonId}, report day ` +
+        `${reportDay} failed and the day has no published news index.\n\n` +
+        `Error: ${message}\n\n` +
+        `Re-run it from Admin (triggerDailyNews) once the cause is fixed.`,
+    });
+  } catch (notifyErr) {
+    logger.warn("Could not send news-generation failure alert:", notifyErr);
+  }
+}
 
 // Define Gemini API key secret for triggers that use news generation
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
@@ -402,7 +439,7 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
     // incrementally so partial progress survives even if we still hit the ceiling.
     timeoutSeconds: 540,
     memory: "1GiB",
-    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret, brevoApiKey],
   },
   async (event) => {
     const db = getDb();
@@ -422,6 +459,24 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
 
       if (!reportDay) {
         logger.info("No offSeasonDay in recap, skipping news generation");
+        return;
+      }
+
+      // Idempotency: this fires on EVERY write to the day recap doc, and the
+      // scoring pipeline supports forced re-runs (claimScoringRun {force})
+      // that rewrite it — each of which used to trigger a full paid
+      // regeneration of all five Gemini articles plus images. If the day's
+      // news index is already published, the night's work is done; admins
+      // who genuinely want a regeneration use the triggerDailyNews callable,
+      // which bypasses this trigger entirely.
+      const seasonPath = event.params.seasonId || "current_season";
+      const dayIndexRef = db.doc(`news_hub/${seasonPath}/days/day_${reportDay}`);
+      const dayIndexSnap = await dayIndexRef.get();
+      if (dayIndexSnap.exists && dayIndexSnap.data()?.isPublished) {
+        logger.info(
+          `News for day ${reportDay} already published — skipping regeneration ` +
+            `(use triggerDailyNews to force).`
+        );
         return;
       }
 
@@ -490,10 +545,23 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
                   seasonId: event.params.seasonId,
                 },
               });
+            } else {
+              // Both the 5-article generator AND the legacy fallback came up
+              // empty — the day will have no news at all. Say so loudly.
+              await reportNewsGenerationFailure(db, {
+                seasonId: event.params.seasonId,
+                reportDay,
+                error: result.error || fantasyResult.error || "no articles generated",
+              });
             }
           }
       } catch (recapError) {
         logger.error("Error processing recap:", recapError);
+        await reportNewsGenerationFailure(db, {
+          seasonId: event.params.seasonId,
+          reportDay,
+          error: recapError,
+        });
       }
     } catch (error) {
       logger.error("Error in fantasy recap trigger:", error);
