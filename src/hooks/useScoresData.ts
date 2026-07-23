@@ -351,15 +351,23 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   // so navigating away and back to the Scores page costs zero extra Firestore reads. (The
   // always-mounted ticker and the Dashboard recent-results box use the bounded
   // fantasyRecapsRecent variant; this full-archive fetch backs the Scores page history.)
+  // Archived seasons are immutable — their recap days never change — so they
+  // never go stale and can sit in cache for an hour. Only the current season
+  // keeps the 5-minute staleTime (new day recaps land nightly).
+  const isFetchingCurrentSeason = targetSeasonId === currentSeasonUid;
   const {
     data: rawRecaps,
     isLoading: loading,
     error: queryError,
+    refetch,
   } = useQuery({
     queryKey: queryKeys.fantasyRecaps(targetSeasonId ?? ''),
     queryFn: () => getSeasonRecaps(targetSeasonId ?? ''),
     enabled: !!targetSeasonId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: isFetchingCurrentSeason ? 5 * 60 * 1000 : Infinity,
+    // 30 min matches the queryClient default; spelled out because an explicit
+    // `undefined` here would override (not inherit) that default.
+    gcTime: isFetchingCurrentSeason ? 30 * 60 * 1000 : 60 * 60 * 1000,
   });
 
   // Propagate query errors to the existing error state consumed by callers
@@ -583,6 +591,9 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   return {
     loading,
     error,
+    // Manual refresh (pull-to-refresh on the Scores page). React Query's
+    // refetch bypasses staleTime, so an explicit user pull always re-reads.
+    refetch,
     allShows: filteredShows,
     unfilteredShows: allShows,
     availableDays,

@@ -11,12 +11,10 @@ import { Calendar, Activity, Archive } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
-import { formatEventName } from '../utils/season';
 import { useScoresData } from '../hooks/useScoresData';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useHaptic } from '../hooks/useHaptic';
 import { usePodiumEnabled } from '../hooks/useFeatures';
-import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   PillTabControl,
   RecapDataGrid,
@@ -125,13 +123,9 @@ const Scores = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetTab, validTabIds]);
-  const [selectedShow, setSelectedShow] = useState(null);
   const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
   const [selectedArchiveYear, setSelectedArchiveYear] = useState(null);
   const [archiveViewTab, setArchiveViewTab] = useState('latest'); // Sub-tab within archive
-
-  // Close the full-recap modal on Escape
-  useEscapeKey(() => setSelectedShow(null), !!selectedShow);
 
   const {
     loading,
@@ -148,7 +142,6 @@ const Scores = () => {
   } = useScoresData({
     seasonId: targetSeasonId,
     classFilter: 'all',
-    enabledCaptions: { ge: true, vis: true, mus: true },
     // Disable auto-fallback so Latest tab starts fresh on new season
     disableArchiveFallback: activeTab !== 'archive',
   });
@@ -747,48 +740,6 @@ const Scores = () => {
           )}
         </PullToRefresh>
       </div>
-
-      {/* SELECTED SHOW MODAL (Full Recap) */}
-      {selectedShow && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Recap for ${formatEventName(selectedShow.eventName)}`}
-        >
-          <div className="absolute inset-0 bg-black/80" onClick={() => setSelectedShow(null)} />
-          <div className="relative w-full max-w-lg max-h-[80dvh] bg-surface-card border border-line sm:rounded-none overflow-hidden flex flex-col">
-            {/* Modal Header */}
-            <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between flex-shrink-0">
-              <div>
-                <h2 className="text-sm font-bold text-white">
-                  {formatEventName(selectedShow.eventName)}
-                </h2>
-                <p className="text-[10px] text-muted">
-                  {selectedShow.location} • {selectedShow.date}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedShow(null)}
-                className="text-muted hover:text-white text-xs font-bold"
-              >
-                CLOSE
-              </button>
-            </div>
-
-            {/* Modal Content - Uses same RecapDataGrid */}
-            <div className="flex-1 overflow-y-auto p-3 md:p-4">
-              <RecapDataGrid
-                scores={selectedShow.scores}
-                eventName={selectedShow.eventName}
-                location={selectedShow.location}
-                date={selectedShow.date}
-                userCorpsName={userCorpsName}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

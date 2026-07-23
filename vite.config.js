@@ -84,10 +84,14 @@ export default defineConfig({
           if (inPackage('@tanstack/react-query') || inPackage('zustand') || inPackage('date-fns')) {
             return 'vendor-query';
           }
-          // Framer Motion - now uses LazyMotion with async feature loading
-          // Features are lazy-loaded after initial render via dynamic import
-          // See src/components/MotionProvider.jsx for implementation
-          if (inPackage('framer-motion')) return 'vendor-motion';
+          // framer-motion intentionally gets NO manual group: the app uses
+          // LazyMotion, whose domMax feature bundle is loaded behind a
+          // dynamic import of src/lib/motionFeatures.js. A manual
+          // 'vendor-motion' group forced the whole package — features
+          // included — into an eagerly modulepreloaded chunk (~41.5 kB
+          // gzip dead on first paint), defeating that split. With no group,
+          // only the small LazyMotion/m/MotionConfig entry stays eager and
+          // domMax lands in a lazy chunk (same reasoning as chart.js below).
           // chart.js / react-chartjs-2 intentionally get NO manual group:
           // they are only imported behind React.lazy (LazyCharts), and a
           // manual 'vendor-charts' group forced that whole library — plus a
