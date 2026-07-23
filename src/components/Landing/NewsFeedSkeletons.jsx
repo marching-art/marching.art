@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // News feed loading skeletons. Extracted from NewsFeed.jsx.
 
 function SkeletonPulse({ className }) {

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // StandingsTab - Dashboard-first design with standings table
 // Design System: Visual dashboard cards at top, data table below
 

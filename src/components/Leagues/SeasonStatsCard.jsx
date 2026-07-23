@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // SeasonStatsCard - Individual user season stats display
 // Shows detailed stats for a league member including caption win rates, achievements
 

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for the Dashboard score hooks (useDashboardScores.js) — the wiring
 // between react-query, the api/season service, and the per-caption/recent-
 // results derivations. The scoring math itself is covered by

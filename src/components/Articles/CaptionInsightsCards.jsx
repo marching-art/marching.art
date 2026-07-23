@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CAPTION INSIGHTS CARDS - Visual cards for GE, Visual, and Music insights
 // =============================================================================

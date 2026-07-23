@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Surfaces the daily-login payoff. claimDailyLogin has always returned the
 // day's rewards (xp, streak, milestone, level-ups) — but App.jsx discarded
 // the response, so the game's most reliable daily reward beat happened in

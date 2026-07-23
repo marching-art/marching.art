@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueDetailView - Command Center for league competition
 // Design System: App Shell layout with fixed header, sticky tabs, scrollable content
 

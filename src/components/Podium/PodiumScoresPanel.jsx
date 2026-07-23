@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumScoresPanel — the Podium Class Scores tab, split into two sub-views:
 //
 //   • Recaps — the DCI-style per-show box scores (PodiumRecapSheet)

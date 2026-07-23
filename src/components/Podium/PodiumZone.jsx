@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumZone — everything that renders in Dashboard Zone C when the Podium
 // tab is selected (Phase 2, design §6). Handles its own three states:
 // loading, unregistered (four-step setup), and the daily loop

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational pieces extracted from HallOfChampions.jsx (max-lines
 // guardrail): the SoundSport blue-ribbon icon and the champion's
 // hang-a-banner purchase modal. No data fetching lives here.

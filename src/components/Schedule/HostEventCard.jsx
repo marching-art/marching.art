@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // HostEventCard — director-hosted events (Phase 6.2 client, design §5.10).
 // ALL-class feature: any director with a fielded corps can rent a venue and
 // put a show on the season schedule through open enrollment. CorpsCoin

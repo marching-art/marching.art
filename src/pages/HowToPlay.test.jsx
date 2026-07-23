@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Smoke test for the consolidated Game Guide (/guide). Verifies the document
 // mounts, renders every section, surfaces the consolidated SoundSport ratings
 // and Podium Class content, and that search filters the flat index.

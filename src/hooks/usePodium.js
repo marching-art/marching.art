@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Podium Class state + actions hook (Phase 2).
  *

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Activity tab recap cards: weekly recap and rivalries (both fetch their own
 // data). Extracted verbatim from ActivityTab.jsx.
 

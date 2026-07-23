@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // RivalsPanel - Sidebar widget showing the user's closest competitors
 // Replaces the LeagueStatus widget. Reads from profile.rivals[corpsClass]
 // which is populated daily by the scheduledRivalsUpdate cloud function.

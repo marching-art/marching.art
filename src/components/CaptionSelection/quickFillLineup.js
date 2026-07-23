@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Quick Fill lineup generation for the Caption Selection modal.
 // Extracted from CaptionSelectionModal.jsx to keep that file within the
 // max-lines lint budget. Pure logic — no React/DOM dependencies.

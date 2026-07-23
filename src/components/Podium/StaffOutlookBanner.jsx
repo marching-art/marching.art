@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // StaffOutlookBanner — the in-season heads-up that next season's staff payroll
 // has outgrown what a director can fund (design §5.6). Staff salaries rise with
 // tenure, and contracts only lapse at the season boundary; when the aged

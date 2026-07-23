@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Season setup — Show Design step. Every season is a new show: concepts
 // reset at rollover, so setup is the natural moment to name and style this
 // season's program. Optional (skippable) — the concept stays editable from

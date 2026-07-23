@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // CommunityPulse - Landing page sidebar widget showing live community activity
 // Creates social proof through real-time activity signals.
 // Data source (leagues collection) is auth-gated at the Firestore rule

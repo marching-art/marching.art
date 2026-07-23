@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for profileStore.completeDailyChallenge — the store half of the
 // daily game loop. The heavy lifting (validation, XP award, ledger write)
 // lives in the completeDailyChallenge callable; the store's job is the

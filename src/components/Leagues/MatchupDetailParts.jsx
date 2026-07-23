@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tab panels for MatchupDetailView: season-stats overview and per-show
 // caption comparison, plus the CaptionCompare bar. Extracted verbatim.
 

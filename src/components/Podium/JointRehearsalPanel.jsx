@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // JointRehearsalPanel — the human handshake (design §5.12, redesigned).
 // Pick a rival and the system maps both tours and ranks the real overlap
 // windows (open days for both corps) with their host city/stadium, distance,

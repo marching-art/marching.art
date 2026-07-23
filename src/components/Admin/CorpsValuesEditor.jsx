@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/CorpsValuesEditor.jsx
 // Admin editor for the per-season corps point values stored at dci-data/{dataDocId}.
 // Lets an admin pick any season doc, edit/add/delete corps entries, change point

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // MatchupsTab - Season overview with matchup brackets and history
 // Design System: Week cards, head-to-head tracking, schedule overview
 

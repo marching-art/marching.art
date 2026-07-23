@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // JourneyPanel - First Season Journey quest line
 // Walks a new director through every core mechanic, one step at a time, with
 // server-validated XP + CorpsCoin rewards per step. Completion lives in

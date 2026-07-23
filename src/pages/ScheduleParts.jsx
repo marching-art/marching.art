@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational sections for the Schedule page: week pills, show cards and
 // day-grouped show lists, and the Championship Week display. Extracted
 // verbatim from Schedule.jsx.

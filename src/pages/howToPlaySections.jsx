@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // GAME GUIDE — SECTION CONTENT (/guide). The body of the How-to-Play document,
 // split out of HowToPlay.jsx so the shell stays small. Ordering + icons live in
 // HowToPlay.jsx's SECTIONS list; this file supplies the matching content. Game

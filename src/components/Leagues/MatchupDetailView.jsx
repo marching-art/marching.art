@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // MatchupDetailView - Enhanced head-to-head matchup comparison with battle point system
 // Features: Battle points, caption battles, rivalry history, detailed breakdown
 

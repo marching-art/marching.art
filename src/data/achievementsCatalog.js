@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Shared client-side achievements catalog.
 //
 // This mirrors the server-side source of truth in

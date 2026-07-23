@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Client mirror of caption mastery (WS5.5). The lifetime points live in the
 // server-only profile field `captionStats.{caption}`, banked nightly by the
 // scoring run; tiers here are display-only and captionMastery.test.js fails

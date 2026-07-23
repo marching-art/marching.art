@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Render tests for the Director's Report — the unified Zone-B daily card.
 // Pins the "Today · X of Y done" count assembly (login + challenges +
 // predictions) and the pending ladder-claim row.

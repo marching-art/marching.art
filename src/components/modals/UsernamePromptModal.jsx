@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/modals/UsernamePromptModal.jsx
 // Modal to prompt existing users who don't have a username set
 

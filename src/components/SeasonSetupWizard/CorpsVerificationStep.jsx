@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Step 0 of the season setup wizard: returning-user corps verification
 // (continue / retire / unretire / move / new / skip per class). Extracted
 // verbatim from SeasonSetupWizard.jsx.

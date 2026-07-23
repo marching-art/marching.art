@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumJourneyPanel — the Podium Rookie Journey (Phase 7.2). A one-time
 // quest line through the daily loop: found, rehearse, delegate, route,
 // perform, shake hands, survive. The server verifies each step against real

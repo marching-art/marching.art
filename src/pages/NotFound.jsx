@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/NotFound.jsx
 // 404 page styled to match the data-terminal dark design system:
 // charcoal surfaces, azure primary actions, no gradients / glow / shadow.

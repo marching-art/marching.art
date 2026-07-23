@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Class-capability registry — server wrapper (Phase 1.1).
  *

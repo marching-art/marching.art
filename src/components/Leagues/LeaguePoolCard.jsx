@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeaguePoolCard — the league's daily prediction pool (the flagship social
 // CorpsCoin sink, GAMIFICATION.md). Members buy in
 // for a fixed ante; entrants who post a perfect prediction day split the pot

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // DirectorsReport — the unified "what do I do right now?" card at the top of
 // Zone B (GAMIFICATION.md).
 //

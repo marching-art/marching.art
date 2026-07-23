@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * RegistrationGate - Modal prompt for gated actions in Guest Preview Mode
  *

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Competition calendar — the single source for mapping a competition day
  * number (1–49) onto the real calendar date it falls on.

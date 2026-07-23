@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/PWAInstallInstructions.jsx
 // Platform-specific, manual "add to home screen / install" steps, shown when no
 // native install prompt is available (iOS Safari, or a desktop/Android browser

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // GAME GUIDE — SEARCH (/guide). Flat index across the guide's data; each
 // result jumps to a section. Split out of howToPlaySections.jsx so that file
 // holds only section bodies. Game facts come from howToPlayData.js /

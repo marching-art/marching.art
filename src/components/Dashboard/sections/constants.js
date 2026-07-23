@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Dashboard section shared constants
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and enable code-splitting
 

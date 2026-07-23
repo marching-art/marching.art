@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PredictionGamePanel - Daily prediction questions that resolve when new scores arrive
 // Creates a natural "check back tomorrow" engagement loop between 2 AM scoring cycles.
 //

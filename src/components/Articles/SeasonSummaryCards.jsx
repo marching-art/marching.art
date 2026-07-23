@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Structured panels for the Season Summary article (Article 6): per-class
 // standings compared on combined GE / Visual / Music, the rivalries taking
 // shape in each class, and the SoundSport / Best-in-Show tally to date.

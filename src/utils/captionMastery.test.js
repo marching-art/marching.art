@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Mirror-equality tests: the client mastery tiers must match the backend
 // helper the scoring run banks against (plain CJS, importable by vitest).
 import { describe, it, expect } from 'vitest';

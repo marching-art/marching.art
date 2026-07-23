@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Game-day date math shared by the nightly scoring processors and the admin
  * manual trigger. This logic was previously copy-pasted in three places

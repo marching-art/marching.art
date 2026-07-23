@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Shared Admin panel UI primitives. Extracted from pages/Admin.jsx.
 
 import { CheckCircle, RefreshCw, Terminal } from 'lucide-react';

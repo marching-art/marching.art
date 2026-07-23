@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // RecentResultsFeed - Sidebar showing recent competition results
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 

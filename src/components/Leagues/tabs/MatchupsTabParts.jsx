@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational sections for the league Matchups tab: schedule overview,
 // season history, head-to-head, empty state, and the versus strip.
 // Extracted verbatim from MatchupsTab.jsx.

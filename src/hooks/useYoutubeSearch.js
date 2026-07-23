@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 

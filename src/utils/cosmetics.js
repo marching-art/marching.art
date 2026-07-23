@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Corps Identity Shop — client catalog mirror + display helpers.
 // Ids and prices must stay in sync with functions/src/helpers/shopCatalog.js
 // (the server validates every purchase/equip against its own copy; this

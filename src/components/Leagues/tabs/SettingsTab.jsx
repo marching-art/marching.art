@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // SettingsTab - Commissioner settings for league management
 // Includes matchup generation, league settings, and invite code management
 

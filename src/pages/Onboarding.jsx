@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/Onboarding.jsx
 // Streamlined 3-step onboarding: Welcome+Name, Create Corps, Draft Lineup
 import React, { useState, useEffect, startTransition } from 'react';

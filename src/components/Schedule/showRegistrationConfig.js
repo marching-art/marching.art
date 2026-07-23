@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Show registration constants: per-class display config and Podium tour-pick
 // rules. Kept in a non-component module so fast refresh stays happy for the
 // components that consume them.

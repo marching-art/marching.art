@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // News feed inline badges (trend, fantasy value, urgency, ROI, share).
 // Extracted from NewsFeed.jsx.
 

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PODIUM PREVIEW — INTERACTIVE "TRY IT OUT" DEMO OF THE PODIUM DAILY LOOP
 // =============================================================================

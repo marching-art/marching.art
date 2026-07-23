@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Step 4 of the season setup wizard: weekly show selection. Extracted from
 // SeasonSetupWizard.jsx — owns its modal state and schedule derivations.
 

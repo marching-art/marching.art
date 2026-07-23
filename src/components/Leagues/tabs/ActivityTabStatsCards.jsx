@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Activity tab stats cards: league stats overview, achievements, and power
 // rankings. Extracted verbatim from ActivityTab.jsx.
 

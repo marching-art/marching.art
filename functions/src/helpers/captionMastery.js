@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Caption mastery v1 (WS5.5) — lifetime per-caption craft progression.
 //
 // Every scored show accumulates each lineup caption's (capped) points into

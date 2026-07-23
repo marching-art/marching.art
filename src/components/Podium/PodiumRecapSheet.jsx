@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumRecapSheet — the DCI-style box score for Podium Class shows
 // (Phase 2, design §5.4): full caption columns, bolded box-toppers, event
 // masthead, wordmark footer. Reads the public podium-recaps collection.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumCaptionPanel — Zone C analyzer analogue for Podium Class (Phase 2).
 // Per-caption content/clean progress with challenge level and neglect
 // warnings. The full trajectory-vs-percentile-band chart lands with the

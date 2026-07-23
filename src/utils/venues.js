@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Client-side venue helpers for the Host-a-Show picker (Schedule page).
  *

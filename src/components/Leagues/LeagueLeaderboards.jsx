@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueLeaderboards - Category-based stat rankings
 // Shows leaders in various stats: caption win rates, clutch wins, blowouts, etc.
 

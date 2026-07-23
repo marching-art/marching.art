@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Public Supporters wall — recognition for Buy Me a Coffee members.
 //
 // Data comes from the getSupportersWall callable, which redacts emails and

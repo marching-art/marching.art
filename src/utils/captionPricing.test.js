@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for captionPricing utility functions
 import {
   CLASS_POINT_LIMITS,

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Flame, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';

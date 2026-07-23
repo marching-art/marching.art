@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/charts/LineChartImpl.jsx
 // Lazily loaded Line chart implementation with Chart.js
 import { Line } from 'react-chartjs-2';

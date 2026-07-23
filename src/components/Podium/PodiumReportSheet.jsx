@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumReportSheet — The Podium Report (Phase 7.3, design §7): the latest
 // week's deterministic power-rankings column, on its own Scores tab.
 //

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Daily Predictions — client mirror of the prediction question catalog.
 //
 // The prediction game asks a few questions each day whose thresholds are

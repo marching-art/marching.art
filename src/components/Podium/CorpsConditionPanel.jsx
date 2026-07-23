@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // CorpsConditionPanel — logistics for the tour (Phase 3, design §5.3):
 // weekly food plan, the assistant-director plan template, the upcoming route
 // with travel tiers + heat, and the Family Day diagnostic when present.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Onboarding step-3 guided caption-selection component. Extracted verbatim
 // from Onboarding.jsx; the caption/color/budget constants it renders live in
 // onboardingConstants.js.

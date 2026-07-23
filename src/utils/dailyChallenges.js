@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Daily challenge helpers, shared by the profile store.
 // Extracted from the retired userStore so the challenge feature has one home.
 

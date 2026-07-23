@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Structured data panels for the full-article view (standings, top performers,
 // insights, trending corps). Fantasy buy/hold/sell picks are rendered separately
 // by RecommendationCards in pages/Article.jsx. Extracted from pages/Article.jsx.

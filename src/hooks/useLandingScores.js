@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/hooks/useLandingScores.js
 // Hook for fetching the "Live Scores" ranking shown on the landing/news pages.
 // - Live season: ranks the real current-year DCI corps as they compete, using the
