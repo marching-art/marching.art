@@ -63,7 +63,9 @@ function getLineupLockContext(seasonData, now = new Date()) {
   if (untilLock <= 0 || untilLock > LOCK_WINDOW_MS) return null;
 
   return {
-    phase: window.phase,
+    // status === "open" above narrows the phase to these three at runtime;
+    // the cast tells checkJs what the guard already guarantees.
+    phase: /** @type {"unlimited"|"weekly"|"championship"} */ (window.phase),
     lockAt,
     lockTimeLabel: formatEtTime(lockAt),
     periodKey: window.periodKey,

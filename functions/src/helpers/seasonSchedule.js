@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Season schedule core: scraped-event enrichment, the DCI event scraper
 // client, Firestore schedule storage (subcollection + legacy collection), and
 // small shared utilities. Extracted verbatim from season.js.

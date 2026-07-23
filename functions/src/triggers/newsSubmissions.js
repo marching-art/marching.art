@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // User news submission callables: submit for approval plus the admin
 // pending-list/approve/reject flow. Extracted verbatim from
 // triggers/newsGeneration.js.

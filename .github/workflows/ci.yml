@@ -82,6 +82,17 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      # The functions codebase has its own checkJs pass (functions/tsconfig.json)
+      # — its first run caught two production crashes (client-SDK APIs
+      # destructured from firebase-admin resolving to undefined). Functions
+      # deps must be installed so firebase-admin/firebase-functions types
+      # resolve identically to production.
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Type check functions
+        run: npx tsc -p functions
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

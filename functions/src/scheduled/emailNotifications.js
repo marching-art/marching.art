@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Scheduled Email Notification Functions
  * Handles automated email campaigns for user retention and engagement

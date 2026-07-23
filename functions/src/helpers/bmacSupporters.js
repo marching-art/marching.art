@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Buy Me a Coffee supporter helpers — PURE module (no firebase imports) so the
 // node:test suite can exercise it directly and CI fails if the client tier
 // mirror (src/utils/supporterTiers.ts) drifts.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Article 6: marching.art Season Summary.
 //
 // A RARE piece that publishes only on a competition day (15–49) that has NO

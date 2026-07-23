@@ -1,7 +1,11 @@
 const { getDb } = require("../config");
 const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
-const { getDoc } = require("firebase-admin/firestore");
+// A ProfilesSnapshot is the query-snapshot-shaped object the scoring flow
+// passes around: the real QuerySnapshot in production, or the lite
+// {docs, size, empty} accumulator fetchAllActiveProfiles builds from its
+// cursor pages. Only .docs/.size/.empty are ever used.
+/** @typedef {{docs: Array<any>, size: number, empty: boolean}} ProfilesSnapshot */
 const { getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { SHOW_PARTICIPATION_REWARDS } = require("./economy");
@@ -121,7 +125,7 @@ async function fetchAllActiveProfiles(db, seasonUid) {
  *
  * @param {Object} params
  * @param {Object} params.dayEventData - The day's shows (from the schedule).
- * @param {FirebaseFirestore.QuerySnapshot} params.profilesSnapshot - Active profiles.
+ * @param {ProfilesSnapshot} params.profilesSnapshot - Active profiles.
  * @param {number} params.week - Competition week (ceil(scoredDay / 7)).
  * @param {number} params.scoredDay - The day being scored (1-49).
  * @param {Object|null} params.championshipConfig - Per-show championship config, or null.
@@ -379,7 +383,7 @@ const { RANKED_CLASSES } = require("./classRegistry");
  * totalSeasonScore for everyone else. Corps with no score yet are unranked.
  * Pure function so the standing math is unit-testable without Firestore.
  *
- * @param {QuerySnapshot} profilesSnapshot - Active-season profile docs
+ * @param {ProfilesSnapshot} profilesSnapshot - Active-season profile docs
  * @param {Map<string, number>} dailyScores - uid_class -> tonight's total
  * @returns {Map<string, {rank: number, of: number}>} keyed by `${uid}_${class}`
  */
@@ -416,7 +420,7 @@ function computeSeasonRankings(profilesSnapshot, dailyScores) {
  * Pure function so the skip logic is unit-testable without Firestore.
  *
  * @param {Map<string, {rank: number, of: number}>} rankings - From computeSeasonRankings
- * @param {QuerySnapshot} profilesSnapshot - The same snapshot rankings came from
+ * @param {ProfilesSnapshot} profilesSnapshot - The same snapshot rankings came from
  * @returns {Map<string, {rank: number, of: number}>} entries needing a write
  */
 function diffSeasonRankings(rankings, profilesSnapshot) {
@@ -451,7 +455,8 @@ function diffSeasonRankings(rankings, profilesSnapshot) {
  * @param {Object} params.dailyRecap
  * @param {Array} params.coinAwards
  * @param {Map<string, Object>} [params.captionPoints] - uid -> per-caption points
- * @param {QuerySnapshot} [params.profilesSnapshot] - for nightly class standings
+ * @param {ProfilesSnapshot} [params.profilesSnapshot] - for nightly class standings
+ * @param {boolean} [params.force] - Admin reprocess escape hatch (awardLedger)
  * @returns {Promise<{ opCount: number, batchCount: number }>}
  */
 async function commitDailyScoring({
@@ -862,7 +867,9 @@ async function calculateCorpsStatisticsLogic() {
   const seasonId = seasonData.seasonUid;
 
   const corpsDataRef = db.doc(`dci-data/${seasonData.dataDocId}`);
-  const corpsSnap = await getDoc(corpsDataRef);
+  // NOTE: firebase-admin has no getDoc (that is the client SDK API) — the
+  // old `getDoc(corpsDataRef)` destructured undefined and crashed here.
+  const corpsSnap = await corpsDataRef.get();
   if (!corpsSnap.exists) {
     throw new Error(`Corps data document not found: ${seasonData.dataDocId}`);
   }

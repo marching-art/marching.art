@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Championship, trophy, and matchup processing for scoring runs: season
 // standings cutoffs, championship day config, CorpsCoin awards, regional and
 // class trophies, finals champions, and weekly league matchups. Extracted
@@ -282,6 +283,8 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
  * @param {string} [options.seasonUid] - Enables per-day idempotency markers.
  * @param {number} [options.scoredDay] - The season day being awarded.
  * @param {boolean} [options.force] - Re-apply even if the day's token exists.
+ * @param {Map<string, Object>} [options.captionPoints] - uid -> per-caption
+ *   points; banked as captionStats increments in the SAME tokened write.
  */
 async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
   const { seasonUid = null, scoredDay = null, force = false, captionPoints = null } = options;

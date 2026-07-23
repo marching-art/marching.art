@@ -76,7 +76,10 @@ exports.showReminderPushJob = onSchedule(
       const normalize = (name) => String(name || "").toLowerCase().replace(/\s+/g, " ").trim();
       const soonByKey = new Map();
       for (const comp of startingSoon) {
-        const hoursUntil = Math.max(1, Math.round((new Date(comp.startsAt) - now) / (60 * 60 * 1000)));
+        const hoursUntil = Math.max(
+          1,
+          Math.round((new Date(comp.startsAt).getTime() - now.getTime()) / (60 * 60 * 1000))
+        );
         soonByKey.set(`${comp.day}::${normalize(comp.name)}`, { name: comp.name, hoursUntil });
       }
 

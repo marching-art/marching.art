@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 const { logger } = require("firebase-functions/v2");
 const { normalizeCorps } = require("./historicalSchedules");
 

@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium callable input validators, split from callable/podium.js for
  * file-size hygiene. Pure request-shape/argument validation only — no

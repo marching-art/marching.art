@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // News feed callables: cached daily/recent news retrieval, engagement data,
 // and the public HTTP feed endpoint. Extracted verbatim from
 // triggers/newsGeneration.js.

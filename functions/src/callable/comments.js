@@ -3,7 +3,10 @@ const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const admin = require("firebase-admin");
-const { serverTimestamp } = require("firebase-admin/firestore");
+// NOTE: firebase-admin/firestore has no `serverTimestamp` named export (that
+// is the CLIENT SDK's API) — destructuring it yielded undefined and made
+// reportComment throw on every call. Use FieldValue.serverTimestamp().
+const { FieldValue } = require("firebase-admin/firestore");
 const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
 
 exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
@@ -104,7 +107,7 @@ exports.reportComment = onCall({ cors: true }, async (request) => {
       reportedOnProfileUid: profileOwnerId,
       reporterUid,
       status: "new", // 'new', 'reviewed', 'resolved'
-      createdAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
     return { success: true, message: "Comment reported. Thank you for your feedback." };
   } catch (error) {

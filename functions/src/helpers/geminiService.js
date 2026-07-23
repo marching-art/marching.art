@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Gemini client service for news generation: lazy client init, structured
 // JSON content generation with parse safety, the banned-phrase/hallucination
 // fact-check guard, and drum-corps-grounded image generation. Extracted

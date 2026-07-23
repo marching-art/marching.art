@@ -1,3 +1,4 @@
+// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Shared logic for user news submissions: author credit resolution, the
 // fantasy-daily-style image generation, the publish routine, and the
 // auto-publish scheduling math. Used by both the admin approval callables
