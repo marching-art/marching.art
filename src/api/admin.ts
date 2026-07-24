@@ -16,11 +16,13 @@ import {
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db, paths } from './client';
+import { queryClient, queryKeys } from '../lib/queryClient';
 import {
   getCorpsValues as getCorpsValuesRef,
   getDciDataDoc as getDciDataDocRef,
   getHistoricalScoresForYear as getHistoricalScoresForYearRef,
   getHistoricalScoresMap as getHistoricalScoresMapRef,
+  getSeasonRecaps,
 } from './season';
 
 // Non-namespaced Firestore paths used only by the admin panel (not in `paths`).
@@ -50,42 +52,75 @@ export interface AdminOverviewStats {
   totalCorps: number;
 }
 
+// The full-database profile scan is the most expensive read the client can
+// issue (one billed read per registered user, growing forever). Every admin
+// stats/listing function derives from the same scan, so it runs through a
+// single shared react-query entry: opening the overview and the Users tab in
+// one admin session costs one scan, not four.
+const ADMIN_PROFILE_SCAN_KEY = ['admin', 'profileScan'] as const;
+const ADMIN_PRIVATE_SCAN_KEY = ['admin', 'privateScan'] as const;
+const ADMIN_SCAN_STALE_MS = 5 * 60 * 1000;
+
+function getProfileScan(): Promise<QueryDocumentSnapshot<DocumentData>[]> {
+  return queryClient.fetchQuery({
+    queryKey: ADMIN_PROFILE_SCAN_KEY,
+    queryFn: async () => {
+      const snapshot = await getDocs(collectionGroup(db, 'profile'));
+      // Only keep profile docs from the marching-art users collection
+      return snapshot.docs.filter((d) => d.ref.path.includes(paths.users()));
+    },
+    staleTime: ADMIN_SCAN_STALE_MS,
+  });
+}
+
+function getPrivateScan(): Promise<QueryDocumentSnapshot<DocumentData>[]> {
+  return queryClient.fetchQuery({
+    queryKey: ADMIN_PRIVATE_SCAN_KEY,
+    queryFn: async () => {
+      const snapshot = await getDocs(collectionGroup(db, 'private')).catch(() => ({
+        docs: [] as QueryDocumentSnapshot<DocumentData>[],
+      }));
+      return snapshot.docs.filter((d) => d.ref.path.includes(paths.users()));
+    },
+    staleTime: ADMIN_SCAN_STALE_MS,
+  });
+}
+
+/**
+ * Resolve a profile's last-login Date from either lastLogin (Timestamp) or
+ * engagement.lastLogin (Timestamp on the backend, ISO string from the client).
+ */
+function resolveLastLogin(data: DocumentData): Date | null {
+  if (data.lastLogin?.toDate) {
+    return data.lastLogin.toDate();
+  }
+  if (data.engagement?.lastLogin) {
+    const el = data.engagement.lastLogin;
+    return el.toDate ? el.toDate() : new Date(el);
+  }
+  return null;
+}
+
+function isActiveWithinDays(lastLoginDate: Date | null, days: number): boolean {
+  if (!lastLoginDate) return false;
+  return (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24) <= days;
+}
+
 /**
  * Compute the admin overview telemetry (total users, active in last 7 days,
- * total corps) by scanning all user profile docs via a collectionGroup query.
- * Admin-only per Firestore rules.
+ * total corps) from the shared profile scan. Admin-only per Firestore rules.
  */
 export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
-  // Use collectionGroup to query all profile documents directly
-  const profilesRef = collectionGroup(db, 'profile');
-  const snapshot = await getDocs(profilesRef);
+  const profileDocs = await getProfileScan();
 
   let totalUsers = 0;
   let activeCount = 0,
     corpsCount = 0;
 
-  for (const profileDoc of snapshot.docs) {
-    // Only count profile docs from the marching-art users collection
-    if (!profileDoc.ref.path.includes(paths.users())) continue;
-
+  for (const profileDoc of profileDocs) {
     totalUsers++;
     const data = profileDoc.data();
-
-    // Check activity using lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
-    let lastLoginDate = null;
-    if (data.lastLogin?.toDate) {
-      lastLoginDate = data.lastLogin.toDate();
-    } else if (data.engagement?.lastLogin) {
-      // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
-      const el = data.engagement.lastLogin;
-      lastLoginDate = el.toDate ? el.toDate() : new Date(el);
-    }
-
-    if (lastLoginDate) {
-      const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
-      if (days <= 7) activeCount++;
-    }
-
+    if (isActiveWithinDays(resolveLastLogin(data), 7)) activeCount++;
     if (data.corps) corpsCount += Object.keys(data.corps).length;
   }
 
@@ -102,15 +137,11 @@ export interface UserEngagementStats {
 
 /**
  * Compute user engagement telemetry (totals, 7-day actives, average login
- * streak, corps count, total logins) by scanning all user profile docs via a
- * collectionGroup query. Admin-only per Firestore rules.
+ * streak, corps count, total logins) from the shared profile scan.
+ * Admin-only per Firestore rules.
  */
 export async function getUserEngagementStats(): Promise<UserEngagementStats> {
-  // Use collectionGroup to query all profile documents directly
-  // This is needed because user documents don't exist at the parent level,
-  // only the nested profile/data documents exist
-  const profilesRef = collectionGroup(db, 'profile');
-  const snapshot = await getDocs(profilesRef);
+  const profileDocs = await getProfileScan();
 
   let totalUsers = 0;
   let activeCount = 0,
@@ -119,27 +150,11 @@ export async function getUserEngagementStats(): Promise<UserEngagementStats> {
     streakCount = 0,
     loginSum = 0;
 
-  for (const profileDoc of snapshot.docs) {
-    // Only count profile docs from the marching-art users collection
-    if (!profileDoc.ref.path.includes(paths.users())) continue;
-
+  for (const profileDoc of profileDocs) {
     totalUsers++;
     const data = profileDoc.data();
 
-    // Check activity using lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
-    let lastLoginDate = null;
-    if (data.lastLogin?.toDate) {
-      lastLoginDate = data.lastLogin.toDate();
-    } else if (data.engagement?.lastLogin) {
-      // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
-      const el = data.engagement.lastLogin;
-      lastLoginDate = el.toDate ? el.toDate() : new Date(el);
-    }
-
-    if (lastLoginDate) {
-      const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
-      if (days <= 7) activeCount++;
-    }
+    if (isActiveWithinDays(resolveLastLogin(data), 7)) activeCount++;
 
     // Engagement stats
     if (data.engagement) {
@@ -181,58 +196,41 @@ export interface AdminUserProfile {
  * (most recent first). Admin-only per Firestore rules.
  */
 export async function getAllUserProfiles(): Promise<AdminUserProfile[]> {
-  // Use collectionGroup to query all profile documents directly.
   // Emails live in the owner-private `private/data` doc (never the public
-  // profile doc), so fetch those separately and join by uid. This query is
-  // admin-only per Firestore rules.
-  const profilesRef = collectionGroup(db, 'profile');
-  const privateRef = collectionGroup(db, 'private');
-  const [snapshot, privateSnapshot] = await Promise.all([
-    getDocs(profilesRef),
-    getDocs(privateRef).catch(() => ({ docs: [] as QueryDocumentSnapshot<DocumentData>[] })),
-  ]);
+  // profile doc), so fetch those separately and join by uid. Both scans are
+  // admin-only per Firestore rules and read through the shared cache above.
+  const [profileDocs, privateDocs] = await Promise.all([getProfileScan(), getPrivateScan()]);
 
   const emailByUid: Record<string, string> = {};
-  privateSnapshot.docs.forEach((privateDoc) => {
-    if (!privateDoc.ref.path.includes(paths.users())) return;
+  privateDocs.forEach((privateDoc) => {
     const uid = privateDoc.ref.path.split('/')[3];
     const email = privateDoc.data()?.email;
     if (uid && email) emailByUid[uid] = email;
   });
 
-  const userList = snapshot.docs
-    .filter((profileDoc) => profileDoc.ref.path.includes(paths.users()))
-    .map((profileDoc) => {
-      const data = profileDoc.data();
+  const userList = profileDocs.map((profileDoc) => {
+    const data = profileDoc.data();
 
-      // Extract user ID from the doc path
-      // Path format: paths.userProfile(userId) = artifacts/{ns}/users/{userId}/profile/data
-      const pathParts = profileDoc.ref.path.split('/');
-      const uid = pathParts[3];
+    // Extract user ID from the doc path
+    // Path format: paths.userProfile(userId) = artifacts/{ns}/users/{userId}/profile/data
+    const pathParts = profileDoc.ref.path.split('/');
+    const uid = pathParts[3];
 
-      // Get last login from either lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
-      let lastLoginDate = null;
-      if (data.lastLogin?.toDate) {
-        lastLoginDate = data.lastLogin.toDate();
-      } else if (data.engagement?.lastLogin) {
-        // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
-        const el = data.engagement.lastLogin;
-        lastLoginDate = el.toDate ? el.toDate() : new Date(el);
-      }
+    const lastLoginDate = resolveLastLogin(data);
 
-      return {
-        uid,
-        username: data.username || 'Unknown',
-        email: emailByUid[uid] || data.email || null,
-        lastLogin: lastLoginDate,
-        xpLevel: data.xpLevel || 1,
-        xp: data.xp || 0,
-        loginStreak: data.engagement?.loginStreak || 0,
-        totalLogins: data.engagement?.totalLogins || 0,
-        corps: data.corps ? Object.keys(data.corps) : [],
-        createdAt: data.createdAt?.toDate?.() || null,
-      };
-    });
+    return {
+      uid,
+      username: data.username || 'Unknown',
+      email: emailByUid[uid] || data.email || null,
+      lastLogin: lastLoginDate,
+      xpLevel: data.xpLevel || 1,
+      xp: data.xp || 0,
+      loginStreak: data.engagement?.loginStreak || 0,
+      totalLogins: data.engagement?.totalLogins || 0,
+      corps: data.corps ? Object.keys(data.corps) : [],
+      createdAt: data.createdAt?.toDate?.() || null,
+    };
+  });
 
   // Sort by last login (most recent first)
   return userList.sort((a, b) => (b.lastLogin?.getTime() || 0) - (a.lastLogin?.getTime() || 0));
@@ -315,14 +313,20 @@ export async function getHistoricalScoresForYear(year: string | number): Promise
 
 /**
  * Get the set of competition days (offSeasonDay) that have been scored into
- * fantasy_recaps for a season.
+ * fantasy_recaps for a season. Reads through the shared react-query recap
+ * archive (same key the Scores page / Dashboard / league views populate), so
+ * an admin session usually derives this from an already-downloaded archive
+ * instead of re-fetching every (large) day doc.
  */
 export async function getScoredRecapDays(seasonUid: string): Promise<Set<number>> {
-  const daysSnap = await getDocs(collection(db, paths.fantasyRecapsDays(seasonUid)));
+  const recaps = await queryClient.fetchQuery({
+    queryKey: queryKeys.fantasyRecaps(seasonUid),
+    queryFn: () => getSeasonRecaps(seasonUid),
+    staleTime: 5 * 60 * 1000,
+  });
   const days = new Set<number>();
-  daysSnap.forEach((d) => {
-    const data = d.data();
-    if (typeof data.offSeasonDay === 'number') days.add(data.offSeasonDay);
+  recaps.forEach((recap) => {
+    if (typeof recap.offSeasonDay === 'number') days.add(recap.offSeasonDay);
   });
   return days;
 }

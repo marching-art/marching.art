@@ -10,7 +10,12 @@
 
 import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
-import { getSeasonRecaps, getHistoricalScoresForYear, getPodiumSeasonRecaps } from '../api/season';
+import {
+  getSeasonRecaps,
+  getHistoricalScoresForYear,
+  getRecentPodiumRecaps,
+  RECENT_RECAP_DAYS,
+} from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { CAPTIONS } from '../components/Dashboard';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
@@ -163,9 +168,12 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
   const seasonUid = seasonData?.seasonUid;
   const active = enabled && !!user?.uid && !!seasonUid && !!currentDay;
 
+  // Bounded fetch: the box shows at most 5 results, so the last
+  // RECENT_RECAP_DAYS day-docs are plenty — no need to download the whole
+  // season's Podium archive here (PodiumRecapSheet owns the full-season view).
   const { data: recaps } = useQuery({
-    queryKey: queryKeys.podiumRecaps(seasonUid),
-    queryFn: () => getPodiumSeasonRecaps(seasonUid),
+    queryKey: queryKeys.podiumRecapsRecent(seasonUid, RECENT_RECAP_DAYS),
+    queryFn: () => getRecentPodiumRecaps(seasonUid, RECENT_RECAP_DAYS),
     enabled: active,
     staleTime: SCORES_STALE_TIME,
   });

@@ -193,6 +193,23 @@ export async function getPodiumSeasonRecaps(seasonUid: string): Promise<PodiumDa
   return snapshot.docs.map((d) => d.data() as PodiumDayRecap);
 }
 
+/**
+ * Get the most recent `days` Podium recap documents, descending by day. The
+ * bounded counterpart of getPodiumSeasonRecaps (mirroring
+ * getRecentSeasonRecaps for fantasy): the Dashboard recent-results box only
+ * needs the tail of the season, not every day doc. Single-field orderBy — no
+ * composite index needed.
+ */
+export async function getRecentPodiumRecaps(
+  seasonUid: string,
+  days: number
+): Promise<PodiumDayRecap[]> {
+  const daysRef = collection(db, paths.podiumRecapsDays(seasonUid));
+  const recentQuery = query(daysRef, orderBy('competitionDay', 'desc'), limit(days));
+  const snapshot = await getDocs(recentQuery);
+  return snapshot.docs.map((d) => d.data() as PodiumDayRecap);
+}
+
 // =============================================================================
 // REFERENCE GAME DATA (public read)
 //
@@ -245,17 +262,6 @@ export async function getHistoricalScoresMap(
     }
   });
   return historical;
-}
-
-/**
- * Get all season champion archive docs as `{ id, ...data }` (raw; callers own
- * date conversion and sorting). Errors propagate unchanged.
- */
-export async function getSeasonChampionDocs(): Promise<
-  Array<{ id: string } & Record<string, unknown>>
-> {
-  const snapshot = await getDocs(collection(db, 'season_champions'));
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 /**

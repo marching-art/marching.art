@@ -288,41 +288,13 @@ export function useLeagueActivity(
   return { activities, loading };
 }
 
-// =============================================================================
-// HOOK: useUnreadNotificationCount
-// =============================================================================
-
-export function useUnreadNotificationCount(uid: string | undefined) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!uid) {
-      setCount(0);
-      return;
-    }
-
-    const notificationsRef = collection(db, paths.userNotifications(uid));
-    const q = query(
-      notificationsRef,
-      where('read', '==', false),
-      limit(100) // Cap at 100 for performance
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        setCount(snapshot.docs.length);
-      },
-      (error) => {
-        console.error('Unread count subscription error:', error);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [uid]);
-
-  return count;
-}
+// NOTE: a useUnreadNotificationCount hook used to live here. It opened an
+// app-lifetime onSnapshot that fetched up to 100 full notification docs just
+// to count them — never actually mounted by any component, but an expensive
+// trap for whoever wired it up. If a nav badge needs an unread count, derive
+// it from the (bounded, already-mounted) useLeagueNotifications listener
+// above, or use a getCountFromServer aggregation — do not re-add a
+// fetch-the-docs-to-count-them listener.
 
 // =============================================================================
 // HOOK: useRivalries
@@ -428,23 +400,6 @@ export function useRivalries(
       .filter((r) => r.matchupCount >= 2)
       .sort((a, b) => b.matchupCount - a.matchupCount);
   }, [uid, leagueId, weeklyMatchups, weeklyResults, memberProfiles]);
-}
-
-// =============================================================================
-// HOOK: useLeagueNotificationBadge
-// =============================================================================
-
-/**
- * Simple hook for navigation badge - just returns unread count for all leagues
- */
-export function useLeagueNotificationBadge(uid: string | undefined) {
-  const count = useUnreadNotificationCount(uid);
-
-  return {
-    count,
-    hasNotifications: count > 0,
-    displayCount: count > 99 ? '99+' : count.toString(),
-  };
 }
 
 // =============================================================================

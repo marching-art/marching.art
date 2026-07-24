@@ -122,9 +122,23 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         // league.id — so run them concurrently instead of as a serial
         // waterfall. Opening a league now costs the SLOWEST of the three round
         // trips, not their sum.
+        //
+        // Member profiles and season data read through the shared react-query
+        // cache: getMemberProfiles is one getDoc per member (N reads of large
+        // profile docs), so re-opening a league within the freshness window
+        // must not re-issue the whole fan-out. The membership-derived key
+        // busts the entry when someone joins or leaves.
         const [profiles, sData, matchupDocs] = await Promise.all([
-          getMemberProfiles(league.members),
-          getSeasonData(),
+          queryClient.fetchQuery({
+            queryKey: queryKeys.leagueMemberProfiles(league.id, [...league.members].sort().join(',')),
+            queryFn: () => getMemberProfiles(league.members),
+            staleTime: 5 * 60 * 1000,
+          }),
+          queryClient.fetchQuery({
+            queryKey: queryKeys.season(),
+            queryFn: () => getSeasonData(),
+            staleTime: 5 * 60 * 1000,
+          }),
           getLeagueMatchups(league.id),
         ]);
         setMemberProfiles(profiles);

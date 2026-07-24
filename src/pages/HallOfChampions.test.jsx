@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import HallOfChampions from './HallOfChampions';
 
 vi.mock('../api/season', () => ({
-  getSeasonChampionDocs: vi.fn(),
+  getSeasonChampions: vi.fn(),
 }));
 
 // The banner purchase path pulls in api/functions, which initializes
@@ -20,7 +20,8 @@ vi.mock('../api/functions', () => ({
   purchaseHallBanner: vi.fn(),
 }));
 
-import { getSeasonChampionDocs } from '../api/season';
+import { getSeasonChampions } from '../api/season';
+import { queryClient } from '../lib/queryClient';
 
 const SEASONS = [
   {
@@ -63,7 +64,11 @@ const renderPage = () =>
 const getSidebar = () => screen.getByText('Hall of Champions').closest('.border-r');
 
 beforeEach(() => {
-  getSeasonChampionDocs.mockResolvedValue(SEASONS);
+  // The page reads through the shared react-query cache — clear it so each
+  // test's mock value is actually fetched instead of served from a previous
+  // test's cache entry.
+  queryClient.clear();
+  getSeasonChampions.mockResolvedValue(SEASONS);
 });
 
 describe('HallOfChampions — SoundSport division', () => {

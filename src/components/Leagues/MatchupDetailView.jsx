@@ -70,9 +70,13 @@ const MatchupDetailView = ({
 
         if (!recaps || recaps.length === 0) {
           // Fallback: fetch recaps if not provided (backwards compatibility).
-          // Read through the shared react-query cache entry so this reuses
+          // Read through the shared react-query cache entries so this reuses
           // the Scores/Dashboard/League archive instead of re-downloading it.
-          const sData = await getSeasonData();
+          const sData = await queryClient.fetchQuery({
+            queryKey: queryKeys.season(),
+            queryFn: () => getSeasonData(),
+            staleTime: 5 * 60 * 1000,
+          });
           if (sData) {
             recaps = await queryClient.fetchQuery({
               queryKey: queryKeys.fantasyRecaps(sData.seasonUid),
