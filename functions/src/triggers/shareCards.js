@@ -179,7 +179,11 @@ exports.getShareHttp = onRequest(
               `${clamp(leader.corpsName, 60)} leads ${classLabel} with ${leader.score.toFixed(3)} ` +
               `after day ${route.day}. Full fantasy drum corps standings on marching.art.`,
             imageUrl: `${SITE_URL}/api/og/scores/${route.seasonUid}/${route.day}/${route.classKey}.png`,
-            redirectPath: "/",
+            // Land humans on the public results page for the shared day —
+            // the standings the card promised — not the homepage. (Also
+            // where the canonical points, consolidating crawl signal on the
+            // indexable page.)
+            redirectPath: `/results/${route.seasonUid}/${route.day}`,
           };
         }
       } else if (route.type === "champion") {
