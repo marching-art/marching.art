@@ -165,6 +165,7 @@ const {
   podiumNightly,
 } = require("./src/scheduled/dropDispatcher");
 const { scoringWatchdog } = require("./src/scheduled/scoringWatchdog");
+const { scrapeCanary } = require("./src/scheduled/scrapeCanary");
 const {
   generateWeeklyMatchups,
   generateWeeklyRecaps,
@@ -365,6 +366,9 @@ module.exports = {
   scoreDropDispatcher,
   podiumNightly,
   scoringWatchdog,
+  // Afternoon dci.org markup-drift canary — turns a scraper-breaking site
+  // redesign into a 1 PM email instead of a 2 AM scoring incident.
+  scrapeCanary,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
   economyStatsJob,
