@@ -292,6 +292,21 @@ jobs:
       - name: Install emulator tooling
         run: cd firestore-tests && npm ci
 
+      # The Firestore emulator needs a JDK; firebase-tools requires >= 21
+      # (same setup the rules-emulator job uses — without it the emulators
+      # refuse to start on the runner's default JDK).
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # Same emulator-JAR cache the rules job keeps (~60 MB download).
+      - name: Cache Firestore emulator
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-${{ hashFiles('firestore-tests/package-lock.json') }}
+
       - name: Run emulator-backed e2e (guest draft loop)
         env:
           VITE_FIREBASE_API_KEY: fake-api-key-for-e2e
