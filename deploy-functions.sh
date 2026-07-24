@@ -28,10 +28,17 @@
 #   FIREBASE_PROJECT project to deploy to (default marching-art)
 #
 # SCORE PROCESSING TIMELINE (all times Eastern):
+#   With game-settings/features.dropScheduling ON (timezone-aware pipeline):
+#   8 PM-2:45 AM - scoreDropDispatcher gate ticks (scrape at the westernmost
+#                  show's announced time; scores drop 11 PM/12/1/2 AM by zone,
+#                  midnight on finals week, 9 PM off-season)
+#   9:00 PM      - podiumNightly (Podium Class, year-round)
+#   With the flag OFF (legacy pipeline; dispatcher runs in shadow):
 #   1:30 AM - scrapeDciScores (scrapes DCI website)
 #   2:00 AM - processDailyLiveScores / dailyOffSeasonProcessor (calculates user scores)
-#   2:00 AM - processLiveScoreRecap / processDciScores triggers (save to historical_scores)
-#   2:00 AM - onFantasyRecapUpdated trigger → processNewsGeneration
+#   Either mode:
+#   on publish - processLiveScoreRecap / processDciScores triggers (save to historical_scores)
+#   on recap   - onFantasyRecapUpdated trigger → processNewsGeneration
 #   3:00 AM - seasonScheduler, scheduledLifetimeLeaderboardUpdate
 #
 # Score-critical functions are pinned to the first batches to minimize
@@ -100,6 +107,8 @@ done <<< "$ALL_FUNCTIONS"
 # These deploy first; everything else follows in export order. Names listed
 # here must exist in index.js — a stale entry is skipped with a warning.
 PRIORITY_FUNCTIONS=(
+    scoreDropDispatcher
+    podiumNightly
     scrapeDciScores
     processDailyLiveScores
     dailyOffSeasonProcessor

@@ -3,8 +3,27 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
+const { isDropSchedulingEnabled } = require("../helpers/features");
 const { runPodiumStage, runDiscordStage } = require("./nightlyStages");
 const { discordScoresWebhookUrl } = require("../helpers/scoreDrop");
+
+/**
+ * True when the timezone-aware drop dispatcher owns tonight's pipeline
+ * (scheduled/dropDispatcher.js) and these legacy 2 AM jobs must stand down.
+ * Even without this check the shared {seasonUid}_day{N} scoring lease
+ * prevents double-scoring — the gate just saves the wasted run and keeps
+ * Podium/Discord from racing their own leases.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} jobName
+ * @returns {Promise<boolean>}
+ */
+async function dropDispatcherOwnsTonight(db, jobName) {
+  const enabled = await isDropSchedulingEnabled(db);
+  if (enabled) {
+    logger.info(`[${jobName}] drop scheduling enabled; deferring to the drop dispatcher.`);
+  }
+  return enabled;
+}
 
 /**
  * Run the flag-gated Podium stage after fantasy scoring (Phase 1.2). Fully
@@ -55,8 +74,9 @@ exports.dailyOffSeasonProcessor = onSchedule({
   retryCount: 2,
   secrets: [discordScoresWebhookUrl],
 }, async () => {
-  await processAndArchiveOffSeasonScoresLogic();
   const db = getDb();
+  if (await dropDispatcherOwnsTonight(db, "off-season-2am")) return;
+  await processAndArchiveOffSeasonScoresLogic();
   await runPodiumStageIsolated(db);
   await runDiscordStageIsolated(db);
 });
@@ -121,6 +141,7 @@ exports.processDailyLiveScores = onSchedule({
   secrets: [discordScoresWebhookUrl],
 }, async () => {
   const db = getDb();
+  if (await dropDispatcherOwnsTonight(db, "live-2am")) return;
   await runLiveFantasyStage(db);
   await runPodiumStageIsolated(db);
   await runDiscordStageIsolated(db);

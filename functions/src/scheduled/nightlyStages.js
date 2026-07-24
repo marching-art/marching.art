@@ -36,9 +36,14 @@ const SPRING_TRAINING_DAYS_DEFAULT = 21;
  * (off-season and live) can call it identically.
  *
  * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} [options]
+ * @param {number} [options.calendarDay] - Explicit calendar day to process.
+ *   The legacy 2 AM callers omit it (derived via the 2 AM game-day reset);
+ *   the 9 PM ET Podium job (scheduled/dropDispatcher.js) passes the show
+ *   date's day, where the 2 AM derivation would be off by one.
  * @returns {Promise<{status: string, [key: string]: unknown}>}
  */
-async function runPodiumStage(db) {
+async function runPodiumStage(db, { calendarDay: calendarDayOverride = null } = {}) {
   if (!(await isPodiumEnabled(db))) {
     return { status: "disabled" };
   }
@@ -48,7 +53,8 @@ async function runPodiumStage(db) {
   const seasonData = seasonDoc.data();
   if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
 
-  const calendarDay = getCompletedCalendarDay(seasonData.schedule.startDate.toDate());
+  const calendarDay =
+    calendarDayOverride ?? getCompletedCalendarDay(seasonData.schedule.startDate.toDate());
   const springTrainingDays =
     seasonData.status === "live-season"
       ? seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS_DEFAULT
@@ -118,9 +124,14 @@ async function runPodiumStage(db) {
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} webhookUrl - Discord webhook URL; falsy disables the stage.
  * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @param {Object} [options]
+ * @param {number} [options.scoredDay] - Explicit competition day whose drop to
+ *   post. The legacy 2 AM callers omit it (derived via the 2 AM reset); the
+ *   drop dispatcher passes the planner's day, since it posts at the drop
+ *   instant (as early as 9/11 PM ET) where the 2 AM derivation is off by one.
  * @returns {Promise<{status: string, [key: string]: unknown}>}
  */
-async function runDiscordStage(db, webhookUrl, fetchImpl) {
+async function runDiscordStage(db, webhookUrl, fetchImpl, { scoredDay: scoredDayOverride = null } = {}) {
   if (!webhookUrl) return { status: "disabled" };
 
   const seasonDoc = await db.doc("game-settings/season").get();
@@ -128,8 +139,8 @@ async function runDiscordStage(db, webhookUrl, fetchImpl) {
   const seasonData = seasonDoc.data();
   if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
 
-  const calendarDay = getCompletedCalendarDay(seasonData.schedule.startDate.toDate());
-  const scoredDay = toCompetitionDay(calendarDay, seasonData);
+  const scoredDay = scoredDayOverride ?? toCompetitionDay(
+    getCompletedCalendarDay(seasonData.schedule.startDate.toDate()), seasonData);
 
   if (scoredDay < 1 || scoredDay > 49) return { status: "out-of-season", scoredDay };
 

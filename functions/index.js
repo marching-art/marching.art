@@ -160,6 +160,10 @@ const {
   dailyOffSeasonProcessor,
   processDailyLiveScores,
 } = require("./src/scheduled/dailyProcessors");
+const {
+  scoreDropDispatcher,
+  podiumNightly,
+} = require("./src/scheduled/dropDispatcher");
 const { scoringWatchdog } = require("./src/scheduled/scoringWatchdog");
 const {
   generateWeeklyMatchups,
@@ -356,6 +360,8 @@ module.exports = {
   seasonScheduler,
   dailyOffSeasonProcessor,
   processDailyLiveScores,
+  scoreDropDispatcher,
+  podiumNightly,
   scoringWatchdog,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,

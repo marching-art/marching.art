@@ -321,6 +321,14 @@ match /fantasy_recaps/{docId} {
   }
 }
 
+// Nightly score-drop plans — tonight's scrape/drop schedule, backend-written
+// by the drop dispatcher (scheduled/dropDispatcher.js). Public so the client
+// can show a real countdown to the night's drop time.
+match /drop_plans/{showDate} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 // Podium Class recap sheets — public like fantasy_recaps, backend-written by
 // the nightly Podium stage (helpers/podium/processor.js).
 match /podium-recaps/{seasonUid} {
