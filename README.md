@@ -77,6 +77,7 @@ via the `deploy-functions.yml` GitHub Actions workflow (or `deploy-functions.sh`
 | [`docs/GAMIFICATION.md`](docs/GAMIFICATION.md)       | Progression, economy & engagement: XP/levels, CorpsCoin, the Shop, achievements, streaks, the daily loop, leagues, records, live-ops |
 | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)     | Visual identity (the data-terminal token system), typography, motion, and mobile-UX rules                                            |
 | [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md)       | External integrations: YouTube embeds, Gemini AI news/media, and the historical-data importers                                       |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md)           | Ops runbook: Firestore backup policy (PITR + scheduled backups), restore procedures, functions/hosting deploy rollback               |
 
 ## License
 
