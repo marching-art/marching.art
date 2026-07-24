@@ -59,7 +59,7 @@ const STEPS = [
   {
     id: 'check_scores',
     title: 'Read the Recaps',
-    description: 'Scores drop overnight around 2 AM ET — check your first recap',
+    description: 'Scores drop nightly — 9 PM ET in the off-season, late evening in live season — check your first recap',
     xp: 25,
     coin: 0,
     icon: Trophy,

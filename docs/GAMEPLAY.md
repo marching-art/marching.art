@@ -86,11 +86,20 @@ Rules:
 
 ## Scoring
 
-Scores are processed in a **nightly run at ~2:00 AM ET** (the nightly
-processors). Each night a corps competed, its captions are scored from the
-underlying DCI data (real, in Live Season; historical, in Off-Season) and its
-fantasy total updates. The nightly "score drop" is the game's core daily beat —
-you set a lineup, register for shows, and wake up to results and rank changes.
+Scores are processed in a nightly run whose time mirrors real DCI score
+releases (see [`SCORE_DROPS.md`](SCORE_DROPS.md) for the full system):
+
+- **Off-season: 9:00 PM ET**, fixed, year-round.
+- **Live season: when the night's furthest-west show would post** — 11:00 PM
+  ET for an Eastern-only night, midnight for Central, 1:00 AM for Mountain,
+  2:00 AM for Pacific; Championship Week in Indianapolis drops at midnight ET.
+  The backend publishes each night's exact instant to `drop_plans/{date}`,
+  which drives the client countdown.
+
+Each night a corps competed, its captions are scored from the underlying DCI
+data (real, in Live Season; historical, in Off-Season) and its fantasy total
+updates. The nightly "score drop" is the game's core daily beat — you set a
+lineup, register for shows, and check the drop for results and rank changes.
 
 ## Caption-change windows
 
@@ -126,10 +135,12 @@ beyond its guaranteed window.
 Additional locks:
 
 - Every **Saturday at 8:00 PM ET** (the end of days 7/14/21/28/35/42), changes
-  **lock** until that night's scores are processed (the 2:00 AM ET nightly run;
-  if a day had no events, changes reopen at 2:00 AM ET).
+  **lock** until the **2:00 AM ET reopen boundary**. Scores drop earlier than
+  that under the timezone-aware pipeline, but the lock deliberately holds
+  until 2:00 AM (the server gate is 2:00 AM AND the night's recap existing;
+  if a day had no events, changes reopen at 2:00 AM regardless).
 - During Championship Week, changes close at **8:00 PM ET each day** and reopen
-  once scores are processed; each competing class gets a fresh 2 changes each day.
+  at 2:00 AM ET; each competing class gets a fresh 2 changes each day.
 
 The client display (`src/utils/seasonClock.js`) is kept exactly in sync with
 what the server (`captionWindows.js`) enforces on save, so the countdown you see
@@ -142,8 +153,9 @@ Each week you register your corps for the shows you want to compete in that week
 **except the final week (week 7), which allows up to 7** to accommodate
 Championship Week.
 
-Registrations save to your corps' `selectedShows.week{N}`. Register before the
-nightly run to compete that night.
+Registrations save to your corps' `selectedShows.week{N}`. Register before that
+night's scores process to compete that night (9 PM ET in the off-season; as
+early as 11 PM ET on live-season nights).
 
 ## Championship Week (Days 45–49)
 

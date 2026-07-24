@@ -12,7 +12,7 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
 import { ShowRegistrationModal, HostEventCard } from '../components/Schedule';
-import { formatCountdown } from '../utils/seasonClock';
+import { formatCountdown, formatEtShort } from '../utils/seasonClock';
 import { competitionDayToDate } from '../utils/competitionCalendar';
 import { useSeasonDeadlines } from '../hooks/useSeasonClock';
 import { usePodiumEnabled } from '../hooks/useFeatures';
@@ -26,7 +26,7 @@ import { WeekPills, ShowsList, ChampionshipWeekDisplay } from './ScheduleParts';
 
 const Schedule = () => {
   const { user } = useAuth();
-  const { scoresInMs } = useSeasonDeadlines();
+  const { scoresAt, scoresInMs, scoresExact } = useSeasonDeadlines();
   const [loading, setLoading] = useState(true);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
@@ -203,11 +203,12 @@ const Schedule = () => {
               </p>
               <p className="text-[10px] text-cyan-400 flex items-center gap-1">
                 <Clock className="w-2.5 h-2.5" aria-hidden="true" />
-                Scores process in{' '}
+                Scores drop in{' '}
                 <span className="font-bold font-data tabular-nums">
                   {formatCountdown(scoresInMs)}
                 </span>{' '}
-                (nightly at 2 AM ET)
+                ({scoresExact ? '' : 'by '}
+                {formatEtShort(scoresAt)})
               </p>
             </div>
           </div>

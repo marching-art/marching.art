@@ -182,7 +182,7 @@ const StartSection = () => (
         ],
         [
           'Compete & level up',
-          'Scores drop nightly around 2:00 AM ET. Earn XP, unlock higher classes, and climb the leaderboards.',
+          'Scores drop every night — 9:00 PM ET in the off-season, and as soon as the last West Coast show wraps in live season (11 PM–2 AM ET). Earn XP, unlock higher classes, and climb the leaderboards.',
         ],
       ].map(([title, desc], i) => (
         <div key={title} className="flex items-start gap-3">
@@ -485,7 +485,7 @@ const SeasonSection = () => (
       <DataRow label="Championship Week (45–49)" value="2 per day" />
     </Card>
     <p className="text-[11px] text-muted leading-relaxed">
-      Changes lock every Saturday at 8:00 PM ET and reopen once scores process (around 2:00 AM ET).
+      Changes lock every Saturday at 8:00 PM ET and reopen at 2:00 AM ET, once that night&apos;s scores are final.
       During Championship Week each competing class gets 2 changes per day, resetting nightly at
       8:00 PM ET — only Open and A Class compete Days 45–46, all classes Day 47, and World Class and
       SoundSport the Days 48–49 Finals. That's the same 6 total changes for every class across the

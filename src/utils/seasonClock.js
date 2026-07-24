@@ -3,12 +3,21 @@
  * Season Clock
  *
  * Single source of truth for every player-facing deadline:
- *   - When scores process (nightly Cloud Function, 02:00 America/New_York —
- *     see functions/src/scheduled/dailyProcessors.js)
+ *   - When scores drop. Off-season: 9:00 PM ET, fixed. Live season: when the
+ *     furthest-west show of the night would post (11 PM ET for an
+ *     Eastern-only night, up to 2 AM ET for a West Coast night; midnight ET
+ *     during Championship Week) — the exact instant is published nightly by
+ *     the backend to drop_plans/{date} (functions/src/scheduled/
+ *     dropDispatcher.js) and surfaced via hooks/useSeasonClock. This module
+ *     provides the schedule-free ESTIMATE (exact for off-season, a
+ *     conservative 2 AM ET bound for live nights) used until the plan doc
+ *     exists.
  *   - When caption changes open, lock, and reset — mirrors the backend
- *     rules in functions/src/helpers/captionWindows.js
- *   - When show registration effectively closes (scores processing the
- *     night after the show)
+ *     rules in functions/src/helpers/captionWindows.js. Lockouts reopen at
+ *     the 2 AM ET boundary regardless of how early that night's scores
+ *     dropped (the backend gate is 2 AM AND the recap existing).
+ *   - When show registration effectively closes (the night's scores
+ *     processing).
  *
  * All UI surfaces that display a deadline must derive it from here so the
  * times can never drift apart between screens.
@@ -17,8 +26,18 @@
 const ET_ZONE = 'America/New_York';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Hour of day (ET) when the nightly score processors run. */
+/**
+ * Hour of day (ET) of the caption-lockout reopen boundary — and the latest
+ * possible live-season score drop (a Pacific-westernmost night). Kept at 2 AM
+ * to mirror functions/src/helpers/captionWindows.js.
+ */
 export const SCORES_PROCESS_HOUR_ET = 2;
+
+/** Hour of day (ET) when off-season scores drop (fixed, year-round). */
+export const OFF_SEASON_DROP_HOUR_ET = 21;
+
+/** Earliest possible live-season drop: 11 PM ET (Eastern-only show night). */
+export const LIVE_EARLIEST_DROP_HOUR_ET = 23;
 
 /** Competition weeks in a season. */
 export const TOTAL_SEASON_WEEKS = 7;
@@ -101,28 +120,73 @@ function easternWallTimeToDate(year, month, day, hour) {
 }
 
 /**
- * Next instant the nightly score processors run (02:00 ET).
+ * Next occurrence of an ET wall-clock hour, rolling to tomorrow if today's
+ * instance already passed.
+ * @param {number} hour - 0-23 (ET)
  * @param {Date} [now]
  * @returns {Date}
  */
-export function getNextScoresProcessingTime(now = new Date()) {
+function nextEasternHour(hour, now = new Date()) {
   const today = easternParts(now);
-  let target = easternWallTimeToDate(today.year, today.month, today.day, SCORES_PROCESS_HOUR_ET);
+  let target = easternWallTimeToDate(today.year, today.month, today.day, hour);
   if (target.getTime() <= now.getTime()) {
     const tomorrow = easternParts(new Date(now.getTime() + DAY_MS));
-    target = easternWallTimeToDate(
-      tomorrow.year,
-      tomorrow.month,
-      tomorrow.day,
-      SCORES_PROCESS_HOUR_ET
-    );
+    target = easternWallTimeToDate(tomorrow.year, tomorrow.month, tomorrow.day, hour);
   }
   return target;
 }
 
 /**
- * The instant show registration effectively closes: scores processing at
- * 02:00 ET the day after the show. Until then, attendance can still change.
+ * Next caption-lockout reopen boundary (02:00 ET). Also the latest possible
+ * live-season score drop. NOT the score-drop time itself — use
+ * getScoreDropEstimate / the drop_plans doc for that.
+ * @param {Date} [now]
+ * @returns {Date}
+ */
+export function getNextScoresProcessingTime(now = new Date()) {
+  return nextEasternHour(SCORES_PROCESS_HOUR_ET, now);
+}
+
+/**
+ * Schedule-free estimate of the next score drop.
+ *
+ * Off-season drops are a fixed 9 PM ET, so the estimate is exact. Live-season
+ * drops depend on the night's westernmost show (11 PM–2 AM ET; the backend
+ * publishes tonight's exact instant to drop_plans/{date} from ~8 PM ET) — so
+ * the estimate is the conservative 2 AM ET upper bound, marked inexact, and
+ * hooks/useSeasonClock overlays the plan doc when it exists.
+ *
+ * @param {Object|null} seasonData - Season doc (needs status); null tolerated.
+ * @param {Date} [now]
+ * @returns {{at: Date, exact: boolean}}
+ */
+export function getScoreDropEstimate(seasonData, now = new Date()) {
+  if (seasonData?.status === 'off-season') {
+    return { at: nextEasternHour(OFF_SEASON_DROP_HOUR_ET, now), exact: true };
+  }
+  return { at: nextEasternHour(SCORES_PROCESS_HOUR_ET, now), exact: false };
+}
+
+/**
+ * Tonight's show-date key (YYYY-MM-DD, ET) — the drop_plans/{date} doc id.
+ * Mirrors the backend's 3-hour show-day reset (functions/src/helpers/
+ * dropPlanner.js showDateFor): the whole 11 PM–2:45 AM drop window belongs
+ * to the calendar date the shows were held.
+ * @param {Date} [now]
+ * @returns {string}
+ */
+export function getShowDateKey(now = new Date()) {
+  const shifted = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const p = easternParts(shifted);
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+/**
+ * The LATEST instant show registration can close: 02:00 ET the day after the
+ * show — the last possible moment that night's scores can process. Use for
+ * "is this show definitely past?" checks (scheduleUtils.isEventPast). For the
+ * player-facing "change attendance until..." message, use
+ * getShowRegistrationCloseEstimate — scores usually process earlier.
  * @param {Date|null} eventDate - Local-midnight Date for the show's calendar day
  *   (as produced by Schedule's getActualDate)
  * @returns {Date|null}
@@ -137,6 +201,26 @@ export function getShowRegistrationDeadline(eventDate) {
 }
 
 /**
+ * The EARLIEST instant a show's registration can close — when that night's
+ * scores may start processing. Off-season: 9 PM ET on the show date (exact).
+ * Live season: 11 PM ET on the show date (an Eastern-only night; western
+ * shows push the actual drop later, so this is the safe bound to promise).
+ * @param {Date|null} eventDate - Local-midnight Date for the show's calendar day
+ * @param {Object|null} seasonData - Season doc (needs status)
+ * @returns {{at: Date, exact: boolean}|null}
+ */
+export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
+  if (!eventDate || Number.isNaN(eventDate.getTime())) return null;
+  const year = String(eventDate.getFullYear());
+  const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+  const day = String(eventDate.getDate()).padStart(2, '0');
+  if (seasonData?.status === 'off-season') {
+    return { at: easternWallTimeToDate(year, month, day, OFF_SEASON_DROP_HOUR_ET), exact: true };
+  }
+  return { at: easternWallTimeToDate(year, month, day, LIVE_EARLIEST_DROP_HOUR_ET), exact: false };
+}
+
+/**
  * The caption-change window for a given instant.
  *
  * Replicates the backend rules exactly (functions/src/helpers/captionWindows.js,
@@ -146,11 +230,12 @@ export function getShowRegistrationDeadline(eventDate) {
  *   - Days 15-42: 3 changes per week per class, spendable one at a time or
  *     all at once.
  *   - Every Saturday 8 PM ET (end of days 7/14/21/28/35/42): changes lock
- *     until scores process (nightly run at 2 AM ET).
+ *     until the 2 AM ET reopen boundary (that night's scores are final by
+ *     then — they drop earlier, but the lock holds until 2 AM).
  *   - Days 43-44: no changes at all.
  *   - Days 45-49 (Championship Week): 2 changes per day for each class still
  *     competing that day (the allotment resets every competition day); changes
- *     close at the 8 PM ET boundary each day and reopen after scores process.
+ *     close at the 8 PM ET boundary each day and reopen at 2 AM ET.
  *     Only Open/A compete Days 45-46, all classes Day 47, and World/SoundSport
  *     the Days 48-49 Finals — a class not competing is locked out (pass
  *     corpsClass to surface that; omit for a class-agnostic window).
@@ -190,7 +275,9 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
   const dayStart = (d) => new Date(startDate.getTime() + (springTrainingDays + d - 1) * DAY_MS);
   const day = Math.floor((now.getTime() - startDate.getTime()) / DAY_MS) + 1 - springTrainingDays;
   const week = Math.max(1, Math.ceil(day / 7));
-  // Lockouts end at the nightly 2 AM ET score-processing run after a boundary.
+  // Lockouts end at the 2 AM ET reopen boundary after a lock (scores drop
+  // earlier under the timezone-aware pipeline, but the backend holds the
+  // lock until 2 AM AND the recap exists — captionWindows.js).
   const reopenAfter = (d) => getNextScoresProcessingTime(dayStart(d));
 
   const base = {
@@ -254,7 +341,7 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
 
   // Days 1-42 (day < 1 is spring training / pre-season: unlimited, no lock).
   // Weeks begin on days 8, 15, 22, 29, 36 — the morning after a Saturday
-  // 8 PM ET close — and stay locked until scores process at 2 AM ET.
+  // 8 PM ET close — and stay locked until the 2 AM ET reopen boundary.
   const isWeekStartDay = day > 1 && day % 7 === 1;
   const opensAt = isWeekStartDay ? reopenAfter(day) : null;
   const locked = opensAt !== null && now.getTime() < opensAt.getTime();

@@ -17,7 +17,8 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
-import { getShowRegistrationDeadline, formatEtDayTime } from '../../utils/seasonClock';
+import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/seasonClock';
+import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
 import RunningOrder from './RunningOrder';
 import CorpsSelectionItem from './ShowRegistrationModalParts';
@@ -47,8 +48,15 @@ const ShowRegistrationModal = ({
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
   const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
 
-  // Registration stays open until the nightly score processing after show day
-  const registrationDeadline = useMemo(() => getShowRegistrationDeadline(eventDate), [eventDate]);
+  // Registration stays open until the show night's scores process. That can
+  // be as early as 9 PM ET (off-season, exact) or 11 PM ET (live season,
+  // earlier bound — western shows push the actual drop later), so we promise
+  // the EARLIEST close rather than the old fixed 2 AM.
+  const seasonData = useSeasonStore((s) => s.seasonData);
+  const registrationClose = useMemo(
+    () => getShowRegistrationCloseEstimate(eventDate, seasonData),
+    [eventDate, seasonData]
+  );
 
   // Check if this is a championship show with auto-enrollment
   const isChampionship = show.isChampionship === true;
@@ -646,13 +654,14 @@ const ShowRegistrationModal = ({
                   <span className="text-interactive font-bold">{maxShows} shows per week</span>.
                   Scores from attended shows contribute to your season standings.
                 </p>
-                {registrationDeadline && (
+                {registrationClose && (
                   <p className="mt-1 flex items-center gap-1">
                     <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
                     <span>
-                      You can add or change attendance until scores process:{' '}
+                      You can add or change attendance until the night&apos;s scores
+                      process{registrationClose.exact ? ':' : ' — as early as'}{' '}
                       <span className="text-cyan-400 font-bold">
-                        {formatEtDayTime(registrationDeadline)}
+                        {formatEtDayTime(registrationClose.at)}
                       </span>
                     </span>
                   </p>

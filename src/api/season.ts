@@ -21,6 +21,20 @@ import type { SeasonData, Show, CorpsClass, DayRecap, ShowWithResults } from '..
 // =============================================================================
 
 /**
+ * Tonight's score-drop plan (drop_plans/{showDateKey}), written nightly by the
+ * backend drop dispatcher from ~8 PM ET. Carries the exact instant fantasy
+ * scores publish (`dropInstant`) — variable in live season by the night's
+ * westernmost show. Null when no plan exists yet (earlier in the day, or the
+ * dispatcher isn't deployed); callers fall back to seasonClock's estimate.
+ */
+export async function getDropPlan(showDateKey: string): Promise<DocumentData | null> {
+  return withErrorHandling(async () => {
+    const snap = await getDoc(doc(db, `drop_plans/${showDateKey}`));
+    return snap.exists() ? snap.data() : null;
+  }, 'getDropPlan');
+}
+
+/**
  * Get current season data
  */
 export async function getSeasonData(): Promise<SeasonData | null> {

@@ -8,8 +8,10 @@ historical-data importers that feed scoring and schedule generation.
 
 ## Discord (nightly score drop)
 
-After the 2 AM scoring commit, the nightly processors post one rich embed to
-the community server's scores channel: tonight's top three per ranked class,
+After the nightly scoring commit (at the night's score-drop time — see
+[`SCORE_DROPS.md`](SCORE_DROPS.md): 9 PM ET off-season, 11 PM–2 AM ET in live
+season by the westernmost show), the pipeline posts one rich embed to the
+community server's scores channel: tonight's top three per ranked class,
 show count, and a link to `/scores`. SoundSport is mentioned by participation
 count only — its ratings are never revealed anywhere in the product.
 
