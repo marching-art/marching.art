@@ -4,7 +4,15 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getSeasonRecaps, getSeasonChampions, type SeasonChampions } from '../api/season';
+import {
+  getSeasonRecaps,
+  getSeasonRecapDay,
+  getSeasonChampions,
+  getSeasonStandings,
+  type SeasonChampions,
+  type SeasonStandings,
+  type SeasonStandingsEntry,
+} from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay } from '../utils/dashboardScoring';
@@ -84,6 +92,14 @@ export interface UseScoresDataOptions {
   seasonId?: string | null;
   classFilter?: string;
   disableArchiveFallback?: boolean;
+  /**
+   * When true AND the materialized standings cover the season, the full
+   * recap-subcollection download is skipped entirely — standings supply the
+   * leaderboard/stats/days and `allShows` returns []. Pass this when the
+   * visible view doesn't render per-show sheets (the Scores class tabs and
+   * the lazy recap view, which fetches single days via useDayRecapShows).
+   */
+  skipShows?: boolean;
 }
 
 /** Recap-ish input for formatRecapDate (also accepts the Podium day shim). */
@@ -323,10 +339,84 @@ export const calculateCaptionRanks = <T extends CaptionAggregates>(
 };
 
 /**
+ * Normalize one recap day doc into the NormalizedShow[] shape the score
+ * views consume. Shared by the season-wide memo below and the single-day
+ * lazy hook (useDayRecapShows).
+ */
+export const normalizeRecapToShows = (
+  recap: {
+    offSeasonDay: number;
+    date?: RecapDate | null;
+    shows?: Array<{
+      eventName: string;
+      location: string;
+      results?: Parameters<typeof normalizeShowResult>[0][];
+    }>;
+  },
+  seasonId: string,
+  seasonSchedule: SeasonScheduleLike
+): NormalizedShow[] => {
+  const recapDate = formatRecapDate(recap, seasonSchedule);
+  return (
+    recap.shows?.map((show) => ({
+      eventName: show.eventName,
+      location: show.location,
+      date: recapDate,
+      offSeasonDay: recap.offSeasonDay,
+      seasonId,
+      scores:
+        show.results
+          ?.map((result) => normalizeShowResult(result))
+          .sort((a, b) => b.score - a.score) || [],
+    })) || []
+  );
+};
+
+/**
+ * Convert materialized standings entries into the LeaderboardEntry shape the
+ * class-standings views consume. History items are hydrated with the entry's
+ * identity fields so consumers that read scores[0]/scores[1] (caption
+ * breakdowns, rank deltas, sparklines) see the same shape the client-side
+ * aggregation produced.
+ */
+const standingsToLeaderboard = (
+  classes: Record<string, SeasonStandingsEntry[]>
+): LeaderboardEntry[] => {
+  const CLASS_ORDER = ['worldClass', 'openClass', 'aClass'];
+  const ordered = [
+    ...CLASS_ORDER.filter((cls) => classes[cls]),
+    ...Object.keys(classes).filter((cls) => !CLASS_ORDER.includes(cls)),
+  ];
+  return ordered.flatMap((cls) =>
+    (classes[cls] || []).map((entry) => ({
+      ...entry,
+      corpsClass: entry.corpsClass as CorpsClass,
+      scores: entry.scores.map((h) => ({
+        ...h,
+        corps: entry.corps,
+        corpsName: entry.corpsName,
+        uid: entry.uid,
+        displayName: entry.displayName,
+        avatarUrl: entry.avatarUrl,
+        corpsClass: entry.corpsClass as CorpsClass,
+        captions: {} as CaptionScores,
+        eventName: '',
+        date: '',
+      })),
+    }))
+  );
+};
+
+/**
  * Main hook for scores data
  */
 export const useScoresData = (options: UseScoresDataOptions = {}) => {
-  const { seasonId = null, classFilter = 'all', disableArchiveFallback = false } = options;
+  const {
+    seasonId = null,
+    classFilter = 'all',
+    disableArchiveFallback = false,
+    skipShows = false,
+  } = options;
 
   const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
   const currentSeasonData = useSeasonStore((state) => state.seasonData);
@@ -359,20 +449,65 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   // data that wasn't changing. An explicit user refresh still bypasses
   // staleTime (see refetch below), so "check right after the drop" works.
   const isFetchingCurrentSeason = targetSeasonId === currentSeasonUid;
+
+  // Materialized standings: ~4 small docs written nightly by the scoring
+  // pipeline. When they cover the season, the class-standings/stats surfaces
+  // read these instead of aggregating the whole recap subcollection.
+  const {
+    data: standings,
+    isLoading: standingsLoading,
+    refetch: refetchStandings,
+  } = useQuery<SeasonStandings | null>({
+    queryKey: queryKeys.seasonStandings(targetSeasonId ?? ''),
+    queryFn: () => getSeasonStandings(targetSeasonId ?? ''),
+    enabled: !!targetSeasonId,
+    staleTime: isFetchingCurrentSeason ? 60 * 60 * 1000 : Infinity,
+    gcTime: 60 * 60 * 1000,
+  });
+
+  // Standings are trustworthy when they exist, cover only ranked classes we
+  // need (classFilter 'all' — the Scores page; Dashboard's class-specific
+  // filters include SoundSport, which standings never carry), and don't run
+  // ahead of the client-side reveal boundary: getEffectiveDay hides the most
+  // recent scored day until it "becomes effective" at the 2 AM ET rollover,
+  // and the standings doc always reflects the very latest scored day.
+  const effectiveDayNow = isFetchingCurrentSeason ? getEffectiveDay(currentDay) : null;
+  const standingsUsable = Boolean(
+    standings &&
+    classFilter === 'all' &&
+    (!isFetchingCurrentSeason ||
+      (effectiveDayNow != null &&
+        (standings.lastScoredDay == null || standings.lastScoredDay <= effectiveDayNow)))
+  );
+
+  // The full recap download only runs when a consumer actually needs per-show
+  // data (skipShows false) or the standings can't serve this season. While
+  // the standings query is still in flight the download stays parked —
+  // firing it eagerly would re-download the whole season in parallel and
+  // defeat the point on every cold load.
+  const recapsEnabled = !!targetSeasonId && (!skipShows || (!standingsLoading && !standingsUsable));
   const {
     data: rawRecaps,
-    isLoading: loading,
+    isLoading: recapsLoading,
     error: queryError,
-    refetch,
+    refetch: refetchRecaps,
   } = useQuery({
     queryKey: queryKeys.fantasyRecaps(targetSeasonId ?? ''),
     queryFn: () => getSeasonRecaps(targetSeasonId ?? ''),
-    enabled: !!targetSeasonId,
+    enabled: recapsEnabled,
     staleTime: isFetchingCurrentSeason ? 60 * 60 * 1000 : Infinity,
     // gcTime >= staleTime so still-fresh data is never evicted while
     // unobserved (an eviction would force a full re-read on return).
     gcTime: 60 * 60 * 1000,
   });
+
+  const loading = standingsLoading || (recapsEnabled && recapsLoading);
+
+  // Manual refresh must hit whichever sources are live (react-query refetch
+  // bypasses staleTime; refetching a disabled query is a no-op).
+  const refetch = useCallback(async () => {
+    await Promise.all([refetchStandings(), recapsEnabled ? refetchRecaps() : Promise.resolve()]);
+  }, [refetchStandings, refetchRecaps, recapsEnabled]);
 
   // Propagate query errors to the existing error state consumed by callers
   useEffect(() => {
@@ -412,38 +547,31 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
           if (!effectiveDay || effectiveDay < 1) return [];
           if (recap.offSeasonDay > effectiveDay) return [];
         }
-        const recapDate = formatRecapDate(recap, seasonSchedule);
-        return (
-          recap.shows?.map((show) => ({
-            eventName: show.eventName,
-            location: show.location,
-            date: recapDate,
-            offSeasonDay: recap.offSeasonDay,
-            seasonId: targetSeasonId ?? '',
-            scores:
-              show.results
-                ?.map((result) => normalizeShowResult(result))
-                .sort((a, b) => b.score - a.score) || [],
-          })) || []
-        );
+        return normalizeRecapToShows(recap, targetSeasonId ?? '', seasonSchedule);
       })
       .sort((a, b) => b.offSeasonDay - a.offSeasonDay);
   }, [rawRecaps, targetSeasonId, currentSeasonUid, currentDay, currentSeasonData]);
 
   // displayedSeasonId: which season's data is currently shown
-  const displayedSeasonId = allShows.length > 0 ? targetSeasonId : null;
+  const displayedSeasonId = allShows.length > 0 || standingsUsable ? targetSeasonId : null;
 
   // OPTIMIZATION #8: Derive availableDays from allShows with useMemo instead of state
   // This ensures days are always in sync with shows and removes redundant state updates
   const availableDays = useMemo(() => {
+    if (standingsUsable && standings) {
+      return [...standings.scoredDays].sort((a, b) => b - a);
+    }
     if (allShows.length === 0) return [];
     // Get unique days sorted descending (most recent first)
     return [...new Set(allShows.map((s) => s.offSeasonDay))].sort((a, b) => b - a);
-  }, [allShows]);
+  }, [standingsUsable, standings, allShows]);
 
   // OPTIMIZATION #8: Derive stats from allShows with useMemo instead of state
   // Eliminates redundant state updates and ensures stats stay in sync with data
   const stats = useMemo<ScoresStats>(() => {
+    if (standingsUsable && standings) {
+      return standings.stats;
+    }
     if (allShows.length === 0) {
       return { recentShows: 0, topScore: '-', corpsActive: 0, avgScore: '0.000' };
     }
@@ -476,7 +604,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
       corpsActive: uniqueCorps.size,
       avgScore,
     };
-  }, [allShows]);
+  }, [standingsUsable, standings, allShows]);
 
   // Filter shows by class
   const filteredShows = useMemo<NormalizedShow[]>(() => {
@@ -504,8 +632,15 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
       .filter((show) => show.scores.length > 0);
   }, [allShows, classFilter]);
 
-  // Aggregate all scores for leaderboard view
+  // Aggregate all scores for leaderboard view. When the materialized
+  // standings cover this season the nightly pipeline has already done this
+  // work — consume it directly instead of re-deriving on every device.
   const aggregatedScores = useMemo(() => {
+    if (standingsUsable && standings) {
+      return standingsToLeaderboard(standings.classes) as ReturnType<
+        typeof calculateCaptionRanks<LeaderboardEntry>
+      >;
+    }
     interface CorpsAggregate {
       corps: string;
       corpsName: string;
@@ -566,7 +701,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
 
     // Add caption ranks
     return calculateCaptionRanks(leaderboard);
-  }, [filteredShows]);
+  }, [standingsUsable, standings, filteredShows]);
 
   // Calculate column statistics for heatmap
   const columnStats = useMemo(
@@ -595,6 +730,9 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   return {
     loading,
     error,
+    // True when the materialized standings are serving this season — callers
+    // use it to pick the lazy recap view over the eager one.
+    usingStandings: standingsUsable,
     // Manual refresh (pull-to-refresh on the Scores page). React Query's
     // refetch bypasses staleTime, so an explicit user pull always re-reads.
     refetch,
@@ -611,6 +749,42 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
     displayedSeasonId,
     selectSeason,
   };
+};
+
+/**
+ * Lazily fetch one day's recap and normalize it to shows. The Scores page's
+ * recap view uses this with the standings-supplied day list, so switching a
+ * day tab costs one doc read (cached per day) instead of the whole season
+ * having been downloaded up front.
+ */
+export const useDayRecapShows = (
+  seasonId: string | null | undefined,
+  day: number | null,
+  enabled = true
+) => {
+  const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
+  const currentSeasonData = useSeasonStore((state) => state.seasonData);
+  const isCurrentSeason = seasonId === currentSeasonUid;
+
+  const queryEnabled = enabled && !!seasonId && typeof day === 'number';
+  const { data, isLoading } = useQuery({
+    queryKey: queryKeys.fantasyRecapDay(seasonId ?? '', day ?? 0),
+    queryFn: () => getSeasonRecapDay(seasonId ?? '', day ?? 0),
+    enabled: queryEnabled,
+    // A scored day's recap is immutable once written; the current season's
+    // latest day can in principle be re-run, so give it the same 60-minute
+    // window the season-wide query uses.
+    staleTime: isCurrentSeason ? 60 * 60 * 1000 : Infinity,
+    gcTime: 60 * 60 * 1000,
+  });
+
+  const shows = useMemo<NormalizedShow[]>(() => {
+    if (!data) return [];
+    const seasonSchedule = isCurrentSeason ? currentSeasonData?.schedule : null;
+    return normalizeRecapToShows(data, seasonId ?? '', seasonSchedule);
+  }, [data, seasonId, isCurrentSeason, currentSeasonData]);
+
+  return { shows, loading: queryEnabled && isLoading };
 };
 
 export default useScoresData;

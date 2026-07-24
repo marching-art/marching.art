@@ -77,6 +77,12 @@ export const queryKeys = {
   // ['fantasyRecaps', seasonUid] hits both the full archive and this entry.
   fantasyRecapsRecent: (seasonUid: string, days: number) =>
     ['fantasyRecaps', seasonUid, 'recent', days] as const,
+  // Single-day variant (the Scores page's lazy recap view) — nested under the
+  // same prefix so a season-level invalidation hits it too.
+  fantasyRecapDay: (seasonUid: string, day: number) =>
+    ['fantasyRecaps', seasonUid, 'day', day] as const,
+  // Materialized season standings (fantasy_standings/{seasonUid} + classes).
+  seasonStandings: (seasonUid: string) => ['seasonStandings', seasonUid] as const,
   // Podium Class recaps live in a separate collection (podium-recaps), never
   // in fantasy_recaps, so they get their own cache key.
   podiumRecaps: (seasonUid: string) => ['podiumRecaps', seasonUid] as const,

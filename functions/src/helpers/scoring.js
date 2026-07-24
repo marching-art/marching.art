@@ -31,6 +31,7 @@ const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./weeklyMat
 const { ChunkedWriter } = require("./chunkedWriter");
 const { getCompletedCalendarDay } = require("./gameDay");
 const { updateRecordsFromRecap } = require("./gameRecords");
+const { writeSeasonStandings } = require("./standingsMaterializer");
 const {
   claimScoringRun,
   markScoringRunCompleted,
@@ -677,6 +678,16 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
 
   // Records Book: fold tonight's results into the all-time records doc.
   await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
+
+  // Materialize season standings (fantasy_standings/{seasonUid}) so clients
+  // read one small doc set instead of the whole recap subcollection.
+  // Isolated: a standings failure must never fail the scoring run — clients
+  // fall back to recap aggregation when the doc is stale or missing.
+  try {
+    await writeSeasonStandings(db, seasonData.seasonUid);
+  } catch (error) {
+    logger.error(`Standings materialization failed (scoring unaffected): ${error.message}`);
+  }
 
   // Settle league prediction pools for the game day whose results just
   // posted (inside the caller's guard, so redeliveries cannot double-pay).

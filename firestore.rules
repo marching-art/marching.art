@@ -310,6 +310,19 @@ match /dci-stats/{docId} {
   allow write: if false; // Backend only
 }
 
+// Materialized season standings, written nightly by the scoring pipeline
+// (helpers/standingsMaterializer.js). Public like the recaps they summarize;
+// contains only ranked-class data (SoundSport scores are never included).
+match /fantasy_standings/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+
+  match /classes/{classKey} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
+}
+
 match /fantasy_recaps/{docId} {
   allow read: if true;
   allow write: if false; // Backend only

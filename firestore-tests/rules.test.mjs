@@ -888,6 +888,53 @@ await check(
   assertFails(setDoc(doc(mallory(), 'drop_plans/2026-07-15'), { dropLabel: 'hacked' }))
 );
 
+// =============================================================================
+// fantasy_standings — nightly materialized season standings (public read like
+// the recaps they summarize; written only by the scoring pipeline).
+// =============================================================================
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'fantasy_standings/season-1'), {
+    seasonUid: 'season-1',
+    scoredDays: [1, 2],
+  });
+  await setDoc(doc(ctx.firestore(), 'fantasy_standings/season-1/classes/worldClass'), {
+    classKey: 'worldClass',
+    entries: [],
+  });
+});
+
+await check(
+  'standings summary is publicly readable',
+  assertSucceeds(
+    getDoc(doc(testEnv.unauthenticatedContext().firestore(), 'fantasy_standings/season-1'))
+  )
+);
+
+await check(
+  'standings class doc is publicly readable',
+  assertSucceeds(
+    getDoc(
+      doc(
+        testEnv.unauthenticatedContext().firestore(),
+        'fantasy_standings/season-1/classes/worldClass'
+      )
+    )
+  )
+);
+
+await check(
+  'signed-in user cannot write standings (backend only)',
+  assertFails(setDoc(doc(mallory(), 'fantasy_standings/season-1'), { scoredDays: [1, 2, 3] }))
+);
+
+await check(
+  'signed-in user cannot write a standings class doc (backend only)',
+  assertFails(
+    setDoc(doc(mallory(), 'fantasy_standings/season-1/classes/worldClass'), { entries: [] })
+  )
+);
+
 await testEnv.cleanup();
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
