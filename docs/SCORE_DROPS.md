@@ -70,11 +70,29 @@ double-score; at worst one night publishes on the legacy clock.
 ## 4. Day selection (the one-off-by-one trap)
 
 The dispatcher's day comes from the planner's **3-hour show-day reset**
-(11 PM–2:45 AM all belong to the show's calendar date) and is passed
-**explicitly** into the scorers. `gameDay.js`'s 2 AM reset — still used for
-week math, pushes, and interactive verbs — is one day behind at every
+(11 PM–2:45 AM all belong to the show's calendar date), exported as
+`showCalendarDay()` and passed **explicitly** into the scorers. `gameDay.js`'s
+2 AM reset — still used for week math and pushes — is one day behind at every
 pre-2AM drop time (`dropDispatcher.test.js` documents this). Never derive
 the scored day from `gameDay.js` inside the drop pipeline.
+
+Every scoring entry point resolves the day to whichever pipeline owns the
+night (flag on → show date; flag off → legacy 2 AM reset):
+
+| Path                                                                                        | Day source                                                                                                        |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `scoreDropDispatcher` (fantasy, both season types)                                          | `planDrop().competitionDay`                                                                                       |
+| `podiumNightly` (9 PM ET)                                                                   | `showCalendarDay()`                                                                                               |
+| Admin `processLiveSeasonScores` / `processAndArchiveOffSeasonScores` / `processPodiumStage` | `getManualRunCalendarDay()` (flag-aware) — a 10 PM manual run targets **tonight**, not the 2 AM-reset "yesterday" |
+| Legacy 2 AM jobs (flag off)                                                                 | unchanged `gameDay.js` derivation                                                                                 |
+
+**Podium's interactive day rolls at 9 PM too** (flag on): the nightly stage
+ends each corps' day and advances `state.today` to tomorrow, so
+`podiumContext` uses `getActivePodiumCalendarDay` — after 9 PM ET, rehearsal
+verbs act on the NEXT day. Leaving the 2 AM boundary in place would let a
+9:30 PM verb rebuild the already-processed day with a fresh block allotment
+whose spends were then silently discarded (`gameDay.test.js` pins the
+boundary). Flag off, the 2 AM boundary applies everywhere, unchanged.
 
 ## 5. Watchdog & diagnostics
 

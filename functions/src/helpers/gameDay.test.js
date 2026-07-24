@@ -193,3 +193,64 @@ describe("getCurrentSeasonWeek", () => {
     );
   });
 });
+
+describe("getActivePodiumCalendarDay", () => {
+  const { getActivePodiumCalendarDay, getActiveCalendarDay } = require("./gameDay");
+  // Season starts 2026-06-01 (UTC midnight); July 1 is calendar day 31.
+  const start = utcMidnight("2026-06-01");
+
+  test("flag off: identical to the legacy 2 AM active day", () => {
+    for (const iso of [
+      "2026-07-02T01:00:00Z", // 9 PM EDT Jul 1
+      "2026-07-02T05:00:00Z", // 1 AM EDT Jul 2
+      "2026-07-01T16:00:00Z", // noon EDT Jul 1
+    ]) {
+      const now = new Date(iso);
+      assert.equal(
+        getActivePodiumCalendarDay(start, false, now),
+        getActiveCalendarDay(start, now),
+        iso
+      );
+    }
+  });
+
+  test("flag on: before 9 PM ET the active day is today (processing hasn't run)", () => {
+    // Noon EDT on Jul 1 -> day 31.
+    assert.equal(getActivePodiumCalendarDay(start, true, new Date("2026-07-01T16:00:00Z")), 31);
+    // 8:59 PM EDT Jul 1 -> still day 31.
+    assert.equal(getActivePodiumCalendarDay(start, true, new Date("2026-07-02T00:59:00Z")), 31);
+  });
+
+  test("flag on: at/after the 9 PM ET processing the active day rolls to tomorrow", () => {
+    // 9:00 PM EDT Jul 1 -> day 32 (tonight's stage processes day 31).
+    assert.equal(getActivePodiumCalendarDay(start, true, new Date("2026-07-02T01:00:00Z")), 32);
+    // 11:30 PM EDT Jul 1 -> day 32. The legacy boundary would still say 31 —
+    // the exact off-by-one that let a late verb rebuild a processed day.
+    assert.equal(getActivePodiumCalendarDay(start, true, new Date("2026-07-02T03:30:00Z")), 32);
+    // 1:30 AM EDT Jul 2 -> still day 32 (legacy would say 31 until its 2 AM
+    // boundary; the 9 PM roll stays consistent through the night).
+    assert.equal(getActivePodiumCalendarDay(start, true, new Date("2026-07-02T05:30:00Z")), 32);
+  });
+
+  test("flag on: agrees with the drop planner's processed day + 1 at 9 PM", () => {
+    const { showCalendarDay } = require("./dropPlanner");
+    const nightly = new Date("2026-07-02T01:00:00Z"); // 9 PM EDT Jul 1
+    // podiumNightly processes showCalendarDay (31); verbs then act on 32.
+    assert.equal(showCalendarDay(start, nightly), 31);
+    assert.equal(getActivePodiumCalendarDay(start, true, nightly), 32);
+  });
+
+  test("flag on: tracks EST in winter (9 PM boundary follows the ET wall clock)", () => {
+    const winterStart = utcMidnight("2026-11-01");
+    // 8:30 PM EST Nov 10 (01:30Z Nov 11) -> day 10.
+    assert.equal(
+      getActivePodiumCalendarDay(winterStart, true, new Date("2026-11-11T01:30:00Z")),
+      10
+    );
+    // 9:30 PM EST Nov 10 (02:30Z Nov 11) -> day 11.
+    assert.equal(
+      getActivePodiumCalendarDay(winterStart, true, new Date("2026-11-11T02:30:00Z")),
+      11
+    );
+  });
+});
