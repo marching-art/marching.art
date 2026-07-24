@@ -3,7 +3,8 @@
 // the season store is seeded directly. Time-dependent output is asserted
 // loosely (a countdown exists) since the chip reads the real clock.
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('../../../api', () => ({ db: {}, functions: {} }));
 
@@ -12,8 +13,23 @@ vi.mock('firebase/firestore', () => ({
   onSnapshot: vi.fn(() => () => {}),
 }));
 
+// useSeasonDeadlines fetches tonight's drop plan through the api layer; a
+// null plan exercises the season-clock estimate fallback the chip renders.
+vi.mock('../../../api/season', () => ({
+  getDropPlan: vi.fn(async () => null),
+}));
+
 import { useSeasonStore } from '../../../store/seasonStore';
 import NextDeadlineChip from './NextDeadlineChip';
+
+// The chip's deadline hook uses react-query (drop-plan cache), so renders
+// need a provider. Fresh client per render keeps tests isolated.
+const render = (ui) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+};
 
 const seedSeason = (status, startDate) => {
   useSeasonStore.setState({

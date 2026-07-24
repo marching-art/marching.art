@@ -15,7 +15,13 @@
       "unresolved": 0
     },
     "geodata": "GeoNames cities1000 via all-the-cities (CC-BY 4.0)",
-    "manualCorrections": "The `manual` entries are durable geocode overrides baked into scripts/buildVenueGazetteer.js (MANUAL_OVERRIDES), applied on every rebuild."
+    "manualCorrections": "The `manual` entries are durable geocode overrides baked into scripts/buildVenueGazetteer.js (MANUAL_OVERRIDES), applied on every rebuild.",
+    "timezones": {
+      "resolvedBy": "tz-lookup (coordinate -> IANA), verified against state offset buckets",
+      "geo": 687,
+      "needsReview": 0,
+      "unresolved": 0
+    }
   },
   "venues": {
     "abilene, tx": {
@@ -29,7 +35,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Abilene, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "adrian, mi": {
       "venueId": "adrian-mi",
@@ -42,7 +50,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Adrian, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "akron, oh": {
       "venueId": "akron-oh",
@@ -55,7 +65,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Akron, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "akron, ohio": {
       "venueId": "akron-oh",
@@ -68,7 +80,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Akron, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "albuquerque, new mexico": {
       "venueId": "albuquerque-nm",
@@ -81,7 +95,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Albuquerque, New Mexico"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "albuquerque, nm": {
       "venueId": "albuquerque-nm",
@@ -94,7 +110,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Albuquerque, NM"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "alexandria, ky": {
       "venueId": "alexandria-ky",
@@ -107,7 +125,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Alexandria, KY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "alexandria, minnesota": {
       "venueId": "alexandria-mn",
@@ -120,7 +140,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Alexandria, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "allendale, mi": {
       "venueId": "allendale-mi",
@@ -133,7 +155,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Allendale, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "allentown pennsylvania": {
       "venueId": "allentown-pa",
@@ -146,7 +170,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Allentown. Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "allentown, pa": {
       "venueId": "allentown-pa",
@@ -159,7 +185,9 @@
       "eventCount": 27,
       "rawVariants": [
         "Allentown, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "allentown, pennsylvania": {
       "venueId": "allentown-pa",
@@ -172,7 +200,9 @@
       "eventCount": 26,
       "rawVariants": [
         "Allentown, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "alpharetta, georgia": {
       "venueId": "alpharetta-ga",
@@ -185,7 +215,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Alpharetta, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "alton, illinois": {
       "venueId": "alton-il",
@@ -198,7 +230,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Alton, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "altoona, pennsylvania": {
       "venueId": "altoona-pa",
@@ -211,7 +245,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Altoona, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "amherst, ohio": {
       "venueId": "amherst-oh",
@@ -224,7 +260,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Amherst, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "ankeny, ia": {
       "venueId": "ankeny-ia",
@@ -237,7 +275,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Ankeny, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ankeny, iowa": {
       "venueId": "ankeny-ia",
@@ -250,7 +290,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Ankeny, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "annapolis, maryland": {
       "venueId": "annapolis-md",
@@ -263,7 +305,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Annapolis, Maryland"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "annapolis, md": {
       "venueId": "annapolis-md",
@@ -276,7 +320,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Annapolis, MD"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "apple valley, mn": {
       "venueId": "apple-valley-mn",
@@ -289,7 +335,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Apple Valley, MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "arkadelphia, arkansas": {
       "venueId": "arkadelphia-ar",
@@ -302,7 +350,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Arkadelphia, Arkansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "arlington, virginia": {
       "venueId": "arlington-va",
@@ -315,7 +365,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Arlington, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "ashland, or": {
       "venueId": "ashland-or",
@@ -328,7 +380,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Ashland, OR"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "atascadero, california": {
       "venueId": "atascadero-ca",
@@ -341,7 +395,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Atascadero, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "atlanta, ga": {
       "venueId": "atlanta-ga",
@@ -354,7 +410,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Atlanta, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "atlanta, georgia": {
       "venueId": "atlanta-ga",
@@ -367,7 +425,9 @@
       "eventCount": 13,
       "rawVariants": [
         "Atlanta, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "auburn, wa": {
       "venueId": "auburn-wa",
@@ -380,7 +440,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Auburn, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "auburn, washington": {
       "venueId": "auburn-wa",
@@ -393,7 +455,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Auburn, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "augusta, nj": {
       "venueId": "augusta-nj",
@@ -406,7 +470,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Augusta, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "austin, texas": {
       "venueId": "austin-tx",
@@ -419,7 +485,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Austin, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "austin, tx": {
       "venueId": "austin-tx",
@@ -432,7 +500,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Austin, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "avon lake, oh": {
       "venueId": "avon-lake-oh",
@@ -445,7 +515,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Avon Lake, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "avon lake, ohio": {
       "venueId": "avon-lake-oh",
@@ -458,7 +530,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Avon Lake, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bakersfield, ca": {
       "venueId": "bakersfield-ca",
@@ -471,7 +545,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Bakersfield, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "bakersfield, california": {
       "venueId": "bakersfield-ca",
@@ -484,7 +560,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Bakersfield, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "baton rouge, louisiana": {
       "venueId": "baton-rouge-la",
@@ -497,7 +575,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Baton Rouge, Louisiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "battle creek, michigan": {
       "venueId": "battle-creek-mi",
@@ -510,7 +590,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Battle Creek, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "bealton, virginia": {
       "venueId": "bealeton-va",
@@ -523,7 +605,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bealton, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bedford, tx": {
       "venueId": "bedford-tx",
@@ -536,7 +620,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bedford, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "belding, michigan": {
       "venueId": "belding-mi",
@@ -549,7 +635,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Belding, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "bellbrook, oh": {
       "venueId": "bellbrook-oh",
@@ -562,7 +650,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Bellbrook, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "belleville, il": {
       "venueId": "belleville-il",
@@ -575,7 +665,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Belleville, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "bellflower, ca": {
       "venueId": "bellflower-ca",
@@ -588,7 +680,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Bellflower, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "bellflower, california": {
       "venueId": "bellflower-ca",
@@ -601,7 +695,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Bellflower, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "belton, tx": {
       "venueId": "belton-tx",
@@ -614,7 +710,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Belton, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "belvidere, il": {
       "venueId": "belvidere-il",
@@ -627,7 +725,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Belvidere, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "bensalem, pennsylvania": {
       "venueId": "bensalem-pa",
@@ -640,7 +740,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bensalem, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "benson, north carolina": {
       "venueId": "benson-nc",
@@ -653,7 +755,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Benson, North Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bentonville, ar": {
       "venueId": "bentonville-ar",
@@ -666,7 +770,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Bentonville, AR"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "bentonville, arkansas": {
       "venueId": "bentonville-ar",
@@ -679,7 +785,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bentonville, Arkansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "beverly, massachusetts": {
       "venueId": "beverly-ma",
@@ -692,7 +800,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Beverly, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "biloxi, ms": {
       "venueId": "biloxi-ms",
@@ -705,7 +815,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Biloxi, MS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "birmingham, al": {
       "venueId": "birmingham-al",
@@ -718,7 +830,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Birmingham, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "birmingham, alabama": {
       "venueId": "birmingham-al",
@@ -731,7 +845,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Birmingham, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "blackwood, new jersey": {
       "venueId": "blackwood-nj",
@@ -744,7 +860,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Blackwood, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bloomington normal, illinois": {
       "venueId": "bloomington-il",
@@ -757,7 +875,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Bloomington/Normal, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "bloomington, indiana": {
       "venueId": "bloomington-in",
@@ -770,7 +890,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Bloomington, Indiana"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "bloomington-normal illinois": {
       "venueId": "bloomington-il",
@@ -783,7 +905,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bloomington-Normal. Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "bloomington-normal, illinois": {
       "venueId": "bloomington-il",
@@ -796,7 +920,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Bloomington-Normal, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "boise, id": {
       "venueId": "boise-id",
@@ -809,7 +935,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Boise, ID"
-      ]
+      ],
+      "timezone": "America/Boise",
+      "tzSource": "geo"
     },
     "boise, idaho": {
       "venueId": "boise-id",
@@ -822,7 +950,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Boise, Idaho"
-      ]
+      ],
+      "timezone": "America/Boise",
+      "tzSource": "geo"
     },
     "bowling green, oh": {
       "venueId": "bowling-green-oh",
@@ -835,7 +965,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Bowling Green, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bowling green, ohio": {
       "venueId": "bowling-green-oh",
@@ -848,7 +980,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Bowling Green, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bowling, ohio": {
       "venueId": "bowling-green-oh",
@@ -861,7 +995,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bowling, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "braintree, massachusetts": {
       "venueId": "braintree-ma",
@@ -874,7 +1010,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Braintree, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "brick, new jersey": {
       "venueId": "brick-nj",
@@ -887,7 +1025,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Brick, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bridgeport, connecticut": {
       "venueId": "bridgeport-ct",
@@ -900,7 +1040,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Bridgeport, Connecticut"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bridgewater, massachusetts": {
       "venueId": "bridgewater-ma",
@@ -913,7 +1055,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bridgewater, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bristol, rhode island": {
       "venueId": "bristol-ri",
@@ -926,7 +1070,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Bristol, Rhode Island"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bristol, rhode, island": {
       "venueId": "bristol-ri",
@@ -939,7 +1085,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Bristol, Rhode, Island"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "bristol, ri": {
       "venueId": "bristol-ri",
@@ -952,7 +1100,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Bristol, RI"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "brockton, massachusetts": {
       "venueId": "brockton-ma",
@@ -965,7 +1115,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Brockton, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "broken arrow, ok": {
       "venueId": "broken-arrow-ok",
@@ -978,7 +1130,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Broken Arrow, OK"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "broken arrow, oklahoma": {
       "venueId": "broken-arrow-ok",
@@ -991,7 +1145,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Broken Arrow, Oklahoma"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "brooklyn, new york": {
       "venueId": "brooklyn-ny",
@@ -1004,7 +1160,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Brooklyn, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "brunswick, georgia": {
       "venueId": "brunswick-ga",
@@ -1017,7 +1175,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Brunswick, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "brunswick, oh": {
       "venueId": "brunswick-oh",
@@ -1030,7 +1190,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Brunswick, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "buena park, ca": {
       "venueId": "buena-park-ca",
@@ -1043,7 +1205,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Buena Park, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "buffalo, new york": {
       "venueId": "buffalo-ny",
@@ -1056,7 +1220,9 @@
       "eventCount": 18,
       "rawVariants": [
         "Buffalo, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "buffalo, ny": {
       "venueId": "buffalo-ny",
@@ -1069,7 +1235,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Buffalo, NY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "burlington, iowa": {
       "venueId": "burlington-ia",
@@ -1082,7 +1250,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Burlington, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "butler, pennsylvania": {
       "venueId": "butler-pa",
@@ -1095,7 +1265,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Butler, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "calabasas, california": {
       "venueId": "calabasas-ca",
@@ -1108,7 +1280,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Calabasas, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "camas, wa": {
       "venueId": "camas-wa",
@@ -1121,7 +1295,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Camas, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "canton, michigan": {
       "venueId": "canton-mi",
@@ -1134,7 +1310,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Canton, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "canton, oh": {
       "venueId": "canton-oh",
@@ -1147,7 +1325,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Canton, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "canton, ohio": {
       "venueId": "canton-oh",
@@ -1160,7 +1340,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Canton, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "canyon, texas": {
       "venueId": "canyon-tx",
@@ -1173,7 +1355,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Canyon, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "canyon, tx": {
       "venueId": "canyon-tx",
@@ -1186,7 +1370,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Canyon, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "cape girardeau, mo": {
       "venueId": "cape-girardeau-mo",
@@ -1199,7 +1385,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Cape Girardeau, MO"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "carmel, indiana": {
       "venueId": "carmel-in",
@@ -1212,7 +1400,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Carmel, Indiana"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "carson city, nevada": {
       "venueId": "carson-city-nv",
@@ -1225,7 +1415,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Carson City, Nevada"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "casper, wy": {
       "venueId": "casper-wy",
@@ -1238,7 +1430,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Casper, WY"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "casper, wyoming": {
       "venueId": "casper-wy",
@@ -1251,7 +1445,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Casper, Wyoming"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "cedar rapids, ia": {
       "venueId": "cedar-rapids-ia",
@@ -1264,7 +1460,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Cedar Rapids, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "cedar rapids, iowa": {
       "venueId": "cedar-rapids-ia",
@@ -1277,7 +1475,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Cedar Rapids, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "cedarburg, wi": {
       "venueId": "cedarburg-wi",
@@ -1290,7 +1490,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Cedarburg, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "cedarburg, wisconsin": {
       "venueId": "cedarburg-wi",
@@ -1303,7 +1505,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Cedarburg, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "centerville, michigan": {
       "venueId": "centreville-mi",
@@ -1316,7 +1520,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Centerville, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "centerville, oh": {
       "venueId": "centerville-oh",
@@ -1329,7 +1535,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Centerville, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "centerville, ohio": {
       "venueId": "centerville-oh",
@@ -1342,7 +1550,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Centerville, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "cerritos, ca": {
       "venueId": "cerritos-ca",
@@ -1355,7 +1565,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Cerritos, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "chambersburg, pa": {
       "venueId": "chambersburg-pa",
@@ -1368,7 +1580,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Chambersburg, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "chambersburg, pennsylvania": {
       "venueId": "chambersburg-pa",
@@ -1381,7 +1595,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Chambersburg, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "champlin, minnesota": {
       "venueId": "champlin-mn",
@@ -1394,7 +1610,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Champlin, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "champlin, mn": {
       "venueId": "champlin-mn",
@@ -1407,7 +1625,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Champlin, MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "charles city, iowa": {
       "venueId": "charles-city-ia",
@@ -1420,7 +1640,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Charles City, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "charleston, il": {
       "venueId": "charleston-il",
@@ -1433,7 +1655,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Charleston, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "charleston, west virginia": {
       "venueId": "charleston-wv",
@@ -1446,7 +1670,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Charleston, West Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "charleston, wv": {
       "venueId": "charleston-wv",
@@ -1459,7 +1685,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Charleston, WV"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "charlotte, nc": {
       "venueId": "charlotte-nc",
@@ -1472,7 +1700,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Charlotte, NC"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "charlotte, north carolina": {
       "venueId": "charlotte-nc",
@@ -1485,7 +1715,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Charlotte, North Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "chattanooga, tennessee": {
       "venueId": "chattanooga-tn",
@@ -1498,7 +1730,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Chattanooga, Tennessee"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "cheney, washington": {
       "venueId": "cheney-wa",
@@ -1511,7 +1745,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Cheney, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "chesapeake, virginia": {
       "venueId": "chesapeake-va",
@@ -1524,7 +1760,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Chesapeake, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "chester, pa": {
       "venueId": "chester-pa",
@@ -1537,7 +1775,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Chester, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "chestnut hill, ma": {
       "venueId": "chestnut-hill-ma",
@@ -1550,7 +1790,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Chestnut Hill, MA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "cheyenne, wy": {
       "venueId": "cheyenne-wy",
@@ -1563,7 +1805,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Cheyenne, WY"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "cheyenne, wyoming": {
       "venueId": "cheyenne-wy",
@@ -1576,7 +1820,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Cheyenne, Wyoming"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "chickasha, ok": {
       "venueId": "chickasha-ok",
@@ -1589,7 +1835,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Chickasha, OK"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "chicopee, massachusetts": {
       "venueId": "chicopee-ma",
@@ -1602,7 +1850,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Chicopee, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "chippewa falls, wisconsin": {
       "venueId": "chippewa-falls-wi",
@@ -1615,7 +1865,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Chippewa Falls, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "cincinnati, oh": {
       "venueId": "cincinnati-oh",
@@ -1628,7 +1880,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Cincinnati, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "cincinnati, ohio": {
       "venueId": "cincinnati-oh",
@@ -1641,7 +1895,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Cincinnati, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "clarion, pennsylvania": {
       "venueId": "clarion-pa",
@@ -1654,7 +1910,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Clarion, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "clifton, new jersey": {
       "venueId": "clifton-nj",
@@ -1667,7 +1925,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Clifton, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "clifton, nj": {
       "venueId": "clifton-nj",
@@ -1680,7 +1940,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Clifton, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "clovis, ca": {
       "venueId": "clovis-ca",
@@ -1693,7 +1955,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Clovis, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "clovis, california": {
       "venueId": "clovis-ca",
@@ -1706,7 +1970,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Clovis, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "college park, maryland": {
       "venueId": "college-park-md",
@@ -1719,7 +1985,9 @@
       "eventCount": 4,
       "rawVariants": [
         "College Park, Maryland"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "columbia, missouri": {
       "venueId": "columbia-mo",
@@ -1732,7 +2000,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Columbia, Missouri"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "columbia, sc": {
       "venueId": "columbia-sc",
@@ -1745,7 +2015,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Columbia, SC"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "columbia, south carolina": {
       "venueId": "columbia-sc",
@@ -1758,7 +2030,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Columbia, South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "columbus, ohio": {
       "venueId": "columbus-oh",
@@ -1771,7 +2045,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Columbus, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "concord, california": {
       "venueId": "concord-ca",
@@ -1784,7 +2060,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Concord, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "converse, texas": {
       "venueId": "converse-tx",
@@ -1797,7 +2075,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Converse, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "conway, sc": {
       "venueId": "conway-sc",
@@ -1810,7 +2090,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Conway, SC"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "coon rapids, minnesota": {
       "venueId": "coon-rapids-mn",
@@ -1823,7 +2105,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Coon Rapids, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "corona, california": {
       "venueId": "corona-ca",
@@ -1836,7 +2120,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Corona, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "corpus christi, tx": {
       "venueId": "corpus-christi-tx",
@@ -1849,7 +2135,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Corpus Christi, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "costa, mesa, california": {
       "venueId": "costa-mesa-ca",
@@ -1862,7 +2150,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Costa, Mesa, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "cranston, ri": {
       "venueId": "cranston-ri",
@@ -1875,7 +2165,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Cranston, RI"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "crown point, indiana": {
       "venueId": "crown-point-in",
@@ -1888,7 +2180,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Crown Point, Indiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "cupertino, california": {
       "venueId": "cupertino-ca",
@@ -1901,7 +2195,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Cupertino, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "dallas texas": {
       "venueId": "dallas-tx",
@@ -1914,7 +2210,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Dallas. Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dallas, texas": {
       "venueId": "dallas-tx",
@@ -1927,7 +2225,9 @@
       "eventCount": 13,
       "rawVariants": [
         "Dallas, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dallas, tx": {
       "venueId": "dallas-tx",
@@ -1940,7 +2240,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Dallas, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "daphne, al": {
       "venueId": "daphne-al",
@@ -1953,7 +2255,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Daphne, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "davenport, iowa": {
       "venueId": "davenport-ia",
@@ -1966,7 +2270,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Davenport, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dayton, ohio": {
       "venueId": "dayton-oh",
@@ -1979,7 +2285,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Dayton, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "daytona beach, fl": {
       "venueId": "daytona-beach-fl",
@@ -1992,7 +2300,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Daytona Beach, FL"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "decatur, indiana": {
       "venueId": "decatur-in",
@@ -2005,7 +2315,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Decatur, Indiana"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "decorah, iowa": {
       "venueId": "decorah-ia",
@@ -2018,7 +2330,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Decorah, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dekalb, il": {
       "venueId": "dekalb-il",
@@ -2031,7 +2345,9 @@
       "eventCount": 11,
       "rawVariants": [
         "DeKalb, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dekalb, illinois": {
       "venueId": "dekalb-il",
@@ -2044,7 +2360,9 @@
       "eventCount": 17,
       "rawVariants": [
         "DeKalb, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "denton, texas": {
       "venueId": "denton-tx",
@@ -2057,7 +2375,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Denton, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "denton, tx": {
       "venueId": "denton-tx",
@@ -2070,7 +2390,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Denton, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "denver, co": {
       "venueId": "denver-co",
@@ -2083,7 +2405,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Denver, CO"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "denver, colorado": {
       "venueId": "denver-co",
@@ -2096,7 +2420,9 @@
       "eventCount": 18,
       "rawVariants": [
         "Denver, Colorado"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "des plaines, illinois": {
       "venueId": "des-plaines-il",
@@ -2109,7 +2435,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Des Plaines, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "detroit, mi": {
       "venueId": "detroit-mi",
@@ -2122,7 +2450,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Detroit, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "dixon - rock falls, il": {
       "venueId": "dixon-il",
@@ -2135,7 +2465,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Dixon - Rock Falls, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dixon, il": {
       "venueId": "dixon-il",
@@ -2148,7 +2480,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Dixon, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dixon, illinois": {
       "venueId": "dixon-il",
@@ -2161,7 +2495,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Dixon, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dothan, al": {
       "venueId": "dothan-al",
@@ -2174,7 +2510,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Dothan, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dothan, alabama": {
       "venueId": "dothan-al",
@@ -2187,7 +2525,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Dothan, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "douglasville, ga": {
       "venueId": "douglasville-ga",
@@ -2200,7 +2540,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Douglasville, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "dover, de": {
       "venueId": "dover-de",
@@ -2213,7 +2555,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Dover, DE"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "dover, pa": {
       "venueId": "dover-pa",
@@ -2226,7 +2570,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Dover, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "downingtown, pa": {
       "venueId": "downingtown-pa",
@@ -2239,7 +2585,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Downingtown, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "dublin, california": {
       "venueId": "dublin-ca",
@@ -2252,7 +2600,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Dublin, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "dublin, oh": {
       "venueId": "dublin-oh",
@@ -2265,7 +2615,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Dublin, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "dublin, ohio": {
       "venueId": "dublin-oh",
@@ -2278,7 +2630,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Dublin, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "dubuque, ia": {
       "venueId": "dubuque-ia",
@@ -2291,7 +2645,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Dubuque, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "dubuque, iowa": {
       "venueId": "dubuque-ia",
@@ -2304,7 +2660,9 @@
       "eventCount": 21,
       "rawVariants": [
         "Dubuque, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "duncan, south carolina": {
       "venueId": "duncan-sc",
@@ -2317,7 +2675,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Duncan, South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "east peoria, il": {
       "venueId": "east-peoria-il",
@@ -2330,7 +2690,9 @@
       "eventCount": 1,
       "rawVariants": [
         "East Peoria, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "east rutherford, new jersey": {
       "venueId": "east-rutherford-nj",
@@ -2343,7 +2705,9 @@
       "eventCount": 9,
       "rawVariants": [
         "East Rutherford, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "east rutherford, nj": {
       "venueId": "east-rutherford-nj",
@@ -2356,7 +2720,9 @@
       "eventCount": 1,
       "rawVariants": [
         "East Rutherford, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "east troy, wi": {
       "venueId": "east-troy-wi",
@@ -2369,7 +2735,9 @@
       "eventCount": 1,
       "rawVariants": [
         "East Troy, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "easton, pennsylvania": {
       "venueId": "easton-pa",
@@ -2382,7 +2750,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Easton, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "eau claire, wi": {
       "venueId": "eau-claire-wi",
@@ -2395,7 +2765,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Eau Claire, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "eau claire, wisconsin": {
       "venueId": "eau-claire-wi",
@@ -2408,7 +2780,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Eau Claire, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "eden prairie, mn": {
       "venueId": "eden-prairie-mn",
@@ -2421,7 +2795,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Eden Prairie,  MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "edinboro, pa": {
       "venueId": "edinboro-pa",
@@ -2434,7 +2810,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Edinboro, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "edmond, oklahoma": {
       "venueId": "edmond-ok",
@@ -2447,7 +2825,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Edmond, Oklahoma"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "egg harbor township, nj": {
       "venueId": "egg-harbor-township-nj",
@@ -2460,7 +2840,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Egg Harbor Township, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "el cajon, ca": {
       "venueId": "el-cajon-ca",
@@ -2473,7 +2855,9 @@
       "eventCount": 1,
       "rawVariants": [
         "El Cajon, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "el dorado, ks": {
       "venueId": "el-dorado-ks",
@@ -2486,7 +2870,9 @@
       "eventCount": 4,
       "rawVariants": [
         "El Dorado, KS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "el paso, texas": {
       "venueId": "el-paso-tx",
@@ -2499,7 +2885,9 @@
       "eventCount": 6,
       "rawVariants": [
         "El Paso, Texas"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "elizabeth, pennsylvania": {
       "venueId": "elizabeth-pa",
@@ -2512,7 +2900,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Elizabeth, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "elk grove california": {
       "venueId": "elk-grove-ca",
@@ -2525,7 +2915,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Elk Grove. California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "elk grove, california": {
       "venueId": "elk-grove-ca",
@@ -2538,7 +2930,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Elk Grove, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "elko, nevada": {
       "venueId": "elko-nv",
@@ -2551,7 +2945,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Elko, Nevada"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "elkton, maryland": {
       "venueId": "elkton-md",
@@ -2564,7 +2960,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Elkton, Maryland"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "enid, oklahoma": {
       "venueId": "enid-ok",
@@ -2577,7 +2975,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Enid, Oklahoma"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "erie pennsylvania": {
       "venueId": "erie-pa",
@@ -2590,7 +2990,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Erie. Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "erie, pa": {
       "venueId": "erie-pa",
@@ -2603,7 +3005,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Erie, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "erie, pennsylvania": {
       "venueId": "erie-pa",
@@ -2616,7 +3020,9 @@
       "eventCount": 19,
       "rawVariants": [
         "Erie, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "escondido, ca": {
       "venueId": "escondido-ca",
@@ -2629,7 +3035,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Escondido, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "escondido, california": {
       "venueId": "escondido-ca",
@@ -2642,7 +3050,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Escondido, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "evansville, in": {
       "venueId": "evansville-in",
@@ -2655,7 +3065,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Evansville, IN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "evansville, indiana": {
       "venueId": "evansville-in",
@@ -2668,7 +3080,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Evansville, Indiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "everett, ma": {
       "venueId": "everett-ma",
@@ -2681,7 +3095,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Everett, MA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "everett, massachusetts": {
       "venueId": "everett-ma",
@@ -2694,7 +3110,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Everett, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "everett, washington": {
       "venueId": "everett-wa",
@@ -2707,7 +3125,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Everett, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "ewing, new jersey": {
       "venueId": "ewing-nj",
@@ -2720,7 +3140,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Ewing, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fairfax, virginia": {
       "venueId": "fairfax-va",
@@ -2733,7 +3155,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Fairfax, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fairfield, ct": {
       "venueId": "fairfield-ct",
@@ -2746,7 +3170,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fairfield, CT"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fairfield, oh": {
       "venueId": "fairfield-oh",
@@ -2759,7 +3185,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Fairfield, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fairfield, ohio": {
       "venueId": "fairfield-oh",
@@ -2772,7 +3200,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Fairfield, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "farmington, mn": {
       "venueId": "farmington-mn",
@@ -2785,7 +3215,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Farmington, MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "fayetteville, arkansas": {
       "venueId": "fayetteville-ar",
@@ -2798,7 +3230,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fayetteville, Arkansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "forest city, ia": {
       "venueId": "forest-city-ia",
@@ -2811,7 +3245,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Forest City, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "fort collins, co": {
       "venueId": "fort-collins-co",
@@ -2824,7 +3260,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Fort Collins, CO"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "fort edward, new york": {
       "venueId": "fort-edward-ny",
@@ -2837,7 +3275,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Fort Edward, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fort edwards glens falls, new york": {
       "venueId": "glens-falls-ny",
@@ -2850,7 +3290,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fort Edwards/Glens Falls, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fort edwards new york": {
       "venueId": "fort-edward-ny",
@@ -2863,7 +3305,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fort Edwards. New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fort edwards, new york": {
       "venueId": "fort-edward-ny",
@@ -2876,7 +3320,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fort Edwards, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fort mill, south carolina": {
       "venueId": "fort-mill-sc",
@@ -2889,7 +3335,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Fort Mill, South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fort mills, south carolina": {
       "venueId": "fort-mill-sc",
@@ -2902,7 +3350,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fort Mills, South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "fort walton beach, florida": {
       "venueId": "fort-walton-beach-fl",
@@ -2915,7 +3365,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fort Walton Beach, Florida"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "fort walton, beach, florida": {
       "venueId": "fort-walton-beach-fl",
@@ -2928,7 +3380,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fort Walton, Beach, Florida"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "fort wayne, indiana": {
       "venueId": "fort-wayne-in",
@@ -2941,7 +3395,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Fort Wayne, Indiana"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "foxboro, ma": {
       "venueId": "foxborough-ma",
@@ -2954,7 +3410,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Foxboro, MA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "foxboro, massachusetts": {
       "venueId": "foxborough-ma",
@@ -2967,7 +3425,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Foxboro, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "frankfort, illinois": {
       "venueId": "frankfort-il",
@@ -2980,7 +3440,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Frankfort, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "frankfurt, illinois": {
       "venueId": "frankfort-il",
@@ -2993,7 +3455,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Frankfurt, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "freemont, ne": {
       "venueId": "fremont-ne",
@@ -3006,7 +3470,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Freemont, NE"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "fremont, california": {
       "venueId": "fremont-ca",
@@ -3019,7 +3485,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Fremont, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "fresno, ca": {
       "venueId": "fresno-ca",
@@ -3032,7 +3500,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Fresno, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "ft wayne, in": {
       "venueId": "fort-wayne-in",
@@ -3045,7 +3515,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Ft. Wayne, IN"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "gadsden, alabama": {
       "venueId": "gadsden-al",
@@ -3058,7 +3530,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Gadsden, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "garden city, kansas": {
       "venueId": "garden-city-ks",
@@ -3071,7 +3545,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Garden City, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "geneva, illinois": {
       "venueId": "geneva-il",
@@ -3084,7 +3560,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Geneva, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "geneva, wisconsin": {
       "venueId": "lake-geneva-wi",
@@ -3097,7 +3575,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Geneva, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "gilroy, california": {
       "venueId": "gilroy-ca",
@@ -3110,7 +3590,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Gilroy, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "glassboro, nj": {
       "venueId": "glassboro-nj",
@@ -3123,7 +3605,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Glassboro, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "glendale, arizona": {
       "venueId": "glendale-az",
@@ -3136,7 +3620,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Glendale, Arizona"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "glendale, california": {
       "venueId": "glendale-ca",
@@ -3149,7 +3635,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Glendale, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "glendora, ca": {
       "venueId": "glendora-ca",
@@ -3162,7 +3650,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Glendora, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "glendora, california": {
       "venueId": "glendora-ca",
@@ -3175,7 +3665,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Glendora, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "glens falls, ny": {
       "venueId": "glens-falls-ny",
@@ -3188,7 +3680,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Glens Falls, NY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "gloversville, ny": {
       "venueId": "gloversville-ny",
@@ -3201,7 +3695,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Gloversville, NY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "grand haven, michigan": {
       "venueId": "grand-haven-mi",
@@ -3214,7 +3710,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Grand Haven, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "grandville, michigan": {
       "venueId": "grandville-mi",
@@ -3227,7 +3725,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Grandville, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "grants pass, oregon": {
       "venueId": "grants-pass-or",
@@ -3240,7 +3740,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Grants Pass, Oregon"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "great bend, kansas": {
       "venueId": "great-bend-ks",
@@ -3253,7 +3755,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Great Bend, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "great bend, ks": {
       "venueId": "great-bend-ks",
@@ -3266,7 +3770,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Great Bend, KS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "greeley, colorado": {
       "venueId": "greeley-co",
@@ -3279,7 +3785,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Greeley, Colorado"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "green bay, wisconsin": {
       "venueId": "green-bay-wi",
@@ -3292,7 +3800,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Green Bay, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "greendale, wi": {
       "venueId": "greendale-wi",
@@ -3305,7 +3815,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Greendale, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "greendale, wisconsin": {
       "venueId": "greendale-wi",
@@ -3318,7 +3830,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Greendale, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "greenville, michigan": {
       "venueId": "greenville-mi",
@@ -3331,7 +3845,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Greenville, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "groton, connecticut": {
       "venueId": "groton-ct",
@@ -3344,7 +3860,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Groton, Connecticut"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "gulfport, mississippi": {
       "venueId": "gulfport-ms",
@@ -3357,7 +3875,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Gulfport, Mississippi"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hamilton, oh": {
       "venueId": "hamilton-oh",
@@ -3370,7 +3890,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Hamilton, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "hamilton, ontario": {
       "venueId": "hamilton-on",
@@ -3383,7 +3905,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Hamilton, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "hampton, virginia": {
       "venueId": "hampton-va",
@@ -3396,7 +3920,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Hampton, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "harrison, ohio": {
       "venueId": "harrison-oh",
@@ -3409,7 +3935,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Harrison, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "hastings, minnesota": {
       "venueId": "hastings-mn",
@@ -3422,7 +3950,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Hastings, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hattiesburg, mississippi": {
       "venueId": "hattiesburg-ms",
@@ -3435,7 +3965,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Hattiesburg, Mississippi"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hattiesburg, ms": {
       "venueId": "hattiesburg-ms",
@@ -3448,7 +3980,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Hattiesburg, MS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hayward, california": {
       "venueId": "hayward-ca",
@@ -3461,7 +3995,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Hayward, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "herndon, virginia": {
       "venueId": "herndon-va",
@@ -3474,7 +4010,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Herndon, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "hershey, pennsylvania": {
       "venueId": "hershey-pa",
@@ -3487,7 +4025,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Hershey, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "hillsboro, or": {
       "venueId": "hillsboro-or",
@@ -3500,7 +4040,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Hillsboro, OR"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "hillsboro, oregon": {
       "venueId": "hillsboro-or",
@@ -3513,7 +4055,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Hillsboro, Oregon"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "hilton head, south carolina": {
       "venueId": "hilton-head-sc",
@@ -3526,7 +4070,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Hilton Head, South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "hilton, south carolina": {
       "venueId": "hilton-head-island-sc",
@@ -3539,7 +4085,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Hilton, South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "hiram, ga": {
       "venueId": "hiram-ga",
@@ -3552,7 +4100,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Hiram, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "holman, wisconsin": {
       "venueId": "holmen-wi",
@@ -3565,7 +4115,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Holman, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hoover, alabama": {
       "venueId": "hoover-al",
@@ -3578,7 +4130,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Hoover, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hornell, new york": {
       "venueId": "hornell-ny",
@@ -3591,7 +4145,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Hornell, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "hoschton, ga": {
       "venueId": "hoschton-ga",
@@ -3604,7 +4160,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Hoschton, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "houston, texas": {
       "venueId": "houston-tx",
@@ -3617,7 +4175,9 @@
       "eventCount": 14,
       "rawVariants": [
         "Houston, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "houston, tx": {
       "venueId": "houston-tx",
@@ -3630,7 +4190,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Houston, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "huntington, virginia": {
       "venueId": "huntington-va",
@@ -3643,7 +4205,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Huntington, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "huntington, west virginia": {
       "venueId": "huntington-wv",
@@ -3656,7 +4220,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Huntington, West Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "huntington, wv": {
       "venueId": "huntington-wv",
@@ -3669,7 +4235,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Huntington, WV"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "huntsville, al": {
       "venueId": "huntsville-al",
@@ -3682,7 +4250,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Huntsville, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hutchinson, ks": {
       "venueId": "hutchinson-ks",
@@ -3695,7 +4265,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Hutchinson, KS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "hutchison, kansas": {
       "venueId": "hutchinson-ks",
@@ -3708,7 +4280,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Hutchison, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "indianapolis, in": {
       "venueId": "indianapolis-in",
@@ -3721,7 +4295,9 @@
       "eventCount": 67,
       "rawVariants": [
         "Indianapolis, IN"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "indianapolis, indiana": {
       "venueId": "indianapolis-in",
@@ -3735,7 +4311,9 @@
       "rawVariants": [
         "Indianapolis, Indiana",
         ".Indianapolis, Indiana"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "jackson, michigan": {
       "venueId": "jackson-mi",
@@ -3748,7 +4326,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Jackson, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "jackson, mississippi": {
       "venueId": "jackson-ms",
@@ -3761,7 +4341,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Jackson, Mississippi"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "jackson, new jersey": {
       "venueId": "jackson-nj",
@@ -3774,7 +4356,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Jackson, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "jackson, nj": {
       "venueId": "jackson-nj",
@@ -3787,7 +4371,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Jackson, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "jackson, tennessee": {
       "venueId": "jackson-tn",
@@ -3800,7 +4386,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Jackson, Tennessee"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "jacksonville, alabama": {
       "venueId": "jacksonville-al",
@@ -3813,7 +4401,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Jacksonville, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "jacksonville, florida": {
       "venueId": "jacksonville-fl",
@@ -3826,7 +4416,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Jacksonville, Florida"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "jenison, michigan": {
       "venueId": "jenison-mi",
@@ -3839,7 +4431,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Jenison, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "jensen, michigan": {
       "venueId": "jenison-mi",
@@ -3852,7 +4446,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Jensen, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "johnsonburg, pa": {
       "venueId": "johnsonburg-pa",
@@ -3865,7 +4461,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Johnsonburg, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "johnsonburg, pennsylvania": {
       "venueId": "johnsonburg-pa",
@@ -3878,7 +4476,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Johnsonburg, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "johnston, ia": {
       "venueId": "johnston-ia",
@@ -3891,7 +4491,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Johnston, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "joplin, missouri": {
       "venueId": "joplin-mo",
@@ -3904,7 +4506,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Joplin, Missouri"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "jupiter, fl": {
       "venueId": "jupiter-fl",
@@ -3917,7 +4521,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Jupiter, FL"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "kalamazoo, mi": {
       "venueId": "kalamazoo-mi",
@@ -3930,7 +4536,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Kalamazoo, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "kalamazoo, michigan": {
       "venueId": "kalamazoo-mi",
@@ -3943,7 +4551,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Kalamazoo, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "kansas city, missouri": {
       "venueId": "kansas-city-mo",
@@ -3956,7 +4566,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Kansas City, Missouri"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "katy, tx": {
       "venueId": "katy-tx",
@@ -3969,7 +4581,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Katy, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "kelso, washington": {
       "venueId": "kelso-wa",
@@ -3982,7 +4596,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Kelso, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "kennesaw, georgia": {
       "venueId": "kennesaw-ga",
@@ -3995,7 +4611,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Kennesaw, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "kennewick, wa": {
       "venueId": "kennewick-wa",
@@ -4008,7 +4626,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Kennewick, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "kent, oh": {
       "venueId": "kent-oh",
@@ -4021,7 +4641,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Kent, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "kingsport, tennessee": {
       "venueId": "kingsport-tn",
@@ -4034,7 +4656,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Kingsport, Tennessee"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "kitchener, ontario": {
       "venueId": "kitchener-on",
@@ -4047,7 +4671,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Kitchener, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "kitchner, ontario": {
       "venueId": "kitchener-on",
@@ -4060,7 +4686,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Kitchner, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "knox, ohio": {
       "venueId": "knox-oh",
@@ -4073,7 +4701,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Knox, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "knoxville, tn": {
       "venueId": "knoxville-tn",
@@ -4086,7 +4716,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Knoxville, TN"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "la crosse, wi": {
       "venueId": "la-crosse-wi",
@@ -4099,7 +4731,9 @@
       "eventCount": 11,
       "rawVariants": [
         "La Crosse, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lacrosse, wisconsin": {
       "venueId": "la-crosse-wi",
@@ -4112,7 +4746,9 @@
       "eventCount": 8,
       "rawVariants": [
         "LaCrosse, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lafayette, la": {
       "venueId": "lafayette-la",
@@ -4125,7 +4761,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Lafayette, LA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lafayette, louisiana": {
       "venueId": "lafayette-la",
@@ -4138,7 +4776,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Lafayette, Louisiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "laguna hills, ca": {
       "venueId": "laguna-hills-ca",
@@ -4151,7 +4791,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Laguna Hills, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "lake havasu city, arizona": {
       "venueId": "lake-havasu-city-az",
@@ -4164,7 +4806,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lake Havasu City, Arizona"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "lakeland, fl": {
       "venueId": "lakeland-fl",
@@ -4177,7 +4821,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lakeland, FL"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lamesa, california": {
       "venueId": "la-mesa-ca",
@@ -4190,7 +4836,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lamesa, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "landisville, pa": {
       "venueId": "landisville-pa",
@@ -4203,7 +4851,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Landisville, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lansdale, pennsylvania": {
       "venueId": "lansdale-pa",
@@ -4216,7 +4866,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lansdale, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "laporte, indiana": {
       "venueId": "laporte-in",
@@ -4229,7 +4881,9 @@
       "eventCount": 1,
       "rawVariants": [
         "LaPorte, Indiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "laramie, wy": {
       "venueId": "laramie-wy",
@@ -4242,7 +4896,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Laramie, WY"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "lawrence, kansas": {
       "venueId": "lawrence-ks",
@@ -4255,7 +4911,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Lawrence, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lawrence, ma": {
       "venueId": "lawrence-ma",
@@ -4268,7 +4926,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Lawrence, MA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lawrence, massachusetts": {
       "venueId": "lawrence-ma",
@@ -4281,7 +4941,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Lawrence, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lawton, ok": {
       "venueId": "lawton-ok",
@@ -4294,7 +4956,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lawton, OK"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "leander, texas": {
       "venueId": "leander-tx",
@@ -4307,7 +4971,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Leander, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lebanon, il": {
       "venueId": "lebanon-il",
@@ -4320,7 +4986,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Lebanon, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lebanon, illinois": {
       "venueId": "lebanon-il",
@@ -4333,7 +5001,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Lebanon, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lexington winchester, kentucky": {
       "venueId": "lexington-ky",
@@ -4346,7 +5016,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lexington/Winchester, Kentucky"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lexington, kentucky": {
       "venueId": "lexington-ky",
@@ -4359,7 +5031,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Lexington, Kentucky"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lexington, ky": {
       "venueId": "lexington-ky",
@@ -4372,7 +5046,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Lexington, KY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lexington, sc": {
       "venueId": "lexington-sc",
@@ -4385,7 +5061,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Lexington, SC"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lima, oh": {
       "venueId": "lima-oh",
@@ -4398,7 +5076,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lima, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lima, ohio": {
       "venueId": "lima-oh",
@@ -4411,7 +5091,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Lima, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lincoln, nebraska": {
       "venueId": "lincoln-ne",
@@ -4424,7 +5106,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Lincoln, Nebraska"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lisle, il": {
       "venueId": "lisle-il",
@@ -4437,7 +5121,9 @@
       "eventCount": 12,
       "rawVariants": [
         "Lisle, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lisle, illinois": {
       "venueId": "lisle-il",
@@ -4450,7 +5136,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Lisle, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "little rock, ar": {
       "venueId": "little-rock-ar",
@@ -4463,7 +5151,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Little Rock, AR"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "little rock, arkansas": {
       "venueId": "little-rock-ar",
@@ -4476,7 +5166,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Little Rock, Arkansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "lodi, california": {
       "venueId": "lodi-ca",
@@ -4489,7 +5181,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Lodi, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "long beach, california": {
       "venueId": "long-beach-ca",
@@ -4502,7 +5196,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Long Beach, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "longview, washington": {
       "venueId": "longview-wa",
@@ -4515,7 +5211,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Longview, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "loomis, california": {
       "venueId": "loomis-ca",
@@ -4528,7 +5226,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Loomis, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "louisville, kentucky": {
       "venueId": "louisville-ky",
@@ -4541,7 +5241,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Louisville, Kentucky"
-      ]
+      ],
+      "timezone": "America/Kentucky/Louisville",
+      "tzSource": "geo"
     },
     "louisville, ky": {
       "venueId": "louisville-ky",
@@ -4554,7 +5256,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Louisville, KY"
-      ]
+      ],
+      "timezone": "America/Kentucky/Louisville",
+      "tzSource": "geo"
     },
     "loveland, colorado": {
       "venueId": "loveland-co",
@@ -4567,7 +5271,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Loveland, Colorado"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "lubbock, texas": {
       "venueId": "lubbock-tx",
@@ -4580,7 +5286,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lubbock, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ludlow, massachusetts": {
       "venueId": "ludlow-ma",
@@ -4593,7 +5301,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Ludlow, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lynchburg, virginia": {
       "venueId": "lynchburg-va",
@@ -4606,7 +5316,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Lynchburg, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lynn, ma": {
       "venueId": "lynn-ma",
@@ -4619,7 +5331,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Lynn, MA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "lynn, massachusetts": {
       "venueId": "lynn-ma",
@@ -4632,7 +5346,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Lynn, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "macomb, il": {
       "venueId": "macomb-il",
@@ -4645,7 +5361,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Macomb, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "macon, ga": {
       "venueId": "macon-ga",
@@ -4658,7 +5376,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Macon, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "madison, wi": {
       "venueId": "madison-wi",
@@ -4671,7 +5391,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Madison, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "madison, wisconsin": {
       "venueId": "madison-wi",
@@ -4684,7 +5406,9 @@
       "eventCount": 27,
       "rawVariants": [
         "Madison, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "malden, massachusetts": {
       "venueId": "malden-ma",
@@ -4697,7 +5421,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Malden, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "manchester, new hampshire": {
       "venueId": "manchester-nh",
@@ -4710,7 +5436,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Manchester, New Hampshire"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "manchester, nh": {
       "venueId": "manchester-nh",
@@ -4723,7 +5451,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Manchester, NH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "mankato, minnesota": {
       "venueId": "mankato-mn",
@@ -4736,7 +5466,9 @@
       "eventCount": 12,
       "rawVariants": [
         "Mankato, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mankato, mn": {
       "venueId": "mankato-mn",
@@ -4749,7 +5481,9 @@
       "eventCount": 12,
       "rawVariants": [
         "Mankato, MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "marion, ia": {
       "venueId": "marion-ia",
@@ -4762,7 +5496,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Marion, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "marion, in": {
       "venueId": "marion-in",
@@ -4775,7 +5511,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Marion, IN"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "marion, oh": {
       "venueId": "marion-oh",
@@ -4788,7 +5526,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Marion, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "marion, ohio": {
       "venueId": "marion-oh",
@@ -4801,7 +5541,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Marion, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "martin, tennessee": {
       "venueId": "martin-tn",
@@ -4814,7 +5556,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Martin, Tennessee"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "martin, tn": {
       "venueId": "martin-tn",
@@ -4827,7 +5571,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Martin, TN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mason city, ia": {
       "venueId": "mason-city-ia",
@@ -4840,7 +5586,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Mason City, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mason, oh": {
       "venueId": "mason-oh",
@@ -4853,7 +5601,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Mason, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "massillon ohio": {
       "venueId": "massillon-oh",
@@ -4866,7 +5616,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Massillon. Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "massillon, oh": {
       "venueId": "massillon-oh",
@@ -4879,7 +5631,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Massillon, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "massillon, ohio": {
       "venueId": "massillon-oh",
@@ -4892,7 +5646,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Massillon, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "mattoon, il": {
       "venueId": "mattoon-il",
@@ -4905,7 +5661,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Mattoon, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mckenzie, tennessee": {
       "venueId": "mckenzie-tn",
@@ -4918,7 +5676,9 @@
       "eventCount": 1,
       "rawVariants": [
         "McKenzie, Tennessee"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mckinney, tx": {
       "venueId": "mckinney-tx",
@@ -4931,7 +5691,9 @@
       "eventCount": 4,
       "rawVariants": [
         "McKinney, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mcminnville, or": {
       "venueId": "mcminnville-or",
@@ -4944,7 +5706,9 @@
       "eventCount": 1,
       "rawVariants": [
         "McMinnville, OR"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "medford, or": {
       "venueId": "medford-or",
@@ -4957,7 +5721,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Medford, OR"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "medford, oregon": {
       "venueId": "medford-or",
@@ -4970,7 +5736,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Medford, Oregon"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "memphis, tennessee": {
       "venueId": "memphis-tn",
@@ -4983,7 +5751,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Memphis, Tennessee"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "memphis, tn": {
       "venueId": "memphis-tn",
@@ -4996,7 +5766,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Memphis, TN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "menasha, wisconsin": {
       "venueId": "menasha-wi",
@@ -5009,7 +5781,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Menasha, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "menominee, wisconsin": {
       "venueId": "menomonie-wi",
@@ -5022,7 +5796,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Menominee, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "menomonie, wi": {
       "venueId": "menomonie-wi",
@@ -5035,7 +5811,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Menomonie, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "menomonie, wisconsin": {
       "venueId": "menomonie-wi",
@@ -5048,7 +5826,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Menomonie, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "merrillville, in": {
       "venueId": "merrillville-in",
@@ -5061,7 +5841,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Merrillville, IN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mesa, arizona": {
       "venueId": "mesa-az",
@@ -5074,7 +5856,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Mesa, Arizona"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "mesa, az": {
       "venueId": "mesa-az",
@@ -5087,7 +5871,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Mesa, AZ"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "mesquite, texas": {
       "venueId": "mesquite-tx",
@@ -5100,7 +5886,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Mesquite, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mesquite, tx": {
       "venueId": "mesquite-tx",
@@ -5113,7 +5901,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Mesquite, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "metamora, il": {
       "venueId": "metamora-il",
@@ -5126,7 +5916,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Metamora, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "metamora, illinois": {
       "venueId": "metamora-il",
@@ -5139,7 +5931,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Metamora, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "michigan city, in": {
       "venueId": "michigan-city-in",
@@ -5152,7 +5946,9 @@
       "eventCount": 18,
       "rawVariants": [
         "Michigan City, IN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "michigan city, indiana": {
       "venueId": "michigan-city-in",
@@ -5165,7 +5961,9 @@
       "eventCount": 21,
       "rawVariants": [
         "Michigan City, Indiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "middleton, wisconsin": {
       "venueId": "middleton-wi",
@@ -5178,7 +5976,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Middleton, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "midland, texas": {
       "venueId": "midland-tx",
@@ -5191,7 +5991,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Midland, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "millbrook, al": {
       "venueId": "millbrook-al",
@@ -5204,7 +6006,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Millbrook, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "milton, florida": {
       "venueId": "milton-fl",
@@ -5217,7 +6021,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Milton, Florida"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "milton, georgia": {
       "venueId": "milton-ga",
@@ -5230,7 +6036,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Milton, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "milwaukee, wisconsin": {
       "venueId": "milwaukee-wi",
@@ -5243,7 +6051,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Milwaukee, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "minneapolis, minnesota": {
       "venueId": "minneapolis-mn",
@@ -5256,7 +6066,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Minneapolis, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "minneapolis, mn": {
       "venueId": "minneapolis-mn",
@@ -5269,7 +6081,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Minneapolis, MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "mission viejo, california": {
       "venueId": "mission-viejo-ca",
@@ -5282,7 +6096,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Mission Viejo, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "mississauga, ontario": {
       "venueId": "mississauga-on",
@@ -5295,7 +6111,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Mississauga, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "modesto, california": {
       "venueId": "modesto-ca",
@@ -5308,7 +6126,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Modesto, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "monroe, la": {
       "venueId": "monroe-la",
@@ -5321,7 +6141,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Monroe, LA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "monroe, louisiana": {
       "venueId": "monroe-la",
@@ -5334,7 +6156,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Monroe, Louisiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "monterey park, california": {
       "venueId": "monterey-park-ca",
@@ -5347,7 +6171,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Monterey Park, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "montreal, quebec": {
       "venueId": "montreal-qc",
@@ -5360,7 +6186,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Montreal, Quebec"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "mountain house, ca": {
       "venueId": "mountain-house-ca",
@@ -5373,7 +6201,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Mountain House, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "mt olive, nj": {
       "venueId": "mount-olive-nj",
@@ -5386,7 +6216,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Mt. Olive, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "muncie, in": {
       "venueId": "muncie-in",
@@ -5399,7 +6231,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Muncie, IN"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "muncie, indiana": {
       "venueId": "muncie-in",
@@ -5412,7 +6246,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Muncie, Indiana"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "munfordville, kentucky": {
       "venueId": "munfordville-ky",
@@ -5425,7 +6261,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Munfordville, Kentucky"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "murfreesboro, tennessee": {
       "venueId": "murfreesboro-tn",
@@ -5438,7 +6276,9 @@
       "eventCount": 14,
       "rawVariants": [
         "Murfreesboro, Tennessee"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "murfreesboro, tn": {
       "venueId": "murfreesboro-tn",
@@ -5451,7 +6291,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Murfreesboro, TN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "murray, kentucky": {
       "venueId": "murray-ky",
@@ -5464,7 +6306,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Murray, Kentucky"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "muscatine, ia": {
       "venueId": "muscatine-ia",
@@ -5477,7 +6321,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Muscatine, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "muscatine, iowa": {
       "venueId": "muscatine-ia",
@@ -5490,7 +6336,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Muscatine, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "muscle shoals, al": {
       "venueId": "muscle-shoals-al",
@@ -5503,7 +6351,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Muscle Shoals, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "muskegon, michigan": {
       "venueId": "muskegon-mi",
@@ -5516,7 +6366,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Muskegon, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "mustang, ok": {
       "venueId": "mustang-ok",
@@ -5529,7 +6381,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Mustang, OK"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "myrtle beach, sc": {
       "venueId": "myrtle-beach-sc",
@@ -5542,7 +6396,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Myrtle Beach, SC"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "naperville, illinois": {
       "venueId": "naperville-il",
@@ -5555,7 +6411,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Naperville, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "nashua, new hampshire": {
       "venueId": "nashua-nh",
@@ -5568,7 +6426,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Nashua, New Hampshire"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "nashua, nh": {
       "venueId": "nashua-nh",
@@ -5581,7 +6441,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Nashua, NH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "nashville, tn": {
       "venueId": "nashville-tn",
@@ -5594,7 +6456,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Nashville, TN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "new brunswick, new jersey": {
       "venueId": "new-brunswick-nj",
@@ -5607,7 +6471,9 @@
       "eventCount": 2,
       "rawVariants": [
         "New Brunswick, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "new haven, connecticut": {
       "venueId": "new-haven-ct",
@@ -5620,7 +6486,9 @@
       "eventCount": 1,
       "rawVariants": [
         "New Haven, Connecticut"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "new haven, ct": {
       "venueId": "new-haven-ct",
@@ -5633,7 +6501,9 @@
       "eventCount": 2,
       "rawVariants": [
         "New Haven, CT"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "new london, connecticut": {
       "venueId": "new-london-ct",
@@ -5646,7 +6516,9 @@
       "eventCount": 6,
       "rawVariants": [
         "New London, Connecticut"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "newark, de": {
       "venueId": "newark-de",
@@ -5659,7 +6531,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Newark, DE"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "newbury park, california": {
       "venueId": "newbury-park-ca",
@@ -5672,7 +6546,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Newbury Park, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "newman, georgia": {
       "venueId": "newnan-ga",
@@ -5685,7 +6561,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Newman, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "newnan, ga": {
       "venueId": "newnan-ga",
@@ -5698,7 +6576,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Newnan, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "niagara, ny": {
       "venueId": "niagara-falls-ny",
@@ -5711,7 +6591,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Niagara, NY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "niles, mi": {
       "venueId": "niles-mi",
@@ -5724,7 +6606,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Niles, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "niles, michigan": {
       "venueId": "niles-mi",
@@ -5737,7 +6621,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Niles, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "normal, il": {
       "venueId": "normal-il",
@@ -5750,7 +6636,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Normal, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "normal, illinois": {
       "venueId": "normal-il",
@@ -5763,7 +6651,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Normal, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "north canton, oh": {
       "venueId": "north-canton-oh",
@@ -5776,7 +6666,9 @@
       "eventCount": 1,
       "rawVariants": [
         "North Canton, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "norton, oh": {
       "venueId": "norton-oh",
@@ -5789,7 +6681,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Norton, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "norwalk, ca": {
       "venueId": "norwalk-ca",
@@ -5802,7 +6696,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Norwalk, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "norwalk, california": {
       "venueId": "norwalk-ca",
@@ -5815,7 +6711,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Norwalk, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "o'fallon, il": {
       "venueId": "o-fallon-il",
@@ -5828,7 +6726,9 @@
       "eventCount": 1,
       "rawVariants": [
         "O'Fallon, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ocean springs, mississippi": {
       "venueId": "ocean-springs-ms",
@@ -5841,7 +6741,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Ocean Springs, Mississippi"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ocean springs, ms": {
       "venueId": "ocean-springs-ms",
@@ -5854,7 +6756,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Ocean Springs, MS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ocean springs, oklahoma": {
       "venueId": "ocean-springs-ok",
@@ -5867,7 +6771,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Ocean Springs, Oklahoma"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "oceanside, ca": {
       "venueId": "oceanside-ca",
@@ -5880,7 +6786,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Oceanside, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "oceanside, california": {
       "venueId": "oceanside-ca",
@@ -5893,7 +6801,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Oceanside, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "odessa, texas": {
       "venueId": "odessa-tx",
@@ -5906,7 +6816,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Odessa, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ogden, ut": {
       "venueId": "ogden-ut",
@@ -5919,7 +6831,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Ogden, UT"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "ogden, utah": {
       "venueId": "ogden-ut",
@@ -5932,7 +6846,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Ogden, Utah"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "ogdensburg, new york": {
       "venueId": "ogdensburg-ny",
@@ -5945,7 +6861,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Ogdensburg, New York"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "oklahoma city, oklahoma": {
       "venueId": "oklahoma-city-ok",
@@ -5958,7 +6876,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Oklahoma City, Oklahoma"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "olathe, kansas": {
       "venueId": "olathe-ks",
@@ -5971,7 +6891,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Olathe, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "olathe, ks": {
       "venueId": "olathe-ks",
@@ -5984,7 +6906,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Olathe, KS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "old bridge township, new jersey": {
       "venueId": "old-bridge-nj",
@@ -5997,7 +6921,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Old Bridge Township, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "old bridge, new jersey": {
       "venueId": "old-bridge-nj",
@@ -6010,7 +6936,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Old Bridge, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "old orchard beach, me": {
       "venueId": "old-orchard-beach-me",
@@ -6023,7 +6951,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Old Orchard Beach, ME"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "omaha, ne": {
       "venueId": "omaha-ne",
@@ -6036,7 +6966,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Omaha, NE"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "omaha, nebraska": {
       "venueId": "omaha-ne",
@@ -6049,7 +6981,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Omaha, Nebraska"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "oneida, wisconsin": {
       "venueId": "oneida-wi",
@@ -6062,7 +6996,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Oneida, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ontario, california": {
       "venueId": "ontario-ca",
@@ -6075,7 +7011,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Ontario, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "ontario, idaho": {
       "venueId": "ontario-id",
@@ -6088,7 +7026,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Ontario, Idaho"
-      ]
+      ],
+      "timezone": "America/Boise",
+      "tzSource": "geo"
     },
     "opelika, al": {
       "venueId": "opelika-al",
@@ -6101,7 +7041,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Opelika, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "oregon, il": {
       "venueId": "oregon-il",
@@ -6114,7 +7056,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Oregon, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "oregon, wi": {
       "venueId": "oregon-wi",
@@ -6127,7 +7071,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Oregon, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "orlando, fl": {
       "venueId": "orlando-fl",
@@ -6140,7 +7086,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Orlando, FL"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "orlando, florida": {
       "venueId": "orlando-fl",
@@ -6153,7 +7101,9 @@
       "eventCount": 17,
       "rawVariants": [
         "Orlando, Florida"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "oro valley, arizona": {
       "venueId": "oro-valley-az",
@@ -6166,7 +7116,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Oro Valley, Arizona"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "orrville, oh": {
       "venueId": "orrville-oh",
@@ -6179,7 +7131,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Orrville, OH"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "oskaloosa, ia": {
       "venueId": "oskaloosa-ia",
@@ -6192,7 +7146,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Oskaloosa, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "oskaloosa, iowa": {
       "venueId": "oskaloosa-ia",
@@ -6205,7 +7161,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Oskaloosa, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "oswego, illinois": {
       "venueId": "oswego-il",
@@ -6218,7 +7176,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Oswego, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "ottawa, illinois": {
       "venueId": "ottawa-il",
@@ -6231,7 +7191,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Ottawa, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "overland park, ks": {
       "venueId": "overland-park-ks",
@@ -6244,7 +7206,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Overland Park, KS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "palto alto, california": {
       "venueId": "palo-alto-ca",
@@ -6257,7 +7221,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Palto Alto, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "paramount, california": {
       "venueId": "paramount-ca",
@@ -6270,7 +7236,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Paramount, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "pasadena, ca": {
       "venueId": "pasadena-ca",
@@ -6283,7 +7251,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Pasadena, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "pasadena, california": {
       "venueId": "pasadena-ca",
@@ -6296,7 +7266,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Pasadena, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "pascagoula, mississippi": {
       "venueId": "pascagoula-ms",
@@ -6309,7 +7281,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Pascagoula, Mississippi"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "pasco, washington": {
       "venueId": "pasco-wa",
@@ -6322,7 +7296,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Pasco, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "paso robles, california": {
       "venueId": "paso-robles-ca",
@@ -6335,7 +7311,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Paso Robles, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "paw paw, mi": {
       "venueId": "paw-paw-mi",
@@ -6348,7 +7326,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Paw Paw, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "paw paw, michigan": {
       "venueId": "paw-paw-mi",
@@ -6361,7 +7341,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Paw Paw, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "philadelphia, pennsylvania": {
       "venueId": "philadelphia-pa",
@@ -6374,7 +7356,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Philadelphia, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "phoenix, arizona": {
       "venueId": "phoenix-az",
@@ -6387,7 +7371,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Phoenix, Arizona"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "piscataway, nj": {
       "venueId": "piscataway-nj",
@@ -6400,7 +7386,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Piscataway, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "pittsburg, kansas": {
       "venueId": "pittsburg-ks",
@@ -6413,7 +7401,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Pittsburg, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "pittsburgh, pa": {
       "venueId": "pittsburgh-pa",
@@ -6426,7 +7416,9 @@
       "eventCount": 18,
       "rawVariants": [
         "Pittsburgh, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "pittsburgh, pennsylvania": {
       "venueId": "pittsburgh-pa",
@@ -6439,7 +7431,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Pittsburgh, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "pittsfield, massachusetts": {
       "venueId": "pittsfield-ma",
@@ -6452,7 +7446,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Pittsfield, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "plainwell, mi": {
       "venueId": "plainwell-mi",
@@ -6465,7 +7461,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Plainwell, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "pleasant hill, ca": {
       "venueId": "pleasant-hill-ca",
@@ -6478,7 +7476,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Pleasant Hill, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "pleasant hill, california": {
       "venueId": "pleasant-hill-ca",
@@ -6491,7 +7491,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Pleasant Hill, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "plymouth, in": {
       "venueId": "plymouth-in",
@@ -6504,7 +7506,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Plymouth, IN"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "port huron, michigan": {
       "venueId": "port-huron-mi",
@@ -6517,7 +7521,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Port Huron, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "port washington, wisconsin": {
       "venueId": "port-washington-wi",
@@ -6530,7 +7536,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Port Washington, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "portage, mi": {
       "venueId": "portage-mi",
@@ -6543,7 +7551,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Portage, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "portage, michigan": {
       "venueId": "portage-mi",
@@ -6556,7 +7566,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Portage, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "portland, or": {
       "venueId": "portland-or",
@@ -6569,7 +7581,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Portland, OR"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "portland, oregon": {
       "venueId": "portland-or",
@@ -6582,7 +7596,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Portland, Oregon"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "powder springs, ga": {
       "venueId": "powder-springs-ga",
@@ -6595,7 +7611,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Powder Springs, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "powder springs, georgia": {
       "venueId": "powder-springs-ga",
@@ -6608,7 +7626,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Powder Springs, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "powhatan, va": {
       "venueId": "powhatan-va",
@@ -6621,7 +7641,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Powhatan, VA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "prescott, arizona": {
       "venueId": "prescott-az",
@@ -6634,7 +7656,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Prescott, Arizona"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "pueblo, colorado": {
       "venueId": "pueblo-co",
@@ -6647,7 +7671,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Pueblo, Colorado"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "quincy, ma": {
       "venueId": "quincy-ma",
@@ -6660,7 +7686,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Quincy, MA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "quincy, massachusetts": {
       "venueId": "quincy-ma",
@@ -6673,7 +7701,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Quincy, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "racine, wisconsin": {
       "venueId": "racine-wi",
@@ -6686,7 +7716,9 @@
       "eventCount": 13,
       "rawVariants": [
         "Racine, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "raleigh, north carolina": {
       "venueId": "raleigh-nc",
@@ -6699,7 +7731,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Raleigh, North Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "reedsburg, wisconsin": {
       "venueId": "reedsburg-wi",
@@ -6712,7 +7746,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Reedsburg, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "renton, wa": {
       "venueId": "renton-wa",
@@ -6725,7 +7761,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Renton, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "rexburg, idaho": {
       "venueId": "rexburg-id",
@@ -6738,7 +7776,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Rexburg, Idaho"
-      ]
+      ],
+      "timezone": "America/Boise",
+      "tzSource": "geo"
     },
     "rice lake, wi": {
       "venueId": "rice-lake-wi",
@@ -6751,7 +7791,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Rice Lake, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "rice lake, wisconsin": {
       "venueId": "rice-lake-wi",
@@ -6764,7 +7806,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Rice Lake, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "richmond, kentucky": {
       "venueId": "richmond-ky",
@@ -6777,7 +7821,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Richmond, Kentucky"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "richmond, va": {
       "venueId": "richmond-va",
@@ -6790,7 +7836,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Richmond, VA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "rio rancho, new mexico": {
       "venueId": "rio-rancho-nm",
@@ -6803,7 +7851,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Rio Rancho, New Mexico"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "riverside, ca": {
       "venueId": "riverside-ca",
@@ -6816,7 +7866,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Riverside, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "riverside, california": {
       "venueId": "riverside-ca",
@@ -6829,7 +7881,9 @@
       "eventCount": 15,
       "rawVariants": [
         "Riverside, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "rochester, mn": {
       "venueId": "rochester-mn",
@@ -6842,7 +7896,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Rochester, MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "rochester, new york": {
       "venueId": "rochester-ny",
@@ -6855,7 +7911,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Rochester, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "rochester, ny": {
       "venueId": "rochester-ny",
@@ -6868,7 +7926,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Rochester, NY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "rock hill south carolina": {
       "venueId": "rock-hill-sc",
@@ -6881,7 +7941,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Rock Hill. South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "rock hill, north carolina": {
       "venueId": "rose-hill-nc",
@@ -6894,7 +7956,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Rock Hill, North Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "rockford illinois": {
       "venueId": "rockford-il",
@@ -6907,7 +7971,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Rockford Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "rockford, il": {
       "venueId": "rockford-il",
@@ -6920,7 +7986,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Rockford, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "rockford, illinois": {
       "venueId": "rockford-il",
@@ -6933,7 +8001,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Rockford, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "rockford, mi": {
       "venueId": "rockford-mi",
@@ -6946,7 +8016,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Rockford, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "rocklin, california": {
       "venueId": "rocklin-ca",
@@ -6959,7 +8031,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Rocklin, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "rome, new york": {
       "venueId": "rome-ny",
@@ -6972,7 +8046,9 @@
       "eventCount": 13,
       "rawVariants": [
         "Rome, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "rome, ny": {
       "venueId": "rome-ny",
@@ -6985,7 +8061,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Rome, NY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "rosemount, minnesota": {
       "venueId": "rosemount-mn",
@@ -6998,7 +8076,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Rosemount, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "roseville, ca": {
       "venueId": "roseville-ca",
@@ -7011,7 +8091,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Roseville, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "round rock, texas": {
       "venueId": "round-rock-tx",
@@ -7024,7 +8106,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Round Rock, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "round rock, tx": {
       "venueId": "round-rock-tx",
@@ -7037,7 +8121,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Round Rock, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "russellville, alabama": {
       "venueId": "russellville-al",
@@ -7050,7 +8136,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Russellville, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "sacramento, ca": {
       "venueId": "sacramento-ca",
@@ -7063,7 +8151,9 @@
       "eventCount": 17,
       "rawVariants": [
         "Sacramento, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "sacramento, california": {
       "venueId": "sacramento-ca",
@@ -7076,7 +8166,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Sacramento, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "saginaw, texas": {
       "venueId": "saginaw-tx",
@@ -7089,7 +8181,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Saginaw, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "saint cloud, minnesota": {
       "venueId": "saint-cloud-mn",
@@ -7102,7 +8196,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Saint Cloud, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "saint louis, missouri": {
       "venueId": "st-louis-mo",
@@ -7115,7 +8211,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Saint Louis, Missouri"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "saint peter, minnesota": {
       "venueId": "saint-peter-mn",
@@ -7128,7 +8226,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Saint Peter, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "saint peter, missouri": {
       "venueId": "saint-peters-mo",
@@ -7141,7 +8241,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Saint Peter, Missouri"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "saint peters, missouri": {
       "venueId": "saint-peters-mo",
@@ -7154,7 +8256,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Saint Peters, Missouri"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "salem new hampshire": {
       "venueId": "salem-nh",
@@ -7167,7 +8271,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Salem. New Hampshire"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "salem, oregon": {
       "venueId": "salem-or",
@@ -7180,7 +8286,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Salem, Oregon"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "salem, va": {
       "venueId": "salem-va",
@@ -7193,7 +8301,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Salem, VA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "salem, virginia": {
       "venueId": "salem-va",
@@ -7206,7 +8316,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Salem, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "salem, wi": {
       "venueId": "salem-wi",
@@ -7219,7 +8331,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Salem, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "salem, wisconsin": {
       "venueId": "salem-wi",
@@ -7232,7 +8346,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Salem, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "salina, kansas": {
       "venueId": "salina-ks",
@@ -7245,7 +8361,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Salina, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "salt lake city, ut": {
       "venueId": "salt-lake-city-ut",
@@ -7258,7 +8376,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Salt Lake City, UT"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "salt lake city, utah": {
       "venueId": "salt-lake-city-ut",
@@ -7271,7 +8391,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Salt Lake City, Utah"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "san antonio, texas": {
       "venueId": "san-antonio-tx",
@@ -7284,7 +8406,9 @@
       "eventCount": 17,
       "rawVariants": [
         "San Antonio, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "san antonio, tx": {
       "venueId": "san-antonio-tx",
@@ -7297,7 +8421,9 @@
       "eventCount": 11,
       "rawVariants": [
         "San Antonio, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "san bernardino, ca": {
       "venueId": "san-bernardino-ca",
@@ -7310,7 +8436,9 @@
       "eventCount": 4,
       "rawVariants": [
         "San Bernardino, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "san diego, california": {
       "venueId": "san-diego-ca",
@@ -7323,7 +8451,9 @@
       "eventCount": 13,
       "rawVariants": [
         "San Diego, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "san jose, california": {
       "venueId": "san-jose-ca",
@@ -7336,7 +8466,9 @@
       "eventCount": 3,
       "rawVariants": [
         "San Jose, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "san marcos, ca": {
       "venueId": "san-marcos-ca",
@@ -7349,7 +8481,9 @@
       "eventCount": 2,
       "rawVariants": [
         "San Marcos, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "santa ana, california": {
       "venueId": "santa-ana-ca",
@@ -7362,7 +8496,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Santa Ana, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "santa barbara, ca": {
       "venueId": "santa-barbara-ca",
@@ -7375,7 +8511,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Santa Barbara, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "santa barbara, california": {
       "venueId": "santa-barbara-ca",
@@ -7388,7 +8526,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Santa Barbara, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "santa clara, ca": {
       "venueId": "santa-clara-ca",
@@ -7401,7 +8541,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Santa Clara, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "santa clara, california": {
       "venueId": "santa-clara-ca",
@@ -7414,7 +8556,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Santa Clara, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "santa clarita, ca": {
       "venueId": "santa-clarita-ca",
@@ -7427,7 +8571,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Santa Clarita, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "sarina, ontario": {
       "venueId": "sarnia-on",
@@ -7440,7 +8586,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Sarina, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "sarnia, ontario": {
       "venueId": "sarnia-on",
@@ -7453,7 +8601,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Sarnia, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "sauk rapids, minnesota": {
       "venueId": "sauk-rapids-mn",
@@ -7466,7 +8616,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Sauk Rapids, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "saul ste marie, ontario": {
       "venueId": "sault-ste-marie-on",
@@ -7479,7 +8631,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Saul Ste. Marie, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "seattle, wa": {
       "venueId": "seattle-wa",
@@ -7492,7 +8646,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Seattle, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "seattle, washington": {
       "venueId": "seattle-wa",
@@ -7505,7 +8661,9 @@
       "eventCount": 7,
       "rawVariants": [
         "Seattle, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "severieville, tennessee": {
       "venueId": "severieville-tn",
@@ -7518,7 +8676,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Severieville, Tennessee"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "sevierville, tennessee": {
       "venueId": "sevierville-tn",
@@ -7531,7 +8691,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Sevierville, Tennessee"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "sevierville, tn": {
       "venueId": "sevierville-tn",
@@ -7544,7 +8706,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Sevierville, TN"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "sewell, nj": {
       "venueId": "sewell-nj",
@@ -7557,7 +8721,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Sewell, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "sheffield, pa": {
       "venueId": "sheffield-pa",
@@ -7570,7 +8736,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Sheffield, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "shelbyville, kentucky": {
       "venueId": "shelbyville-ky",
@@ -7583,7 +8751,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Shelbyville, Kentucky"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "shelton, ct": {
       "venueId": "shelton-ct",
@@ -7596,7 +8766,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Shelton, CT"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "sherbrooke, quebec": {
       "venueId": "sherbrooke-qc",
@@ -7609,7 +8781,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Sherbrooke, Quebec"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "shoreline, wa": {
       "venueId": "shoreline-wa",
@@ -7622,7 +8796,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Shoreline, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "siloam springs, arkansas": {
       "venueId": "siloam-springs-ar",
@@ -7635,7 +8811,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Siloam Springs, Arkansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "sioux city, ia": {
       "venueId": "sioux-city-ia",
@@ -7648,7 +8826,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Sioux City, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "sioux falls, iowa": {
       "venueId": "sioux-falls-ia",
@@ -7661,7 +8841,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Sioux Falls, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "sioux falls, sd": {
       "venueId": "sioux-falls-sd",
@@ -7674,7 +8856,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Sioux Falls, SD"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "sioux falls, south dakota": {
       "venueId": "sioux-falls-sd",
@@ -7687,7 +8871,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Sioux Falls, South Dakota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "south lyon, michigan": {
       "venueId": "south-lyon-mi",
@@ -7700,7 +8886,9 @@
       "eventCount": 1,
       "rawVariants": [
         "South Lyon, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "south milwaukee, wisconsin": {
       "venueId": "south-milwaukee-wi",
@@ -7713,7 +8901,9 @@
       "eventCount": 5,
       "rawVariants": [
         "South Milwaukee, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "southbridge, massachusetts": {
       "venueId": "southbridge-ma",
@@ -7726,7 +8916,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Southbridge, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "spokane valley, washington": {
       "venueId": "spokane-valley-wa",
@@ -7739,7 +8931,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Spokane Valley, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "spokane, washington": {
       "venueId": "spokane-wa",
@@ -7752,7 +8946,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Spokane, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "spring valley, il": {
       "venueId": "spring-valley-il",
@@ -7765,7 +8961,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Spring Valley, IL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "spring valley, illinois": {
       "venueId": "spring-valley-il",
@@ -7778,7 +8976,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Spring Valley, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "springboro, ohio": {
       "venueId": "springboro-oh",
@@ -7791,7 +8991,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Springboro, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "springfield, massachusetts": {
       "venueId": "springfield-ma",
@@ -7804,7 +9006,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Springfield, Massachusetts"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "st louis, mo": {
       "venueId": "st-louis-mo",
@@ -7817,7 +9021,9 @@
       "eventCount": 2,
       "rawVariants": [
         "St. Louis, MO"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "st paul, mn": {
       "venueId": "saint-paul-mn",
@@ -7830,7 +9036,9 @@
       "eventCount": 2,
       "rawVariants": [
         "St. Paul, MN"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "stanford, ca": {
       "venueId": "stanford-ca",
@@ -7843,7 +9051,9 @@
       "eventCount": 12,
       "rawVariants": [
         "Stanford, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "stanford, california": {
       "venueId": "stanford-ca",
@@ -7856,7 +9066,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Stanford, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "statesboro, ga": {
       "venueId": "statesboro-ga",
@@ -7869,7 +9081,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Statesboro, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "stillwater, minnesota": {
       "venueId": "stillwater-mn",
@@ -7882,7 +9096,9 @@
       "eventCount": 11,
       "rawVariants": [
         "Stillwater, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "stockton, california": {
       "venueId": "stockton-ca",
@@ -7895,7 +9111,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Stockton, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "storm lake, ia": {
       "venueId": "storm-lake-ia",
@@ -7908,7 +9126,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Storm Lake, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "streator, illinois": {
       "venueId": "streator-il",
@@ -7921,7 +9141,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Streator, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "stroudsburg, pennsylvania": {
       "venueId": "stroudsburg-pa",
@@ -7934,7 +9156,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Stroudsburg, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "succasunna, nj": {
       "venueId": "succasunna-nj",
@@ -7947,7 +9171,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Succasunna, NJ"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "sudbury, ontario": {
       "venueId": "greater-sudbury-on",
@@ -7960,7 +9186,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Sudbury, Ontario"
-      ]
+      ],
+      "timezone": "America/Toronto",
+      "tzSource": "geo"
     },
     "summerville, south carolina": {
       "venueId": "summerville-sc",
@@ -7973,7 +9201,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Summerville, South Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "sun prairie, wi": {
       "venueId": "sun-prairie-wi",
@@ -7986,7 +9216,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Sun Prairie, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "sunnyvale, california": {
       "venueId": "sunnyvale-ca",
@@ -7999,7 +9231,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Sunnyvale, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "syracuse, ny": {
       "venueId": "syracuse-ny",
@@ -8012,7 +9246,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Syracuse, NY"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "tarboro, north carolina": {
       "venueId": "tarboro-nc",
@@ -8025,7 +9261,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Tarboro, North Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "tempe, arizona": {
       "venueId": "tempe-az",
@@ -8038,7 +9276,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Tempe, Arizona"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "tempe, az": {
       "venueId": "tempe-az",
@@ -8051,7 +9291,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Tempe, AZ"
-      ]
+      ],
+      "timezone": "America/Phoenix",
+      "tzSource": "geo"
     },
     "three rivers, mi": {
       "venueId": "three-rivers-mi",
@@ -8064,7 +9306,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Three Rivers, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "tigard, or": {
       "venueId": "tigard-or",
@@ -8077,7 +9321,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Tigard, OR"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "toledo, ohio": {
       "venueId": "toledo-oh",
@@ -8090,7 +9336,9 @@
       "eventCount": 13,
       "rawVariants": [
         "Toledo, Ohio"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "traverse city, michigan": {
       "venueId": "traverse-city-mi",
@@ -8103,7 +9351,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Traverse City, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "tri cities, wa": {
       "venueId": "tri-cities-wa",
@@ -8116,7 +9366,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Tri Cities, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "tri-cities, washington": {
       "venueId": "tri-cities-wa",
@@ -8129,7 +9381,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Tri-Cities, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "troy alabama": {
       "venueId": "troy-al",
@@ -8142,7 +9396,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Troy. Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "troy, alabama": {
       "venueId": "troy-al",
@@ -8155,7 +9411,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Troy, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "troy, mi": {
       "venueId": "troy-mi",
@@ -8168,7 +9426,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Troy, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "trussville, al": {
       "venueId": "trussville-al",
@@ -8181,7 +9441,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Trussville, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "tualatin, or": {
       "venueId": "tualatin-or",
@@ -8194,7 +9456,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Tualatin, OR"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "tulsa, oklahoma": {
       "venueId": "tulsa-ok",
@@ -8207,7 +9471,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Tulsa, Oklahoma"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "tupelo, mississippi": {
       "venueId": "tupelo-ms",
@@ -8220,7 +9486,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Tupelo, Mississippi"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "tupelo, ms": {
       "venueId": "tupelo-ms",
@@ -8233,7 +9501,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Tupelo, MS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "union city, ca": {
       "venueId": "union-city-ca",
@@ -8246,7 +9516,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Union City, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "upper darby, pennsylvania": {
       "venueId": "darby-pa",
@@ -8259,7 +9531,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Upper Darby, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "utica, new york": {
       "venueId": "utica-ny",
@@ -8272,7 +9546,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Utica, New York"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "valdosta, ga": {
       "venueId": "valdosta-ga",
@@ -8285,7 +9561,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Valdosta, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "valdosta, georgia": {
       "venueId": "valdosta-ga",
@@ -8298,7 +9576,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Valdosta, Georgia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "van buren, alabama": {
       "venueId": "van-buren-al",
@@ -8311,7 +9591,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Van Buren, Alabama"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "van buren, arkansas": {
       "venueId": "van-buren-ar",
@@ -8324,7 +9606,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Van Buren, Arkansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "vancouver washington": {
       "venueId": "vancouver-wa",
@@ -8337,7 +9621,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Vancouver. Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "vancouver, wa": {
       "venueId": "vancouver-wa",
@@ -8350,7 +9636,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Vancouver, WA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "vancouver, washington": {
       "venueId": "vancouver-wa",
@@ -8363,7 +9651,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Vancouver, Washington"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "vicksburg, michigan": {
       "venueId": "vicksburg-mi",
@@ -8376,7 +9666,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Vicksburg, Michigan"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "vista, ca": {
       "venueId": "vista-ca",
@@ -8389,7 +9681,9 @@
       "eventCount": 8,
       "rawVariants": [
         "Vista, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "waco, tx": {
       "venueId": "waco-tx",
@@ -8402,7 +9696,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Waco, TX"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "walnut, ca": {
       "venueId": "walnut-ca",
@@ -8415,7 +9711,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Walnut, CA"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "walnut, california": {
       "venueId": "walnut-ca",
@@ -8428,7 +9726,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Walnut, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "warrensburg, mo": {
       "venueId": "warrensburg-mo",
@@ -8441,7 +9741,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Warrensburg, MO"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "warrenton, va": {
       "venueId": "warrenton-va",
@@ -8454,7 +9756,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Warrenton, VA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "warrenton, virginia": {
       "venueId": "warrenton-va",
@@ -8467,7 +9771,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Warrenton, Virginia"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "waukee, ia": {
       "venueId": "waukee-ia",
@@ -8480,7 +9786,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Waukee, IA"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "waukee, iowa": {
       "venueId": "waukee-ia",
@@ -8493,7 +9801,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Waukee, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "waukegan, illinois": {
       "venueId": "waukegan-il",
@@ -8506,7 +9816,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Waukegan, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "waukesha, wi": {
       "venueId": "waukesha-wi",
@@ -8519,7 +9831,9 @@
       "eventCount": 4,
       "rawVariants": [
         "Waukesha, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "waukesha, wisconsin": {
       "venueId": "waukesha-wi",
@@ -8532,7 +9846,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Waukesha, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "wausau, wi": {
       "venueId": "wausau-wi",
@@ -8545,7 +9861,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Wausau, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "wausau, wisconsin": {
       "venueId": "wausau-wi",
@@ -8558,7 +9876,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Wausau, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "wayne, new jersey": {
       "venueId": "wayne-nj",
@@ -8571,7 +9891,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Wayne, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "west chester, pa": {
       "venueId": "west-chester-pa",
@@ -8584,7 +9906,9 @@
       "eventCount": 2,
       "rawVariants": [
         "West Chester, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "west chester, pennsylvania": {
       "venueId": "west-chester-pa",
@@ -8597,7 +9921,9 @@
       "eventCount": 8,
       "rawVariants": [
         "West Chester, Pennsylvania"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "west covina, california": {
       "venueId": "west-covina-ca",
@@ -8610,7 +9936,9 @@
       "eventCount": 5,
       "rawVariants": [
         "West Covina, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "west des moines, iowa": {
       "venueId": "west-des-moines-ia",
@@ -8623,7 +9951,9 @@
       "eventCount": 2,
       "rawVariants": [
         "West Des Moines, Iowa"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "west milford, new jersey": {
       "venueId": "west-milford-nj",
@@ -8636,7 +9966,9 @@
       "eventCount": 1,
       "rawVariants": [
         "West Milford, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "west monroe, louisiana": {
       "venueId": "west-monroe-la",
@@ -8649,7 +9981,9 @@
       "eventCount": 2,
       "rawVariants": [
         "West Monroe, Louisiana"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "westlake village, california": {
       "venueId": "westlake-village-ca",
@@ -8662,7 +9996,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Westlake Village, California"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "westminster, maryland": {
       "venueId": "westminster-md",
@@ -8675,7 +10011,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Westminster, Maryland"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "wetumpka, al": {
       "venueId": "wetumpka-al",
@@ -8688,7 +10026,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Wetumpka, AL"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "white lake, mi": {
       "venueId": "white-lake-mi",
@@ -8701,7 +10041,9 @@
       "eventCount": 4,
       "rawVariants": [
         "White Lake, MI"
-      ]
+      ],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     },
     "whitewater, wi": {
       "venueId": "whitewater-wi",
@@ -8714,7 +10056,9 @@
       "eventCount": 10,
       "rawVariants": [
         "Whitewater, WI"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "whitewater, wisconsin": {
       "venueId": "whitewater-wi",
@@ -8727,7 +10071,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Whitewater, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "wichita falls, texas": {
       "venueId": "wichita-falls-tx",
@@ -8740,7 +10086,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Wichita Falls, Texas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "wichita, kansas": {
       "venueId": "wichita-ks",
@@ -8753,7 +10101,9 @@
       "eventCount": 12,
       "rawVariants": [
         "Wichita, Kansas"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "wichita, ks": {
       "venueId": "wichita-ks",
@@ -8766,7 +10116,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Wichita, KS"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "wildwood, new jersey": {
       "venueId": "wildwood-nj",
@@ -8779,7 +10131,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Wildwood, New Jersey"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "williamsport, pa": {
       "venueId": "williamsport-pa",
@@ -8792,7 +10146,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Williamsport, PA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "wilmot, wisconsin": {
       "venueId": "wilmot-wi",
@@ -8805,7 +10161,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Wilmot, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "windsor, colorado": {
       "venueId": "windsor-co",
@@ -8818,7 +10176,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Windsor, Colorado"
-      ]
+      ],
+      "timezone": "America/Denver",
+      "tzSource": "geo"
     },
     "winston-salem, nc": {
       "venueId": "winston-salem-nc",
@@ -8831,7 +10191,9 @@
       "eventCount": 9,
       "rawVariants": [
         "Winston-Salem, NC"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "winston-salem, north carolina": {
       "venueId": "winston-salem-nc",
@@ -8845,7 +10207,9 @@
       "rawVariants": [
         "Winston-Salem, North Carolina",
         "Winston-Salem,. North Carolina"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "wisconsin rapids, wisconsin": {
       "venueId": "wisconsin-rapids-wi",
@@ -8858,7 +10222,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Wisconsin Rapids, Wisconsin"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "woodburn, oregon": {
       "venueId": "woodburn-or",
@@ -8871,7 +10237,9 @@
       "eventCount": 6,
       "rawVariants": [
         "Woodburn, Oregon"
-      ]
+      ],
+      "timezone": "America/Los_Angeles",
+      "tzSource": "geo"
     },
     "woodbury, minnesota": {
       "venueId": "woodbury-mn",
@@ -8884,7 +10252,9 @@
       "eventCount": 2,
       "rawVariants": [
         "Woodbury, Minnesota"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "woodstock, ga": {
       "venueId": "woodstock-ga",
@@ -8897,7 +10267,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Woodstock, GA"
-      ]
+      ],
+      "timezone": "America/New_York",
+      "tzSource": "geo"
     },
     "woodstock, illinois": {
       "venueId": "woodstock-il",
@@ -8910,7 +10282,9 @@
       "eventCount": 5,
       "rawVariants": [
         "Woodstock, Illinois"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "yukon, oklahoma": {
       "venueId": "yukon-ok",
@@ -8923,7 +10297,9 @@
       "eventCount": 1,
       "rawVariants": [
         "Yukon, Oklahoma"
-      ]
+      ],
+      "timezone": "America/Chicago",
+      "tzSource": "geo"
     },
     "zionsville, in": {
       "venueId": "zionsville-in",
@@ -8936,7 +10312,9 @@
       "eventCount": 3,
       "rawVariants": [
         "Zionsville, IN"
-      ]
+      ],
+      "timezone": "America/Indiana/Indianapolis",
+      "tzSource": "geo"
     },
     "ypsilanti, michigan": {
       "venueId": "ypsilanti-mi",
@@ -8947,7 +10325,9 @@
       "lng": -83.613,
       "source": "seed",
       "eventCount": 0,
-      "rawVariants": []
+      "rawVariants": [],
+      "timezone": "America/Detroit",
+      "tzSource": "geo"
     }
   }
 }

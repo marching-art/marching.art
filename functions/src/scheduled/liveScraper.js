@@ -136,9 +136,17 @@ async function writeScrapeRunStatus(db, date, fields) {
  * @param {object} [options]
  * @param {boolean} [options.force=false] - When true, bypass the "already
  *   scraped today" guard so an admin can re-run the scrape on demand.
+ * @param {string|null} [options.dateKey=null] - Expected show date
+ *   (YYYY-MM-DD, Eastern). Passed by the drop dispatcher, which runs the
+ *   scrape the same EVENING as the shows: it re-keys the same-day guard,
+ *   lastScrapedDate stamp, and scrape_runs doc on the planner's showDateET
+ *   (the legacy 1:30 AM run keys on "the morning after" instead), and it pins
+ *   event selection to that exact date — if dci.org hasn't listed tonight's
+ *   events yet, that's a retryable failure, NOT a silent scrape of yesterday
+ *   that would stamp the guard and block tonight's real attempt.
  * @returns {Promise<object>} Result summary for surfacing in the admin UI.
  */
-async function scrapeLatestLiveScores({ force = false } = {}) {
+async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
   const db = getDb();
   const seasonDoc = await db.doc("game-settings/season").get();
 
@@ -158,12 +166,24 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
   // runs at 1:30 AM ET; a UTC date flips at 8 PM ET (EDT) / 7 PM ET (EST), so a
   // manual/forced scrape run during the prior evening would otherwise stamp
   // lastScrapedDate with the NEXT UTC day and silently skip the 1:30 AM run.
-  // en-CA formats as YYYY-MM-DD.
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+  // en-CA formats as YYYY-MM-DD. The dispatcher passes its own key instead.
+  const today = dateKey ||
+    new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
   const lastScrapedDate = seasonData.lastScrapedDate;
   if (!force && lastScrapedDate === today) {
     logger.info(`Scraper skipped: Already scraped today (${today}).`);
     return { scraped: false, reason: "already-scraped-today", lastScrapedDate };
+  }
+
+  // When the drop dispatcher owns the pipeline but this call came from a
+  // legacy path (the admin "Scrape Now" button), the stamp must use the
+  // SCRAPED EVENTS' date, not the wall-clock date. An admin re-scrape after
+  // midnight would otherwise stamp tomorrow's show-date key and silently
+  // block the dispatcher's scrape the following night.
+  let stampWithEventDate = false;
+  if (!dateKey) {
+    const { isDropSchedulingEnabled } = require("../helpers/features");
+    stampWithEventDate = await isDropSchedulingEnabled(db);
   }
 
   // A single competition night frequently has 2-3 events, so we scrape EVERY
@@ -186,14 +206,37 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
     return { scraped: false, reason: "no-recap-found" };
   }
 
-  // All events sharing the most-recent date belong to the latest competition
-  // night. Compute the max date explicitly rather than trusting listing order.
-  const latestDateKey = listedEvents.reduce(
+  // Target date: pinned to the caller's expected show date when given (the
+  // dispatcher scrapes tonight's shows and must never fall back to an older
+  // night); otherwise all events sharing the most-recent listed date belong to
+  // the latest competition night — compute the max date explicitly rather than
+  // trusting listing order.
+  const latestDateKey = dateKey || listedEvents.reduce(
     (max, e) => (e.dateKey > max ? e.dateKey : max),
     listedEvents[0].dateKey
   );
 
+  if (dateKey && !listedEvents.some((e) => e.dateKey === dateKey)) {
+    // Tonight's events aren't on the listing yet (posted late, or the page is
+    // stale). Record a failure — WITHOUT stamping lastScrapedDate — so the
+    // dispatcher's next gate tick retries until its clamp.
+    logger.warn(`No dci.org events listed for expected date ${dateKey} yet; will retry.`);
+    await writeScrapeRunStatus(db, today, {
+      status: "failed",
+      failedAt: new Date(),
+      attempted: 0,
+      succeeded: 0,
+      failed: 0,
+      lastError: `no events listed for expected date ${dateKey}`,
+    });
+    return { scraped: false, reason: "no-events-for-date", dateKey };
+  }
+
   logger.info(`Latest competition date ${latestDateKey}: scraping events.`);
+  // The night key everything is recorded under: the events' own date when the
+  // dispatcher owns the pipeline (see stampWithEventDate above), else the
+  // caller's/wall-clock key.
+  const runKey = stampWithEventDate ? latestDateKey : today;
   const { recapUrls, results, totalCount } =
     await scrapeRecapsForDateKeys(listedEvents, new Set([latestDateKey]));
 
@@ -205,7 +248,7 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
   const anySucceeded = succeeded > 0;
 
   // Record the night's outcome for the watchdog and admin diagnostics.
-  await writeScrapeRunStatus(db, today, {
+  await writeScrapeRunStatus(db, runKey, {
     status: anySucceeded ? "completed" : "failed",
     ...(anySucceeded ? { completedAt: new Date() } : { failedAt: new Date() }),
     latestDateKey,
@@ -224,15 +267,15 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
   // prevent any retry before the 2 AM scorer runs.
   if (anySucceeded) {
     await db.doc("game-settings/season").update({
-      lastScrapedDate: today,
+      lastScrapedDate: runKey,
     });
     logger.info(
-      `Scraping completed for ${today}: ${succeeded}/${recapUrls.length} event(s) on ` +
+      `Scraping completed for ${runKey}: ${succeeded}/${recapUrls.length} event(s) on ` +
       `${latestDateKey}, ${totalCount} total corps scores.`
     );
   } else {
     logger.error(
-      `Scraping FAILED for ${today}: 0/${recapUrls.length} event(s) on ${latestDateKey} ` +
+      `Scraping FAILED for ${runKey}: 0/${recapUrls.length} event(s) on ${latestDateKey} ` +
       "produced scores. lastScrapedDate NOT stamped so a re-run can retry today."
     );
   }
@@ -246,7 +289,7 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
     stampedLastScrapedDate: anySucceeded,
     count: totalCount,
     events: results,
-    scrapedDate: today,
+    scrapedDate: runKey,
   };
 }
 
@@ -344,6 +387,15 @@ exports.scrapeDciScores = onSchedule({
   secrets: [scraperApiKey],
 }, async () => {
   try {
+    // When the drop dispatcher owns the pipeline it already scraped tonight's
+    // shows earlier this evening under the show-date key; running here too
+    // would spend a second scraper-API pass on the same night (the date-key
+    // mismatch means the same-day guard would NOT stop it).
+    const { isDropSchedulingEnabled } = require("../helpers/features");
+    if (await isDropSchedulingEnabled(getDb())) {
+      logger.info("[scrape-1:30am] drop scheduling enabled; deferring to the drop dispatcher.");
+      return;
+    }
     await scrapeLatestLiveScores({ force: false });
   } catch (error) {
     logger.error("Error during live score scraping:", {

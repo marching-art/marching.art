@@ -718,7 +718,7 @@ const OFF_SEASON_STRATEGY = {
     getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData),
 };
 
-async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
+async function processAndArchiveOffSeasonScoresLogic({ force = false, scoredDay: scoredDayOverride = null } = {}) {
   const db = getDb();
   logger.info("Running Daily Off-Season Score Processor & Archiver...");
 
@@ -737,7 +737,11 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
   const seasonStartDate = seasonData.schedule.startDate.toDate();
 
   // Off-season has no spring training, so the calendar day IS the scored day.
-  const scoredDay = getCompletedCalendarDay(seasonStartDate);
+  //
+  // The legacy 2 AM run derives it from the 2 AM game-day reset ("yesterday").
+  // The drop dispatcher runs at 9 PM ET — where that derivation is off by one —
+  // so it passes the planner's day explicitly (dropPlanner.js show-day reset).
+  const scoredDay = scoredDayOverride ?? getCompletedCalendarDay(seasonStartDate);
 
   if (scoredDay < 1 || scoredDay > 49) {
     logger.info(`Scored day (${scoredDay}) is outside the 1-49 range. Exiting.`);

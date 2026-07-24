@@ -44,7 +44,7 @@ for (const venue of Object.values(gazetteer.venues)) {
  * historical full-name spelling ("Allentown, Pennsylvania") and the canonical
  * "City, ST" label ("Allentown, PA").
  * @param {string} locationString
- * @returns {{venueId, city, region, lat, lng}|null}
+ * @returns {{venueId, city, region, lat, lng, timezone?: (string|null)}|null}
  */
 function venueFor(locationString) {
   const key = normalizeKey(locationString);
@@ -60,6 +60,21 @@ function venueFor(locationString) {
  */
 function stadiumFor(venueId) {
   return (venueId && stadiums.stadiums[venueId]) || null;
+}
+
+/**
+ * The IANA timezone for a location string (e.g. "America/Los_Angeles"), or null
+ * when the venue is unknown or was never stamped with one. Baked into the
+ * gazetteer by scripts/venueTimezones.js from each venue's coordinates; the
+ * furthest-west score-drop rule (helpers/scoreDropTime.js) consumes it. Returns
+ * null rather than a default so callers decide the fallback (live scoring
+ * assumes the latest possible zone when a show's venue can't be resolved).
+ * @param {string} locationString
+ * @returns {string|null}
+ */
+function timezoneFor(locationString) {
+  const venue = venueFor(locationString);
+  return (venue && venue.timezone) || null;
 }
 
 /** Great-circle distance in miles. */
@@ -138,6 +153,7 @@ module.exports = {
   normalizeKey,
   venueFor,
   stadiumFor,
+  timezoneFor,
   haversineMiles,
   travelTierFor,
   travelLeg,

@@ -80,11 +80,20 @@ async function findUnhealthyScoringRuns(db, now = new Date()) {
 }
 
 /**
- * During live season, check that last night's 1:30 AM ET scrape recorded a
- * successful run at `scrape_runs/{date}` (written by scheduled/liveScraper.js,
- * keyed by the Eastern calendar date — the same date this 4:30 AM run sits in).
- * A doc with status !== "completed", or no doc at all (scraper crashed before
- * writing, or never fired), means the scorer had no fresh DCI scores.
+ * During live season, check that last night's scrape recorded a successful
+ * run in `scrape_runs`. Two possible keys, depending on which pipeline owns
+ * the night (game-settings/features.dropScheduling):
+ *
+ *   - legacy 1:30 AM scrape: keyed by the MORNING'S Eastern date — the same
+ *     date this 4:30 AM run sits in.
+ *   - drop dispatcher (scheduled/dropDispatcher.js): keyed by the SHOW DATE —
+ *     the previous Eastern calendar date, since it scrapes the same evening
+ *     the shows run.
+ *
+ * Rather than reading the flag (which may have flipped mid-night), the check
+ * passes when EITHER key has a completed run. A doc with status !==
+ * "completed", or no doc under either key, means the scorer had no fresh
+ * DCI scores.
  *
  * Returns null when healthy or not in live season; otherwise a problem
  * descriptor for the alert.
@@ -98,16 +107,24 @@ async function findScrapeRunProblem(db, now = new Date()) {
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists || seasonDoc.data().status !== "live-season") return null;
 
-  // en-CA formats as YYYY-MM-DD — same key liveScraper.js writes.
-  const date = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(now);
-  const runDoc = await db.collection("scrape_runs").doc(date).get();
-  if (!runDoc.exists) {
-    return { date, status: "missing" };
-  }
-  const run = runDoc.data();
-  if (run.status !== "completed") {
-    return {
-      date,
+  // en-CA formats as YYYY-MM-DD — same key the legacy liveScraper.js writes.
+  const legacyKey = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(now);
+  // The dispatcher's key: last night's show date. At 4:30 AM the show-day
+  // reset (dropPlanner.js) already points at the new date, so step back one.
+  const { showDateFor } = require("../helpers/dropPlanner");
+  const showDate = new Date(showDateFor(now).utcMidnight - 24 * 60 * 60 * 1000);
+  const showKey = showDate.toISOString().slice(0, 10);
+
+  const keys = [...new Set([legacyKey, showKey])];
+  const docs = await Promise.all(keys.map((k) => db.collection("scrape_runs").doc(k).get()));
+
+  let worst = null;
+  for (const runDoc of docs) {
+    if (!runDoc.exists) continue;
+    const run = runDoc.data();
+    if (run.status === "completed") return null; // either pipeline succeeded
+    worst = {
+      date: runDoc.id,
       status: run.status || "unknown",
       lastError: run.lastError,
       attempted: run.attempted,
@@ -115,7 +132,7 @@ async function findScrapeRunProblem(db, now = new Date()) {
       failed: run.failed,
     };
   }
-  return null;
+  return worst || { date: keys.join(" | "), status: "missing" };
 }
 
 // 04:30 ET: after the 02:00 scoring runs (and their retries) have finished or

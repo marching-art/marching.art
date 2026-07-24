@@ -141,9 +141,12 @@ From the architecture survey — this class was designed against the actual code
   breakdowns (`GE1, GE2, VP, VA, CG, B, MA, P`, each 0–20) with `offSeasonDay` 1–49 — exactly the
   training corpus the scoring engine needs. The regression machinery in
   `functions/src/helpers/scoringMath.js` already fits historical curves.
-- **Nightly pipeline:** `dailyOffSeasonProcessor` / `processDailyLiveScores` (02:00 ET) +
-  `scoringRunGuard.js` idempotency + `chunkedWriter.js`. Podium scoring is a new stage in the same
-  run.
+- **Nightly pipeline:** `scoringRunGuard.js` idempotency + `chunkedWriter.js`. With
+  `features.dropScheduling` ON, Podium runs in its own **9 PM ET year-round job**
+  (`podiumNightly`, scheduled/dropDispatcher.js) while fantasy scoring follows the
+  timezone-aware drop plan (see `SCORE_DROPS.md`); with the flag OFF, Podium remains a
+  stage inside the legacy 02:00 ET `dailyOffSeasonProcessor` / `processDailyLiveScores`
+  run. Either way the per-day podium lease makes the handoff safe.
 - **Economy:** CorpsCoin earn/spend (`functions/src/callable/economy.js`), XP levels, shop and
   prestige catalogs — reused as-is for unlocks, staff, and logistics costs.
 - **Unbuilt-but-planned systems:** `project_plan.txt` ("Ultimate Director Sim v5.3") already

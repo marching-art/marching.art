@@ -1,6 +1,9 @@
 // NextDeadlineChip - always-visible countdown to the next game deadline.
-// Scores process nightly at 2 AM ET; caption-change windows (unlimited /
-// weekly / championship / lockouts) come from the shared season clock.
+// Scores drop nightly — 9 PM ET in the off-season, and when the night's
+// westernmost show wraps in live season (the exact instant comes from the
+// backend's drop plan via useSeasonDeadlines). Caption-change windows
+// (unlimited / weekly / championship / lockouts) keep their own 2 AM ET
+// reopen boundary, independent of how early scores dropped.
 
 import React, { useState } from 'react';
 import { Clock, ChevronDown } from 'lucide-react';
@@ -8,26 +11,28 @@ import { useSeasonDeadlines } from '../../../hooks/useSeasonClock';
 import { formatCountdown, formatEtShort, formatEtDayTime } from '../../../utils/seasonClock';
 
 const NextDeadlineChip = ({ variant = 'chip' }) => {
-  const { scoresAt, scoresInMs, trade } = useSeasonDeadlines();
+  const { scoresAt, scoresInMs, scoresExact, trade } = useSeasonDeadlines();
   const [expanded, setExpanded] = useState(false);
 
   const tooltipLines = [
-    `Scores process nightly at 2:00 AM ET — next: ${formatEtDayTime(scoresAt)}`,
+    scoresExact
+      ? `Scores drop ${formatEtDayTime(scoresAt)}`
+      : `Scores drop by ${formatEtDayTime(scoresAt)} — exact time depends on the night's westernmost show`,
   ];
   let tradeLabel = null;
   if (trade?.status === 'locked') {
     if (trade.phase === 'weekly') {
       // Locked at the Saturday 8 PM ET week boundary — the fresh weekly
-      // allotment becomes usable once scores process, so now the reset matters.
+      // allotment becomes usable at the 2 AM ET reopen.
       tradeLabel = `Changes reset ${formatEtShort(trade.reopensAt)}`;
       tooltipLines.push(
-        'Caption changes are locked until scores process',
+        'Caption changes are locked overnight',
         `Weekly lineup-change limit (${trade.tradeLimit}) resets ${formatEtDayTime(trade.reopensAt)}`
       );
     } else {
-      tradeLabel = 'Changes locked until scores process';
+      tradeLabel = `Changes locked until ${formatEtShort(trade.reopensAt)}`;
       tooltipLines.push(
-        `Caption changes reopen once scores are processed (~${formatEtDayTime(trade.reopensAt)})`
+        `Caption changes reopen ${formatEtDayTime(trade.reopensAt)} (once that night's scores are final)`
       );
     }
   } else if (trade?.phase === 'blackout') {
@@ -40,7 +45,7 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     tradeLabel = `Championship changes lock ${formatEtShort(trade.locksAt)}`;
     tooltipLines.push(
       `${trade.tradeLimit} caption changes per day during Championship Week (Days 45-49)`,
-      `Changes lock nightly at ${formatEtDayTime(trade.locksAt)} until scores process`
+      `Changes lock nightly at ${formatEtDayTime(trade.locksAt)}, reopening at 2 AM ET`
     );
   } else if (trade?.isUnlimited && trade.unlimitedEndsAt) {
     tradeLabel = `Unlimited changes until ${formatEtShort(trade.unlimitedEndsAt)}`;
@@ -52,7 +57,7 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     // only becomes relevant once changes actually lock (handled above).
     tradeLabel = `Changes lock ${formatEtShort(trade.locksAt)}`;
     tooltipLines.push(
-      `Changes lock ${formatEtDayTime(trade.locksAt)} until scores process`,
+      `Changes lock ${formatEtDayTime(trade.locksAt)} overnight`,
       `Weekly lineup-change limit (${trade.tradeLimit}) resets ${formatEtDayTime(trade.resetsAt)}`
     );
   }

@@ -385,19 +385,19 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   if (!changeInfo) return null;
 
   // Nightly lockout: Saturday 8 PM ET (and every championship night) until
-  // scores are processed at ~2 AM ET.
+  // the 2 AM ET reopen boundary (the night's scores are final by then).
   if (changeInfo.status === 'locked') {
     return (
       <div
         className="flex items-center gap-1.5 px-2 py-1 bg-warning/10 border border-warning/30 rounded-none"
-        title={`Caption changes reopen once scores are processed (~${formatEtDayTime(changeInfo.reopensAt)})`}
+        title={`Caption changes reopen ${formatEtDayTime(changeInfo.reopensAt)}, once the night's scores are final`}
       >
         <Lock className="w-3 h-3 text-warning" />
         <span className="text-[10px] font-bold text-warning uppercase tracking-wider">
           Changes Locked
         </span>
         <span className="text-[9px] text-warning/70 normal-case whitespace-nowrap">
-          until scores process (~{formatEtShort(changeInfo.reopensAt)})
+          until {formatEtShort(changeInfo.reopensAt)}
         </span>
       </div>
     );
@@ -469,7 +469,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
     return (
       <div
         className={`flex items-center gap-1.5 px-2 py-1 border rounded-none ${colorClass}`}
-        title={`${changeInfo.tradeLimit} caption changes per day during Championship Week (Days 45-49). Changes lock nightly at ${formatEtDayTime(changeInfo.locksAt)} until scores process.`}
+        title={`${changeInfo.tradeLimit} caption changes per day during Championship Week (Days 45-49). Changes lock nightly at ${formatEtDayTime(changeInfo.locksAt)}, reopening at 2 AM ET.`}
       >
         <RefreshCw className="w-3 h-3" />
         <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -489,7 +489,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
       className={`flex items-center gap-1.5 px-2 py-1 border rounded-none ${colorClass}`}
       title={
         changeInfo.resetsAt
-          ? `Change limit resets ${formatEtDayTime(changeInfo.resetsAt)}. Changes lock ${formatEtDayTime(changeInfo.locksAt)} until scores process.`
+          ? `Change limit resets ${formatEtDayTime(changeInfo.resetsAt)}. Changes lock ${formatEtDayTime(changeInfo.locksAt)} overnight.`
           : undefined
       }
     >

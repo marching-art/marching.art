@@ -85,6 +85,9 @@ export const queryKeys = {
   historicalScores: (year: string) => ['historicalScores', year] as const,
   corpsValues: (dataDocId: string) => ['corpsValues', dataDocId] as const,
   archivedSeasons: () => ['archivedSeasons'] as const,
+  // Tonight's score-drop plan (drop_plans/{showDateKey}) — the exact instant
+  // scores publish, keyed by the ET show date so it naturally rolls nightly.
+  dropPlan: (showDateKey: string) => ['dropPlan', showDateKey] as const,
 
   // Leaderboard queries
   leaderboard: (type: string, corpsClass: string) => ['leaderboard', type, corpsClass] as const,

@@ -373,11 +373,11 @@ const CaptionSelectionModal = ({
       // Mirrors the saveLineup enforcement messages.
       if (changeInfo.status === 'locked') {
         setSaveError(
-          'Caption changes are locked while scores are processed. They reopen around 2:00 AM ET.'
+          "Caption changes are locked overnight. They reopen at 2:00 AM ET, once the night's scores are final."
         );
       } else if (changeInfo.phase === 'blackout') {
         setSaveError(
-          'Caption changes are closed on Days 43-44. Championship changes open on Day 45 once scores are processed.'
+          'Caption changes are closed on Days 43-44. Championship changes open on Day 45 at 2:00 AM ET.'
         );
       } else if (changeInfo.phase === 'championship') {
         setSaveError(

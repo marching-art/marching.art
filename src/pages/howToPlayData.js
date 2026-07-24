@@ -214,12 +214,16 @@ export const FAQ = [
     a: 'Each night your corps earns a score out of 100, using the same 40/30/30 split real DCI does. Your two General Effect captions (GE1, GE2) count at full value, up to 40 points. Your three Visual captions (VP, VA, CG) are added together and halved into a 30-point block, and your three Music captions (B, MA, P) the same. Every caption is capped, and the total can never exceed 100. Scores come straight from the historical (or live) performances you drafted — no purchase, streak, or show concept can change them.',
   },
   {
+    q: 'When do scores drop?',
+    a: "Off-season scores drop at 9:00 PM ET every night, year-round. During live DCI seasons, scores drop once every show from that night has finished and posted — just like real DCI. That means 11:00 PM ET on a night whose westernmost show is on the East Coast, midnight ET for Central, 1:00 AM ET for Mountain, and 2:00 AM ET when there's a West Coast show. Championship Week in Indianapolis drops at midnight ET. Your dashboard countdown always shows tonight's actual drop time.",
+  },
+  {
     q: 'What score do I need for a Gold rating?',
     a: 'SoundSport earns a medal rating instead of a rank: Gold at 85 and above, Silver at 75, Bronze at 65, and Participation for every corps that competes. Because SoundSport is scored out of 100 like every class, a clean, well-drafted lineup is what pushes you into the medals.',
   },
   {
     q: 'Can I change my lineup?',
-    a: 'Yes! Caption changes are unlimited for the first two weeks, through Day 14 at 8:00 PM ET. From Week 3 on you get 3 changes per week per class — use them one at a time or all at once. Changes always lock from Saturday 8:00 PM ET until scores are processed (around 2:00 AM ET). No changes are allowed on Days 43-44. During Championship Week (Days 45-49) each competing class gets 2 changes per day, resetting nightly at 8:00 PM ET — only Open and A Class compete on Days 45-46, all classes on Day 47, and World Class and SoundSport in the Days 48-49 Finals. That works out to the same 6 total changes for every class across the days it is guaranteed to compete, so it stays fair even if an Open or A Class corps advances to Finals.',
+    a: "Yes! Caption changes are unlimited for the first two weeks, through Day 14 at 8:00 PM ET. From Week 3 on you get 3 changes per week per class — use them one at a time or all at once. Changes always lock from Saturday 8:00 PM ET until 2:00 AM ET, once that night's scores are final. No changes are allowed on Days 43-44. During Championship Week (Days 45-49) each competing class gets 2 changes per day, resetting nightly at 8:00 PM ET — only Open and A Class compete on Days 45-46, all classes on Day 47, and World Class and SoundSport in the Days 48-49 Finals. That works out to the same 6 total changes for every class across the days it is guaranteed to compete, so it stays fair even if an Open or A Class corps advances to Finals.",
   },
   {
     q: 'What happens when a season ends?',

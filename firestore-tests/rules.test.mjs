@@ -866,6 +866,28 @@ await check(
   assertFails(getDocs(collection(mallory(), `${leaguesPath}/league-1/meta`)))
 );
 
+// =============================================================================
+// drop_plans — nightly score-drop plans (public countdown data, backend-written
+// by the drop dispatcher). Anyone may read; no client may ever write.
+// =============================================================================
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'drop_plans/2026-07-15'), {
+    showDateET: '2026-07-15',
+    dropLabel: '2026-07-15 23:00 ET',
+  });
+});
+
+await check(
+  'drop_plans are publicly readable (client countdown)',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), 'drop_plans/2026-07-15')))
+);
+
+await check(
+  'signed-in user cannot write a drop plan (backend only)',
+  assertFails(setDoc(doc(mallory(), 'drop_plans/2026-07-15'), { dropLabel: 'hacked' }))
+);
+
 await testEnv.cleanup();
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

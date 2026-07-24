@@ -277,12 +277,14 @@ exports.weeklyMatchupPushJob = onSchedule(
 /**
  * Send "scores are in" push notifications for last night's score drop.
  *
- * Runs at 8:00 AM ET — a humane hour, not the 2 AM scoring moment — and
+ * Runs at 8:00 AM ET — a humane hour, not the overnight scoring moment — and
  * notifies exactly the directors who performed last night (they appear in
  * the day's fantasy_recaps doc). Ranked-class directors get their score and
  * nightly placement; SoundSport directors get a score-free message (ratings
  * are never revealed). Because getCompletedCalendarDay uses the 2 AM ET
- * game-day reset, 8 AM still resolves to the day the 2 AM jobs just scored.
+ * game-day reset, 8 AM resolves to last night's show date — the same day
+ * both pipelines score, whether the legacy 2 AM run or the drop dispatcher
+ * (which scores that day earlier, between 9 PM and 2:45 AM ET).
  *
  * If scoring failed or it was a dark day, the recap doc doesn't exist and
  * the job exits without sending anything.

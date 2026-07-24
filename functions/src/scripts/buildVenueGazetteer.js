@@ -549,6 +549,28 @@ async function main() {
     },
     venues: gazetteer,
   };
+
+  // Stamp an IANA timezone on every venue from its coordinates, so the "furthest
+  // west" score-drop rule can read it offline (helpers/scoreDropTime.js). Needs
+  // the tz-lookup dev dependency; if it's absent, keep the geocode-only build
+  // rather than fail — a follow-up `node src/scripts/venueTimezones.js` stamps it.
+  try {
+    const tzLookup = require("tz-lookup");
+    const { enrichVenuesWithTimezones } = require("./venueTimezones");
+    const { stats: tzStats, reviews } = enrichVenuesWithTimezones(output, tzLookup);
+    output.meta.timezones = {
+      resolvedBy: "tz-lookup (coordinate -> IANA), verified against state offset buckets",
+      ...tzStats,
+    };
+    console.log("Timezone stats:", JSON.stringify(tzStats));
+    for (const r of reviews) console.warn(`TZ REVIEW: ${r.key} [${r.region}] -> ${r.timezone}: ${r.note}`);
+  } catch (error) {
+    console.warn(
+      `Skipped timezone stamping (${error.message}). ` +
+      "Run `npm install --no-save tz-lookup` then `node src/scripts/venueTimezones.js`."
+    );
+  }
+
   fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(output, null, 2)}\n`);
   console.log(`Wrote ${Object.keys(gazetteer).length} venues -> ${OUTPUT_PATH}`);
   console.log("Resolution stats:", JSON.stringify(stats));

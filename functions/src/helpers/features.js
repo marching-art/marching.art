@@ -40,9 +40,32 @@ async function isPodiumEnabled(db, opts) {
   return features.podiumClass === true;
 }
 
+/**
+ * True only when `game-settings/features.dropScheduling === true`.
+ *
+ * Gates the timezone-aware score-drop pipeline (scheduled/dropDispatcher.js):
+ * OFF (default) = shadow mode — the dispatcher computes and persists tonight's
+ * plan but takes no action while the legacy 1:30 AM scrape / 2 AM scorers keep
+ * running. ON = the dispatcher scrapes and scores at the planned instants and
+ * the legacy jobs stand down. Rollback is a config write, never a deploy.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {{now?: Date}} [opts]
+ * @returns {Promise<boolean>}
+ */
+async function isDropSchedulingEnabled(db, opts) {
+  const features = await getFeatures(db, opts);
+  return features.dropScheduling === true;
+}
+
 /** Test hook: drop the memo so the next read hits Firestore. */
 function resetFeatureCache() {
   cache = { at: 0, data: null };
 }
 
-module.exports = { getFeatures, isPodiumEnabled, resetFeatureCache, FEATURES_DOC };
+module.exports = {
+  getFeatures,
+  isPodiumEnabled,
+  isDropSchedulingEnabled,
+  resetFeatureCache,
+  FEATURES_DOC,
+};
