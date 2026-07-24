@@ -105,3 +105,74 @@ describe("findUnhealthyScoringRuns", () => {
     assert.equal(unhealthy[0].status, "stale-running");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Unscored-night detection (drop dispatcher audit trail). A night where
+// scoring never claimed a lease leaves scoring_runs empty — only the
+// "active" drop_plans doc without a scoredAt stamp reveals it.
+// ---------------------------------------------------------------------------
+
+const { findUnscoredNightProblem } = require("./scoringWatchdog");
+
+// 4:30 AM EDT on 2026-07-02 — last night's show date is 2026-07-01.
+const WATCHDOG_NOW = new Date("2026-07-02T08:30:00Z");
+
+// Flat path -> data fake covering doc() and collection().doc() reads.
+function makePathDb(docs) {
+  const docRef = (path) => ({
+    async get() {
+      const data = docs[path];
+      return { exists: data !== undefined, data: () => data };
+    },
+  });
+  return {
+    doc: docRef,
+    collection: (name) => ({ doc: (id) => docRef(`${name}/${id}`) }),
+  };
+}
+
+describe("findUnscoredNightProblem", () => {
+  test("no plan doc (dispatcher not deployed / season inactive) is healthy", async () => {
+    const db = makePathDb({});
+    assert.equal(await findUnscoredNightProblem(db, WATCHDOG_NOW), null);
+  });
+
+  test("a shadow-mode plan never alerts (legacy pipeline owned the night)", async () => {
+    const db = makePathDb({
+      "drop_plans/2026-07-01": { mode: "shadow", competitionDay: 10 },
+    });
+    assert.equal(await findUnscoredNightProblem(db, WATCHDOG_NOW), null);
+  });
+
+  test("an active plan with scoredAt is healthy", async () => {
+    const db = makePathDb({
+      "drop_plans/2026-07-01": { mode: "active", competitionDay: 10, scoredAt: new Date() },
+    });
+    assert.equal(await findUnscoredNightProblem(db, WATCHDOG_NOW), null);
+  });
+
+  test("an active plan with no scoredAt and no completed lease alerts", async () => {
+    const db = makePathDb({
+      "drop_plans/2026-07-01": {
+        mode: "active", competitionDay: 10, dropLabel: "2026-07-01 23:00 ET",
+      },
+      "game-settings/season": { seasonUid: "s26" },
+    });
+    const problem = await findUnscoredNightProblem(db, WATCHDOG_NOW);
+    assert.deepEqual(problem, {
+      date: "2026-07-01",
+      status: "unscored",
+      competitionDay: 10,
+      dropLabel: "2026-07-01 23:00 ET",
+    });
+  });
+
+  test("a completed scoring lease suppresses the alert (mid-night flag flip)", async () => {
+    const db = makePathDb({
+      "drop_plans/2026-07-01": { mode: "active", competitionDay: 10 },
+      "game-settings/season": { seasonUid: "s26" },
+      "scoring_runs/s26_day10": { status: "completed" },
+    });
+    assert.equal(await findUnscoredNightProblem(db, WATCHDOG_NOW), null);
+  });
+});

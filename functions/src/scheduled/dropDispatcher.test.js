@@ -110,3 +110,170 @@ test("gameDay's 2 AM reset disagrees with the planner at 11 PM/12 AM/1 AM, conve
     );
   }
 });
+
+// ---------------------------------------------------------------------------
+// Dark-day scrape budget, already-scored short-circuit, and the recap-settle
+// defer (review follow-up findings).
+// ---------------------------------------------------------------------------
+
+const { scrapeBudgetFor, runDropDispatcherTick } = require("./dropDispatcher");
+const { resetFeatureCache } = require("../helpers/features");
+const { FieldValue } = require("firebase-admin/firestore");
+
+const DARK_PLAN = planDrop({
+  seasonData: LIVE_SEASON,
+  competitions: [], // nothing scheduled on day 10
+  now: new Date("2026-07-02T02:00:00Z"),
+});
+
+test("a dark day before championship week gets a single scrape attempt", () => {
+  assert.equal(scrapeBudgetFor(DARK_PLAN), 1);
+  const now = new Date("2026-07-02T06:00:00Z"); // 2 AM EDT — the Pacific-default drop
+  const first = dueActions({ plan: DARK_PLAN, now, scrapedTonight: false, scrapeAttempts: 0 });
+  assert.equal(first.scrapeDue, true); // one attempt covers the stale-schedule case
+  const after = dueActions({ plan: DARK_PLAN, now, scrapedTonight: false, scrapeAttempts: 1 });
+  assert.equal(after.scrapeDue, false); // budget spent — a genuine dark day stops here
+  assert.equal(after.scoreDue, true);
+});
+
+test("championship week keeps the full budget despite empty competitions[]", () => {
+  // Competition day 47 = calendar day 68 = 2026-08-07; real events exist on
+  // dci.org, they are just never carried in competitions[].
+  const plan = planDrop({
+    seasonData: LIVE_SEASON, competitions: [], now: new Date("2026-08-08T03:30:00Z"),
+  });
+  assert.equal(plan.competitionDay, 47);
+  assert.equal(plan.hasScheduledShows, false);
+  assert.equal(scrapeBudgetFor(plan), MAX_SCRAPE_ATTEMPTS);
+});
+
+test("an already-scored night suppresses scoring on later ticks", () => {
+  const now = new Date("2026-07-02T03:30:00Z"); // past the 11 PM drop
+  const { scoreDue } = dueActions({
+    plan: EASTERN_PLAN, now, scrapedTonight: true, alreadyScored: true,
+  });
+  assert.equal(scoreDue, false);
+});
+
+// Minimal fake Firestore for driving whole ticks: a flat path -> data map
+// with get/set(merge)/update. FieldValue.increment sentinels (only ever +1
+// here) are resolved so multi-tick attempt counts stay numeric.
+function makeFakeDb(initialDocs) {
+  const store = new Map(Object.entries(initialDocs));
+  const docRef = (path) => ({
+    async get() {
+      const data = store.get(path);
+      return { exists: data !== undefined, data: () => data };
+    },
+    async set(data, opts) {
+      const prev = (opts && opts.merge && store.get(path)) || {};
+      const next = { ...prev };
+      for (const [key, value] of Object.entries(data)) {
+        next[key] = value instanceof FieldValue
+          ? (typeof prev[key] === "number" ? prev[key] : 0) + 1
+          : value;
+      }
+      store.set(path, next);
+    },
+    async update(data) {
+      store.set(path, { ...(store.get(path) || {}), ...data });
+    },
+  });
+  return {
+    store,
+    doc: docRef,
+    collection: (name) => ({ doc: (id) => docRef(`${name}/${id}`) }),
+  };
+}
+
+function liveNightDb({ dropScheduling = true, lastScrapedDate = null, planDoc } = {}) {
+  const docs = {
+    "game-settings/season": {
+      ...LIVE_SEASON, seasonUid: "s26", lastScrapedDate,
+    },
+    "game-settings/features": { dropScheduling },
+    "schedules/s26": { competitions: [{ day: 10, location: "Allentown, PA" }] },
+  };
+  if (planDoc) docs["drop_plans/2026-07-01"] = planDoc;
+  return makeFakeDb(docs);
+}
+
+test("a fresh in-tick scrape defers scoring to the next tick (recap settle)", async () => {
+  resetFeatureCache();
+  const db = liveNightDb();
+  const called = { score: 0 };
+  const result = await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:05:00Z"), // 11:05 PM — past scrape AND drop
+    settleMs: 0,
+    deps: {
+      scrape: async () => ({ scraped: true, stampedLastScrapedDate: true }),
+      scoreLive: async () => { called.score++; return { status: "processed" }; },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.equal(called.score, 0); // recap rows are still in flight via Pub/Sub
+  assert.deepEqual(result.actions.at(-1), { action: "score", deferred: "recap-settle" });
+  assert.equal(db.store.get("drop_plans/2026-07-01").scrapeAttempts, 1);
+  assert.equal(db.store.get("drop_plans/2026-07-01").scoredAt, undefined);
+});
+
+test("the next tick scores a settled night and stamps scoredAt once", async () => {
+  resetFeatureCache();
+  const db = liveNightDb({
+    lastScrapedDate: "2026-07-01",
+    planDoc: { scrapeAttempts: 1 },
+  });
+  const called = { score: 0, discord: 0 };
+  const deps = {
+    scrape: async () => { throw new Error("must not scrape again"); },
+    scoreLive: async (day) => {
+      called.score++;
+      assert.equal(day, 10); // the PLANNER'S day, never gameDay's 2 AM reset
+      return { status: "processed", scoredDay: day };
+    },
+    discord: async () => { called.discord++; return { status: "disabled" }; },
+  };
+  await runDropDispatcherTick(db, { now: new Date("2026-07-02T03:20:00Z"), settleMs: 0, deps });
+  assert.equal(called.score, 1);
+  assert.equal(called.discord, 1);
+  assert.ok(db.store.get("drop_plans/2026-07-01").scoredAt instanceof Date);
+
+  // Later ticks see scoredAt and skip the scoring path entirely.
+  resetFeatureCache();
+  const again = await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:35:00Z"), settleMs: 0, deps,
+  });
+  assert.equal(called.score, 1);
+  assert.equal(called.discord, 1);
+  assert.deepEqual(again.actions, []);
+});
+
+test("the night's last tick scrapes and scores in one slot (no later tick exists)", async () => {
+  resetFeatureCache();
+  const db = liveNightDb();
+  const called = { score: 0 };
+  await runDropDispatcherTick(db, {
+    now: EASTERN_PLAN.scrapeRetryUntil, // 2:45 AM ET — the final cron slot
+    settleMs: 0,
+    deps: {
+      scrape: async () => ({ scraped: true, stampedLastScrapedDate: true }),
+      scoreLive: async () => { called.score++; return { status: "processed" }; },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.equal(called.score, 1); // never orphan the night waiting on a tick that won't come
+});
+
+test("a skipped in-progress claim leaves the night unstamped for later ticks", async () => {
+  resetFeatureCache();
+  const db = liveNightDb({ lastScrapedDate: "2026-07-01" });
+  await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:20:00Z"),
+    settleMs: 0,
+    deps: {
+      scoreLive: async () => ({ status: "skipped", reason: "in-progress" }),
+      discord: async () => { throw new Error("must not post before the day is done"); },
+    },
+  });
+  assert.equal(db.store.get("drop_plans/2026-07-01").scoredAt, undefined);
+});
