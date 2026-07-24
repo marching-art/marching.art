@@ -44,7 +44,7 @@ for (const venue of Object.values(gazetteer.venues)) {
  * historical full-name spelling ("Allentown, Pennsylvania") and the canonical
  * "City, ST" label ("Allentown, PA").
  * @param {string} locationString
- * @returns {{venueId, city, region, lat, lng}|null}
+ * @returns {{venueId, city, region, lat, lng, timezone?: (string|null)}|null}
  */
 function venueFor(locationString) {
   const key = normalizeKey(locationString);

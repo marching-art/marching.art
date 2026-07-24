@@ -8,11 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSeasonStore } from '../store/seasonStore';
 import { getDropPlan } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
-import {
-  getScoreDropEstimate,
-  getShowDateKey,
-  getCaptionChangeInfo,
-} from '../utils/seasonClock';
+import { getScoreDropEstimate, getShowDateKey, getCaptionChangeInfo } from '../utils/seasonClock';
 
 // The plan doc is written/refreshed by backend gate ticks every 15 minutes,
 // so a 5-minute client cache never lags it meaningfully.

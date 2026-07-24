@@ -373,7 +373,7 @@ const CaptionSelectionModal = ({
       // Mirrors the saveLineup enforcement messages.
       if (changeInfo.status === 'locked') {
         setSaveError(
-          'Caption changes are locked overnight. They reopen at 2:00 AM ET, once the night\'s scores are final.'
+          "Caption changes are locked overnight. They reopen at 2:00 AM ET, once the night's scores are final."
         );
       } else if (changeInfo.phase === 'blackout') {
         setSaveError(

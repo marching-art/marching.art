@@ -175,6 +175,17 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
     return { scraped: false, reason: "already-scraped-today", lastScrapedDate };
   }
 
+  // When the drop dispatcher owns the pipeline but this call came from a
+  // legacy path (the admin "Scrape Now" button), the stamp must use the
+  // SCRAPED EVENTS' date, not the wall-clock date. An admin re-scrape after
+  // midnight would otherwise stamp tomorrow's show-date key and silently
+  // block the dispatcher's scrape the following night.
+  let stampWithEventDate = false;
+  if (!dateKey) {
+    const { isDropSchedulingEnabled } = require("../helpers/features");
+    stampWithEventDate = await isDropSchedulingEnabled(db);
+  }
+
   // A single competition night frequently has 2-3 events, so we scrape EVERY
   // event sharing the most-recent date rather than just the latest single link.
   const listedEvents = await fetchScoresListing();
@@ -222,6 +233,10 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
   }
 
   logger.info(`Latest competition date ${latestDateKey}: scraping events.`);
+  // The night key everything is recorded under: the events' own date when the
+  // dispatcher owns the pipeline (see stampWithEventDate above), else the
+  // caller's/wall-clock key.
+  const runKey = stampWithEventDate ? latestDateKey : today;
   const { recapUrls, results, totalCount } =
     await scrapeRecapsForDateKeys(listedEvents, new Set([latestDateKey]));
 
@@ -233,7 +248,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
   const anySucceeded = succeeded > 0;
 
   // Record the night's outcome for the watchdog and admin diagnostics.
-  await writeScrapeRunStatus(db, today, {
+  await writeScrapeRunStatus(db, runKey, {
     status: anySucceeded ? "completed" : "failed",
     ...(anySucceeded ? { completedAt: new Date() } : { failedAt: new Date() }),
     latestDateKey,
@@ -252,15 +267,15 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
   // prevent any retry before the 2 AM scorer runs.
   if (anySucceeded) {
     await db.doc("game-settings/season").update({
-      lastScrapedDate: today,
+      lastScrapedDate: runKey,
     });
     logger.info(
-      `Scraping completed for ${today}: ${succeeded}/${recapUrls.length} event(s) on ` +
+      `Scraping completed for ${runKey}: ${succeeded}/${recapUrls.length} event(s) on ` +
       `${latestDateKey}, ${totalCount} total corps scores.`
     );
   } else {
     logger.error(
-      `Scraping FAILED for ${today}: 0/${recapUrls.length} event(s) on ${latestDateKey} ` +
+      `Scraping FAILED for ${runKey}: 0/${recapUrls.length} event(s) on ${latestDateKey} ` +
       "produced scores. lastScrapedDate NOT stamped so a re-run can retry today."
     );
   }
@@ -274,7 +289,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
     stampedLastScrapedDate: anySucceeded,
     count: totalCount,
     events: results,
-    scrapedDate: today,
+    scrapedDate: runKey,
   };
 }
 

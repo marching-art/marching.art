@@ -215,7 +215,7 @@ export const FAQ = [
   },
   {
     q: 'When do scores drop?',
-    a: 'Off-season scores drop at 9:00 PM ET every night, year-round. During live DCI seasons, scores drop once every show from that night has finished and posted — just like real DCI. That means 11:00 PM ET on a night whose westernmost show is on the East Coast, midnight ET for Central, 1:00 AM ET for Mountain, and 2:00 AM ET when there\'s a West Coast show. Championship Week in Indianapolis drops at midnight ET. Your dashboard countdown always shows tonight\'s actual drop time.',
+    a: "Off-season scores drop at 9:00 PM ET every night, year-round. During live DCI seasons, scores drop once every show from that night has finished and posted — just like real DCI. That means 11:00 PM ET on a night whose westernmost show is on the East Coast, midnight ET for Central, 1:00 AM ET for Mountain, and 2:00 AM ET when there's a West Coast show. Championship Week in Indianapolis drops at midnight ET. Your dashboard countdown always shows tonight's actual drop time.",
   },
   {
     q: 'What score do I need for a Gold rating?',
@@ -223,7 +223,7 @@ export const FAQ = [
   },
   {
     q: 'Can I change my lineup?',
-    a: 'Yes! Caption changes are unlimited for the first two weeks, through Day 14 at 8:00 PM ET. From Week 3 on you get 3 changes per week per class — use them one at a time or all at once. Changes always lock from Saturday 8:00 PM ET until 2:00 AM ET, once that night\'s scores are final. No changes are allowed on Days 43-44. During Championship Week (Days 45-49) each competing class gets 2 changes per day, resetting nightly at 8:00 PM ET — only Open and A Class compete on Days 45-46, all classes on Day 47, and World Class and SoundSport in the Days 48-49 Finals. That works out to the same 6 total changes for every class across the days it is guaranteed to compete, so it stays fair even if an Open or A Class corps advances to Finals.',
+    a: "Yes! Caption changes are unlimited for the first two weeks, through Day 14 at 8:00 PM ET. From Week 3 on you get 3 changes per week per class — use them one at a time or all at once. Changes always lock from Saturday 8:00 PM ET until 2:00 AM ET, once that night's scores are final. No changes are allowed on Days 43-44. During Championship Week (Days 45-49) each competing class gets 2 changes per day, resetting nightly at 8:00 PM ET — only Open and A Class compete on Days 45-46, all classes on Day 47, and World Class and SoundSport in the Days 48-49 Finals. That works out to the same 6 total changes for every class across the days it is guaranteed to compete, so it stays fair even if an Open or A Class corps advances to Finals.",
   },
   {
     q: 'What happens when a season ends?',

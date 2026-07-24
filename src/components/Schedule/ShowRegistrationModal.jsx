@@ -658,8 +658,8 @@ const ShowRegistrationModal = ({
                   <p className="mt-1 flex items-center gap-1">
                     <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
                     <span>
-                      You can add or change attendance until the night&apos;s scores
-                      process{registrationClose.exact ? ':' : ' — as early as'}{' '}
+                      You can add or change attendance until the night&apos;s scores process
+                      {registrationClose.exact ? ':' : ' — as early as'}{' '}
                       <span className="text-cyan-400 font-bold">
                         {formatEtDayTime(registrationClose.at)}
                       </span>

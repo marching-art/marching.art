@@ -17,12 +17,12 @@ operate the timezone-aware pipeline. Source-of-truth files:
 Mirrors how real DCI scores become known: a show's scores post ~11 PM local,
 and a day's slate is only complete once the furthest-WEST show has posted.
 
-| Westernmost show of the day | Drop (ET, DST-tracking) |
-| --------------------------- | ----------------------- |
-| Eastern                     | 11:00 PM                |
-| Central                     | 12:00 AM                |
-| Mountain                    | 1:00 AM                 |
-| Pacific                     | 2:00 AM                 |
+| Westernmost show of the day                        | Drop (ET, DST-tracking)   |
+| -------------------------------------------------- | ------------------------- |
+| Eastern                                            | 11:00 PM                  |
+| Central                                            | 12:00 AM                  |
+| Mountain                                           | 1:00 AM                   |
+| Pacific                                            | 2:00 AM                   |
 | World Championship week (days 47–49, Indianapolis) | 12:00 AM (publishes late) |
 
 - **Off-season**: fixed **9:00 PM ET** (synthetic scores, nothing to wait for).
