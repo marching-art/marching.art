@@ -5,6 +5,22 @@
       "source": "/api/news",
       "destination": "https://us-central1-marching-art.cloudfunctions.net/getNewsFeedHttp"
     },
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getSitemapHttp"
+    },
+    {
+      "source": "/api/og/:path*",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getOgCardHttp/api/og/:path*"
+    },
+    {
+      "source": "/share/:path*",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getShareHttp/share/:path*"
+    },
+    {
+      "source": "/results/:path*",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getResultsPageHttp/results/:path*"
+    },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ],
   "headers": [

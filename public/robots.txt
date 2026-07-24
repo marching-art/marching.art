@@ -24,6 +24,9 @@ Disallow: /soundsport
 # Note: /how-to-play is intentionally crawlable — it is the public
 # fantasy drum corps guide. /hall-of-champions is also crawlable: it is
 # not auth-walled and its data (seasons, champions) is world-readable.
+# /results/** is intentionally crawlable too: server-rendered public
+# season/day results pages (getResultsPageHttp), listed in the sitemap.
+# Note /scores stays disallowed — that's the auth-walled SPA route.
 Disallow: /hub
 Disallow: /hud
 Disallow: /leaderboard

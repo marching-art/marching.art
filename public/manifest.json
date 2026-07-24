@@ -51,14 +51,21 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Dashboard view showing your corps performance"
+      "label": "Dashboard with your active lineup and season scorecard"
     },
     {
-      "src": "/screenshots/leaderboard.png",
+      "src": "/screenshots/season-progress.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Leaderboard showing top directors"
+      "label": "Recent results, rivals, and class progression"
+    },
+    {
+      "src": "/screenshots/dashboard-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard with your season scorecard on mobile"
     }
   ],
   "shortcuts": [

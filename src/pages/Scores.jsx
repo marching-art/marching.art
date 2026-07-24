@@ -132,6 +132,8 @@ const Scores = () => {
     unfilteredShows,
     stats,
     aggregatedScores,
+    availableDays,
+    usingStandings,
     refetch,
     isArchived,
     displayedSeasonId,
@@ -143,6 +145,11 @@ const Scores = () => {
     classFilter: 'all',
     // Disable auto-fallback so Latest tab starts fresh on new season
     disableArchiveFallback: activeTab !== 'archive',
+    // Only the SoundSport and Archive tabs render from the season-wide show
+    // list; everything else reads the materialized standings plus lazy
+    // per-day recaps, so the full recap download can be skipped when the
+    // standings cover this season.
+    skipShows: activeTab !== 'soundsport' && activeTab !== 'archive',
   });
 
   const handleRefresh = async () => {
@@ -402,10 +409,19 @@ const Scores = () => {
 
                   {/* Recaps View — day tabs + sort, mirroring the Podium sheet.
                       The Eastern Classic combined standings surface on the two-
-                      night days (41-42) inside the view (§5.11). */}
-                  {fantasyViewTab === 'latest' && (
-                    <FantasyRecapsView shows={recapShows} userCorpsName={userCorpsName} />
-                  )}
+                      night days (41-42) inside the view (§5.11). With
+                      materialized standings the view runs lazy: day list from
+                      the standings doc, one recap doc fetched per viewed day. */}
+                  {fantasyViewTab === 'latest' &&
+                    (usingStandings ? (
+                      <FantasyRecapsView
+                        seasonId={displayedSeasonId}
+                        availableDays={availableDays}
+                        userCorpsName={userCorpsName}
+                      />
+                    ) : (
+                      <FantasyRecapsView shows={recapShows} userCorpsName={userCorpsName} />
+                    ))}
 
                   {/* World Class View */}
                   {fantasyViewTab === 'world' && (

@@ -286,6 +286,11 @@ export const paths = {
   // One doc per competition day under the season's `days` subcollection.
   podiumRecapsDays: (seasonUid: string) => `podium-recaps/${seasonUid}/days`,
 
+  // Materialized season standings (nightly, backend-written by
+  // helpers/standingsMaterializer.js): summary doc + per-class entries.
+  fantasyStandings: (seasonUid: string) => `fantasy_standings/${seasonUid}`,
+  fantasyStandingsClasses: (seasonUid: string) => `fantasy_standings/${seasonUid}/classes`,
+
   // Leaderboard paths
   leaderboard: (type: string, corpsClass: string) =>
     `artifacts/${DATA_NAMESPACE}/leaderboard/${type}/${corpsClass}`,

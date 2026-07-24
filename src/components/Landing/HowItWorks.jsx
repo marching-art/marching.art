@@ -92,39 +92,49 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
 
   return (
     <div className={`${!isLast ? 'border-b border-line' : ''}`}>
-      {/* Header - Always visible */}
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors text-left"
-        aria-expanded={isOpen}
-      >
+      {/* Header — the summary line lives OUTSIDE the toggle button because it
+          embeds keyboard-focusable JargonTooltip spans; interactive controls
+          must not nest inside a button (axe: nested-interactive). The button
+          overlays the header row via an absolute inset so the whole row stays
+          clickable, while the tooltips sit above it and keep their own focus
+          and hover behavior. */}
+      <div className="relative flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors">
+        <button
+          onClick={onToggle}
+          className="absolute inset-0 w-full h-full text-left"
+          aria-expanded={isOpen}
+          aria-label={`Step ${step.id}: ${step.title}`}
+        />
+
         {/* Step number + icon */}
         <div
-          className={`flex-shrink-0 w-10 h-10 rounded-none ${step.iconBg} flex items-center justify-center`}
+          className={`flex-shrink-0 w-10 h-10 rounded-none ${step.iconBg} flex items-center justify-center pointer-events-none`}
         >
           <Icon className={`w-5 h-5 ${step.iconColor}`} />
         </div>
 
-        {/* Title + summary */}
-        <div className="flex-1 min-w-0">
+        {/* Title + summary (tooltips remain independently focusable) */}
+        <div className="flex-1 min-w-0 pointer-events-none">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-muted uppercase tracking-wider">
               Step {step.id}
             </span>
           </div>
           <h3 className="text-sm font-bold text-white mt-0.5">{step.title}</h3>
-          <p className="text-xs text-muted mt-0.5 hidden sm:block">{step.summary}</p>
+          <p className="text-xs text-muted mt-0.5 hidden sm:block relative z-10 pointer-events-auto">
+            {step.summary}
+          </p>
         </div>
 
         {/* Expand/collapse indicator */}
         <m.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="flex-shrink-0"
+          className="flex-shrink-0 pointer-events-none"
         >
           <ChevronDown className="w-5 h-5 text-muted" />
         </m.div>
-      </button>
+      </div>
 
       {/* Expandable content */}
       <AnimatePresence initial={false}>

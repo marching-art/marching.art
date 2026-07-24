@@ -10,7 +10,7 @@
 // horizontal scroll. Per the anti-lineup-harvesting rule (§5.4) the fantasy
 // sheets stay condensed to GE/VIS/MUS; full per-caption columns are Podium-only.
 
-import React, { useMemo, memo, useRef, useState, useEffect } from 'react';
+import React, { useMemo, memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Music, ChevronRight, MapPin, Medal, Users, Calendar } from 'lucide-react';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
@@ -27,6 +27,9 @@ import {
   TWO_NIGHT_DAYS,
 } from '../utils/scoresUtils';
 import { useHorizontalTabSlide } from '../components/scores/useHorizontalTabSlide';
+import { PillTabControl } from '../components/scores/PillTabControl';
+import { useDayRecapShows } from '../hooks/useScoresData';
+import { scoresShareUrl } from '../utils/shareSheet';
 // Shared box-score primitives — the single source of truth for the sheet look,
 // used by both these Fantasy sheets and the Podium Class sheets.
 import {
@@ -49,68 +52,10 @@ import {
 } from '../components/scores/sheetTokens';
 
 // =============================================================================
-// PILL TAB CONTROL (Design System) — unchanged shell chrome
+// PILL TAB CONTROL (Design System) — moved to components/scores/PillTabControl
+// (imported above, re-exported below so Scores.jsx's import surface is
+// unchanged).
 // =============================================================================
-
-const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
-  const scrollRef = useRef(null);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  // Right-edge fade hint when tabs overflow off-screen (matches DataTable's
-  // scroll-hint pattern) — without it, off-screen tabs are undiscoverable.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const checkScroll = () => {
-      const hasMore = el.scrollWidth > el.clientWidth;
-      const notAtEnd = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
-      setCanScrollRight(hasMore && notAtEnd);
-    };
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    el.addEventListener('scroll', checkScroll);
-    return () => {
-      window.removeEventListener('resize', checkScroll);
-      el.removeEventListener('scroll', checkScroll);
-    };
-  }, [tabs]);
-
-  return (
-    <div className="relative">
-      <div
-        ref={scrollRef}
-        className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-line"
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              haptic?.('medium');
-              onTabChange(tab.id);
-            }}
-            className={`px-3 sm:px-4 py-2.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? tab.accent === 'green'
-                  ? 'text-green-400 border-green-500'
-                  : tab.accent === 'yellow'
-                    ? 'text-interactive border-interactive'
-                    : 'text-white border-interactive'
-                : 'text-muted hover:text-secondary border-transparent'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      {canScrollRight && (
-        <div
-          className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-[#0a0a0a] to-transparent"
-          aria-hidden="true"
-        />
-      )}
-    </div>
-  );
-};
 
 // =============================================================================
 // RECAP BOX SCORE - one card per show, SPLIT BY CLASS (memoized: sibling recaps
@@ -138,7 +83,16 @@ const buildClassRows = (classScores, sortBy) => {
 };
 
 const RecapDataGrid = memo(
-  ({ scores, eventName, location, date, userCorpsName, sortBy = 'total' }) => {
+  ({
+    scores,
+    eventName,
+    location,
+    date,
+    seasonId,
+    offSeasonDay,
+    userCorpsName,
+    sortBy = 'total',
+  }) => {
     // Group the show's corps by class, then rank/sort within each class.
     const sections = useMemo(() => {
       if (!scores || scores.length === 0) return [];
@@ -187,6 +141,15 @@ const RecapDataGrid = memo(
         .join('\n\n');
 
     if (sections.length === 0) return null;
+
+    // Link the share to the day's card for the sheet's top class present
+    // (World → Open → A order). The /share URL unfurls with a live standings
+    // image wherever the copied text is pasted.
+    const topRankedClass = sections.find((s) => RECAP_CLASS_ORDER.includes(s.cls))?.cls;
+    const shareUrl = () =>
+      seasonId && typeof offSeasonDay === 'number' && topRankedClass
+        ? scoresShareUrl(seasonId, offSeasonDay, topRankedClass)
+        : null;
 
     return (
       <div className={`${SHEET_CARD} space-y-3`}>
@@ -255,7 +218,7 @@ const RecapDataGrid = memo(
 
         <SheetFooter
           note="Split by class · GE/VIS/MUS shown · box-toppers in gold"
-          action={<ShareButton getText={shareText} />}
+          action={<ShareButton getText={shareText} getUrl={shareUrl} />}
         />
       </div>
     );
@@ -398,19 +361,36 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
 // (Score/GE/VIS/MUS) reorders every box score on that day at once.
 // =============================================================================
 
-const FantasyRecapsView = ({ shows, userCorpsName }) => {
+/**
+ * Two data modes:
+ *  - Eager (`shows`): the caller already holds the season's shows (archive
+ *    view, or seasons without materialized standings).
+ *  - Lazy (`seasonId` + `availableDays`, no `shows`): the day list comes from
+ *    the materialized standings and only the selected day's recap doc is
+ *    fetched (one read, cached per day) — the Scores page's default path.
+ */
+const FantasyRecapsView = ({
+  shows = null,
+  seasonId = null,
+  availableDays = null,
+  userCorpsName,
+}) => {
   const [sortBy, setSortBy] = useState('total');
   const [selectedDay, setSelectedDay] = useState(null);
+  const lazy = !shows && !!seasonId;
 
-  // Distinct competition days present in the data, oldest → newest (the tab
-  // order). Shows carry `offSeasonDay`; guard against any that don't.
+  // Distinct competition days, oldest → newest (the tab order). Eager mode
+  // derives them from the shows themselves; lazy mode is handed the list.
   const days = useMemo(() => {
+    if (lazy) {
+      return [...(availableDays || [])].sort((a, b) => a - b);
+    }
     const set = new Set();
     (shows || []).forEach((s) => {
       if (typeof s.offSeasonDay === 'number') set.add(s.offSeasonDay);
     });
     return [...set].sort((a, b) => a - b);
-  }, [shows]);
+  }, [lazy, availableDays, shows]);
 
   // Default to the latest day; fall back if the selected day drops out of the
   // data (e.g. switching seasons). Derived (not stored) so there's no empty
@@ -424,12 +404,38 @@ const FantasyRecapsView = ({ shows, userCorpsName }) => {
     `${activeDay}:${days.length}`
   );
 
+  // Lazy fetches. The Eastern Classic combined sheet needs both nights, so on
+  // days 41-42 the sibling night is fetched too. Hooks run unconditionally
+  // (enabled flags gate the reads).
+  const isEasternDay = TWO_NIGHT_DAYS.includes(activeDay);
+  const { shows: lazyDayShows, loading: lazyLoading } = useDayRecapShows(seasonId, activeDay, lazy);
+  const { shows: easternN1 } = useDayRecapShows(seasonId, TWO_NIGHT_DAYS[0], lazy && isEasternDay);
+  const { shows: easternN2 } = useDayRecapShows(seasonId, TWO_NIGHT_DAYS[1], lazy && isEasternDay);
+
+  // The recap sheets exclude SoundSport (ratings are never shown as scores).
+  const stripSoundSport = (list) =>
+    (list || [])
+      .map((show) => ({
+        ...show,
+        scores: (show.scores || []).filter((s) => s.corpsClass !== 'soundSport'),
+      }))
+      .filter((show) => show.scores.length > 0);
+
   const dayShows = useMemo(
-    () => (shows || []).filter((s) => s.offSeasonDay === activeDay),
-    [shows, activeDay]
+    () =>
+      lazy
+        ? stripSoundSport(lazyDayShows)
+        : (shows || []).filter((s) => s.offSeasonDay === activeDay),
+    [lazy, lazyDayShows, shows, activeDay]
   );
 
-  if (!shows || days.length === 0) {
+  // Shows backing the Eastern combined sheet (it filters to days 41-42 itself).
+  const easternShows = useMemo(
+    () => (lazy ? stripSoundSport([...easternN1, ...easternN2]) : shows || []),
+    [lazy, easternN1, easternN2, shows]
+  );
+
+  if (days.length === 0) {
     return (
       <div className="p-8 text-center">
         <Calendar className="w-8 h-8 text-muted mx-auto mb-2" />
@@ -474,11 +480,14 @@ const FantasyRecapsView = ({ shows, userCorpsName }) => {
       </div>
 
       {/* Eastern Classic combined standings — only on the two-night days */}
-      {TWO_NIGHT_DAYS.includes(activeDay) && (
-        <EasternCombinedSheet shows={shows} userCorpsName={userCorpsName} />
-      )}
+      {isEasternDay && <EasternCombinedSheet shows={easternShows} userCorpsName={userCorpsName} />}
 
-      {dayShows.length > 0 ? (
+      {lazy && lazyLoading ? (
+        <div className="p-8 text-center">
+          <Calendar className="w-8 h-8 text-muted mx-auto mb-2 animate-pulse" />
+          <p className="text-muted text-sm">Loading day {activeDay}…</p>
+        </div>
+      ) : dayShows.length > 0 ? (
         dayShows.map((show, idx) => (
           <RecapDataGrid
             key={show.eventName || idx}
@@ -486,6 +495,8 @@ const FantasyRecapsView = ({ shows, userCorpsName }) => {
             eventName={show.eventName}
             location={show.location}
             date={show.date}
+            seasonId={show.seasonId}
+            offSeasonDay={show.offSeasonDay}
             userCorpsName={userCorpsName}
             sortBy={sortBy}
           />

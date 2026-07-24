@@ -166,6 +166,97 @@ export async function getRecentSeasonRecaps(seasonUid: string, days: number): Pr
   return legacyRecaps.sort((a, b) => a.offSeasonDay - b.offSeasonDay).slice(-days);
 }
 
+/**
+ * Get a single day's recap document. Backs the Scores page's lazy recap view:
+ * with the materialized standings supplying the day list, only the day being
+ * looked at needs its (large) recap doc downloaded. Returns null when the day
+ * has no recap. Errors propagate to the caller unchanged.
+ */
+export async function getSeasonRecapDay(seasonUid: string, day: number): Promise<DayRecap | null> {
+  const dayRef = doc(db, paths.fantasyRecapsDay(seasonUid, day));
+  const daySnap = await getDoc(dayRef);
+  if (daySnap.exists()) return daySnap.data() as DayRecap;
+
+  // Legacy single-document seasons keep their recaps in one array.
+  const legacyRecaps = await getLegacySeasonRecaps(seasonUid);
+  return legacyRecaps.find((r) => r.offSeasonDay === day) ?? null;
+}
+
+// =============================================================================
+// MATERIALIZED SEASON STANDINGS
+//
+// Written nightly by the scoring pipeline (functions/src/helpers/
+// standingsMaterializer.js): a summary doc plus one doc per ranked class,
+// shaped to the LeaderboardEntry contract so the Scores page reads ~4 small
+// docs instead of the entire recap subcollection. Public read, backend-write.
+// =============================================================================
+
+/** One bounded history item on a standings entry (most-recent first). */
+export interface StandingsHistoryEntry {
+  score: number;
+  totalScore: number;
+  geScore: number;
+  visualScore: number;
+  musicScore: number;
+  offSeasonDay: number;
+}
+
+/** One ranked corps in a standings class doc. */
+export interface SeasonStandingsEntry {
+  rank: number;
+  corps: string;
+  corpsName: string;
+  corpsClass: string;
+  uid: string;
+  displayName?: string;
+  avatarUrl: string | null;
+  score: number;
+  totalScore: number;
+  showCount: number;
+  GE_Total: number;
+  VIS_Total: number;
+  MUS_Total: number;
+  Total_Score: number;
+  GE_Rank: number;
+  VIS_Rank: number;
+  MUS_Rank: number;
+  trend: { trend: 'up' | 'down' | 'stable'; values: number[]; direction: number };
+  scores: StandingsHistoryEntry[];
+}
+
+export interface SeasonStandings {
+  seasonUid: string;
+  scoredDays: number[];
+  lastScoredDay: number | null;
+  stats: { recentShows: number; topScore: string; corpsActive: number; avgScore: string };
+  classes: Record<string, SeasonStandingsEntry[]>;
+}
+
+/**
+ * Get the materialized standings for a season, or null when the season has
+ * none (pre-materializer seasons, or the pipeline hasn't run yet) — callers
+ * fall back to client-side recap aggregation. Errors propagate unchanged.
+ */
+export async function getSeasonStandings(seasonUid: string): Promise<SeasonStandings | null> {
+  const summarySnap = await getDoc(doc(db, paths.fantasyStandings(seasonUid)));
+  if (!summarySnap.exists()) return null;
+  const summary = summarySnap.data();
+
+  const classesSnap = await getDocs(collection(db, paths.fantasyStandingsClasses(seasonUid)));
+  const classes: Record<string, SeasonStandingsEntry[]> = {};
+  classesSnap.forEach((classDoc) => {
+    classes[classDoc.id] = (classDoc.data().entries || []) as SeasonStandingsEntry[];
+  });
+
+  return {
+    seasonUid,
+    scoredDays: summary.scoredDays || [],
+    lastScoredDay: summary.lastScoredDay ?? null,
+    stats: summary.stats || { recentShows: 0, topScore: '-', corpsActive: 0, avgScore: '0.000' },
+    classes,
+  };
+}
+
 // =============================================================================
 // PODIUM CLASS RECAPS
 //

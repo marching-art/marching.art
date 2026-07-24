@@ -13,6 +13,7 @@ const { logger } = require("firebase-functions/v2");
 const store = require("../helpers/podium/store");
 const staffMarket = require("../helpers/podium/staffMarket");
 const { podiumContext } = require("./podium");
+const { assertWriteBudget } = require("../helpers/callableGuards");
 
 exports.getPodiumStaffMarket = onCall({ cors: true }, async (request) => {
   const { db } = await podiumContext(request);
@@ -22,6 +23,9 @@ exports.getPodiumStaffMarket = onCall({ cors: true }, async (request) => {
 
 exports.hirePodiumStaff = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { specialty, tier } = request.data || {};
   const requestedSeasons = request.data?.seasons;
 
@@ -77,6 +81,9 @@ exports.hirePodiumStaff = onCall({ cors: true }, async (request) => {
 
 exports.releasePodiumStaff = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { specialty } = request.data || {};
   if (!staffMarket.SPECIALTIES.includes(specialty)) {
     throw new HttpsError("invalid-argument", `Unknown specialty: ${specialty}`);
@@ -104,6 +111,9 @@ exports.releasePodiumStaff = onCall({ cors: true }, async (request) => {
 
 exports.retrainPodiumStaff = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { staffId, toSpecialty } = request.data || {};
   if (typeof staffId !== "string" || !staffId) {
     throw new HttpsError("invalid-argument", "staffId is required.");
@@ -158,6 +168,9 @@ exports.retrainPodiumStaff = onCall({ cors: true }, async (request) => {
  */
 exports.acknowledgePodiumStaffOutlook = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const sRef = store.stateRef(db, uid);
   const acknowledgedPayroll = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(sRef);

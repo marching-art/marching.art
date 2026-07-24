@@ -3,7 +3,7 @@ const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const admin = require("firebase-admin");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
 
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
@@ -11,6 +11,9 @@ const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 exports.registerCorps = onCall({ cors: true }, async (request) => {
   const { corpsName, location, description, class: corpsClass } = request.data;
   const uid = assertAuth(request);
+
+  // Abuse throttle (shared corps bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "corps", { max: 60, windowMs: 10 * 60 * 1000 });
 
   // --- 1. Validation ---
   if (!corpsName || !location || !corpsClass) {

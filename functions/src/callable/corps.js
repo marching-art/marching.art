@@ -4,7 +4,7 @@ const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
 const {
@@ -53,10 +53,12 @@ function sanitizeDecisionShowConcept(showConcept) {
  * Handles continue/retire/unretire/new/skip/move decisions for all classes atomically
  */
 exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const uid = assertAuth(request);
 
   const { decisions } = request.data;
-  const uid = request.auth.uid;
+
+  // Abuse throttle (shared corps bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "corps", { max: 60, windowMs: 10 * 60 * 1000 });
 
   if (!decisions || !Array.isArray(decisions)) {
     throw new HttpsError("invalid-argument", "Decisions array is required.");
@@ -412,10 +414,12 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
  * Retire a corps - move it from active corps to retired list
  */
 exports.retireCorps = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const uid = assertAuth(request);
 
   const { corpsClass, checkOnly } = request.data;
-  const uid = request.auth.uid;
+
+  // Abuse throttle (shared corps bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "corps", { max: 60, windowMs: 10 * 60 * 1000 });
 
   if (!corpsClass) {
     throw new HttpsError("invalid-argument", "Corps class is required.");
@@ -510,10 +514,12 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
  * - Preserves corps identity (name, location, history) but resets season-specific data.
  */
 exports.transferCorps = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const uid = assertAuth(request);
 
   const { fromClass, toClass } = request.data;
-  const uid = request.auth.uid;
+
+  // Abuse throttle (shared corps bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "corps", { max: 60, windowMs: 10 * 60 * 1000 });
 
   if (!fromClass || !toClass) {
     throw new HttpsError("invalid-argument", "Both fromClass and toClass are required.");
@@ -681,10 +687,12 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
  * Unretire a corps - restore it from retired list to active corps
  */
 exports.unretireCorps = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const uid = assertAuth(request);
 
   const { corpsClass, retiredIndex } = request.data;
-  const uid = request.auth.uid;
+
+  // Abuse throttle (shared corps bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "corps", { max: 60, windowMs: 10 * 60 * 1000 });
 
   if (!corpsClass || retiredIndex === undefined) {
     throw new HttpsError("invalid-argument", "Corps class and retired index are required.");
@@ -772,6 +780,9 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
 exports.renameCorps = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const { corpsClass, newName } = request.data || {};
+
+  // Abuse throttle (shared corps bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "corps", { max: 60, windowMs: 10 * 60 * 1000 });
 
   if (!corpsClass || !VALID_CLASSES.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");

@@ -289,19 +289,12 @@ const Onboarding = () => {
             createdAt: new Date(),
             seasonId: seasonData?.seasonUid || null,
             lineup: lineup,
-            execution: {
-              readiness: 0.75,
-              morale: 0.85,
-              equipment: {
-                instruments: 0.9,
-                uniforms: 0.9,
-                props: 0.85,
-              },
-            },
+            // NOTE: no execution/morale/equipment/rehearsal seeds — those
+            // systems were cut from the fantasy classes (see GAMIFICATION.md
+            // "Removed / out of scope"); Podium keeps its own state under the
+            // user's /podium subcollection. Nothing ever read these fields.
           },
         },
-        dailyOps: {},
-        lastRehearsal: null,
         // Mark as first visit for dashboard tooltips
         isFirstVisit: true,
         onboardingCompletedAt: new Date().toISOString(),

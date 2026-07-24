@@ -4,7 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
-const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
+const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
 const { sumSeasonScore } = require("../helpers/seasonRankings");
 const {
   showRegistrationEventKey,
@@ -57,10 +57,13 @@ exports.checkUsername = onCall({ cors: true }, async (request) => {
 });
 
 exports.createUserProfile = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const uid = assertAuth(request);
+
+  // Abuse throttle (shared profile bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "profile", { max: 60, windowMs: 10 * 60 * 1000 });
 
   const { username, displayName } = request.data;
-  const { uid, email } = request.auth.token;
+  const { email } = request.auth.token;
 
   if (!username) {
     throw new HttpsError("invalid-argument", "Username is required for profile creation.");

@@ -5,7 +5,7 @@ const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getJourneyStep, verifyJourneyStep } = require("../helpers/journey");
 
 /**
@@ -27,6 +27,8 @@ const completeJourneyStep = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+  // Abuse throttle (shared engagement bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "engagement", { max: 60, windowMs: 10 * 60 * 1000 });
   const profileRef = db.doc(paths.userProfile(uid));
 
   try {

@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
@@ -22,9 +22,12 @@ const admin = require("firebase-admin");
  */
 // Add { cors: true } here
 exports.saveLineup = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const uid = assertAuth(request);
   const { lineup, corpsClass, forceUpdate } = request.data;
-  const uid = request.auth.uid;
+
+  // Abuse throttle (shared lineups bucket) — sized for burst drafting, far
+  // above any human rate.
+  await assertWriteBudget(getDb(), uid, "lineups", { max: 120, windowMs: 10 * 60 * 1000 });
 
   // 1. --- Validate Inputs ---
   const validClasses = FANTASY_CLASSES;
@@ -401,6 +404,9 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const { week, shows, corpsClass } = request.data;
 
+  // Abuse throttle (shared lineups bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "lineups", { max: 120, windowMs: 10 * 60 * 1000 });
+
   // Get the max shows allowed for this week (7 for final week, 4 otherwise)
   const maxShowsForWeek = getMaxShowsForWeek(week);
 
@@ -535,10 +541,12 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
  * Save show concept (theme, music source, drill style) for synergy bonuses
  */
 exports.saveShowConcept = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const uid = assertAuth(request);
 
   const { corpsClass, showConcept } = request.data;
-  const uid = request.auth.uid;
+
+  // Abuse throttle (shared lineups bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "lineups", { max: 120, windowMs: 10 * 60 * 1000 });
 
   // Validate inputs. Show concepts are pure identity (title/theme/music/drill)
   // and apply to EVERY enabled class, not just the lineup-bearing ones — a

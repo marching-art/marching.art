@@ -536,6 +536,43 @@ await check(
   assertFails(getDoc(doc(mallory(), notificationPath)))
 );
 
+// =============================================================================
+// USER-SUBCOLLECTION CATCH-ALL — inverted to default-private. Unlisted
+// subcollections (email_log, corpsCoinHistory, future additions) are readable
+// only by their owner and writable only by the backend; the old default-public
+// denylist made every NEW subcollection world-readable-to-authenticated.
+// =============================================================================
+const emailLogPath = `artifacts/${APP}/users/${ALICE}/email_log/entry-1`;
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), profilePath), seedProfile);
+  await setDoc(doc(ctx.firestore(), emailLogPath), { type: 'weekly_digest', sentAt: 1 });
+});
+
+await check(
+  "another user cannot read someone else's email_log (default-private catch-all)",
+  assertFails(getDoc(doc(mallory(), emailLogPath)))
+);
+
+await check(
+  'owner can read their own unlisted subcollection docs',
+  assertSucceeds(getDoc(doc(authed(), emailLogPath)))
+);
+
+await check(
+  'owner cannot write an unlisted subcollection (backend only)',
+  assertFails(
+    setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/email_log/entry-2`), { forged: true })
+  )
+);
+
+await check(
+  "signed-in user cannot write into another user's unlisted subcollection",
+  assertFails(
+    setDoc(doc(mallory(), `artifacts/${APP}/users/${ALICE}/mystery/doc-1`), { spam: true })
+  )
+);
+
 await freshNotificationSeed();
 await check(
   "another user cannot list someone else's notification feed (catch-all regression)",
@@ -886,6 +923,53 @@ await check(
 await check(
   'signed-in user cannot write a drop plan (backend only)',
   assertFails(setDoc(doc(mallory(), 'drop_plans/2026-07-15'), { dropLabel: 'hacked' }))
+);
+
+// =============================================================================
+// fantasy_standings — nightly materialized season standings (public read like
+// the recaps they summarize; written only by the scoring pipeline).
+// =============================================================================
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'fantasy_standings/season-1'), {
+    seasonUid: 'season-1',
+    scoredDays: [1, 2],
+  });
+  await setDoc(doc(ctx.firestore(), 'fantasy_standings/season-1/classes/worldClass'), {
+    classKey: 'worldClass',
+    entries: [],
+  });
+});
+
+await check(
+  'standings summary is publicly readable',
+  assertSucceeds(
+    getDoc(doc(testEnv.unauthenticatedContext().firestore(), 'fantasy_standings/season-1'))
+  )
+);
+
+await check(
+  'standings class doc is publicly readable',
+  assertSucceeds(
+    getDoc(
+      doc(
+        testEnv.unauthenticatedContext().firestore(),
+        'fantasy_standings/season-1/classes/worldClass'
+      )
+    )
+  )
+);
+
+await check(
+  'signed-in user cannot write standings (backend only)',
+  assertFails(setDoc(doc(mallory(), 'fantasy_standings/season-1'), { scoredDays: [1, 2, 3] }))
+);
+
+await check(
+  'signed-in user cannot write a standings class doc (backend only)',
+  assertFails(
+    setDoc(doc(mallory(), 'fantasy_standings/season-1/classes/worldClass'), { entries: [] })
+  )
 );
 
 await testEnv.cleanup();

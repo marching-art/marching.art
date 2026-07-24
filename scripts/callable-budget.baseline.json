@@ -1,0 +1,6 @@
+{
+  "exempt": {
+    "functions/src/callable/podiumRoute.js": "Read-only: getPodiumRegistrationPreview / getPodiumState only read Firestore; a budget charge would add a billed read per call.",
+    "functions/src/callable/podiumValidation.js": "No callables: shared validation helpers only (no onCall exports, no writes)."
+  }
+}

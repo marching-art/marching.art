@@ -10,9 +10,13 @@ const store = require("../helpers/podium/store");
 const hostedEvents = require("../helpers/podium/hostedEvents");
 const { podiumContext } = require("./podium");
 const { paths } = require("../helpers/paths");
+const { assertWriteBudget } = require("../helpers/callableGuards");
 
 exports.hostEvent = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   let validated;
   try {
     validated = hostedEvents.validateHostRequest(request.data || {}, Math.max(0, competitionDay));

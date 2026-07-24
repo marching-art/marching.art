@@ -10,7 +10,7 @@ const {
   seasonBaselineStamp,
 } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
   WEEKLY_LOOP_TARGET_DAYS,
@@ -41,6 +41,8 @@ const {
 const claimDailyLogin = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
+  // Abuse throttle (shared engagement bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "engagement", { max: 60, windowMs: 10 * 60 * 1000 });
   const profileRef = db.doc(paths.userProfile(uid));
 
   try {
@@ -308,6 +310,8 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+  // Abuse throttle (shared engagement bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "engagement", { max: 60, windowMs: 10 * 60 * 1000 });
   const profileRef = db.doc(paths.userProfile(uid));
 
   try {
@@ -460,6 +464,8 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
 const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const db = getDb();
+  // Abuse throttle (shared engagement bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "engagement", { max: 60, windowMs: 10 * 60 * 1000 });
   const profileRef = db.doc(paths.userProfile(uid));
 
   try {

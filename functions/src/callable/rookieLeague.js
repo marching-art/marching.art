@@ -4,7 +4,7 @@ const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, createLeagueActivity } = require("../helpers/leagueHelpers");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 
 /**
  * One-tap rookie league placement.
@@ -23,6 +23,10 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
   const uid = request.auth.uid;
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   const pointerRef = db.doc("game-settings/rookie-league");
   const userProfileRef = db.doc(paths.userProfile(uid));
 

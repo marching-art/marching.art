@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { assertAdmin } = require("../helpers/callableGuards");
+const { assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
 
 // Define YouTube API key secret
 const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
@@ -415,6 +415,15 @@ exports.searchYoutubeVideo = onCall(
         "You've searched for a lot of videos in the last hour — try again a bit later."
       );
     }
+
+    // Shared "youtube" write budget: external-API cost protection. This
+    // callable only reads Firestore, but every uncached search spends billed
+    // YouTube Data API quota, so it is metered like a write — alongside the
+    // stricter hourly search budget above.
+    await assertWriteBudget(db, request.auth.uid, "youtube", {
+      max: 30,
+      windowMs: 10 * 60 * 1000,
+    });
 
     return performYoutubeSearch(db, query, apiKey);
   }

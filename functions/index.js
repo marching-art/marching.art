@@ -165,6 +165,7 @@ const {
   podiumNightly,
 } = require("./src/scheduled/dropDispatcher");
 const { scoringWatchdog } = require("./src/scheduled/scoringWatchdog");
+const { scrapeCanary } = require("./src/scheduled/scrapeCanary");
 const {
   generateWeeklyMatchups,
   generateWeeklyRecaps,
@@ -228,6 +229,9 @@ const {
   approveSubmission,
   rejectSubmission,
 } = require("./src/triggers/newsGeneration");
+const { getSitemapHttp } = require("./src/triggers/sitemap");
+const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
+const { getResultsPageHttp } = require("./src/triggers/resultsPages");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -362,6 +366,9 @@ module.exports = {
   scoreDropDispatcher,
   podiumNightly,
   scoringWatchdog,
+  // Afternoon dci.org markup-drift canary — turns a scraper-breaking site
+  // redesign into a 1 PM email instead of a 2 AM scoring incident.
+  scrapeCanary,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
   economyStatsJob,
@@ -413,6 +420,19 @@ module.exports = {
   // feed CDN caching; without this export the rewrite 404s and every client
   // silently falls back to the slower getRecentNews callable.
   getNewsFeedHttp,
+  // Backs the /sitemap.xml hosting rewrite (firebase.json + vercel.json):
+  // static public routes plus one URL per published article. Without this
+  // export the rewrite 404s and crawlers lose the sitemap entirely.
+  getSitemapHttp,
+  // Back the /api/og/** and /share/** hosting rewrites (both hosts): PNG
+  // score/champion cards and the share pages whose OG tags social scrapers
+  // read. Without these exports every shared link falls back to the static
+  // homepage card.
+  getOgCardHttp,
+  getShareHttp,
+  // Backs the /results/** rewrite (both hosts): crawlable server-rendered
+  // season/day results pages — the public SEO surface for nightly scores.
+  getResultsPageHttp,
 
   // Article Management (Admin)
   listAllArticles,

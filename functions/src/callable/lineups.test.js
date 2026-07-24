@@ -218,7 +218,13 @@ function makeFakeDb(docs = new Map()) {
     },
     set(data) {
       docs.set(path, data);
-      writes.push({ type: "set", path, data });
+      // The write-budget throttle's bookkeeping (server-only rate_* docs,
+      // helpers/rateLimit.js) is infrastructure, not feature output — keep it
+      // out of the recorded writes so "nothing written" assertions stay about
+      // lineup/profile data.
+      if (!path.startsWith("rate_")) {
+        writes.push({ type: "set", path, data });
+      }
     },
   });
 

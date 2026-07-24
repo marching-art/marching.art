@@ -11,7 +11,7 @@ const {
 } = require("../helpers/leagueHelpers");
 const { consumeRateBudget } = require("../helpers/rateLimit");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
-const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
@@ -26,6 +26,9 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
     settings = {}
   } = request.data;
   const uid = request.auth.uid;
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "leagueSocial", { max: 40 });
 
   if (typeof name !== 'string' || name.trim().length < 3) {
     throw new HttpsError("invalid-argument", "League name must be at least 3 characters long.");
@@ -187,6 +190,9 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
 
   if (!leagueId) throw new HttpsError("invalid-argument", "A league ID is required.");
 
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), uid, "leagueSocial", { max: 40 });
+
   const db = getDb();
   const leagueRef = db.doc(paths.league(leagueId));
   const userProfileRef = db.doc(paths.userProfile(uid));
@@ -311,6 +317,9 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
 
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   // Look up the league by invite code
   const inviteRef = db.doc(`leagueInvites/${inviteCode.toUpperCase()}`);
   const inviteDoc = await inviteRef.get();
@@ -410,6 +419,10 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   const leagueRef = db.doc(paths.league(leagueId));
   const userProfileRef = db.doc(paths.userProfile(uid));
 
@@ -473,6 +486,10 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   const leagueRef = db.doc(paths.league(leagueId));
 
   const leagueDoc = await leagueRef.get();
@@ -595,6 +612,10 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   const leagueRef = db.doc(paths.league(leagueId));
   const matchupRef = leagueRef.collection('matchups').doc(`week-${week}`);
   const standingsRef = leagueRef.collection('standings').doc('current');
@@ -789,6 +810,10 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — humans chat fast; this only stops scripts.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 120 });
+
   const leagueRef = db.doc(paths.league(leagueId));
 
   // Verify user is a member
