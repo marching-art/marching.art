@@ -282,6 +282,30 @@ jobs:
           VITE_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000'
         run: npx playwright test
 
+      # Emulator-backed core-loop e2e: seeds a season doc + corps pool into
+      # the Firestore emulator (e2e/seedEmulator.mjs) and runs the guest
+      # draft flow end-to-end — all 8 caption picks against real budget rules
+      # through to the save-progress registration gate. firebase-tools comes
+      # from firestore-tests' devDeps (same install the rules job uses); the
+      # spec self-skips its seeded/gated variants by data mode, so it also
+      # ran (gated variant) in the plain smoke pass above.
+      - name: Install emulator tooling
+        run: cd firestore-tests && npm ci
+
+      - name: Run emulator-backed e2e (guest draft loop)
+        env:
+          VITE_FIREBASE_API_KEY: fake-api-key-for-e2e
+          VITE_FIREBASE_AUTH_DOMAIN: demo-e2e.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: demo-e2e
+          VITE_FIREBASE_STORAGE_BUCKET: demo-e2e.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: '000000000000'
+          VITE_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000'
+          VITE_USE_EMULATORS: 'true'
+        run: |
+          ./firestore-tests/node_modules/.bin/firebase emulators:exec \
+            --only firestore,auth --project demo-e2e --config e2e/firebase.json \
+            "node e2e/seedEmulator.mjs && npx playwright test e2e/guest-draft.spec.ts"
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v7

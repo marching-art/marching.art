@@ -1,4 +1,3 @@
-// @ts-nocheck is intentionally absent — new files typecheck.
 // Scrape schema-drift canary (scheduled): fetches the live dci.org pages the
 // scraper depends on every afternoon and audits their structure
 // (helpers/scrapeCanary.js), so a markup redesign surfaces as a 1 PM ET
