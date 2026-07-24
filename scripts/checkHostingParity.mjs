@@ -129,6 +129,10 @@ for (const source of vercelHeaderBlocks.keys()) {
 const REWRITE_SOURCE_MAP = new Map([
   ['/api/og/**', '/api/og/:path*'],
   ['/share/**', '/share/:path*'],
+  // Firebase needs separate /results and /results/** sources (its glob does
+  // not match the bare path); Vercel's :path* covers both with one rewrite.
+  ['/results', '/results/:path*'],
+  ['/results/**', '/results/:path*'],
 ]);
 
 const mapRewriteSource = (source) => REWRITE_SOURCE_MAP.get(source) ?? source;

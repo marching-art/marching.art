@@ -56,6 +56,13 @@ describe("buildSitemapXml", () => {
     assert.ok(xml.includes("/article/bad&amp;&lt;id&gt;</loc>"));
     assert.ok(!xml.includes("bad&<id>"));
   });
+
+  test("emits /results index and day URLs per season", () => {
+    const xml = buildSitemapXml([], [], [{ seasonUid: "overture_2026", days: [1, 12] }]);
+    assert.ok(xml.includes("<loc>https://marching.art/results/overture_2026</loc>"));
+    assert.ok(xml.includes("<loc>https://marching.art/results/overture_2026/1</loc>"));
+    assert.ok(xml.includes("<loc>https://marching.art/results/overture_2026/12</loc>"));
+  });
 });
 
 describe("articleEntryFromDoc", () => {

@@ -138,6 +138,20 @@
         }
       },
       {
+        "source": "/results",
+        "function": {
+          "functionId": "getResultsPageHttp",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/results/**",
+        "function": {
+          "functionId": "getResultsPageHttp",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

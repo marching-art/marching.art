@@ -17,6 +17,10 @@
       "source": "/share/:path*",
       "destination": "https://us-central1-marching-art.cloudfunctions.net/getShareHttp/share/:path*"
     },
+    {
+      "source": "/results/:path*",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getResultsPageHttp/results/:path*"
+    },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ],
   "headers": [

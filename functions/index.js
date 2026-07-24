@@ -230,6 +230,7 @@ const {
 } = require("./src/triggers/newsGeneration");
 const { getSitemapHttp } = require("./src/triggers/sitemap");
 const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
+const { getResultsPageHttp } = require("./src/triggers/resultsPages");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -425,6 +426,9 @@ module.exports = {
   // homepage card.
   getOgCardHttp,
   getShareHttp,
+  // Backs the /results/** rewrite (both hosts): crawlable server-rendered
+  // season/day results pages — the public SEO surface for nightly scores.
+  getResultsPageHttp,
 
   // Article Management (Admin)
   listAllArticles,

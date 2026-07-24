@@ -9,6 +9,7 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
+const { listScoredDays } = require("./resultsPages");
 
 // Public, crawlable routes (see robots.txt for the disallow list these must
 // stay out of). lastmod is intentionally omitted for static routes — a fake
@@ -56,9 +57,11 @@ const escapeXml = (value) =>
  * @param {Array<{path: string, changefreq: string, priority: string}>} staticRoutes
  * @param {Array<{id: string, lastmod?: string}>} articles
  *   Article page entries; lastmod is a YYYY-MM-DD string when known.
+ * @param {Array<{seasonUid: string, days: number[]}>} [resultsSeasons]
+ *   Public /results pages: one index URL per season plus one per scored day.
  * @returns {string}
  */
-function buildSitemapXml(staticRoutes, articles) {
+function buildSitemapXml(staticRoutes, articles, resultsSeasons = []) {
   const urls = [];
 
   for (const route of staticRoutes) {
@@ -80,6 +83,25 @@ function buildSitemapXml(staticRoutes, articles) {
         "    <priority>0.6</priority>\n" +
         "  </url>"
     );
+  }
+
+  for (const season of resultsSeasons) {
+    urls.push(
+      "  <url>\n" +
+        `    <loc>${SITE_URL}/results/${escapeXml(season.seasonUid)}</loc>\n` +
+        "    <changefreq>weekly</changefreq>\n" +
+        "    <priority>0.6</priority>\n" +
+        "  </url>"
+    );
+    for (const day of season.days) {
+      urls.push(
+        "  <url>\n" +
+          `    <loc>${SITE_URL}/results/${escapeXml(season.seasonUid)}/${day}</loc>\n` +
+          "    <changefreq>monthly</changefreq>\n" +
+          "    <priority>0.5</priority>\n" +
+          "  </url>"
+      );
+    }
   }
 
   return (
@@ -112,6 +134,48 @@ function articleEntryFromDoc(doc) {
     id: `${seasonId}_${dayId}_${doc.id}`,
     ...(date ? { lastmod: date.toISOString().slice(0, 10) } : {}),
   };
+}
+
+// Sitemaps bound at 50k URLs; ~50 day-pages per season keeps even years of
+// seasons far under it, but cap the season count defensively.
+const MAX_RESULTS_SEASONS = 40;
+
+/**
+ * Seasons with public /results pages: the active season plus every archived
+ * season (season_champions doc ids), each with its scored-day numbers via
+ * ref-only listDocuments. Failures degrade to an empty list — the sitemap
+ * must not 500 because one enumeration hiccuped.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @returns {Promise<Array<{seasonUid: string, days: number[]}>>}
+ */
+async function listResultsSeasons(db) {
+  try {
+    const seasonUids = [];
+    const settings = await db.doc("game-settings/season").get();
+    if (settings.exists && settings.data().seasonUid) {
+      seasonUids.push(settings.data().seasonUid);
+    }
+    const archivedRefs = await db.collection("season_champions").listDocuments();
+    for (const ref of archivedRefs) {
+      if (!seasonUids.includes(ref.id)) seasonUids.push(ref.id);
+    }
+
+    const capped = seasonUids.slice(0, MAX_RESULTS_SEASONS);
+    const withDays = await Promise.all(
+      capped.map(async (seasonUid) => ({
+        seasonUid,
+        days: await listScoredDays(db, seasonUid),
+      }))
+    );
+    // An archived season with no recap days still gets its index page when
+    // champions exist, but linking day-less seasons is pointless noise — keep
+    // only seasons that have at least an index worth crawling.
+    return withDays.filter((season) => season.days.length > 0);
+  } catch (error) {
+    logger.warn("Failed to enumerate results seasons for sitemap:", error);
+    return [];
+  }
 }
 
 /**
@@ -158,7 +222,8 @@ exports.getSitemapHttp = onRequest(
         .get();
 
       const articles = snapshot.docs.map(articleEntryFromDoc);
-      const xml = buildSitemapXml(STATIC_ROUTES, articles);
+      const resultsSeasons = await listResultsSeasons(db);
+      const xml = buildSitemapXml(STATIC_ROUTES, articles, resultsSeasons);
 
       // Best-effort cache write; a failed write must not fail the response.
       try {
