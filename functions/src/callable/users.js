@@ -385,7 +385,7 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
 // existed ('dailyRehearsal'), and awardXP had no callers at all, which is
 // why weekly-participation and league-win XP never paid. Those two sources
 // are now paid server-side inside the guarded weekly scoring run
-// (helpers/scoringAwards.js payWeeklyParticipationXP / processWeeklyMatchups),
+// (helpers/weeklyMatchups.js payWeeklyParticipationXP / processWeeklyMatchups),
 // and daily-login XP is owned by claimDailyLogin (callable/dailyOps.js).
 
 /**

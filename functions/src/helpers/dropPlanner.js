@@ -1,4 +1,3 @@
-// @ts-nocheck -- date math is plain JS; typed callers pass validated inputs.
 /**
  * Nightly score-drop planner.
  *

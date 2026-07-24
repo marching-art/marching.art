@@ -13,7 +13,7 @@ const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 const admin = require("firebase-admin");
-const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./scoringAwards");
+const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./weeklyMatchups");
 const { WEEKLY_LEAGUE_WIN_REWARD } = require("./economy");
 const { XP_SOURCES } = require("./xpCalculations");
 const { matchupRecordToken, weeklyWinToken, LEDGER_FIELD } = require("./awardLedger");

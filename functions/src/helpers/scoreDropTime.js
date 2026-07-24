@@ -1,4 +1,3 @@
-// @ts-nocheck -- date math is plain JS; typed callers pass validated inputs.
 /**
  * Single source of truth for WHEN a competition day's scores drop.
  *

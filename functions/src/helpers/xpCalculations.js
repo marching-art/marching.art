@@ -97,7 +97,7 @@ const XP_SOURCES = {
 
   // Weekly participation — compete in ≥1 show in a week, paid once per
   // participating class at the week boundary of the nightly scoring run
-  // (helpers/scoringAwards.js payWeeklyParticipationXP).
+  // (helpers/weeklyMatchups.js payWeeklyParticipationXP).
   weeklyParticipation: 150,
 
   // League wins — paid alongside the weekly-win CorpsCoin in

@@ -1,4 +1,3 @@
-// @ts-nocheck -- build-time tooling; not part of the deployed runtime bundle.
 /**
  * Venue timezone enrichment + verification.
  *
@@ -94,6 +93,7 @@ function resolveVenueTimezone(venue, tzLookup) {
   // inherently unreliable near a split line, so it never counts as verified.
   const centroid = venue.source === "centroid";
   const expectedOk = Array.isArray(allowed) && allowed.includes(offsetHours);
+  /** @type {"geo"|"needs-review"} */
   let tzSource = "geo";
   let note;
   if (!allowed) {
@@ -143,6 +143,7 @@ if (require.main === module) {
   const path = require("node:path");
   let tzLookup;
   try {
+    // @ts-ignore -- dev-only dependency, installed ad hoc with --no-save; not in package.json
     tzLookup = require("tz-lookup");
   } catch {
     console.error("Missing dev dependency. Run:  npm install --no-save tz-lookup");

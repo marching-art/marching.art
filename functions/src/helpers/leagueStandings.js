@@ -2,7 +2,7 @@
  * League standings updater — shared by the commissioner callable
  * (callable/leagues.js updateMatchupResults) and the automatic weekly
  * matchup resolution in the nightly scoring run
- * (helpers/scoringAwards.js processWeeklyMatchups).
+ * (helpers/weeklyMatchups.js processWeeklyMatchups).
  *
  * Takes resolved pairs in the shape both producers emit:
  *   { player1, player2|null, player1Score?, player2Score?,

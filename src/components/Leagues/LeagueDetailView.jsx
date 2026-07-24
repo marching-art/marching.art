@@ -130,7 +130,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         // busts the entry when someone joins or leaves.
         const [profiles, sData, matchupDocs] = await Promise.all([
           queryClient.fetchQuery({
-            queryKey: queryKeys.leagueMemberProfiles(league.id, [...league.members].sort().join(',')),
+            queryKey: queryKeys.leagueMemberProfiles(
+              league.id,
+              [...league.members].sort().join(',')
+            ),
             queryFn: () => getMemberProfiles(league.members),
             staleTime: 5 * 60 * 1000,
           }),
