@@ -135,6 +135,54 @@ async function findScrapeRunProblem(db, now = new Date()) {
   return worst || { date: keys.join(" | "), status: "missing" };
 }
 
+/**
+ * Detect a night the drop dispatcher OWNED but never scored. The scoring_runs
+ * check above only sees failed or stale leases — a night where scoring never
+ * even CLAIMED a lease (the final gate tick crashed or timed out, Cloud
+ * Scheduler skipped the window) leaves no scoring_runs doc at all and would
+ * read as healthy. The dispatcher's own audit trail closes the gap: an
+ * "active"-mode drop_plans doc for last night with no scoredAt stamp means
+ * the night is unscored — unless the scoring lease says some run completed it
+ * anyway (a mid-night kill-switch flip handing the night back to the legacy
+ * 2 AM job), which is cross-checked to avoid a false alarm.
+ *
+ * Returns null when healthy (or the dispatcher didn't own last night);
+ * otherwise a problem descriptor for the alert.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Date} [now] - Injectable clock for tests.
+ * @returns {Promise<null|{date: string, status: string, competitionDay?: number,
+ *   dropLabel?: string, lastError?: string}>}
+ */
+async function findUnscoredNightProblem(db, now = new Date()) {
+  // Last night's show date: at 4:30 AM the show-day reset (dropPlanner.js)
+  // already points at the new date, so step back one.
+  const { showDateFor } = require("../helpers/dropPlanner");
+  const showDate = new Date(showDateFor(now).utcMidnight - 24 * 60 * 60 * 1000);
+  const showKey = showDate.toISOString().slice(0, 10);
+
+  const planDoc = await db.collection("drop_plans").doc(showKey).get();
+  if (!planDoc.exists) return null;
+  const plan = planDoc.data();
+  if (plan.mode !== "active" || plan.scoredAt) return null;
+
+  // Cross-check the scoring lease (shared by both pipelines) before alerting.
+  const seasonDoc = await db.doc("game-settings/season").get();
+  const seasonUid = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
+  if (seasonUid && plan.competitionDay != null) {
+    const lease = await db.collection("scoring_runs")
+      .doc(`${seasonUid}_day${plan.competitionDay}`).get();
+    if (lease.exists && lease.data().status === "completed") return null;
+  }
+
+  return {
+    date: showKey,
+    status: "unscored",
+    competitionDay: plan.competitionDay,
+    dropLabel: plan.dropLabel,
+  };
+}
+
 // 04:30 ET: after the 02:00 scoring runs (and their retries) have finished or
 // timed out, and past the 30-minute stale-lease window for a crashed claim.
 exports.scoringWatchdog = onSchedule({
@@ -157,7 +205,16 @@ exports.scoringWatchdog = onSchedule({
     scrapeProblem = { date: "unknown", status: "check-error", lastError: error.message };
   }
 
-  if (unhealthy.length === 0 && !scrapeProblem) {
+  // Same containment for the dispatcher's unscored-night check.
+  let unscoredProblem = null;
+  try {
+    unscoredProblem = await findUnscoredNightProblem(db);
+  } catch (error) {
+    logger.error(`[scoring-watchdog] Could not check last night's drop plan: ${error.message}`);
+    unscoredProblem = { date: "unknown", status: "check-error", lastError: error.message };
+  }
+
+  if (unhealthy.length === 0 && !scrapeProblem && !unscoredProblem) {
     logger.info("[scoring-watchdog] All recent scoring runs healthy.");
     return;
   }
@@ -178,12 +235,22 @@ exports.scoringWatchdog = onSchedule({
         : ""),
     );
   }
+  if (unscoredProblem) {
+    problems.push(
+      `Last night's drop plan (drop_plans/${unscoredProblem.date}) is ${unscoredProblem.status}` +
+      (unscoredProblem.competitionDay != null
+        ? ` — competition day ${unscoredProblem.competitionDay} never scored` +
+          (unscoredProblem.dropLabel ? ` (planned drop ${unscoredProblem.dropLabel})` : "")
+        : "") +
+      (unscoredProblem.lastError ? `: ${unscoredProblem.lastError}` : ""),
+    );
+  }
 
   // Loud and stably tagged so a log-based alert can match on the literal
   // string "[scoring-watchdog]".
   logger.error(
     `[scoring-watchdog] ${problems.join(" | ")}`,
-    { runs: unhealthy, scrape: scrapeProblem },
+    { runs: unhealthy, scrape: scrapeProblem, unscored: unscoredProblem },
   );
 
   // Also email the admins (same pattern as the news-generation failure path in
@@ -206,4 +273,5 @@ exports.scoringWatchdog = onSchedule({
 // Exported for unit tests.
 exports.findUnhealthyScoringRuns = findUnhealthyScoringRuns;
 exports.findScrapeRunProblem = findScrapeRunProblem;
+exports.findUnscoredNightProblem = findUnscoredNightProblem;
 exports.LOOKBACK_MS = LOOKBACK_MS;

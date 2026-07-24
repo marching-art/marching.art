@@ -13,7 +13,12 @@
  * Ticks that aren't tonight's slot never touch dci.org, so scraper-API
  * credits stay at one scrape pass per night. Failed attempts (recap not
  * posted, Cloudflare) re-arm on later ticks, bounded by MAX_SCRAPE_ATTEMPTS
- * and the planner's 2:45 AM clamp; a normal night still scrapes exactly once.
+ * and the planner's 2:45 AM clamp (a day with no scheduled shows before
+ * championship week gets a single attempt — see scrapeBudgetFor); a normal
+ * night still scrapes exactly once. Scoring never runs on the same tick as
+ * a fresh scrape unless it is the night's last tick: the scrape publishes
+ * recap rows via Pub/Sub and the archive consumer needs time to land them
+ * (recap-settle defer inside runDropDispatcherTick).
  *
  * KILL SWITCH: game-settings/features.dropScheduling. OFF (default) = shadow
  * mode — every tick computes and persists tonight's plan to drop_plans/{date}
@@ -35,7 +40,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
-const { planDrop, showCalendarDay } = require("../helpers/dropPlanner");
+const { planDrop, showCalendarDay, CHAMPIONSHIP_WEEK_START_DAY } = require("../helpers/dropPlanner");
 const { isDropSchedulingEnabled } = require("../helpers/features");
 const { discordScoresWebhookUrl } = require("../helpers/scoreDrop");
 const { scraperApiKey } = require("../helpers/dciFetch");
@@ -44,6 +49,36 @@ const { scraperApiKey } = require("../helpers/dciFetch");
 // many times (first attempt included) before scoring proceeds on regression
 // fallback. Keeps a dci.org outage from burning a credit on every tick.
 const MAX_SCRAPE_ATTEMPTS = 3;
+
+// The dispatcher's cron cadence. Used to decide whether ANOTHER tick will run
+// before the night's window closes — a same-tick scrape+score is only taken
+// when this is the last chance (see the recap-settle logic in the tick).
+const TICK_INTERVAL_MIN = 15;
+
+// A successful scrape publishes recap rows to Pub/Sub; a SEPARATE triggered
+// function (triggers/scoreProcessing.js processLiveScoreRecap) archives them
+// into historical_scores, which is what scoring reads. Scoring immediately
+// after an in-tick scrape would race that consumer and silently fall back to
+// regression for exactly the shows just scraped. Normally the fix is free —
+// defer scoring to the next tick, 15 minutes of settle — but on the night's
+// LAST tick there is no next tick, so wait this long instead.
+const SCRAPE_SETTLE_MS = 60 * 1000;
+
+/**
+ * The night's scrape-attempt budget. A day with no scheduled shows before
+ * championship week is either a genuine dark day (dci.org lists nothing —
+ * every attempt is a wasted credit) or a stale schedules doc; one attempt
+ * distinguishes the two, since real listed events make the first attempt
+ * succeed. Championship week (>= day 45) has real events that are simply
+ * never carried in competitions[], so it keeps the full budget.
+ * @param {object} plan - From planDrop() (non-null).
+ * @returns {number}
+ */
+function scrapeBudgetFor(plan) {
+  const darkDay =
+    plan.hasScheduledShows === false && plan.competitionDay < CHAMPIONSHIP_WEEK_START_DAY;
+  return darkDay ? 1 : MAX_SCRAPE_ATTEMPTS;
+}
 
 /**
  * Pure decision core: which actions are due on this tick. No IO — testable.
@@ -61,14 +96,18 @@ const MAX_SCRAPE_ATTEMPTS = 3;
  * @param {Date} params.now
  * @param {boolean} params.scrapedTonight - lastScrapedDate === plan.showDateET.
  * @param {number} params.scrapeAttempts - Attempts recorded on tonight's plan doc.
+ * @param {boolean} [params.alreadyScored] - Tonight's plan doc carries scoredAt:
+ *   the day is done, so post-drop ticks skip the scoring path (its lease would
+ *   no-op anyway) instead of re-entering it every 15 minutes until 2:45 AM.
  * @returns {{scrapeDue: boolean, scoreDue: boolean}}
  */
-function dueActions({ plan, now, scrapedTonight, scrapeAttempts = 0 }) {
+function dueActions({ plan, now, scrapedTonight, scrapeAttempts = 0, alreadyScored = false }) {
   const t = now.getTime();
+  const scrapeBudget = scrapeBudgetFor(plan);
   const scrapeDue =
     plan.needsScrape &&
     !scrapedTonight &&
-    scrapeAttempts < MAX_SCRAPE_ATTEMPTS &&
+    scrapeAttempts < scrapeBudget &&
     t >= plan.scrapeInstant.getTime() &&
     t <= plan.scrapeRetryUntil.getTime();
 
@@ -76,10 +115,10 @@ function dueActions({ plan, now, scrapedTonight, scrapeAttempts = 0 }) {
     !plan.needsScrape ||
     scrapedTonight ||
     !plan.hasScheduledShows ||
-    scrapeAttempts >= MAX_SCRAPE_ATTEMPTS ||
+    scrapeAttempts >= scrapeBudget ||
     t >= plan.scrapeRetryUntil.getTime();
 
-  const scoreDue = t >= plan.dropInstant.getTime() && scrapeSettled;
+  const scoreDue = !alreadyScored && t >= plan.dropInstant.getTime() && scrapeSettled;
   return { scrapeDue, scoreDue };
 }
 
@@ -156,10 +195,24 @@ async function persistPlan(db, plan, mode, existingSignature) {
  * One gate tick: plan, persist, and act if an instant has arrived.
  * Extracted from the schedule wrapper so tests can drive it with fakes.
  * @param {FirebaseFirestore.Firestore} db
- * @param {{now?: Date}} [options]
+ * @param {object} [options]
+ * @param {Date} [options.now]
+ * @param {number} [options.settleMs] - Recap-settle wait for a last-tick
+ *   scrape+score (see SCRAPE_SETTLE_MS); tests pass 0.
+ * @param {object} [options.deps] - Injectable action implementations for
+ *   tests; production defaults lazy-require the real ones.
  * @returns {Promise<{status: string, [k: string]: unknown}>}
  */
-async function runDropDispatcherTick(db, { now = new Date() } = {}) {
+async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_SETTLE_MS, deps = {} } = {}) {
+  const {
+    scrape = (args) => require("./liveScraper").scrapeLatestLiveScores(args),
+    scoreOffSeason = (args) =>
+      require("../helpers/scoring").processAndArchiveOffSeasonScoresLogic(args),
+    scoreLive = (day, seasonData) =>
+      require("../helpers/scoring").processAndScoreLiveSeasonDayLogic(day, seasonData),
+    discord = (dbArg, opts) =>
+      require("./nightlyStages").runDiscordStage(dbArg, discordScoresWebhookUrl.value(), undefined, opts),
+  } = deps;
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) return { status: "no-season" };
   const seasonData = seasonDoc.data();
@@ -203,19 +256,21 @@ async function runDropDispatcherTick(db, { now = new Date() } = {}) {
 
   // Tonight's dispatcher state: scrape success comes from the season doc's
   // lastScrapedDate stamp (written only on a scrape that produced rows);
-  // the attempt count lives on the plan doc (read above).
+  // the attempt count and the scored marker live on the plan doc (read above).
   const scrapeAttempts = planDocData.scrapeAttempts || 0;
+  const alreadyScored = Boolean(planDocData.scoredAt);
   let scrapedTonight = seasonData.lastScrapedDate === plan.showDateET;
 
-  let { scrapeDue, scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts });
+  let { scrapeDue, scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts, alreadyScored });
   const result = { status: "ticked", showDateET: plan.showDateET, actions: [] };
 
+  let freshScrapeThisTick = false;
   if (scrapeDue) {
-    const { scrapeLatestLiveScores } = require("./liveScraper");
     try {
-      const scrape = await scrapeLatestLiveScores({ dateKey: plan.showDateET });
-      scrapedTonight = scrape?.stampedLastScrapedDate === true;
-      result.actions.push({ action: "scrape", scraped: scrape?.scraped, stamped: scrapedTonight });
+      const scraped = await scrape({ dateKey: plan.showDateET });
+      scrapedTonight = scraped?.stampedLastScrapedDate === true;
+      freshScrapeThisTick = scrapedTonight;
+      result.actions.push({ action: "scrape", scraped: scraped?.scraped, stamped: scrapedTonight });
     } catch (error) {
       logger.error(`[drop-dispatcher] scrape failed (will retry within budget): ${error.message}`);
       result.actions.push({ action: "scrape", error: error.message });
@@ -228,37 +283,60 @@ async function runDropDispatcherTick(db, { now = new Date() } = {}) {
     );
     // A scrape that just succeeded may unlock scoring on this same tick
     // (slipped nights where scrape and drop coincide).
-    ({ scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts: scrapeAttempts + 1 }));
+    ({ scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts: scrapeAttempts + 1, alreadyScored }));
+  }
+
+  // A scrape only PUBLISHES recap rows; processLiveScoreRecap archives them
+  // into historical_scores, which scoring reads. Scoring immediately after an
+  // in-tick scrape would race that consumer and regression-fall-back on
+  // exactly the shows just scraped. Defer to the next tick (15 minutes of
+  // settle) whenever one exists before the window closes; on the night's
+  // last tick, wait a bounded settle instead — never orphan the night.
+  if (scoreDue && freshScrapeThisTick) {
+    const nextTickMs = now.getTime() + TICK_INTERVAL_MIN * 60 * 1000;
+    if (nextTickMs <= plan.scrapeRetryUntil.getTime()) {
+      result.actions.push({ action: "score", deferred: "recap-settle" });
+      scoreDue = false;
+    } else if (settleMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, settleMs));
+    }
   }
 
   if (scoreDue) {
-    // Fresh season data: the scrape above may have stamped lastScrapedDate.
+    // seasonData here is the tick-start read; scoring derives everything it
+    // needs from the day number and historical data, not lastScrapedDate.
+    let score;
     if (plan.seasonType === "off-season") {
-      const { processAndArchiveOffSeasonScoresLogic } = require("../helpers/scoring");
-      const score = await processAndArchiveOffSeasonScoresLogic({ scoredDay: plan.competitionDay });
-      result.actions.push({ action: "score", ...score });
+      score = await scoreOffSeason({ scoredDay: plan.competitionDay });
     } else {
-      const { processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
-      const score = await processAndScoreLiveSeasonDayLogic(plan.competitionDay, seasonData);
-      result.actions.push({ action: "score", ...score });
+      score = await scoreLive(plan.competitionDay, seasonData);
     }
-    await db.collection("drop_plans").doc(plan.showDateET).set(
-      { scoredAt: new Date() }, { merge: true },
-    );
+    result.actions.push({ action: "score", ...score });
 
-    // Discord score-drop post, at the drop it announces. Isolated (its own
-    // per-day lease posts at most once) — a Discord failure never blocks
-    // or retries the fantasy pipeline.
-    try {
-      const { runDiscordStage } = require("./nightlyStages");
-      const discord = await runDiscordStage(
-        db, discordScoresWebhookUrl.value(), undefined, { scoredDay: plan.competitionDay },
+    // Stamp the plan doc only when the day is actually done — a fresh run
+    // that processed, or a lease that says some run already completed it
+    // (e.g. the legacy 2 AM job before a mid-night flag flip). A skipped
+    // "in-progress" claim stays unstamped so later ticks re-check the lease.
+    const dayDone =
+      score?.status === "processed" ||
+      (score?.status === "skipped" && score?.reason === "completed");
+    if (dayDone) {
+      await db.collection("drop_plans").doc(plan.showDateET).set(
+        { scoredAt: new Date() }, { merge: true },
       );
-      if (discord.status !== "disabled") {
-        logger.info(`[drop-dispatcher] discord-stage result: ${JSON.stringify(discord)}`);
+
+      // Discord score-drop post, at the drop it announces. Isolated (its own
+      // per-day lease posts at most once) — a Discord failure never blocks
+      // the fantasy pipeline, and (like the legacy 2 AM job) is not retried
+      // within the night.
+      try {
+        const discordResult = await discord(db, { scoredDay: plan.competitionDay });
+        if (discordResult.status !== "disabled") {
+          logger.info(`[drop-dispatcher] discord-stage result: ${JSON.stringify(discordResult)}`);
+        }
+      } catch (error) {
+        logger.error(`[drop-dispatcher] discord stage failed (scoring unaffected): ${error.message}`);
       }
-    } catch (error) {
-      logger.error(`[drop-dispatcher] discord stage failed (scoring unaffected): ${error.message}`);
     }
   }
 
@@ -272,9 +350,11 @@ async function runDropDispatcherTick(db, { now = new Date() } = {}) {
 exports.scoreDropDispatcher = onSchedule({
   schedule: "*/15 20-23,0-2 * * *",
   timeZone: "America/New_York",
-  // Scoring alone fits 540s (legacy budget); a slipped night where scrape and
-  // score share one tick may run long — the next tick self-heals via the
-  // scoring lease if this one times out.
+  // Scoring alone fits 540s (the legacy budget), and the recap-settle defer
+  // keeps scrape and score on separate ticks every night but the LAST one.
+  // 540 is the platform maximum for scheduled functions; if that final shared
+  // tick ever times out, the watchdog's unscored-night check catches it at
+  // 4:30 (scoringWatchdog.js findUnscoredNightProblem).
   timeoutSeconds: 540,
   memory: "512MiB",
   // No scheduler retries: the 15-minute cadence IS the retry loop, and the
@@ -341,5 +421,8 @@ exports.podiumNightly = onSchedule({
 });
 
 module.exports.dueActions = dueActions;
+module.exports.scrapeBudgetFor = scrapeBudgetFor;
 module.exports.runDropDispatcherTick = runDropDispatcherTick;
 module.exports.MAX_SCRAPE_ATTEMPTS = MAX_SCRAPE_ATTEMPTS;
+module.exports.TICK_INTERVAL_MIN = TICK_INTERVAL_MIN;
+module.exports.SCRAPE_SETTLE_MS = SCRAPE_SETTLE_MS;
