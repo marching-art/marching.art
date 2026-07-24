@@ -81,9 +81,18 @@ export default defineConfig({
             }
             return 'vendor-firebase';
           }
-          // UI utilities - lightweight, loaded immediately
-          if (inPackage('lucide-react') || inPackage('react-hot-toast')) return 'vendor-ui';
-          if (inPackage('@tanstack/react-query') || inPackage('zustand') || inPackage('date-fns')) {
+          // react-hot-toast is genuinely app-shell code (<Toaster> mounts at
+          // the App root), so it stays eager.
+          // lucide-react intentionally gets NO manual group: icons are
+          // imported per-icon and most are referenced only by lazy-loaded
+          // routes/modals. Grouping it into an eager 'vendor-ui' chunk pulled
+          // the union of every icon used anywhere in the app (~150+) into the
+          // first-paint payload (~15-30 kB gzip of icons the landing page
+          // never renders). With no group, each icon lands in the chunk of
+          // the route that actually imports it (same reasoning as
+          // framer-motion / chart.js below).
+          if (inPackage('react-hot-toast')) return 'vendor-ui';
+          if (inPackage('@tanstack/react-query') || inPackage('zustand')) {
             return 'vendor-query';
           }
           // framer-motion intentionally gets NO manual group: the app uses
