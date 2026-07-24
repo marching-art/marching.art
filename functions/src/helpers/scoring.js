@@ -26,9 +26,8 @@ const {
   awardClassChampionshipTrophies,
   awardFinalsAndSaveChampions,
   buildEasternClassicParticipantSet,
-  processWeeklyMatchups,
-  payWeeklyParticipationXP,
 } = require("./scoringAwards");
+const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./weeklyMatchups");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { getCompletedCalendarDay } = require("./gameDay");
 const { updateRecordsFromRecap } = require("./gameRecords");

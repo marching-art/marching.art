@@ -668,7 +668,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
         // call) must not be re-folded into standings — that double-counts
         // wins. Byes are never folded here at all: the generator creates
         // them already completed, and the guarded nightly weekly resolution
-        // is their single standings counting point (see scoringAwards.js) —
+        // is their single standings counting point (see weeklyMatchups.js) —
         // the old code folded a not-yet-completed bye WITHOUT marking it
         // completed, so every repeat call counted it again.
         if (matchup.completed || !matchup.pair || matchup.pair[1] === null) {

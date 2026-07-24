@@ -65,6 +65,7 @@ exports.scheduledLifetimeLeaderboardUpdate = onSchedule(
  * @returns {Promise<Array<{userId: string, data: Object}>>}
  */
 async function fetchProfiles(db, fields, activeSeasonId) {
+  /** @type {FirebaseFirestore.Query} */
   let profilesQuery = db.collectionGroup("profile");
   if (activeSeasonId) {
     profilesQuery = profilesQuery.where("activeSeasonId", "==", activeSeasonId);

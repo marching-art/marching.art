@@ -1,4 +1,3 @@
-// @ts-nocheck -- follows the scheduled-job conventions of dailyProcessors.js.
 /**
  * Timezone-aware score-drop dispatcher (gated cron slots).
  *
