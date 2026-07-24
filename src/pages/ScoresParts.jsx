@@ -10,7 +10,7 @@
 // horizontal scroll. Per the anti-lineup-harvesting rule (§5.4) the fantasy
 // sheets stay condensed to GE/VIS/MUS; full per-caption columns are Podium-only.
 
-import React, { useMemo, memo, useRef, useState, useEffect } from 'react';
+import React, { useMemo, memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Music, ChevronRight, MapPin, Medal, Users, Calendar } from 'lucide-react';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
@@ -27,6 +27,8 @@ import {
   TWO_NIGHT_DAYS,
 } from '../utils/scoresUtils';
 import { useHorizontalTabSlide } from '../components/scores/useHorizontalTabSlide';
+import { PillTabControl } from '../components/scores/PillTabControl';
+import { scoresShareUrl } from '../utils/shareSheet';
 // Shared box-score primitives — the single source of truth for the sheet look,
 // used by both these Fantasy sheets and the Podium Class sheets.
 import {
@@ -49,68 +51,10 @@ import {
 } from '../components/scores/sheetTokens';
 
 // =============================================================================
-// PILL TAB CONTROL (Design System) — unchanged shell chrome
+// PILL TAB CONTROL (Design System) — moved to components/scores/PillTabControl
+// (imported above, re-exported below so Scores.jsx's import surface is
+// unchanged).
 // =============================================================================
-
-const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
-  const scrollRef = useRef(null);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  // Right-edge fade hint when tabs overflow off-screen (matches DataTable's
-  // scroll-hint pattern) — without it, off-screen tabs are undiscoverable.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const checkScroll = () => {
-      const hasMore = el.scrollWidth > el.clientWidth;
-      const notAtEnd = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
-      setCanScrollRight(hasMore && notAtEnd);
-    };
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    el.addEventListener('scroll', checkScroll);
-    return () => {
-      window.removeEventListener('resize', checkScroll);
-      el.removeEventListener('scroll', checkScroll);
-    };
-  }, [tabs]);
-
-  return (
-    <div className="relative">
-      <div
-        ref={scrollRef}
-        className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-line"
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              haptic?.('medium');
-              onTabChange(tab.id);
-            }}
-            className={`px-3 sm:px-4 py-2.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? tab.accent === 'green'
-                  ? 'text-green-400 border-green-500'
-                  : tab.accent === 'yellow'
-                    ? 'text-interactive border-interactive'
-                    : 'text-white border-interactive'
-                : 'text-muted hover:text-secondary border-transparent'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      {canScrollRight && (
-        <div
-          className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-[#0a0a0a] to-transparent"
-          aria-hidden="true"
-        />
-      )}
-    </div>
-  );
-};
 
 // =============================================================================
 // RECAP BOX SCORE - one card per show, SPLIT BY CLASS (memoized: sibling recaps
@@ -138,7 +82,16 @@ const buildClassRows = (classScores, sortBy) => {
 };
 
 const RecapDataGrid = memo(
-  ({ scores, eventName, location, date, userCorpsName, sortBy = 'total' }) => {
+  ({
+    scores,
+    eventName,
+    location,
+    date,
+    seasonId,
+    offSeasonDay,
+    userCorpsName,
+    sortBy = 'total',
+  }) => {
     // Group the show's corps by class, then rank/sort within each class.
     const sections = useMemo(() => {
       if (!scores || scores.length === 0) return [];
@@ -187,6 +140,15 @@ const RecapDataGrid = memo(
         .join('\n\n');
 
     if (sections.length === 0) return null;
+
+    // Link the share to the day's card for the sheet's top class present
+    // (World → Open → A order). The /share URL unfurls with a live standings
+    // image wherever the copied text is pasted.
+    const topRankedClass = sections.find((s) => RECAP_CLASS_ORDER.includes(s.cls))?.cls;
+    const shareUrl = () =>
+      seasonId && typeof offSeasonDay === 'number' && topRankedClass
+        ? scoresShareUrl(seasonId, offSeasonDay, topRankedClass)
+        : null;
 
     return (
       <div className={`${SHEET_CARD} space-y-3`}>
@@ -255,7 +217,7 @@ const RecapDataGrid = memo(
 
         <SheetFooter
           note="Split by class · GE/VIS/MUS shown · box-toppers in gold"
-          action={<ShareButton getText={shareText} />}
+          action={<ShareButton getText={shareText} getUrl={shareUrl} />}
         />
       </div>
     );
@@ -486,6 +448,8 @@ const FantasyRecapsView = ({ shows, userCorpsName }) => {
             eventName={show.eventName}
             location={show.location}
             date={show.date}
+            seasonId={show.seasonId}
+            offSeasonDay={show.offSeasonDay}
             userCorpsName={userCorpsName}
             sortBy={sortBy}
           />

@@ -227,11 +227,15 @@ export const SortPills = ({
 // Share/copy button — native share sheet on mobile, Discord-ready text copied to
 // the clipboard elsewhere (see utils/shareSheet). `getText` is called lazily on
 // click so the (sometimes expensive) formatting only runs when the user shares.
+// `getUrl` (optional) attaches a /share/* link that unfurls into a live score
+// card wherever the text is pasted.
 export const ShareButton = ({
   getText,
+  getUrl,
   title = 'Copy the sheet as Discord-ready text',
 }: {
   getText: () => string;
+  getUrl?: () => string | null;
   title?: string;
 }) => {
   const [copied, setCopied] = useState(false);
@@ -239,7 +243,7 @@ export const ShareButton = ({
     <button
       type="button"
       onClick={async () => {
-        const didCopy = await shareOrCopy(getText());
+        const didCopy = await shareOrCopy(getText(), getUrl ? getUrl() : null);
         if (didCopy) {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);

@@ -120,6 +120,19 @@ for (const source of vercelHeaderBlocks.keys()) {
 
 // --- 2. Function-rewrite parity ---------------------------------------------
 
+// firebase.json glob rewrite source -> vercel.json path-to-regexp source.
+// Exact-path sources (e.g. /api/news) are identical on both hosts and need
+// no entry; add a mapping here whenever a glob rewrite lands, together with
+// the vercel.json block. NOTE: for mapped (multi-segment) sources the Vercel
+// destination must append the original path (…cloudfunctions.net/<fn>/<path>)
+// so the function sees the same req.path Firebase Hosting forwards.
+const REWRITE_SOURCE_MAP = new Map([
+  ['/api/og/**', '/api/og/:path*'],
+  ['/share/**', '/share/:path*'],
+]);
+
+const mapRewriteSource = (source) => REWRITE_SOURCE_MAP.get(source) ?? source;
+
 const vercelRewrites = vercel.rewrites || [];
 const spaIndex = vercelRewrites.findIndex((r) => r.destination === '/index.html');
 if (spaIndex === -1) {
@@ -130,12 +143,14 @@ const firebaseFunctionRewrites = (firebaseHosting.rewrites || []).filter((r) => 
 
 for (const rewrite of firebaseFunctionRewrites) {
   const functionId = rewrite.function.functionId || rewrite.function;
-  const match = vercelRewrites.findIndex((r) => r.source === rewrite.source);
+  const expectedSource = mapRewriteSource(rewrite.source);
+  const match = vercelRewrites.findIndex((r) => r.source === expectedSource);
   if (match === -1) {
     fail(
       `firebase.json rewrites "${rewrite.source}" to function "${functionId}" but ` +
-        `vercel.json has no rewrite for that source — on Vercel it falls through to the ` +
-        `SPA shell. Add a rewrite to the function's public URL.`
+        `vercel.json has no rewrite for "${expectedSource}" — on Vercel it falls through to ` +
+        `the SPA shell. Add a rewrite to the function's public URL (and a REWRITE_SOURCE_MAP ` +
+        `entry in scripts/checkHostingParity.mjs if the source is a glob).`
     );
     continue;
   }
@@ -156,7 +171,9 @@ for (const rewrite of firebaseFunctionRewrites) {
 
 for (const [index, rewrite] of vercelRewrites.entries()) {
   if (index === spaIndex) continue;
-  const counterpart = firebaseFunctionRewrites.some((r) => r.source === rewrite.source);
+  const counterpart = firebaseFunctionRewrites.some(
+    (r) => mapRewriteSource(r.source) === rewrite.source
+  );
   if (!counterpart) {
     fail(
       `vercel.json rewrite "${rewrite.source}" has no firebase.json counterpart — ` +

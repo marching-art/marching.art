@@ -9,6 +9,14 @@
       "source": "/sitemap.xml",
       "destination": "https://us-central1-marching-art.cloudfunctions.net/getSitemapHttp"
     },
+    {
+      "source": "/api/og/:path*",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getOgCardHttp/api/og/:path*"
+    },
+    {
+      "source": "/share/:path*",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getShareHttp/share/:path*"
+    },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ],
   "headers": [

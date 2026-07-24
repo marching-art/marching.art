@@ -229,6 +229,7 @@ const {
   rejectSubmission,
 } = require("./src/triggers/newsGeneration");
 const { getSitemapHttp } = require("./src/triggers/sitemap");
+const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -418,6 +419,12 @@ module.exports = {
   // static public routes plus one URL per published article. Without this
   // export the rewrite 404s and crawlers lose the sitemap entirely.
   getSitemapHttp,
+  // Back the /api/og/** and /share/** hosting rewrites (both hosts): PNG
+  // score/champion cards and the share pages whose OG tags social scrapers
+  // read. Without these exports every shared link falls back to the static
+  // homepage card.
+  getOgCardHttp,
+  getShareHttp,
 
   // Article Management (Admin)
   listAllArticles,

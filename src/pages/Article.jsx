@@ -44,7 +44,7 @@ import { resolveArticleById } from '../api/articles';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
-import toast from 'react-hot-toast';
+import { shareLink, articleShareUrl } from '../utils/shareSheet';
 
 /** Meta descriptions get cut around ~160 chars in search results; trim on a word. */
 const truncateForMeta = (text, max = 160) => {
@@ -204,42 +204,10 @@ const Article = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
-
-    // Helper function to copy to clipboard
-    const copyToClipboard = async () => {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copied to clipboard');
-      } catch {
-        toast.error('Failed to copy link');
-      }
-    };
-
-    // Check if we're on a mobile device - Web Share API is only reliable on mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-
-    if (navigator.share && isMobile) {
-      try {
-        await navigator.share({
-          title: article?.headline,
-          text: article?.headline,
-          url: shareUrl,
-        });
-      } catch (err) {
-        // If user cancelled (AbortError), do nothing
-        // For other errors (blocked by enterprise, etc.), fall back to clipboard
-        if (err.name !== 'AbortError') {
-          await copyToClipboard();
-        }
-      }
-    } else {
-      await copyToClipboard();
-    }
-  };
+  // Share the /share/ URL, not window.location: social scrapers don't run
+  // the SPA's JS, so only the share endpoint's OG tags unfurl properly.
+  const handleShare = () =>
+    shareLink({ title: article?.headline, url: articleShareUrl(article?.id || id) });
 
   const handleCommentCountChange = (newCount) => {
     setEngagement((prev) =>

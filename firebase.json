@@ -124,6 +124,20 @@
         }
       },
       {
+        "source": "/api/og/**",
+        "function": {
+          "functionId": "getOgCardHttp",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/share/**",
+        "function": {
+          "functionId": "getShareHttp",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

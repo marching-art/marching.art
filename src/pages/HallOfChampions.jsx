@@ -17,8 +17,10 @@ import {
   Music,
   Flag,
   Coins,
+  Share2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { shareLink, championShareUrl } from '../utils/shareSheet';
 import { getSeasonChampions } from '../api/season';
 import { queryClient, queryKeys } from '../lib/queryClient';
 import { purchaseHallBanner } from '../api/functions';
@@ -178,9 +180,26 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
             {type} {year} {soundSport ? 'Best in Show' : 'Champion'}
           </span>
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-          {CLASS_CONFIG[classKey]?.name}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+            {CLASS_CONFIG[classKey]?.name}
+          </span>
+          {/* Shares the /share/champion URL so the link unfurls with the
+              live champion card (see src/utils/share.ts). */}
+          <button
+            onClick={() =>
+              shareLink({
+                title: `${season.seasonName || 'Season'} ${CLASS_CONFIG[classKey]?.name || ''} — marching.art`,
+                url: championShareUrl(season.id, classKey),
+              })
+            }
+            className="p-1 opacity-80 hover:opacity-100 transition-opacity"
+            title="Share this champion"
+            aria-label="Share this champion"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Champion identity */}
