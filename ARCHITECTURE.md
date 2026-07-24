@@ -33,7 +33,6 @@ marching.art/
 │   ├── lib/                 # Query client, low-level libs
 │   ├── pages/               # Route components
 │   ├── store/               # Zustand stores (scheduleStore, …)
-│   ├── stories/             # Storybook stories
 │   ├── types/               # TypeScript definitions
 │   └── utils/               # Pure logic (scoring, seasonClock, corps, cosmetics, …)
 ├── functions/               # Firebase Cloud Functions (own package.json, Node 22)

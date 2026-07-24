@@ -1,5 +1,5 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy,
@@ -13,8 +13,7 @@ import {
   Award,
   Coins,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { subscribeToProfile } from '../api/profile';
+import { useProfileStore } from '../store/profileStore';
 import { unretireCorps, purchaseRetirementPlaque } from '../api/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
@@ -61,10 +60,14 @@ const CLASS_FILTERS = [
 ];
 
 const RetiredCorpsGallery = () => {
-  const { user } = useAuth();
-  const [retiredCorps, setRetiredCorps] = useState([]);
-  const [corpsCoin, setCorpsCoin] = useState(0);
-  const [loading, setLoading] = useState(true);
+  // Current-user profile comes from the app-wide profileStore listener —
+  // this page used to open a second onSnapshot on the same (large) profile
+  // doc, doubling the download on every server-side profile write while
+  // mounted.
+  const profile = useProfileStore((state) => state.profile);
+  const loading = useProfileStore((state) => state.loading);
+  const retiredCorps = profile?.retiredCorps || [];
+  const corpsCoin = profile?.corpsCoin || 0;
   const [selectedCorps, setSelectedCorps] = useState(null);
   const [showUnretireModal, setShowUnretireModal] = useState(false);
   const [showPlaqueModal, setShowPlaqueModal] = useState(false);
@@ -72,20 +75,6 @@ const RetiredCorpsGallery = () => {
   const [unretiring, setUnretiring] = useState(false);
   const [filterClass, setFilterClass] = useState('all');
   const [sortBy, setSortBy] = useState('retiredAt'); // retiredAt, totalSeasons, bestScore
-
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    const unsubscribe = subscribeToProfile(user.uid, (profileData) => {
-      if (profileData) {
-        setRetiredCorps(profileData.retiredCorps || []);
-        setCorpsCoin(profileData.corpsCoin || 0);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
 
   const getClassConfig = (corpsClass) =>
     CLASS_CONFIG[corpsClass] || {

@@ -19,7 +19,8 @@ import {
   Coins,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getSeasonChampionDocs } from '../api/season';
+import { getSeasonChampions } from '../api/season';
+import { queryClient, queryKeys } from '../lib/queryClient';
 import { purchaseHallBanner } from '../api/functions';
 import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
 import { HALL_BANNER_PRICE } from '../utils/prestige';
@@ -465,23 +466,15 @@ const HallOfChampions = () => {
     const fetchSeasonChampions = async () => {
       try {
         setLoading(true);
-        const championDocs = await getSeasonChampionDocs();
-
-        const seasonsData = [];
-        championDocs.forEach((data) => {
-          seasonsData.push({
-            id: data.id,
-            seasonName: data.seasonName,
-            seasonType: data.seasonType,
-            archivedAt:
-              data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
-            classes: data.classes || {},
-          });
+        // Shared react-query entry with useScoresData's archived-season list —
+        // whichever of the Scores page or this page loads first pays for the
+        // season_champions collection read; the other is a cache hit.
+        // getSeasonChampions already normalizes archivedAt and sorts newest
+        // first.
+        const seasonsData = await queryClient.fetchQuery({
+          queryKey: queryKeys.archivedSeasons(),
+          queryFn: getSeasonChampions,
         });
-
-        seasonsData.sort(
-          (a, b) => (b.archivedAt?.getTime?.() || 0) - (a.archivedAt?.getTime?.() || 0)
-        );
 
         if (cancelled) return;
         setSeasons(seasonsData);

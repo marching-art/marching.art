@@ -636,6 +636,18 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
       return { success: true, hotCorps: {} };
     }
 
+    // The result depends only on (dataDocId, currentDay) — it is identical
+    // for every caller until the day rolls over. First caller of the day
+    // computes and caches it (one doc, server-written); everyone else costs
+    // 2 reads (season + cache) instead of re-reading the corps list plus one
+    // historical_scores doc per source year on every request.
+    const hotCorpsCacheRef = db.doc("computed/hotCorps");
+    const cacheKey = `${dataDocId}:${currentDay}`;
+    const cachedSnap = await hotCorpsCacheRef.get();
+    if (cachedSnap.exists && cachedSnap.data().cacheKey === cacheKey) {
+      return { success: true, hotCorps: cachedSnap.data().hotCorps || {}, windowStart, windowEnd, currentDay };
+    }
+
     // Get corps list for this season
     const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
     if (!corpsDataDoc.exists) {
@@ -767,6 +779,13 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
       }
     }
 
+    // Best-effort cache write — a failure here must not fail the request.
+    try {
+      await hotCorpsCacheRef.set({ cacheKey, hotCorps, windowStart, windowEnd, currentDay, computedAt: new Date() });
+    } catch (cacheError) {
+      logger.warn(`Failed to cache hot corps result: ${cacheError.message}`);
+    }
+
     return { success: true, hotCorps, windowStart, windowEnd, currentDay };
   } catch (error) {
     logger.error("Error calculating hot corps:", error);
@@ -792,8 +811,11 @@ exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
   const db = getDb();
 
   try {
-    // Get user's lineup
-    const profileDoc = await db.doc(paths.userProfile(uid)).get();
+    // Get user's lineup — field-masked; nothing else on the (large) profile
+    // doc is consumed here.
+    const [profileDoc] = await db.getAll(db.doc(paths.userProfile(uid)), {
+      fieldMask: [`corps.${corpsClass}.lineup`],
+    });
     if (!profileDoc.exists) {
       throw new HttpsError("not-found", "User profile not found.");
     }

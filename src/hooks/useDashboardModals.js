@@ -10,6 +10,7 @@ import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { updateProfile } from '../api/profile';
 import {
+  generateCorpsAvatar,
   registerCorps,
   retireCorps,
   unlockClassWithCorpsCoin,
@@ -340,9 +341,17 @@ export function useDashboardModals(user, dashboardData) {
         await updateProfile(user.uid, {
           [`corps.${activeCorpsClass}.uniformDesign`]: design,
         });
-        toast.success('Uniform design saved! Avatar will be generated soon.');
+        toast.success('Uniform design saved!');
         setShowUniformDesign(false);
         refreshProfile?.();
+        // Avatar generation is invoked explicitly — there is no server-side
+        // trigger watching profile writes for design changes. The profile
+        // listener picks up the new avatarUrl when the callable finishes.
+        toast.promise(generateCorpsAvatar({ corpsClass: activeCorpsClass }), {
+          loading: 'Generating avatar...',
+          success: 'Avatar generated!',
+          error: 'Avatar generation failed — you can retry from your profile.',
+        });
       } catch (error) {
         toast.error('Failed to save uniform design');
         throw error;

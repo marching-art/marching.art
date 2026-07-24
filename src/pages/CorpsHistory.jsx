@@ -21,7 +21,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
 import { Heading } from '../components/ui';
-import { subscribeToProfile } from '../api/profile';
+import { useProfileStore } from '../store/profileStore';
 import { compareCorpsClasses, getCorpsClassOrderIndex } from '../utils/corps';
 import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
@@ -30,46 +30,31 @@ import { toCanonicalClassKey } from '../utils/classUnlocks';
 
 const CorpsHistory = () => {
   const { user } = useAuth();
-  const [corps, setCorps] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Current-user profile comes from the app-wide profileStore listener —
+  // this page used to open a second onSnapshot on the same (large) profile
+  // doc, doubling the download on every server-side profile write while
+  // mounted (and re-subscribing on every corps-class selection).
+  const corps = useProfileStore((state) => state.corps);
+  const loading = useProfileStore((state) => state.loading);
+  const error = useProfileStore((state) => state.error);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState(null);
   const [activeView, setActiveView] = useState('chart'); // 'chart' or 'timeline'
 
+  // Auto-select first corps with history once profile data is available
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || selectedCorpsClass || !corps) return;
 
-    const unsubscribe = subscribeToProfile(
-      user.uid,
-      (profileData) => {
-        if (profileData) {
-          setCorps(profileData.corps || {});
-
-          // Auto-select first corps with history
-          if (!selectedCorpsClass && profileData.corps) {
-            const corpsWithHistory = Object.entries(profileData.corps).find(
-              ([_, corpsData]) => corpsData?.seasonHistory?.length > 0
-            );
-            if (corpsWithHistory) {
-              setSelectedCorpsClass(corpsWithHistory[0]);
-            } else {
-              // If no history, select first available corps
-              setSelectedCorpsClass(Object.keys(profileData.corps)[0]);
-            }
-          }
-        }
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Error loading corps data:', err);
-        setError(err.message);
-        setLoading(false);
-      }
+    const corpsWithHistory = Object.entries(corps).find(
+      ([_, corpsData]) => corpsData?.seasonHistory?.length > 0
     );
-
-    return () => unsubscribe();
-  }, [user, selectedCorpsClass]);
+    if (corpsWithHistory) {
+      setSelectedCorpsClass(corpsWithHistory[0]);
+    } else if (Object.keys(corps).length > 0) {
+      // If no history, select first available corps
+      setSelectedCorpsClass(Object.keys(corps)[0]);
+    }
+  }, [user, corps, selectedCorpsClass]);
 
   const getClassDisplayName = (corpsClass) => {
     const classNames = {

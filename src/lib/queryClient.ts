@@ -80,6 +80,11 @@ export const queryKeys = {
   // Podium Class recaps live in a separate collection (podium-recaps), never
   // in fantasy_recaps, so they get their own cache key.
   podiumRecaps: (seasonUid: string) => ['podiumRecaps', seasonUid] as const,
+  // Bounded variant (Dashboard recent-results box) — nested under the
+  // 'podiumRecaps' prefix so invalidating ['podiumRecaps', seasonUid] hits
+  // both the full archive and this entry.
+  podiumRecapsRecent: (seasonUid: string, days: number) =>
+    ['podiumRecaps', seasonUid, 'recent', days] as const,
 
   // Score reference data (public reads shared across Scores/Dashboard/Landing/ticker)
   historicalScores: (year: string) => ['historicalScores', year] as const,
@@ -102,6 +107,10 @@ export const queryKeys = {
   leagueChat: (leagueId: string) => ['leagueChat', leagueId] as const,
   leagueTrades: (leagueId: string) => ['leagueTrades', leagueId] as const,
   leagueActivity: (leagueId: string) => ['leagueActivity', leagueId] as const,
+  // Member profile docs for a league, keyed by the membership itself (sorted
+  // uid list) so a join/leave naturally busts the entry.
+  leagueMemberProfiles: (leagueId: string, membersKey: string) =>
+    ['leagueMemberProfiles', leagueId, membersKey] as const,
 
   // Notification queries
   leagueNotifications: (uid: string) => ['leagueNotifications', uid] as const,

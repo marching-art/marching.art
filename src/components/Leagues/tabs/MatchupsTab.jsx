@@ -7,6 +7,7 @@ import { m } from 'framer-motion';
 import { Swords, Calendar, Radio, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
 import { getLeagueMatchups } from '../../../api/leagues';
 import { getSeasonData } from '../../../api/season';
+import { queryClient, queryKeys } from '../../../lib/queryClient';
 import { getSeasonProgress } from '../../../utils/seasonProgress';
 import { GAME_CONFIG } from '../../../config';
 import {
@@ -64,7 +65,14 @@ const MatchupsTab = ({
         // math (utils/seasonProgress). The raw (now - startDate)/24h count
         // used here before rolled the week over at midnight UTC (8 PM ET in
         // summer), highlighting the wrong "live" week every evening.
-        const sData = await getSeasonData();
+        // Read through the shared react-query season entry — LeagueDetailView
+        // fetches the same doc when the league opens, so this tab is a cache
+        // hit instead of a second read.
+        const sData = await queryClient.fetchQuery({
+          queryKey: queryKeys.season(),
+          queryFn: () => getSeasonData(),
+          staleTime: 5 * 60 * 1000,
+        });
         const week = sData ? Math.max(1, getSeasonProgress(sData).currentWeek) : 1;
         setCurrentWeek(week);
         setSelectedWeek(week);

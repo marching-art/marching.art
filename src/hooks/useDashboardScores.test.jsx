@@ -13,7 +13,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 vi.mock('../api/season', () => ({
   getSeasonRecaps: vi.fn(),
   getHistoricalScoresForYear: vi.fn(),
-  getPodiumSeasonRecaps: vi.fn(),
+  getRecentPodiumRecaps: vi.fn(),
+  RECENT_RECAP_DAYS: 10,
 }));
 
 vi.mock('../utils/dashboardScoring', () => ({
@@ -42,7 +43,7 @@ vi.mock('./useScoresData', () => ({
   formatRecapDate: vi.fn(() => 'Jan 1'),
 }));
 
-import { getSeasonRecaps, getHistoricalScoresForYear, getPodiumSeasonRecaps } from '../api/season';
+import { getSeasonRecaps, getHistoricalScoresForYear, getRecentPodiumRecaps } from '../api/season';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
 import {
   useLineupScores,
@@ -226,12 +227,12 @@ describe('usePodiumRecentResults', () => {
       wrapper: createWrapper(),
     });
     expect(result.current).toEqual([]);
-    expect(getPodiumSeasonRecaps).not.toHaveBeenCalled();
+    expect(getRecentPodiumRecaps).not.toHaveBeenCalled();
   });
 
   it('returns the most recent processed Podium results for this director', async () => {
     getEffectiveDay.mockReturnValue(5);
-    getPodiumSeasonRecaps.mockResolvedValue([
+    getRecentPodiumRecaps.mockResolvedValue([
       recap(4, [aliceResult]),
       // Day 6 is beyond the effective day — filtered out
       recap(6, [{ ...aliceResult, totalScore: 99 }]),
