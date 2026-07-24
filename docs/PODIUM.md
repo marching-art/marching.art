@@ -1650,10 +1650,12 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    pipeline. The daily job needs restructuring into per-system stages with their own day gates —
    touching the `scoringRunGuard` idempotency lease, which currently guards the whole run.
 4. **Day-boundary semantics for rehearsal.** Fantasy deadlines run on ET wall-clock
-   (`seasonClock.js` is the declared single source of truth). Podium's "one day's blocks" must
-   adopt the same ET day boundary explicitly (blocks roll at the 02:00 ET processing hour), or
-   players near midnight double-allocate. Every Podium callable validates "today" server-side
-   against the same clock module — never client time.
+   (`seasonClock.js` is the declared single source of truth). Podium's "one day's blocks" roll
+   at the PROCESSING hour — 9 PM ET under the timezone-aware pipeline
+   (`getActivePodiumCalendarDay`, features.dropScheduling on), 02:00 ET legacy — or players
+   near the boundary double-allocate into an already-processed day. Every Podium callable
+   validates "today" server-side against the same clock module — never client time. See
+   `SCORE_DROPS.md` §4.
 5. **Profile-write security.** Podium state lives on the profile doc
    (`corps.podiumClass.podium.*`), parts of which are legitimately client-writable (biography,
    avatar). Firestore rules must deny client writes to the `podium` subtree specifically —

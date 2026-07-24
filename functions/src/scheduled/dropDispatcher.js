@@ -36,12 +36,10 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
-const { planDrop, showDateFor } = require("../helpers/dropPlanner");
+const { planDrop, showCalendarDay } = require("../helpers/dropPlanner");
 const { isDropSchedulingEnabled } = require("../helpers/features");
 const { discordScoresWebhookUrl } = require("../helpers/scoreDrop");
 const { scraperApiKey } = require("../helpers/dciFetch");
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // Failure-only retry bound: a night's scrape may be attempted at most this
 // many times (first attempt included) before scoring proceeds on regression
@@ -327,9 +325,7 @@ exports.podiumNightly = onSchedule({
   // Tonight's calendar day from the show-date reset (at 9 PM ET this is
   // simply "today" in Eastern). runPodiumStage's own range checks handle
   // before-season / season-over; spring training is a valid Podium day.
-  const { utcMidnight } = showDateFor(new Date());
-  const startUtc = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
-  const calendarDay = Math.floor((utcMidnight - startUtc) / MS_PER_DAY) + 1;
+  const calendarDay = showCalendarDay(startDate);
 
   try {
     const { runPodiumStage } = require("./nightlyStages");

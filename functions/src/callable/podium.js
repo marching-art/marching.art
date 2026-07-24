@@ -14,8 +14,8 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const economy = require("../helpers/economy");
 const { assertAuth } = require("../helpers/callableGuards");
-const { isPodiumEnabled } = require("../helpers/features");
-const { getActiveCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
+const { isPodiumEnabled, isDropSchedulingEnabled } = require("../helpers/features");
+const { getActivePodiumCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
 const staffMarket = require("../helpers/podium/staffMarket");
@@ -118,7 +118,14 @@ async function podiumContext(request) {
     throw new HttpsError("failed-precondition", "There is no active season.");
   }
   const seasonData = seasonDoc.data();
-  const calendarDay = getActiveCalendarDay(seasonData.schedule.startDate.toDate());
+  // The active Podium day rolls at the pipeline's processing moment: 9 PM ET
+  // under the timezone-aware pipeline (verbs act on tomorrow once tonight's
+  // stage has run), 2 AM under the legacy one. Using the wrong boundary would
+  // let a 9:30 PM verb rebuild an already-processed day (see gameDay.js).
+  const calendarDay = getActivePodiumCalendarDay(
+    seasonData.schedule.startDate.toDate(),
+    await isDropSchedulingEnabled(db),
+  );
   const competitionDay = toCompetitionDay(calendarDay, seasonData);
   // Beta tuning path: merge podium-config/balance overrides over the
   // committed defaults, and swap in the full-archive curve rebuild when

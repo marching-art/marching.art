@@ -146,10 +146,64 @@ function toCompetitionDay(calendarDay, seasonData) {
   return calendarDay - springTrainingDays;
 }
 
+// Podium processes at 9 PM ET under the timezone-aware pipeline
+// (scheduled/dropDispatcher.js podiumNightly).
+const PODIUM_PROCESS_HOUR_ET = 21;
+
+/**
+ * The calendar day Podium's interactive verbs should act on.
+ *
+ * Under the legacy pipeline (dropSchedulingEnabled=false) this is the plain
+ * 2 AM-reset active day, unchanged. Under the timezone-aware pipeline,
+ * Podium's nightly processing runs at 9 PM ET and ends its own state.today
+ * forward (processor.js sets today = calendarDay + 1) — so the active day
+ * must roll at 9 PM too: after tonight's run, verbs act on TOMORROW. Leaving
+ * the 2 AM boundary in place would make a 9:30 PM verb request the
+ * already-processed day, and rollToday would rebuild it with a fresh block
+ * allotment whose spends are silently discarded at the next roll.
+ *
+ * @param {Date} seasonStartDate - Season start (UTC midnight).
+ * @param {boolean} [dropSchedulingEnabled] - features.dropScheduling.
+ * @param {Date} [now] - Injectable clock for tests.
+ * @returns {number}
+ */
+function getActivePodiumCalendarDay(seasonStartDate, dropSchedulingEnabled = false, now = new Date()) {
+  if (!dropSchedulingEnabled) return getActiveCalendarDay(seasonStartDate, now);
+
+  const etParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const etValues = {};
+  for (const part of etParts) etValues[part.type] = part.value;
+  // Some ICU versions report midnight as hour "24" in h23 mode.
+  const hour = parseInt(etValues.hour === "24" ? "0" : etValues.hour);
+  const dayShift = hour >= PODIUM_PROCESS_HOUR_ET ? 1 : 0;
+  const etDateUtc = Date.UTC(
+    parseInt(etValues.year),
+    parseInt(etValues.month) - 1,
+    parseInt(etValues.day) + dayShift,
+    0, 0, 0,
+  );
+  const startNormalized = Date.UTC(
+    seasonStartDate.getUTCFullYear(),
+    seasonStartDate.getUTCMonth(),
+    seasonStartDate.getUTCDate(),
+    0, 0, 0,
+  );
+  return Math.floor((etDateUtc - startNormalized) / MS_PER_DAY) + 1;
+}
+
 module.exports = {
   getCompletedGameDayET,
   getCompletedCalendarDay,
   getActiveCalendarDay,
+  getActivePodiumCalendarDay,
   toCompetitionDay,
   getCurrentSeasonWeek,
+  PODIUM_PROCESS_HOUR_ET,
 };

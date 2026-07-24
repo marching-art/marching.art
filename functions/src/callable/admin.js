@@ -26,21 +26,25 @@ const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const SPRING_TRAINING_DAYS = 21;
 
 /**
- * Compute the current live-season competition day (1-49) the same way the
- * nightly processor does: convert "yesterday" in Eastern time (with the 2 AM
- * game-day boundary) into a calendar day from the season start, then subtract
- * the spring-training offset. Returns a value that may be <1 (spring training)
- * or >49 (season over); callers validate the range.
+ * The calendar day a MANUAL scoring/podium run should target, matching
+ * whichever pipeline owns the night. With features.dropScheduling ON, the
+ * drop dispatcher scores the SHOW date (3-hour reset — an admin running
+ * "score now" at 10 PM means tonight, not the 2 AM-reset "yesterday");
+ * with it OFF, the legacy 2 AM derivation stands so a manual run targets
+ * exactly what the 2 AM scheduler would.
  *
- * @param {object} seasonData - The game-settings/season document data.
- * @returns {number} The competition day (scoredDay).
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {object} seasonData - game-settings/season doc data.
+ * @returns {Promise<number>} Calendar day (no spring-training offset applied).
  */
-function getCurrentLiveScoredDay(seasonData) {
+async function getManualRunCalendarDay(db, seasonData) {
+  const { isDropSchedulingEnabled } = require("../helpers/features");
   const seasonStartDate = seasonData.schedule.startDate.toDate();
-  const springTrainingDays = seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS;
-  // Same "yesterday in ET with 2 AM reset" math as processDailyLiveScores
-  // (see helpers/gameDay.js), so manual runs target the day the scheduler would.
-  return getCompletedCalendarDay(seasonStartDate) - springTrainingDays;
+  if (await isDropSchedulingEnabled(db)) {
+    const { showCalendarDay } = require("../helpers/dropPlanner");
+    return showCalendarDay(seasonStartDate);
+  }
+  return getCompletedCalendarDay(seasonStartDate);
 }
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
@@ -92,10 +96,19 @@ exports.manualTrigger = onCall({
       return { success: true, message: "Successfully calculated and saved corps statistics." };
     case "processPodiumStage": {
       // Alpha/beta convenience: run the flag-gated Podium nightly stage now
-      // instead of waiting for the 2 AM scheduler. Same lease semantics; a
+      // instead of waiting for the scheduler. Same lease semantics; a
       // completed day is skipped unless it is reprocessed via the guard.
+      // The day is resolved to match whichever pipeline owns the night
+      // (show date under drop scheduling, 2 AM-reset "yesterday" legacy) —
+      // a 10 PM manual run must process TONIGHT, not yesterday.
+      const db = getDb();
       const { runPodiumStage } = require("../scheduled/nightlyStages");
-      const stageResult = await runPodiumStage(getDb());
+      const seasonDoc = await db.doc("game-settings/season").get();
+      const stageOptions = {};
+      if (seasonDoc.exists && seasonDoc.data()?.schedule?.startDate) {
+        stageOptions.calendarDay = await getManualRunCalendarDay(db, seasonDoc.data());
+      }
+      const stageResult = await runPodiumStage(db, stageOptions);
       return { success: true, message: `Podium stage: ${JSON.stringify(stageResult)}` };
     }
     case "archiveSeasonResults":
@@ -148,7 +161,22 @@ exports.manualTrigger = onCall({
       // force=true bypasses the already-processed guard for reprocessing after
       // a data fix — it re-applies coin/league-record increments, so it is
       // surfaced as an explicit admin choice, never the default.
-      const result = await processAndArchiveOffSeasonScoresLogic({ force: request.data.force === true });
+      // Resolve the day to whichever pipeline owns the night: under drop
+      // scheduling a manual evening run means TONIGHT's day (show date);
+      // legacy keeps the internal 2 AM-reset derivation (passing undefined).
+      const db = getDb();
+      const seasonDoc = await db.doc("game-settings/season").get();
+      let scoredDayOverride;
+      if (seasonDoc.exists && seasonDoc.data().status === "off-season") {
+        const { isDropSchedulingEnabled } = require("../helpers/features");
+        if (await isDropSchedulingEnabled(db)) {
+          scoredDayOverride = await getManualRunCalendarDay(db, seasonDoc.data());
+        }
+      }
+      const result = await processAndArchiveOffSeasonScoresLogic({
+        force: request.data.force === true,
+        scoredDay: scoredDayOverride,
+      });
       if (result.status === "skipped" && (result.reason === "completed" || result.reason === "in-progress")) {
         return {
           success: true,
@@ -166,9 +194,12 @@ exports.manualTrigger = onCall({
         throw new HttpsError("failed-precondition", "No active live season found.");
       }
       const seasonData = seasonDoc.data();
-      // Use the same day calculation as the nightly processor, including the
-      // spring-training offset, so manual runs score the correct competition day.
-      const scoredDay = getCurrentLiveScoredDay(seasonData);
+      // Match whichever pipeline owns the night, including the spring-training
+      // offset: under drop scheduling a manual evening run targets TONIGHT's
+      // show date (the day the dispatcher scores); legacy uses the 2 AM-reset
+      // "yesterday" the 2 AM scheduler would.
+      const springTrainingDays = seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS;
+      const scoredDay = (await getManualRunCalendarDay(db, seasonData)) - springTrainingDays;
       if (scoredDay < 1) {
         throw new HttpsError("failed-precondition", `Season is in spring training (competition day ${scoredDay}). No scoring yet.`);
       }

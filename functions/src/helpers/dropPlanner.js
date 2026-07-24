@@ -105,6 +105,26 @@ function zoneForShow(show) {
 }
 
 /**
+ * The 1-based calendar day of tonight's show date, counted from the season
+ * start. THE day selector for everything the drop pipeline scores — the
+ * dispatcher, the 9 PM Podium job, and the admin manual triggers when the
+ * pipeline owns scoring. Never derive this via gameDay.js's 2 AM reset,
+ * which is one day behind at every pre-2AM drop time.
+ * @param {Date} seasonStartDate - Season start (UTC midnight).
+ * @param {Date} [now]
+ * @returns {number}
+ */
+function showCalendarDay(seasonStartDate, now = new Date()) {
+  const { utcMidnight } = showDateFor(now);
+  const startUtc = Date.UTC(
+    seasonStartDate.getUTCFullYear(),
+    seasonStartDate.getUTCMonth(),
+    seasonStartDate.getUTCDate(),
+  );
+  return Math.floor((utcMidnight - startUtc) / MS_PER_DAY) + 1;
+}
+
+/**
  * Plan tonight's scrape + drop for the live/off-season pipeline.
  *
  * @param {object} params
@@ -234,6 +254,7 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
 module.exports = {
   planDrop,
   showDateFor,
+  showCalendarDay,
   zoneForShow,
   SHOW_DAY_RESET_HOURS,
   CHAMPIONSHIP_WEEK_START_DAY,
