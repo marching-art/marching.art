@@ -14,7 +14,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { brevoApiKey } = require("../helpers/emailService");
-const { assertAuth, hasAdminClaim } = require("../helpers/callableGuards");
+const { hasAdminClaim, assertAuthWithBudget } = require("../helpers/callableGuards");
 
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
@@ -45,9 +45,10 @@ exports.toggleArticleReaction = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    assertAuth(request);
-
     const db = getDb();
+    // Abuse throttle (shared comments bucket) — far above any human rate.
+    await assertAuthWithBudget(db, request, "comments", { max: 30, windowMs: 10 * 60 * 1000 });
+
     const { articleId, emoji } = request.data || {};
 
     if (!articleId || typeof articleId !== "string") {
@@ -202,9 +203,10 @@ exports.addArticleComment = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    assertAuth(request);
-
     const db = getDb();
+    // Abuse throttle (shared comments bucket) — far above any human rate.
+    await assertAuthWithBudget(db, request, "comments", { max: 30, windowMs: 10 * 60 * 1000 });
+
     const { articleId, content } = request.data || {};
 
     if (!articleId || typeof articleId !== "string") {
@@ -410,9 +412,10 @@ exports.editArticleComment = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    assertAuth(request);
-
     const db = getDb();
+    // Abuse throttle (shared comments bucket) — far above any human rate.
+    await assertAuthWithBudget(db, request, "comments", { max: 30, windowMs: 10 * 60 * 1000 });
+
     const { commentId, content } = request.data || {};
 
     if (!commentId || typeof commentId !== "string") {
@@ -494,9 +497,10 @@ exports.deleteArticleComment = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    assertAuth(request);
-
     const db = getDb();
+    // Abuse throttle (shared comments bucket) — far above any human rate.
+    await assertAuthWithBudget(db, request, "comments", { max: 30, windowMs: 10 * 60 * 1000 });
+
     const { commentId } = request.data || {};
 
     if (!commentId || typeof commentId !== "string") {
@@ -549,9 +553,10 @@ exports.reportArticleComment = onCall(
     secrets: [brevoApiKey],
   },
   async (request) => {
-    assertAuth(request);
-
     const db = getDb();
+    // Abuse throttle (shared comments bucket) — far above any human rate.
+    await assertAuthWithBudget(db, request, "comments", { max: 30, windowMs: 10 * 60 * 1000 });
+
     const { commentId, reason } = request.data || {};
 
     if (!commentId || typeof commentId !== "string") {

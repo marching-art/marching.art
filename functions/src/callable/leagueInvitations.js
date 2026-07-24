@@ -6,7 +6,7 @@ const { paths } = require("../helpers/paths");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 
 // =============================================================================
 // PER-DIRECTOR LEAGUE INVITATIONS
@@ -35,6 +35,10 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   const trimmedMessage = typeof message === 'string' ? message.trim().slice(0, 280) : '';
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, inviterUid, "leagueSocial", { max: 40 });
+
   const leagueRef = db.doc(paths.league(leagueId));
   const inviterRef = db.doc(paths.userProfile(inviterUid));
   const inviteeRef = db.doc(paths.userProfile(inviteeUid));
@@ -102,6 +106,10 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   const invitationRef = db.doc(
     paths.leagueInvitation(invitationId(leagueId, uid))
   );
@@ -201,6 +209,10 @@ exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   const leagueRef = db.doc(paths.league(leagueId));
   const invitationRef = db.doc(
     paths.leagueInvitation(invitationId(leagueId, inviteeUid))

@@ -11,6 +11,7 @@ const store = require("../helpers/podium/store");
 const joint = require("../helpers/podium/joint");
 const venues = require("../helpers/podium/venues");
 const { podiumContext } = require("./podium");
+const { assertWriteBudget } = require("../helpers/callableGuards");
 
 // ---------------------------------------------------------------------------
 // Joint rehearsals (Phase 7.1, design §5.12) — the human handshake.
@@ -97,6 +98,9 @@ exports.getJointOverlaps = onCall({ cors: true }, async (request) => {
 
 exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { toUid, day } = request.data || {};
   if (typeof toUid !== "string" || !toUid || toUid === uid) {
     throw new HttpsError("invalid-argument", "Pick another director's corps.");
@@ -164,6 +168,9 @@ exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
 
 exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { proposalId, accept } = request.data || {};
   if (typeof proposalId !== "string" || !proposalId) {
     throw new HttpsError("invalid-argument", "proposalId is required.");

@@ -13,7 +13,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const economy = require("../helpers/economy");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { isPodiumEnabled, isDropSchedulingEnabled } = require("../helpers/features");
 const { getActivePodiumCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
@@ -162,6 +162,9 @@ function rollToday(state, calendarDay) {
 
 exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { corpsName, location, showConcept } = request.data || {};
 
   if (typeof corpsName !== "string" || corpsName.trim().length < NAME_MIN || corpsName.trim().length > NAME_MAX) {
@@ -453,6 +456,9 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
 
 exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { blockType, blockIndex } = request.data || {};
 
   const isFundraiser = blockType === "fundraiser";
@@ -582,6 +588,9 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
 
 exports.setPodiumRestDay = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   if (calendarDay < 1) {
     throw new HttpsError("failed-precondition", "The season has not started yet.");
   }
@@ -605,6 +614,9 @@ exports.setPodiumRestDay = onCall({ cors: true }, async (request) => {
 
 exports.setPodiumShows = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { week, shows } = request.data || {};
   const sRef = store.stateRef(db, uid);
   // Reads before the transaction: the published Eastern-night assignments (so
@@ -667,6 +679,9 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
 
 exports.setPodiumFoodPlan = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { tier } = request.data || {};
   if (!FOOD_TIERS.includes(tier)) {
     throw new HttpsError("invalid-argument", `Food tier must be one of: ${FOOD_TIERS.join(", ")}.`);
@@ -686,6 +701,9 @@ exports.setPodiumFoodPlan = onCall({ cors: true }, async (request) => {
 
 exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { blocks, planType = "rehearsal" } = request.data || {};
   const field = PLAN_FIELD_BY_TYPE[planType];
   if (!field) {
@@ -723,6 +741,9 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
 
 exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { amount } = request.data || {};
   const sRef = store.stateRef(db, uid);
   const result = await db.runTransaction(async (transaction) => {
@@ -750,6 +771,9 @@ exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {
 
 exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
+  // Podium core loop, so the budget is generous (still far above human rate).
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { block } = request.data || {};
   if (!engine.BLOCK_TYPES.includes(block) || block === "warmup") {
     throw new HttpsError("invalid-argument", "Clinicians coach a rehearsal block (not warmup).");

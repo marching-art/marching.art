@@ -304,7 +304,8 @@ describe("joinLeague private-league guard", () => {
       joinLeague.run(authedRequest("u1", { leagueId: "league-1" })),
       /private/
     );
-    assert.equal(writes.length, 0);
+    // Only the write-budget's own bookkeeping doc may be written on rejection.
+    assert.equal(writes.filter((w) => !w.path.startsWith("rate_")).length, 0);
   });
 
   test("rejects a non-pending invitation (declined/rescinded codes stay dead)", async () => {
@@ -317,7 +318,8 @@ describe("joinLeague private-league guard", () => {
       joinLeague.run(authedRequest("u1", { leagueId: "league-1" })),
       /private/
     );
-    assert.equal(writes.length, 0);
+    // Only the write-budget's own bookkeeping doc may be written on rejection.
+    assert.equal(writes.filter((w) => !w.path.startsWith("rate_")).length, 0);
   });
 
   test("admits an invited director and consumes the invitation", async () => {

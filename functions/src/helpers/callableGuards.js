@@ -116,6 +116,13 @@ async function assertWriteBudget(db, uid, key, { max = 30, windowMs = 10 * 60 * 
  * fails CI when a callable file ships with neither a budget nor an admin
  * gate, so unthrottled mutations can't quietly come back.
  *
+ * HAZARD: pass an ALREADY-OBTAINED db handle. Writing
+ * `assertAuthWithBudget(getDb(), request, ...)` evaluates getDb() before the
+ * auth check runs, so an anonymous caller in an uninitialized context gets an
+ * internal error instead of `unauthenticated` (caught by authGates.test.js).
+ * When the db isn't in scope yet, use the two-step idiom instead:
+ * `const uid = assertAuth(request); await assertWriteBudget(getDb(), uid, ...)`.
+ *
  * @param {FirebaseFirestore.Firestore} db
  * @param {import("firebase-functions/v2/https").CallableRequest} request
  * @param {string} key - Budget bucket (see assertWriteBudget).

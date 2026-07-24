@@ -4,7 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getLadderTier, getSeasonXP } = require("../helpers/seasonLadder");
 
 /**
@@ -25,6 +25,8 @@ const claimLadderTier = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+  // Abuse throttle (shared engagement bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "engagement", { max: 60, windowMs: 10 * 60 * 1000 });
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) {
     throw new HttpsError("not-found", "No active season.");

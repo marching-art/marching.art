@@ -10,8 +10,6 @@ const admin = require("firebase-admin");
 // email senders touch Brevo.
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
-const { getDb } = require("../config");
-const { paths } = require("./paths");
 // Every user-derived string (usernames, corps names, headlines, reasons,
 // comment excerpts...) MUST pass through escapeHtml before being interpolated
 // into an email HTML template — otherwise it's stored XSS in the recipient's

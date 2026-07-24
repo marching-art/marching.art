@@ -15,7 +15,7 @@ const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const {
   hashEmail,
   parseSupporterEvent,
@@ -173,6 +173,8 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+  // Abuse throttle (shared supporters bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "supporters", { max: 12, windowMs: 24 * 60 * 60 * 1000 });
   const supporterRef = db.doc(paths.supporter(emailHash));
   const profileRef = db.doc(paths.userProfile(uid));
 
@@ -297,6 +299,8 @@ exports.setSupporterVisibility = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const anonymous = request.data?.anonymous === true;
   const db = getDb();
+  // Abuse throttle (shared supporters bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "supporters", { max: 12, windowMs: 24 * 60 * 60 * 1000 });
   await db.runTransaction(async (tx) => {
     const { ref, profileRef } = await requireLinkedSupporter(db, uid, tx);
     tx.set(ref, { anonymous }, { merge: true });
@@ -315,6 +319,8 @@ exports.setSupporterMessage = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Keep it to 60 characters, no control characters.");
   }
   const db = getDb();
+  // Abuse throttle (shared supporters bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "supporters", { max: 12, windowMs: 24 * 60 * 60 * 1000 });
   await db.runTransaction(async (tx) => {
     const { ref, data, profileRef } = await requireLinkedSupporter(db, uid, tx);
     if (data.tier !== "corps_angel") {

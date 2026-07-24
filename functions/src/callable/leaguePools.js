@@ -14,7 +14,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { getGameDay } = require("../helpers/dailyChallenges");
 const { POOL_ANTE } = require("../helpers/leaguePools");
@@ -27,6 +27,10 @@ const joinLeaguePool = onCall({ cors: true }, async (request) => {
   }
 
   const db = getDb();
+
+  // Abuse throttle (shared league bucket) — far above any human rate.
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+
   const leagueRef = db.doc(paths.league(leagueId));
   const profileRef = db.doc(paths.userProfile(uid));
 

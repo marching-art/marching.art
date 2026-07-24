@@ -4,7 +4,7 @@ const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 
 /**
  * Update user profile information
@@ -15,10 +15,12 @@ const { assertAuth } = require("../helpers/callableGuards");
  * @param {string} data.favoriteCorps - User's favorite corps
  */
 exports.updateProfile = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const userId = assertAuth(request);
 
-  const userId = request.auth.uid;
   const { displayName, location, bio, favoriteCorps } = request.data;
+
+  // Abuse throttle (shared profile bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), userId, "profile", { max: 60, windowMs: 10 * 60 * 1000 });
 
   logger.info(`Updating profile for user ${userId}`);
 
@@ -91,10 +93,12 @@ exports.updateProfile = onCall({ cors: true }, async (request) => {
  * @param {string} data.username - New username to set
  */
 exports.updateUsername = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const userId = assertAuth(request);
 
-  const userId = request.auth.uid;
   const { username } = request.data;
+
+  // Abuse throttle (shared profile bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), userId, "profile", { max: 60, windowMs: 10 * 60 * 1000 });
 
   logger.info(`Updating username for user ${userId}`);
 
@@ -199,10 +203,12 @@ exports.updateUsername = onCall({ cors: true }, async (request) => {
  * @param {string} data.email - New email address
  */
 exports.updateEmail = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const userId = assertAuth(request);
 
-  const userId = request.auth.uid;
   const { email } = request.data;
+
+  // Abuse throttle (shared profile bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), userId, "profile", { max: 60, windowMs: 10 * 60 * 1000 });
 
   logger.info(`Updating email for user ${userId}`);
 
@@ -350,9 +356,10 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
  * and removes all their data from Firestore
  */
 exports.deleteAccount = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
+  const userId = assertAuth(request);
 
-  const userId = request.auth.uid;
+  // Abuse throttle (shared profile bucket) — far above any human rate.
+  await assertWriteBudget(getDb(), userId, "profile", { max: 60, windowMs: 10 * 60 * 1000 });
 
   logger.info(`Deleting account for user ${userId}`);
 
