@@ -536,6 +536,43 @@ await check(
   assertFails(getDoc(doc(mallory(), notificationPath)))
 );
 
+// =============================================================================
+// USER-SUBCOLLECTION CATCH-ALL — inverted to default-private. Unlisted
+// subcollections (email_log, corpsCoinHistory, future additions) are readable
+// only by their owner and writable only by the backend; the old default-public
+// denylist made every NEW subcollection world-readable-to-authenticated.
+// =============================================================================
+const emailLogPath = `artifacts/${APP}/users/${ALICE}/email_log/entry-1`;
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), profilePath), seedProfile);
+  await setDoc(doc(ctx.firestore(), emailLogPath), { type: 'weekly_digest', sentAt: 1 });
+});
+
+await check(
+  "another user cannot read someone else's email_log (default-private catch-all)",
+  assertFails(getDoc(doc(mallory(), emailLogPath)))
+);
+
+await check(
+  'owner can read their own unlisted subcollection docs',
+  assertSucceeds(getDoc(doc(authed(), emailLogPath)))
+);
+
+await check(
+  'owner cannot write an unlisted subcollection (backend only)',
+  assertFails(
+    setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/email_log/entry-2`), { forged: true })
+  )
+);
+
+await check(
+  "signed-in user cannot write into another user's unlisted subcollection",
+  assertFails(
+    setDoc(doc(mallory(), `artifacts/${APP}/users/${ALICE}/mystery/doc-1`), { spam: true })
+  )
+);
+
 await freshNotificationSeed();
 await check(
   "another user cannot list someone else's notification feed (catch-all regression)",

@@ -708,35 +708,32 @@ async function sendMilestoneEmail(email, username, milestoneType, milestoneValue
  * Resolve the email addresses of all admins. Used to fan out notifications
  * (article submissions, reported comments). Returns [{ uid, email }].
  *
- * Admins are identified by `profile.role === "admin"` in the per-user profile
- * doc at `artifacts/<namespace>/users/<uid>/profile/data`. Email addresses are
- * pulled from Firebase Auth so we don't have to keep them duplicated in
- * Firestore.
+ * Admins are identified by the `admin: true` CUSTOM CLAIM — the same single
+ * source of truth every callable gate uses (callableGuards.assertAdmin) and
+ * the only thing setUserRole actually writes. The previous implementation
+ * queried `profile.role === "admin"` in Firestore, a field setUserRole never
+ * maintained: admins granted via the claim silently missed these emails, and
+ * a stale role field kept receiving them after revocation.
+ *
+ * listUsers pages through the whole Auth user base (1000/page); admin
+ * fan-outs are rare (submission/report notifications), so the scan cost is
+ * irrelevant next to the correctness of a single admin definition.
  */
 async function getAdminEmails() {
-  const db = getDb();
-  const snapshot = await db
-    .collectionGroup("profile")
-    .where("role", "==", "admin")
-    .get();
-
-  if (snapshot.empty) return [];
-
   const recipients = [];
-  for (const doc of snapshot.docs) {
-    // Profile docs live at artifacts/<ns>/users/<uid>/profile/data.
-    const userPath = doc.ref.parent.parent;
-    if (!userPath) continue;
-    if (!userPath.path.startsWith(`${paths.users()}/`)) continue;
-    const uid = userPath.id;
-    try {
-      const userRecord = await admin.auth().getUser(uid);
-      if (userRecord.email) {
-        recipients.push({ uid, email: userRecord.email });
+  try {
+    let pageToken = undefined;
+    do {
+      const page = await admin.auth().listUsers(1000, pageToken);
+      for (const userRecord of page.users) {
+        if (userRecord.customClaims?.admin === true && userRecord.email) {
+          recipients.push({ uid: userRecord.uid, email: userRecord.email });
+        }
       }
-    } catch (err) {
-      logger.warn(`Could not resolve admin email for uid ${uid}: ${err.message}`);
-    }
+      pageToken = page.pageToken;
+    } while (pageToken);
+  } catch (err) {
+    logger.warn(`Could not enumerate admin users: ${err.message}`);
   }
   return recipients;
 }

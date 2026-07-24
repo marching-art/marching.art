@@ -151,6 +151,13 @@ jobs:
       - name: ts-nocheck ratchet
         run: npm run ts-nocheck:check
 
+      # Callable write-budget census: every user-facing mutation callable
+      # must charge a per-uid write budget (or be admin-gated); genuinely
+      # read-only files are exempted with a reason in
+      # scripts/callable-budget.baseline.json. New unguarded callables fail.
+      - name: Callable write-budget census
+        run: node scripts/callableBudgetCensus.mjs --check
+
       # Dependency-audit ratchet: per-manifest high+critical PRODUCTION-dep
       # advisory counts may only fall. Fails if a PR introduces a new one, so
       # supply-chain regressions are caught pre-merge instead of a week later by

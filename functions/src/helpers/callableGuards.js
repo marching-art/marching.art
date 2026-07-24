@@ -109,4 +109,30 @@ async function assertWriteBudget(db, uid, key, { max = 30, windowMs = 10 * 60 * 
   }
 }
 
-module.exports = { assertAuth, assertAdmin, hasAdminClaim, clampLimit, assertWriteBudget };
+/**
+ * The DEFAULT guard for user-facing mutation callables: authenticate, then
+ * charge the caller's write budget in one call. Prefer this over a bare
+ * assertAuth in any callable that writes — scripts/callableBudgetCensus.mjs
+ * fails CI when a callable file ships with neither a budget nor an admin
+ * gate, so unthrottled mutations can't quietly come back.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {import("firebase-functions/v2/https").CallableRequest} request
+ * @param {string} key - Budget bucket (see assertWriteBudget).
+ * @param {Object} [opts] - Budget options (max / windowMs).
+ * @returns {Promise<string>} The caller's uid.
+ */
+async function assertAuthWithBudget(db, request, key, opts = {}) {
+  const uid = assertAuth(request);
+  await assertWriteBudget(db, uid, key, opts);
+  return uid;
+}
+
+module.exports = {
+  assertAuth,
+  assertAdmin,
+  hasAdminClaim,
+  clampLimit,
+  assertWriteBudget,
+  assertAuthWithBudget,
+};

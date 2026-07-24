@@ -220,37 +220,26 @@ match /artifacts/{appId}/users/{userId} {
     allow write: if isAdmin();
   }
 
-  // NOTE ON READ SCOPE: this catch-all is read-open to any authenticated user
-  // so leaderboards/public profiles can read corps data. `corpsCoinHistory` is
-  // excluded because it is the private economy audit trail — every CorpsCoin
-  // debit/credit for the user — and is no more public than an email address.
-  // The owner reads their own history through the getCorpsCoinHistory callable
-  // (Admin SDK, bypasses rules), so no direct client read is needed at all;
-  // denying it here keeps another user's ledger private. It is also
-  // server-write-only (excluded from owner writes below). HAZARD: any NEW
-  // subcollection added under a user is world-readable-to-authenticated by
-  // default here — add it to this read exclusion (or give it its own stricter
-  // match above) if it carries anything private.
-  // `notifications` is excluded from the catch-all read for the same reason:
-  // it carries private league/trade/matchup messages and already has its own
-  // owner-only rule above — without the exclusion here, the additive
-  // catch-all silently made every user's notification feed readable by any
-  // signed-in account. `comments` is excluded from the owner write below:
-  // comment creation is backend-only (`allow create: if false` above), and
-  // the owner-write catch-all let the profile OWNER forge comment docs on
-  // their own profile attributed to any authorUid.
+  // Catch-all for user subcollections WITHOUT a specific rule above.
+  // INVERTED TO DEFAULT-PRIVATE (was a default-public denylist): the old
+  // shape made any NEW subcollection world-readable-to-authenticated and
+  // owner-writable unless someone remembered to exclude it — which is how
+  // email_log (which emails each user was sent) ended up readable by any
+  // signed-in account, and exactly the hazard the old comment warned about.
+  //
+  // Every surface a client actually reads or writes has its own explicit
+  // match above (profile, comments, notifications, private, podium), so this
+  // catch-all now only covers server-written data (corpsCoinHistory,
+  // email_log, legacy corps docs, and anything added in the future): owners
+  // and admins may read their own; writes are backend/admin-only. If a new
+  // subcollection needs public reads or client writes, give it its OWN match
+  // block with the tightest rule that works — do not re-widen this one.
+  // `corpsCoinHistory` stays callable-only even for the owner (the
+  // getCorpsCoinHistory callable owns pagination/shape) — a deliberate,
+  // rules-test-pinned contract.
   match /{subcollection}/{document=**} {
-    allow read: if isAuthenticated() &&
-      subcollection != 'private' &&
-      subcollection != 'podium' &&
-      subcollection != 'notifications' &&
-      subcollection != 'corpsCoinHistory';
-    allow write: if isAdmin() ||
-      (isOwner(userId) &&
-        subcollection != 'corpsCoinHistory' &&
-        subcollection != 'profile' &&
-        subcollection != 'comments' &&
-        subcollection != 'podium');
+    allow read: if isAdmin() || (isOwner(userId) && subcollection != 'corpsCoinHistory');
+    allow write: if isAdmin();
   }
 }
 
