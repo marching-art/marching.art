@@ -87,17 +87,52 @@ function dueActions({ plan, now, scrapedTonight, scrapeAttempts = 0 }) {
 }
 
 /**
+ * Deterministic serialization of the persisted plan fields. Stored on the
+ * plan doc so an unchanged plan is not rewritten on all ~28 gate ticks a
+ * night — the plan only changes when the schedule/season data feeding the
+ * planner changes (or the kill switch flips), so most ticks skip the write.
+ * Dates serialize to ISO strings, keeping the comparison stable.
+ * @param {object} plan
+ * @param {"shadow"|"active"} mode
+ * @returns {string}
+ */
+function planSignatureOf(plan, mode) {
+  return JSON.stringify({
+    showDateET: plan.showDateET,
+    seasonType: plan.seasonType,
+    competitionDay: plan.competitionDay,
+    timeZones: plan.timeZones,
+    scoresAt: plan.scoresAt,
+    dropInstant: plan.dropInstant,
+    plannedDropInstant: plan.plannedDropInstant,
+    scrapeInstant: plan.scrapeInstant,
+    scrapeRetryUntil: plan.scrapeRetryUntil,
+    dropLabel: plan.dropLabel,
+    needsScrape: plan.needsScrape,
+    hasScheduledShows: plan.hasScheduledShows,
+    tzMismatches: plan.tzMismatches,
+    ignoredScoresAt: plan.ignoredScoresAt,
+    mode,
+  });
+}
+
+/**
  * Persist tonight's plan to drop_plans/{showDateET} (merge). Public,
  * backend-written: the audit trail for "why did scores drop at 1 AM?", and
  * the client's real countdown target. Best-effort — a status write must
- * never fail the pipeline.
+ * never fail the pipeline. Skipped when the doc already carries an
+ * identical plan (see planSignatureOf).
  * @param {FirebaseFirestore.Firestore} db
  * @param {object} plan
  * @param {"shadow"|"active"} mode
+ * @param {string|undefined} existingSignature - planSignature already on the doc.
  */
-async function persistPlan(db, plan, mode) {
+async function persistPlan(db, plan, mode, existingSignature) {
+  const planSignature = planSignatureOf(plan, mode);
+  if (existingSignature === planSignature) return;
   try {
     await db.collection("drop_plans").doc(plan.showDateET).set({
+      planSignature,
       showDateET: plan.showDateET,
       seasonType: plan.seasonType,
       competitionDay: plan.competitionDay,
@@ -143,7 +178,12 @@ async function runDropDispatcherTick(db, { now = new Date() } = {}) {
   if (!plan) return { status: "no-plan" };
 
   const enabled = await isDropSchedulingEnabled(db);
-  await persistPlan(db, plan, enabled ? "active" : "shadow");
+  // One read of tonight's plan doc serves both the persist dedup check and
+  // the scrape-attempt bookkeeping below (persistPlan's merge never touches
+  // scrapeAttempts, so reading before the write is equivalent).
+  const planDocSnap = await db.collection("drop_plans").doc(plan.showDateET).get();
+  const planDocData = planDocSnap.exists ? planDocSnap.data() : {};
+  await persistPlan(db, plan, enabled ? "active" : "shadow", planDocData.planSignature);
 
   // Surface data problems the planner detected (stale schedule silently
   // degrading to the 2 AM worst case; gazetteer-vs-enrichment disagreement).
@@ -166,9 +206,8 @@ async function runDropDispatcherTick(db, { now = new Date() } = {}) {
 
   // Tonight's dispatcher state: scrape success comes from the season doc's
   // lastScrapedDate stamp (written only on a scrape that produced rows);
-  // the attempt count lives on the plan doc.
-  const planDocSnap = await db.collection("drop_plans").doc(plan.showDateET).get();
-  const scrapeAttempts = (planDocSnap.exists && planDocSnap.data().scrapeAttempts) || 0;
+  // the attempt count lives on the plan doc (read above).
+  const scrapeAttempts = planDocData.scrapeAttempts || 0;
   let scrapedTonight = seasonData.lastScrapedDate === plan.showDateET;
 
   let { scrapeDue, scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts });

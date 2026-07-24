@@ -24,6 +24,7 @@ const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { assertAdmin } = require("../helpers/callableGuards");
 const { ENABLED_CLASSES } = require("../helpers/classRegistry");
+const { processAllInPages } = require("../helpers/firestorePaging");
 
 // Every enabled class competes for rivals — including podiumClass, which has
 // no lineup (hasLineup: false) and so is absent from FANTASY_CLASSES.
@@ -182,34 +183,36 @@ function pickRivalsForEntry(entry, bucketEntries) {
 
 async function updateRivalsLogic() {
   const db = getDb();
-  logger.info("Computing rivals for all users…");
+  logger.info("Computing rivals for active-season users…");
 
-  const usersRef = db.collection(paths.users());
-  // The users/{uid} documents are "missing ancestors": createUserProfile only
-  // writes the profile/ and private/ subcollection docs, never the users/{uid}
-  // doc itself, so those docs have no fields of their own. A collection query
-  // (.get()) returns only documents that exist, so it skips every one of them
-  // and reports the collection as empty even when profiles are present. Use
-  // listDocuments(), which enumerates every document reference in the collection
-  // INCLUDING implicit ancestors of subcollections.
-  const userDocRefs = await usersRef.listDocuments();
-  if (userDocRefs.length === 0) {
-    logger.info("No users found; skipping rivals computation.");
+  // Rivals are derived from totalSeasonScore, which only exists on profiles
+  // registered in the current season — so scan just those instead of reading
+  // every profile ever created (the old listDocuments + getAll of the whole
+  // users collection). Same activeSeasonId collection-group index the nightly
+  // scoring scan uses; the select() projection keeps each doc small. Profiles
+  // from past seasons keep their last-written rivals, which nothing renders
+  // until they re-register (and then the next run covers them).
+  const seasonDoc = await db.doc("game-settings/season").get();
+  const activeSeasonId = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
+  if (!activeSeasonId) {
+    logger.info("No active season; skipping rivals computation.");
     return { processed: 0 };
   }
 
-  const userIds = userDocRefs.map((ref) => ref.id);
-  const profileRefs = userDocRefs.map((ref) =>
-    ref.collection("profile").doc("data"),
-  );
-
-  // Batch-fetch profiles (Admin SDK getAll caps at 500).
-  const profileDocs = [];
-  for (let i = 0; i < profileRefs.length; i += 500) {
-    const chunk = profileRefs.slice(i, i + 500);
-    const docs = await db.getAll(...chunk);
-    profileDocs.push(...docs);
+  const profilesQuery = db
+    .collectionGroup("profile")
+    .where("activeSeasonId", "==", activeSeasonId)
+    .select("username", "corps", "classRanks");
+  const allDocs = await processAllInPages(profilesQuery, 1000, async (doc) => doc);
+  // The collection group spans data namespaces; keep only this namespace's
+  // profile docs (users/{uid}/profile/data under paths.users()).
+  const usersPrefix = `${paths.users()}/`;
+  const profileDocs = allDocs.filter((doc) => doc.ref.path.startsWith(usersPrefix));
+  if (profileDocs.length === 0) {
+    logger.info("No active-season users found; skipping rivals computation.");
+    return { processed: 0 };
   }
+  const userIds = profileDocs.map((doc) => doc.ref.parent.parent.id);
 
   const byBucket = indexCorpsByBucket(profileDocs, userIds);
   logger.info(
@@ -293,6 +296,11 @@ exports.scheduledRivalsUpdate = onSchedule(
     // Run after the 2 AM ET score processor so scores reflect the latest day.
     schedule: "30 2 * * *",
     timeZone: "America/New_York",
+    // Scans every active-season profile; the default 60s scheduler timeout
+    // would cut the scan off (and retry it from zero) once the player base
+    // grows. Same headroom the email/push population scans use.
+    timeoutSeconds: 540,
+    memory: "512MiB",
   },
   async () => {
     logger.info("Starting scheduled rivals update");

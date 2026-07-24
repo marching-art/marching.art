@@ -10,6 +10,30 @@ const { getDb } = require('../config');
 const { logger } = require('firebase-functions/v2');
 
 /**
+ * Per-request read cache. A full-lineup analysis touches the same handful of
+ * documents once per caption (8×) without this: the historical_scores docs
+ * are shared across captions of the same source year, and the season +
+ * dci-stats docs are identical for every caption. Memoizing them turns
+ * ~26 document reads per getLineupAnalytics call into ~4-10.
+ */
+function createAnalyticsContext() {
+  return {
+    historicalEvents: new Map(), // sourceYear -> events[] | null
+    allCorpsStats: undefined, // undefined = not fetched; null = unavailable
+  };
+}
+
+async function getHistoricalEvents(db, sourceYear, ctx) {
+  if (ctx.historicalEvents.has(sourceYear)) {
+    return ctx.historicalEvents.get(sourceYear);
+  }
+  const historicalDoc = await db.doc(`historical_scores/${sourceYear}`).get();
+  const events = historicalDoc.exists ? historicalDoc.data().data || [] : null;
+  ctx.historicalEvents.set(sourceYear, events);
+  return events;
+}
+
+/**
  * Analyze caption trends for a specific corps
  * Returns insights without exposing actual scores
  *
@@ -17,19 +41,18 @@ const { logger } = require('firebase-functions/v2');
  * @param {string} sourceYear - Source year for the corps
  * @param {string} caption - Caption code (GE1, GE2, VP, VA, CG, B, MA, P)
  * @param {number} currentDay - Current day in the season
+ * @param {Object} [ctx] - Shared read cache from createAnalyticsContext().
  * @returns {Object} Trend analysis with indicators
  */
-async function analyzeCaptionTrend(corpsName, sourceYear, caption, currentDay) {
+async function analyzeCaptionTrend(corpsName, sourceYear, caption, currentDay, ctx = createAnalyticsContext()) {
   const db = getDb();
 
   try {
-    // Fetch historical scores for this corps
-    const historicalDoc = await db.doc(`historical_scores/${sourceYear}`).get();
-    if (!historicalDoc.exists) {
+    // Fetch historical scores for this corps (cached across captions)
+    const events = await getHistoricalEvents(db, sourceYear, ctx);
+    if (events === null) {
       return getDefaultAnalytics();
     }
-
-    const events = historicalDoc.data().data || [];
     const corpsScores = [];
 
     // Collect all scores for this corps/caption
@@ -60,7 +83,7 @@ async function analyzeCaptionTrend(corpsName, sourceYear, caption, currentDay) {
     const consistency = calculateConsistency(corpsScores);
 
     // Calculate relative strength (percentile among all corps)
-    const strength = await calculateRelativeStrength(corpsName, sourceYear, caption, db);
+    const strength = await calculateRelativeStrength(corpsName, sourceYear, caption, db, ctx);
 
     return {
       trend,
@@ -184,22 +207,27 @@ function calculateConsistency(scores) {
  * Calculate relative strength compared to other corps
  * Returns a percentile ranking
  */
-async function calculateRelativeStrength(corpsName, sourceYear, caption, db) {
+async function calculateRelativeStrength(corpsName, sourceYear, caption, db, ctx = createAnalyticsContext()) {
   try {
-    // Get the dci-stats document which has averages for all corps
-    const seasonDoc = await db.doc('game-settings/season').get();
-    if (!seasonDoc.exists) {
+    // Get the dci-stats document which has averages for all corps. The
+    // season + stats docs are identical for every caption in a lineup, so
+    // they are fetched once per context and reused.
+    if (ctx.allCorpsStats === undefined) {
+      const seasonDoc = await db.doc('game-settings/season').get();
+      if (!seasonDoc.exists) {
+        ctx.allCorpsStats = null;
+      } else {
+        const seasonId = seasonDoc.data().seasonUid;
+        const statsDoc = await db.doc(`dci-stats/${seasonId}`).get();
+        ctx.allCorpsStats = statsDoc.exists ? statsDoc.data().data || [] : null;
+      }
+    }
+
+    if (ctx.allCorpsStats === null) {
       return { percentile: 50, label: 'Average' };
     }
 
-    const seasonId = seasonDoc.data().seasonUid;
-    const statsDoc = await db.doc(`dci-stats/${seasonId}`).get();
-
-    if (!statsDoc.exists) {
-      return { percentile: 50, label: 'Average' };
-    }
-
-    const allCorpsStats = statsDoc.data().data || [];
+    const allCorpsStats = ctx.allCorpsStats;
 
     // Get all averages for this caption
     const captionAverages = allCorpsStats
@@ -251,12 +279,15 @@ async function calculateRelativeStrength(corpsName, sourceYear, caption, db) {
  */
 async function analyzeLineupTrends(lineup, currentDay) {
   const analytics = {};
+  // One shared read cache for the whole lineup — the 8 captions reuse the
+  // same historical/season/stats documents instead of re-reading them.
+  const ctx = createAnalyticsContext();
 
   for (const [caption, corpsValue] of Object.entries(lineup || {})) {
     if (!corpsValue) continue;
 
     const [corpsName, sourceYear] = corpsValue.split('|');
-    analytics[caption] = await analyzeCaptionTrend(corpsName, sourceYear, caption, currentDay);
+    analytics[caption] = await analyzeCaptionTrend(corpsName, sourceYear, caption, currentDay, ctx);
   }
 
   return analytics;

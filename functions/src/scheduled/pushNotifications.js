@@ -85,14 +85,20 @@ exports.showReminderPushJob = onSchedule(
 
       // Find directors in this season (indexed collectionGroup query — same pattern
       // scoring.js uses). This only runs when shows are actually starting soon.
+      // Only corps.selectedShows is consumed, so project just `corps` instead
+      // of pulling full profile docs.
       const profilesSnapshot = await db
         .collectionGroup("profile")
         .where("activeSeasonId", "==", season.seasonUid)
+        .select("corps")
         .get();
 
-      let totalSent = 0;
       const CORPS_CLASSES = FANTASY_CLASSES;
 
+      // Collect every (director, show) reminder first, then send in parallel
+      // chunks like the other push jobs — sequential awaits made this job's
+      // wall clock scale with (users × selections).
+      const reminderTasks = [];
       for (const profileDoc of profilesSnapshot.docs) {
         // profile/data lives under artifacts/{ns}/users/{uid}/profile/data
         const uid = profileDoc.ref.parent.parent?.id;
@@ -111,12 +117,21 @@ exports.showReminderPushJob = onSchedule(
               const soon = soonByKey.get(key);
               if (soon && !notified.has(key)) {
                 notified.add(key);
-                const sent = await sendShowReminderPush(uid, soon.name, soon.hoursUntil);
-                if (sent) totalSent++;
+                reminderTasks.push({ uid, name: soon.name, hoursUntil: soon.hoursUntil });
               }
             }
           }
         }
+      }
+
+      const PARALLEL_LIMIT = 25;
+      let totalSent = 0;
+      for (let i = 0; i < reminderTasks.length; i += PARALLEL_LIMIT) {
+        const chunk = reminderTasks.slice(i, i + PARALLEL_LIMIT);
+        const results = await Promise.allSettled(
+          chunk.map((task) => sendShowReminderPush(task.uid, task.name, task.hoursUntil))
+        );
+        totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
       }
 
       logger.info(
@@ -222,12 +237,13 @@ exports.weeklyMatchupPushJob = onSchedule(
 
       logger.info(`Found ${allMatchups.length} matchups to notify`);
 
-      // Batch fetch all profiles
+      // Batch fetch all profiles (field mask: only username is consumed, so
+      // don't pull the full — large — profile docs over the wire).
       const userIdsArray = [...allUserIds];
       const profileRefs = userIdsArray.map((uid) =>
         db.doc(paths.userProfile(uid))
       );
-      const profileDocs = await db.getAll(...profileRefs);
+      const profileDocs = await db.getAll(...profileRefs, { fieldMask: ["username"] });
 
       // Build username map
       const usernameMap = new Map();
@@ -395,9 +411,11 @@ exports.lineupLockReminderPushJob = onSchedule(
         return;
       }
 
+      // Only corps is consumed below — project it instead of full profiles.
       const profilesSnapshot = await db
         .collectionGroup("profile")
         .where("activeSeasonId", "==", season.seasonUid)
+        .select("corps")
         .get();
 
       const profiles = profilesSnapshot.docs.map((doc) => ({

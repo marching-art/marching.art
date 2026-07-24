@@ -5,6 +5,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { assertAdmin } = require("../helpers/callableGuards");
 const { computeDirectorRating } = require("../helpers/directorRating");
+const { processAllInPages } = require("../helpers/firestorePaging");
 const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRankings");
 const {
   collectRegistrationsFromProfile,
@@ -21,7 +22,7 @@ exports.updateLifetimeLeaderboard = onCall({ cors: true }, async (request) => {
   // instead of the claim only the Admin SDK can set.
   assertAdmin(request);
 
-  await updateLifetimeLeaderboardLogic();
+  await updateLifetimeLeaderboardLogic({ forceLifetime: true });
   return { success: true, message: "Lifetime leaderboard updated" };
 });
 
@@ -33,6 +34,11 @@ exports.scheduledLifetimeLeaderboardUpdate = onSchedule(
   {
     schedule: "0 3 * * *", // 3 AM UTC daily
     timeZone: "UTC",
+    // The lifetime rebuild scans every profile with lifetime stats; the
+    // default 60s scheduler timeout would cut that off (and retry from zero)
+    // as the player base grows. Same headroom the email/push scans use.
+    timeoutSeconds: 540,
+    memory: "512MiB",
   },
   async () => {
     logger.info("Starting scheduled lifetime leaderboard update");
@@ -42,12 +48,53 @@ exports.scheduledLifetimeLeaderboardUpdate = onSchedule(
 );
 
 /**
- * Core logic to update lifetime leaderboard
- * Optimized: Uses db.getAll() for batch fetching instead of sequential reads
- * Previous: N+1 queries (1001 reads for 1000 users)
- * Now: 2 reads total (1 for users collection, 1 batch for all profiles)
+ * Fetch profile docs via a paged, projected collection-group query.
+ *
+ * The users/{uid} parent docs are "missing ancestors" (createUserProfile only
+ * writes the profile/ and private/ subcollection docs), so a plain collection
+ * query over users/ sees nothing — but the profile docs themselves are real
+ * documents, and a collectionGroup("profile") query reaches them directly.
+ * The select() projection keeps only the fields the caller needs, and the
+ * path-prefix filter drops profile docs from other data namespaces.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string[]} fields - Fields to project.
+ * @param {string|null} activeSeasonId - When set, only profiles registered in
+ *   that season (the indexed activeSeasonId equality scoring already uses);
+ *   when null, every profile.
+ * @returns {Promise<Array<{userId: string, data: Object}>>}
  */
-async function updateLifetimeLeaderboardLogic() {
+async function fetchProfiles(db, fields, activeSeasonId) {
+  let profilesQuery = db.collectionGroup("profile");
+  if (activeSeasonId) {
+    profilesQuery = profilesQuery.where("activeSeasonId", "==", activeSeasonId);
+  }
+  profilesQuery = profilesQuery.select(...fields);
+  const docs = await processAllInPages(profilesQuery, 1000, async (doc) => doc);
+  const usersPrefix = `${paths.users()}/`;
+  return docs
+    .filter((doc) => doc.ref.path.startsWith(usersPrefix))
+    .map((doc) => ({ userId: doc.ref.parent.parent.id, data: doc.data() }));
+}
+
+// The lifetime leaderboards only move when a season is archived (that's the
+// only writer of lifetimeStats / seasonHistory placements), so rebuilding
+// them nightly re-read every profile to produce identical output. The meta
+// doc records which season the last rebuild saw; a rollover (seasonUid
+// change) triggers a rebuild, and MAX_LIFETIME_AGE_MS forces a weekly one so
+// cosmetic fields (username, userTitle) in the entries can't go stale for
+// months. The current-season rankings + registration index are still
+// materialized nightly from the (much cheaper) active-season scan.
+const MAX_LIFETIME_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Core logic to update the lifetime leaderboard + current-season rankings.
+ *
+ * @param {Object} [options]
+ * @param {boolean} [options.forceLifetime] - Rebuild the lifetime leaderboards
+ *   even if no season rollover happened (admin callable always forces).
+ */
+async function updateLifetimeLeaderboardLogic({ forceLifetime = false } = {}) {
   const db = getDb();
   logger.info("Updating lifetime leaderboard...");
 
@@ -59,62 +106,54 @@ async function updateLifetimeLeaderboardLogic() {
     const seasonRankEntries = [];
     const registrationPairs = [];
 
-    // Get all user document references.
-    // The users/{uid} docs are "missing ancestors": createUserProfile only
-    // writes the profile/ and private/ subcollection docs, never the parent
-    // users/{uid} doc, so those docs have no fields of their own. A collection
-    // query (.get()/.select()) returns only documents that exist and therefore
-    // skips every one of them, reporting the collection as empty even when
-    // profiles are present. listDocuments() enumerates every document reference
-    // INCLUDING implicit ancestors of subcollections.
-    const usersRef = db.collection(paths.users());
-    const userDocRefs = await usersRef.listDocuments();
-
-    const lifetimeData = [];
-
-    // Build array of profile document references for batch fetch
-    const profileRefs = userDocRefs.map(ref =>
-      ref.collection("profile").doc("data")
-    );
-
-    // Batch fetch all profiles in chunks of 500 (Admin SDK getAll limit)
-    const profileDocs = [];
-    for (let i = 0; i < profileRefs.length; i += 500) {
-      const chunk = profileRefs.slice(i, i + 500);
-      const chunkDocs = await db.getAll(...chunk);
-      profileDocs.push(...chunkDocs);
+    if (activeSeasonId) {
+      const activeProfiles = await fetchProfiles(db, ["corps", "username"], activeSeasonId);
+      for (const { userId, data } of activeProfiles) {
+        seasonRankEntries.push({ uid: userId, totalScore: sumSeasonScore(data) });
+        registrationPairs.push(...collectRegistrationsFromProfile(userId, data));
+      }
     }
 
-    // Process all profiles
-    profileDocs.forEach((profileDoc, index) => {
-      if (profileDoc.exists) {
-        const profileData = profileDoc.data();
-        const userId = userDocRefs[index].id;
+    // Decide whether the full-population lifetime rebuild needs to run.
+    const metaRef = db.doc(paths.lifetimeLeaderboard("meta"));
+    const metaDoc = await metaRef.get();
+    const meta = metaDoc.exists ? metaDoc.data() : null;
+    const lifetimeStale =
+      forceLifetime ||
+      !meta ||
+      meta.seasonUid !== (activeSeasonId || null) ||
+      !meta.rebuiltAtMs ||
+      Date.now() - meta.rebuiltAtMs > MAX_LIFETIME_AGE_MS;
 
-        if (profileData.lifetimeStats && profileData.username) {
+    const lifetimeData = [];
+    if (lifetimeStale) {
+      // corps is projected for computeDirectorRating (seasonHistory placements).
+      const allProfiles = await fetchProfiles(
+        db,
+        ["lifetimeStats", "username", "userTitle", "corps"],
+        null
+      );
+      for (const { userId, data } of allProfiles) {
+        if (data.lifetimeStats && data.username) {
           lifetimeData.push({
             userId,
-            username: profileData.username,
-            userTitle: profileData.userTitle || "Rookie",
+            username: data.username,
+            userTitle: data.userTitle || "Rookie",
             lifetimeStats: {
-              ...profileData.lifetimeStats,
+              ...data.lifetimeStats,
               // Director Rating (Phase 7.5): lifetime, placements-only,
-              // cross-class — derived here nightly, never stored on profiles.
-              directorRating: computeDirectorRating(profileData),
+              // cross-class — derived here on rebuild, never stored on profiles.
+              directorRating: computeDirectorRating(data),
             },
             updatedAt: new Date()
           });
         }
-
-        // Current-season ranking snapshot: include every profile registered in
-        // the active season (mirrors the getUserRankings scan filter). Uses the
-        // full profileData already fetched here, so no extra reads.
-        if (activeSeasonId && profileData.activeSeasonId === activeSeasonId) {
-          seasonRankEntries.push({ uid: userId, totalScore: sumSeasonScore(profileData) });
-          registrationPairs.push(...collectRegistrationsFromProfile(userId, profileData));
-        }
       }
-    });
+    } else {
+      logger.info(
+        "Lifetime leaderboards up to date (no season rollover, refreshed within a week); skipping rebuild."
+      );
+    }
 
     // Materialize the current-season rankings into a single doc so
     // getUserRankings reads one document instead of scanning all profiles.
@@ -168,8 +207,14 @@ async function updateLifetimeLeaderboardLogic() {
       );
     }
 
+    if (!lifetimeStale) {
+      return;
+    }
+
     if (lifetimeData.length === 0) {
       logger.info("No lifetime stats found to update");
+      // Still stamp the meta doc so the empty result isn't re-scanned nightly.
+      await metaRef.set({ seasonUid: activeSeasonId || null, rebuiltAtMs: Date.now() });
       return;
     }
 
@@ -225,6 +270,10 @@ async function updateLifetimeLeaderboardLogic() {
     if (batchCount > 0) {
       await batch.commit();
     }
+
+    // Record what this rebuild saw so the nightly run can skip until the next
+    // season rollover (or until the weekly cosmetic refresh comes due).
+    await metaRef.set({ seasonUid: activeSeasonId || null, rebuiltAtMs: Date.now() });
 
     logger.info(`Successfully updated lifetime leaderboard with ${lifetimeData.length} entries across ${metrics.length} metrics`);
 
