@@ -80,6 +80,7 @@ const GuestHeader = () => {
         {/* Back to Landing */}
         <Link
           to="/"
+          aria-label="Back to home"
           className="flex items-center gap-2 text-muted hover:text-white transition-colors mr-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -108,6 +109,7 @@ const GuestHeader = () => {
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <Link
             to="/login"
+            aria-label="Sign in"
             className="flex items-center gap-1.5 px-2 sm:px-3 h-9 text-sm text-muted hover:text-white transition-colors"
           >
             <LogIn className="w-4 h-4" />
