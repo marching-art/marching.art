@@ -39,11 +39,33 @@ import {
   cleanLocation,
 } from '../components/Landing/newsFeedUtils';
 import ArticleDataSections from '../components/Articles/ArticleDataSections';
+import { useSEO } from '../hooks/useSEO';
 import { resolveArticleById } from '../api/articles';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import toast from 'react-hot-toast';
+
+/** Meta descriptions get cut around ~160 chars in search results; trim on a word. */
+const truncateForMeta = (text, max = 160) => {
+  if (!text) return undefined;
+  const clean = String(text).replace(/\s+/g, ' ').trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1).replace(/\s+\S*$/, '')}…`;
+};
+
+/** Article createdAt arrives as a string/number/Date (or a Firestore Timestamp
+    on some legacy docs); normalize to ISO for article:published_time. */
+const toIsoDate = (value) => {
+  if (!value) return undefined;
+  const date =
+    typeof value?.toDate === 'function'
+      ? value.toDate()
+      : typeof value?.seconds === 'number'
+        ? new Date(value.seconds * 1000)
+        : new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
 
 /**
  * Article Page - Full article view with site layout
@@ -242,6 +264,48 @@ const Article = () => {
   const isPriorSeasonArticle = seasonUid && article?.seasonId && article.seasonId !== seasonUid;
   const isDayGated =
     article && effectiveDay && !isPriorSeasonArticle && article.reportDay > effectiveDay;
+
+  // Per-article document metadata: title/description/OG/Twitter card, an
+  // article-type canonical, and NewsArticle structured data. Must run every
+  // render (hooks rule), so the not-yet-loaded and not-found cases are handled
+  // via the arguments rather than by skipping the call.
+  const showArticleMeta = Boolean(article) && !isDayGated && !error;
+  const publishedTime = showArticleMeta ? toIsoDate(article.createdAt) : undefined;
+  const articleJsonLd = useMemo(() => {
+    if (!showArticleMeta) return null;
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'NewsArticle',
+      headline: article.headline,
+      description: truncateForMeta(article.summary),
+      mainEntityOfPage: `https://marching.art/article/${article.id}`,
+      publisher: {
+        '@type': 'Organization',
+        name: 'marching.art',
+        url: 'https://marching.art',
+      },
+    };
+    if (article.imageUrl) jsonLd.image = [article.imageUrl];
+    if (publishedTime) jsonLd.datePublished = publishedTime;
+    if (article.authorUsername || article.authorName) {
+      jsonLd.author = { '@type': 'Person', name: article.authorUsername || article.authorName };
+    }
+    return jsonLd;
+  }, [showArticleMeta, article, publishedTime]);
+
+  useSEO({
+    title: showArticleMeta ? `${article.headline} | marching.art` : undefined,
+    description: showArticleMeta ? truncateForMeta(article.summary) : undefined,
+    path: `/article/${id}`,
+    // Loading renders indexable defaults; a missing or day-gated article is a
+    // dead-end page that should stay out of the index.
+    noindex: !loading && !showArticleMeta,
+    image: showArticleMeta ? article.imageUrl : undefined,
+    imageAlt: showArticleMeta ? article.headline : undefined,
+    type: showArticleMeta ? 'article' : undefined,
+    publishedTime,
+    jsonLd: articleJsonLd,
+  });
 
   if (loading) {
     return (
