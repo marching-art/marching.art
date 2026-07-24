@@ -149,6 +149,13 @@ test("eveningDropInstant equals podiumDropInstant", () => {
   assert.equal(eveningDropInstant("2026-07-15").getTime(), podiumDropInstant("2026-07-15").getTime());
 });
 
+test("fantasyDropInstant throws on an unknown seasonType instead of assuming live", () => {
+  assert.throws(
+    () => fantasyDropInstant({ etDate: "2026-07-15", seasonType: "finished", day: 10 }),
+    /unknown seasonType/,
+  );
+});
+
 test("wallClockToUtc handles a spring-forward day without error", () => {
   // 2026 US spring forward is Mar 8. 11 PM local that day is well clear of the
   // 2 AM gap; just assert it resolves to a valid EDT instant.

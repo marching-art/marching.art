@@ -6,25 +6,47 @@
  * which competition day is in its scrape/drop window tonight, and the two
  * instants that gate the pipeline:
  *
- *   scrapeInstant  when to hit dci.org ONCE (anchored to the westernmost show's
- *                  real "Scores Announced" time when known, so the recap is
- *                  near-certainly posted; otherwise a fixed lead before the drop)
+ *   scrapeInstant  when to hit dci.org ONCE. Anchored to the westernmost
+ *                  show's real "Scores Announced" time + buffer when known
+ *                  (so the recap is near-certainly posted), but FLOORED at
+ *                  drop − 15 min: an early-eastern announced time must never
+ *                  pull the single scrape attempt earlier than the drop
+ *                  requires, because a later scrape maximizes the chance
+ *                  every recap is up (dci.org scraping is rationed).
  *   dropInstant    when fantasy scores publish (helpers/scoreDropTime.js:
  *                  furthest-west 11 PM local -> ET ladder, off-season 9 PM ET,
- *                  Indianapolis finals week -> midnight ET)
+ *                  Indianapolis finals week -> midnight ET). If the scrape
+ *                  anchor lands after the planned drop, the drop slips to the
+ *                  scrape (scoring always follows data); the pre-slip value is
+ *                  returned as plannedDropInstant for diagnostics.
+ *
+ * Both instants are clamped before the 3 AM ET show-day boundary so a late or
+ * bogus scoresAt can never push tonight's pipeline into tomorrow's plan.
+ * scoresAt is scraped, scheduled (not actual) data — values outside the
+ * plausible evening window are ignored and surfaced in ignoredScoresAt.
  *
  * Everything comes from schedules/{seasonId}.competitions[] (each show's
  * location -> timezone via the offline gazetteer, plus the enriched scoresAt),
  * so the gate ticks that AREN'T tonight's slot never touch dci.org — they read
- * one Firestore doc and return. That is what keeps the scrape to once per night
- * without burning scraper credits.
+ * one Firestore doc and return. That is what keeps the scrape to once per
+ * night without burning scraper credits. scrapeRetryUntil bounds failure-only
+ * retries: a failed/zero-row attempt may re-arm on later ticks up to the
+ * clamp, which costs nothing on a normal night.
  */
 
-const { fantasyDropInstant, eveningDropInstant, easternLabel, DEFAULT_ZONE } =
-  require("./scoreDropTime");
+const {
+  fantasyDropInstant,
+  eveningDropInstant,
+  easternLabel,
+  wallClockToUtc,
+  tzOffsetMs,
+  EASTERN_ZONE,
+  DEFAULT_ZONE,
+} = require("./scoreDropTime");
 const { timezoneFor } = require("./podium/venues");
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_MIN = 60 * 1000;
 
 // The live drop window runs 11 PM ET (Eastern show) to 2 AM ET (Pacific show),
 // plus the finals-week midnight drop. Shifting the clock back 3 hours maps that
@@ -41,37 +63,31 @@ const CHAMPIONSHIP_WEEK_ZONE = "America/Indiana/Indianapolis";
 
 // Scrape timing relative to the real announced time / the drop.
 const SCRAPE_BUFFER_AFTER_SCORES_MIN = 10; // scrape this long after scoresAt (recap surely up)
-const SCRAPE_LEAD_BEFORE_DROP_MIN = 15;    // fallback: scrape this long before the drop
+const SCRAPE_LEAD_BEFORE_DROP_MIN = 15;    // floor/fallback: this long before the drop
+
+// scoresAt sanity window: a show's announced time must land between this ET
+// hour on the show date and the late clamp below, or it is ignored (bad parse,
+// wrong date/year). Real announcements run ~9:30 PM–2 AM ET.
+const EARLIEST_SCORES_HOUR_ET = 18;
+// Hard stop for scrape + drop: this long before the 3 AM ET show-day boundary,
+// so a slipped drop can never cross into the next plan's date.
+const LATE_CLAMP_LEAD_MIN = 15;
 
 function pad(n) {
   return String(n).padStart(2, "0");
 }
 
-/** Eastern wall-clock parts of an instant. */
-function easternParts(now) {
-  const dtf = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-  });
-  const v = {};
-  for (const p of dtf.formatToParts(now)) v[p.type] = p.value;
-  return {
-    year: +v.year, month: +v.month, day: +v.day,
-    hour: v.hour === "24" ? 0 : +v.hour, minute: +v.minute, second: +v.second,
-  };
-}
-
 /**
  * The "show date" (YYYY-MM-DD, Eastern) whose evening `now` belongs to, using
  * the 3-hour reset so the 11 PM–2 AM drop window resolves to one date.
+ * (Derived from tzOffsetMs rather than a fourth copy of the formatToParts
+ * wall-clock dance — see gameDay.js's header for why that matters.)
  * @param {Date} now
  * @returns {{iso: string, utcMidnight: number}}
  */
 function showDateFor(now) {
-  const et = easternParts(now);
-  const etAsUtc = Date.UTC(et.year, et.month - 1, et.day, et.hour, et.minute, et.second);
-  const shifted = new Date(etAsUtc - SHOW_DAY_RESET_HOURS * 60 * 60 * 1000);
+  const etWallAsUtc = now.getTime() + tzOffsetMs(EASTERN_ZONE, now.getTime());
+  const shifted = new Date(etWallAsUtc - SHOW_DAY_RESET_HOURS * 60 * 60 * 1000);
   const iso = `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}`;
   const utcMidnight = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
   return { iso, utcMidnight };
@@ -98,15 +114,19 @@ function zoneForShow(show) {
  * @param {Date} [params.now]
  * @returns {null | {
  *   seasonType: string, competitionDay: number, showDateET: string,
- *   timeZones: string[], scoresAt: Date|null,
- *   scrapeInstant: Date|null, dropInstant: Date,
+ *   timeZones: string[], scoresAt: Date|null, ignoredScoresAt: Array<object>,
+ *   tzMismatches: Array<object>, hasScheduledShows: boolean|null,
+ *   scrapeInstant: Date|null, scrapeRetryUntil: Date|null,
+ *   dropInstant: Date, plannedDropInstant: Date,
  *   dropLabel: string, needsScrape: boolean,
  * }} null when there is nothing to score tonight (before season, spring
- *   training, season over, or no season).
+ *   training, season over, or no/unknown season).
  */
 function planDrop({ seasonData, competitions = [], now = new Date() }) {
-  if (!seasonData || !seasonData.status) return null;
-  const seasonType = seasonData.status; // "live-season" | "off-season"
+  const seasonType = seasonData && seasonData.status;
+  // Fail closed on anything that isn't an explicitly scoreable status —
+  // "finished", a typo, etc. must never flow into a scoring path.
+  if (seasonType !== "live-season" && seasonType !== "off-season") return null;
   const isLive = seasonType === "live-season";
 
   const startRaw = seasonData?.schedule?.startDate;
@@ -128,50 +148,86 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
     const dropInstant = eveningDropInstant(showDateET);
     return {
       seasonType, competitionDay, showDateET,
-      timeZones: [], scoresAt: null,
-      scrapeInstant: null, dropInstant,
+      timeZones: [], scoresAt: null, ignoredScoresAt: [], tzMismatches: [],
+      hasScheduledShows: null,
+      scrapeInstant: null, scrapeRetryUntil: null,
+      dropInstant, plannedDropInstant: dropInstant,
       dropLabel: easternLabel(dropInstant), needsScrape: false,
     };
   }
 
+  const [year, month, date] = showDateET.split("-").map((n) => parseInt(n, 10));
+  // Hard boundaries for tonight: nothing may cross the 3 AM ET show-day reset.
+  const dayBoundary = wallClockToUtc(year, month, date + 1, SHOW_DAY_RESET_HOURS, 0, EASTERN_ZONE);
+  const lateClamp = new Date(dayBoundary.getTime() - LATE_CLAMP_LEAD_MIN * MS_PER_MIN);
+  const earliestPlausibleScores = wallClockToUtc(year, month, date, EARLIEST_SCORES_HOUR_ET, 0, EASTERN_ZONE);
+
   // Live season: gather tonight's shows and their zones + real announced times.
   const todaysShows = competitions.filter((c) => c && c.day === competitionDay);
+  const hasScheduledShows = todaysShows.length > 0;
   let timeZones = todaysShows.map(zoneForShow);
   if (timeZones.length === 0) {
     // Championship week (45-49) is Indianapolis/Eastern but absent from
     // competitions[]; everything else with no shows defaults to Pacific.
+    // hasScheduledShows lets the caller tell "expected empty" (day >= 45)
+    // from a stale schedule doc burning the latest slot every night.
     timeZones = competitionDay >= CHAMPIONSHIP_WEEK_START_DAY ? [CHAMPIONSHIP_WEEK_ZONE] : [];
   }
 
+  // Surface gazetteer-vs-enrichment zone disagreements (compared by actual UTC
+  // offset tonight, so America/Detroit vs America/New_York never false-flags).
+  // A real mismatch means a geocode issue or a bad detail-page parse.
+  const tzMismatches = [];
+  for (const show of todaysShows) {
+    const geo = timezoneFor(show.location);
+    if (!geo || !show.timezone || geo === show.timezone) continue;
+    const ref = earliestPlausibleScores.getTime();
+    if (tzOffsetMs(geo, ref) !== tzOffsetMs(show.timezone, ref)) {
+      tzMismatches.push({ location: show.location || null, gazetteer: geo, enriched: show.timezone });
+    }
+  }
+
+  // Latest VALID announced time across tonight's shows. scoresAt is scraped
+  // scheduled data — a wrong-date/wrong-year value would delay the drop
+  // unboundedly, so anything outside tonight's plausible window is ignored.
   let scoresAt = null;
+  const ignoredScoresAt = [];
   for (const show of todaysShows) {
     if (!show.scoresAt) continue;
     const t = new Date(show.scoresAt);
-    if (!isNaN(t.getTime()) && (!scoresAt || t.getTime() > scoresAt.getTime())) scoresAt = t;
+    if (isNaN(t.getTime()) ||
+        t.getTime() < earliestPlausibleScores.getTime() ||
+        t.getTime() > lateClamp.getTime()) {
+      ignoredScoresAt.push({ location: show.location || null, scoresAt: show.scoresAt });
+      continue;
+    }
+    if (!scoresAt || t.getTime() > scoresAt.getTime()) scoresAt = t;
   }
 
-  const dropInstant = fantasyDropInstant({
+  const plannedDropInstant = fantasyDropInstant({
     etDate: showDateET, timeZones, seasonType, day: competitionDay,
   });
 
-  // Scrape anchor: after the westernmost show's real announced time (recap surely
-  // posted) when we know it; otherwise a fixed lead before the drop. Never later
-  // than the drop unless the real announced time forces it (then the drop slips
-  // to the scrape so scoring always has data).
-  let scrapeInstant;
-  if (scoresAt) {
-    scrapeInstant = new Date(scoresAt.getTime() + SCRAPE_BUFFER_AFTER_SCORES_MIN * 60000);
-  } else {
-    scrapeInstant = new Date(dropInstant.getTime() - SCRAPE_LEAD_BEFORE_DROP_MIN * 60000);
-  }
-  const effectiveDrop =
-    scrapeInstant.getTime() > dropInstant.getTime() ? scrapeInstant : dropInstant;
+  // Scrape anchor: announced time + buffer when known, FLOORED at drop − 15 min
+  // (an early-eastern scoresAt with an unknown western show must not spend the
+  // night's one attempt before the western recap can exist), and CLAMPED before
+  // the show-day boundary.
+  const scrapeFloor = plannedDropInstant.getTime() - SCRAPE_LEAD_BEFORE_DROP_MIN * MS_PER_MIN;
+  const scrapeAnchor = scoresAt
+    ? scoresAt.getTime() + SCRAPE_BUFFER_AFTER_SCORES_MIN * MS_PER_MIN
+    : scrapeFloor;
+  const scrapeInstant = new Date(Math.min(Math.max(scrapeAnchor, scrapeFloor), lateClamp.getTime()));
+
+  // Scoring always follows data: if the scrape anchor lands after the planned
+  // drop, the drop slips to the scrape. Both are already clamped tonight.
+  const dropInstant = new Date(Math.max(plannedDropInstant.getTime(), scrapeInstant.getTime()));
 
   return {
     seasonType, competitionDay, showDateET,
-    timeZones, scoresAt,
-    scrapeInstant, dropInstant: effectiveDrop,
-    dropLabel: easternLabel(effectiveDrop), needsScrape: true,
+    timeZones, scoresAt, ignoredScoresAt, tzMismatches, hasScheduledShows,
+    scrapeInstant, scrapeRetryUntil: lateClamp,
+    dropInstant, plannedDropInstant,
+    dropLabel: easternLabel(dropInstant), needsScrape: true,
   };
 }
 
@@ -184,4 +240,6 @@ module.exports = {
   CHAMPIONSHIP_WEEK_ZONE,
   SCRAPE_BUFFER_AFTER_SCORES_MIN,
   SCRAPE_LEAD_BEFORE_DROP_MIN,
+  EARLIEST_SCORES_HOUR_ET,
+  LATE_CLAMP_LEAD_MIN,
 };

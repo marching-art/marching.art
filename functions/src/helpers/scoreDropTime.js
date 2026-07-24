@@ -141,6 +141,11 @@ function podiumDropInstant(etDate) {
  * @returns {Date} The UTC instant at which the day's scores should drop.
  */
 function fantasyDropInstant({ etDate, timeZones = [], seasonType, day }) {
+  // Fail loudly on a typo'd status — silently treating it as live season would
+  // route a bad season doc into the show-gated scrape path.
+  if (seasonType !== "off-season" && seasonType !== "live-season") {
+    throw new Error(`scoreDropTime: unknown seasonType "${seasonType}".`);
+  }
   const { year, month, day: date } = parseEtDate(etDate);
 
   // Off-season: fixed 9 PM ET, no show gating.
