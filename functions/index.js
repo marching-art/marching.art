@@ -237,7 +237,6 @@ const {
   onLeagueChatMessage,
 } = require("./src/triggers/pushTriggers");
 const {
-  onUniformDesignUpdated,
   generateCorpsAvatar,
   regenerateAllAvatars,
 } = require("./src/triggers/avatarGeneration");
@@ -444,7 +443,6 @@ module.exports = {
   onLeagueChatMessage,
 
   // Avatar Generation
-  onUniformDesignUpdated,
   generateCorpsAvatar,
   regenerateAllAvatars,
 

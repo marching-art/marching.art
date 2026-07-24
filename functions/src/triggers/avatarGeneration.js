@@ -1,14 +1,18 @@
 // @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
- * Avatar Generation Triggers
+ * Avatar Generation
  *
  * Generates AI-powered avatars/icons for fantasy corps when uniform design is saved.
  * Uses Gemini image generation with director-provided uniform customization.
  *
- * Trigger: Firestore update on user profile when uniformDesign changes
+ * Invoked explicitly via the generateCorpsAvatar callable after a design save
+ * (Profile.jsx / useDashboardModals.js). There is deliberately NO Firestore
+ * trigger on the profile doc: that doc is written by every gameplay action and
+ * nightly batch job, so a trigger here billed one 512MiB invocation per profile
+ * write (~2×users/night from scoring + rivals alone) just to diff uniformDesign
+ * and early-return.
  */
 
-const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
@@ -42,113 +46,6 @@ const CORPS_CLASSES = [
   "worldClass",
   "podiumClass",
 ];
-
-// =============================================================================
-// FIRESTORE TRIGGER: Corps Uniform Design Updated
-// =============================================================================
-
-/**
- * Trigger avatar generation when a user updates their corps uniform design
- * Listens to changes in the user's profile document
- */
-exports.onUniformDesignUpdated = onDocumentWritten(
-  {
-    // Trigger document patterns are static deploy-time strings, so this one
-    // cannot call paths.* / dataNamespaceParam (params are runtime-only).
-    // Unlike pushTriggers/emailTriggers it pins the production namespace
-    // rather than a {namespace} wildcard; all RUNTIME reads/writes below go
-    // through paths.* so they respect DATA_NAMESPACE.
-    document: "artifacts/marching-art/users/{userId}/profile/data",
-    timeoutSeconds: 120,
-    memory: "512MiB",
-    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
-  },
-  async (event) => {
-    const beforeData = event.data?.before?.data();
-    const afterData = event.data?.after?.data();
-
-    if (!afterData) {
-      logger.info("Document deleted, skipping avatar generation");
-      return;
-    }
-
-    const userId = event.params.userId;
-
-    // Check each corps class for uniform design changes
-    for (const corpsClass of CORPS_CLASSES) {
-      const beforeCorps = beforeData?.corps?.[corpsClass];
-      const afterCorps = afterData?.corps?.[corpsClass];
-
-      // Skip if no corps in this class
-      if (!afterCorps) continue;
-
-      const beforeDesign = beforeCorps?.uniformDesign;
-      const afterDesign = afterCorps?.uniformDesign;
-
-      // Check if uniform design was added or changed
-      const designChanged = hasUniformDesignChanged(beforeDesign, afterDesign);
-
-      if (designChanged) {
-        logger.info(`Uniform design changed for ${corpsClass}, generating avatar`, {
-          userId,
-          corpsClass,
-          corpsName: afterCorps.corpsName,
-        });
-
-        try {
-          await generateAndSaveAvatar({
-            userId,
-            corpsClass,
-            corpsName: afterCorps.corpsName || afterCorps.name,
-            location: afterCorps.location,
-            uniformDesign: afterDesign,
-          });
-        } catch (error) {
-          logger.error(`Failed to generate avatar for ${corpsClass}:`, error);
-          // Don't throw - allow other corps to still be processed
-        }
-      }
-    }
-  }
-);
-
-/**
- * Check if uniform design has meaningfully changed
- * Compares key fields that would affect the avatar
- */
-function hasUniformDesignChanged(before, after) {
-  // If after is null/undefined, no generation needed
-  if (!after) return false;
-
-  // If before is null/undefined but after has data, it's new
-  if (!before && after.primaryColor) return true;
-
-  // Check for changes in key fields that affect avatar appearance
-  const keyFields = [
-    "primaryColor",
-    "secondaryColor",
-    "accentColor",
-    "style",
-    "mascotOrEmblem",
-    "avatarStyle",    // logo vs performer
-    "avatarSection",  // drumMajor, hornline, drumline, colorGuard
-  ];
-
-  for (const field of keyFields) {
-    if (before?.[field] !== after?.[field]) {
-      return true;
-    }
-  }
-
-  // Check theme keywords array
-  const beforeKeywords = (before?.themeKeywords || []).sort().join(",");
-  const afterKeywords = (after?.themeKeywords || []).sort().join(",");
-  if (beforeKeywords !== afterKeywords) {
-    return true;
-  }
-
-  return false;
-}
 
 /**
  * Generate avatar image and save URL to corps data
