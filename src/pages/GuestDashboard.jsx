@@ -86,36 +86,40 @@ const GuestHeader = () => {
           <span className="text-sm font-medium hidden sm:inline">Back</span>
         </Link>
 
-        {/* Logo */}
+        {/* Logo — the wordmark needs more width than phones have once the
+            Preview badge and auth CTAs join it, so it waits for sm. */}
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-none overflow-hidden">
             <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
           </div>
-          <span className="text-base font-bold text-white tracking-wider">marching.art</span>
+          <span className="text-base font-bold text-white tracking-wider hidden sm:inline">
+            marching.art
+          </span>
         </div>
 
         {/* Preview Badge */}
         <div className="ml-3 px-2.5 py-1 bg-surface-raised border border-line rounded-none">
-          <span className="text-xs font-bold text-secondary uppercase tracking-wider">
+          <span className="text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap">
             Preview Mode
           </span>
         </div>
 
         {/* Auth Links */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <Link
             to="/login"
-            className="flex items-center gap-1.5 px-3 h-9 text-sm text-muted hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-2 sm:px-3 h-9 text-sm text-muted hover:text-white transition-colors"
           >
             <LogIn className="w-4 h-4" />
             <span className="hidden sm:inline">Sign In</span>
           </Link>
           <Link
             to="/register"
-            className="flex items-center gap-1.5 px-4 h-9 bg-interactive text-white text-sm font-bold rounded-none hover:bg-interactive-hover transition-colors"
+            className="flex items-center gap-1.5 px-3 sm:px-4 h-9 bg-interactive text-white text-sm font-bold rounded-none hover:bg-interactive-hover transition-colors whitespace-nowrap"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Sign Up Free</span>
+            <span className="sm:hidden">Sign Up</span>
+            <span className="hidden sm:inline">Sign Up Free</span>
           </Link>
         </div>
       </div>

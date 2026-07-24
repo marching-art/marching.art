@@ -117,6 +117,13 @@
         }
       },
       {
+        "source": "/sitemap.xml",
+        "function": {
+          "functionId": "getSitemapHttp",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

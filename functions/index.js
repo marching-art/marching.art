@@ -228,6 +228,7 @@ const {
   approveSubmission,
   rejectSubmission,
 } = require("./src/triggers/newsGeneration");
+const { getSitemapHttp } = require("./src/triggers/sitemap");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -413,6 +414,10 @@ module.exports = {
   // feed CDN caching; without this export the rewrite 404s and every client
   // silently falls back to the slower getRecentNews callable.
   getNewsFeedHttp,
+  // Backs the /sitemap.xml hosting rewrite (firebase.json + vercel.json):
+  // static public routes plus one URL per published article. Without this
+  // export the rewrite 404s and crawlers lose the sitemap entirely.
+  getSitemapHttp,
 
   // Article Management (Admin)
   listAllArticles,

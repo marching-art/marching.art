@@ -5,6 +5,10 @@
       "source": "/api/news",
       "destination": "https://us-central1-marching-art.cloudfunctions.net/getNewsFeedHttp"
     },
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getSitemapHttp"
+    },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ],
   "headers": [
