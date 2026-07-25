@@ -16,7 +16,10 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
 } from 'firebase/firestore';
-import { db, paths, callFunction, withErrorHandling } from './client';
+import { db, paths, withErrorHandling } from './client';
+// League actions report funnel events; callFunctionTracked is the
+// instrumented transport (see the note in src/api/callable.ts).
+import { callFunctionTracked } from './callable';
 import type {
   League,
   LeagueStanding,
@@ -212,7 +215,7 @@ export async function createLeague(
   data: LeagueCreationData
 ): Promise<ApiResponse<{ leagueId: string }>> {
   return withErrorHandling(async () => {
-    const result = await callFunction<LeagueCreationData, ApiResponse<{ leagueId: string }>>(
+    const result = await callFunctionTracked<LeagueCreationData, ApiResponse<{ leagueId: string }>>(
       'createLeague',
       data
     );
@@ -225,7 +228,7 @@ export async function createLeague(
  */
 export async function joinLeague(leagueId: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
-    const result = await callFunction<{ leagueId: string }, ApiResponse>('joinLeague', {
+    const result = await callFunctionTracked<{ leagueId: string }, ApiResponse>('joinLeague', {
       leagueId,
     });
     return result.data;
@@ -237,9 +240,12 @@ export async function joinLeague(leagueId: string): Promise<ApiResponse> {
  */
 export async function joinLeagueByCode(inviteCode: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
-    const result = await callFunction<{ inviteCode: string }, ApiResponse>('joinLeagueByCode', {
-      inviteCode,
-    });
+    const result = await callFunctionTracked<{ inviteCode: string }, ApiResponse>(
+      'joinLeagueByCode',
+      {
+        inviteCode,
+      }
+    );
     return result.data;
   }, 'Failed to join league');
 }
@@ -249,7 +255,7 @@ export async function joinLeagueByCode(inviteCode: string): Promise<ApiResponse>
  */
 export async function leaveLeague(leagueId: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
-    const result = await callFunction<{ leagueId: string }, ApiResponse>('leaveLeague', {
+    const result = await callFunctionTracked<{ leagueId: string }, ApiResponse>('leaveLeague', {
       leagueId,
     });
     return result.data;
@@ -303,7 +309,7 @@ export function subscribeToChat(
  */
 export async function postChatMessage(leagueId: string, message: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
-    const result = await callFunction<{ leagueId: string; message: string }, ApiResponse>(
+    const result = await callFunctionTracked<{ leagueId: string; message: string }, ApiResponse>(
       'postLeagueMessage',
       { leagueId, message }
     );

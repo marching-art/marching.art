@@ -157,6 +157,20 @@ exports.manualTrigger = onCall({
           `sunk ${stats.sunk.toLocaleString()} CC, net ${stats.net.toLocaleString()} CC.`,
       };
     }
+    case "updateRetentionStats": {
+      const { updateRetentionStats } = require("../helpers/retentionStats");
+      const stats = await updateRetentionStats(getDb());
+      const d7 = stats.retention.d7;
+      const pct = (rate) => (rate === null ? "n/a" : `${(rate * 100).toFixed(1)}%`);
+      return {
+        success: true,
+        message:
+          `Retention refreshed: ${stats.totalProfiles} directors, ` +
+          `DAU ${stats.active.dau} / WAU ${stats.active.wau} / MAU ${stats.active.mau}, ` +
+          `stickiness ${pct(stats.stickiness)}, ` +
+          `D7 ${pct(d7.rate)} (${d7.retained}/${d7.eligible}).`,
+      };
+    }
     case "processAndArchiveOffSeasonScores": {
       // force=true bypasses the already-processed guard for reprocessing after
       // a data fix — it re-applies coin/league-record increments, so it is

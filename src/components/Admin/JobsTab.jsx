@@ -19,6 +19,7 @@ import {
   Search,
   Send,
   Terminal,
+  Users,
 } from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';
 
@@ -99,6 +100,118 @@ const EconomyStatsPanel = ({ refreshKey }) => {
   );
 };
 
+// Retention readout — the counterpart to mint-vs-sink, written nightly by
+// retentionStatsJob. GA4 answers "what did users do"; it is sampled, partly
+// ad-blocked, and cannot see the roster, so it cannot answer "of the directors
+// who signed up last week, how many are still here". This can.
+const RetentionPanel = ({ refreshKey }) => {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    getDoc(doc(db, 'admin-stats/retention'))
+      .then((snap) => setStats(snap.exists() ? snap.data() : null))
+      .catch(() => setStats(null));
+  }, [refreshKey]);
+
+  // null rate means "nothing eligible yet", which must not render as 0%.
+  const pct = (rate) => (rate === null || rate === undefined ? '—' : `${(rate * 100).toFixed(1)}%`);
+  const computedAt = stats?.computedAt?.toDate?.();
+  const cohortDays = stats?.cohortDays || [1, 7, 14, 30];
+  const streakBuckets = Object.entries(stats?.streaks || {});
+  const maxBucket = streakBuckets.reduce((max, [, count]) => Math.max(max, count), 0);
+
+  return (
+    <div className="bg-surface-card border border-line overflow-hidden">
+      <SectionHeader title="Retention — Active & Cohorts" icon={Users} />
+      <div className="p-3">
+        {!stats ? (
+          <p className="text-[11px] text-muted">
+            No stats yet — run “Refresh Retention Stats” below (also runs nightly at 5 AM ET).
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {[
+                { label: 'DAU', value: stats.active?.dau },
+                { label: 'WAU', value: stats.active?.wau },
+                { label: 'MAU', value: stats.active?.mau },
+                { label: 'Directors', value: stats.totalProfiles },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-surface-sunken border border-line p-2 text-center">
+                  <p className="text-[9px] uppercase tracking-wider text-muted">{label}</p>
+                  <p className="text-sm font-bold text-primary font-data tabular-nums">
+                    {(value || 0).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Stickiness: DAU/MAU. ~0.2 is healthy for a daily-loop game; this
+                one should aim higher because the score drop is nightly. */}
+            <div className="flex items-center justify-between text-[11px] mb-3 px-1">
+              <span className="text-muted">Stickiness (DAU/MAU)</span>
+              <span className="font-data tabular-nums text-primary">{pct(stats.stickiness)}</span>
+            </div>
+
+            <p className="text-[9px] uppercase tracking-wider text-muted mb-1">
+              Cohort retention — of accounts old enough to answer
+            </p>
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {cohortDays.map((day) => {
+                const cohort = stats.retention?.[`d${day}`] || {};
+                return (
+                  <div key={day} className="bg-surface-sunken border border-line p-2 text-center">
+                    <p className="text-[9px] uppercase tracking-wider text-muted">D{day}</p>
+                    <p className="text-sm font-bold font-data tabular-nums text-primary">
+                      {pct(cohort.rate)}
+                    </p>
+                    <p className="text-[9px] text-muted font-data tabular-nums">
+                      {(cohort.retained || 0).toLocaleString()}/
+                      {(cohort.eligible || 0).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="text-[9px] uppercase tracking-wider text-muted mb-1">
+              Login-streak distribution
+            </p>
+            <div className="space-y-0.5 mb-2">
+              {streakBuckets.map(([bucket, count]) => (
+                <div key={bucket} className="flex items-center gap-2 text-[11px]">
+                  <span className="text-muted font-mono w-14 shrink-0">{bucket}</span>
+                  <span className="flex-1 bg-surface-sunken h-2 overflow-hidden">
+                    <span
+                      className="block h-full bg-interactive"
+                      style={{ width: maxBucket > 0 ? `${(count / maxBucket) * 100}%` : '0%' }}
+                    />
+                  </span>
+                  <span className="font-data tabular-nums text-muted w-10 text-right shrink-0">
+                    {count.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[9px] text-muted mt-2">
+              New signups: {(stats.signups?.last1 || 0).toLocaleString()} today ·{' '}
+              {(stats.signups?.last7 || 0).toLocaleString()} this week ·{' '}
+              {(stats.signups?.last30 || 0).toLocaleString()} this month · longest streak{' '}
+              {(stats.longestStreak || 0).toLocaleString()}d ·{' '}
+              {(stats.neverLoggedIn || 0).toLocaleString()} never logged in
+              {stats.unknownSignup > 0
+                ? ` · ${stats.unknownSignup.toLocaleString()} with no signup date`
+                : ''}
+              {computedAt ? ` · computed ${computedAt.toLocaleString()}` : ''}
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const JobsTab = ({ callAdminFunction, seasonData }) => {
   const [loading, setLoading] = useState(null);
   const [testEmail, setTestEmail] = useState('');
@@ -149,6 +262,13 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       name: 'Refresh Economy Stats',
       description: 'Recompute the mint-vs-sink aggregates above (also runs weekly)',
       icon: Coins,
+    },
+    {
+      id: 'updateRetentionStats',
+      name: 'Refresh Retention Stats',
+      description:
+        'Recompute the active/cohort/streak aggregates above (also runs nightly at 5 AM ET)',
+      icon: Users,
     },
     {
       id: 'processPodiumStage',
@@ -276,6 +396,9 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
 
   return (
     <div className="space-y-4">
+      {/* Retention instrumentation — read before deciding what to build next */}
+      <RetentionPanel refreshKey={statsRefresh} />
+
       {/* Economy instrumentation — read before touching prices */}
       <EconomyStatsPanel refreshKey={statsRefresh} />
 
