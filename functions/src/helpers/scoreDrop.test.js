@@ -109,10 +109,22 @@ describe("buildScoreDropEmbed", () => {
     assert.match(world.value, /🥇 \*\*Iron Cadence\*\* — 86\.100 · alex/);
     assert.match(world.value, /🥉 \*\*Aurora Vanguard\*\* — 84\.350/);
 
-    // SoundSport: counted in the footer, never a ranked field, never a score.
-    assert.equal(embed.fields.some((f) => f.name.includes("SoundSport")), false);
+    // SoundSport: counted in the footer, never RANKED alongside the scored
+    // classes — but its blue ribbon is named, because Best in Show is an
+    // award, not a rating. The score behind it never appears.
+    assert.equal(embed.fields.some((f) => f.name.startsWith("SoundSport (")), false);
+    const ribbons = embed.fields.find((f) => f.name.includes("Best in Show"));
+    assert.match(ribbons.value, /\*\*Groove Unit\*\* — Midwest Classic/);
     assert.match(embed.footer.text, /1 SoundSport performance/);
     assert.equal(JSON.stringify(payload).includes("71"), false);
+  });
+
+  test("no blue-ribbon field on a night with no SoundSport performances", () => {
+    const recap = sampleRecap();
+    recap.shows[0].results = recap.shows[0].results.filter((r) => r.corpsClass !== "soundSport");
+    const payload = buildScoreDropEmbed({ dailyRecap: recap, seasonName: "s", scoredDay: 12 });
+    assert.equal(payload.embeds[0].fields.some((f) => f.name.includes("Best in Show")), false);
+    assert.equal(payload.embeds[0].footer, undefined);
   });
 
   test("returns null when there is nothing to announce", () => {
@@ -162,7 +174,26 @@ describe("postToDiscordWebhook", () => {
     assert.equal(calls[0].url, "https://discord.test/hook");
     assert.equal(calls[0].options.method, "POST");
     assert.equal(calls[0].options.headers["Content-Type"], "application/json");
-    assert.deepEqual(JSON.parse(calls[0].options.body), { a: 1 });
+    // Every post is silenced by default: corps and event names are
+    // user-authored, so nobody can ping the server from inside the game.
+    assert.deepEqual(JSON.parse(calls[0].options.body), {
+      allowed_mentions: { parse: [] },
+      a: 1,
+    });
+  });
+
+  test("a payload's own allowed_mentions wins (deliberate role pings)", async () => {
+    const calls = [];
+    const fetchImpl = async (url, options) => {
+      calls.push(JSON.parse(options.body));
+      return { ok: true, status: 204, text: async () => "" };
+    };
+    await postToDiscordWebhook(
+      "https://discord.test/hook",
+      { content: "hi", allowed_mentions: { parse: ["roles"] } },
+      fetchImpl
+    );
+    assert.deepEqual(calls[0].allowed_mentions, { parse: ["roles"] });
   });
 
   test("throws with status detail on non-2xx", async () => {
@@ -261,5 +292,96 @@ describe("runDiscordScoreDrop", () => {
     assert.equal(result.status, "empty-recap");
     assert.equal(posts, 0);
     assert.equal(db.writes[leasePath], undefined);
+  });
+
+  test("an all-time record set tonight rides along as a second embed", async () => {
+    const db = fakeDb({
+      "fantasy_recaps/s26/days/12": sampleRecap(),
+      "game-records/records": {
+        classes: {
+          worldClass: {
+            // Set tonight — announced.
+            highestScore: {
+              value: 86.1,
+              corpsName: "Iron Cadence",
+              displayName: "alex",
+              seasonName: "Summer 2026",
+              day: 12,
+            },
+            // Set on an earlier night — never re-announced.
+            highestGE: {
+              value: 30.0,
+              corpsName: "Old Guard",
+              seasonName: "Summer 2026",
+              day: 4,
+            },
+          },
+        },
+      },
+    });
+    let payload = null;
+    const fetchImpl = async (url, options) => {
+      payload = JSON.parse(options.body);
+      return { ok: true, status: 204, text: async () => "" };
+    };
+
+    const result = await runDiscordScoreDrop(db, { ...seasonArgs, fetchImpl });
+    assert.equal(result.status, "posted");
+    assert.equal(result.recordsBroken, 1);
+    assert.equal(payload.embeds.length, 2);
+    assert.match(payload.embeds[1].title, /All-time record broken/);
+    assert.match(payload.embeds[1].fields[0].value, /Iron Cadence.*Highest score, World Class/);
+    assert.equal(payload.embeds[1].fields[0].value.includes("Old Guard"), false);
+  });
+
+  test("finals night posts the champions under their own lease", async () => {
+    const db = fakeDb({
+      "fantasy_recaps/s26/days/49": sampleRecap(),
+      "season_champions/s26": {
+        classes: {
+          worldClass: [
+            { rank: 1, corpsName: "Iron Cadence", username: "alex", score: 98.4 },
+            { rank: 2, corpsName: "Aurora Vanguard", username: "chris", score: 97.9 },
+          ],
+          aClass: [{ rank: 1, corpsName: "Riverhawks", username: "sam", score: 80.1 }],
+        },
+      },
+    });
+    const posts = [];
+    const fetchImpl = async (url, options) => {
+      posts.push(JSON.parse(options.body));
+      return { ok: true, status: 204, text: async () => "" };
+    };
+
+    const result = await runDiscordScoreDrop(db, { ...seasonArgs, scoredDay: 49, fetchImpl });
+    assert.equal(result.status, "posted");
+    assert.deepEqual(result.champions, { kind: "champions", status: "posted" });
+    assert.equal(posts.length, 2);
+    assert.match(posts[1].embeds[0].title, /Summer 2026 Champions/);
+    assert.match(posts[1].embeds[0].description, /\*\*Iron Cadence\*\* takes the World Class title/);
+    assert.match(posts[1].embeds[0].fields[0].value, /🥇 \*\*Iron Cadence\*\* — 98\.400 · alex/);
+    assert.equal(db.writes["scoring_runs/s26_discord_champions_day49"].status, "completed");
+
+    // A rerun of finals night re-posts neither the drop nor the champions.
+    const rerun = await runDiscordScoreDrop(db, { ...seasonArgs, scoredDay: 49, fetchImpl });
+    assert.equal(rerun.status, "skipped");
+    assert.equal(posts.length, 2);
+  });
+
+  test("an ordinary night never reaches the champions post", async () => {
+    const db = fakeDb({
+      "fantasy_recaps/s26/days/12": sampleRecap(),
+      "season_champions/s26": { classes: { worldClass: [{ corpsName: "X" }] } },
+    });
+    const posts = [];
+    const result = await runDiscordScoreDrop(db, {
+      ...seasonArgs,
+      fetchImpl: async (url, options) => {
+        posts.push(JSON.parse(options.body));
+        return { ok: true, status: 204, text: async () => "" };
+      },
+    });
+    assert.equal(result.champions, undefined);
+    assert.equal(posts.length, 1);
   });
 });

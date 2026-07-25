@@ -9,16 +9,22 @@
 // (scheduled/liveScraper.js): a failed or missing 1:30 AM scrape means the
 // 2 AM scorer ran on a night with no DCI scores.
 //
-// Alerting is both a loud, stably-tagged logger.error ("[scoring-watchdog]")
-// — so a Cloud Logging alert can also match on that tag — and an admin email
-// via fanOutToAdmins/sendAdminGenericAlertEmail (helpers/emailService.js),
-// the same fan-out the news-generation failure path uses.
+// Alerting is three-way: a loud, stably-tagged logger.error
+// ("[scoring-watchdog]") so a Cloud Logging alert can match on that tag; an
+// admin email via fanOutToAdmins/sendAdminGenericAlertEmail
+// (helpers/emailService.js), the same fan-out the news-generation failure
+// path uses; and a post to the admin-only Discord #operations channel
+// (helpers/opsAlerts.js), which is the one that actually reaches a phone at
+// 4:30 AM. The Discord post is additive and best-effort — never the only
+// record of an incident.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { STALE_LEASE_MS } = require("../helpers/scoringRunGuard");
 const { brevoApiKey } = require("../helpers/emailService");
+const { discordOpsWebhookUrl } = require("../helpers/discord");
+const { postOpsAlert } = require("../helpers/opsAlerts");
 
 // Only look at runs claimed in the last 2 days: yesterday's run plus one day
 // of slack. Bounds the query to a handful of docs (one per season-day) and
@@ -189,8 +195,9 @@ exports.scoringWatchdog = onSchedule({
   schedule: "every day 04:30",
   timeZone: "America/New_York",
   timeoutSeconds: 120,
-  // The admin alert email goes out through Brevo (helpers/emailService.js).
-  secrets: [brevoApiKey],
+  // The admin alert email goes out through Brevo (helpers/emailService.js);
+  // the same alert is mirrored to the admin-only #operations channel.
+  secrets: [brevoApiKey, discordOpsWebhookUrl],
 }, async () => {
   const db = getDb();
   const unhealthy = await findUnhealthyScoringRuns(db);
@@ -268,6 +275,20 @@ exports.scoringWatchdog = onSchedule({
   } catch (notifyErr) {
     logger.warn("[scoring-watchdog] Could not send admin alert email:", notifyErr);
   }
+
+  // And put it on a phone: the admin-only #operations channel. Additive —
+  // the log line and the email above are still the durable record; this is
+  // the fast path. postOpsAlert never throws.
+  await postOpsAlert(discordOpsWebhookUrl.value(), {
+    title: "Nightly scoring pipeline: unhealthy run(s)",
+    source: "scoring-watchdog",
+    severity: "critical",
+    summary:
+      "The 4:30 AM watchdog found problems with last night's pipeline. A failed scoring " +
+      "run can be re-run from Admin (manual trigger); a failed scrape can be re-run with " +
+      '"Scrape DCI Scores Now".',
+    details: problems,
+  });
 });
 
 // Exported for unit tests.

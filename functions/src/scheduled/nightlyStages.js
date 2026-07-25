@@ -234,4 +234,53 @@ async function runFanFavoriteStage(
   return { status: "ran", competitionDay, announcements };
 }
 
-module.exports = { runPodiumStage, runDiscordStage, runFanFavoriteStage };
+/**
+ * Run the Podium Report stage: post the week's power-rankings column to the
+ * Discord #news channel (helpers/podium/podiumReportDiscord.js). Same shape
+ * as the Fan Favorite stage — self-contained, lease-guarded per week, and
+ * run after the Podium stage, which is what publishes the column.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} webhookUrl - #news webhook; falsy disables the stage.
+ * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @param {Object} [options]
+ * @param {number} [options.competitionDay] - The day the Podium stage just
+ *   processed; derived via the 2 AM reset when omitted.
+ * @returns {Promise<{status: string, competitionDay?: number,
+ *   announcement?: {kind: string, status: string}}>}
+ */
+async function runPodiumReportStage(
+  db,
+  webhookUrl,
+  fetchImpl,
+  { competitionDay: competitionDayOverride = null } = {}
+) {
+  if (!webhookUrl) return { status: "disabled" };
+  if (!(await isPodiumEnabled(db))) return { status: "podium-disabled" };
+
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) return { status: "no-season" };
+  const seasonData = seasonDoc.data();
+  if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
+
+  const competitionDay =
+    competitionDayOverride ??
+    toCompetitionDay(getCompletedCalendarDay(seasonData.schedule.startDate.toDate()), seasonData);
+
+  const { announcePodiumReport } = require("../helpers/podium/podiumReportDiscord");
+  const announcement = await announcePodiumReport(db, {
+    seasonUid: seasonData.seasonUid,
+    seasonName: seasonData.name || seasonData.seasonUid,
+    competitionDay,
+    webhookUrl,
+    fetchImpl,
+  });
+  return { status: "ran", competitionDay, announcement };
+}
+
+module.exports = {
+  runPodiumStage,
+  runDiscordStage,
+  runFanFavoriteStage,
+  runPodiumReportStage,
+};

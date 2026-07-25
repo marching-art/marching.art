@@ -3,31 +3,40 @@
  *
  * Two consumers share the same recap aggregation:
  *   1. The Discord stage (dailyProcessors -> nightlyStages.runDiscordStage):
- *      one rich-embed webhook post to the community server right after the
- *      2 AM scoring commit, with tonight's top corps per ranked class.
+ *      one rich-embed webhook post to the community server's scores channel
+ *      right after the 2 AM scoring commit, with tonight's top corps per
+ *      ranked class, tonight's SoundSport blue ribbons, and — when one fell —
+ *      an all-time record. Finals night adds the season champions.
  *   2. The morning push job (pushNotifications.scoreDropPushJob): one FCM
  *      push per director who performed last night, at a humane hour.
  *
  * Both read the per-day recap doc (fantasy_recaps/{seasonUid}/days/{day})
  * that commitDailyScoring writes — no extra scoring-time state is needed.
  *
- * SoundSport is ratings-only: its scores are never revealed anywhere in the
- * product (see newsSeasonSummary.js), so announcements mention SoundSport
- * participation without scores or placements.
+ * SoundSport is ratings-only: its SCORES are never revealed anywhere in the
+ * product (see newsSeasonSummary.js). Best in Show is an AWARD, not a rating,
+ * so the blue ribbon is announced by name — never with the number behind it.
  *
  * The Discord post is guarded by a scoringRunGuard lease under the
  * `{seasonUid}_discord` key so a scheduler retry of a completed scoring run
  * can never double-post.
  */
 
-const { defineSecret } = require("firebase-functions/params");
+const { logger } = require("firebase-functions/v2");
+const {
+  discordScoresWebhookUrl,
+  COLORS,
+  MEDALS,
+  clampName,
+  joinLines,
+  place,
+  link,
+  payloadOf,
+  postToDiscordWebhook,
+  postOnce,
+} = require("./discord");
 const { claimScoringRun, markScoringRunCompleted, markScoringRunFailed } = require("./scoringRunGuard");
 const { RANKED_CLASSES } = require("./classRegistry");
-
-// Webhook URL for the community server's scores channel. Not stored in
-// game-settings (world-readable) — anyone holding the URL can post to the
-// channel. Empty/unset disables the stage without erroring.
-const discordScoresWebhookUrl = defineSecret("DISCORD_SCORES_WEBHOOK_URL");
 
 const CLASS_LABELS = {
   worldClass: "World Class",
@@ -42,14 +51,27 @@ const CLASS_LABELS = {
 // identical in analytics, so there is no way to tell whether either
 // announcement channel actually pulls anyone back — the question the channels
 // were built to answer. The client reads `src` on arrival (useScoreDropReturn)
-// and reports it with the score_drop_return event.
+// and reports it with the score_drop_return event. Discord links are tagged by
+// helpers/discord.js `link()`; the push tag lives here.
 const SRC_PARAM = "src";
-const SRC_DISCORD = "discord";
 const SRC_PUSH = "push";
 
 const SCORES_PATH = "/scores";
-const SCORES_URL = `https://marching.art${SCORES_PATH}?${SRC_PARAM}=${SRC_DISCORD}`;
-const MEDALS = ["🥇", "🥈", "🥉"];
+const SCORES_URL = link(SCORES_PATH);
+
+// World Championship Finals — the last scored day of a season, and the night
+// the champions post goes out.
+const FINALS_DAY = 49;
+
+// Record categories as the records book stores them (helpers/gameRecords.js),
+// with the copy a "record just fell" announcement uses.
+const RECORD_LABELS = {
+  highestScore: "Highest score",
+  highestGE: "Highest GE",
+  highestVisual: "Highest Visual",
+  highestMusic: "Highest Music",
+  highestSeasonTotal: "Highest season total",
+};
 
 /** 1 -> "1st", 2 -> "2nd", 11 -> "11th", 23 -> "23rd". */
 function ordinal(n) {
@@ -66,11 +88,16 @@ function ordinal(n) {
  * accumulation scoring.js uses for dailyScores — then ranked per class.
  * SoundSport entries are counted but never ranked or exposed with scores.
  *
+ * Blue ribbons ride along: each show's top SoundSport corps is that show's
+ * Best in Show (the same rule scoringAwards.js awards the trophy by), so the
+ * winners can be named without ever exposing a SoundSport score.
+ *
  * @param {Object} dailyRecap - fantasy_recaps day doc ({shows: [{eventName, results: []}]})
  * @returns {{
  *   byClass: Map<string, Array<{uid: string, corpsName: string, displayName: string,
  *     score: number, rank: number, of: number}>>,
  *   soundSport: Array<{uid: string, corpsName: string}>,
+ *   bestInShow: Array<{uid: string, corpsName: string, displayName: string, eventName: string}>,
  *   showCount: number,
  * }}
  */
@@ -78,8 +105,25 @@ function aggregateNightlyStandings(dailyRecap) {
   const shows = (dailyRecap && dailyRecap.shows) || [];
   const totals = new Map(); // `${uid}_${class}` -> entry
   const soundSportByUid = new Map();
+  const bestInShow = [];
 
   for (const show of shows) {
+    // Blue ribbon: this show's top SoundSport corps. Scored per show, exactly
+    // like the trophy — a corps can win the ribbon at one show on a night
+    // another corps wins it elsewhere.
+    const showSoundSport = (show.results || [])
+      .filter((r) => r && r.uid && r.corpsClass === "soundSport")
+      .sort((a, b) => (Number(b.totalScore) || 0) - (Number(a.totalScore) || 0));
+    if (showSoundSport.length > 0) {
+      const winner = showSoundSport[0];
+      bestInShow.push({
+        uid: winner.uid,
+        corpsName: winner.corpsName || "",
+        displayName: winner.displayName || "",
+        eventName: show.eventName || "",
+      });
+    }
+
     for (const result of show.results || []) {
       if (!result || !result.uid || !result.corpsClass) continue;
       if (result.corpsClass === "soundSport") {
@@ -112,13 +156,12 @@ function aggregateNightlyStandings(dailyRecap) {
     byClass.set(corpsClass, entries);
   }
 
-  return { byClass, soundSport: [...soundSportByUid.values()], showCount: shows.length };
-}
-
-/** Keep user-authored names from blowing up embed/push copy. */
-function clampName(name, max = 60) {
-  const text = String(name || "").trim();
-  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+  return {
+    byClass,
+    soundSport: [...soundSportByUid.values()],
+    bestInShow,
+    showCount: shows.length,
+  };
 }
 
 /**
@@ -132,7 +175,7 @@ function clampName(name, max = 60) {
  * @returns {Object|null}
  */
 function buildScoreDropEmbed({ dailyRecap, seasonName, scoredDay }) {
-  const { byClass, soundSport, showCount } = aggregateNightlyStandings(dailyRecap);
+  const { byClass, soundSport, bestInShow, showCount } = aggregateNightlyStandings(dailyRecap);
   if (byClass.size === 0 && soundSport.length === 0) return null;
 
   const fields = [];
@@ -145,12 +188,26 @@ function buildScoreDropEmbed({ dailyRecap, seasonName, scoredDay }) {
     fields.push({ name: fieldName, value: lines.join("\n") });
   }
 
+  // Blue ribbons — named, never scored. SoundSport's whole point is that it
+  // isn't a competition, but Best in Show is still an honor worth reading out.
+  if (bestInShow.length > 0) {
+    fields.push({
+      name: `🎀 SoundSport Best in Show (${bestInShow.length})`,
+      value: joinLines(
+        bestInShow.map((winner) => {
+          const where = winner.eventName ? ` — ${clampName(winner.eventName, 40)}` : "";
+          return `**${clampName(winner.corpsName)}**${where}`;
+        })
+      ),
+    });
+  }
+
   const showWord = showCount === 1 ? "show" : "shows";
   const embed = {
     title: `🎺 Day ${scoredDay} Scores Are In`,
     url: SCORES_URL,
     description: `${seasonName} — ${showCount} ${showWord} scored tonight. Full recaps and standings on marching.art.`,
-    color: 0xd4af37,
+    color: COLORS.scores,
     fields,
   };
   if (soundSport.length > 0) {
@@ -158,7 +215,112 @@ function buildScoreDropEmbed({ dailyRecap, seasonName, scoredDay }) {
     embed.footer = { text: `Plus ${soundSport.length} SoundSport ${perfWord} 🎉` };
   }
 
-  return { username: "marching.art", embeds: [embed] };
+  return payloadOf(embed);
+}
+
+/**
+ * The all-time marks set on `scoredDay`, read straight off the records book.
+ *
+ * gameRecords stamps every record it accepts with `{seasonName, day}`, so
+ * "what fell tonight" needs no extra state — just the records doc and the
+ * night's identity. Podium-class records are stamped with the seasonUid
+ * rather than the display name, so both are accepted.
+ *
+ * @param {Object} records - game-records/records doc data.
+ * @param {Object} params
+ * @param {string} params.seasonName
+ * @param {string} params.seasonUid
+ * @param {number} params.scoredDay
+ * @returns {Array<{corpsClass: string, category: string, value: number,
+ *   corpsName: string, displayName: string}>}
+ */
+function recordsSetOn(records, { seasonName, seasonUid, scoredDay }) {
+  const classes = (records && records.classes) || {};
+  const fell = [];
+  for (const [corpsClass, categories] of Object.entries(classes)) {
+    for (const [category, record] of Object.entries(categories || {})) {
+      if (!record || record.day !== scoredDay) continue;
+      if (record.seasonName !== seasonName && record.seasonName !== seasonUid) continue;
+      fell.push({
+        corpsClass,
+        category,
+        value: Number(record.value) || 0,
+        corpsName: record.corpsName || "",
+        displayName: record.displayName || "",
+      });
+    }
+  }
+  return fell;
+}
+
+/**
+ * "An all-time record just fell" — the second embed on the nightly drop.
+ *
+ * Rides the same message as the scores rather than a separate post: same
+ * channel, same moment, one notification.
+ *
+ * @param {Array} fell - From recordsSetOn().
+ * @returns {Object|null} Embed, or null on an ordinary night.
+ */
+function buildRecordsEmbed(fell) {
+  if (!fell || fell.length === 0) return null;
+  const lines = fell.map((record) => {
+    const classLabel = CLASS_LABELS[record.corpsClass] || record.corpsClass;
+    const label = RECORD_LABELS[record.category] || record.category;
+    const director = record.displayName ? ` · ${clampName(record.displayName, 30)}` : "";
+    return `📌 **${clampName(record.corpsName)}** — ${label}, ${classLabel}: ${record.value.toFixed(3)}${director}`;
+  });
+  const word = fell.length === 1 ? "record" : "records";
+  return {
+    title: `🔥 All-time ${word} broken`,
+    url: link("/records"),
+    description:
+      fell.length === 1
+        ? "A mark that stood since the game started just went down."
+        : `${fell.length} all-time marks went down tonight.`,
+    color: COLORS.record,
+    fields: [{ name: "The Records Book", value: joinLines(lines) }],
+  };
+}
+
+/**
+ * Season champions — finals night, the biggest post of the year.
+ *
+ * @param {Object} params
+ * @param {Object} params.champions - season_champions/{seasonUid} doc data.
+ * @param {string} params.seasonName
+ * @returns {Object|null} Webhook payload, or null when no class was crowned.
+ */
+function buildChampionsPayload({ champions, seasonName }) {
+  const classes = (champions && champions.classes) || {};
+  const fields = [];
+  for (const corpsClass of RANKED_CLASSES) {
+    const podium = classes[corpsClass];
+    if (!Array.isArray(podium) || podium.length === 0) continue;
+    fields.push({
+      name: CLASS_LABELS[corpsClass] || corpsClass,
+      value: joinLines(
+        podium.slice(0, 3).map((entry, index) => {
+          const director = entry.username ? ` · ${clampName(entry.username, 30)}` : "";
+          const score = typeof entry.score === "number" ? ` — ${entry.score.toFixed(3)}` : "";
+          return `${place(index)} **${clampName(entry.corpsName)}**${score}${director}`;
+        })
+      ),
+    });
+  }
+  if (fields.length === 0) return null;
+
+  const champion = (classes.worldClass || [])[0];
+  return payloadOf({
+    title: `👑 ${seasonName} Champions`,
+    url: link("/hall-of-champions"),
+    description: champion
+      ? `Finals are over. **${clampName(champion.corpsName)}** takes the World Class title, ` +
+        `and the season goes into the books.`
+      : "Finals are over and the season goes into the books.",
+    color: COLORS.champion,
+    fields,
+  });
 }
 
 /**
@@ -209,26 +371,6 @@ function buildScoreDropPushes({ dailyRecap, scoredDay }) {
 }
 
 /**
- * POST a payload to a Discord webhook. Throws on any non-2xx response so the
- * caller can mark the lease failed (Discord returns 204 on success).
- *
- * @param {string} webhookUrl
- * @param {Object} payload
- * @param {typeof fetch} [fetchImpl] - Injectable for tests.
- */
-async function postToDiscordWebhook(webhookUrl, payload, fetchImpl = fetch) {
-  const response = await fetchImpl(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(`Discord webhook responded ${response.status}: ${body.slice(0, 200)}`);
-  }
-}
-
-/**
  * Post tonight's score drop to Discord exactly once per (season, day).
  *
  * Reads the day recap, builds the embed, claims the `{seasonUid}_discord`
@@ -254,31 +396,102 @@ async function runDiscordScoreDrop(db, { seasonUid, seasonName, scoredDay, webho
   const payload = buildScoreDropEmbed({ dailyRecap: recapSnap.data(), seasonName, scoredDay });
   if (!payload) return { status: "empty-recap", scoredDay };
 
+  // Records that fell tonight ride the same message — same channel, same
+  // moment, one notification. Never fails the drop: an unreadable records
+  // doc just means the night posts without the extra embed.
+  let recordsBroken = 0;
+  try {
+    const recordsSnap = await db.doc("game-records/records").get();
+    const embed = buildRecordsEmbed(
+      recordsSetOn(recordsSnap.exists ? recordsSnap.data() : null, {
+        seasonName,
+        seasonUid,
+        scoredDay,
+      })
+    );
+    if (embed) {
+      payload.embeds.push(embed);
+      recordsBroken = embed.fields[0].value.split("\n").length;
+    }
+  } catch (error) {
+    logger.warn(`[discord-stage] records check skipped: ${error.message}`);
+  }
+
   const leaseKey = `${seasonUid}_discord`;
   const lease = await claimScoringRun(db, leaseKey, scoredDay);
   if (!lease.claimed) return { status: "skipped", reason: lease.reason, scoredDay };
 
+  const result = { status: "posted", scoredDay, recordsBroken };
   try {
     await postToDiscordWebhook(webhookUrl, payload, fetchImpl);
     await markScoringRunCompleted(db, leaseKey, scoredDay, { posted: true });
-    return { status: "posted", scoredDay };
   } catch (error) {
     await markScoringRunFailed(db, leaseKey, scoredDay, error);
     throw error;
   }
+
+  // Finals night: the champions post follows the last score drop of the year,
+  // under its own lease so a champions failure can't un-post the drop.
+  if (scoredDay === FINALS_DAY) {
+    try {
+      result.champions = await runChampionsPost(db, {
+        seasonUid,
+        seasonName,
+        webhookUrl,
+        fetchImpl,
+      });
+    } catch (error) {
+      logger.error(`[discord-stage] champions post failed: ${error.message}`);
+    }
+  }
+  return result;
+}
+
+/**
+ * Post the season champions to the scores channel, once per season.
+ *
+ * Separate message and separate lease from the nightly drop: the drop is a
+ * daily habit, the champions post is the year's headline.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} params
+ * @param {string} params.seasonUid
+ * @param {string} params.seasonName
+ * @param {string} params.webhookUrl
+ * @param {typeof fetch} [params.fetchImpl]
+ * @returns {Promise<{kind: string, status: string, [k: string]: unknown}>}
+ */
+async function runChampionsPost(db, { seasonUid, seasonName, webhookUrl, fetchImpl }) {
+  const snapshot = await db.doc(`season_champions/${seasonUid}`).get();
+  if (!snapshot.exists) return { kind: "champions", status: "no-champions" };
+
+  const payload = buildChampionsPayload({ champions: snapshot.data(), seasonName });
+  if (!payload) return { kind: "champions", status: "no-champions" };
+
+  return postOnce(db, {
+    kind: "champions",
+    tag: "discord-stage",
+    leaseKey: `${seasonUid}_discord_champions`,
+    leaseDay: FINALS_DAY,
+    payload,
+    webhookUrl,
+    fetchImpl,
+  });
 }
 
 module.exports = {
   discordScoresWebhookUrl,
   CLASS_LABELS,
-  MEDALS,
-  SRC_PARAM,
-  SRC_DISCORD,
-  clampName,
+  RECORD_LABELS,
+  FINALS_DAY,
   ordinal,
   aggregateNightlyStandings,
   buildScoreDropEmbed,
   buildScoreDropPushes,
+  recordsSetOn,
+  buildRecordsEmbed,
+  buildChampionsPayload,
   postToDiscordWebhook,
   runDiscordScoreDrop,
+  runChampionsPost,
 };
