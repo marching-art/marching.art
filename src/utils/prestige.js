@@ -1,9 +1,16 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Client mirror of the prestige-sink catalog (WS5.6). Prices and limits are
 // display-only here — the purchaseRetirementPlaque / purchaseHallBanner
 // callables validate against functions/src/helpers/prestigeCatalog.js, and
 // prestige.test.js fails CI if this mirror drifts from it.
 
+/**
+ * @typedef {Object} PlaqueTier
+ * @property {number} rank
+ * @property {number} price
+ * @property {string} name
+ */
+
+/** @type {Record<string, PlaqueTier>} */
 export const PLAQUE_TIERS = {
   bronze: { rank: 1, price: 2500, name: 'Bronze Plaque' },
   silver: { rank: 2, price: 7500, name: 'Silver Plaque' },
@@ -32,9 +39,13 @@ export const PLAQUE_STYLES = {
   },
 };
 
-/** Tiers a retired corps can still be upgraded to (strictly finer only). */
+/**
+ * Tiers a retired corps can still be upgraded to (strictly finer only).
+ * @param {{plaque?: {tier?: string}}|null|undefined} entry a retiredCorps entry
+ */
 export function availablePlaqueUpgrades(entry) {
-  const currentRank = entry?.plaque ? PLAQUE_TIERS[entry.plaque.tier]?.rank || 0 : 0;
+  const currentTier = entry?.plaque?.tier;
+  const currentRank = (currentTier && PLAQUE_TIERS[currentTier]?.rank) || 0;
   return Object.entries(PLAQUE_TIERS)
     .filter(([, tier]) => tier.rank > currentRank)
     .map(([id, tier]) => ({ id, ...tier }));

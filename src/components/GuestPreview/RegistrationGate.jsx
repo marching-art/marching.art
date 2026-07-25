@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * RegistrationGate - Modal prompt for gated actions in Guest Preview Mode
  *
@@ -27,6 +26,7 @@ import { Heading } from '../ui';
 // GATE TYPES - Different prompts for different actions
 // =============================================================================
 
+/** @type {Record<string, any>} */
 const GATE_CONFIGS = {
   // Trying to save lineup changes
   save: {
@@ -88,8 +88,16 @@ const GATE_CONFIGS = {
 // REGISTRATION GATE COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   isOpen: boolean,
+ *   onClose: () => void,
+ *   gateType?: string,
+ *   hasEngaged?: boolean,
+ * }} props
+ */
 const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = false }) => {
-  const config = GATE_CONFIGS[gateType] || GATE_CONFIGS.default;
+  const config = GATE_CONFIGS[gateType] ?? GATE_CONFIGS.default;
   const GateIcon = config.icon;
 
   return (

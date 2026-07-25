@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Competition calendar — the single source for mapping a competition day
  * number (1–49) onto the real calendar date it falls on.
@@ -34,7 +33,10 @@ function toDate(value) {
   return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
 }
 
-/** Spring-training days for a schedule (0 when absent, e.g. off-seasons). */
+/**
+ * Spring-training days for a schedule (0 when absent, e.g. off-seasons).
+ * @param {{springTrainingDays?: number}|null|undefined} schedule
+ */
 export function getSpringTrainingDays(schedule) {
   return schedule?.springTrainingDays || 0;
 }
@@ -48,9 +50,9 @@ export function getSpringTrainingDays(schedule) {
  * with local getters would land on the previous evening in negative-UTC-offset
  * zones and shift every day one early.)
  *
- * @param {Object|null|undefined} schedule - `game-settings/season`'s
- *   `schedule` object: `{ startDate, springTrainingDays }`. `startDate` may be a
- *   Firestore Timestamp, a Date, or a millisecond value.
+ * @param {{startDate?: unknown, springTrainingDays?: number}|null|undefined} schedule -
+ *   `game-settings/season`'s `schedule` object. `startDate` may be a Firestore
+ *   Timestamp, a Date, or a millisecond value.
  * @param {number} dayNumber - Competition day (1–49).
  * @returns {Date|null} null when the schedule has no usable start date.
  */

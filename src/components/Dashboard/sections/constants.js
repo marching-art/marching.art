@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Dashboard section shared constants
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and enable code-splitting
 
@@ -43,6 +42,10 @@ export const SOUNDSPORT_RATING_THRESHOLDS = [
   { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black' },
 ];
 
+/**
+ * The medal rating a SoundSport score earns.
+ * @param {number} score
+ */
 export const getSoundSportRating = (score) => {
   for (const threshold of SOUNDSPORT_RATING_THRESHOLDS) {
     if (score >= threshold.min) return threshold;

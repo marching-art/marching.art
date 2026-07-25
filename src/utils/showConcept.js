@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Show concept option lists — client mirror of the backend's SHOW_THEMES /
 // MUSIC_SOURCES / DRILL_STYLES in functions/src/helpers/showConceptSynergy.js
 // (keep values in sync; the server validates saves against its own lists).
@@ -33,12 +32,23 @@ export const DRILL_STYLES = [
   { value: 'dance', label: 'Dance / Movement-Heavy' },
 ];
 
-/** Structured concept (legacy free-text strings don't count) */
+/**
+ * Structured concept (legacy free-text strings don't count).
+ * @param {unknown} showConcept
+ * @returns {showConcept is {theme: string, musicSource?: string, drillStyle?: string, showName?: unknown}}
+ */
 export function isStructuredConcept(showConcept) {
-  return !!(showConcept && typeof showConcept === 'object' && showConcept.theme);
+  return !!(
+    showConcept &&
+    typeof showConcept === 'object' &&
+    /** @type {{theme?: unknown}} */ (showConcept).theme
+  );
 }
 
-/** "Cinematic / Film · Film Score · Curvilinear / Flowing" (null if unset) */
+/**
+ * "Cinematic / Film · Film Score · Curvilinear / Flowing" (null if unset).
+ * @param {unknown} showConcept
+ */
 export function describeConceptStyle(showConcept) {
   if (!isStructuredConcept(showConcept)) return null;
   const parts = [
@@ -49,7 +59,10 @@ export function describeConceptStyle(showConcept) {
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
-/** Show title from a structured concept (null for legacy strings / unset) */
+/**
+ * Show title from a structured concept (null for legacy strings / unset).
+ * @param {unknown} showConcept
+ */
 export function getConceptTitle(showConcept) {
   if (!isStructuredConcept(showConcept)) return null;
   const name = showConcept.showName;

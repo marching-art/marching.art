@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/charts/LineChartImpl.jsx
 // Lazily loaded Line chart implementation with Chart.js
 import { Line } from 'react-chartjs-2';
@@ -26,6 +25,13 @@ ChartJS.register(
   Filler
 );
 
+/**
+ * Chart.js data/options are passed straight through; typing them as the
+ * library's own generics here would pull chart.js types into every caller for
+ * no benefit, so they stay deliberately loose.
+ *
+ * @param {{data: any, options?: any, [key: string]: any}} props
+ */
 const LineChartImpl = ({ data, options, ...props }) => {
   return <Line data={data} options={options} {...props} />;
 };

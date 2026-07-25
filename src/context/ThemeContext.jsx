@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/context/ThemeContext.jsx
 // =============================================================================
 // THEME CONTEXT - SINGLE DARK MODE
@@ -19,6 +18,7 @@ const THEME_VALUE = Object.freeze({
   toggleTheme: () => {},
 });
 
+/** @param {{children: React.ReactNode}} props */
 export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     // Always apply dark theme - this is the only mode

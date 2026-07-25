@@ -6,7 +6,15 @@
 
 import { createContext, useContext } from 'react';
 
-export const ThemeContext = createContext(null);
+/**
+ * @typedef {Object} ThemeContextValue
+ * @property {'dark'} theme
+ * @property {boolean} isDark
+ * @property {() => void} setTheme - No-op; kept for backwards compatibility.
+ * @property {() => void} toggleTheme - No-op; kept for backwards compatibility.
+ */
+
+export const ThemeContext = createContext(/** @type {ThemeContextValue | null} */ (null));
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);

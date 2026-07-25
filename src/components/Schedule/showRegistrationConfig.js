@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Show registration constants: per-class display config and Podium tour-pick
 // rules. Kept in a non-component module so fast refresh stays happy for the
 // components that consume them.
@@ -47,4 +46,5 @@ export const PODIUM_EASTERN_DAYS = [41, 42];
 export const PODIUM_CHAMPIONSHIP_WEEK_DAYS = [45, 46, 47, 48, 49];
 // Week 7 opens its two non-championship days (43-44) to picks; days 45-49 are
 // auto-attended Championship Week. Weeks 4-6 spend one slot on a major.
+/** @param {number} week */
 export const podiumMaxPicksForWeek = (week) => (week === 7 ? 2 : week >= 4 ? 3 : 4);

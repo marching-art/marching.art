@@ -25,7 +25,10 @@ import {
 export function usePodium(enabled) {
   const [loading, setLoading] = useState(Boolean(enabled));
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null); // PodiumStateResponse
+  // Widened deliberately: the getPodiumState response has no declared type
+  // yet, and leaving this as `useState(null)` infers `null`, which breaks
+  // every consumer that reads `podium.data?.x`.
+  const [data, setData] = useState(/** @type {any} */ (null)); // PodiumStateResponse
   const [lastPanel, setLastPanel] = useState(null); // most recent Action Complete panel
 
   const reload = useCallback(async () => {

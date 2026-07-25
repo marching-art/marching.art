@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Corps Identity Shop — server-side catalog (v1).
  *
@@ -66,6 +65,7 @@ const TYPE_TO_SLOT = {
   cardTheme: 'cardTheme',
 };
 
+/** @param {string} itemId */
 function getShopItem(itemId) {
   return SHOP_CATALOG.find((item) => item.id === itemId) || null;
 }

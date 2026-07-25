@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Pure helpers for the current-season global ranking snapshot.
 //
 // getUserRankings used to scan every active-season profile on EVERY call to
@@ -55,6 +54,7 @@ function computeSeasonRankings(entries) {
     }
   });
 
+  /** @type {Record<string, {rank: number, totalScore: number}>} */
   const ranks = {};
   for (const { uid, totalScore } of entries) {
     ranks[uid] = { rank: scoreToRank.get(totalScore), totalScore };

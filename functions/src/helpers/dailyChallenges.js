@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Daily Challenges Helper
  *
@@ -23,6 +22,15 @@
  * auto-completed on navigation — clicks, not choices; retired per
  * GAMIFICATION.md.)
  */
+/**
+ * @typedef {Object} Challenge
+ * @property {string} id
+ * @property {string} label
+ * @property {number} xp
+ * @property {(profile: any, gameDay?: string) => boolean} verify
+ */
+
+/** @type {Challenge[]} */
 const CHALLENGE_POOL = [
   {
     id: "check-lineup",
@@ -39,7 +47,7 @@ const CHALLENGE_POOL = [
     label: "Make today's prediction",
     xp: 10,
     verify: (profile, gameDay) =>
-      Object.keys(profile.predictions?.[gameDay]?.picks || {}).length > 0,
+      Object.keys(profile.predictions?.[gameDay ?? ""]?.picks || {}).length > 0,
   },
   {
     id: "register-show",
@@ -140,6 +148,7 @@ function getGameDay(now = new Date()) {
     hour12: false,
   }).formatToParts(now);
 
+  /** @type {Record<string, string>} */
   const v = {};
   for (const part of parts) v[part.type] = part.value;
 

@@ -89,7 +89,9 @@ const SECTIONS = [
 ];
 
 export default function PodiumGuide() {
-  const { user } = useAuth();
+  // These render on public routes too, where there is no AuthProvider —
+  // `useAuth()` is null there and `user` is simply undefined.
+  const user = useAuth()?.user;
 
   // This page is submitted in the sitemap (functions/src/triggers/sitemap.js)
   // but never set its own metadata, so it inherited index.html's canonical —

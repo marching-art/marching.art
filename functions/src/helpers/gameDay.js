@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Game-day date math shared by the nightly scoring processors and the admin
  * manual trigger. This logic was previously copy-pasted in three places
@@ -36,6 +35,9 @@ function getCompletedGameDayET(now = new Date()) {
     second: "2-digit",
     hour12: false,
   }).formatToParts(now);
+  /** @type {Record<string, string>} */
+  /** @type {Record<string, string>} */
+  /** @type {Record<string, string>} */
   const etValues = {};
   for (const part of etParts) etValues[part.type] = part.value;
 
@@ -99,7 +101,8 @@ function getCompletedCalendarDay(seasonStartDate, now = new Date()) {
  * (leagueAutomation.js) runs, making it disagree with the Monday 8 AM push
  * job by a full week.
  *
- * @param {Object} seasonData - game-settings/season doc data.
+ * @param {{status?: string, schedule?: {startDate?: unknown,
+ *   springTrainingDays?: number}}|null|undefined} seasonData - game-settings/season doc data.
  * @param {Date} [now] - Injectable clock for tests; defaults to now.
  * @returns {number|null} Week number (≥1), or null if the season doc has no
  *   usable start date.
@@ -107,7 +110,9 @@ function getCompletedCalendarDay(seasonStartDate, now = new Date()) {
 function getCurrentSeasonWeek(seasonData, now = new Date()) {
   const rawStart = seasonData?.schedule?.startDate;
   const startDate =
-    rawStart && typeof rawStart.toDate === "function" ? rawStart.toDate() : rawStart;
+    rawStart && typeof /** @type {{toDate?: unknown}} */ (rawStart).toDate === "function"
+      ? /** @type {{toDate: () => Date}} */ (rawStart).toDate()
+      : rawStart;
   if (!(startDate instanceof Date) || isNaN(startDate.getTime())) return null;
 
   const activeDay = getActiveCalendarDay(startDate, now);
@@ -137,7 +142,8 @@ function getActiveCalendarDay(seasonStartDate, now = new Date()) {
  * Values <1 mean spring training; >49 means the season is over.
  *
  * @param {number} calendarDay
- * @param {Object} seasonData - game-settings/season doc data.
+ * @param {{status?: string, schedule?: {startDate?: unknown,
+ *   springTrainingDays?: number}}|null|undefined} seasonData - game-settings/season doc data.
  * @returns {number}
  */
 function toCompetitionDay(calendarDay, seasonData) {
@@ -178,6 +184,7 @@ function getActivePodiumCalendarDay(seasonStartDate, dropSchedulingEnabled = fal
     hour: "2-digit",
     hour12: false,
   }).formatToParts(now);
+  /** @type {Record<string, string>} */
   const etValues = {};
   for (const part of etParts) etValues[part.type] = part.value;
   // Some ICU versions report midnight as hour "24" in h23 mode.

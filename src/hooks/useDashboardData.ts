@@ -56,7 +56,10 @@ interface RecentScoreRow {
  * duplicate Firestore listeners. The store is initialized in App.jsx.
  */
 export const useDashboardData = () => {
-  const { user } = useAuth();
+  // useAuth() is null only outside AuthProvider (the public pages); this
+  // component renders behind the auth gate, so `user` is simply absent
+  // rather than the hook being unavailable.
+  const user = useAuth()?.user;
   const {
     seasonData,
     loading: seasonLoading,

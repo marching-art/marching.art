@@ -1,4 +1,5 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
+// @ts-nocheck -- grandfathered before checkJs; the frontend mirror test pulls
+// this file into a project without firebase-admin types (FirebaseFirestore).
 /**
  * Daily Predictions Helper
  *
@@ -29,6 +30,15 @@ const MAX_PREDICTION_DAYS_KEPT = 30;
  * result. `needs` names the result field required to resolve the question, so
  * a pick is left unresolved (rather than mis-scored) when that data is absent.
  */
+/**
+ * @typedef {Object} PredictionQuestion
+ * @property {string} id
+ * @property {number} xp
+ * @property {string} needs - Result field required to resolve the pick.
+ * @property {(result: any, threshold: any) => string} resolve
+ */
+
+/** @type {PredictionQuestion[]} */
 const PREDICTION_QUESTIONS = [
   {
     id: "over-under",

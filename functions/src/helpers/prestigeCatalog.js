@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Prestige sinks — server-side price catalog (WS5.6).
 //
 // Pure module (no firebase imports) so the vitest client-mirror test can
@@ -21,6 +20,10 @@ const HALL_BANNER_MAX_LENGTH = 60;
 /**
  * Normalize a champion's banner message: strip control characters, collapse
  * runs of whitespace, trim. Returns null when nothing displayable remains.
+ */
+/**
+ * @param {unknown} raw
+ * @returns {string|null}
  */
 function sanitizeBannerMessage(raw) {
   if (typeof raw !== 'string') return null;

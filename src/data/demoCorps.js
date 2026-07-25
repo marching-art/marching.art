@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Demo Corps Data - Sample corps for Guest Preview Mode
  *
@@ -25,7 +24,10 @@
 //   totalScore  = min(100, ge + visual + music)
 // SoundSport shares this math; only its *presentation* (medal ratings) differs.
 
-/** Sum the GE / Visual / Music category totals from a caption map. */
+/**
+ * Sum the GE / Visual / Music category totals from a caption map.
+ * @param {Record<string, number>} captions
+ */
 export function computeCategoryTotals(captions) {
   const geScore = (captions.GE1 || 0) + (captions.GE2 || 0);
   const visualScore = ((captions.VP || 0) + (captions.VA || 0) + (captions.CG || 0)) / 2;
@@ -33,7 +35,10 @@ export function computeCategoryTotals(captions) {
   return { geScore, visualScore, musicScore };
 }
 
-/** Compute the capped show total (<= 100) from a caption map. */
+/**
+ * Compute the capped show total (<= 100) from a caption map.
+ * @param {Record<string, number>} captions
+ */
 export function computeShowTotal(captions) {
   const { geScore, visualScore, musicScore } = computeCategoryTotals(captions);
   return Math.round(Math.min(100, geScore + visualScore + musicScore) * 100) / 100;

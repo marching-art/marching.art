@@ -245,7 +245,8 @@ export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
  * treats a lockout as ending at the 2 AM ET processing run; the backend
  * additionally waits for the day's recap to actually exist.
  *
- * @param {Object} seasonData - Season doc (needs schedule.startDate)
+ * @param {{schedule?: {startDate?: unknown}}|null|undefined} seasonData - Season
+ *   doc (needs schedule.startDate); null before the season store hydrates.
  * @param {Date} [now]
  * @param {string|null} [corpsClass] - Canonical class id. When provided, the
  *   Championship-day class lockout (a class that no longer competes) is

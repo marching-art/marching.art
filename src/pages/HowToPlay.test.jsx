@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Smoke test for the consolidated Game Guide (/guide). Verifies the document
 // mounts, renders every section, surfaces the consolidated SoundSport ratings
 // and Podium Class content, and that search filters the flat index.
@@ -60,6 +59,7 @@ describe('HowToPlay (/guide)', () => {
     // The rail button and the section heading share the label; clicking should
     // not throw (scrollTo is a no-op in jsdom but the handler must run cleanly).
     const rail = screen.getByText('Sections').closest('nav');
+    if (!rail) throw new Error('expected a Sections nav rail');
     fireEvent.click(within(rail).getByText('Podium Class'));
     expect(screen.getByText('Reputation: the climb to Champion Status')).toBeInTheDocument();
   });

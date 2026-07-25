@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Historical shadows chart (decision 29): the committed shadow data renders
 // as ghost lines and the player's scoreHistory as the emphasized series.
 
@@ -7,6 +6,7 @@ import { render, screen } from '@testing-library/react';
 import PodiumTrajectoryCard from './PodiumTrajectoryCard';
 import shadowData from '../../data/historicalShadows.json';
 
+/** @param {any} state */
 const podiumWith = (state) => ({ data: { state } });
 
 describe('PodiumTrajectoryCard', () => {

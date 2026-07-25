@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for profileStore.completeDailyChallenge — the store half of the
 // daily game loop. The heavy lifting (validation, XP award, ledger write)
 // lives in the completeDailyChallenge callable; the store's job is the
@@ -15,7 +14,7 @@ vi.mock('../api', () => ({
   db: {},
   functions: {},
   paths: {
-    userProfile: (uid) => `artifacts/test-ns/users/${uid}/profile/data`,
+    userProfile: (/** @type {string} */ uid) => `artifacts/test-ns/users/${uid}/profile/data`,
   },
 }));
 
@@ -44,6 +43,10 @@ vi.mock('react-hot-toast', () => ({
 import { useProfileStore } from './profileStore';
 import { getGameDay } from '../utils/dailyChallenges';
 
+/**
+ * @param {any} profile
+ * @param {string} [uid]
+ */
 const seedStore = (profile, uid = 'user-1') => {
   useProfileStore.setState({ profile, _currentUid: uid });
 };

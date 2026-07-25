@@ -15,128 +15,131 @@ import { showCoinGain } from '../../xpFeedbackTrigger';
 // (react-refresh) — the Director's Report imports it from there too.
 import { TIERS } from './seasonLadderTiers';
 
-const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
-  const [claiming, setClaiming] = useState(null);
+const SeasonLadderPanel = memo(
+  /** @param {{profile: any, seasonUid?: string|null}} props */
+  ({ profile, seasonUid }) => {
+    const [claiming, setClaiming] = useState(null);
 
-  // The baseline is stamped server-side by the first daily XP event (login,
-  // challenge, prediction) or at season rollover. Until then season XP can't
-  // be computed — say so instead of showing a misleading 0.
-  const baselineStamped = typeof profile?.xpAtSeasonStart === 'number';
-  const seasonXP = useMemo(() => {
-    if (typeof profile?.xpAtSeasonStart !== 'number') return 0;
-    return Math.max(0, (profile.xp || 0) - profile.xpAtSeasonStart);
-  }, [profile?.xp, profile?.xpAtSeasonStart]);
+    // The baseline is stamped server-side by the first daily XP event (login,
+    // challenge, prediction) or at season rollover. Until then season XP can't
+    // be computed — say so instead of showing a misleading 0.
+    const baselineStamped = typeof profile?.xpAtSeasonStart === 'number';
+    const seasonXP = useMemo(() => {
+      if (typeof profile?.xpAtSeasonStart !== 'number') return 0;
+      return Math.max(0, (profile.xp || 0) - profile.xpAtSeasonStart);
+    }, [profile?.xp, profile?.xpAtSeasonStart]);
 
-  // Claims from a previous season don't count against this one
-  const claimed = useMemo(() => {
-    const state = profile?.seasonLadder;
-    if (!state || (seasonUid && state.seasonUid !== seasonUid)) return [];
-    return state.claimed || [];
-  }, [profile?.seasonLadder, seasonUid]);
+    // Claims from a previous season don't count against this one
+    const claimed = useMemo(() => {
+      const state = profile?.seasonLadder;
+      if (!state || (seasonUid && state.seasonUid !== seasonUid)) return [];
+      return state.claimed || [];
+    }, [profile?.seasonLadder, seasonUid]);
 
-  const claimable = TIERS.filter((t) => seasonXP >= t.xp && !claimed.includes(t.tier));
-  const nextTier = TIERS.find((t) => seasonXP < t.xp) || null;
-  const maxXP = TIERS[TIERS.length - 1].xp;
+    const claimable = TIERS.filter((t) => seasonXP >= t.xp && !claimed.includes(t.tier));
+    const nextTier = TIERS.find((t) => seasonXP < t.xp) || null;
+    const maxXP = TIERS[TIERS.length - 1].xp;
 
-  if (!profile) return null;
+    if (!profile) return null;
 
-  const handleClaim = async (tier) => {
-    setClaiming(tier.tier);
-    try {
-      const result = await claimLadderTier({ tier: tier.tier });
-      if (result.data.success && !result.data.alreadyClaimed) {
-        const extra = result.data.grantItem ? ' + Laureate title unlocked!' : '';
-        toast.success(`Tier ${tier.tier} claimed — +${result.data.coinAwarded} CC${extra}`);
-        if (result.data.coinAwarded > 0)
-          showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
+    const handleClaim = async (tier) => {
+      setClaiming(tier.tier);
+      try {
+        const result = await claimLadderTier({ tier: tier.tier });
+        if (result.data.success && !result.data.alreadyClaimed) {
+          const extra = result.data.grantItem ? ' + Laureate title unlocked!' : '';
+          toast.success(`Tier ${tier.tier} claimed — +${result.data.coinAwarded} CC${extra}`);
+          if (result.data.coinAwarded > 0)
+            showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
+        }
+      } catch (error) {
+        toast.error(error.message || 'Could not claim tier');
+      } finally {
+        setClaiming(null);
       }
-    } catch (error) {
-      toast.error(error.message || 'Could not claim tier');
-    } finally {
-      setClaiming(null);
-    }
-  };
+    };
 
-  return (
-    <div className="bg-surface-card border border-line overflow-hidden">
-      {/* Header */}
-      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-          <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-          Season Ladder
-        </h3>
-        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
-          {claimed.length}/{TIERS.length} tiers
-        </span>
-      </div>
-
-      {/* Season XP progress */}
-      <div className="px-4 pt-3">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-muted">Season XP</span>
-          <span className="text-[10px] font-bold text-emerald-400 font-data tabular-nums">
-            {seasonXP.toLocaleString()}
-            {nextTier ? ` / ${nextTier.xp.toLocaleString()}` : ' — maxed!'}
+    return (
+      <div className="bg-surface-card border border-line overflow-hidden">
+        {/* Header */}
+        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+            Season Ladder
+          </h3>
+          <span className="text-[10px] font-bold text-muted font-data tabular-nums">
+            {claimed.length}/{TIERS.length} tiers
           </span>
         </div>
-        <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
-          <div
-            className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
-            style={{ width: `${Math.min(100, (seasonXP / maxXP) * 100)}%` }}
-          />
+
+        {/* Season XP progress */}
+        <div className="px-4 pt-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-muted">Season XP</span>
+            <span className="text-[10px] font-bold text-emerald-400 font-data tabular-nums">
+              {seasonXP.toLocaleString()}
+              {nextTier ? ` / ${nextTier.xp.toLocaleString()}` : ' — maxed!'}
+            </span>
+          </div>
+          <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
+              style={{ width: `${Math.min(100, (seasonXP / maxXP) * 100)}%` }}
+            />
+          </div>
         </div>
+
+        {/* Claimable tiers */}
+        {claimable.length > 0 && (
+          <div className="px-4 py-3 space-y-1.5">
+            {claimable.map((tier) => (
+              <button
+                key={tier.tier}
+                onClick={() => handleClaim(tier)}
+                disabled={claiming === tier.tier}
+                className="w-full flex items-center gap-2 px-3 py-2 bg-emerald-600/10 border border-emerald-500/30 hover:bg-emerald-600/20 transition-colors press-feedback"
+              >
+                <Gift className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                <span className="text-xs text-white flex-1 text-left">
+                  Tier {tier.tier} ready
+                  {tier.exclusive ? ` — includes the ${tier.exclusive}!` : ''}
+                </span>
+                <span className="text-[10px] font-bold text-brand font-data whitespace-nowrap">
+                  {claiming === tier.tier ? '...' : `+${tier.coin} CC`}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Baseline not stamped yet — tracking begins with the next XP event */}
+        {!baselineStamped && (
+          <div className="px-4 py-3 text-[10px] text-muted">
+            Season XP starts counting with your next check-in, challenge, or prediction — all the XP
+            you earn from then on climbs the ladder.
+          </div>
+        )}
+
+        {/* Next tier preview */}
+        {baselineStamped && nextTier && claimable.length === 0 && (
+          <div className="px-4 py-3 flex items-center gap-2 text-[10px] text-muted">
+            <Lock className="w-3 h-3" />
+            Tier {nextTier.tier}: {(nextTier.xp - seasonXP).toLocaleString()} XP away — +
+            {nextTier.coin} CC{nextTier.exclusive ? ` + ${nextTier.exclusive}` : ''}
+          </div>
+        )}
+
+        {/* Ladder complete */}
+        {!nextTier && claimable.length === 0 && (
+          <div className="px-4 py-3 flex items-center justify-center gap-2 text-xs text-emerald-400 font-bold">
+            <Award className="w-4 h-4" />
+            Ladder complete — see you next season!
+          </div>
+        )}
       </div>
-
-      {/* Claimable tiers */}
-      {claimable.length > 0 && (
-        <div className="px-4 py-3 space-y-1.5">
-          {claimable.map((tier) => (
-            <button
-              key={tier.tier}
-              onClick={() => handleClaim(tier)}
-              disabled={claiming === tier.tier}
-              className="w-full flex items-center gap-2 px-3 py-2 bg-emerald-600/10 border border-emerald-500/30 hover:bg-emerald-600/20 transition-colors press-feedback"
-            >
-              <Gift className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-              <span className="text-xs text-white flex-1 text-left">
-                Tier {tier.tier} ready
-                {tier.exclusive ? ` — includes the ${tier.exclusive}!` : ''}
-              </span>
-              <span className="text-[10px] font-bold text-brand font-data whitespace-nowrap">
-                {claiming === tier.tier ? '...' : `+${tier.coin} CC`}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Baseline not stamped yet — tracking begins with the next XP event */}
-      {!baselineStamped && (
-        <div className="px-4 py-3 text-[10px] text-muted">
-          Season XP starts counting with your next check-in, challenge, or prediction — all the XP
-          you earn from then on climbs the ladder.
-        </div>
-      )}
-
-      {/* Next tier preview */}
-      {baselineStamped && nextTier && claimable.length === 0 && (
-        <div className="px-4 py-3 flex items-center gap-2 text-[10px] text-muted">
-          <Lock className="w-3 h-3" />
-          Tier {nextTier.tier}: {(nextTier.xp - seasonXP).toLocaleString()} XP away — +
-          {nextTier.coin} CC{nextTier.exclusive ? ` + ${nextTier.exclusive}` : ''}
-        </div>
-      )}
-
-      {/* Ladder complete */}
-      {!nextTier && claimable.length === 0 && (
-        <div className="px-4 py-3 flex items-center justify-center gap-2 text-xs text-emerald-400 font-bold">
-          <Award className="w-4 h-4" />
-          Ladder complete — see you next season!
-        </div>
-      )}
-    </div>
-  );
-});
+    );
+  }
+);
 
 SeasonLadderPanel.displayName = 'SeasonLadderPanel';
 

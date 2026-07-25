@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // ACHIEVEMENTS — full catalog, earned + in-progress + locked
 // =============================================================================
@@ -23,6 +22,7 @@ import {
 
 // Rarity styling — matches AchievementModal / AchievementMini so a badge looks
 // the same everywhere it appears.
+/** @type {Record<string, {border: string, bg: string, text: string, badge: string}>} */
 const RARITY_STYLES = {
   legendary: {
     border: 'border-purple-500/40',
@@ -58,9 +58,10 @@ const FILTERS = [
 ];
 
 // A single achievement tile.
+/** @param {{a: any}} props an evaluated achievement from the catalog */
 const AchievementCard = ({ a }) => {
   const Icon = a.icon;
-  const styles = RARITY_STYLES[a.rarity] || RARITY_STYLES.common;
+  const styles = RARITY_STYLES[a.rarity] ?? RARITY_STYLES.common;
   const started = a.pct > 0 && !a.earned;
 
   return (
@@ -158,6 +159,7 @@ const Achievements = () => {
   const overallPct = totalCount ? Math.round((earnedCount / totalCount) * 100) : 0;
   const ccEarned = evaluated.filter((a) => a.earned).reduce((sum, a) => sum + (a.ccReward || 0), 0);
 
+  /** @param {any} a */
   const matchesFilter = (a) => {
     if (filter === 'earned') return a.earned;
     if (filter === 'locked') return !a.earned && a.pct === 0;

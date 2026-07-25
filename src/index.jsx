@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -24,8 +23,14 @@ if (
   document.head.appendChild(fontLink);
 }
 
-// Create root element
-const root = ReactDOM.createRoot(document.getElementById('root'));
+// Create root element. index.html always ships #root, so a miss means the
+// document was replaced or the script ran against the wrong page — fail loudly
+// rather than rendering into nothing.
+const container = document.getElementById('root');
+if (!container) {
+  throw new Error('Root element #root not found');
+}
+const root = ReactDOM.createRoot(container);
 
 // Render app
 root.render(

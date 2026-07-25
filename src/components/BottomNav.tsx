@@ -49,7 +49,10 @@ const navItems: NavItem[] = [
 
 const BottomNav: React.FC = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  // useAuth() is null only outside AuthProvider (the public pages); this
+  // component renders behind the auth gate, so `user` is simply absent
+  // rather than the hook being unavailable.
+  const user = useAuth()?.user;
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is admin (mirrors the desktop TopNav in GameShell)

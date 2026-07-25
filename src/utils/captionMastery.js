@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Client mirror of caption mastery (WS5.5). The lifetime points live in the
 // server-only profile field `captionStats.{caption}`, banked nightly by the
 // scoring run; tiers here are display-only and captionMastery.test.js fails
@@ -22,7 +21,10 @@ export const MASTERY_TIER_STYLES = {
   platinum: { text: 'text-cyan-300', bar: 'bg-cyan-300' },
 };
 
-/** Mirror of the backend tier resolution — see helpers/captionMastery.js. */
+/**
+ * Mirror of the backend tier resolution — see helpers/captionMastery.js.
+ * @param {unknown} rawPoints
+ */
 export function getCaptionMastery(rawPoints) {
   const points = Math.max(0, Number(rawPoints) || 0);
   let tier = null;
@@ -36,7 +38,10 @@ export function getCaptionMastery(rawPoints) {
   return { points, tier, next, progress };
 }
 
-/** True once any caption has banked points — gates the profile panel. */
+/**
+ * True once any caption has banked points — gates the profile panel.
+ * @param {Record<string, number>|null|undefined} captionStats
+ */
 export function hasCaptionStats(captionStats) {
   return MASTERY_CAPTIONS.some((c) => (captionStats?.[c] || 0) > 0);
 }
