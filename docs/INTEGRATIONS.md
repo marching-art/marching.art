@@ -39,7 +39,9 @@ Two rules hold across every channel:
 → Webhooks), then store it in Secret Manager **before deploying** — the
 declaring functions won't deploy until the secret exists. Either add it as a
 repo secret of the same name and run **Deploy Cloud Functions** with
-`deploy_target: all` and the matching `set_discord_*_webhook_url` box checked,
+`deploy_target: all` and the `set_discord_webhook_urls` box checked — one box
+pushes every `DISCORD_*_WEBHOOK_URL` repo secret that is set, and warns about
+any that aren't —
 or `firebase functions:secrets:set <NAME>` via the CLI. A webhook URL is a
 post-capability — anyone holding it can post to the channel — which is why it
 lives in Secret Manager, never in the world-readable `game-settings` docs.
@@ -85,10 +87,10 @@ Two more things ride this channel:
   - **Via GitHub Actions (preferred):** add the URL as a repository secret
     named `DISCORD_SCORES_WEBHOOK_URL` (GitHub → Settings → Secrets and
     variables → Actions), then run the **Deploy Cloud Functions** workflow
-    with `deploy_target: all` and the `set_discord_webhook_url` box checked —
+    with `deploy_target: all` and the `set_discord_webhook_urls` box checked —
     the workflow pushes the repo secret into Secret Manager and the deploy
     binds it. Leave the box unchecked on later deploys; re-check it only to
-    rotate the URL (same mechanism as `set_scraper_api_key`).
+    rotate a URL (same mechanism as `set_scraper_api_key`).
   - **Via the CLI:**
 
     ```bash
@@ -144,9 +146,9 @@ collects nobody's vote. Three event posts go to the server's
   Secret Manager **before deploying** (the nightly jobs declare
   `secrets: [discordAnnouncementsWebhookUrl]`): either add it as the repo
   secret `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` and run **Deploy Cloud Functions**
-  with `deploy_target: all` and `set_discord_announcements_webhook_url`
-  checked, or `firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL`
-  via the CLI.
+  with `deploy_target: all` and `set_discord_webhook_urls` checked, or
+  `firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` via the
+  CLI.
 
 ---
 

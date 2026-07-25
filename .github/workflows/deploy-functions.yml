@@ -66,28 +66,8 @@ on:
         required: false
         default: false
         type: boolean
-      set_discord_webhook_url:
-        description: 'One-off: push the DISCORD_SCORES_WEBHOOK_URL repo secret into Google Secret Manager (check on the FIRST deploy after the Discord score-drop stage landed — the scoring functions declare the secret and will not deploy until it exists — and when rotating the webhook; then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
-        required: false
-        default: false
-        type: boolean
-      set_discord_announcements_webhook_url:
-        description: 'One-off: push the DISCORD_ANNOUNCEMENTS_WEBHOOK_URL repo secret into Google Secret Manager (the #announcements webhook: Fan Favorite ballots, season start, lineup lock — check on the FIRST deploy after those stages landed, since the nightly jobs declare the secret and will not deploy until it exists, and when rotating that webhook; then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
-        required: false
-        default: false
-        type: boolean
-      set_discord_news_webhook_url:
-        description: 'One-off: push the DISCORD_NEWS_WEBHOOK_URL repo secret into Google Secret Manager (the #news webhook: published articles and the weekly Podium Report). Same rules as the other webhook secrets — the declaring functions will not deploy until it exists. Requires deploy_target=all.'
-        required: false
-        default: false
-        type: boolean
-      set_discord_events_webhook_url:
-        description: 'One-off: push the DISCORD_EVENTS_WEBHOOK_URL repo secret into Google Secret Manager (the #events webhook: DIRECTOR-HOSTED shows only, never the generated season schedule). Same rules as the other webhook secrets. Requires deploy_target=all.'
-        required: false
-        default: false
-        type: boolean
-      set_discord_ops_webhook_url:
-        description: 'One-off: push the DISCORD_OPS_WEBHOOK_URL repo secret into Google Secret Manager (the ADMIN-ONLY #operations webhook: scoring-watchdog and scrape-canary alerts). Same rules as the other webhook secrets. Requires deploy_target=all.'
+      set_discord_webhook_urls:
+        description: 'One-off: push every DISCORD_*_WEBHOOK_URL repo secret (scores, announcements, news, events, ops) into Google Secret Manager. Check this on the FIRST deploy after a new channel lands — the functions declare the secrets and will not deploy until they exist — and to rotate any webhook; then leave unchecked. Secrets that are not set as repo secrets are skipped with a warning. Requires deploy_target=all so the functions redeploy and pick up the new values.'
         required: false
         default: false
         type: boolean
@@ -212,114 +192,62 @@ jobs:
             firebase functions:secrets:set SCRAPER_API_KEY --data-file - --project marching-art
           echo "SCRAPER_API_KEY written to Secret Manager; the deploy below will bind it to the functions."
 
-      # Same mechanism for the Discord score-drop webhook (helpers/scoreDrop.js).
-      # The nightly scoring functions declare `secrets: [discordScoresWebhookUrl]`,
-      # so this secret MUST exist in Secret Manager before the first deploy that
-      # includes the Discord stage — check this box on that deploy. Afterwards
-      # it's only needed again to rotate the webhook URL.
-      - name: Set DISCORD_SCORES_WEBHOOK_URL in Secret Manager
-        if: ${{ inputs.set_discord_webhook_url }}
+      # One-off push of the Discord channel webhooks (helpers/discord.js).
+      # Every channel has its own secret so any one can be rotated — or
+      # silenced by setting it empty — without touching the others, and the
+      # functions that post to a channel declare that channel's secret. A
+      # declared secret that does not exist in Secret Manager FAILS THE
+      # DEPLOY, so this step must run before the first deploy that includes a
+      # new channel. Afterwards it is only needed to rotate a URL.
+      #
+      # One checkbox rather than one per channel: workflow_dispatch allows a
+      # limited number of inputs, and in practice these are set together.
+      - name: Set Discord webhook URLs in Secret Manager
+        if: ${{ inputs.set_discord_webhook_urls }}
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # scores channel — nightly drop, blue ribbons, records, champions
           DISCORD_SCORES_WEBHOOK_URL: ${{ secrets.DISCORD_SCORES_WEBHOOK_URL }}
-        run: |
-          if [ -z "$DISCORD_SCORES_WEBHOOK_URL" ]; then
-            echo "::error::set_discord_webhook_url was checked but the DISCORD_SCORES_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
-            exit 1
-          fi
-          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
-          trap 'rm -f /tmp/sa-key.json' EXIT
-
-          printf '%s' "$DISCORD_SCORES_WEBHOOK_URL" | \
-            firebase functions:secrets:set DISCORD_SCORES_WEBHOOK_URL --data-file - --project marching-art
-          echo "DISCORD_SCORES_WEBHOOK_URL written to Secret Manager; the deploy below will bind it to the scoring functions."
-
-      # Same mechanism again for the #announcements webhook the Fan Favorite
-      # ballot posts use (helpers/podium/fanFavoriteDiscord.js). A SEPARATE
-      # secret from the scores webhook: different channel, independently
-      # rotatable, and either can be emptied to silence one channel only. The
-      # nightly jobs declare `secrets: [discordAnnouncementsWebhookUrl]`, so it
-      # must exist in Secret Manager before the first deploy that includes them.
-      - name: Set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL in Secret Manager
-        if: ${{ inputs.set_discord_announcements_webhook_url }}
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # #announcements — Fan Favorite ballots, season start, lineup lock
           DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
-        run: |
-          if [ -z "$DISCORD_ANNOUNCEMENTS_WEBHOOK_URL" ]; then
-            echo "::error::set_discord_announcements_webhook_url was checked but the DISCORD_ANNOUNCEMENTS_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
-            exit 1
-          fi
-          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
-          trap 'rm -f /tmp/sa-key.json' EXIT
-
-          printf '%s' "$DISCORD_ANNOUNCEMENTS_WEBHOOK_URL" | \
-            firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL --data-file - --project marching-art
-          echo "DISCORD_ANNOUNCEMENTS_WEBHOOK_URL written to Secret Manager; the deploy below will bind it to the nightly jobs."
-
-      # The #news webhook: published articles (triggers/newsDiscord.js) and the
-      # weekly Podium Report column (helpers/podium/podiumReportDiscord.js).
-      - name: Set DISCORD_NEWS_WEBHOOK_URL in Secret Manager
-        if: ${{ inputs.set_discord_news_webhook_url }}
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # #news — published articles, the weekly Podium Report
           DISCORD_NEWS_WEBHOOK_URL: ${{ secrets.DISCORD_NEWS_WEBHOOK_URL }}
-        run: |
-          if [ -z "$DISCORD_NEWS_WEBHOOK_URL" ]; then
-            echo "::error::set_discord_news_webhook_url was checked but the DISCORD_NEWS_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
-            exit 1
-          fi
-          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
-          trap 'rm -f /tmp/sa-key.json' EXIT
-
-          printf '%s' "$DISCORD_NEWS_WEBHOOK_URL" | \
-            firebase functions:secrets:set DISCORD_NEWS_WEBHOOK_URL --data-file - --project marching-art
-          echo "DISCORD_NEWS_WEBHOOK_URL written to Secret Manager; the deploy below will bind it."
-
-      # The #events webhook: DIRECTOR-HOSTED shows only
-      # (helpers/hostedEventDiscord.js, called from callable/podiumHost.js). The
-      # generated season schedule must never post here.
-      - name: Set DISCORD_EVENTS_WEBHOOK_URL in Secret Manager
-        if: ${{ inputs.set_discord_events_webhook_url }}
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # #events — director-hosted shows only
           DISCORD_EVENTS_WEBHOOK_URL: ${{ secrets.DISCORD_EVENTS_WEBHOOK_URL }}
-        run: |
-          if [ -z "$DISCORD_EVENTS_WEBHOOK_URL" ]; then
-            echo "::error::set_discord_events_webhook_url was checked but the DISCORD_EVENTS_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
-            exit 1
-          fi
-          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
-          trap 'rm -f /tmp/sa-key.json' EXIT
-
-          printf '%s' "$DISCORD_EVENTS_WEBHOOK_URL" | \
-            firebase functions:secrets:set DISCORD_EVENTS_WEBHOOK_URL --data-file - --project marching-art
-          echo "DISCORD_EVENTS_WEBHOOK_URL written to Secret Manager; the deploy below will bind it."
-
-      # The ADMIN-ONLY #operations webhook: scoring-watchdog and scrape-canary
-      # alerts (helpers/opsAlerts.js). Carries lease keys and error text, so the
-      # channel must stay private.
-      - name: Set DISCORD_OPS_WEBHOOK_URL in Secret Manager
-        if: ${{ inputs.set_discord_ops_webhook_url }}
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # #operations — admin-only watchdog/canary alerts
           DISCORD_OPS_WEBHOOK_URL: ${{ secrets.DISCORD_OPS_WEBHOOK_URL }}
         run: |
-          if [ -z "$DISCORD_OPS_WEBHOOK_URL" ]; then
-            echo "::error::set_discord_ops_webhook_url was checked but the DISCORD_OPS_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
-            exit 1
-          fi
           echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
           trap 'rm -f /tmp/sa-key.json' EXIT
 
-          printf '%s' "$DISCORD_OPS_WEBHOOK_URL" | \
-            firebase functions:secrets:set DISCORD_OPS_WEBHOOK_URL --data-file - --project marching-art
-          echo "DISCORD_OPS_WEBHOOK_URL written to Secret Manager; the deploy below will bind it."
+          PUSHED=0
+          for NAME in \
+            DISCORD_SCORES_WEBHOOK_URL \
+            DISCORD_ANNOUNCEMENTS_WEBHOOK_URL \
+            DISCORD_NEWS_WEBHOOK_URL \
+            DISCORD_EVENTS_WEBHOOK_URL \
+            DISCORD_OPS_WEBHOOK_URL
+          do
+            VALUE="${!NAME}"
+            if [ -z "$VALUE" ]; then
+              # A missing secret is a warning, not a failure: a server may
+              # genuinely not have that channel yet. But any function that
+              # declares it will fail to deploy below, so make it loud.
+              echo "::warning::$NAME is not set as a repository secret — skipped. Functions that declare it will fail to deploy until it exists in Secret Manager."
+              continue
+            fi
+            printf '%s' "$VALUE" | \
+              firebase functions:secrets:set "$NAME" --data-file - --project marching-art
+            echo "$NAME written to Secret Manager."
+            PUSHED=$((PUSHED + 1))
+          done
+
+          if [ "$PUSHED" -eq 0 ]; then
+            echo "::error::set_discord_webhook_urls was checked but no DISCORD_*_WEBHOOK_URL repo secrets are set. Add them under Settings → Secrets and variables → Actions → New repository secret, then re-run."
+            exit 1
+          fi
+          echo "$PUSHED Discord webhook secret(s) written; the deploy below will bind them."
 
       - name: Deploy Firestore rules + all functions
         env:
