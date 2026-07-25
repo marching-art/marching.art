@@ -148,13 +148,28 @@ enrichment/archive path all pull from **dci.org**.
   add a new one, declare it too or the key won't be readable at runtime.
 
 - **Volume & etiquette:** the live scrape hits ~1–4 URLs/night; keep it that way.
-  The durable fix is an allowlist/data arrangement with DCI (a shared-secret
-  header or a static-IP Cloudflare skip rule), which lets us drop the scraping
-  API entirely.
+  Under the timezone-aware drop pipeline the night's scrape is a **single pass**
+  fired at the planned instant (see [`SCORE_DROPS.md`](SCORE_DROPS.md) §2), so
+  scraper credits don't scale with the number of dispatcher ticks. The durable
+  fix is an allowlist/data arrangement with DCI (a shared-secret header or a
+  static-IP Cloudflare skip rule), which lets us drop the scraping API entirely.
 - **Still affected:** the upcoming-events scrape (`functions-scraper`, Puppeteer
   against `dci.org/events/`) hits the same Cloudflare wall and is **not** routed
   through `dciFetch` yet — it needs its own bypass (stealth browser or the
-  scraping API's JS-scenario paging).
+  scraping API's JS-scenario paging). It lives in its own deploy codebase
+  (`firebase.json` → `codebase: "scraper"`, 2 GB, Chromium) and the main
+  functions call it over HTTP with the `SCRAPER_INVOKE_KEY` shared secret.
+
+### Markup-drift canary
+
+`scrapeCanary` (`functions/src/scheduled/scrapeCanary.js`, ~1 PM ET) fetches the
+pages the nightly scrape depends on — the `/scores/` listing, sitemap discovery,
+and a recap page — and audits their structure via
+`helpers/scrapeCanary.js`. A dci.org redesign then surfaces as an early-afternoon
+alert instead of a 2 AM scoring-night incident. Alerting mirrors the scoring
+watchdog: a stably-tagged `[scrape-canary]` `logger.error` for log-based alerts
+plus an admin email fan-out, with the last result persisted to
+`admin-stats/scrapeCanary` for the admin dashboard.
 
 ## Historical-data importers
 

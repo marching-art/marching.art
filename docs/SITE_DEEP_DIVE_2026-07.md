@@ -6,18 +6,21 @@ followed by five recommendations expected to produce substantial improvement.
 
 ## Implementation status (July 2026, same branch)
 
-| Rec                   | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1 — Retention loop    | **Shipped.** Discord score-drop embed (nightly stage + `DISCORD_SCORES_WEBHOOK_URL` secret), morning FCM score-drop push, lineup-deadline reminders, matchup-result pushes. Email intentionally welcome-only (Brevo free tier).                                                                                                                                                                                                                                                                              |
-| 2 — Growth surface    | **Plumbing shipped:** `/api/news` fixed on Vercel, hosting-parity CI check, Hall of Champions crawlable + sitemapped. **Remaining:** prerendered public score/champion pages and dynamic OG share cards (design-shaped project).                                                                                                                                                                                                                                                                             |
-| 3 — Scores data path  | **Shipped:** registration-indexed scoring loop (was O(shows × all profiles)), rank writes only on movement, dark days skip the historical fetch, hourly (was 5-min) current-season recap staleness, non-blocking fonts. **Remaining:** nightly materialized standings doc + Scores-page consumption of it (larger client rework).                                                                                                                                                                            |
-| 4 — Callable lockdown | **Shipped:** per-uid write budgets on economy/vote/notification mutations, hardened `sendCommentNotification`, scoped league `list` (live namespace) with 6 new rules-test pins, App Check enforcement wired via `setGlobalOptions` in `functions/index.js` (a one-line literal flip after console metrics confirm attestation).                                                                                                                                                                             |
-| 5 — Regression safety | **Shipped:** captionStats award-ledger fix (real double-count bug), single scoring orchestrator (was ~95% duplicated), functions `checkJs` typecheck in CI (first run caught two production crashes: `reportComment` and `calculateCorpsStatisticsLogic` calling client-SDK APIs on firebase-admin), deploy tagging + rollback procedure, frontend coverage floors ratcheted to current. **Remaining:** authenticated emulator-backed e2e for the money paths; component tests for Dashboard/Leagues/Scores. |
+All five recommendations are now shipped. The one deliberate residual is the
+App Check enforcement flip, which waits on console attestation metrics.
+
+| Rec                   | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Retention loop    | **Shipped.** Discord score-drop embed (nightly stage + `DISCORD_SCORES_WEBHOOK_URL` secret), morning FCM score-drop push, lineup-deadline reminders, matchup-result pushes. Email intentionally welcome-only (Brevo free tier).                                                                                                                                                                                                                                                                                            |
+| 2 — Growth surface    | **Shipped.** `/api/news` fixed on Vercel + hosting-parity CI check; per-article meta/OG tags and `NewsArticle` JSON-LD; a live `/sitemap.xml` served from Firestore (`getSitemapHttp`); dynamic OG share cards behind `/share/**` and `/api/og/**` (`shareCards.js`); server-rendered, crawlable `/results` season and per-day standings (`resultsPages.js`), unified with the site's own styling. Score share links land on the day's public results page.                                                                |
+| 3 — Scores data path  | **Shipped.** Registration-indexed scoring loop (was O(shows × all profiles)), rank writes only on movement, dark days skip the historical fetch, hourly (was 5-min) current-season recap staleness, non-blocking fonts — plus the nightly materialized `fantasy_standings/{seasonUid}` docs (`standingsMaterializer.js`), which the Scores page now reads instead of aggregating up to 49 recap days client-side.                                                                                                          |
+| 4 — Callable lockdown | **Shipped.** Per-uid write budgets on every user-facing mutation callable, enforced by a CI census (`scripts/callableBudgetCensus.mjs`); hardened `sendCommentNotification`; scoped league `list`; the user-subcollection catch-all inverted to default-private; admin standardized on custom claims only. App Check enforcement is wired via `setGlobalOptions` in `functions/index.js` — a one-line literal flip once console metrics confirm attestation.                                                               |
+| 5 — Regression safety | **Shipped.** captionStats award-ledger fix (real double-count bug), single scoring orchestrator (was ~95% duplicated), functions `checkJs` typecheck in CI (first run caught two production crashes: `reportComment` and `calculateCorpsStatisticsLogic` calling client-SDK APIs on firebase-admin), deploy tagging + rollback procedure, ratcheted frontend coverage — plus an emulator-backed core-loop e2e (seeded Firestore, guest draft through the registration gate), Scores component tests, and an axe a11y gate. |
 
 ## Follow-up work (July 2026, after the five recs landed)
 
-All five recommendations above are shipped. Three follow-ups were taken up
-afterwards, each addressing a gap the audit surfaced but did not rank:
+Three follow-ups were taken up afterwards, each addressing a gap the audit
+surfaced but did not rank:
 
 | Area        | What changed                                                                                                                                                                                                                                                              |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,6 +37,11 @@ every director the answer sheet.
 
 ## State of the site — summary
 
+> Everything from here down is the **audit as written in July 2026**, preserved
+> for its reasoning. The problems it names are the ones the five
+> recommendations fixed — see the status table above before treating any of them
+> as current.
+
 The codebase is in unusually good shape for a solo/small-team live-ops game.
 Things that are genuinely strong and should be protected:
 
@@ -41,7 +49,7 @@ Things that are genuinely strong and should be protected:
   (profile/season/schedule) with documented single-source-of-truth rules, React
   Query for one-shot reads with sane defaults, cursor-paginated leaderboards,
   an offline lineup-save queue with replay, layered error boundaries, and
-  per-route code splitting with stale-chunk retry (`src/utils/lazyWithRetry.ts`).
+  per-route code splitting with stale-chunk retry (`src/utils/lazyWithRetry.js`).
 - **Economy integrity (security).** All currency/XP/rank fields are server-only,
   guarded in `firestore.rules` (`touchesProtectedProfileFields`,
   `touchesProtectedCorpsFields`) and verified by a real emulator rules suite
@@ -227,21 +235,30 @@ to ship quickly.
 
 ## Smaller items worth picking up opportunistically
 
-- Decide **Podium's fate** — an entire second game sits complete but dark
-  behind `game-settings/features.podiumClass`. Dark-launch to a cohort with a
-  date, or shelve explicitly; leaving it dark strands the investment.
-- Onboarding still seeds `execution/morale/equipment/readiness` — systems
-  explicitly cut per `GAMIFICATION.md`. Stop writing dead data.
+Resolved since the audit:
+
+- ~~Decide **Podium's fate**~~ — launched mid-live-season 2026; `PODIUM.md` is
+  at v3.0 LIVE with a launch-week decision sheet.
+- ~~Onboarding seeds `execution/morale/equipment/readiness`~~ — those seeds are
+  gone (`src/pages/Onboarding.jsx` now carries a note saying why).
+- ~~`src/stories/` is dead CRA/Storybook scaffolding~~ — deleted.
+- ~~Recurring CorpsCoin sinks are thin~~ — Legacy Endowments added the first
+  repeatable, uncapped sink. See `GAMIFICATION.md`.
+
+Still open:
+
 - `sharp` is a devDependency with no pipeline invoking it — wire it up or drop it.
-- `src/stories/` is dead CRA/Storybook scaffolding (no config, no stories) — delete.
 - `/styleguide` is a dev reference exposed on a public route.
-- Recurring CorpsCoin sinks are thin (mostly one-time cosmetics) versus
-  perpetual faucets — add seasonal/consumable sinks to keep the economy
-  meaningful across multi-year careers.
 - Public league discovery + shareable invite links would turn the
   best-built retention system (leagues) into an acquisition channel.
 
 ## Per-dimension audit notes
+
+> These are the **July 2026 snapshot** that produced the recommendations above,
+> kept as written so the before/after is legible. Several numbers here are now
+> stale by design — `@ts-nocheck` is down from 258 to 209 files, the Scores read
+> path and nightly loop were rebuilt (rec #3), and the public surface exists
+> (rec #2). Read the status table at the top for current state.
 
 ### Frontend (React/Vite)
 

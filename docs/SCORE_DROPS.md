@@ -7,8 +7,8 @@ operate the timezone-aware pipeline. Source-of-truth files:
 - Nightly planner: `functions/src/helpers/dropPlanner.js`
 - Dispatcher + Podium job: `functions/src/scheduled/dropDispatcher.js`
 - Venue timezones: `functions/src/helpers/podium/venueGazetteer.json`
-  (stamped by `src/scripts/venueTimezones.js`; consumed via
-  `timezoneFor()` in `helpers/podium/venues.js`)
+  (stamped in place by `functions/src/scripts/venueTimezones.js`; consumed via
+  `timezoneFor()` in `functions/src/helpers/podium/venues.js`)
 
 ---
 

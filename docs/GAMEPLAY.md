@@ -8,7 +8,8 @@ simulation game documented in [`PODIUM.md`](PODIUM.md).
 Authoritative constants live in code and should be treated as the source of
 truth if this doc ever drifts:
 
-- Class caps / unlocks / rewards: `src/config/classRegistry.json`
+- Class caps / unlocks / rewards: `functions/src/config/classRegistry.json`
+  (canonical; `src/config/classRegistry.json` is its byte-identical client mirror)
 - Caption-change windows: `functions/src/helpers/captionWindows.js` (mirrored
   client-side in `src/utils/seasonClock.js`)
 - Show registration limits: `functions/src/callable/lineups.js`

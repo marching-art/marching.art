@@ -204,7 +204,7 @@ of actual DCI recaps.**
 
 ### 4.1 Mining the corpus (one-time + per-season refresh)
 
-An offline analysis job (`functions/scripts/buildPodiumCurves.js`) processes every
+An offline analysis job (`functions/src/scripts/buildPodiumCurves.js`) processes every
 `historical_scores/{year}` document:
 
 1. **Normalize trajectories.** For every corps-season, for each of the 8 captions, extract the
@@ -1023,14 +1023,22 @@ Podium populates identically).
 
 ### 7.2 New/changed documents
 
-| Path                                  | Purpose                                                                                                                                  |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `podium-config/curves`                | Percentile bands, delta bounds, archetype params from the corpus job (§4.1)                                                              |
-| `podium-config/venues`                | Venue gazetteer: normalized location string → `{venueId, city, state, lat, lng}` (§5.3); appended-to when live scraping meets a new city |
-| `podium-config/balance`               | Tunables: block yields, decay rates, condition coefficients — hot-adjustable without deploys                                             |
-| `fantasy_recaps/{seasonUid}/days/{d}` | Existing docs; Podium results appear as entries with `corpsClass: 'podiumClass'`                                                         |
-| `game-settings/season`                | Unchanged — Podium reads the same schedule                                                                                               |
-| `firestore.rules`                     | Podium fields writable only via functions (all mutations go through callables)                                                           |
+| Path                                  | Purpose                                                                                                                                                              |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `podium-config/curves`                | Runtime overrides for the percentile bands, delta bounds, and archetype params from the corpus job (§4.1); the committed baseline is `helpers/podium/curveData.json` |
+| `podium-config/balance`               | Tunables: block yields, decay rates, condition coefficients — hot-adjustable without deploys                                                                         |
+| `podium-config/podiumSeasons`         | The season ledger that makes dormancy countable for returning directors (§5.13)                                                                                      |
+| `fantasy_recaps/{seasonUid}/days/{d}` | Existing docs; Podium results appear as entries with `corpsClass: 'podiumClass'`                                                                                     |
+| `podium-recaps/{seasonUid}/…`         | Podium's own day results, power rankings, and standings — never mixed into the fantasy ranking pass                                                                  |
+| `game-settings/season`                | Unchanged — Podium reads the same schedule                                                                                                                           |
+| `firestore.rules`                     | Podium fields writable only via functions (all mutations go through callables)                                                                                       |
+
+> The venue gazetteer shipped as a **committed JSON file**
+> (`helpers/podium/venueGazetteer.json`, timezone-stamped by
+> `src/scripts/venueTimezones.js`) rather than the `podium-config/venues`
+> document this section originally planned — the deployed runtime reads it
+> directly, with no Firestore round trip and no tz dependency. `venues.js`
+> resolves lookups against it.
 
 Every game-state mutation is server-side (callable-validated) — client never writes caption or
 condition values. This is non-negotiable for a competitive class (FMA's alt-account cheating
@@ -1068,23 +1076,48 @@ New stage `processPodiumDay(seasonUid, day)` after fantasy scoring, inside the e
 5. Existing downstream (rivals job, leaderboards, league matchups) picks Podium up via class
    filters.
 
+> **Timing, as shipped.** With `features.dropScheduling` ON the stage runs in its own **9 PM ET
+> year-round job** (`podiumNightly`, `scheduled/dropDispatcher.js`) rather than trailing fantasy
+> scoring, so Podium's drop no longer moves with the fantasy ladder's westernmost show. The
+> interactive day rolls at 9 PM too — after the stage ends a corps' day, rehearsal verbs act on
+> tomorrow (`getActivePodiumCalendarDay`). Flag off, the legacy 2 AM boundary applies everywhere.
+> See [`SCORE_DROPS.md`](SCORE_DROPS.md) §4.
+
 ### New scripts
 
-- `functions/scripts/buildPodiumCurves.js` — the corpus-mining job from §4.1. Run manually per new
-  data year; output committed as JSON + uploaded to `podium-config/curves`.
-- `functions/scripts/buildVenueGazetteer.js` — extracts every distinct `location` string from
-  `historical_scores`, normalizes + geocodes offline, emits `podium-config/venues` (§5.3).
-  Schedule generation and the live scraper stamp events with resolved venue data at ingest time.
+- `functions/src/scripts/buildPodiumCurves.js` — the corpus-mining job from §4.1. Run manually per new
+  data year; output committed as `helpers/podium/curveData.json`, with `podium-config/curves` reserved
+  for runtime overrides.
+- `functions/src/scripts/buildVenueGazetteer.js` — extracts every distinct `location` string from
+  `historical_scores`, normalizes + geocodes offline, and emits the committed
+  `helpers/podium/venueGazetteer.json` (§5.3). `functions/src/scripts/venueTimezones.js` then stamps each
+  venue's IANA timezone in place — the input the score-drop ladder reads (see
+  [`SCORE_DROPS.md`](SCORE_DROPS.md)). Refreshed in CI by
+  `.github/workflows/refresh-venue-gazetteer.yml`; schedule generation and the live scraper stamp
+  events with resolved venue data at ingest time.
 
-### Config touchpoints (the mirrored-constant checklist)
+### Config touchpoints
 
-`src/utils/corps.ts` (`CORPS_CLASS_ORDER`, labels, colors) · `src/config/index.ts`
-(`GAME_CONFIG.corpsClasses`) · `sections/constants.js` (unlock level/cost) ·
-`src/utils/captionPricing.js` (unlock mirrors; Podium has **no point cap** — flag it exempt) ·
-`functions/src/callable/lineups.js` `validClasses` (Podium must be _rejected_ by `saveLineup` — it
-has no lineup) · `registerCorps.js` (registration lock: 0 weeks, matching SoundSport — always joinable) ·
-`economy.js` (unlock cost, participation reward) · `scoring.js` (excluded from `RANKED_CLASSES`) ·
-`firestore.rules`.
+The mirrored-constant checklist this section once carried is **obsolete**: Phase 1.1 collapsed
+those ~9 hand-kept copies into the class-capability registry
+(canonical: `functions/src/config/classRegistry.json`; byte-identical client mirror:
+`src/config/classRegistry.json`, enforced by
+`scripts/checkClassRegistrySync.js`). Point caps, unlock levels/costs, registration-lock weeks,
+participation rewards, and capabilities are all read from there —
+`src/components/Dashboard/sections/constants.js` and `src/utils/captionPricing.js` now re-export
+from `src/utils/classRegistry`, and the backend reads
+`functions/src/helpers/classRegistry.js`. Change a Podium policy value in the registry, not at a
+call site.
+
+Podium's registry entry pins the things that are genuinely special:
+`capabilities.hasLineup: false` (so `saveLineup` rejects it and it never enters a point-cap path),
+`pointCap: null`, `fantasyRanked: false` (excluded from `RANKED_CLASSES`), `usesRehearsal: true`,
+`hasDivisions: true`, `registrationLockWeeks: 0` (always joinable, matching SoundSport), and
+`participationReward: 175`.
+
+What still lives outside the registry: presentation
+(`src/utils/corps.ts` — `CORPS_CLASS_ORDER`, labels, colors), `firestore.rules`, and
+`game-settings/features.podiumClass` as the runtime kill switch.
 
 ---
 
@@ -1141,9 +1174,9 @@ Three governing principles, restated as build constraints:
 
 ### Phase 0 — Data science & calibration _(no product code; 1–2 wks)_
 
-0.1 `functions/scripts/buildVenueGazetteer.js` — extract/normalize/geocode all distinct
+0.1 `functions/src/scripts/buildVenueGazetteer.js` — extract/normalize/geocode all distinct
 `location` strings → `podium-config/venues` + bundled JSON (§5.3).
-0.2 `functions/scripts/buildPodiumCurves.js` — logistic fits, day-indexed percentile bands,
+0.2 `functions/src/scripts/buildPodiumCurves.js` — logistic fits, day-indexed percentile bands,
 delta distributions, k-means archetypes → `podium-config/curves` + JSON (§4.1). Completed
 years only (§14.2.7).
 0.3 Calibration notebook: reputation pacing vs real multi-season climbs (Crown 2004→2013 as
