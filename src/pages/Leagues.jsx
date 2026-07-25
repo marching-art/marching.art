@@ -38,6 +38,7 @@ import {
   getActiveMemberCount,
   isMemberActive,
   isLeagueDormant,
+  needsCorpsSetup,
 } from '../utils/leagueActivity';
 
 // =============================================================================
@@ -114,6 +115,7 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
   const activeCount = getActiveMemberCount(league);
   const dormant = isLeagueDormant(league);
   const youArePlaying = isMemberActive(league, userProfile?.uid);
+  const youNeedSetup = needsCorpsSetup(league, userProfile?.uid);
   const maxMembers = league.maxMembers || 20;
   const currentWeek = league.currentWeek || 1;
 
@@ -163,14 +165,25 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
           <span className="text-muted">•</span>
           <span>Week {currentWeek}</span>
         </div>
-        {dormant ? (
+        {/* Each of these is only shown when it is provably true of THIS
+            director. Participation we haven't computed yet falls through to
+            the normal matchup line — an un-backfilled league is not an empty
+            one, and telling a competing director mid-season that their season
+            hasn't started is worse than saying nothing. */}
+        {youNeedSetup ? (
           <div className="flex items-center gap-1 mt-1 text-[10px] text-brand">
             <Sprout className="w-3 h-3" />
-            <span>
-              {youArePlaying
-                ? 'Waiting on other members to set up their corps'
-                : 'Season not started — set up your corps'}
-            </span>
+            <span>You haven&apos;t registered a corps this season</span>
+          </div>
+        ) : dormant ? (
+          <div className="flex items-center gap-1 mt-1 text-[10px] text-brand">
+            <Sprout className="w-3 h-3" />
+            <span>No corps registered here yet this season</span>
+          </div>
+        ) : youArePlaying && activeCount === 1 ? (
+          <div className="flex items-center gap-1 mt-1 text-[10px] text-muted">
+            <Sprout className="w-3 h-3" />
+            <span>Waiting on other members to set up their corps</span>
           </div>
         ) : (
           hasMatchupsGenerated && (

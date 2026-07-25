@@ -108,8 +108,29 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       [`corps.${corpsClass}`]: newCorpsData
     };
 
-    // Set activeSeasonId when registering first corps for this season
-    if (!profileData.activeSeasonId && seasonData?.seasonUid) {
+    // Set activeSeasonId when registering a corps for this season.
+    //
+    // This used to fire only when the field was entirely UNSET, which left a
+    // hole: a returning director who retired everything last season has a
+    // stale activeSeasonId and no corps, so the setup wizard sends them
+    // straight to registration (there are no continue/retire decisions to
+    // make) and processCorpsDecisions — the other writer of this field —
+    // never runs. They ended up fielding a corps while their profile still
+    // claimed the previous season. That was invisible until league
+    // participation started keying off activeSeasonId
+    // (helpers/leagueActivity.js), where it reads as "not playing".
+    //
+    // Guarded on having no other named corps so the wizard's step-0 detection
+    // is untouched: a director who DOES hold corps from last season must keep
+    // the season mismatch until they work through those decisions, which is
+    // what makes the verification step appear.
+    const hasOtherNamedCorps = Object.entries(profileData.corps || {})
+      .some(([cls, c]) => cls !== corpsClass && c?.corpsName);
+    if (
+      seasonData?.seasonUid &&
+      profileData.activeSeasonId !== seasonData.seasonUid &&
+      !hasOtherNamedCorps
+    ) {
       updateData.activeSeasonId = seasonData.seasonUid;
       logger.info(`Setting activeSeasonId for user ${uid} to ${seasonData.seasonUid}`);
     }
