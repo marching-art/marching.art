@@ -1,7 +1,8 @@
 # Integrations
 
 External services and data pipelines: YouTube video embeds, Google Gemini
-(AI news + corps avatars), the Discord score-drop webhook, and the
+(AI news + corps avatars), the two Discord webhooks (nightly score drop →
+scores channel, Fan Favorite ballots → #announcements), and the
 historical-data importers that feed scoring and schedule generation.
 
 ---
@@ -49,6 +50,50 @@ The companion morning push (`scoreDropPushJob` in
 `functions/src/scheduled/pushNotifications.js`, 8 AM ET) notifies each
 director who performed last night via FCM, gated by the existing
 `pushPreferences.scoreUpdate` setting.
+
+---
+
+## Discord (Fan Favorite ballots → #announcements)
+
+The Fan Favorite is a community ritual (see [`PODIUM.md`](PODIUM.md) decision
+30), and the community lives in Discord — a ballot nobody knows is open
+collects nobody's vote. Three event posts go to the server's
+**#announcements** channel:
+
+| Post             | When                                                                                                                        | Contents                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Prelims open** | the night a major is scored (days 28, 35, and **42** for the two-night Eastern, whose field isn't complete until night two) | candidate corps by division, the day voting closes, vote link    |
+| **Finals open**  | the night finalists publish (day 44)                                                                                        | each major's prelims **results** with vote counts, the finalists |
+| **Crowned**      | season archival (first night of the next season)                                                                            | the finals results and the winner                                |
+
+- **Code:** `functions/src/helpers/podium/fanFavoriteDiscord.js` (embeds +
+  post), wired as `runFanFavoriteStage` in
+  `functions/src/scheduled/nightlyStages.js` and run right after the Podium
+  stage by both callers (`scheduled/dailyProcessors.js` at 2 AM, and
+  `scheduled/dropDispatcher.js`'s 9 PM `podiumNightly` once drop scheduling is
+  on) — it announces off the state that stage just wrote. Isolated the same
+  way: a Discord failure is logged and swallowed, never blocking Podium
+  processing or scoring.
+- **Idempotency:** one `scoring_runs` lease per (season, event) —
+  `{seasonUid}_fanfav_prelims_day{major}`, `_fanfav_finals_day0`,
+  `_fanfav_winner_day0`. The stage runs every night (that is how it notices a
+  state change) and posts each announcement exactly once. A failed post marks
+  its lease failed, so the next night re-claims and re-posts.
+- **Tallies:** the announcements read published results, not ballots.
+  `publishFinalists` writes `prelimsResults` (top 5 per major) and
+  `crownWinner` writes `finalsResults` onto the world-readable
+  `podium-fan/{seasonUid}` doc — ballots stay server-only and private
+  (`firestore.rules`), counts are public, exactly as decision 30 specifies.
+- **Setup:** a **separate webhook and secret** from the score drop —
+  `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL`, pointed at #announcements. Create the
+  webhook (Channel Settings → Integrations → Webhooks), then store it in
+  Secret Manager **before deploying** (the nightly jobs declare
+  `secrets: [discordAnnouncementsWebhookUrl]`): either add it as the repo
+  secret `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` and run **Deploy Cloud Functions**
+  with `deploy_target: all` and `set_discord_announcements_webhook_url`
+  checked, or `firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL`
+  via the CLI. Two secrets means either channel can be rotated, or silenced by
+  setting it empty, without touching the other.
 
 ---
 

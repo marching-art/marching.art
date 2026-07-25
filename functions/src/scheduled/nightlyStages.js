@@ -22,6 +22,10 @@
  * scores channel (helpers/scoreDrop.js). It only runs on scored competition
  * days and is disabled entirely when the DISCORD_SCORES_WEBHOOK_URL secret
  * is unset/empty.
+ *
+ * The Fan Favorite stage posts the community ballot's openings and results to
+ * the #announcements channel (helpers/podium/fanFavoriteDiscord.js) — its own
+ * webhook secret, DISCORD_ANNOUNCEMENTS_WEBHOOK_URL, disabled the same way.
  */
 
 const { logger } = require("firebase-functions/v2");
@@ -154,4 +158,80 @@ async function runDiscordStage(db, webhookUrl, fetchImpl, { scoredDay: scoredDay
   });
 }
 
-module.exports = { runPodiumStage, runDiscordStage };
+/**
+ * Run the Fan Favorite announcement stage: post the community ballot's
+ * openings and results to the Discord #announcements channel
+ * (helpers/podium/fanFavoriteDiscord.js). Self-contained like the other
+ * stages, and lease-guarded per (season, event) so running it every night —
+ * which is how it detects state changes — posts each announcement once.
+ *
+ * Runs AFTER the Podium stage: a major's ballot opens off the recap that
+ * stage writes, and the crowned winner off the archival sweep it performs.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} webhookUrl - #announcements webhook; falsy disables the stage.
+ * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @param {Object} [options]
+ * @param {number} [options.competitionDay] - The day the Podium stage just
+ *   processed. Omitted, it is derived via the 2 AM game-day reset, which is
+ *   correct only for the legacy 2 AM callers; the 9 PM Podium job passes the
+ *   day its own stage reported.
+ * @returns {Promise<{status: string, [key: string]: unknown}>}
+ */
+async function runFanFavoriteStage(
+  db,
+  webhookUrl,
+  fetchImpl,
+  { competitionDay: competitionDayOverride = null } = {}
+) {
+  if (!webhookUrl) return { status: "disabled" };
+  if (!(await isPodiumEnabled(db))) return { status: "podium-disabled" };
+
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) return { status: "no-season" };
+  const seasonData = seasonDoc.data();
+  if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
+
+  const competitionDay =
+    competitionDayOverride ??
+    toCompetitionDay(getCompletedCalendarDay(seasonData.schedule.startDate.toDate()), seasonData);
+
+  const store = require("../helpers/podium/store");
+  const fanFavoriteDiscord = require("../helpers/podium/fanFavoriteDiscord");
+  const announcements = await fanFavoriteDiscord.announceFanFavorite(db, {
+    seasonUid: seasonData.seasonUid,
+    seasonName: seasonData.name || seasonData.seasonUid,
+    competitionDay,
+    cfg: store.balance,
+    webhookUrl,
+    fetchImpl,
+  });
+
+  // A season's Fan Favorite is crowned at ARCHIVAL — the first night of the
+  // next season — so the winner announcement belongs to the previous season's
+  // ballot, not the active one.
+  try {
+    const career = require("../helpers/podium/career");
+    const previous = await career.latestPreviousSeason(db);
+    if (previous && previous.seasonUid !== seasonData.seasonUid) {
+      const crowned = await fanFavoriteDiscord.announceFanFavoriteWinner(db, {
+        seasonUid: previous.seasonUid,
+        // Past seasons have no display name of their own; the Podium season
+        // index reads better in an embed title than the raw seasonUid.
+        seasonName:
+          typeof previous.index === "number" ? `Season ${previous.index}` : previous.seasonUid,
+        webhookUrl,
+        fetchImpl,
+      });
+      // Uncrowned is the state on all but one night a year — reporting it
+      // would make every quiet night look like the stage did something.
+      if (crowned.status !== "no-winner") announcements.push(crowned);
+    }
+  } catch (error) {
+    logger.warn(`[fan-favorite] previous-season winner check skipped: ${error.message}`);
+  }
+
+  return { status: "ran", competitionDay, announcements };
+}
+
+module.exports = { runPodiumStage, runDiscordStage, runFanFavoriteStage };

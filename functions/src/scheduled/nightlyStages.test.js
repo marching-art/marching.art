@@ -6,7 +6,7 @@
 const { test, describe, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { runPodiumStage, runDiscordStage } = require("./nightlyStages");
+const { runPodiumStage, runDiscordStage, runFanFavoriteStage } = require("./nightlyStages");
 const { resetFeatureCache } = require("../helpers/features");
 
 /**
@@ -181,6 +181,71 @@ describe("nightly Discord score-drop stage", () => {
     assert.match(posted.body.embeds[0].description, /Offseason IX/);
     const leasePath = `scoring_runs/test_season_discord_day${result.scoredDay}`;
     assert.equal(db.writes[leasePath].status, "completed");
+  });
+});
+
+describe("nightly Fan Favorite announcement stage", () => {
+  const okFetch = async () => ({ ok: true, status: 204, text: async () => "" });
+  const season = {
+    status: "off-season",
+    seasonUid: "test_season",
+    name: "Offseason IX",
+    schedule: { startDate: startDaysAgo(10) },
+  };
+
+  beforeEach(() => resetFeatureCache());
+
+  test("disabled when no #announcements webhook is configured", async () => {
+    const db = fakeDb({ "game-settings/features": { podiumClass: true } });
+    assert.deepEqual(await runFanFavoriteStage(db, ""), { status: "disabled" });
+    assert.deepEqual(await runFanFavoriteStage(db, undefined), { status: "disabled" });
+  });
+
+  test("silent while Podium is flagged off", async () => {
+    const db = fakeDb({ "game-settings/season": season });
+    const result = await runFanFavoriteStage(db, "https://d.test/a", okFetch);
+    assert.equal(result.status, "podium-disabled");
+  });
+
+  test("no season doc: skipped safely", async () => {
+    const db = fakeDb({ "game-settings/features": { podiumClass: true } });
+    assert.equal((await runFanFavoriteStage(db, "https://d.test/a", okFetch)).status, "no-season");
+  });
+
+  test("posts the ballot for the major the Podium stage just scored", async () => {
+    let posted = null;
+    const fetchImpl = async (url, options) => {
+      posted = JSON.parse(options.body);
+      return { ok: true, status: 204, text: async () => "" };
+    };
+    const db = fakeDb({
+      "game-settings/features": { podiumClass: true },
+      "game-settings/season": season,
+      "podium-recaps/test_season/days/35": {
+        shows: [{ results: [{ uid: "u1", corpsName: "Colts", division: "openClass" }] }],
+      },
+    });
+
+    // The day is the one the Podium stage reported, not a clock derivation.
+    const result = await runFanFavoriteStage(db, "https://d.test/a", fetchImpl, {
+      competitionDay: 35,
+    });
+    assert.equal(result.status, "ran");
+    assert.deepEqual(result.announcements, [{ kind: "prelims-open", status: "posted" }]);
+    assert.match(posted.embeds[0].title, /Southeastern Championship/);
+    assert.equal(db.writes["scoring_runs/test_season_fanfav_prelims_day35"].status, "completed");
+  });
+
+  test("an ordinary night has nothing to announce", async () => {
+    const db = fakeDb({
+      "game-settings/features": { podiumClass: true },
+      "game-settings/season": season,
+    });
+    const result = await runFanFavoriteStage(db, "https://d.test/a", okFetch, {
+      competitionDay: 20,
+    });
+    assert.equal(result.status, "ran");
+    assert.deepEqual(result.announcements, []);
   });
 });
 

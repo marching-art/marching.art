@@ -271,6 +271,10 @@ async function runDiscordScoreDrop(db, { seasonUid, seasonName, scoredDay, webho
 module.exports = {
   discordScoresWebhookUrl,
   CLASS_LABELS,
+  MEDALS,
+  SRC_PARAM,
+  SRC_DISCORD,
+  clampName,
   ordinal,
   aggregateNightlyStandings,
   buildScoreDropEmbed,

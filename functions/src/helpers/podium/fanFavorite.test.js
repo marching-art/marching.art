@@ -21,6 +21,18 @@ describe("Fan Favorite ballot windows (decision 30)", () => {
     assert.equal(fanFavorite.openPrelimsMajor(45, cfg), null);
   });
 
+  test("the closing day is the window's last day — the Eastern counts from night two", () => {
+    assert.equal(fanFavorite.prelimsClosesOn(28, cfg), 30);
+    assert.equal(fanFavorite.prelimsClosesOn(35, cfg), 37);
+    assert.equal(fanFavorite.prelimsClosesOn(41, cfg), 44);
+    // Whatever the window, the last open day is exactly the last day it closes.
+    for (const major of fanFavorite.MAJORS) {
+      const closes = fanFavorite.prelimsClosesOn(major, cfg);
+      assert.equal(fanFavorite.openPrelimsMajor(closes, cfg), major);
+      assert.notEqual(fanFavorite.openPrelimsMajor(closes + 1, cfg), major);
+    }
+  });
+
   test("the finals ballot runs championship week only", () => {
     assert.equal(fanFavorite.finalsOpen(44, cfg), false);
     assert.equal(fanFavorite.finalsOpen(45, cfg), true);
