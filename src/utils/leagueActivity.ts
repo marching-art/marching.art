@@ -50,14 +50,30 @@ export function isMemberActive(
 }
 
 /**
- * Has nobody set a corps up for this season yet?
+ * Do we know that nobody has set a corps up for this season?
  *
- * True for a league whose members have all lapsed AND for one that has not been
- * scored yet — both should read as "the season hasn't started here", never as a
- * populated league.
+ * Deliberately false when participation is UNKNOWN. Collapsing unknown into
+ * dormant told directors mid-season that their season hadn't started, on
+ * leagues where everyone was already competing — an un-backfilled league is not
+ * an empty one. Public discovery hides unknown leagues through the Firestore
+ * query, not through this helper, so nothing depends on the old conflation.
  */
 export function isLeagueDormant(league: LeagueLike | null | undefined): boolean {
-  return (getActiveMemberCount(league) ?? 0) === 0;
+  return getActiveMemberCount(league) === 0;
+}
+
+/**
+ * Should this director be nudged to register a corps for the current season?
+ *
+ * Only when participation is known AND they are absent from it — never on a
+ * guess. A director who has set their corps up must never see this.
+ */
+export function needsCorpsSetup(
+  league: LeagueLike | null | undefined,
+  uid: string | undefined
+): boolean {
+  if (!uid || getSeasonActivity(league) === null) return false;
+  return !isMemberActive(league, uid);
 }
 
 /**

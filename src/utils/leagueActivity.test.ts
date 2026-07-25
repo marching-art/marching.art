@@ -5,6 +5,7 @@ import {
   getActiveMemberCount,
   isMemberActive,
   isLeagueDormant,
+  needsCorpsSetup,
   formatActivityLabel,
 } from './leagueActivity';
 
@@ -66,13 +67,33 @@ describe('isMemberActive', () => {
 });
 
 describe('isLeagueDormant', () => {
-  it('treats both an empty and an unscored league as not started', () => {
+  it('is true only when we know nobody is playing', () => {
     expect(isLeagueDormant(league([]))).toBe(true);
-    expect(isLeagueDormant(league(null))).toBe(true);
+    expect(isLeagueDormant(league(['a']))).toBe(false);
   });
 
-  it('is false as soon as one director registers', () => {
-    expect(isLeagueDormant(league(['a']))).toBe(false);
+  it('is false when participation is unknown', () => {
+    // Regression: collapsing unknown into dormant told directors mid-season
+    // that their season hadn't started, on leagues where everyone was
+    // competing. An un-backfilled league is not an empty one.
+    expect(isLeagueDormant(league(null))).toBe(false);
+  });
+});
+
+describe('needsCorpsSetup', () => {
+  it('nudges a director who is absent from a known active set', () => {
+    expect(needsCorpsSetup(league(['b']), 'a')).toBe(true);
+  });
+
+  it('never nudges a director who has set their corps up', () => {
+    expect(needsCorpsSetup(league(['a', 'b']), 'a')).toBe(false);
+  });
+
+  it('never nudges on a guess', () => {
+    // No activity block means we have not computed participation — saying
+    // nothing beats telling an active director to go register.
+    expect(needsCorpsSetup(league(null), 'a')).toBe(false);
+    expect(needsCorpsSetup(league([]), undefined)).toBe(false);
   });
 });
 
