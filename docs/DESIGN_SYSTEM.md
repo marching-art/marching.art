@@ -116,6 +116,16 @@ Every text token clears AA (≥ 4.5:1) on `background` and `surface-card`:
 
 Recompute with the relative-luminance ratio if a token value changes.
 
+**Known debt — azure as a _fill_ behind white text.** The table above measures
+azure as foreground on dark surfaces. As a background it falls short: white text
+on `interactive` (`#3B82F6`) is **3.67:1**, under the 4.5:1 AA bar, on every
+primary CTA. The axe gate (`e2e/a11y.spec.ts`) reports color-contrast but
+deliberately does not fail on it, with a carve-out pointing here. The proper fix
+is a token split in `tailwind.config.cjs` — a darker fill for white-on-blue
+buttons, keeping the current tone for blue-on-dark text — which is a design
+decision, not a test-side one. When that lands, update this table and delete the
+carve-out in the spec so contrast gates.
+
 ---
 
 ## Enforcement — the census & ratchet
@@ -169,14 +179,16 @@ Tracked improvements not yet made (verify against current code before acting):
 - **Sub-44px targets** still exist on some controls (class switcher, kebab menus,
   some Shop/Leagues buttons).
 - **`screen` → `100dvh`** config mapping not yet applied globally.
-- Route-change scroll/focus reset (`src/components/ui/PageTransition.tsx` is built
-  but never mounted — verified dead as of this audit).
 
 > Note: the mobile bottom-sheet, dead-search, toast-position, and avatar-overlay
 > issues from earlier audits have since been fixed. The `SwipeableTabs` /
 > `ActionSheet` / `ConfirmationSheet` "toolkit" referenced by older notes was
-> aspirational — those components were never actually built.
+> aspirational — those components were never actually built, and the never-mounted
+> `PageTransition.tsx` has since been deleted.
 
-For a best-in-class pass, also consider: prod sourcemaps + error tracking for
-mobile-only crashes, real-device Web Vitals, and expanded mobile e2e (a Pixel 5
-Playwright project exists).
+Already covered, so don't re-file these: production sourcemaps ship as
+`sourcemap: 'hidden'` (emitted, not referenced from the bundles) with
+`src/lib/errorReporter.ts` symbolicating out of band, and mobile e2e runs in CI
+(`e2e/mobile.spec.ts` on the Pixel 5 Playwright project, plus an axe
+accessibility gate in `e2e/a11y.spec.ts`). Real-device Web Vitals are still
+unmeasured.
