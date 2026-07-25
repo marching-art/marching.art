@@ -11,10 +11,18 @@ import { m } from 'framer-motion';
 import { Mail, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { authApi } from '../api/client';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
 
 const ForgotPassword = () => {
   useBodyScroll();
+  // Without this the page inherited index.html's canonical and reported itself
+  // as the homepage. A password-reset form has no business in search results.
+  useSEO({
+    title: 'Reset Your Password | marching.art',
+    path: '/forgot-password',
+    noindex: true,
+  });
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);

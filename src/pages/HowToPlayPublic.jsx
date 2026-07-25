@@ -22,7 +22,6 @@ import {
   Play,
   Medal,
 } from 'lucide-react';
-import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
 import { Heading } from '../components/ui';
@@ -58,8 +57,10 @@ const SectionHeading = ({ icon: Icon, children }) => (
   </Heading>
 );
 
+// Chrome (header, footer, bottom nav) comes from PublicShell in App.jsx — this
+// page used to carry its own one-off header and footer, which is exactly the
+// drift PublicShell exists to prevent.
 const HowToPlayPublic = () => {
-  useBodyScroll();
   useSEO({
     title: 'How to Play Fantasy Drum Corps — Free DCI Fantasy Game | marching.art',
     description:
@@ -68,33 +69,13 @@ const HowToPlayPublic = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
       />
 
-      {/* Top bar */}
-      <header className="border-b border-white/10">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="text-sm font-bold text-white hover:text-brand transition-colors">
-            marching<span className="text-brand">.art</span>
-          </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link to="/login" className="text-muted hover:text-white transition-colors">
-              Sign In
-            </Link>
-            <Link
-              to="/register"
-              className="px-3 py-1.5 bg-interactive text-white font-bold text-xs uppercase tracking-wider rounded-none hover:bg-interactive-hover transition-colors"
-            >
-              Create Your Corps
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 py-10">
+      <div className="max-w-3xl mx-auto px-4 py-10">
         {/* Intro */}
         <p className="text-xs font-bold uppercase tracking-wider text-interactive mb-2">
           The Fantasy Drum Corps Game
@@ -373,32 +354,8 @@ const HowToPlayPublic = () => {
             </Link>
           </div>
         </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-white/10 mt-4">
-        <div className="max-w-3xl mx-auto px-4 py-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted">
-          <Link to="/" className="hover:text-white transition-colors">
-            Home
-          </Link>
-          <Link to="/preview" className="hover:text-white transition-colors">
-            Demo
-          </Link>
-          <Link to="/register" className="hover:text-white transition-colors">
-            Register
-          </Link>
-          <Link to="/login" className="hover:text-white transition-colors">
-            Sign In
-          </Link>
-          <Link to="/privacy" className="hover:text-white transition-colors">
-            Privacy
-          </Link>
-          <Link to="/terms" className="hover:text-white transition-colors">
-            Terms
-          </Link>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </>
   );
 };
 

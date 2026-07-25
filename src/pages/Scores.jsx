@@ -7,7 +7,7 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Activity, Archive } from 'lucide-react';
+import { Activity, Archive, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
@@ -346,6 +346,22 @@ const Scores = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs">
+            {/* The public, shareable twin of this page. /results is the surface
+                score share links land on, but nothing in the app ever pointed
+                at it — so the two renderings of the same night had no
+                connection in either direction. Plain <a>: /results is served by
+                a Cloud Function through a hosting rewrite, so a react-router
+                <Link> would be swallowed client-side and hit the 404 route. */}
+            {displayedSeasonId && (
+              <a
+                href={`/results/${displayedSeasonId}`}
+                className="hidden sm:flex items-center gap-1 text-[10px] text-muted hover:text-interactive uppercase tracking-wider transition-colors"
+                title="Public results page for this season"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Public Page
+              </a>
+            )}
             <div className="text-right">
               <div className="text-[10px] text-muted uppercase">Corps</div>
               <div className="font-bold text-white tabular-nums">{stats.corpsActive || 0}</div>

@@ -9,8 +9,10 @@ const {
   aggregateDayResults,
   buildDayResultsHtml,
   buildSeasonIndexHtml,
+  buildErrorPageHtml,
   parseResultsPath,
 } = require("./resultsPages");
+const { COLORS } = require("./designTokens");
 
 const RECAP = {
   shows: [
@@ -139,6 +141,94 @@ describe("buildDayResultsHtml", () => {
     const page = buildDayResultsHtml({ seasonUid: "s", day: 1, recap: evil, days: [1] });
     assert.ok(!page.includes("<script>alert(1)</script>"));
     assert.ok(page.includes("&lt;script&gt;"));
+  });
+
+  test("neutralizes corps names inside the JSON-LD block", () => {
+    // The structured-data payload has to stay valid JSON, so it can't use HTML
+    // entities — a raw name would otherwise close the <script> and execute.
+    const evil = {
+      shows: [
+        {
+          eventName: "Show",
+          results: [
+            {
+              uid: "u1",
+              corpsClass: "worldClass",
+              corpsName: `</script><script>alert(1)</script>`,
+              totalScore: 90,
+              geScore: 30,
+              visualScore: 30,
+              musicScore: 30,
+            },
+          ],
+        },
+      ],
+    };
+    const page = buildDayResultsHtml({ seasonUid: "s", day: 1, recap: evil, days: [1] });
+    const block = page.match(
+      /<script type="application\/ld\+json">([\s\S]*?)<\/script>/
+    );
+    assert.ok(block, "expected a JSON-LD block");
+    assert.ok(!block[1].includes("</script>"));
+    assert.ok(block[1].includes("\\u003c"));
+    // Still parses, and round-trips the original name.
+    const parsed = JSON.parse(block[1]);
+    assert.equal(parsed.itemListElement[0].name, `</script><script>alert(1)</script>`);
+  });
+
+  test("emits ItemList structured data for the top class", () => {
+    const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    const parsed = JSON.parse(block[1]);
+    assert.equal(parsed["@type"], "ItemList");
+    assert.equal(parsed.numberOfItems, 2);
+    assert.equal(parsed.itemListElement[0].position, 1);
+    assert.equal(parsed.itemListElement[0].name, "Crimson Cadence");
+  });
+
+  test("offers signed-in directors a door back into the app", () => {
+    // Score share links land on these pages, so the likeliest reader may
+    // already have an account — "create your corps" is useless to them.
+    assert.ok(html.includes("Open in marching.art"));
+    assert.ok(html.includes("/scores?season=season42&amp;tab=fantasy"));
+  });
+
+  test("carries the shared site chrome", () => {
+    assert.ok(html.includes('class="site-header"'));
+    assert.ok(html.includes("/logo192.svg"));
+    // Same footer link set as src/components/Layout/SiteFooter.jsx
+    for (const path of ["/how-to-play", "/podium-guide", "/hall-of-champions", "/privacy", "/terms"]) {
+      assert.ok(html.includes(`href="https://marching.art${path}"`), `missing footer link ${path}`);
+    }
+  });
+
+  test("styles links with the interactive token, not brand gold", () => {
+    // tailwind.config.cjs: gold is identity and reward, never a generic accent.
+    assert.ok(html.includes(`a { color: ${COLORS.interactive};`));
+    assert.ok(html.includes(`background: ${COLORS.surfaceCard}`));
+    assert.ok(!html.includes("#141414"), "off-palette card surface");
+    assert.ok(!html.includes("#9CA3AF"), "off-palette muted text");
+  });
+});
+
+describe("buildErrorPageHtml", () => {
+  const html = buildErrorPageHtml({
+    title: "No Results Yet | marching.art",
+    heading: "No results here yet",
+    message: "Scores land nightly around 2 AM ET.",
+  });
+
+  test("is a real page, not a bare string", () => {
+    assert.ok(html.startsWith("<!doctype html>"));
+    assert.ok(html.includes('<meta charset="utf-8">'));
+    assert.ok(html.includes('name="viewport"'));
+    assert.ok(html.includes("<style>"));
+    assert.ok(html.includes("No results here yet"));
+  });
+
+  test("is noindex and offers a way back", () => {
+    assert.ok(html.includes('<meta name="robots" content="noindex, nofollow">'));
+    assert.ok(html.includes('href="https://marching.art/results"'));
+    assert.ok(html.includes('href="https://marching.art/"'));
   });
 });
 

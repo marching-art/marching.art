@@ -19,6 +19,10 @@ import {
   GalleryPageSkeleton,
 } from './components/Skeleton';
 import GameShell from './components/Layout/GameShell';
+import PublicShell from './components/Layout/PublicShell';
+import RouteAnalytics from './components/RouteAnalytics';
+import { useSEO } from './hooks/useSEO';
+import { useAuthRedirectTarget } from './hooks/useAuthRedirect';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import UsernamePromptModal from './components/modals/UsernamePromptModal';
 import { CelebrationContainer } from './components/Celebration';
@@ -76,6 +80,20 @@ const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'Gu
 
 // Helper component to wrap pages with error boundaries
 const Page = ({ name, children }) => <PageErrorBoundary name={name}>{children}</PageErrorBoundary>;
+
+// Public page: the shared shell (header, footer, bottom nav) plus the same
+// error boundary and suspense treatment the app routes get. Public routes used
+// to have neither — a render crash on /privacy or /article escalated to the
+// root boundary and white-screened the whole app.
+const PublicPage = ({ name, children, ...shellProps }) => (
+  <PublicShell {...shellProps}>
+    {/* Inline (not fullScreen) so the shell's header and nav stay put while the
+        lazy chunk loads, instead of flashing a full-page loader over them. */}
+    <Suspense fallback={<LoadingScreen fullScreen={false} />}>
+      <Page name={name}>{children}</Page>
+    </Suspense>
+  </PublicShell>
+);
 
 // Auth context + useAuth hook live in ./context/AuthContext so this file only
 // exports components (keeps Vite fast refresh working).
@@ -138,6 +156,51 @@ const SupportersEntry = () => {
   if (loading) return <LoadingScreen fullScreen />;
   if (user) return <Navigate to="/scores?tab=supporters" replace />;
   return <LoadingScreen fullScreen />; // brief, while the external redirect fires
+};
+
+// See the /scores/:date route comment — the segment was never read, so keep the
+// old URLs working but land them on the canonical path with their query intact.
+const ScoresDateRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/scores${location.search}`} replace />;
+};
+
+// Auth pages bounce already-authenticated users onward. The destination is the
+// route they were originally trying to reach (ProtectedRoute's `state.from`),
+// not an unconditional /dashboard.
+const RedirectIfAuthed = ({ children }) => {
+  const { user } = useAuth();
+  const target = useAuthRedirectTarget();
+  return user ? <Navigate to={target} replace /> : children;
+};
+
+// /hall-of-champions is public — robots.txt allows it and the sitemap lists it —
+// but it rendered inside GameShell, whose entire nav points at protected routes.
+// A logged-out visitor arriving from search got the full app chrome and bounced
+// to / on every click. Pick the shell that matches the visitor instead.
+//
+// SEO lives here rather than in the page component because HallOfChampions is
+// also mounted as a tab inside /scores; calling useSEO there would rewrite the
+// canonical URL to /hall-of-champions while the user is on the Scores page.
+const HallOfChampionsEntry = () => {
+  const { user } = useAuth();
+
+  useSEO({
+    title: 'Hall of Champions — Every marching.art Season Champion',
+    description:
+      'The championship record book: World, Open, A Class, SoundSport, and Podium champions from every completed marching.art season, with finals scores and finalists.',
+    path: '/hall-of-champions',
+  });
+
+  const content = (
+    <Suspense fallback={<GalleryPageSkeleton />}>
+      <Page name="Hall of Champions">
+        <HallOfChampions />
+      </Page>
+    </Suspense>
+  );
+
+  return user ? <GameShell>{content}</GameShell> : <PublicShell>{content}</PublicShell>;
 };
 
 // Main App Component
@@ -292,6 +355,10 @@ function App() {
                 {/* Reset scroll + move focus to main content on navigation */}
                 <RouteChangeFocus />
 
+                {/* Page views for every route (this used to live in GameShell,
+                    so the whole public funnel went unrecorded) */}
+                <RouteAnalytics />
+
                 {/* Offline Banner - Shows when network is unavailable */}
                 <OfflineBanner />
 
@@ -372,25 +439,21 @@ function App() {
                     <Route
                       path="/login"
                       element={
-                        user ? (
-                          <Navigate to="/dashboard" />
-                        ) : (
+                        <RedirectIfAuthed>
                           <Suspense fallback={<LoadingScreen fullScreen />}>
                             <Login />
                           </Suspense>
-                        )
+                        </RedirectIfAuthed>
                       }
                     />
                     <Route
                       path="/register"
                       element={
-                        user ? (
-                          <Navigate to="/dashboard" />
-                        ) : (
+                        <RedirectIfAuthed>
                           <Suspense fallback={<LoadingScreen fullScreen />}>
                             <Register />
                           </Suspense>
-                        )
+                        </RedirectIfAuthed>
                       }
                     />
                     {/* Podium Class recruiting page — signup/login focused on
@@ -438,17 +501,17 @@ function App() {
                     <Route
                       path="/privacy"
                       element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                        <PublicPage name="Privacy">
                           <Privacy />
-                        </Suspense>
+                        </PublicPage>
                       }
                     />
                     <Route
                       path="/terms"
                       element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                        <PublicPage name="Terms">
                           <Terms />
-                        </Suspense>
+                        </PublicPage>
                       }
                     />
                     {/* Living design-system reference (docs/DESIGN_SYSTEM.md) */}
@@ -526,18 +589,18 @@ function App() {
                     <Route
                       path="/how-to-play"
                       element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                        <PublicPage name="How to Play">
                           <HowToPlayPublic />
-                        </Suspense>
+                        </PublicPage>
                       }
                     />
                     {/* Public Podium Class guide (Phase 7.6) — crawlable, no auth */}
                     <Route
                       path="/podium-guide"
                       element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                        <PublicPage name="Podium Guide">
                           <PodiumGuide />
-                        </Suspense>
+                        </PublicPage>
                       }
                     />
                     {/* Supporters wall lives as a Scores tab for signed-in
@@ -609,20 +672,12 @@ function App() {
                       }
                     />
 
-                    <Route
-                      path="/scores/:date"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<ScoresPageSkeleton />}>
-                              <Page name="Scores">
-                                <Scores />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
-                    />
+                    {/* /scores/:date looked like a per-day deep link but Scores
+                        never called useParams — it only reads ?season and ?tab,
+                        so the date segment was silently dropped and the page
+                        rendered as though it weren't there. Redirect to the
+                        canonical path instead of serving a URL that lies. */}
+                    <Route path="/scores/:date" element={<ScoresDateRedirect />} />
 
                     <Route
                       path="/profile/:userId?"
@@ -657,18 +712,7 @@ function App() {
                     {/* Settings is now integrated into Profile - redirect for backwards compatibility */}
                     <Route path="/settings" element={<Navigate to="/profile" replace />} />
 
-                    <Route
-                      path="/hall-of-champions"
-                      element={
-                        <GameShell>
-                          <Suspense fallback={<GalleryPageSkeleton />}>
-                            <Page name="Hall of Champions">
-                              <HallOfChampions />
-                            </Page>
-                          </Suspense>
-                        </GameShell>
-                      }
-                    />
+                    <Route path="/hall-of-champions" element={<HallOfChampionsEntry />} />
 
                     <Route
                       path="/admin"
@@ -734,13 +778,14 @@ function App() {
                         Guide — keep the old path working for existing links. */}
                     <Route path="/soundsport" element={<Navigate to="/guide" replace />} />
 
-                    {/* 404 Route */}
+                    {/* 404 Route — inside the shell so a wrong URL still leaves
+                        the visitor somewhere they can navigate from. */}
                     <Route
                       path="*"
                       element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                        <PublicPage name="Not Found">
                           <NotFound />
-                        </Suspense>
+                        </PublicPage>
                       }
                     />
                   </Routes>

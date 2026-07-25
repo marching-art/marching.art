@@ -10,7 +10,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Flame, Share2, Loader2, AlertCircle, MessageCircle } from 'lucide-react';
 import ArticleReactions from '../components/Articles/ArticleReactions';
-import ArticleSiteHeader from '../components/Articles/ArticleSiteHeader';
+import SiteHeader from '../components/Layout/SiteHeader';
+import SiteFooter from '../components/Layout/SiteFooter';
 import BottomNav from '../components/BottomNav';
 import GuestActionBar from '../components/Landing/GuestActionBar';
 import { useAuth } from '../context/AuthContext';
@@ -309,12 +310,11 @@ const Article = () => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
-      {/* FIXED HEADER - Same as Landing */}
-      <ArticleSiteHeader />
+      <SiteHeader />
 
       {/* SCROLLABLE CONTENT - pb reserves space for the fixed bottom bar up to
           lg (where the bar is hidden), so content clears it on tablets too. */}
-      <main className="flex-1 overflow-y-auto min-h-0 pb-24 lg:pb-4">
+      <main id="main-content" role="main" className="flex-1 overflow-y-auto min-h-0 pb-24 lg:pb-4">
         <div className="p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* ============================================================= */}
@@ -561,6 +561,10 @@ const Article = () => {
             </div>
           </div>
         </div>
+
+        {/* Footer scrolls with the article — it lives inside this page's own
+            scroll container, not after it. */}
+        <SiteFooter />
       </main>
 
       {/* FULL STANDINGS MODAL */}

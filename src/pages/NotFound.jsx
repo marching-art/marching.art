@@ -15,7 +15,7 @@ const NotFound = () => {
   const shouldReduceMotion = useShouldReduceMotion();
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-[70vh] bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Subtle grid pattern */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"

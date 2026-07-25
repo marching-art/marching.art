@@ -5,8 +5,10 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Medal, ChevronLeft } from 'lucide-react';
+import { Medal } from 'lucide-react';
 import { Heading } from '../components/ui';
+import { useSEO } from '../hooks/useSEO';
+import { useAuth } from '../context/AuthContext';
 
 const SECTIONS = [
   {
@@ -87,50 +89,59 @@ const SECTIONS = [
 ];
 
 export default function PodiumGuide() {
+  const { user } = useAuth();
+
+  // This page is submitted in the sitemap (functions/src/triggers/sitemap.js)
+  // but never set its own metadata, so it inherited index.html's canonical —
+  // self-canonicalizing to the homepage, which tells Google it is a duplicate
+  // of / and drops it from the index.
+  useSEO({
+    title: 'The Podium Class Guide — Run a Drum Corps | marching.art',
+    description:
+      'How Podium Class works: found a corps, run daily rehearsal blocks, route a tour, manage condition and money, and earn every point. Free to play, always open.',
+    path: '/podium-guide',
+  });
+
   return (
-    <div className="min-h-screen bg-background text-white">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Masthead */}
-        <div className="mb-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-white mb-4"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" /> marching.art
-          </Link>
-          <div className="flex items-center gap-2 mb-1">
-            <Medal className="w-6 h-6 text-brand" />
-            <Heading level="display">The Podium Class Guide</Heading>
-          </div>
-          <p className="text-sm text-muted">
-            Run a drum corps. Earn every point. Twelve short sections — everything you need.
-          </p>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Masthead */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-1">
+          <Medal className="w-6 h-6 text-brand" />
+          <Heading level="display">The Podium Class Guide</Heading>
         </div>
+        <p className="text-sm text-muted">
+          Run a drum corps. Earn every point. Twelve short sections — everything you need.
+        </p>
+      </div>
 
-        {/* Sections */}
-        <div className="space-y-6">
-          {SECTIONS.map((section) => (
-            <section key={section.n} id={`s${section.n}`}>
-              <h2 className="text-sm font-bold text-brand uppercase tracking-wider mb-1.5">
-                {section.n}. {section.title}
-              </h2>
-              <p className="text-[13px] leading-relaxed text-secondary">{section.body}</p>
-            </section>
-          ))}
-        </div>
+      {/* Sections */}
+      <div className="space-y-6">
+        {SECTIONS.map((section) => (
+          <section key={section.n} id={`s${section.n}`}>
+            <h2 className="text-sm font-bold text-brand uppercase tracking-wider mb-1.5">
+              {section.n}. {section.title}
+            </h2>
+            <p className="text-[13px] leading-relaxed text-secondary">{section.body}</p>
+          </section>
+        ))}
+      </div>
 
-        {/* Footer CTA */}
-        <div className="mt-10 pt-6 border-t border-line flex items-center justify-between">
-          <span className="text-[11px] text-muted">
-            Podium Class is always open — found your corps from the Dashboard.
-          </span>
-          <Link
-            to="/dashboard"
-            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-interactive text-white rounded-none"
-          >
-            Play
-          </Link>
-        </div>
+      {/* Footer CTA. This is a public, crawlable guide, so most readers are
+          logged out — pointing them at /dashboard sent them through
+          ProtectedRoute, which bounced them to / and lost the intent. */}
+      <div className="mt-10 pt-6 border-t border-line flex items-center justify-between gap-4">
+        <span className="text-[11px] text-muted">
+          {user
+            ? 'Podium Class is always open — found your corps from the Dashboard.'
+            : 'Podium Class is always open and always free — one account plays every class.'}
+        </span>
+        <Link
+          to={user ? '/dashboard' : '/register'}
+          className="flex-shrink-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-interactive text-white rounded-none hover:bg-interactive-hover transition-colors"
+        >
+          {user ? 'Play' : 'Play Free'}
+        </Link>
       </div>
     </div>
   );

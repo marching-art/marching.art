@@ -15,6 +15,7 @@
 
 const { CLASS_LABELS } = require("./scoreDrop");
 const { SITE_URL, escapeHtml, clamp } = require("./shareCards");
+const { COLORS, FONT_STACK } = require("./designTokens");
 
 // Ranked-class display order for the public sheets (mirrors RECAP_CLASS_ORDER
 // in src/pages/ScoresParts.jsx).
@@ -104,31 +105,92 @@ function aggregateDayResults(recap) {
 }
 
 // Shared page chrome. Inline CSS keeps the pages dependency-free and safe
-// under any CSP (no external fetches at all).
+// under the site's CSP (no external fetches at all) — but the values come from
+// helpers/designTokens, which mirrors tailwind.config.cjs, so this surface can
+// no longer drift away from the app the way it had.
+//
+// Note the link color: brand gold used to style every link and heading here,
+// which is the one thing tailwind.config.cjs calls out by name as forbidden
+// ("NEVER a generic UI accent — that job belongs to `interactive`"). Gold is
+// now reserved for the wordmark and the winning total, as it is in the app.
 const PAGE_CSS = `
   :root { color-scheme: dark; }
   * { box-sizing: border-box; margin: 0; }
-  body { background: #0A0A0A; color: #fff; font: 16px/1.5 -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
-  a { color: #EAB308; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
-  .brand { display: inline-block; font-weight: 700; color: #EAB308; font-size: 20px; }
-  .kicker { color: #9CA3AF; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
-  h1 { font-size: 28px; margin: 18px 0 4px; }
-  .sub { color: #9CA3AF; margin-bottom: 24px; }
-  h2 { font-size: 16px; text-transform: uppercase; letter-spacing: 1px; margin: 28px 0 8px; color: #EAB308; }
-  table { width: 100%; border-collapse: collapse; background: #141414; border: 1px solid #2A2A2A; }
-  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2A2A2A; font-size: 14px; }
-  th { color: #9CA3AF; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  body { background: ${COLORS.background}; color: ${COLORS.textMain}; font: 16px/1.5 ${FONT_STACK}; }
+  a { color: ${COLORS.interactive}; text-decoration: none; }
+  a:hover { color: ${COLORS.interactiveHover}; text-decoration: underline; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 16px 48px; }
+  .site-header { border-bottom: 1px solid ${COLORS.line}; background: ${COLORS.surfaceCard}; margin: 0 -16px 24px; padding: 0 16px; height: 56px; display: flex; align-items: center; }
+  .brand { display: flex; align-items: center; gap: 10px; color: ${COLORS.textMain}; font-weight: 700; font-size: 16px; letter-spacing: 1px; }
+  .brand img { width: 32px; height: 32px; display: block; }
+  .brand:hover { color: ${COLORS.textMain}; text-decoration: none; }
+  .header-links { margin-left: auto; display: flex; gap: 16px; font-size: 13px; }
+  .kicker { color: ${COLORS.textMuted}; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+  h1 { font-size: 28px; margin: 8px 0 4px; }
+  .sub { color: ${COLORS.textMuted}; margin-bottom: 24px; }
+  h2 { font-size: 16px; text-transform: uppercase; letter-spacing: 1px; margin: 28px 0 8px; color: ${COLORS.textSecondary}; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: ${COLORS.surfaceCard}; border: 1px solid ${COLORS.line}; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid ${COLORS.line}; font-size: 14px; }
+  th { color: ${COLORS.textMuted}; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; background: ${COLORS.surfaceRaised}; }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  td.total { color: #EAB308; font-weight: 700; }
-  .dir { color: #9CA3AF; font-size: 12px; }
+  td.total { color: ${COLORS.brand}; font-weight: 700; }
+  .dir { color: ${COLORS.textMuted}; font-size: 12px; }
   .nav { display: flex; gap: 16px; flex-wrap: wrap; margin: 28px 0 0; }
-  .cta { margin-top: 32px; padding: 16px; background: #141414; border: 1px solid #2A2A2A; }
+  .cta { margin-top: 32px; padding: 16px; background: ${COLORS.surfaceCard}; border: 1px solid ${COLORS.line}; }
+  .open-in-app { display: inline-block; margin-top: 16px; padding: 8px 14px; background: ${COLORS.interactive}; color: ${COLORS.textMain}; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .open-in-app:hover { background: ${COLORS.interactiveHover}; color: ${COLORS.textMain}; text-decoration: none; }
   .days { display: flex; flex-wrap: wrap; gap: 8px; }
-  .days a { border: 1px solid #2A2A2A; padding: 6px 10px; font-variant-numeric: tabular-nums; }
-  footer { margin-top: 40px; color: #9CA3AF; font-size: 13px; }
+  .days a { border: 1px solid ${COLORS.line}; padding: 6px 10px; font-variant-numeric: tabular-nums; }
+  footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid ${COLORS.line}; color: ${COLORS.textMuted}; font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px 20px; }
 `;
+
+// Mirrors src/components/Layout/SiteFooter.jsx. Both surfaces carry the same
+// link set so a visitor crossing between them sees one site.
+const FOOTER_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/how-to-play", label: "How to Play" },
+  { href: "/podium-guide", label: "Podium Guide" },
+  { href: "/hall-of-champions", label: "Hall of Champions" },
+  { href: "/results", label: "Results" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+];
+
+const footerHtml = () =>
+  `<footer>${FOOTER_LINKS.map(
+    (link) => `<a href="${SITE_URL}${link.href}">${escapeHtml(link.label)}</a>`
+  ).join("\n")}</footer>`;
+
+/**
+ * Serialize structured data for embedding in a <script> block.
+ *
+ * escapeHtml is wrong here — the payload has to stay valid JSON, so entities
+ * would corrupt it. Instead escape the three characters that can break out of
+ * a script element as JSON string escapes, which parsers read back verbatim.
+ * Corps names are user-authored, so without this a name of
+ * `</script><script>…` executes.
+ *
+ * @param {Object} data
+ * @returns {string}
+ */
+function serializeJsonLd(data) {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
+// The site header, matching src/components/Layout/SiteHeader.jsx: the same
+// logo mark and wordmark rather than the bare text link this used to carry.
+const headerHtml = () =>
+  `<header class="site-header">
+<a class="brand" href="${SITE_URL}/"><img src="${SITE_URL}/logo192.svg" alt="" width="32" height="32">marching.art</a>
+<nav class="header-links">
+<a href="${SITE_URL}/how-to-play">How to Play</a>
+<a href="${SITE_URL}/register">Sign Up Free</a>
+</nav>
+</header>`;
 
 /**
  * @param {Object} params
@@ -137,8 +199,18 @@ const PAGE_CSS = `
  * @param {string} params.canonicalPath
  * @param {string} [params.ogImage]
  * @param {string} params.bodyHtml Pre-escaped body markup.
+ * @param {boolean} [params.noindex] For the error pages, which must never rank.
+ * @param {Object|null} [params.jsonLd] Structured data for the page.
  */
-function buildPageShell({ title, description, canonicalPath, ogImage, bodyHtml }) {
+function buildPageShell({
+  title,
+  description,
+  canonicalPath,
+  ogImage,
+  bodyHtml,
+  noindex = false,
+  jsonLd = null,
+}) {
   const canonical = `${SITE_URL}${canonicalPath}`;
   return `<!doctype html>
 <html lang="en">
@@ -147,7 +219,8 @@ function buildPageShell({ title, description, canonicalPath, ogImage, bodyHtml }
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(description)}">
-<link rel="canonical" href="${escapeHtml(canonical)}">
+${noindex ? `<meta name="robots" content="noindex, nofollow">\n` : ""}<link rel="canonical" href="${escapeHtml(canonical)}">
+<link rel="icon" href="${SITE_URL}/favicon.svg" type="image/svg+xml">
 <meta property="og:site_name" content="marching.art">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${escapeHtml(title)}">
@@ -155,20 +228,61 @@ function buildPageShell({ title, description, canonicalPath, ogImage, bodyHtml }
 <meta property="og:url" content="${escapeHtml(canonical)}">
 ${ogImage ? `<meta property="og:image" content="${escapeHtml(ogImage)}">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:image" content="${escapeHtml(ogImage)}">` : `<meta name="twitter:card" content="summary">`}
 <style>${PAGE_CSS}</style>
+${jsonLd ? `<script type="application/ld+json">${serializeJsonLd(jsonLd)}</script>` : ""}
 </head>
 <body>
 <div class="wrap">
-<a class="brand" href="${SITE_URL}/">marching.art</a>
-<div class="kicker">Fantasy Drum Corps</div>
+${headerHtml()}
 ${bodyHtml}
 <div class="cta"><strong>Think your dream lineup scores higher?</strong><br>
 marching.art is the free fantasy drum corps game — draft legendary DCI captions and compete on nightly leaderboards. <a href="${SITE_URL}/register">Create your corps free</a> or <a href="${SITE_URL}/preview">try the live demo</a>.</div>
-<footer>marching.art — where legends are made. · <a href="${SITE_URL}/hall-of-champions">Hall of Champions</a> · <a href="${SITE_URL}/how-to-play">How to play</a></footer>
+${footerHtml()}
 </div>
 </body>
 </html>
 `;
 }
+
+/**
+ * A styled page for the endpoint's error responses. These used to be bare
+ * strings — Express serves them as text/html, so a crawler or a phone hitting a
+ * dead day got an unstyled document with no charset, no viewport, and no way
+ * back into the site.
+ *
+ * @param {Object} params
+ * @param {string} params.title
+ * @param {string} params.heading
+ * @param {string} params.message
+ * @param {string} [params.canonicalPath]
+ */
+function buildErrorPageHtml({ title, heading, message, canonicalPath = "/results" }) {
+  return buildPageShell({
+    title,
+    description: message,
+    canonicalPath,
+    noindex: true,
+    bodyHtml: `<div class="kicker">Fantasy Drum Corps</div>
+<h1>${escapeHtml(heading)}</h1>
+<p class="sub">${escapeHtml(message)}</p>
+<div class="nav"><a href="${SITE_URL}/results">All results</a>
+<a href="${SITE_URL}/hall-of-champions">Hall of Champions</a>
+<a href="${SITE_URL}/">Home</a></div>`,
+  });
+}
+
+/**
+ * Door back into the app for a director who already has an account.
+ *
+ * Score share links land here (see triggers/shareCards.js), so the likeliest
+ * visitor to a results page is a signed-in director's friend — and until now
+ * the only calls to action were "create your corps" and "try the demo", both
+ * useless to someone who already plays. /scores honors ?season and ?tab; there
+ * is no per-day param, so this lands them on the right season's fantasy view.
+ *
+ * @param {string} seasonUid
+ */
+const openInAppHtml = (seasonUid) =>
+  `<a class="open-in-app" href="${SITE_URL}/scores?season=${encodeURIComponent(seasonUid)}&amp;tab=fantasy">Open in marching.art</a>`;
 
 /** @param {number|null} value */
 const fmtScore = (value) =>
@@ -209,12 +323,12 @@ function buildDayResultsHtml({ seasonUid, seasonName, day, recap, days = [] }) {
       )
       .join("\n");
     sections.push(`<h2>${escapeHtml(CLASS_LABELS[classKey] || classKey)}</h2>
-<table>
+<div class="scroll"><table>
 <thead><tr><th class="num">#</th><th>Corps</th><th class="num">GE</th><th class="num">VIS</th><th class="num">MUS</th><th class="num">Total</th></tr></thead>
 <tbody>
 ${rows}
 </tbody>
-</table>`);
+</table></div>`);
   }
 
   if (soundSport.length > 0) {
@@ -228,12 +342,12 @@ ${rows}
       .join("\n");
     sections.push(`<h2>SoundSport</h2>
 <p class="sub">SoundSport is participation-focused — ensembles earn medal ratings, never numeric scores.</p>
-<table>
+<div class="scroll"><table>
 <thead><tr><th>Ensemble</th><th>Rating</th></tr></thead>
 <tbody>
 ${rows}
 </tbody>
-</table>`);
+</table></div>`);
   }
 
   const dayIndex = days.indexOf(day);
@@ -259,15 +373,36 @@ ${rows}
     ? `Day ${day} fantasy drum corps results for ${displaySeason}: ${clamp(leader.corpsName, 50)} leads ${CLASS_LABELS[topClass]} with ${leader.total.toFixed(3)}. Full GE/Visual/Music standings for every class.`
     : `Day ${day} fantasy drum corps results for ${displaySeason} on marching.art.`;
 
+  // Structured data for the top class's standings. This is the most structured
+  // content on the site and it emitted none, while the SPA has supported JSON-LD
+  // for articles all along.
+  const jsonLd = leader
+    ? {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `Day ${day} ${CLASS_LABELS[topClass]} standings — ${displaySeason}`,
+      itemListOrder: "https://schema.org/ItemListOrderDescending",
+      numberOfItems: byClass.get(topClass).length,
+      itemListElement: byClass.get(topClass).map((entry) => ({
+        "@type": "ListItem",
+        position: entry.rank,
+        name: clamp(entry.corpsName, 60),
+      })),
+    }
+    : null;
+
   return buildPageShell({
     title: `Day ${day} Fantasy Scores — ${displaySeason} | marching.art`,
     description,
     canonicalPath: `${base}/${day}`,
     ogImage,
-    bodyHtml: `<h1>Day ${day} — ${escapeHtml(displaySeason)}</h1>
+    jsonLd,
+    bodyHtml: `<div class="kicker">Fantasy Drum Corps</div>
+<h1>Day ${day} — ${escapeHtml(displaySeason)}</h1>
 <p class="sub">${shows.length > 0 ? `${shows.length} ${showWord} scored${showList ? ` · ${escapeHtml(showList)}` : ""}` : "Nightly fantasy results"}</p>
 ${sections.join("\n")}
-<div class="nav">${nav}</div>`,
+<div class="nav">${nav}</div>
+${openInAppHtml(seasonUid)}`,
   });
 }
 
@@ -305,12 +440,12 @@ function buildSeasonIndexHtml({ seasonUid, seasonName, days, champions = null })
 </tr>`);
     }
     sections.push(`<h2>Season Champions</h2>
-<table>
+<div class="scroll"><table>
 <thead><tr><th>Class</th><th>Champion</th><th class="num">Final</th></tr></thead>
 <tbody>
 ${rows.join("\n")}
 </tbody>
-</table>`);
+</table></div>`);
   }
 
   if (days && days.length > 0) {
@@ -325,10 +460,12 @@ ${links}
     title: `${displaySeason} Fantasy Scores & Results | marching.art`,
     description: `Every scored night of ${displaySeason} fantasy drum corps${hasChampions ? ", plus the season champions" : ""} — full class standings on marching.art.`,
     canonicalPath: base,
-    bodyHtml: `<h1>${escapeHtml(displaySeason)}</h1>
+    bodyHtml: `<div class="kicker">Fantasy Drum Corps</div>
+<h1>${escapeHtml(displaySeason)}</h1>
 <p class="sub">Fantasy drum corps results, night by night.</p>
 ${sections.join("\n")}
-<div class="nav"><a href="${SITE_URL}/hall-of-champions">Hall of Champions</a></div>`,
+<div class="nav"><a href="${SITE_URL}/hall-of-champions">Hall of Champions</a></div>
+${openInAppHtml(seasonUid)}`,
   });
 }
 
@@ -363,5 +500,6 @@ module.exports = {
   aggregateDayResults,
   buildDayResultsHtml,
   buildSeasonIndexHtml,
+  buildErrorPageHtml,
   parseResultsPath,
 };

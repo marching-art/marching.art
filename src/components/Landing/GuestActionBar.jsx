@@ -10,18 +10,24 @@
 // BottomNav so the chrome feels continuous across the login boundary.
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Play, LogIn, UserPlus } from 'lucide-react';
 import { triggerHaptic } from '../../hooks/useHaptic';
 import { prefetchRoute } from '../../lib/prefetch';
 
 const actions = [
   { path: '/preview', label: 'Demo', icon: Play },
-  { path: '/login', label: 'Sign In', icon: LogIn },
-  { path: '/register', label: 'Join Free', icon: UserPlus, emphasized: true },
+  { path: '/login', label: 'Sign In', icon: LogIn, carriesIntent: true },
+  { path: '/register', label: 'Join Free', icon: UserPlus, emphasized: true, carriesIntent: true },
 ];
 
 const GuestActionBar = () => {
+  const location = useLocation();
+  // When ProtectedRoute bounced the visitor off a deep link it parked the
+  // destination in state.from. Carry it through the auth pages so signing in
+  // finishes the trip they started instead of dumping them on the dashboard.
+  const from = location.state?.from;
+
   return (
     <nav
       className="lg:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom select-none"
@@ -38,6 +44,7 @@ const GuestActionBar = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                state={item.carriesIntent && from ? { from } : undefined}
                 aria-label={item.label}
                 onClick={() => triggerHaptic('light')}
                 onMouseEnter={() => prefetchRoute(item.path)}
