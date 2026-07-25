@@ -113,6 +113,39 @@ exports.manualTrigger = onCall({
     case "archiveSeasonResults":
       await archiveSeasonResultsLogic();
       return { success: true, message: "Season results and league champions have been archived." };
+    case "refreshLeagueActivity": {
+      // Recompute every league's season participation now instead of waiting
+      // for the nightly job. This is also the backfill: leagues created before
+      // seasonActivity existed carry no such field, and Firestore inequality
+      // filters skip documents that lack the field, so those leagues stay out
+      // of public discovery until this has run once.
+      const db = getDb();
+      const { paths } = require("../helpers/paths");
+      const { computeSeasonActivity, getActiveSeasonUid } = require("../helpers/leagueActivity");
+      const seasonUid = await getActiveSeasonUid(db);
+      if (!seasonUid) {
+        throw new HttpsError("failed-precondition", "No active season.");
+      }
+
+      const leaguesSnapshot = await db.collection(paths.leagues()).get();
+      let active = 0;
+      for (const leagueDoc of leaguesSnapshot.docs) {
+        const members = leagueDoc.data().members || [];
+        const profileDocs = members.length
+          ? await db.getAll(...members.map((uid) => db.doc(paths.userProfile(uid))))
+          : [];
+        const seasonActivity = computeSeasonActivity(members, profileDocs, seasonUid);
+        await leagueDoc.ref.update({ seasonActivity });
+        if (seasonActivity.activeMemberCount > 0) active++;
+      }
+
+      return {
+        success: true,
+        message:
+          `Refreshed ${leaguesSnapshot.size} leagues for ${seasonUid}; ` +
+          `${active} have at least one director competing.`,
+      };
+    }
     case "rebuildGameRecords": {
       const { rebuildGameRecords } = require("../helpers/gameRecords");
       const result = await rebuildGameRecords(getDb());

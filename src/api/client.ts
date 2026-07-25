@@ -241,6 +241,7 @@ type CloudFunctionName =
   | 'joinLeague'
   | 'joinLeagueByCode'
   | 'leaveLeague'
+  | 'removeLeagueMember'
   | 'postLeagueMessage'
   | 'selectShows'
   | 'updateLineup';

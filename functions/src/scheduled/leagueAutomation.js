@@ -21,6 +21,11 @@ const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
 const { buildMatchupResultPushes } = require("../helpers/matchupResults");
 const { sendPushNotification, PUSH_TYPES } = require("../helpers/pushService");
+const {
+  isClassActiveThisSeason,
+  computeSeasonActivity,
+  getActiveSeasonUid,
+} = require("../helpers/leagueActivity");
 
 // Corps class configuration — registry-derived (Phase 7.4) so Podium joins
 // automated matchup generation when its registry entry enables at launch.
@@ -317,6 +322,14 @@ exports.generateWeeklyMatchups = onSchedule(
       const currentWeek = await getCurrentWeek(db);
       const nextWeek = currentWeek + 1;
 
+      // Pairing is season-scoped (see the grouping loop below); without a live
+      // season there is nobody registered to pair.
+      const seasonUid = await getActiveSeasonUid(db);
+      if (!seasonUid) {
+        logger.warn("No active season; skipping weekly matchup generation.");
+        return;
+      }
+
       logger.info(`Generating matchups for week ${nextWeek}`);
 
       let leaguesProcessed = 0;
@@ -360,22 +373,21 @@ exports.generateWeeklyMatchups = onSchedule(
             standings[s.uid] = { ...s, rank: idx + 1 };
           });
 
-          // Group members by corps class
-          const membersByClass = {
-            worldClass: [],
-            openClass: [],
-            aClass: [],
-            soundSport: []
-          };
+          // Group members by corps class — REGISTERED FOR THE LIVE SEASON
+          // only. corpsName survives season rollover by design
+          // (helpers/season.js), so testing it alone paired every director who
+          // had ever named a corps into every future season's matchups: active
+          // directors drew absent opponents who score 0, and ghost-inflated
+          // odd counts handed out meaningless byes. See helpers/leagueActivity.js.
+          const membersByClass = Object.fromEntries(CORPS_CLASSES.map((c) => [c, []]));
 
           profileDocs.forEach((doc, index) => {
             const memberId = members[index];
             if (doc.exists) {
               const profileData = doc.data();
-              const corps = profileData.corps || {};
 
               for (const corpsClass of CORPS_CLASSES) {
-                if (corps[corpsClass] && corps[corpsClass].corpsName) {
+                if (isClassActiveThisSeason(profileData, corpsClass, seasonUid)) {
                   membersByClass[corpsClass].push(memberId);
                 }
               }
@@ -707,21 +719,20 @@ exports.triggerMatchupGeneration = onCall(
       standings[s.uid] = { ...s, rank: idx + 1 };
     });
 
-    // Group by corps class
-    const membersByClass = {
-      worldClass: [],
-      openClass: [],
-      aClass: [],
-      soundSport: []
-    };
+    // Group by corps class — registered-this-season only, matching the
+    // scheduled generator (see helpers/leagueActivity.js).
+    const seasonUid = await getActiveSeasonUid(db);
+    if (!seasonUid) {
+      throw new HttpsError("failed-precondition", "No active season.");
+    }
+    const membersByClass = Object.fromEntries(CORPS_CLASSES.map((c) => [c, []]));
 
     profileDocs.forEach((doc, index) => {
       const memberId = members[index];
       if (doc.exists) {
         const profileData = doc.data();
-        const corps = profileData.corps || {};
         for (const corpsClass of CORPS_CLASSES) {
-          if (corps[corpsClass] && corps[corpsClass].corpsName) {
+          if (isClassActiveThisSeason(profileData, corpsClass, seasonUid)) {
             membersByClass[corpsClass].push(memberId);
           }
         }
@@ -756,9 +767,70 @@ exports.triggerMatchupGeneration = onCall(
   }
 );
 
+/**
+ * SCHEDULED: Recompute every league's season participation.
+ *
+ * The authoritative pass behind `seasonActivity` (helpers/leagueActivity.js).
+ * The incremental writers — createLeague, join/leave, commissioner removal, and
+ * the post-registration hooks in registerCorps/processCorpsDecisions — keep the
+ * block fresh in the common cases; this job is what guarantees it converges
+ * anyway: it repairs anything a best-effort hook swallowed, and it backfills
+ * leagues created before the block existed (which are otherwise invisible to
+ * the discovery query, since Firestore inequality filters skip documents
+ * missing the field).
+ *
+ * Runs daily, after the nightly scoring pass has settled.
+ */
+exports.refreshLeagueActivityJob = onSchedule(
+  {
+    schedule: "30 5 * * *", // 5:30 AM ET, after nightly scoring
+    timeZone: "America/New_York",
+    timeoutSeconds: 540,
+    memory: "512MiB",
+  },
+  async () => {
+    const db = getDb();
+
+    const seasonUid = await getActiveSeasonUid(db);
+    if (!seasonUid) {
+      logger.warn("No active season; skipping league activity refresh.");
+      return;
+    }
+
+    let leaguesUpdated = 0;
+    let activeLeagues = 0;
+
+    const leaguesRef = db.collection(paths.leagues());
+    await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
+      try {
+        const members = leagueDoc.data().members || [];
+        const profileDocs = members.length
+          ? await db.getAll(...members.map((uid) => db.doc(paths.userProfile(uid))))
+          : [];
+
+        const seasonActivity = computeSeasonActivity(members, profileDocs, seasonUid);
+        await leagueDoc.ref.update({ seasonActivity });
+
+        leaguesUpdated++;
+        if (seasonActivity.activeMemberCount > 0) activeLeagues++;
+        return { processed: 1 };
+      } catch (error) {
+        logger.error(`Failed to refresh activity for league ${leagueDoc.id}:`, error);
+        return { error: error.message };
+      }
+    });
+
+    logger.info(
+      `League activity refresh complete: ${leaguesUpdated} leagues updated, ` +
+      `${activeLeagues} with at least one director registered for ${seasonUid}.`
+    );
+  }
+);
+
 module.exports = {
   generateWeeklyMatchups: exports.generateWeeklyMatchups,
   generateWeeklyRecaps: exports.generateWeeklyRecaps,
   updateLeagueRivalries: exports.updateLeagueRivalries,
-  triggerMatchupGeneration: exports.triggerMatchupGeneration
+  triggerMatchupGeneration: exports.triggerMatchupGeneration,
+  refreshLeagueActivityJob: exports.refreshLeagueActivityJob
 };

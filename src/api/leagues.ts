@@ -51,7 +51,29 @@ export async function getMyLeagues(uid: string): Promise<League[]> {
 }
 
 /**
- * Get public leagues with pagination
+ * Get public leagues with pagination.
+ *
+ * Only leagues with at least one director registered for the CURRENT season are
+ * discoverable. A league's roster is permanent, but participation is not —
+ * season rollover preserves each director's corps name, so `members.length`
+ * describes who ever joined, not who is playing. Without this filter the browse
+ * grid advertised leagues that looked well populated but had nobody fielding a
+ * corps, which is the worst thing a new director can join.
+ *
+ * `seasonActivity.activeMemberCount` is maintained by the backend (see
+ * functions/src/helpers/leagueActivity.js) and zeroed at season rollover, so
+ * every league goes dark when the season resets and reappears as its members
+ * come back and set their corps up.
+ *
+ * Two consequences worth knowing:
+ *  - liveliest leagues sort first (the inequality field must lead the sort),
+ *    with newest breaking ties;
+ *  - leagues predating this field are absent until the nightly refresh
+ *    backfills them, because Firestore inequality filters skip documents that
+ *    lack the field.
+ *
+ * Members and commissioners always reach their own leagues through
+ * getMyLeagues/getLeaguesByCreator, which are deliberately unfiltered.
  */
 export async function getPublicLeagues(
   pageSize = DEFAULT_PAGE_SIZE,
@@ -60,23 +82,19 @@ export async function getPublicLeagues(
   return withErrorHandling(async () => {
     const leaguesRef = collection(db, paths.leagues());
 
-    let q = query(
-      leaguesRef,
+    const constraints = [
       where('isPublic', '==', true),
+      where('seasonActivity.activeMemberCount', '>=', 1),
+      orderBy('seasonActivity.activeMemberCount', 'desc'),
       orderBy('createdAt', 'desc'),
-      limit(pageSize)
-    );
+    ];
+
+    let q = query(leaguesRef, ...constraints, limit(pageSize));
 
     // Cast lastDoc to the expected type for pagination
     const lastDocSnapshot = lastDoc as QueryDocumentSnapshot<DocumentData> | undefined;
     if (lastDocSnapshot) {
-      q = query(
-        leaguesRef,
-        where('isPublic', '==', true),
-        orderBy('createdAt', 'desc'),
-        startAfter(lastDocSnapshot),
-        limit(pageSize)
-      );
+      q = query(leaguesRef, ...constraints, startAfter(lastDocSnapshot), limit(pageSize));
     }
 
     const snapshot = await getDocs(q);
@@ -260,6 +278,23 @@ export async function leaveLeague(leagueId: string): Promise<ApiResponse> {
     });
     return result.data;
   }, 'Failed to leave league');
+}
+
+/**
+ * Remove a member from a league (commissioner only).
+ *
+ * The server refunds the removed director's entry fee out of the prize pool and
+ * writes the removal to the league activity feed — see removeLeagueMember in
+ * functions/src/callable/leagues.js.
+ */
+export async function removeLeagueMember(leagueId: string, memberId: string): Promise<ApiResponse> {
+  return withErrorHandling(async () => {
+    const result = await callFunctionTracked<{ leagueId: string; memberId: string }, ApiResponse>(
+      'removeLeagueMember',
+      { leagueId, memberId }
+    );
+    return result.data;
+  }, 'Failed to remove member');
 }
 
 // =============================================================================

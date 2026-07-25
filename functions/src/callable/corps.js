@@ -7,6 +7,7 @@ const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
+const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
 const {
   VALID_CLASSES,
   CORPS_NAME_CLASSES,
@@ -394,8 +395,13 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
         }
       });
 
-      return { corpsNeedingSetup };
+      return { corpsNeedingSetup, seasonUid: currentSeasonUid };
     });
+
+    // The wizard just advanced activeSeasonId, so this director's leagues may
+    // have gone from empty to active. Best-effort; the nightly refresh backs
+    // it up (helpers/leagueActivity.js).
+    await refreshLeaguesForUser(db, uid, result.seasonUid);
 
     logger.info(`User ${uid} processed corps decisions:`, decisions.map(d => `${d.corpsClass}:${d.action}`));
     return {

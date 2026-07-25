@@ -22,8 +22,34 @@ export interface League {
   /** Legacy only — new leagues keep the code in meta/private (see useLeagueInviteCode). */
   inviteCode?: string;
 
+  // Season participation
+  /** Which season this league is currently playing (advanced at rollover). */
+  seasonId?: string;
+  seasonActivity?: LeagueSeasonActivity;
+
   // Settings
   settings: LeagueSettings;
+}
+
+/**
+ * Season-scoped participation, materialized by the backend
+ * (functions/src/helpers/leagueActivity.js).
+ *
+ * The roster is permanent but participation is not: a director's corps name
+ * survives season rollover, so `members` alone says nothing about who is
+ * actually playing right now. Public discovery filters on `activeMemberCount`
+ * and league UI reports it, so a league whose members haven't returned since
+ * the season reset reads as empty instead of advertising a full roster.
+ */
+export interface LeagueSeasonActivity {
+  /** The season this block describes; stale blocks are refreshed nightly. */
+  seasonUid: string;
+  /** Members registered for `seasonUid`. */
+  activeMembers: string[];
+  activeMemberCount: number;
+  /** Full roster size, so the UI can show "2 of 12" rather than hiding members. */
+  totalMemberCount: number;
+  updatedAt: Timestamp;
 }
 
 export interface LeagueSettings {

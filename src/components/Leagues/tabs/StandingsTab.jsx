@@ -23,6 +23,7 @@ import SeasonStatsCard from '../SeasonStatsCard';
 import LeagueLeaderboards from '../LeagueLeaderboards';
 import LeagueDashboard from '../LeagueDashboard';
 import { getEquippedCosmetic } from '../../../utils/cosmetics';
+import { getSeasonActivity } from '../../../utils/leagueActivity';
 
 const StandingsTab = ({
   standings,
@@ -93,20 +94,28 @@ const StandingsTab = ({
     return standings.find((s) => s.uid === userProfile?.uid);
   }, [standings, userProfile?.uid]);
 
-  // Separate active vs inactive members
+  // Separate active vs inactive members.
+  //
+  // This used to infer activity from a non-zero record (wins/losses/points),
+  // which was only ever right in season one: standings now reset at rollover,
+  // but before that they accumulated forever, so every director who had ever
+  // played read as active in perpetuity. The authoritative answer is the
+  // server-maintained seasonActivity block (see utils/leagueActivity.ts); the
+  // record heuristic remains as the fallback for leagues the nightly refresh
+  // has not backfilled yet.
   const { activeStandings, inactiveStandings } = useMemo(() => {
+    const activity = getSeasonActivity(league);
+    const isActive = activity
+      ? (stats) => activity.activeMembers?.includes(stats.uid)
+      : (stats) => stats.wins > 0 || stats.losses > 0 || stats.totalPoints > 0;
+
     const active = [];
     const inactive = [];
     standings.forEach((stats) => {
-      const hasActivity = stats.wins > 0 || stats.losses > 0 || stats.totalPoints > 0;
-      if (hasActivity) {
-        active.push(stats);
-      } else {
-        inactive.push(stats);
-      }
+      (isActive(stats) ? active : inactive).push(stats);
     });
     return { activeStandings: active, inactiveStandings: inactive };
-  }, [standings]);
+  }, [standings, league]);
 
   // Enhance standings with calculated fields (active members only get ranks)
   const enhancedStandings = useMemo(() => {
@@ -549,7 +558,8 @@ const StandingsTab = ({
                     >
                       <div className="px-4 py-2 border-t border-line-subtle bg-surface-sunken">
                         <p className="text-[10px] text-muted">
-                          These members haven't participated in any shows this season.
+                          These members haven't registered a corps for this season yet. They're
+                          excluded from standings and weekly matchups until they do.
                         </p>
                       </div>
                       <div className="divide-y divide-line-subtle">

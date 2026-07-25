@@ -96,6 +96,7 @@ const {
   updateMatchupResults,
   postLeagueMessage,
 } = require("./src/callable/leagues");
+const { removeLeagueMember } = require("./src/callable/leagueRoster");
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
@@ -172,6 +173,7 @@ const {
   generateWeeklyRecaps,
   updateLeagueRivalries,
   triggerMatchupGeneration,
+  refreshLeagueActivityJob,
 } = require("./src/scheduled/leagueAutomation");
 const {
   updateLifetimeLeaderboard,
@@ -283,6 +285,7 @@ module.exports = {
   makeLegacyEndowment,
   claimLadderTier,
   leaveLeague,
+  removeLeagueMember,
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
@@ -387,6 +390,7 @@ module.exports = {
   generateWeeklyRecaps,
   updateLeagueRivalries,
   triggerMatchupGeneration,
+  refreshLeagueActivityJob,
 
   // Email Scheduled Jobs
   weeklyDigestEmailJob,

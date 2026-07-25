@@ -784,6 +784,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               key="settings"
               league={league}
               userProfile={userProfile}
+              memberProfiles={memberProfiles}
               currentWeek={currentWeek}
               onBack={() => setActiveTab('standings')}
             />

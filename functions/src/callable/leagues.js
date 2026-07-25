@@ -15,6 +15,12 @@ const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/cal
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
+const {
+  isClassActiveThisSeason,
+  computeSeasonActivity,
+  refreshLeagueActivity,
+  getActiveSeasonUid,
+} = require("../helpers/leagueActivity");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -74,14 +80,20 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
+    // The creator's profile is read unconditionally: besides the entry fee it
+    // seeds seasonActivity below, so a league founded by a director who has
+    // already set their corps up is discoverable immediately rather than
+    // staying hidden until the nightly refresh.
+    const creatorProfileDoc = await transaction.get(userProfileRef);
+    if (!creatorProfileDoc.exists) {
+      throw new HttpsError("not-found", "User profile not found.");
+    }
+    const creatorProfile = creatorProfileDoc.data();
+
     // Creator pays the entry fee too — same terms as every member
     let creatorBalance = null;
     if (entryFee > 0) {
-      const creatorProfileDoc = await transaction.get(userProfileRef);
-      if (!creatorProfileDoc.exists) {
-        throw new HttpsError("not-found", "User profile not found.");
-      }
-      creatorBalance = creatorProfileDoc.data().corpsCoin || 0;
+      creatorBalance = creatorProfile.corpsCoin || 0;
       if (creatorBalance < entryFee) {
         throw new HttpsError(
           "failed-precondition",
@@ -89,6 +101,11 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
         );
       }
     }
+
+    // Season-scoped participation (see helpers/leagueActivity.js). A league
+    // whose members haven't registered for the live season stays out of public
+    // discovery; the commissioner still sees it under "My Leagues".
+    const seasonActivity = computeSeasonActivity([uid], [creatorProfileDoc], seasonUid);
 
     // Create league. The invite code is a JOIN SECRET and must never live on
     // this doc: firestore.rules deliberately leaves `list` over leagues open
@@ -105,6 +122,10 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       isPublic,
       maxMembers,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      // Public discovery filters on seasonActivity.activeMemberCount, so this
+      // must be written at creation — Firestore inequality filters skip
+      // documents missing the field entirely.
+      seasonActivity,
       settings: {
         // Whitelisted keys only — never spread arbitrary client-supplied
         // settings into the stored doc.
@@ -289,6 +310,10 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     }
   });
 
+  // Roster changed — recompute season participation so discovery and the
+  // matchup generators see the new member right away.
+  await refreshLeagueActivity(db, leagueId);
+
   // Create activity event for member joining
   const userProfileDoc = await db.doc(paths.userProfile(uid)).get();
   const userDisplayName = userProfileDoc.exists
@@ -392,6 +417,9 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
     }
   });
 
+  // Roster changed — recompute season participation (see joinLeague).
+  await refreshLeagueActivity(db, leagueId);
+
   // Create activity event for member joining
   const userProfileDoc = await db.doc(paths.userProfile(uid)).get();
   const userDisplayName = userProfileDoc.exists
@@ -427,6 +455,7 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
   const userProfileRef = db.doc(paths.userProfile(uid));
 
   try {
+    let leagueDeleted = false;
     await db.runTransaction(async (transaction) => {
       const leagueDoc = await transaction.get(leagueRef);
       if (!leagueDoc.exists) {
@@ -442,6 +471,7 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
 
       if (leagueData.creatorId === uid && leagueData.members.length === 1) {
         logger.info(`Creator ${uid} is the last member of league ${leagueId}. Deleting league.`);
+        leagueDeleted = true;
         transaction.delete(leagueRef);
         const inviteCode = (metaPrivateDoc.exists && metaPrivateDoc.data().inviteCode) ||
           leagueData.inviteCode;
@@ -462,6 +492,12 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
         leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId),
       });
     });
+
+    // Roster shrank — recompute season participation, unless the league went
+    // away with its last member.
+    if (!leagueDeleted) {
+      await refreshLeagueActivity(db, leagueId);
+    }
 
     return { success: true, message: "Successfully left the league." };
   } catch (error) {
@@ -529,6 +565,17 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
 
   // Group members by their active corps classes. Registry-derived (Phase
   // 7.4) so Podium corps join league matchups automatically at launch.
+  //
+  // Only directors REGISTERED FOR THE LIVE SEASON are paired. Testing
+  // corps[class].corpsName alone is not enough: rollover preserves corpsName
+  // (helpers/season.js), so every director who ever named a corps used to be
+  // paired forever — real directors were matched against absent accounts that
+  // score 0, and odd ghost counts handed out bogus byes. See
+  // helpers/leagueActivity.js.
+  const seasonUid = await getActiveSeasonUid(db);
+  if (!seasonUid) {
+    throw new HttpsError("failed-precondition", "No active season.");
+  }
   const corpsClasses = MATCHUP_CLASSES;
   const membersByClass = Object.fromEntries(corpsClasses.map((c) => [c, []]));
 
@@ -536,10 +583,9 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     const memberId = members[index];
     if (doc.exists) {
       const profileData = doc.data();
-      const corps = profileData.corps || {};
 
       for (const corpsClass of corpsClasses) {
-        if (corps[corpsClass] && corps[corpsClass].corpsName) {
+        if (isClassActiveThisSeason(profileData, corpsClass, seasonUid)) {
           membersByClass[corpsClass].push(memberId);
         }
       }
