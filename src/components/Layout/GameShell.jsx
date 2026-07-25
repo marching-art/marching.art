@@ -6,10 +6,12 @@
 // Laws enforced: No glow, no shadow, tight spacing
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, useLocation, NavLink } from 'react-router-dom';
-import { analyticsHelpers, adminHelpers } from '../../api';
+import { Link, NavLink } from 'react-router-dom';
+import { adminHelpers } from '../../api';
 import { ShellContext } from './shellContext';
 import { useAuth } from '../../context/AuthContext';
+import { DISCORD_URL } from '../../utils/siteLinks';
+import SiteLinksMenu from './SiteLinksMenu';
 import BottomNav from '../BottomNav';
 import { useTickerData } from '../../hooks/useTickerData';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
@@ -26,7 +28,6 @@ import {
   Sparkles,
   Shield,
   Newspaper,
-  HelpCircle,
   MessageCircle,
 } from 'lucide-react';
 
@@ -81,7 +82,7 @@ const TopNav = () => {
         {/* Discord — kept in the persistent header so the community link is
             reachable from every page (it used to live only on the home header). */}
         <a
-          href="https://discord.gg/YvFRJ97A5H"
+          href={DISCORD_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-2 p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors"
@@ -91,14 +92,9 @@ const TopNav = () => {
           <MessageCircle className="w-5 h-5" />
         </a>
 
-        {/* Help Icon */}
-        <Link
-          to="/guide"
-          className="ml-1 p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors"
-          title="Game Guide"
-        >
-          <HelpCircle className="w-5 h-5" />
-        </Link>
+        {/* Guides + site links. GameShell has no footer (fixed layout), so this
+            is the app's only route to the public pages and the legal links. */}
+        <SiteLinksMenu />
       </div>
     </nav>
   );
@@ -593,8 +589,6 @@ const TickerBar = () => {
 // =============================================================================
 
 const GameShell = ({ children }) => {
-  const location = useLocation();
-
   // Enable fixed one-screen layout for GameShell pages
   useEffect(() => {
     document.documentElement.classList.add('game-shell-active');
@@ -603,10 +597,8 @@ const GameShell = ({ children }) => {
     };
   }, []);
 
-  // Log page views
-  useEffect(() => {
-    analyticsHelpers.logPageView(location.pathname);
-  }, [location]);
+  // Page views are logged app-wide by RouteAnalytics (mounted in App.jsx) so
+  // public routes are counted too — they were invisible when this lived here.
 
   const shellContextValue = {
     // 56px top nav + ticker: 32px (h-8) on sm+, 40px (h-10) on mobile.

@@ -1,13 +1,11 @@
 // src/pages/Terms.jsx
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import { Heading } from '../components/ui';
-import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 
+// Chrome comes from PublicShell — this page used to offer a lone "Back to Home"
+// link as its entire navigation.
 const Terms = () => {
-  useBodyScroll();
   useSEO({
     title: 'Terms of Service | marching.art',
     description: 'Terms of service for marching.art, the free fantasy drum corps game.',
@@ -15,164 +13,154 @@ const Terms = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-responsive py-8 px-4 max-w-3xl mx-auto">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-secondary hover:text-interactive transition-colors mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
+    <div className="container-responsive py-8 px-4 max-w-3xl mx-auto">
+      <div className="bg-surface-card border border-line rounded-none p-6 sm:p-8">
+        <Heading level="display" className="text-gradient mb-6">
+          Terms of Service
+        </Heading>
 
-        <div className="bg-surface-card border border-line rounded-none p-6 sm:p-8">
-          <Heading level="display" className="text-gradient mb-6">
-            Terms of Service
-          </Heading>
+        <p className="text-muted text-sm mb-6">Last updated: January 2026</p>
 
-          <p className="text-muted text-sm mb-6">Last updated: January 2026</p>
+        <div className="space-y-6 text-secondary">
+          <section>
+            <Heading level="title" className="mb-3">
+              1. Acceptance of Terms
+            </Heading>
+            <p className="text-sm">
+              By accessing or using marching.art, you agree to be bound by these Terms of Service.
+              If you do not agree to these terms, please do not use the service.
+            </p>
+            <p className="text-sm mt-2">
+              Our service uses the YouTube API Services to display video content. By using
+              marching.art, you are also agreeing to be bound by the{' '}
+              <a
+                href="https://www.youtube.com/t/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-interactive hover:text-interactive-hover underline"
+              >
+                YouTube Terms of Service
+              </a>
+              .
+            </p>
+          </section>
 
-          <div className="space-y-6 text-secondary">
-            <section>
-              <Heading level="title" className="mb-3">
-                1. Acceptance of Terms
-              </Heading>
-              <p className="text-sm">
-                By accessing or using marching.art, you agree to be bound by these Terms of Service.
-                If you do not agree to these terms, please do not use the service.
-              </p>
-              <p className="text-sm mt-2">
-                Our service uses the YouTube API Services to display video content. By using
-                marching.art, you are also agreeing to be bound by the{' '}
-                <a
-                  href="https://www.youtube.com/t/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-interactive hover:text-interactive-hover underline"
-                >
-                  YouTube Terms of Service
-                </a>
-                .
-              </p>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              2. Description of Service
+            </Heading>
+            <p className="text-sm">
+              marching.art is a fantasy drum corps game that allows users to create virtual corps,
+              compete in leagues, and track scores based on real DCI performances. The service is
+              provided for entertainment purposes.
+            </p>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                2. Description of Service
-              </Heading>
-              <p className="text-sm">
-                marching.art is a fantasy drum corps game that allows users to create virtual corps,
-                compete in leagues, and track scores based on real DCI performances. The service is
-                provided for entertainment purposes.
-              </p>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              3. User Accounts
+            </Heading>
+            <ul className="list-disc list-inside space-y-1 text-sm ml-2">
+              <li>You must provide accurate information when creating an account</li>
+              <li>You are responsible for maintaining the security of your account</li>
+              <li>You must be at least 13 years old to use this service</li>
+              <li>One account per person is permitted</li>
+            </ul>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                3. User Accounts
-              </Heading>
-              <ul className="list-disc list-inside space-y-1 text-sm ml-2">
-                <li>You must provide accurate information when creating an account</li>
-                <li>You are responsible for maintaining the security of your account</li>
-                <li>You must be at least 13 years old to use this service</li>
-                <li>One account per person is permitted</li>
-              </ul>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              4. User Conduct
+            </Heading>
+            <p className="text-sm mb-2">You agree not to:</p>
+            <ul className="list-disc list-inside space-y-1 text-sm ml-2">
+              <li>Use offensive, abusive, or inappropriate names or content</li>
+              <li>Harass, threaten, or intimidate other users</li>
+              <li>Attempt to manipulate scores or game mechanics</li>
+              <li>Use automated systems or bots</li>
+              <li>Interfere with the proper functioning of the service</li>
+            </ul>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                4. User Conduct
-              </Heading>
-              <p className="text-sm mb-2">You agree not to:</p>
-              <ul className="list-disc list-inside space-y-1 text-sm ml-2">
-                <li>Use offensive, abusive, or inappropriate names or content</li>
-                <li>Harass, threaten, or intimidate other users</li>
-                <li>Attempt to manipulate scores or game mechanics</li>
-                <li>Use automated systems or bots</li>
-                <li>Interfere with the proper functioning of the service</li>
-              </ul>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              5. Intellectual Property
+            </Heading>
+            <p className="text-sm">
+              The service and its original content, features, and functionality are owned by
+              marching.art and are protected by copyright and other intellectual property laws. DCI
+              and corps names are trademarks of their respective owners.
+            </p>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                5. Intellectual Property
-              </Heading>
-              <p className="text-sm">
-                The service and its original content, features, and functionality are owned by
-                marching.art and are protected by copyright and other intellectual property laws.
-                DCI and corps names are trademarks of their respective owners.
-              </p>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              6. User Content
+            </Heading>
+            <p className="text-sm">
+              You retain ownership of content you create (corps names, show concepts). By posting
+              content, you grant us a license to display it within the service. We may remove
+              content that violates these terms.
+            </p>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                6. User Content
-              </Heading>
-              <p className="text-sm">
-                You retain ownership of content you create (corps names, show concepts). By posting
-                content, you grant us a license to display it within the service. We may remove
-                content that violates these terms.
-              </p>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              7. Disclaimer of Warranties
+            </Heading>
+            <p className="text-sm">
+              The service is provided "as is" without warranties of any kind. We do not guarantee
+              the service will be uninterrupted, secure, or error-free. Game scores and rankings are
+              for entertainment only.
+            </p>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                7. Disclaimer of Warranties
-              </Heading>
-              <p className="text-sm">
-                The service is provided "as is" without warranties of any kind. We do not guarantee
-                the service will be uninterrupted, secure, or error-free. Game scores and rankings
-                are for entertainment only.
-              </p>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              8. Limitation of Liability
+            </Heading>
+            <p className="text-sm">
+              To the maximum extent permitted by law, marching.art shall not be liable for any
+              indirect, incidental, special, or consequential damages arising from your use of the
+              service.
+            </p>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                8. Limitation of Liability
-              </Heading>
-              <p className="text-sm">
-                To the maximum extent permitted by law, marching.art shall not be liable for any
-                indirect, incidental, special, or consequential damages arising from your use of the
-                service.
-              </p>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              9. Termination
+            </Heading>
+            <p className="text-sm">
+              We reserve the right to suspend or terminate your account at our discretion, with or
+              without notice, for conduct that violates these terms or is harmful to other users or
+              the service.
+            </p>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                9. Termination
-              </Heading>
-              <p className="text-sm">
-                We reserve the right to suspend or terminate your account at our discretion, with or
-                without notice, for conduct that violates these terms or is harmful to other users
-                or the service.
-              </p>
-            </section>
+          <section>
+            <Heading level="title" className="mb-3">
+              10. Changes to Terms
+            </Heading>
+            <p className="text-sm">
+              We may modify these terms at any time. Continued use of the service after changes
+              constitutes acceptance of the new terms.
+            </p>
+          </section>
 
-            <section>
-              <Heading level="title" className="mb-3">
-                10. Changes to Terms
-              </Heading>
-              <p className="text-sm">
-                We may modify these terms at any time. Continued use of the service after changes
-                constitutes acceptance of the new terms.
-              </p>
-            </section>
-
-            <section>
-              <Heading level="title" className="mb-3">
-                11. Contact
-              </Heading>
-              <p className="text-sm">
-                If you have questions about these Terms of Service, please contact us at:{' '}
-                <a
-                  href="mailto:contact@marching.art"
-                  className="text-interactive hover:text-interactive-hover underline"
-                >
-                  contact@marching.art
-                </a>
-              </p>
-            </section>
-          </div>
+          <section>
+            <Heading level="title" className="mb-3">
+              11. Contact
+            </Heading>
+            <p className="text-sm">
+              If you have questions about these Terms of Service, please contact us at:{' '}
+              <a
+                href="mailto:contact@marching.art"
+                className="text-interactive hover:text-interactive-hover underline"
+              >
+                contact@marching.art
+              </a>
+            </p>
+          </section>
         </div>
       </div>
     </div>

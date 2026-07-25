@@ -20,6 +20,13 @@ Disallow: /retired-corps
 Disallow: /corps-history
 Disallow: /soundsport
 
+# Internal design-system reference, not a product page. The page also sets its
+# own noindex; this saves the crawl.
+Disallow: /styleguide
+
+# Password reset — a form, never a search result.
+Disallow: /forgot-password
+
 # Legacy redirect routes — duplicates of the canonical paths above.
 # Note: /how-to-play is intentionally crawlable — it is the public
 # fantasy drum corps guide. /hall-of-champions is also crawlable: it is

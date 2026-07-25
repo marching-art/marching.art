@@ -6,23 +6,18 @@
 // Laws: No marketing fluff, no parallax, no testimonials
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Trophy,
   Lock,
   Mail,
   AlertCircle,
-  LayoutDashboard,
   User,
   LogOut,
   Flame,
   Zap,
-  MessageCircle,
   Coins,
   Play,
-  Newspaper,
-  Calendar,
-  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -31,7 +26,8 @@ import NewsFeed from '../components/Landing/NewsFeed';
 import GuestActionBar from '../components/Landing/GuestActionBar';
 import BottomNav from '../components/BottomNav';
 import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
-import DesktopNavItem from '../components/Layout/DesktopNavItem';
+import SiteHeader from '../components/Layout/SiteHeader';
+import SiteFooter from '../components/Layout/SiteFooter';
 import { useScheduleStore } from '../store/scheduleStore';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
@@ -50,6 +46,7 @@ import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
+import { resolveAuthRedirect } from '../hooks/useAuthRedirect';
 
 // =============================================================================
 // LANDING PAGE COMPONENT
@@ -62,6 +59,11 @@ const Landing = () => {
   useSEO({ path: '/' });
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Set only when ProtectedRoute redirected here from a route the visitor was
+  // actually trying to reach; null on an ordinary visit to the home page.
+  const redirectAfterAuth = location.state?.from ? resolveAuthRedirect(location.state.from) : null;
 
   // Signed-in home surfaces the director's next show as the primary action.
   // Data comes straight from the global stores (already listening app-wide) —
@@ -174,6 +176,10 @@ const Landing = () => {
       await signIn(email, password);
       markAsReturning(); // User has engaged - mark as returning visitor
       toast.success('Welcome back!');
+      // Signing in from the home page normally keeps you on the home page (it
+      // becomes the signed-in home). The exception is arriving here because
+      // ProtectedRoute bounced you off a deep link — then finish the trip.
+      if (redirectAfterAuth) navigate(redirectAfterAuth, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       switch (err.code) {
@@ -198,117 +204,10 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* FIXED HEADER */}
-      <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line">
-        <div className="h-full flex items-center px-4 lg:px-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-none overflow-hidden">
-              <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
-            </div>
-            <span className="text-base font-bold text-white tracking-wider">marching.art</span>
-          </div>
-          <div className="ml-auto flex items-center gap-1">
-            {/* Signed-out auth actions live in the bottom nav (GuestActionBar:
-                Demo / Sign In / Join), not the header — so the header corner is
-                free for the Discord + Privacy/Terms utility links below. */}
-            {/* Authenticated user - Compact status chip on mobile.
-                Replaces the old oversized DASHBOARD button: navigation now lives
-                in the persistent BottomNav below, so the header only needs to
-                surface glanceable status (coins + level). Links to the dashboard
-                to preserve the one-tap path into the game. */}
-            {user && profile && (
-              <Link
-                to="/dashboard"
-                aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
-                className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-line active:scale-95 transition-all duration-150 press-feedback"
-              >
-                <span className="flex items-center gap-1 text-sm font-bold text-brand font-data tabular-nums">
-                  <Coins className="w-3.5 h-3.5" />
-                  {(profile.corpsCoin || 0).toLocaleString()}
-                </span>
-                <span className="flex items-center gap-1 text-sm font-bold text-purple-400 font-data tabular-nums pl-2 border-l border-line">
-                  <Zap className="w-3.5 h-3.5" />
-                  {profile.xpLevel || 1}
-                </span>
-              </Link>
-            )}
-            {/* Desktop links */}
-            {user ? (
-              /* Signed in: the app's primary navigation, matching GameShell's top
-                 nav. Without this the home screen would be the only page where a
-                 desktop user has no way into Dashboard/Schedule/Scores/Profile
-                 (previously hidden inside the sidebar widget's quick-links). */
-              <nav className="hidden lg:flex items-center gap-1" aria-label="Primary">
-                <DesktopNavItem to="/" icon={Newspaper} label="News" end />
-                <DesktopNavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-                <DesktopNavItem to="/schedule" icon={Calendar} label="Schedule" />
-                <DesktopNavItem to="/scores" icon={Trophy} label="Scores" />
-                <DesktopNavItem to="/profile" icon={User} label="Profile" />
-              </nav>
-            ) : (
-              /* Signed out: Discord + Privacy/Terms in the header corner, now on
-                 mobile too (they used to be desktop-only). Discord is an icon;
-                 the legal links stay compact. Auth moved to the bottom nav. */
-              <div className="flex items-center gap-0.5">
-                <a
-                  href="https://discord.gg/YvFRJ97A5H"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
-                  title="Join our Discord"
-                  aria-label="Join our Discord"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </a>
-                <Link
-                  to="/privacy"
-                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-secondary active:text-white transition-colors press-feedback flex items-center"
-                >
-                  Privacy
-                </Link>
-                <Link
-                  to="/terms"
-                  className="px-2 py-2.5 min-h-touch text-xs text-muted hover:text-secondary active:text-white transition-colors press-feedback flex items-center"
-                >
-                  Terms
-                </Link>
-              </div>
-            )}
-            {/* Discord — signed-in users don't get the informational link row
-                above, so surface the community link as an icon here (matches the
-                Discord icon in GameShell's header on every other page). Sits after
-                the chip on mobile and after the nav on desktop. */}
-            {user && (
-              <a
-                href="https://discord.gg/YvFRJ97A5H"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
-                title="Join our Discord"
-                aria-label="Join our Discord"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </a>
-            )}
-            {/* Game Guide — mirrors the help icon in GameShell's header so the
-                guide is reachable from the home page too. Signed-in only, sitting
-                after Discord to match the icon order elsewhere on the site. */}
-            {user && (
-              <Link
-                to="/guide"
-                className="p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
-                title="Game Guide"
-                aria-label="Game Guide"
-              >
-                <HelpCircle className="w-5 h-5" />
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* SCROLLABLE CONTENT */}
-      <main className="flex-1 pb-24 lg:pb-4">
+      <main id="main-content" role="main" className="flex-1 pb-4">
         <div className="p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
             {/* ============================================================= */}
@@ -575,6 +474,10 @@ const Landing = () => {
           </div>
         </div>
       </main>
+
+      {/* Shared utility links. The home page used to be the only route that
+          surfaced Privacy/Terms at all, and only in its signed-out header. */}
+      <SiteFooter className="pb-20 lg:pb-0" />
 
       {/* FULL STANDINGS MODAL */}
       <StandingsModal
