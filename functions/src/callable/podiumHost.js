@@ -11,8 +11,10 @@ const hostedEvents = require("../helpers/podium/hostedEvents");
 const { podiumContext } = require("./podium");
 const { paths } = require("../helpers/paths");
 const { assertWriteBudget } = require("../helpers/callableGuards");
+const { discordEventsWebhookUrl } = require("../helpers/discord");
+const { announceHostedEvent } = require("../helpers/hostedEventDiscord");
 
-exports.hostEvent = onCall({ cors: true }, async (request) => {
+exports.hostEvent = onCall({ cors: true, secrets: [discordEventsWebhookUrl] }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
   // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
   // Podium core loop, so the budget is generous (still far above human rate).
@@ -122,5 +124,19 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
   }
 
   logger.info(`Hosted event created: ${eventName} day ${day} by ${uid}`);
+
+  // Tell the room. A hosted show's payout scales with attendance, and
+  // attendance starts with somebody hearing about it. Never throws — the
+  // event exists and is on the schedule regardless of Discord.
+  await announceHostedEvent(discordEventsWebhookUrl.value(), {
+    eventName,
+    hostName: (profileSnapshotPre.exists && profileSnapshotPre.data().username) || null,
+    location: `${venue.city}, ${venue.region}`,
+    venueLabel: tier.label,
+    day,
+    capacity: tier.capacity,
+    seasonName: seasonData.name || seasonData.seasonUid,
+  });
+
   return { success: true, eventId: eventRef.id, day, eventName };
 });

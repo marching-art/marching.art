@@ -1,9 +1,50 @@
 # Integrations
 
 External services and data pipelines: YouTube video embeds, Google Gemini
-(AI news + corps avatars), the two Discord webhooks (nightly score drop →
-scores channel, Fan Favorite ballots → #announcements), and the
+(AI news + corps avatars), the Discord channel webhooks, and the
 historical-data importers that feed scoring and schedule generation.
+
+---
+
+## Discord (channel map)
+
+Five channels, five webhooks, five secrets. One secret per channel is
+deliberate: any channel can be rotated, or silenced by setting its secret to
+an empty value, without touching the others — and an unset secret disables
+only that channel's posts. Shared plumbing lives in
+[`functions/src/helpers/discord.js`](../functions/src/helpers/discord.js):
+the secret definitions, the poster, the lease-guarded `postOnce`, and the
+embed helpers.
+
+| Channel            | Secret                              | Posts                                                                                 |
+| ------------------ | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, season champions |
+| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock                             |
+| **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                          |
+| **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                       |
+| **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                 |
+
+Two rules hold across every channel:
+
+- **No pings, ever, by default.** Corps names, event names and director names
+  are user-authored and flow straight into embed copy, so every post is sent
+  with `allowed_mentions: {parse: []}` — nobody can name a corps `@everyone`
+  and ping the server from inside the game. A post that _should_ ping opts in
+  explicitly.
+- **Isolation.** No Discord failure ever fails, blocks, or retries game logic.
+  Announcements that should survive an outage are lease-guarded and re-posted
+  by the next nightly run; fire-and-forget posts are logged and dropped.
+
+**Setup (any channel):** create the webhook (Channel Settings → Integrations
+→ Webhooks), then store it in Secret Manager **before deploying** — the
+declaring functions won't deploy until the secret exists. Either add it as a
+repo secret of the same name and run **Deploy Cloud Functions** with
+`deploy_target: all` and the `set_discord_webhook_urls` box checked — one box
+pushes every `DISCORD_*_WEBHOOK_URL` repo secret that is set, and warns about
+any that aren't —
+or `firebase functions:secrets:set <NAME>` via the CLI. A webhook URL is a
+post-capability — anyone holding it can post to the channel — which is why it
+lives in Secret Manager, never in the world-readable `game-settings` docs.
 
 ---
 
@@ -13,8 +54,23 @@ After the nightly scoring commit (at the night's score-drop time — see
 [`SCORE_DROPS.md`](SCORE_DROPS.md): 9 PM ET off-season, 11 PM–2 AM ET in live
 season by the westernmost show), the pipeline posts one rich embed to the
 community server's scores channel: tonight's top three per ranked class,
-show count, and a link to `/scores`. SoundSport is mentioned by participation
-count only — its ratings are never revealed anywhere in the product.
+show count, and a link to `/scores`.
+
+SoundSport is mentioned by participation count and by **blue ribbon** — each
+show's Best in Show winner is named, using the same per-show rule
+`scoringAwards.js` awards the trophy by. The award is announced, never the
+rating: SoundSport scores are still revealed nowhere in the product.
+
+Two more things ride this channel:
+
+- **All-time records.** `gameRecords.js` stamps every record it accepts with
+  `{seasonName, day}`, so "what fell tonight" needs no extra state — the stage
+  reads `game-records/records` and filters for tonight. A record adds a second
+  embed to the same message (same channel, same moment, one notification).
+- **Season champions.** On finals night (day 49) the drop is followed by a
+  separate champions post built from `season_champions/{seasonUid}`, under its
+  own `{seasonUid}_discord_champions_day49` lease so a champions failure can't
+  un-post the drop.
 
 - **Code:** `functions/src/helpers/scoreDrop.js` (aggregation + embed + post),
   wired as an isolated stage in `functions/src/scheduled/nightlyStages.js`
@@ -31,10 +87,10 @@ count only — its ratings are never revealed anywhere in the product.
   - **Via GitHub Actions (preferred):** add the URL as a repository secret
     named `DISCORD_SCORES_WEBHOOK_URL` (GitHub → Settings → Secrets and
     variables → Actions), then run the **Deploy Cloud Functions** workflow
-    with `deploy_target: all` and the `set_discord_webhook_url` box checked —
+    with `deploy_target: all` and the `set_discord_webhook_urls` box checked —
     the workflow pushes the repo secret into Secret Manager and the deploy
     binds it. Leave the box unchecked on later deploys; re-check it only to
-    rotate the URL (same mechanism as `set_scraper_api_key`).
+    rotate a URL (same mechanism as `set_scraper_api_key`).
   - **Via the CLI:**
 
     ```bash
@@ -90,10 +146,92 @@ collects nobody's vote. Three event posts go to the server's
   Secret Manager **before deploying** (the nightly jobs declare
   `secrets: [discordAnnouncementsWebhookUrl]`): either add it as the repo
   secret `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` and run **Deploy Cloud Functions**
-  with `deploy_target: all` and `set_discord_announcements_webhook_url`
-  checked, or `firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL`
-  via the CLI. Two secrets means either channel can be rotated, or silenced by
-  setting it empty, without touching the other.
+  with `deploy_target: all` and `set_discord_webhook_urls` checked, or
+  `firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` via the
+  CLI.
+
+---
+
+## Discord (#news)
+
+Two publishers, one channel:
+
+- **Published articles** — `functions/src/triggers/newsDiscord.js`, an
+  `onDocumentCreated` trigger on
+  `news_hub/{seasonId}/days/{dayId}/articles/{articleType}`. Articles reach
+  Firestore from several paths (nightly generation, the season summary, the
+  admin approve flow, the trusted-author auto-publisher) but all land on that
+  one path, so a single trigger covers every publish route present and future.
+  Each post carries the headline, summary, hero image when one exists, and a
+  link built from the composite article id the SPA resolves
+  (`{seasonId}_{dayId}_{articleType}`). A **backfill guard** (`FRESH_WINDOW_MS`,
+  6 h) means a records rebuild or migration can never replay years of
+  headlines into the channel. Volume is ~5 posts on a generation night; if
+  that ever reads as noise, switch to one digest per day off the day-index doc.
+- **The Podium Report** — `functions/src/helpers/podium/podiumReportDiscord.js`,
+  posted by `runPodiumReportStage` after the Podium stage publishes the week's
+  column to `podium-recaps/{seasonUid}/power/{week}`. The column is
+  deterministic and data-composed (never LLM-written), so it is safe to
+  syndicate verbatim. One lease per week (`{seasonUid}_discord_podreport_day{week}`).
+
+---
+
+## Discord (#events — director-hosted shows only)
+
+A hosted show is open-enrollment: the host rents a venue, the show lands on
+the season schedule, and any corps can pick it in the weekly selector. The
+host's payout scales with how many distinct directors actually turn up — so
+whether a booking profits comes down to whether anyone hears about it.
+
+- **Code:** `functions/src/helpers/hostedEventDiscord.js`, called at the end of
+  the `hostEvent` callable (`functions/src/callable/podiumHost.js`) once the
+  event exists and is on the schedule. Fire-and-forget: a Discord failure is
+  logged and swallowed — it must never fail a callable the director paid
+  CorpsCoin for.
+- **Scope — this is the whole point of the channel:** only director-created
+  events post here. The **generated season schedule**
+  (`helpers/seasonSchedule.js`, the `seasonScheduler` job) must never post to
+  #events — it is dozens of shows nobody chose, and it would bury the one show
+  a player is trying to fill.
+
+---
+
+## Discord (#operations — admin only)
+
+The scoring watchdog (4:30 AM) and the scrape canary (1 PM) already detect the
+incidents that matter. They reported via a stably-tagged `logger.error` plus an
+admin email — a fine audit trail, a slow page. The webhook post is the fast
+path.
+
+- **Code:** `functions/src/helpers/opsAlerts.js`, called from
+  `scheduled/scoringWatchdog.js` and `scheduled/scrapeCanary.js`.
+- **Additive, never sole:** the log line and the email still go out. An
+  alerting channel that can itself be down must not be the only place an
+  incident is reported. `postOpsAlert` never throws.
+- **Not lease-guarded**, unlike the announcement posts: a problem that persists
+  across runs _should_ keep being reported. The callers already fire at most
+  once per scheduled run.
+- **Keep the channel private:** alerts carry lease keys, run ids and raw error
+  text, which is exactly why they don't belong in a player-facing channel.
+
+---
+
+## Discord (season clock → #announcements)
+
+`functions/src/helpers/seasonAnnounce.js` builds two posts for the moments the
+game asks something of everyone at once:
+
+- **Season start** — posted by `scheduled/seasonScheduler.js` right after
+  `startNewOffSeason`/`startNewLiveSeason`, re-reading the season doc that
+  actually landed rather than trusting a return value. Lease:
+  `{seasonUid}_discord_seasonstart_day0`. The audience that most needs this is
+  the one not opening the app — lapsed directors still sitting in the server.
+- **Lineup lock** — posted by the existing 4 PM `lineupLockReminderPushJob`
+  when `getLineupLockContext` says caption changes close tonight. The FCM push
+  reaches directors with changes left to spend; the channel post reaches
+  everyone else, including people who never enabled push. Lease is keyed by the
+  caption window's `periodKey`, which is exactly "which lock is this", so the
+  daily job announces each lock once and stays quiet in between.
 
 ---
 

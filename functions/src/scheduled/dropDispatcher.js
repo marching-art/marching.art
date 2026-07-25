@@ -42,8 +42,11 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { planDrop, showCalendarDay, CHAMPIONSHIP_WEEK_START_DAY } = require("../helpers/dropPlanner");
 const { isDropSchedulingEnabled } = require("../helpers/features");
-const { discordScoresWebhookUrl } = require("../helpers/scoreDrop");
-const { discordAnnouncementsWebhookUrl } = require("../helpers/podium/fanFavoriteDiscord");
+const {
+  discordScoresWebhookUrl,
+  discordAnnouncementsWebhookUrl,
+  discordNewsWebhookUrl,
+} = require("../helpers/discord");
 const { scraperApiKey } = require("../helpers/dciFetch");
 
 // Failure-only retry bound: a night's scrape may be attempted at most this
@@ -388,9 +391,10 @@ exports.podiumNightly = onSchedule({
   // Errors are swallowed below (isolation contract), so scheduler retries
   // would never fire; the podium stage's own leases self-heal next night.
   retryCount: 0,
-  // The Fan Favorite announcements ride this job (they announce off the state
-  // the Podium stage writes), so it needs the #announcements webhook.
-  secrets: [discordAnnouncementsWebhookUrl],
+  // The Fan Favorite ballots (#announcements) and the weekly Podium Report
+  // (#news) ride this job — both announce off the state the Podium stage
+  // writes — so it needs both webhooks.
+  secrets: [discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
 }, async () => {
   const db = getDb();
   if (!(await isDropSchedulingEnabled(db))) {
@@ -441,6 +445,20 @@ exports.podiumNightly = onSchedule({
     }
   } catch (error) {
     logger.error(`[fan-favorite] stage failed (Podium unaffected): ${error.message}`);
+  }
+
+  // The weekly Podium Report column (#news), same isolation and its own
+  // per-week lease.
+  try {
+    const { runPodiumReportStage } = require("./nightlyStages");
+    const result = await runPodiumReportStage(db, discordNewsWebhookUrl.value(), undefined, {
+      competitionDay,
+    });
+    if (result.status === "ran" && result.announcement?.status === "posted") {
+      logger.info(`[podium-report] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[podium-report] stage failed (Podium unaffected): ${error.message}`);
   }
 });
 

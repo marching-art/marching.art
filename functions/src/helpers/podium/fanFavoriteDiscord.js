@@ -25,20 +25,17 @@
  * caller. Ballots, scoring and archival never depend on Discord being up.
  */
 
-const { logger } = require("firebase-functions/v2");
-const { defineSecret } = require("firebase-functions/params");
 const {
-  claimScoringRun,
-  markScoringRunCompleted,
-  markScoringRunFailed,
-} = require("../scoringRunGuard");
-const { postToDiscordWebhook, clampName, MEDALS, SRC_PARAM, SRC_DISCORD } = require("../scoreDrop");
+  discordAnnouncementsWebhookUrl,
+  COLORS,
+  clampName,
+  joinLines,
+  place,
+  link,
+  payloadOf,
+  postOnce,
+} = require("../discord");
 const fanFavorite = require("./fanFavorite");
-
-// Webhook URL for the community server's #announcements channel. Like the
-// scores webhook it is a post-capability, so it lives in Secret Manager and
-// never in the world-readable game-settings docs.
-const discordAnnouncementsWebhookUrl = defineSecret("DISCORD_ANNOUNCEMENTS_WEBHOOK_URL");
 
 const MAJOR_LABELS = {
   28: "Southwestern Championship",
@@ -59,13 +56,10 @@ const DIVISION_ORDER = ["worldClass", "openClass", "aClass"];
  */
 const ANNOUNCE_DAY_TO_MAJOR = { 28: 28, 35: 35, 42: 41 };
 
-const WEBHOOK_USERNAME = "marching.art";
-const PODIUM_URL = `https://marching.art/podium?${SRC_PARAM}=${SRC_DISCORD}`;
-// The ballot card's pink, so the posts read as one thread of the same ritual.
-const FAN_COLOR = 0xec4899;
+const PODIUM_URL = link("/podium");
 
-// Discord embed field values cap at 1024 characters.
-const FIELD_VALUE_MAX = 1024;
+// Log tag on every announcement this module posts.
+const TAG = "fan-favorite";
 
 /** The major whose ballot is announced on `competitionDay`, or null. */
 function majorAnnouncedOn(competitionDay) {
@@ -76,30 +70,6 @@ function majorAnnouncedOn(competitionDay) {
 function votes(count) {
   const n = Number(count) || 0;
   return `${n} vote${n === 1 ? "" : "s"}`;
-}
-
-/**
- * Join lines into an embed field value, dropping the tail (with a count) when
- * a big ballot would blow Discord's 1024-character field limit.
- */
-function joinLines(lines) {
-  const kept = [];
-  let length = 0;
-  for (const line of lines) {
-    const cost = line.length + 1;
-    // Leave room for the "…and N more" tail before committing the last line.
-    if (length + cost > FIELD_VALUE_MAX - 20 && kept.length < lines.length) break;
-    kept.push(line);
-    length += cost;
-  }
-  const dropped = lines.length - kept.length;
-  if (dropped > 0) kept.push(`…and ${dropped} more`);
-  return kept.join("\n");
-}
-
-/** 🥇🥈🥉 for the podium, a neutral marker below it. */
-function place(index) {
-  return MEDALS[index] || "▫️";
 }
 
 /** Ranked "medal — corps — votes" lines for a published tally. */
@@ -132,22 +102,19 @@ function buildBallotOpenPayload({ seasonName, major, candidates, closesOnDay }) 
     });
   }
 
-  return {
-    username: WEBHOOK_USERNAME,
-    embeds: [
-      {
-        title: `🗳️ Fan Favorite ballot — ${label}`,
-        url: PODIUM_URL,
-        description:
-          `${seasonName} — voting is open for the corps that stole the show at the ${label}. ` +
-          `One vote each, and you don't need a corps to cast it. ` +
-          `The ballot closes after Day ${closesOnDay}. Cosmetic only — zero score impact.`,
-        color: FAN_COLOR,
-        fields,
-        footer: { text: `${list.length} corps on the ballot · vote on the Podium page` },
-      },
-    ],
-  };
+  return payloadOf(
+    {
+      title: `🗳️ Fan Favorite ballot — ${label}`,
+      url: PODIUM_URL,
+      description:
+        `${seasonName} — voting is open for the corps that stole the show at the ${label}. ` +
+        `One vote each, and you don't need a corps to cast it. ` +
+        `The ballot closes after Day ${closesOnDay}. Cosmetic only — zero score impact.`,
+      color: COLORS.fan,
+      fields,
+      footer: { text: `${list.length} corps on the ballot · vote on the Podium page` },
+    }
+  );
 }
 
 /**
@@ -180,22 +147,17 @@ function buildFinalsOpenPayload({ seasonName, finalists, prelimsResults }) {
     ),
   });
 
-  return {
-    username: WEBHOOK_USERNAME,
-    embeds: [
-      {
-        title: "🏆 Fan Favorite finals — the ballot is set",
-        url: PODIUM_URL,
-        description:
-          `${seasonName} — the prelims polls are in and the finals ballot is open for ` +
-          `championship week. One vote each, everyone eligible, winner crowned when the ` +
-          `season is archived.`,
-        color: FAN_COLOR,
-        fields,
-        footer: { text: "Vote on the Podium page · cosmetic only" },
-      },
-    ],
-  };
+  return payloadOf({
+    title: "🏆 Fan Favorite finals — the ballot is set",
+    url: PODIUM_URL,
+    description:
+      `${seasonName} — the prelims polls are in and the finals ballot is open for ` +
+      `championship week. One vote each, everyone eligible, winner crowned when the ` +
+      `season is archived.`,
+    color: COLORS.fan,
+    fields,
+    footer: { text: "Vote on the Podium page · cosmetic only" },
+  });
 }
 
 /**
@@ -220,45 +182,17 @@ function buildWinnerPayload({ seasonName, winner, finalsResults }) {
       ? `with ${votes(winner.finalsVotes)} in the finals`
       : "on the strength of the prelims ballots — the finals drew no votes";
 
-  return {
-    username: WEBHOOK_USERNAME,
-    embeds: [
-      {
-        title: `💗 ${clampName(winner.corpsName)} is the ${seasonName} Fan Favorite`,
-        url: PODIUM_URL,
-        description:
-          `The community's ballot is closed. **${clampName(winner.corpsName)}** takes the crown ` +
-          `${margin}. The trophy goes to their director's case and onto the season record — ` +
-          `hardware voted for entirely by the room.`,
-        color: FAN_COLOR,
-        fields,
-        footer: { text: "Fan Favorite · cosmetic, and the one trophy the field can't score for" },
-      },
-    ],
-  };
-}
-
-/**
- * Post one announcement at most once, ever, per (season, event).
- *
- * Never throws: a Discord outage marks the lease failed and is logged with a
- * stable `[fan-favorite]` tag, so the next nightly run re-claims and re-posts.
- *
- * @returns {Promise<{kind: string, status: string, [k: string]: unknown}>}
- */
-async function postAnnouncement(db, { kind, leaseKey, leaseDay, payload, webhookUrl, fetchImpl }) {
-  const lease = await claimScoringRun(db, leaseKey, leaseDay);
-  if (!lease.claimed) return { kind, status: "skipped", reason: lease.reason };
-  try {
-    await postToDiscordWebhook(webhookUrl, payload, fetchImpl);
-    await markScoringRunCompleted(db, leaseKey, leaseDay, { posted: true, kind });
-    logger.info(`[fan-favorite] announced ${kind} to Discord.`);
-    return { kind, status: "posted" };
-  } catch (error) {
-    await markScoringRunFailed(db, leaseKey, leaseDay, error);
-    logger.error(`[fan-favorite] ${kind} announcement failed (will retry): ${error.message}`);
-    return { kind, status: "failed", error: error.message };
-  }
+  return payloadOf({
+    title: `💗 ${clampName(winner.corpsName)} is the ${seasonName} Fan Favorite`,
+    url: PODIUM_URL,
+    description:
+      `The community's ballot is closed. **${clampName(winner.corpsName)}** takes the crown ` +
+      `${margin}. The trophy goes to their director's case and onto the season record — ` +
+      `hardware voted for entirely by the room.`,
+    color: COLORS.fan,
+    fields,
+    footer: { text: "Fan Favorite · cosmetic, and the one trophy the field can't score for" },
+  });
 }
 
 /**
@@ -297,8 +231,9 @@ async function announceFanFavorite(
     });
     announcements.push(
       payload
-        ? await postAnnouncement(db, {
+        ? await postOnce(db, {
             kind: "prelims-open",
+            tag: TAG,
             leaseKey: `${seasonUid}_fanfav_prelims`,
             leaseDay: major,
             payload,
@@ -318,8 +253,9 @@ async function announceFanFavorite(
     });
     if (payload) {
       announcements.push(
-        await postAnnouncement(db, {
+        await postOnce(db, {
           kind: "finals-open",
+          tag: TAG,
           leaseKey: `${seasonUid}_fanfav_finals`,
           leaseDay: 0,
           payload,
@@ -380,8 +316,9 @@ async function announceFanFavoriteWinner(
   });
   if (!payload) return { kind: "crowned", status: "no-winner", seasonUid };
 
-  return postAnnouncement(db, {
+  return postOnce(db, {
     kind: "crowned",
+    tag: TAG,
     leaseKey: `${seasonUid}_fanfav_winner`,
     leaseDay: 0,
     payload,

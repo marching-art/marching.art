@@ -17,6 +17,8 @@ const { getCurrentSeasonWeek, getCompletedCalendarDay, toCompetitionDay } = requ
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
+const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
+const { buildLineupLockPayload } = require("../helpers/seasonAnnounce");
 
 /**
  * Send show reminder push notifications
@@ -391,6 +393,8 @@ exports.lineupLockReminderPushJob = onSchedule(
     // as showReminderPushJob above.
     timeoutSeconds: 540,
     memory: "256MiB",
+    // The same lock is announced once to #announcements (seasonAnnounce.js).
+    secrets: [discordAnnouncementsWebhookUrl],
   },
   async () => {
     logger.info("Running lineup lock reminder push job");
@@ -410,6 +414,11 @@ exports.lineupLockReminderPushJob = onSchedule(
         logger.info("No caption-change lock tonight, skipping lineup reminders");
         return;
       }
+
+      // The channel post reaches the directors push never will — the ones
+      // who never enabled notifications. One per lock period, lease-guarded,
+      // and isolated: Discord never blocks the push fan-out below.
+      await announceLineupLock(db, season, context);
 
       // Only corps is consumed below — project it instead of full profiles.
       const profilesSnapshot = await db
@@ -451,3 +460,35 @@ exports.lineupLockReminderPushJob = onSchedule(
     }
   }
 );
+
+/**
+ * Post tonight's lineup lock to #announcements, once per lock period.
+ *
+ * The lease is keyed by the caption window's periodKey, which is exactly
+ * "which lock is this" — so the daily job announces each lock once and stays
+ * quiet on the days between. Never throws.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} season - game-settings/season data.
+ * @param {Object} context - From getLineupLockContext.
+ */
+async function announceLineupLock(db, season, context) {
+  const webhookUrl = discordAnnouncementsWebhookUrl.value();
+  if (!webhookUrl) return;
+  try {
+    const result = await postOnce(db, {
+      kind: `lineup-lock-${context.phase}`,
+      tag: "lineup-lock",
+      leaseKey: `${season.seasonUid}_discord_lock_${context.phase}`,
+      leaseDay: context.periodKey,
+      payload: buildLineupLockPayload({
+        context,
+        seasonName: season.name || season.seasonUid,
+      }),
+      webhookUrl,
+    });
+    logger.info(`[lineup-lock] Discord announcement: ${result.status}`);
+  } catch (error) {
+    logger.error(`[lineup-lock] Discord announcement failed: ${error.message}`);
+  }
+}

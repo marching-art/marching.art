@@ -2,7 +2,8 @@
 // scraper depends on every afternoon and audits their structure
 // (helpers/scrapeCanary.js), so a markup redesign surfaces as a 1 PM ET
 // email instead of a 2 AM scoring-night incident. Alerting mirrors the
-// scoring watchdog: a stably-tagged logger.error ("[scrape-canary]") for
+// scoring watchdog: a Discord post to the admin-only #operations channel,
+// a stably-tagged logger.error ("[scrape-canary]") for
 // log-based alerting plus an admin email fan-out. The last result is
 // persisted to admin-stats/scrapeCanary for the admin dashboard.
 
@@ -12,6 +13,8 @@ const { getDb } = require("../config");
 const { dciFetch, scraperApiKey } = require("../helpers/dciFetch");
 const { discoverAllRecapUrls } = require("../helpers/scraping");
 const { auditScoresListing, auditRecapPage } = require("../helpers/scrapeCanary");
+const { discordOpsWebhookUrl } = require("../helpers/discord");
+const { postOpsAlert } = require("../helpers/opsAlerts");
 
 const SCORES_LIST_URL = "https://www.dci.org/scores/";
 
@@ -106,6 +109,19 @@ async function runScrapeCanary(db) {
     logger.error(`[scrape-canary] admin email fan-out failed: ${error.message}`);
   }
 
+  // Alert channel 3: the admin-only #operations channel — the one that
+  // reaches a phone while there is still an afternoon left to fix the
+  // selectors. Never throws.
+  await postOpsAlert(discordOpsWebhookUrl.value(), {
+    title: "dci.org markup drift — tonight's scrape will likely fail",
+    source: "scrape-canary",
+    severity: "critical",
+    summary:
+      "Selectors live in functions/src/helpers/scraping.js and scheduled/liveScraper.js; " +
+      "the canary's mirrored contracts in helpers/scrapeCanary.js must be updated with them.",
+    details: [...problems, ...warnings.map((w) => `warning: ${w}`)],
+  });
+
   return result;
 }
 
@@ -118,7 +134,7 @@ exports.scrapeCanary = onSchedule(
     schedule: "0 13 * * *",
     timeZone: "America/New_York",
     timeoutSeconds: 120,
-    secrets: [scraperApiKey],
+    secrets: [scraperApiKey, discordOpsWebhookUrl],
   },
   async () => {
     await runScrapeCanary(getDb());

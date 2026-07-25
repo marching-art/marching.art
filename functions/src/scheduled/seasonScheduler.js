@@ -3,11 +3,13 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { startNewOffSeason, startNewLiveSeason, scraperInvokeKey } = require("../helpers/season");
 const { scraperApiKey } = require("../helpers/dciFetch");
+const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
+const { buildSeasonStartPayload } = require("../helpers/seasonAnnounce");
 
 exports.seasonScheduler = onSchedule({
   schedule: "every day 03:00",
   timeZone: "America/New_York",
-  secrets: [scraperInvokeKey, scraperApiKey],
+  secrets: [scraperInvokeKey, scraperApiKey, discordAnnouncementsWebhookUrl],
   timeoutSeconds: 540,
   memory: "512MiB",
 }, async () => {
@@ -67,4 +69,47 @@ exports.seasonScheduler = onSchedule({
     logger.info("Starting a new off-season.");
     await startNewOffSeason();
   }
+
+  await announceSeasonStart(getDb());
 });
+
+/**
+ * Post "a new season starts now" to #announcements, once per season.
+ *
+ * Re-reads the season doc that startNew*Season just wrote rather than
+ * trusting a return value, so the post always describes what actually
+ * landed. Lease-guarded per seasonUid; isolated — a Discord failure must
+ * never fail (or retry) a season rollover.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function announceSeasonStart(db) {
+  const webhookUrl = discordAnnouncementsWebhookUrl.value();
+  if (!webhookUrl) return;
+  try {
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists) return;
+    const season = seasonDoc.data();
+    if (!season.seasonUid) return;
+
+    const endRaw = season.schedule && season.schedule.endDate;
+    const payload = buildSeasonStartPayload({
+      seasonName: season.name || season.seasonUid,
+      seasonType: season.status,
+      endDate: endRaw && typeof endRaw.toDate === "function" ? endRaw.toDate() : endRaw,
+    });
+    const result = await postOnce(db, {
+      kind: "season-start",
+      tag: "season-scheduler",
+      leaseKey: `${season.seasonUid}_discord_seasonstart`,
+      leaseDay: 0,
+      payload,
+      webhookUrl,
+    });
+    logger.info(`[season-scheduler] season-start announcement: ${result.status}`);
+  } catch (error) {
+    logger.error(`[season-scheduler] season-start announcement failed: ${error.message}`);
+  }
+}
+
+exports.announceSeasonStart = announceSeasonStart;

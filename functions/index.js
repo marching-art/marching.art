@@ -232,6 +232,7 @@ const {
   rejectSubmission,
 } = require("./src/triggers/newsGeneration");
 const { getSitemapHttp } = require("./src/triggers/sitemap");
+const { announceArticleToDiscord } = require("./src/triggers/newsDiscord");
 const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
 const { getResultsPageHttp } = require("./src/triggers/resultsPages");
 const {
@@ -465,6 +466,9 @@ module.exports = {
   // Push Triggers
   onLeagueMemberJoined,
   onLeagueChatMessage,
+
+  // Published articles -> Discord #news
+  announceArticleToDiscord,
 
   // Avatar Generation
   generateCorpsAvatar,
