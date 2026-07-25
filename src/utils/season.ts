@@ -14,6 +14,11 @@
  * the display collapses it to the single competition year (e.g. 'LIVE 2026').
  * This is a display-only transform; the underlying season name is unchanged.
  *
+ * MIRROR: `formatSeasonName` in functions/src/helpers/seasonDisplay.js is the
+ * server-side twin, used for Discord posts and other backend copy. The two must
+ * agree — a director should never see a season called one thing in the app and
+ * another in Discord. Change both.
+ *
  * @param name - Raw season name (e.g., 'off_season_2024', 'live_2026-26')
  * @returns Formatted name (e.g., 'Off Season 2024', 'LIVE 2026')
  */
