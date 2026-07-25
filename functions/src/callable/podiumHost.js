@@ -13,6 +13,7 @@ const { paths } = require("../helpers/paths");
 const { assertWriteBudget } = require("../helpers/callableGuards");
 const { discordEventsWebhookUrl } = require("../helpers/discord");
 const { announceHostedEvent } = require("../helpers/hostedEventDiscord");
+const { seasonDisplayName } = require("../helpers/seasonDisplay");
 
 exports.hostEvent = onCall({ cors: true, secrets: [discordEventsWebhookUrl] }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
@@ -135,7 +136,7 @@ exports.hostEvent = onCall({ cors: true, secrets: [discordEventsWebhookUrl] }, a
     venueLabel: tier.label,
     day,
     capacity: tier.capacity,
-    seasonName: seasonData.name || seasonData.seasonUid,
+    seasonName: seasonDisplayName(seasonData),
   });
 
   return { success: true, eventId: eventRef.id, day, eventName };

@@ -19,6 +19,7 @@ const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
 const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
 const { buildLineupLockPayload } = require("../helpers/seasonAnnounce");
+const { seasonDisplayName } = require("../helpers/seasonDisplay");
 
 /**
  * Send show reminder push notifications
@@ -481,10 +482,7 @@ async function announceLineupLock(db, season, context) {
       tag: "lineup-lock",
       leaseKey: `${season.seasonUid}_discord_lock_${context.phase}`,
       leaseDay: context.periodKey,
-      payload: buildLineupLockPayload({
-        context,
-        seasonName: season.name || season.seasonUid,
-      }),
+      payload: buildLineupLockPayload({ context, seasonName: seasonDisplayName(season) }),
       webhookUrl,
     });
     logger.info(`[lineup-lock] Discord announcement: ${result.status}`);

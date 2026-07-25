@@ -31,6 +31,7 @@
 const { logger } = require("firebase-functions/v2");
 const { isPodiumEnabled } = require("../helpers/features");
 const { getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
+const { seasonDisplayName, formatSeasonName } = require("../helpers/seasonDisplay");
 
 const SPRING_TRAINING_DAYS_DEFAULT = 21;
 
@@ -151,7 +152,7 @@ async function runDiscordStage(db, webhookUrl, fetchImpl, { scoredDay: scoredDay
   const { runDiscordScoreDrop } = require("../helpers/scoreDrop");
   return runDiscordScoreDrop(db, {
     seasonUid: seasonData.seasonUid,
-    seasonName: seasonData.name || seasonData.seasonUid,
+    seasonName: seasonDisplayName(seasonData),
     scoredDay,
     webhookUrl,
     fetchImpl,
@@ -200,7 +201,7 @@ async function runFanFavoriteStage(
   const fanFavoriteDiscord = require("../helpers/podium/fanFavoriteDiscord");
   const announcements = await fanFavoriteDiscord.announceFanFavorite(db, {
     seasonUid: seasonData.seasonUid,
-    seasonName: seasonData.name || seasonData.seasonUid,
+    seasonName: seasonDisplayName(seasonData),
     competitionDay,
     cfg: store.balance,
     webhookUrl,
@@ -216,10 +217,9 @@ async function runFanFavoriteStage(
     if (previous && previous.seasonUid !== seasonData.seasonUid) {
       const crowned = await fanFavoriteDiscord.announceFanFavoriteWinner(db, {
         seasonUid: previous.seasonUid,
-        // Past seasons have no display name of their own; the Podium season
-        // index reads better in an embed title than the raw seasonUid.
-        seasonName:
-          typeof previous.index === "number" ? `Season ${previous.index}` : previous.seasonUid,
+        // A past season carries only its uid; format it the same way the
+        // active one is formatted rather than showing a raw key.
+        seasonName: formatSeasonName(previous.seasonUid),
         webhookUrl,
         fetchImpl,
       });
@@ -270,7 +270,7 @@ async function runPodiumReportStage(
   const { announcePodiumReport } = require("../helpers/podium/podiumReportDiscord");
   const announcement = await announcePodiumReport(db, {
     seasonUid: seasonData.seasonUid,
-    seasonName: seasonData.name || seasonData.seasonUid,
+    seasonName: seasonDisplayName(seasonData),
     competitionDay,
     webhookUrl,
     fetchImpl,

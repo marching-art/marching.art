@@ -5,6 +5,7 @@ const { startNewOffSeason, startNewLiveSeason, scraperInvokeKey } = require("../
 const { scraperApiKey } = require("../helpers/dciFetch");
 const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
 const { buildSeasonStartPayload } = require("../helpers/seasonAnnounce");
+const { seasonDisplayName } = require("../helpers/seasonDisplay");
 
 exports.seasonScheduler = onSchedule({
   schedule: "every day 03:00",
@@ -94,7 +95,7 @@ async function announceSeasonStart(db) {
 
     const endRaw = season.schedule && season.schedule.endDate;
     const payload = buildSeasonStartPayload({
-      seasonName: season.name || season.seasonUid,
+      seasonName: seasonDisplayName(season),
       seasonType: season.status,
       endDate: endRaw && typeof endRaw.toDate === "function" ? endRaw.toDate() : endRaw,
     });

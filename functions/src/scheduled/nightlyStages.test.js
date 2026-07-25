@@ -182,6 +182,46 @@ describe("nightly Discord score-drop stage", () => {
     const leasePath = `scoring_runs/test_season_discord_day${result.scoredDay}`;
     assert.equal(db.writes[leasePath].status, "completed");
   });
+
+  test("the season reads as a name, never as a storage key", async () => {
+    // A season's `name` IS its seasonUid, so without formatting the post says
+    // "live_2026-26" where a person expects "LIVE 2026".
+    const recap = {
+      shows: [
+        {
+          eventName: "Show",
+          results: [{ uid: "u1", corpsClass: "worldClass", corpsName: "X", totalScore: 91 }],
+        },
+      ],
+    };
+    for (const [seasonUid, expected] of [
+      ["live_2026-26", "LIVE 2026"],
+      ["finale_2026-27", "Finale 2026-27"],
+    ]) {
+      const docs = {
+        "game-settings/season": {
+          status: "off-season", // day math only; the naming is what's under test
+          seasonUid,
+          name: seasonUid,
+          schedule: { startDate: startDaysAgo(10) },
+        },
+      };
+      for (const day of [9, 10, 11]) docs[`fantasy_recaps/${seasonUid}/days/${day}`] = recap;
+
+      let posted = null;
+      const result = await runDiscordStage(
+        fakeDb(docs),
+        "https://d.test/h",
+        async (url, options) => {
+          posted = JSON.parse(options.body);
+          return { ok: true, status: 204, text: async () => "" };
+        }
+      );
+      assert.equal(result.status, "posted");
+      assert.match(posted.embeds[0].description, new RegExp(`^${expected} —`));
+      assert.equal(posted.embeds[0].description.includes("_"), false);
+    }
+  });
 });
 
 describe("nightly Fan Favorite announcement stage", () => {
