@@ -55,6 +55,7 @@ export const FUNNEL_EVENTS: Readonly<Record<string, string>> = Object.freeze({
   purchaseStreakFreeze: 'streak_freeze_purchased',
   purchaseRetirementPlaque: 'prestige_purchase',
   purchaseHallBanner: 'prestige_purchase',
+  makeLegacyEndowment: 'legacy_endowment',
 
   // --- Leagues: the highest-retention cohort ---
   createLeague: 'league_created',
@@ -126,6 +127,7 @@ const PARAM_EXTRACTORS: Record<string, (data: unknown) => Record<string, unknown
   purchaseShopItem: (data) => ({ item_id: pickString(data, 'itemId') }),
   equipShopItem: (data) => ({ item_id: pickString(data, 'itemId') }),
   purchaseRetirementPlaque: (data) => ({ tier: pickString(data, 'tier') }),
+  makeLegacyEndowment: (data) => ({ tier: pickString(data, 'tierId') }),
   completeJourneyStep: (data) => ({ step: pickString(data, 'stepId') }),
   completeDailyChallenge: (data) => ({ challenge_id: pickString(data, 'challengeId') }),
   retireCorps: (data) => ({ corps_class: pickString(data, 'corpsClass') }),

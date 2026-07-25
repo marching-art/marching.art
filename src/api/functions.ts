@@ -327,6 +327,24 @@ export const purchaseHallBanner = createCallable<
   { success: boolean; newBalance: number; message: string }
 >('purchaseHallBanner');
 
+/**
+ * Legacy Endowment — the recurring CorpsCoin sink. Repeatable forever and
+ * purely commemorative; see src/utils/legacy.ts for the catalog.
+ */
+export const makeLegacyEndowment = createCallable<
+  { tierId: string; dedication?: string | null },
+  {
+    success: boolean;
+    tierId: string;
+    name: string;
+    amount: number;
+    newBalance: number;
+    legacyTotal: number;
+    earnedTitles: Array<{ threshold: number; itemId: string; name: string }>;
+    message: string;
+  }
+>('makeLegacyEndowment');
+
 export const joinRookieLeague = createCallable<
   void,
   {

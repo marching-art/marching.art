@@ -189,6 +189,35 @@ await check(
   )
 );
 
+// Legacy Endowments: the recurring CorpsCoin sink. `legacy.total` renders on
+// public profiles and grants milestone titles, so a client write would mint a
+// free legacy and its honors without ever spending a coin.
+await freshSeed();
+await check(
+  'owner cannot write legacy.total (free legacy)',
+  assertFails(updateDoc(doc(authed(), profilePath), { 'legacy.total': 1000000 }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot replace the legacy map',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      legacy: { total: 1000000, count: 99, entries: [{ tierId: 'facility' }] },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot forge a legacy entry',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'legacy.entries': [{ tierId: 'facility', amount: 100000 }],
+    })
+  )
+);
+
 // --- protected corps subfields ---
 await freshSeed();
 await check(

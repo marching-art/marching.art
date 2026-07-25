@@ -127,21 +127,64 @@ rookie roughly 300–500.
 
 ### Sinks (spending)
 
-| Sink                      | Cost                                      | Where                                                          |
-| ------------------------- | ----------------------------------------- | -------------------------------------------------------------- |
-| Class unlocks (skip lane) | 1,000 / 2,500 / 5,000 CC                  | `unlockClassWithCorpsCoin`                                     |
-| Streak freeze             | 300 CC                                    | Shop / streak modal                                            |
-| Director titles           | 1,000 / 2,500 / 5,000 / 10,000 CC         | Shop (`shopCatalog.js`) — flair on profile                     |
-| Profile frames            | 750 / 1,500 / 3,000 / 7,500 CC            | Shop — avatar border                                           |
-| Corps card themes         | 1,500 / 3,500 / 5,000 CC (seasonal 2,500) | Shop — dashboard scorecard accent                              |
-| League prediction pools   | small buy-in (e.g. 25 CC)                 | `leaguePools.js` — escrowed, zero-sum                          |
-| Retirement plaques        | 2,500 / 7,500 / 15,000 CC                 | Prestige (`prestigeCatalog.js`) — dresses a retired-corps card |
-| Hall of Champions banner  | 10,000 CC                                 | Prestige — champion's message on their Hall entry              |
-| Show sponsorship          | 10,000 / 15,000 / 25,000 CC               | Prestige status sink                                           |
+| Sink                      | Cost                                          | Where                                                                  |
+| ------------------------- | --------------------------------------------- | ---------------------------------------------------------------------- |
+| Class unlocks (skip lane) | 1,000 / 2,500 / 5,000 CC                      | `unlockClassWithCorpsCoin`                                             |
+| Streak freeze             | 300 CC                                        | Shop / streak modal                                                    |
+| Director titles           | 1,000 / 2,500 / 5,000 / 10,000 CC             | Shop (`shopCatalog.js`) — flair on profile                             |
+| Profile frames            | 750 / 1,500 / 3,000 / 7,500 CC                | Shop — avatar border                                                   |
+| Corps card themes         | 1,500 / 3,500 / 5,000 CC (seasonal 2,500)     | Shop — dashboard scorecard accent                                      |
+| League prediction pools   | small buy-in (e.g. 25 CC)                     | `leaguePools.js` — escrowed, zero-sum                                  |
+| Retirement plaques        | 2,500 / 7,500 / 15,000 CC                     | Prestige (`prestigeCatalog.js`) — dresses a retired-corps card         |
+| Hall of Champions banner  | 10,000 CC                                     | Prestige — champion's message on their Hall entry                      |
+| Show sponsorship          | 10,000 / 15,000 / 25,000 CC                   | Prestige status sink                                                   |
+| **Legacy Endowments**     | 5,000 / 12,500 / 25,000 / 50,000 / 100,000 CC | **Recurring** — `legacyCatalog.js`; repeatable forever, uncapped total |
 
 Pricing is anchored to weekly income: consumables ~¼–½ a week, cosmetics 1–3
 weeks, prestige items 10–25 weeks (to drain long-term hoards). A closed-loop
 cosmetic economy is forgiving — expect to retune prices about once per season.
+
+### Why the sinks needed a recurring tier
+
+Every sink above the Legacy row is **terminal** — bought once, owned forever.
+Totalled up, the whole purchasable catalogue is about **56,250 CC** (class
+unlocks 8,500 + titles 18,500 + frames 12,750 + card themes 16,500), and the
+only true consumable is the 300 CC streak freeze. At 800–1,200 CC/week an active
+World Class director exhausts all of it in roughly **11–16 months**, after which
+100% of income is dead surplus — permanently, and for the most-retained cohort
+in a game whose entire premise is a decades-long career.
+
+**Legacy Endowments** (`helpers/legacyCatalog.js`, `callable/legacy.js`) are the
+answer: repeatable forever, so the sink can never be exhausted, and purely
+commemorative, so they can never become pay-to-win. That last point matters more
+here than in a game with real-money currency — CC is _earned by playing_, so any
+advantage bought with it would be grind-to-win.
+
+An endowment converts surplus coin into a permanent, dated line in the
+director's record. `legacy.total` is cumulative and uncapped, and crossing a
+threshold grants a milestone title:
+
+| Cumulative total | Title           |
+| ---------------- | --------------- |
+| 5,000 CC         | Patron          |
+| 25,000 CC        | Benefactor      |
+| 100,000 CC       | Guarantor       |
+| 250,000 CC       | Cornerstone     |
+| 1,000,000 CC     | Founding Legacy |
+
+The thresholds are deliberately career-scale: at ~400 CC/week of surplus
+directed here, Cornerstone is roughly a twelve-year goal and Founding Legacy is
+a career's work. The standing renders in the profile hero next to the equipped
+title, and the entry list (capped at the 50 most recent — `total` and `count`
+are separate scalars, so trimming loses no aggregate) renders in the Shop.
+
+This is the design test from the top of this document applied directly: coin
+that vanishes into a balance fails; coin that stamps a line in your biography
+passes.
+
+The `economyStats` job breaks sinks out by transaction type, so
+`legacy_endowment` shows exactly how much surplus the endowments absorb — read
+that before retuning any price here.
 
 ### The Shop
 
@@ -246,6 +289,9 @@ The payoff for playing for years:
   real skill (caption selection) and never caps.
 - **Prestige sinks** (`callable/prestige.js`) — retirement plaques and Hall of
   Champions banners turn a CorpsCoin hoard into permanent, visible legacy.
+- **Legacy Endowments** (`callable/legacy.js`) — the recurring version of the
+  same idea, and the only sink that never runs out. See "Why the sinks needed a
+  recurring tier" above.
 - **Director Rating** (`helpers/directorRating.js`) — a synthesized rating.
 - **Hall of Champions** and the **Retired Corps gallery** — the browsable history
   of the whole game and of each director's retired corps.

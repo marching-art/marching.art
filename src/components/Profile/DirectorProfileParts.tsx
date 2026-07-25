@@ -36,6 +36,7 @@ import { describeConceptStyle, getConceptTitle } from '../../utils/showConcept';
 import { toCanonicalClassKey } from '../../utils/classUnlocks';
 import { getSoundSportRating } from '../../utils/scoresUtils';
 import { getSupporterTier } from '../../utils/supporterTiers';
+import { highestLegacyTitle } from '../../utils/legacy';
 import {
   STATUS_INDICATORS,
   getClassDisplay,
@@ -662,7 +663,25 @@ const SupporterFlair = ({ tier }: { tier?: string | null }) => {
   );
 };
 
+// Legacy standing — the cumulative CorpsCoin a director has endowed back to the
+// activity (callable/legacy.js). Purely commemorative, and the one number in
+// the hero that keeps growing across a decades-long career. Hidden until the
+// first milestone, so it reads as an earned mark rather than an empty slot.
+const LegacyFlair = ({ total }: { total?: number | null }) => {
+  const title = highestLegacyTitle(total);
+  if (!title) return null;
+  return (
+    <span
+      title={`${(Number(total) || 0).toLocaleString()} CC endowed`}
+      className="text-[11px] font-bold text-secondary"
+    >
+      ‡ {title.name}
+    </span>
+  );
+};
+
 export {
+  LegacyFlair,
   StatusIndicator,
   StatPill,
   TrophyMini,

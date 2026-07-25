@@ -3,9 +3,14 @@
 // SHOP - Corps Identity Shop (v1)
 // =============================================================================
 // CorpsCoin-only cosmetic store: director titles, profile frames, corps card
-// themes, plus the streak freeze consumable. Purchases and equips are
-// validated server-side (functions/src/callable/shop.js); this page renders
-// the client catalog mirror in src/utils/cosmetics.js.
+// themes, the streak freeze consumable, and Legacy Endowments. Purchases and
+// equips are validated server-side (functions/src/callable/shop.js and
+// callable/legacy.js); this page renders the client catalog mirrors in
+// src/utils/cosmetics.js and src/utils/legacy.ts.
+//
+// Everything above Legacy is bought once. Legacy Endowments are the recurring
+// sink — repeatable forever, so income never becomes dead surplus. See
+// src/components/LegacySection.tsx.
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
@@ -36,6 +41,7 @@ import {
   isSeasonallyAvailable,
   seasonalLabel,
 } from '../utils/cosmetics';
+import { LegacySection } from '../components/LegacySection';
 
 const SECTION_ICONS = { title: Shield, frame: User, cardTheme: CreditCard };
 
@@ -212,6 +218,9 @@ const Shop = () => {
             </Link>
           </div>
         </div>
+
+        {/* Legacy Endowments — the one sink that never runs out */}
+        <LegacySection profile={profile} balance={balance} />
 
         {/* Cosmetic sections */}
         {SHOP_SECTIONS.map((section) => {

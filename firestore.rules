@@ -44,6 +44,11 @@ function touchesProtectedProfileFields() {
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
     'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
     'retiredCorps', 'captionStats', 'role',
+    // Legacy Endowments (callable/legacy.js): the cumulative total, count and
+    // entry list. Written only by makeLegacyEndowment after the CorpsCoin is
+    // debited, and the total renders on public profiles and grants milestone
+    // titles — a client write would mint a free legacy and its honors.
+    'legacy',
     // Buy Me a Coffee supporter flair (tier + link). Granted only by the
     // BMAC webhook / linkBmacSupport callable after payment is verified; a
     // client write would let anyone forge a supporter badge for free.

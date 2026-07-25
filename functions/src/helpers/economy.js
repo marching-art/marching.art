@@ -105,6 +105,10 @@ const TRANSACTION_TYPES = {
   CLASS_UNLOCK: "class_unlock",
   LEAGUE_ENTRY: "league_entry",
   COSMETIC_PURCHASE: "cosmetic_purchase",
+  // Legacy Endowment: the recurring, uncapped sink (helpers/legacyCatalog.js).
+  // Distinct from COSMETIC_PURCHASE so the weekly mint-vs-sink readout can show
+  // how much surplus the endowments are actually absorbing.
+  LEGACY_ENDOWMENT: "legacy_endowment",
   // Podium Class Corps Budget: CC committed from the wallet into a season's
   // operating ledger, and the end-of-season sweep of the unspent balance back.
   PODIUM_BUDGET_COMMIT: "podium_budget_commit",
