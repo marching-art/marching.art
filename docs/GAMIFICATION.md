@@ -304,9 +304,36 @@ The payoff for playing for years:
 
 The 49-day season is the operating heartbeat. Seasonal **card themes** rotate in
 the Shop (`shopCatalog.js` `seasonal` field) as time-limited collectibles, and
-off-seasons carry tempo-named narrative themes (adagio, allegro, …). The
-`economyStats` job reads the CC ledger (minted vs. sunk per week) — the one
-instrument needed to keep the economy balanced across years.
+off-seasons carry tempo-named narrative themes (adagio, allegro, …).
+
+### Instrumentation — the two dashboards
+
+Both are admin-only docs rendered side by side in **Admin > Jobs**, and both can
+be recomputed on demand from that tab.
+
+| Doc                     | Job                                   | Answers                                                                                                      |
+| ----------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `admin-stats/economy`   | `economyStats` (weekly, Mon 04:00 ET) | CC minted vs. sunk per week, broken out by transaction type — read this before retuning any price            |
+| `admin-stats/retention` | `retentionStats` (nightly, 05:00 ET)  | DAU/WAU/MAU, stickiness (DAU/MAU), D1/D7/D14/D30 cohort retention, signup windows, login-streak distribution |
+
+Retention is nightly and economy is weekly because of what each costs: the
+retention rollup is a projected three-field scan of profile docs, while the
+economy rollup must query every user's `corpsCoinHistory` subcollection.
+
+Two things the retention numbers deliberately refuse to do, because they are how
+this metric usually lies:
+
+- A cohort only counts accounts **old enough to answer it** — a D30 rate never
+  includes accounts created last week.
+- A rate with nothing eligible reports **null, not 0**, so "no data yet" never
+  renders as "nobody came back."
+
+Client-side, the product funnel is instrumented at `createCallable`
+(`src/api/funnel.ts`) rather than per component, so it keeps covering new
+callables automatically. The nightly score drop's announcement links carry
+`?src=push` / `?src=discord`, and `useScoreDropReturn` reports a
+`score_drop_return` event with that source plus `days_missed` — which is what
+says whether the announcements actually bring anyone back.
 
 ---
 
