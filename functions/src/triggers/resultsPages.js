@@ -8,8 +8,25 @@ const { getDb } = require("../config");
 const {
   buildDayResultsHtml,
   buildSeasonIndexHtml,
+  buildErrorPageHtml,
   parseResultsPath,
 } = require("../helpers/resultsPages");
+
+/**
+ * Error responses used to be bare strings. Express serves a string as
+ * text/html, so they rendered as an unstyled document with no charset, no
+ * viewport, and no links — a dead end for a crawler or a phone. Send real
+ * pages instead.
+ *
+ * @param {import("express").Response} res
+ * @param {number} status
+ * @param {{title: string, heading: string, message: string, cacheControl: string}} params
+ */
+function sendErrorPage(res, status, { title, heading, message, cacheControl }) {
+  res.set("Content-Type", "text/html; charset=utf-8");
+  res.set("Cache-Control", cacheControl);
+  res.status(status).send(buildErrorPageHtml({ title, heading, message }));
+}
 
 // Scored nights never change once written (rank movement happens in later
 // docs), so cache generously: browser 1h, CDN 6h, stale for a day.
@@ -55,7 +72,13 @@ exports.getResultsPageHttp = onRequest(
   async (req, res) => {
     const route = parseResultsPath(req.path);
     if (!route) {
-      res.status(404).send("Not found");
+      sendErrorPage(res, 404, {
+        title: "Page Not Found | marching.art",
+        heading: "No such results page",
+        message:
+          "That URL doesn't match a season or a scored day. Browse the seasons below.",
+        cacheControl: "public, max-age=300, s-maxage=3600",
+      });
       return;
     }
 
@@ -70,7 +93,12 @@ exports.getResultsPageHttp = onRequest(
         if (currentUid) {
           res.redirect(302, `/results/${currentUid}`);
         } else {
-          res.status(404).send("No active season");
+          sendErrorPage(res, 404, {
+            title: "No Active Season | marching.art",
+            heading: "No active season",
+            message: "There's no season running right now. Past results are still here.",
+            cacheControl: "public, max-age=300, s-maxage=3600",
+          });
         }
         return;
       }
@@ -109,13 +137,12 @@ exports.getResultsPageHttp = onRequest(
       if (!html) {
         // Proper 404 (not a redirect) so crawlers drop dead URLs instead of
         // indexing the homepage under them.
-        res.set("Cache-Control", "public, max-age=300, s-maxage=3600");
-        res
-          .status(404)
-          .send(
-            "No results here (yet). Scores land nightly at " +
-              '<a href="https://marching.art/">marching.art</a>.'
-          );
+        sendErrorPage(res, 404, {
+          title: "No Results Yet | marching.art",
+          heading: "No results here yet",
+          message: "Scores land nightly around 2 AM ET. Try another day or season.",
+          cacheControl: "public, max-age=300, s-maxage=3600",
+        });
         return;
       }
 
@@ -124,8 +151,12 @@ exports.getResultsPageHttp = onRequest(
       res.status(200).send(html);
     } catch (error) {
       logger.error("Error rendering results page:", error);
-      res.set("Cache-Control", "no-store");
-      res.status(500).send("Results temporarily unavailable");
+      sendErrorPage(res, 500, {
+        title: "Results Unavailable | marching.art",
+        heading: "Results temporarily unavailable",
+        message: "Something went wrong loading this page. Please try again in a moment.",
+        cacheControl: "no-store",
+      });
     }
   }
 );
