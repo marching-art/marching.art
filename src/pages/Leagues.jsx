@@ -30,6 +30,7 @@ import {
   useLeaveLeague,
 } from '../hooks/useLeagues';
 import { useProfileStore } from '../store/profileStore';
+import { useSeasonStore } from '../store/seasonStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -110,14 +111,13 @@ const ActivityIndicator = ({ hasNewMessages, isLive }) => {
 // MY LEAGUE CARD (High-Density)
 // =============================================================================
 
-const MyLeagueCard = ({ league, userProfile, onClick }) => {
+const MyLeagueCard = ({ league, userProfile, currentWeek, onClick }) => {
   const memberCount = getRosterSize(league);
   const activeCount = getActiveMemberCount(league);
   const dormant = isLeagueDormant(league);
   const youArePlaying = isMemberActive(league, userProfile?.uid);
   const youNeedSetup = needsCorpsSetup(league, userProfile?.uid);
   const maxMembers = league.maxMembers || 20;
-  const currentWeek = league.currentWeek || 1;
 
   // Find user's rank in this league
   const userRank = useMemo(() => {
@@ -409,6 +409,11 @@ const Leagues = () => {
   // Current user's profile comes from the global realtime store — no need for
   // a second one-shot read of the same document through react-query.
   const userProfile = useProfileStore((state) => state.profile);
+  // The season week comes from the season store, the same source
+  // LeagueDetailView uses. League documents carry no `currentWeek` field, so
+  // the old `league.currentWeek || 1` was a fallback that could only ever
+  // resolve to 1 — every card claimed Week 1 all season long.
+  const currentWeek = useSeasonStore((s) => s.currentWeek);
   const {
     data: myLeagues = [],
     isLoading: loadingMyLeagues,
@@ -586,6 +591,7 @@ const Leagues = () => {
                   key={league.id}
                   league={league}
                   userProfile={userProfile}
+                  currentWeek={currentWeek}
                   onClick={() => setSelectedLeague(league)}
                 />
               ))}
