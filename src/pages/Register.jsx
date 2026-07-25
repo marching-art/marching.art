@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/Register.jsx
 // =============================================================================
 // REGISTER PAGE - MOBILE-FIRST DESIGN
@@ -16,6 +15,18 @@ import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
 
+/**
+ * Firebase auth errors arrive as `unknown` under strict mode but always carry
+ * a string `code`. One narrow accessor beats a cast at every use site.
+ *
+ * @param {unknown} error
+ * @returns {string}
+ */
+const authErrorCode = (error) =>
+  typeof (/** @type {{code?: unknown}} */ (error)?.code) === 'string'
+    ? /** @type {{code: string}} */ (error).code
+    : '';
+
 const Register = () => {
   useBodyScroll();
   useSEO({
@@ -25,7 +36,10 @@ const Register = () => {
     path: '/register',
   });
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  // Null only outside AuthProvider, which this page never is in practice.
+  // Read optionally rather than throwing here — an early exit above the
+  // useState calls below would make the hook order conditional.
+  const signUp = useAuth()?.signUp;
   const { markAsReturning } = useFirstVisit();
 
   const [formData, setFormData] = useState({
@@ -58,6 +72,7 @@ const Register = () => {
     return true;
   };
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -69,6 +84,7 @@ const Register = () => {
     setLoading(true);
 
     try {
+      if (!signUp) throw new Error('Auth is unavailable. Please reload.');
       await signUp(formData.email, formData.password, formData.displayName.trim());
       markAsReturning();
       toast.success('Account created successfully!');
@@ -78,7 +94,7 @@ const Register = () => {
     } catch (err) {
       console.error('Registration error:', err);
 
-      switch (err.code) {
+      switch (authErrorCode(err)) {
         case 'auth/email-already-in-use':
           setError('An account already exists with this email address');
           break;

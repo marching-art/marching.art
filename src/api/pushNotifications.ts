@@ -4,6 +4,10 @@
  */
 
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+// Push opt-in is a funnel step, not a callable: the morning score-drop push
+// only reaches directors who granted permission, so the grant rate is the
+// ceiling on that whole retention channel.
+import { trackFunnelEvent, CLIENT_FUNNEL_EVENTS } from './funnel';
 import { app, db, paths } from './client';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -76,6 +80,7 @@ function getMessagingInstance(): Messaging | null {
 export async function requestPushPermission(): Promise<string | null> {
   const messagingInstance = getMessagingInstance();
   if (!messagingInstance) {
+    trackFunnelEvent(CLIENT_FUNNEL_EVENTS.NOTIFICATION_PERMISSION, { outcome: 'unsupported' });
     return null;
   }
 
@@ -85,16 +90,27 @@ export async function requestPushPermission(): Promise<string | null> {
 
     if (permission === 'denied') {
       console.warn('Push notification permission denied');
+      trackFunnelEvent(CLIENT_FUNNEL_EVENTS.NOTIFICATION_PERMISSION, { outcome: 'blocked' });
       return null;
     }
 
-    // Request permission if not already granted
+    // Request permission if not already granted. `already_granted` is tracked
+    // separately from a fresh `granted` so the prompt's true accept rate is
+    // measurable — re-entry into this function would otherwise look like a
+    // brand-new grant every time.
     if (permission !== 'granted') {
       const result = await Notification.requestPermission();
+      trackFunnelEvent(CLIENT_FUNNEL_EVENTS.NOTIFICATION_PERMISSION, {
+        outcome: result === 'granted' ? 'granted' : 'denied',
+      });
       if (result !== 'granted') {
         console.warn('Push notification permission not granted');
         return null;
       }
+    } else {
+      trackFunnelEvent(CLIENT_FUNNEL_EVENTS.NOTIFICATION_PERMISSION, {
+        outcome: 'already_granted',
+      });
     }
 
     // Get the service worker registration
@@ -111,6 +127,7 @@ export async function requestPushPermission(): Promise<string | null> {
 
         if (token) {
           console.log('FCM token obtained');
+          trackFunnelEvent(CLIENT_FUNNEL_EVENTS.NOTIFICATION_ENABLED, { attempt: attempt + 1 });
           return token;
         } else {
           console.warn('No FCM token available');

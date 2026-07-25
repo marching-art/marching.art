@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/PWAInstallInstructions.jsx
 // Platform-specific, manual "add to home screen / install" steps, shown when no
 // native install prompt is available (iOS Safari, or a desktop/Android browser
@@ -7,6 +6,7 @@
 import React from 'react';
 import { Share2, MoreVertical, Plus } from 'lucide-react';
 
+/** @param {{n: number, children: React.ReactNode}} props */
 const Step = ({ n, children }) => (
   <div className="flex items-center gap-2 flex-wrap">
     <span className="text-muted">{n}.</span>
@@ -14,6 +14,7 @@ const Step = ({ n, children }) => (
   </div>
 );
 
+/** @param {{platform: string}} props */
 const PWAInstallInstructions = ({ platform }) => {
   switch (platform) {
     case 'ios':

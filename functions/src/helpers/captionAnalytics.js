@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Caption Analytics System
  *
@@ -42,7 +41,7 @@ async function getHistoricalEvents(db, sourceYear, ctx) {
  * @param {string} caption - Caption code (GE1, GE2, VP, VA, CG, B, MA, P)
  * @param {number} currentDay - Current day in the season
  * @param {Object} [ctx] - Shared read cache from createAnalyticsContext().
- * @returns {Object} Trend analysis with indicators
+ * @returns {Promise<Object>} Trend analysis with indicators
  */
 async function analyzeCaptionTrend(corpsName, sourceYear, caption, currentDay, ctx = createAnalyticsContext()) {
   const db = getDb();

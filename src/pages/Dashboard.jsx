@@ -113,6 +113,7 @@ import {
 } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
+import { useScoreDropReturn } from '../hooks/useScoreDropReturn';
 import { getEquippedCosmetic } from '../utils/cosmetics';
 
 // OPTIMIZATION #4: Constants moved to src/components/Dashboard/sections/constants.js
@@ -337,6 +338,15 @@ const Dashboard = () => {
     if (!recentResults?.length) return null;
     return recentResults.reduce((a, b) => ((a.score || 0) > (b.score || 0) ? a : b));
   }, [recentResults]);
+
+  // Report the first view of each new scored day — the conversion event for the
+  // nightly drop and its Discord/push announcements. Effective day, not raw
+  // currentDay, so it tracks what is actually on screen.
+  useScoreDropReturn({
+    seasonUid: seasonData?.seasonUid,
+    scoredDay: currentDay ? getEffectiveDay(currentDay) : null,
+    competed: recentResults.length > 0,
+  });
 
   // =============================================================================
   // RENDER

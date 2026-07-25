@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
@@ -155,6 +154,20 @@ exports.manualTrigger = onCall({
         message:
           `Economy stats refreshed (${stats.windowDays}d): minted ${stats.minted.toLocaleString()} CC, ` +
           `sunk ${stats.sunk.toLocaleString()} CC, net ${stats.net.toLocaleString()} CC.`,
+      };
+    }
+    case "updateRetentionStats": {
+      const { updateRetentionStats } = require("../helpers/retentionStats");
+      const stats = await updateRetentionStats(getDb());
+      const d7 = stats.retention.d7;
+      const pct = (rate) => (rate === null ? "n/a" : `${(rate * 100).toFixed(1)}%`);
+      return {
+        success: true,
+        message:
+          `Retention refreshed: ${stats.totalProfiles} directors, ` +
+          `DAU ${stats.active.dau} / WAU ${stats.active.wau} / MAU ${stats.active.mau}, ` +
+          `stickiness ${pct(stats.stickiness)}, ` +
+          `D7 ${pct(d7.rate)} (${d7.retained}/${d7.eligible}).`,
       };
     }
     case "processAndArchiveOffSeasonScores": {

@@ -30,7 +30,9 @@ import { DISCORD_URL } from '../../utils/siteLinks';
 import DesktopNavItem from './DesktopNavItem';
 
 const SiteHeader = () => {
-  const { user } = useAuth();
+  // These render on public routes too, where there is no AuthProvider —
+  // `useAuth()` is null there and `user` is simply undefined.
+  const user = useAuth()?.user;
   const profile = useProfileStore((state) => state.profile);
 
   return (

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // StaffOutlookBanner — the in-season heads-up that next season's staff payroll
 // has outgrown what a director can fund (design §5.6). Staff salaries rise with
 // tenure, and contracts only lapse at the season boundary; when the aged
@@ -14,6 +13,15 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 
+/**
+ * `podium` is the usePodium() hook value; only the two members this banner
+ * touches are named here rather than restating the whole (untyped) hook shape.
+ *
+ * @param {{podium: {
+ *   data?: any,
+ *   acknowledgeStaffOutlook: () => Promise<unknown>,
+ * }}} props
+ */
 export default function StaffOutlookBanner({ podium }) {
   const [dismissing, setDismissing] = useState(false);
   const outlook = podium.data?.staffOutlook;

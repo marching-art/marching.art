@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // DESKTOP NAV ITEM
 // =============================================================================
@@ -9,6 +8,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
+/**
+ * @param {{
+ *   to: string,
+ *   icon: React.ComponentType<{className?: string}>,
+ *   label: string,
+ *   end?: boolean,
+ * }} props
+ */
 const DesktopNavItem = ({ to, icon: Icon, label, end = false }) => (
   <NavLink
     to={to}

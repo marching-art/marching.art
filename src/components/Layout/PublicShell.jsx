@@ -34,7 +34,9 @@ import { useBodyScroll } from '../../hooks/useBodyScroll';
  *   BottomNav, or GuestActionBar for logged-out visitors.
  */
 const PublicShell = ({ children, header, showFooter = true, showBottomBar = true }) => {
-  const { user } = useAuth();
+  // These render on public routes too, where there is no AuthProvider —
+  // `useAuth()` is null there and `user` is simply undefined.
+  const user = useAuth()?.user;
 
   // Strip GameShell's fixed-layout class if we arrived from an app route
   // before its cleanup effect ran.

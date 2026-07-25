@@ -14,6 +14,24 @@ followed by five recommendations expected to produce substantial improvement.
 | 4 — Callable lockdown | **Shipped:** per-uid write budgets on economy/vote/notification mutations, hardened `sendCommentNotification`, scoped league `list` (live namespace) with 6 new rules-test pins, App Check enforcement wired via `setGlobalOptions` in `functions/index.js` (a one-line literal flip after console metrics confirm attestation).                                                                                                                                                                             |
 | 5 — Regression safety | **Shipped:** captionStats award-ledger fix (real double-count bug), single scoring orchestrator (was ~95% duplicated), functions `checkJs` typecheck in CI (first run caught two production crashes: `reportComment` and `calculateCorpsStatisticsLogic` calling client-SDK APIs on firebase-admin), deploy tagging + rollback procedure, frontend coverage floors ratcheted to current. **Remaining:** authenticated emulator-backed e2e for the money paths; component tests for Dashboard/Leagues/Scores. |
 
+## Follow-up work (July 2026, after the five recs landed)
+
+All five recommendations above are shipped. Three follow-ups were taken up
+afterwards, each addressing a gap the audit surfaced but did not rank:
+
+| Area        | What changed                                                                                                                                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Measurement | The retention features from rec #1 shipped with nothing measuring them. Product-funnel events now fire from `createCallable` (one chokepoint, so coverage survives new callables), announcement links carry `?src=`, and a nightly rollup writes `admin-stats/retention`. |
+| Economy     | Every sink was terminal — ~56,250 CC of total inventory, exhausted in 11–16 months, after which all income is dead surplus. **Legacy Endowments** add a repeatable, uncapped, purely commemorative sink. See GAMIFICATION.md "Why the sinks needed a recurring tier".     |
+| Type debt   | The `@ts-nocheck` ratchet was working (it never let the count rise; the 213→258 jump was `functions/src` entering scope under checkJs). What was missing was paydown: 258 → 209 files, all genuinely typed, verified against both tsconfigs.                              |
+
+Not taken up, by owner decision: making the historical DCI archive public and
+crawlable. Those scores are already published elsewhere, and hunting them down
+is part of the off-season game — a searchable in-product archive would hand
+every director the answer sheet.
+
+---
+
 ## State of the site — summary
 
 The codebase is in unusually good shape for a solo/small-team live-ops game.

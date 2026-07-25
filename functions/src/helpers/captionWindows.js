@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Caption Change Windows
  *
@@ -67,6 +66,7 @@ const CHAMPIONSHIP_START_DAY = 45;
  *   - Day 47:     all classes compete.
  *   - Days 48-49: World Class & SoundSport finals only.
  */
+/** @type {Record<number, string[]>} */
 const CHAMPIONSHIP_CLASS_DAYS = {
   45: ["openClass", "aClass"],
   46: ["openClass", "aClass"],
@@ -81,7 +81,7 @@ const SEASON_FINAL_DAY = 49;
 /**
  * Break a Date into its Eastern-Time wall-clock parts.
  * @param {Date} date
- * @returns {Object} parts keyed by type ('year', 'month', 'day', 'hour', ...)
+ * @returns {Record<string, string>} parts keyed by type ('year', 'month', 'day', 'hour', ...)
  */
 function easternParts(date) {
   const fmt = new Intl.DateTimeFormat("en-US", {
@@ -93,6 +93,7 @@ function easternParts(date) {
     hour: "2-digit",
     minute: "2-digit",
   });
+  /** @type {Record<string, string>} */
   const out = {};
   for (const { type, value } of fmt.formatToParts(date)) out[type] = value;
   return out;
@@ -145,7 +146,8 @@ function nextScoresProcessingAfter(after) {
 /**
  * Compute the caption-change window for a given instant.
  *
- * @param {Object} seasonData - Season doc (needs schedule.startDate; optional
+ * @param {{schedule?: {startDate?: unknown, springTrainingDays?: number}}|null|undefined}
+ *   seasonData - Season doc (needs schedule.startDate); null before load.
  *   schedule.springTrainingDays and status)
  * @param {Date} [now]
  * @param {string|null} [corpsClass] - Canonical class id. When provided, the
@@ -174,16 +176,22 @@ function nextScoresProcessingAfter(after) {
 function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null) {
   const startTs = seasonData?.schedule?.startDate;
   if (!startTs) return null;
-  const startDate = typeof startTs.toDate === "function" ? startTs.toDate() : new Date(startTs);
+  // startDate is a Firestore Timestamp in production and a Date/number in
+  // tests and imported fixtures, so normalize rather than assume.
+  const asTimestamp = /** @type {{toDate?: () => Date}} */ (startTs);
+  const startDate =
+    typeof asTimestamp.toDate === "function"
+      ? asTimestamp.toDate()
+      : new Date(/** @type {string|number|Date} */ (startTs));
   if (Number.isNaN(startDate.getTime())) return null;
 
-  const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-  const dayStart = (d) =>
+  const springTrainingDays = seasonData?.schedule?.springTrainingDays || 0;
+  const dayStart = (/** @type {number} */ d) =>
     new Date(startDate.getTime() + (springTrainingDays + d - 1) * DAY_MS);
   const day =
     Math.floor((now.getTime() - startDate.getTime()) / DAY_MS) + 1 - springTrainingDays;
   const week = Math.max(1, Math.ceil(day / 7));
-  const reopenAfter = (d) => nextScoresProcessingAfter(dayStart(d));
+  const reopenAfter = (/** @type {number} */ d) => nextScoresProcessingAfter(dayStart(d));
 
   const base = {
     day,
@@ -272,8 +280,10 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
  * lockouts: changes stay closed after 2 AM ET until the nightly processor
  * has actually written the day's recap.
  *
- * @param {Object} db - Firestore instance
- * @param {Object} seasonData - Season doc (needs seasonUid)
+ * @param {{doc: (path: string) => {get: () => Promise<any>}}} db - Firestore
+ *   instance (only `.doc().get()` is used, so the shape is stated rather than
+ *   pulling firebase-admin types into the frontend's typecheck of this mirror).
+ * @param {{seasonUid?: string}|null|undefined} seasonData - Season doc
  * @param {number} day - Competition day whose scores must be in (1-49)
  * @returns {Promise<boolean>}
  */
@@ -288,7 +298,7 @@ async function isDayScoresProcessed(db, seasonData, day) {
   const scheduleDoc = await db.doc(`schedules/${seasonData.seasonUid}`).get();
   if (!scheduleDoc.exists) return true;
   const competitions = scheduleDoc.data().competitions || [];
-  return !competitions.some((comp) => comp.day === day);
+  return !competitions.some((/** @type {{day?: number}} */ comp) => comp.day === day);
 }
 
 module.exports = {

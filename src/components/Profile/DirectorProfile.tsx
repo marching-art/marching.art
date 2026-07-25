@@ -46,6 +46,7 @@ import {
   UnregisteredEnsembleCard,
   EmptyWithCTA,
   AvatarActions,
+  LegacyFlair,
   ShopTitleFlair,
   SupporterFlair,
 } from './DirectorProfileParts';
@@ -395,6 +396,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   </span>
                 </span>
                 {equippedTitle && <ShopTitleFlair item={equippedTitle} />}
+                <LegacyFlair total={profile.legacy?.total} />
                 {profile.supporter?.tier && <SupporterFlair tier={profile.supporter.tier} />}
               </div>
 

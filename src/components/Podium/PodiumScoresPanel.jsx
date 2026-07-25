@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumScoresPanel — the Podium Class Scores tab, split into two sub-views:
 //
 //   • Recaps — the DCI-style per-show box scores (PodiumRecapSheet)
@@ -19,6 +18,13 @@ const SUB_TABS = [
   { id: 'report', label: 'Standings' },
 ];
 
+/**
+ * @param {{
+ *   seasonUid?: string|null,
+ *   seasonName?: string|null,
+ *   userCorpsName?: string|null,
+ * }} props
+ */
 export default function PodiumScoresPanel({ seasonUid, seasonName, userCorpsName }) {
   const [subTab, setSubTab] = useState('recaps');
 

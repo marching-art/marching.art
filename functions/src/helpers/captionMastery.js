@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Caption mastery v1 (WS5.5) — lifetime per-caption craft progression.
 //
 // Every scored show accumulates each lineup caption's (capped) points into
@@ -33,6 +32,7 @@ const CAPTION_MASTERY_TIERS = [
  *   worked toward (null at Platinum); progress: 0..1 toward `next` measured
  *   from the previous threshold.
  */
+/** @param {unknown} rawPoints */
 function getCaptionMastery(rawPoints) {
   const points = Math.max(0, Number(rawPoints) || 0);
   let tier = null;

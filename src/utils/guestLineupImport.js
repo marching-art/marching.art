@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Import the guest-preview draft into the onboarding lineup, fulfilling the
 // registration gate's "your preview progress will be saved" promise.
 //
@@ -11,13 +10,14 @@ import { CAPTIONS, SOUNDSPORT_POINT_LIMIT } from '../pages/onboardingConstants';
 
 /**
  * @param {Array<{corpsName: string, sourceYear: number|string, points: number}>} availableCorps
- * @param {Object|null} guestLineup - Stored guest picks keyed by caption id,
- *   values "corpsName|sourceYear|points"
- * @returns {{lineup: Object, count: number}}
+ * @param {Record<string, unknown>|null|undefined} guestLineup - Stored guest
+ *   picks keyed by caption id, values "corpsName|sourceYear|points"
+ * @returns {{lineup: Record<string, string>, count: number}}
  */
 export function importGuestLineup(availableCorps, guestLineup) {
   if (!guestLineup || typeof guestLineup !== 'object') return { lineup: {}, count: 0 };
 
+  /** @type {Record<string, string>} */
   const imported = {};
   let total = 0;
   for (const caption of CAPTIONS) {

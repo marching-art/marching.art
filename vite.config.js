@@ -138,15 +138,15 @@ export default defineConfig({
       exclude: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/setupTests.jsx', 'src/types/**'],
       reporter: ['text-summary', 'lcov'],
       // Ratchet, not target: floors sit just below the current whole-tree
-      // numbers (statements 15.70 / branches 12.31 / functions 13.06 / lines
-      // 15.62 as of the scores/standings + SEO hook test additions) so
-      // coverage can only move up. When a PR raises coverage meaningfully,
-      // raise the floors to just below the new numbers.
+      // numbers (statements 16.03 / branches 12.65 / functions 13.41 / lines
+      // 15.94 as of the funnel-instrumentation and Legacy-Endowment test
+      // additions) so coverage can only move up. When a PR raises coverage
+      // meaningfully, raise the floors to just below the new numbers.
       thresholds: {
-        statements: 15.5,
-        branches: 12.1,
-        functions: 12.8,
-        lines: 15.4,
+        statements: 15.9,
+        branches: 12.5,
+        functions: 13.3,
+        lines: 15.8,
       },
     },
   },

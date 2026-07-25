@@ -13,6 +13,7 @@
 // transient prompt. Components subscribe via `usePWAInstall`.
 // -----------------------------------------------------------------------------
 import { useCallback, useSyncExternalStore } from 'react';
+import { trackFunnelEvent, CLIENT_FUNNEL_EVENTS } from '../api/funnel';
 
 export type PWAPlatform = 'ios' | 'ipados' | 'android' | 'macos' | 'windows' | 'other';
 
@@ -141,6 +142,10 @@ export const promptInstall = async (): Promise<PromptInstallResult> => {
   try {
     await evt.prompt();
     const { outcome } = await evt.userChoice;
+    // Installed directors are the cohort push notifications reach most
+    // reliably, so the accept rate on this prompt is a retention input, not a
+    // vanity number.
+    trackFunnelEvent(CLIENT_FUNNEL_EVENTS.PWA_INSTALLED, { outcome });
     // A deferred prompt can only be used once.
     deferredPrompt = null;
     setState({ canPromptInstall: false });

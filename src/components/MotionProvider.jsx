@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // MotionProvider - LazyMotion wrapper for reduced bundle size + reduced motion
 // OPTIMIZATION: Defers framer-motion features from initial bundle
 // ACCESSIBILITY: Respects prefers-reduced-motion user preference
@@ -32,6 +31,7 @@ const loadFeatures = () => import('../lib/motionFeatures').then((m) => m.default
  * - In components, import { m } from 'framer-motion' instead of { motion }
  * - Use <m.div> instead of <motion.div>
  */
+/** @param {{children: React.ReactNode}} props */
 export const MotionProvider = ({ children }) => {
   return (
     <LazyMotion features={loadFeatures} strict={false}>

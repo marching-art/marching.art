@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Live-updating deadlines derived from the shared season clock.
 // Any component that shows a countdown should use these hooks rather than
 // computing times itself, so every surface agrees on the same instants.

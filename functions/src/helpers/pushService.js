@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Push Notification Service for marching.art Cloud Functions
  * Handles sending Firebase Cloud Messaging (FCM) push notifications
@@ -33,7 +32,7 @@ const PUSH_PREFERENCE_MAP = {
 /**
  * Get user's FCM token and push preferences
  * @param {string} userId - User ID
- * @returns {Object} Token and preferences
+ * @returns {Promise<Object>} Token and preferences
  */
 async function getUserPushConfig(userId) {
   try {

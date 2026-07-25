@@ -6,8 +6,6 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { auth, authHelpers, analytics } from './api';
-import { claimDailyLogin } from './api/functions';
-import { surfaceDailyLoginPayoff } from './utils/dailyLoginPayoff';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
 import {
@@ -23,6 +21,8 @@ import PublicShell from './components/Layout/PublicShell';
 import RouteAnalytics from './components/RouteAnalytics';
 import { useSEO } from './hooks/useSEO';
 import { useAuthRedirectTarget } from './hooks/useAuthRedirect';
+import { useAppBootstrap } from './hooks/useAppBootstrap';
+import { useProfileStore } from './store/profileStore';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import UsernamePromptModal from './components/modals/UsernamePromptModal';
 import { CelebrationContainer } from './components/Celebration';
@@ -34,12 +34,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthContext, useAuth } from './context/AuthContext';
 import { BMAC_URL } from './utils/supporterTiers';
 import { MotionProvider } from './components/MotionProvider';
-import { useSeasonStore } from './store/seasonStore';
-import { useScheduleStore } from './store/scheduleStore';
-import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent, RouteChangeFocus } from './components/a11y';
-import { initOfflineLineupReplay } from './lib/offlineLineupQueue';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // Lazy load pages for better performance.
@@ -206,105 +202,11 @@ const HallOfChampionsEntry = () => {
 // Main App Component
 function App() {
   const [user, loading, error] = useAuthState(auth);
-  const initSeasonListener = useSeasonStore((state) => state.initSeasonListener);
-  const cleanupSeasonListener = useSeasonStore((state) => state.cleanup);
-  const seasonUid = useSeasonStore((state) => state.seasonUid);
-  const initScheduleListener = useScheduleStore((state) => state.initScheduleListener);
-  const cleanupScheduleListener = useScheduleStore((state) => state.cleanup);
-  const initProfileListener = useProfileStore((state) => state.initProfileListener);
-  const cleanupProfileListener = useProfileStore((state) => state.cleanup);
-  const profile = useProfileStore((state) => state.profile);
 
-  // Initialize global season listener ONCE at app startup
-  // This prevents duplicate Firestore listeners across components
-  useEffect(() => {
-    initSeasonListener();
-    return () => {
-      cleanupSeasonListener();
-    };
-  }, [initSeasonListener, cleanupSeasonListener]);
-
-  // Initialize global schedule listener when seasonUid changes
-  // This keeps schedule data in sync with the current season
-  useEffect(() => {
-    if (seasonUid) {
-      initScheduleListener(seasonUid);
-    }
-    return () => {
-      cleanupScheduleListener();
-    };
-  }, [seasonUid, initScheduleListener, cleanupScheduleListener]);
-
-  // Initialize global profile listener when user changes
-  // This prevents duplicate Firestore listeners for profile data across components
-  useEffect(() => {
-    if (user) {
-      initProfileListener(user.uid);
-    } else {
-      cleanupProfileListener();
-      // Evict cached per-user react-query data (profiles, leagues, etc.) so a
-      // subsequent sign-in with a different account can't briefly see the
-      // previous account's cached reads.
-      queryClient.clear();
-    }
-    return () => {
-      // Only cleanup on unmount, not on user change (handled above)
-    };
-  }, [user, initProfileListener, cleanupProfileListener]);
-
-  // Replay lineup saves queued while offline: flush on sign-in and whenever
-  // connectivity returns (see src/lib/offlineLineupQueue.ts).
-  useEffect(() => {
-    if (!user) return;
-    return initOfflineLineupReplay(user.uid);
-  }, [user]);
-
-  // Claim daily login once per calendar day to award XP, update streak, and
-  // update userTitle. The backend is idempotent (returns alreadyClaimed:true
-  // on subsequent calls within the same day); the localStorage guard just
-  // avoids redundant network calls per session.
-  // Gate on `profile` as well as `user`: a freshly-authenticated user going
-  // through onboarding has no profile yet, and claimDailyLogin would 404 with
-  // "profile not found". Waiting for the profile to exist avoids that race.
-  useEffect(() => {
-    if (!user || !profile) return;
-    const todayKey = new Date().toISOString().slice(0, 10);
-    const storageKey = `dailyLoginClaimed:${user.uid}`;
-    if (typeof window === 'undefined') return;
-    const lastClaimed = window.localStorage.getItem(storageKey);
-    if (lastClaimed === todayKey) return;
-    claimDailyLogin()
-      .then((result) => {
-        window.localStorage.setItem(storageKey, todayKey);
-        // Show the payoff (XP/coin pills, milestone celebration, level-up).
-        // The response used to be discarded, making the game's most
-        // reliable daily reward beat completely silent.
-        surfaceDailyLoginPayoff(result?.data);
-      })
-      .catch((err) => {
-        console.warn('Daily login claim skipped:', err?.message || err);
-      });
-  }, [user, profile]);
-
-  // Initialize push notifications when user is authenticated
-  // Only attempts to get token if user has previously granted permission
-  useEffect(() => {
-    const initPushNotifications = async () => {
-      if (!user) return;
-
-      // Only proceed if notifications are supported and permission granted
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try {
-          const { initializePushNotifications } = await import('./api/pushNotifications');
-          await initializePushNotifications(user.uid);
-        } catch (error) {
-          console.warn('Push notification initialization skipped:', error.message);
-        }
-      }
-    };
-
-    initPushNotifications();
-  }, [user]);
+  // App-wide listeners and daily-loop side effects (season/schedule/profile
+  // Firestore listeners, offline lineup replay, daily-login claim, push
+  // re-attach). Extracted so this file is about routing and nothing else.
+  useAppBootstrap(user);
 
   // Memoize auth context value to prevent unnecessary re-renders of all consumers
   // Only recreates when user, loading, or error actually change

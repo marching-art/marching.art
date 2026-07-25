@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Daily Predictions — client mirror of the prediction question catalog.
 //
 // The prediction game asks a few questions each day whose thresholds are
@@ -13,6 +12,7 @@ export const PREDICTION_XP = 15;
 
 export const PREDICTION_QUESTION_IDS = ['over-under', 'beat-prev', 'podium', 'ss-improve'];
 
+/** @param {number} n */
 const ordinal = (n) => {
   const rem10 = n % 10;
   const rem100 = n % 100;

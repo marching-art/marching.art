@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Class-capability registry — client wrapper (Phase 1.1).
  *
@@ -51,7 +50,10 @@ export const UNLOCK_COSTS = Object.fromEntries(
   ENABLED_ENTRIES.filter(([, c]) => c.unlockCost > 0).map(([id, c]) => [id, c.unlockCost])
 );
 
-/** Full registry entry for a class id (any alias), or null. */
+/**
+ * Full registry entry for a class id (any alias), or null.
+ * @param {string} classId
+ */
 export function getClass(classId) {
   for (const [id, c] of ALL_ENTRIES) {
     if (id === classId || c.aliases.includes(classId)) return { id, ...c };
@@ -59,7 +61,10 @@ export function getClass(classId) {
   return null;
 }
 
-/** True when the id/alias names an enabled class. */
+/**
+ * True when the id/alias names an enabled class.
+ * @param {string} classId
+ */
 export function isClassEnabled(classId) {
   const entry = getClass(classId);
   return Boolean(entry && entry.enabled);

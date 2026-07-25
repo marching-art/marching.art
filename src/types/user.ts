@@ -86,6 +86,24 @@ export interface UserProfile {
     equipped?: Record<string, string | null>;
   };
 
+  // Legacy Endowments (server-only; written by the makeLegacyEndowment callable
+  // after the CorpsCoin is debited). The game's recurring sink: purely
+  // commemorative, repeatable forever, and never a competitive advantage.
+  // `total` drives the milestone titles and the profile-hero standing.
+  legacy?: {
+    total?: number;
+    count?: number;
+    entries?: Array<{
+      tierId?: string;
+      name?: string;
+      amount?: number;
+      dedication?: string;
+      seasonUid?: string | null;
+      at?: Timestamp | Date | string | null;
+    }>;
+    lastEndowedAt?: Timestamp | Date | string | null;
+  };
+
   // Buy Me a Coffee supporter flair (server-only; granted by the BMAC webhook /
   // linkBmacSupport callable after payment is verified). Cosmetic recognition
   // only — never a competitive advantage.

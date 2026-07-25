@@ -37,7 +37,18 @@ const CLASS_LABELS = {
   podiumClass: "Podium",
 };
 
-const SCORES_URL = "https://marching.art/scores";
+// Attribution params on the announcement deep links. Without these, a director
+// arriving from the morning push and one who happened to open the app look
+// identical in analytics, so there is no way to tell whether either
+// announcement channel actually pulls anyone back — the question the channels
+// were built to answer. The client reads `src` on arrival (useScoreDropReturn)
+// and reports it with the score_drop_return event.
+const SRC_PARAM = "src";
+const SRC_DISCORD = "discord";
+const SRC_PUSH = "push";
+
+const SCORES_PATH = "/scores";
+const SCORES_URL = `https://marching.art${SCORES_PATH}?${SRC_PARAM}=${SRC_DISCORD}`;
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 /** 1 -> "1st", 2 -> "2nd", 11 -> "11th", 23 -> "23rd". */
@@ -177,7 +188,7 @@ function buildScoreDropPushes({ dailyRecap, scoredDay }) {
         body:
           `${clampName(entry.corpsName)} scored ${entry.score.toFixed(3)} tonight — ` +
           `${ordinal(entry.rank)} of ${entry.of} in ${label}. Tap for the full recap.`,
-        url: "/scores",
+        url: `${SCORES_PATH}?${SRC_PARAM}=${SRC_PUSH}`,
         data: { scoredDay: String(scoredDay), corpsClass },
       });
     }
@@ -189,7 +200,7 @@ function buildScoreDropPushes({ dailyRecap, scoredDay }) {
       uid: entry.uid,
       title,
       body: `${clampName(entry.corpsName)}'s SoundSport performance is in the books. Tap for tonight's recap.`,
-      url: "/scores",
+      url: `${SCORES_PATH}?${SRC_PARAM}=${SRC_PUSH}`,
       data: { scoredDay: String(scoredDay), corpsClass: "soundSport" },
     });
   }

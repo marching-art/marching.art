@@ -24,6 +24,10 @@ import { autoFillLineup } from '../utils/lineupAutoFill';
 import { getStoredGuestLineup, clearGuestPreviewData } from '../hooks/useGuestPreview';
 import { importGuestLineup } from '../utils/guestLineupImport';
 import { CAPTIONS, SOUNDSPORT_POINT_LIMIT, STEPS } from './onboardingConstants';
+// Activation funnel: onboarding is the one flow where a drop-off is an
+// account never created, so both the step reached AND the reason a step was
+// refused are reported (`reason` is what says which gate is costing signups).
+import { trackFunnelEvent, errorCodeOf, CLIENT_FUNNEL_EVENTS } from '../api/funnel';
 import { GuidedCaptionSelection } from './OnboardingParts';
 import { StepWelcome, StepCorps, CelebrationModal } from './OnboardingSteps';
 
@@ -212,23 +216,45 @@ const Onboarding = () => {
     validateUsername(value);
   };
 
+  // Report each step as it is reached, so the funnel shows where directors stop.
+  // Keyed on `step` alone: an error path that sends the flow back to step 1
+  // (a username taken mid-submit) re-reports that step, which is correct — it
+  // is a second attempt at the same gate.
+  useEffect(() => {
+    trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, { step, outcome: 'reached' });
+  }, [step]);
+
+  // Report a step the director could not advance past. Low-cardinality reason
+  // codes only — they name the gate, never the value the director typed.
+  const trackBlocked = (reason) => {
+    trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, {
+      step,
+      outcome: 'blocked',
+      reason,
+    });
+  };
+
   const handleNext = () => {
     if (step === 1) {
       if (!formData.displayName.trim()) {
         toast.error('Please enter your director name');
+        trackBlocked('missing_display_name');
         return;
       }
       if (!formData.username.trim()) {
         toast.error('Please choose a username');
+        trackBlocked('missing_username');
         return;
       }
       if (usernameStatus.valid !== true) {
         toast.error('Please choose a valid, available username');
+        trackBlocked('username_unavailable');
         return;
       }
     }
     if (step === 2 && !formData.corpsName.trim()) {
       toast.error('Please enter a name for your corps');
+      trackBlocked('missing_corps_name');
       return;
     }
     setStep(step + 1);
@@ -253,12 +279,14 @@ const Onboarding = () => {
   const handleSubmit = async () => {
     if (!isLineupValid) {
       toast.error('Please complete your lineup within the point budget');
+      trackBlocked(isLineupComplete ? 'lineup_over_budget' : 'lineup_incomplete');
       return;
     }
 
     // Final username validation before submit
     if (usernameStatus.valid !== true) {
       toast.error('Please choose a valid, available username');
+      trackBlocked('username_unavailable');
       return;
     }
 
@@ -312,10 +340,19 @@ const Onboarding = () => {
       // signed-out visit starts fresh.
       clearGuestPreviewData();
 
+      trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_COMPLETED, {
+        lineup_points: getLineupPoints(),
+      });
+
       // Show celebration before navigating
       setShowCelebration(true);
     } catch (error) {
       console.error('Error creating profile:', error);
+      trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, {
+        step,
+        outcome: 'error',
+        reason: errorCodeOf(error),
+      });
       if (error?.code === 'functions/already-exists') {
         // Username was claimed between the availability check and submit.
         toast.error('That username was just taken. Please choose another.');

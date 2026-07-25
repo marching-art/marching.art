@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import { useState, useEffect, useCallback } from 'react';
 
 // =============================================================================
@@ -66,7 +65,7 @@ export function useTooltipPreference() {
   }, []);
 
   // Set preference explicitly
-  const setTooltipsEnabled = useCallback((enabled) => {
+  const setTooltipsEnabled = useCallback((/** @type {boolean} */ enabled) => {
     try {
       localStorage.setItem(STORAGE_KEY_ENABLED, enabled.toString());
       setTooltipsEnabledState(enabled);

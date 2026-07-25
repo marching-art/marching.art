@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/context/AuthContext.js
 // Auth context + hook live outside App.jsx so that file only exports
 // components, which keeps Vite's fast refresh working for App.jsx
@@ -18,8 +17,16 @@ import { createContext, useContext } from 'react';
  * @property {() => Promise<unknown>} signOut
  */
 
-/** @type {import('react').Context<AuthContextValue | null>} */
-export const AuthContext = createContext(null);
+export const AuthContext = createContext(/** @type {AuthContextValue | null} */ (null));
 
-/** @returns {AuthContextValue} */
+/**
+ * The auth context, or null outside a provider.
+ *
+ * Null is a real, supported case, not a bug: the public pages (Hall of
+ * Champions, articles, the guides) render outside AuthProvider and guard with
+ * `useAuth()?.user`. The previous `@returns {AuthContextValue}` claimed a
+ * guarantee the code does not make.
+ *
+ * @returns {AuthContextValue | null}
+ */
 export const useAuth = () => useContext(AuthContext);

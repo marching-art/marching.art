@@ -101,6 +101,7 @@ const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
 const { purchaseShopItem, equipShopItem } = require("./src/callable/shop");
 const { purchaseRetirementPlaque, purchaseHallBanner } = require("./src/callable/prestige");
+const { makeLegacyEndowment } = require("./src/callable/legacy");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
 const {
   inviteDirectorToLeague,
@@ -177,6 +178,7 @@ const {
   scheduledLifetimeLeaderboardUpdate
 } = require("./src/scheduled/lifetimeLeaderboard");
 const { economyStatsJob } = require("./src/scheduled/economyStats");
+const { retentionStatsJob } = require("./src/scheduled/retentionStats");
 const {
   scheduledRivalsUpdate,
   updateRivalsNow,
@@ -277,6 +279,7 @@ module.exports = {
   equipShopItem,
   purchaseRetirementPlaque,
   purchaseHallBanner,
+  makeLegacyEndowment,
   claimLadderTier,
   leaveLeague,
   generateMatchups,
@@ -372,6 +375,7 @@ module.exports = {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
   economyStatsJob,
+  retentionStatsJob,
 
   // Rivals
   scheduledRivalsUpdate,

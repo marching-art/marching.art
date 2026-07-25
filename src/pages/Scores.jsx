@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScoresData } from '../hooks/useScoresData';
+import { useScoreDropReturn } from '../hooks/useScoreDropReturn';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useHaptic } from '../hooks/useHaptic';
 import { usePodiumEnabled } from '../hooks/useFeatures';
@@ -150,6 +151,21 @@ const Scores = () => {
     // per-day recaps, so the full recap download can be skipped when the
     // standings cover this season.
     skipShows: activeTab !== 'soundsport' && activeTab !== 'archive',
+  });
+
+  // The score-drop push and Discord embed both deep-link here, so this is
+  // where most attributed arrivals land. Archived-season browsing is not a
+  // score-drop return, so it reports nothing. `competed` is left unset: this
+  // page renders whole-class standings and does not resolve the viewer's own
+  // participation — the Dashboard supplies that dimension, and the shared
+  // watermark means whichever surface is opened first reports the day.
+  const latestScoredDay = useMemo(
+    () => (availableDays?.length ? Math.max(...availableDays) : null),
+    [availableDays]
+  );
+  useScoreDropReturn({
+    seasonUid: isArchived ? null : currentSeasonUid,
+    scoredDay: latestScoredDay,
   });
 
   const handleRefresh = async () => {

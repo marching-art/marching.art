@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/Login.jsx
 // =============================================================================
 // LOGIN PAGE - MOBILE-FIRST DESIGN
@@ -15,6 +14,18 @@ import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
 
+/**
+ * Firebase auth errors arrive as `unknown` under strict mode but always carry
+ * a string `code`. One narrow accessor beats a cast at every use site.
+ *
+ * @param {unknown} error
+ * @returns {string}
+ */
+const authErrorCode = (error) =>
+  typeof (/** @type {{code?: unknown}} */ (error)?.code) === 'string'
+    ? /** @type {{code: string}} */ (error).code
+    : '';
+
 const Login = () => {
   useBodyScroll();
   useSEO({
@@ -23,7 +34,10 @@ const Login = () => {
       'Sign in to marching.art to manage your fantasy drum corps lineup, check scores, and climb the leaderboards.',
     path: '/login',
   });
-  const { signIn } = useAuth();
+  // Null only outside AuthProvider, which this page never is in practice.
+  // Read optionally rather than throwing here — an early exit above the
+  // useState calls below would make the hook order conditional.
+  const signIn = useAuth()?.signIn;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,18 +45,20 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      if (!signIn) throw new Error('Auth is unavailable. Please reload.');
       await signIn(email, password);
       toast.success('Welcome back!');
     } catch (err) {
       console.error('Login error:', err);
 
-      switch (err.code) {
+      switch (authErrorCode(err)) {
         // Email enumeration protection collapses user-not-found and
         // wrong-password into a single invalid-credential error
         case 'auth/invalid-credential':

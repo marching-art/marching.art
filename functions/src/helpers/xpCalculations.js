@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * XP Calculations Helper
  *
@@ -13,6 +12,7 @@
  */
 const XP_CONFIG = {
   xpPerLevel: 1000,  // XP required per level
+  /** @type {Record<string, number>} */
   classUnlocks: {
     aClass: 3,       // Level 3 (3000 XP) unlocks A Class early
     open: 5,         // Level 5 (5000 XP) unlocks Open Class early
@@ -26,6 +26,7 @@ const XP_CONFIG = {
    * you played) is gone — it out-ran active play and made the XP path
    * decorative. Owner-approved redesign: docs/GAMIFICATION.md.
    */
+  /** @type {Record<string, number>} */
   classUnlockSeasons: {
     aClass: 1,       // complete 1 season
     open: 2,         // complete 2 seasons
@@ -36,6 +37,7 @@ const XP_CONFIG = {
    * unlocks regardless, set so far out that any active play beats it. Granted
    * without the graduation fanfare (unlockPath 'backstop').
    */
+  /** @type {Record<string, number>} */
   backstopWeeks: {
     aClass: 52,
     open: 56,
@@ -49,6 +51,7 @@ const XP_CONFIG = {
  * The ladder continues past Level 10 so long-term directors keep a title to
  * chase: 10 Legend → 15 Icon → 20 Hall of Famer → 25 Immortal → 30 Eternal.
  */
+/** @type {Record<number, string>} */
 const LEVEL_TITLES = {
   1: 'Rookie',
   2: 'Trainee',
@@ -72,12 +75,16 @@ const EXTENDED_TITLE_TIERS = [30, 25, 20, 15, 10];
 /**
  * Get the director title for a given level (1+).
  * Levels 10+ resolve to the highest extended tier reached.
+ *
+ * @param {unknown} level
  */
 function getLevelTitle(level) {
   const lvl = Math.max(1, Math.floor(Number(level) || 1));
   if (lvl >= 10) {
+    // find() can miss if the tier table is ever emptied; fall back rather
+    // than indexing with undefined.
     const tier = EXTENDED_TITLE_TIERS.find((t) => lvl >= t);
-    return LEVEL_TITLES[tier];
+    return tier === undefined ? 'Rookie' : LEVEL_TITLES[tier];
   }
   return LEVEL_TITLES[lvl] || 'Rookie';
 }
@@ -129,8 +136,8 @@ const MILLIS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 function getWeeksSinceRegistration(createdAt) {
   if (!createdAt) return 0;
   let date;
-  if (createdAt.toDate) {
-    date = createdAt.toDate(); // Firestore Timestamp
+  if (/** @type {{toDate?: unknown}} */ (createdAt).toDate) {
+    date = /** @type {{toDate: () => Date}} */ (createdAt).toDate(); // Firestore Timestamp
   } else if (createdAt instanceof Date) {
     date = createdAt;
   } else if (typeof createdAt === 'string') {
@@ -145,7 +152,7 @@ function getWeeksSinceRegistration(createdAt) {
 /**
  * Calculate XP updates including level and class unlocks
  *
- * @param {Object} profileData - Current profile data from Firestore
+ * @param {Record<string, any>} profileData - Current profile data from Firestore
  * @param {number} xpToAdd - Amount of XP to add
  * @returns {Object} Object containing updates, newXP, newLevel, and classUnlocked
  */
@@ -154,6 +161,7 @@ function calculateXPUpdates(profileData, xpToAdd) {
   const newXP = currentXP + xpToAdd;
   const newLevel = Math.floor(newXP / XP_CONFIG.xpPerLevel) + 1;
 
+  /** @type {Record<string, any>} */
   const updates = {
     xp: newXP,
     xpLevel: newLevel,
@@ -164,7 +172,8 @@ function calculateXPUpdates(profileData, xpToAdd) {
   // Canonicalize stored entries — some legacy profiles contain short keys
   // ('open', 'world') that don't match the canonical format used elsewhere
   // ('openClass', 'worldClass', 'aClass', 'soundSport').
-  const CANONICAL = {
+  /** @type {Record<string, string>} */
+const CANONICAL = {
     soundSport: 'soundSport',
     aClass: 'aClass',
     open: 'openClass',
@@ -174,7 +183,7 @@ function calculateXPUpdates(profileData, xpToAdd) {
   };
   const rawUnlocked = profileData.unlockedClasses || ['soundSport'];
   const unlockedClasses = Array.from(
-    new Set(rawUnlocked.map((c) => CANONICAL[c] || c))
+    new Set(rawUnlocked.map((/** @type {string} */ c) => CANONICAL[c] || c))
   );
   // If canonicalization changed anything, persist the cleaned array.
   const canonicalizationChanged =
@@ -194,7 +203,10 @@ function calculateXPUpdates(profileData, xpToAdd) {
   const totalSeasons = profileData.lifetimeStats?.totalSeasons || 0;
   const weeksSinceRegistration = getWeeksSinceRegistration(profileData.createdAt);
 
+  /** @type {Record<string, string>} */
+
   const CLASS_LABELS = { aClass: 'A Class', open: 'Open Class', world: 'World Class' };
+  /** @type {Record<string, string>} */
   const CANONICAL_KEY = { aClass: 'aClass', open: 'openClass', world: 'worldClass' };
 
   for (const key of ['aClass', 'open', 'world']) {
@@ -258,6 +270,7 @@ function getSeasonCompletionXP(rank, totalParticipants) {
  * so the ladder starts counting on a player's first XP event after deploy —
  * new seasons stamp the baseline properly at rollover.
  */
+/** @param {Record<string, any>} profileData */
 function seasonBaselineStamp(profileData) {
   return typeof profileData.xpAtSeasonStart === "number"
     ? {}

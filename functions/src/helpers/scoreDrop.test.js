@@ -133,7 +133,11 @@ describe("buildScoreDropPushes", () => {
     assert.match(byUid.get("u2").body, /1st of 3 in World Class/);
     assert.match(byUid.get("u3").body, /1st of 1 in A Class/);
     assert.equal(byUid.get("u1").title, "Day 12 scores are in 🎺");
-    assert.equal(byUid.get("u1").url, "/scores");
+    // The deep link carries `src=push` so an arrival from the morning push is
+    // distinguishable from an organic visit in analytics (useScoreDropReturn
+    // reads it). Without attribution there is no way to tell whether this
+    // channel returns anyone.
+    assert.equal(byUid.get("u1").url, "/scores?src=push");
   });
 
   test("SoundSport pushes never reveal a score", () => {

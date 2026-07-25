@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Class-capability registry — server wrapper (Phase 1.1).
  *
@@ -57,6 +56,7 @@ const REGISTRATION_LOCK_WEEKS = Object.fromEntries(
  * legacy short keys) — matches the historical economy.js literal, which
  * had no entry for free classes (soundSport).
  */
+/** @type {Record<string, number>} */
 const CLASS_UNLOCK_COSTS = {};
 for (const [, c] of ENABLED_ENTRIES) {
   if (c.unlockCost > 0) {
@@ -73,12 +73,14 @@ const CLASS_UNLOCK_LEVELS = Object.fromEntries(
  * Show-participation CorpsCoin rewards keyed by every accepted alias —
  * matches the historical economy.js literal.
  */
+/** @type {Record<string, number>} */
 const SHOW_PARTICIPATION_REWARDS = {};
 for (const [, c] of ENABLED_ENTRIES) {
   for (const alias of c.aliases) SHOW_PARTICIPATION_REWARDS[alias] = c.participationReward;
 }
 
 /** Full registry entry for a class id (any alias), or null. */
+/** @param {string} classId */
 function getClass(classId) {
   for (const [id, c] of ALL_ENTRIES) {
     if (id === classId || c.aliases.includes(classId)) return { id, ...c };
@@ -87,6 +89,7 @@ function getClass(classId) {
 }
 
 /** True when the id/alias names an enabled class. */
+/** @param {string} classId */
 function isClassEnabled(classId) {
   const entry = getClass(classId);
   return Boolean(entry && entry.enabled);

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PUBLIC HOW-TO-PLAY PAGE - /how-to-play
 // =============================================================================
@@ -48,6 +47,12 @@ const FAQ_SCHEMA = {
   })),
 };
 
+/**
+ * @param {{
+ *   icon: React.ComponentType<{className?: string}>,
+ *   children: React.ReactNode,
+ * }} props
+ */
 const SectionHeading = ({ icon: Icon, children }) => (
   <Heading level="title" as="h2" className="flex items-center gap-3 mb-4">
     <span className="w-8 h-8 bg-interactive/20 rounded-none flex items-center justify-center flex-shrink-0">

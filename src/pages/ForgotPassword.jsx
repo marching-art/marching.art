@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/ForgotPassword.jsx
 // =============================================================================
 // FORGOT PASSWORD PAGE - MOBILE-FIRST DESIGN
@@ -13,6 +12,18 @@ import { authApi } from '../api/client';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
+
+/**
+ * Firebase auth errors arrive as `unknown` under strict mode but always carry
+ * a string `code`. One narrow accessor beats a cast at every use site.
+ *
+ * @param {unknown} error
+ * @returns {string}
+ */
+const authErrorCode = (error) =>
+  typeof (/** @type {{code?: unknown}} */ (error)?.code) === 'string'
+    ? /** @type {{code: string}} */ (error).code
+    : '';
 
 const ForgotPassword = () => {
   useBodyScroll();
@@ -29,6 +40,7 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -42,7 +54,7 @@ const ForgotPassword = () => {
 
       // Email enumeration protection is enabled on the Firebase project, so
       // unknown emails resolve successfully (no auth/user-not-found here).
-      switch (err.code) {
+      switch (authErrorCode(err)) {
         case 'auth/invalid-email':
           setError('Invalid email address');
           break;

@@ -1,6 +1,6 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // News feed loading skeletons. Extracted from NewsFeed.jsx.
 
+/** @param {{className?: string}} props */
 function SkeletonPulse({ className }) {
   return <div className={`animate-pulse bg-surface-elevated ${className}`} />;
 }
