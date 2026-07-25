@@ -4,8 +4,9 @@ const { getDb } = require("../config");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { isDropSchedulingEnabled } = require("../helpers/features");
-const { runPodiumStage, runDiscordStage } = require("./nightlyStages");
+const { runPodiumStage, runDiscordStage, runFanFavoriteStage } = require("./nightlyStages");
 const { discordScoresWebhookUrl } = require("../helpers/scoreDrop");
+const { discordAnnouncementsWebhookUrl } = require("../helpers/podium/fanFavoriteDiscord");
 
 /**
  * True when the timezone-aware drop dispatcher owns tonight's pipeline
@@ -33,13 +34,40 @@ async function dropDispatcherOwnsTonight(db, jobName) {
  * @param {FirebaseFirestore.Firestore} db
  */
 async function runPodiumStageIsolated(db) {
+  let competitionDay = null;
   try {
     const result = await runPodiumStage(db);
     if (result.status !== "disabled") {
       logger.info(`[podium-stage] result: ${JSON.stringify(result)}`);
     }
+    if (typeof result.competitionDay === "number") competitionDay = result.competitionDay;
   } catch (error) {
     logger.error(`[podium-stage] failed (fantasy scoring unaffected): ${error.message}`);
+  }
+  // Fan Favorite announcements read the state the stage above just wrote, so
+  // they run after it — and, being read-only over that state, they run even
+  // when it failed (they simply find nothing new to announce).
+  await runFanFavoriteStageIsolated(db, competitionDay);
+}
+
+/**
+ * Post any due Fan Favorite ballot announcement to the Discord
+ * #announcements channel. Isolated exactly like the stages above; no-op while
+ * the DISCORD_ANNOUNCEMENTS_WEBHOOK_URL secret is unset/empty, and its
+ * per-event leases make reruns post-at-most-once.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {number|null} competitionDay - The day the Podium stage processed.
+ */
+async function runFanFavoriteStageIsolated(db, competitionDay) {
+  try {
+    const result = await runFanFavoriteStage(db, discordAnnouncementsWebhookUrl.value(), undefined, {
+      competitionDay,
+    });
+    if (result.status === "ran" && Array.isArray(result.announcements) && result.announcements.length > 0) {
+      logger.info(`[fan-favorite] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[fan-favorite] stage failed (scoring unaffected): ${error.message}`);
   }
 }
 
@@ -72,7 +100,7 @@ exports.dailyOffSeasonProcessor = onSchedule({
   // A thrown scoring error is retried by Cloud Scheduler; the scoring run
   // guard makes reruns safe (a completed day is never re-claimed).
   retryCount: 2,
-  secrets: [discordScoresWebhookUrl],
+  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
   if (await dropDispatcherOwnsTonight(db, "off-season-2am")) return;
@@ -138,7 +166,7 @@ exports.processDailyLiveScores = onSchedule({
   timeoutSeconds: 540,
   memory: "512MiB",
   retryCount: 2,
-  secrets: [discordScoresWebhookUrl],
+  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
   if (await dropDispatcherOwnsTonight(db, "live-2am")) return;

@@ -43,6 +43,7 @@ const { getDb } = require("../config");
 const { planDrop, showCalendarDay, CHAMPIONSHIP_WEEK_START_DAY } = require("../helpers/dropPlanner");
 const { isDropSchedulingEnabled } = require("../helpers/features");
 const { discordScoresWebhookUrl } = require("../helpers/scoreDrop");
+const { discordAnnouncementsWebhookUrl } = require("../helpers/podium/fanFavoriteDiscord");
 const { scraperApiKey } = require("../helpers/dciFetch");
 
 // Failure-only retry bound: a night's scrape may be attempted at most this
@@ -387,6 +388,9 @@ exports.podiumNightly = onSchedule({
   // Errors are swallowed below (isolation contract), so scheduler retries
   // would never fire; the podium stage's own leases self-heal next night.
   retryCount: 0,
+  // The Fan Favorite announcements ride this job (they announce off the state
+  // the Podium stage writes), so it needs the #announcements webhook.
+  secrets: [discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
   if (!(await isDropSchedulingEnabled(db))) {
@@ -406,17 +410,37 @@ exports.podiumNightly = onSchedule({
   // before-season / season-over; spring training is a valid Podium day.
   const calendarDay = showCalendarDay(startDate);
 
+  let competitionDay = null;
   try {
     const { runPodiumStage } = require("./nightlyStages");
     const result = await runPodiumStage(db, { calendarDay });
     if (result.status !== "disabled") {
       logger.info(`[podium-nightly] result: ${JSON.stringify(result)}`);
     }
+    if (typeof result.competitionDay === "number") competitionDay = result.competitionDay;
   } catch (error) {
     // Same isolation contract as the legacy callers: a Podium failure is
     // logged and swallowed, never propagated into scheduler retries of the
     // fantasy pipeline (which no longer shares this job anyway).
     logger.error(`[podium-nightly] failed: ${error.message}`);
+  }
+
+  // Fan Favorite ballot announcements (#announcements channel), off the state
+  // the stage above just wrote. Isolated the same way, and lease-guarded per
+  // (season, event) so it posts each announcement exactly once.
+  try {
+    const { runFanFavoriteStage } = require("./nightlyStages");
+    const result = await runFanFavoriteStage(
+      db,
+      discordAnnouncementsWebhookUrl.value(),
+      undefined,
+      { competitionDay }
+    );
+    if (result.status === "ran" && Array.isArray(result.announcements) && result.announcements.length > 0) {
+      logger.info(`[fan-favorite] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[fan-favorite] stage failed (Podium unaffected): ${error.message}`);
   }
 });
 

@@ -71,6 +71,11 @@ on:
         required: false
         default: false
         type: boolean
+      set_discord_announcements_webhook_url:
+        description: 'One-off: push the DISCORD_ANNOUNCEMENTS_WEBHOOK_URL repo secret into Google Secret Manager (the #announcements webhook the Fan Favorite ballot posts use — check on the FIRST deploy after the Fan Favorite Discord stage landed, since the nightly jobs declare the secret and will not deploy until it exists, and when rotating that webhook; then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # Gate: every deploy path that ships function code must pass the functions
@@ -214,6 +219,30 @@ jobs:
           printf '%s' "$DISCORD_SCORES_WEBHOOK_URL" | \
             firebase functions:secrets:set DISCORD_SCORES_WEBHOOK_URL --data-file - --project marching-art
           echo "DISCORD_SCORES_WEBHOOK_URL written to Secret Manager; the deploy below will bind it to the scoring functions."
+
+      # Same mechanism again for the #announcements webhook the Fan Favorite
+      # ballot posts use (helpers/podium/fanFavoriteDiscord.js). A SEPARATE
+      # secret from the scores webhook: different channel, independently
+      # rotatable, and either can be emptied to silence one channel only. The
+      # nightly jobs declare `secrets: [discordAnnouncementsWebhookUrl]`, so it
+      # must exist in Secret Manager before the first deploy that includes them.
+      - name: Set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL in Secret Manager
+        if: ${{ inputs.set_discord_announcements_webhook_url }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_ANNOUNCEMENTS_WEBHOOK_URL" ]; then
+            echo "::error::set_discord_announcements_webhook_url was checked but the DISCORD_ANNOUNCEMENTS_WEBHOOK_URL repo secret is empty. Add it under Settings → Secrets and variables → Actions → New repository secret, then re-run."
+            exit 1
+          fi
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          printf '%s' "$DISCORD_ANNOUNCEMENTS_WEBHOOK_URL" | \
+            firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL --data-file - --project marching-art
+          echo "DISCORD_ANNOUNCEMENTS_WEBHOOK_URL written to Secret Manager; the deploy below will bind it to the nightly jobs."
 
       - name: Deploy Firestore rules + all functions
         env:

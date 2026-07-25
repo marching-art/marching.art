@@ -20,6 +20,11 @@ const store = require("./store");
 
 const MAJORS = [28, 35, 41]; // 41 covers the two-night Eastern (41-42)
 
+// How deep the published per-major prelims results run. The ballot's public
+// record — enough to show the race, short enough to keep the (world-readable)
+// fan doc small and an announcement embed inside Discord's field limits.
+const RESULTS_PER_MAJOR = 5;
+
 function fanDocRef(db, seasonUid) {
   return db.doc(`podium-fan/${seasonUid}`);
 }
@@ -28,12 +33,16 @@ function ballotRef(db, seasonUid, voterUid) {
   return db.doc(`podium-fan/${seasonUid}/ballots/${voterUid}`);
 }
 
+/** Last competition day a major's prelims ballot accepts votes. */
+function prelimsClosesOn(major, cfg) {
+  const lastNight = major === 41 ? 42 : major; // Eastern spans two nights
+  return lastNight + cfg.fanFavorite.voteWindowDays - 1;
+}
+
 /** The major whose prelims ballot is open on `competitionDay`, or null. */
 function openPrelimsMajor(competitionDay, cfg) {
-  const window = cfg.fanFavorite.voteWindowDays;
   for (const major of MAJORS) {
-    const lastNight = major === 41 ? 42 : major; // Eastern spans two nights
-    if (competitionDay >= major && competitionDay <= lastNight + window - 1) {
+    if (competitionDay >= major && competitionDay <= prelimsClosesOn(major, cfg)) {
       return major;
     }
   }
@@ -91,15 +100,22 @@ async function publishFinalists(db, seasonUid, cfg) {
   if (existing.exists && existing.data().finalists) return existing.data().finalists;
 
   const finalists = new Map();
+  // Per-major ranked tallies, published alongside the finalists: the ballot's
+  // RESULTS, not just its survivors (votes are private, counts are public —
+  // see the header). Feeds the Podium display copy and the Discord recap of
+  // each prelims poll.
+  const prelimsResults = {};
   for (const major of MAJORS) {
     const counts = await tally(db, seasonUid, String(major));
     const candidates = await candidatesForMajor(db, seasonUid, major);
     const byUid = Object.fromEntries(candidates.map((c) => [c.uid, c]));
-    const top = Object.entries(counts)
+    const ranked = Object.entries(counts)
       .filter(([uid]) => byUid[uid])
-      .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
-      .slice(0, cfg.fanFavorite.finalistsPerMajor);
-    for (const [uid, votes] of top) {
+      .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
+    prelimsResults[String(major)] = ranked
+      .slice(0, RESULTS_PER_MAJOR)
+      .map(([uid, votes]) => ({ ...byUid[uid], votes }));
+    for (const [uid, votes] of ranked.slice(0, cfg.fanFavorite.finalistsPerMajor)) {
       const prior = finalists.get(uid);
       finalists.set(uid, {
         ...byUid[uid],
@@ -110,7 +126,12 @@ async function publishFinalists(db, seasonUid, cfg) {
   }
   const list = [...finalists.values()].sort((a, b) => b.prelimVotes - a.prelimVotes);
   await fanRef.set(
-    { seasonUid, finalists: list, finalistsPublishedAt: new Date().toISOString() },
+    {
+      seasonUid,
+      finalists: list,
+      prelimsResults,
+      finalistsPublishedAt: new Date().toISOString(),
+    },
     { merge: true }
   );
   logger.info(`[podium] Fan Favorite finalists published: ${list.length}`);
@@ -131,16 +152,22 @@ async function crownWinner(db, seasonUid) {
   if (finalists.length === 0) return null;
 
   const counts = await tally(db, seasonUid, "finals");
-  const eligible = new Set(finalists.map((f) => f.uid));
+  const byUid = Object.fromEntries(finalists.map((f) => [f.uid, f]));
   const ranked = Object.entries(counts)
-    .filter(([uid]) => eligible.has(uid))
+    .filter(([uid]) => byUid[uid])
     .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
   const winnerUid = ranked.length > 0 ? ranked[0][0] : finalists[0].uid;
   const winner = {
-    ...finalists.find((f) => f.uid === winnerUid),
+    ...byUid[winnerUid],
     finalsVotes: ranked.length > 0 ? ranked[0][1] : 0,
   };
-  await fanRef.set({ winner, crownedAt: new Date().toISOString() }, { merge: true });
+  // The finals tally, public like the prelims one — the result the ballot
+  // produced, not only the corps it crowned.
+  const finalsResults = ranked.map(([uid, votes]) => ({ ...byUid[uid], votes }));
+  await fanRef.set(
+    { winner, finalsResults, crownedAt: new Date().toISOString() },
+    { merge: true }
+  );
 
   // Cosmetic hardware: a Fan Favorite entry in the profile trophy case and
   // a banner flag on the Podium display copy. Never score, never budget.
@@ -179,8 +206,10 @@ async function crownWinner(db, seasonUid) {
 
 module.exports = {
   MAJORS,
+  RESULTS_PER_MAJOR,
   fanDocRef,
   ballotRef,
+  prelimsClosesOn,
   openPrelimsMajor,
   finalsOpen,
   candidatesForMajor,

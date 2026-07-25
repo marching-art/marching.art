@@ -1555,7 +1555,11 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     window, one vote per signed-in user — fans included — for a Podium corps that performed),
     top 3 per major advance; the finals ballot runs Championship Week; the winner is crowned at
     archival (season-record banner + profile trophy). Ballots private, results public, cosmetic
-    forever.
+    forever. **The ballot is announced where the community actually is:** each opening and each
+    result posts to Discord #announcements — prelims ballot open (with the candidate field),
+    finals ballot open (with every major's prelims tally), and the crowning (with the finals
+    tally). A ritual nobody is told about is a ritual nobody votes in. See
+    [`INTEGRATIONS.md`](INTEGRATIONS.md) → "Discord (Fan Favorite ballots)".
 31. **The Podium Report replaces one DCI article** (resolves 7.3's remainder): on Podium week
     boundaries the deterministic power-rankings column runs as news Article 3 in place of the
     DCI caption deep-dive — composed directly from the column doc, never LLM-written, so player
