@@ -84,8 +84,19 @@ function authedRequest(uid, data = {}) {
   return { data, auth: { uid, token: {} } };
 }
 
-const seasonDocs = () =>
-  new Map([["game-settings/season", { seasonUid: "season-1" }]]);
+// createLeague reads the creator's profile unconditionally (it seeds both the
+// entry-fee charge and the seasonActivity block), so every fixture carries one.
+// "u1" here is registered for season-1 — a named corps plus a matching
+// activeSeasonId — which is the participation test in helpers/leagueActivity.js.
+const seasonDocs = () => {
+  const docs = new Map([["game-settings/season", { seasonUid: "season-1" }]]);
+  docs.set(`artifacts/${NS}/users/u1/profile/data`, {
+    corpsCoin: 0,
+    activeSeasonId: "season-1",
+    corps: { worldClass: { corpsName: "Blue Devils" } },
+  });
+  return docs;
+};
 
 after(() => setDbForTesting(null));
 

@@ -24,6 +24,7 @@ const assert = require("node:assert/strict");
 const {
   archiveAndResetProfiles,
   archiveSeasonResultsLogic,
+  resetLeaguesForNewSeason,
   rolloverFromOldSeason,
   corpsParticipatedThisSeason,
 } = require("./season");
@@ -68,6 +69,13 @@ function makeFakeDb({ profiles = [], leagues = [], docs = new Map() } = {}) {
         docs.set(path, data);
       }
       writes.push({ type: "docSet", path, data, options });
+    },
+    // resetLeaguesForNewSeason reaches leagues/{id}/standings/{docId} through
+    // the league ref, the same way createLeague and joinLeague do.
+    collection(sub) {
+      return {
+        doc: (id) => makeDocRef(`${path}/${sub}/${id ?? `auto-${++autoId}`}`),
+      };
     },
   });
 
@@ -436,6 +444,86 @@ describe("archiveSeasonResultsLogic", () => {
     });
 
     assert.equal(writes.length, 0, "an already-archived league must not be re-paid");
+  });
+});
+
+describe("resetLeaguesForNewSeason", () => {
+  // Leagues used to be season-blind: seasonId was stamped once at creation and
+  // standings simply accumulated, so two seasons in, a league's table showed
+  // W/L blended across every season it had ever played — which also defeated
+  // the client's "inactive member" heuristic, since it inferred activity from
+  // a non-zero record.
+  const leagueWithStandings = (docs, id = "league-1", members = ["alice", "bob"]) => {
+    docs.set(`${leaguesPath}/${id}/standings/current`, {
+      records: { alice: { wins: 5, losses: 1 }, bob: { wins: 1, losses: 5 } },
+      standings: [
+        { uid: "alice", wins: 5, losses: 1, totalPoints: 400 },
+        { uid: "bob", wins: 1, losses: 5, totalPoints: 120 },
+      ],
+    });
+    return { id, data: { name: "Test League", members, matchupsGeneratedWeek: 8 } };
+  };
+
+  test("archives the finished table and starts the new season at 0-0", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const archived = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1/standings/old-season`
+    );
+    assert.ok(archived, "the finished season's table must be kept as history");
+    assert.equal(archived.data.seasonUid, "old-season");
+    assert.equal(archived.data.standings.length, 2);
+
+    const live = writes.find((w) => w.path === `${leaguesPath}/league-1/standings/current`);
+    assert.ok(live, "the live table must be reset");
+    assert.deepEqual(live.data.standings, []);
+    assert.deepEqual(live.data.records, {});
+  });
+
+  test("zeroes season participation so the league goes dark until members return", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs, "league-1", ["alice", "bob", "carol"]);
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === `${leaguesPath}/league-1`
+    );
+    assert.ok(update);
+    assert.equal(update.data.seasonId, "new-season");
+    assert.equal(update.data.seasonActivity.seasonUid, "new-season");
+    assert.equal(update.data.seasonActivity.activeMemberCount, 0);
+    assert.deepEqual(update.data.seasonActivity.activeMembers, []);
+    // The roster itself is untouched — members stay members, they just are not
+    // counted as playing until they set their corps up again.
+    assert.equal(update.data.seasonActivity.totalMemberCount, 3);
+    assert.ok(
+      update.data.matchupsGeneratedWeek,
+      "matchupsGeneratedWeek must be cleared so the UI stops claiming a matchup is live"
+    );
+  });
+
+  test("a league that never recorded a result accumulates no history docs", async () => {
+    const docs = new Map();
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "empty-league", data: { name: "Empty", members: ["alice"] } }],
+      docs,
+    });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    assert.equal(
+      writes.filter((w) => w.path.endsWith("/standings/old-season")).length,
+      0,
+      "an untouched league must not write an empty history doc every season"
+    );
+    // It is still rolled forward, so discovery sees a zeroed block.
+    assert.ok(writes.find((w) => w.type === "update" && w.path === `${leaguesPath}/empty-league`));
   });
 });
 

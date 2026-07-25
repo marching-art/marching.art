@@ -104,6 +104,11 @@ const TRANSACTION_TYPES = {
   SEASON_BONUS: "season_bonus",
   CLASS_UNLOCK: "class_unlock",
   LEAGUE_ENTRY: "league_entry",
+  // Entry fee returned from the prize pool when a commissioner removes a
+  // member (callable/leagues.js removeLeagueMember). Leaving voluntarily
+  // forfeits the fee; being removed is not the member's choice, and without
+  // the refund a commissioner could farm the pool by kicking every joiner.
+  LEAGUE_ENTRY_REFUND: "league_entry_refund",
   COSMETIC_PURCHASE: "cosmetic_purchase",
   // Legacy Endowment: the recurring, uncapped sink (helpers/legacyCatalog.js).
   // Distinct from COSMETIC_PURCHASE so the weekly mint-vs-sink readout can show

@@ -7,7 +7,18 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Users, Trophy, Plus, Search, Crown, X, Zap, ChevronRight, Swords } from 'lucide-react';
+import {
+  Users,
+  Trophy,
+  Plus,
+  Search,
+  Crown,
+  X,
+  Zap,
+  ChevronRight,
+  Swords,
+  Sprout,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
@@ -22,6 +33,12 @@ import { useProfileStore } from '../store/profileStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import {
+  getRosterSize,
+  getActiveMemberCount,
+  isMemberActive,
+  isLeagueDormant,
+} from '../utils/leagueActivity';
 
 // =============================================================================
 // LEAGUE TYPE TAGS
@@ -93,7 +110,10 @@ const ActivityIndicator = ({ hasNewMessages, isLive }) => {
 // =============================================================================
 
 const MyLeagueCard = ({ league, userProfile, onClick }) => {
-  const memberCount = league.memberCount || league.members?.length || 0;
+  const memberCount = getRosterSize(league);
+  const activeCount = getActiveMemberCount(league);
+  const dormant = isLeagueDormant(league);
+  const youArePlaying = isMemberActive(league, userProfile?.uid);
   const maxMembers = league.maxMembers || 20;
   const currentWeek = league.currentWeek || 1;
 
@@ -130,23 +150,41 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
           <ActivityIndicator hasNewMessages={hasNewMessages} isLive={isLive} />
         </div>
         <div className="flex items-center gap-2 text-[11px] text-muted">
+          {/* Directors actually fielding a corps this season, not the roster
+              size — a league can be full and still have nobody competing. */}
           <span className="flex items-center gap-1">
             <Users className="w-3 h-3" />
-            {memberCount}/{maxMembers}
+            {activeCount === null
+              ? `${memberCount}/${maxMembers}`
+              : `${activeCount}/${memberCount}`}
           </span>
+          <span className="text-muted">•</span>
+          <span>{activeCount === null ? 'members' : 'playing'}</span>
           <span className="text-muted">•</span>
           <span>Week {currentWeek}</span>
         </div>
-        {hasMatchupsGenerated && (
-          <div className="flex items-center gap-1 mt-1 text-[10px] text-muted">
-            <Swords className="w-3 h-3" />
-            <span>Matchup in progress</span>
+        {dormant ? (
+          <div className="flex items-center gap-1 mt-1 text-[10px] text-brand">
+            <Sprout className="w-3 h-3" />
+            <span>
+              {youArePlaying
+                ? 'Waiting on other members to set up their corps'
+                : 'Season not started — set up your corps'}
+            </span>
           </div>
+        ) : (
+          hasMatchupsGenerated && (
+            <div className="flex items-center gap-1 mt-1 text-[10px] text-muted">
+              <Swords className="w-3 h-3" />
+              <span>Matchup in progress</span>
+            </div>
+          )
         )}
       </div>
 
-      {/* Rank - Right */}
-      <RankBadge rank={userRank} total={memberCount} />
+      {/* Rank - Right. Ranking against directors who aren't playing is
+          meaningless, so a dormant league shows no placement at all. */}
+      {!dormant && <RankBadge rank={userRank} total={activeCount ?? memberCount} />}
 
       {/* Chevron */}
       <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />
@@ -159,7 +197,8 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
 // =============================================================================
 
 const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
-  const memberCount = league.memberCount || league.members?.length || 0;
+  const memberCount = getRosterSize(league);
+  const activeCount = getActiveMemberCount(league);
   const maxMembers = league.maxMembers || 20;
   const isFull = memberCount >= maxMembers;
   const tags = getLeagueTags(league);
@@ -197,9 +236,13 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
       <div className="px-3 py-2 bg-surface-sunken">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-[11px] text-muted">
+            {/* The headline number is how many directors are actually
+                competing this season. Showing the roster instead is what made
+                a league look thriving when nobody had registered a corps. */}
             <span className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              {memberCount}/{maxMembers}
+              <Users className="w-3 h-3 text-green-500" />
+              <span className="text-white font-bold">{activeCount ?? memberCount}</span>
+              <span>{activeCount === null ? `/${maxMembers}` : `of ${memberCount} playing`}</span>
             </span>
             {league.creatorName && (
               <span className="flex items-center gap-1 truncate max-w-[80px]">
@@ -317,14 +360,19 @@ const EmptyMyLeagues = ({ onCreate }) => (
   </div>
 );
 
+// Discovery only lists leagues with at least one director competing this
+// season, so an empty grid usually means nobody has set their corps up yet
+// rather than that no leagues exist — say so, or it reads as a bug.
 const EmptyDiscover = ({ searchTerm }) => (
   <div className="col-span-2 p-6 bg-surface-card border-2 border-dashed border-line text-center">
     <Users className="w-8 h-8 text-muted mx-auto mb-2" />
     <p className="text-sm text-muted">
-      {searchTerm ? 'No leagues match your search' : 'No public leagues available'}
+      {searchTerm ? 'No leagues match your search' : 'No leagues are competing yet this season'}
     </p>
     <p className="text-xs text-muted mt-1">
-      {searchTerm ? 'Try a different search term' : 'Create one to get started!'}
+      {searchTerm
+        ? 'Try a different search term'
+        : 'Leagues appear here once a member registers a corps. Create one to get started!'}
     </p>
   </div>
 );
@@ -473,7 +521,7 @@ const Leagues = () => {
             <div>
               <h1 className="text-sm font-bold text-white uppercase">Leagues</h1>
               <p className="text-[10px] text-muted">
-                {myLeagues.length} active • {discoverLeagues.length} available
+                {myLeagues.length} joined • {discoverLeagues.length} available
               </p>
             </div>
           </div>

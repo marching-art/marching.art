@@ -285,6 +285,13 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       icon: RefreshCw,
     },
     {
+      id: 'refreshLeagueActivity',
+      name: 'Refresh League Activity',
+      description:
+        'Recompute which league members have registered a corps this season — public league discovery filters on this. Runs nightly; use this to backfill immediately after a deploy or a data fix',
+      icon: Users,
+    },
+    {
       id: 'rebuildGameRecords',
       name: 'Rebuild Records Book',
       description:

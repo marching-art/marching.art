@@ -11,6 +11,7 @@ const {
 const { calculateXPUpdates, getSeasonCompletionXP } = require("./xpCalculations");
 const { updateSeasonBestRecords } = require("./gameRecords");
 const { RARITY_CC } = require("./achievements");
+const { emptySeasonActivity } = require("./leagueActivity");
 const {
   claimSeasonRollover,
   markSeasonRolloverCompleted,
@@ -341,6 +342,92 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
 }
 
 /**
+ * Roll every league into the new season.
+ *
+ * Leagues used to be entirely season-blind: `seasonId` was stamped once at
+ * creation and never touched again, and standings/matchup state simply
+ * accumulated. Two seasons in, a league's table showed W/L records blended
+ * across every season it had ever played, which also broke the client's
+ * "inactive member" heuristic (it inferred activity from a non-zero record, so
+ * everyone who had ever played read as active forever).
+ *
+ * For each league this:
+ *  - copies standings/current to standings/{oldSeasonUid} as history, then
+ *    resets the live doc so week 1 starts 0-0 for everyone;
+ *  - clears matchupsGeneratedWeek so the UI stops claiming a matchup is running;
+ *  - advances seasonId;
+ *  - zeroes seasonActivity, so a league goes dark the moment the season resets
+ *    and lights back up only as its members return and set their corps up.
+ *
+ * Runs AFTER archiveSeasonResultsLogic (which crowns champions and pays the
+ * prize pools out of the state this clears) and BEFORE archiveAndResetProfiles.
+ * Deliberately NOT part of archiveSeasonResultsLogic: that function is also
+ * reachable on its own through the admin manualTrigger, where wiping live
+ * standings mid-season would be destructive.
+ *
+ * Batches are chunked — archiveSeasonResultsLogic's single un-chunked batch is
+ * already near Firestore's 500-op ceiling as leagues grow, and this writes up
+ * to three ops per league.
+ */
+async function resetLeaguesForNewSeason(db, oldSeasonUid, newSeasonUid) {
+  const leaguesSnapshot = await db.collection(paths.leagues()).get();
+  if (leaguesSnapshot.empty) {
+    logger.info("No leagues to roll into the new season.");
+    return;
+  }
+
+  logger.info(`Rolling ${leaguesSnapshot.size} leagues into season ${newSeasonUid}...`);
+
+  const emptyStandings = { records: {}, standings: [], lastUpdated: new Date() };
+
+  let batch = db.batch();
+  let opCount = 0;
+
+  for (const leagueDoc of leaguesSnapshot.docs) {
+    const leagueRef = leagueDoc.ref;
+    const memberCount = (leagueDoc.data().members || []).length;
+
+    const standingsRef = leagueRef.collection("standings").doc("current");
+    const standingsDoc = await standingsRef.get();
+    if (standingsDoc.exists) {
+      const previous = standingsDoc.data();
+      // Only archive a table that actually recorded something — an untouched
+      // league shouldn't accumulate empty history docs every season.
+      if ((previous.standings || []).length > 0 || Object.keys(previous.records || {}).length > 0) {
+        batch.set(leagueRef.collection("standings").doc(oldSeasonUid), {
+          ...previous,
+          seasonUid: oldSeasonUid,
+          archivedAt: new Date(),
+        });
+        opCount++;
+      }
+    }
+
+    batch.set(standingsRef, emptyStandings);
+    opCount++;
+
+    batch.update(leagueRef, {
+      seasonId: newSeasonUid,
+      matchupsGeneratedWeek: admin.firestore.FieldValue.delete(),
+      seasonActivity: emptySeasonActivity(newSeasonUid, memberCount),
+    });
+    opCount++;
+
+    if (opCount >= 400) {
+      await batch.commit();
+      batch = db.batch();
+      opCount = 0;
+    }
+  }
+
+  if (opCount > 0) {
+    await batch.commit();
+  }
+
+  logger.info(`Leagues rolled into ${newSeasonUid}; all season participation reset to zero.`);
+}
+
+/**
  * Delete every activeLineups doc belonging to the finished season.
  * Shared by startNewLiveSeason and startNewOffSeason.
  */
@@ -400,6 +487,7 @@ async function rolloverFromOldSeason(db, oldSeason, newSeasonUid) {
   }
   try {
     await archiveSeasonResultsLogic(db, { seasonUid, seasonName });
+    await resetLeaguesForNewSeason(db, seasonUid, newSeasonUid);
     await archiveAndResetProfiles(db, seasonUid, newSeasonUid);
     await clearActiveLineups(db, seasonUid);
     await markSeasonRolloverCompleted(db, seasonUid);
@@ -822,6 +910,7 @@ module.exports = {
   archiveSeasonResultsLogic,
   // Exported for tests (rollover pipeline internals)
   archiveAndResetProfiles,
+  resetLeaguesForNewSeason,
   rolloverFromOldSeason,
   corpsParticipatedThisSeason,
   refreshLiveSeasonSchedule,

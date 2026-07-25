@@ -5,6 +5,7 @@ const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
+const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
 
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 
@@ -125,6 +126,11 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     await batch.commit();
+
+    // This director now counts as registered for the season, so any league
+    // they belong to may have just become publicly discoverable. Best-effort:
+    // the nightly refresh is the backstop (helpers/leagueActivity.js).
+    await refreshLeaguesForUser(db, uid, seasonData?.seasonUid);
 
     logger.info(`User ${uid} successfully registered ${corpsName} (${corpsClass}).`);
     return { success: true, message: "Corps registered!" };

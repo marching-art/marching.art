@@ -2,7 +2,7 @@
 // SettingsTab - Commissioner settings for league management
 // Includes matchup generation, league settings, and invite code management
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { m } from 'framer-motion';
 import {
   Settings,
@@ -20,13 +20,16 @@ import {
   Trophy,
   Award,
   Star,
+  UserMinus,
 } from 'lucide-react';
 import { getLeagueMatchupWeek } from '../../../api/leagues';
-import { useLeagueInviteCode } from '../../../hooks/useLeagues';
+import { useLeagueInviteCode, useRemoveLeagueMember } from '../../../hooks/useLeagues';
 import { generateMatchups } from '../../../api/functions';
 import { GAME_CONFIG } from '../../../config';
 import toast from 'react-hot-toast';
 import { Heading } from '../../ui';
+import { useEscapeKey } from '../../../hooks/useEscapeKey';
+import { getRosterSize, getActiveMemberCount, isMemberActive } from '../../../utils/leagueActivity';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -41,7 +44,75 @@ const CORPS_CLASS_CONFIG = {
   soundSport: { name: 'SoundSport', icon: Zap, color: 'text-green-500', bg: 'bg-green-500/10' },
 };
 
-const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBack }) => {
+/**
+ * Confirmation for a commissioner removing a member. Removal is not something
+ * the removed director can undo, and it moves CorpsCoin, so it never fires
+ * straight off a tap.
+ */
+const ConfirmRemoveMemberModal = ({ member, entryFee, onCancel, onConfirm, isRemoving }) => {
+  useEscapeKey(onCancel);
+  return (
+    <div
+      className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirm member removal"
+    >
+      <div
+        className="w-full sm:max-w-sm bg-surface-card border-t sm:border border-line"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center gap-2">
+          <UserMinus className="w-4 h-4 text-red-400" />
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
+            Remove Member
+          </span>
+        </div>
+
+        <div className="p-4 space-y-3">
+          <p className="text-sm text-white">
+            Remove <span className="font-bold">{member.name}</span> from this league?
+          </p>
+          <ul className="text-xs text-muted space-y-1 list-disc pl-4">
+            <li>Their standings record is cleared and they leave future matchups.</li>
+            {entryFee > 0 && (
+              <li>
+                Their {entryFee.toLocaleString()} CC entry fee is refunded from the prize pool.
+              </li>
+            )}
+            <li>The removal is posted to the league activity feed.</li>
+          </ul>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={onCancel}
+              className="flex-1 py-3 min-h-touch text-sm font-bold text-muted border border-line-strong hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isRemoving}
+              className="flex-1 py-3 min-h-touch text-sm font-bold text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {isRemoving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SettingsTab = ({
+  league,
+  userProfile: _userProfile,
+  memberProfiles = {},
+  currentWeek = 1,
+  onBack,
+}) => {
   const inviteCode = useLeagueInviteCode(league);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
@@ -49,6 +120,10 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
   const [existingMatchups, setExistingMatchups] = useState({});
   const [_checkingMatchups, setCheckingMatchups] = useState(true);
   const [lastGeneratedResult, setLastGeneratedResult] = useState(null);
+  const [pendingRemoval, setPendingRemoval] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
+
+  const removeMemberMutation = useRemoveLeagueMember(league?.id);
 
   // Check which weeks have matchups already
   useEffect(() => {
@@ -132,9 +207,49 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
     }
   };
 
+  const handleRemoveMember = async (member) => {
+    setRemovingId(member.uid);
+    try {
+      const result = await removeMemberMutation.mutateAsync(member.uid);
+      toast.success(result?.message || `${member.name} was removed.`);
+      setPendingRemoval(null);
+    } catch (error) {
+      toast.error(error.message || 'Failed to remove member');
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
   const weekHasMatchups = existingMatchups[selectedWeek];
-  const memberCount = league?.members?.length || 0;
+  const memberCount = getRosterSize(league);
+  const activeCount = getActiveMemberCount(league);
   const canGenerate = memberCount >= 2;
+
+  // Roster rows for the management list — active directors first, so the
+  // members a commissioner is most likely to prune surface at the bottom
+  // together rather than scattered through the list.
+  const roster = useMemo(() => {
+    const rows = (league?.members || []).map((uid) => {
+      const profile = memberProfiles[uid] || {};
+      const displayName =
+        profile.displayName && profile.displayName !== 'Director'
+          ? profile.displayName
+          : profile.username;
+      const activeCorps = Object.values(profile.corps || {}).find((c) => c?.corpsName);
+      return {
+        uid,
+        name: displayName || `Director ${uid.slice(0, 6)}`,
+        corpsName: activeCorps?.corpsName || null,
+        isActive: isMemberActive(league, uid),
+        isCommissioner: uid === league?.creatorId,
+      };
+    });
+    return rows.sort((a, b) => {
+      if (a.isCommissioner !== b.isCommissioner) return a.isCommissioner ? -1 : 1;
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [league, memberProfiles]);
 
   return (
     <m.div
@@ -411,8 +526,93 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
               {memberCount} / {league.maxMembers || 20}
             </span>
           </div>
+          <div className="px-4 py-3 flex items-center justify-between">
+            <span className="text-sm text-muted">Competing this season</span>
+            <span
+              className={`text-sm font-bold ${activeCount > 0 ? 'text-green-500' : 'text-muted'}`}
+            >
+              {activeCount === null ? 'Unknown' : `${activeCount} / ${memberCount}`}
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Roster Management — the commissioner's control over who stays.
+          A roster is otherwise append-only, so a league slowly fills with
+          directors who stopped playing; they pad the member count and, before
+          the season-activity gate, were still drawn into weekly matchups. */}
+      <div className="bg-surface-card border border-line">
+        <div className="px-4 py-3 border-b border-line bg-surface-raised">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              Manage Roster
+            </span>
+          </div>
+        </div>
+
+        <div className="px-4 py-2 bg-surface-sunken border-b border-line-subtle">
+          <p className="text-[10px] text-muted">
+            Removing a director refunds their entry fee from the prize pool and posts a note to the
+            league activity feed. They can rejoin if the league is public.
+          </p>
+        </div>
+
+        <div className="divide-y divide-line-subtle">
+          {roster.map((member) => (
+            <div key={member.uid} className="px-4 py-3 flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-white truncate">{member.name}</span>
+                  {member.isCommissioner && (
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand bg-surface-raised flex-shrink-0">
+                      Commissioner
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={`text-[10px] ${member.isActive ? 'text-green-500' : 'text-muted'}`}
+                >
+                  {member.isActive
+                    ? `Competing${member.corpsName ? ` — ${member.corpsName}` : ''}`
+                    : 'No corps registered this season'}
+                </span>
+              </div>
+
+              {member.isCommissioner ? (
+                // The commissioner cannot remove themselves — the league would
+                // be left with nobody able to run it. Leaving is the exit.
+                <span className="text-[10px] text-muted flex-shrink-0">—</span>
+              ) : (
+                <button
+                  onClick={() => setPendingRemoval(member)}
+                  disabled={removingId === member.uid}
+                  className="px-3 py-2 min-h-touch text-[10px] font-bold uppercase text-red-400 border border-red-500/30 hover:bg-red-500/10 disabled:opacity-40 transition-colors flex items-center gap-1.5 flex-shrink-0"
+                >
+                  {removingId === member.uid ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <UserMinus className="w-3 h-3" />
+                  )}
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Removal is irreversible from the commissioner's side and moves
+          CorpsCoin, so it always goes through an explicit confirmation. */}
+      {pendingRemoval && (
+        <ConfirmRemoveMemberModal
+          member={pendingRemoval}
+          entryFee={league.settings?.entryFee || 0}
+          onCancel={() => setPendingRemoval(null)}
+          onConfirm={() => handleRemoveMember(pendingRemoval)}
+          isRemoving={removingId === pendingRemoval.uid}
+        />
+      )}
     </m.div>
   );
 };

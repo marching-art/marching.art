@@ -176,3 +176,28 @@ export function useLeaveLeague(uid: string | undefined) {
     },
   });
 }
+
+/**
+ * Hook for a commissioner to remove a member.
+ *
+ * Invalidates the league doc and standings: removal rewrites `members`,
+ * `seasonActivity`, and the standings table in one server call.
+ */
+export function useRemoveLeagueMember(leagueId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: string) => leaguesApi.removeLeagueMember(leagueId!, memberId),
+    onSuccess: () => {
+      if (leagueId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.league(leagueId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.leagueStandings(leagueId) });
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
+    },
+    onError: (error: Error) => {
+      console.error('Remove league member error:', error);
+      toast.error(error.message || 'Failed to remove member.');
+    },
+  });
+}
