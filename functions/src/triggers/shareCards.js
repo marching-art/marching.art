@@ -29,11 +29,14 @@ const {
   SITE_URL,
   buildScoresCardSvg,
   buildChampionCardSvg,
+  buildDirectorCardSvg,
   buildShareHtml,
   parseOgPath,
   parseSharePath,
   clamp,
 } = require("../helpers/shareCards");
+const { isProfilePrivate, pickPublicProfile } = require("../helpers/publicProfilePages");
+const { resolveDirectorProfile } = require("./publicProfilePages");
 const { CLASS_LABELS, aggregateNightlyStandings } = require("../helpers/scoreDrop");
 
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
@@ -112,6 +115,16 @@ exports.getOgCardHttp = onRequest(
         const champions = await fetchChampions(db, route.seasonId);
         if (champions) {
           svg = buildChampionCardSvg({ champions, classKey: route.classKey });
+        }
+      } else if (route.type === "director") {
+        // Backs the OG image on /d/{username}. Private profiles get no card:
+        // an unfurl must never leak what the page itself withholds.
+        const resolved = await resolveDirectorProfile(db, route.username);
+        if (resolved && !isProfilePrivate(resolved.data)) {
+          svg = buildDirectorCardSvg({
+            profile: pickPublicProfile(resolved.data),
+            username: resolved.data.username,
+          });
         }
       }
 

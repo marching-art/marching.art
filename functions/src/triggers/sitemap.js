@@ -10,6 +10,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { listScoredDays } = require("./resultsPages");
+const { isProfilePrivate } = require("../helpers/publicProfilePages");
 
 // Public, crawlable routes (see robots.txt for the disallow list these must
 // stay out of). lastmod is intentionally omitted for static routes — a fake
@@ -59,9 +60,10 @@ const escapeXml = (value) =>
  *   Article page entries; lastmod is a YYYY-MM-DD string when known.
  * @param {Array<{seasonUid: string, days: number[]}>} [resultsSeasons]
  *   Public /results pages: one index URL per season plus one per scored day.
+ * @param {string[]} [directorUsernames] - Public /d/{username} director pages.
  * @returns {string}
  */
-function buildSitemapXml(staticRoutes, articles, resultsSeasons = []) {
+function buildSitemapXml(staticRoutes, articles, resultsSeasons = [], directorUsernames = []) {
   const urls = [];
 
   for (const route of staticRoutes) {
@@ -104,6 +106,16 @@ function buildSitemapXml(staticRoutes, articles, resultsSeasons = []) {
     }
   }
 
+  for (const username of directorUsernames) {
+    urls.push(
+      "  <url>\n" +
+        `    <loc>${SITE_URL}/d/${escapeXml(encodeURIComponent(username))}</loc>\n` +
+        "    <changefreq>weekly</changefreq>\n" +
+        "    <priority>0.5</priority>\n" +
+        "  </url>"
+    );
+  }
+
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
@@ -139,6 +151,48 @@ function articleEntryFromDoc(doc) {
 // Sitemaps bound at 50k URLs; ~50 day-pages per season keeps even years of
 // seasons far under it, but cap the season count defensively.
 const MAX_RESULTS_SEASONS = 40;
+
+// Directors are the one sitemap section that grows with signups, so it is
+// bounded twice: the query is projected + limited, and only directors with
+// real activity (a level past the starting one, or a completed season) are
+// listed. A brand-new empty profile is a thin page that would only dilute
+// crawl budget — it becomes crawlable as soon as the director plays.
+const MAX_DIRECTOR_URLS = 2000;
+
+/**
+ * Usernames with a public /d/{username} page worth crawling: public
+ * visibility (same rule the page itself enforces) plus some activity.
+ * Failures degrade to an empty list — the sitemap must not 500 because
+ * profile enumeration hiccuped.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @returns {Promise<string[]>}
+ */
+async function listPublicDirectors(db) {
+  try {
+    const snapshot = await db
+      .collectionGroup("profile")
+      .select("username", "directorInfo", "xpLevel", "seasonHistory")
+      .limit(MAX_DIRECTOR_URLS)
+      .get();
+
+    const usernames = [];
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (typeof data.username !== "string" || !data.username) continue;
+      if (isProfilePrivate(data)) continue;
+      const hasActivity =
+        (typeof data.xpLevel === "number" && data.xpLevel > 1) ||
+        (Array.isArray(data.seasonHistory) && data.seasonHistory.length > 0);
+      if (!hasActivity) continue;
+      usernames.push(data.username);
+    }
+    return usernames;
+  } catch (error) {
+    logger.warn("Failed to enumerate public directors for sitemap:", error);
+    return [];
+  }
+}
 
 /**
  * Seasons with public /results pages: the active season plus every archived
@@ -222,8 +276,11 @@ exports.getSitemapHttp = onRequest(
         .get();
 
       const articles = snapshot.docs.map(articleEntryFromDoc);
-      const resultsSeasons = await listResultsSeasons(db);
-      const xml = buildSitemapXml(STATIC_ROUTES, articles, resultsSeasons);
+      const [resultsSeasons, directorUsernames] = await Promise.all([
+        listResultsSeasons(db),
+        listPublicDirectors(db),
+      ]);
+      const xml = buildSitemapXml(STATIC_ROUTES, articles, resultsSeasons, directorUsernames);
 
       // Best-effort cache write; a failed write must not fail the response.
       try {

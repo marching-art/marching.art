@@ -241,6 +241,7 @@ const { getSitemapHttp } = require("./src/triggers/sitemap");
 const { announceArticleToDiscord } = require("./src/triggers/newsDiscord");
 const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
 const { getResultsPageHttp } = require("./src/triggers/resultsPages");
+const { getPublicProfilePageHttp } = require("./src/triggers/publicProfilePages");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -446,6 +447,10 @@ module.exports = {
   // Backs the /results/** rewrite (both hosts): crawlable server-rendered
   // season/day results pages — the public SEO surface for nightly scores.
   getResultsPageHttp,
+  // Backs the /d/** rewrite (both hosts): crawlable server-rendered director
+  // pages, so a director's identity is a shareable, indexable URL instead of
+  // living behind the auth wall.
+  getPublicProfilePageHttp,
 
   // Article Management (Admin)
   listAllArticles,

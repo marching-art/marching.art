@@ -153,6 +153,13 @@
         }
       },
       {
+        "source": "/d/**",
+        "function": {
+          "functionId": "getPublicProfilePageHttp",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
