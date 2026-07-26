@@ -10,11 +10,20 @@
 
 const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
-// sharp's dual-package typings claim a `.default` export, but the CJS
-// runtime export IS the callable — cast through the type it actually has.
-const sharp = /** @type {import("sharp").default} */ (
-  /** @type {unknown} */ (require("sharp"))
-);
+// sharp is required lazily (memoized, same pattern as mediaService's
+// cloudinary): every function in the deploy unit loads this module at cold
+// start via index.js, but only the OG-card endpoint ever rasterizes SVGs —
+// eagerly loading libvips taxed every other function's cold start.
+/** @type {import("sharp").default | undefined} */
+let sharpModule;
+function getSharp() {
+  // sharp's dual-package typings claim a `.default` export, but the CJS
+  // runtime export IS the callable — cast through the type it actually has.
+  sharpModule ||= /** @type {import("sharp").default} */ (
+    /** @type {unknown} */ (require("sharp"))
+  );
+  return sharpModule;
+}
 const { getDb } = require("../config");
 const {
   SITE_URL,
@@ -111,7 +120,7 @@ exports.getOgCardHttp = onRequest(
         return;
       }
 
-      const png = await sharp(Buffer.from(svg)).png().toBuffer();
+      const png = await getSharp()(Buffer.from(svg)).png().toBuffer();
       res.set("Content-Type", "image/png");
       res.set("Cache-Control", CARD_CACHE_CONTROL);
       res.status(200).send(png);

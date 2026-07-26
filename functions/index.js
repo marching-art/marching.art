@@ -22,7 +22,11 @@ db.settings({ ignoreUndefinedProperties: true });
 // deploys unless the param has a dotenv value — a params-based flip broke
 // the deploy workflow exactly that way. A one-line literal is just as easy
 // to flip and can never fail a deploy.
-setGlobalOptions({ enforceAppCheck: false });
+// maxInstances is a spend ceiling: 10 instances x 80 concurrent requests per
+// instance is far above real traffic, and per-function options still win where
+// a tighter cap matters (the scraper pubsub triggers set maxInstances: 3).
+// Scheduled jobs run a single instance regardless.
+setGlobalOptions({ enforceAppCheck: false, maxInstances: 10 });
 
 // Callable Functions
 const {

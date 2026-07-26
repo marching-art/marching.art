@@ -474,14 +474,19 @@ async function commitDailyScoring({
   // Update user profiles with their most recent score.
   // Note: Uses latest score (not cumulative) - drum corps rankings are based
   // on most recent performance.
+  // set+merge (nested maps deep-merge, so only the named leaves change — the
+  // exact semantics of update()'s dotted paths) instead of update(): update()
+  // fails on a missing doc, and one profile deleted mid-run would fail its
+  // whole ChunkedWriter chunk (~200 writes). A deleted profile now gets an
+  // inert fragment doc instead — every reader filters on activeSeasonId,
+  // which the fragment lacks.
   for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
     if (totalDailyScore > 0) {
       const [uid, corpsClass] = uidAndClass.split("_");
       const userProfileRef = db.doc(paths.userProfile(uid));
-      batch.update(userProfileRef, {
-        [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
-        [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
-      });
+      batch.set(userProfileRef, {
+        corps: { [corpsClass]: { totalSeasonScore: totalDailyScore, lastScoredDay: scoredDay } },
+      }, { merge: true });
     }
   }
 
@@ -495,10 +500,10 @@ async function commitDailyScoring({
     for (const [uidAndClass, { rank, of }] of changed.entries()) {
       const [uid, corpsClass] = uidAndClass.split("_");
       const ref = db.doc(paths.userProfile(uid));
-      batch.update(ref, {
-        [`corps.${corpsClass}.seasonRank`]: rank,
-        [`corps.${corpsClass}.seasonRankOf`]: of,
-      });
+      // set+merge for the same deleted-profile tolerance as the score write.
+      batch.set(ref, {
+        corps: { [corpsClass]: { seasonRank: rank, seasonRankOf: of } },
+      }, { merge: true });
     }
   }
 
@@ -822,15 +827,34 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force 
 }
 
 /**
+ * The calendar year live scraped scores are stored under
+ * (historical_scores/{year}). Derived from the season doc — the finals year
+ * (seasonYear, written by startNewLiveSeason), falling back to the schedule's
+ * start year, then the wall clock. Deriving from `new Date()` alone broke a
+ * reprocess run that crossed New Year (and any run against an archived
+ * season): the strategy would silently look up the wrong year's scores.
+ *
+ * @param {Object} seasonData - The season doc's data.
+ * @returns {number}
+ */
+function liveSeasonYear(seasonData) {
+  const fromSeason = Number(seasonData?.seasonYear);
+  if (Number.isFinite(fromSeason) && fromSeason > 0) return fromSeason;
+  const startDate = seasonData?.schedule?.startDate;
+  if (startDate?.toDate) return startDate.toDate().getUTCFullYear();
+  return new Date().getFullYear();
+}
+
+/**
  * Live-season strategy. Recap dates offset spring training and pin UTC
  * (omitting the offset once shifted every live recap date 21 days early);
  * base scores prefer tonight's actual scraped score, then current-year
  * regression (>= 3 data points), then prior-year regression.
  */
 const LIVE_SEASON_STRATEGY = {
-  // Corps source years (prior year) + current year for live scraped data.
+  // Corps source years (prior year) + the season's live year for scraped data.
   historical: (seasonData) =>
-    fetchHistoricalData(seasonData.dataDocId, [new Date().getFullYear()]),
+    fetchHistoricalData(seasonData.dataDocId, [liveSeasonYear(seasonData)]),
   recapDate: (seasonData, scoredDay) => {
     const seasonStartDate = seasonData.schedule.startDate.toDate();
     const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
@@ -840,8 +864,8 @@ const LIVE_SEASON_STRATEGY = {
       seasonStartDate.getUTCDate() + springTrainingDays + (scoredDay - 1),
     ));
   },
-  baseScore: ({ scoredDay, historicalData }) => {
-    const currentYear = new Date().getFullYear();
+  baseScore: ({ seasonData, scoredDay, historicalData }) => {
+    const currentYear = liveSeasonYear(seasonData);
     return (corpsName, sourceYear, caption) => {
       let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
 
@@ -986,4 +1010,5 @@ module.exports = {
   computeSeasonRankings,
   diffSeasonRankings,
   fetchAllActiveProfiles,
+  liveSeasonYear,
 };
