@@ -501,5 +501,9 @@ module.exports = {
   buildDayResultsHtml,
   buildSeasonIndexHtml,
   buildErrorPageHtml,
+  // Shared page chrome (header/footer/meta/CSS) — also the shell for the
+  // public director pages (helpers/publicProfilePages.js), so both public
+  // surfaces stay one site.
+  buildPageShell,
   parseResultsPath,
 };

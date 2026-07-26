@@ -7,25 +7,17 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+const { createUserNotification } = require("../helpers/userNotifications");
 
 // Cross-user notifications MUST be written here with the Admin SDK — Firestore
 // rules only let a client write into its OWN notifications subcollection, so a
 // client-side write to another user's feed is silently denied (the old
 // createLeagueNotification utility in src/hooks/useLeagueNotifications.ts).
-// Non-fatal: a notification failure never fails the action that triggered it.
+// Non-fatal: a notification failure never fails the action that triggered it —
+// the shared writer (helpers/userNotifications) catches and logs internally,
+// and keeps the exact doc shape this file used to write inline.
 async function createUserLeagueNotification(db, recipientUid, notification) {
-  try {
-    const notificationRef = db.collection(paths.userNotifications(recipientUid)).doc();
-    await notificationRef.set({
-      ...notification,
-      id: notificationRef.id,
-      userId: recipientUid,
-      read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  } catch (error) {
-    logger.error(`Failed to write league notification for ${recipientUid}:`, error);
-  }
+  await createUserNotification(db, recipientUid, notification);
 }
 
 // =============================================================================

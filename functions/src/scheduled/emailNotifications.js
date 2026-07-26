@@ -16,6 +16,7 @@ const {
   brevoApiKey,
   EMAIL_TYPES,
 } = require("../helpers/emailService");
+const { createUserNotification } = require("../helpers/userNotifications");
 
 // Batch size for processing users
 const BATCH_SIZE = 100;
@@ -613,6 +614,33 @@ exports.streakBrokenEmailJob = onSchedule(
           if (freezeUntil && now < freezeUntil) {
             return { status: 'skipped', reason: 'freeze' };
           }
+
+          // In-app inbox entry for everyone whose streak actually broke —
+          // BEFORE the email gates, because emailPreferences is an
+          // email-channel opt-out and users with no email address still
+          // deserve the in-app surface (it is the lowest-friction channel;
+          // see helpers/userNotifications). Best-effort: the writer never
+          // throws, so it can't fail the email job. Keyed by the lastLogin
+          // date so a job retry (the 24-48h window spans two daily runs at
+          // the edges) overwrites instead of duplicating.
+          const lostStreak = profile.engagement?.loginStreak || 0;
+          const lastLoginRaw = profile.engagement?.lastLogin;
+          const lastLoginDate =
+            lastLoginRaw?.toDate?.() || (lastLoginRaw ? new Date(lastLoginRaw) : null);
+          const lastLoginDay =
+            lastLoginDate && !isNaN(lastLoginDate.getTime())
+              ? lastLoginDate.toISOString().slice(0, 10)
+              : "unknown";
+          await createUserNotification(db, uid, {
+            type: "streak_broken",
+            title: "Your login streak ended",
+            message:
+              `Your ${lostStreak}-day login streak has ended. ` +
+              `Log in today to start a new one.`,
+            link: "/dashboard",
+            metadata: { previousStreak: lostStreak },
+            dedupeKey: `streak_broken_${lastLoginDay}`,
+          });
 
           // Check email preferences
           if (!shouldSendEmail(profile, EMAIL_TYPES.STREAK_BROKEN)) {

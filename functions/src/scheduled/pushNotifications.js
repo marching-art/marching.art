@@ -18,6 +18,7 @@ const { processAllInPages } = require("../helpers/firestorePaging");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
+const { createUserNotifications } = require("../helpers/userNotifications");
 const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
 const { buildLineupLockPayload } = require("../helpers/seasonAnnounce");
 const { seasonDisplayName } = require("../helpers/seasonDisplay");
@@ -238,6 +239,7 @@ exports.weeklyMatchupPushJob = onSchedule(
             allMatchups.push({
               player1,
               player2,
+              leagueId: leagueDocs[leagueIndex].id,
               leagueName: league.name,
               corpsClass,
             });
@@ -274,11 +276,13 @@ exports.weeklyMatchupPushJob = onSchedule(
         {
           userId: matchup.player1,
           opponentName: usernameMap.get(matchup.player2),
+          leagueId: matchup.leagueId,
           leagueName: matchup.leagueName,
         },
         {
           userId: matchup.player2,
           opponentName: usernameMap.get(matchup.player1),
+          leagueId: matchup.leagueId,
           leagueName: matchup.leagueName,
         },
       ]);
@@ -298,6 +302,31 @@ exports.weeklyMatchupPushJob = onSchedule(
         totalSent += results.filter(
           (r) => r.status === "fulfilled" && r.value === true
         ).length;
+      }
+
+      // In-app inbox copy per matchup participant — same text as the push,
+      // best-effort and never failing the job; not gated on pushPreferences
+      // (see the score-drop job below for the rationale). Keyed per
+      // (week, league) so a retry converges and a director in several
+      // leagues still gets one entry per league.
+      try {
+        const inbox = await createUserNotifications(
+          db,
+          notificationTasks.map((task) => ({
+            uid: task.userId,
+            type: "matchup_start",
+            title: "Matchup Starting!",
+            message: `Your matchup vs ${task.opponentName} in ${task.leagueName} is about to begin!`,
+            link: "/leagues",
+            leagueId: task.leagueId,
+            leagueName: task.leagueName,
+            metadata: { week: currentWeek, opponentName: task.opponentName },
+            dedupeKey: `matchup_start_w${currentWeek}_${task.leagueId}`,
+          }))
+        );
+        logger.info(`Matchup inbox fan-out: ${inbox.written} written, ${inbox.skipped} skipped`);
+      } catch (error) {
+        logger.error("Matchup inbox fan-out failed:", error);
       }
 
       logger.info(`Weekly matchup push job complete. Sent ${totalSent} notifications.`);
@@ -377,6 +406,32 @@ exports.scoreDropPushJob = onSchedule(
           )
         );
         totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
+      }
+
+      // In-app inbox copy of the same message, per recipient — the surface for
+      // directors who denied push. Best-effort and isolated (same idiom as the
+      // Discord stage): an inbox failure never fails the push job. Deliberately
+      // NOT gated on pushPreferences — that is a push-channel opt-out, and no
+      // channel-neutral category setting exists (see helpers/userNotifications).
+      // dedupeKey makes a scheduler retry overwrite instead of duplicate.
+      try {
+        const inbox = await createUserNotifications(
+          db,
+          pushes.map((push) => ({
+            uid: push.uid,
+            type: "score_drop",
+            title: push.title,
+            message: push.body,
+            // Same destination as the push, tagged so score_drop_return
+            // analytics can tell inbox arrivals from push arrivals.
+            link: "/scores?src=inbox",
+            metadata: push.data,
+            dedupeKey: `score_drop_${season.seasonUid}_${scoredDay}`,
+          }))
+        );
+        logger.info(`Score-drop inbox fan-out: ${inbox.written} written, ${inbox.skipped} skipped`);
+      } catch (error) {
+        logger.error("Score-drop inbox fan-out failed:", error);
       }
 
       logger.info(
@@ -464,6 +519,30 @@ exports.lineupLockReminderPushJob = onSchedule(
           )
         );
         totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
+      }
+
+      // In-app inbox copy per reminded director — reaches the push-denied.
+      // Best-effort, never fails the job; not gated on pushPreferences (see
+      // the score-drop job above for the rationale). One lock period = one
+      // dedupeKey, so the daily retry window can't stack duplicates.
+      try {
+        const inbox = await createUserNotifications(
+          db,
+          pushes.map((push) => ({
+            uid: push.uid,
+            type: "lineup_lock",
+            title: push.title,
+            message: push.body,
+            link: push.url,
+            metadata: push.data,
+            dedupeKey: `lineup_lock_${season.seasonUid}_${context.phase}_${context.periodKey}`,
+          }))
+        );
+        logger.info(
+          `Lineup-lock inbox fan-out: ${inbox.written} written, ${inbox.skipped} skipped`
+        );
+      } catch (error) {
+        logger.error("Lineup-lock inbox fan-out failed:", error);
       }
 
       logger.info(
