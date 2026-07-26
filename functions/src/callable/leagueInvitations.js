@@ -117,10 +117,10 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   // server-derived values only (never the client-supplied message).
   await createUserLeagueNotification(db, inviteeUid, {
     leagueId,
-    leagueName: leagueData.name || 'Unnamed League',
-    type: 'league_invite',
-    title: 'League Invitation',
-    message: `${inviterName} invited you to join ${leagueData.name || 'a league'}.`,
+    leagueName: leagueData.name || "Unnamed League",
+    type: "league_invite",
+    title: "League Invitation",
+    message: `${inviterName} invited you to join ${leagueData.name || "a league"}.`,
   });
 
   logger.info(`League invitation sent: ${inviterUid} → ${inviteeUid} for ${leagueId}`);
@@ -231,10 +231,10 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   if (invitation.inviterUid && invitation.inviterUid !== uid) {
     await createUserLeagueNotification(db, invitation.inviterUid, {
       leagueId,
-      leagueName: invitation.leagueName || 'your league',
-      type: 'member_joined',
-      title: 'Invitation Accepted',
-      message: `${userDisplayName} accepted your invitation to ${invitation.leagueName || 'your league'}.`,
+      leagueName: invitation.leagueName || "your league",
+      type: "member_joined",
+      title: "Invitation Accepted",
+      message: `${userDisplayName} accepted your invitation to ${invitation.leagueName || "your league"}.`,
     });
   }
 
