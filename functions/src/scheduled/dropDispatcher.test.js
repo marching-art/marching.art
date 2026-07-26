@@ -237,6 +237,8 @@ test("the next tick scores a settled night and stamps scoredAt once", async () =
   assert.equal(called.score, 1);
   assert.equal(called.discord, 1);
   assert.ok(db.store.get("drop_plans/2026-07-01").scoredAt instanceof Date);
+  // The night WAS scraped — no regression-fallback stamp.
+  assert.equal(db.store.get("drop_plans/2026-07-01").usedRegressionFallback, undefined);
 
   // Later ticks see scoredAt and skip the scoring path entirely.
   resetFeatureCache();
@@ -262,6 +264,103 @@ test("the night's last tick scrapes and scores in one slot (no later tick exists
     },
   });
   assert.equal(called.score, 1); // never orphan the night waiting on a tick that won't come
+});
+
+test("the scrape attempt is counted even when the scrape throws", async () => {
+  // The attempt increment lands BEFORE the scrape: a scrape that hangs until
+  // the function times out is still budgeted, so a wedged dci.org can never
+  // earn unlimited nightly retries.
+  resetFeatureCache();
+  const db = liveNightDb();
+  const result = await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:05:00Z"),
+    settleMs: 0,
+    deps: {
+      scrape: async () => { throw new Error("proxy exploded"); },
+      scoreLive: async () => { throw new Error("must not score inside the retry window"); },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.equal(db.store.get("drop_plans/2026-07-01").scrapeAttempts, 1);
+  assert.deepEqual(result.actions, [{ action: "scrape", error: "proxy exploded" }]);
+});
+
+test("a failed attempt-bookkeeping write does not abort the tick's scoring branch", async () => {
+  resetFeatureCache();
+  const db = liveNightDb();
+  // Fail ONLY the scrapeAttempts increment; every other drop_plans write
+  // (persistPlan, scoredAt) still lands.
+  const origCollection = db.collection;
+  db.collection = (name) => {
+    const col = origCollection(name);
+    if (name !== "drop_plans") return col;
+    return {
+      doc: (id) => {
+        const ref = col.doc(id);
+        return {
+          ...ref,
+          async set(data, opts) {
+            if (data.scrapeAttempts !== undefined) throw new Error("firestore blip");
+            return ref.set(data, opts);
+          },
+        };
+      },
+    };
+  };
+  const called = { score: 0 };
+  await runDropDispatcherTick(db, {
+    now: EASTERN_PLAN.scrapeRetryUntil, // last tick: scrape + score in one slot
+    settleMs: 0,
+    deps: {
+      scrape: async () => ({ scraped: true, stampedLastScrapedDate: true }),
+      scoreLive: async () => { called.score++; return { status: "processed" }; },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.equal(called.score, 1); // the blip was contained; the night still scored
+  assert.ok(db.store.get("drop_plans/2026-07-01").scoredAt instanceof Date);
+});
+
+test("a night scored on an exhausted scrape budget is stamped usedRegressionFallback", async () => {
+  resetFeatureCache();
+  const db = liveNightDb({ planDoc: { scrapeAttempts: MAX_SCRAPE_ATTEMPTS } });
+  const called = { score: 0 };
+  await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:05:00Z"), // past the 11 PM drop, budget spent
+    settleMs: 0,
+    deps: {
+      scrape: async () => { throw new Error("budget is spent — must not scrape"); },
+      scoreLive: async () => { called.score++; return { status: "processed" }; },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.equal(called.score, 1);
+  const planDoc = db.store.get("drop_plans/2026-07-01");
+  assert.ok(planDoc.scoredAt instanceof Date);
+  assert.equal(planDoc.usedRegressionFallback, true);
+});
+
+test("a dark day scoring without a scrape is NOT stamped as regression fallback", async () => {
+  // Nothing was scheduled, so scoring without fresh data is by design.
+  resetFeatureCache();
+  const db = makeFakeDb({
+    "game-settings/season": { ...LIVE_SEASON, seasonUid: "s26", lastScrapedDate: null },
+    "game-settings/features": { dropScheduling: true },
+    "schedules/s26": { competitions: [] },
+    "drop_plans/2026-07-01": { scrapeAttempts: 1 }, // the single dark-day attempt, spent
+  });
+  await runDropDispatcherTick(db, {
+    now: DARK_PLAN.dropInstant,
+    settleMs: 0,
+    deps: {
+      scrape: async () => { throw new Error("dark-day budget spent — must not scrape"); },
+      scoreLive: async () => ({ status: "processed" }),
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  const planDoc = db.store.get("drop_plans/2026-07-01");
+  assert.ok(planDoc.scoredAt instanceof Date);
+  assert.equal(planDoc.usedRegressionFallback, undefined);
 });
 
 test("a skipped in-progress claim leaves the night unstamped for later ticks", async () => {

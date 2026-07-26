@@ -99,7 +99,7 @@ async function findUnhealthyScoringRuns(db, now = new Date()) {
  * players' scores are fine, only a side channel misfired.
  *
  * @param {Object} params
- * @param {Array<{kind?: string}>} params.unhealthy
+ * @param {Array<{kind?: string, [key: string]: *}>} params.unhealthy
  * @param {object|null} params.scrapeProblem
  * @param {object|null} params.unscoredProblem
  * @returns {"critical"|"warning"}

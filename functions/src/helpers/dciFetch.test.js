@@ -7,7 +7,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildProxiedUrl, buildAttemptPlan, looksLikeChallenge } = require("./dciFetch");
+const { dciFetch, buildProxiedUrl, buildAttemptPlan, looksLikeChallenge } = require("./dciFetch");
 
 const TARGET = "https://www.dci.org/scores/recap/2025-dci-world-championship-finals/";
 const ENC = encodeURIComponent(TARGET);
@@ -151,5 +151,47 @@ describe("looksLikeChallenge", () => {
     assert.equal(looksLikeChallenge(null), false);
     assert.equal(looksLikeChallenge({ scores: [] }), false);
     assert.equal(looksLikeChallenge(undefined), false);
+  });
+});
+
+// dciFetch's retry loop, driven through the injectable transport (no secret
+// is bound under test, so these exercise the direct-GET path). maxRetries is
+// the knob the scrape canary turns down to fit its timeout budget.
+describe("dciFetch retry cap", () => {
+  test("returns the body on a first-attempt success", async () => {
+    const calls = [];
+    const body = await dciFetch(TARGET, {
+      transport: async (url) => { calls.push(url); return { data: "<html>ok</html>" }; },
+    });
+    assert.equal(body, "<html>ok</html>");
+    assert.deepEqual(calls, [TARGET]); // direct path: the raw URL, unproxied
+  });
+
+  test("maxRetries=1 makes a retryable failure throw after a single attempt", async () => {
+    let attempts = 0;
+    const transport = async () => {
+      attempts++;
+      const error = new Error("socket hang up");
+      error.code = "ECONNRESET"; // normally retryable
+      throw error;
+    };
+    await assert.rejects(() => dciFetch(TARGET, { maxRetries: 1, transport }), /socket hang up/);
+    assert.equal(attempts, 1);
+  });
+
+  test("a non-retryable status stops immediately regardless of maxRetries", async () => {
+    let attempts = 0;
+    const transport = async () => {
+      attempts++;
+      const error = new Error("Request failed with status code 404");
+      error.response = { status: 404 };
+      throw error;
+    };
+    await assert.rejects(() => dciFetch(TARGET, { maxRetries: 4, transport }));
+    assert.equal(attempts, 1);
+  });
+
+  test("requires a URL", async () => {
+    await assert.rejects(() => dciFetch(""), /requires a URL/);
   });
 });
