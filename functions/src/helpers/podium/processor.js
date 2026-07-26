@@ -167,11 +167,40 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     };
     let processed = 0;
 
-    for (const rosterDoc of roster.docs) {
+    // Batch the per-corps state reads: one chunked getAll over the roster
+    // instead of a sequential get() per corps. The full doc is needed
+    // (hydrateState), so no field mask applies.
+    const GETALL_CHUNK = 300;
+    const rosterDocs = roster.docs;
+    const stateSnapshots = [];
+    for (let i = 0; i < rosterDocs.length; i += GETALL_CHUNK) {
+      const chunk = rosterDocs.slice(i, i + GETALL_CHUNK);
+      stateSnapshots.push(
+        ...(await db.getAll(...chunk.map((rosterDoc) => store.stateRef(db, rosterDoc.id))))
+      );
+    }
+
+    // What each corps' state doc contains after tonight's main pass — exactly
+    // the payload written below (or the raw doc for corps the pass skipped).
+    // The rankings pass reuses this instead of re-reading the whole roster.
+    const stateDataByUid = new Map();
+    // Per-corps end-of-day writes land in chunked batches (previously one
+    // sequential write per corps). Committed before the scrimmage pass, which
+    // merge-writes onto these same docs.
+    const stateWriter = new ChunkedWriter(db);
+
+    for (let rosterIndex = 0; rosterIndex < rosterDocs.length; rosterIndex++) {
+      const rosterDoc = rosterDocs[rosterIndex];
       const uid = rosterDoc.id;
       const sRef = store.stateRef(db, uid);
-      const snapshot = await sRef.get();
-      if (!snapshot.exists || snapshot.data().seasonUid !== seasonUid) continue;
+      const snapshot = stateSnapshots[rosterIndex];
+      if (!snapshot.exists) continue;
+      if (snapshot.data().seasonUid !== seasonUid) {
+        // Not processed tonight, but the rankings pass has always read these
+        // docs too (it filters on lastTotal only) — keep that behavior.
+        stateDataByUid.set(uid, snapshot.data());
+        continue;
+      }
 
       const state = store.hydrateState(snapshot.data());
 
@@ -505,9 +534,14 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         warmupUsed: false,
       };
       state.updatedAt = new Date().toISOString();
-      await sRef.set(store.dehydrateState(state));
+      const written = store.dehydrateState(state);
+      stateWriter.set(sRef, written);
+      stateDataByUid.set(uid, written);
       processed++;
     }
+
+    // Make tonight's state durable before the scrimmage pass reads it back.
+    await stateWriter.commit();
 
     // --- 2b. Scrimmage pass (design §5.12) -----------------------------------
     // For every pair whose joint rehearsal was today: each side gets the
@@ -515,13 +549,32 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     // consumed, and the pair emits one public feed line for the recap.
     const jointFeed = [];
     const scrimmagedPairs = new Set();
+    // Batch the pair reads: one chunked getAll over every corps involved in a
+    // joint rehearsal today (fresh reads on purpose — see the merge-write note
+    // below) instead of two sequential reads per pair.
+    const jointStateByUid = new Map();
+    if (jointToday.length > 0) {
+      const jointUids = [
+        ...new Set(jointToday.flatMap((e) => [e.uid, e.partnerUid]).filter(Boolean)),
+      ];
+      try {
+        for (let i = 0; i < jointUids.length; i += GETALL_CHUNK) {
+          const chunk = jointUids.slice(i, i + GETALL_CHUNK);
+          const snaps = await db.getAll(...chunk.map((uid) => store.stateRef(db, uid)));
+          snaps.forEach((snap, j) => jointStateByUid.set(chunk[j], snap));
+        }
+      } catch (error) {
+        logger.error(`[podium] scrimmage state reads failed: ${error.message}`);
+      }
+    }
+    const scrimmageWriter = new ChunkedWriter(db);
     for (const entry of jointToday) {
       try {
-        const mySnapshot = await store.stateRef(db, entry.uid).get();
-        if (!mySnapshot.exists) continue;
+        const mySnapshot = jointStateByUid.get(entry.uid);
+        if (!mySnapshot || !mySnapshot.exists) continue;
         const myState = store.hydrateState(mySnapshot.data());
         const partnerSnapshot = entry.partnerUid
-          ? await store.stateRef(db, entry.partnerUid).get()
+          ? jointStateByUid.get(entry.partnerUid) || null
           : null;
         let scrimmage = null;
         let headToHead = myState.headToHead || null;
@@ -591,7 +644,8 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         const remainingJoints = joint
           .pendingJoints(myState)
           .filter((j) => j.day !== competitionDay);
-        await store.stateRef(db, entry.uid).set(
+        scrimmageWriter.set(
+          store.stateRef(db, entry.uid),
           {
             ...(scrimmage ? { scrimmage } : {}),
             ...(headToHead ? { headToHead } : {}),
@@ -603,6 +657,13 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       } catch (error) {
         logger.error(`[podium] scrimmage pass failed for ${entry.uid}: ${error.message}`);
       }
+    }
+    // Isolated like the per-entry writes it replaces: a scrimmage write
+    // failure never fails the night's scoring.
+    try {
+      await scrimmageWriter.commit();
+    } catch (error) {
+      logger.error(`[podium] scrimmage pass writes failed: ${error.message}`);
     }
 
     // --- 2c. Participation CC/XP pass ----------------------------------------
@@ -688,12 +749,15 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     }
 
     // --- 4. Rankings (latest total, DCI-style current score) ----------------
+    // Reuses the state the main loop computed (stateDataByUid holds exactly
+    // what each corps' doc now contains) instead of re-fetching the roster and
+    // re-reading every state doc. Safe because the only writes since — the
+    // scrimmage pass's merges — touch scrimmage/headToHead/jointRehearsals,
+    // none of the fields ranked here.
     const standings = [];
-    const rosterAgain = await store.rosterCollection(db, seasonUid).get();
-    for (const rosterDoc of rosterAgain.docs) {
-      const snapshot = await store.stateRef(db, rosterDoc.id).get();
-      if (!snapshot.exists) continue;
-      const data = snapshot.data();
+    for (const rosterDoc of rosterDocs) {
+      const data = stateDataByUid.get(rosterDoc.id);
+      if (!data) continue;
       if (data.lastTotal != null) {
         standings.push({
           uid: rosterDoc.id,
@@ -759,17 +823,22 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         logger.error(`[podium] Eastern snake publication failed: ${error.message}`);
       }
     }
+    // Rank/medal display copies land in chunked batches (previously two
+    // sequential writes per corps).
+    const rankWriter = new ChunkedWriter(db);
     for (let i = 0; i < standings.length; i++) {
       const { uid, lastTotal, medals, division } = standings[i];
       const medalWon = medalByUid[uid];
       const updatedMedals = medalWon
         ? { ...(medals || {}), [medalWon]: ((medals || {})[medalWon] || 0) + 1 }
         : medals || {};
-      await store.stateRef(db, uid).set(
+      rankWriter.set(
+        store.stateRef(db, uid),
         { seasonRank: i + 1, seasonRankOf: standings.length, medals: updatedMedals },
         { merge: true }
       );
-      await store.profileRef(db, uid).set(
+      rankWriter.set(
+        store.profileRef(db, uid),
         {
           corps: {
             podiumClass: {
@@ -784,6 +853,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         { merge: true }
       );
     }
+    await rankWriter.commit();
 
     // --- 4a2. Funnel metrics doc (Phase 8.2) ----------------------------------
     // One doc per calendar day; the Admin panel charts the last weeks.

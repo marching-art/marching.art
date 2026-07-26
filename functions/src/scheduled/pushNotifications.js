@@ -14,6 +14,7 @@ const {
   PUSH_TYPES,
 } = require("../helpers/pushService");
 const { getCurrentSeasonWeek, getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
+const { processAllInPages } = require("../helpers/firestorePaging");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
@@ -89,23 +90,22 @@ exports.showReminderPushJob = onSchedule(
       // Find directors in this season (indexed collectionGroup query — same pattern
       // scoring.js uses). This only runs when shows are actually starting soon.
       // Only corps.selectedShows is consumed, so project just `corps` instead
-      // of pulling full profile docs.
-      const profilesSnapshot = await db
-        .collectionGroup("profile")
-        .where("activeSeasonId", "==", season.seasonUid)
-        .select("corps")
-        .get();
-
+      // of pulling full profile docs, and page the scan so it never truncates
+      // at a single query's cap (see helpers/firestorePaging).
       const CORPS_CLASSES = FANTASY_CLASSES;
 
       // Collect every (director, show) reminder first, then send in parallel
       // chunks like the other push jobs — sequential awaits made this job's
       // wall clock scale with (users × selections).
       const reminderTasks = [];
-      for (const profileDoc of profilesSnapshot.docs) {
+      const profilesQuery = db
+        .collectionGroup("profile")
+        .where("activeSeasonId", "==", season.seasonUid)
+        .select("corps");
+      await processAllInPages(profilesQuery, 500, async (profileDoc) => {
         // profile/data lives under artifacts/{ns}/users/{uid}/profile/data
         const uid = profileDoc.ref.parent.parent?.id;
-        if (!uid) continue;
+        if (!uid) return;
         const profile = profileDoc.data();
 
         // Collect this director's selected shows that are starting soon (dedupe so
@@ -125,7 +125,7 @@ exports.showReminderPushJob = onSchedule(
             }
           }
         }
-      }
+      });
 
       const PARALLEL_LIMIT = 25;
       let totalSent = 0;
@@ -160,6 +160,10 @@ exports.weeklyMatchupPushJob = onSchedule(
   {
     schedule: "every monday 08:00",
     timeZone: "America/New_York",
+    // Reads every league's matchup doc and sends pushes one-by-one — the
+    // default 60s timeout would cut the job off mid-scan as leagues grow. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     memory: "256MiB",
   },
   async () => {
@@ -198,13 +202,23 @@ exports.weeklyMatchupPushJob = onSchedule(
       const allMatchups = [];
       const allUserIds = new Set();
 
-      for (const leagueDoc of leaguesSnapshot.docs) {
-        const league = leagueDoc.data();
+      // Batch the per-league matchup reads: one chunked getAll instead of a
+      // sequential get() per league.
+      const GETALL_CHUNK = 300;
+      const leagueDocs = leaguesSnapshot.docs;
+      const matchupDocs = [];
+      for (let i = 0; i < leagueDocs.length; i += GETALL_CHUNK) {
+        const chunk = leagueDocs.slice(i, i + GETALL_CHUNK);
+        matchupDocs.push(
+          ...(await db.getAll(
+            ...chunk.map((leagueDoc) => db.doc(paths.leagueMatchupWeek(leagueDoc.id, currentWeek)))
+          ))
+        );
+      }
 
-        // Get this week's matchups document
-        const matchupDoc = await db
-          .doc(paths.leagueMatchupWeek(leagueDoc.id, currentWeek))
-          .get();
+      for (let leagueIndex = 0; leagueIndex < leagueDocs.length; leagueIndex++) {
+        const league = leagueDocs[leagueIndex].data();
+        const matchupDoc = matchupDocs[leagueIndex];
 
         if (!matchupDoc.exists) continue;
 
@@ -421,14 +435,14 @@ exports.lineupLockReminderPushJob = onSchedule(
       // and isolated: Discord never blocks the push fan-out below.
       await announceLineupLock(db, season, context);
 
-      // Only corps is consumed below — project it instead of full profiles.
-      const profilesSnapshot = await db
+      // Only corps is consumed below — project it instead of full profiles,
+      // and page the scan so it never truncates at a single query's cap
+      // (see helpers/firestorePaging).
+      const profilesQuery = db
         .collectionGroup("profile")
         .where("activeSeasonId", "==", season.seasonUid)
-        .select("corps")
-        .get();
-
-      const profiles = profilesSnapshot.docs.map((doc) => ({
+        .select("corps");
+      const profiles = await processAllInPages(profilesQuery, 500, async (doc) => ({
         uid: doc.ref.parent.parent?.id,
         corps: doc.data().corps || {},
       }));

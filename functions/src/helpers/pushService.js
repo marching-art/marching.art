@@ -42,9 +42,12 @@ async function getUserPushConfig(userId) {
     // before the move still sit at profile settings.fcmToken, so fall back
     // to that until the client re-registers (every enable/refresh writes to
     // the private doc now).
+    // Field mask: only fcmToken (private doc) and settings (profile — token
+    // fallback + pushPreferences) are read; the profile doc is large.
     const [privateDoc, profileDoc] = await db.getAll(
       db.doc(paths.userPrivate(userId)),
-      db.doc(paths.userProfile(userId))
+      db.doc(paths.userProfile(userId)),
+      { fieldMask: ["fcmToken", "settings"] }
     );
 
     if (!profileDoc.exists && !privateDoc.exists) {
