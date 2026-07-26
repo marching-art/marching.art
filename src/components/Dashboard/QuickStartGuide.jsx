@@ -46,7 +46,7 @@ const QUICK_START_STEPS = [
   {
     id: 'schedule',
     title: 'Register for Shows',
-    description: `Sign up for shows each week to earn scores. You can register for up to ${REGULAR_WEEK_SHOWS} shows per week (${FINAL_WEEK_SHOWS} in Championship Week).`,
+    description: `Sign up for shows each week to earn scores. You can register for up to ${REGULAR_WEEK_SHOWS} shows per week (${FINAL_WEEK_SHOWS} in Championship Week — championship events are auto-enrolled).`,
     icon: Calendar,
     color: 'purple',
     action: { label: 'View Schedule', target: '/schedule' },

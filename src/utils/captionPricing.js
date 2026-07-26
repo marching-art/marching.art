@@ -261,15 +261,21 @@ export const getCaptionChangesAllowed = (weeksRemaining) => {
 };
 
 /**
- * Get maximum number of show registrations allowed for a given week
+ * Get maximum number of MANUAL show registrations allowed for a given week —
+ * the budget the registration UI displays and enforces.
  * @param {number} week - Week number (1-7)
  * @param {number} totalWeeks - Total weeks in the season (default 7)
- * @returns {number} Maximum shows allowed for the week
+ * @returns {number} Maximum self-selected shows for the week
  */
 export const getMaxShowsForWeek = (week, totalWeeks = 7) => {
-  // Final week allows 7 registrations (1 per day max per corps)
+  // Final week: only Days 43-44 host registrable shows — Days 45-49 are
+  // Championship Week, where every eligible corps is auto-enrolled with no
+  // manual registration (and no slot spent). Showing the nominal one-per-day
+  // cap of 7 here read as "5 more slots" that could never actually be used.
+  // The server still validates against the loose 7 (callable/lineups.js);
+  // this stricter client budget is what directors can really register.
   if (week === totalWeeks) {
-    return 7;
+    return 2;
   }
   // Regular weeks allow 4 shows
   return 4;

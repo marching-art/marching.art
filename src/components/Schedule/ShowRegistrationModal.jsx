@@ -21,7 +21,7 @@ import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/s
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
 import RunningOrder from './RunningOrder';
-import CorpsSelectionItem from './ShowRegistrationModalParts';
+import CorpsSelectionItem, { PodiumSelectionRow } from './ShowRegistrationModalParts';
 import {
   CLASS_CONFIG,
   PODIUM_EASTERN_DAYS,
@@ -29,6 +29,7 @@ import {
   podiumMaxPicksForWeek,
   podiumAutoSlotNoteForWeek,
   podiumAutoSlotSentenceForWeek,
+  sameDayShowFor,
 } from './showRegistrationConfig';
 
 // =============================================================================
@@ -236,6 +237,15 @@ const ShowRegistrationModal = ({
       const currentShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
+      const dayConflict = sameDayShowFor(currentShows, show.day, show.eventName);
+      if (dayConflict && !isAlreadyAtShow) {
+        haptic('error');
+        toast.error(
+          `This corps is already attending ${dayConflict.eventName} that day — ` +
+            'corps can attend one show per day.'
+        );
+        return;
+      }
       if (currentShows.length >= maxShows && !isAlreadyAtShow) {
         haptic('error');
         toast.error(`This corps already has ${maxShows} shows registered for week ${show.week}`);
@@ -252,6 +262,7 @@ const ShowRegistrationModal = ({
       const currentShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
+      if (sameDayShowFor(currentShows, show.day, show.eventName) && !isAlreadyAtShow) return false;
       return (
         currentShows.length < maxShows || isAlreadyAtShow || selectedCorps.includes(corpsClass)
       );
@@ -373,7 +384,10 @@ const ShowRegistrationModal = ({
         <span className="px-2 py-1 bg-interactive/10 text-interactive text-[10px] font-bold uppercase">
           Week {show.week}
         </span>
-        <span className="text-[10px] text-muted">Max {maxShows} shows per corps</span>
+        <span className="text-[10px] text-muted">
+          Max {maxShows} shows per corps
+          {show.week === 7 && ' · Championship Week auto-enrolled'}
+        </span>
       </div>
 
       {/* Two-night event notice (e.g. the Eastern Classic, days 41-42) */}
@@ -595,55 +609,18 @@ const ShowRegistrationModal = ({
 
             {/* Podium corps — day-based tour pick, separate rules from lineups */}
             {!podiumLoading && podiumInfo && (
-              <button
-                onClick={togglePodium}
-                disabled={podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast}
-                className={`
-                  flex items-center gap-3 p-4 w-full text-left transition-colors min-h-[60px]
-                  ${
-                    podiumAttend
-                      ? 'bg-brand/5 border-l-2 border-l-brand'
-                      : 'hover:bg-white/5 active:bg-white/10'
-                  }
-                  ${podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
-                `}
-              >
-                <div
-                  className={`
-                  w-5 h-5 border-2 flex items-center justify-center flex-shrink-0
-                  ${podiumAttend || podiumIsMyAutoDay ? 'bg-brand border-brand' : 'border-line-strong'}
-                `}
-                >
-                  {(podiumAttend || podiumIsMyAutoDay) && (
-                    <Check className="w-3.5 h-3.5 text-black" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-white text-sm truncate">
-                      {podiumInfo.corpsName}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase text-brand">Podium</span>
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-2">
-                    <span className={`text-[11px] ${podiumAtMax ? 'text-red-400' : 'text-muted'}`}>
-                      {podiumIsMyAutoDay
-                        ? 'Auto-attended — major / championship'
-                        : podiumIsEasternOffNight
-                          ? 'Eastern Classic — not your assigned night'
-                          : podiumIsPast
-                            ? 'This day has passed'
-                            : `${podiumPicksThisWeek}/${podiumMaxPicks} tour picks this week` +
-                              (podiumAutoSlotNote ? ` · ${podiumAutoSlotNote}` : '')}
-                    </span>
-                    {podiumAtMax && (
-                      <span className="text-[10px] text-red-400 font-bold px-1.5 py-0.5 bg-red-400/10">
-                        MAX
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
+              <PodiumSelectionRow
+                info={podiumInfo}
+                attend={podiumAttend}
+                atMax={podiumAtMax}
+                isMyAutoDay={podiumIsMyAutoDay}
+                isEasternOffNight={podiumIsEasternOffNight}
+                isPast={podiumIsPast}
+                picksThisWeek={podiumPicksThisWeek}
+                maxPicks={podiumMaxPicks}
+                autoSlotNote={podiumAutoSlotNote}
+                onToggle={togglePodium}
+              />
             )}
 
             {/* Fantasy corps (lineup-based registration) */}
@@ -676,6 +653,12 @@ const ShowRegistrationModal = ({
                   <span className="text-interactive font-bold">{maxShows} shows per week</span>.
                   Scores from attended shows contribute to your season standings.
                 </p>
+                {show.week === 7 && (
+                  <p className="mt-1">
+                    Championship events (Days 45-49) are auto-enrolled by class — they don&apos;t
+                    use these slots.
+                  </p>
+                )}
                 {registrationClose && (
                   <p className="mt-1 flex items-center gap-1">
                     <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />

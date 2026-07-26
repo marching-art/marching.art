@@ -64,3 +64,17 @@ export const podiumAutoSlotSentenceForWeek = (week) =>
     : week >= 4
       ? " The week's major is auto-attended and fills the fourth slot."
       : '';
+
+// Fantasy corps attend one show per day (server: resolveShowsAgainstSchedule
+// in callable/lineups.js). Surface the conflict at selection time instead of
+// letting the save round-trip fail.
+/**
+ * The DIFFERENT show a corps already has registered on `day`, or undefined.
+ * @param {Array<{day?: number, eventName: string}>} corpsShows - The corps' stored week selections.
+ * @param {number} day - The open show's competition day.
+ * @param {string} eventName - The open show's event name (excluded from the match).
+ */
+export const sameDayShowFor = (corpsShows, day, eventName) =>
+  Number.isInteger(day)
+    ? corpsShows.find((s) => s.day === day && s.eventName !== eventName)
+    : undefined;
