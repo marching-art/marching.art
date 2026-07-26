@@ -218,7 +218,7 @@ export const useTickerData = ({ enabled = true }: { enabled?: boolean } = {}) =>
   const displayDay = useMemo<number | null>(() => {
     if (allRecaps.length === 0) return null;
 
-    // Guard: null on Day 1 (or Day 2 before 2 AM ET) — no processed scores yet
+    // Guard: null on Day 1 — no processed scores yet
     const effectiveDay = getEffectiveDay(currentDay);
     if (!effectiveDay || effectiveDay < 1) return null;
 

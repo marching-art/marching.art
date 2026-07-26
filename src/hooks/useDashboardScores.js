@@ -26,8 +26,8 @@ const SCORES_STALE_TIME = 5 * 60 * 1000;
 export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   const hasLineup = !!lineup && Object.keys(lineup).length > 0;
 
-  // Effective day accounting for 2 AM ET score processing. Guard: if null or
-  // < 1 no scores should be visible (Day 1, or Day 2 before 2 AM).
+  // Effective day accounting for the 2 AM ET score-processing rollover.
+  // Guard: if null or < 1 no scores should be visible (Day 1).
   const effectiveDay = currentDay ? getEffectiveDay(currentDay) : null;
   const shouldFetch = hasLineup && !!effectiveDay && effectiveDay >= 1;
 

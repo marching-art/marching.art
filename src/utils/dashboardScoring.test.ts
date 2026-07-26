@@ -21,31 +21,19 @@ function event(
 }
 
 describe('getEffectiveDay', () => {
-  // The 2 AM boundary is in Eastern Time (score processing runs at 2 AM ET),
-  // so tests pin explicit UTC instants: January is EST (UTC-5).
-  const at3amET = new Date('2026-01-01T08:00:00Z'); // 3:00 AM EST
-  const at1amET = new Date('2026-01-01T06:00:00Z'); // 1:00 AM EST
-
-  it('returns currentDay - 1 at/after 2 AM ET', () => {
-    expect(getEffectiveDay(10, at3amET)).toBe(9);
-  });
-
-  it('returns currentDay - 2 before 2 AM ET', () => {
-    expect(getEffectiveDay(10, at1amET)).toBe(8);
-  });
-
-  it('uses the Eastern hour, not the browser-local hour', () => {
-    // 1:00 AM ET is 6:00 AM UTC — a UTC (or any non-ET) clock would read
-    // this as past the boundary and wrongly expose an extra day of scores.
-    expect(getEffectiveDay(10, at1amET)).toBe(8);
-    // Midnight ET (guards the ICU builds that format midnight as "24").
-    const midnightET = new Date('2026-01-01T05:00:00Z');
-    expect(getEffectiveDay(10, midnightET)).toBe(8);
+  // currentDay itself rolls at the 2 AM ET score-processing reset
+  // (getSeasonProgress), so no wall-clock adjustment belongs here: the most
+  // recent visible day is always currentDay - 1. Subtracting an extra day
+  // before 2 AM (the old behavior) double-counted the reset and hid an
+  // already-scored day between midnight and 2 AM ET.
+  it('returns currentDay - 1', () => {
+    expect(getEffectiveDay(10)).toBe(9);
+    expect(getEffectiveDay(2)).toBe(1);
   });
 
   it('returns null when no scores are available yet', () => {
-    expect(getEffectiveDay(2, at1amET)).toBeNull(); // 2 - 2 = 0 -> null
-    expect(getEffectiveDay(1, at3amET)).toBeNull(); // 1 - 1 = 0 -> null
+    expect(getEffectiveDay(1)).toBeNull(); // 1 - 1 = 0 -> null
+    expect(getEffectiveDay(0)).toBeNull();
   });
 });
 

@@ -10,12 +10,12 @@
 // per-year historical docs share cache entries with the Dashboard lineup table
 // (same query keys), so landing/news pages reuse data other surfaces fetched.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { getCorpsValues, getHistoricalScoresForYear } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
-import { getEasternHour, getEffectiveDay } from '../utils/dashboardScoring';
+import { getEffectiveDay } from '../utils/dashboardScoring';
 
 const SCORES_STALE_TIME = 5 * 60 * 1000;
 
@@ -47,35 +47,13 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   const liveSeasonYear = seasonData?.seasonYear != null ? String(seasonData.seasonYear) : null;
   const dataDocId = seasonData?.dataDocId;
 
-  // Track whether we're past the 2 AM ET score processing time
-  // This state updates every minute to ensure we react to the 2 AM boundary
-  const [isPastProcessingTime, setIsPastProcessingTime] = useState(() => getEasternHour() >= 2);
-
-  // Set up interval to check if we've crossed the 2 AM boundary
-  useEffect(() => {
-    const checkProcessingTime = () => {
-      const nowPastProcessingTime = getEasternHour() >= 2;
-      setIsPastProcessingTime((prev) => {
-        // Only update if the value actually changed to avoid unnecessary re-renders
-        return prev !== nowPastProcessingTime ? nowPastProcessingTime : prev;
-      });
-    };
-
-    // Check every minute
-    const interval = setInterval(checkProcessingTime, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Max day of scores to display, accounting for the 2 AM ET processing window:
-  // scores for day N are processed at 2 AM ET on day N+1, so before 2 AM only
-  // day N-2 is available and after 2 AM day N-1 is. Recalculates when the day
-  // changes OR when we cross the 2 AM boundary.
+  // Max day of scores to display. currentDay rolls at the same 2 AM ET reset
+  // that processes scores, so the most recent visible day is simply
+  // currentDay - 1 (see getEffectiveDay) — no separate wall-clock tracking.
   const maxScoreDay = useMemo(() => {
     if (!currentDay) return null;
     return getEffectiveDay(currentDay);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentDay, isPastProcessingTime]);
+  }, [currentDay]);
 
   // Fantasy pool corps (dci-data doc). Needed in both modes: it defines the
   // off-season ranking list, and in live season it filters the scraped corps
@@ -152,7 +130,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   // Process scores for landing page display
   const liveScores = useMemo(() => {
     // Guard: If no data or maxScoreDay is null/0, no scores should be visible
-    // maxScoreDay is null on Day 1 and Day 2 before 2 AM (no processed scores yet)
+    // maxScoreDay is null on Day 1 (no processed scores yet)
     if (
       corpsValues.length === 0 ||
       Object.keys(historicalData).length === 0 ||
@@ -176,9 +154,8 @@ export const useLandingScores = ({ enabled = true } = {}) => {
         // This is a hard cap to prevent showing today's competition results before they happen
         if (event.offSeasonDay >= currentDay) return;
 
-        // Also respect the 2 AM processing window:
-        // Before 2 AM, yesterday's scores haven't been processed yet, so show up to day-2
-        // After 2 AM, yesterday's scores were just processed, so show up to day-1
+        // Also respect the reveal boundary: only days up to currentDay - 1
+        // (revealed at the 2 AM ET rollover) are visible.
         if (event.offSeasonDay > maxScoreDay) return;
 
         const scoreData = event.scores?.find((s) => s.corps === corps.corpsName);
