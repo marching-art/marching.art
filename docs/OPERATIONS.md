@@ -80,6 +80,12 @@ on top of corrupted state.
 
 ## Functions deploy rollback
 
+Functions deploys run automatically: a push to `main` touching
+`functions/**`, `functions-scraper/**`, or the Firestore/Storage rules
+triggers the full deploy path in `.github/workflows/deploy-functions.yml`
+(tests gate the deploy); `workflow_dispatch` remains available for manual,
+single-function, scraper, and rules-only deploys.
+
 Every functions deploy (full or single-function) pushes an annotated
 `functions-deploy/*` git tag pointing at the exact deployed ref (see
 `.github/workflows/deploy-functions.yml`). To roll back a bad deploy:
@@ -98,10 +104,16 @@ rolled back first and diagnosed second; the scoring watchdog (4:30 AM ET,
 
 ## Hosting rollback
 
+Frontend deploys are automatic on both hosts: Vercel deploys `main` via its
+GitHub integration, and `.github/workflows/deploy-hosting.yml` builds and
+deploys to Firebase Hosting (live channel) on every push to `main` touching
+frontend paths (`src/**`, `public/**`, `index.html`, build/hosting config).
+
 - **Vercel:** promote the previous deployment from the Vercel dashboard
   (Deployments → ⋯ → Promote to Production).
 - **Firebase Hosting:** `firebase hosting:rollback` (interactive channel
-  picker), or redeploy the prior ref.
+  picker), or redeploy the prior ref (re-run **Deploy Hosting** from that
+  ref via workflow_dispatch).
 
 Frontend rollbacks are low-risk: the service worker's build-stamped
 versioning (vite.config.js `closeBundle` plugin) busts caches in both

@@ -79,9 +79,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npx tsc --noEmit
-
       # The functions codebase has its own checkJs pass (functions/tsconfig.json)
       # — its first run caught two production crashes (client-SDK APIs
       # destructured from firebase-admin resolving to undefined). Functions
@@ -90,8 +87,10 @@ jobs:
       - name: Install function dependencies
         run: cd functions && npm ci
 
-      - name: Type check functions
-        run: npx tsc -p functions
+      # Runs both passes (app tsc --noEmit + functions tsc -p functions) via
+      # the same script developers run locally.
+      - name: Type check (app + functions)
+        run: npm run typecheck
 
   lint:
     name: Lint

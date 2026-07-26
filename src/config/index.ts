@@ -13,10 +13,13 @@
 import { CAPTION_IDS, CAPTION_NAMES } from '../data/captions';
 
 // =============================================================================
-// PRODUCTION ENVIRONMENT VALIDATION
+// ENVIRONMENT VALIDATION
 // =============================================================================
+// Production builds fail fast on a missing Firebase config; dev builds log a
+// clear error instead (no throw, so the dev server still boots) — otherwise a
+// blank .env.local surfaces only as cryptic Firebase "invalid-api-key" errors.
 
-if (import.meta.env.MODE === 'production') {
+{
   const requiredEnvVars = [
     'VITE_FIREBASE_API_KEY',
     'VITE_FIREBASE_AUTH_DOMAIN',
@@ -29,8 +32,15 @@ if (import.meta.env.MODE === 'production') {
   const missingVars = requiredEnvVars.filter((varName) => !import.meta.env[varName]);
 
   if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required environment variables in production: ${missingVars.join(', ')}`
+    if (import.meta.env.MODE === 'production') {
+      throw new Error(
+        `Missing required environment variables in production: ${missingVars.join(', ')}`
+      );
+    }
+    console.error(
+      `[config] Missing required Firebase environment variables: ${missingVars.join(', ')}.\n` +
+        'Firebase will not initialize correctly. Copy .env.local.example to ' +
+        '.env.local and fill in your Firebase web-app config.'
     );
   }
 }

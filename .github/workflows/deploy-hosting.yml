@@ -1,0 +1,94 @@
+name: Deploy Hosting
+
+# Auto-deploys the frontend to Firebase Hosting (project marching-art, from
+# .firebaserc) on every push to main that touches frontend code or hosting
+# config. Vercel deploys separately from its own GitHub integration; this
+# workflow keeps the Firebase Hosting copy of the site equally fresh.
+#
+# REQUIRED SETUP (Settings → Secrets and variables → Actions):
+#   - FIREBASE_SERVICE_ACCOUNT (secret): service-account JSON with the
+#     "Firebase Hosting Admin" role — the same secret deploy-functions.yml
+#     uses. If it is missing the deploy is skipped gracefully (a warning, not
+#     a red run) so forks/preview clones don't fail.
+#   - VITE_FIREBASE_* (secrets): the Firebase web-app config baked into the
+#     bundle at build time (see .env.local.example for the full list). These
+#     values are public by design, but shipping a bundle without them yields a
+#     broken app, so the build fails loudly if VITE_FIREBASE_API_KEY is unset.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.js'
+      - 'package.json'
+      - 'firebase.json'
+      - 'vercel.json'
+  # Manual re-deploy of the current main (e.g. after fixing secrets).
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hosting-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      # Secrets cannot be referenced in a job-level `if`, so gate via a step
+      # output: no FIREBASE_SERVICE_ACCOUNT → skip the deploy without failing.
+      - name: Check deploy credentials
+        id: creds
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT secret is not set — skipping the Firebase Hosting deploy. See the header of this workflow for setup."
+            echo "deployable=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$VITE_FIREBASE_API_KEY" ]; then
+            echo "::error::VITE_FIREBASE_API_KEY secret is not set — a bundle built without the Firebase web config is broken. Add the VITE_FIREBASE_* secrets (see .env.local.example)."
+            exit 1
+          fi
+          echo "deployable=true" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        if: steps.creds.outputs.deployable == 'true'
+        run: npm ci
+
+      - name: Build
+        if: steps.creds.outputs.deployable == 'true'
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_APPCHECK_RECAPTCHA_SITE_KEY }}
+        run: npm run build
+
+      # Deploys the build/ directory (firebase.json → hosting.public) to the
+      # live channel of the marching-art project.
+      - name: Deploy to Firebase Hosting
+        if: steps.creds.outputs.deployable == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: marching-art
