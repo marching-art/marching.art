@@ -76,6 +76,28 @@ function clampLimit(value, { fallback = 50, max = 100, min = 1 } = {}) {
   return Math.min(Math.max(Math.floor(n), min), max);
 }
 
+// Firestore doc-id shape for client-supplied ids (uids, comment ids, league
+// ids, season ids, ...). Anything outside this set could mint arbitrary doc
+// ids, inject path segments ("a/b"), or address reserved names ("__foo__").
+const DOC_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
+
+/**
+ * Validate a client-supplied Firestore document id before it is interpolated
+ * into a document path. Rejects non-strings, empty/oversized values, and any
+ * character outside [A-Za-z0-9_-] (notably "/" and ".").
+ *
+ * @param {unknown} value - Raw id from request data.
+ * @param {string} [label="id"] - Field name used in the error message.
+ * @returns {string} The validated id.
+ * @throws {HttpsError} invalid-argument when the id is malformed.
+ */
+function assertDocId(value, label = "id") {
+  if (typeof value !== "string" || !DOC_ID_RE.test(value)) {
+    throw new HttpsError("invalid-argument", `Invalid ${label}.`);
+  }
+  return value;
+}
+
 /**
  * Throttle a caller's writes through a windowed per-uid budget, throwing
  * resource-exhausted when it is spent. This is abuse/billing protection for
@@ -140,6 +162,7 @@ module.exports = {
   assertAdmin,
   hasAdminClaim,
   clampLimit,
+  assertDocId,
   assertWriteBudget,
   assertAuthWithBudget,
 };
