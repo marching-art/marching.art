@@ -36,14 +36,31 @@ function finalScoresToRecapUrl(finalScoresUrl) {
 }
 
 /**
- * Extract all <loc> values from a sitemap XML string.
- * @param {string} xml
+ * Extract all URLs from a Yoast sitemap body, whichever form it arrives in.
+ *
+ * dciFetch routes through a JS-rendering proxy (Cloudflare bypass), and Yoast
+ * sitemaps declare an `<?xml-stylesheet ... main-sitemap.xsl?>`. Depending on
+ * whether the rendering browser can load that stylesheet, the returned body is
+ * either the raw XML (with `<loc>` entries, possibly wrapped in the browser's
+ * XML-viewer markup) or the XSLT-transformed HTML table, where each URL
+ * survives only as an anchor's href. Parse `<loc>` first; when a body has
+ * none, fall back to dci.org anchor hrefs so a stylesheet-rendered sitemap
+ * still discovers every URL (the Yoast credit link points off-site and is
+ * filtered out by the host check).
+ *
+ * @param {string} body - Sitemap response body (XML or XSL-rendered HTML).
  * @returns {string[]}
  */
-function extractSitemapLocs(xml) {
+function extractSitemapLocs(body) {
   const locs = [];
-  for (const match of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)) {
+  for (const match of body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)) {
     locs.push(match[1]);
+  }
+  if (locs.length > 0) return locs;
+
+  for (const match of body.matchAll(/<a\s[^>]*href=["']([^"']+)["']/gi)) {
+    const href = match[1];
+    if (/^https?:\/\/(www\.)?dci\.org\//i.test(href)) locs.push(href);
   }
   return locs;
 }
@@ -393,6 +410,7 @@ const discoverAndQueueEventUrls = onCall({
 module.exports = {
   scrapeDciScoresLogic,
   finalScoresToRecapUrl,
+  extractSitemapLocs,
   discoverAllRecapUrls,
   discoverAllEventUrls,
   discoverAndQueueUrls,
