@@ -27,6 +27,8 @@ import {
   PODIUM_EASTERN_DAYS,
   PODIUM_CHAMPIONSHIP_WEEK_DAYS,
   podiumMaxPicksForWeek,
+  podiumAutoSlotNoteForWeek,
+  podiumAutoSlotSentenceForWeek,
 } from './showRegistrationConfig';
 
 // =============================================================================
@@ -170,15 +172,27 @@ const ShowRegistrationModal = ({
     [podiumInfo, show.week, podiumDay]
   );
   const podiumPicksThisWeek = podiumOtherWeekPicks.length + (podiumAttend ? 1 : 0);
+  const podiumAutoSlotNote = podiumAutoSlotNoteForWeek(show.week);
+  // Same condition togglePodium rejects on: the pick budget is spent and this
+  // show isn't one of the picks. Disabled rows (auto-day / off-night / past)
+  // are excluded — they explain themselves and never reach the toggle.
+  const podiumAtMax =
+    Boolean(podiumInfo) &&
+    !podiumIsMyAutoDay &&
+    !podiumIsEasternOffNight &&
+    !podiumIsPast &&
+    !podiumAttend &&
+    podiumOtherWeekPicks.length >= podiumMaxPicks;
   const podiumChanged = Boolean(podiumInfo) && podiumAttend !== podiumInitial;
 
   const togglePodium = () => {
     if (!podiumInfo || podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast) return;
     haptic('light');
-    if (!podiumAttend && podiumOtherWeekPicks.length >= podiumMaxPicks) {
+    if (podiumAtMax) {
       haptic('error');
       toast.error(
-        `Your Podium corps already has ${podiumOtherWeekPicks.length} picks in week ${show.week}.`
+        `Your Podium corps already has ${podiumOtherWeekPicks.length} tour picks in week ` +
+          `${show.week}.${podiumAutoSlotSentenceForWeek(show.week)}`
       );
       return;
     }
@@ -611,14 +625,22 @@ const ShowRegistrationModal = ({
                     </span>
                     <span className="text-[10px] font-bold uppercase text-brand">Podium</span>
                   </div>
-                  <div className="mt-0.5 text-[11px] text-muted">
-                    {podiumIsMyAutoDay
-                      ? 'Auto-attended — major / championship'
-                      : podiumIsEasternOffNight
-                        ? 'Eastern Classic — not your assigned night'
-                        : podiumIsPast
-                          ? 'This day has passed'
-                          : `${podiumPicksThisWeek}/${podiumMaxPicks} tour picks this week`}
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <span className={`text-[11px] ${podiumAtMax ? 'text-red-400' : 'text-muted'}`}>
+                      {podiumIsMyAutoDay
+                        ? 'Auto-attended — major / championship'
+                        : podiumIsEasternOffNight
+                          ? 'Eastern Classic — not your assigned night'
+                          : podiumIsPast
+                            ? 'This day has passed'
+                            : `${podiumPicksThisWeek}/${podiumMaxPicks} tour picks this week` +
+                              (podiumAutoSlotNote ? ` · ${podiumAutoSlotNote}` : '')}
+                    </span>
+                    {podiumAtMax && (
+                      <span className="text-[10px] text-red-400 font-bold px-1.5 py-0.5 bg-red-400/10">
+                        MAX
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>

@@ -48,3 +48,19 @@ export const PODIUM_CHAMPIONSHIP_WEEK_DAYS = [45, 46, 47, 48, 49];
 // auto-attended Championship Week. Weeks 4-6 spend one slot on a major.
 /** @param {number} week */
 export const podiumMaxPicksForWeek = (week) => (week === 7 ? 2 : week >= 4 ? 3 : 4);
+
+// Why the Podium pick budget is under the fantasy 4: weeks 4-6 auto-attend
+// the week's major; week 7 auto-attends Championship Week (days 45-49).
+// Surfaced wherever the sub-4 cap shows, so "3/3" under a "Max 4 shows per
+// corps" header reads as design, not a bug.
+/** Short row-subtitle note (or null for weeks with the full budget). @param {number} week */
+export const podiumAutoSlotNoteForWeek = (week) =>
+  week === 7 ? 'Championship Week auto-attended' : week >= 4 ? 'major auto-attended' : null;
+
+/** Full-sentence version for the at-max error toast (or empty). @param {number} week */
+export const podiumAutoSlotSentenceForWeek = (week) =>
+  week === 7
+    ? ' Days 45-49 are the auto-attended Championship Week.'
+    : week >= 4
+      ? " The week's major is auto-attended and fills the fourth slot."
+      : '';
