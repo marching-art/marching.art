@@ -750,9 +750,7 @@ await check(
 await freshNotificationSeed();
 await check(
   'owner cannot piggyback content changes onto a mark-read update',
-  assertFails(
-    updateDoc(doc(authed(), notificationPath), { read: true, message: 'forged' })
-  )
+  assertFails(updateDoc(doc(authed(), notificationPath), { read: true, message: 'forged' }))
 );
 
 await freshNotificationSeed();

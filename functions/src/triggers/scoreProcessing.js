@@ -16,6 +16,10 @@ exports.processDciScores = onMessagePublished({
   // double-apply. Without this a transient Firestore error acked the message
   // and the scraped scores were silently lost.
   retry: true,
+  // Cap fan-out to match processDciRecap upstream: every message transacts on
+  // the same historical_scores/{year} document, so unbounded instances just
+  // churn transaction aborts and Pub/Sub redeliveries during deep scrapes.
+  maxInstances: 3,
 }, async (message) => {
   logger.info("Received new historical scores to process.");
 

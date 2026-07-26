@@ -53,39 +53,39 @@ opportunities cluster into five themes:
 
 ### Scorecard
 
-| Area | Grade | One-line verdict |
-| --- | --- | --- |
-| Security (rules, auth, economy) | **A−** | Defense-in-depth, rules-tested, server-authoritative; a handful of medium abuse/cost findings |
-| Backend correctness | **A−** | Pervasive transactions + idempotency architecture; one real race (corps names) |
-| Pipeline reliability | **B+** | Top-decile design (lease, canary, watchdog); two high-severity data-integrity gaps |
-| Testing & CI | **A− / B+** | Backend excellent (70/80/85% floors); frontend honest but thin (~16%) |
-| Frontend architecture | **B+** | Great performance/code-splitting; data-fetching layer needs consolidation |
-| Cost & performance | **B** | Strong scaling helpers exist but adoption is uneven; no spend ceilings |
-| Deployment | **B−** | Manual functions deploys, dual-host drift risk |
-| SEO / growth surface | **B** | Best-in-class SPA plumbing, but the valuable content is auth-walled |
-| Accessibility | **B** | Strong foundations; known CTA contrast failure carved out of the a11y gate |
+| Area                            | Grade       | One-line verdict                                                                              |
+| ------------------------------- | ----------- | --------------------------------------------------------------------------------------------- |
+| Security (rules, auth, economy) | **A−**      | Defense-in-depth, rules-tested, server-authoritative; a handful of medium abuse/cost findings |
+| Backend correctness             | **A−**      | Pervasive transactions + idempotency architecture; one real race (corps names)                |
+| Pipeline reliability            | **B+**      | Top-decile design (lease, canary, watchdog); two high-severity data-integrity gaps            |
+| Testing & CI                    | **A− / B+** | Backend excellent (70/80/85% floors); frontend honest but thin (~16%)                         |
+| Frontend architecture           | **B+**      | Great performance/code-splitting; data-fetching layer needs consolidation                     |
+| Cost & performance              | **B**       | Strong scaling helpers exist but adoption is uneven; no spend ceilings                        |
+| Deployment                      | **B−**      | Manual functions deploys, dual-host drift risk                                                |
+| SEO / growth surface            | **B**       | Best-in-class SPA plumbing, but the valuable content is auth-walled                           |
+| Accessibility                   | **B**       | Strong foundations; known CTA contrast failure carved out of the a11y gate                    |
 
 ---
 
 ## Top priorities (ranked by impact ÷ effort)
 
-| # | Item | Impact | Effort |
-| --- | --- | --- | --- |
-| 1 | **Public, shareable director/corps profile pages with SSR OG cards** — biggest available SEO + viral-loop win; the SSR machinery already exists | High (growth) | Medium |
-| 2 | **Close the unthrottled-spend paths:** rate-budget `generateCorpsAvatar` (AI image gen, currently unlimited per signed-in user); clamp `getRecentNews` limit; allowlist/sanitize the news-feed cache key (unauthenticated callers can mint unbounded cache docs) | High (cost/abuse) | Small |
-| 3 | **Set `maxInstances`** globally + per-function (only 2 of ~171 functions have one) | High (cost ceiling) | Small |
-| 4 | **Harden the scrape-date join:** fail hard on unparseable recap dates; validate the parsed recap date against the listing's `dateKey` (a silent one-day mis-date currently degrades scoring to regression invisibly) | High (data integrity) | Small |
-| 5 | **Shard `historical_scores/{year}`** out of its single unbounded-array document before the 1 MiB cap fails a merge mid-season at 1:30 AM | High (time bomb) | Medium |
-| 6 | **Upgrade `@getbrevo/brevo` 2.5 → 6.x** in `functions/` — clears both critical npm advisories (`request` SSRF, `form-data`); then `npm audit fix` for `ws` | High (hygiene) | Small |
-| 7 | **Fix the `interactive` azure contrast token** (3.67:1 white-on-blue on every primary CTA; AA needs 4.5:1) and delete the axe carve-out — the remediation plan is already written in `e2e/a11y.spec.ts:11-17` | High (a11y) | Small–Med |
-| 8 | **Lazy-load `sharp`** in `shareCards.js` — a native module needed by 2 functions, currently loaded on every cold start of all ~150 | High (latency) | Tiny |
-| 9 | **Finish the App Check rollout** (site key in prod → watch metrics → flip the literal) — reduces the blast radius of every abuse finding at once | Med-High | Small |
-| 10 | **Automate deploys:** auto-dispatch the functions deploy on `main` merges touching `functions/`; add a Firebase Hosting deploy step (or retire one host); add the test gate to `deploy-single-function.sh` | Med-High | Medium |
-| 11 | **Promote Leagues into primary nav** (BottomNav + GameShell); surface Shop/Records; link or delete the orphaned `/retired-corps` and `/corps-history` pages | Med-High (retention) | Small |
-| 12 | **Fix job configs:** `weeklyMatchupPushJob` and `updateLeagueRivalries` run full-population scans at the default 60s timeout; `sweepDuplicateCorps` scans every profile ever into 256 MiB; `migrateUserProfiles`/`fixProfileFields` are bare `onCall` | Med-High (reliability) | Small |
-| 13 | **Fix the corps-name reservation race** (`batch.create()` or transaction in `registerCorps.js`) | Medium | Small |
-| 14 | **Decompose `LeagueDetailView.jsx`** onto React Query hooks; begin migrating the 26 manual-fetch components; de-`@ts-nocheck` the Leagues tree in the same pass | Medium | Med-Large |
-| 15 | **In-app notification inbox** (bell + unread badge) reusing the events the email jobs already compute — retention shouldn't depend on push-permission grants | Medium (retention) | Medium |
+| #   | Item                                                                                                                                                                                                                                                             | Impact                 | Effort    |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | --------- |
+| 1   | **Public, shareable director/corps profile pages with SSR OG cards** — biggest available SEO + viral-loop win; the SSR machinery already exists                                                                                                                  | High (growth)          | Medium    |
+| 2   | **Close the unthrottled-spend paths:** rate-budget `generateCorpsAvatar` (AI image gen, currently unlimited per signed-in user); clamp `getRecentNews` limit; allowlist/sanitize the news-feed cache key (unauthenticated callers can mint unbounded cache docs) | High (cost/abuse)      | Small     |
+| 3   | **Set `maxInstances`** globally + per-function (only 2 of ~171 functions have one)                                                                                                                                                                               | High (cost ceiling)    | Small     |
+| 4   | **Harden the scrape-date join:** fail hard on unparseable recap dates; validate the parsed recap date against the listing's `dateKey` (a silent one-day mis-date currently degrades scoring to regression invisibly)                                             | High (data integrity)  | Small     |
+| 5   | **Shard `historical_scores/{year}`** out of its single unbounded-array document before the 1 MiB cap fails a merge mid-season at 1:30 AM                                                                                                                         | High (time bomb)       | Medium    |
+| 6   | **Upgrade `@getbrevo/brevo` 2.5 → 6.x** in `functions/` — clears both critical npm advisories (`request` SSRF, `form-data`); then `npm audit fix` for `ws`                                                                                                       | High (hygiene)         | Small     |
+| 7   | **Fix the `interactive` azure contrast token** (3.67:1 white-on-blue on every primary CTA; AA needs 4.5:1) and delete the axe carve-out — the remediation plan is already written in `e2e/a11y.spec.ts:11-17`                                                    | High (a11y)            | Small–Med |
+| 8   | **Lazy-load `sharp`** in `shareCards.js` — a native module needed by 2 functions, currently loaded on every cold start of all ~150                                                                                                                               | High (latency)         | Tiny      |
+| 9   | **Finish the App Check rollout** (site key in prod → watch metrics → flip the literal) — reduces the blast radius of every abuse finding at once                                                                                                                 | Med-High               | Small     |
+| 10  | **Automate deploys:** auto-dispatch the functions deploy on `main` merges touching `functions/`; add a Firebase Hosting deploy step (or retire one host); add the test gate to `deploy-single-function.sh`                                                       | Med-High               | Medium    |
+| 11  | **Promote Leagues into primary nav** (BottomNav + GameShell); surface Shop/Records; link or delete the orphaned `/retired-corps` and `/corps-history` pages                                                                                                      | Med-High (retention)   | Small     |
+| 12  | **Fix job configs:** `weeklyMatchupPushJob` and `updateLeagueRivalries` run full-population scans at the default 60s timeout; `sweepDuplicateCorps` scans every profile ever into 256 MiB; `migrateUserProfiles`/`fixProfileFields` are bare `onCall`            | Med-High (reliability) | Small     |
+| 13  | **Fix the corps-name reservation race** (`batch.create()` or transaction in `registerCorps.js`)                                                                                                                                                                  | Medium                 | Small     |
+| 14  | **Decompose `LeagueDetailView.jsx`** onto React Query hooks; begin migrating the 26 manual-fetch components; de-`@ts-nocheck` the Leagues tree in the same pass                                                                                                  | Medium                 | Med-Large |
+| 15  | **In-app notification inbox** (bell + unread badge) reusing the events the email jobs already compute — retention shouldn't depend on push-permission grants                                                                                                     | Medium (retention)     | Medium    |
 
 ---
 
@@ -211,8 +211,8 @@ the most carefully engineered part of the codebase — no DST bug found.
 - **Med** — the 1:30 AM scrape swallows all errors (a total failure writes no
   `scrape_runs` doc and exits green; detection deferred 3 hours); Discord/
   podium leases share `scoring_runs`, so a failed webhook pages the operator
-  with a *critical scoring* alert two nights running (add a `kind` field);
-  `scrapeAttempts` increments *after* the scrape, so a timing-out scrape
+  with a _critical scoring_ alert two nights running (add a `kind` field);
+  `scrapeAttempts` increments _after_ the scrape, so a timing-out scrape
   burns unlimited proxy credits (increment before); `dciFetch`'s worst-case
   retry budget (~294s/URL) exceeds the canary's 120s timeout — a slow-proxy
   afternoon kills the canary before its alerting block runs; `processDciScores`
