@@ -16,7 +16,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
 const { buildMatchupResultPushes } = require("../helpers/matchupResults");
@@ -677,6 +677,10 @@ exports.triggerMatchupGeneration = onCall(
     }
 
     const db = getDb();
+
+    // Abuse throttle (commissioner-only mutation, but still per-uid capped
+    // so a scripted caller can't hammer matchup regeneration).
+    await assertWriteBudget(db, uid, "leagueAdmin", { max: 10, windowMs: 60 * 60 * 1000 });
 
     // Check if user is commissioner
     const leagueRef = db.doc(paths.league(leagueId));

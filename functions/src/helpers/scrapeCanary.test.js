@@ -101,4 +101,21 @@ describe("auditRecapPage", () => {
     // "General - Effect 1" normalizes to "General Effect 1" — still recognized.
     assert.equal(result.recognizedCaptions, 8);
   });
+
+  test("a missing date/location block is a hard problem, not a warning", () => {
+    // The scraper refuses to publish a recap without a parseable event date
+    // (the date is the archive key), so this drift fails every recap tonight.
+    const drifted = GOOD_RECAP.replace('class="score-date-location"', 'class="score-block"');
+    const result = auditRecapPage(drifted);
+    assert.ok(result.problems.some((p) => p.includes("date/location block missing")));
+    assert.ok(!result.warnings.some((w) => w.includes("date/location")));
+  });
+});
+
+describe("scheduled canary fetch budget", () => {
+  test("the canary caps dciFetch retries below the default so 3 fetches fit its timeout", () => {
+    const { CANARY_FETCH_OPTS } = require("../scheduled/scrapeCanary");
+    assert.ok(CANARY_FETCH_OPTS.maxRetries >= 1);
+    assert.ok(CANARY_FETCH_OPTS.maxRetries < 4); // dciFetch's default
+  });
 });
