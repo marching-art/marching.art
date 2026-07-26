@@ -105,46 +105,31 @@ export function getNextSelectedShow(
 }
 
 /**
- * Get the current hour (0-23) in Eastern Time.
- *
- * Score processing runs at 2 AM ET regardless of the user's timezone, so all
- * "has day N been processed yet" checks must read the ET clock, never the
- * browser's local hour.
- *
- * @param now Injectable clock for testing; defaults to the real time.
- */
-export function getEasternHour(now: Date = new Date()): number {
-  const hour = parseInt(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/New_York',
-      hour: '2-digit',
-      hour12: false,
-    }).format(now),
-    10
-  );
-  // Some ICU builds format midnight as "24" in h23 mode.
-  return hour === 24 ? 0 : hour;
-}
-
-/**
  * Get the effective current day for score filtering.
  *
- * Scores for day N are processed at 2 AM ET and become available after that:
- * - After 2 AM ET: the previous day's scores were just processed (currentDay - 1)
- * - Before 2 AM ET: scores are only available up to currentDay - 2
+ * `currentDay` (getSeasonProgress / the season store) is the game day IN
+ * PROGRESS and already rolls at the 2 AM ET reset that processes scores —
+ * between midnight and 2 AM it still reports the previous game day. The most
+ * recent day with visible scores is therefore always `currentDay - 1`: the
+ * day whose scores were revealed when `currentDay` last rolled.
+ *
+ * This used to subtract an EXTRA day before 2 AM ET, assuming a `currentDay`
+ * that rolled at midnight. Since it rolls at 2 AM, that double-counted the
+ * reset: between midnight and 2 AM every score surface hid a fully scored,
+ * already-published day that the news feed (gated by
+ * seasonProgress.getMaxVisibleArticleDay, which is `currentDay - 1` and
+ * documents this same trap) was still showing.
  *
  * This is the single implementation shared by the Scores page, Dashboard,
  * ticker, and Live Scores box (it previously existed as four near-identical
  * copies, one of which wrongly read the browser-local hour).
  *
- * @param currentDay The current season day.
- * @param now Injectable clock for testing; defaults to the real time.
+ * @param currentDay The active season day (2 AM ET reset).
  * @returns The effective day, or null if no scores are available yet.
  */
-export function getEffectiveDay(currentDay: number, now: Date = new Date()): number | null {
+export function getEffectiveDay(currentDay: number): number | null {
   if (!currentDay) return null;
-  const hour = getEasternHour(now);
-  const effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+  const effectiveDay = currentDay - 1;
   return effectiveDay >= 1 ? effectiveDay : null;
 }
 

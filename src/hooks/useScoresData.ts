@@ -15,7 +15,7 @@ import {
 } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
-import { getEffectiveDay } from '../utils/dashboardScoring';
+import { useRevealedDay } from './useRevealedDay';
 import { competitionDayToDate } from '../utils/competitionCalendar';
 import { getScoreValue, normalizeShowResult } from '../utils/recap';
 import type {
@@ -468,10 +468,12 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   // Standings are trustworthy when they exist, cover only ranked classes we
   // need (classFilter 'all' — the Scores page; Dashboard's class-specific
   // filters include SoundSport, which standings never carry), and don't run
-  // ahead of the client-side reveal boundary: getEffectiveDay hides the most
-  // recent scored day until it "becomes effective" at the 2 AM ET rollover,
-  // and the standings doc always reflects the very latest scored day.
-  const effectiveDayNow = isFetchingCurrentSeason ? getEffectiveDay(currentDay) : null;
+  // ahead of the client-side reveal boundary: useRevealedDay hides days whose
+  // scores haven't revealed yet (tonight's day reveals the moment it is
+  // scored; otherwise at the 2 AM ET rollover), and the standings doc always
+  // reflects the very latest scored day.
+  const revealedDay = useRevealedDay(currentDay);
+  const effectiveDayNow = isFetchingCurrentSeason ? revealedDay : null;
   const standingsUsable = Boolean(
     standings &&
     classFilter === 'all' &&
@@ -536,7 +538,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
     if (recaps.length === 0) return [];
 
     const isCurrentSeason = targetSeasonId === currentSeasonUid;
-    const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
+    const effectiveDay = isCurrentSeason ? revealedDay : null;
     // Only the current season's schedule is loaded here; use it to derive accurate
     // event dates. Archived seasons fall back to their stored (correct) recap date.
     const seasonSchedule = isCurrentSeason ? currentSeasonData?.schedule : null;
@@ -550,7 +552,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
         return normalizeRecapToShows(recap, targetSeasonId ?? '', seasonSchedule);
       })
       .sort((a, b) => b.offSeasonDay - a.offSeasonDay);
-  }, [rawRecaps, targetSeasonId, currentSeasonUid, currentDay, currentSeasonData]);
+  }, [rawRecaps, targetSeasonId, currentSeasonUid, revealedDay, currentSeasonData]);
 
   // displayedSeasonId: which season's data is currently shown
   const displayedSeasonId = allShows.length > 0 || standingsUsable ? targetSeasonId : null;

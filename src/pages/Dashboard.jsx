@@ -112,7 +112,8 @@ import {
   useBestInShowCount,
 } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
-import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
+import { getNextSelectedShow } from '../utils/dashboardScoring';
+import { useRevealedDay } from '../hooks/useRevealedDay';
 import { useScoreDropReturn } from '../hooks/useScoreDropReturn';
 import { getEquippedCosmetic } from '../utils/cosmetics';
 
@@ -150,7 +151,8 @@ const Dashboard = () => {
   const currentDay = useSeasonStore((s) => s.currentDay);
 
   // Calculate if scores are available (for hiding Last Score/Trend columns on Day 1)
-  const scoresAvailable = currentDay ? getEffectiveDay(currentDay) !== null : false;
+  const revealedDay = useRevealedDay(currentDay);
+  const scoresAvailable = revealedDay !== null;
 
   // Modal state, modal-queue effects, and modal action handlers
   // (extracted to src/hooks/useDashboardModals.js)
@@ -344,7 +346,7 @@ const Dashboard = () => {
   // currentDay, so it tracks what is actually on screen.
   useScoreDropReturn({
     seasonUid: seasonData?.seasonUid,
-    scoredDay: currentDay ? getEffectiveDay(currentDay) : null,
+    scoredDay: revealedDay,
     competed: recentResults.length > 0,
   });
 

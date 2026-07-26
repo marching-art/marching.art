@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getRecentSeasonRecaps, RECENT_RECAP_DAYS } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
-import { getEffectiveDay } from '../utils/dashboardScoring';
+import { useRevealedDay } from './useRevealedDay';
 import { toRecapDate } from '../utils/recap';
 import { calculateCaptionAggregates, calculateTrend } from './useScoresData';
 import type { CaptionAggregates, DayRecap, RecapResult } from '../types/recap';
@@ -193,6 +193,7 @@ export const useTickerData = ({ enabled = true }: { enabled?: boolean } = {}) =>
   const seasonUid = useSeasonStore((state) => state.seasonUid);
   const currentDay = useSeasonStore((state) => state.currentDay);
   const seasonData = useSeasonStore((state) => state.seasonData);
+  const revealedDay = useRevealedDay(currentDay);
 
   // The ticker is mounted on every authenticated page, so it uses the bounded
   // recent-days recap query (shared cache entry with the Dashboard
@@ -213,23 +214,22 @@ export const useTickerData = ({ enabled = true }: { enabled?: boolean } = {}) =>
   const allRecaps = useMemo<DayRecap[]>(() => allRecapsData || [], [allRecapsData]);
   const error = queryError?.message || null;
 
-  // The day to show is the most recent day with processed scores
-  // At 2 AM ET, scores for the current day are processed, so we can show them
+  // The day to show is the most recent day with revealed scores (tonight's
+  // day the moment it is scored, else through the 2 AM ET rollover).
   const displayDay = useMemo<number | null>(() => {
     if (allRecaps.length === 0) return null;
 
-    // Guard: null on Day 1 (or Day 2 before 2 AM ET) — no processed scores yet
-    const effectiveDay = getEffectiveDay(currentDay);
-    if (!effectiveDay || effectiveDay < 1) return null;
+    // Guard: null on Day 1 — no revealed scores yet
+    if (!revealedDay || revealedDay < 1) return null;
 
-    // Find the most recent day that has scores up to and including effective day
+    // Find the most recent day that has scores up to and including the reveal
     const availableDays = allRecaps
       .map((r) => r.offSeasonDay)
-      .filter((day) => day <= effectiveDay)
+      .filter((day) => day <= revealedDay)
       .sort((a, b) => b - a);
 
     return availableDays[0] || null;
-  }, [allRecaps, currentDay]);
+  }, [allRecaps, revealedDay]);
 
   // Process the previous day's data - separated by class
   // OPTIMIZED: Single-pass processing to reduce array iterations from O(5n) to O(n)

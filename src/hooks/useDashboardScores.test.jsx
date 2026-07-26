@@ -14,6 +14,9 @@ vi.mock('../api/season', () => ({
   getSeasonRecaps: vi.fn(),
   getHistoricalScoresForYear: vi.fn(),
   getRecentPodiumRecaps: vi.fn(),
+  // useRevealedDay's drop-plan overlay; null = no plan doc, so the reveal
+  // boundary falls back to the mocked getEffectiveDay value.
+  getDropPlan: vi.fn(() => Promise.resolve(null)),
   RECENT_RECAP_DAYS: 10,
 }));
 

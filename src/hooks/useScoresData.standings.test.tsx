@@ -14,6 +14,9 @@ vi.mock('../api/season', () => ({
   getSeasonRecapDay: vi.fn(),
   getSeasonChampions: vi.fn(),
   getSeasonStandings: vi.fn(),
+  // useRevealedDay's drop-plan overlay; null = no plan doc, so the reveal
+  // boundary falls back to the mocked getEffectiveDay value.
+  getDropPlan: vi.fn(() => Promise.resolve(null)),
 }));
 
 // Selector-style zustand mock: useSeasonStore(sel) => sel(state).
