@@ -15,7 +15,7 @@ import { useQuery, useQueries } from '@tanstack/react-query';
 import { getCorpsValues, getHistoricalScoresForYear } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
-import { getEffectiveDay } from '../utils/dashboardScoring';
+import { useRevealedDay } from './useRevealedDay';
 
 const SCORES_STALE_TIME = 5 * 60 * 1000;
 
@@ -47,13 +47,12 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   const liveSeasonYear = seasonData?.seasonYear != null ? String(seasonData.seasonYear) : null;
   const dataDocId = seasonData?.dataDocId;
 
-  // Max day of scores to display. currentDay rolls at the same 2 AM ET reset
-  // that processes scores, so the most recent visible day is simply
-  // currentDay - 1 (see getEffectiveDay) — no separate wall-clock tracking.
-  const maxScoreDay = useMemo(() => {
-    if (!currentDay) return null;
-    return getEffectiveDay(currentDay);
-  }, [currentDay]);
+  // Max day of scores to display: the shared reveal boundary — tonight's day
+  // the moment its fantasy scoring completes, otherwise everything through
+  // the 2 AM ET rollover. This is what keeps live-scraped DCI results (which
+  // land in historical_scores before fantasy scoring runs) hidden until the
+  // night's scores actually drop.
+  const maxScoreDay = useRevealedDay(currentDay);
 
   // Fantasy pool corps (dci-data doc). Needed in both modes: it defines the
   // off-season ranking list, and in live season it filters the scraped corps
@@ -149,13 +148,12 @@ export const useLandingScores = ({ enabled = true } = {}) => {
       const scores = [];
 
       yearData.forEach((event) => {
-        // CRITICAL: Never show scores from the current day or future days
-        // Day N scores should only be visible starting at 2 AM on Day N+1
-        // This is a hard cap to prevent showing today's competition results before they happen
-        if (event.offSeasonDay >= currentDay) return;
-
-        // Also respect the reveal boundary: only days up to currentDay - 1
-        // (revealed at the 2 AM ET rollover) are visible.
+        // CRITICAL: never show a day past the reveal boundary. During a live
+        // season the scraper writes tonight's DCI results into
+        // historical_scores BEFORE fantasy scoring runs, so this filter is
+        // what keeps them hidden until the night's scores actually drop
+        // (maxScoreDay only advances to tonight's day once the backend stamps
+        // the night as scored).
         if (event.offSeasonDay > maxScoreDay) return;
 
         const scoreData = event.scores?.find((s) => s.corps === corps.corpsName);
@@ -231,7 +229,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     });
 
     return rankedScores;
-  }, [corpsValues, historicalData, maxScoreDay, currentDay]);
+  }, [corpsValues, historicalData, maxScoreDay]);
 
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {

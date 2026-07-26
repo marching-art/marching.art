@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { Flame, Loader2, DollarSign, ArrowUpRight, ArrowDownRight, Zap } from 'lucide-react';
 import { fetchNewsFeedHttp, getRecentNews } from '../../api/functions';
 import { useSeasonStore } from '../../store/seasonStore';
-import { getMaxVisibleArticleDay } from '../../utils/seasonProgress';
+import { useMaxVisibleArticleDay } from '../../hooks/useRevealedDay';
 
 // =============================================================================
 // NEWS FEED CACHE WITH STALE-WHILE-REVALIDATE
@@ -146,15 +146,16 @@ export default function NewsFeed({ maxItems = 4 }) {
   const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
   const [autoLoadCount, setAutoLoadCount] = useState(0); // Track auto-loads to prevent sidebar racing
 
-  // Day-gating: prevent articles from spoiling scores before they appear on the
-  // scores page. currentDay rolls at the same 2 AM ET reset that processes
-  // scores, so hiding just the active (still unscored) day is sufficient.
+  // Day-gating: prevent articles from spoiling scores before they appear on
+  // the scores page. Shares the score surfaces' reveal boundary: the active
+  // day's articles stay hidden until the night is scored, then reveal
+  // together with the scores (useRevealedDay/useMaxVisibleArticleDay).
   const currentDay = useSeasonStore((state) => state.currentDay);
   // The active season's UID matches the `seasonId` on its articles. Articles from
   // prior seasons carry a different seasonId and should never be day-gated, since
   // their scores are already fully revealed (e.g. last season's finals results).
   const seasonUid = useSeasonStore((state) => state.seasonUid);
-  const effectiveDay = getMaxVisibleArticleDay(currentDay);
+  const effectiveDay = useMaxVisibleArticleDay(currentDay);
 
   /**
    * Fetch news with stale-while-revalidate pattern and request deduplication

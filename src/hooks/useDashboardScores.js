@@ -18,7 +18,8 @@ import {
 } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { CAPTIONS } from '../components/Dashboard';
-import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
+import { processCaptionScores } from '../utils/dashboardScoring';
+import { useRevealedDay } from './useRevealedDay';
 import { formatRecapDate } from './useScoresData';
 
 const SCORES_STALE_TIME = 5 * 60 * 1000;
@@ -26,9 +27,9 @@ const SCORES_STALE_TIME = 5 * 60 * 1000;
 export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   const hasLineup = !!lineup && Object.keys(lineup).length > 0;
 
-  // Effective day accounting for the 2 AM ET score-processing rollover.
-  // Guard: if null or < 1 no scores should be visible (Day 1).
-  const effectiveDay = currentDay ? getEffectiveDay(currentDay) : null;
+  // Reveal boundary: tonight's day the moment it is scored, else the 2 AM ET
+  // rollover. Guard: if null or < 1 no scores should be visible (Day 1).
+  const effectiveDay = useRevealedDay(currentDay);
   const shouldFetch = hasLineup && !!effectiveDay && effectiveDay >= 1;
 
   // Unique source years referenced by the lineup ("corpsName|sourceYear")
@@ -105,6 +106,7 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
 export function useRecentResults(user, seasonData, activeCorpsClass, currentDay) {
   const seasonUid = seasonData?.seasonUid;
   const enabled = !!user?.uid && !!seasonUid && !!activeCorpsClass && !!currentDay;
+  const effectiveDay = useRevealedDay(currentDay);
 
   // Same cache entry as the Scores page's full-archive fetch (which the
   // Dashboard already mounts via useScoresData, so this costs no extra reads)
@@ -118,13 +120,12 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
   return useMemo(() => {
     if (!enabled || !recaps || recaps.length === 0) return [];
 
-    // Only show scores from days that have been processed (2 AM ET boundary).
-    const effectiveDay = getEffectiveDay(currentDay);
+    // Only show scores from days that have revealed.
     if (effectiveDay === null) return [];
 
     const results = [];
 
-    // Sort by day descending and filter to only include processed days
+    // Sort by day descending and filter to only include revealed days
     const sortedRecaps = [...recaps]
       .filter((recap) => recap.offSeasonDay <= effectiveDay)
       .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
@@ -151,7 +152,7 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
     }
 
     return results;
-  }, [enabled, recaps, user?.uid, activeCorpsClass, currentDay, seasonData?.schedule]);
+  }, [enabled, recaps, user?.uid, activeCorpsClass, effectiveDay, seasonData?.schedule]);
 }
 
 /**
@@ -167,6 +168,7 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
 export function usePodiumRecentResults(user, seasonData, currentDay, enabled = true) {
   const seasonUid = seasonData?.seasonUid;
   const active = enabled && !!user?.uid && !!seasonUid && !!currentDay;
+  const effectiveDay = useRevealedDay(currentDay);
 
   // Bounded fetch: the box shows at most 5 results, so the last
   // RECENT_RECAP_DAYS day-docs are plenty — no need to download the whole
@@ -181,8 +183,8 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
   return useMemo(() => {
     if (!active || !recaps || recaps.length === 0) return [];
 
-    // Only surface days that have been processed (2 AM ET boundary).
-    const effectiveDay = getEffectiveDay(currentDay);
+    // Only surface days that have revealed. Podium processes at its own 9 PM
+    // ET job; its days ride the shared fantasy reveal boundary.
     if (effectiveDay === null) return [];
 
     const results = [];
@@ -211,7 +213,7 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
     }
 
     return results;
-  }, [active, recaps, user?.uid, currentDay, seasonData?.schedule]);
+  }, [active, recaps, user?.uid, effectiveDay, seasonData?.schedule]);
 }
 
 export function useBestInShowCount(activeCorps, activeCorpsClass, allShows) {
