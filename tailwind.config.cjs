@@ -41,20 +41,35 @@ module.exports = {
 
         // ===========================================
         // INTERACTIVE / SELF — azure. Links, primary actions, active nav,
-        // focus rings, "your row" highlight. Replaces the legacy #0057B8,
-        // which failed WCAG (~2.9:1) on the app background; azure clears
-        // ~5.4:1. Warm gold vs. cool azure keeps reward and interaction
-        // perceptually distinct.
+        // focus rings, "your row" highlight. Warm gold vs. cool azure keeps
+        // reward and interaction perceptually distinct.
+        //
+        // The token is SPLIT by role for WCAG AA (the old single #3B82F6 was
+        // 3.7:1 under white button text and 3.9:1 as text on surface-elevated):
+        // - `interactive` (this scale) is the FOREGROUND tone — text, borders,
+        //   icons, rings on dark surfaces. #60A5FA clears 7.8:1 on background
+        //   and 5.7:1 on surface-elevated.
+        // - `interactive-fill` (below) is the FILL tone — backgrounds under
+        //   white text. #2563EB is 5.2:1 with white (AA needs 4.5:1).
+        // `theme.extend.backgroundColor` re-points bg-interactive* at the fill
+        // scale, so every existing bg-interactive CTA is accessible without
+        // call-site edits while text-/border-/ring-interactive stay light.
         // ===========================================
         interactive: {
-          DEFAULT: '#3B82F6', // azure
-          hover: '#2563EB',
-          subtle: '#1D4ED8',
+          DEFAULT: '#60A5FA', // foreground azure — 7.8:1 on #0A0A0A, 5.7:1 on #2A2A2A
+          hover: '#93C5FD', // lighter on hover — 11.0:1 on #0A0A0A
+          subtle: '#3B82F6', // dimmed foreground — 5.4:1 on #0A0A0A
+        },
+        'interactive-fill': {
+          DEFAULT: '#2563EB', // white text: 5.2:1
+          hover: '#1D4ED8', // white text: 6.7:1
+          subtle: '#1E40AF', // white text: 8.7:1 (pressed / dim fills)
         },
 
         // `primary` maps to azure (the interactive color) for back-compat with
-        // components that use bg-primary/text-primary.
-        primary: '#3B82F6',
+        // components that use bg-primary/text-primary. Foreground tone here;
+        // bg-primary is re-pointed at the fill via backgroundColor below.
+        primary: '#60A5FA',
         'primary-content': '#FFFFFF',
 
         // Panel color
@@ -132,6 +147,25 @@ module.exports = {
           900: '#1A1A1A',
           950: '#0A0A0A',
         },
+      },
+      // bg-* utilities read this scale before falling back to `colors`, so the
+      // SAME utility names (bg-interactive, hover:bg-interactive-hover,
+      // active:bg-interactive-subtle, bg-primary) resolve to the darker
+      // accessible FILL values, while text-/border-/ring-interactive keep the
+      // lighter foreground tone above. Opacity tints (bg-interactive/10) also
+      // read the fill base — visually indistinguishable at low alpha.
+      backgroundColor: {
+        interactive: {
+          DEFAULT: '#2563EB', // white text: 5.2:1
+          hover: '#1D4ED8', // white text: 6.7:1
+          subtle: '#1E40AF', // white text: 8.7:1
+        },
+        primary: '#2563EB',
+      },
+      // Checked checkboxes/radios paint a white glyph over the accent color —
+      // same white-on-azure case as button fills, so use the fill scale.
+      accentColor: {
+        interactive: '#2563EB',
       },
       // SHADOWS BANNED - Law 4: No Glow, No Shadow
       boxShadow: {

@@ -7,7 +7,10 @@ const admin = require("firebase-admin");
 // is the CLIENT SDK's API) — destructuring it yielded undefined and made
 // reportComment throw on every call. Use FieldValue.serverTimestamp().
 const { FieldValue } = require("firebase-admin/firestore");
-const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
+
+// Maximum reported-comment text length (mirrors articleComments' MAX_COMMENT_LENGTH)
+const MAX_COMMENT_LENGTH = 1000;
 
 exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -71,11 +74,17 @@ exports.deleteComment = onCall({ cors: true }, async (request) => {
   if (!profileOwnerId || !commentId) {
     throw new HttpsError("invalid-argument", "Missing profile owner ID or comment ID.");
   }
+  // Both ids are interpolated into a Firestore doc path below.
+  assertDocId(profileOwnerId, "profile owner ID");
+  assertDocId(commentId, "comment ID");
 
   // Security Check: Only the profile owner or an admin can delete.
   if (callerUid !== profileOwnerId && !isAdmin) {
     throw new HttpsError("permission-denied", "You do not have permission to delete this comment.");
   }
+
+  // Abuse throttle (mirrors deleteArticleComment's shared comments bucket).
+  await assertWriteBudget(getDb(), callerUid, "comments", { max: 30, windowMs: 10 * 60 * 1000 });
 
   try {
     const commentRef = getDb().doc(paths.userComment(profileOwnerId, commentId));
@@ -96,6 +105,24 @@ exports.reportComment = onCall({ cors: true }, async (request) => {
   if (!profileOwnerId || !commentId || !commentText || !commentAuthorUid) {
     throw new HttpsError("invalid-argument", "Missing required report data.");
   }
+  // Ids must be plausible doc-id strings — commentAuthorUid lands in the
+  // report doc and drives moderation actions, so it can't be free-form.
+  assertDocId(profileOwnerId, "profile owner ID");
+  assertDocId(commentId, "comment ID");
+  assertDocId(commentAuthorUid, "comment author UID");
+
+  // The reported text is stored verbatim and rendered to moderators.
+  if (typeof commentText !== "string" || commentText.trim().length === 0) {
+    throw new HttpsError("invalid-argument", "Comment text must be a non-empty string.");
+  }
+  if (commentText.length > MAX_COMMENT_LENGTH) {
+    throw new HttpsError("invalid-argument",
+      `Comment text too long (max ${MAX_COMMENT_LENGTH} characters).`);
+  }
+
+  // Abuse throttle (mirrors reportArticleComment's shared comments bucket) —
+  // far above any human rate.
+  await assertWriteBudget(getDb(), reporterUid, "comments", { max: 30, windowMs: 10 * 60 * 1000 });
 
   try {
     const reportRef = getDb().collection("reports").doc();

@@ -182,7 +182,8 @@ export type LeagueNotificationType =
   | 'trade_proposal' // Trade proposal received
   | 'trade_response' // Trade accepted/rejected
   | 'member_joined' // New member joined league
-  | 'rivalry_matchup'; // Matchup with a rival
+  | 'rivalry_matchup' // Matchup with a rival
+  | 'league_invite'; // Invited to join a league (written server-side)
 
 export interface LeagueNotification {
   id: string;

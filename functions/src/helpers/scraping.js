@@ -65,7 +65,65 @@ function extractSitemapLocs(body) {
   return locs;
 }
 
-async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", extraPayload = {}) {
+// Month names as they appear in recap date/location blocks ("July 20, 2026"),
+// plus 3-letter abbreviations. Index = JS month number.
+const MONTH_NAMES = [
+  "january", "february", "march", "april", "may", "june",
+  "july", "august", "september", "october", "november", "december",
+];
+
+/**
+ * Parse a recap page's date text into a Date at UTC midnight, or null when no
+ * valid calendar date can be extracted. Explicit-UTC on purpose: the old
+ * `new Date(dateText)` parse produced local midnight, so the derived calendar
+ * date depended on the runtime's TZ env — a recap could archive under the
+ * wrong day if that assumption ever broke.
+ *
+ * Accepts "July 20, 2026" / "Jul 20 2026" and "7/20/2026".
+ *
+ * @param {string} dateText
+ * @returns {Date|null}
+ */
+function parseRecapDateUTC(dateText) {
+  if (!dateText) return null;
+  const text = dateText.trim();
+
+  const named = text.match(/^([A-Za-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (named) {
+    const monthToken = named[1].toLowerCase();
+    const month = MONTH_NAMES.findIndex(
+      (m) => m === monthToken || (monthToken.length === 3 && m.startsWith(monthToken))
+    );
+    if (month !== -1) {
+      const parsed = new Date(Date.UTC(parseInt(named[3], 10), month, parseInt(named[2], 10)));
+      // Reject overflow like "June 31" (rolls into the next month).
+      return parsed.getUTCMonth() === month ? parsed : null;
+    }
+    return null;
+  }
+
+  const numeric = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (numeric) {
+    const month = parseInt(numeric[1], 10) - 1;
+    if (month < 0 || month > 11) return null;
+    const parsed = new Date(Date.UTC(parseInt(numeric[3], 10), month, parseInt(numeric[2], 10)));
+    return parsed.getUTCMonth() === month ? parsed : null;
+  }
+
+  return null;
+}
+
+/**
+ * @param {string} urlToScrape - Recap URL to fetch and parse.
+ * @param {string} [topic] - Pub/Sub topic the parsed scores publish to.
+ * @param {object} [extraPayload] - Opt-in consumer flags (e.g. { overwrite: true }).
+ * @param {object} [options]
+ * @param {string|null} [options.expectedDateKey] - The listing's authoritative
+ *   date for this recap (YYYY-MM-DD, from scheduled/liveScraper.js
+ *   fetchScoresListing). When set, a recap whose own parsed date disagrees is
+ *   rejected (count 0, error) instead of archived under the wrong day.
+ */
+async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", extraPayload = {}, { expectedDateKey = null } = {}) {
   // Lazy initialize the client if it hasn't been already
   if (!pubsubClient) {
     const { PubSub } = require("@google-cloud/pubsub");
@@ -89,16 +147,34 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", ext
     const dateText = dateLocationDiv.find("p").eq(0).text().trim();
     const locationText = dateLocationDiv.find("p").eq(1).text().trim();
 
-    let eventDate = new Date();
-    let eventLocation = locationText || "Unknown Location";
-    let year = new Date().getFullYear();
+    const eventLocation = locationText || "Unknown Location";
 
-    if (dateText) {
-      const parsedDate = new Date(dateText);
-      if (!isNaN(parsedDate.getTime())) {
-        eventDate = parsedDate;
-        year = eventDate.getFullYear();
-      }
+    // The event date is the archive key (historical_scores merges by
+    // name+date, and the whole scoring day hangs off it). A missing or
+    // unparseable date must therefore FAIL the recap — the old fallback to
+    // scrape time silently mis-dated the event by up to a day.
+    const eventDate = parseRecapDateUTC(dateText);
+    if (!eventDate) {
+      const dateError = `no parseable event date on recap (date text: "${dateText}")`;
+      logger.error(
+        `[scrapeDciScoresLogic] ${dateError} for ${urlToScrape}; refusing to publish.`
+      );
+      return { eventName, eventLocation, eventDate: null, year: null, count: 0, error: dateError };
+    }
+    const year = eventDate.getUTCFullYear();
+
+    // Cross-check against the listing's authoritative date when the caller
+    // provided one: a recap page carrying a different calendar date than its
+    // listing row means one of the two is wrong — never archive it blind.
+    const recapDateKey = eventDate.toISOString().slice(0, 10);
+    if (expectedDateKey && recapDateKey !== expectedDateKey) {
+      const mismatchError =
+        `recap date ${recapDateKey} disagrees with the listing's date ${expectedDateKey}`;
+      logger.error(`[scrapeDciScoresLogic] ${mismatchError} for ${urlToScrape}; refusing to publish.`);
+      return {
+        eventName, eventLocation, eventDate: eventDate.toISOString(), year, count: 0,
+        error: mismatchError,
+      };
     }
 
     const logMsg = `PARSED DATA --> Name: '${eventName}', Date: '${eventDate.toISOString()}', ` +
@@ -197,10 +273,13 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", ext
  * /scores/final-scores/{year}-{slug}/ URL (2013-present) over plain GET, which
  * is far more robust and complete.
  *
+ * @param {object} [options]
+ * @param {number} [options.maxRetries] - Per-fetch retry cap forwarded to
+ *   dciFetch (the canary passes a low one to fit its timeout budget).
  * @returns {Promise<string[]>} Array of unique recap URLs.
  */
-async function discoverAllRecapUrls() {
-  const indexXml = await dciFetch(SITEMAP_INDEX_URL);
+async function discoverAllRecapUrls({ maxRetries } = {}) {
+  const indexXml = await dciFetch(SITEMAP_INDEX_URL, { maxRetries });
   const competitionSitemaps = extractSitemapLocs(indexXml)
     .filter((u) => /competition-sitemap\d*\.xml/.test(u));
 
@@ -213,7 +292,7 @@ async function discoverAllRecapUrls() {
   const recapUrls = new Set();
   for (const sitemapUrl of competitionSitemaps) {
     try {
-      const xml = await dciFetch(sitemapUrl);
+      const xml = await dciFetch(sitemapUrl, { maxRetries });
       for (const loc of extractSitemapLocs(xml)) {
         if (loc.includes("/scores/final-scores/")) {
           recapUrls.add(finalScoresToRecapUrl(loc));
@@ -409,6 +488,7 @@ const discoverAndQueueEventUrls = onCall({
 
 module.exports = {
   scrapeDciScoresLogic,
+  parseRecapDateUTC,
   finalScoresToRecapUrl,
   extractSitemapLocs,
   discoverAllRecapUrls,

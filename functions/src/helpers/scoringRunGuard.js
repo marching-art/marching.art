@@ -61,10 +61,15 @@ function toDate(value) {
  *   escape hatch for reprocessing after a data fix; re-runs re-apply coin
  *   and league-record increments).
  * @param {Date} [options.now] - Injectable clock for tests.
+ * @param {string} [options.kind] - What the lease guards: "scoring" (default,
+ *   the fantasy pipeline — a failure is a critical incident) vs "announce"
+ *   (Discord posts and similar side channels — the watchdog reports those as
+ *   warnings, not critical). Docs written before this field existed carry no
+ *   kind and are treated as "scoring".
  * @returns {Promise<{claimed: boolean, reason?: "completed"|"in-progress"}>}
  */
-async function claimScoringRun(db, seasonUid, scoredDay, { force = false, now = new Date() } = {}) {
-  return claimRun(db, scoringRunRef(db, seasonUid, scoredDay), { seasonUid, scoredDay }, { force, now });
+async function claimScoringRun(db, seasonUid, scoredDay, { force = false, now = new Date(), kind = "scoring" } = {}) {
+  return claimRun(db, scoringRunRef(db, seasonUid, scoredDay), { seasonUid, scoredDay, kind }, { force, now });
 }
 
 /** Shared lease transaction behind claimScoringRun and claimSeasonRollover. */

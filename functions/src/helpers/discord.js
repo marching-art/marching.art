@@ -153,7 +153,9 @@ async function postToDiscordWebhook(webhookUrl, payload, fetchImpl = fetch) {
  * @returns {Promise<{kind: string, status: string, [k: string]: unknown}>}
  */
 async function postOnce(db, { kind, tag, leaseKey, leaseDay, payload, webhookUrl, fetchImpl }) {
-  const lease = await claimScoringRun(db, leaseKey, leaseDay);
+  // Lease kind "announce": a failed announcement is a warning at the scoring
+  // watchdog, never a critical incident like a failed scoring run.
+  const lease = await claimScoringRun(db, leaseKey, leaseDay, { kind: "announce" });
   if (!lease.claimed) return { kind, status: "skipped", reason: lease.reason };
   try {
     await postToDiscordWebhook(webhookUrl, payload, fetchImpl);

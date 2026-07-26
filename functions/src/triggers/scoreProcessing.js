@@ -150,6 +150,21 @@ exports.processDciRecap = onMessagePublished({
     return;
   }
 
+  // Host allowlist: only dci.org recap pages may be fetched, so a message
+  // from anything with publish access can't turn this worker into a fetch
+  // proxy for arbitrary hosts.
+  let hostname;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    logger.warn(`[RecapWorker] Skipping malformed URL: ${url}`);
+    return;
+  }
+  if (hostname !== "www.dci.org" && hostname !== "dci.org") {
+    logger.warn(`[RecapWorker] Skipping non-dci.org URL: ${url}`);
+    return;
+  }
+
   try {
     // Default topic (dci-scores-topic) -> processDciScores -> historical_scores/{year}.
     await scrapeDciScoresLogic(url);

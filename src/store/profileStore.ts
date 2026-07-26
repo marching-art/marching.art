@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions, paths } from '../api';
-import { AUTH_CONFIG } from '../config';
+import { adminHelpers, db, functions, paths } from '../api';
 import { normalizeUnlockedClasses } from '../utils/classUnlocks';
 import { getGameDay } from '../utils/dailyChallenges';
 import {
@@ -157,10 +156,18 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
       return () => {};
     }
 
-    // Check admin status synchronously from config
-    const isAdmin = AUTH_CONFIG.isAdminUid(uid);
-
-    set({ loading: true, _currentUid: uid, isAdmin });
+    // Admin status comes solely from the server-set `admin` custom claim on
+    // the auth token; resolve it asynchronously. The uid guard prevents a
+    // stale result from landing after a user switch.
+    set({ loading: true, _currentUid: uid, isAdmin: false });
+    adminHelpers
+      .isAdmin()
+      .then((isAdmin) => {
+        if (get()._currentUid === uid) set({ isAdmin });
+      })
+      .catch(() => {
+        // Leave isAdmin false — admin-only UI simply stays hidden.
+      });
 
     const profileRef = doc(db, paths.userProfile(uid));
 
@@ -186,8 +193,11 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
           // seasons-completed grant, and legacy key canonicalization). The
           // listener picks up the resulting profile update. Cheap local
           // pre-check: skip the call when every class is already unlocked and
-          // the stored keys are canonical.
-          if (!_timeUnlockProcessed && !isAdmin && data.createdAt) {
+          // the stored keys are canonical. (isAdmin resolves asynchronously
+          // from the auth claim; if it hasn't landed yet this may run for an
+          // admin too, which is harmless — the callable is idempotent and
+          // server-authoritative.)
+          if (!_timeUnlockProcessed && !get().isAdmin && data.createdAt) {
             _timeUnlockProcessed = true;
             const { normalized, changed } = normalizeUnlockedClasses(
               data.unlockedClasses || ['soundSport']

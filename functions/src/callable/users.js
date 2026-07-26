@@ -15,11 +15,19 @@ exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
 
   const { email, makeAdmin } = request.data;
+  if (typeof email !== "string" || !email.trim()) {
+    throw new HttpsError("invalid-argument", "A valid email is required.");
+  }
   logger.info(`Admin ${request.auth.uid} attempting to set role for ${email} to admin: ${makeAdmin}`);
 
   try {
     const user = await admin.auth().getUserByEmail(email);
-    await admin.auth().setCustomUserClaims(user.uid, { admin: makeAdmin });
+    // Merge onto the existing claims — a bare { admin } here would clobber
+    // any other custom claims the user carries.
+    await admin.auth().setCustomUserClaims(user.uid, {
+      ...user.customClaims,
+      admin: makeAdmin === true,
+    });
 
     const action = makeAdmin ? "granted" : "revoked";
     return {

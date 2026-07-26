@@ -86,7 +86,9 @@ async function runPodiumStage(db, { calendarDay: calendarDayOverride = null } = 
   const previousSeason = seasonIndex.previous || (await career.latestPreviousSeason(db));
   if (previousSeason) {
     const archiveKey = `${previousSeason.seasonUid}_podium_archive`;
-    const lease = await claimScoringRun(db, archiveKey, 0);
+    // kind "announce": a failed archival sweep self-heals next night, so the
+    // watchdog reports it as a warning, not a critical scoring incident.
+    const lease = await claimScoringRun(db, archiveKey, 0, { kind: "announce" });
     if (lease.claimed) {
       // Isolated + retryable: a transient archival failure marks the lease
       // failed (so tomorrow's run re-claims and re-sweeps — the sweep is

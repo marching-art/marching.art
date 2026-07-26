@@ -7,6 +7,7 @@
  * - Keep heavy Chromium/Puppeteer dependencies isolated
  */
 
+const crypto = require("crypto");
 const admin = require("firebase-admin");
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
@@ -254,7 +255,12 @@ const scrapeUpcomingDciEventsHttp = onRequest({
     res.status(500).json({ success: false, error: "Scraper invoke key not configured" });
     return;
   }
-  if (providedKey !== expectedKey) {
+  // Constant-time compare (length-guarded) so the key can't be recovered
+  // byte-by-byte via response timing.
+  const providedBuf = Buffer.from(String(providedKey), "utf8");
+  const expectedBuf = Buffer.from(String(expectedKey), "utf8");
+  if (providedBuf.length !== expectedBuf.length ||
+      !crypto.timingSafeEqual(providedBuf, expectedBuf)) {
     logger.warn("scrapeUpcomingDciEventsHttp called with invalid invoke key");
     res.status(401).json({ success: false, error: "Unauthorized" });
     return;

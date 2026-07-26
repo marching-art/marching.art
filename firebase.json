@@ -12,6 +12,7 @@
         "*.local",
         "**/*.test.js",
         "pressboxImporter",
+        "dciArchiveImporter",
         "src/scripts/cleanupLeakedProfileEmails.js"
       ]
     },

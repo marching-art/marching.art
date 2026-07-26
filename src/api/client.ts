@@ -35,7 +35,7 @@ import {
 import type { FirebaseStorage } from 'firebase/storage';
 
 // Import centralized configuration
-import { FIREBASE_CONFIG, DATA_CONFIG, AUTH_CONFIG, DEV_CONFIG, APP_CHECK_CONFIG } from '../config';
+import { FIREBASE_CONFIG, DATA_CONFIG, DEV_CONFIG, APP_CHECK_CONFIG } from '../config';
 
 // =============================================================================
 // CONFIGURATION
@@ -210,16 +210,13 @@ export const authApi = {
 
   /**
    * Check if user is admin
-   * Uses centralized AUTH_CONFIG for admin UID list
+   * Determined solely by the server-set `admin` custom claim on the auth
+   * token — there is intentionally no client-side admin UID list.
    */
   isAdmin: async (): Promise<boolean> => {
     const user = auth.currentUser;
     if (!user) return false;
 
-    // Check against configured admin UIDs
-    if (AUTH_CONFIG.isAdminUid(user.uid)) return true;
-
-    // Also check custom claims
     const tokenResult = await user.getIdTokenResult();
     return tokenResult.claims.admin === true;
   },

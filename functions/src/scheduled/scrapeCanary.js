@@ -18,6 +18,14 @@ const { postOpsAlert } = require("../helpers/opsAlerts");
 
 const SCORES_LIST_URL = "https://www.dci.org/scores/";
 
+// Fewer retries than dciFetch's default 4: the canary makes up to three
+// proxied fetches (listing, sitemap index + sitemaps, recap page) and each
+// rendering-proxy attempt can take ~70s, so the default retry budget could
+// blow well past even a generous timeout. Two attempts per fetch still
+// absorbs a transient blip while keeping the worst case inside the 300s
+// budget below; a genuinely broken fetch is itself a canary finding.
+const CANARY_FETCH_OPTS = { maxRetries: 2 };
+
 /**
  * Run the three drift checks. Exported for the admin manual trigger/tests.
  *
@@ -31,7 +39,7 @@ async function runScrapeCanary(db) {
 
   // 1. Scores listing page (what the nightly live scraper reads first).
   try {
-    const listingHtml = await dciFetch(SCORES_LIST_URL);
+    const listingHtml = await dciFetch(SCORES_LIST_URL, CANARY_FETCH_OPTS);
     const listing = auditScoresListing(listingHtml);
     problems.push(...listing.problems);
     warnings.push(...listing.warnings);
@@ -42,7 +50,7 @@ async function runScrapeCanary(db) {
 
   // 2. Sitemap discovery (the backfill/importer path) + 3. recap page parse.
   try {
-    const recapUrls = await discoverAllRecapUrls();
+    const recapUrls = await discoverAllRecapUrls(CANARY_FETCH_OPTS);
     summary.sitemapRecapUrls = recapUrls.length;
     if (recapUrls.length === 0) {
       problems.push("sitemap discovery returned zero recap URLs — the Yoast sitemap layout drifted");
@@ -51,7 +59,7 @@ async function runScrapeCanary(db) {
       // markup generation, unlike a decade-old archive page.
       const target = recapUrls[recapUrls.length - 1];
       summary.auditedRecapUrl = target;
-      const recapHtml = await dciFetch(target);
+      const recapHtml = await dciFetch(target, CANARY_FETCH_OPTS);
       const recap = auditRecapPage(recapHtml);
       problems.push(...recap.problems);
       warnings.push(...recap.warnings);
@@ -133,7 +141,10 @@ exports.scrapeCanary = onSchedule(
   {
     schedule: "0 13 * * *",
     timeZone: "America/New_York",
-    timeoutSeconds: 120,
+    // Headroom for three proxied fetches at CANARY_FETCH_OPTS retries — the
+    // old 120s could expire mid-audit and turn a slow proxy into a false
+    // "could not fetch" alarm.
+    timeoutSeconds: 300,
     secrets: [scraperApiKey, discordOpsWebhookUrl],
   },
   async () => {
@@ -141,4 +152,4 @@ exports.scrapeCanary = onSchedule(
   }
 );
 
-module.exports = { scrapeCanary: exports.scrapeCanary, runScrapeCanary };
+module.exports = { scrapeCanary: exports.scrapeCanary, runScrapeCanary, CANARY_FETCH_OPTS };

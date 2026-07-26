@@ -16,9 +16,12 @@
 //                 events whose stored name is still a placeholder.
 //
 // Flags:
-//   --dry-run          report matches, write nothing
-//   --years 2004,2005  limit scope
-//   --firestore        update Firestore instead of the pressbox JSON files
+//   --dry-run                report matches, write nothing
+//   --years 2004,2005        limit scope
+//   --firestore              update Firestore instead of the pressbox JSON files
+//   --force-current-season   allow --firestore to write the ACTIVE live
+//                            season's year (normally refused: the nightly
+//                            pipeline owns that document)
 //
 // Usage: node apply.js --dry-run   (then without --dry-run once it looks right)
 
@@ -34,6 +37,7 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const FIRESTORE = args.includes("--firestore");
+const FORCE_CURRENT_SEASON = args.includes("--force-current-season");
 const yearFilter = args.includes("--years")
   ? args[args.indexOf("--years") + 1].split(",")
   : YEARS;
@@ -142,34 +146,68 @@ function getDb() {
   return firestoreDb;
 }
 
+// True when {year} is the ACTIVE live season's year — the document the
+// nightly scrape/merge pipeline is writing concurrently. Importer writes to
+// it are refused unless --force-current-season is passed.
+async function isCurrentSeasonYear(db, year) {
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) return false;
+  const season = seasonDoc.data();
+  return season.status === "live-season" &&
+    season.seasonYear != null && String(season.seasonYear) === String(year);
+}
+
 // Plan and (unless dryRun) apply against the LIVE historical_scores/{year}
 // document, so the preview and the write both reflect what is actually in
 // Firestore - not the committed pressbox output, which this tool has already
 // patched. Returns the per-year counts for the running totals.
 async function applyFirestore(year, index, dryRun) {
-  const ref = getDb().collection("historical_scores").doc(year);
+  const db = getDb();
+  const ref = db.collection("historical_scores").doc(year);
+
+  if (!dryRun && !FORCE_CURRENT_SEASON && await isCurrentSeasonYear(db, year)) {
+    console.log(`${year}: REFUSED - historical_scores/${year} is the active live season's ` +
+      "document (the nightly pipeline owns it). Pass --force-current-season to override.");
+    return { renames: 0, locationFixed: 0 };
+  }
+
+  // Preview from a plain read (dry-run reporting); the real write below
+  // re-reads and re-plans inside a transaction.
   const snap = await ref.get();
   if (!snap.exists) {
     console.log(`${year}: historical_scores/${year} does not exist, skipping.`);
     return { renames: 0, locationFixed: 0 };
   }
-  const data = snap.data().data || [];
-  const { renames, locationFixes } = planRenames(data, index);
+  const previewData = snap.data().data || [];
+  const preview = planRenames(previewData, index);
   const verb = dryRun ? "would update" : "updating";
-  console.log(`${year}: ${verb} ${renames.length} name(s), ` +
-    `${locationFixes.length} location(s) (live doc has ${data.length} events).`);
-  for (const r of renames.slice(0, 8)) {
+  console.log(`${year}: ${verb} ${preview.renames.length} name(s), ` +
+    `${preview.locationFixes.length} location(s) (live doc has ${previewData.length} events).`);
+  for (const r of preview.renames.slice(0, 8)) {
     console.log(`    name: ${r.key}  "${r.from}" -> "${r.to}"`);
   }
-  if (renames.length > 8) console.log(`    ... +${renames.length - 8} more`);
+  if (preview.renames.length > 8) console.log(`    ... +${preview.renames.length - 8} more`);
 
-  if (!dryRun && (renames.length || locationFixes.length)) {
+  if (dryRun || (!preview.renames.length && !preview.locationFixes.length)) {
+    return { renames: preview.renames.length, locationFixed: preview.locationFixes.length };
+  }
+
+  // Transactional read-modify-write: the nightly merge pipeline writes this
+  // same document, so a plain get()/set() could clobber an event archived
+  // between our read and write (and set() would drop any other top-level
+  // fields). update({data}) touches only the data array.
+  const written = await db.runTransaction(async (tx) => {
+    const txSnap = await tx.get(ref);
+    if (!txSnap.exists) return { renames: 0, locationFixed: 0 }; // vanished since the preview
+    const data = txSnap.data().data || [];
+    const { renames, locationFixes } = planRenames(data, index);
     for (const r of renames) r.event.eventName = r.to;
     for (const f of locationFixes) f.event.location = f.to;
-    await ref.set({ data });
-    console.log(`  ${year}: written.`);
-  }
-  return { renames: renames.length, locationFixed: locationFixes.length };
+    if (renames.length || locationFixes.length) tx.update(ref, { data });
+    return { renames: renames.length, locationFixed: locationFixes.length };
+  });
+  console.log(`  ${year}: written (${written.renames} name(s), ${written.locationFixed} location(s)).`);
+  return written;
 }
 
 async function main() {

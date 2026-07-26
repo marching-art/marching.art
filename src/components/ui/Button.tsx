@@ -22,7 +22,10 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 
 // Button variant styles
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-white border border-primary hover:bg-primary/90',
+  // bg-interactive resolves to the accessible azure fill (5.2:1 under white
+  // text); the border matches the fill so the outline doesn't read lighter.
+  primary:
+    'bg-interactive text-white border border-interactive-fill hover:bg-interactive-hover active:bg-interactive-subtle',
   secondary:
     'bg-transparent border border-white/30 text-white hover:bg-white/5 hover:border-white/50',
   ghost:

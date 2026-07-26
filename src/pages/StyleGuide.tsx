@@ -67,11 +67,17 @@ const StyleGuide: React.FC = () => {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Swatch token="brand (gold)" bg="bg-brand" note="10.3:1 · logo, reward, #1, currency" />
             <Swatch
-              token="interactive (azure)"
+              token="interactive fill (bg-interactive)"
               bg="bg-interactive"
-              note="5.4:1 · links, actions, active, you"
+              note="5.2:1 under white · CTA / button fills"
             />
           </div>
+          <p className="mt-3 text-xs text-muted">
+            Azure is split by role: <span className="text-interactive">text-interactive</span> /
+            border / ring use the lighter foreground tone (7.8:1 on background), while
+            bg-interactive resolves to the darker fill so white button text clears WCAG AA — same
+            class names, accessible in both directions.
+          </p>
         </Section>
 
         <Section title="Status — data only">
@@ -100,7 +106,7 @@ const StyleGuide: React.FC = () => {
             <p className="text-secondary">text-secondary — supporting copy (9.4:1)</p>
             <p className="text-muted">text-muted — labels &amp; captions (6.9:1)</p>
             <p className="text-brand">text-brand — reward emphasis</p>
-            <p className="text-interactive">text-interactive — links &amp; actions</p>
+            <p className="text-interactive">text-interactive — links &amp; actions (7.8:1)</p>
           </div>
         </Section>
 

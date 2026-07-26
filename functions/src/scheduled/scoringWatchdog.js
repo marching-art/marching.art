@@ -46,10 +46,14 @@ function toDate(value) {
  * failed/stale-running split is done in memory over the tiny result set, so
  * no composite index is needed).
  *
+ * Each entry carries the lease's `kind` ("scoring" for the fantasy pipeline,
+ * "announce" for Discord-post leases; see helpers/scoringRunGuard.js). Docs
+ * written before the field existed have no kind and are treated as "scoring".
+ *
  * @param {FirebaseFirestore.Firestore} db
  * @param {Date} [now] - Injectable clock for tests.
- * @returns {Promise<Array<{id: string, status: string, seasonUid?: string,
- *   scoredDay?: number, attempts?: number, lastError?: string}>>}
+ * @returns {Promise<Array<{id: string, status: string, kind: string,
+ *   seasonUid?: string, scoredDay?: number, attempts?: number, lastError?: string}>>}
  */
 async function findUnhealthyScoringRuns(db, now = new Date()) {
   const cutoff = new Date(now.getTime() - LOOKBACK_MS);
@@ -64,6 +68,7 @@ async function findUnhealthyScoringRuns(db, now = new Date()) {
       unhealthy.push({
         id: doc.id,
         status: "failed",
+        kind: run.kind || "scoring",
         seasonUid: run.seasonUid,
         scoredDay: run.scoredDay,
         attempts: run.attempts,
@@ -75,6 +80,7 @@ async function findUnhealthyScoringRuns(db, now = new Date()) {
         unhealthy.push({
           id: doc.id,
           status: "stale-running",
+          kind: run.kind || "scoring",
           seasonUid: run.seasonUid,
           scoredDay: run.scoredDay,
           attempts: run.attempts,
@@ -83,6 +89,27 @@ async function findUnhealthyScoringRuns(db, now = new Date()) {
     }
   }
   return unhealthy;
+}
+
+/**
+ * Overall alert severity for a watchdog run. Critical only when the fantasy
+ * pipeline itself is implicated: a failed/stale "scoring"-kind run, a failed
+ * scrape night, or an unscored dispatcher night. Unhealthy non-scoring leases
+ * (kind "announce" — Discord posts, archival sweeps) alone are a warning:
+ * players' scores are fine, only a side channel misfired.
+ *
+ * @param {Object} params
+ * @param {Array<{kind?: string}>} params.unhealthy
+ * @param {object|null} params.scrapeProblem
+ * @param {object|null} params.unscoredProblem
+ * @returns {"critical"|"warning"}
+ */
+function watchdogSeverity({ unhealthy, scrapeProblem, unscoredProblem }) {
+  const scoringImplicated =
+    Boolean(scrapeProblem) ||
+    Boolean(unscoredProblem) ||
+    unhealthy.some((r) => (r.kind || "scoring") === "scoring");
+  return scoringImplicated ? "critical" : "warning";
 }
 
 /**
@@ -200,10 +227,20 @@ exports.scoringWatchdog = onSchedule({
   secrets: [brevoApiKey, discordOpsWebhookUrl],
 }, async () => {
   const db = getDb();
-  const unhealthy = await findUnhealthyScoringRuns(db);
 
-  // A broken scrape check must never mask (or be masked by) the scoring-run
-  // check, so its errors are contained here.
+  // Each check is contained so a broken one can never mask (or be masked by)
+  // the others — the watchdog must always reach its alerting with whatever it
+  // did manage to check, and a check that errored is itself reported.
+  let unhealthy = [];
+  try {
+    unhealthy = await findUnhealthyScoringRuns(db);
+  } catch (error) {
+    logger.error(`[scoring-watchdog] Could not check recent scoring runs: ${error.message}`);
+    unhealthy = [{
+      id: "scoring_runs", status: "check-error", kind: "scoring", lastError: error.message,
+    }];
+  }
+
   let scrapeProblem = null;
   try {
     scrapeProblem = await findScrapeRunProblem(db);
@@ -226,11 +263,23 @@ exports.scoringWatchdog = onSchedule({
     return;
   }
 
+  // Split by lease kind: scoring-run failures are the critical incident;
+  // announce-kind leases (Discord posts etc.) only warrant a warning line.
+  const unhealthyScoring = unhealthy.filter((r) => (r.kind || "scoring") === "scoring");
+  const unhealthyAnnounce = unhealthy.filter((r) => (r.kind || "scoring") !== "scoring");
+  const describeRun = (r) => `${r.id} (${r.status}${r.lastError ? `: ${r.lastError}` : ""})`;
+
   const problems = [];
-  if (unhealthy.length > 0) {
+  if (unhealthyScoring.length > 0) {
     problems.push(
-      `${unhealthy.length} unhealthy scoring run(s) in the last 2 days: ` +
-      unhealthy.map((r) => `${r.id} (${r.status}${r.lastError ? `: ${r.lastError}` : ""})`).join("; "),
+      `${unhealthyScoring.length} unhealthy scoring run(s) in the last 2 days: ` +
+      unhealthyScoring.map(describeRun).join("; "),
+    );
+  }
+  if (unhealthyAnnounce.length > 0) {
+    problems.push(
+      `warning: ${unhealthyAnnounce.length} unhealthy announcement lease(s) (non-scoring) ` +
+      `in the last 2 days: ${unhealthyAnnounce.map(describeRun).join("; ")}`,
     );
   }
   if (scrapeProblem) {
@@ -253,11 +302,13 @@ exports.scoringWatchdog = onSchedule({
     );
   }
 
+  const severity = watchdogSeverity({ unhealthy, scrapeProblem, unscoredProblem });
+
   // Loud and stably tagged so a log-based alert can match on the literal
   // string "[scoring-watchdog]".
   logger.error(
     `[scoring-watchdog] ${problems.join(" | ")}`,
-    { runs: unhealthy, scrape: scrapeProblem, unscored: unscoredProblem },
+    { runs: unhealthy, scrape: scrapeProblem, unscored: unscoredProblem, severity },
   );
 
   // Also email the admins (same pattern as the news-generation failure path in
@@ -282,7 +333,7 @@ exports.scoringWatchdog = onSchedule({
   await postOpsAlert(discordOpsWebhookUrl.value(), {
     title: "Nightly scoring pipeline: unhealthy run(s)",
     source: "scoring-watchdog",
-    severity: "critical",
+    severity,
     summary:
       "The 4:30 AM watchdog found problems with last night's pipeline. A failed scoring " +
       "run can be re-run from Admin (manual trigger); a failed scrape can be re-run with " +
@@ -293,6 +344,7 @@ exports.scoringWatchdog = onSchedule({
 
 // Exported for unit tests.
 exports.findUnhealthyScoringRuns = findUnhealthyScoringRuns;
+exports.watchdogSeverity = watchdogSeverity;
 exports.findScrapeRunProblem = findScrapeRunProblem;
 exports.findUnscoredNightProblem = findUnscoredNightProblem;
 exports.LOOKBACK_MS = LOOKBACK_MS;

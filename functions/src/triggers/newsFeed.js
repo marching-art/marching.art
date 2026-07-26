@@ -6,7 +6,12 @@
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { getCategoryFromType } = require("../helpers/newsArticleShared");
+const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
+const { clampLimit, assertDocId } = require("../helpers/callableGuards");
+
+// Known article categories ("dci" | "fantasy" | "analysis" | "daily"). Client
+// input outside this set never reaches a Firestore query or cache-key path.
+const VALID_NEWS_CATEGORIES = new Set(Object.values(NEWS_CATEGORIES));
 
 /**
  * Fetch daily news for a specific day
@@ -22,6 +27,16 @@ exports.getDailyNews = onCall(
 
     if (!day) {
       throw new HttpsError("invalid-argument", "Missing required parameter: day");
+    }
+
+    // Both params are interpolated into a Firestore doc path below, so they
+    // must be a bounded integer / doc-id shape — never raw caller strings.
+    const dayNum = Number(day);
+    if (!Number.isInteger(dayNum) || dayNum < 1 || dayNum > 366) {
+      throw new HttpsError("invalid-argument", "day must be an integer between 1 and 366");
+    }
+    if (seasonId !== undefined && seasonId !== null) {
+      assertDocId(seasonId, "seasonId");
     }
 
     try {
@@ -41,7 +56,7 @@ exports.getDailyNews = onCall(
       }
 
       // Correct path: news_hub/{seasonId}/days/day_{n}
-      const docPath = `news_hub/${activeSeasonId}/days/day_${day}`;
+      const docPath = `news_hub/${activeSeasonId}/days/day_${dayNum}`;
       const doc = await db.doc(docPath).get();
 
       if (!doc.exists) {
@@ -74,10 +89,14 @@ const NEWS_FEED_CACHE_TTL = 5 * 60 * 1000; // 5 minutes server-side cache (match
 const NEWS_FEED_CACHE_COLLECTION = "news_feed_cache";
 
 /**
- * Generate cache key for news feed requests
+ * Generate cache key for news feed requests.
+ * Both entry points validate category/limit before calling this; the
+ * sanitize here is defense in depth so a future caller can never mint
+ * arbitrary cache doc ids from raw client input.
  */
 function getNewsCacheKey(category, limit) {
-  return `feed_${category || "all"}_${limit}`;
+  const safeCategory = String(category || "all").toLowerCase().replace(/[^a-z0-9_]/g, "");
+  return `feed_${safeCategory || "all"}_${clampLimit(limit, { fallback: 10, max: 50 })}`;
 }
 
 /**
@@ -165,12 +184,22 @@ exports.getRecentNews = onCall(
   async (request) => {
     const db = getDb();
     const {
-      limit = 10,
+      limit: rawLimit,
       category,
       startAfter,
       includeEngagement = false,
       feedOnly = false, // NEW: Only return display fields for feed (no full content)
     } = request.data || {};
+
+    // Server-clamped page size: an unbounded limit would let one call read
+    // (and bill) an arbitrarily large result set.
+    const limit = clampLimit(rawLimit, { fallback: 10, max: 50 });
+
+    // Category flows into a Firestore query and the cache key — unknown
+    // values are rejected rather than queried/cached.
+    if (category !== undefined && category !== null && !VALID_NEWS_CATEGORIES.has(category)) {
+      throw new HttpsError("invalid-argument", "Invalid category");
+    }
 
     // For paginated requests (startAfter), skip cache - user is loading more
     const useCache = !startAfter;
@@ -421,9 +450,10 @@ exports.getNewsFeedHttp = onRequest(
   async (req, res) => {
     const db = getDb();
 
-    // Parse query parameters
-    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
-    const category = req.query.category || null;
+    // Parse query parameters. Unknown categories are coerced to "all" (null)
+    // rather than 400ing so cached/CDN'd links with junk params still serve.
+    const limit = clampLimit(req.query.limit, { fallback: 10, max: 50 });
+    const category = VALID_NEWS_CATEGORIES.has(req.query.category) ? req.query.category : null;
 
     const cacheKey = getNewsCacheKey(category, limit);
 

@@ -161,10 +161,14 @@ function readApiKey() {
  *
  * @param {string} url - The dci.org URL to fetch.
  * @param {object} [options]
- * @param {number} [options.maxRetries=3]
+ * @param {number} [options.maxRetries=4] - Total attempt cap, first attempt
+ *   included. Callers on a tight timeout budget (the scrape canary) pass a
+ *   lower cap so the worst case fits their deadline.
+ * @param {typeof axios.get} [options.transport] - Injectable GET for tests;
+ *   defaults to axios.get.
  * @returns {Promise<string>} The response body (HTML or XML).
  */
-async function dciFetch(url, { maxRetries = 4 } = {}) {
+async function dciFetch(url, { maxRetries = 4, transport = axios.get } = {}) {
   if (!url) throw new Error("dciFetch requires a URL.");
 
   const key = readApiKey();
@@ -191,7 +195,7 @@ async function dciFetch(url, { maxRetries = 4 } = {}) {
   let lastError;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const response = await axios.get(requestUrl, config);
+      const response = await transport(requestUrl, config);
       // A challenge page returned as HTTP 200 would otherwise parse to "no
       // results". Treat it as a retryable failure so we retry (and ultimately
       // surface a clear error) instead of silently succeeding on junk.
