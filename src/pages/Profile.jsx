@@ -354,8 +354,13 @@ const Profile = () => {
   const handleShareProfile = useCallback(async () => {
     if (!profile) return;
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const handle = profile.username ? `@${profile.username}` : profile.uid;
-    const url = `${origin}/profile/${handle}`;
+    // Share the public /d/{username} page, not the in-app /profile route: it
+    // is server-rendered, so it unfurls in chats and is indexable, and a
+    // recipient who isn't signed in sees the profile instead of a login wall.
+    // Without a username there is no public page, so fall back to the app URL.
+    const url = profile.username
+      ? `${origin}/d/${encodeURIComponent(profile.username)}`
+      : `${origin}/profile/${profile.uid}`;
     const title = profile.displayName || 'marching.art director';
     const shareText = `Check out ${title} on marching.art`;
     try {
