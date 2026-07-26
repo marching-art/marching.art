@@ -15,7 +15,13 @@
 
   /* Identity tokens (docs/DESIGN_SYSTEM.md) */
   --brand: #eab308; /* permanent gold — logo / reward */
-  --interactive: #3b82f6; /* azure — links / focus / self */
+  --interactive: #60a5fa; /* azure foreground — links / focus / self (button fills use the darker interactive-fill token) */
+
+  /* Status tokens — same values as the Tailwind `success` / `error` colors
+     (tailwind.config.cjs). Exposed as CSS variables for non-Tailwind contexts
+     (e.g. react-hot-toast inline styles in App.jsx). */
+  --success: #00c853;
+  --error: #ff5252;
 
   /* Touch & Interaction */
   --touch-target-min: 44px;

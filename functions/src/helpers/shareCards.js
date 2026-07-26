@@ -176,6 +176,64 @@ function buildChampionCardSvg({ champions, classKey }) {
   });
 }
 
+// Corps display order on the director card mirrors the profile UI: ranked
+// classes first, SoundSport last.
+const DIRECTOR_CARD_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport"];
+
+/**
+ * Director-profile card for the public /d/{username} pages.
+ *
+ * IMPORTANT: `profile` must already be reduced to getPublicProfile's field
+ * allowlist by the caller (helpers/publicProfilePages.pickPublicProfile) —
+ * this builder only reads allowlisted fields, but keeping the reduction at
+ * the call boundary means a new field here can't silently widen exposure.
+ *
+ * @param {Object} params
+ * @param {Object} params.profile   Allowlisted public profile view.
+ * @param {string} params.username  Canonical username.
+ * @returns {string | null} SVG, or null when there is nothing to render.
+ */
+function buildDirectorCardSvg({ profile, username }) {
+  if (!profile || !username) return null;
+  const stats = profile.stats || {};
+  const corps = profile.corps || {};
+
+  const corpsRows = [];
+  const keys = [
+    ...DIRECTOR_CARD_CLASS_ORDER.filter((key) => key in corps),
+    ...Object.keys(corps).filter((key) => !DIRECTOR_CARD_CLASS_ORDER.includes(key)),
+  ];
+  for (const classKey of keys) {
+    const corpsName =
+      corps[classKey] && typeof corps[classKey].corpsName === "string"
+        ? corps[classKey].corpsName.trim()
+        : "";
+    if (!corpsName) continue;
+    corpsRows.push({
+      rank: corpsRows.length + 1,
+      name: corpsName,
+      detail: CLASS_LABELS[classKey] || classKey,
+    });
+  }
+
+  const championships = Number(stats.championships) || 0;
+  const seasons = Number(stats.seasonsPlayed) || 0;
+  const subtitleParts = [
+    `@${username}`,
+    `Level ${Number(profile.xpLevel) || 1}`,
+    seasons > 0 ? `${seasons} season${seasons === 1 ? "" : "s"}` : "",
+    championships > 0 ? `${championships} championship${championships === 1 ? "" : "s"}` : "",
+  ].filter(Boolean);
+
+  return buildCardSvg({
+    kicker: "Fantasy Drum Corps · Director Profile",
+    title: profile.displayName || "Unknown Director",
+    subtitle: subtitleParts.join(" · "),
+    rows: corpsRows.slice(0, 5),
+    footer: `marching.art/d/${username}`,
+  });
+}
+
 // -----------------------------------------------------------------------------
 // SHARE PAGE HTML
 // -----------------------------------------------------------------------------
@@ -237,14 +295,19 @@ const SEGMENT = /^[A-Za-z0-9_-]+$/;
 /** @param {string} value */
 const isValidClassKey = (value) => Object.prototype.hasOwnProperty.call(CLASS_LABELS, value);
 
+// Username shape enforced by the updateUsername callable (callable/profile.js).
+const USERNAME_SEGMENT = /^[A-Za-z0-9_]{3,15}$/;
+
 /**
  * Parse an /api/og request path into a card descriptor.
  * Shapes: /api/og/scores/{seasonUid}/{day}/{classKey}.png
  *         /api/og/champion/{seasonId}/{classKey}.png
+ *         /api/og/director/{username}.png
  *
  * @param {string} path
  * @returns {{type: 'scores', seasonUid: string, day: number, classKey: string}
  *   | {type: 'champion', seasonId: string, classKey: string}
+ *   | {type: 'director', username: string}
  *   | null}
  */
 function parseOgPath(path) {
@@ -269,6 +332,12 @@ function parseOgPath(path) {
     const classKey = classFile.replace(/\.png$/, "");
     if (!SEGMENT.test(seasonId) || !isValidClassKey(classKey)) return null;
     return { type: "champion", seasonId, classKey };
+  }
+
+  if (kind === "director" && parts.length === 4) {
+    const username = parts[3].replace(/\.png$/, "");
+    if (!USERNAME_SEGMENT.test(username)) return null;
+    return { type: "director", username };
   }
 
   return null;
@@ -319,6 +388,7 @@ module.exports = {
   buildCardSvg,
   buildScoresCardSvg,
   buildChampionCardSvg,
+  buildDirectorCardSvg,
   buildShareHtml,
   parseOgPath,
   parseSharePath,

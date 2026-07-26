@@ -9,6 +9,19 @@ name: Deploy Cloud Functions
 # redeploy. List tags: `git tag -l 'functions-deploy/*' | sort | tail`.
 
 on:
+  # Auto-deploy: a push to main that touches backend code or security rules
+  # runs the full deploy path (same as deploy_target=all — `firebase deploy
+  # --only functions` covers both the default and scraper codebases). The
+  # one-off maintenance jobs stay dispatch-only: their checkbox inputs are
+  # empty (falsy) on push events.
+  push:
+    branches: [main]
+    paths:
+      - 'functions/**'
+      - 'functions-scraper/**'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'firestore.indexes.json'
   # Manual trigger from GitHub UI with options
   workflow_dispatch:
     inputs:
@@ -80,7 +93,8 @@ jobs:
   # commit could deploy all ~150 production functions, nightly scoring
   # pipeline included, without a single test running.
   test-functions:
-    if: contains(fromJSON('["all", "single", "scraper"]'), inputs.deploy_target)
+    # Push events have no inputs; they always take the full-deploy path.
+    if: github.event_name == 'push' || contains(fromJSON('["all", "single", "scraper"]'), inputs.deploy_target)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -109,7 +123,8 @@ jobs:
   # deploy ship rules, so both need this — otherwise a workflow_dispatch from
   # an un-CI'd branch could push a rules regression straight to production.
   test-rules:
-    if: contains(fromJSON('["all", "rules-only"]'), inputs.deploy_target)
+    # Push events have no inputs; they always take the full-deploy path.
+    if: github.event_name == 'push' || contains(fromJSON('["all", "rules-only"]'), inputs.deploy_target)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -140,7 +155,9 @@ jobs:
         run: cd firestore-tests && npm test
 
   deploy-all:
-    if: inputs.deploy_target == 'all'
+    # Runs for deploy_target=all AND for every push to main touching backend
+    # paths (see the push trigger above).
+    if: github.event_name == 'push' || inputs.deploy_target == 'all'
     needs: [test-functions, test-rules]
     # contents: write is for the functions-deploy/* rollback tag push only.
     permissions:

@@ -89,7 +89,13 @@ function auditRecapPage(html) {
     'div[data-widget_type="shortcode.default"] div.score-date-location'
   ).find("p");
   if (dateLocationPs.length < 1) {
-    warnings.push("date/location block missing — event dates would fall back to scrape time");
+    // A hard problem, not a warning: the scraper refuses to publish a recap
+    // without a parseable event date (the date is the archive key), so a
+    // missing block means every recap fails tonight.
+    problems.push(
+      "date/location block missing (score-date-location drifted) — the scraper will reject " +
+        "every recap for lacking a parseable event date"
+    );
   }
 
   const table = $("table#effect-table-0");

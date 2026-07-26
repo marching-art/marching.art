@@ -10,21 +10,33 @@
 
 const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
-// sharp's dual-package typings claim a `.default` export, but the CJS
-// runtime export IS the callable — cast through the type it actually has.
-const sharp = /** @type {import("sharp").default} */ (
-  /** @type {unknown} */ (require("sharp"))
-);
+// sharp is required lazily (memoized, same pattern as mediaService's
+// cloudinary): every function in the deploy unit loads this module at cold
+// start via index.js, but only the OG-card endpoint ever rasterizes SVGs —
+// eagerly loading libvips taxed every other function's cold start.
+/** @type {import("sharp").default | undefined} */
+let sharpModule;
+function getSharp() {
+  // sharp's dual-package typings claim a `.default` export, but the CJS
+  // runtime export IS the callable — cast through the type it actually has.
+  sharpModule ||= /** @type {import("sharp").default} */ (
+    /** @type {unknown} */ (require("sharp"))
+  );
+  return sharpModule;
+}
 const { getDb } = require("../config");
 const {
   SITE_URL,
   buildScoresCardSvg,
   buildChampionCardSvg,
+  buildDirectorCardSvg,
   buildShareHtml,
   parseOgPath,
   parseSharePath,
   clamp,
 } = require("../helpers/shareCards");
+const { isProfilePrivate, pickPublicProfile } = require("../helpers/publicProfilePages");
+const { resolveDirectorProfile } = require("./publicProfilePages");
 const { CLASS_LABELS, aggregateNightlyStandings } = require("../helpers/scoreDrop");
 
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
@@ -104,6 +116,16 @@ exports.getOgCardHttp = onRequest(
         if (champions) {
           svg = buildChampionCardSvg({ champions, classKey: route.classKey });
         }
+      } else if (route.type === "director") {
+        // Backs the OG image on /d/{username}. Private profiles get no card:
+        // an unfurl must never leak what the page itself withholds.
+        const resolved = await resolveDirectorProfile(db, route.username);
+        if (resolved && !isProfilePrivate(resolved.data)) {
+          svg = buildDirectorCardSvg({
+            profile: pickPublicProfile(resolved.data),
+            username: resolved.data.username,
+          });
+        }
       }
 
       if (!svg) {
@@ -111,7 +133,7 @@ exports.getOgCardHttp = onRequest(
         return;
       }
 
-      const png = await sharp(Buffer.from(svg)).png().toBuffer();
+      const png = await getSharp()(Buffer.from(svg)).png().toBuffer();
       res.set("Content-Type", "image/png");
       res.set("Cache-Control", CARD_CACHE_CONTROL);
       res.status(200).send(png);

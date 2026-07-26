@@ -29,8 +29,8 @@ const COLORS = {
 
   // Accents
   brand: "#EAB308", // brand — identity and reward only
-  interactive: "#3B82F6", // interactive — links and actions
-  interactiveHover: "#2563EB", // interactive.hover
+  interactive: "#60A5FA", // interactive — links and actions (foreground tone)
+  interactiveHover: "#93C5FD", // interactive.hover
 };
 
 // Matches the app's font-sans stack closely enough for a static page; the

@@ -7,14 +7,6 @@ import AxeBuilder from '@axe-core/playwright';
  * locks them in by failing CI on any SERIOUS or CRITICAL WCAG 2.0/2.1 A/AA
  * violation on the pages every visitor can reach. Moderate/minor findings are
  * reported in the test output but don't fail — tighten over time.
- *
- * KNOWN DEBT — color-contrast is reported but does not gate: the design
- * system's `interactive` blue (#3b82f6) yields 3.67:1 with white button text
- * (AA needs 4.5:1) on every CTA, and 3.66:1 as text on dark chips. Fixing it
- * properly means splitting the token (darker fill for white-on-blue buttons,
- * lighter tone for blue-on-dark text) in tailwind.config.cjs +
- * docs/DESIGN_SYSTEM.md — a deliberate design change, not a test-side fix.
- * Once the token is reworked, delete the carve-out below so contrast gates.
  */
 
 const PAGES: Array<{ path: string; name: string }> = [
@@ -39,7 +31,7 @@ test.describe('Accessibility (axe)', () => {
         .analyze();
 
       const gating = results.violations.filter(
-        (v) => (v.impact === 'serious' || v.impact === 'critical') && v.id !== 'color-contrast'
+        (v) => v.impact === 'serious' || v.impact === 'critical'
       );
       const advisory = results.violations.filter((v) => !gating.includes(v));
 

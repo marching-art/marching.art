@@ -17,7 +17,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { db, paths } from '../api/client';
+import { auth, db, paths } from '../api/client';
 import { queryKeys } from '../lib/queryClient';
 import type { LeagueNotification, LeagueActivity, RivalryData } from '../types';
 
@@ -65,6 +65,8 @@ export function getNotificationStyle(type: LeagueNotification['type']) {
       return { icon: 'UserPlus', color: 'text-cyan-400', bg: 'bg-cyan-500/20' };
     case 'rivalry_matchup':
       return { icon: 'Flame', color: 'text-red-400', bg: 'bg-red-500/20' };
+    case 'league_invite':
+      return { icon: 'Mail', color: 'text-interactive', bg: 'bg-interactive/20' };
     default:
       return { icon: 'Bell', color: 'text-muted', bg: 'bg-charcoal-500/20' };
   }
@@ -128,6 +130,7 @@ export function useLeagueNotifications(
         'trade_response',
         'member_joined',
         'rivalry_matchup',
+        'league_invite',
       ]),
       orderBy('createdAt', 'desc'),
       limit(notificationLimit)
@@ -403,12 +406,31 @@ export function useRivalries(
 }
 
 // =============================================================================
-// UTILITY: Create notification
+// UTILITY: Create notification (SELF only)
 // =============================================================================
 
+/**
+ * Create a league notification for the CURRENTLY SIGNED-IN user only.
+ *
+ * Firestore rules only permit a client to write into its own notifications
+ * subcollection — a cross-user write from the browser is denied (and used to
+ * fail silently here). Notifications aimed at OTHER users (league invites,
+ * invitation responses, matchup results, …) are written server-side with the
+ * Admin SDK inside the callables that perform the triggering action — see
+ * functions/src/callable/leagueInvitations.js.
+ */
 export async function createLeagueNotification(
   notification: Omit<LeagueNotification, 'id' | 'createdAt'>
 ): Promise<string> {
+  const currentUid = auth.currentUser?.uid;
+  if (!currentUid || notification.userId !== currentUid) {
+    throw new Error(
+      'createLeagueNotification only writes notifications for the signed-in user. ' +
+        'Cross-user notifications must be created server-side (Admin SDK) by the ' +
+        'callable that triggers them.'
+    );
+  }
+
   const notificationsRef = collection(db, paths.userNotifications(notification.userId));
   const newNotificationRef = doc(notificationsRef);
 

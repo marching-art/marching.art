@@ -44,11 +44,11 @@ const EMAIL_TYPES = {
   ADMIN_GENERIC_ALERT: "admin_generic_alert",
 };
 
-// Cached Brevo API instance - reused across requests in same instance
+// Cached Brevo client instance - reused across requests in same instance
 let cachedBrevoClient = null;
 
 /**
- * Get or create Brevo API instance (cached for performance)
+ * Get or create the Brevo client (cached for performance)
  */
 function getBrevoClient() {
   if (!cachedBrevoClient) {
@@ -59,9 +59,10 @@ function getBrevoClient() {
     if (!apiKey) {
       throw new Error("Brevo API key not configured");
     }
-    const brevo = require("@getbrevo/brevo");
-    cachedBrevoClient = new brevo.TransactionalEmailsApi();
-    cachedBrevoClient.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+    // v6 SDK: one BrevoClient with per-resource namespaces (replaces the v2
+    // per-API classes like TransactionalEmailsApi + setApiKey).
+    const { BrevoClient } = require("@getbrevo/brevo");
+    cachedBrevoClient = new BrevoClient({ apiKey });
   }
   return cachedBrevoClient;
 }
@@ -78,30 +79,31 @@ function getBrevoClient() {
  */
 async function sendEmail({ to, subject, html, text, emailType }) {
   try {
-    const apiInstance = getBrevoClient();
+    const client = getBrevoClient();
 
-    const brevo = require("@getbrevo/brevo");
-    const sendSmtpEmail = new brevo.SendSmtpEmail();
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = html;
-    sendSmtpEmail.textContent = text || stripHtml(html);
-    sendSmtpEmail.sender = {
-      email: EMAIL_CONFIG.fromEmail,
-      name: EMAIL_CONFIG.fromName,
-    };
-    sendSmtpEmail.to = [{ email: to }];
-    sendSmtpEmail.replyTo = { email: EMAIL_CONFIG.replyTo };
-    sendSmtpEmail.tags = [emailType];
-
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
+    // v6 SDK: plain request object (no SendSmtpEmail model class) sent via the
+    // client's transactionalEmails namespace. Field names are unchanged.
+    await client.transactionalEmails.sendTransacEmail({
+      subject,
+      htmlContent: html,
+      textContent: text || stripHtml(html),
+      sender: {
+        email: EMAIL_CONFIG.fromEmail,
+        name: EMAIL_CONFIG.fromName,
+      },
+      to: [{ email: to }],
+      replyTo: { email: EMAIL_CONFIG.replyTo },
+      tags: [emailType],
+    });
     logger.info(`Email sent successfully: ${emailType} to ${to}`);
     return true;
   } catch (error) {
-    // Brevo's HttpError carries the useful detail on error.response, not on the
-    // top-level message. Surface the status code and parsed body so failures
-    // (e.g. a 401 from a bad/disabled BREVO_API_KEY) are diagnosable from logs.
-    const statusCode = error.response?.statusCode || error.statusCode;
-    const responseBody = error.response?.body || error.body;
+    // v6 BrevoError subclasses expose the HTTP status and parsed body at the
+    // top level (error.statusCode / error.body); the error.response fallback
+    // covers any non-SDK error shape. Surface both so failures (e.g. a 401
+    // from a bad/disabled BREVO_API_KEY) are diagnosable from logs.
+    const statusCode = error.statusCode || error.response?.statusCode;
+    const responseBody = error.body || error.response?.body;
     logger.error(`Failed to send email: ${emailType} to ${to}`, {
       statusCode,
       responseBody,

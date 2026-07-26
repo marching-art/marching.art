@@ -7,7 +7,18 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { User, Crown, Coins, Heart, MessageCircle } from 'lucide-react';
+import {
+  User,
+  Crown,
+  Coins,
+  Heart,
+  MessageCircle,
+  ShoppingBag,
+  Award,
+  BookOpen,
+  Archive,
+  History,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
@@ -343,8 +354,13 @@ const Profile = () => {
   const handleShareProfile = useCallback(async () => {
     if (!profile) return;
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const handle = profile.username ? `@${profile.username}` : profile.uid;
-    const url = `${origin}/profile/${handle}`;
+    // Share the public /d/{username} page, not the in-app /profile route: it
+    // is server-rendered, so it unfurls in chats and is indexable, and a
+    // recipient who isn't signed in sees the profile instead of a login wall.
+    // Without a username there is no public page, so fall back to the app URL.
+    const url = profile.username
+      ? `${origin}/d/${encodeURIComponent(profile.username)}`
+      : `${origin}/profile/${profile.uid}`;
     const title = profile.displayName || 'marching.art director';
     const shareText = `Check out ${title} on marching.art`;
     try {
@@ -514,6 +530,48 @@ const Profile = () => {
                   {(profile.corpsCoin || 0).toLocaleString()} CC
                 </span>
               </button>
+            )}
+            {/* Previously buried pages — Shop was reachable only from the
+                CorpsCoin modal, Records only from Hall of Champions, and the
+                retired corps gallery / corps history had no inbound links. */}
+            {isOwnProfile && (
+              <>
+                <Link
+                  to="/shop"
+                  className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+                >
+                  <ShoppingBag className="w-5 h-5 text-interactive mb-1" />
+                  <span className="text-xs text-muted">Shop</span>
+                </Link>
+                <Link
+                  to="/achievements"
+                  className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+                >
+                  <Award className="w-5 h-5 text-brand mb-1" />
+                  <span className="text-xs text-muted">Achievements</span>
+                </Link>
+                <Link
+                  to="/records"
+                  className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+                >
+                  <BookOpen className="w-5 h-5 text-secondary mb-1" />
+                  <span className="text-xs text-muted">Records</span>
+                </Link>
+                <Link
+                  to="/retired-corps"
+                  className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+                >
+                  <Archive className="w-5 h-5 text-secondary mb-1" />
+                  <span className="text-xs text-muted">Retired Corps</span>
+                </Link>
+                <Link
+                  to="/corps-history"
+                  className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+                >
+                  <History className="w-5 h-5 text-secondary mb-1" />
+                  <span className="text-xs text-muted">Corps History</span>
+                </Link>
+              </>
             )}
           </div>
 

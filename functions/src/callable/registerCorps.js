@@ -81,6 +81,8 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     }
 
     // --- 4b. Check if corps name is already taken this season ---
+    // Friendly pre-check for the common case; the batch.create() below is the
+    // race-proof backstop for two directors submitting the same name at once.
     const seasonId = seasonData?.seasonUid || 'default';
     const corpsNameKey = `${seasonId}_${normalizedNewName}`;
     const corpsNameRef = db.doc(`corpsnames/${corpsNameKey}`);
@@ -138,15 +140,27 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     // --- 7. Write to DB (batch to ensure atomicity) ---
     const batch = db.batch();
     batch.update(profileDocRef, updateData);
-    // Reserve the corps name for this season
-    batch.set(corpsNameRef, {
+    // Reserve the corps name for this season. create() (not set) so a
+    // concurrent registration of the same name atomically fails the whole
+    // commit instead of silently overwriting the other director's
+    // reservation — the pre-check above cannot see an in-flight rival.
+    batch.create(corpsNameRef, {
       uid,
       corpsName,
       corpsClass,
       seasonId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    await batch.commit();
+    try {
+      await batch.commit();
+    } catch (commitError) {
+      // gRPC ALREADY_EXISTS (code 6): we lost the reservation race. Surface
+      // the same user-facing error the pre-check produces.
+      if (commitError?.code === 6 || /ALREADY_EXISTS/i.test(String(commitError?.message))) {
+        throw new HttpsError("already-exists", "This corps name is already taken. Please choose a different name.");
+      }
+      throw commitError;
+    }
 
     // This director now counts as registered for the season, so any league
     // they belong to may have just become publicly discoverable. Best-effort:

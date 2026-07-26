@@ -418,7 +418,9 @@ async function runDiscordScoreDrop(db, { seasonUid, seasonName, scoredDay, webho
   }
 
   const leaseKey = `${seasonUid}_discord`;
-  const lease = await claimScoringRun(db, leaseKey, scoredDay);
+  // kind "announce": a failed Discord post is a warning at the watchdog, not
+  // a critical scoring incident.
+  const lease = await claimScoringRun(db, leaseKey, scoredDay, { kind: "announce" });
   if (!lease.claimed) return { status: "skipped", reason: lease.reason, scoredDay };
 
   const result = { status: "posted", scoredDay, recordsBroken };

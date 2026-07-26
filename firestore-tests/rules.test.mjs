@@ -18,6 +18,7 @@ import {
   updateDoc,
   setDoc,
   deleteDoc,
+  deleteField,
   collection,
   getDocs,
   query,
@@ -146,6 +147,147 @@ await check(
       },
       { merge: true }
     )
+  )
+);
+
+// =============================================================================
+// FREE-TEXT SIZE/TYPE CAPS — profile/data is world-readable, so owner-writable
+// free-text fields (bio, displayName, location, favoriteCorps, directorInfo)
+// are coarsely bounded in rules: oversized or non-string junk written by an
+// owner would otherwise be publicly served to every visitor. Caps are checked
+// only for fields the write touches, so partial updates and deletions keep
+// working.
+// =============================================================================
+await freshSeed();
+await check(
+  'owner cannot write an oversized bio (2KB cap)',
+  assertFails(updateDoc(doc(authed(), profilePath), { bio: 'x'.repeat(5000) }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot write a non-string bio',
+  assertFails(updateDoc(doc(authed(), profilePath), { bio: 12345 }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot write an oversized displayName (100 cap)',
+  assertFails(updateDoc(doc(authed(), profilePath), { displayName: 'D'.repeat(150) }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot write an oversized location (200 cap)',
+  assertFails(updateDoc(doc(authed(), profilePath), { location: 'L'.repeat(500) }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot write an oversized favoriteCorps (200 cap)',
+  assertFails(updateDoc(doc(authed(), profilePath), { favoriteCorps: 'F'.repeat(500) }))
+);
+
+await freshSeed();
+await check(
+  'owner can delete a capped free-text field (FieldValue.delete still works)',
+  assertSucceeds(updateDoc(doc(authed(), profilePath), { bio: deleteField() }))
+);
+
+// The exact onboarding merge shape (mergeProfile in src/pages/Onboarding.jsx)
+await freshSeed();
+await check(
+  'onboarding merge with empty free-text fields still passes the caps',
+  assertSucceeds(
+    setDoc(
+      doc(authed(), profilePath),
+      { location: '', bio: '', favoriteCorps: '' },
+      { merge: true }
+    )
+  )
+);
+
+// directorInfo is written wholesale by the profile edit modal; its free-text
+// members and social links are capped, and unknown keys are rejected so a
+// giant payload cannot hide under an unchecked key.
+await freshSeed();
+await check(
+  'owner can save a full modal-shaped directorInfo with socials',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: {
+        bio: 'Directing since 2020',
+        yearsDirecting: 5,
+        specialties: ['Brass', 'General Effect'],
+        credentials: 'BA Music Ed',
+        acceptingLeagueInvites: true,
+        socialLinks: { website: 'https://example.com', twitter: '@alice' },
+      },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot write an oversized directorInfo.bio',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'x'.repeat(5000), specialties: [], socialLinks: {} },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot write an oversized social link (300 cap)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: {
+        bio: 'ok',
+        specialties: [],
+        socialLinks: { website: 'https://example.com/' + 'a'.repeat(500) },
+      },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot smuggle text under an unknown socialLinks key',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: {
+        bio: 'ok',
+        specialties: [],
+        socialLinks: { myspace: 'x'.repeat(100000) },
+      },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot smuggle text under an unknown directorInfo key',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'ok', wall_of_text: 'x'.repeat(100000) },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot replace directorInfo with a non-map',
+  assertFails(updateDoc(doc(authed(), profilePath), { directorInfo: 'x'.repeat(100000) }))
+);
+
+// Writes that do not touch a capped field never pay for the caps: the seed
+// bio stays in place while an unrelated cosmetic field changes.
+await freshSeed();
+await check(
+  'update not touching capped fields is unaffected by the caps',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), { 'corps.worldClass.showConcept': 'Untouched' })
   )
 );
 
@@ -563,6 +705,64 @@ await freshNotificationSeed();
 await check(
   "another user cannot read someone else's notifications (catch-all regression)",
   assertFails(getDoc(doc(mallory(), notificationPath)))
+);
+
+// --- creation is backend-only; the owner's write surface is exactly
+// mark-read + delete (useLeagueNotifications.ts). The old blanket owner
+// `write` let a user forge arbitrary "official" notifications to themselves
+// with unbounded payloads.
+await freshNotificationSeed();
+await check(
+  'owner can mark their notification read (the real client write)',
+  assertSucceeds(updateDoc(doc(authed(), notificationPath), { read: true }))
+);
+
+await freshNotificationSeed();
+await check(
+  'owner can delete their own notification (clearOldNotifications)',
+  assertSucceeds(deleteDoc(doc(authed(), notificationPath)))
+);
+
+await freshNotificationSeed();
+await check(
+  'owner cannot create a notification client-side (forgery, backend only)',
+  assertFails(
+    setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/notifications/forged-1`), {
+      type: 'league_invite',
+      title: 'OFFICIAL: You won',
+      message: 'x'.repeat(100000),
+      createdAt: new Date(),
+    })
+  )
+);
+
+await freshNotificationSeed();
+await check(
+  'owner cannot rewrite notification content via update (mark-read only)',
+  assertFails(
+    updateDoc(doc(authed(), notificationPath), {
+      title: 'OFFICIAL: You actually won',
+      message: 'forged',
+    })
+  )
+);
+
+await freshNotificationSeed();
+await check(
+  'owner cannot piggyback content changes onto a mark-read update',
+  assertFails(updateDoc(doc(authed(), notificationPath), { read: true, message: 'forged' }))
+);
+
+await freshNotificationSeed();
+await check(
+  'notification read flag must be a boolean',
+  assertFails(updateDoc(doc(authed(), notificationPath), { read: 'x'.repeat(100000) }))
+);
+
+await freshNotificationSeed();
+await check(
+  "another user cannot mark someone else's notification read",
+  assertFails(updateDoc(doc(mallory(), notificationPath), { read: true }))
 );
 
 // =============================================================================

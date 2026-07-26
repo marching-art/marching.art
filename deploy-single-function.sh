@@ -45,6 +45,21 @@ if ! command -v firebase &> /dev/null; then
     npm install -g firebase-tools
 fi
 
+# =============================================================================
+# TEST GATE: never ship untested function code (same gate as
+# deploy-functions.sh and the test-functions job in
+# .github/workflows/deploy-functions.yml). Set SKIP_TESTS=1 only for a
+# break-glass redeploy of a known-good ref.
+# =============================================================================
+
+if [ "${SKIP_TESTS:-}" = "1" ]; then
+    echo "WARNING: SKIP_TESTS=1 — deploying without running the functions test suite."
+else
+    echo "Running functions test suite before deploy..."
+    (cd functions && npm test)
+    echo "Tests passed."
+fi
+
 # Deploy
 firebase deploy --only "$FUNCTIONS" --force
 

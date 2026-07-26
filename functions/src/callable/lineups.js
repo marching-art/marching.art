@@ -868,20 +868,51 @@ exports.getActiveLineupKeys = onCall({ cors: true }, async (request) => {
   const db = getDb();
 
   try {
-    // Query all active lineups for this corps class
-    const lineupsSnapshot = await db.collection("activeLineups")
-      .where("corpsClass", "==", corpsClass)
-      .get();
+    // Quick fill only needs "which keys are taken today" — advisory data
+    // (saveLineup enforces uniqueness transactionally), identical for every
+    // caller of a class until the day rolls over. Same materialized-cache
+    // pattern as getHotCorps: first caller of the day scans and caches;
+    // everyone else costs 2 point reads instead of a collection scan.
+    const seasonDoc = await db.doc("game-settings/season").get();
+    const seasonUid = seasonDoc.exists ? (seasonDoc.data().seasonUid || "default") : "default";
+    const cacheKey = `${seasonUid}:${new Date().toISOString().slice(0, 10)}:${corpsClass}`;
+    const cacheRef = db.doc(`computed/activeLineupKeys_${corpsClass}`);
 
-    // Return lineup keys, excluding the current user's lineup
-    const lineupKeys = [];
-    lineupsSnapshot.forEach(doc => {
-      if (doc.data().uid !== uid) {
-        lineupKeys.push(doc.id);
-      }
+    /** @param {Array<{key: string, uid: string}>} entries */
+    const toResponse = (entries) => ({
+      success: true,
+      lineupKeys: entries.filter((e) => e.uid !== uid).map((e) => e.key),
     });
 
-    return { success: true, lineupKeys };
+    const cachedSnap = await cacheRef.get();
+    if (cachedSnap.exists && cachedSnap.data().cacheKey === cacheKey) {
+      return toResponse(cachedSnap.data().entries || []);
+    }
+
+    // Cache miss: scan, but projected (only `uid` is read — the key is the
+    // doc id) and bounded. 2000 keys is far beyond what duplicate-avoidance
+    // needs and keeps the cache doc safely under the 1 MiB document limit
+    // (lineup keys are long composite strings).
+    const lineupsSnapshot = await db.collection("activeLineups")
+      .where("corpsClass", "==", corpsClass)
+      .select("uid")
+      .limit(2000)
+      .get();
+
+    const entries = lineupsSnapshot.docs.map((doc) => ({
+      key: doc.id,
+      uid: doc.data().uid || "",
+    }));
+
+    // Best-effort materialization — a failed cache write must not fail the
+    // request; the next caller simply recomputes.
+    try {
+      await cacheRef.set({ cacheKey, entries, updatedAt: new Date() });
+    } catch (cacheError) {
+      logger.warn("Could not materialize active-lineup-keys cache:", cacheError);
+    }
+
+    return toResponse(entries);
   } catch (error) {
     logger.error(`Failed to get active lineup keys:`, error);
     throw new HttpsError("internal", "Could not retrieve active lineups.");

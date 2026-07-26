@@ -25,7 +25,7 @@ const {
 } = require("../helpers/newsGeneration");
 const { FREE_IMAGE_MODEL } = require("../helpers/geminiService");
 const { uploadFromUrl } = require("../helpers/mediaService");
-const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
+const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
 
 // Define secrets
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
@@ -166,6 +166,13 @@ exports.generateCorpsAvatar = onCall(
 
     const db = getDb();
     const userId = request.auth.uid;
+
+    // Abuse throttle: each call bills a Gemini image generation + Cloudinary
+    // upload, so it needs a tight per-uid budget (well above any human rate).
+    await assertWriteBudget(db, userId, "avatarGen", {
+      max: 5,
+      windowMs: 60 * 60 * 1000,
+    });
 
     // Fetch user's profile
     const profileDoc = await db.doc(paths.userProfile(userId)).get();

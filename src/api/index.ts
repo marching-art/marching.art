@@ -46,7 +46,6 @@ export * from './functions';
 export {
   APP_CONFIG,
   DATA_CONFIG,
-  AUTH_CONFIG,
   FIREBASE_CONFIG,
   GAME_CONFIG,
   FEATURE_FLAGS,

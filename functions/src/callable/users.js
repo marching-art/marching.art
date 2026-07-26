@@ -6,6 +6,7 @@ const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
 const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
 const { sumSeasonScore } = require("../helpers/seasonRankings");
+const { processAllInPages } = require("../helpers/firestorePaging");
 const {
   showRegistrationEventKey,
   registrationEntryKey,
@@ -15,11 +16,19 @@ exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
 
   const { email, makeAdmin } = request.data;
+  if (typeof email !== "string" || !email.trim()) {
+    throw new HttpsError("invalid-argument", "A valid email is required.");
+  }
   logger.info(`Admin ${request.auth.uid} attempting to set role for ${email} to admin: ${makeAdmin}`);
 
   try {
     const user = await admin.auth().getUserByEmail(email);
-    await admin.auth().setCustomUserClaims(user.uid, { admin: makeAdmin });
+    // Merge onto the existing claims — a bare { admin } here would clobber
+    // any other custom claims the user carries.
+    await admin.auth().setCustomUserClaims(user.uid, {
+      ...user.customClaims,
+      admin: makeAdmin === true,
+    });
 
     const action = makeAdmin ? "granted" : "revoked";
     return {
@@ -264,21 +273,25 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
   // This turns an O(players) read into a single document read.
   const rankingsSnap = await db.doc(paths.seasonRankings()).get();
   const rankings = rankingsSnap.exists ? rankingsSnap.data() : null;
-  if (rankings && rankings.seasonUid === activeSeasonId && rankings.ranks) {
+  if (rankings && rankings.ranks) {
     const totalPlayers = rankings.totalPlayers || Object.keys(rankings.ranks).length || 1;
     const mine = rankings.ranks[uid];
+    // Stale snapshot (e.g. right after a season rollover, before the nightly
+    // job re-materializes): serve the previous snapshot flagged `stale`
+    // rather than letting every caller pay the full profile scan below — a
+    // thundering herd exactly when the whole player base reloads.
+    const stale = rankings.seasonUid !== activeSeasonId;
     if (mine) {
-      return { globalRank: mine.rank, totalPlayers, totalScore: mine.totalScore };
+      return { globalRank: mine.rank, totalPlayers, totalScore: mine.totalScore, ...(stale && { stale }) };
     }
     // Registered since the last materialization (not yet in the snapshot):
     // rank at the bottom rather than mis-reporting rank 1.
-    return { globalRank: totalPlayers, totalPlayers, totalScore: 0 };
+    return { globalRank: totalPlayers, totalPlayers, totalScore: 0, ...(stale && { stale }) };
   }
 
-  // Fallback: snapshot missing or from a previous season (e.g. right after a
-  // season rollover, before the nightly job runs). Compute from a single scan
-  // so the value is never wrong — just occasionally expensive until the first
-  // materialization lands.
+  // Fallback: no usable snapshot exists at all (first-ever season, before the
+  // first materialization lands). Compute from a single scan so the value is
+  // never wrong — just occasionally expensive until the nightly job runs.
   const profilesQuery = db.collectionGroup("profile")
     .where("activeSeasonId", "==", activeSeasonId)
     .select("corps", "corpsName", "totalSeasonScore");
@@ -312,30 +325,29 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
   };
 });
 
-exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
+exports.migrateUserProfiles = onCall({ cors: true, timeoutSeconds: 540, memory: "512MiB" }, async (request) => {
   assertAdmin(request);
 
   const db = getDb();
   let migratedCount = 0;
   let errorCount = 0;
+  let scannedCount = 0;
 
   try {
+    // The inequality filter needs its own leading orderBy; processAllInPages
+    // appends the documentId orderBy that makes its cursor paging stable.
     const profilesQuery = db.collectionGroup("profile")
-      .where("corpsName", "!=", null);
-
-    const profilesSnapshot = await profilesQuery.get();
-
-    if (profilesSnapshot.empty) {
-      return { success: true, message: "No profiles need migration." };
-    }
+      .where("corpsName", "!=", null)
+      .orderBy("corpsName");
 
     let batch = db.batch();
     let batchCount = 0;
 
-    for (const doc of profilesSnapshot.docs) {
+    await processAllInPages(profilesQuery, 300, async (doc) => {
+      scannedCount++;
       const oldProfile = doc.data();
 
-      if (oldProfile.corps) continue;
+      if (oldProfile.corps) return;
 
       try {
         const newProfileData = {
@@ -358,14 +370,19 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
         batchCount++;
 
         if (batchCount >= 400) {
-          await batch.commit();
+          const committing = batch;
           batch = db.batch();
           batchCount = 0;
+          await committing.commit();
         }
       } catch (error) {
         logger.error(`Error migrating profile ${doc.id}:`, error);
         errorCount++;
       }
+    });
+
+    if (scannedCount === 0) {
+      return { success: true, message: "No profiles need migration." };
     }
 
     if (batchCount > 0) {
@@ -395,7 +412,7 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
  * Fix missing profile fields for existing users
  * Admin-only function to ensure all profiles have required fields
  */
-exports.fixProfileFields = onCall({ cors: true }, async (request) => {
+exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "512MiB" }, async (request) => {
   assertAdmin(request);
 
   const db = getDb();
@@ -421,16 +438,13 @@ exports.fixProfileFields = onCall({ cors: true }, async (request) => {
 
   try {
     const profilesQuery = db.collectionGroup("profile");
-    const profilesSnapshot = await profilesQuery.get();
-
-    if (profilesSnapshot.empty) {
-      return { success: true, message: "No profiles found." };
-    }
 
     let batch = db.batch();
     let batchCount = 0;
+    let scannedCount = 0;
 
-    for (const docSnap of profilesSnapshot.docs) {
+    await processAllInPages(profilesQuery, 300, async (docSnap) => {
+      scannedCount++;
       const profile = docSnap.data();
       const updates = {};
 
@@ -476,11 +490,14 @@ exports.fixProfileFields = onCall({ cors: true }, async (request) => {
           fixedCount++;
           batchCount++;
 
-          // Commit in batches of 400 to avoid Firestore limits
+          // Commit in batches of 400 to avoid Firestore limits (swap in the
+          // fresh batch before awaiting so in-page siblings never queue onto
+          // a batch that is mid-commit)
           if (batchCount >= 400) {
-            await batch.commit();
+            const committing = batch;
             batch = db.batch();
             batchCount = 0;
+            await committing.commit();
           }
         } catch (error) {
           logger.error(`Error fixing profile ${docSnap.id}:`, error);
@@ -489,6 +506,10 @@ exports.fixProfileFields = onCall({ cors: true }, async (request) => {
       } else {
         skippedCount++;
       }
+    });
+
+    if (scannedCount === 0) {
+      return { success: true, message: "No profiles found." };
     }
 
     // Commit any remaining updates

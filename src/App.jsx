@@ -277,10 +277,13 @@ function App() {
                     toastOptions={{
                       duration: 4000,
                       className: 'press-feedback',
+                      // Colors come from the design-system CSS variables
+                      // declared in index.css (:root), which mirror the
+                      // Tailwind tokens: surface-card, line, success, error.
                       style: {
-                        background: '#1a1a1a',
-                        color: '#fff',
-                        border: '1px solid #333',
+                        background: 'var(--bg-panel)',
+                        color: 'white',
+                        border: '1px solid var(--border-subtle)',
                         borderRadius: '2px',
                         fontSize: '12px',
                         padding: '10px 14px',
@@ -288,14 +291,14 @@ function App() {
                       },
                       success: {
                         iconTheme: {
-                          primary: '#22c55e',
-                          secondary: '#1a1a1a',
+                          primary: 'var(--success)',
+                          secondary: 'var(--bg-panel)',
                         },
                       },
                       error: {
                         iconTheme: {
-                          primary: '#ef4444',
-                          secondary: '#1a1a1a',
+                          primary: 'var(--error)',
+                          secondary: 'var(--bg-panel)',
                         },
                       },
                     }}

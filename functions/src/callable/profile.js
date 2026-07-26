@@ -38,8 +38,13 @@ exports.updateProfile = onCall({ cors: true }, async (request) => {
       }
     }
 
-    if (location !== undefined && typeof location !== 'string') {
-      throw new HttpsError("invalid-argument", "Location must be a string.");
+    if (location !== undefined) {
+      if (typeof location !== 'string') {
+        throw new HttpsError("invalid-argument", "Location must be a string.");
+      }
+      if (location.length > 100) {
+        throw new HttpsError("invalid-argument", "Location cannot exceed 100 characters.");
+      }
     }
 
     if (bio !== undefined) {
@@ -51,8 +56,13 @@ exports.updateProfile = onCall({ cors: true }, async (request) => {
       }
     }
 
-    if (favoriteCorps !== undefined && typeof favoriteCorps !== 'string') {
-      throw new HttpsError("invalid-argument", "Favorite corps must be a string.");
+    if (favoriteCorps !== undefined) {
+      if (typeof favoriteCorps !== 'string') {
+        throw new HttpsError("invalid-argument", "Favorite corps must be a string.");
+      }
+      if (favoriteCorps.length > 100) {
+        throw new HttpsError("invalid-argument", "Favorite corps cannot exceed 100 characters.");
+      }
     }
 
     // Build update object (only include provided fields)

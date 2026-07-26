@@ -30,6 +30,7 @@ const {
 } = require("./dailyPredictions");
 const { getCompletedGameDayET } = require("./gameDay");
 const { ChunkedWriter } = require("./chunkedWriter");
+const { processAllInPages } = require("./firestorePaging");
 
 /** Fixed buy-in per member per day. ~5% of an active day's earnings. */
 const POOL_ANTE = 25;
@@ -93,8 +94,25 @@ function entrantHadPerfectDay(uid, profileData, gameDay, recaps) {
 async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
   const gameDay = completedGameDayString(now);
 
-  const leaguesSnapshot = await db.collection(paths.leagues()).limit(500).get();
-  if (leaguesSnapshot.empty) return;
+  // Page through every league (no silent 500-league cap — see
+  // helpers/firestorePaging), collecting each league's pool ref for the day.
+  const leagues = await processAllInPages(
+    db.collection(paths.leagues()),
+    500,
+    async (leagueDoc) => ({
+      leagueDoc,
+      poolRef: leagueDoc.ref.collection("pools").doc(gameDay),
+    })
+  );
+  if (leagues.length === 0) return;
+
+  // Batch the pool reads: one chunked getAll instead of a get() per league.
+  const GETALL_CHUNK = 300;
+  const poolSnaps = [];
+  for (let i = 0; i < leagues.length; i += GETALL_CHUNK) {
+    const chunk = leagues.slice(i, i + GETALL_CHUNK);
+    poolSnaps.push(...(await db.getAll(...chunk.map((entry) => entry.poolRef))));
+  }
 
   // One recap read per source serves every league's settlement. Podium and
   // fantasy classes live in separate recap collections, so both are needed to
@@ -104,9 +122,9 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
   const batch = new ChunkedWriter(db);
   let settled = 0;
 
-  for (const leagueDoc of leaguesSnapshot.docs) {
-    const poolRef = leagueDoc.ref.collection("pools").doc(gameDay);
-    const poolSnap = await poolRef.get();
+  for (let leagueIndex = 0; leagueIndex < leagues.length; leagueIndex++) {
+    const { leagueDoc, poolRef } = leagues[leagueIndex];
+    const poolSnap = poolSnaps[leagueIndex];
     if (!poolSnap.exists) continue;
     const pool = poolSnap.data();
     if (pool.resolved) continue;

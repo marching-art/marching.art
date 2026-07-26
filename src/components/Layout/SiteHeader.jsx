@@ -22,6 +22,7 @@ import {
   Calendar,
   Trophy,
   User,
+  Users,
   HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -77,6 +78,7 @@ const SiteHeader = () => {
               <DesktopNavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
               <DesktopNavItem to="/schedule" icon={Calendar} label="Schedule" />
               <DesktopNavItem to="/scores" icon={Trophy} label="Scores" />
+              <DesktopNavItem to="/leagues" icon={Users} label="Leagues" />
               <DesktopNavItem to="/profile" icon={User} label="Profile" />
             </nav>
           ) : (

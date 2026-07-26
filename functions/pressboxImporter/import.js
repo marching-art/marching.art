@@ -11,6 +11,9 @@
 //                      missing (matched by eventName + date, same rule as
 //                      processDciScores) instead of skipping the year
 //   --replace          overwrite existing year documents entirely
+//   --force-current-season  allow writing the ACTIVE live season's year
+//                      (normally refused: the nightly scrape pipeline owns
+//                      that document and an import could clobber fresh scores)
 //
 // Credentials: uses functions/serviceAccountKey.json when present (local runs,
 // same as masterParser.js), otherwise falls back to application-default
@@ -27,6 +30,7 @@ const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const MERGE = args.includes("--merge");
 const REPLACE = args.includes("--replace");
+const FORCE_CURRENT_SEASON = args.includes("--force-current-season");
 const yearsArg = args[args.indexOf("--years") + 1];
 const yearFilter = args.includes("--years") ? yearsArg.split(",") : YEARS;
 
@@ -45,10 +49,26 @@ async function main() {
   }
   const db = admin.firestore();
 
+  // The ACTIVE live season's year is owned by the nightly scrape pipeline —
+  // importing over it could clobber freshly scraped events, so it is refused
+  // unless --force-current-season is passed.
+  const seasonDoc = await db.doc("game-settings/season").get();
+  const season = seasonDoc.exists ? seasonDoc.data() : null;
+  const currentSeasonYear =
+    season && season.status === "live-season" && season.seasonYear != null
+      ? String(season.seasonYear)
+      : null;
+
   for (const year of yearFilter) {
     const scores = loadJson(`historical_scores_${year}.json`);
     if (!scores) {
       console.log(`${year}: no parsed output, skipping.`);
+      continue;
+    }
+
+    if (!FORCE_CURRENT_SEASON && String(year) === currentSeasonYear) {
+      console.log(`${year}: REFUSED - this is the active live season's year (the nightly ` +
+        "pipeline owns historical_scores/" + year + "). Pass --force-current-season to override.");
       continue;
     }
 
@@ -62,14 +82,29 @@ async function main() {
       if (!DRY_RUN) await scoresRef.set({ data: scores.data });
     } else if (MERGE) {
       const existingData = existing.data().data || [];
-      const seen = new Set(existingData.map((e) =>
-        `${e.eventName}|${new Date(e.date).getTime()}`));
-      const additions = scores.data.filter((e) =>
-        !seen.has(`${e.eventName}|${new Date(e.date).getTime()}`));
+      const eventKey = (e) => `${e.eventName}|${new Date(e.date).getTime()}`;
+      const seen = new Set(existingData.map(eventKey));
+      const additions = scores.data.filter((e) => !seen.has(eventKey(e)));
       console.log(`${year}: merge - ${additions.length} of ${scores.data.length} ` +
         `events are new (doc already has ${existingData.length}).`);
       if (!DRY_RUN && additions.length > 0) {
-        await scoresRef.set({ data: [...existingData, ...additions] });
+        // Transactional re-read: the nightly pipeline merges into this same
+        // document, so a plain read-then-set could clobber an event archived
+        // between our read and write. update({data}) also leaves any other
+        // top-level fields alone; set() only when the doc vanished.
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(scoresRef);
+          if (!snap.exists) {
+            tx.set(scoresRef, { data: scores.data });
+            return;
+          }
+          const current = snap.data().data || [];
+          const currentSeen = new Set(current.map(eventKey));
+          const freshAdditions = scores.data.filter((e) => !currentSeen.has(eventKey(e)));
+          if (freshAdditions.length > 0) {
+            tx.update(scoresRef, { data: [...current, ...freshAdditions] });
+          }
+        });
       }
     } else {
       console.log(`${year}: historical_scores/${year} already exists, skipping ` +

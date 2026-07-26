@@ -16,7 +16,7 @@ for progression/economy/engagement systems see [`docs/GAMIFICATION.md`](docs/GAM
 | Backend      | Firebase — Auth, Firestore, Cloud Functions (2nd gen, two codebases), Hosting, Storage                                      |
 | AI / media   | Google Gemini (news + avatars), YouTube Data API v3                                                                         |
 | Hosting      | Firebase Hosting (`firebase.json`, `public: build`) and Vercel (`vercel.json`), kept in sync by a CI parity check           |
-| CI/CD        | GitHub Actions (`.github/workflows/{ci,deploy-functions,security,refresh-venue-gazetteer}.yml`), Node 22                    |
+| CI/CD        | GitHub Actions (`.github/workflows/{ci,deploy-functions,deploy-hosting,security,refresh-venue-gazetteer}.yml`), Node 22     |
 | Monetization | Donation-only (Buy Me a Coffee, cosmetic recognition only); CorpsCoin is a closed-loop in-game currency, no real-money path |
 
 ## Project structure
@@ -366,7 +366,9 @@ npm run build        # production build → build/
 cd functions && npm install && npm test
 # Firestore security rules (needs a JDK 21+ for the emulator)
 cd firestore-tests && npm install && npm test
-# Functions deploy via .github/workflows/deploy-functions.yml (or deploy-functions.sh)
+# Deploys are automatic on push to main: deploy-functions.yml (backend paths,
+# test-gated) and deploy-hosting.yml (frontend paths → Firebase Hosting);
+# both also support workflow_dispatch. deploy-functions.sh remains for local use.
 ```
 
 Backups, restore, and deploy rollback are documented in

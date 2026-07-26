@@ -16,6 +16,7 @@ const {
   brevoApiKey,
   EMAIL_TYPES,
 } = require("../helpers/emailService");
+const { createUserNotification } = require("../helpers/userNotifications");
 
 // Batch size for processing users
 const BATCH_SIZE = 100;
@@ -50,16 +51,25 @@ function shouldSendEmail(profile, emailType) {
 }
 
 /**
- * Get user email from Firebase Auth
+ * Batch-fetch emails from Firebase Auth for a page of uids — one getUsers()
+ * round-trip per 100 identifiers (the API's cap) instead of a getUser() call
+ * per user. Returns uid -> email; uids that don't resolve to an email are
+ * absent, matching the old per-uid null result.
  */
-async function getUserEmail(uid) {
-  try {
-    const userRecord = await admin.auth().getUser(uid);
-    return userRecord.email;
-  } catch (error) {
-    logger.warn(`Could not get email for user ${uid}:`, error.message);
-    return null;
+async function getUserEmails(uids) {
+  const emailByUid = new Map();
+  for (let i = 0; i < uids.length; i += 100) {
+    const chunk = uids.slice(i, i + 100);
+    try {
+      const result = await admin.auth().getUsers(chunk.map((uid) => ({ uid })));
+      for (const user of result.users) {
+        if (user.email) emailByUid.set(user.uid, user.email);
+      }
+    } catch (error) {
+      logger.warn(`Could not batch-fetch emails for ${chunk.length} users:`, error.message);
+    }
   }
+  return emailByUid;
 }
 
 /**
@@ -285,6 +295,9 @@ exports.weeklyDigestEmailJob = onSchedule(
         let query = db
           .collectionGroup("profile")
           .where("engagement.lastLogin", ">=", thirtyDaysAgo)
+          // Only these fields are consumed below (preferences, the rival diff
+          // inputs, and the greeting name) — don't pull full profile docs.
+          .select("settings", "rivals", "rivalsSnapshotForEmail", "username")
           .limit(BATCH_SIZE);
 
         if (lastDoc) {
@@ -298,6 +311,11 @@ exports.weeklyDigestEmailJob = onSchedule(
         }
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+        // One batched Auth lookup per page instead of a getUser() per user.
+        const emailByUid = await getUserEmails(
+          snapshot.docs.map((doc) => doc.ref.parent.parent.id),
+        );
 
         const processUser = async (doc) => {
           const profile = doc.data();
@@ -320,10 +338,8 @@ exports.weeklyDigestEmailJob = onSchedule(
           // so a crash/timeout between send and snapshot would otherwise
           // resend everyone on the retry. 6 days sits safely under the weekly
           // cadence while still allowing next Sunday's send.
-          const [recentlySent, email] = await Promise.all([
-            wasEmailRecentlySent(db, uid, EMAIL_TYPES.WEEKLY_DIGEST, 6 * 24),
-            getUserEmail(uid),
-          ]);
+          const recentlySent = await wasEmailRecentlySent(db, uid, EMAIL_TYPES.WEEKLY_DIGEST, 6 * 24);
+          const email = emailByUid.get(uid) || null;
 
           if (recentlySent) {
             return { status: "skipped", reason: "recently_sent" };
@@ -427,6 +443,9 @@ exports.winBackEmailJob = onSchedule(
           .collectionGroup("profile")
           .where("engagement.lastLogin", ">=", fourteenDaysAgo)
           .where("engagement.lastLogin", "<=", sevenDaysAgo)
+          // Only these fields are consumed below (preferences, last
+          // login/streak, greeting name, CC balance) — don't pull full docs.
+          .select("settings", "engagement", "username", "corpsCoin")
           .limit(BATCH_SIZE);
 
         if (lastDoc) {
@@ -441,6 +460,11 @@ exports.winBackEmailJob = onSchedule(
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
+        // One batched Auth lookup per page instead of a getUser() per user.
+        const emailByUid = await getUserEmails(
+          snapshot.docs.map((doc) => doc.ref.parent.parent.id),
+        );
+
         // OPTIMIZATION: Process users in parallel chunks instead of sequentially
         const processUser = async (doc) => {
           const profile = doc.data();
@@ -451,11 +475,8 @@ exports.winBackEmailJob = onSchedule(
             return { status: 'skipped', reason: 'preferences' };
           }
 
-          // OPTIMIZATION: Parallelize the email check and user email fetch
-          const [recentlySent, email] = await Promise.all([
-            wasEmailRecentlySent(db, uid, EMAIL_TYPES.WIN_BACK, 7 * 24),
-            getUserEmail(uid)
-          ]);
+          const recentlySent = await wasEmailRecentlySent(db, uid, EMAIL_TYPES.WIN_BACK, 7 * 24);
+          const email = emailByUid.get(uid) || null;
 
           if (recentlySent) {
             return { status: 'skipped', reason: 'recently_sent' };
@@ -559,6 +580,9 @@ exports.streakBrokenEmailJob = onSchedule(
           .where("engagement.lastLogin", ">=", twoDaysAgo)
           .where("engagement.lastLogin", "<=", oneDayAgo)
           .where("engagement.loginStreak", ">=", 3) // Only notify if had meaningful streak
+          // Only these fields are consumed below (freeze/streak, preferences,
+          // greeting name) — don't pull full profile docs.
+          .select("settings", "engagement", "username")
           .limit(BATCH_SIZE);
 
         if (lastDoc) {
@@ -573,6 +597,11 @@ exports.streakBrokenEmailJob = onSchedule(
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
+        // One batched Auth lookup per page instead of a getUser() per user.
+        const emailByUid = await getUserEmails(
+          snapshot.docs.map((doc) => doc.ref.parent.parent.id),
+        );
+
         // OPTIMIZATION: Process users in parallel chunks instead of sequentially
         const processUser = async (doc) => {
           const profile = doc.data();
@@ -586,16 +615,40 @@ exports.streakBrokenEmailJob = onSchedule(
             return { status: 'skipped', reason: 'freeze' };
           }
 
+          // In-app inbox entry for everyone whose streak actually broke —
+          // BEFORE the email gates, because emailPreferences is an
+          // email-channel opt-out and users with no email address still
+          // deserve the in-app surface (it is the lowest-friction channel;
+          // see helpers/userNotifications). Best-effort: the writer never
+          // throws, so it can't fail the email job. Keyed by the lastLogin
+          // date so a job retry (the 24-48h window spans two daily runs at
+          // the edges) overwrites instead of duplicating.
+          const lostStreak = profile.engagement?.loginStreak || 0;
+          const lastLoginRaw = profile.engagement?.lastLogin;
+          const lastLoginDate =
+            lastLoginRaw?.toDate?.() || (lastLoginRaw ? new Date(lastLoginRaw) : null);
+          const lastLoginDay =
+            lastLoginDate && !isNaN(lastLoginDate.getTime())
+              ? lastLoginDate.toISOString().slice(0, 10)
+              : "unknown";
+          await createUserNotification(db, uid, {
+            type: "streak_broken",
+            title: "Your login streak ended",
+            message:
+              `Your ${lostStreak}-day login streak has ended. ` +
+              `Log in today to start a new one.`,
+            link: "/dashboard",
+            metadata: { previousStreak: lostStreak },
+            dedupeKey: `streak_broken_${lastLoginDay}`,
+          });
+
           // Check email preferences
           if (!shouldSendEmail(profile, EMAIL_TYPES.STREAK_BROKEN)) {
             return { status: 'skipped', reason: 'preferences' };
           }
 
-          // OPTIMIZATION: Parallelize the email check and user email fetch
-          const [recentlySent, email] = await Promise.all([
-            wasEmailRecentlySent(db, uid, EMAIL_TYPES.STREAK_BROKEN, 48),
-            getUserEmail(uid)
-          ]);
+          const recentlySent = await wasEmailRecentlySent(db, uid, EMAIL_TYPES.STREAK_BROKEN, 48);
+          const email = emailByUid.get(uid) || null;
 
           if (recentlySent) {
             return { status: 'skipped', reason: 'recently_sent' };

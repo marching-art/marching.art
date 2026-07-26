@@ -37,6 +37,21 @@ exports.processDciEvent = onMessagePublished({
     return;
   }
 
+  // Host allowlist: only dci.org event pages may be fetched, so a message
+  // from anything with publish access can't turn this worker into a fetch
+  // proxy for arbitrary hosts.
+  let hostname;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    logger.warn(`[EventWorker] Skipping malformed URL: ${url}`);
+    return;
+  }
+  if (hostname !== "www.dci.org" && hostname !== "dci.org") {
+    logger.warn(`[EventWorker] Skipping non-dci.org URL: ${url}`);
+    return;
+  }
+
   try {
     const event = await fetchEventForArchive(url);
     if (!event) {

@@ -22,7 +22,7 @@ the first minute and have them hold on every screen.
 | Role                   | Color                                                 | Used for                                                                                       | Never for                               |
 | ---------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------- |
 | **Brand / reward**     | Gold `#EAB308`                                        | Logo, wordmark, #1 / podium & medal ranks, achievement unlocks, level-ups, currency, "you won" | General buttons, links, arbitrary icons |
-| **Interactive / self** | Azure `#3B82F6`                                       | Links, primary buttons, active nav, focus rings, "your row," selected states                   | Decoration, celebration, status         |
+| **Interactive / self** | Azure — `#60A5FA` foreground / `#2563EB` fill         | Links, primary buttons, active nav, focus rings, "your row," selected states                   | Decoration, celebration, status         |
 | **Trend / status**     | Green `#00C853` / Red `#FF5252` / Amber `#FF9800`     | Score deltas, win/loss, live, warnings                                                         | Branding or navigation                  |
 | **Neutral**            | One charcoal ramp + one border scale + one muted gray | All surfaces, structure, secondary text                                                        | —                                       |
 
@@ -33,14 +33,30 @@ charcoal.**
 Azure was chosen deliberately: it's the chromatic complement of the gold anchor
 (cleanest possible warm-reward vs. cool-interactive separation on a leaderboard),
 it preserves the "blue = clickable" convention, and it fixes an accessibility
-defect — the retired `#0057B8` computed to only ~2.9:1 on `#0A0A0A`; `#3B82F6`
-clears ~5.4:1.
+defect — the retired `#0057B8` computed to only ~2.9:1 on `#0A0A0A`.
+
+**The azure token is split by role** (WCAG AA in both directions):
+
+- `interactive` — the **foreground** scale: text, borders, icons, focus rings on
+  dark surfaces. `#60A5FA` clears 7.8:1 on `background` and 5.7:1 on
+  `surface-elevated`.
+- `interactive-fill` — the **fill** scale: backgrounds under white text.
+  `#2563EB` yields 5.2:1 with white (`hover` `#1D4ED8` 6.7:1, `subtle` `#1E40AF`
+  8.7:1).
+
+You rarely need the `-fill` name: `theme.extend.backgroundColor` re-points the
+`bg-interactive`/`bg-interactive-hover`/`bg-interactive-subtle` (and
+`bg-primary`) utilities at the fill values, so the same class names are
+accessible as fills, while `text-`/`border-`/`ring-interactive` resolve to the
+lighter foreground tone. Use `*-interactive-fill` only when a non-`bg-` utility
+must match a filled control (e.g. the primary Button's border).
 
 ### Token values (`tailwind.config.cjs`)
 
 ```javascript
 brand:       { DEFAULT: '#EAB308', strong: '#CA8A04', subtle: '#A16207' } // gold
-interactive: { DEFAULT: '#3B82F6', hover: '#2563EB', subtle: '#1D4ED8' }  // azure
+interactive: { DEFAULT: '#60A5FA', hover: '#93C5FD', subtle: '#3B82F6' }  // azure foreground
+'interactive-fill': { DEFAULT: '#2563EB', hover: '#1D4ED8', subtle: '#1E40AF' } // azure fill (bg-interactive* maps here)
 background:  '#0A0A0A'
 surface:     { sunken: '#111', card: '#1A1A1A', raised: '#222', elevated: '#2A2A2A' }
 line:        { subtle: '#242424', muted, DEFAULT: '#333', strong: '#444' }
@@ -95,8 +111,10 @@ rest are review conventions.
    borders (`border-line`, `-subtle`/`-muted`/`-strong`), text (`text-main`,
    `text-secondary`, `text-muted`).
 2. **Gold is brand + reward only.**
-3. **Azure is interaction + self.** (Avoid azure _small body text_ on
-   `surface-raised` — 4.3:1.)
+3. **Azure is interaction + self.** The token is role-split: `bg-interactive` is
+   the darker accessible fill for white text; `text-/border-/ring-interactive`
+   are the lighter foreground tone. Never put the foreground tone behind white
+   text or use the fill tone as text on dark surfaces.
 4. **Green/red/amber are data only** — never brand or navigate.
 5. **Corners are square.**
 6. **Headings go through the scale.**
@@ -106,25 +124,28 @@ rest are review conventions.
 
 Every text token clears AA (≥ 4.5:1) on `background` and `surface-card`:
 
-| token               | on `#0a0a0a` | on `surface-card` | on `surface-raised`           |
-| ------------------- | ------------ | ----------------- | ----------------------------- |
-| text-main           | 19.8         | 17.4              | 15.9                          |
-| text-secondary      | 9.4          | 8.3               | 7.6                           |
-| text-muted          | 6.9          | 6.1               | 5.6                           |
-| interactive (azure) | 5.4          | 4.7               | 4.3 ⚠ (avoid small body text) |
-| brand (gold)        | 10.3         | 9.1               | 8.3                           |
+| token                          | on `#0a0a0a` | on `surface-card` | on `surface-raised` | on `surface-elevated` |
+| ------------------------------ | ------------ | ----------------- | ------------------- | --------------------- |
+| text-main                      | 19.8         | 17.4              | 15.9                | —                     |
+| text-secondary                 | 9.4          | 8.3               | 7.6                 | —                     |
+| text-muted                     | 6.9          | 6.1               | 5.6                 | —                     |
+| interactive (azure foreground) | 7.8          | 6.9               | 6.3                 | 5.7                   |
+| brand (gold)                   | 10.3         | 9.1               | 8.3                 | —                     |
+
+And the fill direction — white text on the azure fill scale:
+
+| fill token               | white text on it |
+| ------------------------ | ---------------- |
+| interactive-fill         | 5.2              |
+| interactive-fill\.hover  | 6.7              |
+| interactive-fill\.subtle | 8.7              |
 
 Recompute with the relative-luminance ratio if a token value changes.
 
-**Known debt — azure as a _fill_ behind white text.** The table above measures
-azure as foreground on dark surfaces. As a background it falls short: white text
-on `interactive` (`#3B82F6`) is **3.67:1**, under the 4.5:1 AA bar, on every
-primary CTA. The axe gate (`e2e/a11y.spec.ts`) reports color-contrast but
-deliberately does not fail on it, with a carve-out pointing here. The proper fix
-is a token split in `tailwind.config.cjs` — a darker fill for white-on-blue
-buttons, keeping the current tone for blue-on-dark text — which is a design
-decision, not a test-side one. When that lands, update this table and delete the
-carve-out in the spec so contrast gates.
+The former single azure (`#3B82F6`) was **3.7:1** under white button text and
+3.9:1 as text on `surface-elevated`; the role split above resolved both, so the
+axe gate (`e2e/a11y.spec.ts`) now fails the build on any serious/critical
+color-contrast violation — no carve-outs.
 
 ---
 

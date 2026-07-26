@@ -16,6 +16,7 @@ const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { scrapeLatestLiveScores, scrapeLiveScoresForDayRange } = require("../scheduled/liveScraper");
 const { scraperApiKey } = require("../helpers/dciFetch");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
+const { discordOpsWebhookUrl } = require("../helpers/discord");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
 const { assertAdmin } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
@@ -79,7 +80,9 @@ exports.startNewLiveSeason = onCall({
 
 exports.manualTrigger = onCall({
   cors: true,
-  secrets: [scraperInvokeKey, scraperApiKey],
+  // discordOpsWebhookUrl + brevoApiKey are for the scrapeCanary job below,
+  // whose unhealthy path posts to #operations and emails the admins.
+  secrets: [scraperInvokeKey, scraperApiKey, discordOpsWebhookUrl, brevoApiKey],
   timeoutSeconds: 540,
   memory: "512MiB",
 }, async (request) => {
@@ -568,6 +571,21 @@ exports.manualTrigger = onCall({
       return {
         success: true,
         message: `Schedule regenerated with ${competitions.length} competitions for season ${seasonId}. Cleared schedule selections for ${usersUpdated} users from week ${currentWeek} onward.`
+      };
+    }
+    case "scrapeCanary": {
+      // Re-run the afternoon dci.org schema-drift canary on demand — the
+      // verification step after fixing scraper selectors, instead of waiting
+      // for the next 1 PM run. Same audits, alerts, and admin-stats persist
+      // as the scheduled run.
+      const { runScrapeCanary } = require("../scheduled/scrapeCanary");
+      const canary = await runScrapeCanary(getDb());
+      return {
+        success: canary.healthy,
+        message: canary.healthy
+          ? `Scrape canary healthy: ${JSON.stringify(canary.summary)}` +
+            (canary.warnings.length > 0 ? ` Warnings: ${canary.warnings.join(" | ")}` : "")
+          : `Scrape canary found problems: ${canary.problems.join(" | ")}`,
       };
     }
     case "seedDciReference": {

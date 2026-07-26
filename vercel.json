@@ -21,6 +21,10 @@
       "source": "/results/:path*",
       "destination": "https://us-central1-marching-art.cloudfunctions.net/getResultsPageHttp/results/:path*"
     },
+    {
+      "source": "/d/:path*",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getPublicProfilePageHttp/d/:path*"
+    },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ],
   "headers": [

@@ -5,7 +5,6 @@
 // This eliminates hardcoded values and makes the app more configurable.
 //
 // Environment Variables (set in .env or deployment):
-// - VITE_ADMIN_UID: Override default admin user ID
 // - VITE_DATA_NAMESPACE: Override default data namespace
 // - VITE_APP_NAME: Override app name
 // - VITE_SUPPORT_EMAIL: Support email address
@@ -14,10 +13,13 @@
 import { CAPTION_IDS, CAPTION_NAMES } from '../data/captions';
 
 // =============================================================================
-// PRODUCTION ENVIRONMENT VALIDATION
+// ENVIRONMENT VALIDATION
 // =============================================================================
+// Production builds fail fast on a missing Firebase config; dev builds log a
+// clear error instead (no throw, so the dev server still boots) — otherwise a
+// blank .env.local surfaces only as cryptic Firebase "invalid-api-key" errors.
 
-if (import.meta.env.MODE === 'production') {
+{
   const requiredEnvVars = [
     'VITE_FIREBASE_API_KEY',
     'VITE_FIREBASE_AUTH_DOMAIN',
@@ -25,14 +27,20 @@ if (import.meta.env.MODE === 'production') {
     'VITE_FIREBASE_STORAGE_BUCKET',
     'VITE_FIREBASE_MESSAGING_SENDER_ID',
     'VITE_FIREBASE_APP_ID',
-    'VITE_ADMIN_UIDS',
   ] as const;
 
   const missingVars = requiredEnvVars.filter((varName) => !import.meta.env[varName]);
 
   if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required environment variables in production: ${missingVars.join(', ')}`
+    if (import.meta.env.MODE === 'production') {
+      throw new Error(
+        `Missing required environment variables in production: ${missingVars.join(', ')}`
+      );
+    }
+    console.error(
+      `[config] Missing required Firebase environment variables: ${missingVars.join(', ')}.\n` +
+        'Firebase will not initialize correctly. Copy .env.local.example to ' +
+        '.env.local and fill in your Firebase web-app config.'
     );
   }
 }
@@ -67,25 +75,10 @@ export const DATA_CONFIG = {
   artifactsPath: `artifacts/${import.meta.env.VITE_DATA_NAMESPACE || 'marching-art'}`,
 } as const;
 
-// =============================================================================
-// AUTH CONFIGURATION
-// =============================================================================
-
-export const AUTH_CONFIG = {
-  /**
-   * Admin user ID(s)
-   * Can be a single UID or comma-separated list
-   * Must be set via VITE_ADMIN_UIDS environment variable
-   */
-  adminUids: (import.meta.env.VITE_ADMIN_UIDS?.split(',') || [])
-    .map((uid: string) => uid.trim())
-    .filter((uid: string) => uid.length > 0),
-
-  /** Check if a UID is an admin */
-  isAdminUid: (uid: string): boolean => {
-    return AUTH_CONFIG.adminUids.includes(uid);
-  },
-} as const;
+// NOTE: admin status is intentionally NOT configured client-side. It is
+// determined solely by the server-set `admin` custom claim on the auth token
+// (see authApi.isAdmin in src/api/client.ts). A client-visible UID list was
+// both an information leak and a spoofable signal.
 
 // =============================================================================
 // FIREBASE CONFIGURATION

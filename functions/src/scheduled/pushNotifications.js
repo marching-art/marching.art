@@ -14,9 +14,11 @@ const {
   PUSH_TYPES,
 } = require("../helpers/pushService");
 const { getCurrentSeasonWeek, getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
+const { processAllInPages } = require("../helpers/firestorePaging");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
+const { createUserNotifications } = require("../helpers/userNotifications");
 const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
 const { buildLineupLockPayload } = require("../helpers/seasonAnnounce");
 const { seasonDisplayName } = require("../helpers/seasonDisplay");
@@ -89,23 +91,22 @@ exports.showReminderPushJob = onSchedule(
       // Find directors in this season (indexed collectionGroup query — same pattern
       // scoring.js uses). This only runs when shows are actually starting soon.
       // Only corps.selectedShows is consumed, so project just `corps` instead
-      // of pulling full profile docs.
-      const profilesSnapshot = await db
-        .collectionGroup("profile")
-        .where("activeSeasonId", "==", season.seasonUid)
-        .select("corps")
-        .get();
-
+      // of pulling full profile docs, and page the scan so it never truncates
+      // at a single query's cap (see helpers/firestorePaging).
       const CORPS_CLASSES = FANTASY_CLASSES;
 
       // Collect every (director, show) reminder first, then send in parallel
       // chunks like the other push jobs — sequential awaits made this job's
       // wall clock scale with (users × selections).
       const reminderTasks = [];
-      for (const profileDoc of profilesSnapshot.docs) {
+      const profilesQuery = db
+        .collectionGroup("profile")
+        .where("activeSeasonId", "==", season.seasonUid)
+        .select("corps");
+      await processAllInPages(profilesQuery, 500, async (profileDoc) => {
         // profile/data lives under artifacts/{ns}/users/{uid}/profile/data
         const uid = profileDoc.ref.parent.parent?.id;
-        if (!uid) continue;
+        if (!uid) return;
         const profile = profileDoc.data();
 
         // Collect this director's selected shows that are starting soon (dedupe so
@@ -125,7 +126,7 @@ exports.showReminderPushJob = onSchedule(
             }
           }
         }
-      }
+      });
 
       const PARALLEL_LIMIT = 25;
       let totalSent = 0;
@@ -160,6 +161,10 @@ exports.weeklyMatchupPushJob = onSchedule(
   {
     schedule: "every monday 08:00",
     timeZone: "America/New_York",
+    // Reads every league's matchup doc and sends pushes one-by-one — the
+    // default 60s timeout would cut the job off mid-scan as leagues grow. 540s
+    // matches the scoring jobs (see dailyProcessors.js).
+    timeoutSeconds: 540,
     memory: "256MiB",
   },
   async () => {
@@ -198,13 +203,23 @@ exports.weeklyMatchupPushJob = onSchedule(
       const allMatchups = [];
       const allUserIds = new Set();
 
-      for (const leagueDoc of leaguesSnapshot.docs) {
-        const league = leagueDoc.data();
+      // Batch the per-league matchup reads: one chunked getAll instead of a
+      // sequential get() per league.
+      const GETALL_CHUNK = 300;
+      const leagueDocs = leaguesSnapshot.docs;
+      const matchupDocs = [];
+      for (let i = 0; i < leagueDocs.length; i += GETALL_CHUNK) {
+        const chunk = leagueDocs.slice(i, i + GETALL_CHUNK);
+        matchupDocs.push(
+          ...(await db.getAll(
+            ...chunk.map((leagueDoc) => db.doc(paths.leagueMatchupWeek(leagueDoc.id, currentWeek)))
+          ))
+        );
+      }
 
-        // Get this week's matchups document
-        const matchupDoc = await db
-          .doc(paths.leagueMatchupWeek(leagueDoc.id, currentWeek))
-          .get();
+      for (let leagueIndex = 0; leagueIndex < leagueDocs.length; leagueIndex++) {
+        const league = leagueDocs[leagueIndex].data();
+        const matchupDoc = matchupDocs[leagueIndex];
 
         if (!matchupDoc.exists) continue;
 
@@ -224,6 +239,7 @@ exports.weeklyMatchupPushJob = onSchedule(
             allMatchups.push({
               player1,
               player2,
+              leagueId: leagueDocs[leagueIndex].id,
               leagueName: league.name,
               corpsClass,
             });
@@ -260,11 +276,13 @@ exports.weeklyMatchupPushJob = onSchedule(
         {
           userId: matchup.player1,
           opponentName: usernameMap.get(matchup.player2),
+          leagueId: matchup.leagueId,
           leagueName: matchup.leagueName,
         },
         {
           userId: matchup.player2,
           opponentName: usernameMap.get(matchup.player1),
+          leagueId: matchup.leagueId,
           leagueName: matchup.leagueName,
         },
       ]);
@@ -284,6 +302,31 @@ exports.weeklyMatchupPushJob = onSchedule(
         totalSent += results.filter(
           (r) => r.status === "fulfilled" && r.value === true
         ).length;
+      }
+
+      // In-app inbox copy per matchup participant — same text as the push,
+      // best-effort and never failing the job; not gated on pushPreferences
+      // (see the score-drop job below for the rationale). Keyed per
+      // (week, league) so a retry converges and a director in several
+      // leagues still gets one entry per league.
+      try {
+        const inbox = await createUserNotifications(
+          db,
+          notificationTasks.map((task) => ({
+            uid: task.userId,
+            type: "matchup_start",
+            title: "Matchup Starting!",
+            message: `Your matchup vs ${task.opponentName} in ${task.leagueName} is about to begin!`,
+            link: "/leagues",
+            leagueId: task.leagueId,
+            leagueName: task.leagueName,
+            metadata: { week: currentWeek, opponentName: task.opponentName },
+            dedupeKey: `matchup_start_w${currentWeek}_${task.leagueId}`,
+          }))
+        );
+        logger.info(`Matchup inbox fan-out: ${inbox.written} written, ${inbox.skipped} skipped`);
+      } catch (error) {
+        logger.error("Matchup inbox fan-out failed:", error);
       }
 
       logger.info(`Weekly matchup push job complete. Sent ${totalSent} notifications.`);
@@ -365,6 +408,32 @@ exports.scoreDropPushJob = onSchedule(
         totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
       }
 
+      // In-app inbox copy of the same message, per recipient — the surface for
+      // directors who denied push. Best-effort and isolated (same idiom as the
+      // Discord stage): an inbox failure never fails the push job. Deliberately
+      // NOT gated on pushPreferences — that is a push-channel opt-out, and no
+      // channel-neutral category setting exists (see helpers/userNotifications).
+      // dedupeKey makes a scheduler retry overwrite instead of duplicate.
+      try {
+        const inbox = await createUserNotifications(
+          db,
+          pushes.map((push) => ({
+            uid: push.uid,
+            type: "score_drop",
+            title: push.title,
+            message: push.body,
+            // Same destination as the push, tagged so score_drop_return
+            // analytics can tell inbox arrivals from push arrivals.
+            link: "/scores?src=inbox",
+            metadata: push.data,
+            dedupeKey: `score_drop_${season.seasonUid}_${scoredDay}`,
+          }))
+        );
+        logger.info(`Score-drop inbox fan-out: ${inbox.written} written, ${inbox.skipped} skipped`);
+      } catch (error) {
+        logger.error("Score-drop inbox fan-out failed:", error);
+      }
+
       logger.info(
         `Score-drop push job complete. Day ${scoredDay}: sent ${totalSent} of ` +
           `${pushes.length} candidate notifications.`
@@ -421,14 +490,14 @@ exports.lineupLockReminderPushJob = onSchedule(
       // and isolated: Discord never blocks the push fan-out below.
       await announceLineupLock(db, season, context);
 
-      // Only corps is consumed below — project it instead of full profiles.
-      const profilesSnapshot = await db
+      // Only corps is consumed below — project it instead of full profiles,
+      // and page the scan so it never truncates at a single query's cap
+      // (see helpers/firestorePaging).
+      const profilesQuery = db
         .collectionGroup("profile")
         .where("activeSeasonId", "==", season.seasonUid)
-        .select("corps")
-        .get();
-
-      const profiles = profilesSnapshot.docs.map((doc) => ({
+        .select("corps");
+      const profiles = await processAllInPages(profilesQuery, 500, async (doc) => ({
         uid: doc.ref.parent.parent?.id,
         corps: doc.data().corps || {},
       }));
@@ -450,6 +519,30 @@ exports.lineupLockReminderPushJob = onSchedule(
           )
         );
         totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
+      }
+
+      // In-app inbox copy per reminded director — reaches the push-denied.
+      // Best-effort, never fails the job; not gated on pushPreferences (see
+      // the score-drop job above for the rationale). One lock period = one
+      // dedupeKey, so the daily retry window can't stack duplicates.
+      try {
+        const inbox = await createUserNotifications(
+          db,
+          pushes.map((push) => ({
+            uid: push.uid,
+            type: "lineup_lock",
+            title: push.title,
+            message: push.body,
+            link: push.url,
+            metadata: push.data,
+            dedupeKey: `lineup_lock_${season.seasonUid}_${context.phase}_${context.periodKey}`,
+          }))
+        );
+        logger.info(
+          `Lineup-lock inbox fan-out: ${inbox.written} written, ${inbox.skipped} skipped`
+        );
+      } catch (error) {
+        logger.error("Lineup-lock inbox fan-out failed:", error);
       }
 
       logger.info(

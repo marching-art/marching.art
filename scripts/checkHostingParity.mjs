@@ -133,6 +133,7 @@ const REWRITE_SOURCE_MAP = new Map([
   // not match the bare path); Vercel's :path* covers both with one rewrite.
   ['/results', '/results/:path*'],
   ['/results/**', '/results/:path*'],
+  ['/d/**', '/d/:path*'],
 ]);
 
 const mapRewriteSource = (source) => REWRITE_SOURCE_MAP.get(source) ?? source;

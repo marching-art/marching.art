@@ -16,6 +16,10 @@ exports.processDciScores = onMessagePublished({
   // double-apply. Without this a transient Firestore error acked the message
   // and the scraped scores were silently lost.
   retry: true,
+  // Cap fan-out to match processDciRecap upstream: every message transacts on
+  // the same historical_scores/{year} document, so unbounded instances just
+  // churn transaction aborts and Pub/Sub redeliveries during deep scrapes.
+  maxInstances: 3,
 }, async (message) => {
   logger.info("Received new historical scores to process.");
 
@@ -147,6 +151,21 @@ exports.processDciRecap = onMessagePublished({
 
   if (!url) {
     logger.warn("[RecapWorker] Received a message with no URL. Skipping.");
+    return;
+  }
+
+  // Host allowlist: only dci.org recap pages may be fetched, so a message
+  // from anything with publish access can't turn this worker into a fetch
+  // proxy for arbitrary hosts.
+  let hostname;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    logger.warn(`[RecapWorker] Skipping malformed URL: ${url}`);
+    return;
+  }
+  if (hostname !== "www.dci.org" && hostname !== "dci.org") {
+    logger.warn(`[RecapWorker] Skipping non-dci.org URL: ${url}`);
     return;
   }
 

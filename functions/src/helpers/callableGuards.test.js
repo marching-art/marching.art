@@ -3,7 +3,13 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { assertAuth, assertAdmin, hasAdminClaim, clampLimit } = require("./callableGuards");
+const {
+  assertAuth,
+  assertAdmin,
+  hasAdminClaim,
+  clampLimit,
+  assertDocId,
+} = require("./callableGuards");
 
 describe("assertAuth", () => {
   test("throws unauthenticated when there is no auth context", () => {
@@ -93,5 +99,34 @@ describe("clampLimit", () => {
     assert.equal(clampLimit("abc"), 50);
     assert.equal(clampLimit(NaN), 50);
     assert.equal(clampLimit(Infinity), 50);
+  });
+});
+
+describe("assertDocId", () => {
+  test("returns valid doc ids unchanged", () => {
+    assert.equal(assertDocId("abc123"), "abc123");
+    assert.equal(assertDocId("A-Za_z0-9"), "A-Za_z0-9");
+    assert.equal(assertDocId("x".repeat(128)), "x".repeat(128));
+  });
+
+  test("throws invalid-argument on non-string input", () => {
+    for (const bad of [undefined, null, 42, {}, [], true]) {
+      assert.throws(() => assertDocId(bad), /Invalid id/);
+    }
+  });
+
+  test("throws on empty and oversized ids", () => {
+    assert.throws(() => assertDocId(""), /Invalid id/);
+    assert.throws(() => assertDocId("x".repeat(129)), /Invalid id/);
+  });
+
+  test("throws on path separators and other reserved characters", () => {
+    for (const bad of ["a/b", "..", "a.b", "a b", "id%20", "__x__$"]) {
+      assert.throws(() => assertDocId(bad), /Invalid id/);
+    }
+  });
+
+  test("uses the label in the error message", () => {
+    assert.throws(() => assertDocId("a/b", "league ID"), /Invalid league ID/);
   });
 });

@@ -59,6 +59,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
+    "typecheck": "tsc --noEmit && tsc -p functions",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "census": "node scripts/designCensus.mjs",

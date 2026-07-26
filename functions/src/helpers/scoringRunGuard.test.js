@@ -65,6 +65,18 @@ describe("claimScoringRun", () => {
     assert.equal(writes[0].data.scoredDay, 5);
   });
 
+  test("stamps kind 'scoring' by default and passes an explicit kind through", async () => {
+    const scoring = makeDb(undefined);
+    await claimScoringRun(scoring.db, "s2026", 5, { now: NOW });
+    assert.equal(scoring.writes[0].data.kind, "scoring");
+
+    // Announcement leases (Discord posts etc.) mark themselves so the
+    // watchdog can report their failures as warnings, not critical.
+    const announce = makeDb(undefined);
+    await claimScoringRun(announce.db, "s2026_discord", 5, { now: NOW, kind: "announce" });
+    assert.equal(announce.writes[0].data.kind, "announce");
+  });
+
   test("skips a day that already completed", async () => {
     const { db, writes } = makeDb({ status: "completed", attempts: 1 });
     const result = await claimScoringRun(db, "s2026", 5, { now: NOW });

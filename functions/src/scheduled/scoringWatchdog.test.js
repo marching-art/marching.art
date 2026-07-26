@@ -7,7 +7,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { findUnhealthyScoringRuns, LOOKBACK_MS } = require("./scoringWatchdog");
+const { findUnhealthyScoringRuns, watchdogSeverity, LOOKBACK_MS } = require("./scoringWatchdog");
 const { STALE_LEASE_MS } = require("../helpers/scoringRunGuard");
 
 const NOW = new Date("2026-07-22T08:30:00Z");
@@ -103,6 +103,58 @@ describe("findUnhealthyScoringRuns", () => {
 
     assert.equal(unhealthy.length, 1);
     assert.equal(unhealthy[0].status, "stale-running");
+  });
+
+  test("carries the lease kind through, defaulting pre-kind docs to 'scoring'", async () => {
+    const db = makeDb([
+      // Written before the kind field existed — must read as scoring.
+      { id: "s2026_day5", status: "failed", startedAt: minutesAgo(150) },
+      { id: "s2026_discord_day5", status: "failed", kind: "announce", startedAt: minutesAgo(140) },
+    ]);
+    const unhealthy = await findUnhealthyScoringRuns(db, NOW);
+
+    assert.equal(unhealthy.find((r) => r.id === "s2026_day5").kind, "scoring");
+    assert.equal(unhealthy.find((r) => r.id === "s2026_discord_day5").kind, "announce");
+  });
+});
+
+describe("watchdogSeverity", () => {
+  test("a failed scoring run is critical", () => {
+    const severity = watchdogSeverity({
+      unhealthy: [{ id: "s2026_day5", status: "failed", kind: "scoring" }],
+      scrapeProblem: null,
+      unscoredProblem: null,
+    });
+    assert.equal(severity, "critical");
+  });
+
+  test("only announce-kind failures downgrade to a warning", () => {
+    const severity = watchdogSeverity({
+      unhealthy: [{ id: "s2026_discord_day5", status: "failed", kind: "announce" }],
+      scrapeProblem: null,
+      unscoredProblem: null,
+    });
+    assert.equal(severity, "warning");
+  });
+
+  test("a pre-kind doc counts as scoring (backward compat) — critical", () => {
+    const severity = watchdogSeverity({
+      unhealthy: [{ id: "s2026_day5", status: "failed" }],
+      scrapeProblem: null,
+      unscoredProblem: null,
+    });
+    assert.equal(severity, "critical");
+  });
+
+  test("a scrape or unscored-night problem is critical even with healthy runs", () => {
+    assert.equal(
+      watchdogSeverity({ unhealthy: [], scrapeProblem: { status: "failed" }, unscoredProblem: null }),
+      "critical",
+    );
+    assert.equal(
+      watchdogSeverity({ unhealthy: [], scrapeProblem: null, unscoredProblem: { status: "unscored" } }),
+      "critical",
+    );
   });
 });
 

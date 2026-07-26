@@ -7,6 +7,18 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+const { createUserNotification } = require("../helpers/userNotifications");
+
+// Cross-user notifications MUST be written here with the Admin SDK — Firestore
+// rules only let a client write into its OWN notifications subcollection, so a
+// client-side write to another user's feed is silently denied (the old
+// createLeagueNotification utility in src/hooks/useLeagueNotifications.ts).
+// Non-fatal: a notification failure never fails the action that triggered it —
+// the shared writer (helpers/userNotifications) catches and logs internally,
+// and keeps the exact doc shape this file used to write inline.
+async function createUserLeagueNotification(db, recipientUid, notification) {
+  await createUserNotification(db, recipientUid, notification);
+}
 
 // =============================================================================
 // PER-DIRECTOR LEAGUE INVITATIONS
@@ -91,6 +103,16 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
     message: trimmedMessage,
     status: 'pending',
     invitedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Notify the invitee in their notification feed. Text is built from
+  // server-derived values only (never the client-supplied message).
+  await createUserLeagueNotification(db, inviteeUid, {
+    leagueId,
+    leagueName: leagueData.name || "Unnamed League",
+    type: "league_invite",
+    title: "League Invitation",
+    message: `${inviterName} invited you to join ${leagueData.name || "a league"}.`,
   });
 
   logger.info(`League invitation sent: ${inviterUid} → ${inviteeUid} for ${leagueId}`);
@@ -196,6 +218,17 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
     message: `${userDisplayName} has joined the league!`,
     userId: uid,
   });
+
+  // Tell the inviter their invitation was accepted (cross-user, Admin SDK).
+  if (invitation.inviterUid && invitation.inviterUid !== uid) {
+    await createUserLeagueNotification(db, invitation.inviterUid, {
+      leagueId,
+      leagueName: invitation.leagueName || "your league",
+      type: "member_joined",
+      title: "Invitation Accepted",
+      message: `${userDisplayName} accepted your invitation to ${invitation.leagueName || "your league"}.`,
+    });
+  }
 
   return { success: true, accepted: true };
 });

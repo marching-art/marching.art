@@ -14,7 +14,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { brevoApiKey } = require("../helpers/emailService");
-const { hasAdminClaim, assertAuthWithBudget } = require("../helpers/callableGuards");
+const { hasAdminClaim, assertAuthWithBudget, assertDocId } = require("../helpers/callableGuards");
 
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
@@ -54,6 +54,8 @@ exports.toggleArticleReaction = onCall(
     if (!articleId || typeof articleId !== "string") {
       throw new HttpsError("invalid-argument", "Article ID is required");
     }
+    // The id is interpolated into Firestore doc ids/paths below.
+    assertDocId(articleId, "article ID");
 
     if (!emoji || !VALID_REACTIONS.includes(emoji)) {
       throw new HttpsError("invalid-argument", "Invalid reaction emoji");
@@ -156,6 +158,8 @@ exports.getArticleReactions = onCall(
     if (!articleId || typeof articleId !== "string") {
       throw new HttpsError("invalid-argument", "Article ID is required");
     }
+    // The id is interpolated into Firestore doc ids/paths below.
+    assertDocId(articleId, "article ID");
 
     try {
       // Get aggregate counts
@@ -212,6 +216,8 @@ exports.addArticleComment = onCall(
     if (!articleId || typeof articleId !== "string") {
       throw new HttpsError("invalid-argument", "Article ID is required");
     }
+    // The id is interpolated into Firestore doc ids/paths below.
+    assertDocId(articleId, "article ID");
 
     if (!content || typeof content !== "string") {
       throw new HttpsError("invalid-argument", "Comment content is required");
@@ -307,6 +313,8 @@ exports.getArticleComments = onCall(
     if (!articleId || typeof articleId !== "string") {
       throw new HttpsError("invalid-argument", "Article ID is required");
     }
+    // The id is interpolated into Firestore doc ids/paths below.
+    assertDocId(articleId, "article ID");
 
     // Page size is client-suggested but server-clamped: an unbounded limit
     // would let one call read (and bill) an arbitrarily large result set.
@@ -679,6 +687,11 @@ exports.getArticleEngagement = onCall(
 
     if (articleIds.length > 50) {
       throw new HttpsError("invalid-argument", "Maximum 50 articles per request");
+    }
+
+    // Every id is used as a Firestore doc id below.
+    for (const articleId of articleIds) {
+      assertDocId(articleId, "article ID");
     }
 
     try {

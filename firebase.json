@@ -12,6 +12,7 @@
         "*.local",
         "**/*.test.js",
         "pressboxImporter",
+        "dciArchiveImporter",
         "src/scripts/cleanupLeakedProfileEmails.js"
       ]
     },
@@ -148,6 +149,13 @@
         "source": "/results/**",
         "function": {
           "functionId": "getResultsPageHttp",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/d/**",
+        "function": {
+          "functionId": "getPublicProfilePageHttp",
           "region": "us-central1"
         }
       },

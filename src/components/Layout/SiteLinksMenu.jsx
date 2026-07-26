@@ -24,6 +24,17 @@ const MENU_LINKS = [
   { to: '/hall-of-champions', label: 'Hall of Champions' },
 ];
 
+// App pages with no other persistent inbound link (Shop was reachable only
+// from the CorpsCoin modal; Records only from Hall of Champions; the retired
+// corps gallery and corps history had no inbound links at all).
+const EXPLORE_LINKS = [
+  { to: '/shop', label: 'Shop' },
+  { to: '/achievements', label: 'Achievements' },
+  { to: '/records', label: 'Records' },
+  { to: '/retired-corps', label: 'Retired Corps' },
+  { to: '/corps-history', label: 'Corps History' },
+];
+
 const LEGAL_LINKS = [
   { to: '/privacy', label: 'Privacy' },
   { to: '/terms', label: 'Terms' },
@@ -100,6 +111,22 @@ const SiteLinksMenu = () => {
               {link.label}
             </Link>
           ))}
+
+          <div className="my-1 border-t border-line" />
+
+          {EXPLORE_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className={itemClass}
+            >
+              {link.label}
+            </Link>
+          ))}
+
+          <div className="my-1 border-t border-line" />
 
           {/* /results is served by a Cloud Function through a hosting rewrite,
               not the SPA router — a <Link> would be swallowed client-side and

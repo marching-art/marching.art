@@ -2,7 +2,7 @@
 // BOTTOM NAV COMPONENT (TypeScript)
 // =============================================================================
 // Mobile bottom navigation bar matching desktop nav
-// News, Dashboard, Schedule, Scores, Profile
+// News, Dashboard, Schedule, Scores, Leagues, Profile
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Trophy,
   User,
+  Users,
   Newspaper,
   Calendar,
   Shield,
@@ -32,7 +33,7 @@ interface NavItem {
 }
 
 // =============================================================================
-// CONSTANTS - 5 navigation items (matching desktop)
+// CONSTANTS - 6 navigation items (matching desktop)
 // =============================================================================
 
 const navItems: NavItem[] = [
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
+  { path: '/leagues', label: 'Leagues', icon: Users },
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
@@ -81,6 +83,9 @@ const BottomNav: React.FC = () => {
     }
     if (path === '/schedule') {
       return location.pathname.startsWith('/schedule');
+    }
+    if (path === '/leagues') {
+      return location.pathname.startsWith('/leagues');
     }
     if (path === '/admin') {
       return location.pathname.startsWith('/admin');

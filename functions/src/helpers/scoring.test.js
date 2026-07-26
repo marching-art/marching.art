@@ -9,6 +9,7 @@ const {
   logarithmicRegression,
   getScoreForDay,
   getRealisticCaptionScore,
+  liveSeasonYear,
 } = require("./scoring");
 
 describe("simpleLinearRegression", () => {
@@ -106,6 +107,39 @@ describe("getScoreForDay", () => {
       2019: [{ offSeasonDay: 1, scores: [{ corps: "X", captions: { GE1: 0 } }] }],
     };
     assert.equal(getScoreForDay(1, "X", 2019, "GE1", withZero), null);
+  });
+});
+
+describe("liveSeasonYear", () => {
+  // The live strategy used the wall clock for the scraped-scores year, which
+  // broke reprocessing across New Year and archived-season runs — the season
+  // doc, not today's date, must decide which historical_scores/{year} to read.
+  test("prefers the season doc's seasonYear (finals year)", () => {
+    assert.equal(liveSeasonYear({ seasonYear: 2025 }), 2025);
+  });
+
+  test("coerces a string seasonYear", () => {
+    assert.equal(liveSeasonYear({ seasonYear: "2024" }), 2024);
+  });
+
+  test("falls back to the schedule start date's UTC year", () => {
+    const seasonData = {
+      schedule: { startDate: { toDate: () => new Date(Date.UTC(2023, 5, 1)) } },
+    };
+    assert.equal(liveSeasonYear(seasonData), 2023);
+  });
+
+  test("seasonYear wins over the schedule start date", () => {
+    const seasonData = {
+      seasonYear: 2025,
+      schedule: { startDate: { toDate: () => new Date(Date.UTC(2023, 5, 1)) } },
+    };
+    assert.equal(liveSeasonYear(seasonData), 2025);
+  });
+
+  test("uses the wall clock only when the season carries neither", () => {
+    assert.equal(liveSeasonYear({}), new Date().getFullYear());
+    assert.equal(liveSeasonYear(undefined), new Date().getFullYear());
   });
 });
 

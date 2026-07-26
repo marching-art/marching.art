@@ -9,7 +9,7 @@ const { defineSecret } = require("firebase-functions/params");
 const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { brevoApiKey } = require("../helpers/emailService");
-const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
+const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
 const {
   AUTO_PUBLISH_THRESHOLD,
   computeNextAutoPublishAt,
@@ -54,19 +54,37 @@ exports.submitNewsForApproval = onCall(
     assertAuth(request);
 
     const db = getDb();
+
+    // Abuse throttle: each submission is a Firestore write plus an admin
+    // email fan-out, so cap it well above any human authoring rate.
+    await assertWriteBudget(db, request.auth.uid, "newsSubmissions", {
+      max: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+
     const { headline, summary, fullStory, category, imageUrl, imageOption } = request.data || {};
 
-    // Validate required fields
+    // Validate required fields (min AND max lengths — these strings are
+    // stored verbatim and rendered to admins/readers)
     if (!headline || typeof headline !== "string" || headline.trim().length < 10) {
       throw new HttpsError("invalid-argument", "Headline must be at least 10 characters");
+    }
+    if (headline.trim().length > 200) {
+      throw new HttpsError("invalid-argument", "Headline cannot exceed 200 characters");
     }
 
     if (!summary || typeof summary !== "string" || summary.trim().length < 20) {
       throw new HttpsError("invalid-argument", "Summary must be at least 20 characters");
     }
+    if (summary.trim().length > 500) {
+      throw new HttpsError("invalid-argument", "Summary cannot exceed 500 characters");
+    }
 
     if (!fullStory || typeof fullStory !== "string" || fullStory.trim().length < 100) {
       throw new HttpsError("invalid-argument", "Full story must be at least 100 characters");
+    }
+    if (fullStory.trim().length > 20000) {
+      throw new HttpsError("invalid-argument", "Full story cannot exceed 20000 characters");
     }
 
     const validCategories = ["dci", "fantasy", "analysis"];
@@ -85,10 +103,16 @@ exports.submitNewsForApproval = onCall(
       if (!imageUrl || typeof imageUrl !== "string" || !imageUrl.trim()) {
         throw new HttpsError("invalid-argument", "An image URL is required when supplying your own image");
       }
+      let parsedUrl;
       try {
-        new URL(imageUrl);
+        parsedUrl = new URL(imageUrl);
       } catch {
         throw new HttpsError("invalid-argument", "Invalid image URL");
+      }
+      // Scheme allowlist: the URL is stored and later rendered as an <img>
+      // src, so javascript:/data:/etc. must never make it into an article.
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        throw new HttpsError("invalid-argument", "Image URL must use http or https");
       }
       submittedImageUrl = imageUrl.trim();
     }

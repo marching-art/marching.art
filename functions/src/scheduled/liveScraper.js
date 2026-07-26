@@ -51,29 +51,41 @@ async function fetchScoresListing() {
  * @returns {Promise<{recapUrls: string[], results: object[], totalCount: number}>}
  */
 async function scrapeRecapsForDateKeys(listedEvents, dateKeySet, { overwrite = false } = {}) {
-  const recapUrls = [
-    ...new Set(listedEvents.filter((e) => dateKeySet.has(e.dateKey)).map((e) => e.recapUrl)),
-  ];
+  // Dedupe by recap URL, keeping each URL's listing dateKey — the listing's
+  // date is authoritative and is cross-checked against the recap page's own
+  // date inside scrapeDciScoresLogic (expectedDateKey below).
+  const recapsByUrl = new Map();
+  for (const e of listedEvents) {
+    if (dateKeySet.has(e.dateKey) && !recapsByUrl.has(e.recapUrl)) {
+      recapsByUrl.set(e.recapUrl, e.dateKey);
+    }
+  }
+  const recapUrls = [...recapsByUrl.keys()];
   const extraPayload = overwrite ? { overwrite: true } : {};
 
   const results = [];
   let totalCount = 0;
-  for (const recapUrl of recapUrls) {
+  for (const [recapUrl, dateKey] of recapsByUrl) {
     try {
-      const summary = await scrapeDciScoresLogic(recapUrl, LIVE_SCORES_TOPIC, extraPayload);
+      const summary = await scrapeDciScoresLogic(recapUrl, LIVE_SCORES_TOPIC, extraPayload, {
+        expectedDateKey: dateKey,
+      });
       const count = summary?.count ?? 0;
       totalCount += count;
       if (count === 0) {
         // A 200 response that parses to zero rows is a Cloudflare interstitial
         // or a markup change, not a published recap — record it as a failure so
         // the night is never treated as successfully scraped on empty data.
-        logger.error(`Recap ${recapUrl} returned 0 parsed rows; treating as a failed scrape.`);
+        // summary.error carries the specific reason when the scrape itself
+        // rejected the page (unparseable/mismatched event date).
+        const error = summary?.error || "0 rows parsed from response";
+        logger.error(`Recap ${recapUrl} failed: ${error}; treating as a failed scrape.`);
         results.push({
           recapUrl,
           eventName: summary?.eventName || null,
           eventDate: summary?.eventDate || null,
           eventLocation: summary?.eventLocation || null,
-          error: "0 rows parsed from response",
+          error,
           count: 0,
         });
         continue;
@@ -403,6 +415,20 @@ exports.scrapeDciScores = onSchedule({
       code: error.code,
       status: error.response?.status,
     });
+    // A total failure (listing fetch threw, season doc unreadable) must still
+    // leave a scrape_runs doc, or the 4:30 watchdog reads the night as merely
+    // "missing" with no error to act on. Best-effort — never throws.
+    try {
+      const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" })
+        .format(new Date());
+      await writeScrapeRunStatus(getDb(), today, {
+        status: "failed",
+        failedAt: new Date(),
+        lastError: String(error.message || error),
+      });
+    } catch (statusError) {
+      logger.error("Failed to record the scrape failure in scrape_runs:", statusError);
+    }
     // Don't throw - let the function complete so it doesn't retry automatically
     // The next scheduled run will try again
   }

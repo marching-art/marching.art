@@ -1,6 +1,25 @@
 {
   "exempt": {
-    "functions/src/callable/podiumRoute.js": "Read-only: getPodiumRegistrationPreview / getPodiumState only read Firestore; a budget charge would add a billed read per call.",
-    "functions/src/callable/podiumValidation.js": "No callables: shared validation helpers only (no onCall exports, no writes)."
+    "functions/src/callable/articleComments.js#getArticleReactions": "Read-only: fetches aggregate reaction counts and the caller's own reaction.",
+    "functions/src/callable/articleComments.js#getArticleComments": "Read-only: paginated comment fetch, page size server-clamped.",
+    "functions/src/callable/articleComments.js#getArticleEngagement": "Read-only: batch engagement counts, capped at 50 article ids per call.",
+    "functions/src/callable/corpsDuplicates.js#detectMyDuplicateCorps": "Read-only: reports the caller's own duplicate corps; the repair mutation is a separate guarded callable.",
+    "functions/src/callable/lineups.js#getHotCorps": "Read-only endpoint; only write is a best-effort shared cache doc materialization (hotCorpsCacheRef).",
+    "functions/src/callable/lineups.js#getLineupAnalytics": "Read-only: aggregates historical scores for display.",
+    "functions/src/callable/lineups.js#getActiveLineupKeys": "Read-only: lists active lineup keys.",
+    "functions/src/callable/lineups.js#validateLineup": "Validation endpoint; only write is a self-heal flag update on the CALLER'S OWN profile when a stale lineup is detected.",
+    "functions/src/callable/podiumFan.js#getFanFavorite": "Read-only: fetches fan-favorite standings and the caller's own ballot.",
+    "functions/src/callable/podiumJoint.js#getJointOverlaps": "Read-only: lists overlap candidates for joint rehearsals.",
+    "functions/src/callable/podiumJoint.js#getJointRehearsals": "Read-only: lists the caller's joint rehearsal proposals.",
+    "functions/src/callable/podiumRoute.js#getPodiumRegistrationPreview": "Read-only: previews podium registration state; a budget charge would add a billed read per call.",
+    "functions/src/callable/podiumRoute.js#getPodiumState": "Read-only: fetches podium state; a budget charge would add a billed read per call.",
+    "functions/src/callable/podiumStaff.js#getPodiumStaffMarket": "Read-only: fetches the staff market listing.",
+    "functions/src/callable/profile.js#getPublicProfile": "Read-only: public profile fetch.",
+    "functions/src/callable/supporters.js#getSupportersWall": "Read-only: public supporters wall fetch.",
+    "functions/src/callable/users.js#checkUsername": "Read-only: username availability check (validated + length-capped input).",
+    "functions/src/callable/users.js#getShowRegistrations": "Read endpoint; only write is a best-effort materialization of the show-registration index doc on legacy fallback.",
+    "functions/src/callable/users.js#getUserRankings": "Read-only: rankings snapshot read with scan fallback.",
+    "functions/src/triggers/newsFeed.js#getDailyNews": "Read-only: single news doc fetch, day/seasonId validated.",
+    "functions/src/triggers/newsFeed.js#getRecentNews": "Read-only endpoint; only write is the shared server-side feed cache doc (validated category + clamped limit key)."
   }
 }

@@ -7,7 +7,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { mergeEventIntoHistoricalScores } = require("./historicalScores");
+const { mergeEventIntoHistoricalScores, SIZE_ALERT_BYTES } = require("./historicalScores");
 
 // Fake Firestore where historical_scores/{year} maps to `stored` (or absent).
 function makeDb(stored) {
@@ -146,5 +146,33 @@ describe("mergeEventIntoHistoricalScores", () => {
 
     const corpsNames = writes[0].data.data[0].scores.map((s) => s.corps);
     assert.deepEqual(corpsNames, ["Blue Devils", "Bluecoats"]);
+  });
+
+  test("fires a warning ops alert when the year document nears the 1MiB cap", async () => {
+    // An existing data array already past the ~700KB soft limit.
+    const bloated = event({
+      eventName: "Bloated Show",
+      date: "2024-06-01",
+      location: "x".repeat(SIZE_ALERT_BYTES),
+    });
+    const { db } = makeDb({ data: [bloated] });
+    const alerts = [];
+    await mergeEventIntoHistoricalScores(db, 2024, event(), {
+      postAlert: async (webhookUrl, alert) => { alerts.push(alert); return { status: "posted" }; },
+    });
+
+    assert.equal(alerts.length, 1);
+    assert.equal(alerts[0].severity, "warning");
+    assert.equal(alerts[0].source, "historical-scores");
+    assert.match(alerts[0].title, /historical_scores\/2024/);
+  });
+
+  test("stays silent on a normally-sized document, even when nothing merges", async () => {
+    const { db } = makeDb({ data: [event()] });
+    const alerts = [];
+    await mergeEventIntoHistoricalScores(db, 2024, event(), {
+      postAlert: async (...args) => { alerts.push(args); return { status: "posted" }; },
+    });
+    assert.equal(alerts.length, 0);
   });
 });

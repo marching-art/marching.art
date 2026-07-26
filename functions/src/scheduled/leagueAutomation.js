@@ -16,7 +16,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertAuth } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
 const { buildMatchupResultPushes } = require("../helpers/matchupResults");
@@ -359,11 +359,13 @@ exports.generateWeeklyMatchups = onSchedule(
             return { skipped: true };
           }
 
-          // Fetch member profiles and standings in parallel
+          // Fetch member profiles and standings in parallel (field mask: only
+          // activeSeasonId + corps feed isClassActiveThisSeason below).
           const [profileDocs, standingsDoc] = await Promise.all([
-            db.getAll(...members.map(memberId =>
-              db.doc(paths.userProfile(memberId))
-            )),
+            db.getAll(
+              ...members.map(memberId => db.doc(paths.userProfile(memberId))),
+              { fieldMask: ["activeSeasonId", "corps"] }
+            ),
             db.doc(paths.leagueStandings(leagueId)).get()
           ]);
 
@@ -499,13 +501,16 @@ exports.generateWeeklyRecaps = onSchedule(
 
           const matchupData = matchupDoc.data();
 
-          // Fetch standings, profiles, and matchup history in parallel
+          // Fetch standings, profiles, and matchup history in parallel (field
+          // mask: only displayName is consumed from the profiles, by
+          // generateWeeklyRecap and buildMatchupResultPushes).
           const [standingsDoc, profileDocs, matchupHistorySnapshot] = await Promise.all([
             db.doc(paths.leagueStandings(leagueId)).get(),
             members.length > 0
-              ? db.getAll(...members.map(uid =>
-                  db.doc(paths.userProfile(uid))
-                ))
+              ? db.getAll(
+                  ...members.map(uid => db.doc(paths.userProfile(uid))),
+                  { fieldMask: ["displayName"] }
+                )
               : Promise.resolve([]),
             db.collection(paths.leagueMatchups(leagueId)).get()
           ]);
@@ -600,6 +605,10 @@ exports.updateLeagueRivalries = onSchedule(
   {
     schedule: "0 6 * * 1", // Monday 6:00 AM
     timeZone: "America/New_York",
+    // Pages through every league with a matchup-history read per league — the
+    // default 60s timeout would cut the job off mid-scan as leagues grow. 540s
+    // matches the sibling league jobs above.
+    timeoutSeconds: 540,
     memory: "256MiB",
   },
   async () => {
@@ -678,6 +687,10 @@ exports.triggerMatchupGeneration = onCall(
 
     const db = getDb();
 
+    // Abuse throttle (commissioner-only mutation, but still per-uid capped
+    // so a scripted caller can't hammer matchup regeneration).
+    await assertWriteBudget(db, uid, "leagueAdmin", { max: 10, windowMs: 60 * 60 * 1000 });
+
     // Check if user is commissioner
     const leagueRef = db.doc(paths.league(leagueId));
     const leagueDoc = await leagueRef.get();
@@ -705,11 +718,14 @@ exports.triggerMatchupGeneration = onCall(
       throw new HttpsError("failed-precondition", "Need at least 2 members to generate matchups.");
     }
 
-    // Fetch member profiles
+    // Fetch member profiles (field mask: only activeSeasonId + corps feed
+    // isClassActiveThisSeason below).
     const profileRefs = members.map(memberId =>
       db.doc(paths.userProfile(memberId))
     );
-    const profileDocs = await db.getAll(...profileRefs);
+    const profileDocs = await db.getAll(...profileRefs, {
+      fieldMask: ["activeSeasonId", "corps"],
+    });
 
     // Build standings
     const standingsDoc = await db.doc(paths.leagueStandings(leagueId)).get();
@@ -804,14 +820,31 @@ exports.refreshLeagueActivityJob = onSchedule(
     await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
       try {
         const members = leagueDoc.data().members || [];
+        // Field mask: computeSeasonActivity → isActiveThisSeason reads only
+        // activeSeasonId + corps from each profile.
         const profileDocs = members.length
-          ? await db.getAll(...members.map((uid) => db.doc(paths.userProfile(uid))))
+          ? await db.getAll(...members.map((uid) => db.doc(paths.userProfile(uid))), {
+              fieldMask: ["activeSeasonId", "corps"],
+            })
           : [];
 
         const seasonActivity = computeSeasonActivity(members, profileDocs, seasonUid);
-        await leagueDoc.ref.update({ seasonActivity });
+        // Skip the write when nothing changed (ignoring the updatedAt stamp) —
+        // on a quiet day this job is otherwise one write per league.
+        const prior = leagueDoc.data().seasonActivity;
+        const unchanged =
+          prior &&
+          prior.seasonUid === seasonActivity.seasonUid &&
+          prior.activeMemberCount === seasonActivity.activeMemberCount &&
+          prior.totalMemberCount === seasonActivity.totalMemberCount &&
+          Array.isArray(prior.activeMembers) &&
+          prior.activeMembers.length === seasonActivity.activeMembers.length &&
+          prior.activeMembers.every((uid, i) => uid === seasonActivity.activeMembers[i]);
+        if (!unchanged) {
+          await leagueDoc.ref.update({ seasonActivity });
+          leaguesUpdated++;
+        }
 
-        leaguesUpdated++;
         if (seasonActivity.activeMemberCount > 0) activeLeagues++;
         return { processed: 1 };
       } catch (error) {

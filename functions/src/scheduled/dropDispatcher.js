@@ -270,6 +270,19 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
 
   let freshScrapeThisTick = false;
   if (scrapeDue) {
+    // Count the attempt BEFORE the scrape — the budget bounds dci.org
+    // requests, not successes, and a scrape that hangs until the function
+    // times out would otherwise never be counted (unbounded nightly retries).
+    // Guarded so a Firestore blip on this bookkeeping write cannot abort the
+    // tick before the scoring branch below.
+    try {
+      await db.collection("drop_plans").doc(plan.showDateET).set(
+        { scrapeAttempts: FieldValue.increment(1), lastScrapeAttemptAt: new Date() },
+        { merge: true },
+      );
+    } catch (error) {
+      logger.error(`[drop-dispatcher] failed to record the scrape attempt: ${error.message}`);
+    }
     try {
       const scraped = await scrape({ dateKey: plan.showDateET });
       scrapedTonight = scraped?.stampedLastScrapedDate === true;
@@ -279,12 +292,6 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
       logger.error(`[drop-dispatcher] scrape failed (will retry within budget): ${error.message}`);
       result.actions.push({ action: "scrape", error: error.message });
     }
-    // Count the attempt whether it succeeded or threw — the budget bounds
-    // dci.org requests, not successes.
-    await db.collection("drop_plans").doc(plan.showDateET).set(
-      { scrapeAttempts: FieldValue.increment(1), lastScrapeAttemptAt: new Date() },
-      { merge: true },
-    );
     // A scrape that just succeeded may unlock scoring on this same tick
     // (slipped nights where scrape and drop coincide).
     ({ scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts: scrapeAttempts + 1, alreadyScored }));
@@ -325,8 +332,16 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
       score?.status === "processed" ||
       (score?.status === "skipped" && score?.reason === "completed");
     if (dayDone) {
+      // Audit trail: a night scored WITHOUT tonight's scraped recap (budget
+      // exhausted / retry window elapsed) fell back to regression for its
+      // shows. A dark day (nothing scheduled, pre-championship) is excluded —
+      // scoring without fresh data is by design there, not a fallback.
+      const darkDay =
+        plan.hasScheduledShows === false && plan.competitionDay < CHAMPIONSHIP_WEEK_START_DAY;
+      const usedRegressionFallback = plan.needsScrape && !scrapedTonight && !darkDay;
       await db.collection("drop_plans").doc(plan.showDateET).set(
-        { scoredAt: new Date() }, { merge: true },
+        { scoredAt: new Date(), ...(usedRegressionFallback ? { usedRegressionFallback: true } : {}) },
+        { merge: true },
       );
 
       // Discord score-drop post, at the drop it announces. Isolated (its own

@@ -11,7 +11,7 @@ const {
 } = require("../helpers/leagueHelpers");
 const { consumeRateBudget } = require("../helpers/rateLimit");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
-const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
@@ -848,6 +848,8 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
   if (!leagueId || typeof message !== 'string' || !message.trim()) {
     throw new HttpsError("invalid-argument", "League ID and message are required.");
   }
+  // The id is interpolated into a Firestore doc path below.
+  assertDocId(leagueId, "league ID");
 
   const trimmedMessage = message.trim();
   if (trimmedMessage.length > MAX_LEAGUE_MESSAGE_LENGTH) {

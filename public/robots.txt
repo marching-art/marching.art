@@ -4,6 +4,13 @@
 User-agent: *
 Allow: /
 
+# Public director pages (getPublicProfilePageHttp): server-rendered, listed in
+# the sitemap, and the shareable form of a director's identity. Explicitly
+# allowed so it stays crawlable even though the SPA's /profile route below is
+# not — /d/{username} is the canonical public URL, /profile is the auth-walled
+# app view of the same data.
+Allow: /d/
+
 # Protected routes — redirect to /login for unauthenticated visitors and
 # have no crawlable content. Exclude from indexing to conserve crawl budget.
 Disallow: /dashboard

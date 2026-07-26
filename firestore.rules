@@ -154,6 +154,70 @@ function touchesProtectedCorpsFields() {
        != resource.data.get(['corps', 'soundSport', 'selectedShows'], null));
 }
 
+// SIZE/TYPE CAPS on owner-writable free-text profile fields. profile/data is
+// world-readable (leaderboards, public profiles), so without caps oversized
+// or non-string junk written by an owner gets publicly served to every
+// visitor. Coarse backstops only — the UI enforces tighter limits (e.g. the
+// edit modal clips bio at 500). Each field is checked ONLY when the write
+// touches it (affectedKeys guard), so partial updates and field deletions
+// (FieldValue.delete()) keep working, and writes that don't touch a field
+// pay nothing — keep that short-circuit shape for the expression budget
+// (see the PERF note above).
+function textFieldOk(keys, field, max) {
+  return !keys.hasAny([field]) ||
+    !(field in request.resource.data) ||
+    (request.resource.data[field] is string &&
+     request.resource.data[field].size() < max);
+}
+
+// directorInfo is written wholesale by the profile edit modal
+// (ProfileEditModal.jsx); allowed keys mirror DirectorProfileInfo in
+// src/types/user.ts. hasOnly stops a giant payload from hiding under an
+// unchecked key.
+function directorInfoCapsOk(info) {
+  return info is map &&
+    info.keys().hasOnly(['bio', 'yearsDirecting', 'specialties', 'credentials',
+                         'socialLinks', 'acceptingLeagueInvites', 'profileVisibility']) &&
+    info.get('bio', '') is string && info.get('bio', '').size() < 2000 &&
+    info.get('credentials', '') is string && info.get('credentials', '').size() < 500 &&
+    socialLinksOk(info.get('socialLinks', {}));
+}
+
+function socialLinkOk(links, key) {
+  return links.get(key, '') is string && links.get(key, '').size() < 300;
+}
+
+function socialLinksOk(links) {
+  return links is map &&
+    links.keys().hasOnly(['website', 'twitter', 'instagram', 'youtube',
+                          'tiktok', 'facebook', 'discord']) &&
+    socialLinkOk(links, 'website') && socialLinkOk(links, 'twitter') &&
+    socialLinkOk(links, 'instagram') && socialLinkOk(links, 'youtube') &&
+    socialLinkOk(links, 'tiktok') && socialLinkOk(links, 'facebook') &&
+    socialLinkOk(links, 'discord');
+}
+
+function directorInfoOk(keys) {
+  return !keys.hasAny(['directorInfo']) ||
+    !('directorInfo' in request.resource.data) ||
+    directorInfoCapsOk(request.resource.data.directorInfo);
+}
+
+// The free-text fields the client writes today: displayName/location (Profile
+// page + edit modal), bio/favoriteCorps (onboarding merge), directorInfo (edit
+// modal). One diff feeds every per-field check.
+function profileTextFieldsValid() {
+  return profileTextCapsOk(request.resource.data.diff(resource.data).affectedKeys());
+}
+
+function profileTextCapsOk(keys) {
+  return textFieldOk(keys, 'displayName', 100) &&
+    textFieldOk(keys, 'bio', 2000) &&
+    textFieldOk(keys, 'location', 200) &&
+    textFieldOk(keys, 'favoriteCorps', 200) &&
+    directorInfoOk(keys);
+}
+
 // --- USER DATA ---
 // This path now uses {appId} to match our React code and guidelines
 
@@ -173,7 +237,7 @@ match /artifacts/{appId}/users/{userId} {
     allow create, delete: if isAdmin();
     allow update: if isAdmin() ||
       (isOwner(userId) && !touchesProtectedProfileFields() &&
-        !touchesProtectedCorpsFields());
+        !touchesProtectedCorpsFields() && profileTextFieldsValid());
   }
   
   // Profile comments are public to read. Creation is backend-only: no client
@@ -191,9 +255,24 @@ match /artifacts/{appId}/users/{userId} {
       (request.auth.uid == userId || request.auth.uid == resource.data.authorUid || isAdmin());
   }
   
-  // Notifications are private
+  // Notifications are private. Creation is backend-only: every notification
+  // the client reads is server-written (league fan-out, matchups, trades),
+  // and no client code creates notification docs — the old blanket owner
+  // `write` let a user forge arbitrary "official" notifications to
+  // themselves with unbounded payloads (publicly harmless but a storage /
+  // spoofing surface). The client's real write surfaces are exactly:
+  // mark-read (updateDoc {read: true}, single and batched) and pruning old
+  // read notifications (batch.delete) — see useLeagueNotifications.ts. So
+  // updates may only flip the `read` flag, and deletes stay owner-open. If
+  // client-side self-notification creation ever returns, add a validated
+  // create rule (bounded string fields) instead of re-widening write.
   match /notifications/{notificationId} {
-    allow read, write: if isOwner(userId);
+    allow read: if isOwner(userId);
+    allow create: if false; // Backend only (Cloud Functions fan-out)
+    allow update: if isOwner(userId) &&
+      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
+      request.resource.data.read is bool;
+    allow delete: if isOwner(userId);
   }
 
   // Private data (email address, etc.) is readable ONLY by the owner or an

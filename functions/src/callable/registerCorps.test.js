@@ -20,7 +20,7 @@ const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
  * of update/set, and the collection().where().limit().get() duplicate-name
  * scan. Everything not seeded reads as missing.
  */
-function makeFakeDb(docs = new Map()) {
+function makeFakeDb(docs = new Map(), { commitError = null } = {}) {
   const writes = [];
 
   const makeRef = (path) => ({
@@ -58,7 +58,12 @@ function makeFakeDb(docs = new Map()) {
           set(ref, data) {
             writes.push({ type: "set", path: ref.path, data });
           },
-          async commit() {},
+          create(ref, data) {
+            writes.push({ type: "create", path: ref.path, data });
+          },
+          async commit() {
+            if (commitError) throw commitError;
+          },
         };
       },
     },
@@ -79,12 +84,12 @@ const registerData = (overrides = {}) => ({
 const profileUpdate = (writes, uid = "u1") =>
   writes.find((w) => w.type === "update" && w.path === profilePath(uid))?.data;
 
-function seed(profile) {
+function seed(profile, opts = {}) {
   const docs = new Map([
     ["game-settings/season", { seasonUid: "season-2" }],
     [profilePath("u1"), profile],
   ]);
-  return makeFakeDb(docs);
+  return makeFakeDb(docs, opts);
 }
 
 describe("registerCorps activeSeasonId", () => {
@@ -150,5 +155,48 @@ describe("registerCorps activeSeasonId", () => {
     await registerCorps.run(authedRequest("u1", registerData()));
 
     assert.equal(profileUpdate(writes).activeSeasonId, undefined);
+  });
+});
+
+describe("registerCorps name reservation race", () => {
+  beforeEach(() => setDbForTesting(null));
+  after(() => setDbForTesting(null));
+
+  test("reserves the corpsnames doc with create(), not set()", async () => {
+    // set() would silently overwrite a rival registration that committed
+    // between our pre-check read and our commit; create() makes the commit
+    // itself fail atomically for the loser.
+    const { db, writes } = seed({ corps: {}, unlockedClasses: ["soundSport"] });
+    setDbForTesting(db);
+
+    await registerCorps.run(authedRequest("u1", registerData()));
+
+    const reservation = writes.find((w) => w.path.startsWith("corpsnames/"));
+    assert.equal(reservation.type, "create");
+    assert.equal(reservation.path, "corpsnames/season-2_cavaliers");
+    assert.equal(reservation.data.uid, "u1");
+  });
+
+  test("losing the create() race surfaces the same friendly already-exists error", async () => {
+    // gRPC ALREADY_EXISTS from a concurrent duplicate registration.
+    const commitError = Object.assign(new Error("6 ALREADY_EXISTS: Document already exists"), { code: 6 });
+    const { db } = seed({ corps: {}, unlockedClasses: ["soundSport"] }, { commitError });
+    setDbForTesting(db);
+
+    await assert.rejects(
+      registerCorps.run(authedRequest("u1", registerData())),
+      (err) => err.code === "already-exists" && /already taken/.test(err.message)
+    );
+  });
+
+  test("a non-race commit failure is not mislabeled as a name conflict", async () => {
+    const commitError = Object.assign(new Error("13 INTERNAL: write failed"), { code: 13 });
+    const { db } = seed({ corps: {}, unlockedClasses: ["soundSport"] }, { commitError });
+    setDbForTesting(db);
+
+    await assert.rejects(
+      registerCorps.run(authedRequest("u1", registerData())),
+      (err) => err.code === "internal"
+    );
   });
 });

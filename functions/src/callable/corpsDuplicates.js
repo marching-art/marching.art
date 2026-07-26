@@ -8,6 +8,7 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { normalizeCorpsName, pickDuplicateWinner, CORPS_NAME_CLASSES } = require("../helpers/corpsHelpers");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
+const { processAllInPages } = require("../helpers/firestorePaging");
 
 /**
  * Detect corps in this user's profile that must be renamed because they share
@@ -53,44 +54,57 @@ exports.detectMyDuplicateCorps = onCall({ cors: true }, async (request) => {
  * aClass > soundSport). Ties broken by oldest createdAt, then by presence of
  * a corpsnames reservation. Podium ranks top because a Podium corps has no
  * self-service rename flow, so the colliding fantasy corps must be the loser.
+ *
+ * NOTE: since registerCorps reserves names with batch.create() (atomic — a
+ * concurrent duplicate registration now fails at commit), this sweep is a
+ * legacy backstop for collisions that predate that change or arrive through
+ * other write paths (e.g. Podium corps, renames).
  */
-exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540 }, async (request) => {
+exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540, memory: "1GiB" }, async (request) => {
   assertAdmin(request);
 
   const db = getDb();
 
   try {
-    const profilesSnapshot = await db.collectionGroup("profile").get();
-
     // Pull every active corps and tag with a stable id we can write back to.
+    // Paged + projected: only `corps` is read off each profile, and pages keep
+    // memory bounded as the player base grows.
     const allCorps = [];
-    for (const profileDoc of profilesSnapshot.docs) {
-      const data = profileDoc.data();
-      const profileUid = profileDoc.ref.parent.parent?.id;
-      if (!profileUid) continue;
-      const corps = data.corps || {};
-      for (const cls of CORPS_NAME_CLASSES) {
-        const c = corps[cls];
-        if (c?.corpsName) {
-          allCorps.push({
-            uid: profileUid,
-            profileRef: profileDoc.ref,
-            corpsClass: cls,
-            corpsName: c.corpsName,
-            createdAt: c.createdAt || null,
-            hadMustRename: !!c.mustRename,
-          });
+    await processAllInPages(
+      db.collectionGroup("profile").select("corps"),
+      300,
+      async (profileDoc) => {
+        const data = profileDoc.data();
+        const profileUid = profileDoc.ref.parent.parent?.id;
+        if (!profileUid) return;
+        const corps = data.corps || {};
+        for (const cls of CORPS_NAME_CLASSES) {
+          const c = corps[cls];
+          if (c?.corpsName) {
+            allCorps.push({
+              uid: profileUid,
+              profileRef: profileDoc.ref,
+              corpsClass: cls,
+              corpsName: c.corpsName,
+              createdAt: c.createdAt || null,
+              hadMustRename: !!c.mustRename,
+            });
+          }
         }
       }
-    }
+    );
 
     // Cross-reference reservations so the tiebreaker can prefer corps that
-    // own a corpsnames slot. Read the entire collection — small dataset.
-    const reservationsSnap = await db.collection("corpsnames").get();
+    // own a corpsnames slot. Only the owner uid is read; paged for the same
+    // reason as the profile scan.
     const reservationByKey = new Map();
-    reservationsSnap.forEach((doc) => {
-      reservationByKey.set(doc.id, doc.data());
-    });
+    await processAllInPages(
+      db.collection("corpsnames").select("uid"),
+      500,
+      async (doc) => {
+        reservationByKey.set(doc.id, doc.data());
+      }
+    );
 
     const seasonDoc = await db.doc("game-settings/season").get();
     const seasonId = seasonDoc.exists ? (seasonDoc.data().seasonUid || "default") : "default";
