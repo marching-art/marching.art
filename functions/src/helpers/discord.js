@@ -61,6 +61,7 @@ function link(path) {
 // Embed accents, one per kind of moment.
 const COLORS = {
   scores: 0xd4af37, // gold — the nightly drop
+  cut: 0x0ca678, // teal — a championship-week field is set
   record: 0xff4d4f, // red — an all-time mark just fell
   champion: 0x9b59b6, // purple — season champions
   fan: 0xec4899, // pink — the Fan Favorite ballot

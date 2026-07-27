@@ -479,6 +479,13 @@ exports.lineupLockReminderPushJob = onSchedule(
         return;
       }
 
+      // Registration deadlines ride this job because it is the one job that
+      // runs EVERY day regardless of which scoring pipeline owns the night,
+      // and it already carries the #announcements webhook. It must run before
+      // the lineup-lock early return below — the two deadlines are unrelated
+      // and rarely fall on the same day. Isolated: never blocks the job.
+      await announceRegistrationDeadlines(db, season);
+
       const context = getLineupLockContext(season);
       if (!context) {
         logger.info("No caption-change lock tonight, skipping lineup reminders");
@@ -581,5 +588,33 @@ async function announceLineupLock(db, season, context) {
     logger.info(`[lineup-lock] Discord announcement: ${result.status}`);
   } catch (error) {
     logger.error(`[lineup-lock] Discord announcement failed: ${error.message}`);
+  }
+}
+
+/**
+ * Post the last week of a class's registration window to #announcements, once
+ * per closing week (helpers/registrationAnnounce.js). Never throws.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} season - game-settings/season data.
+ */
+async function announceRegistrationDeadlines(db, season) {
+  const webhookUrl = discordAnnouncementsWebhookUrl.value();
+  if (!webhookUrl) return;
+  try {
+    const { announceRegistrationDeadline } = require("../helpers/registrationAnnounce");
+    const result = await announceRegistrationDeadline(db, {
+      seasonUid: season.seasonUid,
+      seasonName: seasonDisplayName(season),
+      seasonData: season,
+      webhookUrl,
+    });
+    // "nothing-closing" is the state on all but three days a season; logging
+    // it would make every quiet day look like the job did something.
+    if (result.status !== "nothing-closing") {
+      logger.info(`[registration-lock] Discord announcement: ${result.status}`);
+    }
+  } catch (error) {
+    logger.error(`[registration-lock] Discord announcement failed: ${error.message}`);
   }
 }
