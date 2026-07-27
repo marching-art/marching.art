@@ -184,3 +184,71 @@ test("showDateFor rolls to the next date exactly at the 3 AM ET boundary", () =>
   assert.equal(showDateFor(justBefore).iso, "2026-07-01");
   assert.equal(showDateFor(atBoundary).iso, "2026-07-02");
 });
+
+// ---------------------------------------------------------------------------
+// The legacy 2 AM handoff, and which scheduled shows owe a DCI recap.
+// ---------------------------------------------------------------------------
+
+const { isVirtualShow, owesDciRecap } = require("./dropPlanner");
+
+test("legacyScoringInstant is 2 AM ET the morning after the shows", () => {
+  const plan = planDrop({ seasonData: LIVE_SEASON, competitions: [], now: EVENING });
+  // 2026-07-02 02:00 EDT = 06:00Z.
+  assert.equal(plan.legacyScoringInstant.toISOString(), "2026-07-02T06:00:00.000Z");
+  assert.equal(easternLabel(plan.legacyScoringInstant), "2026-07-02 02:00 ET");
+});
+
+test("legacyScoringInstant tracks DST (EST nights are 07:00Z)", () => {
+  const winter = {
+    status: "live-season",
+    schedule: { startDate: new Date(Date.UTC(2026, 10, 1)), springTrainingDays: 0 },
+  };
+  // 2026-11-10's shows -> 2 AM EST on the 11th = 07:00Z.
+  const plan = planDrop({
+    seasonData: winter, competitions: [], now: new Date("2026-11-11T02:00:00Z"),
+  });
+  assert.equal(plan.legacyScoringInstant.toISOString(), "2026-11-11T07:00:00.000Z");
+});
+
+test("off-season plans carry no legacy handoff (nothing to scrape)", () => {
+  const plan = planDrop({
+    seasonData: { status: "off-season", schedule: { startDate: new Date(Date.UTC(2026, 10, 1)) } },
+    competitions: [],
+    now: new Date("2026-11-06T01:00:00Z"),
+  });
+  assert.equal(plan.legacyScoringInstant, null);
+  assert.equal(plan.expectedShowCount, 0);
+});
+
+test("isVirtualShow flags player-hosted events on positive markers only", () => {
+  assert.equal(isVirtualShow({ date: "2026-07-01", eventTier: "hosted" }), true);
+  assert.equal(isVirtualShow({ date: "2026-07-01", hostUid: "u1" }), true);
+  assert.equal(isVirtualShow({ location: "Allentown, PA", date: "2026-07-01" }), false);
+  // An unmarked show stays "real" — guessing virtual from a missing field
+  // could drop a Pacific night's scores at 11 PM.
+  assert.equal(isVirtualShow({ location: "Boise, ID" }), false);
+  assert.equal(isVirtualShow(null), false);
+});
+
+test("owesDciRecap also requires the date every scraped event carries", () => {
+  assert.equal(owesDciRecap({ location: "Allentown, PA", date: "2026-07-01" }), true);
+  assert.equal(owesDciRecap({ date: "2026-07-01", eventTier: "hosted" }), false);
+  assert.equal(owesDciRecap({ date: "2026-07-01", hostUid: "u1" }), false);
+  // Hosted shows created before addShowToDay persisted its markers.
+  assert.equal(owesDciRecap({ location: "Boise, ID" }), false);
+  assert.equal(owesDciRecap(null), false);
+});
+
+test("expectedShowCount counts only the DCI-scraped shows on the day", () => {
+  const plan = planDrop({
+    seasonData: LIVE_SEASON,
+    competitions: [
+      { day: 10, location: "Allentown, PA", date: "2026-07-01" },
+      { day: 10, location: "Atlanta, GA", date: "2026-07-01" },
+      { day: 10, location: "Denver, CO", eventTier: "hosted", hostUid: "u1" },
+      { day: 11, location: "Boston, MA", date: "2026-07-02" }, // another day
+    ],
+    now: EVENING,
+  });
+  assert.equal(plan.expectedShowCount, 2);
+});

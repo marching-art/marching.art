@@ -32,6 +32,24 @@ and a day's slate is only complete once the furthest-WEST show has posted.
   from each show's location via the coordinate-geocoded gazetteer (El Paso →
   Mountain, Arizona → no-DST, etc.); unknown venues assume Pacific so scores
   never drop early.
+- **Only real DCI shows drive timing.** The ladder exists to wait for scores
+  announced at an actual venue, so player-hosted events are skipped when
+  computing zones and announced times — they're virtual, scored by
+  marching.art with nothing to wait for, and a hosted show in Denver must
+  never push an Eastern night from 11 PM to 1 AM. The all-virtual off-season
+  is the same rule at its limit: a flat 9 PM ET, no ladder.
+
+Two predicates, each erring in the direction that's safe for its use
+(`helpers/dropPlanner.js`):
+
+| Predicate       | Used for                          | Unmarked show is…                              |
+| ----------------- | ----------------------------------- | ------------------------------------------------ |
+| `isVirtualShow` | zones, announced times, drop time | **real** — waiting too long beats dropping early |
+| `owesDciRecap`  | `expectedShowCount`               | **not owed** — also requires a scraped `date`   |
+
+Hosted events are marked `eventTier: "hosted"` + `hostUid` by `addShowToDay`.
+Shows created before it persisted those carry neither, which is why timing
+keeps them and the owed count (which requires `date`) drops them.
 
 ## 2. The once-per-night scrape
 
@@ -42,14 +60,71 @@ scrape pass per night**:
 
 - Scrape fires at the westernmost show's real "Scores Announced" time
   (enriched `scoresAt`) + 10 min, floored at drop − 15 min, clamped ≤ 2:45 AM.
-- A failed/zero-row attempt retries on later ticks (max 3 attempts total).
-- Scoring waits for the scrape, but is force-released by an exhausted retry
-  budget, a dark day, or the 2:45 AM clamp — a night is never orphaned; the
-  strategy falls back to regression and the watchdog reports the scrape.
+- Scoring waits for the scrape, but is force-released by exhausted retries, a
+  dark day, or the 2:45 AM clamp — a night is never orphaned; the strategy
+  falls back to regression and the watchdog reports the scrape.
 
 Tonight's plan is persisted to **`drop_plans/{showDateET}`** (public,
 backend-written): drop/scrape instants, zones, mode, attempt counts. This is
 the audit trail and the client's countdown target.
+
+### Waiting for DCI
+
+The announced "Scores Announced" time is when scores are read in the stadium;
+the recap reaches dci.org some time after. Retries are therefore budgeted by
+what an attempt **costs**, because the cheap failure is the common one:
+
+| Attempt                                              | Cost        | Budget                    |
+| ------------------------------------------------------ | ----------- | ------------------------- |
+| Probe — fetched `/scores`, nothing new to pull       | 1 request   | `MAX_LISTING_PROBES` (16) |
+| Scrape — fetched tonight's recap pages, still failed | 1 per event | `MAX_SCRAPE_ATTEMPTS` (3) |
+
+A dark day before championship week gets one of each. The dispatcher charges
+every attempt to the recap budget optimistically (a scrape that hangs to the
+function timeout must stay charged) and refunds it to the probe counter when
+the result reports `fetchedRecaps: false`. 16 probes covers the whole window
+at the 15-minute cadence, so in practice the clamp bounds the night and the
+budget is a runaway guard.
+
+### Accounting for every scheduled show
+
+A night's scores are only fully real once **every DCI show on the schedule for
+that day** has a recap archived. The dispatcher holds the drop until then:
+
+- **What's owed** — `plan.expectedShowCount`, the day's `competitions[]`
+  entries that came from the DCI scrape (`owesDciRecap`), or dci.org's own
+  listing count if that's higher (a show added since the last schedule
+  refresh).
+- **What's in hand** — `drop_plans/{date}.scrapedRecapUrls`, the recaps
+  actually archived tonight. Counting archived rather than listed events covers
+  both a night DCI is still posting and a listed recap that failed to scrape.
+- **Cost of re-checking** — the archived URLs are passed back to the scraper as
+  a skip list, so a re-check fetches the listing and only genuinely new events.
+  A tick with nothing new is a probe, not a recap attempt.
+- **When it gives up** — `legacyScoringInstant` (2 AM ET, the old scoring hour)
+  plus one tick. The 2:00 AM tick takes a final scrape and the 2:15 tick scores
+  with whatever arrived. Anything still missing is a manual
+  "Scrape DCI Scores Now" in the morning.
+
+`lastScrapedDate` is stamped only when every recap a run pulled produced rows;
+a partial run leaves it unstamped and writes `scrape_runs` status `partial`,
+which the 4:30 AM watchdog reads as unhealthy. Any night that scores short is
+stamped `usedRegressionFallback` with `recapsArchived` / `recapsOwed`.
+
+### What the client shows
+
+`useDropPlan` (`src/hooks/useSeasonClock.js`) keeps the plan authoritative
+**past** its own drop instant, because the drop instant is when scoring may
+first run, not proof it did. Three states:
+
+- drop ahead → countdown to `dropInstant` (exact).
+- drop passed, no `scoredAt`, before `scrapeRetryUntil` → `scoresPending`;
+  surfaces show "Scores processing", never a countdown.
+- `scoredAt` set → tonight is done, and the next estimate is taken from
+  `scrapeRetryUntil` so the countdown targets **tomorrow** night.
+
+Rolling the countdown forward on a pending drop is what made the chip promise
+11 PM and then jump to "3 hours" the moment 11 PM arrived.
 
 ## 3. Kill switch / rollout
 

@@ -20,6 +20,7 @@ vi.mock('../../../api/season', () => ({
 }));
 
 import { useSeasonStore } from '../../../store/seasonStore';
+import { getDropPlan } from '../../../api/season';
 import NextDeadlineChip from './NextDeadlineChip';
 
 // The chip's deadline hook uses react-query (drop-plan cache), so renders
@@ -88,5 +89,56 @@ describe('NextDeadlineChip', () => {
     useSeasonStore.setState({ seasonData: null, loading: false });
     render(<NextDeadlineChip />);
     expect(screen.getByText(/Scores in/i)).toBeInTheDocument();
+  });
+
+  // Live scores derive from the DCI recap, so the backend holds the drop when
+  // dci.org posts late. The chip used to discard the plan the instant its drop
+  // time passed and roll the countdown forward to the 2 AM ET estimate — so it
+  // promised 11 PM and then jumped to "3 hours" at 11 PM sharp.
+  describe('while the drop is pending', () => {
+    const planFor = ({ dropOffsetMs, windowOffsetMs, scoredAt = null }) => ({
+      dropInstant: new Date(Date.now() + dropOffsetMs).toISOString(),
+      scrapeRetryUntil: new Date(Date.now() + windowOffsetMs).toISOString(),
+      dropLabel: '11:00 PM ET',
+      ...(scoredAt ? { scoredAt } : {}),
+    });
+
+    it('says scores are processing instead of counting down to a later time', async () => {
+      getDropPlan.mockResolvedValueOnce(
+        // Drop was 10 minutes ago; the night's retry window runs 2 more hours.
+        planFor({ dropOffsetMs: -10 * 60e3, windowOffsetMs: 2 * 3600e3 })
+      );
+      seedSeason('live-season', new Date(Date.now() - 30 * 24 * 3600e3));
+      render(<NextDeadlineChip />);
+
+      expect(await screen.findByText(/Scores processing/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Scores in/i)).not.toBeInTheDocument();
+    });
+
+    it('counts down normally while the planned drop is still ahead', async () => {
+      getDropPlan.mockResolvedValueOnce(
+        planFor({ dropOffsetMs: 45 * 60e3, windowOffsetMs: 3 * 3600e3 })
+      );
+      seedSeason('live-season', new Date(Date.now() - 30 * 24 * 3600e3));
+      render(<NextDeadlineChip />);
+
+      expect(await screen.findByText(/Scores in/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Scores processing/i)).not.toBeInTheDocument();
+    });
+
+    it('goes back to a countdown once the night has scored', async () => {
+      getDropPlan.mockResolvedValueOnce(
+        planFor({
+          dropOffsetMs: -10 * 60e3,
+          windowOffsetMs: 2 * 3600e3,
+          scoredAt: new Date().toISOString(),
+        })
+      );
+      seedSeason('live-season', new Date(Date.now() - 30 * 24 * 3600e3));
+      render(<NextDeadlineChip />);
+
+      expect(await screen.findByText(/Scores in/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Scores processing/i)).not.toBeInTheDocument();
+    });
   });
 });

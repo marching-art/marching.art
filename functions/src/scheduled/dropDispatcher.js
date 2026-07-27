@@ -11,14 +11,33 @@
  * from Firestore-backed data only — season doc, schedules doc, tonight's
  * drop_plans doc — and exits unless the scrape or drop instant has arrived.
  * Ticks that aren't tonight's slot never touch dci.org, so scraper-API
- * credits stay at one scrape pass per night. Failed attempts (recap not
- * posted, Cloudflare) re-arm on later ticks, bounded by MAX_SCRAPE_ATTEMPTS
- * and the planner's 2:45 AM clamp (a day with no scheduled shows before
- * championship week gets a single attempt — see scrapeBudgetFor); a normal
- * night still scrapes exactly once. Scoring never runs on the same tick as
- * a fresh scrape unless it is the night's last tick: the scrape publishes
- * recap rows via Pub/Sub and the archive consumer needs time to land them
- * (recap-settle defer inside runDropDispatcherTick).
+ * credits stay at one scrape pass per night. Scoring never runs on the same
+ * tick as a fresh scrape unless it is the night's last tick: the scrape
+ * publishes recap rows via Pub/Sub and the archive consumer needs time to
+ * land them (recap-settle defer inside runDropDispatcherTick).
+ *
+ * WAITING FOR DCI: fantasy scores are only as good as the recap they derive
+ * from, so the night holds the drop until dci.org has actually posted. Two
+ * budgets bound that wait by what an attempt costs, because the cheap failure
+ * is the common one:
+ *   - MAX_LISTING_PROBES  attempts that fetched only dci.org/scores and found
+ *                         tonight absent — one request. DCI running an hour
+ *                         late is exactly this, so the budget spans the window.
+ *   - MAX_SCRAPE_ATTEMPTS attempts that fetched tonight's recap pages and
+ *                         still failed (Cloudflare, markup change) — one
+ *                         request per event, and retrying rarely helps.
+ * A day with no scheduled shows before championship week gets one of each
+ * (see scrapeBudgetFor/probeBudgetFor).
+ *
+ * DCI posts a night's recaps one event at a time, so a night that archived
+ * fewer recaps than the schedule's SCRAPED shows owe (player-hosted events
+ * excluded — they never appear on dci.org) keeps re-checking until the legacy
+ * 2 AM ET scoring hour, takes one last scrape on that tick, and scores on the
+ * next. Re-checks cost a single listing fetch: already-archived recaps are
+ * passed back to the scraper as a skip list, so only genuinely new events are
+ * fetched. Either budget running dry — or the planner's 2:45 AM clamp —
+ * releases scoring on regression fallback, stamped usedRegressionFallback for
+ * the watchdog. A normal night still scrapes exactly once.
  *
  * KILL SWITCH: game-settings/features.dropScheduling. OFF (default) = shadow
  * mode — every tick computes and persists tonight's plan to drop_plans/{date}
@@ -49,10 +68,24 @@ const {
 } = require("../helpers/discord");
 const { scraperApiKey } = require("../helpers/dciFetch");
 
-// Failure-only retry bound: a night's scrape may be attempted at most this
-// many times (first attempt included) before scoring proceeds on regression
-// fallback. Keeps a dci.org outage from burning a credit on every tick.
+// Failure-only retry bound for EXPENSIVE attempts — ones that actually fetched
+// tonight's recap pages (one request per event). A night may spend at most this
+// many before scoring proceeds on regression fallback. Keeps a dci.org outage
+// from burning a full multi-recap pass on every tick.
 const MAX_SCRAPE_ATTEMPTS = 3;
+
+// Bound for CHEAP attempts: a fetch of dci.org/scores that produced no new
+// recap to pull (`fetchedRecaps: false`) — tonight isn't listed yet, or every
+// listed event is already archived and the rest simply aren't up. These are
+// the "DCI hasn't posted yet" case, and charging them against the expensive
+// budget above is what used to end the night's retries ~30 minutes after the
+// first probe — hours before the night was meant to give up — and drop
+// regression scores while the real recaps were still minutes away. One listing
+// fetch is cheap enough to keep asking for the whole window: 16 covers the
+// earliest scrape instant (10:45 PM ET) through the 2:45 AM clamp at the
+// 15-minute tick cadence, so in practice the clamp is what bounds the night
+// and this is a runaway guard.
+const MAX_LISTING_PROBES = 16;
 
 // The dispatcher's cron cadence. Used to decide whether ANOTHER tick will run
 // before the night's window closes — a same-tick scrape+score is only taken
@@ -79,51 +112,151 @@ const SCRAPE_SETTLE_MS = 60 * 1000;
  * @returns {number}
  */
 function scrapeBudgetFor(plan) {
-  const darkDay =
-    plan.hasScheduledShows === false && plan.competitionDay < CHAMPIONSHIP_WEEK_START_DAY;
-  return darkDay ? 1 : MAX_SCRAPE_ATTEMPTS;
+  return isDarkDay(plan) ? 1 : MAX_SCRAPE_ATTEMPTS;
+}
+
+/**
+ * True for a day with nothing scheduled before championship week — either a
+ * genuine dark day or a stale schedules doc. Scoring such a day without fresh
+ * data is by design, not a fallback.
+ * @param {object} plan - From planDrop() (non-null).
+ * @returns {boolean}
+ */
+function isDarkDay(plan) {
+  return plan.hasScheduledShows === false && plan.competitionDay < CHAMPIONSHIP_WEEK_START_DAY;
+}
+
+/**
+ * The night's cheap-probe budget. A dark day gets one, same reasoning as
+ * scrapeBudgetFor: dci.org genuinely lists nothing, so re-asking is pure waste.
+ * @param {object} plan - From planDrop() (non-null).
+ * @returns {number}
+ */
+function probeBudgetFor(plan) {
+  return isDarkDay(plan) ? 1 : MAX_LISTING_PROBES;
+}
+
+/**
+ * How many DCI recaps tonight owes before its scores are fully real: the
+ * scraped shows on the schedule, or the number dci.org actually lists for the
+ * night if that is higher (a show added after the last schedule refresh).
+ * @param {object} plan - From planDrop() (non-null).
+ * @param {number|null} [listedEventCount] - Events dci.org listed for tonight.
+ * @returns {number}
+ */
+function recapsOwedBy(plan, listedEventCount = null) {
+  return Math.max(plan.expectedShowCount || 0, listedEventCount || 0);
+}
+
+/**
+ * The instant the night stops waiting for stragglers: the legacy 2 AM ET
+ * scoring run plus one tick, so the 2 AM tick itself gets a final scrape and
+ * the tick after it scores with whatever arrived. Clamped by the planner's
+ * 2:45 AM stop so nothing crosses the show-day boundary.
+ * @param {object} plan - From planDrop() (non-null).
+ * @returns {number} Epoch millis.
+ */
+function completenessDeadline(plan) {
+  const legacy = plan.legacyScoringInstant
+    ? plan.legacyScoringInstant.getTime()
+    : plan.scrapeRetryUntil.getTime();
+  return Math.min(legacy + TICK_INTERVAL_MIN * 60 * 1000, plan.scrapeRetryUntil.getTime());
+}
+
+/**
+ * True while the night is still owed recaps DCI hasn't posted yet — fewer
+ * events archived than the schedule (or dci.org's own listing) says the night
+ * has — and the wait hasn't reached the legacy 2 AM handoff.
+ *
+ * Counting ARCHIVED events rather than listed ones covers both ways a night
+ * comes up short: DCI posting its events one at a time, and a listed recap
+ * that failed to scrape. Requires at least one completed scrape — before that
+ * there is nothing to compare and the normal `!scrapedTonight` gating drives
+ * the retries.
+ *
+ * @param {object} params
+ * @param {object} params.plan - From planDrop() (non-null).
+ * @param {Date} params.now
+ * @param {number|null} [params.archivedCount] - Recaps successfully scraped for
+ *   tonight so far (accumulated on the plan doc).
+ * @param {number|null} [params.listedEventCount] - Events dci.org listed for
+ *   tonight on the last scrape.
+ * @returns {boolean}
+ */
+function awaitingMoreEvents({ plan, now, archivedCount = null, listedEventCount = null }) {
+  if (!plan.needsScrape) return false;
+  if (archivedCount == null) return false;
+  const owed = recapsOwedBy(plan, listedEventCount);
+  if (owed === 0 || archivedCount >= owed) return false;
+  return now.getTime() < completenessDeadline(plan);
 }
 
 /**
  * Pure decision core: which actions are due on this tick. No IO — testable.
  *
- * Scoring on a live night normally waits for tonight's scrape to have
- * succeeded (scores derive from the scraped recap). It proceeds anyway when
+ * Scoring on a live night waits for tonight's data: a scrape that stamped the
+ * night (every recap it pulled produced rows) and, until the legacy 2 AM
+ * handoff, as many archived recaps as the night owes. It proceeds anyway when
  * the day has no scheduled shows (dark-day settlement owes pools/payouts),
- * when the retry budget is exhausted, or at the planner's late clamp — the
- * strategy falls back to regression and the watchdog reports the scrape, so
- * a bad scrape night degrades exactly like the legacy 2 AM pipeline instead
- * of orphaning the day.
+ * when dci.org requests are exhausted, or at the planner's late clamp — the
+ * strategy falls back to regression and the watchdog reports the scrape, so a
+ * bad scrape night degrades exactly like the legacy 2 AM pipeline instead of
+ * orphaning the day.
  *
  * @param {object} params
  * @param {object} params.plan - From planDrop() (non-null).
  * @param {Date} params.now
  * @param {boolean} params.scrapedTonight - lastScrapedDate === plan.showDateET.
- * @param {number} params.scrapeAttempts - Attempts recorded on tonight's plan doc.
+ * @param {number} [params.scrapeAttempts] - Expensive attempts (recap pages
+ *   fetched) recorded on tonight's plan doc.
+ * @param {number} [params.scrapeProbes] - Cheap attempts (listing fetch only,
+ *   tonight not posted yet) recorded on tonight's plan doc.
  * @param {boolean} [params.alreadyScored] - Tonight's plan doc carries scoredAt:
  *   the day is done, so post-drop ticks skip the scoring path (its lease would
  *   no-op anyway) instead of re-entering it every 15 minutes until 2:45 AM.
- * @returns {{scrapeDue: boolean, scoreDue: boolean}}
+ * @param {number|null} [params.archivedCount] - Recaps successfully scraped for
+ *   tonight so far; drives the half-posted-night check.
+ * @param {number|null} [params.listedEventCount] - Events dci.org listed for
+ *   tonight on the last scrape.
+ * @returns {{scrapeDue: boolean, scoreDue: boolean, awaitingEvents: boolean}}
  */
-function dueActions({ plan, now, scrapedTonight, scrapeAttempts = 0, alreadyScored = false }) {
+function dueActions({
+  plan,
+  now,
+  scrapedTonight,
+  scrapeAttempts = 0,
+  scrapeProbes = 0,
+  alreadyScored = false,
+  archivedCount = null,
+  listedEventCount = null,
+}) {
   const t = now.getTime();
-  const scrapeBudget = scrapeBudgetFor(plan);
+  // Either budget running dry ends the night's dci.org requests: a spent recap
+  // budget means the expensive path keeps failing and retrying won't fix it; a
+  // spent probe budget means tonight never showed up on the listing at all.
+  const canRequest =
+    scrapeAttempts < scrapeBudgetFor(plan) && scrapeProbes < probeBudgetFor(plan);
+
+  const awaitingEvents = awaitingMoreEvents({ plan, now, archivedCount, listedEventCount });
+
   const scrapeDue =
     plan.needsScrape &&
-    !scrapedTonight &&
-    scrapeAttempts < scrapeBudget &&
+    // A stamped night still re-scrapes while events are missing — that is how
+    // the recaps DCI posts after the first ones get picked up.
+    (!scrapedTonight || awaitingEvents) &&
+    canRequest &&
     t >= plan.scrapeInstant.getTime() &&
     t <= plan.scrapeRetryUntil.getTime();
 
   const scrapeSettled =
     !plan.needsScrape ||
-    scrapedTonight ||
+    (scrapedTonight && !awaitingEvents) ||
     !plan.hasScheduledShows ||
-    scrapeAttempts >= scrapeBudget ||
+    !canRequest ||
     t >= plan.scrapeRetryUntil.getTime();
 
   const scoreDue = !alreadyScored && t >= plan.dropInstant.getTime() && scrapeSettled;
-  return { scrapeDue, scoreDue };
+  return { scrapeDue, scoreDue, awaitingEvents };
 }
 
 /**
@@ -150,6 +283,7 @@ function planSignatureOf(plan, mode) {
     dropLabel: plan.dropLabel,
     needsScrape: plan.needsScrape,
     hasScheduledShows: plan.hasScheduledShows,
+    expectedShowCount: plan.expectedShowCount,
     tzMismatches: plan.tzMismatches,
     ignoredScoresAt: plan.ignoredScoresAt,
     mode,
@@ -185,6 +319,7 @@ async function persistPlan(db, plan, mode, existingSignature) {
       dropLabel: plan.dropLabel,
       needsScrape: plan.needsScrape,
       hasScheduledShows: plan.hasScheduledShows,
+      expectedShowCount: plan.expectedShowCount,
       tzMismatches: plan.tzMismatches,
       ignoredScoresAt: plan.ignoredScoresAt,
       mode,
@@ -261,11 +396,24 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
   // Tonight's dispatcher state: scrape success comes from the season doc's
   // lastScrapedDate stamp (written only on a scrape that produced rows);
   // the attempt count and the scored marker live on the plan doc (read above).
-  const scrapeAttempts = planDocData.scrapeAttempts || 0;
   const alreadyScored = Boolean(planDocData.scoredAt);
+  let scrapeAttempts = planDocData.scrapeAttempts || 0;
+  let scrapeProbes = planDocData.scrapeProbes || 0;
+  let listedEventCount =
+    typeof planDocData.listedEventCount === "number" ? planDocData.listedEventCount : null;
+  // Recaps already archived tonight. Doubles as the skip list handed to the
+  // scraper (so a re-check costs one listing fetch) and as the completeness
+  // count — null until the night's first scrape completes.
+  let scrapedRecapUrls = Array.isArray(planDocData.scrapedRecapUrls)
+    ? planDocData.scrapedRecapUrls
+    : null;
   let scrapedTonight = seasonData.lastScrapedDate === plan.showDateET;
 
-  let { scrapeDue, scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts, alreadyScored });
+  let { scrapeDue, scoreDue, awaitingEvents } = dueActions({
+    plan, now, scrapedTonight, scrapeAttempts, scrapeProbes, alreadyScored,
+    archivedCount: scrapedRecapUrls ? scrapedRecapUrls.length : null,
+    listedEventCount,
+  });
   const result = { status: "ticked", showDateET: plan.showDateET, actions: [] };
 
   let freshScrapeThisTick = false;
@@ -283,18 +431,72 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
     } catch (error) {
       logger.error(`[drop-dispatcher] failed to record the scrape attempt: ${error.message}`);
     }
+    scrapeAttempts += 1;
     try {
-      const scraped = await scrape({ dateKey: plan.showDateET });
+      const scraped = await scrape({
+        dateKey: plan.showDateET,
+        skipRecapUrls: scrapedRecapUrls || [],
+      });
       scrapedTonight = scraped?.stampedLastScrapedDate === true;
       freshScrapeThisTick = scrapedTonight;
-      result.actions.push({ action: "scrape", scraped: scraped?.scraped, stamped: scrapedTonight });
+      if (typeof scraped?.listedEventCount === "number") {
+        listedEventCount = scraped.listedEventCount;
+      }
+      if (Array.isArray(scraped?.scrapedRecapUrls)) {
+        scrapedRecapUrls = [...new Set([...(scrapedRecapUrls || []), ...scraped.scrapedRecapUrls])];
+      }
+
+      // Reclassify a cheap attempt. The optimistic pre-scrape increment above
+      // has to assume the expensive path (a scrape that hangs until the
+      // function times out must stay charged, or a wedged dci.org earns
+      // unlimited nightly retries) — but an attempt that came back without
+      // ever opening a recap page cost one listing fetch, and charging it
+      // against the recap budget is what would end the night's retries long
+      // before DCI got around to posting. Move it to the probe counter with an
+      // absolute write, since both values are known here.
+      const bookkeeping = {};
+      if (scraped && scraped.fetchedRecaps === false) {
+        scrapeAttempts -= 1;
+        scrapeProbes += 1;
+        bookkeeping.scrapeAttempts = scrapeAttempts;
+        bookkeeping.scrapeProbes = scrapeProbes;
+      }
+      if (listedEventCount != null) bookkeeping.listedEventCount = listedEventCount;
+      if (scrapedRecapUrls != null) bookkeeping.scrapedRecapUrls = scrapedRecapUrls;
+      if (Object.keys(bookkeeping).length > 0) {
+        try {
+          await db.collection("drop_plans").doc(plan.showDateET)
+            .set(bookkeeping, { merge: true });
+        } catch (error) {
+          logger.error(`[drop-dispatcher] failed to record scrape bookkeeping: ${error.message}`);
+        }
+      }
+      result.actions.push({
+        action: "scrape",
+        scraped: scraped?.scraped,
+        stamped: scrapedTonight,
+        reason: scraped?.reason,
+        probe: scraped?.fetchedRecaps === false,
+      });
     } catch (error) {
       logger.error(`[drop-dispatcher] scrape failed (will retry within budget): ${error.message}`);
       result.actions.push({ action: "scrape", error: error.message });
     }
     // A scrape that just succeeded may unlock scoring on this same tick
     // (slipped nights where scrape and drop coincide).
-    ({ scoreDue } = dueActions({ plan, now, scrapedTonight, scrapeAttempts: scrapeAttempts + 1, alreadyScored }));
+    ({ scoreDue, awaitingEvents } = dueActions({
+      plan, now, scrapedTonight, scrapeAttempts, scrapeProbes, alreadyScored,
+      archivedCount: scrapedRecapUrls ? scrapedRecapUrls.length : null,
+      listedEventCount,
+    }));
+  }
+
+  if (awaitingEvents) {
+    logger.info(
+      `[drop-dispatcher] ${plan.showDateET}: ${scrapedRecapUrls.length}/` +
+      `${recapsOwedBy(plan, listedEventCount)} recap(s) archived; holding the drop until ` +
+      "the 2 AM ET handoff for the rest."
+    );
   }
 
   // A scrape only PUBLISHES recap rows; processLiveScoreRecap archives them
@@ -332,15 +534,22 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
       score?.status === "processed" ||
       (score?.status === "skipped" && score?.reason === "completed");
     if (dayDone) {
-      // Audit trail: a night scored WITHOUT tonight's scraped recap (budget
-      // exhausted / retry window elapsed) fell back to regression for its
-      // shows. A dark day (nothing scheduled, pre-championship) is excluded —
-      // scoring without fresh data is by design there, not a fallback.
-      const darkDay =
-        plan.hasScheduledShows === false && plan.competitionDay < CHAMPIONSHIP_WEEK_START_DAY;
-      const usedRegressionFallback = plan.needsScrape && !scrapedTonight && !darkDay;
+      // Audit trail: a night scored without all of tonight's recaps (budget
+      // exhausted, retry window elapsed, or the 2 AM handoff reached on a
+      // half-posted night) fell back to regression for the shows it never got.
+      // A dark day (nothing scheduled, pre-championship) is excluded — scoring
+      // without fresh data is by design there, not a fallback.
+      const owed = recapsOwedBy(plan, listedEventCount);
+      const archived = scrapedRecapUrls ? scrapedRecapUrls.length : 0;
+      const usedRegressionFallback =
+        plan.needsScrape && (!scrapedTonight || archived < owed) && !isDarkDay(plan);
       await db.collection("drop_plans").doc(plan.showDateET).set(
-        { scoredAt: new Date(), ...(usedRegressionFallback ? { usedRegressionFallback: true } : {}) },
+        {
+          scoredAt: new Date(),
+          ...(usedRegressionFallback
+            ? { usedRegressionFallback: true, recapsArchived: archived, recapsOwed: owed }
+            : {}),
+        },
         { merge: true },
       );
 
@@ -479,7 +688,12 @@ exports.podiumNightly = onSchedule({
 
 module.exports.dueActions = dueActions;
 module.exports.scrapeBudgetFor = scrapeBudgetFor;
+module.exports.probeBudgetFor = probeBudgetFor;
+module.exports.awaitingMoreEvents = awaitingMoreEvents;
+module.exports.recapsOwedBy = recapsOwedBy;
+module.exports.completenessDeadline = completenessDeadline;
 module.exports.runDropDispatcherTick = runDropDispatcherTick;
 module.exports.MAX_SCRAPE_ATTEMPTS = MAX_SCRAPE_ATTEMPTS;
+module.exports.MAX_LISTING_PROBES = MAX_LISTING_PROBES;
 module.exports.TICK_INTERVAL_MIN = TICK_INTERVAL_MIN;
 module.exports.SCRAPE_SETTLE_MS = SCRAPE_SETTLE_MS;

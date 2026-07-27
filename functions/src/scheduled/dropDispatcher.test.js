@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const { dueActions, MAX_SCRAPE_ATTEMPTS } = require("./dropDispatcher");
 const { planDrop } = require("../helpers/dropPlanner");
+const { easternLabel } = require("../helpers/scoreDropTime");
 const { getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 
 // A live-season plan for competition day 10 on an Eastern-only night:
@@ -361,6 +362,324 @@ test("a dark day scoring without a scrape is NOT stamped as regression fallback"
   const planDoc = db.store.get("drop_plans/2026-07-01");
   assert.ok(planDoc.scoredAt instanceof Date);
   assert.equal(planDoc.usedRegressionFallback, undefined);
+});
+
+// ---------------------------------------------------------------------------
+// Waiting for DCI: cheap listing probes vs expensive recap scrapes, and the
+// half-posted night. The bug these cover: a night whose recap DCI posted late
+// spent its 3 attempts within ~30 minutes and then dropped regression scores
+// hours before the 2:45 AM clamp it was supposed to be able to wait for.
+// ---------------------------------------------------------------------------
+
+const {
+  probeBudgetFor,
+  completenessDeadline,
+  MAX_LISTING_PROBES,
+} = require("./dropDispatcher");
+
+// Two SCRAPED Eastern shows on day 10 — drop stays 11 PM ET, and both carry a
+// `date`, which is what marks a competitions[] entry as DCI-sourced.
+const TWO_SHOW_COMPETITIONS = [
+  { day: 10, location: "Allentown, PA", date: "2026-07-01" },
+  { day: 10, location: "Atlanta, GA", date: "2026-07-01" },
+];
+const TWO_SHOW_PLAN = planDrop({
+  seasonData: LIVE_SEASON,
+  competitions: TWO_SHOW_COMPETITIONS,
+  now: new Date("2026-07-02T02:00:00Z"),
+});
+
+test("listing probes do not spend the recap budget", () => {
+  const now = new Date("2026-07-02T03:05:00Z"); // 11:05 PM — past the drop
+  // Six ticks of "dci.org hasn't listed tonight yet". Each cost one listing
+  // fetch and never opened a recap page, so the night keeps asking and keeps
+  // holding the drop — under the old single budget it would have scored on
+  // regression data three ticks ago.
+  const { scrapeDue, scoreDue } = dueActions({
+    plan: EASTERN_PLAN, now, scrapedTonight: false, scrapeAttempts: 0, scrapeProbes: 6,
+  });
+  assert.equal(scrapeDue, true);
+  assert.equal(scoreDue, false);
+});
+
+test("an exhausted probe budget still releases scoring", () => {
+  const now = new Date("2026-07-02T03:05:00Z");
+  const { scrapeDue, scoreDue } = dueActions({
+    plan: EASTERN_PLAN, now, scrapedTonight: false, scrapeProbes: MAX_LISTING_PROBES,
+  });
+  assert.equal(scrapeDue, false); // tonight never appeared on the listing
+  assert.equal(scoreDue, true);
+});
+
+test("a dark day gets a single probe, like its single scrape attempt", () => {
+  assert.equal(probeBudgetFor(DARK_PLAN), 1);
+  assert.equal(probeBudgetFor(EASTERN_PLAN), MAX_LISTING_PROBES);
+});
+
+test("a scrape that never opened a recap page is charged as a probe", async () => {
+  resetFeatureCache();
+  const db = liveNightDb();
+  await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:05:00Z"), // past scrape AND drop
+    settleMs: 0,
+    deps: {
+      scrape: async () => ({ scraped: false, reason: "no-events-for-date", fetchedRecaps: false }),
+      scoreLive: async () => { throw new Error("must not score while DCI is still unposted"); },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  const planDoc = db.store.get("drop_plans/2026-07-01");
+  assert.equal(planDoc.scrapeAttempts, 0); // the optimistic charge was refunded
+  assert.equal(planDoc.scrapeProbes, 1);
+  assert.equal(planDoc.scoredAt, undefined); // and the night is still waiting
+});
+
+test("a scrape that fetched recap pages stays charged as an attempt", async () => {
+  resetFeatureCache();
+  const db = liveNightDb();
+  await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:05:00Z"),
+    settleMs: 0,
+    deps: {
+      // Listed, fetched, and every recap failed (Cloudflare / markup change).
+      scrape: async () => ({
+        scraped: true, stampedLastScrapedDate: false, fetchedRecaps: true, eventCount: 1,
+      }),
+      scoreLive: async () => { throw new Error("must not score inside the retry window"); },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  const planDoc = db.store.get("drop_plans/2026-07-01");
+  assert.equal(planDoc.scrapeAttempts, 1);
+  assert.equal(planDoc.scrapeProbes, undefined);
+});
+
+test("a half-posted night keeps scraping and holds the drop", () => {
+  assert.equal(TWO_SHOW_PLAN.expectedShowCount, 2);
+  const now = new Date("2026-07-02T03:05:00Z"); // 11:05 PM, just past the drop
+  const { scrapeDue, scoreDue, awaitingEvents } = dueActions({
+    plan: TWO_SHOW_PLAN, now, scrapedTonight: true, archivedCount: 1, listedEventCount: 1,
+  });
+  assert.equal(awaitingEvents, true);
+  assert.equal(scrapeDue, true); // go back for the recap DCI hasn't posted yet
+  assert.equal(scoreDue, false);
+});
+
+test("a listed recap that failed to archive also holds the drop", () => {
+  // Both events are up on dci.org; only one of them scraped clean.
+  const now = new Date("2026-07-02T03:05:00Z");
+  const { scrapeDue, scoreDue, awaitingEvents } = dueActions({
+    plan: TWO_SHOW_PLAN, now, scrapedTonight: true, archivedCount: 1, listedEventCount: 2,
+  });
+  assert.equal(awaitingEvents, true);
+  assert.equal(scrapeDue, true);
+  assert.equal(scoreDue, false);
+});
+
+test("the wait runs to the legacy 2 AM handoff, not a short grace window", () => {
+  // 1:45 AM ET — nearly three hours past the 11 PM drop, still holding.
+  const beforeHandoff = new Date("2026-07-02T05:45:00Z");
+  const held = dueActions({
+    plan: TWO_SHOW_PLAN, now: beforeHandoff, scrapedTonight: true,
+    archivedCount: 1, listedEventCount: 1,
+  });
+  assert.equal(held.awaitingEvents, true);
+  assert.equal(held.scoreDue, false);
+
+  // The 2:00 AM tick takes one last scrape...
+  const handoff = new Date(TWO_SHOW_PLAN.legacyScoringInstant.getTime());
+  const lastTry = dueActions({
+    plan: TWO_SHOW_PLAN, now: handoff, scrapedTonight: true,
+    archivedCount: 1, listedEventCount: 1,
+  });
+  assert.equal(lastTry.scrapeDue, true);
+  assert.equal(lastTry.scoreDue, false);
+
+  // ...and the tick after it scores with whatever arrived.
+  const after = new Date(completenessDeadline(TWO_SHOW_PLAN));
+  const released = dueActions({
+    plan: TWO_SHOW_PLAN, now: after, scrapedTonight: true,
+    archivedCount: 1, listedEventCount: 1,
+  });
+  assert.equal(released.awaitingEvents, false);
+  assert.equal(released.scoreDue, true);
+});
+
+test("the completeness deadline never crosses the planner's clamp", () => {
+  assert.ok(completenessDeadline(TWO_SHOW_PLAN) <= TWO_SHOW_PLAN.scrapeRetryUntil.getTime());
+});
+
+test("a fully archived night never triggers the completeness wait", () => {
+  const now = new Date("2026-07-02T03:05:00Z");
+  const { scrapeDue, scoreDue, awaitingEvents } = dueActions({
+    plan: TWO_SHOW_PLAN, now, scrapedTonight: true, archivedCount: 2, listedEventCount: 2,
+  });
+  assert.equal(awaitingEvents, false);
+  assert.equal(scrapeDue, false); // no extra dci.org request on a healthy night
+  assert.equal(scoreDue, true);
+});
+
+test("a re-check hands the scraper its skip list and costs only a probe", async () => {
+  resetFeatureCache();
+  const db = makeFakeDb({
+    "game-settings/season": {
+      ...LIVE_SEASON, seasonUid: "s26", lastScrapedDate: "2026-07-01",
+    },
+    "game-settings/features": { dropScheduling: true },
+    "schedules/s26": { competitions: TWO_SHOW_COMPETITIONS },
+    "drop_plans/2026-07-01": {
+      scrapeAttempts: 1, listedEventCount: 1, scrapedRecapUrls: ["https://dci.org/recap/a"],
+    },
+  });
+  let sawSkipList = null;
+  await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:20:00Z"), // 11:20 PM — still holding for event 2
+    settleMs: 0,
+    deps: {
+      scrape: async ({ skipRecapUrls }) => {
+        sawSkipList = skipRecapUrls;
+        // Event 2 still isn't up: nothing new to fetch, so this is a probe.
+        return {
+          scraped: false, reason: "no-new-events", fetchedRecaps: false, listedEventCount: 1,
+        };
+      },
+      scoreLive: async () => { throw new Error("must not score while a recap is missing"); },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.deepEqual(sawSkipList, ["https://dci.org/recap/a"]);
+  const planDoc = db.store.get("drop_plans/2026-07-01");
+  assert.equal(planDoc.scrapeAttempts, 1); // unchanged — the recap budget is intact
+  assert.equal(planDoc.scrapeProbes, 1);
+  assert.equal(planDoc.scoredAt, undefined);
+});
+
+test("a re-check that finds the missing recap completes the night", async () => {
+  resetFeatureCache();
+  const db = makeFakeDb({
+    "game-settings/season": {
+      ...LIVE_SEASON, seasonUid: "s26", lastScrapedDate: "2026-07-01",
+    },
+    "game-settings/features": { dropScheduling: true },
+    "schedules/s26": { competitions: TWO_SHOW_COMPETITIONS },
+    "drop_plans/2026-07-01": {
+      scrapeAttempts: 1, listedEventCount: 1, scrapedRecapUrls: ["https://dci.org/recap/a"],
+    },
+  });
+  await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:20:00Z"),
+    settleMs: 0,
+    deps: {
+      scrape: async () => ({
+        scraped: true,
+        stampedLastScrapedDate: true,
+        fetchedRecaps: true,
+        listedEventCount: 2,
+        scrapedRecapUrls: ["https://dci.org/recap/b"],
+      }),
+      scoreLive: async () => ({ status: "processed" }),
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  const planDoc = db.store.get("drop_plans/2026-07-01");
+  assert.deepEqual(planDoc.scrapedRecapUrls, [
+    "https://dci.org/recap/a", "https://dci.org/recap/b",
+  ]);
+  assert.equal(planDoc.listedEventCount, 2);
+  // Scoring is deferred one tick for the Pub/Sub archive consumer to land rows.
+  assert.equal(planDoc.scoredAt, undefined);
+});
+
+test("scoring a night short of its owed recaps stamps usedRegressionFallback", async () => {
+  resetFeatureCache();
+  const db = makeFakeDb({
+    "game-settings/season": {
+      ...LIVE_SEASON, seasonUid: "s26", lastScrapedDate: "2026-07-01",
+    },
+    "game-settings/features": { dropScheduling: true },
+    "schedules/s26": { competitions: TWO_SHOW_COMPETITIONS },
+    // One of the two events came in; the 2 AM handoff has since passed.
+    "drop_plans/2026-07-01": {
+      scrapeAttempts: 1, listedEventCount: 1, scrapedRecapUrls: ["https://dci.org/recap/a"],
+    },
+  });
+  await runDropDispatcherTick(db, {
+    now: new Date(completenessDeadline(TWO_SHOW_PLAN)),
+    settleMs: 0,
+    deps: {
+      scrape: async () => { throw new Error("handoff passed — must not scrape"); },
+      scoreLive: async () => ({ status: "processed" }),
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  const planDoc = db.store.get("drop_plans/2026-07-01");
+  assert.ok(planDoc.scoredAt instanceof Date);
+  // The night scored, but one show's scores came from regression, not DCI.
+  assert.equal(planDoc.usedRegressionFallback, true);
+  assert.equal(planDoc.recapsArchived, 1);
+  assert.equal(planDoc.recapsOwed, 2);
+});
+
+test("player-hosted shows drive neither the owed recap count nor the drop time", () => {
+  // A hosted event is virtual: marching.art scores it, dci.org never lists it,
+  // and it is not a real show at a real venue whose announcement the night
+  // must wait on. Its Mountain location must NOT push this Eastern night's
+  // 11 PM drop out to 1 AM.
+  const plan = planDrop({
+    seasonData: LIVE_SEASON,
+    competitions: [
+      ...TWO_SHOW_COMPETITIONS, // both Eastern
+      { day: 10, location: "Denver, CO", eventTier: "hosted", hostUid: "u1" },
+    ],
+    now: new Date("2026-07-02T02:00:00Z"),
+  });
+  assert.equal(plan.hasScheduledShows, true);
+  assert.equal(plan.expectedShowCount, 2); // only the two scraped DCI shows
+  assert.deepEqual(plan.timeZones, ["America/New_York", "America/New_York"]);
+  assert.equal(plan.dropInstant.toISOString(), EASTERN_PLAN.dropInstant.toISOString());
+
+  const now = new Date("2026-07-02T03:05:00Z"); // 11:05 PM
+  const { scoreDue, awaitingEvents } = dueActions({
+    plan, now, scrapedTonight: true, archivedCount: 2, listedEventCount: 2,
+  });
+  assert.equal(awaitingEvents, false);
+  assert.equal(scoreDue, true);
+});
+
+test("an unmarked legacy show still counts for timing, but owes no recap", () => {
+  // Hosted shows created before addShowToDay persisted eventTier/hostUid are
+  // indistinguishable from a real one, so timing keeps them (waiting too long
+  // is recoverable; dropping a western night's scores at 11 PM is not) while
+  // the owed-recap count drops them (it requires the `date` every scraped
+  // event carries).
+  const plan = planDrop({
+    seasonData: LIVE_SEASON,
+    competitions: [...TWO_SHOW_COMPETITIONS, { day: 10, location: "Boise, ID" }],
+    now: new Date("2026-07-02T02:00:00Z"),
+  });
+  assert.equal(plan.expectedShowCount, 2);
+  assert.equal(plan.timeZones.length, 3);
+  assert.equal(easternLabel(plan.dropInstant), "2026-07-02 01:00 ET"); // Mountain
+});
+
+test("a day whose only shows are virtual has no DCI shows to wait on", () => {
+  // Nothing real is scheduled, so the night behaves like any other day with no
+  // DCI shows: the conservative Pacific default (a day with an empty DCI slate
+  // is indistinguishable from a stale schedules doc), one scrape attempt.
+  const plan = planDrop({
+    seasonData: LIVE_SEASON,
+    competitions: [{ day: 10, location: "Denver, CO", eventTier: "hosted", hostUid: "u1" }],
+    now: new Date("2026-07-02T02:00:00Z"),
+  });
+  assert.equal(plan.hasScheduledShows, false);
+  assert.equal(plan.expectedShowCount, 0);
+  assert.deepEqual(plan.timeZones, []);
+  assert.equal(scrapeBudgetFor(plan), 1);
+
+  const { scoreDue } = dueActions({
+    plan, now: new Date(plan.dropInstant.getTime()), scrapedTonight: false, scrapeAttempts: 1,
+  });
+  assert.equal(scoreDue, true); // pools/payouts still settle
 });
 
 test("a skipped in-progress claim leaves the night unstamped for later ticks", async () => {
