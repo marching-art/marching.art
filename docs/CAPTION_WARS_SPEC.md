@@ -1,6 +1,17 @@
 # Caption Wars — league format specification
 
-**Status:** design, not built. No code exists for anything below.
+**Status:** built, all four phases (§10). This document is now the reference for
+_why_ it works the way it does; the code is the reference for what it does.
+Where they disagree, the code is right and this file is stale.
+
+Landed as: `48c2e80` (resolution), `609805a` (standings), `95e5073` (the
+unlock), `f8b738b` (surfaces).
+
+Two things ended up different from the design below, both noted in place:
+§4.3's undecided-category rule needed one more row than first drafted, and §8's
+Record Book work turned up a live bug in the existing blowout/closest-call
+records — they named whoever scored more as the winner, which under this format
+is not always who won.
 
 An alternate way for a league to decide its weekly matchups. Instead of one
 comparison of the week's total score, a matchup is decided as a **best-of-three
