@@ -29,6 +29,23 @@ const SCORING_FORMATS = {
 };
 
 /**
+ * What a commissioner pays to run Caption Wars for ONE season, out of their own
+ * balance.
+ *
+ * Grounded against the rest of the economy: a show pays 50–200 CC, a weekly
+ * league win 100, a season finish bonus 250–1,000, and the World Class unlock
+ * 5,000. Two thousand is a real commitment — roughly a season's participation
+ * earnings for a mid-tier director — without being the biggest purchase in the
+ * game.
+ *
+ * Per season rather than once: a one-time unlock drains a balance once and then
+ * the sink is gone forever, while this recurs for as long as the league lasts.
+ * The rollover clears the format (helpers/leagueSeasonReset.js), which is what
+ * makes that true.
+ */
+const CAPTION_WARS_SEASON_COST = 2000;
+
+/**
  * The three categories, in the order they are shown and stored.
  *
  * `field` is the accumulator on a weekly score entry (helpers/leagueScoring.js);
@@ -135,6 +152,7 @@ function captionsWonBy(captions, uid) {
 
 module.exports = {
   SCORING_FORMATS,
+  CAPTION_WARS_SEASON_COST,
   CAPTION_CATEGORIES,
   isCaptionWarsLeague,
   resolveCaptionWars,

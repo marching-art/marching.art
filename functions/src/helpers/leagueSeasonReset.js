@@ -11,6 +11,7 @@ const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
 const admin = require("firebase-admin");
 const { emptySeasonActivity } = require("./leagueActivity");
+const { SCORING_FORMATS } = require("./captionWars");
 
 /**
  * Roll every league into the new season.
@@ -42,6 +43,7 @@ const { emptySeasonActivity } = require("./leagueActivity");
  *    season (it is derived from the live matchup collection this empties) and
  *    would otherwise display last season's grudges until the Monday job ran;
  *  - clears matchupsGeneratedWeek so the UI stops claiming a matchup is running;
+ *  - resets the scoring format, which is bought one season at a time;
  *  - advances seasonId;
  *  - zeroes seasonActivity, so a league goes dark the moment the season resets
  *    and lights back up only as its members return and set their corps up.
@@ -134,10 +136,19 @@ async function resetLeaguesForNewSeason(db, oldSeasonUid, newSeasonUid) {
       // sits above every tab, and one about a season that has ended is worse
       // than none at all.
       announcement: admin.firestore.FieldValue.delete(),
+      // An alternate scoring format is bought for ONE season (see
+      // callable/leagueFormat.js). Clearing it here is what makes it a
+      // recurring CorpsCoin sink rather than a one-time one, and it means a
+      // commissioner who has moved on cannot leave their league playing a
+      // format none of the current members chose. Resolution requires both the
+      // format and its season uid, so this pair being cleared can only ever
+      // fail back to the default.
+      "settings.scoringFormat": SCORING_FORMATS.TOTAL,
+      "settings.scoringFormatSeasonUid": admin.firestore.FieldValue.delete(),
     });
 
     // Deliberately kept: champions[] (the Hall of Fame), commissioners[], the
-    // league's tag and settings, meta/private (the invite code), chat (a
+    // league's tag and the rest of settings, meta/private (the invite code), chat (a
     // conversation, not season state), activity (its own chronological
     // history), and poolCarry — unclaimed prediction-pool escrow whose whole
     // purpose is to roll into the next pool.

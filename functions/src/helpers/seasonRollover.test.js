@@ -626,6 +626,34 @@ describe("resetLeaguesForNewSeason", () => {
     assert.ok(leagueWrite.data.announcement, "announcement must be explicitly cleared");
   });
 
+  // An alternate scoring format is bought for ONE season. Clearing it here is
+  // what makes it a recurring CorpsCoin sink rather than a one-time unlock, and
+  // it stops a departed commissioner leaving their league on a format none of
+  // the current members chose.
+  test("resets the scoring format, which is bought one season at a time", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    league.data.settings = {
+      entryFee: 500,
+      scoringFormat: "captionWars",
+      scoringFormatSeasonUid: "old-season",
+    };
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const leagueWrite = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1` && w.data?.seasonId === "new-season"
+    );
+    assert.equal(leagueWrite.data["settings.scoringFormat"], "total");
+    assert.ok(
+      leagueWrite.data["settings.scoringFormatSeasonUid"],
+      "the season pin must be explicitly cleared"
+    );
+    // The rest of settings — entry fee, prize pool, finals size — is untouched.
+    assert.equal(leagueWrite.data["settings.entryFee"], undefined);
+  });
+
   test("leaves documents that are not week-N alone", async () => {
     const docs = new Map();
     const league = leagueWithStandings(docs);

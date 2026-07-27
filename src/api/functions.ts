@@ -499,6 +499,17 @@ export const setCoCommissioner = createCallable<
   { leagueId: string; memberId: string; grant: boolean },
   { success: boolean; changed: boolean; message: string }
 >('setCoCommissioner');
+/**
+ * Put a league on an alternate scoring format for the season.
+ *
+ * Commissioner-only, preseason-only, and charged to the commissioner's own
+ * balance — never per member and never from the prize pool. See
+ * docs/CAPTION_WARS_SPEC.md §6.
+ */
+export const setLeagueScoringFormat = createCallable<
+  { leagueId: string; format: 'total' | 'captionWars' },
+  { success: boolean; charged: number; format: string; message: string }
+>('setLeagueScoringFormat');
 export const transferCommissioner = createCallable<
   { leagueId: string; newCommissionerUid: string },
   { success: boolean; message: string }

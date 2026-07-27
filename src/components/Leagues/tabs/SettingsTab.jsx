@@ -35,6 +35,7 @@ import LeagueSettingsForm from './LeagueSettingsForm';
 import CommissionerTransfer from './CommissionerTransfer';
 import CoCommissionerManager from './CoCommissionerManager';
 import ResultCorrection from './ResultCorrection';
+import ScoringFormatCard from './ScoringFormatCard';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -249,6 +250,18 @@ const SettingsTab = ({
   };
 
   const weekHasMatchups = existingMatchups[selectedWeek];
+
+  // Whether the league's scoring format is still changeable, read exactly the
+  // way the server reads it (callable/leagueFormat.js seasonUnderway): a week
+  // left behind by a previous season is not this season's business, and an
+  // unstamped week predates stamping, which rollover would have cleared.
+  const seasonUnderway = useMemo(
+    () =>
+      Object.values(existingMatchups).some(
+        (doc) => !doc?.seasonUid || doc.seasonUid === league?.seasonId
+      ),
+    [existingMatchups, league?.seasonId]
+  );
   const memberCount = getRosterSize(league);
   const activeCount = getActiveMemberCount(league);
   const canGenerate = memberCount >= 2;
@@ -535,6 +548,14 @@ const SettingsTab = ({
       {/* Editable league settings — a league used to be immutable from the
           moment it was created (no updateLeague* callable existed at all). */}
       <LeagueSettingsForm league={league} memberCount={memberCount} onSaved={onSettingsSaved} />
+
+      {/* Alternate scoring format — a purchase, and locked once the season
+          starts, so it is its own card rather than a field on the form. */}
+      <ScoringFormatCard
+        league={league}
+        seasonUnderway={seasonUnderway}
+        onChanged={onSettingsSaved}
+      />
 
       {/* Read-only league facts */}
       <div className="bg-surface-card border border-line">
