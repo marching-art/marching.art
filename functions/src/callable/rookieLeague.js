@@ -19,6 +19,28 @@ const { refreshLeagueActivity } = require("../helpers/leagueActivity");
  */
 const ROOKIE_LEAGUE_MAX_MEMBERS = 16;
 
+/**
+ * Who the Rookie Circuit is for.
+ *
+ * This endpoint had no gate at all: any director could call it regardless of
+ * level or tenure, so a veteran could drop into a league of new directors — the
+ * one place in the game explicitly reserved for people finding their feet.
+ *
+ * The bar is deliberately generous, and it is an OR: a director is a rookie
+ * while they are early in their first season OR still under the level cut.
+ * Getting this wrong in the strict direction is worse than in the loose one —
+ * a new director bounced out of the beginner league has nowhere to go.
+ */
+const ROOKIE_MAX_LEVEL = 10;
+const ROOKIE_MAX_SEASONS = 1;
+
+function isRookieDirector(profileData) {
+  if (!profileData) return true;
+  const level = Number(profileData.xpLevel) || 1;
+  const seasons = Number(profileData.stats?.seasonsPlayed ?? profileData.seasonsPlayed) || 0;
+  return seasons <= ROOKIE_MAX_SEASONS || level <= ROOKIE_MAX_LEVEL;
+}
+
 exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
   const uid = request.auth.uid;
@@ -35,6 +57,17 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
   if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
   const { seasonUid } = seasonDoc.data();
 
+  // Checked before the transaction so a veteran never even provisions a
+  // circuit. Directors already in a circuit still reach the early-return
+  // inside the transaction — the gate is on JOINING, not on staying.
+  const gateProfileDoc = await userProfileRef.get();
+  if (gateProfileDoc.exists && !isRookieDirector(gateProfileDoc.data())) {
+    throw new HttpsError(
+      "failed-precondition",
+      "The Rookie Circuit is for directors in their first season. Browse or create a league instead."
+    );
+  }
+
   const result = await db.runTransaction(async (transaction) => {
     // Reads first (Firestore transaction requirement)
     const pointerDoc = await transaction.get(pointerRef);
@@ -50,7 +83,8 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
       }
     }
 
-    // Already in the current rookie circuit — nothing to do
+    // Already in the current rookie circuit — nothing to do. Reached before
+    // any gate matters: a director who joined as a rookie keeps their circuit.
     if (leagueData && leagueData.members.includes(uid)) {
       return { leagueId: leagueRef.id, leagueName: leagueData.name, alreadyMember: true };
     }
@@ -188,3 +222,7 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
       : `Welcome to ${result.leagueName}!`,
   };
 });
+
+module.exports.isRookieDirector = isRookieDirector;
+module.exports.ROOKIE_MAX_LEVEL = ROOKIE_MAX_LEVEL;
+module.exports.ROOKIE_MAX_SEASONS = ROOKIE_MAX_SEASONS;

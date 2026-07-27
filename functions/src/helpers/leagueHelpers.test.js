@@ -8,6 +8,7 @@ const {
   generateUniqueInviteCode,
   smartPairMembers,
   buildPairingHistory,
+  recordPairingsInHistory,
   invitationId,
 } = require("./leagueHelpers");
 
@@ -202,5 +203,58 @@ describe("invitationId", () => {
     assert.equal(invitationId("league1", "userA"), "league1_userA");
     assert.equal(invitationId("league1", "userA"), invitationId("league1", "userA"));
     assert.notEqual(invitationId("league1", "userA"), invitationId("league1", "userB"));
+  });
+});
+
+// The daily generator ensures both the current and the next week in one pass.
+// Pairing from identical history twice would produce the same matchups for
+// both weeks — the exact repetition the history exists to prevent.
+describe('recordPairingsInHistory', () => {
+  const classes = ['worldClass'];
+
+  test('folds a generated week into an existing history in place', () => {
+    const history = { meetings: { a: { b: 1 }, b: { a: 1 } }, byes: { c: 1 } };
+    const week = {
+      worldClassMatchups: [
+        { pair: ['a', 'b'] },
+        { pair: ['c', null], isBye: true },
+      ],
+    };
+
+    const returned = recordPairingsInHistory(history, week, classes);
+
+    assert.equal(returned, history, 'mutates and returns the same object');
+    assert.equal(history.meetings.a.b, 2);
+    assert.equal(history.meetings.b.a, 2);
+    assert.equal(history.byes.c, 2);
+  });
+
+  test('seeds entries that the prior history did not have', () => {
+    const history = { meetings: {}, byes: {} };
+    recordPairingsInHistory(history, { worldClassMatchups: [{ pair: ['x', 'y'] }] }, classes);
+
+    assert.equal(history.meetings.x.y, 1);
+    assert.equal(history.meetings.y.x, 1);
+  });
+
+  test('a second week generated from the folded history avoids the rematch', () => {
+    const members = ['a', 'b', 'c', 'd'];
+    const standings = {
+      a: { wins: 0, totalPoints: 0 },
+      b: { wins: 0, totalPoints: 0 },
+      c: { wins: 0, totalPoints: 0 },
+      d: { wins: 0, totalPoints: 0 },
+    };
+    const history = { meetings: {}, byes: {} };
+
+    const week1 = { worldClassMatchups: smartPairMembers(members, standings, history) };
+    recordPairingsInHistory(history, week1, classes);
+    const week2 = smartPairMembers(members, standings, history);
+
+    const key = (m) => [...m.pair].sort().join('+');
+    const week1Pairs = new Set(week1.worldClassMatchups.map(key));
+    for (const matchup of week2) {
+      assert.ok(!week1Pairs.has(key(matchup)), `${key(matchup)} repeated in week 2`);
+    }
   });
 });

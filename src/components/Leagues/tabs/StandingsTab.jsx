@@ -8,8 +8,6 @@ import {
   Trophy,
   Flame,
   TrendingUp,
-  TrendingDown,
-  Minus,
   Crown,
   ChevronDown,
   ChevronUp,
@@ -22,8 +20,13 @@ import {
 import SeasonStatsCard from '../SeasonStatsCard';
 import LeagueLeaderboards from '../LeagueLeaderboards';
 import LeagueDashboard from '../LeagueDashboard';
+import LeagueFinalsBracket from '../LeagueFinalsBracket';
 import { getEquippedCosmetic } from '../../../utils/cosmetics';
 import { getSeasonActivity } from '../../../utils/leagueActivity';
+// Shared label map — never a local one (see utils/corps.ts).
+import { CORPS_CLASS_SHORT_LABELS as CLASS_SHORT_LABELS } from '../../../utils/corps';
+import { GAME_CONFIG } from '../../../config';
+import { RankBadge, TrendIndicator } from './StandingsTabParts';
 
 const StandingsTab = ({
   standings,
@@ -118,14 +121,50 @@ const StandingsTab = ({
     return { activeStandings: active, inactiveStandings: inactive };
   }, [standings, league]);
 
+  // Which classes each member actually fields this season. Matchups are
+  // segregated by corps class, but this table is league-wide — so without
+  // saying which class a row belongs to it reads as though a SoundSport
+  // director and a World Class director played each other, and the points
+  // column silently compares numbers on different scales.
+  const classesByUid = useMemo(() => {
+    const byUid = {};
+    for (const [uid, profile] of Object.entries(memberProfiles || {})) {
+      byUid[uid] = Object.entries(profile?.corps || {})
+        .filter(([, corps]) => corps?.corpsName)
+        .map(([corpsClass]) => corpsClass);
+    }
+    return byUid;
+  }, [memberProfiles]);
+
+  // The archived champion for the season this league is currently playing, if
+  // it has already been crowned (a league viewed after rollover, before its
+  // next season starts).
+  const currentSeasonChampion = useMemo(() => {
+    const champions = league?.champions || [];
+    if (champions.length === 0) return null;
+    const forSeason = league?.seasonId
+      ? champions.find((c) => c.seasonId === league.seasonId)
+      : null;
+    return forSeason || null;
+  }, [league?.champions, league?.seasonId]);
+
+  // A league whose members all field the same class needs no class column at
+  // all — only say it when it is actually true of this league.
+  const isMixedClassLeague = useMemo(() => {
+    const seen = new Set();
+    Object.values(classesByUid).forEach((classes) => classes.forEach((c) => seen.add(c)));
+    return seen.size > 1;
+  }, [classesByUid]);
+
   // Enhance standings with calculated fields (active members only get ranks)
   const enhancedStandings = useMemo(() => {
     return activeStandings.map((stats, idx) => ({
       ...stats,
       rank: idx + 1,
       isPlayoffSpot: idx < playoffSize,
+      corpsClasses: classesByUid[stats.uid] || [],
     }));
-  }, [activeStandings, playoffSize]);
+  }, [activeStandings, playoffSize, classesByUid]);
 
   if (loading) {
     return (
@@ -309,6 +348,17 @@ const StandingsTab = ({
                   </h3>
                   <span className="text-[10px] text-muted">Top {playoffSize} make Finals</span>
                 </div>
+                {/* Matchups are segregated by corps class; this table is not.
+                    A director's record is their record across everything they
+                    field, and Points compares scores from different classes on
+                    different scales — say so instead of letting the table
+                    imply a SoundSport row and a World Class row raced. */}
+                {isMixedClassLeague && (
+                  <p className="text-[10px] text-muted mt-1.5">
+                    Members compete within their own class. Records combine every class a director
+                    fields; Points are not comparable across classes.
+                  </p>
+                )}
               </div>
 
               {/* Data Table */}
@@ -408,6 +458,21 @@ const StandingsTab = ({
                                   )}
                                 </div>
                               </div>
+                              {/* Which class this director's record was earned
+                                  in. Only shown when the league actually mixes
+                                  classes, where the row is otherwise ambiguous. */}
+                              {isMixedClassLeague && stats.corpsClasses.length > 0 && (
+                                <div className="flex items-center gap-1 mt-0.5 ml-9">
+                                  {stats.corpsClasses.map((corpsClass) => (
+                                    <span
+                                      key={corpsClass}
+                                      className="text-[9px] uppercase tracking-wider text-muted"
+                                    >
+                                      {CLASS_SHORT_LABELS[corpsClass] || corpsClass}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </td>
 
                             {/* Record W-L */}
@@ -617,6 +682,22 @@ const StandingsTab = ({
               </div>
             )}
 
+            {/* The Finals field the cut line above points at. `finalsSize` has
+                always been stored and the table has always drawn a playoff
+                line, but nothing ever showed who had qualified or what
+                qualifying meant. */}
+            <div className="mt-4">
+              <LeagueFinalsBracket
+                standings={enhancedStandings}
+                finalsSize={playoffSize}
+                currentWeek={currentWeek}
+                totalWeeks={GAME_CONFIG.season.totalWeeks}
+                getDisplayName={getDisplayName}
+                viewerUid={userProfile?.uid}
+                champion={currentSeasonChampion}
+              />
+            </div>
+
             {/* Leaderboards Section */}
             {showLeaderboards && Object.keys(leagueStats).length > 0 && (
               <div className="mt-4">
@@ -661,53 +742,5 @@ const StandingsTab = ({
     </m.div>
   );
 };
-
-// Rank badge - compact design
-const RankBadge = React.memo(({ rank, isPlayoffSpot }) => {
-  if (rank === 1) {
-    return (
-      <div className="inline-flex items-center justify-center w-6 h-6 bg-brand/20 text-brand text-xs font-bold">
-        1
-      </div>
-    );
-  }
-  if (rank === 2) {
-    return (
-      <div className="inline-flex items-center justify-center w-6 h-6 bg-charcoal-500/20 text-muted text-xs font-bold">
-        2
-      </div>
-    );
-  }
-  if (rank === 3) {
-    return (
-      <div className="inline-flex items-center justify-center w-6 h-6 bg-orange-500/20 text-orange-500 text-xs font-bold">
-        3
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold ${
-        isPlayoffSpot
-          ? 'bg-green-500/10 text-green-500 border border-green-500/30'
-          : 'bg-surface-raised text-muted'
-      }`}
-    >
-      {rank}
-    </div>
-  );
-});
-
-// Trend indicator - compact
-const TrendIndicator = React.memo(({ trend }) => {
-  if (trend === 'up') {
-    return <TrendingUp className="w-3.5 h-3.5 text-green-500 mx-auto" />;
-  }
-  if (trend === 'down') {
-    return <TrendingDown className="w-3.5 h-3.5 text-red-500 mx-auto" />;
-  }
-  return <Minus className="w-3.5 h-3.5 text-muted mx-auto" />;
-});
 
 export default StandingsTab;

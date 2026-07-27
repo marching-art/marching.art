@@ -912,22 +912,39 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       // rollover (the champions[] guard is per-season, not per-pool).
       // Decrement rather than set 0 so an entry fee escrowed concurrently
       // by a joiner mid-rollover isn't clobbered.
+      // `poolCarry` rides along. It is prediction-pool antes that no member
+      // ever won, and it was only ever released when someone next bought in —
+      // so a league that stopped running pools mid-season left real escrowed
+      // CorpsCoin in a field nothing would ever pay out, permanently. Rolling
+      // it up to the season champion keeps the loop zero-sum and closes the
+      // leak; every coin in it was staked by a member of this league.
       const prizePool = league.settings?.prizePool || 0;
-      if (prizePool > 0) {
+      const poolCarry = league.poolCarry || 0;
+      const payout = prizePool + poolCarry;
+      if (payout > 0) {
         batch.update(winnerProfileRef, {
-          corpsCoin: admin.firestore.FieldValue.increment(prizePool),
+          corpsCoin: admin.firestore.FieldValue.increment(payout),
         });
-        batch.update(leagueRef, {
-          "settings.prizePool": admin.firestore.FieldValue.increment(-prizePool),
-        });
+        const leaguePayoutUpdate = {};
+        if (prizePool > 0) {
+          leaguePayoutUpdate["settings.prizePool"] =
+            admin.firestore.FieldValue.increment(-prizePool);
+        }
+        if (poolCarry > 0) {
+          leaguePayoutUpdate.poolCarry = admin.firestore.FieldValue.increment(-poolCarry);
+        }
+        batch.update(leagueRef, leaguePayoutUpdate);
         addCoinHistoryEntryToBatch(batch, db, leagueWinner.userId, {
           type: TRANSACTION_TYPES.LEAGUE_WIN,
-          amount: prizePool,
-          description: `${seasonName} champion prize pool — ${league.name}`,
+          amount: payout,
+          description: poolCarry > 0
+            ? `${seasonName} champion prize pool + unclaimed prediction pool — ${league.name}`
+            : `${seasonName} champion prize pool — ${league.name}`,
           timestamp: new Date(),
         });
         logger.info(
-          `Paid ${prizePool} CC prize pool to ${leagueWinner.username} for winning '${league.name}'.`
+          `Paid ${payout} CC (${prizePool} prize pool + ${poolCarry} pool carry) to ` +
+            `${leagueWinner.username} for winning '${league.name}'.`
         );
       }
 

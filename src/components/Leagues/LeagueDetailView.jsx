@@ -350,6 +350,10 @@ const LeagueDetailView = ({
         {showLeaveModal && (
           <LeaveLeagueModal
             leagueName={league.name}
+            entryFee={league.settings?.entryFee || 0}
+            isCommissioner={isCommissioner}
+            isLastMember={(league.members?.length || 0) <= 1 && isCommissioner}
+            escrowReturned={(league.settings?.prizePool || 0) + (league.poolCarry || 0)}
             onClose={() => setShowLeaveModal(false)}
             onConfirm={handleLeaveConfirm}
             isLoading={isLeaving}

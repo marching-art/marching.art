@@ -156,6 +156,34 @@ function buildPairingHistory(matchupDocsData, corpsClasses) {
   return { meetings, byes };
 }
 
+/**
+ * Fold a freshly generated week back into an existing history object, in place.
+ *
+ * Generating several weeks in one pass (the daily job ensures both the current
+ * and the next week) would otherwise pair from identical history every time and
+ * produce the same matchups for both weeks — the exact repetition the history
+ * exists to prevent.
+ *
+ * @param {{meetings: Object, byes: Object}} history - mutated
+ * @param {Object} weekData - a generated `matchups/week-N` payload
+ * @param {string[]} corpsClasses
+ */
+function recordPairingsInHistory(history, weekData, corpsClasses) {
+  const fresh = buildPairingHistory([weekData], corpsClasses);
+
+  for (const [uid, opponents] of Object.entries(fresh.meetings)) {
+    if (!history.meetings[uid]) history.meetings[uid] = {};
+    for (const [opponent, count] of Object.entries(opponents)) {
+      history.meetings[uid][opponent] = (history.meetings[uid][opponent] || 0) + count;
+    }
+  }
+  for (const [uid, count] of Object.entries(fresh.byes)) {
+    history.byes[uid] = (history.byes[uid] || 0) + count;
+  }
+
+  return history;
+}
+
 // Helper function to create league activity events
 async function createLeagueActivity(db, leagueId, activityData) {
   const activityRef = db.collection(paths.leagueActivity(leagueId)).doc();
@@ -176,6 +204,7 @@ module.exports = {
   generateUniqueInviteCode,
   smartPairMembers,
   buildPairingHistory,
+  recordPairingsInHistory,
   createLeagueActivity,
   invitationId,
 };

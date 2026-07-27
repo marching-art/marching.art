@@ -130,7 +130,7 @@ module exports `isActiveThisSeason()` precisely to fix this, and the champion
 selector doesn't use it. A fully competing director can be excluded from their
 own league's championship.
 
-### A6 · P1 — Playoffs advertised and unimplemented — PARTLY FIXED
+### A6 · P1 — Playoffs advertised and unimplemented — FIXED
 
 - `settings.finalsSize` (default 12) — written at creation, rendered once in
   SettingsTab, consumed by nothing.
@@ -144,11 +144,12 @@ own league's championship.
 The season ended with no bracket, no finals, no playoff seeding. The line in
 the standings table pointed at nothing.
 
-Fixed so far: `finalsSize` now decides a real finals field and championship week
-decides the title among it (A4), and `playoffSize` is wired through to the
-standings cut line so it reflects the league's own setting. Still outstanding: a
-visible bracket, and either implementing `scoringFormat`/`matchupType` or
-removing them.
+Fixed: `finalsSize` decides a real finals field and championship week decides
+the title among it (A4); `playoffSize` is wired through to the standings cut
+line so it reflects the league's own setting; and `LeagueFinalsBracket` draws
+the field the cut line points at — seeds, who is in, who is on the bubble, and
+who won and how once the season is archived. `scoringFormat` and `matchupType`
+remain stored-and-unread; they are the last of this group.
 
 ### A7 · P2 — Pairing had no rematch avoidance and no bye rotation — FIXED
 
@@ -166,7 +167,7 @@ prior-opponent counts and bye counts, and `smartPairMembers` takes the nearest
 seed it has faced fewest times and hands the bye to whoever has had it least.
 Deterministic — same inputs, same pairings.
 
-### A8 · P2 — Cross-class standings in one table
+### A8 · P2 — Cross-class standings in one table — FIXED
 
 Matchups are segregated by corps class (correct), but standings, the prize
 pool, and the champion are league-wide. A World Class director and a SoundSport
@@ -174,6 +175,12 @@ director appear in one ranked table having never played each other, with
 `totalPoints` on wildly different scales. `GAMIFICATION.md:353` lists
 "cross-class normalized matchups" as future work; until then the table needs to
 be honest about what it is.
+
+Fixed by being honest: a league that actually mixes classes now labels each row
+with the class(es) that director fields, and says plainly that records combine
+every class and that Points are not comparable across them. Normalized
+cross-class scoring is still future work — this stops the table from implying
+something untrue in the meantime.
 
 ### A9 · P3 — Two divergent copies of the pairing algorithm — FIXED
 
@@ -232,13 +239,13 @@ documents — permanently, since Firestore doesn't cascade. Any escrowed
 `settings.prizePool` and `poolCarry` vanish with the doc rather than being
 refunded.
 
-### B5 · P2 — Entry fee is immutable and unrefundable in the normal case
+### B5 · P2 — Entry-fee forfeiture was never disclosed — FIXED
 
 The fee is fixed at creation and can never be changed (see C2). Members who
 leave forfeit it silently — the UI never warns them. If a league dissolves
 mid-season (B4), every escrowed coin is destroyed with no payout.
 
-### B6 · P3 — Pool carry can be stranded
+### B6 · P3 — Pool carry could be stranded — FIXED
 
 `league.poolCarry` accumulates when nobody has a perfect day and is only
 released when a member next buys in (`leaguePools.js:75`). A league that stops
@@ -300,7 +307,7 @@ announcement, no league rules/description-with-formatting, no way to schedule
 or lock a season format, no member-visible audit of commissioner actions beyond
 removals.
 
-### C7 · P3 — The rookie circuit had an accidental commissioner — PARTLY FIXED
+### C7 · P3 — The rookie circuit had no gate and an accidental commissioner — FIXED
 
 `joinRookieLeague` is callable by any authenticated director regardless of
 level or tenure, and whoever provisions a new circuit becomes its `creatorId` —
@@ -335,7 +342,7 @@ no report, no mute, no commissioner moderation — `ChatTab` even receives
 with no recourse. For a persistent social space this will need to exist before
 it's needed, not after.
 
-### D3 · P3 — Removal is the only logged commissioner action
+### D3 · P3 — Removal was the only logged commissioner action — FIXED
 
 `removeLeagueMember` writes to the activity feed specifically so a commissioner
 "cannot quietly purge rivals mid-season". The same reasoning applies to matchup
@@ -358,7 +365,7 @@ scored and the matchups are not resolved, so the recap is built from unresolved
 data and emits an empty `highlights[]` with null stats. This compounds A1 — even
 the highlights that could fire, don't.
 
-### E2 · P2 — The crons assume week boundaries land on Sunday/Monday
+### E2 · P2 — The crons assumed week boundaries land on Sunday/Monday — FIXED
 
 Season weeks are `ceil((activeDay - springTrainingDays) / 7)` from the season
 start date (`helpers/gameDay.js:110-121`), but generation/recap/rivalry jobs are
@@ -661,30 +668,17 @@ Small, isolated, high ratio of value to risk:
 
 ## Still outstanding
 
-Everything not marked FIXED above. In rough priority order:
-
-- **A6 (remainder)** — a visible playoff bracket, and a decision on
-  `scoringFormat` / `matchupType`: implement them or delete them. Finals seeding
-  and the title now work; the bracket itself is not drawn anywhere.
-- **A8** — cross-class standings still share one table. Matchups are
-  class-segregated and now scored per class, but the ranked table mixes classes
-  on different scales. Needs either per-class tables or normalized scoring
-  (`GAMIFICATION.md` already parks this as future work).
-- **B5 / B6** — leavers still forfeit their entry fee silently (the UI does not
-  warn them), and `poolCarry` can still strand escrow in a league that stops
-  running pools mid-season. Season archival drains `prizePool`, not `poolCarry`.
+- **A6 (last piece)** — `scoringFormat` and `matchupType` are still stored and
+  never read. Implement the formats or delete the fields.
+- **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
+  can rank on one comparable scale. The table is now honest about the limitation
+  rather than fixed of it.
 - **C6** — co-commissioners, result correction, pinned announcements, league
-  rules documents, scheduled format locks.
-- **C7 (remainder)** — `joinRookieLeague` still has no rookie gate; any director
-  can call it regardless of level or tenure.
-- **D3** — matchup regeneration and settings changes are now logged, but there
-  is still no consolidated commissioner audit view.
-- **E2** — the generation/rivalry crons are pinned to Sunday/Monday while season
-  weeks derive from the season start date and `springTrainingDays`. Nothing
-  asserts the two agree. (Recaps no longer depend on this — they run from the
-  nightly scoring run.)
-- **F7** — file-size and typing debt: several league files remain past the
-  ~700-line guidance and carry `@ts-nocheck`. `MatchupsTab` still fetches into
-  local state rather than reusing `useLeagueDetail`'s React Query entries.
-- **Phase 4 in full** — alternate league formats, dynasty mode, cross-class
-  normalization.
+  rules documents, scheduled format locks. The audit view (D3) and settings
+  editing (C2) landed; the rest of the commissioner toolkit has not.
+- **F7 (remainder)** — `MatchupsTab` still fetches into local `useState` rather
+  than reusing `useLeagueDetail`'s React Query entries, and several league files
+  remain `@ts-nocheck`'d. `StandingsTab` is back under the line; the rest of the
+  folder is not yet migrated.
+- **Phase 4** — alternate league formats (Survivor / Pick'em / One-Night Slate),
+  dynasty mode, and the deeper discovery work.
