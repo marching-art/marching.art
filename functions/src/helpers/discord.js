@@ -11,7 +11,9 @@
  *                                                    season champions
  *   announcements DISCORD_ANNOUNCEMENTS_WEBHOOK_URL  Fan Favorite ballots,
  *                                                    season start,
- *                                                    lineup lock
+ *                                                    lineup lock,
+ *                                                    Eastern Classic night
+ *                                                    lineups
  *   news          DISCORD_NEWS_WEBHOOK_URL           published articles,
  *                                                    the Podium Report
  *   events        DISCORD_EVENTS_WEBHOOK_URL         DIRECTOR-HOSTED shows
@@ -59,10 +61,12 @@ function link(path) {
 // Embed accents, one per kind of moment.
 const COLORS = {
   scores: 0xd4af37, // gold — the nightly drop
+  cut: 0x0ca678, // teal — a championship-week field is set
   record: 0xff4d4f, // red — an all-time mark just fell
   champion: 0x9b59b6, // purple — season champions
   fan: 0xec4899, // pink — the Fan Favorite ballot
   season: 0x2f9e44, // green — a season opens
+  lineup: 0x7048e8, // indigo — the Eastern Classic night lineups
   event: 0x1c7ed6, // blue — a director-hosted show
   news: 0x868e96, // grey — editorial
   ops: 0xe8590c, // orange — something needs a human

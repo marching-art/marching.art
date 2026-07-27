@@ -351,6 +351,9 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
       require("../helpers/scoring").processAndScoreLiveSeasonDayLogic(day, seasonData),
     discord = (dbArg, opts) =>
       require("./nightlyStages").runDiscordStage(dbArg, discordScoresWebhookUrl.value(), undefined, opts),
+    eastern = (dbArg, opts) =>
+      require("./nightlyStages").runEasternClassicStage(
+        dbArg, discordAnnouncementsWebhookUrl.value(), undefined, opts),
   } = deps;
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) return { status: "no-season" };
@@ -565,6 +568,19 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
       } catch (error) {
         logger.error(`[drop-dispatcher] discord stage failed (scoring unaffected): ${error.message}`);
       }
+
+      // The Eastern Classic night lineups (#announcements), off the preview
+      // the day-38 run just published — so the split reaches the server in the
+      // same moment as the scores that seeded it. Isolated and lease-guarded
+      // like the drop above; every other night this is a no-op.
+      try {
+        const easternResult = await eastern(db, { competitionDay: plan.competitionDay });
+        if (easternResult.announcement && easternResult.announcement.status === "posted") {
+          logger.info(`[drop-dispatcher] eastern-classic result: ${JSON.stringify(easternResult)}`);
+        }
+      } catch (error) {
+        logger.error(`[drop-dispatcher] eastern stage failed (scoring unaffected): ${error.message}`);
+      }
     }
   }
 
@@ -588,7 +604,10 @@ exports.scoreDropDispatcher = onSchedule({
   // No scheduler retries: the 15-minute cadence IS the retry loop, and the
   // scoring lease makes re-entry safe.
   retryCount: 0,
-  secrets: [scraperApiKey, discordScoresWebhookUrl],
+  // The score drop rides this job (#scores), and so does the Eastern Classic
+  // lineup post (#announcements) — it announces the preview the day-38 scoring
+  // run publishes here, so it needs that webhook too.
+  secrets: [scraperApiKey, discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
   const result = await runDropDispatcherTick(db);

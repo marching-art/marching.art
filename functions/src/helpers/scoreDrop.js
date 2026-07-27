@@ -6,7 +6,9 @@
  *      one rich-embed webhook post to the community server's scores channel
  *      right after the 2 AM scoring commit, with tonight's top corps per
  *      ranked class, tonight's SoundSport blue ribbons, and — when one fell —
- *      an all-time record. Finals night adds the season champions.
+ *      an all-time record. Championship week adds the cut tonight's results
+ *      decided (helpers/championshipCuts.js); finals night adds the season
+ *      champions.
  *   2. The morning push job (pushNotifications.scoreDropPushJob): one FCM
  *      push per director who performed last night, at a humane hour.
  *
@@ -417,6 +419,24 @@ async function runDiscordScoreDrop(db, { seasonUid, seasonName, scoredDay, webho
     logger.warn(`[discord-stage] records check skipped: ${error.message}`);
   }
 
+  // Championship week: the cut tonight's results just decided — who marches
+  // tomorrow (helpers/championshipCuts.js). Rides the same message for the
+  // same reason the records embed does: it IS tonight's headline, and it is
+  // news at the moment the scores land, not the next morning. Isolated the
+  // same way — a failure here just means the drop posts without it.
+  let cutAnnounced = null;
+  try {
+    const { cutForDrop, buildCutsEmbed } = require("./championshipCuts");
+    const cut = cutForDrop(recapSnap.data(), scoredDay);
+    const embed = buildCutsEmbed(cut, { seasonName });
+    if (embed) {
+      payload.embeds.push(embed);
+      cutAnnounced = { event: cut.eventName, advancing: cut.advancing.length, missed: cut.missed };
+    }
+  } catch (error) {
+    logger.warn(`[discord-stage] championship cut skipped: ${error.message}`);
+  }
+
   const leaseKey = `${seasonUid}_discord`;
   // kind "announce": a failed Discord post is a warning at the watchdog, not
   // a critical scoring incident.
@@ -424,6 +444,7 @@ async function runDiscordScoreDrop(db, { seasonUid, seasonName, scoredDay, webho
   if (!lease.claimed) return { status: "skipped", reason: lease.reason, scoredDay };
 
   const result = { status: "posted", scoredDay, recordsBroken };
+  if (cutAnnounced) result.cut = cutAnnounced;
   try {
     await postToDiscordWebhook(webhookUrl, payload, fetchImpl);
     await markScoringRunCompleted(db, leaseKey, scoredDay, { posted: true });

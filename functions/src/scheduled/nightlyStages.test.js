@@ -6,7 +6,12 @@
 const { test, describe, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { runPodiumStage, runDiscordStage, runFanFavoriteStage } = require("./nightlyStages");
+const {
+  runPodiumStage,
+  runDiscordStage,
+  runFanFavoriteStage,
+  runEasternClassicStage,
+} = require("./nightlyStages");
 const { resetFeatureCache } = require("../helpers/features");
 
 /**
@@ -286,6 +291,75 @@ describe("nightly Fan Favorite announcement stage", () => {
     });
     assert.equal(result.status, "ran");
     assert.deepEqual(result.announcements, []);
+  });
+});
+
+describe("nightly Eastern Classic announcement stage", () => {
+  const okFetch = async () => ({ ok: true, status: 204, text: async () => "" });
+  const season = {
+    status: "off-season",
+    seasonUid: "test_season",
+    name: "Offseason IX",
+    schedule: { startDate: startDaysAgo(38) },
+  };
+  const splitDoc = {
+    seasonUid: "test_season",
+    eventName: "marching.art Eastern Classic",
+    nights: [41, 42],
+    preview: {
+      assignments: {
+        41: [{ key: "u1_worldClass", uid: "u1", corpsClass: "worldClass", corpsName: "Colts", seed: 1 }],
+        42: [{ key: "u2_worldClass", uid: "u2", corpsClass: "worldClass", corpsName: "Cadets", seed: 2 }],
+      },
+      counts: { 41: 1, 42: 1 },
+      enrolled: 2,
+    },
+  };
+
+  test("disabled when no #announcements webhook is configured", async () => {
+    const db = fakeDb({ "game-settings/season": season });
+    assert.deepEqual(await runEasternClassicStage(db, ""), { status: "disabled" });
+    assert.deepEqual(await runEasternClassicStage(db, undefined), { status: "disabled" });
+  });
+
+  test("no season doc: skipped safely", async () => {
+    const db = fakeDb({});
+    assert.equal((await runEasternClassicStage(db, "https://d.test/a", okFetch)).status, "no-season");
+  });
+
+  // Unlike the Fan Favorite stage, this one is NOT Podium-gated: the split it
+  // reads out is a fantasy-class event that predates Podium.
+  test("posts the lineups with Podium flagged off", async () => {
+    let posted = null;
+    const fetchImpl = async (url, options) => {
+      posted = JSON.parse(options.body);
+      return { ok: true, status: 204, text: async () => "" };
+    };
+    const db = fakeDb({
+      "game-settings/season": season,
+      "eastern-classic/test_season": splitDoc,
+    });
+
+    const result = await runEasternClassicStage(db, "https://d.test/a", fetchImpl, {
+      competitionDay: 38,
+    });
+    assert.equal(result.status, "ran");
+    assert.deepEqual(result.announcement, { kind: "eastern-preview", status: "posted" });
+    assert.match(posted.embeds[0].title, /Eastern Classic/);
+    assert.equal(db.writes["scoring_runs/test_season_eastern_preview_day38"].status, "completed");
+  });
+
+  test("an ordinary night has nothing to announce", async () => {
+    const db = fakeDb({
+      "game-settings/season": season,
+      "eastern-classic/test_season": splitDoc,
+    });
+    const result = await runEasternClassicStage(db, "https://d.test/a", okFetch, {
+      competitionDay: 20,
+    });
+    assert.equal(result.status, "ran");
+    assert.equal(result.announcement.status, "out-of-window");
+    assert.deepEqual(db.writes, {});
   });
 });
 

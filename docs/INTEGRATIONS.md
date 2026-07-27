@@ -18,8 +18,8 @@ embed helpers.
 
 | Channel            | Secret                              | Posts                                                                                 |
 | ------------------ | ----------------------------------- | ------------------------------------------------------------------------------------- |
-| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, season champions |
-| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock                             |
+| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, championship-week cuts, season champions |
+| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, registration deadlines, Eastern Classic night lineups |
 | **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                          |
 | **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                       |
 | **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                 |
@@ -149,6 +149,112 @@ collects nobody's vote. Three event posts go to the server's
   with `deploy_target: all` and `set_discord_webhook_urls` checked, or
   `firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` via the
   CLI.
+
+---
+
+## Discord (championship-week cuts → #scores)
+
+Three nights of championship week end with a cut, and each is the most
+dramatic thing that happens all year: Day 45 Prelims decide the top 8 Open +
+top 4 A for the Open & A Class Finals, Day 47 Prelims decide the top 25 for
+Semifinals, Day 48 Semis decide the top 12 for Finals. (SoundSport marches
+none of these — it has its own festival on Day 49.) The cut was already being
+computed and announced to nobody but the logs.
+
+- **Code:** `functions/src/helpers/championshipCuts.js`. The embed is appended
+  to the nightly score drop (`helpers/scoreDrop.js`) exactly like the
+  all-time-records embed — same channel, same message, same moment as the
+  scores that decided it. **No new lease, secret, or scheduled job**, and on
+  the other 46 nights `cutForDrop` returns null and nothing changes.
+- **Single source of truth:** it calls `scoringAwards.buildChampionshipConfig`
+  — the same function the scorer uses to decide who actually gets scored
+  tomorrow — rather than re-deriving the cutoff. A second implementation of
+  "top 25, ties included" would eventually disagree with the one that counts,
+  and a post naming a corps the scorer then leaves out is worse than no post.
+  The recap is used only to put names and scores on the uids it returns.
+- **Class filter:** the participant list is ranked *before* `classFilter` is
+  applied, so the announcement re-applies that filter. This keeps the count
+  truthful (an ineligible row occupies a slot but never marches) and
+  guarantees a SoundSport score can never reach a public embed — SoundSport is
+  ratings-only and its scores are never revealed anywhere in the product.
+- **Ties:** the cutoff is tie-inclusive, so a tie on the cut line advances
+  everyone level with it and the post says 26, not 25.
+
+---
+
+## Discord (registration deadlines → #announcements)
+
+Each class closes **new-corps** registration a fixed number of weeks before
+finals (`classRegistry.registrationLockWeeks`: World 6, Open 5, A 4;
+SoundSport and Podium never lock) so a director can't enter a class with too
+little season left to compete — `helpers/registrationLock.js`, enforced in
+`callable/corps.js`. It is hard and irreversible: miss it and that class is
+gone until next season. The rule was enforced and never advertised, so a
+director met it as an error message when it was already too late.
+
+- **Code:** `functions/src/helpers/registrationAnnounce.js`, called from
+  `scheduled/pushNotifications.js`'s daily 4 PM ET job. That job hosts it for
+  two reasons: it is the one job that runs **every** day regardless of which
+  scoring pipeline owns the night, and it already declares the
+  #announcements webhook. The call sits **before** that job's lineup-lock
+  early return — the two deadlines are unrelated and rarely coincide.
+- **Timing:** the lock fires when `weeksRemaining < lockWeeks`, so the post
+  goes out while `weeksRemaining === lockWeeks` — the last week the class is
+  still open, which is the only week the post is actionable. Tests pin this
+  against `getRegistrationLock` itself rather than a copy of the numbers.
+- **Idempotency:** one lease per closing week,
+  `{seasonUid}_discord_reglock_day{weeksRemaining}`. `weeksRemaining` holds the
+  same value for seven days, so the daily job posts on the first day of the
+  window and is quiet for the rest; World, Open and A each get their own post.
+- **Copy:** the footer states that the lock only affects *starting* a corps —
+  without it, a director who already has one reads the post as a threat to the
+  corps they're running.
+- **Not a push:** the audience is directors who have **not** registered in a
+  class, which is exactly the group the per-corps push fan-outs cannot target.
+
+---
+
+## Discord (Eastern Classic night lineups → #announcements)
+
+The Eastern Classic is one event across two nights (days 41-42): registering
+once covers both, and every corps performs exactly one night, seeded by season
+score and snaked so the nights carry equal strength
+(`helpers/easternSplit.js`, [`PODIUM.md`](PODIUM.md) §5.11). The split is
+computed after the **day-38** scoring run and published to
+`eastern-classic/{seasonUid}` — the "who got Friday?" moment the design calls
+for. Until this post existed it landed silently, and a director only learned
+their night by opening the app.
+
+- **Code:** `functions/src/helpers/easternClassicDiscord.js` (embed + post),
+  wired as `runEasternClassicStage` in
+  `functions/src/scheduled/nightlyStages.js`. It announces off state someone
+  else wrote, so it runs **after fantasy scoring** in both callers:
+  `scheduled/dailyProcessors.js` (2 AM, after the Podium stage) and
+  `scheduled/dropDispatcher.js` (in the tick, right after the score drop, so
+  the lineups reach the server in the same moment as the scores that seeded
+  them). Isolated like every other stage — a Discord failure never touches
+  scoring.
+- **Contents:** one field per night, listing each fantasy class with its
+  headcount and roster (strongest seed first, clamped with a `+N more` tail so
+  a big class can't blow Discord's 1024-character field limit). When the Podium
+  stage has already written its own snake that night, the Podium **headcount**
+  joins each field — that doc is uid-keyed, so it contributes numbers, not
+  names.
+- **It is a PREVIEW, and says so.** The authoritative split is recomputed from
+  **final** enrollment on night one (`easternSplit.resolveEasternNightSet`),
+  and week-6 show selections stay editable until then — so a corps that joins
+  or drops on days 39-40 is re-seeded. The embed's footer states this outright;
+  copy that read as final would make a late registrant think the post had lost
+  them.
+- **Idempotency + window:** one lease, `{seasonUid}_eastern_preview_day38`,
+  contended by every night in the **days 38-40** window. The normal case posts
+  on day 38; a night when Discord was unreachable (or when the preview landed
+  late) re-claims the failed lease and re-posts the next night, still ahead of
+  the event. Outside the window, and before the preview exists, the stage is a
+  no-op that claims nothing.
+- **Setup:** shares `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` with the Fan Favorite
+  posts — no new secret. The `scoreDropDispatcher` job declares it alongside
+  the scores webhook.
 
 ---
 

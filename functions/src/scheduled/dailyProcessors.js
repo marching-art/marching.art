@@ -9,6 +9,7 @@ const {
   runDiscordStage,
   runFanFavoriteStage,
   runPodiumReportStage,
+  runEasternClassicStage,
 } = require("./nightlyStages");
 const {
   discordScoresWebhookUrl,
@@ -101,6 +102,28 @@ async function runPodiumReportStageIsolated(db, competitionDay) {
 }
 
 /**
+ * Announce the Eastern Classic two-night lineups to the Discord
+ * #announcements channel. Isolated like every other stage; no-op while
+ * DISCORD_ANNOUNCEMENTS_WEBHOOK_URL is unset, on every night outside the
+ * days-38-40 window, and once its lease records the post.
+ *
+ * Runs after BOTH the fantasy scoring pass (which publishes the preview) and
+ * the Podium stage (which publishes its own night snake), so the post carries
+ * whichever halves of the split exist by then.
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function runEasternClassicStageIsolated(db) {
+  try {
+    const result = await runEasternClassicStage(db, discordAnnouncementsWebhookUrl.value());
+    if (result.status === "ran" && result.announcement?.status === "posted") {
+      logger.info(`[eastern-classic] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[eastern-classic] stage failed (scoring unaffected): ${error.message}`);
+  }
+}
+
+/**
  * Post the nightly score drop to Discord after fantasy scoring. Fully
  * isolated like the Podium stage: a Discord failure is logged and swallowed
  * so it can never block or retry the fantasy pipeline. No-op while the
@@ -135,6 +158,7 @@ exports.dailyOffSeasonProcessor = onSchedule({
   if (await dropDispatcherOwnsTonight(db, "off-season-2am")) return;
   await processAndArchiveOffSeasonScoresLogic();
   await runPodiumStageIsolated(db);
+  await runEasternClassicStageIsolated(db);
   await runDiscordStageIsolated(db);
 });
 
@@ -201,6 +225,7 @@ exports.processDailyLiveScores = onSchedule({
   if (await dropDispatcherOwnsTonight(db, "live-2am")) return;
   await runLiveFantasyStage(db);
   await runPodiumStageIsolated(db);
+  await runEasternClassicStageIsolated(db);
   await runDiscordStageIsolated(db);
 });
 
