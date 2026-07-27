@@ -6,22 +6,28 @@ import { m } from 'framer-motion';
 import { Award, Flame, Target, Trophy } from 'lucide-react';
 
 /** One director's week, as MatchupDetailView folds it out of the recaps. */
-interface SideBreakdown {
-  shows: Array<{ eventName?: string; score: number }>;
+export interface SideBreakdown {
+  shows: Array<{
+    eventName?: string;
+    score: number;
+    geScore?: number;
+    visualScore?: number;
+    musicScore?: number;
+  }>;
   geTotal: number;
   visualTotal: number;
   musicTotal: number;
 }
 
-interface ScoreBreakdown {
-  user1?: SideBreakdown;
-  user2?: SideBreakdown;
+export interface ScoreBreakdown {
+  user1?: SideBreakdown | null;
+  user2?: SideBreakdown | null;
 }
 
-interface SideStats {
+export interface SideStats {
   wins: number;
   losses: number;
-  totalPoints: number;
+  totalPoints?: number;
   streak?: number;
   streakType?: 'W' | 'L' | null;
 }
@@ -140,18 +146,22 @@ export const MatchupOverviewPanel = ({
             <div className="flex items-center justify-center gap-4">
               <span
                 className={`font-bold text-lg ${
-                  user1Stats.totalPoints > user2Stats.totalPoints ? 'text-secondary' : 'text-white'
+                  (user1Stats.totalPoints ?? 0) > (user2Stats.totalPoints ?? 0)
+                    ? 'text-secondary'
+                    : 'text-white'
                 }`}
               >
-                {user1Stats.totalPoints.toFixed(0)}
+                {(user1Stats.totalPoints ?? 0).toFixed(0)}
               </span>
               <span className="text-muted/20">|</span>
               <span
                 className={`font-bold text-lg ${
-                  user2Stats.totalPoints > user1Stats.totalPoints ? 'text-secondary' : 'text-white'
+                  (user2Stats.totalPoints ?? 0) > (user1Stats.totalPoints ?? 0)
+                    ? 'text-secondary'
+                    : 'text-white'
                 }`}
               >
-                {user2Stats.totalPoints.toFixed(0)}
+                {(user2Stats.totalPoints ?? 0).toFixed(0)}
               </span>
             </div>
           </div>

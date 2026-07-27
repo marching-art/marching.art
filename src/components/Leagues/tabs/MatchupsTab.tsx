@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // MatchupsTab - Season overview with matchup brackets and history
 // Design System: Week cards, head-to-head tracking, schedule overview
 
@@ -26,18 +25,54 @@ const MatchupDetailView = lazy(() => import('../MatchupDetailView'));
 // Registry-derived (Phase 7.4): mirrors the server's MATCHUP_CLASSES, so
 // Podium matchups render automatically when the class registry enables it.
 import { ENABLED_CLASSES as CORPS_CLASSES } from '../../../utils/classRegistry';
+import type { TabMatchup } from './MatchupsTabParts';
+import type { LeagueMatchup } from '../../../utils/leagueStats';
+
+/** A `week-N` matchup document: one array per corps class. */
+interface MatchupWeekDoc {
+  id: string;
+  [key: string]: unknown;
+}
+
+import type { CaptionsBlock } from '../../../utils/captionWars';
+import type { RivalryData } from '../../../types';
 
 // Season Schedule Overview - Visual week-by-week calendar
+interface TabStanding {
+  uid: string;
+  wins: number;
+  losses: number;
+}
+
+interface MatchupsTabProps {
+  league?: { id?: string; members?: string[]; creatorId?: string } | null;
+  userProfile?: { uid?: string } | null;
+  standings?: TabStanding[];
+  memberProfiles?: Record<string, { displayName?: string; username?: string } | undefined>;
+  rivalries?: RivalryData[];
+}
+
+/** A matchup opened into the detail view. */
+interface SelectedMatchup {
+  user1: string;
+  user2: string;
+  week: number;
+  status?: string;
+  corpsClass?: string;
+  captions?: CaptionsBlock;
+  isUserMatchup: boolean;
+}
+
 const MatchupsTab = ({
   league,
   userProfile,
   standings = [],
   memberProfiles = {},
   rivalries = [],
-}) => {
-  const [selectedWeek, setSelectedWeek] = useState(null);
-  const [selectedMatchup, setSelectedMatchup] = useState(null);
-  const [viewMode, setViewMode] = useState('week'); // 'week' | 'season'
+}: MatchupsTabProps) => {
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
+  const [selectedMatchup, setSelectedMatchup] = useState<SelectedMatchup | null>(null);
+  const [viewMode, setViewMode] = useState<'week' | 'season'>('week');
 
   // Both reads go through React Query, so opening this tab is a cache hit
   // against what LeagueDetailView already fetched. This used to duplicate both
@@ -60,8 +95,8 @@ const MatchupsTab = ({
   );
 
   const { matchupsByClass, weeksWithMatchups } = useMemo(() => {
-    const byWeek = {};
-    const weeks = new Set();
+    const byWeek: Record<number, MatchupWeekDoc> = {};
+    const weeks = new Set<number>();
     const maxWeek = Math.min(currentWeek + 1, GAME_CONFIG.season.totalWeeks);
 
     matchupDocs.forEach((matchupDoc) => {
@@ -85,7 +120,7 @@ const MatchupsTab = ({
   const isCommissioner = isLeagueCommissioner(league, userProfile?.uid);
 
   // Check if matchup is a rivalry
-  const isRivalryMatchup = (matchup) => {
+  const isRivalryMatchup = (matchup: TabMatchup) => {
     if (!userProfile?.uid || !rivalries.length || !matchup.pair) return false;
     const [p1, p2] = matchup.pair;
     const opponentId = p1 === userProfile.uid ? p2 : p2 === userProfile.uid ? p1 : null;
@@ -100,11 +135,12 @@ const MatchupsTab = ({
   // which is the same number the standings were folded from — so deriving it
   // here costs nothing and cannot disagree with the table.
   const weeklyResults = useMemo(() => {
-    const byWeek = {};
+    const byWeek: Record<number, Record<string, number>> = {};
     for (const [week, weekData] of Object.entries(matchupsByClass)) {
-      const scores = {};
+      const scores: Record<string, number> = {};
       for (const corpsClass of CORPS_CLASSES) {
-        for (const matchup of weekData?.[`${corpsClass}Matchups`] || []) {
+        const classMatchups = (weekData?.[`${corpsClass}Matchups`] as TabMatchup[]) || [];
+        for (const matchup of classMatchups) {
           for (const [uid, score] of Object.entries(matchup.scores || {})) {
             // Summed, not overwritten: a director fielding two classes has two
             // matchups in the same week.
@@ -112,27 +148,61 @@ const MatchupsTab = ({
           }
         }
       }
-      byWeek[week] = scores;
+      byWeek[Number(week)] = scores;
+    }
+    return byWeek;
+  }, [matchupsByClass]);
+
+  // Every week's pairings, flattened to the `user1`/`user2` shape the season
+  // views read.
+  //
+  // The head-to-head section used to be handed `matchupsByClass` directly —
+  // a map of week to the raw `week-N` DOCUMENT — and called `.forEach` on it,
+  // which is a TypeError on an object. Switching the Matchups tab to its
+  // Season view threw for any league that had matchup documents at all; it
+  // only appeared to work for a league with none.
+  const pairingsByWeek = useMemo(() => {
+    const byWeek: Record<number, LeagueMatchup[]> = {};
+    for (const [week, weekData] of Object.entries(matchupsByClass)) {
+      const pairings: LeagueMatchup[] = [];
+      for (const corpsClass of CORPS_CLASSES) {
+        const classMatchups = (weekData?.[`${corpsClass}Matchups`] as TabMatchup[]) || [];
+        for (const matchup of classMatchups) {
+          // Byes have no opponent, so they are not head-to-head results.
+          if (!matchup.pair?.[0] || !matchup.pair?.[1]) continue;
+          pairings.push({
+            user1: matchup.pair[0],
+            user2: matchup.pair[1],
+            winner: matchup.winner,
+            completed: matchup.completed,
+            scores: matchup.scores,
+            corpsClass,
+          });
+        }
+      }
+      byWeek[Number(week)] = pairings;
     }
     return byWeek;
   }, [matchupsByClass]);
 
   // Get matchups for selected week, organized by class
   const weekMatchups = useMemo(() => {
-    const weekData = matchupsByClass[selectedWeek] || {};
-    const result = {};
+    const weekData: MatchupWeekDoc = (selectedWeek ? matchupsByClass[selectedWeek] : undefined) || {
+      id: '',
+    };
+    const result: Record<string, TabMatchup[]> = {};
 
     for (const corpsClass of CORPS_CLASSES) {
-      const classMatchups = weekData[`${corpsClass}Matchups`] || [];
+      const classMatchups = (weekData[`${corpsClass}Matchups`] as TabMatchup[]) || [];
       if (classMatchups.length > 0) {
         result[corpsClass] = classMatchups.map((m, idx) => ({
           ...m,
           id: `${selectedWeek}-${corpsClass}-${idx}`,
           corpsClass,
-          week: selectedWeek,
+          week: selectedWeek ?? 0,
           // Determine status based on week
           status:
-            selectedWeek < currentWeek
+            (selectedWeek ?? 0) < currentWeek
               ? 'completed'
               : selectedWeek === currentWeek
                 ? 'live'
@@ -164,9 +234,9 @@ const MatchupsTab = ({
   const userMatchupHistory = useMemo(() => {
     const history = [];
     for (let w = 1; w <= currentWeek; w++) {
-      const weekData = matchupsByClass[w] || {};
+      const weekData: MatchupWeekDoc = matchupsByClass[w] || { id: '' };
       for (const corpsClass of CORPS_CLASSES) {
-        const classMatchups = weekData[`${corpsClass}Matchups`] || [];
+        const classMatchups = (weekData[`${corpsClass}Matchups`] as TabMatchup[]) || [];
         for (const matchup of classMatchups) {
           if (
             matchup.pair &&
@@ -184,7 +254,7 @@ const MatchupsTab = ({
   const hasMatchups = Object.keys(weekMatchups).length > 0;
 
   // Get display name
-  const getDisplayName = (userId) => {
+  const getDisplayName = (userId?: string | null) => {
     if (!userId) return 'BYE';
     if (userId === userProfile?.uid) return 'You';
     const profile = memberProfiles[userId];
@@ -194,15 +264,16 @@ const MatchupsTab = ({
   };
 
   // Get user standing
-  const getStanding = (userId) => standings.find((s) => s.uid === userId);
+  const getStanding = (userId?: string | null) =>
+    userId ? standings.find((s) => s.uid === userId) : undefined;
 
   // Handle matchup click
-  const handleMatchupClick = (matchup) => {
+  const handleMatchupClick = (matchup: TabMatchup) => {
     if (!matchup.pair || !matchup.pair[1]) return; // Don't click bye matchups
     setSelectedMatchup({
       user1: matchup.pair[0],
       user2: matchup.pair[1],
-      week: matchup.week,
+      week: matchup.week ?? 0,
       status: matchup.status,
       corpsClass: matchup.corpsClass,
       // The stored caption verdicts, on a league running Caption Wars. Passed
@@ -215,11 +286,12 @@ const MatchupsTab = ({
 
   // Week navigation
   const goToPrevWeek = () => {
-    if (selectedWeek > 1) setSelectedWeek(selectedWeek - 1);
+    if ((selectedWeek ?? 1) > 1) setSelectedWeek((selectedWeek ?? 1) - 1);
   };
 
   const goToNextWeek = () => {
-    if (selectedWeek < GAME_CONFIG.season.totalWeeks) setSelectedWeek(selectedWeek + 1);
+    if ((selectedWeek ?? 1) < GAME_CONFIG.season.totalWeeks)
+      setSelectedWeek((selectedWeek ?? 1) + 1);
   };
 
   if (loading) {
@@ -297,7 +369,7 @@ const MatchupsTab = ({
             currentWeek={currentWeek}
             totalWeeks={GAME_CONFIG.season.totalWeeks}
             weeksWithMatchups={weeksWithMatchups}
-            selectedWeek={selectedWeek}
+            selectedWeek={selectedWeek ?? currentWeek}
             onSelectWeek={(week) => {
               setSelectedWeek(week);
               setViewMode('week');
@@ -315,7 +387,7 @@ const MatchupsTab = ({
             standings={standings}
             memberProfiles={memberProfiles}
             userProfile={userProfile}
-            weeklyMatchups={matchupsByClass}
+            weeklyMatchups={pairingsByWeek}
             weeklyResults={weeklyResults}
           />
         </>
@@ -335,7 +407,7 @@ const MatchupsTab = ({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={goToPrevWeek}
-                    disabled={selectedWeek <= 1}
+                    disabled={(selectedWeek ?? 1) <= 1}
                     className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -343,13 +415,13 @@ const MatchupsTab = ({
                   <span className="text-xs text-muted min-w-[60px] text-center">
                     {selectedWeek === currentWeek
                       ? 'Current'
-                      : selectedWeek < currentWeek
+                      : (selectedWeek ?? 1) < currentWeek
                         ? 'Past'
                         : 'Upcoming'}
                   </span>
                   <button
                     onClick={goToNextWeek}
-                    disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
+                    disabled={(selectedWeek ?? 1) >= GAME_CONFIG.season.totalWeeks}
                     className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -470,7 +542,7 @@ const MatchupsTab = ({
           {/* Empty State */}
           {!hasMatchups && (
             <EmptyMatchupsState
-              selectedWeek={selectedWeek}
+              selectedWeek={selectedWeek ?? currentWeek}
               currentWeek={currentWeek}
               league={league}
               isCommissioner={isCommissioner}
