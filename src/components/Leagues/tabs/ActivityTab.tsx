@@ -7,6 +7,8 @@ import { Activity } from 'lucide-react';
 import LeagueActivityFeed from '../LeagueActivityFeed';
 import LeagueHallOfFame from '../LeagueHallOfFame';
 import LeagueRecordBook from '../LeagueRecordBook';
+import LeagueAllTimeTable from '../LeagueAllTimeTable';
+import LeagueCareerCard from '../LeagueCareerCard';
 import { ENABLED_CLASSES } from '../../../utils/classRegistry';
 import { LeagueStatsOverview, AchievementsCard, PowerRankingsCard } from './ActivityTabStatsCards';
 import { WeeklyRecapCard, EnhancedRivalriesCard } from './ActivityTabRecapCards';
@@ -15,7 +17,7 @@ import { useLeagueMatchupHistory } from '../../../hooks/useLeagueMatchupHistory'
 import type { LeagueChampionEntry } from '../LeagueHallOfFame';
 
 interface ActivityTabProps {
-  league?: { id?: string; champions?: LeagueChampionEntry[] } | null;
+  league?: { id?: string; members?: string[]; champions?: LeagueChampionEntry[] } | null;
   userProfile?: { uid?: string } | null;
   standings?: unknown[];
   memberProfiles?: Record<string, { displayName?: string; username?: string }>;
@@ -51,6 +53,16 @@ const ActivityTab = ({
     () => [...matchupDocs, ...archivedMatchups],
     [matchupDocs, archivedMatchups]
   );
+
+  // Season display names, from the league's own champion entries — the only
+  // place a finished season's human-readable name survives on the client.
+  const seasonNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    for (const champion of league?.champions || []) {
+      if (champion.seasonId && champion.seasonName) names[champion.seasonId] = champion.seasonName;
+    }
+    return names;
+  }, [league?.champions]);
 
   const getDisplayName = (uid: string) => {
     const profile = memberProfiles?.[uid] || {};
@@ -137,6 +149,32 @@ const ActivityTab = ({
         getDisplayName={getDisplayName}
         viewerUid={userProfile?.uid}
       />
+
+      {/* The league across every season it has played. The live standings
+          reset each rollover by design, so without this nothing said who had
+          been good at this league — only who was winning right now. */}
+      <LeagueAllTimeTable
+        matchupDocs={allMatchups}
+        corpsClasses={ENABLED_CLASSES}
+        champions={league?.champions}
+        members={league?.members ?? null}
+        getDisplayName={getDisplayName}
+        viewerUid={userProfile?.uid}
+      />
+
+      {/* The viewer's own history here — including who they are 1-7 against
+          and about to draw again. */}
+      {userProfile?.uid && (
+        <LeagueCareerCard
+          uid={userProfile.uid}
+          matchupDocs={allMatchups}
+          corpsClasses={ENABLED_CLASSES}
+          champions={league?.champions}
+          getDisplayName={getDisplayName}
+          viewerUid={userProfile.uid}
+          seasonNames={seasonNames}
+        />
+      )}
 
       {/* The league's permanent record. Season archival has always written
           champions[] onto the league document; nothing ever showed it. */}

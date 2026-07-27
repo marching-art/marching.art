@@ -100,7 +100,7 @@ const EMPTY: LeagueRecords = {
   longestCaptionStreak: null,
 };
 
-interface FlatResult {
+export interface FlatResult {
   week: number;
   corpsClass: string;
   seasonUid: string | null;
@@ -116,7 +116,7 @@ interface FlatResult {
  * every week of the next season). Both are real history; only the live form
  * counts as current work.
  */
-function parseWeekId(id: string): { week: number; seasonUid: string | null } | null {
+export function parseWeekId(id: string): { week: number; seasonUid: string | null } | null {
   const live = String(id).match(/^week-(\d+)$/);
   if (live) return { week: parseInt(live[1], 10), seasonUid: null };
 
@@ -133,7 +133,11 @@ function parseWeekId(id: string): { week: number; seasonUid: string | null } | n
  * walked in the order it was played, and season uids sort chronologically. The
  * live season (no stamp) sorts last, because it is the one still happening.
  */
-function flattenResolved(weekDocs: RecordWeekDoc[], corpsClasses: string[]): FlatResult[] {
+export function flattenResolved(
+  weekDocs: RecordWeekDoc[],
+  corpsClasses: string[],
+  { includeByes = false }: { includeByes?: boolean } = {}
+): FlatResult[] {
   const flat: FlatResult[] = [];
 
   for (const doc of weekDocs) {
@@ -143,7 +147,15 @@ function flattenResolved(weekDocs: RecordWeekDoc[], corpsClasses: string[]): Fla
     for (const corpsClass of corpsClasses) {
       const matchups = (doc[`${corpsClass}Matchups`] || []) as RecordMatchup[];
       for (const matchup of matchups) {
-        if (!matchup?.completed || matchup.isBye || !matchup.pair?.[1]) continue;
+        if (!matchup?.completed) continue;
+        // A bye is not a performance, so the record book excludes it — letting
+        // a free win set a streak is the unfairness the bye rotation exists to
+        // avoid. A CAREER record counts it, because the standings table beside
+        // it counts it as a win, and two tables disagreeing about a director's
+        // record is worse than either convention.
+        const isBye = matchup.isBye || !matchup.pair?.[1];
+        if (isBye && !includeByes) continue;
+        if (!matchup.pair?.[0]) continue;
         flat.push({ ...parsed, corpsClass, matchup });
       }
     }
