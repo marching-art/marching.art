@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const { dueActions, MAX_SCRAPE_ATTEMPTS } = require("./dropDispatcher");
 const { planDrop } = require("../helpers/dropPlanner");
+const { easternLabel } = require("../helpers/scoreDropTime");
 const { getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 
 // A live-season plan for competition day 10 on an Eastern-only night:
@@ -619,30 +620,66 @@ test("scoring a night short of its owed recaps stamps usedRegressionFallback", a
   assert.equal(planDoc.recapsOwed, 2);
 });
 
-test("player-hosted shows are not counted as owed DCI recaps", () => {
-  // A hosted event lives on the schedule but never appears on dci.org, so
-  // counting it would hold the night open for a recap that cannot exist.
+test("player-hosted shows drive neither the owed recap count nor the drop time", () => {
+  // A hosted event is virtual: marching.art scores it, dci.org never lists it,
+  // and it is not a real show at a real venue whose announcement the night
+  // must wait on. Its Mountain location must NOT push this Eastern night's
+  // 11 PM drop out to 1 AM.
   const plan = planDrop({
     seasonData: LIVE_SEASON,
     competitions: [
-      ...TWO_SHOW_COMPETITIONS,
+      ...TWO_SHOW_COMPETITIONS, // both Eastern
       { day: 10, location: "Denver, CO", eventTier: "hosted", hostUid: "u1" },
-      // Created before addShowToDay persisted the marker: no date either.
-      { day: 10, location: "Boise, ID" },
     ],
     now: new Date("2026-07-02T02:00:00Z"),
   });
   assert.equal(plan.hasScheduledShows, true);
   assert.equal(plan.expectedShowCount, 2); // only the two scraped DCI shows
+  assert.deepEqual(plan.timeZones, ["America/New_York", "America/New_York"]);
+  assert.equal(plan.dropInstant.toISOString(), EASTERN_PLAN.dropInstant.toISOString());
 
-  // The hosted shows still count for drop TIMING (they happen that night, in
-  // their own timezone) — they just aren't recaps to wait on.
-  const now = new Date(plan.dropInstant.getTime());
+  const now = new Date("2026-07-02T03:05:00Z"); // 11:05 PM
   const { scoreDue, awaitingEvents } = dueActions({
     plan, now, scrapedTonight: true, archivedCount: 2, listedEventCount: 2,
   });
   assert.equal(awaitingEvents, false);
   assert.equal(scoreDue, true);
+});
+
+test("an unmarked legacy show still counts for timing, but owes no recap", () => {
+  // Hosted shows created before addShowToDay persisted eventTier/hostUid are
+  // indistinguishable from a real one, so timing keeps them (waiting too long
+  // is recoverable; dropping a western night's scores at 11 PM is not) while
+  // the owed-recap count drops them (it requires the `date` every scraped
+  // event carries).
+  const plan = planDrop({
+    seasonData: LIVE_SEASON,
+    competitions: [...TWO_SHOW_COMPETITIONS, { day: 10, location: "Boise, ID" }],
+    now: new Date("2026-07-02T02:00:00Z"),
+  });
+  assert.equal(plan.expectedShowCount, 2);
+  assert.equal(plan.timeZones.length, 3);
+  assert.equal(easternLabel(plan.dropInstant), "2026-07-02 01:00 ET"); // Mountain
+});
+
+test("a day whose only shows are virtual has no DCI shows to wait on", () => {
+  // Nothing real is scheduled, so the night behaves like any other day with no
+  // DCI shows: the conservative Pacific default (a day with an empty DCI slate
+  // is indistinguishable from a stale schedules doc), one scrape attempt.
+  const plan = planDrop({
+    seasonData: LIVE_SEASON,
+    competitions: [{ day: 10, location: "Denver, CO", eventTier: "hosted", hostUid: "u1" }],
+    now: new Date("2026-07-02T02:00:00Z"),
+  });
+  assert.equal(plan.hasScheduledShows, false);
+  assert.equal(plan.expectedShowCount, 0);
+  assert.deepEqual(plan.timeZones, []);
+  assert.equal(scrapeBudgetFor(plan), 1);
+
+  const { scoreDue } = dueActions({
+    plan, now: new Date(plan.dropInstant.getTime()), scrapedTonight: false, scrapeAttempts: 1,
+  });
+  assert.equal(scoreDue, true); // pools/payouts still settle
 });
 
 test("a skipped in-progress claim leaves the night unstamped for later ticks", async () => {

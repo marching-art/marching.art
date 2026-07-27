@@ -31,6 +31,15 @@
  * night without burning scraper credits. scrapeRetryUntil bounds failure-only
  * retries: a failed/zero-row attempt may re-arm on later ticks up to the
  * clamp, which costs nothing on a normal night.
+ *
+ * ONLY REAL DCI SHOWS DRIVE TIMING. Every instant above exists to wait on
+ * scores being announced at an actual venue, so timezones and announced times
+ * skip the day's player-hosted events (isVirtualShow) — those are virtual,
+ * scored by marching.art itself with nothing to wait for, and a hosted show's
+ * location must never move the drop. The all-virtual off-season is the same
+ * rule taken to its limit: a flat 9 PM ET, no ladder at all. expectedShowCount
+ * applies the stricter owesDciRecap, since a show only counts toward what the
+ * night is owed if a dci.org recap will actually exist for it.
  */
 
 const {
@@ -110,27 +119,38 @@ function zoneForShow(show) {
 }
 
 /**
- * True when a scheduled show came from the DCI event scrape — i.e. one that
- * will eventually appear in a dci.org recap. Player-hosted events
- * (callable/podiumHost.js -> addShowToDay) are marching.art's own and never
- * will, so counting them would hold a night's scores open forever waiting on a
- * recap that cannot exist.
+ * True for a player-hosted event (callable/podiumHost.js -> addShowToDay):
+ * virtual, scored by marching.art itself, never held at a real venue and never
+ * listed on dci.org. Nothing about it should move the night's timing.
  *
- * Hosted shows carry `eventTier: "hosted"` and `hostUid`. Shows created before
- * addShowToDay persisted those fall back to the `date` check: every scraped
- * event has one (helpers/scheduleRefresh.js skips dateless events outright),
- * while addShowToDay stores `date: null`. The heuristic errs toward NOT
- * counting a show, which only ever gives up waiting sooner — never the
- * opposite.
+ * Positive markers only. An unmarked show is treated as real, which at worst
+ * makes a night wait LONGER — the safe direction. Inferring "virtual" from a
+ * missing field could drop a Pacific night's scores at 11 PM.
  *
  * @param {object} show - A competitions[] entry.
  * @returns {boolean}
  */
-function isDciSourcedShow(show) {
-  if (!show) return false;
-  if (show.hostUid) return false;
-  if (show.eventTier === "hosted") return false;
-  return Boolean(show.date);
+function isVirtualShow(show) {
+  return Boolean(show && (show.hostUid || show.eventTier === "hosted"));
+}
+
+/**
+ * True when a scheduled show will eventually appear in a dci.org recap, and so
+ * counts toward what tonight owes before its scores are fully real.
+ *
+ * Stricter than `!isVirtualShow`: it also requires the `date` every scraped
+ * event carries (helpers/scheduleGeneration.js and scheduleRefresh.js both
+ * skip dateless events outright), which catches hosted shows created before
+ * addShowToDay persisted its markers — those store `date: null`. Here the
+ * heuristic errs toward NOT counting a show, which only ever gives up waiting
+ * sooner. That is the safe direction for a count, and the opposite of the safe
+ * direction for timing — hence the two predicates.
+ *
+ * @param {object} show - A competitions[] entry.
+ * @returns {boolean}
+ */
+function owesDciRecap(show) {
+  return Boolean(show && !isVirtualShow(show) && show.date);
 }
 
 /**
@@ -216,13 +236,24 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
   const legacyScoringInstant =
     wallClockToUtc(year, month, date + 1, LEGACY_SCORING_HOUR_ET, 0, EASTERN_ZONE);
 
-  // Live season: gather tonight's shows and their zones + real announced times.
+  // Live season: gather tonight's REAL shows and their zones + announced times.
+  //
+  // Only actual DCI shows drive timing. The whole drop ladder exists to wait
+  // for real scores to be announced at a real venue in a real timezone;
+  // player-hosted events are virtual, scored by marching.art itself with
+  // nothing to wait for (which is exactly why the all-virtual off-season drops
+  // at a flat 9 PM ET above). A hosted show in Denver must never push an
+  // Eastern night's drop from 11 PM to 1 AM.
   const todaysShows = competitions.filter((c) => c && c.day === competitionDay);
-  const hasScheduledShows = todaysShows.length > 0;
-  let timeZones = todaysShows.map(zoneForShow);
+  const realShows = todaysShows.filter((s) => !isVirtualShow(s));
+  const dciShows = todaysShows.filter(owesDciRecap);
+  const hasScheduledShows = realShows.length > 0;
+  let timeZones = realShows.map(zoneForShow);
   if (timeZones.length === 0) {
     // Championship week (45-49) is Indianapolis/Eastern but absent from
-    // competitions[]; everything else with no shows defaults to Pacific.
+    // competitions[]; everything else with no real shows defaults to Pacific —
+    // the conservative bound, since an empty day is indistinguishable from a
+    // stale schedules doc that is missing tonight's shows.
     // hasScheduledShows lets the caller tell "expected empty" (day >= 45)
     // from a stale schedule doc burning the latest slot every night.
     timeZones = competitionDay >= CHAMPIONSHIP_WEEK_START_DAY ? [CHAMPIONSHIP_WEEK_ZONE] : [];
@@ -232,7 +263,7 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
   // offset tonight, so America/Detroit vs America/New_York never false-flags).
   // A real mismatch means a geocode issue or a bad detail-page parse.
   const tzMismatches = [];
-  for (const show of todaysShows) {
+  for (const show of realShows) {
     const geo = timezoneFor(show.location);
     if (!geo || !show.timezone || geo === show.timezone) continue;
     const ref = earliestPlausibleScores.getTime();
@@ -241,12 +272,12 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
     }
   }
 
-  // Latest VALID announced time across tonight's shows. scoresAt is scraped
-  // scheduled data — a wrong-date/wrong-year value would delay the drop
+  // Latest VALID announced time across tonight's real shows. scoresAt is
+  // scraped scheduled data — a wrong-date/wrong-year value would delay the drop
   // unboundedly, so anything outside tonight's plausible window is ignored.
   let scoresAt = null;
   const ignoredScoresAt = [];
-  for (const show of todaysShows) {
+  for (const show of realShows) {
     if (!show.scoresAt) continue;
     const t = new Date(show.scoresAt);
     if (isNaN(t.getTime()) ||
@@ -283,9 +314,8 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
     // own event list (helpers/scheduleRefresh.js mergeScheduleRefresh), so the
     // scraped entries are directly comparable to the events the scrape finds
     // listed for tonight — that comparison is what tells the dispatcher the
-    // recaps are still trickling in. Player-hosted shows are excluded: they
-    // never appear on dci.org.
-    expectedShowCount: todaysShows.filter(isDciSourcedShow).length,
+    // recaps are still trickling in.
+    expectedShowCount: dciShows.length,
     scrapeInstant, scrapeRetryUntil: lateClamp, legacyScoringInstant,
     dropInstant, plannedDropInstant,
     dropLabel: easternLabel(dropInstant), needsScrape: true,
@@ -297,7 +327,8 @@ module.exports = {
   showDateFor,
   showCalendarDay,
   zoneForShow,
-  isDciSourcedShow,
+  isVirtualShow,
+  owesDciRecap,
   SHOW_DAY_RESET_HOURS,
   LEGACY_SCORING_HOUR_ET,
   CHAMPIONSHIP_WEEK_START_DAY,

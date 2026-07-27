@@ -189,7 +189,7 @@ test("showDateFor rolls to the next date exactly at the 3 AM ET boundary", () =>
 // The legacy 2 AM handoff, and which scheduled shows owe a DCI recap.
 // ---------------------------------------------------------------------------
 
-const { isDciSourcedShow } = require("./dropPlanner");
+const { isVirtualShow, owesDciRecap } = require("./dropPlanner");
 
 test("legacyScoringInstant is 2 AM ET the morning after the shows", () => {
   const plan = planDrop({ seasonData: LIVE_SEASON, competitions: [], now: EVENING });
@@ -220,14 +220,23 @@ test("off-season plans carry no legacy handoff (nothing to scrape)", () => {
   assert.equal(plan.expectedShowCount, 0);
 });
 
-test("isDciSourcedShow counts scraped shows and excludes player-hosted ones", () => {
-  assert.equal(isDciSourcedShow({ location: "Allentown, PA", date: "2026-07-01" }), true);
-  // Hosted events (callable/podiumHost.js) never appear in a dci.org recap.
-  assert.equal(isDciSourcedShow({ date: "2026-07-01", eventTier: "hosted" }), false);
-  assert.equal(isDciSourcedShow({ date: "2026-07-01", hostUid: "u1" }), false);
-  // Legacy hosted shows carry no marker, but never carry a date either.
-  assert.equal(isDciSourcedShow({ location: "Boise, ID" }), false);
-  assert.equal(isDciSourcedShow(null), false);
+test("isVirtualShow flags player-hosted events on positive markers only", () => {
+  assert.equal(isVirtualShow({ date: "2026-07-01", eventTier: "hosted" }), true);
+  assert.equal(isVirtualShow({ date: "2026-07-01", hostUid: "u1" }), true);
+  assert.equal(isVirtualShow({ location: "Allentown, PA", date: "2026-07-01" }), false);
+  // An unmarked show stays "real" — guessing virtual from a missing field
+  // could drop a Pacific night's scores at 11 PM.
+  assert.equal(isVirtualShow({ location: "Boise, ID" }), false);
+  assert.equal(isVirtualShow(null), false);
+});
+
+test("owesDciRecap also requires the date every scraped event carries", () => {
+  assert.equal(owesDciRecap({ location: "Allentown, PA", date: "2026-07-01" }), true);
+  assert.equal(owesDciRecap({ date: "2026-07-01", eventTier: "hosted" }), false);
+  assert.equal(owesDciRecap({ date: "2026-07-01", hostUid: "u1" }), false);
+  // Hosted shows created before addShowToDay persisted its markers.
+  assert.equal(owesDciRecap({ location: "Boise, ID" }), false);
+  assert.equal(owesDciRecap(null), false);
 });
 
 test("expectedShowCount counts only the DCI-scraped shows on the day", () => {

@@ -32,6 +32,24 @@ and a day's slate is only complete once the furthest-WEST show has posted.
   from each show's location via the coordinate-geocoded gazetteer (El Paso →
   Mountain, Arizona → no-DST, etc.); unknown venues assume Pacific so scores
   never drop early.
+- **Only real DCI shows drive timing.** The ladder exists to wait for scores
+  announced at an actual venue, so player-hosted events are skipped when
+  computing zones and announced times — they're virtual, scored by
+  marching.art with nothing to wait for, and a hosted show in Denver must
+  never push an Eastern night from 11 PM to 1 AM. The all-virtual off-season
+  is the same rule at its limit: a flat 9 PM ET, no ladder.
+
+Two predicates, each erring in the direction that's safe for its use
+(`helpers/dropPlanner.js`):
+
+| Predicate       | Used for                          | Unmarked show is…                              |
+| ----------------- | ----------------------------------- | ------------------------------------------------ |
+| `isVirtualShow` | zones, announced times, drop time | **real** — waiting too long beats dropping early |
+| `owesDciRecap`  | `expectedShowCount`               | **not owed** — also requires a scraped `date`   |
+
+Hosted events are marked `eventTier: "hosted"` + `hostUid` by `addShowToDay`.
+Shows created before it persisted those carry neither, which is why timing
+keeps them and the owed count (which requires `date`) drops them.
 
 ## 2. The once-per-night scrape
 
@@ -74,13 +92,9 @@ A night's scores are only fully real once **every DCI show on the schedule for
 that day** has a recap archived. The dispatcher holds the drop until then:
 
 - **What's owed** — `plan.expectedShowCount`, the day's `competitions[]`
-  entries that came from the DCI scrape, or dci.org's own listing count if
-  that's higher (a show added since the last schedule refresh). Player-hosted
-  events are excluded (`isDciSourcedShow`): they're marching.art's own and
-  never appear in a DCI recap, so counting them would hold the night open
-  forever. They're identified by `eventTier: "hosted"` / `hostUid`, which
-  `addShowToDay` persists, falling back to "has no `date`" for shows created
-  before it did.
+  entries that came from the DCI scrape (`owesDciRecap`), or dci.org's own
+  listing count if that's higher (a show added since the last schedule
+  refresh).
 - **What's in hand** — `drop_plans/{date}.scrapedRecapUrls`, the recaps
   actually archived tonight. Counting archived rather than listed events covers
   both a night DCI is still posting and a listed recap that failed to scrape.

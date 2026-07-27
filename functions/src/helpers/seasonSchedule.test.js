@@ -104,7 +104,7 @@ describe("mergeScheduleRefresh eventTier tagging", () => {
 // for a dci.org recap that will never exist (helpers/dropPlanner.js).
 // ---------------------------------------------------------------------------
 
-const { isDciSourcedShow } = require("./dropPlanner");
+const { isVirtualShow, owesDciRecap } = require("./dropPlanner");
 
 /**
  * Run addShowToDay against an in-memory schedules/{id} doc. seasonSchedule.js
@@ -156,8 +156,10 @@ describe("addShowToDay provenance", () => {
     const added = competitions.find((c) => c.name === "Rohn Invitational");
     assert.equal(added.eventTier, "hosted");
     assert.equal(added.hostUid, "user-1");
-    // And the drop planner therefore doesn't count it as an owed DCI recap.
-    assert.equal(isDciSourcedShow(added), false);
+    // The drop planner therefore treats it as virtual: no timing influence,
+    // and not an owed DCI recap.
+    assert.equal(isVirtualShow(added), true);
+    assert.equal(owesDciRecap(added), false);
   });
 
   test("leaves a show with neither marker alone", async () => {
