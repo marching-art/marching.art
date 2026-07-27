@@ -40,6 +40,10 @@ export interface League {
  * actually playing right now. Public discovery filters on `activeMemberCount`
  * and league UI reports it, so a league whose members haven't returned since
  * the season reset reads as empty instead of advertising a full roster.
+ *
+ * The block is absent until the backend first writes it. Absent means UNKNOWN,
+ * never zero — discovery and the league cards both show such a league rather
+ * than hiding it (src/utils/leagueActivity.ts, getPublicLeagues).
  */
 export interface LeagueSeasonActivity {
   /** The season this block describes; stale blocks are refreshed nightly. */

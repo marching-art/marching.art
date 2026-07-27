@@ -238,6 +238,9 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
             if (existingCorps?.corpsName) {
               updatedCorps[corpsClass] = {
                 ...existingCorps,
+                // This corps is now registered for the live season — see the
+                // stamp note in helpers/leagueActivity.js.
+                seasonUid: currentSeasonUid,
                 lineup: null,
                 lineupKey: null,
                 selectedShows: {},
@@ -271,6 +274,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
             updatedCorps[corpsClass] = {
               corpsName: retiredRecord.corpsName,
               location: retiredRecord.location,
+              seasonUid: currentSeasonUid,
               seasonHistory: retiredRecord.seasonHistory || [],
               weeklyTrades: retiredRecord.weeklyTrades || null,
               // Restore the director's branding and ensemble identity
@@ -296,6 +300,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
               corpsName: decision.corpsName,
               location: decision.location,
               showConcept: decision.showConcept || "",
+              seasonUid: currentSeasonUid,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
               seasonHistory: [],
               lineup: null,
@@ -313,6 +318,11 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
             if (existingCorps?.corpsName) {
               updatedCorps[corpsClass] = {
                 ...existingCorps,
+                // Sitting the class out is the opposite of registering it, so
+                // the stamp is cleared rather than advanced — otherwise a corps
+                // whose profile escaped the rollover sweep would keep an old
+                // stamp and read as registered.
+                seasonUid: null,
                 lineup: null,
                 lineupKey: null,
                 selectedShows: {},
@@ -335,6 +345,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
               // Move corps to target class with reset season data
               updatedCorps[targetClass] = {
                 ...existingCorps,
+                seasonUid: currentSeasonUid,
                 lineup: null,
                 lineupKey: null,
                 selectedShows: {},
