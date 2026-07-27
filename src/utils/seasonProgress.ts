@@ -27,8 +27,15 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 // belongs to the previous game day (matches gameDay.GAME_DAY_RESET_HOURS).
 const GAME_DAY_RESET_HOURS = 2;
 
-const SEASON_FINAL_DAY = 49;
-const TOTAL_SEASON_WEEKS = 7;
+/**
+ * A season is 49 competition days = 7 weeks, ending on finals day. Exported so
+ * UI that displays progress divides by the same numbers getSeasonProgress
+ * counts up to — a progress bar whose numerator and denominator came from
+ * different places is how "Week 5 of 12" ended up on a seven-week season.
+ * (GAME_CONFIG.season.totalWeeks carries the same 7 for week pickers.)
+ */
+export const SEASON_FINAL_DAY = 49;
+export const TOTAL_SEASON_WEEKS = 7;
 
 /** A Firestore Timestamp exposes toDate(); we also accept a raw Date. */
 type TimestampLike = Date | { toDate: () => Date };
@@ -135,6 +142,24 @@ export function getSeasonProgress(
   const currentWeek = Math.max(1, Math.min(Math.ceil(currentDay / 7), TOTAL_SEASON_WEEKS));
 
   return { currentDay, currentWeek };
+}
+
+/**
+ * How far through the season we are, 0–100, for progress bars.
+ *
+ * Measured in DAYS ELAPSED, not weeks reached. Week-based math
+ * (`currentWeek / totalWeeks`) is wrong at both ends: it reports 14% on the
+ * opening day, before anything has happened, and then sits pinned at 100% for
+ * the whole of championship week. Day 1 of 49 is the start of the season, so
+ * it reads as ~0%, and only finals day reads as 100%.
+ *
+ * @param currentDay - Competition day from getSeasonProgress (1–49). Values
+ *   outside that range clamp, and 0 (no season yet) reads as 0%.
+ */
+export function getSeasonPercentComplete(currentDay: number): number {
+  if (!currentDay || currentDay < 1) return 0;
+  const day = Math.min(currentDay, SEASON_FINAL_DAY);
+  return ((day - 1) / (SEASON_FINAL_DAY - 1)) * 100;
 }
 
 /**

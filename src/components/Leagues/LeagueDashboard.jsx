@@ -19,6 +19,12 @@ import {
   Medal,
   Radio,
 } from 'lucide-react';
+import { useSeasonStore } from '../../store/seasonStore';
+import {
+  getSeasonPercentComplete,
+  SEASON_FINAL_DAY,
+  TOTAL_SEASON_WEEKS,
+} from '../../utils/seasonProgress';
 
 // Stat Card - Main building block
 const StatCard = ({
@@ -381,9 +387,27 @@ const LeagueLeadersMini = ({
   );
 };
 
-// Season Progress Bar
-const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
-  const progress = (currentWeek / totalWeeks) * 100;
+/**
+ * Season Progress Bar
+ *
+ * The season is 49 competition days across 7 weeks (utils/seasonProgress).
+ * This used to divide by a hardcoded `totalWeeks = 12` that no caller ever
+ * overrode, so it read "Week 5 of 12" on a seven-week season and drew the bar
+ * at 42% when the season was 71% gone — and it could never pass 58%, because
+ * week 7 of 12 is as far as the numerator ever got.
+ *
+ * The fill is now day-based (see getSeasonPercentComplete): weeks are too
+ * coarse to be honest at the edges, claiming a seventh of the season had
+ * elapsed on opening day and staying at 100% for all of championship week.
+ *
+ * Day and week both come from the season store, which derives them with the
+ * same getSeasonProgress the rest of the league view uses, so the bar can't
+ * disagree with the week shown beside it.
+ */
+const SeasonProgressBar = () => {
+  const currentWeek = useSeasonStore((s) => s.currentWeek);
+  const currentDay = useSeasonStore((s) => s.currentDay);
+  const progress = getSeasonPercentComplete(currentDay);
 
   return (
     <div className="bg-surface-card border border-line p-3">
@@ -395,10 +419,18 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
           </span>
         </div>
         <span className="text-xs text-muted">
-          Week {currentWeek} of {totalWeeks}
+          Week {currentWeek} of {TOTAL_SEASON_WEEKS} • Day {currentDay} of {SEASON_FINAL_DAY}
         </span>
       </div>
-      <div className="h-2 bg-surface-raised overflow-hidden">
+      <div
+        className="h-2 bg-surface-raised overflow-hidden"
+        role="progressbar"
+        aria-label="Season progress"
+        aria-valuemin={1}
+        aria-valuemax={SEASON_FINAL_DAY}
+        aria-valuenow={currentDay}
+        aria-valuetext={`Day ${currentDay} of ${SEASON_FINAL_DAY}, week ${currentWeek} of ${TOTAL_SEASON_WEEKS}`}
+      >
         <m.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
@@ -406,10 +438,14 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
           className="h-full bg-interactive"
         />
       </div>
+      {/* Three evenly spaced labels sit at 0%, 50% and 100% of the bar, so
+          they have to name what is actually there. The old middle marker said
+          "Playoffs", which no league has — the season runs straight through to
+          championship week. */}
       <div className="flex justify-between mt-1">
         <span className="text-[9px] text-muted">Start</span>
-        <span className="text-[9px] text-muted">Playoffs</span>
-        <span className="text-[9px] text-muted">Finals</span>
+        <span className="text-[9px] text-muted">Midseason</span>
+        <span className="text-[9px] text-muted">Championships</span>
       </div>
     </div>
   );
@@ -468,7 +504,7 @@ const LeagueDashboard = ({
       />
 
       {/* Season Progress */}
-      <SeasonProgressBar currentWeek={currentWeek} />
+      <SeasonProgressBar />
 
       {/* Quick Stats */}
       <QuickStatsRow stats={userStats} leagueStats={leagueStats} userId={userProfile?.uid} />
