@@ -19,6 +19,23 @@ import {
   createWeeklyPerformance,
 } from '../../utils/matchupScoring';
 
+/**
+ * The three caption groups a show result actually carries.
+ *
+ * This file used to manufacture all eight lineup captions here by dividing each
+ * group evenly — `GE1 = GE2 = geScore / 2` — and render them as judged numbers.
+ * They were never real: both directors got the same even split, so GE1 and GE2
+ * always had the identical winner, as did the three visual and the three music
+ * captions. The eight are deliberately unrecorded per show, because publishing
+ * them would let an opponent read a director's lineup straight off the recap
+ * (docs/CAPTION_WARS_SPEC.md §7), so the fix is to show the three that exist.
+ */
+const captionGroupScores = (result) => ({
+  ge: result.geScore || 0,
+  visual: result.visualScore || 0,
+  music: result.musicScore || 0,
+});
+
 const MatchupDetailView = ({
   matchup,
   league,
@@ -114,16 +131,7 @@ const MatchupDetailView = ({
                       showName: show.eventName,
                       score: result.totalScore || 0,
                       placement: result.placement,
-                      captions: result.captions || {
-                        GE1: (result.geScore || 0) / 2,
-                        GE2: (result.geScore || 0) / 2,
-                        VP: (result.visualScore || 0) / 3,
-                        VA: (result.visualScore || 0) / 3,
-                        CG: (result.visualScore || 0) / 3,
-                        B: (result.musicScore || 0) / 3,
-                        MA: (result.musicScore || 0) / 3,
-                        P: (result.musicScore || 0) / 3,
-                      },
+                      captions: captionGroupScores(result),
                     };
                     user1Shows.push(showData);
                     breakdown1.shows.push({
@@ -144,16 +152,7 @@ const MatchupDetailView = ({
                       showName: show.eventName,
                       score: result.totalScore || 0,
                       placement: result.placement,
-                      captions: result.captions || {
-                        GE1: (result.geScore || 0) / 2,
-                        GE2: (result.geScore || 0) / 2,
-                        VP: (result.visualScore || 0) / 3,
-                        VA: (result.visualScore || 0) / 3,
-                        CG: (result.visualScore || 0) / 3,
-                        B: (result.musicScore || 0) / 3,
-                        MA: (result.musicScore || 0) / 3,
-                        P: (result.musicScore || 0) / 3,
-                      },
+                      captions: captionGroupScores(result),
                     };
                     user2Shows.push(showData);
                     breakdown2.shows.push({
@@ -235,16 +234,7 @@ const MatchupDetailView = ({
                         showName: show.eventName,
                         score: result.totalScore || 0,
                         placement: result.placement,
-                        captions: result.captions || {
-                          GE1: (result.geScore || 0) / 2,
-                          GE2: (result.geScore || 0) / 2,
-                          VP: (result.visualScore || 0) / 3,
-                          VA: (result.visualScore || 0) / 3,
-                          CG: (result.visualScore || 0) / 3,
-                          B: (result.musicScore || 0) / 3,
-                          MA: (result.musicScore || 0) / 3,
-                          P: (result.musicScore || 0) / 3,
-                        },
+                        captions: captionGroupScores(result),
                       });
                     }
                     if (result.uid === matchup.user2) {
@@ -253,16 +243,7 @@ const MatchupDetailView = ({
                         showName: show.eventName,
                         score: result.totalScore || 0,
                         placement: result.placement,
-                        captions: result.captions || {
-                          GE1: (result.geScore || 0) / 2,
-                          GE2: (result.geScore || 0) / 2,
-                          VP: (result.visualScore || 0) / 3,
-                          VA: (result.visualScore || 0) / 3,
-                          CG: (result.visualScore || 0) / 3,
-                          B: (result.musicScore || 0) / 3,
-                          MA: (result.musicScore || 0) / 3,
-                          P: (result.musicScore || 0) / 3,
-                        },
+                        captions: captionGroupScores(result),
                       });
                     }
                   });

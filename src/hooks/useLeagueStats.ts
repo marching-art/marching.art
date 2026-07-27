@@ -16,7 +16,7 @@ import type {
   SeasonMatchupStats,
   MatchupBattleBreakdown,
   WeeklyUserPerformance,
-  CaptionScores,
+  CaptionGroupScores,
 } from '../types';
 
 interface DayRecap {
@@ -30,7 +30,6 @@ interface DayRecap {
       geScore?: number;
       visualScore?: number;
       musicScore?: number;
-      captions?: CaptionScores;
       placement?: number;
     }[];
   }[];
@@ -71,7 +70,7 @@ function calculateWeeklyPerformances(
       showName: string;
       score: number;
       placement?: number;
-      captions?: CaptionScores;
+      captions?: CaptionGroupScores;
     }[] = [];
 
     recaps.forEach((dayRecap) => {
@@ -87,7 +86,9 @@ function calculateWeeklyPerformances(
             showName: show.eventName,
             score: result.totalScore || 0,
             placement: result.placement,
-            captions: result.captions || deriveCaptionScores(result),
+            // Always the group scores: a recap result's `captions` field, where
+            // it exists at all, is the eight-caption shape this no longer uses.
+            captions: captionGroupScores(result),
           });
         });
       });
@@ -103,26 +104,29 @@ function calculateWeeklyPerformances(
 }
 
 /**
- * Derive caption scores from aggregate scores when not available
+ * The three caption groups a show result actually carries.
+ *
+ * This used to manufacture all eight lineup captions by dividing each group
+ * evenly — `GE1 = GE2 = geScore / 2` — and hand them to the battle system as if
+ * they were judged numbers. Because both directors got the same even split,
+ * GE1 and GE2 always had the identical winner, as did the three visual and the
+ * three music captions: eight battles that were really three, weighted 2/3/3.
+ * The season-long "best GE1 win rate" leaderboards were the same three answers
+ * printed twice and thrice.
+ *
+ * Storing the real eight is not the fix. They are deliberately unrecorded per
+ * show, because publishing them would let an opponent read a director's lineup
+ * straight off the recap (docs/CAPTION_WARS_SPEC.md §7).
  */
-function deriveCaptionScores(result: {
+function captionGroupScores(result: {
   geScore?: number;
   visualScore?: number;
   musicScore?: number;
-}): CaptionScores {
-  const ge = result.geScore || 0;
-  const visual = result.visualScore || 0;
-  const music = result.musicScore || 0;
-
+}): CaptionGroupScores {
   return {
-    GE1: ge / 2,
-    GE2: ge / 2,
-    VP: visual / 3,
-    VA: visual / 3,
-    CG: visual / 3,
-    B: music / 3,
-    MA: music / 3,
-    P: music / 3,
+    ge: result.geScore || 0,
+    visual: result.visualScore || 0,
+    music: result.musicScore || 0,
   };
 }
 
@@ -223,9 +227,9 @@ export function useLeagueStats({
           avgBattlePointsFor: 0,
           avgBattlePointsAgainst: 0,
           captionWinRates: initializeCaptionWinRates(),
-          bestCaption: 'GE1',
+          bestCaption: 'ge',
           bestCaptionWinRate: 0,
-          worstCaption: 'GE1',
+          worstCaption: 'ge',
           worstCaptionWinRate: 0,
           totalScoreBattlesWon: 0,
           highSingleBattlesWon: 0,

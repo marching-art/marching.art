@@ -5,7 +5,7 @@
 import React, { useMemo } from 'react';
 import { m } from 'framer-motion';
 import { Swords, Trophy, Flame, TrendingUp, Target, Award, Zap } from 'lucide-react';
-import { GAME_CONFIG } from '../../config';
+import { CAPTION_CATEGORIES } from '../../utils/captionWars';
 
 /**
  * Caption domination bar showing who wins each caption more often
@@ -24,7 +24,7 @@ const CaptionDominationBar = ({
   return (
     <div className="py-1.5">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-bold text-muted w-8">{caption}</span>
+        <span className="text-[10px] font-bold text-muted w-20">{caption}</span>
         <div className="flex items-center gap-2 text-[10px]">
           <span className={`font-bold ${user1Wins > user2Wins ? 'text-green-400' : 'text-muted'}`}>
             {user1Wins}
@@ -398,12 +398,14 @@ const RivalryHistoryCard = ({
               <span className="truncate max-w-[80px]">{user1DisplayName}</span>
               <span className="truncate max-w-[80px]">{user2DisplayName}</span>
             </div>
-            {GAME_CONFIG.captions.map((caption) => {
-              const dom = captionDomination[caption];
+            {/* Three groups, not the eight lineup captions — nothing records
+                eight numbers per show. See utils/matchupScoring.ts. */}
+            {CAPTION_CATEGORIES.map(({ key, label }) => {
+              const dom = captionDomination[key];
               return (
                 <CaptionDominationBar
-                  key={caption}
-                  caption={caption}
+                  key={key}
+                  caption={label}
                   user1Wins={dom?.user1Wins || 0}
                   user2Wins={dom?.user2Wins || 0}
                   user1Name={user1DisplayName}

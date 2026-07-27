@@ -1,8 +1,25 @@
 import { Timestamp } from 'firebase/firestore';
 
-import type { Caption } from './corps';
 import type { Matchup } from './league';
-import type { CaptionScores } from './season';
+import type { CaptionKey } from '../utils/captionWars';
+
+/**
+ * The battle system compares the three caption GROUPS the scorer actually
+ * persists per show — General Effect, Visual, Music — not the eight lineup
+ * captions.
+ *
+ * It used to compare all eight, but nothing anywhere records eight per-show
+ * numbers: the detail view manufactured them by dividing each group evenly
+ * (`GE1 = GE2 = geScore / 2`), so GE1 and GE2 always had the identical winner,
+ * as did the three visual and the three music captions. Eight battles were
+ * really three, silently weighted 2 / 3 / 3 — the inverse of the real judging
+ * ratio, where General Effect is worth the most.
+ *
+ * The eight are also deliberately unrecorded per show: publishing them would
+ * let an opponent read a director's lineup straight off the recap
+ * (docs/CAPTION_WARS_SPEC.md §7), so this cannot be fixed by storing more.
+ */
+export type CaptionGroupScores = Partial<Record<CaptionKey, number>>;
 
 // =============================================================================
 // HEAD-TO-HEAD BATTLE SYSTEM TYPES
@@ -18,7 +35,7 @@ export type BattleType = 'caption' | 'total' | 'highSingle' | 'momentum';
  * Result of a single caption battle
  */
 export interface CaptionBattle {
-  caption: Caption;
+  caption: CaptionKey;
   homeScore: number;
   awayScore: number;
   winnerId: string | null; // null = tie
@@ -30,7 +47,7 @@ export interface CaptionBattle {
  */
 export interface BattleResult {
   type: BattleType;
-  caption?: Caption; // Only for caption battles
+  caption?: CaptionKey; // Only for caption battles
   homeValue: number;
   awayValue: number;
   winnerId: string | null;
@@ -49,8 +66,8 @@ export interface WeeklyUserPerformance {
   totalScore: number;
   showCount: number;
 
-  // Caption totals for the week
-  captions: CaptionScores;
+  // Caption-group totals for the week
+  captions: CaptionGroupScores;
 
   // Individual show performances
   shows: {
@@ -58,7 +75,7 @@ export interface WeeklyUserPerformance {
     showName: string;
     score: number;
     placement?: number;
-    captions?: CaptionScores;
+    captions?: CaptionGroupScores;
   }[];
 
   // Best single show score
@@ -85,7 +102,7 @@ export interface MatchupBattleBreakdown {
   homeBattlePoints: number;
   awayBattlePoints: number;
 
-  // Caption battles (8 total)
+  // Caption battles (one per group)
   captionBattles: CaptionBattle[];
   captionBattlesWon: {
     home: number;
@@ -145,14 +162,14 @@ export interface SeasonMatchupStats {
   avgBattlePointsAgainst: number;
 
   // Caption win rates (key = caption name)
-  captionWinRates: Record<Caption, CaptionWinRate>;
+  captionWinRates: Record<CaptionKey, CaptionWinRate>;
 
   // Best caption (highest win rate)
-  bestCaption: Caption;
+  bestCaption: CaptionKey;
   bestCaptionWinRate: number;
 
   // Worst caption (lowest win rate)
-  worstCaption: Caption;
+  worstCaption: CaptionKey;
   worstCaptionWinRate: number;
 
   // Performance stats
@@ -190,7 +207,7 @@ export interface SeasonMatchupStats {
  * Win rate data for a specific caption
  */
 export interface CaptionWinRate {
-  caption: Caption;
+  caption: CaptionKey;
   wins: number;
   losses: number;
   ties: number;
@@ -219,7 +236,7 @@ export interface ExtendedHeadToHead {
 
   // Caption domination map (which user wins each caption more often)
   captionDomination: Record<
-    Caption,
+    CaptionKey,
     {
       user1Wins: number;
       user2Wins: number;

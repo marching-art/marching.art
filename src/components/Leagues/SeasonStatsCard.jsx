@@ -17,7 +17,7 @@ import {
   X,
   BarChart3,
 } from 'lucide-react';
-import { GAME_CONFIG } from '../../config';
+import { CAPTION_CATEGORIES } from '../../utils/captionWars';
 
 /**
  * Compact stat row
@@ -56,7 +56,7 @@ const CaptionBar = ({ caption, winRate, avgDiff: _avgDiff, isStrength, isWeaknes
     <div className="py-1.5">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold text-muted w-8">{caption}</span>
+          <span className="text-[10px] font-bold text-muted w-20">{caption}</span>
           {isStrength && <Crown className="w-3 h-3 text-brand" />}
           {isWeakness && <TrendingDown className="w-3 h-3 text-red-400" />}
         </div>
@@ -301,16 +301,19 @@ const SeasonStatsCard = ({
             Caption Performance
           </h3>
           <div className="bg-surface-sunken p-3">
-            {GAME_CONFIG.captions.map((caption) => {
-              const rate = captionWinRates[caption];
+            {/* Three groups, not the eight lineup captions: nothing records
+                eight numbers per show, and this used to render an even split of
+                each group as if it did. See utils/matchupScoring.ts. */}
+            {CAPTION_CATEGORIES.map(({ key, label }) => {
+              const rate = captionWinRates[key];
               return (
                 <CaptionBar
-                  key={caption}
-                  caption={caption}
+                  key={key}
+                  caption={label}
                   winRate={rate?.winRate || 0}
                   avgDiff={rate?.avgDifferential || 0}
-                  isStrength={caption === bestCaption}
-                  isWeakness={caption === worstCaption}
+                  isStrength={key === bestCaption}
+                  isWeakness={key === worstCaption}
                 />
               );
             })}

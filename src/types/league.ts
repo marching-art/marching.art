@@ -1,7 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
 import type { CorpsClass } from './corps';
-import type { CaptionScores } from './season';
 import type { LifetimeStats } from './user';
 
 // =============================================================================
@@ -130,10 +129,6 @@ export interface Matchup {
   homeScore: number;
   awayScore: number;
 
-  // Caption breakdowns
-  homeCaptions?: CaptionScores;
-  awayCaptions?: CaptionScores;
-
   // Result (after completion)
   winnerId?: string;
   margin?: number;
@@ -162,10 +157,6 @@ export interface MatchupResult {
   // Final scores
   homeScore: number;
   awayScore: number;
-
-  // Caption breakdown
-  homeCaptions: CaptionScores;
-  awayCaptions: CaptionScores;
 
   // Winner
   winnerId: string;

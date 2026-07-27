@@ -16,7 +16,7 @@ import {
   ChevronUp,
   Medal,
 } from 'lucide-react';
-import { GAME_CONFIG } from '../../config';
+import { CAPTION_CATEGORIES } from '../../utils/captionWars';
 
 // Leaderboard categories with display info
 const LEADERBOARD_CATEGORIES = [
@@ -76,16 +76,22 @@ const LEADERBOARD_CATEGORIES = [
   },
 ];
 
-// Caption-specific leaderboards
-const CAPTION_CATEGORIES = GAME_CONFIG.captions.map((caption) => ({
-  id: `bestCaption_${caption}`,
-  label: GAME_CONFIG.captionNames[caption],
-  shortLabel: caption,
+// Caption-specific leaderboards — one per caption GROUP.
+//
+// There used to be eight, one per lineup caption, and they were three answers
+// printed twice and thrice: nothing records eight numbers per show, so the
+// stats pipeline manufactured them by splitting each group evenly, which made
+// every director's GE1 and GE2 win rates identical by construction. See
+// utils/matchupScoring.ts.
+const CAPTION_BOARDS = CAPTION_CATEGORIES.map(({ key, label, short }) => ({
+  id: `bestCaption_${key}`,
+  label,
+  shortLabel: short,
   icon: Medal,
   color: 'blue',
-  description: `Best ${GAME_CONFIG.captionNames[caption]} win rate`,
+  description: `Best ${label} win rate`,
   format: (v) => `${(v * 100).toFixed(0)}%`,
-  caption,
+  caption: key,
 }));
 
 const colorClasses = {
@@ -311,11 +317,11 @@ const LeagueLeaderboards = ({
       .sort((a, b) => b.value - a.value);
 
     // Caption-specific
-    GAME_CONFIG.captions.forEach((caption) => {
-      boards[`bestCaption_${caption}`] = stats
+    CAPTION_CATEGORIES.forEach(({ key }) => {
+      boards[`bestCaption_${key}`] = stats
         .map((s) => ({
           userId: s.userId,
-          value: s.captionWinRates[caption]?.winRate || 0,
+          value: s.captionWinRates[key]?.winRate || 0,
         }))
         .sort((a, b) => b.value - a.value);
     });
@@ -377,7 +383,7 @@ const LeagueLeaderboards = ({
             exit={{ height: 0, opacity: 0 }}
             className="space-y-2 overflow-hidden"
           >
-            {CAPTION_CATEGORIES.map((category) => (
+            {CAPTION_BOARDS.map((category) => (
               <LeaderboardCard
                 key={category.id}
                 category={category}

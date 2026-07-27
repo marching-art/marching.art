@@ -5,6 +5,7 @@
 import React from 'react';
 import { m } from 'framer-motion';
 import { Trophy, TrendingUp, Zap, Target, Check, X, Minus, Flame, Award } from 'lucide-react';
+import { getCaptionDisplayName } from '../../utils/matchupScoring';
 
 // Battle type icons and labels
 const BATTLE_INFO = {
@@ -184,7 +185,11 @@ const BattleRow = ({
 };
 
 /**
- * Caption battles section (8 caption comparisons)
+ * Caption battles — one per caption GROUP.
+ *
+ * Three, not eight. The eight lineup captions are not recorded per show, and
+ * this section used to render them anyway from an even split of each group,
+ * which made GE1 and GE2 always agree. See utils/matchupScoring.ts.
  */
 export const CaptionBattlesSection = ({
   captionBattles,
@@ -228,7 +233,7 @@ export const CaptionBattlesSection = ({
         {captionBattles.map((battle, idx) => (
           <BattleRow
             key={battle.caption}
-            label={battle.caption}
+            label={getCaptionDisplayName(battle.caption)}
             homeValue={battle.homeScore}
             awayValue={battle.awayScore}
             homeWins={battle.winnerId === homeUserId}
