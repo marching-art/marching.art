@@ -3,7 +3,9 @@
 
 import {
   collection,
+  collectionGroup,
   doc,
+  documentId,
   getDoc,
   getDocs,
   query,
@@ -361,21 +363,107 @@ export async function postChatMessage(leagueId: string, message: string): Promis
 // =============================================================================
 
 /**
+ * The slice of a member's profile document the league views actually render:
+ * a name, the corps map (enumerated with Object.values to find the active
+ * corps, so every class key has to survive), and the cosmetics sub-object
+ * (StandingsTab hands the whole thing to getEquippedCosmetic).
+ *
+ * Profile documents are large — full corps lineups, score history, the
+ * challenge ledger — and a league fans out one per member. Projecting here
+ * keeps that bulk out of the react-query cache and out of the props that get
+ * drilled through five tabs.
+ */
+export interface LeagueMemberProfile {
+  displayName?: string;
+  username?: string;
+  corps?: Record<string, { corpsName?: string; name?: string } & DocumentData>;
+  cosmetics?: DocumentData;
+}
+
+/** Firestore caps `in` filters at 30 values. */
+const MEMBER_PROFILE_CHUNK_SIZE = 30;
+
+function projectMemberProfile(data: DocumentData): LeagueMemberProfile {
+  return {
+    displayName: data.displayName,
+    username: data.username,
+    corps: data.corps,
+    cosmetics: data.cosmetics,
+  };
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
+ * Per-document fallback for getMemberProfiles.
+ *
+ * The path-based profile rule is `allow read: if true` while the collection
+ * group rule requires auth, and a collection group filter on documentId()
+ * leans on index behaviour we cannot exercise from the client test suite. If
+ * the batched query is ever rejected, degrade to the original fan-out rather
+ * than blanking the league — bounded so a large roster cannot open dozens of
+ * simultaneous connections.
+ */
+async function getMemberProfilesIndividually(
+  memberUids: string[]
+): Promise<Record<string, LeagueMemberProfile>> {
+  const profiles: Record<string, LeagueMemberProfile> = {};
+  const MAX_CONCURRENT = 10;
+  for (const batch of chunk(memberUids, MAX_CONCURRENT)) {
+    await Promise.all(
+      batch.map(async (uid) => {
+        const profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
+        if (profileDoc.exists()) {
+          profiles[uid] = projectMemberProfile(profileDoc.data());
+        }
+      })
+    );
+  }
+  return profiles;
+}
+
+/**
  * Fetch the profile documents for a set of league members, keyed by uid.
  * Members without a profile document are omitted.
+ *
+ * Profiles live at `users/{uid}/profile/data`, so they are only reachable as a
+ * set through the `profile` collection group — one query per 30 members
+ * instead of one round trip per member. `documentId()` in a collection group
+ * query must be compared against full document paths, which is why the values
+ * are DocumentReferences built from the shared path helper.
  */
 export async function getMemberProfiles(
   memberUids: string[]
-): Promise<Record<string, DocumentData>> {
-  const profiles: Record<string, DocumentData> = {};
-  await Promise.all(
-    memberUids.map(async (uid) => {
-      const profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
-      if (profileDoc.exists()) {
-        profiles[uid] = profileDoc.data();
-      }
-    })
-  );
+): Promise<Record<string, LeagueMemberProfile>> {
+  if (!memberUids.length) return {};
+
+  const profiles: Record<string, LeagueMemberProfile> = {};
+  try {
+    await Promise.all(
+      chunk(memberUids, MEMBER_PROFILE_CHUNK_SIZE).map(async (uids) => {
+        const refs = uids.map((uid) => doc(db, paths.userProfile(uid)));
+        const snapshot = await getDocs(
+          query(collectionGroup(db, 'profile'), where(documentId(), 'in', refs))
+        );
+        snapshot.docs.forEach((d) => {
+          // `.../users/{uid}/profile/data` — the uid is the grandparent doc.
+          const uid = d.ref.parent.parent?.id;
+          if (uid) {
+            profiles[uid] = projectMemberProfile(d.data());
+          }
+        });
+      })
+    );
+  } catch (error) {
+    console.warn('Batched member profile query failed; falling back to per-document reads', error);
+    return getMemberProfilesIndividually(memberUids);
+  }
   return profiles;
 }
 
