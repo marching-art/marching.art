@@ -7,7 +7,7 @@ process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || "test-ns";
 
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
-const { foldPairsIntoStandings } = require("./leagueStandings");
+const { foldPairsIntoStandings, rebuildStandingsFromMatchups } = require("./leagueStandings");
 
 const freshRecords = () => ({
   alice: { wins: 1, losses: 0, ties: 0, pointsFor: 80, pointsAgainst: 70, currentStreak: 1, streakType: "W" },
@@ -138,5 +138,81 @@ describe("foldPairsIntoStandings", () => {
       },
     ]);
     assert.deepEqual(base, snapshot);
+  });
+});
+
+// Rebuilding from the matchup documents is what makes a correction possible at
+// all: the incremental fold counts each pair exactly once, so "unfold the old
+// result and fold the new one" is exactly the arithmetic that goes wrong
+// quietly. Deriving the whole table sidesteps it.
+describe("rebuildStandingsFromMatchups", () => {
+  const classes = ["worldClass", "soundSport"];
+  const week = (n, worldClass = [], soundSport = []) => ({
+    id: `week-${n}`,
+    data: { worldClassMatchups: worldClass, soundSportMatchups: soundSport },
+  });
+  const decided = (p1, p2, s1, s2) => ({
+    pair: [p1, p2],
+    scores: { [p1]: s1, [p2]: s2 },
+    winner: s1 === s2 ? "tie" : s1 > s2 ? p1 : p2,
+    completed: true,
+  });
+
+  test("derives the whole table from every resolved week", () => {
+    const { records } = rebuildStandingsFromMatchups(
+      [week(1, [decided("alice", "bob", 90, 80)]), week(2, [decided("alice", "bob", 70, 85)])],
+      classes
+    );
+
+    assert.equal(records.alice.wins, 1);
+    assert.equal(records.alice.losses, 1);
+    assert.equal(records.alice.pointsFor, 160);
+    assert.equal(records.bob.pointsFor, 165);
+    // Streak reflects the LAST week, so weeks must be folded in order.
+    assert.equal(records.bob.streakType, "W");
+  });
+
+  test("ignores unresolved weeks and counts byes once", () => {
+    const { records } = rebuildStandingsFromMatchups(
+      [
+        week(1, [{ pair: ["alice", null], winner: "alice", completed: true, isBye: true }]),
+        week(2, [{ pair: ["alice", "bob"], completed: false }]),
+      ],
+      classes
+    );
+
+    assert.equal(records.alice.wins, 1);
+    assert.equal(records.bob, undefined);
+  });
+
+  test("running it twice produces the same table (unlike the incremental fold)", () => {
+    const weeks = [week(1, [decided("alice", "bob", 90, 80)])];
+    const first = rebuildStandingsFromMatchups(weeks, classes);
+    const second = rebuildStandingsFromMatchups(weeks, classes);
+    assert.deepEqual(first.records, second.records);
+  });
+
+  test("seeds every current member and drops directors who left", () => {
+    const { records, standings } = rebuildStandingsFromMatchups(
+      [week(1, [decided("alice", "departed", 90, 80)])],
+      classes,
+      ["alice", "newcomer"]
+    );
+
+    // A director who joined mid-season appears rather than vanishing.
+    assert.ok(records.newcomer, "current members get a row even with no results");
+    assert.equal(records.newcomer.wins, 0);
+    assert.equal(records.departed, undefined);
+    assert.deepEqual(standings.map((r) => r.uid).sort(), ["alice", "newcomer"]);
+  });
+
+  test("folds every corps class, not just the first", () => {
+    const { records } = rebuildStandingsFromMatchups(
+      [week(1, [decided("alice", "bob", 90, 80)], [decided("alice", "carol", 40, 60)])],
+      classes
+    );
+
+    assert.equal(records.alice.wins, 1);
+    assert.equal(records.alice.losses, 1);
   });
 });

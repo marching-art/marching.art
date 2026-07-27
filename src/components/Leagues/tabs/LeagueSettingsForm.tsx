@@ -24,6 +24,7 @@ interface LeagueSettingsFormProps {
     maxMembers?: number;
     tag?: string | null;
     settings?: { finalsSize?: number; entryFee?: number };
+    announcement?: { text?: string } | null;
   } | null;
   memberCount: number;
   onSaved?: () => void;
@@ -36,6 +37,7 @@ interface FormState {
   maxMembers: number;
   tag: string | null;
   finalsSize: number;
+  announcement: string;
 }
 
 const LEAGUE_TAGS = [
@@ -47,6 +49,8 @@ const LEAGUE_TAGS = [
 
 const MAX_NAME = 50;
 const MAX_DESCRIPTION = 500;
+/** Matches MAX_ANNOUNCEMENT_LENGTH in functions/src/callable/leagueAdmin.js. */
+const MAX_ANNOUNCEMENT = 280;
 
 const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsFormProps) => {
   const initial = useMemo<FormState>(
@@ -57,6 +61,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
       maxMembers: league?.maxMembers || 20,
       tag: league?.tag || null,
       finalsSize: league?.settings?.finalsSize || 12,
+      announcement: league?.announcement?.text || '',
     }),
     [league]
   );
@@ -92,6 +97,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
           maxMembers: form.maxMembers,
           tag: form.tag,
           finalsSize: form.finalsSize,
+          announcement: form.announcement.trim() || null,
         },
       });
       toast.success(result.data?.message || 'League settings updated.');
@@ -155,6 +161,29 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
           />
           <p className="text-[10px] text-muted mt-1 text-right tabular-nums">
             {form.description.length}/{MAX_DESCRIPTION}
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="league-announcement"
+            className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1.5"
+          >
+            Pinned Announcement
+          </label>
+          {/* Sits above every tab for every member. Deliberately short — a
+              pinned note that scrolls is not pinned, it is a wall. */}
+          <textarea
+            id="league-announcement"
+            rows={2}
+            value={form.announcement}
+            maxLength={MAX_ANNOUNCEMENT}
+            onChange={(e) => set({ announcement: e.target.value })}
+            placeholder="Draft night moved to Thursday. Set your lineups!"
+            className="w-full px-3 py-2 bg-background border border-line-strong text-sm text-white focus:outline-none focus:border-interactive placeholder:text-muted resize-none"
+          />
+          <p className="text-[10px] text-muted mt-1 text-right tabular-nums">
+            {form.announcement.length}/{MAX_ANNOUNCEMENT} · clear it to unpin
           </p>
         </div>
 

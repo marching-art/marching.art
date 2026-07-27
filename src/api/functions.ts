@@ -474,10 +474,27 @@ export const updateLeagueSettings = createCallable<
       maxMembers?: number;
       tag?: string | null;
       finalsSize?: number;
+      /** Pinned note, or null to unpin. */
+      announcement?: string | null;
     };
   },
   { success: boolean; changed: number; message: string }
 >('updateLeagueSettings');
+export const recomputeLeagueStandings = createCallable<
+  { leagueId: string },
+  { success: boolean; rows: number; message: string }
+>('recomputeLeagueStandings');
+export const overrideMatchupResult = createCallable<
+  {
+    leagueId: string;
+    week: number;
+    corpsClass: string;
+    matchupIndex: number;
+    /** A participant's uid, or 'tie'. */
+    winner: string;
+  },
+  { success: boolean; rows: number; message: string }
+>('overrideMatchupResult');
 export const setCoCommissioner = createCallable<
   { leagueId: string; memberId: string; grant: boolean },
   { success: boolean; changed: boolean; message: string }

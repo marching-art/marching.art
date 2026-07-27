@@ -2,7 +2,7 @@
 // SettingsTab - Commissioner settings for league management
 // Includes matchup generation, league settings, and invite code management
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { m } from 'framer-motion';
 import {
   Settings,
@@ -34,6 +34,7 @@ import { isLeagueCommissioner } from '../../../utils/leaguePermissions';
 import LeagueSettingsForm from './LeagueSettingsForm';
 import CommissionerTransfer from './CommissionerTransfer';
 import CoCommissionerManager from './CoCommissionerManager';
+import ResultCorrection from './ResultCorrection';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -130,6 +131,20 @@ const SettingsTab = ({
   const [removingId, setRemovingId] = useState(null);
 
   const removeMemberMutation = useRemoveLeagueMember(league?.id);
+
+  // Stable identity: this feeds the roster useMemo below and is handed to
+  // ResultCorrection, so a fresh closure each render would defeat both.
+  const getMemberName = useCallback(
+    (uid) => {
+      const profile = memberProfiles[uid] || {};
+      const displayName =
+        profile.displayName && profile.displayName !== 'Director'
+          ? profile.displayName
+          : profile.username;
+      return displayName || `Director ${String(uid).slice(0, 6)}`;
+    },
+    [memberProfiles]
+  );
 
   // Which weeks already have matchups. ONE collection read — this was a
   // serial getDoc per week (up to totalWeeks round trips) on every open of the
@@ -244,14 +259,10 @@ const SettingsTab = ({
   const roster = useMemo(() => {
     const rows = (league?.members || []).map((uid) => {
       const profile = memberProfiles[uid] || {};
-      const displayName =
-        profile.displayName && profile.displayName !== 'Director'
-          ? profile.displayName
-          : profile.username;
       const activeCorps = Object.values(profile.corps || {}).find((c) => c?.corpsName);
       return {
         uid,
-        name: displayName || `Director ${uid.slice(0, 6)}`,
+        name: getMemberName(uid),
         corpsName: activeCorps?.corpsName || null,
         isActive: isMemberActive(league, uid),
         isOwner: uid === league?.creatorId,
@@ -264,7 +275,7 @@ const SettingsTab = ({
       if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-  }, [league, memberProfiles]);
+  }, [league, memberProfiles, getMemberName]);
 
   return (
     <m.div
@@ -473,6 +484,17 @@ const SettingsTab = ({
           </p>
         </div>
       </div>
+
+      {/* A resolved matchup used to be final and unappealable, with no way to
+          fix a week that resolved against missing data. */}
+      <ResultCorrection
+        league={league}
+        weekData={existingMatchups[selectedWeek]}
+        week={selectedWeek}
+        corpsClasses={Object.keys(CORPS_CLASS_CONFIG)}
+        getDisplayName={getMemberName}
+        onCorrected={onSettingsSaved}
+      />
 
       {/* Invite Code Section */}
       <div className="bg-surface-card border border-line">

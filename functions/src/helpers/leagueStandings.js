@@ -198,8 +198,80 @@ async function updateStandings(db, leagueRef, pairs) {
   });
 }
 
+/**
+ * Rebuild a league's standings from scratch, by re-folding every resolved
+ * matchup in week order.
+ *
+ * The incremental fold is not idempotent — each pair must be counted exactly
+ * once — which makes it correct but unforgiving: there was no way to fix a
+ * league whose table had drifted, and no way to correct a matchup result at
+ * all, because "unfold the old result and fold the new one" is the kind of
+ * arithmetic that goes wrong silently.
+ *
+ * Deriving the whole table from the matchup documents sidesteps that. It is the
+ * escape hatch for a corrected result, and for any historical corruption.
+ *
+ * Members with no resolved matchups still get an empty row, so a director who
+ * joined mid-season appears in the table rather than vanishing from it.
+ *
+ * @param {Array<{id: string, data: Object}>} weekDocs - `week-N` documents
+ * @param {string[]} corpsClasses
+ * @param {string[]} [members] - current roster; rows are limited to these when given
+ * @returns {{records: Object, standings: Array}}
+ */
+function rebuildStandingsFromMatchups(weekDocs, corpsClasses, members = null) {
+  const ordered = [...weekDocs]
+    .map((doc) => ({ week: parseInt(String(doc.id).replace("week-", ""), 10), data: doc.data }))
+    .filter((entry) => Number.isFinite(entry.week))
+    .sort((a, b) => a.week - b.week);
+
+  const pairs = [];
+  for (const { data } of ordered) {
+    for (const corpsClass of corpsClasses) {
+      for (const matchup of data?.[`${corpsClass}Matchups`] || []) {
+        if (!matchup?.completed || !matchup.pair?.[0]) continue;
+
+        const [p1, p2] = matchup.pair;
+        if (!p2 || matchup.isBye) {
+          pairs.push({ player1: p1, player2: null, winner: p1, completed: true, corpsClass });
+          continue;
+        }
+        pairs.push({
+          player1: p1,
+          player2: p2,
+          player1Score: matchup.scores?.[p1] || 0,
+          player2Score: matchup.scores?.[p2] || 0,
+          winner: matchup.winner ?? "tie",
+          completed: true,
+          corpsClass,
+        });
+      }
+    }
+  }
+
+  // Seed every current member so the roster and the table agree.
+  const base = {};
+  for (const uid of members || []) base[uid] = { ...EMPTY_RECORD };
+
+  const folded = foldPairsIntoStandings(base, pairs);
+  if (!members) return folded;
+
+  // Drop rows for directors who have since left — the same cleanup the
+  // removal and leave paths do.
+  const roster = new Set(members);
+  const records = {};
+  for (const [uid, record] of Object.entries(folded.records)) {
+    if (roster.has(uid)) records[uid] = record;
+  }
+  return {
+    records,
+    standings: folded.standings.filter((row) => roster.has(row.uid)),
+  };
+}
+
 module.exports = {
   foldPairsIntoStandings,
+  rebuildStandingsFromMatchups,
   applyStandingsInTransaction,
   updateStandings,
   compareStandingRows,

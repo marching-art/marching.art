@@ -9,7 +9,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Swords, MessageSquare, BarChart3, Bell } from 'lucide-react';
+import { Swords, MessageSquare, BarChart3, Bell, Pin } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // Import tab components
@@ -234,6 +234,16 @@ const LeagueDetailView = ({
             </button>
           </div>
         )}
+        {/* The commissioner's pinned note, above everything, on every tab —
+            "draft night moved to Thursday" is the sort of thing that has to be
+            impossible to miss, and chat scrolls. */}
+        {league.announcement?.text && (
+          <div className="mx-4 mt-4 px-3 py-2.5 bg-brand/5 border-l-2 border-brand flex items-start gap-2">
+            <Pin className="w-3.5 h-3.5 text-brand flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-white leading-relaxed">{league.announcement.text}</p>
+          </div>
+        )}
+
         {/* Daily prediction pool — the league's social side-pot, on the
             default tab where every member lands */}
         {activeTab === 'standings' && (

@@ -244,6 +244,8 @@ type CloudFunctionName =
   | 'updateLeagueSettings'
   | 'transferCommissioner'
   | 'setCoCommissioner'
+  | 'recomputeLeagueStandings'
+  | 'overrideMatchupResult'
   | 'selectShows'
   | 'updateLineup';
 

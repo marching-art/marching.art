@@ -106,6 +106,10 @@ const {
   setCoCommissioner,
 } = require("./src/callable/leagueAdmin");
 const { removeLeagueMember } = require("./src/callable/leagueRoster");
+const {
+  recomputeLeagueStandings,
+  overrideMatchupResult,
+} = require("./src/callable/leagueResults");
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
@@ -296,6 +300,8 @@ module.exports = {
   claimLadderTier,
   leaveLeague,
   removeLeagueMember,
+  recomputeLeagueStandings,
+  overrideMatchupResult,
   updateLeagueSettings,
   transferCommissioner,
   setCoCommissioner,

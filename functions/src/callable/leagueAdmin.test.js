@@ -101,3 +101,50 @@ describe("buildLeagueSettingsUpdate", () => {
     );
   });
 });
+
+// A pinned note sits above everything else in the league, so it is capped
+// short by design and clearing it is an explicit null rather than an empty
+// string sneaking through as a change.
+describe("buildLeagueSettingsUpdate — announcements", () => {
+  const withAnnouncement = (text) =>
+    league({ announcement: text ? { text, setBy: "owner" } : undefined });
+
+  test("pins a new announcement", () => {
+    const { updates, changes } = buildLeagueSettingsUpdate(
+      { announcement: "  Draft night moved to Thursday.  " },
+      withAnnouncement(null)
+    );
+    assert.deepEqual(updates, { announcement: { text: "Draft night moved to Thursday." } });
+    assert.equal(changes[0].field, "announcement");
+  });
+
+  test("clearing it with null or an empty string both unpin", () => {
+    assert.deepEqual(
+      buildLeagueSettingsUpdate({ announcement: null }, withAnnouncement("old")).updates,
+      { announcement: null }
+    );
+    assert.deepEqual(
+      buildLeagueSettingsUpdate({ announcement: "   " }, withAnnouncement("old")).updates,
+      { announcement: null }
+    );
+  });
+
+  test("re-pinning the same text is not a change", () => {
+    const { changes } = buildLeagueSettingsUpdate(
+      { announcement: "same" },
+      withAnnouncement("same")
+    );
+    assert.deepEqual(changes, []);
+  });
+
+  test("rejects an over-long or non-text announcement", () => {
+    assert.throws(
+      () => buildLeagueSettingsUpdate({ announcement: "x".repeat(281) }, withAnnouncement(null)),
+      /280 characters/
+    );
+    assert.throws(
+      () => buildLeagueSettingsUpdate({ announcement: 42 }, withAnnouncement(null)),
+      /must be text/
+    );
+  });
+});

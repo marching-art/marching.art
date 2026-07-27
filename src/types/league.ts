@@ -26,6 +26,8 @@ export interface League {
   tag?: 'competitive' | 'casual' | 'roleplay' | 'dynasty' | null;
   /** Auto-provisioned beginner league (callable/rookieLeague.js). */
   isRookieCircuit?: boolean;
+  /** Commissioner's pinned note, shown above every tab. */
+  announcement?: { text: string; setBy?: string; setAt?: Timestamp } | null;
   /** Legacy only — new leagues keep the code in meta/private (see useLeagueInviteCode). */
   inviteCode?: string;
 

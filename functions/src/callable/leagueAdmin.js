@@ -34,6 +34,8 @@ const {
 const MAX_NAME_LENGTH = 50;
 const MIN_NAME_LENGTH = 3;
 const MAX_DESCRIPTION_LENGTH = 500;
+/** A pinned note sits above everything else, so it stays short by design. */
+const MAX_ANNOUNCEMENT_LENGTH = 280;
 const MIN_MAX_MEMBERS = 2;
 const MAX_MAX_MEMBERS = 50;
 
@@ -158,6 +160,24 @@ function buildLeagueSettingsUpdate(patch, league) {
     }
   }
 
+  if (patch.announcement !== undefined) {
+    if (patch.announcement !== null && typeof patch.announcement !== "string") {
+      throw new HttpsError("invalid-argument", "An announcement must be text.");
+    }
+    const announcement = patch.announcement === null ? null : patch.announcement.trim();
+    if (announcement && announcement.length > MAX_ANNOUNCEMENT_LENGTH) {
+      throw new HttpsError(
+        "invalid-argument",
+        `An announcement must be ${MAX_ANNOUNCEMENT_LENGTH} characters or fewer.`
+      );
+    }
+    const next = announcement || null;
+    if (next !== (league.announcement?.text ?? null)) {
+      updates.announcement = next ? { text: next } : null;
+      note("announcement", league.announcement?.text ?? null, next);
+    }
+  }
+
   // Deliberately NOT editable: entryFee. The pool is escrow — every member
   // paid the fee that was advertised when they joined, and the removal refund
   // is clamped to it. Changing it mid-season would let a commissioner alter
@@ -191,6 +211,17 @@ exports.updateLeagueSettings = onCall({ cors: true }, async (request) => {
   const { updates, changes } = buildLeagueSettingsUpdate(settings, league);
   if (changes.length === 0) {
     return { success: true, changed: 0, message: "Nothing to change." };
+  }
+
+  // The announcement carries who pinned it and when — a note with no author is
+  // just text on the page, and members should be able to tell a stale pin from
+  // a fresh one.
+  if (updates.announcement) {
+    updates.announcement = {
+      ...updates.announcement,
+      setBy: uid,
+      setAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
   }
 
   await leagueRef.update(updates);

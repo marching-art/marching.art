@@ -303,7 +303,7 @@ writes `inviteCode: leagueData.inviteCode || null`
 (`leagueInvitations.js:99`) — always `null` since the code moved to
 `meta/private`, and a leak if a legacy doc still carries it.
 
-### C6 · P2 — No commissioner tools that a real league needs — MOSTLY FIXED
+### C6 · P2 — No commissioner tools that a real league needs — FIXED
 
 No co-commissioner role, no ability to correct a matchup result, no pinned
 announcement, no league rules/description-with-formatting, no way to schedule
@@ -312,9 +312,20 @@ removals.
 
 Fixed: co-commissioners (`setCoCommissioner`, up to four, owner-only to grant
 or revoke — a co-commissioner who could appoint peers could take the league over
-from the inside), an editable league description that serves as the rules
-document (C2), and the commissioner audit view (D3). Still outstanding: matchup
-result correction, pinned announcements, and scheduled format locks.
+from the inside); a pinned announcement above every tab; result correction
+(`overrideMatchupResult`) plus a standalone standings rebuild
+(`recomputeLeagueStandings`); an editable description that serves as the rules
+document (C2); and the commissioner audit view (D3).
+
+Corrections deliberately do not unfold the old result — the standings fold
+counts each pair exactly once, so subtracting one result and adding another is
+exactly the arithmetic that goes wrong quietly. The matchup document is edited
+and the whole table is rebuilt from every resolved week. That rebuild is also
+the escape hatch for a table that has drifted for any other reason, which is why
+it is exposed on its own.
+
+Scheduled format locks remain out of scope — they depend on alternate formats,
+which are Phase 4.
 
 ### C7 · P3 — The rookie circuit had no gate and an accidental commissioner — FIXED
 
@@ -680,9 +691,6 @@ Small, isolated, high ratio of value to risk:
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
   can rank on one comparable scale. The table is now honest about the limitation
   rather than fixed of it.
-- **C6 (remainder)** — matchup result correction, pinned announcements, and
-  scheduled format locks. Co-commissioners, the editable description, and the
-  audit view have landed.
 - **F7 (remainder)** — several league files still carry `@ts-nocheck`.
   `StandingsTab`, `MatchupsTab` and `callable/leagues.js` are back under the
   line, and `MatchupsTab` reads through React Query instead of duplicating the
