@@ -5,11 +5,13 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { m } from 'framer-motion';
 import { Swords, Calendar, Radio, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
-import { getLeagueMatchups } from '../../../api/leagues';
+import { useQuery } from '@tanstack/react-query';
 import { getSeasonData } from '../../../api/season';
-import { queryClient, queryKeys } from '../../../lib/queryClient';
+import { queryKeys } from '../../../lib/queryClient';
+import { useLeagueMatchups } from '../../../hooks/useLeagueMatchups';
 import { getSeasonProgress } from '../../../utils/seasonProgress';
 import { GAME_CONFIG } from '../../../config';
+import { isLeagueCommissioner } from '../../../utils/leaguePermissions';
 import {
   SeasonScheduleOverview,
   YourSeasonHistory,
@@ -33,16 +35,54 @@ const MatchupsTab = ({
   memberProfiles = {},
   rivalries = [],
 }) => {
-  const [matchupsByClass, setMatchupsByClass] = useState({});
-  const [loading, setLoading] = useState(true);
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
-  const [currentWeek, setCurrentWeek] = useState(1);
-  const [weeksWithMatchups, setWeeksWithMatchups] = useState(new Set());
-  const [weeklyResults, _setWeeklyResults] = useState({});
   const [viewMode, setViewMode] = useState('week'); // 'week' | 'season'
 
-  const isCommissioner = league?.creatorId === userProfile?.uid;
+  // Both reads go through React Query, so opening this tab is a cache hit
+  // against what LeagueDetailView already fetched. This used to duplicate both
+  // fetches into local useState — a second copy of the season document and a
+  // second copy of the matchup schedule, with their own loading flag and their
+  // own idea of the current week.
+  const { data: seasonData } = useQuery({
+    queryKey: queryKeys.season(),
+    queryFn: () => getSeasonData(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: matchupDocs = [], isPending: loading } = useLeagueMatchups(league?.id);
+
+  // Shared 2AM-ET/UTC-normalized week math (utils/seasonProgress). A raw
+  // (now - startDate)/24h count rolled the week over at midnight UTC (8 PM ET
+  // in summer), highlighting the wrong "live" week every evening.
+  const currentWeek = useMemo(
+    () => (seasonData ? Math.max(1, getSeasonProgress(seasonData).currentWeek) : 1),
+    [seasonData]
+  );
+
+  const { matchupsByClass, weeksWithMatchups } = useMemo(() => {
+    const byWeek = {};
+    const weeks = new Set();
+    const maxWeek = Math.min(currentWeek + 1, GAME_CONFIG.season.totalWeeks);
+
+    matchupDocs.forEach((matchupDoc) => {
+      const weekMatch = matchupDoc.id.match(/^week-(\d+)$/);
+      if (!weekMatch) return;
+      const w = parseInt(weekMatch[1]);
+      if (w < 1 || w > maxWeek) return;
+      byWeek[w] = matchupDoc;
+      weeks.add(w);
+    });
+
+    return { matchupsByClass: byWeek, weeksWithMatchups: weeks };
+  }, [matchupDocs, currentWeek]);
+
+  // Land on the live week once the season resolves, without clobbering a week
+  // the member has since picked.
+  useEffect(() => {
+    setSelectedWeek((prev) => prev ?? currentWeek);
+  }, [currentWeek]);
+
+  const isCommissioner = isLeagueCommissioner(league, userProfile?.uid);
 
   // Check if matchup is a rivalry
   const isRivalryMatchup = (matchup) => {
@@ -52,58 +92,30 @@ const MatchupsTab = ({
     return opponentId ? rivalries.some((r) => r.rivalId === opponentId) : false;
   };
 
-  // Fetch matchups from Firestore
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!league?.id) {
-        setLoading(false);
-        return;
+  // Per-week scores, read off the matchup documents the backend already wrote.
+  //
+  // This was `useState({})` whose setter was never called, so every head-to-head
+  // record in this tab rendered as 0-0-0 for every opponent, all season. The
+  // resolved matchup docs carry `scores` keyed by uid (helpers/weeklyMatchups.js),
+  // which is the same number the standings were folded from — so deriving it
+  // here costs nothing and cannot disagree with the table.
+  const weeklyResults = useMemo(() => {
+    const byWeek = {};
+    for (const [week, weekData] of Object.entries(matchupsByClass)) {
+      const scores = {};
+      for (const corpsClass of CORPS_CLASSES) {
+        for (const matchup of weekData?.[`${corpsClass}Matchups`] || []) {
+          for (const [uid, score] of Object.entries(matchup.scores || {})) {
+            // Summed, not overwritten: a director fielding two classes has two
+            // matchups in the same week.
+            scores[uid] = (scores[uid] || 0) + (Number(score) || 0);
+          }
+        }
       }
-
-      try {
-        // Get current week from season data — shared 2AM-ET/UTC-normalized
-        // math (utils/seasonProgress). The raw (now - startDate)/24h count
-        // used here before rolled the week over at midnight UTC (8 PM ET in
-        // summer), highlighting the wrong "live" week every evening.
-        // Read through the shared react-query season entry — LeagueDetailView
-        // fetches the same doc when the league opens, so this tab is a cache
-        // hit instead of a second read.
-        const sData = await queryClient.fetchQuery({
-          queryKey: queryKeys.season(),
-          queryFn: () => getSeasonData(),
-          staleTime: 5 * 60 * 1000,
-        });
-        const week = sData ? Math.max(1, getSeasonProgress(sData).currentWeek) : 1;
-        setCurrentWeek(week);
-        setSelectedWeek(week);
-
-        // One collection read for every generated week — this was a serial
-        // per-week getDoc waterfall (up to 8 round-trips).
-        const matchupsData = {};
-        const weeksFound = new Set();
-        const maxWeek = Math.min(week + 1, GAME_CONFIG.season.totalWeeks);
-
-        const matchupDocs = await getLeagueMatchups(league.id);
-        matchupDocs.forEach((matchupDoc) => {
-          const weekMatch = matchupDoc.id.match(/^week-(\d+)$/);
-          if (!weekMatch) return;
-          const w = parseInt(weekMatch[1]);
-          if (w < 1 || w > maxWeek) return;
-          matchupsData[w] = matchupDoc;
-          weeksFound.add(w);
-        });
-
-        setMatchupsByClass(matchupsData);
-        setWeeksWithMatchups(weeksFound);
-      } catch (error) {
-        console.error('Error fetching matchups:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [league?.id]);
+      byWeek[week] = scores;
+    }
+    return byWeek;
+  }, [matchupsByClass]);
 
   // Get matchups for selected week, organized by class
   const weekMatchups = useMemo(() => {

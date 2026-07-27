@@ -8,6 +8,7 @@ import {
   generateRoundRobinMatchups,
   type LeagueMatchupDoc,
   type LeagueRecapDay,
+  buildWeeklyClassResults,
 } from './leagueStats';
 
 // A recap day with a single show, which is all the league table reads.
@@ -278,5 +279,106 @@ describe('computeLeagueTables', () => {
     expect(tables.weeklyMatchups[2]).toHaveLength(1);
     expect(tables.standings.map((s) => s.uid)).toEqual(['b', 'a']);
     expect(tables.standings[0]).toMatchObject({ wins: 1, losses: 1, currentRank: 1 });
+  });
+});
+
+// A director can field more than one corps class, which means more than one
+// matchup per week. Both of these used to be wrong: weekly scores were summed
+// across every class and compared in a class-scoped matchup, and only the
+// FIRST matchup a member appeared in was visible to streaks and trend.
+describe('multi-class members', () => {
+  const classDay = (
+    offSeasonDay: number,
+    results: Array<[string, string, number]>
+  ): LeagueRecapDay => ({
+    offSeasonDay,
+    shows: [
+      {
+        results: results.map(([uid, corpsClass, totalScore]) => ({
+          uid,
+          corpsClass,
+          totalScore,
+        })),
+      },
+    ],
+  });
+
+  const classWeekDoc = (
+    week: number,
+    world: Array<[string, string]>,
+    sound: Array<[string, string]>
+  ) => ({
+    id: `week-${week}`,
+    worldClassMatchups: world.map((pair) => ({ pair })),
+    soundSportMatchups: sound.map((pair) => ({ pair })),
+  });
+
+  it('scores each matchup in the class it was contested in', () => {
+    const recaps = [
+      classDay(1, [
+        ['a', 'worldClass', 90],
+        ['a', 'soundSport', 40],
+        ['b', 'worldClass', 85],
+        ['c', 'soundSport', 60],
+      ]),
+    ];
+    const members = ['a', 'b', 'c'];
+    const results = buildWeeklyResults(recaps, members);
+    const classResults = buildWeeklyClassResults(recaps, members);
+    const matchups = buildMatchupsByWeek([classWeekDoc(1, [['a', 'b']], [['a', 'c']])], members, 1);
+
+    const standings = computeMemberStandings(members, results, matchups, classResults);
+    const byUid = Object.fromEntries(standings.map((s) => [s.uid, s]));
+
+    // a's combined week is 130. Compared as a total, a beats c's 60 in
+    // SoundSport on the strength of a World Class score.
+    expect(byUid.a.wins).toBe(1); // beat b 90-85 in World Class
+    expect(byUid.a.losses).toBe(1); // lost to c 40-60 in SoundSport
+    expect(byUid.c.wins).toBe(1);
+    expect(byUid.b.losses).toBe(1);
+  });
+
+  it('counts both of a week’s matchups toward the streak', () => {
+    const recaps = [
+      classDay(1, [
+        ['a', 'worldClass', 90],
+        ['a', 'soundSport', 70],
+        ['b', 'worldClass', 85],
+        ['c', 'soundSport', 60],
+      ]),
+    ];
+    const members = ['a', 'b', 'c'];
+    const standings = computeMemberStandings(
+      members,
+      buildWeeklyResults(recaps, members),
+      buildMatchupsByWeek([classWeekDoc(1, [['a', 'b']], [['a', 'c']])], members, 1),
+      buildWeeklyClassResults(recaps, members)
+    );
+
+    const a = standings.find((s) => s.uid === 'a')!;
+    expect(a.streakType).toBe('W');
+    expect(a.streak).toBe(2);
+  });
+
+  it('treats sitting a class out as a zero, not as the combined total', () => {
+    const recaps = [
+      classDay(1, [
+        ['a', 'worldClass', 95],
+        ['b', 'soundSport', 30],
+      ]),
+    ];
+    const members = ['a', 'b'];
+    const standings = computeMemberStandings(
+      members,
+      buildWeeklyResults(recaps, members),
+      buildMatchupsByWeek([classWeekDoc(1, [], [['a', 'b']])], members, 1),
+      buildWeeklyClassResults(recaps, members)
+    );
+
+    // a never fielded a SoundSport corps, so b wins the SoundSport matchup 30-0
+    // rather than losing to a's 95-point World Class run.
+    const byUid = Object.fromEntries(standings.map((s) => [s.uid, s]));
+    expect(byUid.b.wins).toBe(1);
+    expect(byUid.a.losses).toBe(1);
   });
 });

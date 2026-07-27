@@ -12,13 +12,22 @@ export interface League {
   id: string;
   name: string;
   description: string;
+  /** The league owner — one director, the only one who can hand it over. */
   creatorId: string;
+  /** Additional directors who can run the league (see utils/leaguePermissions). */
+  commissioners?: string[];
   createdAt: Timestamp;
 
   // Membership
   members: string[];
   maxMembers: number;
   isPublic: boolean;
+  /** Discovery taxonomy set by the commissioner (updateLeagueSettings). */
+  tag?: 'competitive' | 'casual' | 'roleplay' | 'dynasty' | null;
+  /** Auto-provisioned beginner league (callable/rookieLeague.js). */
+  isRookieCircuit?: boolean;
+  /** Commissioner's pinned note, shown above every tab. */
+  announcement?: { text: string; setBy?: string; setAt?: Timestamp } | null;
   /** Legacy only — new leagues keep the code in meta/private (see useLeagueInviteCode). */
   inviteCode?: string;
 
@@ -57,7 +66,16 @@ export interface LeagueSeasonActivity {
 }
 
 export interface LeagueSettings {
-  scoringFormat: 'circuit' | 'weekly' | 'total';
+  /**
+   * How many regular-season seeds reach Finals, where the title is decided
+   * (functions/src/helpers/leagueChampion.js). The one league setting that
+   * changes how a season ends.
+   *
+   * `scoringFormat`, `matchupType` and `playoffSize` used to live here and were
+   * read by nothing — settings a commissioner appeared to choose that could not
+   * affect their league. Alternate formats are real future work
+   * (docs/GAMIFICATION.md); until they exist, the fields are gone.
+   */
   finalsSize: number;
   prizePool: number;
   /** CorpsCoin fee charged to every joiner (creator included), paid into the prize pool */

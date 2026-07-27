@@ -54,7 +54,16 @@ export const SmackTalkInput = ({ leagueId, userProfile: _userProfile, disabled =
 };
 
 // Leave League Confirmation Modal
-export const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) => {
+export const LeaveLeagueModal = ({
+  leagueName,
+  onClose,
+  onConfirm,
+  isLoading,
+  entryFee = 0,
+  isCommissioner = false,
+  isLastMember = false,
+  escrowReturned = 0,
+}) => {
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') onClose();
@@ -97,10 +106,32 @@ export const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) 
             <p className="text-sm text-muted mb-1">Are you sure?</p>
             <p className="text-base font-bold text-white">{leagueName}</p>
           </div>
-          <div className="bg-red-500/10 border border-red-500/30 p-2.5">
+          <div className="bg-red-500/10 border border-red-500/30 p-2.5 space-y-1.5">
             <p className="text-[11px] text-red-400 text-center">
-              You'll lose access to standings, matchups, and chat history.
+              You&apos;ll lose access to standings, matchups, and chat history.
             </p>
+            {/* Leaving forfeits the entry fee, and nothing used to say so —
+                a director could walk away from a paid league and only find
+                out from their CorpsCoin balance. */}
+            {entryFee > 0 && !isLastMember && (
+              <p className="text-[11px] text-red-400 text-center">
+                Your {entryFee.toLocaleString()} CC entry fee stays in the prize pool. Rejoining
+                costs it again.
+              </p>
+            )}
+            {isLastMember && (
+              <p className="text-[11px] text-red-400 text-center">
+                You&apos;re the last member — the league will be dissolved
+                {escrowReturned > 0
+                  ? ` and its ${escrowReturned.toLocaleString()} CC of escrow returned to you.`
+                  : '.'}
+              </p>
+            )}
+            {isCommissioner && !isLastMember && (
+              <p className="text-[11px] text-red-400 text-center">
+                Another member will become commissioner in your place.
+              </p>
+            )}
           </div>
         </div>
 

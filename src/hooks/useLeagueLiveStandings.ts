@@ -17,50 +17,62 @@ export interface LiveStandingsResult {
   standings: LeagueStandingRow[];
   /** When the backend last pushed a standings update, or null if never. */
   lastUpdated: Date | null;
+  /**
+   * True when these rows are the client-side fallback rather than the
+   * authoritative backend table — the view should say so rather than present
+   * a provisional record as settled.
+   */
+  isProvisional: boolean;
 }
 
 /**
- * Why local state rather than `queryClient.setQueryData`:
+ * The league's standings, from the ONE source that owns them.
  *
- * This feed has two writers — the streamed backend document and the table the
- * client computes from recaps — and the view has always been last-writer-wins
- * between them (the subscription typically lands first, the computation
- * overwrites it, and any later backend push wins again). Modelling that in the
- * query cache would mean a `useQuery` whose queryFn never resolves, purely so
- * something can read back what the snapshot wrote. It also carries a
- * `lastUpdated` stamp that exists only on the client and has no place in a
- * cached server payload, and no second consumer that would benefit from cache
- * sharing. `useLeagueSubscription` in useLeagues.ts does use setQueryData —
- * correctly, because `useLeague` already owns that key and the snapshot is the
- * only writer.
+ * This used to have two writers racing each other. The streamed backend
+ * document and a table the client computed from recaps were layered
+ * last-writer-wins: the subscription landed first, the computation overwrote
+ * it, a later backend push overwrote that. The two did not agree — the server
+ * resolved matchups on each corps' most recent show score while the client
+ * summed the week's recap scores — so a member's record, rank, streak and
+ * playoff position visibly changed with nothing happening in the game. Nothing
+ * erodes trust in a competition faster.
+ *
+ * The backend document is now authoritative, always. The computed table is a
+ * FALLBACK only, used when the league has no standings rows at all (a league
+ * whose first week has not resolved yet, or one created before the backend
+ * materialized standings). Once the server has rows, they win and stay won —
+ * a later computation can never overwrite them.
+ *
+ * Local state rather than `queryClient.setQueryData` because this carries a
+ * `lastUpdated` stamp that exists only on the client, and has no second
+ * consumer that would benefit from cache sharing. `useLeagueSubscription` in
+ * useLeagues.ts does use setQueryData — correctly, because `useLeague` already
+ * owns that key and the snapshot is its only writer.
  *
  * @param leagueId  League whose standings document to stream.
- * @param computedStandings  The locally computed table, or null when there is
- *   nothing to compute from yet. Null is never published, so an empty season
- *   cannot blank out a backend standings push.
+ * @param computedStandings  The locally computed fallback table, or null when
+ *   there is nothing to compute from yet.
  */
 export function useLeagueLiveStandings(
   leagueId: string | undefined,
   computedStandings: LeagueMemberStanding[] | null
 ): LiveStandingsResult {
-  const [standings, setStandings] = useState<LeagueStandingRow[]>([]);
+  const [serverStandings, setServerStandings] = useState<LeagueStandingRow[] | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (!computedStandings) return;
-    setStandings(computedStandings);
-  }, [computedStandings]);
-
-  useEffect(() => {
+    setServerStandings(null);
+    setLastUpdated(null);
     if (!leagueId) return;
 
     const unsubscribe = subscribeToStandings(
       leagueId,
       (standingsData) => {
         if (standingsData && standingsData.length > 0) {
-          // Backend standings are already sorted - use them directly
+          // Backend standings are already sorted (helpers/leagueStandings.js
+          // compareStandingRows) — rank is position, never recomputed here.
           const rows = standingsData as unknown as LeagueStandingRow[];
-          setStandings(
+          setServerStandings(
             rows.map((s, idx) => ({
               ...s,
               currentRank: idx + 1,
@@ -83,5 +95,12 @@ export function useLeagueLiveStandings(
     return () => unsubscribe();
   }, [leagueId]);
 
-  return { standings, lastUpdated };
+  return {
+    standings: serverStandings ?? computedStandings ?? [],
+    // Only the server document has a real "last updated" moment; the fallback
+    // table is derived on the fly and must not claim one.
+    lastUpdated: serverStandings ? lastUpdated : null,
+    /** True while the view is showing the client-side fallback. */
+    isProvisional: !serverStandings,
+  };
 }

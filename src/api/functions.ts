@@ -454,6 +454,55 @@ export const generateMatchups = createCallable<
   { leagueId: string; week: number },
   { success: boolean; matchups?: unknown[]; message?: string }
 >('generateMatchups');
+/**
+ * The only matchup generator that can OVERWRITE an existing week.
+ * `generateMatchups` throws `already-exists` unconditionally, so the settings
+ * tab's "Regenerate" button — which prompts "this will replace them" — has to
+ * come here or it fails 100% of the time.
+ */
+export const triggerMatchupGeneration = createCallable<
+  { leagueId: string; week: number; forceRegenerate?: boolean },
+  { success: boolean; matchups?: Record<string, number>; message?: string }
+>('triggerMatchupGeneration');
+export const updateLeagueSettings = createCallable<
+  {
+    leagueId: string;
+    settings: {
+      name?: string;
+      description?: string;
+      isPublic?: boolean;
+      maxMembers?: number;
+      tag?: string | null;
+      finalsSize?: number;
+      /** Pinned note, or null to unpin. */
+      announcement?: string | null;
+    };
+  },
+  { success: boolean; changed: number; message: string }
+>('updateLeagueSettings');
+export const recomputeLeagueStandings = createCallable<
+  { leagueId: string },
+  { success: boolean; rows: number; message: string }
+>('recomputeLeagueStandings');
+export const overrideMatchupResult = createCallable<
+  {
+    leagueId: string;
+    week: number;
+    corpsClass: string;
+    matchupIndex: number;
+    /** A participant's uid, or 'tie'. */
+    winner: string;
+  },
+  { success: boolean; rows: number; message: string }
+>('overrideMatchupResult');
+export const setCoCommissioner = createCallable<
+  { leagueId: string; memberId: string; grant: boolean },
+  { success: boolean; changed: boolean; message: string }
+>('setCoCommissioner');
+export const transferCommissioner = createCallable<
+  { leagueId: string; newCommissionerUid: string },
+  { success: boolean; message: string }
+>('transferCommissioner');
 export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>(
   'updateMatchupResults'
 );

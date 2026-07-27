@@ -48,6 +48,8 @@ export interface UseLeagueDetailResult {
   currentWeek: number;
   weeklyMatchups: MatchupsByWeek;
   weeklyResults: WeeklyResults;
+  /** Raw `week-N` documents, for views that derive their own figures. */
+  matchupDocs: LeagueMatchupDoc[];
   /** The computed table, or null when there is nothing to compute from. */
   computedStandings: LeagueMemberStanding[] | null;
   loading: boolean;
@@ -175,6 +177,7 @@ export function useLeagueDetail(league: LeagueLike | null | undefined): UseLeagu
     currentWeek,
     weeklyMatchups: tables?.weeklyMatchups ?? NO_MATCHUPS,
     weeklyResults: tables?.weeklyResults ?? NO_RESULTS,
+    matchupDocs,
     computedStandings: tables?.standings ?? null,
     loading,
     loadError: isError,

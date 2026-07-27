@@ -6,7 +6,7 @@
 // Laws: No glow, no shadow, tight spacing, data-rich cards
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Users,
   Trophy,
@@ -28,6 +28,7 @@ import {
   useJoinLeague,
   useJoinLeagueByCode,
   useLeaveLeague,
+  useLeague,
 } from '../hooks/useLeagues';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
@@ -53,15 +54,21 @@ const LEAGUE_TAGS = {
   dynasty: { label: 'Dynasty', color: 'text-secondary bg-surface-raised' },
   weekly: { label: 'Weekly', color: 'text-blue-400 bg-blue-500/10' },
   public: { label: 'Public', color: 'text-muted bg-white/5' },
+  rookie: { label: 'Rookie', color: 'text-brand bg-brand/10' },
 };
 
+/** Filter chips over the discover grid, in the order they read best. */
+const DISCOVER_FILTERS = ['competitive', 'casual', 'roleplay', 'dynasty', 'rookie'];
+
+// `league.tag` is the taxonomy commissioners now set (updateLeagueSettings).
+// This used to read isCompetitive / isDynasty / type — three fields that
+// nothing in the codebase ever wrote — so every league in the browse grid
+// rendered as "Casual", and discovery had no signal to filter on at all.
 const getLeagueTags = (league) => {
   const tags = [];
-  if (league.isCompetitive || league.type === 'competitive') tags.push('competitive');
-  else if (league.type === 'casual') tags.push('casual');
-  if (league.isDynasty) tags.push('dynasty');
+  if (LEAGUE_TAGS[league.tag]) tags.push(league.tag);
+  if (league.isRookieCircuit) tags.push('rookie');
   if (league.isPublic) tags.push('public');
-  if (tags.length === 0) tags.push('casual');
   return tags;
 };
 
@@ -376,15 +383,17 @@ const EmptyMyLeagues = ({ onCreate }) => (
 // Discovery only lists leagues with at least one director competing this
 // season, so an empty grid usually means nobody has set their corps up yet
 // rather than that no leagues exist — say so, or it reads as a bug.
-const EmptyDiscover = ({ searchTerm }) => (
+const EmptyDiscover = ({ searchTerm, hasFilter }) => (
   <div className="col-span-2 p-6 bg-surface-card border-2 border-dashed border-line text-center">
     <Users className="w-8 h-8 text-muted mx-auto mb-2" />
     <p className="text-sm text-muted">
-      {searchTerm ? 'No leagues match your search' : 'No leagues are competing yet this season'}
+      {searchTerm || hasFilter
+        ? 'No leagues match your search'
+        : 'No leagues are competing yet this season'}
     </p>
     <p className="text-xs text-muted mt-1">
-      {searchTerm
-        ? 'Try a different search term'
+      {searchTerm || hasFilter
+        ? 'Try a different search term or clear the filters'
         : 'Leagues appear here once a member registers a corps. Create one to get started!'}
     </p>
   </div>
@@ -397,9 +406,15 @@ const EmptyDiscover = ({ searchTerm }) => (
 const Leagues = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  // The league being viewed lives in the URL, not in component state. That is
+  // what makes a league linkable, bookmarkable, restorable on refresh, and
+  // reachable from the champion notification the backend has always written as
+  // /leagues/{leagueId}.
+  const { leagueId: routeLeagueId, tab: routeTab } = useParams();
+  const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLeague, setSelectedLeague] = useState(null);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [showQuickJoin, setShowQuickJoin] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [joiningByCode, setJoiningByCode] = useState(false);
@@ -449,6 +464,21 @@ const Leagues = () => {
     }
   }, [searchParams, setSearchParams]);
 
+  // Resolve the routed league. Prefer the copy already in "My Leagues" so
+  // navigating from the list is instant, and fall back to a direct fetch for a
+  // link opened cold — including a link to a league the viewer is not in.
+  const routedFromMine = useMemo(
+    () => (routeLeagueId ? myLeagues.find((l) => l.id === routeLeagueId) : null),
+    [myLeagues, routeLeagueId]
+  );
+  const { data: fetchedLeague, isLoading: loadingRoutedLeague } = useLeague(
+    routeLeagueId && !routedFromMine ? routeLeagueId : undefined
+  );
+  const selectedLeague = routedFromMine || fetchedLeague || null;
+
+  const openLeague = useCallback((league) => navigate(`/leagues/${league.id}`), [navigate]);
+  const closeLeague = useCallback(() => navigate('/leagues'), [navigate]);
+
   // Flatten public leagues
   const availableLeagues = useMemo(() => {
     if (!publicLeaguesData?.pages) return [];
@@ -472,10 +502,17 @@ const Leagues = () => {
     let filtered = availableLeagues.filter((league) => !myLeagueIds.has(league.id));
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter((league) => league.name.toLowerCase().includes(term));
+      filtered = filtered.filter(
+        (league) =>
+          league.name.toLowerCase().includes(term) ||
+          (league.description || '').toLowerCase().includes(term)
+      );
+    }
+    if (activeFilter) {
+      filtered = filtered.filter((league) => getLeagueTags(league).includes(activeFilter));
     }
     return filtered;
-  }, [availableLeagues, myLeagues, searchTerm]);
+  }, [availableLeagues, myLeagues, searchTerm, activeFilter]);
 
   // Handlers
   const handleCreateLeague = async (leagueData) => {
@@ -521,11 +558,44 @@ const Leagues = () => {
     try {
       await leaveLeagueMutation.mutateAsync(leagueId);
       toast.success('Left league');
-      setSelectedLeague(null);
+      closeLeague();
     } catch (error) {
       toast.error(error.message || 'Failed to leave');
     }
   };
+
+  // A routed league that is still loading, or that does not exist / is not
+  // visible to this viewer. Silently redirecting would make a shared link look
+  // broken, so say which it is.
+  if (routeLeagueId && !selectedLeague) {
+    if (loadingRoutedLeague || loadingMyLeagues) {
+      return (
+        <div className="h-full flex items-center justify-center bg-background">
+          <div className="text-center">
+            <div className="w-5 h-5 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <p className="text-xs text-muted">Loading league…</p>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="h-full flex items-center justify-center bg-background px-6">
+        <div className="p-6 bg-surface-card border-2 border-dashed border-line text-center max-w-sm">
+          <Trophy className="w-8 h-8 text-muted mx-auto mb-3" />
+          <h2 className="text-sm font-bold text-white mb-1">League not found</h2>
+          <p className="text-xs text-muted mb-4">
+            This league may have been dissolved, or it&apos;s private and you&apos;re not a member.
+          </p>
+          <button
+            onClick={closeLeague}
+            className="px-4 py-2 text-xs font-bold text-white bg-interactive hover:bg-interactive-hover"
+          >
+            Back to Leagues
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // If league selected, show the LeagueDetailView
   if (selectedLeague) {
@@ -534,7 +604,13 @@ const Leagues = () => {
         league={selectedLeague}
         userProfile={userProfile}
         userId={user?.uid}
-        onBack={() => setSelectedLeague(null)}
+        initialTab={routeTab}
+        onTabChange={(tab) =>
+          navigate(`/leagues/${selectedLeague.id}${tab === 'standings' ? '' : `/${tab}`}`, {
+            replace: true,
+          })
+        }
+        onBack={closeLeague}
         onLeave={() => handleLeaveLeague(selectedLeague.id)}
       />
     );
@@ -603,7 +679,7 @@ const Leagues = () => {
                   league={league}
                   userProfile={userProfile}
                   currentWeek={currentWeek}
-                  onClick={() => setSelectedLeague(league)}
+                  onClick={() => openLeague(league)}
                 />
               ))}
             </div>
@@ -637,6 +713,29 @@ const Leagues = () => {
                 className="w-full h-11 pl-10 pr-4 bg-background border border-line-strong text-base text-white focus:outline-none focus:border-interactive placeholder:text-muted"
               />
             </div>
+
+            {/* Discovery had exactly one signal — a name search. These chips
+                filter on the league type its commissioner set. */}
+            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-0.5">
+              {DISCOVER_FILTERS.map((filter) => {
+                const config = LEAGUE_TAGS[filter];
+                const isActive = activeFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setActiveFilter(isActive ? null : filter)}
+                    aria-pressed={isActive}
+                    className={`flex-shrink-0 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider border transition-colors ${
+                      isActive
+                        ? 'border-interactive text-white bg-interactive/10'
+                        : 'border-line text-muted hover:border-line-strong hover:text-white'
+                    }`}
+                  >
+                    {config.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* League Grid */}
@@ -649,7 +748,7 @@ const Leagues = () => {
             ) : (
               <>
                 {discoverLeagues.length === 0 ? (
-                  <EmptyDiscover searchTerm={searchTerm} />
+                  <EmptyDiscover searchTerm={searchTerm} hasFilter={!!activeFilter} />
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {discoverLeagues.map((league) => (

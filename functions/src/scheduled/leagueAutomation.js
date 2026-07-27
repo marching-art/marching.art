@@ -17,10 +17,19 @@ const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+// One pairing implementation, shared with the commissioner callable. The
+// scheduled job used to carry a near-identical private copy that had already
+// drifted from it (differing bye shape), so automated and manual generation
+// could produce structurally different matchup documents.
+const {
+  smartPairMembers,
+  buildPairingHistory,
+  recordPairingsInHistory,
+} = require("../helpers/leagueHelpers");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
-const { buildMatchupResultPushes } = require("../helpers/matchupResults");
-const { sendPushNotification, PUSH_TYPES } = require("../helpers/pushService");
+const { detectRivalries, generateLeagueRecapsForWeek } = require("../helpers/leagueRecaps");
+const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
 const {
   isClassActiveThisSeason,
   computeSeasonActivity,
@@ -43,268 +52,28 @@ async function getCurrentWeek(db) {
 }
 
 /**
- * Smart pairing algorithm - pairs players by similar standings
- * This keeps matchups competitive throughout the season
- */
-function smartPairMembers(members, standings) {
-  if (members.length < 2) {
-    return members.length === 1
-      ? [{ pair: [members[0], null], winner: members[0], completed: true, isBye: true }]
-      : [];
-  }
-
-  // Sort members by their standings (wins, then points)
-  const sortedMembers = [...members].sort((a, b) => {
-    const statsA = standings[a] || { wins: 0, totalPoints: 0 };
-    const statsB = standings[b] || { wins: 0, totalPoints: 0 };
-
-    // Primary: wins descending
-    if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
-    // Secondary: total points descending
-    return statsB.totalPoints - statsA.totalPoints;
-  });
-
-  const matchups = [];
-  const paired = new Set();
-
-  // Pair adjacent players in standings (1v2, 3v4, etc.)
-  // This ensures similar-skill matchups
-  for (let i = 0; i < sortedMembers.length - 1; i += 2) {
-    const player1 = sortedMembers[i];
-    const player2 = sortedMembers[i + 1];
-
-    if (!paired.has(player1) && !paired.has(player2)) {
-      // Randomize home/away to keep it fair over season
-      const isReversed = Math.random() > 0.5;
-      matchups.push({
-        pair: isReversed ? [player2, player1] : [player1, player2],
-        winner: null,
-        scores: null,
-        completed: false,
-        isBye: false
-      });
-      paired.add(player1);
-      paired.add(player2);
-    }
-  }
-
-  // Handle odd player - gets a bye
-  for (const member of sortedMembers) {
-    if (!paired.has(member)) {
-      matchups.push({
-        pair: [member, null],
-        winner: member,
-        scores: null,
-        completed: true,
-        isBye: true
-      });
-    }
-  }
-
-  return matchups;
-}
-
-/**
- * Detect rivalries based on matchup history
- * Returns rivalry data for players who have faced each other multiple times
+ * SCHEDULED: Make sure every league has matchups for the weeks it needs.
  *
- * OPTIMIZATION: Only create records for pairs that actually played
- * (previously O(n²) initialization for ALL possible pairs)
- */
-function detectRivalries(matchupHistory) {
-  const h2hRecords = {};
-
-  // Process matchup history - only create records for actual matches
-  for (const weekData of Object.values(matchupHistory)) {
-    for (const corpsClass of CORPS_CLASSES) {
-      const matchups = weekData[`${corpsClass}Matchups`] || [];
-      for (const matchup of matchups) {
-        if (!matchup.pair || !matchup.pair[0] || !matchup.pair[1]) continue;
-        if (!matchup.completed) continue;
-
-        const [p1, p2] = matchup.pair.sort();
-        const key = `${p1}_${p2}`;
-
-        // Create record on first encounter (lazy initialization)
-        if (!h2hRecords[key]) {
-          h2hRecords[key] = {
-            player1: p1,
-            player2: p2,
-            p1Wins: 0,
-            p2Wins: 0,
-            ties: 0,
-            totalMatches: 0,
-            closeMatches: 0,
-            lastMatchWeek: 0
-          };
-        }
-
-        h2hRecords[key].totalMatches++;
-        h2hRecords[key].lastMatchWeek = Math.max(h2hRecords[key].lastMatchWeek, weekData.week || 0);
-
-        if (matchup.winner === matchup.pair[0]) {
-          if (matchup.pair[0] === p1) h2hRecords[key].p1Wins++;
-          else h2hRecords[key].p2Wins++;
-        } else if (matchup.winner === matchup.pair[1]) {
-          if (matchup.pair[1] === p1) h2hRecords[key].p1Wins++;
-          else h2hRecords[key].p2Wins++;
-        } else {
-          h2hRecords[key].ties++;
-        }
-
-        // Track close matches (determined by score margin)
-        if (matchup.scores) {
-          const score1 = matchup.scores[matchup.pair[0]] || 0;
-          const score2 = matchup.scores[matchup.pair[1]] || 0;
-          const margin = Math.abs(score1 - score2);
-          if (margin < 5) h2hRecords[key].closeMatches++;
-        }
-      }
-    }
-  }
-
-  // Identify rivalries: 3+ matches with close record or multiple close games
-  const rivalries = [];
-  for (const [, record] of Object.entries(h2hRecords)) {
-    if (record.totalMatches >= 3) {
-      const winDiff = Math.abs(record.p1Wins - record.p2Wins);
-      const isCloseRecord = winDiff <= 2;
-      const hasCloseGames = record.closeMatches >= 2;
-
-      if (isCloseRecord || hasCloseGames) {
-        rivalries.push({
-          ...record,
-          rivalryScore: record.totalMatches + record.closeMatches * 2 - winDiff,
-          intensity: record.closeMatches >= 3 ? 'intense' : record.totalMatches >= 5 ? 'established' : 'emerging'
-        });
-      }
-    }
-  }
-
-  return rivalries.sort((a, b) => b.rivalryScore - a.rivalryScore);
-}
-
-/**
- * Generate weekly recap for a league
- */
-function generateWeeklyRecap(weekMatchups, standings, memberProfiles) {
-  const recap = {
-    highlights: [],
-    stats: {
-      totalMatchups: 0,
-      totalByes: 0,
-      biggestUpset: null,
-      closestMatch: null,
-      highestScorer: null,
-      playerOfWeek: null
-    }
-  };
-
-  let closestMargin = Infinity;
-  let biggestUpsetMargin = 0;
-  let highestScore = 0;
-
-  for (const corpsClass of CORPS_CLASSES) {
-    const matchups = weekMatchups[`${corpsClass}Matchups`] || [];
-
-    for (const matchup of matchups) {
-      if (matchup.isBye) {
-        recap.stats.totalByes++;
-        continue;
-      }
-
-      recap.stats.totalMatchups++;
-
-      if (!matchup.completed || !matchup.scores) continue;
-
-      const [p1, p2] = matchup.pair;
-      const score1 = matchup.scores[p1] || 0;
-      const score2 = matchup.scores[p2] || 0;
-      const margin = Math.abs(score1 - score2);
-
-      // Track closest match
-      if (margin < closestMargin && margin > 0) {
-        closestMargin = margin;
-        recap.stats.closestMatch = {
-          player1: memberProfiles[p1]?.displayName || p1,
-          player2: memberProfiles[p2]?.displayName || p2,
-          score1,
-          score2,
-          margin,
-          corpsClass
-        };
-      }
-
-      // Track upset (lower-ranked player beating higher-ranked)
-      const rank1 = standings[p1]?.rank || 999;
-      const rank2 = standings[p2]?.rank || 999;
-      const winner = matchup.winner;
-      const loser = winner === p1 ? p2 : p1;
-      const winnerRank = winner === p1 ? rank1 : rank2;
-      const loserRank = winner === p1 ? rank2 : rank1;
-
-      if (winnerRank > loserRank + 2) { // At least 3 rank difference
-        const upsetMagnitude = winnerRank - loserRank;
-        if (upsetMagnitude > biggestUpsetMargin) {
-          biggestUpsetMargin = upsetMagnitude;
-          recap.stats.biggestUpset = {
-            winner: memberProfiles[winner]?.displayName || winner,
-            loser: memberProfiles[loser]?.displayName || loser,
-            winnerRank,
-            loserRank,
-            magnitude: upsetMagnitude,
-            corpsClass
-          };
-        }
-      }
-
-      // Track highest scorer
-      const maxScore = Math.max(score1, score2);
-      if (maxScore > highestScore) {
-        highestScore = maxScore;
-        const scorer = score1 > score2 ? p1 : p2;
-        recap.stats.highestScorer = {
-          player: memberProfiles[scorer]?.displayName || scorer,
-          playerId: scorer,
-          score: maxScore,
-          corpsClass
-        };
-      }
-    }
-  }
-
-  // Generate highlight sentences
-  if (recap.stats.biggestUpset) {
-    recap.highlights.push({
-      type: 'upset',
-      text: `Upset Alert! ${recap.stats.biggestUpset.winner} (ranked #${recap.stats.biggestUpset.winnerRank}) defeated ${recap.stats.biggestUpset.loser} (ranked #${recap.stats.biggestUpset.loserRank})!`
-    });
-  }
-
-  if (recap.stats.closestMatch && recap.stats.closestMatch.margin < 3) {
-    recap.highlights.push({
-      type: 'close_game',
-      text: `Nail-biter! ${recap.stats.closestMatch.player1} edged out ${recap.stats.closestMatch.player2} by just ${recap.stats.closestMatch.margin.toFixed(1)} points!`
-    });
-  }
-
-  if (recap.stats.highestScorer) {
-    recap.highlights.push({
-      type: 'top_scorer',
-      text: `${recap.stats.highestScorer.player} dominated with ${recap.stats.highestScorer.score.toFixed(1)} points this week!`
-    });
-  }
-
-  return recap;
-}
-
-/**
- * SCHEDULED: Generate weekly matchups for ALL leagues
- * Runs Sunday 11:59 PM ET to prepare matchups before Monday notifications
+ * Runs DAILY, not on a fixed Sunday slot. The old `59 23 * * 0` schedule
+ * assumed a season week boundary always lands on Sunday night, but weeks are
+ * `ceil((activeDay - springTrainingDays) / 7)` from the season's start date
+ * (helpers/gameDay.js) — nothing makes those agree, and nothing asserted it. A
+ * season starting on a Wednesday generated its matchups mid-week, and a single
+ * missed firing left a league with no matchups for a whole week.
+ *
+ * Generation is already idempotent (an existing week document is skipped), so
+ * running daily is free when there is nothing to do and self-healing when
+ * there is: a league created mid-week gets matchups immediately instead of
+ * waiting for Sunday, and a failed run is retried within a day.
+ *
+ * Both the CURRENT and the NEXT week are ensured. Pairing reads standings that
+ * are settled through the previous week either way — the Sunday job had exactly
+ * the same staleness, because the week it followed did not resolve until the
+ * nightly run hours later.
  */
 exports.generateWeeklyMatchups = onSchedule(
   {
-    schedule: "59 23 * * 0", // Sunday 11:59 PM
+    schedule: "0 6 * * *", // Daily 6:00 AM ET, after the nightly scoring run
     timeZone: "America/New_York",
     // Pages through every league with per-league profile/standings reads — the
     // default 60s timeout would cut the job off mid-scan as leagues grow. 540s
@@ -313,14 +82,14 @@ exports.generateWeeklyMatchups = onSchedule(
     memory: "512MiB",
   },
   async () => {
-    logger.info("Starting automated weekly matchup generation for all leagues");
+    logger.info("Ensuring league matchups exist for the current and next week");
 
     const db = getDb();
 
     try {
       // Get current week
       const currentWeek = await getCurrentWeek(db);
-      const nextWeek = currentWeek + 1;
+      const targetWeeks = [currentWeek, currentWeek + 1];
 
       // Pairing is season-scoped (see the grouping loop below); without a live
       // season there is nobody registered to pair.
@@ -330,7 +99,7 @@ exports.generateWeeklyMatchups = onSchedule(
         return;
       }
 
-      logger.info(`Generating matchups for week ${nextWeek}`);
+      logger.info(`Ensuring matchups for weeks ${targetWeeks.join(" and ")}`);
 
       let leaguesProcessed = 0;
       let matchupsGenerated = 0;
@@ -346,28 +115,35 @@ exports.generateWeeklyMatchups = onSchedule(
           const members = league.members || [];
 
           if (members.length < 2) {
-            logger.info(`Skipping league ${leagueId}: less than 2 members`);
             return { skipped: true };
           }
 
-          // Check if matchups already exist for this week
-          const matchupRef = db.doc(paths.leagueMatchupWeek(leagueId, nextWeek));
-          const existingMatchup = await matchupRef.get();
+          // Which of the target weeks are actually missing.
+          const weekRefs = targetWeeks.map((w) => db.doc(paths.leagueMatchupWeek(leagueId, w)));
+          const weekDocs = await db.getAll(...weekRefs);
+          const missingWeeks = targetWeeks.filter((_, i) => !weekDocs[i].exists);
 
-          if (existingMatchup.exists) {
-            logger.info(`Skipping league ${leagueId}: week ${nextWeek} matchups already exist`);
+          if (missingWeeks.length === 0) {
             return { skipped: true };
           }
 
-          // Fetch member profiles and standings in parallel (field mask: only
-          // activeSeasonId + corps feed isClassActiveThisSeason below).
-          const [profileDocs, standingsDoc] = await Promise.all([
+          // Fetch member profiles, standings, and the league's matchup history
+          // in parallel (profile field mask: only activeSeasonId + corps feed
+          // isClassActiveThisSeason below). The history is what stops the
+          // generator handing the same two directors to each other every week
+          // and the same director the bye every week.
+          const [profileDocs, standingsDoc, historySnapshot] = await Promise.all([
             db.getAll(
               ...members.map(memberId => db.doc(paths.userProfile(memberId))),
               { fieldMask: ["activeSeasonId", "corps"] }
             ),
-            db.doc(paths.leagueStandings(leagueId)).get()
+            db.doc(paths.leagueStandings(leagueId)).get(),
+            db.collection(paths.leagueMatchups(leagueId)).get()
           ]);
+          const pairingHistory = buildPairingHistory(
+            historySnapshot.docs.map((d) => d.data()),
+            CORPS_CLASSES
+          );
 
           const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
           const standings = {};
@@ -396,32 +172,42 @@ exports.generateWeeklyMatchups = onSchedule(
             }
           });
 
-          // Generate matchups for each corps class using smart pairing
-          const matchupData = {
-            week: nextWeek,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            autoGenerated: true,
-            pairs: []
-          };
-
+          // Generate each missing week in order, folding each week back into
+          // the pairing history so generating two weeks at once cannot hand the
+          // same two directors to each other twice.
           let leagueMatchups = 0;
-          for (const corpsClass of CORPS_CLASSES) {
-            const classMembers = membersByClass[corpsClass];
-            const matchupArrayKey = `${corpsClass}Matchups`;
+          for (const week of missingWeeks) {
+            const matchupData = {
+              week,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              autoGenerated: true,
+              pairs: []
+            };
 
-            // Use smart pairing based on standings
-            matchupData[matchupArrayKey] = smartPairMembers(classMembers, standings);
-            leagueMatchups += matchupData[matchupArrayKey].filter(m => !m.isBye).length;
+            for (const corpsClass of CORPS_CLASSES) {
+              const matchupArrayKey = `${corpsClass}Matchups`;
+              matchupData[matchupArrayKey] = smartPairMembers(
+                membersByClass[corpsClass],
+                standings,
+                pairingHistory
+              );
+              leagueMatchups += matchupData[matchupArrayKey].filter(m => !m.isBye).length;
+            }
+
+            await db.doc(paths.leagueMatchupWeek(leagueId, week)).set(matchupData);
+            recordPairingsInHistory(pairingHistory, matchupData, CORPS_CLASSES);
           }
 
-          await matchupRef.set(matchupData);
+          // The league card reads this to show "Matchup in progress". Only the
+          // commissioner path used to set it, so auto-generated leagues — i.e.
+          // nearly all of them — never showed the indicator.
+          await leagueDoc.ref.update({
+            matchupsGeneratedWeek: Math.max(...missingWeeks),
+          });
 
-          logger.info(`Generated matchups for league ${leagueId}: ${JSON.stringify({
-            worldClass: matchupData.worldClassMatchups?.length || 0,
-            openClass: matchupData.openClassMatchups?.length || 0,
-            aClass: matchupData.aClassMatchups?.length || 0,
-            soundSport: matchupData.soundSportMatchups?.length || 0
-          })}`);
+          logger.info(
+            `Generated matchups for league ${leagueId}: weeks ${missingWeeks.join(", ")}`
+          );
 
           return { processed: 1, matchupsCount: leagueMatchups };
         } catch (leagueError) {
@@ -453,12 +239,20 @@ exports.generateWeeklyMatchups = onSchedule(
 );
 
 /**
- * SCHEDULED: Generate weekly recaps for all leagues
- * Runs Sunday 10:00 PM ET after week's shows are complete
+ * SCHEDULED: Backstop weekly recap generation.
+ *
+ * The primary path is the nightly scoring run, which generates a week's recap
+ * immediately after processWeeklyMatchups resolves it (helpers/leagueRecaps.js).
+ * This job exists only to repair a week whose nightly generation failed.
+ *
+ * It runs MONDAY 07:00 ET, not Sunday 22:00. The old Sunday-evening slot was
+ * before the nightly run that resolves the week, and the recap generator skips
+ * matchups that are not completed — so every recap it ever wrote had an empty
+ * highlights[] and null stats.
  */
 exports.generateWeeklyRecaps = onSchedule(
   {
-    schedule: "0 22 * * 0", // Sunday 10:00 PM
+    schedule: "0 7 * * 1", // Monday 7:00 AM ET — after the night that resolves the week
     timeZone: "America/New_York",
     // Pages through every league with per-league matchup/profile reads — the
     // default 60s timeout would cut the job off mid-scan as leagues grow. 540s
@@ -467,133 +261,18 @@ exports.generateWeeklyRecaps = onSchedule(
     memory: "512MiB",
   },
   async () => {
-    logger.info("Starting weekly recap generation for all leagues");
-
     const db = getDb();
 
-    try {
-      const currentWeek = await getCurrentWeek(db);
-
-      if (currentWeek < 1) {
-        logger.info("Season hasn't started yet, skipping recaps");
-        return;
-      }
-
-      logger.info(`Generating recaps for week ${currentWeek}`);
-
-      let recapsGenerated = 0;
-
-      // Page through every league (see helpers/firestorePaging) — no silent cap.
-      const leaguesRef = db.collection(paths.leagues());
-      const recapResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
-        try {
-          const leagueId = leagueDoc.id;
-          const league = leagueDoc.data();
-          const members = league.members || [];
-
-          // Check if matchups exist before fetching the rest
-          const matchupRef = db.doc(paths.leagueMatchupWeek(leagueId, currentWeek));
-          const matchupDoc = await matchupRef.get();
-
-          if (!matchupDoc.exists) {
-            return { skipped: true };
-          }
-
-          const matchupData = matchupDoc.data();
-
-          // Fetch standings, profiles, and matchup history in parallel (field
-          // mask: only displayName is consumed from the profiles, by
-          // generateWeeklyRecap and buildMatchupResultPushes).
-          const [standingsDoc, profileDocs, matchupHistorySnapshot] = await Promise.all([
-            db.doc(paths.leagueStandings(leagueId)).get(),
-            members.length > 0
-              ? db.getAll(
-                  ...members.map(uid => db.doc(paths.userProfile(uid))),
-                  { fieldMask: ["displayName"] }
-                )
-              : Promise.resolve([]),
-            db.collection(paths.leagueMatchups(leagueId)).get()
-          ]);
-
-          const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
-          const standings = {};
-          standingsData.forEach((s, idx) => {
-            standings[s.uid] = { ...s, rank: idx + 1 };
-          });
-
-          const memberProfiles = {};
-          profileDocs.forEach((doc, idx) => {
-            if (doc.exists) {
-              memberProfiles[members[idx]] = doc.data();
-            }
-          });
-
-          // Generate recap
-          const recap = generateWeeklyRecap(matchupData, standings, memberProfiles);
-          recap.week = currentWeek;
-          recap.generatedAt = admin.firestore.FieldValue.serverTimestamp();
-
-          const matchupHistory = {};
-          matchupHistorySnapshot.forEach(doc => {
-            matchupHistory[doc.id] = { ...doc.data(), week: parseInt(doc.id.replace('week-', '')) };
-          });
-
-          // Detect rivalries
-          const rivalries = detectRivalries(matchupHistory);
-          recap.rivalries = rivalries.slice(0, 5); // Top 5 rivalries
-
-          // Save recap
-          await db.doc(paths.leagueWeekRecap(leagueId, currentWeek)).set(recap);
-
-          // Matchup-result pushes ride the recap: the settled matchup doc and
-          // member profiles are already in memory here. Isolated so a push
-          // failure can never fail recap generation, and preference-gated per
-          // member (pushPreferences.matchupResult).
-          try {
-            const resultPushes = buildMatchupResultPushes({
-              leagueName: league.name,
-              week: currentWeek,
-              matchupData,
-              memberProfiles,
-            });
-            const pushResults = await Promise.allSettled(
-              resultPushes.map((push) =>
-                sendPushNotification(
-                  push.uid,
-                  { title: push.title, body: push.body, url: push.url },
-                  PUSH_TYPES.MATCHUP_RESULT,
-                  push.data
-                )
-              )
-            );
-            const sent = pushResults.filter(
-              (r) => r.status === "fulfilled" && r.value === true
-            ).length;
-            if (resultPushes.length > 0) {
-              logger.info(
-                `Matchup result pushes for league ${leagueId}: sent ${sent}/${resultPushes.length}`
-              );
-            }
-          } catch (pushError) {
-            logger.error(`Matchup result pushes failed for league ${leagueId}:`, pushError);
-          }
-
-          logger.info(`Generated recap for league ${leagueId}: ${recap.highlights.length} highlights`);
-          return { generated: 1 };
-        } catch (leagueError) {
-          logger.error(`Error generating recap for league ${leagueDoc.id}:`, leagueError);
-          return { skipped: true };
-        }
-      });
-
-      recapsGenerated = recapResults.filter(r => r.generated).length;
-
-      logger.info(`Weekly recap generation complete: ${recapsGenerated} recaps generated`);
-
-    } catch (error) {
-      logger.error("Fatal error in weekly recap generation:", error);
-      throw error;
+    // The week that just ENDED is the one to summarize. getCurrentWeek at
+    // Monday morning already reports the new week, so step back one.
+    const week = (await getCurrentWeek(db)) - 1;
+    if (week < 1) {
+      logger.info("No completed week to recap yet.");
+      return;
     }
+
+    logger.info(`Backstop recap generation for week ${week}`);
+    await generateLeagueRecapsForWeek(db, week);
   }
 );
 
@@ -618,6 +297,7 @@ exports.updateLeagueRivalries = onSchedule(
 
     try {
       let rivalriesUpdated = 0;
+      const seasonUid = await getActiveSeasonUid(db);
 
       // Page through every league (see helpers/firestorePaging) — no silent cap.
       const leaguesRef = db.collection(paths.leagues());
@@ -642,16 +322,17 @@ exports.updateLeagueRivalries = onSchedule(
           // Detect rivalries
           const rivalries = detectRivalries(matchupHistory);
 
-          // Store rivalries
-          if (rivalries.length > 0) {
-            await db.doc(paths.leagueMeta(leagueId, "rivalries")).set({
-              rivalries,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-            return { updated: 1 };
-          }
-
-          return { skipped: true };
+          // Written unconditionally, and stamped with the season it describes.
+          // Skipping the write when the list came back empty meant a league
+          // that lost its rivalries — a rematch-free season, a departed member,
+          // a fresh season — kept displaying the previous set forever, with no
+          // way to tell how old it was.
+          await db.doc(paths.leagueMeta(leagueId, "rivalries")).set({
+            rivalries,
+            seasonUid: seasonUid || null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          return rivalries.length > 0 ? { updated: 1 } : { cleared: 1 };
         } catch (leagueError) {
           logger.error(`Error updating rivalries for league ${leagueDoc.id}:`, leagueError);
           return { skipped: true };
@@ -701,8 +382,8 @@ exports.triggerMatchupGeneration = onCall(
 
     const league = leagueDoc.data();
 
-    if (league.creatorId !== uid) {
-      throw new HttpsError("permission-denied", "Only the commissioner can trigger matchup generation.");
+    if (!isLeagueCommissioner(league, uid)) {
+      throw new HttpsError("permission-denied", "Only a commissioner can trigger matchup generation.");
     }
 
     const targetWeek = week || (await getCurrentWeek(db)) + 1;
@@ -727,13 +408,19 @@ exports.triggerMatchupGeneration = onCall(
       fieldMask: ["activeSeasonId", "corps"],
     });
 
-    // Build standings
+    // Build standings and the matchup history that steers pairing away from
+    // rematches and repeated byes (helpers/leagueHelpers.js).
     const standingsDoc = await db.doc(paths.leagueStandings(leagueId)).get();
     const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
     const standings = {};
     standingsData.forEach((s, idx) => {
       standings[s.uid] = { ...s, rank: idx + 1 };
     });
+    const historySnapshot = await db.collection(paths.leagueMatchups(leagueId)).get();
+    const pairingHistory = buildPairingHistory(
+      historySnapshot.docs.filter((d) => d.id !== `week-${targetWeek}`).map((d) => d.data()),
+      CORPS_CLASSES
+    );
 
     // Group by corps class — registered-this-season only, matching the
     // scheduled generator (see helpers/leagueActivity.js).
@@ -765,10 +452,15 @@ exports.triggerMatchupGeneration = onCall(
     };
 
     for (const corpsClass of CORPS_CLASSES) {
-      matchupData[`${corpsClass}Matchups`] = smartPairMembers(membersByClass[corpsClass], standings);
+      matchupData[`${corpsClass}Matchups`] = smartPairMembers(
+        membersByClass[corpsClass],
+        standings,
+        pairingHistory
+      );
     }
 
     await matchupRef.set(matchupData);
+    await leagueRef.update({ matchupsGeneratedWeek: targetWeek });
 
     return {
       success: true,

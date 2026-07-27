@@ -2,23 +2,51 @@
 // ChatTab - Dark-mode messenger styling
 // Design System: #111 received bubbles, #0057B8 sent bubbles, Commissioner badge
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Clock, Crown } from 'lucide-react';
+import { MessageSquare, Clock, Crown, Trash2, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { deleteChatMessage } from '../../../api/leagues';
 
 const ChatTab = ({
   league,
   messages,
   userProfile,
   memberProfiles,
-  isCommissioner: _isCommissioner = false,
+  isCommissioner = false,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadOlder,
+  onMarkRead,
 }) => {
   const messagesEndRef = useRef(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Looking at the conversation is what marks it read. The league card's
+  // unread dot used to read `league.hasUnreadMessages` — a field nothing wrote.
+  useEffect(() => {
+    onMarkRead?.();
+  }, [messages, onMarkRead]);
+
+  // League chat had no moderation surface at all: no delete, no report, no
+  // mute, while rendering verbatim messages to every member with no recourse.
+  const handleDelete = async (message) => {
+    if (!window.confirm('Delete this message?')) return;
+    setDeletingId(message.id);
+    try {
+      await deleteChatMessage(league.id, message.id);
+      toast.success('Message deleted.');
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete message');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Get display name
   const getDisplayName = (uid) => {
@@ -108,6 +136,21 @@ const ChatTab = ({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {/* Older history. The stream is the newest 50 and there was no way to
+            reach anything behind it — a league that talks for a season lost
+            its own history off the top of the window. */}
+        {hasMore && messages.length > 0 && (
+          <div className="flex justify-center pb-2">
+            <button
+              onClick={onLoadOlder}
+              disabled={isLoadingMore}
+              className="px-4 py-2 min-h-touch text-[10px] font-bold uppercase tracking-wider text-muted border border-line hover:border-line-strong hover:text-white disabled:opacity-50 transition-colors flex items-center gap-2"
+            >
+              {isLoadingMore && <Loader2 className="w-3 h-3 animate-spin" />}
+              {isLoadingMore ? 'Loading…' : 'Load earlier messages'}
+            </button>
+          </div>
+        )}
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center py-12">
             <div className="w-12 h-12 bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mb-3">
@@ -178,6 +221,24 @@ const ChatTab = ({
                         <span className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-muted'}`}>
                           {formatTime(item.createdAt)}
                         </span>
+                        {(isOwn || isCommissioner) && (
+                          <button
+                            onClick={() => handleDelete(item)}
+                            disabled={deletingId === item.id}
+                            aria-label="Delete message"
+                            className={`ml-1 p-1 -m-1 transition-colors disabled:opacity-40 ${
+                              isOwn
+                                ? 'text-white/50 hover:text-white'
+                                : 'text-muted hover:text-red-400'
+                            }`}
+                          >
+                            {deletingId === item.id ? (
+                              <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-2.5 h-2.5" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

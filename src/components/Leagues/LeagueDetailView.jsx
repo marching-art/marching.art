@@ -7,9 +7,9 @@
 // computation), the live feeds live in hooks/useLeagueLiveStandings and
 // hooks/useLeagueChat, and the table math itself lives in utils/leagueStats.
 
-import React, { useState, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Swords, MessageSquare, BarChart3, Bell } from 'lucide-react';
+import { Swords, MessageSquare, BarChart3, Bell, Pin } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // Import tab components
@@ -29,16 +29,46 @@ import { useLeagueChat } from '../../hooks/useLeagueChat';
 import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeagueDetailHeader from './LeagueDetailHeader';
 import LeaguePoolCard from './LeaguePoolCard';
+import { isLeagueCommissioner, isLeagueOwner } from '../../utils/leaguePermissions';
 
-const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
-  const [activeTab, setActiveTab] = useState('standings');
+const LeagueDetailView = ({
+  league,
+  userProfile,
+  userId,
+  onBack,
+  onLeave,
+  initialTab,
+  onTabChange,
+}) => {
+  // The tab lives in the URL too, so a link can point at a specific view of a
+  // league — "look at the matchups tab" is a thing members say to each other.
+  const [activeTab, setActiveTab] = useState(initialTab || 'standings');
+
+  const selectTab = useCallback(
+    (tab) => {
+      setActiveTab(tab);
+      onTabChange?.(tab);
+    },
+    [onTabChange]
+  );
+
+  // A back/forward navigation changes the route, not our state.
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) setActiveTab(initialTab);
+    // Only react to route changes; selectTab already handles in-app taps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab]);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
 
-  // Use auth userId directly for commissioner check (more reliable than profile.uid)
-  const isCommissioner = league.creatorId === userId;
+  // Use auth userId directly for commissioner checks (more reliable than
+  // profile.uid). Shared with the backend rule (utils/leaguePermissions):
+  // co-commissioners can run the league, only the owner can hand it over or
+  // change who the commissioners are.
+  const isCommissioner = isLeagueCommissioner(league, userId);
+  const isOwner = isLeagueOwner(league, userId);
 
   const {
     memberProfiles,
@@ -46,20 +76,32 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
     currentWeek,
     weeklyMatchups,
     weeklyResults,
+    matchupDocs,
     computedStandings,
     loading,
     loadError,
     retry,
   } = useLeagueDetail(league);
 
-  // Real-time standings, layered over the computed table (last writer wins).
-  const { standings, lastUpdated: standingsLastUpdated } = useLeagueLiveStandings(
-    league?.id,
-    computedStandings
-  );
+  // The backend standings document is authoritative; the computed table is a
+  // fallback for a league whose first week hasn't resolved yet. These used to
+  // race each other last-writer-wins, so a member's record changed on its own.
+  const {
+    standings,
+    lastUpdated: standingsLastUpdated,
+    isProvisional: standingsProvisional,
+  } = useLeagueLiveStandings(league?.id, computedStandings);
 
-  // Real-time chat (api helper: newest 50, delivered oldest-first)
-  const messages = useLeagueChat(league?.id);
+  // Real-time chat, with older history on demand and a read marker that
+  // finally makes the league card's unread dot mean something.
+  const {
+    messages,
+    unreadCount,
+    hasMore: hasMoreMessages,
+    isLoadingMore: loadingMoreMessages,
+    loadOlder: loadOlderMessages,
+    markRead: markChatRead,
+  } = useLeagueChat(league?.id);
 
   const handleLeaveConfirm = async () => {
     setIsLeaving(true);
@@ -143,7 +185,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
     { id: 'standings', label: 'Standings', icon: BarChart3 },
     { id: 'matchups', label: 'Matchups', icon: Swords },
     { id: 'activity', label: 'Activity', icon: Bell },
-    { id: 'chat', label: 'Chat', icon: MessageSquare, badge: messages.length > 0 },
+    // The badge is unread messages, not "any messages have ever been sent".
+    {
+      id: 'chat',
+      label: 'Chat',
+      icon: MessageSquare,
+      badge: unreadCount > 0,
+      badgeCount: unreadCount,
+    },
   ];
 
   return (
@@ -160,10 +209,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         tabs={tabs}
         activeTab={activeTab}
         onBack={onBack}
-        onOpenSettings={() => setActiveTab('settings')}
+        onOpenSettings={() => selectTab('settings')}
         onLeaveClick={() => setShowLeaveModal(true)}
         onCopyInvite={handleCopyInvite}
-        onTabChange={setActiveTab}
+        onTabChange={selectTab}
       />
 
       {/* SCROLLABLE CONTENT */}
@@ -186,6 +235,16 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             </button>
           </div>
         )}
+        {/* The commissioner's pinned note, above everything, on every tab —
+            "draft night moved to Thursday" is the sort of thing that has to be
+            impossible to miss, and chat scrolls. */}
+        {league.announcement?.text && (
+          <div className="mx-4 mt-4 px-3 py-2.5 bg-brand/5 border-l-2 border-brand flex items-start gap-2">
+            <Pin className="w-3.5 h-3.5 text-brand flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-white leading-relaxed">{league.announcement.text}</p>
+          </div>
+        )}
+
         {/* Daily prediction pool — the league's social side-pot, on the
             default tab where every member lands */}
         {activeTab === 'standings' && (
@@ -207,6 +266,8 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               currentWeek={currentWeek}
               weeklyMatchups={weeklyMatchups}
               lastUpdated={standingsLastUpdated}
+              isProvisional={standingsProvisional}
+              playoffSize={league.settings?.finalsSize || 12}
               onMatchupClick={(matchup) => {
                 if (matchup) {
                   setSelectedMatchup({
@@ -241,6 +302,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               rivalries={rivalries}
               weeklyMatchups={weeklyMatchups}
               weeklyResults={weeklyResults}
+              matchupDocs={matchupDocs}
               currentWeek={currentWeek}
               onMatchupClick={(activity) => {
                 if (activity.type === 'matchup_result' && activity.metadata?.week) {
@@ -259,7 +321,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                   }
                 }
               }}
-              onChatOpen={() => setActiveTab('chat')}
+              onChatOpen={() => selectTab('chat')}
             />
           )}
           {activeTab === 'chat' && (
@@ -270,16 +332,21 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               userProfile={userProfile}
               memberProfiles={memberProfiles}
               isCommissioner={isCommissioner}
+              hasMore={hasMoreMessages}
+              isLoadingMore={loadingMoreMessages}
+              onLoadOlder={loadOlderMessages}
+              onMarkRead={markChatRead}
             />
           )}
           {activeTab === 'settings' && isCommissioner && (
             <SettingsTab
               key="settings"
               league={league}
+              isOwner={isOwner}
               userProfile={userProfile}
               memberProfiles={memberProfiles}
               currentWeek={currentWeek}
-              onBack={() => setActiveTab('standings')}
+              onBack={() => selectTab('standings')}
             />
           )}
         </AnimatePresence>
@@ -301,6 +368,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         {showLeaveModal && (
           <LeaveLeagueModal
             leagueName={league.name}
+            entryFee={league.settings?.entryFee || 0}
+            isCommissioner={isCommissioner}
+            isLastMember={(league.members?.length || 0) <= 1 && isCommissioner}
+            escrowReturned={(league.settings?.prizePool || 0) + (league.poolCarry || 0)}
             onClose={() => setShowLeaveModal(false)}
             onConfirm={handleLeaveConfirm}
             isLoading={isLeaving}

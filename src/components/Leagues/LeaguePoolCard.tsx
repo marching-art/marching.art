@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeaguePoolCard — the league's daily prediction pool (the flagship social
 // CorpsCoin sink, GAMIFICATION.md). Members buy in
 // for a fixed ante; entrants who post a perfect prediction day split the pot
@@ -17,8 +16,22 @@ import { getGameDay } from '../../utils/dailyChallenges';
 // validates the real amount; this only drives display.
 const POOL_ANTE = 25;
 
-const LeaguePoolCard = memo(({ league, userProfile }) => {
-  const [pool, setPool] = useState(null);
+/** The pool document, narrowed to what this card renders. */
+interface PoolDoc {
+  pot?: number;
+  entrants?: Record<string, boolean>;
+  resolved?: boolean;
+  winners?: string[];
+  paidPerWinner?: number;
+}
+
+interface LeaguePoolCardProps {
+  league?: { id?: string; poolCarry?: number } | null;
+  userProfile?: { uid?: string } | null;
+}
+
+const LeaguePoolCard = memo(({ league, userProfile }: LeaguePoolCardProps) => {
+  const [pool, setPool] = useState<PoolDoc | null>(null);
   const [joining, setJoining] = useState(false);
   const gameDay = getGameDay();
 
@@ -27,13 +40,13 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
     const ref = doc(db, paths.leaguePool(league.id, gameDay));
     return onSnapshot(
       ref,
-      (snap) => setPool(snap.exists() ? snap.data() : null),
+      (snap) => setPool(snap.exists() ? (snap.data() as PoolDoc) : null),
       () => setPool(null)
     );
   }, [league?.id, gameDay]);
 
   const entrantCount = Object.keys(pool?.entrants || {}).length;
-  const isIn = !!pool?.entrants?.[userProfile?.uid];
+  const isIn = !!(userProfile?.uid && pool?.entrants?.[userProfile.uid]);
   const resolved = !!pool?.resolved;
   // Before anyone buys in, the visible pot is the carried-over amount the
   // first buy-in will fold in.
@@ -44,12 +57,13 @@ const LeaguePoolCard = memo(({ league, userProfile }) => {
   const handleJoin = async () => {
     setJoining(true);
     try {
+      if (!league?.id) return;
       const result = await joinLeaguePool({ leagueId: league.id });
       if (result.data.success && !result.data.alreadyIn) {
         toast.success(`You're in — the pot is ${result.data.pot} CC`);
       }
     } catch (error) {
-      toast.error(error.message || 'Could not join the pool');
+      toast.error(error instanceof Error ? error.message : 'Could not join the pool');
     } finally {
       setJoining(false);
     }

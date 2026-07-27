@@ -2,7 +2,7 @@
 // SettingsTab - Commissioner settings for league management
 // Includes matchup generation, league settings, and invite code management
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { m } from 'framer-motion';
 import {
   Settings,
@@ -22,14 +22,19 @@ import {
   Star,
   UserMinus,
 } from 'lucide-react';
-import { getLeagueMatchupWeek } from '../../../api/leagues';
+import { getLeagueMatchups } from '../../../api/leagues';
 import { useLeagueInviteCode, useRemoveLeagueMember } from '../../../hooks/useLeagues';
-import { generateMatchups } from '../../../api/functions';
+import { triggerMatchupGeneration } from '../../../api/functions';
 import { GAME_CONFIG } from '../../../config';
 import toast from 'react-hot-toast';
 import { Heading } from '../../ui';
 import { useEscapeKey } from '../../../hooks/useEscapeKey';
 import { getRosterSize, getActiveMemberCount, isMemberActive } from '../../../utils/leagueActivity';
+import { isLeagueCommissioner } from '../../../utils/leaguePermissions';
+import LeagueSettingsForm from './LeagueSettingsForm';
+import CommissionerTransfer from './CommissionerTransfer';
+import CoCommissionerManager from './CoCommissionerManager';
+import ResultCorrection from './ResultCorrection';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -112,6 +117,8 @@ const SettingsTab = ({
   memberProfiles = {},
   currentWeek = 1,
   onBack,
+  onSettingsSaved,
+  isOwner = false,
 }) => {
   const inviteCode = useLeagueInviteCode(league);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -125,7 +132,23 @@ const SettingsTab = ({
 
   const removeMemberMutation = useRemoveLeagueMember(league?.id);
 
-  // Check which weeks have matchups already
+  // Stable identity: this feeds the roster useMemo below and is handed to
+  // ResultCorrection, so a fresh closure each render would defeat both.
+  const getMemberName = useCallback(
+    (uid) => {
+      const profile = memberProfiles[uid] || {};
+      const displayName =
+        profile.displayName && profile.displayName !== 'Director'
+          ? profile.displayName
+          : profile.username;
+      return displayName || `Director ${String(uid).slice(0, 6)}`;
+    },
+    [memberProfiles]
+  );
+
+  // Which weeks already have matchups. ONE collection read — this was a
+  // serial getDoc per week (up to totalWeeks round trips) on every open of the
+  // settings tab. MatchupsTab already made this switch; this was missed.
   useEffect(() => {
     const checkExistingMatchups = async () => {
       if (!league?.id) return;
@@ -133,12 +156,11 @@ const SettingsTab = ({
 
       try {
         const matchupsFound = {};
-        for (let w = 1; w <= GAME_CONFIG.season.totalWeeks; w++) {
-          const data = await getLeagueMatchupWeek(league.id, w);
-          if (data) {
-            matchupsFound[w] = data;
-          }
-        }
+        const docs = await getLeagueMatchups(league.id);
+        docs.forEach((doc) => {
+          const weekMatch = doc.id.match(/^week-(\d+)$/);
+          if (weekMatch) matchupsFound[parseInt(weekMatch[1], 10)] = doc;
+        });
         setExistingMatchups(matchupsFound);
       } catch (error) {
         console.error('Error checking matchups:', error);
@@ -164,10 +186,15 @@ const SettingsTab = ({
   const handleGenerateMatchups = async () => {
     if (generating) return;
 
-    // Check if matchups already exist
-    if (existingMatchups[selectedWeek]) {
+    // This prompt used to be a lie: it promised replacement and then called
+    // `generateMatchups`, which throws `already-exists` unconditionally, so
+    // confirming produced a red error toast every single time.
+    // `triggerMatchupGeneration` is the callable that can actually overwrite.
+    const isRegenerate = Boolean(existingMatchups[selectedWeek]);
+    if (isRegenerate) {
       const confirm = window.confirm(
-        `Week ${selectedWeek} already has matchups. Generating new matchups will replace them. Continue?`
+        `Week ${selectedWeek} already has matchups. Generating new matchups will replace them, ` +
+          `and any results already folded into the standings will NOT be undone. Continue?`
       );
       if (!confirm) return;
     }
@@ -176,9 +203,10 @@ const SettingsTab = ({
     setLastGeneratedResult(null);
 
     try {
-      const result = await generateMatchups({
+      const result = await triggerMatchupGeneration({
         leagueId: league.id,
         week: selectedWeek,
+        forceRegenerate: isRegenerate,
       });
 
       if (result.data?.success) {
@@ -231,25 +259,23 @@ const SettingsTab = ({
   const roster = useMemo(() => {
     const rows = (league?.members || []).map((uid) => {
       const profile = memberProfiles[uid] || {};
-      const displayName =
-        profile.displayName && profile.displayName !== 'Director'
-          ? profile.displayName
-          : profile.username;
       const activeCorps = Object.values(profile.corps || {}).find((c) => c?.corpsName);
       return {
         uid,
-        name: displayName || `Director ${uid.slice(0, 6)}`,
+        name: getMemberName(uid),
         corpsName: activeCorps?.corpsName || null,
         isActive: isMemberActive(league, uid),
-        isCommissioner: uid === league?.creatorId,
+        isOwner: uid === league?.creatorId,
+        isCommissioner: isLeagueCommissioner(league, uid),
       };
     });
     return rows.sort((a, b) => {
+      if (a.isOwner !== b.isOwner) return a.isOwner ? -1 : 1;
       if (a.isCommissioner !== b.isCommissioner) return a.isCommissioner ? -1 : 1;
       if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-  }, [league, memberProfiles]);
+  }, [league, memberProfiles, getMemberName]);
 
   return (
     <m.div
@@ -459,6 +485,17 @@ const SettingsTab = ({
         </div>
       </div>
 
+      {/* A resolved matchup used to be final and unappealable, with no way to
+          fix a week that resolved against missing data. */}
+      <ResultCorrection
+        league={league}
+        weekData={existingMatchups[selectedWeek]}
+        week={selectedWeek}
+        corpsClasses={Object.keys(CORPS_CLASS_CONFIG)}
+        getDisplayName={getMemberName}
+        onCorrected={onSettingsSaved}
+      />
+
       {/* Invite Code Section */}
       <div className="bg-surface-card border border-line">
         <div className="px-4 py-3 border-b border-line bg-surface-raised">
@@ -495,29 +532,18 @@ const SettingsTab = ({
         </div>
       </div>
 
-      {/* League Settings Display */}
-      <div className="bg-surface-card border border-line">
-        <div className="px-4 py-3 border-b border-line bg-surface-raised">
-          <div className="flex items-center gap-2">
-            <Settings className="w-4 h-4 text-muted" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-              League Settings
-            </span>
-          </div>
-        </div>
+      {/* Editable league settings — a league used to be immutable from the
+          moment it was created (no updateLeague* callable existed at all). */}
+      <LeagueSettingsForm league={league} memberCount={memberCount} onSaved={onSettingsSaved} />
 
+      {/* Read-only league facts */}
+      <div className="bg-surface-card border border-line">
         <div className="divide-y divide-line-subtle">
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-muted">Prize Pool</span>
             <span className="text-sm font-bold text-brand">
               {/* Escrowed entry fees only — no phantom seeded pool */}
               {(league.settings?.prizePool || 0).toLocaleString()} CC
-            </span>
-          </div>
-          <div className="px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-muted">Finals Spots</span>
-            <span className="text-sm font-bold text-white">
-              {league.settings?.finalsSize || 12}
             </span>
           </div>
           <div className="px-4 py-3 flex items-center justify-between">
@@ -564,11 +590,15 @@ const SettingsTab = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-white truncate">{member.name}</span>
-                  {member.isCommissioner && (
+                  {member.isOwner ? (
                     <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand bg-surface-raised flex-shrink-0">
                       Commissioner
                     </span>
-                  )}
+                  ) : member.isCommissioner ? (
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase text-secondary bg-surface-raised flex-shrink-0">
+                      Co-Commish
+                    </span>
+                  ) : null}
                 </div>
                 <span
                   className={`text-[10px] ${member.isActive ? 'text-green-500' : 'text-muted'}`}
@@ -579,9 +609,9 @@ const SettingsTab = ({
                 </span>
               </div>
 
-              {member.isCommissioner ? (
-                // The commissioner cannot remove themselves — the league would
-                // be left with nobody able to run it. Leaving is the exit.
+              {member.isOwner ? (
+                // The owner cannot remove themselves — the league would be left
+                // with nobody able to run it. Leaving is the exit.
                 <span className="text-[10px] text-muted flex-shrink-0">—</span>
               ) : (
                 <button
@@ -601,6 +631,17 @@ const SettingsTab = ({
           ))}
         </div>
       </div>
+
+      {/* Handing the league over. Without this the only exits were "run it
+          forever" or "leave", and leaving used to orphan the league entirely:
+          every commissioner gate is creatorId === uid, so the league lost the
+          ability to run itself with no way to recover. */}
+      {isOwner && (
+        <>
+          <CoCommissionerManager league={league} roster={roster} onChanged={onSettingsSaved} />
+          <CommissionerTransfer league={league} roster={roster} onTransferred={onSettingsSaved} />
+        </>
+      )}
 
       {/* Removal is irreversible from the commissioner's side and moves
           CorpsCoin, so it always goes through an explicit confirmation. */}

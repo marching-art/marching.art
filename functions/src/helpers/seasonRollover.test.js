@@ -338,7 +338,7 @@ describe("archiveAndResetProfiles participation gate", () => {
 
 describe("archiveSeasonResultsLogic", () => {
   const leagueMembers = ["alice", "bob"];
-  const makeLeagueFixture = (leagueData = {}) =>
+  const makeLeagueFixture = (leagueData = {}, extraDocs = null) =>
     makeFakeDb({
       leagues: [
         {
@@ -368,6 +368,20 @@ describe("archiveSeasonResultsLogic", () => {
             corps: { worldClass: { corpsName: "B Corps", totalSeasonScore: 80 } },
           },
         ],
+        // The champion comes from the STANDINGS now (helpers/leagueChampion.js).
+        // It used to be whoever had the biggest corps.*.totalSeasonScore sum —
+        // a sum of each corps' LAST show score — so a 7-0 director could lose
+        // their own league to a 2-5 one who peaked on the final night.
+        [
+          `${leaguesPath}/league-1/standings/current`,
+          {
+            standings: [
+              { uid: "alice", wins: 3, losses: 0, ties: 0, totalPoints: 270, pointsAgainst: 240 },
+              { uid: "bob", wins: 0, losses: 3, ties: 0, totalPoints: 240, pointsAgainst: 270 },
+            ],
+          },
+        ],
+        ...(extraDocs || []),
       ]),
     });
 

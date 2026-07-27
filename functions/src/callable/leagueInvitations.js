@@ -8,6 +8,9 @@ const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { createUserNotification } = require("../helpers/userNotifications");
+const { chargeEntryFeeInTransaction } = require("../helpers/leagueEconomy");
+const { refreshLeagueActivity } = require("../helpers/leagueActivity");
+const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
 
 // Cross-user notifications MUST be written here with the Admin SDK — Firestore
 // rules only let a client write into its OWN notifications subcollection, so a
@@ -31,6 +34,20 @@ async function createUserLeagueNotification(db, recipientUid, notification) {
 // document, standings, and profile.leagueIds stay consistent with every other
 // code path.
 
+
+/**
+ * How long a pending invitation stands. Long enough to survive a holiday,
+ * short enough that a stale offer doesn't outlive the league that sent it.
+ */
+const INVITATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Has this invitation aged out? Missing expiresAt = legacy, never expires. */
+function isInvitationExpired(invitation, now = Date.now()) {
+  const expiresAt = invitation?.expiresAt;
+  if (!expiresAt) return false;
+  const millis = typeof expiresAt.toMillis === "function" ? expiresAt.toMillis() : expiresAt;
+  return millis < now;
+}
 
 exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -67,8 +84,8 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
   const leagueData = leagueDoc.data();
 
-  if (leagueData.creatorId !== inviterUid) {
-    throw new HttpsError("permission-denied", "Only the league commissioner can send invitations.");
+  if (!isLeagueCommissioner(leagueData, inviterUid)) {
+    throw new HttpsError("permission-denied", "Only a league commissioner can send invitations.");
   }
   if ((leagueData.members || []).includes(inviteeUid)) {
     throw new HttpsError("already-exists", "That director is already a member of this league.");
@@ -85,7 +102,8 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   }
 
   const existing = await invitationRef.get();
-  if (existing.exists && existing.data().status === 'pending') {
+  if (existing.exists && existing.data().status === 'pending'
+      && !isInvitationExpired(existing.data())) {
     throw new HttpsError("already-exists", "There is already a pending invitation for this director.");
   }
 
@@ -93,16 +111,22 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
     ? (inviterDoc.data().displayName || inviterDoc.data().username || 'A director')
     : 'A director';
 
+  // No inviteCode field. It was written as `leagueData.inviteCode || null`,
+  // which has been unconditionally null since the code moved to the
+  // member-only meta/private doc — and would be a leak of the league's join
+  // secret to a non-member if a legacy document still carried it.
   await invitationRef.set({
     leagueId,
     leagueName: leagueData.name || 'Unnamed League',
-    inviteCode: leagueData.inviteCode || null,
     inviterUid,
     inviterName,
     inviteeUid,
     message: trimmedMessage,
     status: 'pending',
     invitedAt: admin.firestore.FieldValue.serverTimestamp(),
+    // Invitations used to sit pending forever, so a director's list slowly
+    // filled with offers to leagues that had long since moved on.
+    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + INVITATION_TTL_MS),
   });
 
   // Notify the invitee in their notification feed. Text is built from
@@ -145,6 +169,13 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   if (invitation.status !== 'pending') {
     throw new HttpsError("failed-precondition", `Invitation already ${invitation.status}.`);
   }
+  if (isInvitationExpired(invitation)) {
+    await invitationRef.update({
+      status: 'expired',
+      respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    throw new HttpsError("failed-precondition", "This invitation has expired.");
+  }
 
   if (!accept) {
     await invitationRef.update({
@@ -165,6 +196,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
       throw new HttpsError("not-found", "This league no longer exists.");
     }
     const standingsDoc = await transaction.get(standingsRef);
+    const profileDoc = await transaction.get(userProfileRef);
     const leagueData = leagueDoc.data();
 
     if ((leagueData.members || []).includes(uid)) {
@@ -179,11 +211,21 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "This league is now full.");
     }
 
+    // Invited directors pay the same entry fee as everyone else. This path
+    // used to admit them free, which under-funded the prize pool relative to
+    // the roster AND opened a real hole: removeLeagueMember refunds
+    // min(entryFee, prizePool) out of escrow, so a commissioner could invite a
+    // friend for nothing, remove them, and hand them other members' coin.
+    const entryFee = chargeEntryFeeInTransaction(
+      transaction, db, uid, profileDoc, leagueRef, leagueData
+    );
+
     transaction.update(leagueRef, {
       members: admin.firestore.FieldValue.arrayUnion(uid),
     });
     transaction.update(userProfileRef, {
       leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
     });
     if (standingsDoc.exists) {
       const existingData = standingsDoc.data();
@@ -206,6 +248,12 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
       respondedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   });
+
+  // Roster changed — recompute season participation so discovery and the
+  // matchup generators see the new member right away, exactly as joinLeague
+  // and joinLeagueByCode do. Only this path skipped it, so a league that
+  // filled entirely through invitations stayed stale until the nightly job.
+  await refreshLeagueActivity(db, leagueId);
 
   // Activity event outside transaction
   const userProfileDoc = await db.doc(paths.userProfile(uid)).get();
@@ -253,8 +301,8 @@ exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
 
   const leagueDoc = await leagueRef.get();
   if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
-  if (leagueDoc.data().creatorId !== uid) {
-    throw new HttpsError("permission-denied", "Only the league commissioner can rescind invitations.");
+  if (!isLeagueCommissioner(leagueDoc.data(), uid)) {
+    throw new HttpsError("permission-denied", "Only a league commissioner can rescind invitations.");
   }
 
   const invitationDoc = await invitationRef.get();
@@ -269,3 +317,6 @@ exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
   });
   return { success: true };
 });
+
+module.exports.INVITATION_TTL_MS = INVITATION_TTL_MS;
+module.exports.isInvitationExpired = isInvitationExpired;

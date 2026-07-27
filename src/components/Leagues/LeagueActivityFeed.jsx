@@ -32,7 +32,7 @@ import {
 // ICON MAPPING - Enhanced Transaction Log Style
 // =============================================================================
 
-import { Star, Settings, Crown, Target, Zap, Award } from 'lucide-react';
+import { Star, Settings, Crown, Target, Zap, Award, UserMinus, Trash2, Coins } from 'lucide-react';
 
 const iconMap = {
   matchup_result: Swords,
@@ -54,6 +54,14 @@ const iconMap = {
   achievement_unlocked: Award,
   score_update: Target,
   live_matchup: Zap,
+  // Commissioner actions and pool settlement. These were written server-side
+  // with no entry here, so every one of them rendered as a generic bell in
+  // matchup purple — indistinguishable from a matchup result.
+  member_removed: UserMinus,
+  settings_changed: Settings,
+  commissioner_changed: Crown,
+  message_removed: Trash2,
+  pool_result: Coins,
 };
 
 const colorMap = {
@@ -100,6 +108,13 @@ const colorMap = {
   },
   score_update: { text: 'text-lime-500', bg: 'bg-lime-500/10', border: 'border-lime-500/30' },
   live_matchup: { text: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/30' },
+  // Commissioner actions read as one family — a member scanning the feed
+  // should be able to see at a glance what was done TO the league.
+  member_removed: { text: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+  settings_changed: { text: 'text-secondary', bg: 'bg-surface-raised', border: 'border-line' },
+  commissioner_changed: { text: 'text-brand', bg: 'bg-brand/10', border: 'border-brand/30' },
+  message_removed: { text: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+  pool_result: { text: 'text-brand', bg: 'bg-brand/10', border: 'border-brand/30' },
 };
 
 // =============================================================================
@@ -224,6 +239,22 @@ ActivityItem.displayName = 'ActivityItem';
 // FILTER TABS
 // =============================================================================
 
+/**
+ * Everything a commissioner can do that changes the league for everyone else.
+ *
+ * Removal has always been written to the feed specifically so a commissioner
+ * "cannot quietly purge rivals mid-season" — but settings changes, handovers,
+ * matchup regeneration and chat moderation all landed in the same undifferentiated
+ * stream, where they were impossible to review. This filter is the audit view.
+ */
+const COMMISSIONER_ACTION_TYPES = new Set([
+  'member_removed',
+  'settings_changed',
+  'commissioner_changed',
+  'message_removed',
+  'week_start',
+]);
+
 const FilterTab = React.memo(({ active, onClick, children, count }) => (
   <button
     onClick={onClick}
@@ -315,6 +346,8 @@ const LeagueActivityFeed = ({
       items = items.filter((i) => i.type === 'matchup_result' || i.type === 'rivalry_matchup');
     } else if (activeFilter === 'trades') {
       items = items.filter((i) => i.type === 'trade_proposal' || i.type === 'trade_response');
+    } else if (activeFilter === 'commissioner') {
+      items = items.filter((i) => COMMISSIONER_ACTION_TYPES.has(i.type));
     }
 
     return showAll ? items : items.slice(0, maxItems);
@@ -396,6 +429,13 @@ const LeagueActivityFeed = ({
             count={0}
           >
             Trades
+          </FilterTab>
+          <FilterTab
+            active={activeFilter === 'commissioner'}
+            onClick={() => setActiveFilter('commissioner')}
+            count={0}
+          >
+            Commissioner
           </FilterTab>
         </div>
       )}

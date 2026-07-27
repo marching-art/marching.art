@@ -6,13 +6,14 @@ const { logger } = require("firebase-functions/v2");
 const {
   generateUniqueInviteCode,
   smartPairMembers,
+  buildPairingHistory,
   createLeagueActivity,
   invitationId,
 } = require("../helpers/leagueHelpers");
-const { consumeRateBudget } = require("../helpers/rateLimit");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
-const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
+const { escrowedTotal, deleteLeagueSubcollections } = require("../helpers/leagueLifecycle");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
 const {
@@ -21,6 +22,8 @@ const {
   refreshLeagueActivity,
   getActiveSeasonUid,
 } = require("../helpers/leagueActivity");
+const { fetchWeeklyScoreIndex, getWeekScore } = require("../helpers/leagueScoring");
+const { isLeagueCommissioner, pickSuccessor } = require("../helpers/leaguePermissions");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -57,6 +60,17 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
 
   // Commissioner-set entry fee: validated here, charged to every joiner
   // (including the creator, below) and paid into the prize pool.
+  // Validated, not just defaulted: this is the only league setting that
+  // changes how the season ends, so a nonsense value must be rejected at the
+  // door rather than surfacing as a broken cut line in week 7.
+  const finalsSize = settings.finalsSize === undefined ? 12 : settings.finalsSize;
+  if (!Number.isInteger(finalsSize) || finalsSize < 1 || finalsSize > 50) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Finals size must be a whole number between 1 and 50."
+    );
+  }
+
   const entryFee = Number(settings.entryFee) || 0;
   if (!Number.isInteger(entryFee) || entryFee < 0 || entryFee > MAX_LEAGUE_ENTRY_FEE) {
     throw new HttpsError(
@@ -129,10 +143,15 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       settings: {
         // Whitelisted keys only — never spread arbitrary client-supplied
         // settings into the stored doc.
-        matchupType: settings.matchupType || 'weekly', // weekly, h2h
-        playoffSize: settings.playoffSize || 4,
-        scoringFormat: settings.scoringFormat || 'circuit',
-        finalsSize: settings.finalsSize || 12,
+        //
+        // `matchupType`, `scoringFormat` and `playoffSize` used to be stored
+        // here and read by NOTHING — three settings a commissioner appeared to
+        // choose that could not affect their league. `finalsSize` is the one
+        // real knob: it decides the finals field the champion is drawn from
+        // (helpers/leagueChampion.js) and the cut line the standings table
+        // draws. `playoffSize` was a second name for the same idea and is gone
+        // with them.
+        finalsSize,
         // Applied last so client values can't override the validated fee
         // or the pool. The prize pool is PURE ESCROW: it holds only entry
         // fees actually debited from members (creator's fee here, joiners'
@@ -453,9 +472,12 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
 
   const leagueRef = db.doc(paths.league(leagueId));
   const userProfileRef = db.doc(paths.userProfile(uid));
+  const standingsRef = leagueRef.collection('standings').doc('current');
 
   try {
     let leagueDeleted = false;
+    let successorUid = null;
+    let refunded = 0;
     await db.runTransaction(async (transaction) => {
       const leagueDoc = await transaction.get(leagueRef);
       if (!leagueDoc.exists) {
@@ -466,12 +488,29 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
       // docs may still carry it on the league doc until the migration runs).
       const metaPrivateRef = leagueRef.collection('meta').doc('private');
       const metaPrivateDoc = await transaction.get(metaPrivateRef);
+      const standingsDoc = await transaction.get(standingsRef);
+      const leaverProfileDoc = await transaction.get(userProfileRef);
 
       const leagueData = leagueDoc.data();
 
       if (leagueData.creatorId === uid && leagueData.members.length === 1) {
         logger.info(`Creator ${uid} is the last member of league ${leagueId}. Deleting league.`);
         leagueDeleted = true;
+
+        // Return whatever is still escrowed. The prize pool and the pool carry
+        // are members' staked CorpsCoin; deleting the document with coin still
+        // in it destroyed real currency every time a league folded.
+        refunded = escrowedTotal(leagueData);
+        if (refunded > 0) {
+          addCoinHistoryEntryToTransaction(transaction, db, uid, {
+            type: TRANSACTION_TYPES.LEAGUE_ENTRY_REFUND,
+            amount: refunded,
+            balance: (leaverProfileDoc.data()?.corpsCoin || 0) + refunded,
+            description: `Escrow returned — ${leagueData.name} was dissolved`,
+            leagueId,
+          });
+        }
+
         transaction.delete(leagueRef);
         const inviteCode = (metaPrivateDoc.exists && metaPrivateDoc.data().inviteCode) ||
           leagueData.inviteCode;
@@ -483,13 +522,45 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
           transaction.delete(metaPrivateRef);
         }
       } else {
-        transaction.update(leagueRef, {
+        const update = {
           members: admin.firestore.FieldValue.arrayRemove(uid),
-        });
+        };
+
+        // Commissioner succession. Every commissioner gate keys off the
+        // owner, and leaving used to remove the creator from `members` while
+        // leaving creatorId pointing at them — so the league permanently lost
+        // the ability to generate matchups, invite, remove members, or open its
+        // own settings, with no way to recover. A co-commissioner inherits it
+        // if there is one (helpers/leaguePermissions.js).
+        if (leagueData.creatorId === uid) {
+          successorUid = pickSuccessor(leagueData, uid);
+          if (successorUid) {
+            update.creatorId = successorUid;
+            logger.info(
+              `Commissioner ${uid} left league ${leagueId}; ${successorUid} inherits it.`
+            );
+          }
+        }
+
+        transaction.update(leagueRef, update);
+
+        // Drop their standings row. Only the commissioner-removal path did
+        // this, so a director who left voluntarily stayed in the table
+        // forever — holding a rank, and counting against the finals cut.
+        if (standingsDoc.exists) {
+          const existing = standingsDoc.data().standings || [];
+          transaction.update(standingsRef, {
+            [`records.${uid}`]: admin.firestore.FieldValue.delete(),
+            standings: existing.filter((s) => s.uid !== uid),
+          });
+        }
       }
 
       transaction.update(userProfileRef, {
         leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId),
+        ...(refunded > 0
+          ? { corpsCoin: admin.firestore.FieldValue.increment(refunded) }
+          : {}),
       });
     });
 
@@ -497,9 +568,34 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
     // away with its last member.
     if (!leagueDeleted) {
       await refreshLeagueActivity(db, leagueId);
+    } else {
+      // Firestore does not cascade. Without this every standings row, matchup
+      // week, chat message, activity event, recap and pool the league ever
+      // wrote stayed in the database forever, unreachable.
+      await deleteLeagueSubcollections(db, leagueRef);
     }
 
-    return { success: true, message: "Successfully left the league." };
+    // A change of commissioner is a league-wide event, not a private one.
+    if (successorUid) {
+      const successorDoc = await db.doc(paths.userProfile(successorUid)).get();
+      const successorName = successorDoc.exists
+        ? (successorDoc.data().displayName || successorDoc.data().username || 'A director')
+        : 'A director';
+      await createLeagueActivity(db, leagueId, {
+        type: 'commissioner_changed',
+        title: 'New Commissioner',
+        message: `${successorName} is now the league commissioner.`,
+        userId: successorUid,
+        metadata: { previousCommissioner: uid, newCommissioner: successorUid },
+      });
+    }
+
+    return {
+      success: true,
+      message: refunded > 0
+        ? `Successfully left the league. ${refunded.toLocaleString()} CC of escrow was returned.`
+        : "Successfully left the league.",
+    };
   } catch (error) {
     logger.error(`Failed to leave league ${leagueId} for user ${uid}:`, error);
     if (error instanceof HttpsError) throw error;
@@ -536,8 +632,8 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   const leagueData = leagueDoc.data();
 
   // Only commissioner can generate matchups
-  if (leagueData.creatorId !== uid) {
-    throw new HttpsError("permission-denied", "Only the commissioner can generate matchups.");
+  if (!isLeagueCommissioner(leagueData, uid)) {
+    throw new HttpsError("permission-denied", "Only a commissioner can generate matchups.");
   }
 
   const members = leagueData.members || [];
@@ -555,13 +651,20 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   );
   const profileDocs = members.length > 0 ? await db.getAll(...profileRefs) : [];
 
-  // Fetch current standings for smart pairing
+  // Fetch current standings for smart pairing, plus the matchup history that
+  // keeps the generator from producing the same duels and the same bye every
+  // week (helpers/leagueHelpers.js buildPairingHistory).
   const standingsDoc = await db.doc(paths.leagueStandings(leagueId)).get();
   const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
   const standings = {};
   standingsData.forEach((s, idx) => {
     standings[s.uid] = { ...s, rank: idx + 1 };
   });
+  const historySnapshot = await db.collection(paths.leagueMatchups(leagueId)).get();
+  const pairingHistory = buildPairingHistory(
+    historySnapshot.docs.map((d) => d.data()),
+    MATCHUP_CLASSES
+  );
 
   // Group members by their active corps classes. Registry-derived (Phase
   // 7.4) so Podium corps join league matchups automatically at launch.
@@ -601,7 +704,11 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
 
   for (const corpsClass of corpsClasses) {
     const classMembers = membersByClass[corpsClass];
-    matchupData[`${corpsClass}Matchups`] = smartPairMembers(classMembers, standings);
+    matchupData[`${corpsClass}Matchups`] = smartPairMembers(
+      classMembers,
+      standings,
+      pairingHistory
+    );
   }
 
   await matchupRef.set(matchupData);
@@ -674,11 +781,33 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   if (!leagueDoc.exists) {
     throw new HttpsError("not-found", "League not found.");
   }
-  if (leagueDoc.data().creatorId !== uid && !hasAdminClaim(request)) {
-    throw new HttpsError("permission-denied", "Only the commissioner can update matchup results.");
+  if (!isLeagueCommissioner(leagueDoc.data(), uid) && !hasAdminClaim(request)) {
+    throw new HttpsError("permission-denied", "Only a commissioner can update matchup results.");
   }
 
-  const corpsClasses = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+  // Registry-derived, like every other matchup site. The literal list this
+  // replaces would silently skip Podium the moment its registry entry enables.
+  const corpsClasses = MATCHUP_CLASSES;
+
+  // Resolve on the week's actual scores, exactly as the nightly resolution
+  // does (helpers/leagueScoring.js). Reading corps.{class}.totalSeasonScore
+  // here compared each director's most recent show — whenever that happened —
+  // so a commissioner closing week 3 could settle it on week 1 performances.
+  const seasonDocForWeek = await db.doc("game-settings/season").get();
+  if (!seasonDocForWeek.exists) {
+    throw new HttpsError("failed-precondition", "No active season.");
+  }
+  const { index: weekScores, daysFound } = await fetchWeeklyScoreIndex(
+    db,
+    seasonDocForWeek.data().seasonUid,
+    Number(week)
+  );
+  if (daysFound === 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Week ${week} has not been scored yet, so its matchups cannot be resolved.`
+    );
+  }
 
   // Resolve the week and fold standings in ONE transaction. The old flow
   // (plain read → plain matchup update → get-then-update standings) let two
@@ -694,31 +823,9 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
 
     const matchupData = matchupDoc.data();
 
-    // Collect all unique player IDs across all class matchups
-    const allPlayerIds = new Set();
-    for (const corpsClass of corpsClasses) {
-      const matchups = matchupData[`${corpsClass}Matchups`] || [];
-      for (const matchup of matchups) {
-        if (matchup.pair) {
-          matchup.pair.filter(Boolean).forEach(id => allPlayerIds.add(id));
-        }
-      }
-    }
-
-    // Batch fetch all player profiles through the transaction (all reads
-    // must precede writes)
-    const playerIds = [...allPlayerIds];
-    const profileRefs = playerIds.map(playerUid => db.doc(paths.userProfile(playerUid)));
-    const profileDocs = playerIds.length > 0 ? await t.getAll(...profileRefs) : [];
+    // Scores come from the week index built above, not from profile documents,
+    // so the transaction no longer fans out a read per participant.
     const standingsDoc = await t.get(standingsRef);
-
-    // Build a map of userId -> profile data
-    const profileMap = new Map();
-    profileDocs.forEach((doc, index) => {
-      if (doc.exists) {
-        profileMap.set(playerIds[index], doc.data());
-      }
-    });
 
     // Process matchups for each corps class
     const updated = { ...matchupData };
@@ -744,12 +851,13 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
         }
 
         const [p1_uid, p2_uid] = matchup.pair;
-        const p1_profile = profileMap.get(p1_uid);
-        const p2_profile = profileMap.get(p2_uid);
 
-        // Get score for the SPECIFIC corps class
-        const p1_score = p1_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
-        const p2_score = p2_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
+        // The week's total for this class, across every show the corps
+        // attended. Not competing scores 0 — a forfeited week, not a 0.0 run.
+        const p1_week = getWeekScore(weekScores, p1_uid, corpsClass);
+        const p2_week = getWeekScore(weekScores, p2_uid, corpsClass);
+        const p1_score = p1_week.score;
+        const p2_score = p2_week.score;
 
         let winner = null;
         if (p1_score > p2_score) {
@@ -763,6 +871,11 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
         const updatedMatchup = {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
+          shows: { [p1_uid]: p1_week.shows, [p2_uid]: p2_week.shows },
+          normalized: {
+            [p1_uid]: p1_week.classPercentile,
+            [p2_uid]: p2_week.classPercentile,
+          },
           winner,
           completed: true
         };
@@ -774,6 +887,8 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           player2: p2_uid,
           player1Score: p1_score,
           player2Score: p2_score,
+          player1Normalized: p1_week.classPercentile,
+          player2Normalized: p2_week.classPercentile,
           winner,
           completed: true,
           corpsClass
@@ -827,68 +942,3 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
 
 // Standings updater lives in helpers/leagueStandings.js — shared with the
 // automatic weekly resolution in the nightly scoring run.
-
-
-// Post a message to league chat
-// Chat messages are stored verbatim and rendered to every league member, so
-// both the size and the rate of writes are server-capped: 1000 chars (same as
-// article comments' MAX_COMMENT_LENGTH) and 10 messages per minute per user.
-// Budget docs live in a server-only collection (no client rule matches it).
-const MAX_LEAGUE_MESSAGE_LENGTH = 1000;
-const CHAT_RATE_COLLECTION = "leagueChatRateLimits";
-const CHAT_MAX_MESSAGES_PER_WINDOW = 10;
-const CHAT_RATE_WINDOW_MS = 60 * 1000; // 1 minute
-
-exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-
-  const { leagueId, message } = request.data;
-  const uid = request.auth.uid;
-
-  if (!leagueId || typeof message !== 'string' || !message.trim()) {
-    throw new HttpsError("invalid-argument", "League ID and message are required.");
-  }
-  // The id is interpolated into a Firestore doc path below.
-  assertDocId(leagueId, "league ID");
-
-  const trimmedMessage = message.trim();
-  if (trimmedMessage.length > MAX_LEAGUE_MESSAGE_LENGTH) {
-    throw new HttpsError("invalid-argument",
-      `Message too long (max ${MAX_LEAGUE_MESSAGE_LENGTH} characters).`);
-  }
-
-  const db = getDb();
-
-  // Abuse throttle (shared league bucket) — humans chat fast; this only stops scripts.
-  await assertWriteBudget(db, uid, "leagueSocial", { max: 120 });
-
-  const leagueRef = db.doc(paths.league(leagueId));
-
-  // Verify user is a member
-  const leagueDoc = await leagueRef.get();
-  if (!leagueDoc.exists) {
-    throw new HttpsError("not-found", "League not found.");
-  }
-
-  const leagueData = leagueDoc.data();
-  if (!leagueData.members.includes(uid)) {
-    throw new HttpsError("permission-denied", "You must be a league member to post.");
-  }
-
-  const allowed = await consumeRateBudget(
-    db, CHAT_RATE_COLLECTION, uid, CHAT_MAX_MESSAGES_PER_WINDOW, CHAT_RATE_WINDOW_MS
-  );
-  if (!allowed) {
-    throw new HttpsError("resource-exhausted",
-      "You're posting too quickly. Please wait a moment and try again.");
-  }
-
-  const messageRef = leagueRef.collection('chat').doc();
-  await messageRef.set({
-    userId: uid,
-    message: trimmedMessage,
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-
-  return { success: true, message: "Message posted!", messageId: messageRef.id };
-});

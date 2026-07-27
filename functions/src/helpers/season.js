@@ -11,7 +11,16 @@ const {
 const { calculateXPUpdates, getSeasonCompletionXP } = require("./xpCalculations");
 const { updateSeasonBestRecords } = require("./gameRecords");
 const { RARITY_CC } = require("./achievements");
-const { emptySeasonActivity } = require("./leagueActivity");
+const { emptySeasonActivity, isActiveThisSeason } = require("./leagueActivity");
+const { selectLeagueChampion, DEFAULT_FINALS_SIZE } = require("./leagueChampion");
+const { fetchWeeklyScoreIndex } = require("./leagueScoring");
+
+/**
+ * Championship week. A season is 49 competition days in 7 weeks, and day 49 is
+ * Finals (helpers/scoreDrop.js FINALS_DAY), so week 7 is the week league
+ * titles are decided in.
+ */
+const SEASON_FINAL_WEEK = 7;
 const {
   claimSeasonRollover,
   markSeasonRolloverCompleted,
@@ -742,6 +751,29 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
 
   const batch = db.batch();
 
+  // Championship week (days 43-49, ending on Finals day 49) decides the title
+  // among the qualifiers a league's regular season produced. One read for the
+  // whole archival pass, shared by every league.
+  let finalsScores = new Map();
+  try {
+    ({ index: finalsScores } = await fetchWeeklyScoreIndex(db, seasonId, SEASON_FINAL_WEEK));
+  } catch (error) {
+    logger.error(
+      `Could not read championship-week scores for ${seasonId}; ` +
+        `league titles will be decided on the standings alone: ${error.message}`
+    );
+  }
+  // Finals scores are per corps class; a league title is one director against
+  // another, so a director's Finals night is the sum of what they fielded.
+  const finalsByUid = new Map();
+  for (const entry of finalsScores.values()) {
+    const prior = finalsByUid.get(entry.uid) || { score: 0, shows: 0 };
+    finalsByUid.set(entry.uid, {
+      score: prior.score + entry.score,
+      shows: prior.shows + entry.shows,
+    });
+  }
+
   for (const leagueDoc of leaguesSnapshot.docs) {
     const league = leagueDoc.data();
     const leagueId = leagueDoc.id;
@@ -759,33 +791,66 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       continue;
     }
 
-    let leagueWinner = { userId: null, username: "Unknown", finalScore: -1, corpsName: "Unknown" };
-
+    // The champion is the director who WON THE LEAGUE — the season's standings
+    // decide the finals field, and championship week decides the title among
+    // it (helpers/leagueChampion.js). This used to crown whoever had the
+    // biggest `corps.*.totalSeasonScore` sum, which is a sum of each corps'
+    // LAST show score, so a 7-0 director could lose their league to a 2-5 one
+    // who happened to peak on the final night.
     const profilePromises = members.map((uid) => db.doc(paths.userProfile(uid)).get());
     const profileDocs = await Promise.all(profilePromises);
 
-    profileDocs.forEach((profileDoc) => {
-      if (profileDoc.exists) {
-        const profileData = profileDoc.data();
-        if (profileData.activeSeasonId === seasonId) {
-          const userCorps = profileData.corps || {};
-          if (profileData.corpsName && !userCorps.worldClass) {
-            userCorps.worldClass = { totalSeasonScore: profileData.totalSeasonScore || 0 };
-          }
-          const totalScore = Object.values(userCorps)
-            .reduce((sum, corps) => sum + (corps.totalSeasonScore || 0), 0);
-
-          if (totalScore > leagueWinner.finalScore) {
-            leagueWinner = {
-              userId: profileDoc.ref.parent.parent.id,
-              username: profileData.username,
-              finalScore: totalScore,
-              corpsName: userCorps.worldClass?.corpsName || profileData.corpsName || "Unnamed Corps",
-            };
-          }
-        }
-      }
+    const profileByUid = new Map();
+    const eligibleUids = new Set();
+    profileDocs.forEach((profileDoc, index) => {
+      if (!profileDoc.exists) return;
+      const uid = members[index];
+      const profileData = profileDoc.data();
+      profileByUid.set(uid, profileData);
+      // isActiveThisSeason, never `activeSeasonId` alone: registerCorps
+      // deliberately withholds that marker from directors who still owe corps
+      // decisions, so gating on it excluded fully competing members from their
+      // own league's championship (see helpers/leagueActivity.js).
+      if (isActiveThisSeason(profileData, seasonId)) eligibleUids.add(uid);
     });
+
+    const standingsDoc = await db.doc(paths.leagueStandings(leagueId)).get();
+    const standingsRows = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
+
+    const decision = selectLeagueChampion({
+      standings: standingsRows,
+      eligibleUids,
+      finalsScores: finalsByUid,
+      finalsSize: league.settings?.finalsSize || DEFAULT_FINALS_SIZE,
+    });
+
+    let leagueWinner = { userId: null, username: "Unknown", finalScore: -1, corpsName: "Unknown" };
+    if (decision.championUid) {
+      const winnerProfile = profileByUid.get(decision.championUid) || {};
+      const winnerCorps = winnerProfile.corps || {};
+      leagueWinner = {
+        userId: decision.championUid,
+        username: winnerProfile.username || winnerProfile.displayName || "Unknown",
+        // The headline number is what decided it: Finals night when Finals
+        // happened, the season's points-for when it came down to the standings.
+        finalScore: decision.finalsScore ?? decision.record?.totalPoints ?? 0,
+        corpsName:
+          winnerCorps.worldClass?.corpsName ||
+          Object.values(winnerCorps).find((c) => c?.corpsName)?.corpsName ||
+          winnerProfile.corpsName ||
+          "Unnamed Corps",
+      };
+      logger.info(
+        `League '${league.name}' champion: ${leagueWinner.username} ` +
+          `(seed #${decision.seed}, ${decision.record.wins}-${decision.record.losses}-${decision.record.ties}, ` +
+          `decided by ${decision.decidedBy}).`
+      );
+    } else if (eligibleUids.size > 0) {
+      logger.warn(
+        `League '${league.name}' has ${eligibleUids.size} registered member(s) but no ` +
+          `standings rows for ${seasonId}; no champion crowned.`
+      );
+    }
 
     if (leagueWinner.userId) {
       const leagueRef = leagueDoc.ref;
@@ -796,6 +861,12 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
         winnerUsername: leagueWinner.username,
         winnerCorpsName: leagueWinner.corpsName,
         score: leagueWinner.finalScore,
+        // How the title was won — the Hall of Fame renders this, and without
+        // it a champions[] entry is just a name and a number with no story.
+        record: decision.record,
+        seed: decision.seed,
+        decidedBy: decision.decidedBy,
+        finalsField: decision.qualifiers.map((q) => q.uid),
         archivedAt: new Date(),
       };
       batch.update(leagueRef, {
@@ -841,22 +912,39 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       // rollover (the champions[] guard is per-season, not per-pool).
       // Decrement rather than set 0 so an entry fee escrowed concurrently
       // by a joiner mid-rollover isn't clobbered.
+      // `poolCarry` rides along. It is prediction-pool antes that no member
+      // ever won, and it was only ever released when someone next bought in —
+      // so a league that stopped running pools mid-season left real escrowed
+      // CorpsCoin in a field nothing would ever pay out, permanently. Rolling
+      // it up to the season champion keeps the loop zero-sum and closes the
+      // leak; every coin in it was staked by a member of this league.
       const prizePool = league.settings?.prizePool || 0;
-      if (prizePool > 0) {
+      const poolCarry = league.poolCarry || 0;
+      const payout = prizePool + poolCarry;
+      if (payout > 0) {
         batch.update(winnerProfileRef, {
-          corpsCoin: admin.firestore.FieldValue.increment(prizePool),
+          corpsCoin: admin.firestore.FieldValue.increment(payout),
         });
-        batch.update(leagueRef, {
-          "settings.prizePool": admin.firestore.FieldValue.increment(-prizePool),
-        });
+        const leaguePayoutUpdate = {};
+        if (prizePool > 0) {
+          leaguePayoutUpdate["settings.prizePool"] =
+            admin.firestore.FieldValue.increment(-prizePool);
+        }
+        if (poolCarry > 0) {
+          leaguePayoutUpdate.poolCarry = admin.firestore.FieldValue.increment(-poolCarry);
+        }
+        batch.update(leagueRef, leaguePayoutUpdate);
         addCoinHistoryEntryToBatch(batch, db, leagueWinner.userId, {
           type: TRANSACTION_TYPES.LEAGUE_WIN,
-          amount: prizePool,
-          description: `${seasonName} champion prize pool — ${league.name}`,
+          amount: payout,
+          description: poolCarry > 0
+            ? `${seasonName} champion prize pool + unclaimed prediction pool — ${league.name}`
+            : `${seasonName} champion prize pool — ${league.name}`,
           timestamp: new Date(),
         });
         logger.info(
-          `Paid ${prizePool} CC prize pool to ${leagueWinner.username} for winning '${league.name}'.`
+          `Paid ${payout} CC (${prizePool} prize pool + ${poolCarry} pool carry) to ` +
+            `${leagueWinner.username} for winning '${league.name}'.`
         );
       }
 
