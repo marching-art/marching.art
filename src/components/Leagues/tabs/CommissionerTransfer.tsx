@@ -1,4 +1,3 @@
-// @ts-nocheck -- matches the surrounding league JSX; typed when the folder is
 // CommissionerTransfer - hand the league to another member.
 //
 // Every commissioner gate in the backend is `creatorId === uid`, so before this
@@ -16,7 +15,36 @@ import toast from 'react-hot-toast';
 import { transferCommissioner } from '../../../api/functions';
 import { useEscapeKey } from '../../../hooks/useEscapeKey';
 
-const ConfirmTransferModal = ({ member, leagueName, onCancel, onConfirm, isTransferring }) => {
+/** A roster row as SettingsTab builds it. */
+export interface RosterMember {
+  uid: string;
+  name: string;
+  corpsName: string | null;
+  isActive: boolean;
+  isCommissioner: boolean;
+}
+
+interface ConfirmProps {
+  member: RosterMember;
+  leagueName: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  isTransferring: boolean;
+}
+
+interface CommissionerTransferProps {
+  league?: { id?: string; name?: string } | null;
+  roster?: RosterMember[];
+  onTransferred?: () => void;
+}
+
+const ConfirmTransferModal = ({
+  member,
+  leagueName,
+  onCancel,
+  onConfirm,
+  isTransferring,
+}: ConfirmProps) => {
   useEscapeKey(onCancel);
   return (
     <div
@@ -69,14 +97,19 @@ const ConfirmTransferModal = ({ member, leagueName, onCancel, onConfirm, isTrans
   );
 };
 
-const CommissionerTransfer = ({ league, roster = [], onTransferred }) => {
-  const [pending, setPending] = useState(null);
+const CommissionerTransfer = ({
+  league,
+  roster = [],
+  onTransferred,
+}: CommissionerTransferProps) => {
+  const [pending, setPending] = useState<RosterMember | null>(null);
   const [transferring, setTransferring] = useState(false);
 
   const candidates = roster.filter((m) => !m.isCommissioner);
   if (candidates.length === 0) return null;
 
   const handleTransfer = async () => {
+    if (!pending || !league?.id) return;
     setTransferring(true);
     try {
       const result = await transferCommissioner({
@@ -87,7 +120,7 @@ const CommissionerTransfer = ({ league, roster = [], onTransferred }) => {
       setPending(null);
       onTransferred?.();
     } catch (error) {
-      toast.error(error.message || 'Failed to transfer the league');
+      toast.error(error instanceof Error ? error.message : 'Failed to transfer the league');
     } finally {
       setTransferring(false);
     }

@@ -91,6 +91,11 @@ leagues/{leagueId}/standings/current
 leagues/{leagueId}/matchups/week-{n}
 leagues/{leagueId}/activity/{id}  # League feed events
 leagues/{leagueId}/recaps/week-{n}
+leagues/{leagueId}/chat/{id}     # League chat (paged; author + commissioner delete)
+leagues/{leagueId}/pools/{gameDay}
+                                  # Daily prediction pool (escrowed, zero-sum)
+leagues/{leagueId}/meta/{private,rivalries}
+                                  # Invite code (member-only) + detected rivalries
 leagueInvitations/{id}
 leaderboard/lifetime_{view}       # Precomputed lifetime leaderboards
 leaderboard/season_rankings/data  # Precomputed current-season global rankings
@@ -176,7 +181,7 @@ the domain logic lives in `helpers/` so it can be shared and unit-tested.
 | Corps & lineups  | `corps.js`, `registerCorps.js`, `lineups.js`, `corpsDuplicates.js`                                                        |
 | Economy & shop   | `economy.js`, `shop.js`, `prestige.js`, `seasonLadder.js`, `legacy.js` (Legacy Endowments — the recurring sink)           |
 | Daily loop       | `dailyOps.js`, `dailyChallenges.js`, `dailyPredictions.js`, `journey.js`                                                  |
-| Leagues          | `leagues.js`, `leagueInvitations.js`, `leaguePools.js`, `rookieLeague.js`                                                 |
+| Leagues          | `leagues.js`, `leagueAdmin.js`, `leagueRoster.js`, `leagueInvitations.js`, `leaguePools.js`, `rookieLeague.js`            |
 | Social / content | `comments.js`, `articleComments.js`, `commentModeration.js`                                                               |
 | Podium           | `podium.js`, `podiumStaff.js`, `podiumRoute.js`, `podiumJoint.js`, `podiumFan.js`, `podiumHost.js`, `podiumValidation.js` |
 | Supporters       | `supporters.js` (BMAC link/wall/visibility — see [`docs/BMAC_SUPPORTERS.md`](docs/BMAC_SUPPORTERS.md))                    |
@@ -193,7 +198,7 @@ the domain logic lives in `helpers/` so it can be shared and unit-tested.
 | `liveScraper.js`                                 | Live DCI score scraping (legacy 1:30 AM path when `dropScheduling` is off)                                    |
 | `scrapeCanary.js`                                | Afternoon dci.org markup-drift audit, so a redesign surfaces before scoring night                             |
 | `seasonScheduler.js`                             | Season rollover                                                                                               |
-| `leagueAutomation.js`                            | League matchups, standings, recaps                                                                            |
+| `leagueAutomation.js`                            | League matchup generation, rivalries, season-activity refresh, recap backstop                                 |
 | `lifetimeLeaderboard.js`                         | Nightly lifetime leaderboards, season rankings, show-registration index                                       |
 | `economyStats.js`                                | Weekly CorpsCoin mint-vs-sink rollup → `admin-stats/economy`                                                  |
 | `retentionStats.js`                              | Nightly DAU/WAU/MAU + cohort retention rollup → `admin-stats/retention`                                       |

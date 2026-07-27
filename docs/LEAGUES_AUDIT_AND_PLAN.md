@@ -40,8 +40,10 @@ transfer, no settings editing, an invite-code leak in the rookie circuit, a
 free-entry hole in the invitation path, orphaned data on delete, and a set of
 UI affordances wired to fields nothing writes.
 
-> **Status.** Findings marked **FIXED** have landed. Everything else is
-> outstanding. See Part 2 for the sequencing.
+> **Status.** Findings marked **FIXED** have landed across three phases —
+> Phase 1 (the competition), Phase 2 (correctness and governance), and Phase 3
+> (the clubhouse layer). Findings marked **PARTLY FIXED** or left unmarked are
+> outstanding; they are listed under "Still outstanding" at the end of Part 2.
 
 ---
 
@@ -193,7 +195,7 @@ commissioner path will silently skip it.
 
 ## B. Economy and data correctness
 
-### B1 · P1 — Accepting an invitation skips the entry fee
+### B1 · P1 — Accepting an invitation skipped the entry fee — FIXED
 
 `joinLeague` and `joinLeagueByCode` both call `chargeEntryFeeInTransaction`.
 `respondToLeagueInvitation` (`functions/src/callable/leagueInvitations.js:162-208`)
@@ -205,7 +207,7 @@ does not. In a league with an entry fee:
   removed (`leagueRoster.js:83-85`), so a commissioner can invite a friend for
   free, remove them, and hand them other members' escrowed coin.
 
-### B2 · P1 — Leaving a league leaves your standings row behind
+### B2 · P1 — Leaving a league left your standings row behind — FIXED
 
 `leaveLeague` (`functions/src/callable/leagues.js:485-489`) removes the uid from
 `members` and from `profile.leagueIds` and stops. `standings/current.records`
@@ -214,14 +216,14 @@ the table, keep their rank, and count toward "Top N qualify".
 `removeLeagueMember` does this correctly (`leagueRoster.js:111-117`); the
 voluntary path was never updated to match.
 
-### B3 · P1 — Invitation acceptance never refreshes season activity
+### B3 · P1 — Invitation acceptance never refreshed season activity — FIXED
 
 Every other roster mutation calls `refreshLeagueActivity`. The accept path
 doesn't, so a league that fills entirely through invitations keeps a stale
 `seasonActivity` block until the 5:30 AM job runs — under-reporting who's
 competing and (for a league at zero) staying out of public discovery for a day.
 
-### B4 · P2 — Deleting a league orphans all of its subcollections
+### B4 · P2 — Deleting a league orphaned all of its subcollections — FIXED
 
 When the commissioner is the last member, `leaveLeague` deletes the league doc
 and the invite mapping. `standings/`, `matchups/`, `activity/`, `chat/`,
@@ -248,7 +250,7 @@ nothing will ever pay out. Season archival drains `prizePool` but not
 
 ## C. Lifecycle and governance
 
-### C1 · P1 — A departing commissioner orphans the league
+### C1 · P1 — A departing commissioner orphaned the league — FIXED
 
 `leaveLeague` removes the creator from `members` but leaves `creatorId`
 pointing at them. Every commissioner gate is `creatorId === uid`, so the league
@@ -256,14 +258,14 @@ permanently loses the ability to: generate matchups, invite directors, rescind
 invitations, remove members, or open the Settings tab. There is no
 `transferCommissioner` callable and no succession rule.
 
-### C2 · P1 — League settings cannot be edited after creation, at all
+### C2 · P1 — League settings could not be edited at all — FIXED
 
 There is no `updateLeague*` callable anywhere in `functions/`. A commissioner
 cannot fix a typo in the name, rewrite the description, flip public/private,
 raise `maxMembers` when the league gets popular, or adjust anything else. The
 "Commissioner Settings" tab is a read-only display plus a matchup button.
 
-### C3 · P1 — "Regenerate Matchups" is a button that always fails
+### C3 · P1 — "Regenerate Matchups" always failed — FIXED
 
 `SettingsTab.jsx:164-207` prompts _"Generating new matchups will replace them.
 Continue?"_ and then calls `generateMatchups`, which throws
@@ -272,7 +274,7 @@ that supports overwriting — `triggerMatchupGeneration`, with `forceRegenerate`
 (`leagueAutomation.js:712`) — is never called from the client. Confirming the
 dialog produces a red error toast, 100% of the time.
 
-### C4 · P2 — No deep link to a league; existing links 404
+### C4 · P2 — No deep link to a league; existing links 404'd — FIXED
 
 `App.jsx` registers `/leagues` only. League detail is `useState` inside
 `Leagues.jsx`, so there is no URL for a league, no browser back, no shareable
@@ -284,7 +286,7 @@ catch-all route.
 For a clubhouse this is the highest-leverage single UX fix: you cannot share
 your league, link a matchup in chat, or bookmark the standings.
 
-### C5 · P2 — Invitations never expire and carry a dead field
+### C5 · P2 — Invitations never expired and carried a dead field — FIXED
 
 Pending invitations live forever with no TTL and no cleanup job. Each one also
 writes `inviteCode: leagueData.inviteCode || null`
@@ -298,7 +300,7 @@ announcement, no league rules/description-with-formatting, no way to schedule
 or lock a season format, no member-visible audit of commissioner actions beyond
 removals.
 
-### C7 · P3 — The rookie circuit has no rookie gate and an accidental commissioner
+### C7 · P3 — The rookie circuit had an accidental commissioner — PARTLY FIXED
 
 `joinRookieLeague` is callable by any authenticated director regardless of
 level or tenure, and whoever provisions a new circuit becomes its `creatorId` —
@@ -311,7 +313,7 @@ still points at it.
 
 ## D. Security and privacy
 
-### D1 · P1 — The rookie circuit writes the invite code onto the league document
+### D1 · P1 — The rookie circuit wrote the invite code onto the league doc — FIXED
 
 `functions/src/callable/rookieLeague.js:101` sets `inviteCode` on the league
 doc. `createLeague` has a nine-line comment explaining why this must never
@@ -324,7 +326,7 @@ the rest of the system uses.
 `scripts/stripLeagueInviteCodes.js` exists to migrate legacy docs — and this
 callable is actively creating new ones.
 
-### D2 · P2 — League chat has no moderation surface
+### D2 · P2 — League chat had no moderation surface — FIXED
 
 `postLeagueMessage` caps length and rate, which is good. But there is no delete,
 no report, no mute, no commissioner moderation — `ChatTab` even receives
@@ -399,7 +401,7 @@ leagues — i.e. almost all of them — never show the indicator.
 
 ## F. Frontend correctness and performance
 
-### F1 · P1 — `MatchupsTab` renders head-to-head scores that are always zero
+### F1 · P1 — `MatchupsTab` head-to-head scores were always zero — FIXED
 
 `src/components/Leagues/tabs/MatchupsTab.jsx:42`:
 
@@ -412,7 +414,7 @@ renders 0. The tab also re-fetches season data and matchups into local
 `useState` rather than reusing `useLeagueDetail`'s React Query entries, and
 keeps its own duplicate `currentWeek`.
 
-### F2 · P1 — Two-class directors are mis-scored in the client table
+### F2 · P1 — Two-class directors were mis-scored in the client table — FIXED
 
 `buildWeeklyResults` (`leagueStats.ts:106`) sums a director's scores across
 **all** classes into a single weekly number, while `buildMatchupsByWeek`
@@ -422,19 +424,19 @@ World Class and SoundSport has their combined score compared in whichever
 matchup happened to flatten first, and their second matchup is invisible to
 streak and trend calculations.
 
-### F3 · P2 — SettingsTab does N sequential round trips on open
+### F3 · P2 — SettingsTab did N sequential round trips on open — FIXED
 
 `SettingsTab.jsx:129-151` loops `for (let w = 1; w <= totalWeeks; w++)` awaiting
 `getLeagueMatchupWeek` one at a time. `getLeagueMatchups` — one collection read
 for all weeks — already exists and `MatchupsTab` already switched to it
 (with a comment noting exactly this fix). SettingsTab was missed.
 
-### F4 · P2 — `getMyLeagues` is silently capped at 20
+### F4 · P2 — `getMyLeagues` was silently capped at 20 — FIXED
 
 `src/api/leagues.ts:46` uses `limit(20)` with no pagination and no indication in
 the UI. A director in 21 leagues loses one without any signal.
 
-### F5 · P2 — Chat is unreadable past 50 messages and has no unread state
+### F5 · P2 — Chat was unreadable past 50 messages with no unread state — FIXED
 
 `subscribeToChat` takes the newest 50 with no "load older". `league.hasUnreadMessages`
 is read by the league card (`Leagues.jsx:131`) and **written by nothing**, so
@@ -442,7 +444,7 @@ the unread dot never appears. Same for `league.isMatchupActive` — the entire
 "Live" indicator is dead code. There's no new-message notification either,
 despite `'new_message'` being a declared `LeagueNotificationType`.
 
-### F6 · P3 — Dead tag taxonomy on the discovery cards
+### F6 · P3 — Dead tag taxonomy on the discovery cards — FIXED
 
 `LEAGUE_TAGS` in `Leagues.jsx:49` defines competitive/casual/roleplay/dynasty/
 weekly/public. `getLeagueTags` reads `league.isCompetitive`, `league.type` and
@@ -654,3 +656,35 @@ Small, isolated, high ratio of value to risk:
 - `A10` — `MATCHUP_CLASSES` in `updateMatchupResults`.
 - `F1` — delete the dead `weeklyResults` state or wire it.
 - `E5` — copy before sorting in `detectRivalries`.
+
+---
+
+## Still outstanding
+
+Everything not marked FIXED above. In rough priority order:
+
+- **A6 (remainder)** — a visible playoff bracket, and a decision on
+  `scoringFormat` / `matchupType`: implement them or delete them. Finals seeding
+  and the title now work; the bracket itself is not drawn anywhere.
+- **A8** — cross-class standings still share one table. Matchups are
+  class-segregated and now scored per class, but the ranked table mixes classes
+  on different scales. Needs either per-class tables or normalized scoring
+  (`GAMIFICATION.md` already parks this as future work).
+- **B5 / B6** — leavers still forfeit their entry fee silently (the UI does not
+  warn them), and `poolCarry` can still strand escrow in a league that stops
+  running pools mid-season. Season archival drains `prizePool`, not `poolCarry`.
+- **C6** — co-commissioners, result correction, pinned announcements, league
+  rules documents, scheduled format locks.
+- **C7 (remainder)** — `joinRookieLeague` still has no rookie gate; any director
+  can call it regardless of level or tenure.
+- **D3** — matchup regeneration and settings changes are now logged, but there
+  is still no consolidated commissioner audit view.
+- **E2** — the generation/rivalry crons are pinned to Sunday/Monday while season
+  weeks derive from the season start date and `springTrainingDays`. Nothing
+  asserts the two agree. (Recaps no longer depend on this — they run from the
+  nightly scoring run.)
+- **F7** — file-size and typing debt: several league files remain past the
+  ~700-line guidance and carry `@ts-nocheck`. `MatchupsTab` still fetches into
+  local state rather than reusing `useLeagueDetail`'s React Query entries.
+- **Phase 4 in full** — alternate league formats, dynasty mode, cross-class
+  normalization.

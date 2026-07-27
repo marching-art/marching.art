@@ -1,4 +1,3 @@
-// @ts-nocheck -- matches the surrounding league JSX; typed when the folder is
 // LeagueSettingsForm - the commissioner's editable league settings.
 //
 // A league used to be immutable from the moment it was created: there was no
@@ -16,6 +15,29 @@ import { Settings, Loader2, Save, Globe, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { updateLeagueSettings } from '../../../api/functions';
 
+interface LeagueSettingsFormProps {
+  league?: {
+    id?: string;
+    name?: string;
+    description?: string;
+    isPublic?: boolean;
+    maxMembers?: number;
+    tag?: string | null;
+    settings?: { finalsSize?: number; entryFee?: number };
+  } | null;
+  memberCount: number;
+  onSaved?: () => void;
+}
+
+interface FormState {
+  name: string;
+  description: string;
+  isPublic: boolean;
+  maxMembers: number;
+  tag: string | null;
+  finalsSize: number;
+}
+
 const LEAGUE_TAGS = [
   { id: 'competitive', label: 'Competitive', hint: 'Records matter, show up every week' },
   { id: 'casual', label: 'Casual', hint: 'Play at your own pace' },
@@ -26,8 +48,8 @@ const LEAGUE_TAGS = [
 const MAX_NAME = 50;
 const MAX_DESCRIPTION = 500;
 
-const LeagueSettingsForm = ({ league, memberCount, onSaved }) => {
-  const initial = useMemo(
+const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsFormProps) => {
+  const initial = useMemo<FormState>(
     () => ({
       name: league?.name || '',
       description: league?.description || '',
@@ -42,10 +64,11 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }) => {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
 
-  const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+  const set = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const dirty = useMemo(
-    () => Object.keys(initial).some((key) => initial[key] !== form[key]),
+    () =>
+      (Object.keys(initial) as Array<keyof FormState>).some((key) => initial[key] !== form[key]),
     [initial, form]
   );
 
@@ -57,7 +80,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }) => {
   const canSave = dirty && !saving && !capTooLow && !nameTooShort;
 
   const handleSave = async () => {
-    if (!canSave) return;
+    if (!canSave || !league?.id) return;
     setSaving(true);
     try {
       const result = await updateLeagueSettings({
@@ -74,7 +97,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }) => {
       toast.success(result.data?.message || 'League settings updated.');
       onSaved?.();
     } catch (error) {
-      toast.error(error.message || 'Failed to update league settings');
+      toast.error(error instanceof Error ? error.message : 'Failed to update league settings');
     } finally {
       setSaving(false);
     }

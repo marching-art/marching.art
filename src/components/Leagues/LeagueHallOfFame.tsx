@@ -1,4 +1,3 @@
-// @ts-nocheck -- matches the surrounding league JSX; typed when the folder is
 // LeagueHallOfFame - the league's permanent record.
 //
 // Season archival has always written a `champions[]` entry onto every league:
@@ -13,8 +12,37 @@
 import React, { useMemo, useState } from 'react';
 import { Crown, Trophy, ChevronDown, Flame } from 'lucide-react';
 
+/**
+ * One archived season, as helpers/season.js writes it. Everything past the
+ * season identity is optional: entries written before the standings-based
+ * champion selector carry no record, seed, or decidedBy.
+ */
+export interface LeagueChampionEntry {
+  seasonId?: string;
+  seasonName?: string;
+  winnerId?: string;
+  winnerUsername?: string;
+  winnerCorpsName?: string;
+  score?: number;
+  archivedAt?: { toMillis?: () => number; seconds?: number };
+  record?: { wins: number; losses: number; ties: number; totalPoints?: number };
+  seed?: number;
+  decidedBy?: 'finals' | 'standings' | 'none';
+  finalsField?: string[];
+}
+
+interface LeagueHallOfFameProps {
+  league?: { champions?: LeagueChampionEntry[] } | null;
+  userProfile?: { uid?: string } | null;
+}
+
+interface Dynasties {
+  counts: Map<string, number>;
+  bestStreak: { uid: string | null; name: string | null; length: number };
+}
+
 /** Newest first, tolerating legacy entries with no archivedAt. */
-function sortChampions(champions) {
+function sortChampions(champions: LeagueChampionEntry[]): LeagueChampionEntry[] {
   return [...champions].sort((a, b) => {
     const aTime = a.archivedAt?.toMillis?.() ?? a.archivedAt?.seconds ?? 0;
     const bTime = b.archivedAt?.toMillis?.() ?? b.archivedAt?.seconds ?? 0;
@@ -27,35 +55,35 @@ function sortChampions(champions) {
  * Titles per director, and the longest run of consecutive titles — the two
  * numbers a league argues about.
  */
-function buildDynasties(ordered) {
-  const counts = new Map();
+function buildDynasties(ordered: LeagueChampionEntry[]): Dynasties {
+  const counts = new Map<string, number>();
   ordered.forEach((c) => {
     if (!c.winnerId) return;
     counts.set(c.winnerId, (counts.get(c.winnerId) || 0) + 1);
   });
 
   // `ordered` is newest-first, so walk it as-is; a run is a run either way.
-  let bestStreak = { uid: null, name: null, length: 0 };
-  let runUid = null;
+  let bestStreak: Dynasties['bestStreak'] = { uid: null, name: null, length: 0 };
+  let runUid: string | null = null;
   let runLength = 0;
   ordered.forEach((c) => {
     if (c.winnerId && c.winnerId === runUid) {
       runLength += 1;
     } else {
-      runUid = c.winnerId;
+      runUid = c.winnerId ?? null;
       runLength = c.winnerId ? 1 : 0;
     }
     if (runLength > bestStreak.length) {
-      bestStreak = { uid: runUid, name: c.winnerUsername, length: runLength };
+      bestStreak = { uid: runUid, name: c.winnerUsername ?? null, length: runLength };
     }
   });
 
   return { counts, bestStreak };
 }
 
-const RecordLine = ({ champion }) => {
+const RecordLine = ({ champion }: { champion: LeagueChampionEntry }) => {
   const record = champion.record;
-  const parts = [];
+  const parts: string[] = [];
   if (record) {
     parts.push(`${record.wins}-${record.losses}${record.ties ? `-${record.ties}` : ''}`);
   }
@@ -67,7 +95,7 @@ const RecordLine = ({ champion }) => {
   return <span className="text-[10px] text-muted">{parts.join(' · ')}</span>;
 };
 
-const LeagueHallOfFame = ({ league, userProfile }) => {
+const LeagueHallOfFame = ({ league, userProfile }: LeagueHallOfFameProps) => {
   const [expanded, setExpanded] = useState(false);
 
   const ordered = useMemo(() => sortChampions(league?.champions || []), [league?.champions]);
@@ -124,7 +152,7 @@ const LeagueHallOfFame = ({ league, userProfile }) => {
       <div className="divide-y divide-line-subtle">
         {visible.map((champion, index) => {
           const isYou = champion.winnerId && champion.winnerId === userProfile?.uid;
-          const titles = counts.get(champion.winnerId) || 1;
+          const titles = (champion.winnerId ? counts.get(champion.winnerId) : 0) || 1;
           return (
             <div
               key={`${champion.seasonId || champion.seasonName}-${champion.winnerId || index}`}
