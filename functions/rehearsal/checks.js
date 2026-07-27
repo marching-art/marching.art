@@ -247,23 +247,20 @@ async function checkArchivalScale(db, world, played) {
   const seasonUid = played.rollover.oldSeasonUid;
 
   // archiveSeasonResultsLogic commits ONE un-chunked db.batch() across every
-  // league in the game, as the very last thing it does. Per crowned league that
-  // is the champions[] update, the winner's profile update, two coin-history
-  // entries, the league payout update, an activity entry, and one notification
-  // PER MEMBER — so it grows with the player base, not with the league count.
+  // league in the game, as the very last thing it does — so if that commit is
+  // ever rejected, no league gets a champion or a payout and the rollover marks
+  // itself failed. Per crowned league the batch carries the champions[] update,
+  // the winner's profile update, two coin-history entries, the league payout
+  // update, an activity entry, and one notification PER MEMBER, which is the
+  // only part that grows with the player base.
   //
-  // The comments around it (helpers/leagueSeasonReset.js, and the ChunkedWriter
-  // rationale in helpers/scoring.js) describe the danger as Firestore's
-  // "500-op ceiling". That limit is no longer in Firestore's published quotas:
-  // as of July 2026 the documented ceilings are a 10 MiB maximum API request
-  // size and 500 field transformations on a SINGLE document. There is no
-  // documented cap on the number of writes in a batched commit.
-  //
-  // The emulator confirms nothing either way here — it accepted both a
-  // 5,000-write batch and a 12 MiB one during this harness's development — so
-  // this check does not claim a verdict it cannot reach. It measures the shape
-  // of the real batch and extrapolates against the documented 10 MiB limit,
-  // which is the number that actually applies.
+  // Firestore's published quotas cap a request at 10 MiB and 500 field
+  // transformations on a SINGLE document; there is no documented cap on the
+  // number of writes in a batched commit. (The comments that used to cite a
+  // 500-op ceiling around this code have been corrected.) The emulator enforces
+  // neither limit — it accepted a 5,000-write batch and a 12 MiB one during
+  // this harness's development — so this check measures the batch rather than
+  // claiming a verdict only production can give.
   let ops = 0;
   let crowned = 0;
   let members = 0;
@@ -279,8 +276,6 @@ async function checkArchivalScale(db, world, played) {
     return [warn("scale", "archival batch size", "no league was crowned, so there is nothing to measure")];
   }
 
-  // Bytes actually written, measured rather than guessed: the notifications are
-  // the bulk of the batch and the only part that scales with membership.
   let notificationBytes = 0;
   let notificationCount = 0;
   for (const seed of world.leagues) {
@@ -296,8 +291,6 @@ async function checkArchivalScale(db, world, played) {
     }
   }
   const bytesPerNotification = notificationCount > 0 ? notificationBytes / notificationCount : 0;
-  // The non-notification writes are small and fixed; the notification rate is
-  // what decides how far this scales.
   const memberSlotsToLimit =
     bytesPerNotification > 0 ? Math.floor((10 * 1024 * 1024) / bytesPerNotification) : Infinity;
 
@@ -307,24 +300,13 @@ async function checkArchivalScale(db, world, played) {
       "season archival commits one un-chunked batch",
       `measured: ${ops} operations for ${crowned} crowned league(s) across ${members} memberships, ` +
         `${notificationCount} champion notifications averaging ${Math.round(bytesPerNotification)} ` +
-        "bytes. Against the documented 10 MiB request limit that leaves room for roughly " +
-        `${memberSlotsToLimit.toLocaleString()} league memberships in one commit, so the game is a ` +
-        "long way from the real ceiling and needs no change before finals night. Two things are " +
-        "still worth knowing: the surrounding comments cite a 500-op batch limit that Firestore " +
-        "no longer publishes (the current quotas are 10 MiB per request and 500 field " +
-        "transformations per single document), and the emulator enforces neither limit, so no " +
-        "rehearsal can prove this one — only production can"
+        "bytes. Against the documented 10 MiB request limit that is room for roughly " +
+        `${memberSlotsToLimit.toLocaleString()} league memberships in one commit — a long way from ` +
+        "the ceiling, so no change is needed. Recorded each run because it is the one number that " +
+        "grows with the player base, and because the emulator cannot enforce the real limit"
     ),
   ];
 }
-
-/**
- * Run everything.
- *
- * @param {FirebaseFirestore.Firestore} db
- * @param {Object} world
- * @param {Object} played
- */
 
 async function runChecks(db, world, played) {
   const recaps = await readRecaps(db, played.rollover.oldSeasonUid);

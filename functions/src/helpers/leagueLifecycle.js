@@ -24,7 +24,16 @@ const LEAGUE_SUBCOLLECTIONS = [
   "meta",
 ];
 
-/** Firestore caps a WriteBatch at 500 operations. */
+/**
+ * Deletes per committed batch.
+ *
+ * Not a hard limit: Firestore's published quotas cap a request at 10 MiB and
+ * 500 field transformations on a single document — the old 500-writes-per-batch
+ * ceiling this file used to cite is no longer among them. Chunking is still the
+ * right shape for an unbounded teardown (bounded memory, bounded request size,
+ * a failure that loses one chunk rather than the whole delete), so the number
+ * stays; only the reason for it has changed.
+ */
 const DELETE_BATCH_SIZE = 400;
 
 /**

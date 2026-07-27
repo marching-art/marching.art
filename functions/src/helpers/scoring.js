@@ -261,7 +261,12 @@ function scoreShowsForDay({
     showResult.results.push({
       uid: uid,
       displayName: userProfile.username || userProfile.displayName,
-      location: corps.location,
+      // `|| null`, like avatarUrl below it: most corps carry no location, and a
+      // bare undefined here only survives because functions/index.js sets
+      // ignoreUndefinedProperties. Without that one line the whole recap
+      // document is rejected and the night's scoring fails — which is a lot of
+      // weight for a global setting to carry for an optional display field.
+      location: corps.location || null,
       corpsClass: corpsClass,
       corpsName: corps.corpsName,
       avatarUrl: corps.avatarUrl || null,
