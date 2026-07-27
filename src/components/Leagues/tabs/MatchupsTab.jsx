@@ -205,6 +205,10 @@ const MatchupsTab = ({
       week: matchup.week,
       status: matchup.status,
       corpsClass: matchup.corpsClass,
+      // The stored caption verdicts, on a league running Caption Wars. Passed
+      // through rather than recomputed so the detail card can never disagree
+      // with the result on the row that opened it.
+      captions: matchup.captions,
       isUserMatchup: matchup.pair[0] === userProfile?.uid || matchup.pair[1] === userProfile?.uid,
     });
   };

@@ -10,6 +10,7 @@ import { queryClient, queryKeys } from '../../lib/queryClient';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
 import RivalryHistoryCard from './RivalryHistoryCard';
+import CaptionWarsScoreboard from './CaptionWarsScoreboard';
 import { Heading } from '../ui';
 import { MatchupOverviewPanel, MatchupShowsPanel } from './MatchupDetailParts';
 import {
@@ -621,6 +622,21 @@ const MatchupDetailView = ({
           );
         })}
       </div>
+
+      {/* How the week was actually decided, when this league runs Caption
+          Wars. Above the tabs because it IS the result, not a detail of it. */}
+      {matchup.captions && (
+        <div className="px-4 pb-4">
+          <CaptionWarsScoreboard
+            captions={matchup.captions}
+            homeUid={matchup.user1}
+            awayUid={matchup.user2}
+            homeDisplayName={getDisplayName(matchup.user1)}
+            awayDisplayName={getDisplayName(matchup.user2)}
+            hideScores={matchup.corpsClass === 'soundSport'}
+          />
+        </div>
+      )}
 
       {/* Tab Content */}
       <AnimatePresence mode="wait">

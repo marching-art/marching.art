@@ -55,6 +55,10 @@ const LEAGUE_TAGS = {
   weekly: { label: 'Weekly', color: 'text-blue-400 bg-blue-500/10' },
   public: { label: 'Public', color: 'text-muted bg-white/5' },
   rookie: { label: 'Rookie', color: 'text-brand bg-brand/10' },
+  // Not a commissioner-set vibe tag like the rest — derived below from the
+  // league's live scoring format. A league whose weeks are decided on captions
+  // is playing a different game, which is a reason to join THAT league.
+  captionWars: { label: 'Caption Wars', color: 'text-purple-400 bg-purple-500/10' },
 };
 
 /** Filter chips over the discover grid, in the order they read best. */
@@ -67,6 +71,15 @@ const DISCOVER_FILTERS = ['competitive', 'casual', 'roleplay', 'dynasty', 'rooki
 const getLeagueTags = (league) => {
   const tags = [];
   if (LEAGUE_TAGS[league.tag]) tags.push(league.tag);
+  // Both conditions, exactly as the server reads it: a format left over from a
+  // previous season is not this season's format.
+  if (
+    league.settings?.scoringFormat === 'captionWars' &&
+    league.seasonId &&
+    league.settings?.scoringFormatSeasonUid === league.seasonId
+  ) {
+    tags.push('captionWars');
+  }
   if (league.isRookieCircuit) tags.push('rookie');
   if (league.isPublic) tags.push('public');
   return tags;

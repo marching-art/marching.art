@@ -9,6 +9,8 @@
 // Pure and derived: no new documents, no backfill, nothing to keep in sync. It
 // re-reads what the weekly resolution already wrote.
 
+import { CAPTION_CATEGORIES, isSweep, type CaptionsBlock } from './captionWars';
+
 /** One resolved matchup, as the backend writes it. */
 export interface RecordMatchup {
   pair?: [string, string | null];
@@ -17,6 +19,8 @@ export interface RecordMatchup {
   isBye?: boolean;
   scores?: Record<string, number>;
   normalized?: Record<string, number>;
+  /** Present only on leagues running Caption Wars. */
+  captions?: CaptionsBlock;
 }
 
 export interface RecordWeekDoc {
@@ -52,6 +56,21 @@ export interface StreakRecord {
   seasonUid?: string | null;
 }
 
+export interface SweepRecord {
+  uid: string;
+  count: number;
+}
+
+export interface CaptionStreakRecord {
+  uid: string;
+  /** Which category they kept taking. */
+  caption: string;
+  label: string;
+  length: number;
+  endedWeek: number;
+  seasonUid?: string | null;
+}
+
 export interface LeagueRecords {
   /** Weeks that contributed at least one resolved matchup, across all seasons. */
   weeksCounted: number;
@@ -63,6 +82,10 @@ export interface LeagueRecords {
   longestWinStreak: StreakRecord | null;
   /** Best single week measured against the director's own class field. */
   bestClassFinish: (ScoreRecord & { percentile: number }) | null;
+  /** Caption Wars only: most career 3-0 sweeps. */
+  mostSweeps: SweepRecord | null;
+  /** Caption Wars only: longest run of weeks holding one category. */
+  longestCaptionStreak: CaptionStreakRecord | null;
 }
 
 const EMPTY: LeagueRecords = {
@@ -73,6 +96,8 @@ const EMPTY: LeagueRecords = {
   closestCall: null,
   longestWinStreak: null,
   bestClassFinish: null,
+  mostSweeps: null,
+  longestCaptionStreak: null,
 };
 
 interface FlatResult {
@@ -169,6 +194,68 @@ function findLongestWinStreak(flat: FlatResult[]): StreakRecord | null {
 }
 
 /**
+ * Career 3-0 sweeps, on a league running Caption Wars.
+ *
+ * A sweep is every contested category to one director — the format's version of
+ * a statement win, and the thing a director actually brags about.
+ */
+function findMostSweeps(flat: FlatResult[]): SweepRecord | null {
+  const counts = new Map<string, number>();
+
+  for (const { matchup } of flat) {
+    if (!matchup.captions) continue;
+    const [p1, p2] = matchup.pair as [string, string];
+    for (const uid of [p1, p2]) {
+      if (isSweep(matchup.captions, uid)) counts.set(uid, (counts.get(uid) || 0) + 1);
+    }
+  }
+
+  let best: SweepRecord | null = null;
+  for (const [uid, count] of counts) {
+    if (!best || count > best.count) best = { uid, count };
+  }
+  return best;
+}
+
+/**
+ * Longest run of consecutive weeks in which one director took a given category.
+ *
+ * This is the "nobody beats them in Music" narrative the format exists to
+ * create, and it is the one record a best-of-three can produce that a single
+ * comparison of totals cannot.
+ *
+ * A week in which the category went undecided breaks the run rather than
+ * extending it, for the same reason a tie breaks a win streak.
+ */
+function findLongestCaptionStreak(flat: FlatResult[]): CaptionStreakRecord | null {
+  const running = new Map<string, number>();
+  let best: CaptionStreakRecord | null = null;
+
+  for (const { week, seasonUid, matchup } of flat) {
+    if (!matchup.captions) continue;
+    const [p1, p2] = matchup.pair as [string, string];
+
+    for (const { key, label } of CAPTION_CATEGORIES) {
+      const winner = matchup.captions[key]?.winner;
+      for (const uid of [p1, p2]) {
+        const runKey = `${uid}:${key}`;
+        if (winner !== uid) {
+          running.delete(runKey);
+          continue;
+        }
+        const length = (running.get(runKey) || 0) + 1;
+        running.set(runKey, length);
+        if (!best || length > best.length) {
+          best = { uid, caption: key, label, length, endedWeek: week, seasonUid };
+        }
+      }
+    }
+  }
+
+  return best && best.length > 1 ? best : null;
+}
+
+/**
  * Derive a league's record book.
  *
  * @param weekDocs Raw `week-N` matchup documents.
@@ -217,11 +304,19 @@ export function computeLeagueRecords(
     // call ever played.
     if (matchup.winner === 'tie' || (s1 === 0 && s2 === 0)) continue;
 
-    const winnerUid = s1 > s2 ? p1 : p2;
+    // The STORED winner, not the higher score. Under Caption Wars those can
+    // differ: a director who banked their whole week in one caption can post
+    // the bigger number and still lose it.
+    const winnerUid = matchup.winner === p2 ? p2 : p1;
     const loserUid = winnerUid === p1 ? p2 : p1;
-    const winnerScore = Math.max(s1, s2);
-    const loserScore = Math.min(s1, s2);
+    const winnerScore = matchup.scores?.[winnerUid] ?? 0;
+    const loserScore = matchup.scores?.[loserUid] ?? 0;
     const margin = winnerScore - loserScore;
+    // An upset on captions has a negative points margin, and neither "won by
+    // the most" nor "won by the least" is a true sentence about it. It is a
+    // real result and it is still counted as a week; it just is not a
+    // points-margin record.
+    if (margin < 0) continue;
     const entry: MarginRecord = {
       winnerUid,
       loserUid,
@@ -248,5 +343,7 @@ export function computeLeagueRecords(
     closestCall,
     longestWinStreak: findLongestWinStreak(flat),
     bestClassFinish,
+    mostSweeps: findMostSweeps(flat),
+    longestCaptionStreak: findLongestCaptionStreak(flat),
   };
 }

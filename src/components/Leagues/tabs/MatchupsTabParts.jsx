@@ -19,6 +19,8 @@ import {
   Medal,
 } from 'lucide-react';
 import { getSoundSportRating } from '../../../utils/scoresUtils';
+import { formatTally } from '../../../utils/captionWars';
+import CaptionStrip from '../CaptionStrip';
 import { useLeagueInviteCode } from '../../../hooks/useLeagues';
 import { Heading } from '../../ui';
 
@@ -567,6 +569,19 @@ const VersusStrip = memo(
             <div className="flex-shrink-0 text-center min-w-[70px]">
               {isBye ? (
                 <div className="px-2 py-1 bg-surface-raised text-muted text-xs">WIN</div>
+              ) : matchup.completed && matchup.captions ? (
+                /* Caption Wars: the tally is the result, the totals are the
+                   supporting detail rather than the other way round. */
+                <div>
+                  <div className="text-sm font-bold font-data tabular-nums text-white">
+                    {formatTally(matchup.captions, homeWon ? p1_uid : p2_uid)}
+                  </div>
+                  {!isSoundSport && (
+                    <div className="text-[10px] text-muted font-data tabular-nums">
+                      {home.score.toFixed(0)}-{away.score.toFixed(0)}
+                    </div>
+                  )}
+                </div>
               ) : matchup.completed || matchup.status === 'live' ? (
                 <div className="flex items-center justify-center gap-1">
                   <span
@@ -634,6 +649,10 @@ const VersusStrip = memo(
               </div>
             )}
           </div>
+
+          {!isBye && matchup.completed && matchup.captions && (
+            <CaptionStrip captions={matchup.captions} p1Uid={p1_uid} p2Uid={p2_uid} />
+          )}
         </div>
       </button>
     );

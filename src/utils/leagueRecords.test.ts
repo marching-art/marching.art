@@ -133,6 +133,113 @@ describe('computeLeagueRecords', () => {
   });
 });
 
+// Caption Wars records. A league on the default format has none of these, and a
+// league with mixed-format history shows records only from the seasons that had
+// the format.
+describe('caption records', () => {
+  const captionMatchup = (
+    p1: string,
+    p2: string,
+    s1: number,
+    s2: number,
+    winners: [string, string, string]
+  ) => ({
+    pair: [p1, p2] as [string, string],
+    scores: { [p1]: s1, [p2]: s2 },
+    captions: {
+      ge: { scores: { [p1]: 30, [p2]: 30 }, winner: winners[0] },
+      visual: { scores: { [p1]: 28, [p2]: 28 }, winner: winners[1] },
+      music: { scores: { [p1]: 28, [p2]: 28 }, winner: winners[2] },
+      tally: {
+        [p1]: winners.filter((w) => w === p1).length,
+        [p2]: winners.filter((w) => w === p2).length,
+      },
+    },
+    winner: winners.filter((w) => w === p1).length >= 2 ? p1 : p2,
+    completed: true,
+  });
+
+  it('counts career sweeps', () => {
+    const records = computeLeagueRecords(
+      [
+        week(1, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'a'])]),
+        week(2, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'b'])]),
+        week(3, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'a'])]),
+      ],
+      CLASSES
+    );
+
+    expect(records.mostSweeps).toMatchObject({ uid: 'a', count: 2 });
+  });
+
+  it('tracks the longest run of holding one category', () => {
+    const records = computeLeagueRecords(
+      [
+        // Music is b's every week, whoever wins the week itself — a's own runs
+        // are broken by the sweep in the middle.
+        week(1, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'b'])]),
+        week(2, [captionMatchup('a', 'b', 80, 90, ['b', 'b', 'b'])]),
+        week(3, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'b'])]),
+      ],
+      CLASSES
+    );
+
+    expect(records.longestCaptionStreak).toMatchObject({
+      uid: 'b',
+      caption: 'music',
+      length: 3,
+    });
+  });
+
+  it('an undecided category breaks the run rather than extending it', () => {
+    const records = computeLeagueRecords(
+      [
+        week(1, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'b'])]),
+        week(2, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'tie'])]),
+        week(3, [captionMatchup('a', 'b', 90, 80, ['a', 'a', 'b'])]),
+      ],
+      CLASSES
+    );
+
+    // b never held Music twice running, so no caption streak survives for them.
+    expect(records.longestCaptionStreak?.uid).not.toBe('b');
+  });
+
+  // The upset the whole format exists to produce: b posts the higher week and
+  // loses it. Neither "won by the most" nor "won by the least" is true of that
+  // matchup, so it sets no points-margin record — but it is still a real week.
+  it('a caption upset sets no points-margin record', () => {
+    const records = computeLeagueRecords(
+      [week(1, [captionMatchup('a', 'b', 86, 94, ['b', 'a', 'a'])])],
+      CLASSES
+    );
+
+    expect(records.weeksCounted).toBe(1);
+    expect(records.biggestBlowout).toBeNull();
+    expect(records.closestCall).toBeNull();
+    // The bigger week is still the league's highest, whoever won it.
+    expect(records.highestWeek).toMatchObject({ uid: 'b', score: 94 });
+  });
+
+  // Regression guard: the margin records used to name whoever scored more as
+  // the winner, which under Caption Wars is not always who won.
+  it('names the stored winner, not the higher score', () => {
+    const records = computeLeagueRecords(
+      [week(1, [captionMatchup('a', 'b', 95, 60, ['a', 'a', 'b'])])],
+      CLASSES
+    );
+    expect(records.biggestBlowout).toMatchObject({ winnerUid: 'a', loserUid: 'b' });
+  });
+
+  it('a league on the default format has no caption records', () => {
+    const records = computeLeagueRecords([week(1, [decided('a', 'b', 90, 80)])], CLASSES);
+    expect(records.mostSweeps).toBeNull();
+    expect(records.longestCaptionStreak).toBeNull();
+    // And its points records are exactly what they always were.
+    expect(records.biggestBlowout).toMatchObject({ winnerUid: 'a', margin: 10 });
+  });
+});
+
 // Rollover MOVES finished weeks to `{seasonUid}_week-N` so the live collection
 // only ever holds the current season — leaving them in place made the generator
 // skip every week of the next season. Both forms are real history.
