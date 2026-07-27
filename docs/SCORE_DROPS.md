@@ -42,10 +42,10 @@ and a day's slate is only complete once the furthest-WEST show has posted.
 Two predicates, each erring in the direction that's safe for its use
 (`helpers/dropPlanner.js`):
 
-| Predicate       | Used for                          | Unmarked show is…                              |
-| ----------------- | ----------------------------------- | ------------------------------------------------ |
+| Predicate       | Used for                          | Unmarked show is…                                |
+| --------------- | --------------------------------- | ------------------------------------------------ |
 | `isVirtualShow` | zones, announced times, drop time | **real** — waiting too long beats dropping early |
-| `owesDciRecap`  | `expectedShowCount`               | **not owed** — also requires a scraped `date`   |
+| `owesDciRecap`  | `expectedShowCount`               | **not owed** — also requires a scraped `date`    |
 
 Hosted events are marked `eventTier: "hosted"` + `hostUid` by `addShowToDay`.
 Shows created before it persisted those carry neither, which is why timing
@@ -75,7 +75,7 @@ the recap reaches dci.org some time after. Retries are therefore budgeted by
 what an attempt **costs**, because the cheap failure is the common one:
 
 | Attempt                                              | Cost        | Budget                    |
-| ------------------------------------------------------ | ----------- | ------------------------- |
+| ---------------------------------------------------- | ----------- | ------------------------- |
 | Probe — fetched `/scores`, nothing new to pull       | 1 request   | `MAX_LISTING_PROBES` (16) |
 | Scrape — fetched tonight's recap pages, still failed | 1 per event | `MAX_SCRAPE_ATTEMPTS` (3) |
 

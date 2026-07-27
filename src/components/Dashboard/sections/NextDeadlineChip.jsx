@@ -78,7 +78,9 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
         ) : (
           <>
             Scores in{' '}
-            <span className="text-cyan-400 font-data tabular-nums">{formatCountdown(scoresInMs)}</span>
+            <span className="text-cyan-400 font-data tabular-nums">
+              {formatCountdown(scoresInMs)}
+            </span>
           </>
         )}
       </span>
