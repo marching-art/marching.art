@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getMaxVisibleArticleDay, getSeasonProgress } from './seasonProgress';
+import {
+  getMaxVisibleArticleDay,
+  getSeasonPercentComplete,
+  getSeasonProgress,
+  SEASON_FINAL_DAY,
+  TOTAL_SEASON_WEEKS,
+} from './seasonProgress';
 
 // Off-season starts are written at midnight UTC (scheduleGeneration.js), so the
 // canonical day count normalizes the start on the UTC calendar.
@@ -125,5 +131,43 @@ describe('getMaxVisibleArticleDay', () => {
       ).currentDay
     );
     expect(afterMidnight).toBe(beforeMidnight);
+  });
+});
+
+describe('getSeasonPercentComplete', () => {
+  it('runs a clean 0-100 across the season', () => {
+    expect(getSeasonPercentComplete(1)).toBe(0);
+    expect(getSeasonPercentComplete(SEASON_FINAL_DAY)).toBe(100);
+    expect(getSeasonPercentComplete(25)).toBeCloseTo(50, 5);
+  });
+
+  // The bug this replaces: the league dashboard divided the current WEEK by a
+  // hardcoded 12 on a seven-week season, so mid-season read 42% instead of
+  // 71% and the bar topped out at 58% on finals day.
+  it('reports a mid-season day as past halfway, not a third of the way', () => {
+    // Day 34 is week 5 — the old math drew 5/12.
+    const { currentWeek } = getSeasonProgress(
+      { schedule: { startDate: new Date('2026-01-04T00:00:00Z') } },
+      new Date('2026-02-06T12:00:00-05:00')
+    );
+    expect(currentWeek).toBe(5);
+    expect(currentWeek / 12).toBeLessThan(0.5);
+    expect(getSeasonPercentComplete(34)).toBeGreaterThan(65);
+  });
+
+  it('clamps out-of-range and absent days instead of overflowing the bar', () => {
+    expect(getSeasonPercentComplete(0)).toBe(0);
+    expect(getSeasonPercentComplete(-3)).toBe(0);
+    expect(getSeasonPercentComplete(SEASON_FINAL_DAY + 10)).toBe(100);
+  });
+
+  it('agrees with the week count it is displayed beside', () => {
+    // Every week boundary lands inside its own slice of the bar.
+    for (let week = 1; week <= TOTAL_SEASON_WEEKS; week++) {
+      const lastDayOfWeek = week * 7;
+      const percent = getSeasonPercentComplete(lastDayOfWeek);
+      expect(percent).toBeGreaterThan(((week - 1) / TOTAL_SEASON_WEEKS) * 100);
+      expect(percent).toBeLessThanOrEqual(100);
+    }
   });
 });
