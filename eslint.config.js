@@ -39,7 +39,6 @@ export default tseslint.config(
       'coverage/**',
       'playwright-report/**',
       'playwright/.cache/**',
-      'functions/eslint.config.js', // pre-existing ESM config; not a source file
       '**/*.d.ts',
     ],
   },
@@ -120,6 +119,13 @@ export default tseslint.config(
   },
 
   // --- Cloud Functions: Node + CommonJS ---
+  //
+  // This block is the ONLY lint config for the functions tree — do not add a
+  // nested functions/eslint.config.js. ESLint 10 resolves config from each
+  // linted file's own directory upward, so a nested config there silently
+  // takes over the whole subtree (the old Google-style one that used to live
+  // there produced 2911 quote/indent/max-len errors against our
+  // Prettier-formatted sources the moment ESLint 10 landed).
   {
     files: ['functions/**/*.js'],
     extends: [js.configs.recommended],
