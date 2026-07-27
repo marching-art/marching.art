@@ -38,6 +38,7 @@ const StandingsTab = ({
   weeklyMatchups = {},
   onMatchupClick,
   lastUpdated,
+  isProvisional = false,
 }) => {
   const [expandedUser, setExpandedUser] = useState(null);
   const [showLeaderboardSection, setShowLeaderboardSection] = useState(false);
@@ -297,8 +298,16 @@ const StandingsTab = ({
                         {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                       </span>
                     )}
+                    {/* Say so rather than presenting a locally-derived table as
+                        a settled record — these two sources used to overwrite
+                        each other silently. */}
+                    {isProvisional && (
+                      <span className="text-[9px] text-muted font-normal normal-case ml-2">
+                        Provisional — week not yet final
+                      </span>
+                    )}
                   </h3>
-                  <span className="text-[10px] text-muted">Top {playoffSize} qualify</span>
+                  <span className="text-[10px] text-muted">Top {playoffSize} make Finals</span>
                 </div>
               </div>
 

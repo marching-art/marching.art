@@ -92,13 +92,36 @@ describe("foldPairsIntoStandings", () => {
     assert.equal(records.bob.pointsFor, 70); // unchanged
   });
 
-  test("incomplete pairs and unknown uids are ignored", () => {
+  test("incomplete pairs are ignored", () => {
     const base = freshRecords();
     const { records } = foldPairsIntoStandings(base, [
       { player1: "alice", player2: "bob", winner: "alice", completed: false },
-      { player1: "ghost", player2: "phantom", winner: "ghost", completed: true },
     ]);
     assert.deepEqual(records, base);
+  });
+
+  // The fold used to guard every branch with `if (records[uid])`, so a member
+  // whose record had never been seeded played their whole season without a
+  // single result being recorded — silently, with no error anywhere.
+  test("seeds a record for a resolved participant who has none", () => {
+    const { records, standings } = foldPairsIntoStandings(freshRecords(), [
+      {
+        player1: "newcomer",
+        player2: "alice",
+        player1Score: 95,
+        player2Score: 90,
+        winner: "newcomer",
+        completed: true,
+      },
+    ]);
+
+    assert.equal(records.newcomer.wins, 1);
+    assert.equal(records.newcomer.losses, 0);
+    assert.equal(records.newcomer.pointsFor, 95);
+    assert.equal(records.newcomer.pointsAgainst, 90);
+    assert.equal(records.newcomer.streakType, "W");
+    assert.equal(records.alice.losses, 1);
+    assert.ok(standings.some((row) => row.uid === "newcomer"));
   });
 
   test("never mutates the input records (transaction-retry safety)", () => {

@@ -15,6 +15,13 @@ const { ChunkedWriter } = require("./chunkedWriter");
 const { updateStandings } = require("./leagueStandings");
 const { createLeagueActivity } = require("./leagueHelpers");
 const { MATCHUP_CLASSES } = require("./classRegistry");
+const { processAllInPages } = require("./firestorePaging");
+const { generateLeagueRecapsForWeek } = require("./leagueRecaps");
+const {
+  fetchWeeklyScoreIndex,
+  getWeekScore,
+  participatingClassesByUid,
+} = require("./leagueScoring");
 const {
   weeklyXpToken,
   weeklyWinToken,
@@ -33,18 +40,41 @@ const {
 async function processWeeklyMatchups(week, seasonData, db, { force = false } = {}) {
   logger.info(`End of week ${week}. Determining class-based matchup winners...`);
 
-  const LEAGUE_FETCH_LIMIT = 500;
+  // The week's actual body of work, from the committed recap days. Matchups
+  // used to compare `corps.{class}.totalSeasonScore`, which the nightly run
+  // overwrites with each corps' MOST RECENT show total — so a director who sat
+  // the week out kept an old score and could still win, and anyone who
+  // competed twice had all but their last show discarded. See leagueScoring.js.
+  const { index: weekScores, daysFound } = await fetchWeeklyScoreIndex(
+    db,
+    seasonData.seasonUid,
+    week
+  );
+  // No recap day for this week exists at all. Resolving anyway would mark every
+  // matchup in every league a completed 0-0 tie and fold that into standings
+  // permanently — a data-availability incident must not become a recorded
+  // result. Already-decided matchups (generator byes, a commissioner's manual
+  // close) still fold, since they need no scores; the undecided ones are left
+  // for a re-run to settle.
+  const canResolveScores = daysFound > 0;
+  if (!canResolveScores) {
+    logger.error(
+      `Week ${week}: no recap days found for season ${seasonData.seasonUid}; ` +
+        `leaving undecided matchups unresolved rather than recording a week of ties.`
+    );
+  }
+
   // Leagues live under the data namespace (see callable/leagues.js) and
   // matchup docs are written as `week-N` by generateMatchups /
   // generateWeeklyMatchups — these paths must stay in sync with those
   // writers or winner determination silently processes zero leagues.
-  const leaguesSnapshot = await db
-    .collection(paths.leagues())
-    .limit(LEAGUE_FETCH_LIMIT)
-    .get();
-  if (leaguesSnapshot.size === LEAGUE_FETCH_LIMIT) {
-    logger.warn(`OPTIMIZATION WARNING: League fetch hit limit of ${LEAGUE_FETCH_LIMIT}. Consider implementing pagination.`);
-  }
+  //
+  // Paged, not `.limit(500)`: the old fetch logged a warning and then silently
+  // stopped resolving matchups for every league past the 500th — the worst
+  // possible failure mode, arriving exactly when the game succeeds at its
+  // stated scale. Every sibling league job already uses processAllInPages.
+  const leagueDocs = await processAllInPages(db.collection(paths.leagues()), 500, async (d) => d);
+  const leaguesSnapshot = { docs: leagueDocs, size: leagueDocs.length };
 
   // ChunkedWriter: two record writes per matchup across up to 500 leagues
   // plus coin awards can exceed a single WriteBatch's per-request cap.
@@ -127,12 +157,23 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           continue;
         }
 
+        if (!canResolveScores) {
+          updatedMatchupsForClass.push(matchup);
+          continue;
+        }
+
         const [p1_uid, p2_uid] = matchup.pair;
         const p1_profile = profileMap.get(p1_uid);
         const p2_profile = profileMap.get(p2_uid);
 
-        const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
-        const p2_score = p2_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
+        // THIS week's total across every show the corps attended — not the
+        // stale "latest show" number. A director who did not compete scores 0
+        // with 0 shows, which is a real result (a forfeited week), so showing
+        // up now beats sitting out.
+        const p1_week = getWeekScore(weekScores, p1_uid, corpsClass);
+        const p2_week = getWeekScore(weekScores, p2_uid, corpsClass);
+        const p1_score = p1_week.score;
+        const p2_score = p2_week.score;
 
         let winnerUid = null;
         if (p1_score > p2_score) winnerUid = p1_uid;
@@ -219,6 +260,9 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
         const newMatchup = {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
+          // Shows attended, so the matchup card can say "did not compete"
+          // rather than implying a 0.0 performance.
+          shows: { [p1_uid]: p1_week.shows, [p2_uid]: p2_week.shows },
           winner: winnerUid ?? "tie",
           completed: true,
         };
@@ -273,6 +317,18 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
     }
   }
 
+  // The recap summarizes the week that was just resolved, so it is generated
+  // HERE rather than on its own cron. The old Sunday-22:00 recap job ran before
+  // this resolution and skipped every matchup that wasn't `completed`, so it
+  // wrote an empty highlights[] with null stats every week of every season.
+  // Isolated: recaps are a derived view and must never fail the guarded run
+  // that pays rewards. The Monday backstop cron repairs anything lost here.
+  try {
+    await generateLeagueRecapsForWeek(db, week);
+  } catch (error) {
+    logger.error(`Week ${week} league recap generation failed (scoring unaffected):`, error);
+  }
+
   logger.info(`Matchup winner determination for week ${week} complete.`);
 }
 
@@ -299,26 +355,11 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
  * @param {FirebaseFirestore.Firestore} db - Firestore database instance
  */
 async function payWeeklyParticipationXP(week, seasonData, db, { force = false } = {}) {
-  const firstDay = week * 7 - 6;
-  const lastDay = week * 7;
-  const dayRefs = [];
-  for (let day = firstDay; day <= lastDay; day++) {
-    dayRefs.push(db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${day}`));
-  }
-  const dayDocs = await db.getAll(...dayRefs);
-
-  // Distinct participating classes per director across the week.
-  const classesByUid = new Map();
-  for (const dayDoc of dayDocs) {
-    if (!dayDoc.exists) continue;
-    for (const show of (dayDoc.data().shows || [])) {
-      for (const result of (show.results || [])) {
-        if (!result?.uid || !result?.corpsClass) continue;
-        if (!classesByUid.has(result.uid)) classesByUid.set(result.uid, new Set());
-        classesByUid.get(result.uid).add(result.corpsClass);
-      }
-    }
-  }
+  // Same week index the matchup resolution uses (helpers/leagueScoring.js), so
+  // "who competed this week" can never differ between the XP payout and the
+  // matchup that decided their week.
+  const { index } = await fetchWeeklyScoreIndex(db, seasonData.seasonUid, week);
+  const classesByUid = participatingClassesByUid(index);
 
   if (classesByUid.size === 0) {
     logger.info(`Week ${week}: no show participants in recaps; no weekly participation XP to pay.`);

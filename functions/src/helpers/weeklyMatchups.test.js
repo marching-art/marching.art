@@ -60,37 +60,56 @@ function makeFakeDb({ leagues = [], docs = new Map() } = {}) {
       return makeDocRef(path);
     },
     collection(path) {
-      return {
-        limit() {
-          return {
-            async get() {
-              if (path !== leaguesPath) {
-                // Any other collection (e.g. the old root `leagues`) is empty —
-                // exactly how the path bug failed silently in production.
-                return { docs: [], size: 0 };
-              }
-              return {
-                size: leagues.length,
-                docs: leagues.map((l) => ({
-                  id: l.id,
-                  ref: makeDocRef(`${leaguesPath}/${l.id}`),
-                  data: () => l.data,
-                })),
-              };
-            },
-          };
+      // Any collection other than the namespaced leagues path is empty —
+      // exactly how the path bug failed silently in production.
+      const listDocs = () =>
+        path !== leaguesPath
+          ? []
+          : leagues.map((l) => ({
+              id: l.id,
+              ref: makeDocRef(`${leaguesPath}/${l.id}`),
+              data: () => l.data,
+            }));
+      const snapshot = () => {
+        const found = listDocs();
+        return {
+          size: found.length,
+          empty: found.length === 0,
+          docs: found,
+          forEach: (fn) => found.forEach(fn),
+        };
+      };
+      // processAllInPages walks orderBy(documentId()).limit(n)[.startAfter()],
+      // so the query builder has to be chainable. A short page ends the walk,
+      // which is why startAfter is only reachable on an exactly-full page.
+      const query = {
+        orderBy: () => query,
+        limit: () => query,
+        startAfter: () => ({
+          async get() {
+            return { size: 0, empty: true, docs: [], forEach: () => {} };
+          },
+        }),
+        async get() {
+          return snapshot();
         },
+      };
+      return {
+        ...query,
         doc() {
           return makeDocRef(`${path}/auto-${++autoId}`);
         },
       };
     },
-    async getAll(...refs) {
-      return refs.map((ref) => ({
-        ref,
-        exists: docs.has(ref.path),
-        data: () => docs.get(ref.path),
-      }));
+    // Trailing options (e.g. { fieldMask }) are not document references.
+    async getAll(...args) {
+      return args
+        .filter((arg) => arg && typeof arg.path === "string")
+        .map((ref) => ({
+          ref,
+          exists: docs.has(ref.path),
+          data: () => docs.get(ref.path),
+        }));
     },
     batch() {
       return {
@@ -146,6 +165,27 @@ function makeFakeDb({ leagues = [], docs = new Map() } = {}) {
 
 const seasonData = { seasonUid: "season-1" };
 
+/**
+ * Recap days for a week, in the shape fantasy_recaps writes.
+ *
+ * Matchups resolve on the week's ACTUAL scores now (helpers/leagueScoring.js).
+ * They used to read corps.{class}.totalSeasonScore, which the nightly run
+ * overwrites with each corps' most recent show total — so a director who sat
+ * the week out kept a stale number and could still win it.
+ *
+ * @param {number} week
+ * @param {Array<{uid: string, corpsClass: string, totalScore: number}>} results
+ */
+function recapDays(week, results) {
+  const firstDay = week * 7 - 6;
+  return [
+    [
+      `fantasy_recaps/season-1/days/${firstDay}`,
+      { offSeasonDay: firstDay, shows: [{ results }] },
+    ],
+  ];
+}
+
 describe("processWeeklyMatchups", () => {
   test("reads namespaced league and week-N matchup paths", async () => {
     const docs = new Map([
@@ -155,8 +195,12 @@ describe("processWeeklyMatchups", () => {
           worldClassMatchups: [{ pair: ["alice", "bob"] }],
         },
       ],
-      [profilePath("alice"), { corps: { worldClass: { totalSeasonScore: 90 } } }],
-      [profilePath("bob"), { corps: { worldClass: { totalSeasonScore: 80 } } }],
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "worldClass", totalScore: 90 },
+        { uid: "bob", corpsClass: "worldClass", totalScore: 80 },
+      ]),
     ]);
     const { db, writes } = makeFakeDb({
       leagues: [{ id: "league-1", data: { name: "Test League" } }],
@@ -183,8 +227,12 @@ describe("processWeeklyMatchups", () => {
         `${leaguesPath}/league-1/matchups/week-3`,
         { aClassMatchups: [{ pair: ["alice", "bob"] }] },
       ],
-      [profilePath("alice"), { corps: { aClass: { totalSeasonScore: 70 } } }],
-      [profilePath("bob"), { corps: { aClass: { totalSeasonScore: 60 } } }],
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "aClass", totalScore: 70 },
+        { uid: "bob", corpsClass: "aClass", totalScore: 60 },
+      ]),
     ]);
     const { db, writes } = makeFakeDb({
       leagues: [{ id: "league-1", data: { name: "Test League" } }],
@@ -231,12 +279,16 @@ describe("processWeeklyMatchups", () => {
       ],
       [
         profilePath("alice"),
-        { corps: { aClass: { totalSeasonScore: 70 } }, [LEDGER_FIELD]: [aliceRecTok, winTok] },
+        { [LEDGER_FIELD]: [aliceRecTok, winTok] },
       ],
       [
         profilePath("bob"),
-        { corps: { aClass: { totalSeasonScore: 60 } }, [LEDGER_FIELD]: [bobRecTok] },
+        { [LEDGER_FIELD]: [bobRecTok] },
       ],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "aClass", totalScore: 70 },
+        { uid: "bob", corpsClass: "aClass", totalScore: 60 },
+      ]),
     ]);
     const { db, writes } = makeFakeDb({
       leagues: [{ id: "league-1", data: { name: "Test League" } }],
@@ -282,9 +334,14 @@ describe("processWeeklyMatchups", () => {
           ],
         },
       ],
-      [profilePath("alice"), { corps: { openClass: { totalSeasonScore: 50 } } }],
-      [profilePath("bob"), { corps: { openClass: { totalSeasonScore: 50 } } }],
-      [profilePath("carol"), { corps: { openClass: { totalSeasonScore: 40 } } }],
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      [profilePath("carol"), {}],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "openClass", totalScore: 50 },
+        { uid: "bob", corpsClass: "openClass", totalScore: 50 },
+        { uid: "carol", corpsClass: "openClass", totalScore: 40 },
+      ]),
     ]);
     const { db, writes } = makeFakeDb({
       leagues: [{ id: "league-1", data: { name: "Test League" } }],
@@ -322,10 +379,16 @@ describe("processWeeklyMatchups", () => {
           },
         },
       ],
-      [profilePath("alice"), { corps: { worldClass: { totalSeasonScore: 90 } } }],
-      [profilePath("bob"), { corps: { worldClass: { totalSeasonScore: 80 } } }],
-      [profilePath("carol"), { corps: { worldClass: { totalSeasonScore: 70 } } }],
-      [profilePath("dave"), { corps: { worldClass: { totalSeasonScore: 70 } } }],
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      [profilePath("carol"), {}],
+      [profilePath("dave"), {}],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "worldClass", totalScore: 90 },
+        { uid: "bob", corpsClass: "worldClass", totalScore: 80 },
+        { uid: "carol", corpsClass: "worldClass", totalScore: 70 },
+        { uid: "dave", corpsClass: "worldClass", totalScore: 70 },
+      ]),
     ]);
     const { db, writes } = makeFakeDb({
       leagues: [{ id: "league-1", data: { name: "Test League" } }],

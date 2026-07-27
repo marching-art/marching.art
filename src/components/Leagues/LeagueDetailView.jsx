@@ -52,11 +52,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
     retry,
   } = useLeagueDetail(league);
 
-  // Real-time standings, layered over the computed table (last writer wins).
-  const { standings, lastUpdated: standingsLastUpdated } = useLeagueLiveStandings(
-    league?.id,
-    computedStandings
-  );
+  // The backend standings document is authoritative; the computed table is a
+  // fallback for a league whose first week hasn't resolved yet. These used to
+  // race each other last-writer-wins, so a member's record changed on its own.
+  const {
+    standings,
+    lastUpdated: standingsLastUpdated,
+    isProvisional: standingsProvisional,
+  } = useLeagueLiveStandings(league?.id, computedStandings);
 
   // Real-time chat (api helper: newest 50, delivered oldest-first)
   const messages = useLeagueChat(league?.id);
@@ -207,6 +210,8 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               currentWeek={currentWeek}
               weeklyMatchups={weeklyMatchups}
               lastUpdated={standingsLastUpdated}
+              isProvisional={standingsProvisional}
+              playoffSize={league.settings?.playoffSize || league.settings?.finalsSize || 4}
               onMatchupClick={(matchup) => {
                 if (matchup) {
                   setSelectedMatchup({

@@ -6,6 +6,7 @@ const { logger } = require("firebase-functions/v2");
 const {
   generateUniqueInviteCode,
   smartPairMembers,
+  buildPairingHistory,
   createLeagueActivity,
   invitationId,
 } = require("../helpers/leagueHelpers");
@@ -21,6 +22,7 @@ const {
   refreshLeagueActivity,
   getActiveSeasonUid,
 } = require("../helpers/leagueActivity");
+const { fetchWeeklyScoreIndex, getWeekScore } = require("../helpers/leagueScoring");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -555,13 +557,20 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   );
   const profileDocs = members.length > 0 ? await db.getAll(...profileRefs) : [];
 
-  // Fetch current standings for smart pairing
+  // Fetch current standings for smart pairing, plus the matchup history that
+  // keeps the generator from producing the same duels and the same bye every
+  // week (helpers/leagueHelpers.js buildPairingHistory).
   const standingsDoc = await db.doc(paths.leagueStandings(leagueId)).get();
   const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
   const standings = {};
   standingsData.forEach((s, idx) => {
     standings[s.uid] = { ...s, rank: idx + 1 };
   });
+  const historySnapshot = await db.collection(paths.leagueMatchups(leagueId)).get();
+  const pairingHistory = buildPairingHistory(
+    historySnapshot.docs.map((d) => d.data()),
+    MATCHUP_CLASSES
+  );
 
   // Group members by their active corps classes. Registry-derived (Phase
   // 7.4) so Podium corps join league matchups automatically at launch.
@@ -601,7 +610,11 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
 
   for (const corpsClass of corpsClasses) {
     const classMembers = membersByClass[corpsClass];
-    matchupData[`${corpsClass}Matchups`] = smartPairMembers(classMembers, standings);
+    matchupData[`${corpsClass}Matchups`] = smartPairMembers(
+      classMembers,
+      standings,
+      pairingHistory
+    );
   }
 
   await matchupRef.set(matchupData);
@@ -678,7 +691,29 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
     throw new HttpsError("permission-denied", "Only the commissioner can update matchup results.");
   }
 
-  const corpsClasses = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+  // Registry-derived, like every other matchup site. The literal list this
+  // replaces would silently skip Podium the moment its registry entry enables.
+  const corpsClasses = MATCHUP_CLASSES;
+
+  // Resolve on the week's actual scores, exactly as the nightly resolution
+  // does (helpers/leagueScoring.js). Reading corps.{class}.totalSeasonScore
+  // here compared each director's most recent show — whenever that happened —
+  // so a commissioner closing week 3 could settle it on week 1 performances.
+  const seasonDocForWeek = await db.doc("game-settings/season").get();
+  if (!seasonDocForWeek.exists) {
+    throw new HttpsError("failed-precondition", "No active season.");
+  }
+  const { index: weekScores, daysFound } = await fetchWeeklyScoreIndex(
+    db,
+    seasonDocForWeek.data().seasonUid,
+    Number(week)
+  );
+  if (daysFound === 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Week ${week} has not been scored yet, so its matchups cannot be resolved.`
+    );
+  }
 
   // Resolve the week and fold standings in ONE transaction. The old flow
   // (plain read → plain matchup update → get-then-update standings) let two
@@ -694,31 +729,9 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
 
     const matchupData = matchupDoc.data();
 
-    // Collect all unique player IDs across all class matchups
-    const allPlayerIds = new Set();
-    for (const corpsClass of corpsClasses) {
-      const matchups = matchupData[`${corpsClass}Matchups`] || [];
-      for (const matchup of matchups) {
-        if (matchup.pair) {
-          matchup.pair.filter(Boolean).forEach(id => allPlayerIds.add(id));
-        }
-      }
-    }
-
-    // Batch fetch all player profiles through the transaction (all reads
-    // must precede writes)
-    const playerIds = [...allPlayerIds];
-    const profileRefs = playerIds.map(playerUid => db.doc(paths.userProfile(playerUid)));
-    const profileDocs = playerIds.length > 0 ? await t.getAll(...profileRefs) : [];
+    // Scores come from the week index built above, not from profile documents,
+    // so the transaction no longer fans out a read per participant.
     const standingsDoc = await t.get(standingsRef);
-
-    // Build a map of userId -> profile data
-    const profileMap = new Map();
-    profileDocs.forEach((doc, index) => {
-      if (doc.exists) {
-        profileMap.set(playerIds[index], doc.data());
-      }
-    });
 
     // Process matchups for each corps class
     const updated = { ...matchupData };
@@ -744,12 +757,13 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
         }
 
         const [p1_uid, p2_uid] = matchup.pair;
-        const p1_profile = profileMap.get(p1_uid);
-        const p2_profile = profileMap.get(p2_uid);
 
-        // Get score for the SPECIFIC corps class
-        const p1_score = p1_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
-        const p2_score = p2_profile?.corps?.[corpsClass]?.totalSeasonScore || 0;
+        // The week's total for this class, across every show the corps
+        // attended. Not competing scores 0 — a forfeited week, not a 0.0 run.
+        const p1_week = getWeekScore(weekScores, p1_uid, corpsClass);
+        const p2_week = getWeekScore(weekScores, p2_uid, corpsClass);
+        const p1_score = p1_week.score;
+        const p2_score = p2_week.score;
 
         let winner = null;
         if (p1_score > p2_score) {
@@ -763,6 +777,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
         const updatedMatchup = {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
+          shows: { [p1_uid]: p1_week.shows, [p2_uid]: p2_week.shows },
           winner,
           completed: true
         };

@@ -27,11 +27,35 @@ const admin = require("firebase-admin");
  * @param {Array} pairs resolved matchup pairs (see module header)
  * @returns {{records: Object, standings: Array}}
  */
+const EMPTY_RECORD = {
+  wins: 0,
+  losses: 0,
+  ties: 0,
+  pointsFor: 0,
+  pointsAgainst: 0,
+  currentStreak: 0,
+  streakType: null,
+};
+
 function foldPairsIntoStandings(baseRecords, pairs) {
   const records = {};
   for (const [uid, data] of Object.entries(baseRecords || {})) {
-    records[uid] = { ...data };
+    records[uid] = { ...EMPTY_RECORD, ...data };
   }
+
+  // Every director in a resolved pair gets a row. The fold used to be guarded
+  // by `if (records[uid])` at every branch, so a member whose record was never
+  // seeded — a league created before standings existed, a roster repaired by
+  // hand, a member added by a path that skipped the standings write — played
+  // their whole season without a single result being recorded, silently.
+  const ensureRecord = (uid) => {
+    if (uid && !records[uid]) records[uid] = { ...EMPTY_RECORD };
+  };
+  pairs.forEach((pair) => {
+    if (!pair.completed || pair.winner === null) return;
+    ensureRecord(pair.player1);
+    ensureRecord(pair.player2);
+  });
 
   pairs.forEach(pair => {
     if (!pair.completed || pair.winner === null) return;
@@ -99,13 +123,44 @@ function foldPairsIntoStandings(baseRecords, pairs) {
       streak: data.currentStreak || 0,
       streakType: data.streakType || null,
     }))
-    .sort((a, b) => {
-      // Sort by wins, then by total points
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      return b.totalPoints - a.totalPoints;
-    });
+    .sort(compareStandingRows);
 
   return { records, standings };
+}
+
+/**
+ * The league's ordering rule, in one place so the table, the playoff cut line,
+ * and the champion selector can never disagree about who is first.
+ *
+ * Win percentage before raw wins: byes, and directors who field a class for
+ * only part of a season, mean members do not all play the same number of
+ * matchups. Ranking on raw wins alone rewarded whoever happened to be paired
+ * most often. Ties count as half a win, the standard convention.
+ *
+ * Order: win% → wins → points for → points against (fewer is better) → uid, so
+ * the result is total and deterministic rather than dependent on object key
+ * order.
+ */
+function winPercentage(row) {
+  const wins = row.wins || 0;
+  const losses = row.losses || 0;
+  const ties = row.ties || 0;
+  const played = wins + losses + ties;
+  if (played === 0) return 0;
+  return (wins + ties / 2) / played;
+}
+
+function compareStandingRows(a, b) {
+  const pctDiff = winPercentage(b) - winPercentage(a);
+  if (pctDiff !== 0) return pctDiff;
+  if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
+  if ((b.totalPoints || 0) !== (a.totalPoints || 0)) {
+    return (b.totalPoints || 0) - (a.totalPoints || 0);
+  }
+  if ((a.pointsAgainst || 0) !== (b.pointsAgainst || 0)) {
+    return (a.pointsAgainst || 0) - (b.pointsAgainst || 0);
+  }
+  return String(a.uid).localeCompare(String(b.uid));
 }
 
 /**
@@ -143,4 +198,10 @@ async function updateStandings(db, leagueRef, pairs) {
   });
 }
 
-module.exports = { foldPairsIntoStandings, applyStandingsInTransaction, updateStandings };
+module.exports = {
+  foldPairsIntoStandings,
+  applyStandingsInTransaction,
+  updateStandings,
+  compareStandingRows,
+  winPercentage,
+};

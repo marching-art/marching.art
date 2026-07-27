@@ -22,25 +22,26 @@ honest about past bugs.
 
 The problem is above the plumbing. **The competitive layer is incoherent.**
 
-1. A "weekly matchup" is decided by comparing *cumulative season totals*, so
-   whoever leads in week 2 mathematically wins every remaining week. Weekly
-   competition does not exist.
-2. There are **two different standings systems** that disagree, and the UI
-   races them — your record changes depending on which one loaded last.
-3. The **league champion is not the standings winner**. Prize pool and the
-   legendary achievement go to the highest raw point total, ignoring the entire
-   W/L season the UI spent seven weeks building.
-4. **Playoffs are advertised and don't exist.** `finalsSize`, `playoffSize`,
-   `scoringFormat`, and `matchupType` are stored and never used; the standings
-   table draws a hardcoded "Top 4 qualify" line to nothing.
+1. A "weekly matchup" was decided by each corps' _most recent show score_, not
+   by the week — so a director who sat the whole week out kept a stale number
+   and could still win it, and anyone who competed twice had all but their last
+   performance thrown away.
+2. There were **two different standings systems** that disagreed, and the UI
+   raced them — your record changed depending on which one loaded last.
+3. The **league champion was not the standings winner**. Prize pool and the
+   legendary achievement went to the biggest final-show score, ignoring the
+   entire W/L season the UI spent seven weeks building.
+4. **Playoffs were advertised and didn't exist.** `finalsSize`, `playoffSize`,
+   `scoringFormat`, and `matchupType` were stored and never used; the standings
+   table drew a hardcoded "Top 4 qualify" line to nothing.
 
 Around that core sit ~30 smaller defects: no deep links, no commissioner
 transfer, no settings editing, an invite-code leak in the rookie circuit, a
 free-entry hole in the invitation path, orphaned data on delete, and a set of
 UI affordances wired to fields nothing writes.
 
-Fix the four items above and leagues become a real competition. The rest of the
-plan is what makes them a *clubhouse*.
+> **Status.** Findings marked **FIXED** have landed. Everything else is
+> outstanding. See Part 2 for the sequencing.
 
 ---
 
@@ -51,73 +52,83 @@ Severity: **P0** breaks the game · **P1** wrong data or real user harm ·
 
 ## A. Competitive integrity
 
-### A1 · P0 — Weekly matchups are decided by cumulative season score
+### A1 · P0 — Weekly matchups are decided by a stale "latest show" score — FIXED
 
-`functions/src/helpers/weeklyMatchups.js:134-135` and the commissioner path at
-`functions/src/callable/leagues.js:751-752` both resolve head-to-head on:
+`functions/src/helpers/weeklyMatchups.js` and the commissioner path in
+`functions/src/callable/leagues.js` both resolved head-to-head on:
 
 ```js
 const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
 ```
 
-`totalSeasonScore` is the season-to-date running total, not the week's score.
-Consequences:
+Despite the name, `totalSeasonScore` is **not** a season aggregate. The nightly
+run _overwrites_ it with each corps' most recent show total
+(`helpers/scoring.js commitDailyScoring` — "Uses latest score (not cumulative)
+— drum corps rankings are based on most recent performance"). Resolving a
+_week_ on it meant:
 
-- Once a director opens a lead, they win **every** subsequent weekly matchup
-  against everyone below them. There is no week-to-week drama, no upsets, no
-  reason to open the app on a Sunday.
-- The recap generator's "biggest upset" and "closest match" highlights are
-  therefore near-impossible to trigger, which is why league recaps read as
-  empty even when they generate.
-- It also makes the weekly-win CC bonus (100 CC, `GAMIFICATION.md`) a
-  rich-get-richer pump rather than a reward for a good week.
+- a director whose last show was Tuesday was judged against one whose last show
+  was Saturday — different nights, different shows, no shared week;
+- **a director who did not compete at all that week kept their old number and
+  could still win the matchup**, at full strength;
+- anyone who competed twice had all but their last performance discarded.
 
-The correct source already exists — `corps.{class}.weeklyScores` — and the
-client-side table already uses per-week recap sums (`buildWeeklyResults`,
-`src/utils/leagueStats.ts:106`).
+Fixed in `functions/src/helpers/leagueScoring.js`: the week's total is now
+derived from the committed recap days (`fantasy_recaps/{seasonUid}/days/{d}`),
+summing every show the corps attended between days `7N-6` and `7N`. Not
+competing scores 0 with 0 shows — a forfeited week, which is a real result.
 
-### A2 · P0 — Two standings systems that disagree, raced in the UI
+### A2 · P0 — Two standings systems that disagreed, raced in the UI — FIXED
 
-| | Server | Client |
-|---|---|---|
-| Where | `leagues/{id}/standings/current` | `computeMemberStandings`, `src/utils/leagueStats.ts:214` |
-| W/L from | cumulative `totalSeasonScore` (A1) | per-week recap sums |
-| `totalPoints` | sum of cumulative totals (see A3) | sum of weekly scores |
-| Ties | counted as `ties` | counted as a loss for streaks |
+|          | Server                           | Client                                                   |
+| -------- | -------------------------------- | -------------------------------------------------------- |
+| Where    | `leagues/{id}/standings/current` | `computeMemberStandings`, `src/utils/leagueStats.ts:214` |
+| W/L from | "latest show" score (A1)         | per-week recap sums                                      |
+| Ties     | counted as `ties`                | counted as a loss for streaks                            |
 
-`src/hooks/useLeagueLiveStandings.ts` layers them last-writer-wins and says so
-in its own docstring. In practice the subscription lands, the computation
-overwrites it, then a later backend push overwrites that. A member's record,
-rank, streak and playoff position visibly change without anything happening in
-the game. This is the single most trust-destroying bug in the feature.
+`src/hooks/useLeagueLiveStandings.ts` layered them last-writer-wins and said so
+in its own docstring: the subscription landed, the computation overwrote it,
+then a later backend push overwrote that. A member's record, rank, streak and
+playoff position visibly changed with nothing happening in the game. The single
+most trust-destroying bug in the feature.
 
-### A3 · P1 — `pointsFor` is inflated by a triangular sum
+Fixed: the backend document is authoritative, always. The computed table is a
+**fallback only**, used when the league has no standings rows yet, and the view
+labels it _Provisional_. Once the server has rows they win and stay won.
 
-`functions/src/helpers/leagueStandings.js:70` adds the pair's *cumulative*
-score into `pointsFor` every week. After week 3 a director who scored 80/80/80
-shows 80 + 160 + 240 = 480 points "for". The number shown as "Total Points" in
-the standings table is not any real quantity. It is also the tiebreaker, so
-ordering is wrong too.
+### A3 — RETRACTED
 
-### A4 · P1 — The league champion ignores the standings entirely
+An earlier revision of this document claimed `pointsFor` was inflated by a
+triangular sum, on the assumption that `totalSeasonScore` was cumulative. It is
+not (see A1), so `pointsFor` was already a coherent "sum of the score each
+matchup was decided on". It is now the sum of each week's actual total, which
+is the quantity the column has always claimed to be.
 
-`functions/src/helpers/season.js:764-786` picks the winner as the member with
-the highest sum of `corps.*.totalSeasonScore`. The prize pool, the
-`league_champion_*` legendary achievement, the `champions[]` entry and the
-all-members notification all follow raw points. A director can go 7-0 and lose
-their league to someone who went 2-5 in a stronger class.
+### A4 · P1 — The league champion ignored the standings entirely — FIXED
 
-### A5 · P1 — Champion eligibility gated on the marker the codebase says is unreliable
+`functions/src/helpers/season.js` picked the winner as the member with the
+highest sum of `corps.*.totalSeasonScore` — a sum, across classes, of each
+corps' _final show score_. The prize pool, the `league_champion_*` legendary
+achievement, the `champions[]` entry and the all-members notification all
+followed that number. A director could go 7-0 and lose their league to someone
+who went 2-5 but peaked on the final night.
+
+Fixed in `functions/src/helpers/leagueChampion.js`: the regular-season standings
+decide the finals field (`settings.finalsSize`), and championship week decides
+the title among it. When nobody in the field competed at Finals, the standings
+leader wins outright.
+
+### A5 · P1 — Champion eligibility gated on an unreliable marker — FIXED
 
 Same block: `if (profileData.activeSeasonId === seasonId)`.
 `functions/src/helpers/leagueActivity.js:36-40` explicitly documents that
-`activeSeasonId` is written on *some* registration paths only — `registerCorps`
+`activeSeasonId` is written on _some_ registration paths only — `registerCorps`
 deliberately holds it back for directors who still owe corps decisions. The
 module exports `isActiveThisSeason()` precisely to fix this, and the champion
 selector doesn't use it. A fully competing director can be excluded from their
 own league's championship.
 
-### A6 · P1 — Playoffs are advertised and unimplemented
+### A6 · P1 — Playoffs advertised and unimplemented — PARTLY FIXED
 
 - `settings.finalsSize` (default 12) — written at creation, rendered once in
   SettingsTab, consumed by nothing.
@@ -128,19 +139,30 @@ own league's championship.
 - `settings.scoringFormat` (`'circuit' | 'weekly' | 'total'`) and
   `settings.matchupType` — stored, never read anywhere.
 
-The season ends with no bracket, no finals, no playoff seeding. The line in the
-standings table points at nothing.
+The season ended with no bracket, no finals, no playoff seeding. The line in
+the standings table pointed at nothing.
 
-### A7 · P2 — Pairing has no rematch avoidance and no schedule
+Fixed so far: `finalsSize` now decides a real finals field and championship week
+decides the title among it (A4), and `playoffSize` is wired through to the
+standings cut line so it reflects the league's own setting. Still outstanding: a
+visible bracket, and either implementing `scoringFormat`/`matchupType` or
+removing them.
 
-`smartPairMembers` sorts by record and pairs adjacent (1v2, 3v4). With a stable
-table that reproduces the *same pairings every week*. There is no memory of
-prior opponents, no round-robin guarantee, and the only randomness is
-`Math.random()` deciding which name prints first (`leagueAutomation.js:78`,
-`leagueHelpers.js:50`) — which is cosmetic, since home/away confers nothing.
+### A7 · P2 — Pairing had no rematch avoidance and no bye rotation — FIXED
 
-Byes are also unfair: the odd director out is whoever sorts last, i.e. the
-worst-performing member gets a free win, every week, forever.
+`smartPairMembers` sorted by record and paired adjacent (1v2, 3v4). Against a
+stable table that reproduces the _same duels every week_ — a ten-person league
+would run a whole season as five repeated matchups. The only randomness was
+`Math.random()` deciding which name printed first, which is cosmetic (home
+confers nothing) while making the generator untestable.
+
+Byes were worse: the odd director out was whoever sorted last, so the
+worst-performing member collected a free win every week, forever.
+
+Fixed: `buildPairingHistory` folds the league's existing matchup documents into
+prior-opponent counts and bye counts, and `smartPairMembers` takes the nearest
+seed it has faced fewest times and hands the bye to whoever has had it least.
+Deterministic — same inputs, same pairings.
 
 ### A8 · P2 — Cross-class standings in one table
 
@@ -151,16 +173,16 @@ director appear in one ranked table having never played each other, with
 "cross-class normalized matchups" as future work; until then the table needs to
 be honest about what it is.
 
-### A9 · P3 — Two divergent copies of the pairing algorithm
+### A9 · P3 — Two divergent copies of the pairing algorithm — FIXED
 
 `functions/src/helpers/leagueHelpers.js:25` and
 `functions/src/scheduled/leagueAutomation.js:49` are near-identical
-`smartPairMembers` implementations that have *already drifted* (the helper
+`smartPairMembers` implementations that have _already drifted_ (the helper
 version sets `scores: null` on a bye; the scheduled version doesn't). The
 scheduled job imports `createLeagueActivity` from the helper but not the
 pairing function it duplicates.
 
-### A10 · P3 — `updateMatchupResults` hardcodes the class list
+### A10 · P3 — `updateMatchupResults` hardcoded the class list — FIXED
 
 `functions/src/callable/leagues.js:681` uses a literal
 `['worldClass','openClass','aClass','soundSport']` while every other site uses
@@ -243,8 +265,8 @@ raise `maxMembers` when the league gets popular, or adjust anything else. The
 
 ### C3 · P1 — "Regenerate Matchups" is a button that always fails
 
-`SettingsTab.jsx:164-207` prompts *"Generating new matchups will replace them.
-Continue?"* and then calls `generateMatchups`, which throws
+`SettingsTab.jsx:164-207` prompts _"Generating new matchups will replace them.
+Continue?"_ and then calls `generateMatchups`, which throws
 `already-exists` unconditionally (`callable/leagues.js:547-550`). The callable
 that supports overwriting — `triggerMatchupGeneration`, with `forceRegenerate`
 (`leagueAutomation.js:712`) — is never called from the client. Confirming the
@@ -322,11 +344,11 @@ of which are logged.
 
 ## E. Automation and scheduling
 
-### E1 · P1 — Weekly recaps are generated before the week is resolved
+### E1 · P1 — Weekly recaps generated before the week resolved — FIXED
 
 - `generateWeeklyRecaps` — Sunday **22:00 ET** (`leagueAutomation.js:461`).
 - `processWeeklyMatchups` — inside the nightly scoring run, which scores the
-  *completed* game day after the 2 AM ET boundary (`helpers/scoring.js:615`).
+  _completed_ game day after the 2 AM ET boundary (`helpers/scoring.js:615`).
 
 The recap generator skips any matchup where `!matchup.completed || !matchup.scores`
 (`leagueAutomation.js:218`). At 22:00 Sunday the week's final night has not been
@@ -342,7 +364,7 @@ pinned to Sunday 23:59, Sunday 22:00 and Monday 06:00. Any season whose start
 date or `springTrainingDays` doesn't align puts the automation mid-week, with
 no assertion anywhere that the two agree.
 
-### E3 · P2 — `processWeeklyMatchups` still has a hard 500-league cap
+### E3 · P2 — `processWeeklyMatchups` had a hard 500-league cap — FIXED
 
 `functions/src/helpers/weeklyMatchups.js:41-47` fetches with `.limit(500)` and
 logs a warning when it hits the cap. Every other league job was migrated to
@@ -350,14 +372,14 @@ logs a warning when it hits the cap. Every other league job was migrated to
 overflow — the most damaging possible failure mode, and it only produces a log
 line.
 
-### E4 · P2 — Rivalries are written but never cleared
+### E4 · P2 — Rivalries written but never cleared — FIXED
 
 `updateLeagueRivalries` only writes when `rivalries.length > 0`
 (`leagueAutomation.js:646`). A `meta/rivalries` doc from a previous season is
 never cleared, so leagues can display last season's rivalries indefinitely.
 There's no season scoping on the doc at all.
 
-### E5 · P3 — `detectRivalries` mutates the matchup it is reading
+### E5 · P3 — `detectRivalries` mutated the matchup it was reading — FIXED
 
 `const [p1, p2] = matchup.pair.sort()` (`leagueAutomation.js:125`) sorts the
 array **in place**, then the win-attribution block below reads
@@ -366,7 +388,7 @@ happens to come out correct, but only by coincidence — any reordering of those
 branches silently corrupts head-to-head records. The scores lookup surviving is
 also luck (it's keyed by uid).
 
-### E6 · P3 — Automated generation ignores `matchupsGeneratedWeek`
+### E6 · P3 — Automated generation ignored `matchupsGeneratedWeek` — FIXED
 
 The commissioner path sets `matchupsGeneratedWeek` (`callable/leagues.js:611`),
 which the league card reads to show "Matchup in progress"
@@ -441,19 +463,19 @@ filtering signal of any kind beyond a name search.
 
 Fields written and never read, or read and never written:
 
-| Field | Written by | Read by | Status |
-|---|---|---|---|
-| `settings.scoringFormat` | createLeague | — | dead |
-| `settings.matchupType` | createLeague, rookieLeague | — | dead |
-| `settings.playoffSize` | createLeague | — | dead (StandingsTab hardcodes 4) |
-| `settings.finalsSize` | createLeague | SettingsTab display only | cosmetic |
-| `league.champions[]` | season archival | — | never surfaced in the UI |
-| `league.isCompetitive` / `.isDynasty` / `.type` | — | `getLeagueTags` | phantom |
-| `league.hasUnreadMessages` | — | league card | phantom |
-| `league.isMatchupActive` | — | league card ("Live") | phantom |
-| `matchupsGeneratedWeek` | commissioner path only | league card | half-wired (E6) |
-| `invitation.inviteCode` | invite callable | — | always `null`, leak risk |
-| `league.poolCarry` | pool settlement | pool buy-in only | can strand coin (B6) |
+| Field                                           | Written by                 | Read by                  | Status                          |
+| ----------------------------------------------- | -------------------------- | ------------------------ | ------------------------------- |
+| `settings.scoringFormat`                        | createLeague               | —                        | dead                            |
+| `settings.matchupType`                          | createLeague, rookieLeague | —                        | dead                            |
+| `settings.playoffSize`                          | createLeague               | —                        | dead (StandingsTab hardcodes 4) |
+| `settings.finalsSize`                           | createLeague               | SettingsTab display only | cosmetic                        |
+| `league.champions[]`                            | season archival            | —                        | never surfaced in the UI        |
+| `league.isCompetitive` / `.isDynasty` / `.type` | —                          | `getLeagueTags`          | phantom                         |
+| `league.hasUnreadMessages`                      | —                          | league card              | phantom                         |
+| `league.isMatchupActive`                        | —                          | league card ("Live")     | phantom                         |
+| `matchupsGeneratedWeek`                         | commissioner path only     | league card              | half-wired (E6)                 |
+| `invitation.inviteCode`                         | invite callable            | —                        | always `null`, leak risk        |
+| `league.poolCarry`                              | pool settlement            | pool buy-in only         | can strand coin (B6)            |
 
 `league.champions[]` deserves its own line: the game records every league's
 season champion, with score and corps name, and **never shows it to anyone**.
@@ -478,7 +500,7 @@ the standings are wrong.
 
 ---
 
-## Phase 1 — Make the competition real *(the foundation)*
+## Phase 1 — Make the competition real _(the foundation)_
 
 **Goal: a league's standings are correct, singular, and decide the champion.**
 
@@ -489,7 +511,7 @@ the standings are wrong.
 
 2. **Collapse to one standings system.** (A2, A3)
    Make `leagues/{id}/standings/current` authoritative. Fix `pointsFor` to
-   accumulate the *weekly* score. Delete the client's parallel
+   accumulate the _weekly_ score. Delete the client's parallel
    `computeMemberStandings` fold, keeping `buildWeeklyResults` /
    `buildMatchupsByWeek` for display only. `useLeagueLiveStandings` becomes a
    plain subscription with no second writer.
@@ -535,7 +557,7 @@ champion is the director who won the league.
 - **Clear standings on leave** (B2) — reuse the removal logic.
 - **Cascade delete or archive** (B4) — a `deleteLeague` path that refunds
   escrow (`prizePool` + `poolCarry`) and recursively deletes subcollections.
-  Prefer *archive* over delete so history survives.
+  Prefer _archive_ over delete so history survives.
 - **Commissioner succession** (C1) — a `transferCommissioner` callable, plus an
   automatic hand-off to the longest-tenured active member when a commissioner
   leaves. Never let `creatorId` point outside `members`.
@@ -556,7 +578,7 @@ champion is the director who won the league.
 
 ---
 
-## Phase 3 — Make it a place *(the clubhouse layer)*
+## Phase 3 — Make it a place _(the clubhouse layer)_
 
 **Goal: a league is somewhere you go, not a tab you check.**
 
@@ -584,7 +606,7 @@ champion is the director who won the league.
    `isCommissioner` and throws it away.
 
 5. **Weekly rhythm.** A Monday "your week ahead" card (your matchup, your
-   opponent's form, the rivalry record), a Sunday "week in review" (a *working*
+   opponent's form, the rivalry record), a Sunday "week in review" (a _working_
    recap, post-Phase 1), and the pool as the nightly heartbeat it was designed
    to be.
 
@@ -612,15 +634,15 @@ champion is the director who won the league.
 
 ## Suggested sequencing
 
-| Order | Items | Why first |
-|---|---|---|
-| 1 | A1, A2, A3 | Everything else displays these numbers |
-| 2 | A4, A5, E1, E3 | The season has to end correctly |
-| 3 | D1, B1, B2, C1 | Security + data-loss + orphan leagues |
-| 4 | C4 (routing) | Unlocks sharing, links, and all of Phase 3 |
-| 5 | A6/A7 (playoffs + pairing) | The competition gets interesting |
-| 6 | Phase 3 | The clubhouse |
-| 7 | Phase 4 | Depth |
+| Order | Items                      | Why first                                  |
+| ----- | -------------------------- | ------------------------------------------ |
+| 1     | A1, A2, A3                 | Everything else displays these numbers     |
+| 2     | A4, A5, E1, E3             | The season has to end correctly            |
+| 3     | D1, B1, B2, C1             | Security + data-loss + orphan leagues      |
+| 4     | C4 (routing)               | Unlocks sharing, links, and all of Phase 3 |
+| 5     | A6/A7 (playoffs + pairing) | The competition gets interesting           |
+| 6     | Phase 3                    | The clubhouse                              |
+| 7     | Phase 4                    | Depth                                      |
 
 ## Quick wins worth doing immediately
 
