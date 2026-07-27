@@ -22,6 +22,7 @@ const {
   getWeekScore,
   participatingClassesByUid,
 } = require("./leagueScoring");
+const { isCaptionWarsLeague, resolveCaptionWars } = require("./captionWars");
 const {
   weeklyXpToken,
   weeklyWinToken,
@@ -110,6 +111,11 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
     const matchupData = { ...matchupEntry.data };
     const matchupDocRef = matchupEntry.ref;
     let hasUpdates = false;
+    // Which format decides this league's weeks. Checked per league and pinned
+    // to the season it was bought for, so a league that never opted in — or
+    // whose opt-in belongs to a previous season — resolves on totals exactly as
+    // it always has. See helpers/captionWars.js.
+    const captionWars = isCaptionWarsLeague(leagueDoc.data(), seasonData.seasonUid);
     // Resolved pairs for the standings/current doc — same shape the
     // commissioner callable feeds updateStandings, so the automatic weekly
     // close and a manual resolution produce identical standings.
@@ -175,9 +181,20 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
         const p1_score = p1_week.score;
         const p2_score = p2_week.score;
 
+        // Best-of-three across the caption groups, or the single comparison of
+        // weekly totals. Either way this produces one winner uid (or a tie),
+        // and everything below this point — the record increment, the award
+        // tokens, the weekly-win bonus, the standings pair — is identical.
         let winnerUid = null;
-        if (p1_score > p2_score) winnerUid = p1_uid;
-        if (p2_score > p1_score) winnerUid = p2_uid;
+        let captions = null;
+        if (captionWars) {
+          const resolved = resolveCaptionWars(p1_uid, p2_uid, p1_week, p2_week);
+          captions = resolved.captions;
+          winnerUid = resolved.winner === "tie" ? null : resolved.winner;
+        } else {
+          if (p1_score > p2_score) winnerUid = p1_uid;
+          if (p2_score > p1_score) winnerUid = p2_uid;
+        }
 
         const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
         const increment = admin.firestore.FieldValue.increment(1);
@@ -270,6 +287,11 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
             [p1_uid]: p1_week.classPercentile,
             [p2_uid]: p2_week.classPercentile,
           },
+          // Only present on leagues running Caption Wars. `scores` above still
+          // holds the weekly TOTAL in both formats, so points-for/against, the
+          // percentile and the record book keep meaning the same thing across a
+          // league that changed format between seasons.
+          ...(captions ? { captions } : {}),
           winner: winnerUid ?? "tie",
           completed: true,
         };

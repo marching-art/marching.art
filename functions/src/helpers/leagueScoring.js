@@ -64,8 +64,21 @@ function buildWeeklyScoreIndex(dayDocs) {
           corpsClass: result.corpsClass,
           score: 0,
           shows: 0,
+          ge: 0,
+          visual: 0,
+          music: 0,
         };
         entry.score += Number(result.totalScore) || 0;
+        // The three caption groups the scorer already persists on every show
+        // result (helpers/scoring.js): GE 0–40, Visual 0–30, Music 0–30. Summed
+        // exactly like `score`, so competing twice counts twice in every
+        // category equally. Only the Caption Wars format reads these; carrying
+        // them always costs one addition over documents already in memory, and
+        // means the format can never disagree with the total about which shows
+        // a week contained.
+        entry.ge += Number(result.geScore) || 0;
+        entry.visual += Number(result.visualScore) || 0;
+        entry.music += Number(result.musicScore) || 0;
         entry.shows += 1;
         index.set(key, entry);
       }
@@ -162,6 +175,12 @@ function getWeekScore(index, uid, corpsClass) {
     index.get(scoreKey(uid, corpsClass)) || {
       score: 0,
       shows: 0,
+      // Zero in every caption too, so a Caption Wars matchup against a director
+      // who sat the week out is a 3-0 sweep rather than a comparison against
+      // undefined. Forfeiting a week forfeits every category.
+      ge: 0,
+      visual: 0,
+      music: 0,
       // Did not compete: last in their field, by definition.
       classPercentile: 0,
       classFieldSize: 0,
