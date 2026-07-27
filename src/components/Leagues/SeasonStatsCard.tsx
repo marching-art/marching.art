@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // SeasonStatsCard - Individual user season stats display
 // Shows detailed stats for a league member including caption win rates, achievements
 
@@ -18,12 +17,29 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { CAPTION_CATEGORIES } from '../../utils/captionWars';
+import type { SeasonMatchupStats } from '../../types';
+
+type StatColor = 'cream' | 'green' | 'red' | 'yellow' | 'purple' | 'blue';
+type BadgeColor = 'yellow' | 'green' | 'red' | 'purple' | 'orange';
+type IconComponent = React.ComponentType<{ className?: string }>;
 
 /**
  * Compact stat row
  */
-const StatRow = ({ label, value, subValue, icon: Icon, color = 'cream' }) => {
-  const colorClasses = {
+const StatRow = ({
+  label,
+  value,
+  subValue,
+  icon: Icon,
+  color = 'cream',
+}: {
+  label: string;
+  value: React.ReactNode;
+  subValue?: React.ReactNode;
+  icon?: IconComponent;
+  color?: StatColor;
+}) => {
+  const colorClasses: Record<StatColor, string> = {
     cream: 'text-secondary',
     green: 'text-green-400',
     red: 'text-red-400',
@@ -49,7 +65,19 @@ const StatRow = ({ label, value, subValue, icon: Icon, color = 'cream' }) => {
 /**
  * Caption win rate bar
  */
-const CaptionBar = ({ caption, winRate, avgDiff: _avgDiff, isStrength, isWeakness }) => {
+const CaptionBar = ({
+  caption,
+  winRate,
+  avgDiff: _avgDiff,
+  isStrength,
+  isWeakness,
+}: {
+  caption: string;
+  winRate: number;
+  avgDiff?: number;
+  isStrength?: boolean;
+  isWeakness?: boolean;
+}) => {
   const percentage = winRate * 100;
 
   return (
@@ -85,10 +113,21 @@ const CaptionBar = ({ caption, winRate, avgDiff: _avgDiff, isStrength, isWeaknes
 /**
  * Achievement badge
  */
-const AchievementBadge = ({ label, value, icon: Icon, color }) => {
+const AchievementBadge = ({
+  label,
+  value,
+  icon: Icon,
+  color,
+}: {
+  label: string;
+  /** A count, or a pre-formatted label like `W5`. */
+  value?: number | string;
+  icon: IconComponent;
+  color: BadgeColor;
+}) => {
   if (!value || value === 0) return null;
 
-  const colorClasses = {
+  const colorClasses: Record<BadgeColor, string> = {
     yellow: 'bg-brand/10 border-brand/30 text-brand',
     green: 'bg-green-500/10 border-green-500/30 text-green-400',
     red: 'bg-red-500/10 border-red-500/30 text-red-400',
@@ -108,13 +147,21 @@ const AchievementBadge = ({ label, value, icon: Icon, color }) => {
 /**
  * Main SeasonStatsCard component
  */
+interface SeasonStatsCardProps {
+  stats?: SeasonMatchupStats | null;
+  displayName?: string;
+  isCurrentUser?: boolean;
+  onClose?: () => void;
+  compact?: boolean;
+}
+
 const SeasonStatsCard = ({
-  stats, // SeasonMatchupStats object
-  displayName,
+  stats,
+  displayName = 'Director',
   isCurrentUser = false,
   onClose,
   compact = false,
-}) => {
+}: SeasonStatsCardProps) => {
   if (!stats) {
     return (
       <div className="bg-surface-card border border-line p-6 text-center">
@@ -204,7 +251,7 @@ const SeasonStatsCard = ({
             <span
               className={`text-sm font-bold ${isCurrentUser ? 'text-purple-400' : 'text-muted'}`}
             >
-              {displayName.charAt(0)}
+              {displayName.charAt(0) || 'D'}
             </span>
           </div>
           <div>

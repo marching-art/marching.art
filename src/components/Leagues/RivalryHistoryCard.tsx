@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // RivalryHistoryCard - Head-to-Head Rivalry History Display
 // Shows historical matchup data, caption domination, streaks, and all past matchups
 
@@ -6,17 +5,27 @@ import React, { useMemo } from 'react';
 import { m } from 'framer-motion';
 import { Swords, Trophy, Flame, TrendingUp, Target, Award, Zap } from 'lucide-react';
 import { CAPTION_CATEGORIES } from '../../utils/captionWars';
+import { BATTLE_THRESHOLDS } from '../../utils/matchupScoring';
+import type { ExtendedHeadToHead } from '../../types';
 
 /**
  * Caption domination bar showing who wins each caption more often
  */
+interface CaptionDominationBarProps {
+  caption: string;
+  user1Wins: number;
+  user2Wins: number;
+  user1Name?: string;
+  user2Name?: string;
+}
+
 const CaptionDominationBar = ({
   caption,
   user1Wins,
   user2Wins,
   user1Name: _user1Name,
   user2Name: _user2Name,
-}) => {
+}: CaptionDominationBarProps) => {
   const total = user1Wins + user2Wins;
   const user1Pct = total > 0 ? (user1Wins / total) * 100 : 50;
   const tied = user1Wins === user2Wins;
@@ -60,6 +69,19 @@ const CaptionDominationBar = ({
 /**
  * Single matchup history item
  */
+interface MatchupHistoryItemProps {
+  week: number;
+  winnerId?: string | null;
+  user1BattlePoints: number;
+  user2BattlePoints: number;
+  user1Score?: number;
+  user2Score?: number;
+  user1Id: string;
+  user1Name?: string;
+  user2Name?: string;
+  isUser1CurrentUser?: boolean;
+}
+
 const MatchupHistoryItem = ({
   week,
   winnerId,
@@ -71,12 +93,16 @@ const MatchupHistoryItem = ({
   user1Name: _user1Name,
   user2Name: _user2Name,
   isUser1CurrentUser,
-}) => {
+}: MatchupHistoryItemProps) => {
   const user1Won = winnerId === user1Id;
   const isTie = winnerId === null;
   const margin = Math.abs(user1BattlePoints - user2BattlePoints);
-  const isClutch = !isTie && margin <= 2;
-  const isBlowout = margin >= 5;
+  // From the shared thresholds, never a literal: these were hard-coded to 2 and
+  // 5 and stayed there when the battle maximum fell from 11 to 6, so every
+  // close game stopped reading as close and half the league's matchups started
+  // flagging as blowouts.
+  const isClutch = !isTie && margin <= BATTLE_THRESHOLDS.clutchMargin;
+  const isBlowout = margin >= BATTLE_THRESHOLDS.blowoutMargin;
 
   return (
     <div
@@ -126,7 +152,7 @@ const MatchupHistoryItem = ({
         <div className="text-center">
           <p className="text-[9px] text-muted uppercase">Score</p>
           <p className="text-sm font-data tabular-nums text-muted">
-            {user1Score.toFixed(1)} - {user2Score.toFixed(1)}
+            {(user1Score ?? 0).toFixed(1)} - {(user2Score ?? 0).toFixed(1)}
           </p>
         </div>
       </div>
@@ -138,11 +164,17 @@ const MatchupHistoryItem = ({
  * Main RivalryHistoryCard component
  */
 const RivalryHistoryCard = ({
-  headToHead, // ExtendedHeadToHead object
-  user1DisplayName,
-  user2DisplayName,
+  headToHead,
+  user1DisplayName = 'Director',
+  user2DisplayName = 'Director',
   currentUserId,
   compact = false,
+}: {
+  headToHead?: ExtendedHeadToHead | null;
+  user1DisplayName?: string;
+  user2DisplayName?: string;
+  currentUserId?: string;
+  compact?: boolean;
 }) => {
   // Hooks must run on every render, before any early return (rules-of-hooks).
   // Guard against a null/empty headToHead since this runs before the check below.

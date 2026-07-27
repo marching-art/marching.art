@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueLeaderboards - Category-based stat rankings
 // Shows leaders in various stats: caption win rates, clutch wins, blowouts, etc.
 
@@ -17,9 +16,29 @@ import {
   Medal,
 } from 'lucide-react';
 import { CAPTION_CATEGORIES } from '../../utils/captionWars';
+import type { SeasonMatchupStats } from '../../types';
+
+type BoardColor = 'yellow' | 'purple' | 'green' | 'orange' | 'red' | 'gold' | 'blue';
+
+interface BoardCategory {
+  id: string;
+  label: string;
+  shortLabel: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: BoardColor;
+  description: string;
+  format: (value: number) => string;
+  /** Only on the per-caption boards. */
+  caption?: string;
+}
+
+interface BoardEntry {
+  userId: string;
+  value: number;
+}
 
 // Leaderboard categories with display info
-const LEADERBOARD_CATEGORIES = [
+const LEADERBOARD_CATEGORIES: BoardCategory[] = [
   {
     id: 'battlePoints',
     label: 'Battle Points',
@@ -83,7 +102,7 @@ const LEADERBOARD_CATEGORIES = [
 // stats pipeline manufactured them by splitting each group evenly, which made
 // every director's GE1 and GE2 win rates identical by construction. See
 // utils/matchupScoring.ts.
-const CAPTION_BOARDS = CAPTION_CATEGORIES.map(({ key, label, short }) => ({
+const CAPTION_BOARDS: BoardCategory[] = CAPTION_CATEGORIES.map(({ key, label, short }) => ({
   id: `bestCaption_${key}`,
   label,
   shortLabel: short,
@@ -94,7 +113,7 @@ const CAPTION_BOARDS = CAPTION_CATEGORIES.map(({ key, label, short }) => ({
   caption: key,
 }));
 
-const colorClasses = {
+const colorClasses: Record<BoardColor, string> = {
   yellow: 'text-secondary bg-surface-raised border-line',
   purple: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
   green: 'text-green-400 bg-green-500/10 border-green-500/30',
@@ -109,7 +128,21 @@ const colorClasses = {
  * OPTIMIZATION #3: Memoized to prevent re-renders when sibling leaderboard cards update
  */
 const LeaderboardCard = memo(
-  ({ category, entries, expanded, onToggle, currentUserId, getDisplayName }) => {
+  ({
+    category,
+    entries,
+    expanded,
+    onToggle,
+    currentUserId,
+    getDisplayName,
+  }: {
+    category: BoardCategory;
+    entries: BoardEntry[];
+    expanded: boolean;
+    onToggle: () => void;
+    currentUserId?: string;
+    getDisplayName: (uid: string) => string;
+  }) => {
     const Icon = category.icon;
     const colors = colorClasses[category.color];
     const topThree = entries.slice(0, 3);
@@ -218,7 +251,7 @@ const LeaderboardCard = memo(
 /**
  * Small rank badge
  */
-const RankBadge = ({ rank, size = 'md' }) => {
+const RankBadge = ({ rank, size = 'md' }: { rank: number; size?: 'sm' | 'md' }) => {
   const sizeClasses = size === 'sm' ? 'w-4 h-4 text-[9px]' : 'w-5 h-5 text-[10px]';
 
   if (rank === 1) {
@@ -259,19 +292,24 @@ const RankBadge = ({ rank, size = 'md' }) => {
  * Main LeagueLeaderboards component
  */
 const LeagueLeaderboards = ({
-  leagueStats, // Map of userId -> SeasonMatchupStats
+  leagueStats,
   currentUserId,
   getDisplayName,
+}: {
+  /** Map of userId -> SeasonMatchupStats. */
+  leagueStats?: Record<string, SeasonMatchupStats>;
+  currentUserId?: string;
+  getDisplayName: (uid: string) => string;
 }) => {
-  const [expandedCategory, setExpandedCategory] = useState(null);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [showCaptions, setShowCaptions] = useState(false);
 
   // Build leaderboard entries for each category
-  const leaderboards = React.useMemo(() => {
+  const leaderboards = React.useMemo<Record<string, BoardEntry[]>>(() => {
     if (!leagueStats || Object.keys(leagueStats).length === 0) return {};
 
     const stats = Object.values(leagueStats);
-    const boards = {};
+    const boards: Record<string, BoardEntry[]> = {};
 
     // Battle Points
     boards.battlePoints = stats

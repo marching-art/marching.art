@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Activity tab recap cards: weekly recap and rivalries (both fetch their own
 // data). Extracted verbatim from ActivityTab.jsx.
 
@@ -15,9 +14,53 @@ import {
 } from 'lucide-react';
 import { getLeagueWeekRecap, getLeagueRivalries } from '../../../api/leagues';
 
+interface RecapHighlight {
+  type?: string;
+  text?: string;
+}
+
+/** The recap document generateWeeklyRecap writes, as far as this card reads it. */
+interface WeekRecap {
+  week?: number;
+  highlights?: RecapHighlight[];
+  stats?: {
+    totalMatchups?: number;
+    biggestUpset?: { magnitude?: number } | null;
+    closestMatch?: { margin?: number } | null;
+    highestScorer?: { score?: number } | null;
+    /**
+     * Caption Wars only — null on a league resolving on totals, so the card can
+     * tell "no sweeps this week" from "this league does not have sweeps".
+     */
+    captions?: { matchups?: number; sweeps?: unknown[]; thrillers?: number } | null;
+  };
+}
+
+/**
+ * Tailwind cannot build a class name at runtime, so the column count is looked
+ * up rather than interpolated.
+ */
+const GRID_COLS = ['', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4'] as const;
+
+const statTiles = (stats: NonNullable<WeekRecap['stats']>) =>
+  [stats.biggestUpset, stats.closestMatch, stats.highestScorer, stats.captions].filter(Boolean)
+    .length as 0 | 1 | 2 | 3 | 4;
+
+interface MemberProfiles {
+  [uid: string]: { displayName?: string; username?: string } | undefined;
+}
+
 // Weekly Recap Card - Displays auto-generated weekly highlights
-const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfiles }) => {
-  const [recap, setRecap] = useState(null);
+const WeeklyRecapCard = ({
+  leagueId,
+  currentWeek = 0,
+  memberProfiles: _memberProfiles,
+}: {
+  leagueId?: string;
+  currentWeek?: number;
+  memberProfiles?: MemberProfiles;
+}) => {
+  const [recap, setRecap] = useState<WeekRecap | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,7 +109,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
     return null; // Don't show anything if no recap
   }
 
-  const getHighlightIcon = (type) => {
+  const getHighlightIcon = (type?: string) => {
     switch (type) {
       case 'upset':
         return AlertTriangle;
@@ -79,7 +122,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
     }
   };
 
-  const getHighlightColor = (type) => {
+  const getHighlightColor = (type?: string) => {
     switch (type) {
       case 'upset':
         return 'text-orange-500 bg-orange-500/10 border-orange-500/30';
@@ -132,7 +175,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
 
         {/* Recap Stats Summary */}
         {recap.stats && (
-          <div className="grid grid-cols-3 gap-2 pt-2">
+          <div className={`grid ${GRID_COLS[statTiles(recap.stats)]} gap-2 pt-2`}>
             {recap.stats.biggestUpset && (
               <div className="bg-surface-raised p-2 text-center">
                 <AlertTriangle className="w-4 h-4 text-orange-500 mx-auto mb-1" />
@@ -160,6 +203,17 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
                 </p>
               </div>
             )}
+            {/* Caption Wars only. Present-with-zero is a real answer here —
+                "nobody swept this week" is a fact about the week. */}
+            {recap.stats.captions && (
+              <div className="bg-surface-raised p-2 text-center">
+                <Swords className="w-4 h-4 text-purple-400 mx-auto mb-1" />
+                <p className="text-[9px] text-muted uppercase">Sweeps</p>
+                <p className="text-xs font-bold text-white truncate">
+                  {recap.stats.captions.sweeps?.length ?? 0}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -167,9 +221,28 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
   );
 };
 
+/** A head-to-head record, as detectRivalries writes it. */
+interface Rivalry {
+  player1?: string;
+  player2?: string;
+  p1Wins?: number;
+  p2Wins?: number;
+  totalMatches?: number;
+  closeMatches?: number;
+  intensity?: string;
+}
+
 // Enhanced Rivalries Card - Shows rivalries with intensity levels
-const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
-  const [rivalries, setRivalries] = useState([]);
+const EnhancedRivalriesCard = ({
+  leagueId,
+  userProfile,
+  memberProfiles = {},
+}: {
+  leagueId?: string;
+  userProfile?: { uid?: string } | null;
+  memberProfiles?: MemberProfiles;
+}) => {
+  const [rivalries, setRivalries] = useState<Rivalry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
@@ -185,7 +258,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
 
         if (data) {
           // Filter to show rivalries involving the current user
-          const userRivalries = (data.rivalries || []).filter(
+          const userRivalries = ((data.rivalries || []) as Rivalry[]).filter(
             (r) => r.player1 === userProfile?.uid || r.player2 === userProfile?.uid
           );
           setRivalries(userRivalries);
@@ -204,7 +277,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
     return null;
   }
 
-  const getIntensityStyles = (intensity) => {
+  const getIntensityStyles = (intensity?: string) => {
     switch (intensity) {
       case 'intense':
         return {
@@ -230,24 +303,24 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
     }
   };
 
-  const getDisplayName = (uid) => {
+  const getDisplayName = (uid?: string) => {
     if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles[uid];
+    const profile = uid ? memberProfiles[uid] : undefined;
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     return profile?.username || name || `User ${uid?.slice(0, 6)}`;
   };
 
-  const getRivalName = (rivalry) => {
+  const getRivalName = (rivalry: Rivalry) => {
     const rivalId = rivalry.player1 === userProfile?.uid ? rivalry.player2 : rivalry.player1;
     return getDisplayName(rivalId);
   };
 
-  const getUserWins = (rivalry) => {
+  const getUserWins = (rivalry: Rivalry) => {
     return rivalry.player1 === userProfile?.uid ? rivalry.p1Wins : rivalry.p2Wins;
   };
 
-  const getRivalWins = (rivalry) => {
+  const getRivalWins = (rivalry: Rivalry) => {
     return rivalry.player1 === userProfile?.uid ? rivalry.p2Wins : rivalry.p1Wins;
   };
 
@@ -323,7 +396,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
                   </div>
                 </div>
 
-                {rivalry.closeMatches > 0 && (
+                {(rivalry.closeMatches ?? 0) > 0 && (
                   <p className="text-[10px] text-muted mt-2 text-center">
                     {rivalry.closeMatches} close game{rivalry.closeMatches !== 1 ? 's' : ''} between
                     you

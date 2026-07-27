@@ -1,14 +1,20 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // BattleBreakdown - Visual breakdown of head-to-head battle points
 // Shows caption battles, total score, high single, and momentum battles
 
 import React from 'react';
 import { m } from 'framer-motion';
 import { Trophy, TrendingUp, Zap, Target, Check, X, Minus, Flame, Award } from 'lucide-react';
-import { getCaptionDisplayName } from '../../utils/matchupScoring';
+import { getCaptionDisplayName, MAX_BATTLE_POINTS } from '../../utils/matchupScoring';
+import type { BattleResult, MatchupBattleBreakdown } from '../../types';
+
+type BattleColor = 'gold' | 'purple' | 'blue' | 'green' | 'cream';
+type IconComponent = React.ComponentType<{ className?: string }>;
 
 // Battle type icons and labels
-const BATTLE_INFO = {
+const BATTLE_INFO: Record<
+  'total' | 'highSingle' | 'momentum',
+  { icon: IconComponent; label: string; color: BattleColor }
+> = {
   total: { icon: Trophy, label: 'Total Score', color: 'gold' },
   highSingle: { icon: Zap, label: 'High Single', color: 'purple' },
   momentum: { icon: TrendingUp, label: 'Momentum', color: 'blue' },
@@ -28,6 +34,17 @@ export const BattleScoreHeader = ({
   isClutch,
   isBlowout,
   winnerId: _winnerId,
+}: {
+  homeBattlePoints: number;
+  awayBattlePoints: number;
+  homeUserId?: string;
+  awayUserId?: string;
+  currentUserId?: string;
+  homeDisplayName?: string;
+  awayDisplayName?: string;
+  isClutch?: boolean;
+  isBlowout?: boolean;
+  winnerId?: string | null;
 }) => {
   const homeWins = homeBattlePoints > awayBattlePoints;
   const awayWins = awayBattlePoints > homeBattlePoints;
@@ -97,10 +114,20 @@ const BattleRow = ({
   color = 'cream',
   delay = 0,
   showDiff: _showDiff = true,
+}: {
+  label: string;
+  homeValue: number;
+  awayValue: number;
+  homeWins?: boolean;
+  awayWins?: boolean;
+  icon?: IconComponent;
+  color?: BattleColor;
+  delay?: number;
+  showDiff?: boolean;
 }) => {
   const isTie = !homeWins && !awayWins;
 
-  const colorClasses = {
+  const colorClasses: Record<BattleColor, string> = {
     gold: 'text-secondary',
     purple: 'text-purple-400',
     blue: 'text-blue-400',
@@ -196,6 +223,11 @@ export const CaptionBattlesSection = ({
   captionBattlesWon,
   homeUserId,
   awayUserId,
+}: {
+  captionBattles: MatchupBattleBreakdown['captionBattles'];
+  captionBattlesWon: MatchupBattleBreakdown['captionBattlesWon'];
+  homeUserId?: string;
+  awayUserId?: string;
 }) => {
   return (
     <div className="glass rounded-none overflow-hidden">
@@ -255,6 +287,12 @@ export const SpecialBattlesSection = ({
   momentumBattle,
   homeUserId,
   awayUserId,
+}: {
+  totalScoreBattle: BattleResult;
+  highSingleBattle: BattleResult;
+  momentumBattle: BattleResult;
+  homeUserId?: string;
+  awayUserId?: string;
 }) => {
   const battles = [
     { ...BATTLE_INFO.total, battle: totalScoreBattle },
@@ -296,9 +334,18 @@ export const SpecialBattlesSection = ({
 export const BattleSummaryBar = ({
   homeBattlePoints,
   awayBattlePoints,
-  maxPoints = 11,
+  // Derived, never a literal: this was hard-coded to 11 and stayed there when
+  // the caption battles went from eight fabricated captions to the three real
+  // groups, so every bar rendered at roughly half the width it should have.
+  maxPoints = MAX_BATTLE_POINTS,
   homeColor = 'purple',
   awayColor: _awayColor = 'cream',
+}: {
+  homeBattlePoints: number;
+  awayBattlePoints: number;
+  maxPoints?: number;
+  homeColor?: string;
+  awayColor?: string;
 }) => {
   const homePercent = (homeBattlePoints / maxPoints) * 100;
   const awayPercent = (awayBattlePoints / maxPoints) * 100;
@@ -333,7 +380,17 @@ export const BattleSummaryBar = ({
 /**
  * Complete battle breakdown component
  */
-const BattleBreakdown = ({ battleBreakdown, homeDisplayName, awayDisplayName, currentUserId }) => {
+const BattleBreakdown = ({
+  battleBreakdown,
+  homeDisplayName,
+  awayDisplayName,
+  currentUserId,
+}: {
+  battleBreakdown?: MatchupBattleBreakdown | null;
+  homeDisplayName?: string;
+  awayDisplayName?: string;
+  currentUserId?: string;
+}) => {
   if (!battleBreakdown) {
     return (
       <div className="glass rounded-none p-8 text-center">
