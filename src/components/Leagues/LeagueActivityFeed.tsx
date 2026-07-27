@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueActivityFeed - Shows recent league events and notifications
 // Keeps users engaged with real-time activity updates
 
@@ -27,6 +26,7 @@ import {
   useLeagueNotifications,
   formatNotificationTime,
 } from '../../hooks/useLeagueNotifications';
+import type { RivalryData } from '../../types';
 
 // =============================================================================
 // ICON MAPPING - Enhanced Transaction Log Style
@@ -34,7 +34,53 @@ import {
 
 import { Star, Settings, Crown, Target, Zap, Award, UserMinus, Trash2, Coins } from 'lucide-react';
 
-const iconMap = {
+type IconComponent = React.ComponentType<{ className?: string }>;
+
+/** A Firestore timestamp, or whatever legacy documents happen to carry. */
+type MaybeTimestamp = { toMillis?: () => number } | string | number | Date | null | undefined;
+
+/** An activity-feed entry or a user notification — the feed renders both. */
+export interface FeedActivity {
+  id?: string;
+  type?: string;
+  title?: string;
+  message?: string;
+  description?: string;
+  read?: boolean;
+  isNotification?: boolean;
+  createdAt?: MaybeTimestamp;
+  timestamp?: MaybeTimestamp;
+  metadata?: {
+    week?: number;
+    won?: boolean;
+    isRival?: boolean;
+    score?: number;
+    newRank?: number;
+    seasonHigh?: boolean;
+    [key: string]: unknown;
+  };
+  isActivity?: boolean;
+}
+
+/** Firestore timestamps carry toMillis(); anything else goes through Date. */
+const toMillis = (value: MaybeTimestamp): number => {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toMillis' in value &&
+    typeof value.toMillis === 'function'
+  ) {
+    return value.toMillis();
+  }
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return new Date(value).getTime() || 0;
+  return 0;
+};
+
+const toDate = (value: MaybeTimestamp): Date => new Date(toMillis(value));
+
+const iconMap: Record<string, IconComponent> = {
   matchup_result: Swords,
   new_champion: Trophy,
   standings_change: TrendingUp,
@@ -64,7 +110,7 @@ const iconMap = {
   pool_result: Coins,
 };
 
-const colorMap = {
+const colorMap: Record<string, { text: string; bg: string; border: string }> = {
   matchup_result: {
     text: 'text-purple-500',
     bg: 'bg-purple-500/10',
@@ -121,118 +167,130 @@ const colorMap = {
 // ACTIVITY ITEM COMPONENT
 // =============================================================================
 
-const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead, onTap }) => {
-  const Icon = iconMap[activity.type] || Bell;
-  const colors = colorMap[activity.type] || colorMap.matchup_result;
+const ActivityItem = React.memo(
+  ({
+    activity,
+    isNotification = false,
+    onMarkRead,
+    onTap,
+  }: {
+    activity: FeedActivity;
+    isNotification?: boolean;
+    onMarkRead?: (notificationId: string) => void;
+    onTap?: (activity: FeedActivity) => void;
+  }) => {
+    const Icon = (activity.type && iconMap[activity.type]) || Bell;
+    const colors = (activity.type && colorMap[activity.type]) || colorMap.matchup_result;
 
-  const timestamp = activity.createdAt || activity.timestamp;
-  const timeAgo = timestamp ? formatNotificationTime(timestamp) : '';
+    const timestamp = activity.createdAt || activity.timestamp;
+    const timeAgo = timestamp ? formatNotificationTime(toDate(timestamp)) : '';
 
-  const handleClick = useCallback(() => {
-    onTap?.(activity);
-  }, [onTap, activity]);
+    const handleClick = useCallback(() => {
+      onTap?.(activity);
+    }, [onTap, activity]);
 
-  const handleMarkRead = useCallback(
-    (e) => {
-      e.stopPropagation();
-      onMarkRead(activity.id);
-    },
-    [onMarkRead, activity.id]
-  );
+    const handleMarkRead = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (activity.id) onMarkRead?.(activity.id);
+      },
+      [onMarkRead, activity.id]
+    );
 
-  return (
-    <m.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 10 }}
-      whileHover={{ scale: 1.01 }}
-      onClick={handleClick}
-      className={`
+    return (
+      <m.div
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 10 }}
+        whileHover={{ scale: 1.01 }}
+        onClick={handleClick}
+        className={`
         relative flex items-start gap-3 p-3 rounded-none cursor-pointer transition-all
         ${isNotification && !activity.read ? 'bg-surface-raised border border-warning/30' : 'bg-surface-card border border-line'}
         hover:border-line-strong
       `}
-    >
-      {/* Unread indicator */}
-      {isNotification && !activity.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-none bg-warning animate-pulse" />
-      )}
-
-      {/* Icon */}
-      <div className={`p-2 rounded-none ${colors.bg}`}>
-        <Icon className={`w-4 h-4 ${colors.text}`} />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="font-bold text-sm text-white truncate">{activity.title}</h4>
-          <span className="text-xs text-muted whitespace-nowrap">{timeAgo}</span>
-        </div>
-        <p className="text-xs text-muted mt-0.5 line-clamp-2">
-          {activity.message || activity.description}
-        </p>
-
-        {/* Metadata badges */}
-        {activity.metadata && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {activity.metadata.won !== undefined && (
-              <span
-                className={`text-xs px-2 py-0.5 rounded-none ${
-                  activity.metadata.won
-                    ? 'bg-green-500/10 text-green-500'
-                    : 'bg-red-500/10 text-red-500'
-                }`}
-              >
-                {activity.metadata.won ? 'Victory' : 'Defeat'}
-              </span>
-            )}
-            {activity.metadata.isRival && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-red-500/10 text-red-500 flex items-center gap-1">
-                <Flame className="w-3 h-3" /> Rivalry
-              </span>
-            )}
-            {activity.metadata.week && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-line text-muted">
-                Week {activity.metadata.week}
-              </span>
-            )}
-            {activity.metadata.score && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-surface-raised text-secondary flex items-center gap-1">
-                <Target className="w-3 h-3" />
-                {activity.metadata.score.toFixed(1)}
-              </span>
-            )}
-            {activity.metadata.newRank && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-blue-500/10 text-blue-500 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />#{activity.metadata.newRank}
-              </span>
-            )}
-            {activity.metadata.seasonHigh && (
-              <span className="text-xs px-2 py-0.5 rounded-none bg-brand/10 text-brand flex items-center gap-1">
-                <Star className="w-3 h-3" />
-                Season High!
-              </span>
-            )}
-          </div>
+      >
+        {/* Unread indicator */}
+        {isNotification && !activity.read && (
+          <div className="absolute top-2 right-2 w-2 h-2 rounded-none bg-warning animate-pulse" />
         )}
-      </div>
 
-      {/* Mark as read button for notifications */}
-      {isNotification && !activity.read && onMarkRead && (
-        <button
-          onClick={handleMarkRead}
-          className="p-1.5 rounded-none hover:bg-line transition-colors"
-          title="Mark as read"
-        >
-          <CheckCircle className="w-4 h-4 text-muted hover:text-green-500" />
-        </button>
-      )}
+        {/* Icon */}
+        <div className={`p-2 rounded-none ${colors.bg}`}>
+          <Icon className={`w-4 h-4 ${colors.text}`} />
+        </div>
 
-      <ChevronRight className="w-4 h-4 text-muted flex-shrink-0 self-center" />
-    </m.div>
-  );
-});
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className="font-bold text-sm text-white truncate">{activity.title}</h4>
+            <span className="text-xs text-muted whitespace-nowrap">{timeAgo}</span>
+          </div>
+          <p className="text-xs text-muted mt-0.5 line-clamp-2">
+            {activity.message || activity.description}
+          </p>
+
+          {/* Metadata badges */}
+          {activity.metadata && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {activity.metadata.won !== undefined && (
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-none ${
+                    activity.metadata.won
+                      ? 'bg-green-500/10 text-green-500'
+                      : 'bg-red-500/10 text-red-500'
+                  }`}
+                >
+                  {activity.metadata.won ? 'Victory' : 'Defeat'}
+                </span>
+              )}
+              {activity.metadata.isRival && (
+                <span className="text-xs px-2 py-0.5 rounded-none bg-red-500/10 text-red-500 flex items-center gap-1">
+                  <Flame className="w-3 h-3" /> Rivalry
+                </span>
+              )}
+              {activity.metadata.week && (
+                <span className="text-xs px-2 py-0.5 rounded-none bg-line text-muted">
+                  Week {activity.metadata.week}
+                </span>
+              )}
+              {activity.metadata.score && (
+                <span className="text-xs px-2 py-0.5 rounded-none bg-surface-raised text-secondary flex items-center gap-1">
+                  <Target className="w-3 h-3" />
+                  {activity.metadata.score.toFixed(1)}
+                </span>
+              )}
+              {activity.metadata.newRank && (
+                <span className="text-xs px-2 py-0.5 rounded-none bg-blue-500/10 text-blue-500 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />#{activity.metadata.newRank}
+                </span>
+              )}
+              {activity.metadata.seasonHigh && (
+                <span className="text-xs px-2 py-0.5 rounded-none bg-brand/10 text-brand flex items-center gap-1">
+                  <Star className="w-3 h-3" />
+                  Season High!
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Mark as read button for notifications */}
+        {isNotification && !activity.read && onMarkRead && (
+          <button
+            onClick={handleMarkRead}
+            className="p-1.5 rounded-none hover:bg-line transition-colors"
+            title="Mark as read"
+          >
+            <CheckCircle className="w-4 h-4 text-muted hover:text-green-500" />
+          </button>
+        )}
+
+        <ChevronRight className="w-4 h-4 text-muted flex-shrink-0 self-center" />
+      </m.div>
+    );
+  }
+);
 ActivityItem.displayName = 'ActivityItem';
 
 // =============================================================================
@@ -255,27 +313,39 @@ const COMMISSIONER_ACTION_TYPES = new Set([
   'week_start',
 ]);
 
-const FilterTab = React.memo(({ active, onClick, children, count }) => (
-  <button
-    onClick={onClick}
-    className={`
+const FilterTab = React.memo(
+  ({
+    active,
+    onClick,
+    children,
+    count,
+  }: {
+    active: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+    count?: number;
+  }) => (
+    <button
+      onClick={onClick}
+      className={`
       relative px-3 py-1.5 rounded-none text-xs font-bold transition-all
       ${active ? 'bg-interactive text-white' : 'bg-surface-raised text-muted hover:bg-line'}
     `}
-  >
-    {children}
-    {count > 0 && (
-      <span
-        className={`
+    >
+      {children}
+      {(count ?? 0) > 0 && (
+        <span
+          className={`
         absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-none text-[10px] flex items-center justify-center
         ${active ? 'bg-black text-interactive' : 'bg-interactive text-white'}
       `}
-      >
-        {count > 99 ? '99+' : count}
-      </span>
-    )}
-  </button>
-));
+        >
+          {(count ?? 0) > 99 ? '99+' : count}
+        </span>
+      )}
+    </button>
+  )
+);
 FilterTab.displayName = 'FilterTab';
 
 // =============================================================================
@@ -290,6 +360,14 @@ const LeagueActivityFeed = ({
   showFilters = true,
   maxItems = 10,
   onActivityTap,
+}: {
+  leagueId?: string;
+  userId?: string;
+  league?: unknown;
+  compact?: boolean;
+  showFilters?: boolean;
+  maxItems?: number;
+  onActivityTap?: (activity: FeedActivity) => void;
 }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [showAll, setShowAll] = useState(false);
@@ -322,7 +400,7 @@ const LeagueActivityFeed = ({
 
   // Combine and filter items
   const filteredItems = useMemo(() => {
-    let items = [];
+    let items: FeedActivity[] = [];
 
     if (activeFilter === 'all' || activeFilter === 'activity') {
       items = [...items, ...activities.map((a) => ({ ...a, isActivity: true }))];
@@ -334,8 +412,8 @@ const LeagueActivityFeed = ({
 
     // Sort by timestamp
     items.sort((a, b) => {
-      const timeA = (a.createdAt || a.timestamp)?.toMillis?.() || 0;
-      const timeB = (b.createdAt || b.timestamp)?.toMillis?.() || 0;
+      const timeA = toMillis(a.createdAt || a.timestamp);
+      const timeB = toMillis(b.createdAt || b.timestamp);
       return timeB - timeA;
     });
 
@@ -347,7 +425,7 @@ const LeagueActivityFeed = ({
     } else if (activeFilter === 'trades') {
       items = items.filter((i) => i.type === 'trade_proposal' || i.type === 'trade_response');
     } else if (activeFilter === 'commissioner') {
-      items = items.filter((i) => COMMISSIONER_ACTION_TYPES.has(i.type));
+      items = items.filter((i) => !!i.type && COMMISSIONER_ACTION_TYPES.has(i.type));
     }
 
     return showAll ? items : items.slice(0, maxItems);
@@ -497,6 +575,13 @@ export const NotificationDropdown = ({
   onMarkAllRead,
   onClose,
   onNotificationClick,
+}: {
+  notifications: FeedActivity[];
+  unreadCount: number;
+  onMarkRead?: (notificationId: string) => void;
+  onMarkAllRead?: () => void;
+  onClose?: () => void;
+  onNotificationClick?: (activity: FeedActivity) => void;
 }) => {
   return (
     <m.div
@@ -557,9 +642,15 @@ export const NotificationDropdown = ({
 // RIVALRY BADGE COMPONENT
 // =============================================================================
 
-export const RivalryBadge = ({ rivalry, compact = false }) => {
-  const userLeading = rivalry.userWins > rivalry.rivalWins;
-  const tied = rivalry.userWins === rivalry.rivalWins;
+export const RivalryBadge = ({
+  rivalry,
+  compact = false,
+}: {
+  rivalry: RivalryData;
+  compact?: boolean;
+}) => {
+  const userLeading = (rivalry.userWins ?? 0) > (rivalry.rivalWins ?? 0);
+  const tied = (rivalry.userWins ?? 0) === (rivalry.rivalWins ?? 0);
 
   if (compact) {
     return (

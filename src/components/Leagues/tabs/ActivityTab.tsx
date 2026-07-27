@@ -10,7 +10,12 @@ import LeagueRecordBook from '../LeagueRecordBook';
 import LeagueAllTimeTable from '../LeagueAllTimeTable';
 import LeagueCareerCard from '../LeagueCareerCard';
 import { ENABLED_CLASSES } from '../../../utils/classRegistry';
-import { LeagueStatsOverview, AchievementsCard, PowerRankingsCard } from './ActivityTabStatsCards';
+import {
+  LeagueStatsOverview,
+  AchievementsCard,
+  PowerRankingsCard,
+  type StandingRow,
+} from './ActivityTabStatsCards';
 import { WeeklyRecapCard, EnhancedRivalriesCard } from './ActivityTabRecapCards';
 import type { RecordWeekDoc } from '../../../utils/leagueRecords';
 import { useLeagueMatchupHistory } from '../../../hooks/useLeagueMatchupHistory';
@@ -19,7 +24,7 @@ import type { LeagueChampionEntry } from '../LeagueHallOfFame';
 interface ActivityTabProps {
   league?: { id?: string; members?: string[]; champions?: LeagueChampionEntry[] } | null;
   userProfile?: { uid?: string } | null;
-  standings?: unknown[];
+  standings?: StandingRow[];
   memberProfiles?: Record<string, { displayName?: string; username?: string }>;
   leagueStats?: Record<string, unknown>;
   rivalries?: unknown[];
