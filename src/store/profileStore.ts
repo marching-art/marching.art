@@ -48,6 +48,12 @@ export interface Engagement {
  * signature preserves them.
  */
 export interface ProfileDoc {
+  /**
+   * Declared explicitly despite the index signature below: every consumer
+   * treats it as a string, and under a bare `[key: string]: unknown` it read
+   * as `unknown` and could not be passed to anything that wanted a uid.
+   */
+  uid?: string;
   corps?: Record<string, unknown> | null;
   unlockedClasses?: string[];
   createdAt?: unknown;

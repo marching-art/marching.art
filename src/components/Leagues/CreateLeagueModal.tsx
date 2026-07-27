@@ -7,17 +7,12 @@ import { X, Users, Lock, Trophy, Copy, Check, Share2, Link2 } from 'lucide-react
 import Portal from '../Portal';
 import toast from 'react-hot-toast';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import type { LeagueCreationData } from '../../types';
 
-interface LeagueFormData {
-  name: string;
-  description: string;
-  isPublic: boolean;
-  maxMembers: number;
-  settings: {
-    finalsSize: number;
-    entryFee: number;
-  };
-}
+/** Exactly what createLeague accepts — no prizePool, which is server escrow. */
+type LeagueFormData = LeagueCreationData & {
+  settings: { finalsSize: number; entryFee: number };
+};
 
 interface CreatedLeague extends LeagueFormData {
   inviteCode: string;
@@ -26,9 +21,9 @@ interface CreatedLeague extends LeagueFormData {
 
 interface CreateLeagueModalProps {
   onClose: () => void;
-  onCreate: (
-    data: LeagueFormData
-  ) => Promise<{ data?: { inviteCode?: string; leagueId?: string } } | undefined>;
+  onCreate: (data: LeagueCreationData) => Promise<{
+    data?: { inviteCode?: string; leagueId?: string };
+  } | void>;
 }
 
 const CreateLeagueModal = ({ onClose, onCreate }: CreateLeagueModalProps) => {

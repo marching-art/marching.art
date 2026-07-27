@@ -36,7 +36,7 @@ interface MemberProfiles {
 }
 
 /** A pairing as the league detail view flattens it for the week. */
-interface DashboardMatchup {
+export interface DashboardMatchup {
   user1?: string;
   user2?: string;
   week?: number;

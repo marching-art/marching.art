@@ -35,7 +35,12 @@ export interface LeagueCreationData {
   description: string;
   isPublic: boolean;
   maxMembers: number;
-  settings: LeagueSettings;
+  /**
+   * `prizePool` is deliberately absent: the pool is pure escrow, seeded and
+   * maintained server-side from entry fees only, and createLeague ignores any
+   * client value. Declaring it here would invite a client to try.
+   */
+  settings: Omit<LeagueSettings, 'prizePool'>;
 }
 
 // =============================================================================

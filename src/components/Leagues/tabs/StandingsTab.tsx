@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // StandingsTab - Dashboard-first design with standings table
 // Design System: Visual dashboard cards at top, data table below
 
@@ -20,17 +19,59 @@ import SeasonStatsCard from '../SeasonStatsCard';
 import LeagueLeaderboards from '../LeagueLeaderboards';
 import LeagueDashboard from '../LeagueDashboard';
 import LeagueFinalsBracket from '../LeagueFinalsBracket';
-import { getEquippedCosmetic } from '../../../utils/cosmetics';
 import { getSeasonActivity } from '../../../utils/leagueActivity';
 // Shared label map — never a local one (see utils/corps.ts).
 import { CORPS_CLASS_SHORT_LABELS as CLASS_SHORT_LABELS } from '../../../utils/corps';
 import { GAME_CONFIG } from '../../../config';
-import { InactiveMembersPanel, RankBadge, TrendIndicator } from './StandingsTabParts';
+import { InactiveMembersPanel, MemberFlair, RankBadge, TrendIndicator } from './StandingsTabParts';
 import { hasCaptionRecords } from '../../../utils/captionWars';
+import type { StandingRow } from './ActivityTabStatsCards';
+import type { LeagueChampionEntry } from '../LeagueHallOfFame';
+import type { DashboardMatchup } from '../LeagueDashboard';
+import type { LeagueSeasonActivity, SeasonMatchupStats } from '../../../types';
+
+/** A standings row as this table renders it. */
+type StandingsRow = StandingRow & {
+  totalPoints?: number;
+  normalizedScore?: number | null;
+  captionsWon?: number;
+  captionsLost?: number;
+  corpsClasses?: string[];
+};
+
+interface MemberProfile {
+  displayName?: string;
+  username?: string;
+  corps?: Record<string, { corpsName?: string } | undefined>;
+}
+
+interface StandingsTabProps {
+  standings: StandingsRow[];
+  memberProfiles?: Record<string, MemberProfile | undefined>;
+  userProfile?: { uid?: string } | null;
+  loading?: boolean;
+  league?: {
+    id?: string;
+    seasonId?: string;
+    creatorId?: string;
+    members?: string[];
+    seasonActivity?: LeagueSeasonActivity;
+    champions?: LeagueChampionEntry[];
+    settings?: { finalsSize?: number };
+  } | null;
+  playoffSize?: number;
+  leagueStats?: Record<string, SeasonMatchupStats>;
+  showLeaderboards?: boolean;
+  currentWeek?: number;
+  weeklyMatchups?: Record<number, DashboardMatchup[]>;
+  onMatchupClick?: (matchup: DashboardMatchup) => void;
+  lastUpdated?: Date | null;
+  isProvisional?: boolean;
+}
 
 const StandingsTab = ({
   standings,
-  memberProfiles,
+  memberProfiles = {},
   userProfile,
   loading,
   league,
@@ -42,54 +83,20 @@ const StandingsTab = ({
   onMatchupClick,
   lastUpdated,
   isProvisional = false,
-}) => {
-  const [expandedUser, setExpandedUser] = useState(null);
+}: StandingsTabProps) => {
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [showLeaderboardSection, setShowLeaderboardSection] = useState(false);
-  const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'table'
+  const [viewMode, setViewMode] = useState<'dashboard' | 'table'>('dashboard');
 
   // Helper to get display name
-  const getDisplayName = (uid) => {
+  const getDisplayName = (uid?: string) => {
     if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles[uid];
+    const profile = uid ? memberProfiles[uid] : undefined;
     // Skip 'Director' as it's the default placeholder, prefer username
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     if (profile?.username) return profile.username;
     return name || `Director ${uid?.slice(0, 6)}`;
-  };
-
-  // Corps Identity Shop flair — status only works when OTHERS see it, so
-  // standings rows show each member's equipped title and card-theme swatch.
-  const getMemberFlair = (uid) => {
-    const profile = memberProfiles[uid];
-    if (!profile) return { title: null, theme: null };
-    return {
-      title: getEquippedCosmetic(profile, 'title'),
-      theme: getEquippedCosmetic(profile, 'cardTheme'),
-    };
-  };
-
-  const MemberFlair = ({ uid }) => {
-    const flair = getMemberFlair(uid);
-    if (!flair.title && !flair.theme) return null;
-    return (
-      <>
-        {flair.title && (
-          <span
-            className={`text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${flair.title.textClass || 'text-muted'}`}
-          >
-            {flair.title.name}
-          </span>
-        )}
-        {flair.theme && (
-          <span
-            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${flair.theme.swatchClass || 'bg-charcoal-500'}`}
-            title={flair.theme.name}
-            aria-label={`${flair.theme.name} card theme`}
-          />
-        )}
-      </>
-    );
   };
 
   // Get user's stats
@@ -109,11 +116,11 @@ const StandingsTab = ({
   const { activeStandings, inactiveStandings } = useMemo(() => {
     const activity = getSeasonActivity(league);
     const isActive = activity
-      ? (stats) => activity.activeMembers?.includes(stats.uid)
-      : (stats) => stats.wins > 0 || stats.losses > 0 || stats.totalPoints > 0;
+      ? (stats: StandingsRow) => activity.activeMembers?.includes(stats.uid)
+      : (stats: StandingsRow) => stats.wins > 0 || stats.losses > 0 || (stats.totalPoints ?? 0) > 0;
 
-    const active = [];
-    const inactive = [];
+    const active: StandingsRow[] = [];
+    const inactive: StandingsRow[] = [];
     standings.forEach((stats) => {
       (isActive(stats) ? active : inactive).push(stats);
     });
@@ -126,7 +133,7 @@ const StandingsTab = ({
   // director and a World Class director played each other, and the points
   // column silently compares numbers on different scales.
   const classesByUid = useMemo(() => {
-    const byUid = {};
+    const byUid: Record<string, string[]> = {};
     for (const [uid, profile] of Object.entries(memberProfiles || {})) {
       byUid[uid] = Object.entries(profile?.corps || {})
         .filter(([, corps]) => corps?.corpsName)
@@ -270,7 +277,7 @@ const StandingsTab = ({
                           >
                             {getDisplayName(stats.uid)}
                           </span>
-                          <MemberFlair uid={stats.uid} />
+                          <MemberFlair uid={stats.uid} memberProfiles={memberProfiles} />
                           {stats.uid === league?.creatorId && (
                             <Crown className="w-3 h-3 text-secondary" />
                           )}
@@ -281,7 +288,7 @@ const StandingsTab = ({
                             <span className="text-muted">-</span>
                             <span className="text-red-500">{stats.losses}</span>
                           </span>
-                          {stats.streak > 0 && (
+                          {(stats.streak ?? 0) > 0 && (
                             <span
                               className={`text-xs font-bold ${
                                 stats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
@@ -471,7 +478,7 @@ const StandingsTab = ({
                                   >
                                     {getDisplayName(stats.uid)}
                                   </p>
-                                  <MemberFlair uid={stats.uid} />
+                                  <MemberFlair uid={stats.uid} memberProfiles={memberProfiles} />
                                   {isCommissioner && (
                                     <Crown className="w-3 h-3 text-secondary flex-shrink-0" />
                                   )}
@@ -524,7 +531,7 @@ const StandingsTab = ({
                             {/* Points For */}
                             <td className="text-right py-2 px-2">
                               <span className="font-bold text-secondary font-data tabular-nums text-sm">
-                                {stats.totalPoints.toFixed(1)}
+                                {(stats.totalPoints ?? 0).toFixed(1)}
                               </span>
                             </td>
 
@@ -541,7 +548,7 @@ const StandingsTab = ({
 
                             {/* Streak */}
                             <td className="text-center py-2 px-2">
-                              {stats.streak > 0 ? (
+                              {(stats.streak ?? 0) > 0 ? (
                                 <span
                                   className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold ${
                                     stats.streakType === 'W'

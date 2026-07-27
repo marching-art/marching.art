@@ -44,7 +44,7 @@ export interface LeagueDetailHeaderProps {
   userStats?: LeagueMemberStanding;
   tabs: LeagueDetailTab[];
   activeTab: string;
-  onBack: () => void;
+  onBack?: () => void;
   onOpenSettings: () => void;
   onLeaveClick: () => void;
   onCopyInvite: () => void;

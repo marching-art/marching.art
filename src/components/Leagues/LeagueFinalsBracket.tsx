@@ -22,7 +22,7 @@ export interface FinalsSeed {
   wins: number;
   losses: number;
   ties?: number;
-  totalPoints: number;
+  totalPoints?: number;
   corpsClasses?: string[];
 }
 

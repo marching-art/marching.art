@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // LEAGUES HUB - LEAGUE DASHBOARD STYLE (Gold Standard Aligned)
 // =============================================================================
@@ -13,7 +12,6 @@ import {
   Plus,
   Search,
   Crown,
-  X,
   Zap,
   ChevronRight,
   Swords,
@@ -34,7 +32,9 @@ import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
-import { useEscapeKey } from '../hooks/useEscapeKey';
+import type { League } from '../types';
+import { EmptyDiscover, EmptyMyLeagues, QuickJoinModal } from './LeaguesParts';
+import type { ProfileDoc } from '../store/profileStore';
 import {
   getRosterSize,
   getActiveMemberCount,
@@ -47,7 +47,20 @@ import {
 // LEAGUE TYPE TAGS
 // =============================================================================
 
-const LEAGUE_TAGS = {
+/**
+ * A league as the cards read it: the canonical document plus the two display
+ * fields the list layers on (`creatorName`, and the legacy activity flags).
+ */
+type LeagueCardDoc = Partial<League> & {
+  /** Layered on by the discovery list, not stored on the document. */
+  creatorName?: string;
+  /** Legacy display flags. Nothing writes these; both read as false. */
+  hasUnreadMessages?: boolean;
+  isMatchupActive?: boolean;
+  matchupsGeneratedWeek?: number;
+};
+
+const LEAGUE_TAGS: Record<string, { label: string; color: string }> = {
   competitive: { label: 'Competitive', color: 'text-red-400 bg-red-500/10' },
   casual: { label: 'Casual', color: 'text-green-400 bg-green-500/10' },
   roleplay: { label: 'Roleplay', color: 'text-purple-400 bg-purple-500/10' },
@@ -68,9 +81,9 @@ const DISCOVER_FILTERS = ['competitive', 'casual', 'roleplay', 'dynasty', 'rooki
 // This used to read isCompetitive / isDynasty / type — three fields that
 // nothing in the codebase ever wrote — so every league in the browse grid
 // rendered as "Casual", and discovery had no signal to filter on at all.
-const getLeagueTags = (league) => {
-  const tags = [];
-  if (LEAGUE_TAGS[league.tag]) tags.push(league.tag);
+const getLeagueTags = (league: LeagueCardDoc) => {
+  const tags: string[] = [];
+  if (league.tag && LEAGUE_TAGS[league.tag]) tags.push(league.tag);
   // Both conditions, exactly as the server reads it: a format left over from a
   // previous season is not this season's format.
   if (
@@ -86,33 +99,16 @@ const getLeagueTags = (league) => {
 };
 
 // =============================================================================
-// RANK BADGE COMPONENT
-// =============================================================================
-
-const RankBadge = ({ rank, total }) => {
-  if (!rank) return null;
-
-  const isTop3 = rank <= 3;
-  const isFirst = rank === 1;
-
-  return (
-    <div
-      className={`
-      flex flex-col items-center justify-center px-2
-      ${isFirst ? 'text-brand' : isTop3 ? 'text-green-400' : 'text-muted'}
-    `}
-    >
-      <span className="text-lg font-bold font-data tabular-nums leading-tight">#{rank}</span>
-      <span className="text-[9px] uppercase tracking-wider text-muted">of {total}</span>
-    </div>
-  );
-};
-
-// =============================================================================
 // ACTIVITY INDICATOR
 // =============================================================================
 
-const ActivityIndicator = ({ hasNewMessages, isLive }) => {
+const ActivityIndicator = ({
+  hasNewMessages,
+  isLive,
+}: {
+  hasNewMessages?: boolean;
+  isLive?: boolean;
+}) => {
   if (isLive) {
     return (
       <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 border border-red-500/30 rounded-none">
@@ -131,7 +127,17 @@ const ActivityIndicator = ({ hasNewMessages, isLive }) => {
 // MY LEAGUE CARD (High-Density)
 // =============================================================================
 
-const MyLeagueCard = ({ league, userProfile, currentWeek, onClick }) => {
+const MyLeagueCard = ({
+  league,
+  userProfile,
+  currentWeek,
+  onClick,
+}: {
+  league: LeagueCardDoc;
+  userProfile?: ProfileDoc | null;
+  currentWeek?: number;
+  onClick?: () => void;
+}) => {
   const memberCount = getRosterSize(league);
   const activeCount = getActiveMemberCount(league);
   const dormant = isLeagueDormant(league);
@@ -139,21 +145,22 @@ const MyLeagueCard = ({ league, userProfile, currentWeek, onClick }) => {
   const youNeedSetup = needsCorpsSetup(league, userProfile?.uid);
   const maxMembers = league.maxMembers || 20;
 
-  // Find user's rank in this league
-  const userRank = useMemo(() => {
-    if (!league.members || !userProfile?.odNumber) return null;
-    const sorted = [...league.members].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
-    const idx = sorted.findIndex((m) => m.odNumber === userProfile.odNumber);
-    return idx >= 0 ? idx + 1 : null;
-  }, [league.members, userProfile?.odNumber]);
+  // There used to be a rank badge here, computed by sorting `league.members`
+  // on `totalScore` and looking for a member whose `odNumber` matched. But
+  // `members` is an array of UID STRINGS: `m.totalScore` and `m.odNumber` are
+  // both undefined on a string, so the sort was a no-op and the lookup always
+  // returned -1. The badge rendered null on every card, for every director,
+  // always. Deleted rather than typed around — the league card has no
+  // standings loaded, so an honest rank would need a fetch this list
+  // deliberately avoids.
 
   // Check for activity
-  const hasNewMessages = league.hasUnreadMessages || false;
-  const isLive = league.isMatchupActive || false;
+  const hasNewMessages = Boolean(league.hasUnreadMessages);
+  const isLive = Boolean(league.isMatchupActive);
 
   // Check if matchups are actually generated for current week
   // Only show matchup status if the league has this data from Firestore
-  const hasMatchupsGenerated = league.matchupsGeneratedWeek >= currentWeek;
+  const hasMatchupsGenerated = (league.matchupsGeneratedWeek ?? 0) >= (currentWeek ?? 0);
 
   return (
     <div
@@ -217,7 +224,6 @@ const MyLeagueCard = ({ league, userProfile, currentWeek, onClick }) => {
 
       {/* Rank - Right. Ranking against directors who aren't playing is
           meaningless, so a dormant league shows no placement at all. */}
-      {!dormant && <RankBadge rank={userRank} total={activeCount ?? memberCount} />}
 
       {/* Chevron */}
       <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />
@@ -229,7 +235,15 @@ const MyLeagueCard = ({ league, userProfile, currentWeek, onClick }) => {
 // DISCOVER LEAGUE CARD (Grid Style)
 // =============================================================================
 
-const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
+const DiscoverLeagueCard = ({
+  league,
+  onJoin,
+  isJoining,
+}: {
+  league: LeagueCardDoc;
+  onJoin?: (league: LeagueCardDoc) => void;
+  isJoining?: boolean;
+}) => {
   const memberCount = getRosterSize(league);
   const activeCount = getActiveMemberCount(league);
   const maxMembers = league.maxMembers || 20;
@@ -277,7 +291,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
               <span className="text-white font-bold">{activeCount ?? memberCount}</span>
               <span>{activeCount === null ? `/${maxMembers}` : `of ${memberCount} playing`}</span>
             </span>
-            {league.creatorName && (
+            {!!league.creatorName && (
               <span className="flex items-center gap-1 truncate max-w-[80px]">
                 <Crown className="w-3 h-3 text-muted" />
                 <span className="truncate">{league.creatorName}</span>
@@ -287,7 +301,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onJoin(league.id);
+              onJoin?.(league);
             }}
             disabled={isFull || isJoining}
             className={`px-4 min-h-touch text-[10px] font-bold uppercase transition-colors press-feedback ${
@@ -305,119 +319,12 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
 };
 
 // =============================================================================
-// QUICK JOIN MODAL
-// =============================================================================
-
-const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining }) => {
-  useEscapeKey(onClose);
-  return (
-    <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Join league by invite code"
-    >
-      <div
-        className="w-full sm:max-w-sm bg-surface-card border-t sm:border border-line rounded-none sm:rounded-none"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Drag handle - mobile */}
-        <div className="sm:hidden flex justify-center py-2">
-          <div className="w-8 h-1 bg-charcoal-600 rounded-full" />
-        </div>
-
-        <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted">
-            Join by Code
-          </span>
-          <button
-            onClick={onClose}
-            className="p-2 -mr-2 text-muted hover:text-white min-w-touch min-h-touch flex items-center justify-center"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onJoin();
-          }}
-          className="p-4 space-y-3"
-        >
-          <input
-            type="text"
-            value={inviteCode}
-            onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-            placeholder="XXXXXXXX"
-            className="w-full px-4 py-3 bg-background border border-line-strong text-center text-xl font-bold font-data text-white tracking-[0.3em] focus:outline-none focus:border-interactive placeholder:text-muted"
-            maxLength={8}
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={isJoining || !inviteCode.trim()}
-            className="w-full py-3 min-h-[44px] bg-interactive text-white font-bold text-sm hover:bg-interactive-hover disabled:opacity-50 transition-colors"
-          >
-            {isJoining ? 'Joining...' : 'Join League'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// =============================================================================
-// EMPTY STATE COMPONENTS
-// =============================================================================
-
-const EmptyMyLeagues = ({ onCreate }) => (
-  <div className="p-6 bg-surface-card border-2 border-dashed border-line text-center">
-    <div className="w-12 h-12 bg-surface-raised border border-line rounded-none mx-auto mb-3 flex items-center justify-center">
-      <Trophy className="w-6 h-6 text-muted" />
-    </div>
-    <h3 className="text-sm font-bold text-white mb-1">No Leagues Yet</h3>
-    <p className="text-xs text-muted mb-4 max-w-[200px] mx-auto">
-      Join a league to compete with other directors
-    </p>
-    <div className="flex items-center justify-center gap-2">
-      <button
-        onClick={onCreate}
-        className="px-4 py-2 text-xs font-bold text-white bg-interactive hover:bg-interactive-hover flex items-center gap-1.5"
-      >
-        <Plus className="w-3.5 h-3.5" />
-        Create League
-      </button>
-    </div>
-  </div>
-);
-
-// Discovery only lists leagues with at least one director competing this
-// season, so an empty grid usually means nobody has set their corps up yet
-// rather than that no leagues exist — say so, or it reads as a bug.
-const EmptyDiscover = ({ searchTerm, hasFilter }) => (
-  <div className="col-span-2 p-6 bg-surface-card border-2 border-dashed border-line text-center">
-    <Users className="w-8 h-8 text-muted mx-auto mb-2" />
-    <p className="text-sm text-muted">
-      {searchTerm || hasFilter
-        ? 'No leagues match your search'
-        : 'No leagues are competing yet this season'}
-    </p>
-    <p className="text-xs text-muted mt-1">
-      {searchTerm || hasFilter
-        ? 'Try a different search term or clear the filters'
-        : 'Leagues appear here once a member registers a corps. Create one to get started!'}
-    </p>
-  </div>
-);
-
-// =============================================================================
 // MAIN LEAGUES COMPONENT
 // =============================================================================
 
 const Leagues = () => {
-  const { user } = useAuth();
+  // Null outside AuthProvider is a supported case (see context/AuthContext).
+  const user = useAuth()?.user;
   const [searchParams, setSearchParams] = useSearchParams();
   // The league being viewed lives in the URL, not in component state. That is
   // what makes a league linkable, bookmarkable, restorable on refresh, and
@@ -427,11 +334,11 @@ const Leagues = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [showQuickJoin, setShowQuickJoin] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [joiningByCode, setJoiningByCode] = useState(false);
-  const [joiningLeagueId, setJoiningLeagueId] = useState(null);
+  const [joiningLeagueId, setJoiningLeagueId] = useState<string | null>(null);
 
   // Hooks
   // Current user's profile comes from the global realtime store — no need for
@@ -489,7 +396,10 @@ const Leagues = () => {
   );
   const selectedLeague = routedFromMine || fetchedLeague || null;
 
-  const openLeague = useCallback((league) => navigate(`/leagues/${league.id}`), [navigate]);
+  const openLeague = useCallback(
+    (league: LeagueCardDoc) => navigate(`/leagues/${league.id}`),
+    [navigate]
+  );
   const closeLeague = useCallback(() => navigate('/leagues'), [navigate]);
 
   // Flatten public leagues
@@ -528,24 +438,26 @@ const Leagues = () => {
   }, [availableLeagues, myLeagues, searchTerm, activeFilter]);
 
   // Handlers
-  const handleCreateLeague = async (leagueData) => {
+  const handleCreateLeague = async (
+    leagueData: Parameters<typeof createLeagueMutation.mutateAsync>[0]
+  ) => {
     try {
       await createLeagueMutation.mutateAsync(leagueData);
       toast.success('League created!');
     } catch (error) {
-      toast.error(error.message || 'Failed to create league');
+      toast.error(error instanceof Error ? error.message : 'Failed to create league');
       throw error;
     }
   };
 
-  const handleJoinLeague = async (leagueId) => {
+  const handleJoinLeague = async (leagueId: string) => {
     setJoiningLeagueId(leagueId);
     try {
       await joinLeagueMutation.mutateAsync(leagueId);
       toast.success('Joined league!');
       refetchMyLeagues();
     } catch (error) {
-      toast.error(error.message || 'Failed to join');
+      toast.error(error instanceof Error ? error.message : 'Failed to join');
     } finally {
       setJoiningLeagueId(null);
     }
@@ -561,19 +473,19 @@ const Leagues = () => {
       setInviteCode('');
       refetchMyLeagues();
     } catch (error) {
-      toast.error(error.message || 'Invalid code');
+      toast.error(error instanceof Error ? error.message : 'Invalid code');
     } finally {
       setJoiningByCode(false);
     }
   };
 
-  const handleLeaveLeague = async (leagueId) => {
+  const handleLeaveLeague = async (leagueId: string) => {
     try {
       await leaveLeagueMutation.mutateAsync(leagueId);
       toast.success('Left league');
       closeLeague();
     } catch (error) {
-      toast.error(error.message || 'Failed to leave');
+      toast.error(error instanceof Error ? error.message : 'Failed to leave');
     }
   };
 
@@ -768,7 +680,7 @@ const Leagues = () => {
                       <DiscoverLeagueCard
                         key={league.id}
                         league={league}
-                        onJoin={handleJoinLeague}
+                        onJoin={(joined) => handleJoinLeague(joined.id || '')}
                         isJoining={joiningLeagueId === league.id}
                       />
                     ))}

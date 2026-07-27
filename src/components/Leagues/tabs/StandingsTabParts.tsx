@@ -14,6 +14,8 @@ import {
   UserX,
 } from 'lucide-react';
 
+import { getEquippedCosmetic } from '../../../utils/cosmetics';
+
 interface RankBadgeProps {
   rank: number;
   isPlayoffSpot?: boolean;
@@ -68,6 +70,43 @@ export const TrendIndicator = React.memo(({ trend }: { trend?: 'up' | 'down' | '
   return <Minus className="w-3.5 h-3.5 text-muted mx-auto" />;
 });
 TrendIndicator.displayName = 'TrendIndicator';
+
+/**
+ * Corps Identity Shop flair. Status only works when OTHERS see it, so standings
+ * rows show each member's equipped title and card-theme swatch.
+ */
+export const MemberFlair = ({
+  uid,
+  memberProfiles,
+}: {
+  uid: string;
+  memberProfiles?: Record<string, unknown>;
+}) => {
+  const profile = memberProfiles?.[uid];
+  if (!profile) return null;
+  const title = getEquippedCosmetic(profile, 'title');
+  const theme = getEquippedCosmetic(profile, 'cardTheme');
+  if (!title && !theme) return null;
+
+  return (
+    <>
+      {title && (
+        <span
+          className={`text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${title.textClass || 'text-muted'}`}
+        >
+          {title.name}
+        </span>
+      )}
+      {theme && (
+        <span
+          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${theme.swatchClass || 'bg-charcoal-500'}`}
+          title={theme.name}
+          aria-label={`${theme.name} card theme`}
+        />
+      )}
+    </>
+  );
+};
 
 interface InactiveMembersPanelProps {
   members: Array<{ uid: string }>;
