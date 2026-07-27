@@ -70,11 +70,23 @@ function makeFakeDb({ profiles = [], leagues = [], docs = new Map() } = {}) {
       }
       writes.push({ type: "docSet", path, data, options });
     },
-    // resetLeaguesForNewSeason reaches leagues/{id}/standings/{docId} through
-    // the league ref, the same way createLeague and joinLeague do.
+    // resetLeaguesForNewSeason reaches leagues/{id}/standings/{docId} and
+    // leagues/{id}/matchups through the league ref, the same way createLeague
+    // and joinLeague do.
     collection(sub) {
+      const prefix = `${path}/${sub}/`;
       return {
-        doc: (id) => makeDocRef(`${path}/${sub}/${id ?? `auto-${++autoId}`}`),
+        doc: (id) => makeDocRef(`${prefix}${id ?? `auto-${++autoId}`}`),
+        async get() {
+          const found = [...docs.keys()]
+            .filter((key) => key.startsWith(prefix) && !key.slice(prefix.length).includes("/"))
+            .map((key) => ({
+              id: key.slice(prefix.length),
+              ref: makeDocRef(key),
+              data: () => docs.get(key),
+            }));
+          return { empty: found.length === 0, size: found.length, docs: found };
+        },
       };
     },
   });
@@ -496,6 +508,58 @@ describe("resetLeaguesForNewSeason", () => {
     assert.ok(live, "the live table must be reset");
     assert.deepEqual(live.data.standings, []);
     assert.deepEqual(live.data.records, {});
+  });
+
+  // Standings were reset here from the start; matchups never were. They are
+  // keyed by week number alone, so last season's week-1 was still sitting there
+  // when the new season began — and the generator skips a week whose document
+  // already exists. A league that completed one season never had matchups
+  // generated again: every week looked done, the weekly resolution found
+  // nothing to resolve, and the table never moved.
+  test("moves the finished season's matchups out of the live collection", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set(`${leaguesPath}/league-1/matchups/week-1`, {
+      worldClassMatchups: [{ pair: ["alice", "bob"], winner: "alice", completed: true }],
+    });
+    docs.set(`${leaguesPath}/league-1/matchups/week-7`, {
+      worldClassMatchups: [{ pair: ["alice", "bob"], winner: "bob", completed: true }],
+    });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    // Kept as history, stamped with the season it belonged to...
+    const archived = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1/matchupHistory/old-season_week-1`
+    );
+    assert.ok(archived, "the finished season's matchups must be kept as history");
+    assert.equal(archived.data.seasonUid, "old-season");
+    assert.equal(archived.data.worldClassMatchups.length, 1);
+
+    // ...and MOVED, not copied. Leaving the live document in place is the bug.
+    for (const week of [1, 7]) {
+      assert.ok(
+        writes.some(
+          (w) => w.type === "delete" && w.path === `${leaguesPath}/league-1/matchups/week-${week}`
+        ),
+        `week-${week} must be cleared from the live collection`
+      );
+    }
+  });
+
+  test("leaves documents that are not week-N alone", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set(`${leaguesPath}/league-1/matchups/notes`, { anything: true });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    assert.equal(
+      writes.filter((w) => w.path.includes("/matchups/notes")).length,
+      0
+    );
   });
 
   test("zeroes season participation so the league goes dark until members return", async () => {

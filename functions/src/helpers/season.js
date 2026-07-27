@@ -367,6 +367,15 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
  * For each league this:
  *  - copies standings/current to standings/{oldSeasonUid} as history, then
  *    resets the live doc so week 1 starts 0-0 for everyone;
+ *  - MOVES every matchups/week-N document into matchupHistory. Standings were
+ *    reset here from the start but matchups never were, and they are keyed by
+ *    week number alone — so last season's week-1 was still sitting there when
+ *    the new season began. The generator skips a week whose document already
+ *    exists, which meant a league that completed one season never had matchups
+ *    generated again: every week looked done, the weekly resolution found
+ *    nothing to resolve, and the table never moved. Everything downstream
+ *    (pairing history, rivalries, the record book, the standings rebuild) also
+ *    silently blended the two seasons.
  *  - clears matchupsGeneratedWeek so the UI stops claiming a matchup is running;
  *  - advances seasonId;
  *  - zeroes seasonActivity, so a league goes dark the moment the season resets
@@ -418,6 +427,25 @@ async function resetLeaguesForNewSeason(db, oldSeasonUid, newSeasonUid) {
 
     batch.set(standingsRef, emptyStandings);
     opCount++;
+
+    // Move, don't copy: leaving the live document in place is the bug.
+    const matchupsSnapshot = await leagueRef.collection("matchups").get();
+    for (const matchupDoc of matchupsSnapshot.docs) {
+      const weekMatch = matchupDoc.id.match(/^week-(\d+)$/);
+      if (!weekMatch) continue;
+      batch.set(
+        db.doc(paths.leagueMatchupHistoryWeek(leagueDoc.id, oldSeasonUid, weekMatch[1])),
+        { ...matchupDoc.data(), seasonUid: oldSeasonUid, archivedAt: new Date() }
+      );
+      batch.delete(matchupDoc.ref);
+      opCount += 2;
+
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = db.batch();
+        opCount = 0;
+      }
+    }
 
     batch.update(leagueRef, {
       seasonId: newSeasonUid,

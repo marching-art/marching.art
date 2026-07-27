@@ -120,6 +120,7 @@ export const queryKeys = {
   // Every `week-N` matchup document for a league (the schedule the standings
   // and matchup tabs are computed against).
   leagueMatchups: (leagueId: string) => ['leagueMatchups', leagueId] as const,
+  leagueMatchupHistory: (leagueId: string) => ['leagueMatchupHistory', leagueId] as const,
 
   // Notification queries
   leagueNotifications: (uid: string) => ['leagueNotifications', uid] as const,

@@ -89,6 +89,11 @@ users/{uid}/notifications/…       # In-app + league notifications
 leagues/{leagueId}                # League config (owner + commissioners[], settings, tag)
 leagues/{leagueId}/standings/current
 leagues/{leagueId}/matchups/week-{n}
+leagues/{leagueId}/matchupHistory/{seasonUid}_week-{n}
+                                  # Finished seasons' matchups, MOVED here at
+                                  #   rollover (see resetLeaguesForNewSeason)
+leagues/{leagueId}/standings/{seasonUid}
+                                  # Archived season tables
 leagues/{leagueId}/activity/{id}  # League feed events
 leagues/{leagueId}/recaps/week-{n}
 leagues/{leagueId}/chat/{id}     # League chat (paged; author + commissioner delete)

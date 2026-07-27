@@ -132,3 +132,54 @@ describe('computeLeagueRecords', () => {
     expect(records.weeksCounted).toBe(0);
   });
 });
+
+// Rollover MOVES finished weeks to `{seasonUid}_week-N` so the live collection
+// only ever holds the current season — leaving them in place made the generator
+// skip every week of the next season. Both forms are real history.
+describe('records across seasons', () => {
+  const archived = (seasonUid: string, n: number, worldClass: unknown[]): RecordWeekDoc => ({
+    id: `${seasonUid}_week-${n}`,
+    worldClassMatchups: worldClass,
+  });
+
+  it('counts archived weeks alongside the live season', () => {
+    const records = computeLeagueRecords(
+      [archived('season-1', 7, [decided('a', 'b', 97, 60)]), week(1, [decided('a', 'b', 88, 80)])],
+      CLASSES
+    );
+
+    expect(records.seasonsCounted).toBe(2);
+    expect(records.weeksCounted).toBe(2);
+    // The all-time high came from a finished season.
+    expect(records.highestWeek).toMatchObject({ score: 97, seasonUid: 'season-1' });
+  });
+
+  it('does not merge the same week number from different seasons', () => {
+    const records = computeLeagueRecords(
+      [archived('season-1', 3, [decided('a', 'b', 90, 80)]), week(3, [decided('a', 'b', 91, 80)])],
+      CLASSES
+    );
+    expect(records.weeksCounted).toBe(2);
+  });
+
+  it('walks a streak in the order it was played, across the rollover', () => {
+    const records = computeLeagueRecords(
+      [
+        // Deliberately out of order in the input.
+        week(1, [decided('a', 'b', 90, 80)]),
+        archived('season-1', 6, [decided('a', 'b', 90, 80)]),
+        archived('season-1', 7, [decided('a', 'b', 90, 80)]),
+      ],
+      CLASSES
+    );
+
+    // Three straight wins ending in the live season, not two runs of one.
+    expect(records.longestWinStreak).toMatchObject({ uid: 'a', length: 3, seasonUid: null });
+  });
+
+  it('a live week marks its season as null, not as a uid', () => {
+    const records = computeLeagueRecords([week(2, [decided('a', 'b', 90, 80)])], CLASSES);
+    expect(records.highestWeek!.seasonUid).toBeNull();
+    expect(records.seasonsCounted).toBe(1);
+  });
+});

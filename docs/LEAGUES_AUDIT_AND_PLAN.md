@@ -691,6 +691,40 @@ Small, isolated, high ratio of value to risk:
 
 ---
 
+### E7 · P0 — Matchups were never cleared at rollover — FIXED
+
+Found while building the cross-season record book, and the most damaging
+defect in the whole audit.
+
+`resetLeaguesForNewSeason` archives `standings/current` to
+`standings/{oldSeasonUid}` and resets the live table — its own comment says
+leagues used to be "entirely season-blind" and that state "simply accumulated".
+But it only ever fixed standings. Matchup documents are keyed by **week number
+alone** (`matchups/week-N`) and were never touched, so when a second season
+began, last season's `week-1` was still sitting in the live collection.
+
+The generator skips a week whose document already exists. So:
+
+- a league that completed one season **never had matchups generated again** —
+  every week already "existed";
+- the weekly resolution found every matchup already `completed` and resolved
+  nothing, so the standings table never moved for the rest of the season;
+- pairing history, rivalry detection, the record book and the standings rebuild
+  all silently blended two seasons.
+
+Fixed three ways, because the fix and the recovery are different problems:
+
+1. rollover now **moves** finished weeks to `matchupHistory/{seasonUid}_week-N`
+   (moves, not copies — leaving the live document in place _is_ the bug);
+2. generated weeks carry a `seasonUid` stamp, and the generator regenerates over
+   a week stamped with a previous season, so this self-heals going forward;
+3. `scripts/archiveStaleLeagueMatchups.js` repairs leagues already stuck, whose
+   documents predate the stamp. Its rule only treats an unstamped week as stale
+   when the league has already archived a prior season's standings — getting
+   this wrong in the aggressive direction would delete a live season's matchups.
+
+The archived weeks are what make the Record Book genuinely all-time.
+
 ## Still outstanding
 
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
@@ -708,6 +742,9 @@ Small, isolated, high ratio of value to risk:
   deleted rather than left as the appearance of the feature, so there is nothing
   half-built to trip over when the formats are actually designed.
 - **Dynasty mode** — multi-season persistent standings and retired numbers. The
-  cross-season groundwork is in place (the Hall of Champions reads
-  `champions[]`, entries carry record/seed/decidedBy, and the Record Book
-  derives from matchup history), so this is now additive rather than structural.
+  cross-season groundwork is now complete: the Hall of Champions reads
+  `champions[]` with record/seed/decidedBy, archived standings live at
+  `standings/{seasonUid}`, archived matchups at `matchupHistory/`, and the
+  Record Book already spans seasons. What remains is presentation.
+- **Per-member career-in-this-league pages** — head-to-head records against
+  every opponent, season by season. All the data is now reachable.

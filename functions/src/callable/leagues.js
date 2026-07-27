@@ -698,6 +698,9 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   // Generate matchups for each corps class using smart pairing
   const matchupData = {
     week,
+    // Stamped so rollover and the generator can tell this season's matchups
+    // from a previous season's (see resetLeaguesForNewSeason).
+    seasonUid,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     generatedBy: uid
   };

@@ -29,6 +29,8 @@ export interface ScoreRecord {
   score: number;
   week: number;
   corpsClass: string;
+  /** Null when the record was set in the season currently being played. */
+  seasonUid?: string | null;
 }
 
 export interface MarginRecord {
@@ -39,6 +41,7 @@ export interface MarginRecord {
   loserScore: number;
   week: number;
   corpsClass: string;
+  seasonUid?: string | null;
 }
 
 export interface StreakRecord {
@@ -46,11 +49,14 @@ export interface StreakRecord {
   length: number;
   type: 'W' | 'L';
   endedWeek: number;
+  seasonUid?: string | null;
 }
 
 export interface LeagueRecords {
-  /** Weeks that contributed at least one resolved matchup. */
+  /** Weeks that contributed at least one resolved matchup, across all seasons. */
   weeksCounted: number;
+  /** How many distinct seasons the book covers, including the live one. */
+  seasonsCounted: number;
   highestWeek: ScoreRecord | null;
   biggestBlowout: MarginRecord | null;
   closestCall: MarginRecord | null;
@@ -61,6 +67,7 @@ export interface LeagueRecords {
 
 const EMPTY: LeagueRecords = {
   weeksCounted: 0,
+  seasonsCounted: 0,
   highestWeek: null,
   biggestBlowout: null,
   closestCall: null,
@@ -71,28 +78,58 @@ const EMPTY: LeagueRecords = {
 interface FlatResult {
   week: number;
   corpsClass: string;
+  seasonUid: string | null;
   matchup: RecordMatchup;
 }
 
-/** Every resolved head-to-head, in week order. Byes carry no result. */
+/**
+ * Week number and season from a matchup document id.
+ *
+ * Live weeks are `week-N`. Weeks from finished seasons are
+ * `{seasonUid}_week-N` — rollover MOVES them there so the live collection only
+ * ever holds the current season (leaving them in place made the generator skip
+ * every week of the next season). Both are real history; only the live form
+ * counts as current work.
+ */
+function parseWeekId(id: string): { week: number; seasonUid: string | null } | null {
+  const live = String(id).match(/^week-(\d+)$/);
+  if (live) return { week: parseInt(live[1], 10), seasonUid: null };
+
+  const archived = String(id).match(/^(.+)_week-(\d+)$/);
+  if (archived) return { week: parseInt(archived[2], 10), seasonUid: archived[1] };
+
+  return null;
+}
+
+/**
+ * Every resolved head-to-head, oldest first. Byes carry no result.
+ *
+ * Ordered by season then week: a streak that ran across a rollover has to be
+ * walked in the order it was played, and season uids sort chronologically. The
+ * live season (no stamp) sorts last, because it is the one still happening.
+ */
 function flattenResolved(weekDocs: RecordWeekDoc[], corpsClasses: string[]): FlatResult[] {
   const flat: FlatResult[] = [];
 
   for (const doc of weekDocs) {
-    const weekMatch = String(doc.id).match(/^week-(\d+)$/);
-    if (!weekMatch) continue;
-    const week = parseInt(weekMatch[1], 10);
+    const parsed = parseWeekId(doc.id);
+    if (!parsed) continue;
 
     for (const corpsClass of corpsClasses) {
       const matchups = (doc[`${corpsClass}Matchups`] || []) as RecordMatchup[];
       for (const matchup of matchups) {
         if (!matchup?.completed || matchup.isBye || !matchup.pair?.[1]) continue;
-        flat.push({ week, corpsClass, matchup });
+        flat.push({ ...parsed, corpsClass, matchup });
       }
     }
   }
 
-  return flat.sort((a, b) => a.week - b.week);
+  return flat.sort((a, b) => {
+    const seasonA = a.seasonUid ?? '\uffff';
+    const seasonB = b.seasonUid ?? '\uffff';
+    if (seasonA !== seasonB) return seasonA < seasonB ? -1 : 1;
+    return a.week - b.week;
+  });
 }
 
 /**
@@ -106,7 +143,7 @@ function findLongestWinStreak(flat: FlatResult[]): StreakRecord | null {
   const running = new Map<string, { length: number; type: 'W' | 'L' }>();
   let best: StreakRecord | null = null;
 
-  for (const { week, matchup } of flat) {
+  for (const { week, seasonUid, matchup } of flat) {
     const [p1, p2] = matchup.pair as [string, string];
     for (const uid of [p1, p2]) {
       const won = matchup.winner === uid;
@@ -123,7 +160,7 @@ function findLongestWinStreak(flat: FlatResult[]): StreakRecord | null {
       running.set(uid, { length, type });
 
       if (type === 'W' && (!best || length > best.length)) {
-        best = { uid, length, type: 'W', endedWeek: week };
+        best = { uid, length, type: 'W', endedWeek: week, seasonUid };
       }
     }
   }
@@ -144,14 +181,17 @@ export function computeLeagueRecords(
   const flat = flattenResolved(weekDocs, corpsClasses);
   if (flat.length === 0) return EMPTY;
 
-  const weeks = new Set<number>();
+  const weeks = new Set<string>();
+  const seasons = new Set<string>();
   let highestWeek: ScoreRecord | null = null;
   let biggestBlowout: MarginRecord | null = null;
   let closestCall: MarginRecord | null = null;
   let bestClassFinish: (ScoreRecord & { percentile: number }) | null = null;
 
-  for (const { week, corpsClass, matchup } of flat) {
-    weeks.add(week);
+  for (const { week, corpsClass, seasonUid, matchup } of flat) {
+    // Keyed by season too — week 3 of two different seasons is two weeks.
+    weeks.add(`${seasonUid ?? 'live'}:${week}`);
+    seasons.add(seasonUid ?? 'live');
     const [p1, p2] = matchup.pair as [string, string];
     const s1 = matchup.scores?.[p1] ?? 0;
     const s2 = matchup.scores?.[p2] ?? 0;
@@ -161,14 +201,14 @@ export function computeLeagueRecords(
       [p2, s2],
     ] as Array<[string, number]>) {
       if (score > 0 && (!highestWeek || score > highestWeek.score)) {
-        highestWeek = { uid, score, week, corpsClass };
+        highestWeek = { uid, score, week, corpsClass, seasonUid };
       }
       const percentile = matchup.normalized?.[uid];
       if (
         typeof percentile === 'number' &&
         (!bestClassFinish || percentile > bestClassFinish.percentile)
       ) {
-        bestClassFinish = { uid, score, week, corpsClass, percentile };
+        bestClassFinish = { uid, score, week, corpsClass, percentile, seasonUid };
       }
     }
 
@@ -190,6 +230,7 @@ export function computeLeagueRecords(
       loserScore,
       week,
       corpsClass,
+      seasonUid,
     };
 
     if (!biggestBlowout || margin > biggestBlowout.margin) biggestBlowout = entry;
@@ -201,6 +242,7 @@ export function computeLeagueRecords(
 
   return {
     weeksCounted: weeks.size,
+    seasonsCounted: seasons.size,
     highestWeek,
     biggestBlowout,
     closestCall,

@@ -1,7 +1,7 @@
 // ActivityTab - League insights dashboard with stats, achievements, and activity feed
 // Design System: Card-based dashboard with engaging visualizations
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { m } from 'framer-motion';
 import { Activity } from 'lucide-react';
 import LeagueActivityFeed from '../LeagueActivityFeed';
@@ -11,6 +11,7 @@ import { ENABLED_CLASSES } from '../../../utils/classRegistry';
 import { LeagueStatsOverview, AchievementsCard, PowerRankingsCard } from './ActivityTabStatsCards';
 import { WeeklyRecapCard, EnhancedRivalriesCard } from './ActivityTabRecapCards';
 import type { RecordWeekDoc } from '../../../utils/leagueRecords';
+import { useLeagueMatchupHistory } from '../../../hooks/useLeagueMatchupHistory';
 import type { LeagueChampionEntry } from '../LeagueHallOfFame';
 
 interface ActivityTabProps {
@@ -43,6 +44,14 @@ const ActivityTab = ({
   onChatOpen,
   matchupDocs = [],
 }: ActivityTabProps) => {
+  // Finished seasons, fetched only when this tab is open — history is
+  // append-only and changes once a year, so it is cheap and heavily cached.
+  const { data: archivedMatchups = [] } = useLeagueMatchupHistory(league?.id);
+  const allMatchups = useMemo(
+    () => [...matchupDocs, ...archivedMatchups],
+    [matchupDocs, archivedMatchups]
+  );
+
   const getDisplayName = (uid: string) => {
     const profile = memberProfiles?.[uid] || {};
     const displayName =
@@ -123,7 +132,7 @@ const ActivityTab = ({
       {/* What happened along the way — derived from the matchup documents the
           weekly resolution already writes, and previously invisible. */}
       <LeagueRecordBook
-        matchupDocs={matchupDocs}
+        matchupDocs={allMatchups}
         corpsClasses={ENABLED_CLASSES}
         getDisplayName={getDisplayName}
         viewerUid={userProfile?.uid}

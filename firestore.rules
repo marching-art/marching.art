@@ -572,6 +572,16 @@ match /artifacts/{appId}/leagues/{leagueId} {
     allow write: if false; // Backend only
   }
 
+  // Finished seasons' matchups. Rollover MOVES week documents here so the live
+  // collection only ever holds the current season — leaving them in place made
+  // the generator skip every week of the next season. Same member-only read as
+  // the live weeks they used to be.
+  match /matchupHistory/{archivedWeek} {
+    allow read: if isAuthenticated() &&
+      (request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/leagues/$(leagueId)).data.members || isAdmin());
+    allow write: if false; // Backend only
+  }
+
   // League chat
   match /chat/{messageId} {
     allow read: if isAuthenticated() &&

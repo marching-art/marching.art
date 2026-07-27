@@ -1132,6 +1132,54 @@ await check(
   assertFails(getDocs(collection(mallory(), `${leaguesPath}/league-1/meta`)))
 );
 
+// --- matchupHistory: where rollover MOVES a finished season's weeks, so the
+// live collection only ever holds the current season. It is the same league
+// data the live weeks were, and gets the same member-only read.
+await freshLeagueSeed();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), `${leaguesPath}/league-1/matchupHistory/old-season_week-1`), {
+    seasonUid: 'old-season',
+    worldClassMatchups: [],
+  });
+});
+await check(
+  'member can read archived league matchups',
+  assertSucceeds(
+    getDoc(
+      doc(
+        testEnv.authenticatedContext(BOB).firestore(),
+        `${leaguesPath}/league-1/matchupHistory/old-season_week-1`
+      )
+    )
+  )
+);
+
+await freshLeagueSeed();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), `${leaguesPath}/league-1/matchupHistory/old-season_week-1`), {
+    seasonUid: 'old-season',
+    worldClassMatchups: [],
+  });
+});
+await check(
+  'non-member cannot read archived league matchups',
+  assertFails(getDoc(doc(mallory(), `${leaguesPath}/league-1/matchupHistory/old-season_week-1`)))
+);
+
+await freshLeagueSeed();
+await check(
+  'no client may write archived league matchups (backend only)',
+  assertFails(
+    setDoc(
+      doc(
+        testEnv.authenticatedContext(BOB).firestore(),
+        `${leaguesPath}/league-1/matchupHistory/forged_week-1`
+      ),
+      { worldClassMatchups: [] }
+    )
+  )
+);
+
 // =============================================================================
 // drop_plans — nightly score-drop plans (public countdown data, backend-written
 // by the drop dispatcher). Anyone may read; no client may ever write.

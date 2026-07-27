@@ -148,7 +148,9 @@ const LeagueRecordBook = ({
           </span>
         </div>
         <span className="text-[10px] font-data tabular-nums text-muted">
-          {records.weeksCounted} {records.weeksCounted === 1 ? 'week' : 'weeks'}
+          {records.seasonsCounted > 1
+            ? `${records.seasonsCounted} seasons`
+            : `${records.weeksCounted} ${records.weeksCounted === 1 ? 'week' : 'weeks'}`}
         </span>
       </div>
 
