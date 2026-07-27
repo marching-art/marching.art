@@ -269,6 +269,54 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.equal(update.corps.aClass.seasonHistory.length, 1);
   });
 
+  test("picking shows all season without ever competing earns nothing", async () => {
+    // The regression the championship-week rehearsal found. Selecting shows
+    // requires no lineup (callable/lineups.js selectUserShows) while scoring
+    // skips any corps whose lineup is incomplete (helpers/scoring.js), so this
+    // director registered, saved picks for all seven weeks, never finished
+    // their eight captions, and never appeared in a single recap.
+    //
+    // The old gate was `Object.keys(selectedShows).length > 0` — weeks with
+    // picks, not shows competed — so this profile was paid the finish bonus,
+    // granted completion XP, and credited a season against the class unlock.
+    const pickedButNeverScored = () => ({
+      corpsName: "The No-Shows",
+      lineup: { GE1: "Blue Devils|2024" }, // seven of eight captions: incomplete
+      selectedShows: {
+        week1: ["show-a"],
+        week2: ["show-b"],
+        week3: ["show-c"],
+        week4: ["show-d"],
+        week5: ["show-e"],
+        week6: ["show-f"],
+        week7: ["show-g"],
+      },
+      weeklyScores: {},
+      totalSeasonScore: 0,
+    });
+
+    const { db, writes } = makeFakeDb({
+      profiles: [{ uid: "carol", data: { xp: 50, corps: { worldClass: pickedButNeverScored() } } }],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("carol")
+    ).data;
+
+    assert.equal(update.lifetimeStats.totalSeasons, 0, "a season nobody competed in is not a season completed");
+    assert.equal(update.lifetimeStats.totalShows, 0, "weeks with picks are not shows attended");
+    assert.equal(update.xp, undefined, "no completion XP");
+    assert.equal(update.corpsCoin, undefined, "no finish bonus");
+    assert.equal(update.pendingSeasonRecap, undefined, "no season recap to show");
+    // Still archived as history, with an honest zero.
+    const history = update.corps.worldClass.seasonHistory;
+    assert.equal(history.length, 1);
+    assert.equal(history[0].showsAttended, 0);
+    assert.equal(history[0].placement, null);
+  });
+
   test("completing season 1 unlocks A Class in the same archival write (the graduation)", async () => {
     const { db, writes } = makeFakeDb({
       profiles: [

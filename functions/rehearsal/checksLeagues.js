@@ -527,24 +527,78 @@ async function checkProfiles(db, world, played) {
         )
   );
 
-  // The participation gate: a corps that never competed should not be paid for
-  // finishing. dq_lineup selected shows but was never scored, because its
-  // lineup was never complete.
+  // The participation gate: a corps that never competed must not be paid for
+  // finishing. dq_lineup saved picks for every week but never appeared in a
+  // recap, because its lineup was never complete and scoring skips incomplete
+  // lineups. This used to be credited a full season.
   const unscored = (await db.doc(paths.userProfile("dq_lineup")).get()).data();
   const seasonsCounted = unscored.lifetimeStats?.totalSeasons || 0;
+  const showsCounted = unscored.lifetimeStats?.totalShows || 0;
   findings.push(
-    seasonsCounted === 0
-      ? pass("profile", "a corps that never competed is not credited a season")
-      : warn(
+    seasonsCounted === 0 && showsCounted === 0
+      ? pass(
           "profile",
           "a corps that never competed is not credited a season",
-          "dq_lineup never appeared in a single recap (its lineup was incomplete all season) yet " +
-            `lifetimeStats.totalSeasons is ${seasonsCounted}. corpsParticipatedThisSeason counts ` +
-            "Object.keys(selectedShows).length — weeks SIGNED UP for, not shows competed in — so " +
-            "the finish bonus and the seasons-completed unlock both credit a director who never " +
-            "took the field"
-      )
+          "dq_lineup: 0 seasons, 0 shows"
+        )
+      : fail(
+          "profile",
+          "a corps that never competed is not credited a season",
+          `dq_lineup never appeared in a single recap yet carries ${seasonsCounted} season(s) ` +
+            `and ${showsCounted} show(s) — the finish bonus, completion XP and the ` +
+            "seasons-completed class unlock all credit a director who never took the field"
+        )
   );
+
+  // Career figures must be the real ones. `showsAttended` used to be the number
+  // of WEEKS a director had picks saved for, and best week came from
+  // `corps.weeklyScores`, which nothing writes — so it was always zero.
+  const veteran = (await db.doc(paths.userProfile("d01")).get()).data();
+  const veteranHistory = veteran.corps?.worldClass?.seasonHistory || [];
+  const archived = veteranHistory.find(
+    (h) => h.seasonId === oldSeasonUid || h.seasonName === oldSeasonUid
+  );
+  if (archived) {
+    findings.push(
+      archived.showsAttended > 7
+        ? pass(
+            "profile",
+            "shows attended counts shows, not weeks",
+            `d01 attended ${archived.showsAttended} shows across a 7-week season`
+          )
+        : fail(
+            "profile",
+            "shows attended counts shows, not weeks",
+            `d01's archived season records ${archived.showsAttended} shows. A director who ` +
+              "competed twice a week for seven weeks attended more than seven shows; a figure " +
+              "of 7 or less means weeks with picks are being counted instead"
+          )
+    );
+    findings.push(
+      archived.highestWeeklyScore > 0
+        ? pass(
+            "profile",
+            "best week is a real number",
+            `d01's best week: ${archived.highestWeeklyScore.toFixed(3)}`
+          )
+        : fail(
+            "profile",
+            "best week is a real number",
+            "d01's archived best week is 0, so the Best Week tile on the career page " +
+              "(src/pages/CorpsHistory.jsx) renders 0.000 for a director who competed all season"
+          )
+    );
+    findings.push(
+      (veteran.lifetimeStats?.totalShows || 0) === archived.showsAttended
+        ? pass("profile", "lifetime shows agree with the archived season")
+        : fail(
+            "profile",
+            "lifetime shows agree with the archived season",
+            `lifetimeStats.totalShows=${veteran.lifetimeStats?.totalShows} but the archived ` +
+              `season records ${archived.showsAttended}`
+          )
+    );
+  }
 
   return findings;
 }

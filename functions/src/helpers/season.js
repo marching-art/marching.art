@@ -15,6 +15,7 @@ const { isActiveThisSeason } = require("./leagueActivity");
 const { resetLeaguesForNewSeason } = require("./leagueSeasonReset");
 const { selectLeagueChampion, DEFAULT_FINALS_SIZE } = require("./leagueChampion");
 const { fetchWeeklyScoreIndex } = require("./leagueScoring");
+const { fetchSeasonParticipation, corpsSeason } = require("./seasonParticipation");
 
 /**
  * Championship week. A season is 49 competition days in 7 weeks, and day 49 is
@@ -70,6 +71,12 @@ const {
  * while totalSeasons required actual shows — a lineup-only corps was paid
  * completion XP yet never advanced totalSeasons.)
  *
+ * Every per-season figure — participation, shows attended, best week — now
+ * comes from the season's recap days via helpers/seasonParticipation.js, not
+ * from profile fields. The fields lied: `selectedShows` is keyed by week, so it
+ * counted weeks with picks rather than shows competed in, and `weeklyScores`
+ * is never written by anything, so best week was always zero.
+ *
  * For each corps that participated:
  * - placement within its class is computed and archived to seasonHistory
  * - a CorpsCoin finish bonus is paid per SEASON_FINISH_BONUSES (top 25;
@@ -79,16 +86,41 @@ const {
  *   show a "Season Complete" recap modal (client clears the field on dismiss)
  */
 
-/** The single participation test: competed in ≥1 show, or carries points. */
-function corpsParticipatedThisSeason(corps) {
-  const showsAttended = Object.keys(corps.selectedShows || {}).length;
-  return showsAttended > 0 || (corps.totalSeasonScore || 0) > 0;
+/**
+ * The single participation test: competed in ≥1 show, or carries points.
+ *
+ * `participation` is the season's recap-derived index
+ * (helpers/seasonParticipation.js). It is optional so the predicate stays
+ * usable where no index has been built; without one this falls back to the
+ * profile's own score, which is non-zero only for a corps the nightly run
+ * actually scored.
+ *
+ * It deliberately no longer consults `selectedShows`. That map is keyed by
+ * WEEK, so it counted weeks a director made picks in — and since selecting
+ * shows requires no lineup while scoring requires a complete one, a corps that
+ * never took the field could pick shows all season and still be paid for
+ * finishing it.
+ *
+ * @param {Object} corps - one entry of profileData.corps
+ * @param {{index?: Map<string, Object>, uid?: string, corpsClass?: string}} [context]
+ */
+function corpsParticipatedThisSeason(corps, context = {}) {
+  const { index, uid, corpsClass } = context;
+  if (index && uid && corpsClass) {
+    return corpsSeason(index, uid, corpsClass, corps).participated;
+  }
+  return (corps.totalSeasonScore || 0) > 0;
 }
+
 async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
   const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
   const profilesSnapshot = await profilesQuery.get();
 
   if (profilesSnapshot.empty) return;
+
+  // What every corps actually did, from the recap days — one read of at most
+  // 49 documents, shared by every profile below.
+  const participation = await fetchSeasonParticipation(db, oldSeasonUid);
 
   logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
 
@@ -106,7 +138,7 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
       // Only corps that actually competed occupy a rank slot — a lineup-only
       // corps at 0 points must not inflate totalInClass or push real
       // competitors' placements down.
-      if (corpsParticipatedThisSeason(corps)) {
+      if (corpsParticipatedThisSeason(corps, { index: participation, uid, corpsClass })) {
         if (!classRankings[corpsClass]) {
           classRankings[corpsClass] = [];
         }
@@ -154,13 +186,18 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
       const corps = corpsData[corpsClass];
       const seasonHistory = corps.seasonHistory || [];
 
-      const participated = corpsParticipatedThisSeason(corps);
+      const season = corpsSeason(participation, uid, corpsClass, corps);
+      const participated = season.participated;
 
       // Archive if the corps was set up at all (lineup) or participated —
       // the seasonHistory record is historical, not a reward.
       if (corps.lineup || participated) {
-        const showsAttended = Object.keys(corps.selectedShows || {}).length;
-        const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
+        // Both from the recap days. `showsAttended` used to be the number of
+        // WEEKS the director had picks saved for, and `highestWeeklyScore` came
+        // from `corps.weeklyScores`, which nothing in the codebase has ever
+        // written — so every archived season recorded a best week of zero.
+        const showsAttended = season.shows;
+        const highestWeeklyScore = season.bestWeek;
 
         // Find placement for this corps in its class (participants only;
         // a lineup-only corps was never ranked, so placement stays null)
