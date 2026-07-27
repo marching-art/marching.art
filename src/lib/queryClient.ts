@@ -117,6 +117,9 @@ export const queryKeys = {
   // uid list) so a join/leave naturally busts the entry.
   leagueMemberProfiles: (leagueId: string, membersKey: string) =>
     ['leagueMemberProfiles', leagueId, membersKey] as const,
+  // Every `week-N` matchup document for a league (the schedule the standings
+  // and matchup tabs are computed against).
+  leagueMatchups: (leagueId: string) => ['leagueMatchups', leagueId] as const,
 
   // Notification queries
   leagueNotifications: (uid: string) => ['leagueNotifications', uid] as const,

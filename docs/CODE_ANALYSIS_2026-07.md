@@ -11,6 +11,27 @@ the live code; findings below are deduplicated, cross-checked, and ranked.
 (~54k LOC non-test, 171 exported functions), `functions-scraper/`,
 `firestore-tests/`, `e2e/`, CI workflows, and both hosting configs.
 
+> **Status: every finding below has been actioned** on
+> `claude/code-analysis-improvements-u4ydyy`, except the two items called out
+> as deliberately deferred at the end of this section. The findings are kept
+> in their original diagnostic form — they document why each change was made,
+> and they are the baseline the next review should measure against.
+>
+> **Deferred on purpose:**
+>
+> 1. **App Check enforcement** (`functions/index.js`) stays `false`. Flipping
+>    it is a console-metrics decision, not a code change: enforcing before
+>    real traffic shows as verified locks out every client still running a
+>    cached bundle. The rollout steps are in ARCHITECTURE.md.
+> 2. **Sharding `historical_scores/{year}`** into a subcollection. The 1 MiB
+>    cliff is now instrumented instead — the merge measures the serialized
+>    size and raises an ops alert past ~700 KB — so the migration can be
+>    scheduled deliberately rather than run against live scoring.
+>
+> Post-change verification: 1,252 functions tests, 676 frontend tests, 104
+> rules-emulator tests, both typechecks, all eight ratchets, and the
+> production build all pass.
+
 ---
 
 ## Executive summary
