@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, createLeagueActivity } = require("../helpers/leagueHelpers");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+const { refreshLeagueActivity } = require("../helpers/leagueActivity");
 
 /**
  * One-tap rookie league placement.
@@ -91,21 +92,44 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
     const newLeagueRef = db.collection(paths.leagues()).doc();
     const newStandingsRef = newLeagueRef.collection('standings').doc('current');
     const inviteRef = db.doc(`leagueInvites/${inviteCode}`);
+    const metaPrivateRef = newLeagueRef.collection('meta').doc('private');
 
     transaction.set(newLeagueRef, {
       name: newName,
       description: 'Auto-created league for new directors. Weekly matchups are fully automated — just compete!',
-      creatorId: uid,
+      // System-owned. The first director to trip provisioning used to become
+      // the circuit's commissioner — with kick and settings power over
+      // strangers, in a league whose own description says it needs no
+      // commissioner. `creatorId` is deliberately absent, so every
+      // `creatorId === uid` gate is false for everyone.
       seasonId: seasonUid,
       members: [uid],
-      inviteCode,
+      // NO inviteCode field. firestore.rules leaves `list` over leagues open to
+      // any signed-in user (community widgets), so every field on a league
+      // document is enumerable by every authenticated account — writing the
+      // join secret here published every Rookie Circuit's code. It lives in
+      // /leagueInvites/{code} and the member-only meta/private doc, exactly as
+      // createLeague documents at length.
       isPublic: true,
       maxMembers: ROOKIE_LEAGUE_MAX_MEMBERS,
       isRookieCircuit: true,
+      tag: 'casual',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      // Discovery filters on this; written at creation because a Firestore
+      // inequality filter skips documents missing the field entirely.
+      seasonActivity: {
+        seasonUid,
+        activeMembers: [],
+        activeMemberCount: 0,
+        totalMemberCount: 1,
+        updatedAt: new Date(),
+      },
       settings: {
         matchupType: 'weekly',
         playoffSize: 4,
+        finalsSize: 4,
+        scoringFormat: 'circuit',
+        entryFee: 0,
         // Pure escrow like every league (see createLeague): the rookie
         // circuit has no entry fee, so its pool stays 0 — champions here
         // win the trophy and the league-champion achievement, not minted CC.
@@ -127,6 +151,7 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
       lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
     });
     transaction.set(inviteRef, { leagueId: newLeagueRef.id });
+    transaction.set(metaPrivateRef, { inviteCode });
     transaction.update(userProfileRef, {
       leagueIds: admin.firestore.FieldValue.arrayUnion(newLeagueRef.id),
     });
@@ -136,6 +161,11 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
   });
 
   if (!result.alreadyMember) {
+    // Roster changed — recompute season participation, as every other join
+    // path does. Only this one skipped it, so a rookie circuit stayed stale
+    // until the nightly refresh.
+    await refreshLeagueActivity(db, result.leagueId, seasonUid);
+
     await createLeagueActivity(db, result.leagueId, {
       type: 'member_joined',
       title: 'New Member Joined',

@@ -454,6 +454,34 @@ export const generateMatchups = createCallable<
   { leagueId: string; week: number },
   { success: boolean; matchups?: unknown[]; message?: string }
 >('generateMatchups');
+/**
+ * The only matchup generator that can OVERWRITE an existing week.
+ * `generateMatchups` throws `already-exists` unconditionally, so the settings
+ * tab's "Regenerate" button — which prompts "this will replace them" — has to
+ * come here or it fails 100% of the time.
+ */
+export const triggerMatchupGeneration = createCallable<
+  { leagueId: string; week: number; forceRegenerate?: boolean },
+  { success: boolean; matchups?: Record<string, number>; message?: string }
+>('triggerMatchupGeneration');
+export const updateLeagueSettings = createCallable<
+  {
+    leagueId: string;
+    settings: {
+      name?: string;
+      description?: string;
+      isPublic?: boolean;
+      maxMembers?: number;
+      tag?: string | null;
+      finalsSize?: number;
+    };
+  },
+  { success: boolean; changed: number; message: string }
+>('updateLeagueSettings');
+export const transferCommissioner = createCallable<
+  { leagueId: string; newCommissionerUid: string },
+  { success: boolean; message: string }
+>('transferCommissioner');
 export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>(
   'updateMatchupResults'
 );

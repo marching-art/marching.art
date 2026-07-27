@@ -14,6 +14,7 @@ const { consumeRateBudget } = require("../helpers/rateLimit");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
 const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
+const { escrowedTotal, deleteLeagueSubcollections } = require("../helpers/leagueLifecycle");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
 const {
@@ -455,9 +456,12 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
 
   const leagueRef = db.doc(paths.league(leagueId));
   const userProfileRef = db.doc(paths.userProfile(uid));
+  const standingsRef = leagueRef.collection('standings').doc('current');
 
   try {
     let leagueDeleted = false;
+    let successorUid = null;
+    let refunded = 0;
     await db.runTransaction(async (transaction) => {
       const leagueDoc = await transaction.get(leagueRef);
       if (!leagueDoc.exists) {
@@ -468,12 +472,29 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
       // docs may still carry it on the league doc until the migration runs).
       const metaPrivateRef = leagueRef.collection('meta').doc('private');
       const metaPrivateDoc = await transaction.get(metaPrivateRef);
+      const standingsDoc = await transaction.get(standingsRef);
+      const leaverProfileDoc = await transaction.get(userProfileRef);
 
       const leagueData = leagueDoc.data();
 
       if (leagueData.creatorId === uid && leagueData.members.length === 1) {
         logger.info(`Creator ${uid} is the last member of league ${leagueId}. Deleting league.`);
         leagueDeleted = true;
+
+        // Return whatever is still escrowed. The prize pool and the pool carry
+        // are members' staked CorpsCoin; deleting the document with coin still
+        // in it destroyed real currency every time a league folded.
+        refunded = escrowedTotal(leagueData);
+        if (refunded > 0) {
+          addCoinHistoryEntryToTransaction(transaction, db, uid, {
+            type: TRANSACTION_TYPES.LEAGUE_ENTRY_REFUND,
+            amount: refunded,
+            balance: (leaverProfileDoc.data()?.corpsCoin || 0) + refunded,
+            description: `Escrow returned — ${leagueData.name} was dissolved`,
+            leagueId,
+          });
+        }
+
         transaction.delete(leagueRef);
         const inviteCode = (metaPrivateDoc.exists && metaPrivateDoc.data().inviteCode) ||
           leagueData.inviteCode;
@@ -485,13 +506,45 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
           transaction.delete(metaPrivateRef);
         }
       } else {
-        transaction.update(leagueRef, {
+        const update = {
           members: admin.firestore.FieldValue.arrayRemove(uid),
-        });
+        };
+
+        // Commissioner succession. Every commissioner gate is
+        // `creatorId === uid`, and leaving used to remove the creator from
+        // `members` while leaving creatorId pointing at them — so the league
+        // permanently lost the ability to generate matchups, invite, remove
+        // members, or open its own settings, with no way to recover. The
+        // longest-tenured remaining member inherits it.
+        if (leagueData.creatorId === uid) {
+          successorUid = (leagueData.members || []).find((m) => m !== uid) || null;
+          if (successorUid) {
+            update.creatorId = successorUid;
+            logger.info(
+              `Commissioner ${uid} left league ${leagueId}; ${successorUid} inherits it.`
+            );
+          }
+        }
+
+        transaction.update(leagueRef, update);
+
+        // Drop their standings row. Only the commissioner-removal path did
+        // this, so a director who left voluntarily stayed in the table
+        // forever — holding a rank, and counting against the finals cut.
+        if (standingsDoc.exists) {
+          const existing = standingsDoc.data().standings || [];
+          transaction.update(standingsRef, {
+            [`records.${uid}`]: admin.firestore.FieldValue.delete(),
+            standings: existing.filter((s) => s.uid !== uid),
+          });
+        }
       }
 
       transaction.update(userProfileRef, {
         leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId),
+        ...(refunded > 0
+          ? { corpsCoin: admin.firestore.FieldValue.increment(refunded) }
+          : {}),
       });
     });
 
@@ -499,9 +552,34 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
     // away with its last member.
     if (!leagueDeleted) {
       await refreshLeagueActivity(db, leagueId);
+    } else {
+      // Firestore does not cascade. Without this every standings row, matchup
+      // week, chat message, activity event, recap and pool the league ever
+      // wrote stayed in the database forever, unreachable.
+      await deleteLeagueSubcollections(db, leagueRef);
     }
 
-    return { success: true, message: "Successfully left the league." };
+    // A change of commissioner is a league-wide event, not a private one.
+    if (successorUid) {
+      const successorDoc = await db.doc(paths.userProfile(successorUid)).get();
+      const successorName = successorDoc.exists
+        ? (successorDoc.data().displayName || successorDoc.data().username || 'A director')
+        : 'A director';
+      await createLeagueActivity(db, leagueId, {
+        type: 'commissioner_changed',
+        title: 'New Commissioner',
+        message: `${successorName} is now the league commissioner.`,
+        userId: successorUid,
+        metadata: { previousCommissioner: uid, newCommissioner: successorUid },
+      });
+    }
+
+    return {
+      success: true,
+      message: refunded > 0
+        ? `Successfully left the league. ${refunded.toLocaleString()} CC of escrow was returned.`
+        : "Successfully left the league.",
+    };
   } catch (error) {
     logger.error(`Failed to leave league ${leagueId} for user ${uid}:`, error);
     if (error instanceof HttpsError) throw error;

@@ -100,6 +100,7 @@ const {
   updateMatchupResults,
   postLeagueMessage,
 } = require("./src/callable/leagues");
+const { updateLeagueSettings, transferCommissioner } = require("./src/callable/leagueAdmin");
 const { removeLeagueMember } = require("./src/callable/leagueRoster");
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { joinLeaguePool } = require("./src/callable/leaguePools");
@@ -291,6 +292,8 @@ module.exports = {
   claimLadderTier,
   leaveLeague,
   removeLeagueMember,
+  updateLeagueSettings,
+  transferCommissioner,
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
