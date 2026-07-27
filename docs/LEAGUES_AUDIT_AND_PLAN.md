@@ -725,6 +725,34 @@ Fixed three ways, because the fix and the recovery are different problems:
 
 The archived weeks are what make the Record Book genuinely all-time.
 
+### E8 · P1 — The rest of the rollover sweep — FIXED
+
+E7 was found by accident, which is a bad way to find something that severe, so
+every piece of league state was then walked against the question _"is this
+season-scoped, and does rollover handle it?"_. Three more gaps:
+
+| State                         | Key               | Was                                                                                                                                                                                                                                                                                            |
+| ----------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recaps/week-N`               | week number alone | Same shape as matchups. The Activity tab reads `recaps/week-{currentWeek}`, so for most of every week of every season after the first, members saw **last season's** highlights, upset and top scorer as if they had just happened. Now archived to `recapHistory/`.                           |
+| `meta/rivalries`              | none              | Derived from the live matchup collection, which rollover empties — so it displayed last season's grudges until the Monday job next ran. Now cleared.                                                                                                                                           |
+| `game-settings/rookie-league` | none              | Names the circuit new directors are placed into. After rollover that circuit is full of members from a season that has ended, so every newcomer was dropped into a league of ghosts. Now retired, and the next joiner provisions a fresh circuit. The counter survives so numbering continues. |
+
+Plus the pinned announcement, which is topical and sat above every tab into the
+next season, and two more copies of the fatal skip-if-exists guard — the
+commissioner's `generateMatchups` and `triggerMatchupGeneration` both refused a
+week whose document belonged to a previous season.
+
+Deliberately **not** reset, and why: `champions[]` (the Hall of Fame),
+`commissioners[]`, the league's tag and settings, `meta/private` (the invite
+code), `chat` (a conversation, not season state), `activity` (its own
+chronological history, read with a limit), and `poolCarry` — unclaimed
+prediction-pool escrow whose entire purpose is to roll into the next pool.
+
+Outside leagues the sweep found nothing: every other season-scoped path already
+carries the season (`fantasy_recaps/{seasonUid}`, `show_registrations/{seasonUid}`,
+`schedules/{seasonId}`, …), Podium manages its own rollover against a stored
+`seasonUid`, and the profile's prediction and challenge buckets are pruned.
+
 ## Still outstanding
 
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league

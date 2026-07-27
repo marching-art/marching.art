@@ -403,9 +403,21 @@ exports.triggerMatchupGeneration = onCall(
     const targetWeek = week || (await getCurrentWeek(db)) + 1;
     const matchupRef = db.doc(paths.leagueMatchupWeek(leagueId, targetWeek));
 
+    // Resolved before the existence check below, which needs it. Pairing is
+    // season-scoped anyway (see helpers/leagueActivity.js).
+    const seasonUid = await getActiveSeasonUid(db);
+    if (!seasonUid) {
+      throw new HttpsError("failed-precondition", "No active season.");
+    }
+
+    // A week stamped with a PREVIOUS season is not "already generated" — see
+    // the scheduled generator above and resetLeaguesForNewSeason.
     const existingMatchup = await matchupRef.get();
     if (existingMatchup.exists && !forceRegenerate) {
-      throw new HttpsError("already-exists", `Matchups for week ${targetWeek} already exist. Set forceRegenerate to true to overwrite.`);
+      const existingSeason = existingMatchup.data().seasonUid;
+      if (!existingSeason || existingSeason === seasonUid) {
+        throw new HttpsError("already-exists", `Matchups for week ${targetWeek} already exist. Set forceRegenerate to true to overwrite.`);
+      }
     }
 
     const members = league.members || [];
@@ -438,10 +450,6 @@ exports.triggerMatchupGeneration = onCall(
 
     // Group by corps class — registered-this-season only, matching the
     // scheduled generator (see helpers/leagueActivity.js).
-    const seasonUid = await getActiveSeasonUid(db);
-    if (!seasonUid) {
-      throw new HttpsError("failed-precondition", "No active season.");
-    }
     const membersByClass = Object.fromEntries(CORPS_CLASSES.map((c) => [c, []]));
 
     profileDocs.forEach((doc, index) => {

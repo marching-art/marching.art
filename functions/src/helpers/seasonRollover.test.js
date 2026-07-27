@@ -548,6 +548,84 @@ describe("resetLeaguesForNewSeason", () => {
     }
   });
 
+  // The Activity tab reads recaps/week-{currentWeek}. Recaps are keyed by week
+  // number alone and were never reset, so for most of every week of every
+  // season after the first, members were shown last season's highlights,
+  // upsets and top scorer as if they had just happened.
+  test("moves the finished season's weekly recaps out of the live collection", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set(`${leaguesPath}/league-1/recaps/week-1`, {
+      week: 1,
+      highlights: [{ type: "upset", text: "Upset Alert!" }],
+    });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const archived = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1/recapHistory/old-season_week-1`
+    );
+    assert.ok(archived, "the finished season's recaps must be kept as history");
+    assert.equal(archived.data.seasonUid, "old-season");
+    assert.ok(
+      writes.some(
+        (w) => w.type === "delete" && w.path === `${leaguesPath}/league-1/recaps/week-1`
+      ),
+      "the live recap must be cleared"
+    );
+  });
+
+  // Rivalries are derived from the live matchup collection, which rollover
+  // empties — so a stale doc would keep displaying last season's grudges until
+  // the Monday job next ran.
+  test("clears detected rivalries", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    assert.ok(
+      writes.some(
+        (w) => w.type === "delete" && w.path === `${leaguesPath}/league-1/meta/rivalries`
+      )
+    );
+  });
+
+  // The pointer names the circuit new directors are placed into, and that
+  // circuit is now full of members from a season that has ended.
+  test("retires the rookie-circuit pointer so new directors get a fresh one", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set("game-settings/rookie-league", { leagueId: "league-1", counter: 3 });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const pointerWrite = writes.find((w) => w.path === "game-settings/rookie-league");
+    assert.ok(pointerWrite, "the pointer must be retired");
+    assert.equal(pointerWrite.data.leagueId, null);
+    // The counter survives, so circuits keep numbering upward.
+    assert.equal(docs.get("game-settings/rookie-league").counter, 3);
+  });
+
+  // A pinned announcement sits above every tab. One about a season that has
+  // ended is worse than none at all.
+  test("unpins the commissioner's announcement", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    league.data.announcement = { text: 'Draft night moved to Thursday.' };
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const leagueWrite = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1` && w.data?.seasonId === "new-season"
+    );
+    assert.ok(leagueWrite.data.announcement, "announcement must be explicitly cleared");
+  });
+
   test("leaves documents that are not week-N alone", async () => {
     const docs = new Map();
     const league = leagueWithStandings(docs);

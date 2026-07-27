@@ -65,6 +65,9 @@ const paths = {
   leagueMatchupWeek: (leagueId, week) =>
     `artifacts/${ns()}/leagues/${leagueId}/matchups/week-${week}`,
   leagueWeekRecap: (leagueId, week) => `artifacts/${ns()}/leagues/${leagueId}/recaps/week-${week}`,
+  /** Finished seasons' weekly recaps — same rollover treatment as matchups. */
+  leagueRecapHistoryWeek: (leagueId, seasonUid, week) =>
+    `artifacts/${ns()}/leagues/${leagueId}/recapHistory/${seasonUid}_week-${week}`,
   leagueMeta: (leagueId, docId) => `artifacts/${ns()}/leagues/${leagueId}/meta/${docId}`,
 
   // --- League invitations ---
