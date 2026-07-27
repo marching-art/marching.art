@@ -21,15 +21,15 @@ and every decision below is downstream of them.
 **Nobody's lineup changes.** Directors pick the same eight captions in the same
 game they always did. A league that turns Caption Wars on does not ask its
 members to build a different corps, or to sacrifice a caption to a league
-gimmick. *"Directors will avoid being in a league if that means they can't pick
-their ideal lineup in the actual game. Leagues are just a side hustle."* A format
+gimmick. _"Directors will avoid being in a league if that means they can't pick
+their ideal lineup in the actual game. Leagues are just a side hustle."_ A format
 that leaks into lineup construction is a worse format no matter how good it
 reads on paper.
 
 **No sub-caption scores, ever.** The eight individual captions (GE1, GE2, VP,
 VA, CG, B, MA, P) are never persisted per-show and never exposed. Publishing
-them would let an opponent read a director's lineup off the recap — *"like
-playing poker with your cards face up on the table."* This is a
+them would let an opponent read a director's lineup off the recap — _"like
+playing poker with your cards face up on the table."_ This is a
 competitive-secrecy invariant, not a storage-cost decision, and it is the reason
 the format is three categories rather than eight. See §7.
 
@@ -154,11 +154,11 @@ the same loop over the same documents — one extra pass over nothing, no extra
 reads:
 
 ```js
-entry.score  += Number(result.totalScore)  || 0;
-entry.ge     += Number(result.geScore)     || 0;
+entry.score += Number(result.totalScore) || 0;
+entry.ge += Number(result.geScore) || 0;
 entry.visual += Number(result.visualScore) || 0;
-entry.music  += Number(result.musicScore)  || 0;
-entry.shows  += 1;
+entry.music += Number(result.musicScore) || 0;
+entry.shows += 1;
 ```
 
 Summing across the week matches how `score` already works: two shows count
@@ -200,18 +200,18 @@ stat, the standings pair, the activity event.
 
 ### 4.3 Every edge case
 
-| Situation | Result |
-|---|---|
-| Neither director competed | all three categories 0-0, totals 0-0, all three undecided, tally 0-0 → **`"tie"`** — same as today's 0-0 |
-| One competed, one did not | competitor takes all three → **3-0** |
-| A category ties, totals differ | category to the higher total — **never a drawn category** |
-| A category ties, totals tie as well | that category is undecided; the other two still decide the week |
-| Bye (`isBye`) | untouched — no `captions` block, folds into standings exactly as now |
-| No recap days exist for the week (`daysFound === 0`) | untouched — matchups stay unresolved rather than recording a week of ties, exactly as now |
-| Commissioner override (`overrideMatchupResult`) | sets `winner` directly and leaves `captions` in place, flagged `overridden` as it is now |
+| Situation                                            | Result                                                                                                   |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Neither director competed                            | all three categories 0-0, totals 0-0, all three undecided, tally 0-0 → **`"tie"`** — same as today's 0-0 |
+| One competed, one did not                            | competitor takes all three → **3-0**                                                                     |
+| A category ties, totals differ                       | category to the higher total — **never a drawn category**                                                |
+| A category ties, totals tie as well                  | that category is undecided; the other two still decide the week                                          |
+| Bye (`isBye`)                                        | untouched — no `captions` block, folds into standings exactly as now                                     |
+| No recap days exist for the week (`daysFound === 0`) | untouched — matchups stay unresolved rather than recording a week of ties, exactly as now                |
+| Commissioner override (`overrideMatchupResult`)      | sets `winner` directly and leaves `captions` in place, flagged `overridden` as it is now                 |
 
 The "one director sat out" case deserves a note: under totals it is a forfeit,
-and under Caption Wars it is a 3-0 sweep. The sweep is *more* punishing in the
+and under Caption Wars it is a 3-0 sweep. The sweep is _more_ punishing in the
 Record Book (§8) than the forfeit is today, which is the correct direction —
 showing up should beat not showing up, loudly.
 
@@ -261,14 +261,14 @@ second, later charge to be allowed to keep playing breaks the same promise from
 a different direction.
 
 **Commissioner-paid, from their own balance, is in.** It is symmetric — the
-format changes how *everyone's* matchup is scored, identically, so no CC buys
+format changes how _everyone's_ matchup is scored, identically, so no CC buys
 anybody an advantage. Commissioners are the most engaged accounts and carry the
 biggest balances, which is precisely the pile you said needs a drain. And it
 gives the commissioner role something to spend on, which it currently has
 nothing of.
 
-**Per season, not permanent.** This is the part that answers *"keep that
-currency flowing."* A one-time unlock drains a balance once and then the sink is
+**Per season, not permanent.** This is the part that answers _"keep that
+currency flowing."_ A one-time unlock drains a balance once and then the sink is
 gone forever. A per-season unlock is a recurring sink that scales with how long
 the league lasts — a five-season league pays five times. It also forces a small
 annual decision that keeps the format from being something a league drifted into
@@ -311,13 +311,13 @@ carries between seasons. Caption Wars is explicitly **not carried**:
 `scoringFormat` resets to `"total"` and `scoringFormatSeasonUid` clears. A
 commissioner who wants it again buys it again — that is what makes it a
 recurring sink rather than a one-time one, and it is the behavior that has to be
-stated in the purchase dialog in plain words: *"For this season. It does not
-renew."*
+stated in the purchase dialog in plain words: _"For this season. It does not
+renew."_
 
 Resolution reads the format as `settings.scoringFormat === "captionWars" &&
 settings.scoringFormatSeasonUid === seasonData.seasonUid`. Both conditions, every
 time. A league whose season uid does not match is resolved on totals, which
-means a rollover bug can only ever fail *back to the default format* — never
+means a rollover bug can only ever fail _back to the default format_ — never
 into a paid one nobody bought.
 
 ---
@@ -353,10 +353,11 @@ points.
 W-L-T record and the normalized column, matching the comparator order.
 
 **Record Book** (`utils/leagueRecords.ts`, derived — no new documents):
-- *Most sweeps* — 3-0 matchups, career.
-- *Longest category streak* — consecutive weeks holding a given category, which
+
+- _Most sweeps_ — 3-0 matchups, career.
+- _Longest category streak_ — consecutive weeks holding a given category, which
   is the "nobody beats them in Music" narrative the format exists to create.
-- *Best category record in a season.*
+- _Best category record in a season._
 
 All three read `matchup.captions` and skip matchups without it, so a league with
 mixed-format history shows records from the seasons that had them and nothing
@@ -375,9 +376,10 @@ at all.
 ## 9. Test plan
 
 Backend, pure, no Firestore:
+
 - Weekly caption index sums across multiple shows in a week.
 - Every row of the §4.3 table.
-- Category tie resolving to the higher total; category tie *and* total tie
+- Category tie resolving to the higher total; category tie _and_ total tie
   leaving one undecided while the other two still decide the week.
 - 2-1 where the loser has the higher weekly total — the upset case, which is the
   one that proves the format is doing something.
@@ -391,6 +393,7 @@ Backend, pure, no Firestore:
   `prizePool` untouched.
 
 Frontend:
+
 - `computeLeagueRecords` over mixed-format history.
 - Matchup card in both formats.
 

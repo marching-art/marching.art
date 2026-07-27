@@ -2,8 +2,17 @@
 // StandingsTab under the ~700-line guidance in ARCHITECTURE.md. Pure render,
 // no state — memoized because the table redraws on every standings push.
 
-import React from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import React, { useState } from 'react';
+import { m, AnimatePresence } from 'framer-motion';
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronDown,
+  ChevronUp,
+  Crown,
+  UserX,
+} from 'lucide-react';
 
 interface RankBadgeProps {
   rank: number;
@@ -59,3 +68,101 @@ export const TrendIndicator = React.memo(({ trend }: { trend?: 'up' | 'down' | '
   return <Minus className="w-3.5 h-3.5 text-muted mx-auto" />;
 });
 TrendIndicator.displayName = 'TrendIndicator';
+
+interface InactiveMembersPanelProps {
+  members: Array<{ uid: string }>;
+  viewerUid?: string;
+  commissionerUid?: string;
+  getDisplayName: (uid: string) => string;
+}
+
+/**
+ * Members who have not registered a corps this season, folded away below the
+ * table. They are excluded from standings and matchups until they do, so
+ * listing them inline would put empty rows above directors who are playing —
+ * but dropping them silently would make the roster and the table disagree.
+ */
+export const InactiveMembersPanel = ({
+  members,
+  viewerUid,
+  commissionerUid,
+  getDisplayName,
+}: InactiveMembersPanelProps) => {
+  const [open, setOpen] = useState(false);
+  if (members.length === 0) return null;
+
+  return (
+    <div className="mt-4 bg-surface-card border border-line overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full px-4 py-3 bg-surface-raised flex items-center justify-between hover:bg-surface-elevated transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <UserX className="w-3.5 h-3.5 text-muted" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            Inactive Members
+          </span>
+          <span className="text-[10px] text-muted">({members.length})</span>
+        </div>
+        {open ? (
+          <ChevronUp className="w-3.5 h-3.5 text-muted" />
+        ) : (
+          <ChevronDown className="w-3.5 h-3.5 text-muted" />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <m.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 py-2 border-t border-line-subtle bg-surface-sunken">
+              <p className="text-[10px] text-muted">
+                These members haven&apos;t registered a corps for this season yet. They&apos;re
+                excluded from standings and weekly matchups until they do.
+              </p>
+            </div>
+            <div className="divide-y divide-line-subtle">
+              {members.map((stats) => {
+                const isUser = stats.uid === viewerUid;
+                return (
+                  <div
+                    key={stats.uid}
+                    className={`flex items-center gap-3 px-4 py-2 ${isUser ? 'bg-purple-500/10' : ''}`}
+                  >
+                    <div
+                      className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
+                        isUser
+                          ? 'bg-purple-500/20 border border-purple-500/50'
+                          : 'bg-surface-raised'
+                      }`}
+                    >
+                      <span
+                        className={`text-xs font-bold ${isUser ? 'text-purple-400' : 'text-muted'}`}
+                      >
+                        {getDisplayName(stats.uid).charAt(0)}
+                      </span>
+                    </div>
+                    <p
+                      className={`text-sm truncate ${
+                        isUser ? 'text-purple-400 font-bold' : 'text-muted'
+                      }`}
+                    >
+                      {getDisplayName(stats.uid)}
+                    </p>
+                    {stats.uid === commissionerUid && (
+                      <Crown className="w-3 h-3 text-secondary flex-shrink-0" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};

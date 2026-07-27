@@ -202,6 +202,108 @@ describe("normalized (cross-class) ranking", () => {
   });
 });
 
+// Caption Wars ranks equal records on the format the league actually played:
+// twelve categories to six is a more dominant 4-2 than seven to eleven.
+describe("category record ranking", () => {
+  const pair = (p1, p2, s1, s2, c1, c2) => ({
+    player1: p1,
+    player2: p2,
+    player1Score: s1,
+    player2Score: s2,
+    player1Captions: c1,
+    player2Captions: c2,
+    winner: s1 > s2 ? p1 : p2,
+    completed: true,
+  });
+
+  test("separates two identical records on categories taken", () => {
+    const { standings, records } = foldPairsIntoStandings({}, [
+      // Both win once, but alice swept and carol scraped it 2-1.
+      pair("alice", "bob", 90, 80, { won: 3, lost: 0 }, { won: 0, lost: 3 }),
+      pair("carol", "dave", 90, 80, { won: 2, lost: 1 }, { won: 1, lost: 2 }),
+    ]);
+
+    assert.equal(records.alice.captionsWon, 3);
+    assert.equal(records.alice.captionsLost, 0);
+    const order = standings.map((row) => row.uid);
+    assert.ok(order.indexOf("alice") < order.indexOf("carol"));
+  });
+
+  // The margin, not the raw count: a director who took 7 while dropping 11 has
+  // been worse than one who took 6 while dropping 3, whatever the totals say.
+  test("ranks on the margin rather than categories taken alone", () => {
+    const { standings } = foldPairsIntoStandings({}, [
+      pair("busy", "b", 90, 80, { won: 2, lost: 1 }, { won: 1, lost: 2 }),
+      pair("busy", "b", 90, 80, { won: 2, lost: 1 }, { won: 1, lost: 2 }),
+      pair("clean", "d", 90, 80, { won: 3, lost: 0 }, { won: 0, lost: 3 }),
+      pair("clean", "d", 90, 80, { won: 3, lost: 0 }, { won: 0, lost: 3 }),
+    ]);
+
+    const order = standings.map((row) => row.uid);
+    assert.ok(order.indexOf("clean") < order.indexOf("busy"));
+  });
+
+  test("outranks the normalized score, which only breaks a category tie", () => {
+    const { standings } = foldPairsIntoStandings({}, [
+      {
+        player1: "sweeper", player2: "a", player1Score: 70, player2Score: 60,
+        player1Normalized: 10, player2Normalized: 5,
+        player1Captions: { won: 3, lost: 0 }, player2Captions: { won: 0, lost: 3 },
+        winner: "sweeper", completed: true,
+      },
+      {
+        // A far better week against its own class, but a narrower win.
+        player1: "ranker", player2: "b", player1Score: 95, player2Score: 90,
+        player1Normalized: 99, player2Normalized: 40,
+        player1Captions: { won: 2, lost: 1 }, player2Captions: { won: 1, lost: 2 },
+        winner: "ranker", completed: true,
+      },
+    ]);
+
+    const order = standings.map((row) => row.uid);
+    assert.ok(
+      order.indexOf("sweeper") < order.indexOf("ranker"),
+      "the category record is checked before the class percentile"
+    );
+  });
+
+  // The regression guard: with no captions anywhere the term is a constant and
+  // the table sorts exactly as it did before the format existed.
+  test("a league on the default format is ordered exactly as before", () => {
+    const { standings, records } = foldPairsIntoStandings({}, [
+      {
+        player1: "a", player2: "b", player1Score: 92, player2Score: 88,
+        player1Normalized: 55, player2Normalized: 20,
+        winner: "a", completed: true,
+      },
+      {
+        player1: "c", player2: "d", player1Score: 61, player2Score: 55,
+        player1Normalized: 98, player2Normalized: 15,
+        winner: "c", completed: true,
+      },
+    ]);
+
+    assert.equal(records.a.captionsWon, 0);
+    assert.equal(records.a.captionsLost, 0);
+    // Still the class percentile that decides, as it did before.
+    assert.equal(standings[0].uid, "c");
+  });
+
+  test("a tie splits categories without touching the win column", () => {
+    const { records } = foldPairsIntoStandings({}, [
+      {
+        player1: "a", player2: "b", player1Score: 86, player2Score: 86,
+        player1Captions: { won: 1, lost: 1 }, player2Captions: { won: 1, lost: 1 },
+        winner: "tie", completed: true,
+      },
+    ]);
+
+    assert.equal(records.a.ties, 1);
+    assert.equal(records.a.captionsWon, 1);
+    assert.equal(records.a.captionsLost, 1);
+  });
+});
+
 describe("rebuildStandingsFromMatchups", () => {
   const classes = ["worldClass", "soundSport"];
   const week = (n, worldClass = [], soundSport = []) => ({
@@ -240,6 +342,43 @@ describe("rebuildStandingsFromMatchups", () => {
 
     assert.equal(records.alice.wins, 1);
     assert.equal(records.bob, undefined);
+  });
+
+  // A rebuild is what repairs a drifted table and what applies a commissioner's
+  // correction, so it has to recover the category record too — otherwise the
+  // repair itself would silently zero the column the league is ranked on.
+  test("recovers the category record from the stored captions block", () => {
+    const captionMatchup = {
+      pair: ["alice", "bob"],
+      scores: { alice: 86, bob: 94 },
+      captions: {
+        ge: { scores: { alice: 30, bob: 40 }, winner: "bob" },
+        visual: { scores: { alice: 28, bob: 27 }, winner: "alice" },
+        music: { scores: { alice: 28, bob: 27 }, winner: "alice" },
+        tally: { alice: 2, bob: 1 },
+      },
+      winner: "alice",
+      completed: true,
+    };
+
+    const { records } = rebuildStandingsFromMatchups([week(1, [captionMatchup])], classes);
+
+    assert.equal(records.alice.wins, 1);
+    assert.equal(records.alice.captionsWon, 2);
+    assert.equal(records.alice.captionsLost, 1);
+    assert.equal(records.bob.captionsWon, 1);
+    assert.equal(records.bob.captionsLost, 2);
+    // Points still come from the totals, so the loser's bigger week survives.
+    assert.equal(records.bob.pointsFor, 94);
+  });
+
+  test("weeks with no captions block leave the counters at zero", () => {
+    const { records } = rebuildStandingsFromMatchups(
+      [week(1, [decided("alice", "bob", 90, 80)])],
+      classes
+    );
+    assert.equal(records.alice.captionsWon, 0);
+    assert.equal(records.alice.captionsLost, 0);
   });
 
   test("running it twice produces the same table (unlike the incremental fold)", () => {

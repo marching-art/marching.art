@@ -14,7 +14,6 @@ import {
   BarChart3,
   LayoutDashboard,
   Table2,
-  UserX,
   Calendar,
 } from 'lucide-react';
 import SeasonStatsCard from '../SeasonStatsCard';
@@ -26,7 +25,8 @@ import { getSeasonActivity } from '../../../utils/leagueActivity';
 // Shared label map — never a local one (see utils/corps.ts).
 import { CORPS_CLASS_SHORT_LABELS as CLASS_SHORT_LABELS } from '../../../utils/corps';
 import { GAME_CONFIG } from '../../../config';
-import { RankBadge, TrendIndicator } from './StandingsTabParts';
+import { InactiveMembersPanel, RankBadge, TrendIndicator } from './StandingsTabParts';
+import { hasCaptionRecords } from '../../../utils/captionWars';
 
 const StandingsTab = ({
   standings,
@@ -46,7 +46,6 @@ const StandingsTab = ({
   const [expandedUser, setExpandedUser] = useState(null);
   const [showLeaderboardSection, setShowLeaderboardSection] = useState(false);
   const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'table'
-  const [showInactive, setShowInactive] = useState(false);
 
   // Helper to get display name
   const getDisplayName = (uid) => {
@@ -147,6 +146,12 @@ const StandingsTab = ({
       : null;
     return forSeason || null;
   }, [league?.champions, league?.seasonId]);
+
+  // A league running Caption Wars ranks on its category record before the class
+  // percentile, so the column has to be visible or the order looks arbitrary.
+  // Driven by the data rather than the league's settings, exactly like the class
+  // column below: it appears when it has something in it.
+  const showCaptionRecord = useMemo(() => hasCaptionRecords(standings), [standings]);
 
   // A league whose members all field the same class needs no class column at
   // all — only say it when it is actually true of this league.
@@ -375,6 +380,17 @@ const StandingsTab = ({
                       <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-16">
                         W-L
                       </th>
+                      {/* Categories taken and dropped — the format this league
+                          actually played, and the first thing that separates two
+                          identical records. */}
+                      {showCaptionRecord && (
+                        <th
+                          className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-16"
+                          title="Caption categories won and lost"
+                        >
+                          CAP
+                        </th>
+                      )}
                       <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-16">
                         PF
                       </th>
@@ -494,6 +510,17 @@ const StandingsTab = ({
                               </span>
                             </td>
 
+                            {/* Category record */}
+                            {showCaptionRecord && (
+                              <td className="text-center py-2 px-2">
+                                <span className="font-data tabular-nums text-sm text-muted">
+                                  {stats.captionsWon || 0}
+                                  <span className="text-muted">-</span>
+                                  {stats.captionsLost || 0}
+                                </span>
+                              </td>
+                            )}
+
                             {/* Points For */}
                             <td className="text-right py-2 px-2">
                               <span className="font-bold text-secondary font-data tabular-nums text-sm">
@@ -545,7 +572,12 @@ const StandingsTab = ({
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                               >
-                                <td colSpan={isMixedClassLeague ? 7 : 6} className="p-0">
+                                <td
+                                  colSpan={
+                                    6 + (isMixedClassLeague ? 1 : 0) + (showCaptionRecord ? 1 : 0)
+                                  }
+                                  className="p-0"
+                                >
                                   <SeasonStatsCard
                                     stats={leagueStats[stats.uid]}
                                     displayName={getDisplayName(stats.uid)}
@@ -560,7 +592,12 @@ const StandingsTab = ({
                           {/* Playoff Line Indicator */}
                           {isPlayoffLine && idx < enhancedStandings.length - 1 && (
                             <tr>
-                              <td colSpan={isMixedClassLeague ? 7 : 6} className="py-0">
+                              <td
+                                colSpan={
+                                  6 + (isMixedClassLeague ? 1 : 0) + (showCaptionRecord ? 1 : 0)
+                                }
+                                className="py-0"
+                              >
                                 <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border-y border-green-500/30">
                                   <div className="flex-1 h-px bg-green-500/30" />
                                   <span className="text-[9px] uppercase tracking-wider text-green-500 font-bold">
@@ -608,6 +645,11 @@ const StandingsTab = ({
                   <span>
                     <strong>PF</strong> = Points For
                   </span>
+                  {showCaptionRecord && (
+                    <span>
+                      <strong>CAP</strong> = Caption categories won-lost
+                    </span>
+                  )}
                   {isMixedClassLeague && (
                     <span>
                       <strong>CLS</strong> = Avg. finish vs. your own class
@@ -627,86 +669,14 @@ const StandingsTab = ({
               </div>
             </div>
 
-            {/* Inactive Members Section */}
-            {inactiveStandings.length > 0 && (
-              <div className="mt-4 bg-surface-card border border-line overflow-hidden">
-                <button
-                  onClick={() => setShowInactive(!showInactive)}
-                  className="w-full px-4 py-3 bg-surface-raised flex items-center justify-between hover:bg-surface-elevated transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <UserX className="w-3.5 h-3.5 text-muted" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                      Inactive Members
-                    </span>
-                    <span className="text-[10px] text-muted">({inactiveStandings.length})</span>
-                  </div>
-                  {showInactive ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-muted" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-muted" />
-                  )}
-                </button>
-
-                <AnimatePresence>
-                  {showInactive && (
-                    <m.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-4 py-2 border-t border-line-subtle bg-surface-sunken">
-                        <p className="text-[10px] text-muted">
-                          These members haven't registered a corps for this season yet. They're
-                          excluded from standings and weekly matchups until they do.
-                        </p>
-                      </div>
-                      <div className="divide-y divide-line-subtle">
-                        {inactiveStandings.map((stats) => {
-                          const isUser = stats.uid === userProfile?.uid;
-                          const isCommissioner = stats.uid === league?.creatorId;
-                          return (
-                            <div
-                              key={stats.uid}
-                              className={`flex items-center gap-3 px-4 py-2 ${
-                                isUser ? 'bg-purple-500/10' : ''
-                              }`}
-                            >
-                              <div
-                                className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
-                                  isUser
-                                    ? 'bg-purple-500/20 border border-purple-500/50'
-                                    : 'bg-surface-raised'
-                                }`}
-                              >
-                                <span
-                                  className={`text-xs font-bold ${
-                                    isUser ? 'text-purple-400' : 'text-muted'
-                                  }`}
-                                >
-                                  {getDisplayName(stats.uid).charAt(0)}
-                                </span>
-                              </div>
-                              <p
-                                className={`text-sm truncate ${
-                                  isUser ? 'text-purple-400 font-bold' : 'text-muted'
-                                }`}
-                              >
-                                {getDisplayName(stats.uid)}
-                              </p>
-                              {isCommissioner && (
-                                <Crown className="w-3 h-3 text-secondary flex-shrink-0" />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </m.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
+            {/* Members with no corps registered this season — folded away
+                below the table (StandingsTabParts.tsx). */}
+            <InactiveMembersPanel
+              members={inactiveStandings}
+              viewerUid={userProfile?.uid}
+              commissionerUid={league?.creatorId}
+              getDisplayName={getDisplayName}
+            />
 
             {/* The Finals field the cut line above points at. `finalsSize` has
                 always been stored and the table has always drawn a playoff

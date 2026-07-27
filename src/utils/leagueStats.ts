@@ -65,6 +65,14 @@ export interface LeagueMemberStanding {
   streakType: 'W' | 'L' | null;
   trend: 'up' | 'down' | 'same';
   currentRank?: number;
+  /**
+   * Categories taken and dropped, on a league running Caption Wars
+   * (functions/src/helpers/captionWars.js). Absent on the client-side fallback
+   * table, which is only ever shown before any week has resolved, and zero on
+   * the default format.
+   */
+  captionsWon?: number;
+  captionsLost?: number;
 }
 
 /** Everything the league detail view derives from recaps + matchup docs. */

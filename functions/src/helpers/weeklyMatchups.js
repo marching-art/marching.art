@@ -22,7 +22,7 @@ const {
   getWeekScore,
   participatingClassesByUid,
 } = require("./leagueScoring");
-const { isCaptionWarsLeague, resolveCaptionWars } = require("./captionWars");
+const { isCaptionWarsLeague, resolveCaptionWars, captionsWonBy } = require("./captionWars");
 const {
   weeklyXpToken,
   weeklyWinToken,
@@ -304,6 +304,12 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           player2Score: p2_score,
           player1Normalized: p1_week.classPercentile,
           player2Normalized: p2_week.classPercentile,
+          ...(captions
+            ? {
+                player1Captions: captionsWonBy(captions, p1_uid),
+                player2Captions: captionsWonBy(captions, p2_uid),
+              }
+            : {}),
           winner: winnerUid ?? "tie",
           completed: true,
           corpsClass,
