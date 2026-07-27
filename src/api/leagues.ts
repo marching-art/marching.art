@@ -19,6 +19,7 @@ import {
   DocumentData,
 } from 'firebase/firestore';
 import { db, paths, withErrorHandling } from './client';
+import { getActiveMemberCount, isLeagueDormant } from '../utils/leagueActivity';
 // League actions report funnel events; callFunctionTracked is the
 // instrumented transport (see the note in src/api/callable.ts).
 import { callFunctionTracked } from './callable';
@@ -53,26 +54,42 @@ export async function getMyLeagues(uid: string): Promise<League[]> {
 }
 
 /**
+ * How many raw league documents a page reads before the dormancy filter runs.
+ * Over-fetching keeps a page from collapsing to a handful of cards when a run
+ * of leagues happens to be sitting the season out.
+ */
+const DISCOVER_FETCH_MULTIPLIER = 3;
+
+/**
  * Get public leagues with pagination.
  *
- * Only leagues with at least one director registered for the CURRENT season are
- * discoverable. A league's roster is permanent, but participation is not —
- * season rollover preserves each director's corps name, so `members.length`
- * describes who ever joined, not who is playing. Without this filter the browse
- * grid advertised leagues that looked well populated but had nobody fielding a
- * corps, which is the worst thing a new director can join.
+ * Leagues with nobody registered for the CURRENT season are hidden. A league's
+ * roster is permanent, but participation is not — season rollover preserves
+ * each director's corps name, so `members.length` describes who ever joined,
+ * not who is playing. Without this the browse grid advertised leagues that
+ * looked well populated but had nobody fielding a corps, which is the worst
+ * thing a new director can join.
  *
- * `seasonActivity.activeMemberCount` is maintained by the backend (see
- * functions/src/helpers/leagueActivity.js) and zeroed at season rollover, so
- * every league goes dark when the season resets and reappears as its members
- * come back and set their corps up.
+ * The filter runs on the CLIENT, over a query ordered by `createdAt`, rather
+ * than as a Firestore `where('seasonActivity.activeMemberCount', '>=', 1)`.
+ * That is deliberate, and it is the fix for leagues that stayed invisible
+ * mid-season while their members were plainly competing:
  *
- * Two consequences worth knowing:
- *  - liveliest leagues sort first (the inequality field must lead the sort),
- *    with newest breaking ties;
- *  - leagues predating this field are absent until the nightly refresh
- *    backfills them, because Firestore inequality filters skip documents that
- *    lack the field.
+ *  - a server-side inequality is fail-CLOSED. Firestore skips any document
+ *    missing the field, so a league whose `seasonActivity` block had not been
+ *    written yet — one created before the block existed, or one whose
+ *    best-effort refresh was swallowed — dropped out of discovery entirely and
+ *    stayed out until a nightly job happened to repair it;
+ *  - it also hard-couples discovery to a materialized counter being FRESH. Any
+ *    lag between a director registering and their leagues being recomputed
+ *    read to everyone else as "this league does not exist".
+ *
+ * Filtering here inverts that: only leagues we can PROVE are dormant
+ * (`activeMemberCount === 0`, per isLeagueDormant) are dropped. Unknown
+ * participation shows — an un-backfilled league is not an empty one, the same
+ * rule the league cards already follow (src/utils/leagueActivity.ts).
+ *
+ * Liveliest leagues still sort first, now within the fetched page.
  *
  * Members and commissioners always reach their own leagues through
  * getMyLeagues/getLeaguesByCreator, which are deliberately unfiltered.
@@ -83,33 +100,30 @@ export async function getPublicLeagues(
 ): Promise<PaginatedResponse<League>> {
   return withErrorHandling(async () => {
     const leaguesRef = collection(db, paths.leagues());
+    const fetchSize = pageSize * DISCOVER_FETCH_MULTIPLIER;
 
-    const constraints = [
-      where('isPublic', '==', true),
-      where('seasonActivity.activeMemberCount', '>=', 1),
-      orderBy('seasonActivity.activeMemberCount', 'desc'),
-      orderBy('createdAt', 'desc'),
-    ];
-
-    let q = query(leaguesRef, ...constraints, limit(pageSize));
+    const constraints = [where('isPublic', '==', true), orderBy('createdAt', 'desc')];
 
     // Cast lastDoc to the expected type for pagination
     const lastDocSnapshot = lastDoc as QueryDocumentSnapshot<DocumentData> | undefined;
-    if (lastDocSnapshot) {
-      q = query(leaguesRef, ...constraints, startAfter(lastDocSnapshot), limit(pageSize));
-    }
+    const q = lastDocSnapshot
+      ? query(leaguesRef, ...constraints, startAfter(lastDocSnapshot), limit(fetchSize))
+      : query(leaguesRef, ...constraints, limit(fetchSize));
 
     const snapshot = await getDocs(q);
-    const leagues = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as League[];
+    const leagues = snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }) as League)
+      .filter((league) => !isLeagueDormant(league))
+      .sort((a, b) => (getActiveMemberCount(b) ?? 0) - (getActiveMemberCount(a) ?? 0));
 
+    // The cursor tracks the RAW page, not the filtered result — otherwise
+    // resuming from the last surviving league would silently re-read (or skip)
+    // whatever the filter removed after it.
     const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
     return {
       data: leagues,
-      hasMore: snapshot.docs.length === pageSize,
+      hasMore: snapshot.docs.length === fetchSize,
       lastDoc: lastVisible,
     };
   }, 'Failed to fetch public leagues');

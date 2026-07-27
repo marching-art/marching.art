@@ -455,6 +455,17 @@ const Leagues = () => {
     return publicLeaguesData.pages.flatMap((page) => page.data);
   }, [publicLeaguesData]);
 
+  // Discovery drops leagues with nobody registered this season, and it does so
+  // AFTER the read (see getPublicLeagues). A page that happens to be all
+  // dormant therefore comes back empty with more pages behind it — keep
+  // pulling rather than stranding the user on an empty grid that has a full
+  // one right behind it.
+  useEffect(() => {
+    if (availableLeagues.length === 0 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [availableLeagues.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   // Filter available leagues
   const discoverLeagues = useMemo(() => {
     const myLeagueIds = new Set(myLeagues.map((l) => l.id));
@@ -635,20 +646,24 @@ const Leagues = () => {
                 <div className="w-5 h-5 border-2 border-interactive border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                 <p className="text-xs text-muted">Loading leagues...</p>
               </div>
-            ) : discoverLeagues.length === 0 ? (
-              <EmptyDiscover searchTerm={searchTerm} />
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {discoverLeagues.map((league) => (
-                    <DiscoverLeagueCard
-                      key={league.id}
-                      league={league}
-                      onJoin={handleJoinLeague}
-                      isJoining={joiningLeagueId === league.id}
-                    />
-                  ))}
-                </div>
+                {discoverLeagues.length === 0 ? (
+                  <EmptyDiscover searchTerm={searchTerm} />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {discoverLeagues.map((league) => (
+                      <DiscoverLeagueCard
+                        key={league.id}
+                        league={league}
+                        onJoin={handleJoinLeague}
+                        isJoining={joiningLeagueId === league.id}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* Rendered alongside the empty state too: a page can filter
+                    down to nothing and still have leagues behind it. */}
                 {hasNextPage && (
                   <div className="mt-4 text-center">
                     <button

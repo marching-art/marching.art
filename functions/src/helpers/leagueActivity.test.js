@@ -15,6 +15,7 @@ const assert = require("node:assert/strict");
 const {
   isActiveThisSeason,
   isClassActiveThisSeason,
+  isCorpsActiveThisSeason,
   computeSeasonActivity,
   emptySeasonActivity,
   refreshLeagueActivity,
@@ -78,6 +79,84 @@ describe("isActiveThisSeason", () => {
   test("missing profile or missing season resolves to inactive", () => {
     assert.equal(isActiveThisSeason(undefined, SEASON), false);
     assert.equal(isActiveThisSeason(registered(), null), false);
+  });
+
+  // The bug this pins down: participation used to require the profile-wide
+  // activeSeasonId marker, which registerCorps deliberately withholds from a
+  // director who still owes corps decisions. Directors who registered that way
+  // competed all season while their leagues reported zero members playing and
+  // dropped out of public discovery entirely.
+  test("the corps' own season stamp is enough, whatever the profile marker says", () => {
+    const stampedButUnacknowledged = {
+      activeSeasonId: "season-1",
+      corps: {
+        worldClass: { corpsName: "Holdover", lineup: null },
+        openClass: { corpsName: "Registered Mid-Season", seasonUid: SEASON, lineup: null },
+      },
+    };
+    assert.equal(isActiveThisSeason(stampedButUnacknowledged, SEASON), true);
+    assert.equal(isClassActiveThisSeason(stampedButUnacknowledged, "openClass", SEASON), true);
+  });
+
+  test("a stale stamp keeps a corps out even if the profile escaped rollover", () => {
+    const escapedRollover = {
+      activeSeasonId: "season-1",
+      corps: { worldClass: { corpsName: "Blue Devils", seasonUid: "season-1" } },
+    };
+    assert.equal(isActiveThisSeason(escapedRollover, SEASON), false);
+  });
+
+  test("season data that rollover clears proves a legacy corps is playing", () => {
+    // No stamp (registered before the stamp existed) and a stale profile
+    // marker, but this corps has plainly been played since the reset.
+    const playing = (corps) => ({ activeSeasonId: "season-1", corps: { worldClass: corps } });
+    const base = { corpsName: "Blue Devils" };
+
+    assert.equal(isActiveThisSeason(playing({ ...base, lineupKey: "abc" }), SEASON), true);
+    assert.equal(isActiveThisSeason(playing({ ...base, lineup: { GE1: "x" } }), SEASON), true);
+    assert.equal(
+      isActiveThisSeason(playing({ ...base, selectedShows: { week1: [] } }), SEASON),
+      true
+    );
+    assert.equal(isActiveThisSeason(playing({ ...base, weeklyScores: { week1: 70 } }), SEASON), true);
+    assert.equal(isActiveThisSeason(playing({ ...base, totalSeasonScore: 71.2 }), SEASON), true);
+    assert.equal(
+      isActiveThisSeason(playing({ ...base, weeklyTrades: { seasonUid: SEASON, used: 1 } }), SEASON),
+      true
+    );
+    // ...and the reset shapes rollover actually writes prove nothing.
+    assert.equal(
+      isActiveThisSeason(
+        playing({ ...base, lineup: null, selectedShows: {}, weeklyScores: {}, totalSeasonScore: 0 }),
+        SEASON
+      ),
+      false
+    );
+    assert.equal(
+      isActiveThisSeason(playing({ ...base, weeklyTrades: { seasonUid: "season-1", used: 3 } }), SEASON),
+      false
+    );
+  });
+});
+
+describe("isCorpsActiveThisSeason", () => {
+  test("an unnamed corps is never active, however it is stamped", () => {
+    assert.equal(isCorpsActiveThisSeason({ seasonUid: SEASON }, {}, SEASON), false);
+    assert.equal(isCorpsActiveThisSeason(undefined, {}, SEASON), false);
+  });
+
+  test("sitting the class out clears the stamp, so the corps stops counting", () => {
+    // processCorpsDecisions' "skip" branch: identity kept, seasonUid nulled,
+    // season data wiped.
+    const skipped = {
+      corpsName: "Blue Devils",
+      seasonUid: null,
+      lineup: null,
+      selectedShows: {},
+      weeklyScores: {},
+      totalSeasonScore: 0,
+    };
+    assert.equal(isCorpsActiveThisSeason(skipped, { activeSeasonId: "season-1" }, SEASON), false);
   });
 });
 

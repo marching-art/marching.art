@@ -10,6 +10,7 @@ const {
   showRegistrationEventKey,
   registrationEntryKey,
 } = require("../helpers/showRegistrations");
+const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
 const admin = require("firebase-admin");
 
 /**
@@ -106,6 +107,10 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   // 4. --- Create Unique Lineup Key ---
   const lineupKey = `${corpsClass}_${Object.values(lineup).sort().join("_")}`;
 
+  // Set inside the transaction (reset on each retry): did this save turn a
+  // corps that wasn't registered for the live season into one that is?
+  let newlyRegistered = false;
+
   try {
     await db.runTransaction(async (transaction) => {
       const userProfileRef = db.doc(paths.userProfile(uid));
@@ -113,9 +118,10 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
       if (!userProfileDoc.exists) {
         throw new HttpsError("not-found", "User profile does not exist.");
       }
-      
+
       const userProfileData = userProfileDoc.data();
       const currentCorpsData = userProfileData.corps?.[corpsClass];
+      newlyRegistered = currentCorpsData?.seasonUid !== activeSeasonId;
 
       if (!currentCorpsData) {
         throw new HttpsError("not-found", `You must register a ${corpsClass} corps before saving a lineup.`);
@@ -240,10 +246,23 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
 
       profileUpdateData[`corps.${corpsClass}.lineup`] = lineup;
       profileUpdateData[`corps.${corpsClass}.lineupKey`] = lineupKey;
-      profileUpdateData.activeSeasonId = activeSeasonId; 
+      // Fielding a lineup registers this corps for the live season, whatever
+      // path put it on the profile (helpers/leagueActivity.js).
+      profileUpdateData[`corps.${corpsClass}.seasonUid`] = activeSeasonId;
+      profileUpdateData.activeSeasonId = activeSeasonId;
 
       transaction.update(userProfileRef, profileUpdateData);
     });
+
+    // The first save of the season is what makes this director count as
+    // registered, so their leagues may have just become discoverable. Gated on
+    // the stamp changing: a refresh reads every member profile of every league
+    // they belong to, and lineups are saved far too often to pay that each
+    // time. Best-effort — refreshLeaguesForUser swallows its own failures and
+    // the nightly job is the backstop.
+    if (newlyRegistered) {
+      await refreshLeaguesForUser(db, uid, activeSeasonId);
+    }
 
     return { success: true, message: `${corpsClass} lineup saved successfully!` };
   } catch (error) {
@@ -470,13 +489,19 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     const profileSnap = await userProfileRef.get();
     const profile = profileSnap.exists ? profileSnap.data() : {};
     const previousShows = profile.corps?.[corpsClass]?.selectedShows?.[`week${week}`] || [];
+    const newlyRegistered =
+      Boolean(seasonData.seasonUid) &&
+      profile.corps?.[corpsClass]?.seasonUid !== seasonData.seasonUid;
 
-    // Also set activeSeasonId so user is properly tracked for season resets
+    // Also set activeSeasonId so user is properly tracked for season resets,
+    // and stamp the corps itself — registering for shows is registering for
+    // the season (helpers/leagueActivity.js reads the stamp first).
     const updateData = {
       [`corps.${corpsClass}.selectedShows.week${week}`]: resolvedShows,
     };
     if (seasonData.seasonUid) {
       updateData.activeSeasonId = seasonData.seasonUid;
+      updateData[`corps.${corpsClass}.seasonUid`] = seasonData.seasonUid;
     }
     await userProfileRef.update(updateData);
 
@@ -528,6 +553,13 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
       } catch (indexError) {
         logger.warn(`Show-registration index update failed for ${uid} (self-heals nightly):`, indexError);
       }
+    }
+
+    // Registering for shows can be the first thing a returning director does,
+    // so refresh their leagues rather than waiting on the nightly job. Gated
+    // on the stamp changing for the same reason as saveLineup.
+    if (newlyRegistered) {
+      await refreshLeaguesForUser(db, uid, seasonData.seasonUid);
     }
 
     return { success: true, message: `Successfully saved selections for week ${week}.` };

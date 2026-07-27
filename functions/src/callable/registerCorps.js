@@ -105,6 +105,17 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       biography: `The ${corpsName} from ${location}.`,
     };
 
+    // Stamp the corps with the season it was registered for. League
+    // participation reads this first (helpers/leagueActivity.js) precisely so
+    // it does not depend on the activeSeasonId guard below, which deliberately
+    // stays silent for a director who still owes corps decisions. Rollover
+    // rebuilds each corps without the field, so it never outlives its season.
+    // Only written when a season actually exists — an explicit null means
+    // "sitting this class out", which is not what a registration is saying.
+    if (seasonData?.seasonUid) {
+      newCorpsData.seasonUid = seasonData.seasonUid;
+    }
+
     // --- 6. Set activeSeasonId if not already set ---
     const updateData = {
       [`corps.${corpsClass}`]: newCorpsData
@@ -125,7 +136,9 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     // Guarded on having no other named corps so the wizard's step-0 detection
     // is untouched: a director who DOES hold corps from last season must keep
     // the season mismatch until they work through those decisions, which is
-    // what makes the verification step appear.
+    // what makes the verification step appear. That guard no longer costs them
+    // league visibility — the corps carries its own `seasonUid` stamp above,
+    // which is what participation is computed from.
     const hasOtherNamedCorps = Object.entries(profileData.corps || {})
       .some(([cls, c]) => cls !== corpsClass && c?.corpsName);
     if (

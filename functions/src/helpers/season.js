@@ -224,6 +224,10 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
         avatarGeneratedAt: corps.avatarGeneratedAt || null,
         ensembleInfo: corps.ensembleInfo || null,
         // RESET: Season-specific data (including weeklyTrades so users can set up corps)
+        // NOTE: this literal deliberately omits `seasonUid` — the per-corps
+        // season stamp league participation reads (helpers/leagueActivity.js).
+        // Dropping it here is what makes every corps go dormant at rollover,
+        // so never "preserve" it by spreading `corps` into this object.
         weeklyTrades: null,
         lineup: null,
         lineupKey: null,

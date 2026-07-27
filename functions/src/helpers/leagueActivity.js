@@ -8,22 +8,41 @@
  * NOT evidence the director is playing the current season — it only proves they
  * played at some point.
  *
- * The season-scoped marker is `activeSeasonId`. It is set when a director
- * registers a corps (callable/registerCorps.js), saves a lineup
- * (callable/lineups.js), or works through the new-season setup wizard
- * (callable/corps.js), and rollover deliberately does NOT advance it — a
- * returning director's profile sits at the OLD season id until they come back
- * and set their corps up. So `activeSeasonId === currentSeasonUid` is exactly
- * "has been here since the season reset", and pairing it with "still holds a
- * named corps" gives the participation test the league system needs:
+ * The question this module answers is therefore per-corps, not per-profile:
  *
  *     registered for the current season
- *       = activeSeasonId matches the live season
- *       AND at least one corps survived their setup decisions
+ *       = this director holds at least one NAMED corps
+ *         that belongs to the LIVE season
  *
- * The second clause matters because the setup wizard lets a director retire
- * everything; acknowledging the season without fielding a corps is not
- * participation.
+ * Which corps belong to the live season is decided from three signals, checked
+ * in that order. Any one of them is sufficient — the point is that the answer
+ * must not depend on WHEN or through WHICH screen a director registered:
+ *
+ *  1. `corps.{class}.seasonUid` — the explicit stamp, written by every path
+ *     that puts a corps into a season: fresh registration
+ *     (callable/registerCorps.js), the setup wizard's continue/new/unretire/
+ *     move decisions (callable/corps.js), and lineup/show saves
+ *     (callable/lineups.js). Rollover rebuilds each corps without it, so the
+ *     stamp is dropped the moment a season ends. When a stamp IS present it is
+ *     authoritative for that corps, including when it names an OLD season —
+ *     that is how a corps whose profile escaped the rollover sweep stops
+ *     counting.
+ *
+ *  2. `activeSeasonId` on the profile — the legacy profile-wide marker, still
+ *     the only signal unstamped corps have. It is written when a director
+ *     acknowledges the new season, but only on some paths: the setup wizard
+ *     always writes it, while registerCorps deliberately holds it back for a
+ *     director who still owes corps decisions. Treating it as the ONLY
+ *     evidence is what made leagues full of competing directors read as empty.
+ *
+ *  3. Season data that rollover clears — a saved lineup, selected shows,
+ *     weekly scores, points, or this season's caption-trade counter. A corps
+ *     carrying any of these has demonstrably been played SINCE the reset, so
+ *     it belongs to the live season no matter what the profile marker says.
+ *
+ * Retiring or sitting a class out leaves none of the three (the wizard's
+ * "skip" branch clears the season data and writes no stamp), so acknowledging
+ * a season without fielding a corps is still not participation.
  *
  * The materialized `seasonActivity` block this module builds is what league
  * discovery filters on and what the matchup generators pair from, so a league
@@ -38,6 +57,50 @@ function hasNamedCorps(corps) {
   return Boolean(corps && corps.corpsName);
 }
 
+function isNonEmptyMap(value) {
+  return Boolean(value) && typeof value === "object" && Object.keys(value).length > 0;
+}
+
+/**
+ * Has this corps been played since the last season reset?
+ *
+ * Every field read here is one that archiveAndResetProfiles (and the wizard's
+ * continue/skip/move branches) clear, so a truthy answer can only have been
+ * produced during the live season. Signal 3 above.
+ */
+function hasCurrentSeasonPlay(corps, seasonUid) {
+  if (!corps) return false;
+  if (isNonEmptyMap(corps.lineup)) return true;
+  if (corps.lineupKey) return true;
+  if (isNonEmptyMap(corps.selectedShows)) return true;
+  if (isNonEmptyMap(corps.weeklyScores)) return true;
+  if ((corps.totalSeasonScore || 0) > 0) return true;
+  return Boolean(seasonUid) && corps.weeklyTrades?.seasonUid === seasonUid;
+}
+
+/**
+ * Is this specific corps registered for `seasonUid`?
+ *
+ * @param {object|undefined} corps - one entry of profileData.corps
+ * @param {object} profileData - the owning profile document data
+ * @param {string} seasonUid - the LIVE season uid
+ * @returns {boolean}
+ */
+function isCorpsActiveThisSeason(corps, profileData, seasonUid) {
+  if (!hasNamedCorps(corps) || !seasonUid) return false;
+  // 1. An explicit stamp settles it either way. A stamp explicitly set to null
+  //    is the wizard's "skip" — the director kept the corps' identity but sat
+  //    this class out — and is distinct from a legacy corps that carries no
+  //    stamp field at all.
+  if (corps.seasonUid) return corps.seasonUid === seasonUid;
+  if (corps.seasonUid === null) return false;
+  // 2. Legacy corps: the profile-wide acknowledgment.
+  if (profileData && profileData.activeSeasonId === seasonUid) return true;
+  // 3. Legacy corps whose profile marker was never advanced, but which have
+  //    plainly been played this season.
+  return hasCurrentSeasonPlay(corps, seasonUid);
+}
+
 /**
  * Is this director registered for `seasonUid`?
  *
@@ -47,8 +110,9 @@ function hasNamedCorps(corps) {
  */
 function isActiveThisSeason(profileData, seasonUid) {
   if (!profileData || !seasonUid) return false;
-  if (profileData.activeSeasonId !== seasonUid) return false;
-  return Object.values(profileData.corps || {}).some(hasNamedCorps);
+  return Object.values(profileData.corps || {}).some((corps) =>
+    isCorpsActiveThisSeason(corps, profileData, seasonUid)
+  );
 }
 
 /**
@@ -66,8 +130,7 @@ function isActiveThisSeason(profileData, seasonUid) {
  */
 function isClassActiveThisSeason(profileData, corpsClass, seasonUid) {
   if (!profileData || !seasonUid) return false;
-  if (profileData.activeSeasonId !== seasonUid) return false;
-  return hasNamedCorps((profileData.corps || {})[corpsClass]);
+  return isCorpsActiveThisSeason((profileData.corps || {})[corpsClass], profileData, seasonUid);
 }
 
 /**
@@ -198,6 +261,8 @@ async function refreshLeaguesForUser(db, uid, seasonUid = null) {
 
 module.exports = {
   hasNamedCorps,
+  hasCurrentSeasonPlay,
+  isCorpsActiveThisSeason,
   isActiveThisSeason,
   isClassActiveThisSeason,
   computeSeasonActivity,
