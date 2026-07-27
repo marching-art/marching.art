@@ -410,7 +410,7 @@ describe("processWeeklyMatchups", () => {
     // Standings/current updated: winner W, loser L, tie for both — this used
     // to happen only via the commissioner callable, never automatically
     const standingsWrite = writes.find(
-      (w) => w.type === "docUpdate" && w.path === standingsPath
+      (w) => w.path === standingsPath && w.data?.records
     );
     assert.ok(standingsWrite, "standings should update automatically at week close");
     assert.equal(standingsWrite.data.records.alice.wins, 1);
@@ -458,7 +458,7 @@ describe("processWeeklyMatchups", () => {
     // Bye counts as a standings win, but pays no CC/XP and creates no
     // matchup_result event (nothing was "decided")
     const standingsWrite = writes.find(
-      (w) => w.type === "docUpdate" && w.path === standingsPath
+      (w) => w.path === standingsPath && w.data?.records
     );
     assert.ok(standingsWrite, "the bye should be folded into standings");
     assert.equal(standingsWrite.data.records.erin.wins, 1);
@@ -592,7 +592,7 @@ describe("processWeeklyMatchups with Caption Wars", () => {
     await processWeeklyMatchups(3, seasonData, db);
 
     const standingsWrite = writes.find(
-      (w) => w.type === "docUpdate" && w.path === standingsPath
+      (w) => w.path === standingsPath && w.data?.records
     );
     assert.equal(standingsWrite.data.records.alice.wins, 1);
     assert.equal(standingsWrite.data.records.bob.wins, 0);

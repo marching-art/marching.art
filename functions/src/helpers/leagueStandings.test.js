@@ -7,7 +7,11 @@ process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || "test-ns";
 
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
-const { foldPairsIntoStandings, rebuildStandingsFromMatchups } = require("./leagueStandings");
+const {
+  foldPairsIntoStandings,
+  rebuildStandingsFromMatchups,
+  applyStandingsInTransaction,
+} = require("./leagueStandings");
 
 const freshRecords = () => ({
   alice: { wins: 1, losses: 0, ties: 0, pointsFor: 80, pointsAgainst: 70, currentStreak: 1, streakType: "W" },
@@ -410,5 +414,59 @@ describe("rebuildStandingsFromMatchups", () => {
 
     assert.equal(records.alice.wins, 1);
     assert.equal(records.alice.losses, 1);
+  });
+});
+
+describe("applyStandingsInTransaction", () => {
+  /** A transaction that records what it was asked to write. */
+  const fakeTransaction = () => {
+    const writes = [];
+    return {
+      writes,
+      set: (ref, data, options) => writes.push({ op: "set", ref, data, options }),
+      update: (ref, data) => writes.push({ op: "update", ref, data }),
+    };
+  };
+
+  const snapshot = (exists, records) => ({
+    exists,
+    ref: { path: "artifacts/ns/leagues/L1/standings/current" },
+    data: () => ({ records }),
+  });
+
+  const decidedPair = [
+    {
+      player1: "alice",
+      player2: "bob",
+      player1Score: 90,
+      player2Score: 80,
+      winner: "alice",
+      completed: true,
+    },
+  ];
+
+  test("folds into an existing document", () => {
+    const t = fakeTransaction();
+    applyStandingsInTransaction(t, snapshot(true, freshRecords()), decidedPair);
+
+    assert.equal(t.writes.length, 1);
+    assert.equal(t.writes[0].data.records.alice.wins, 2);
+  });
+
+  test("CREATES the document when it is missing instead of dropping the week", () => {
+    // The regression the championship-week rehearsal found: this used to
+    // `return` on a missing document, so every week of the season resolved and
+    // was silently discarded, the table stayed empty, and season archival
+    // crowned nobody because it found no standings rows.
+    const t = fakeTransaction();
+    applyStandingsInTransaction(t, snapshot(false, undefined), decidedPair);
+
+    assert.equal(t.writes.length, 1, "the week must be recorded, not dropped");
+    assert.equal(t.writes[0].op, "set", "a missing document cannot be update()d");
+    assert.equal(t.writes[0].options?.merge, true);
+    // Both directors get a row, seeded by the fold.
+    assert.equal(t.writes[0].data.records.alice.wins, 1);
+    assert.equal(t.writes[0].data.records.bob.losses, 1);
+    assert.equal(t.writes[0].data.standings.length, 2);
   });
 });
