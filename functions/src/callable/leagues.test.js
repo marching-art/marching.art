@@ -21,7 +21,10 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
-const { createLeague, joinLeague, postLeagueMessage } = require("./leagues");
+const { createLeague, joinLeague } = require("./leagues");
+// Chat lives in its own module now — callable/leagues.js hit its size cap, and
+// chat has its own rate limit, length cap and permission rule anyway.
+const { postLeagueMessage } = require("./leagueChat");
 
 const NS = process.env.DATA_NAMESPACE;
 

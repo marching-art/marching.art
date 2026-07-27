@@ -10,6 +10,7 @@ const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { createUserNotification } = require("../helpers/userNotifications");
 const { chargeEntryFeeInTransaction } = require("../helpers/leagueEconomy");
 const { refreshLeagueActivity } = require("../helpers/leagueActivity");
+const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
 
 // Cross-user notifications MUST be written here with the Admin SDK — Firestore
 // rules only let a client write into its OWN notifications subcollection, so a
@@ -83,8 +84,8 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
   const leagueData = leagueDoc.data();
 
-  if (leagueData.creatorId !== inviterUid) {
-    throw new HttpsError("permission-denied", "Only the league commissioner can send invitations.");
+  if (!isLeagueCommissioner(leagueData, inviterUid)) {
+    throw new HttpsError("permission-denied", "Only a league commissioner can send invitations.");
   }
   if ((leagueData.members || []).includes(inviteeUid)) {
     throw new HttpsError("already-exists", "That director is already a member of this league.");
@@ -300,8 +301,8 @@ exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
 
   const leagueDoc = await leagueRef.get();
   if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
-  if (leagueDoc.data().creatorId !== uid) {
-    throw new HttpsError("permission-denied", "Only the league commissioner can rescind invitations.");
+  if (!isLeagueCommissioner(leagueDoc.data(), uid)) {
+    throw new HttpsError("permission-denied", "Only a league commissioner can rescind invitations.");
   }
 
   const invitationDoc = await invitationRef.get();

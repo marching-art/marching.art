@@ -11,6 +11,7 @@ import { queryKeys } from '../../../lib/queryClient';
 import { useLeagueMatchups } from '../../../hooks/useLeagueMatchups';
 import { getSeasonProgress } from '../../../utils/seasonProgress';
 import { GAME_CONFIG } from '../../../config';
+import { isLeagueCommissioner } from '../../../utils/leaguePermissions';
 import {
   SeasonScheduleOverview,
   YourSeasonHistory,
@@ -81,7 +82,7 @@ const MatchupsTab = ({
     setSelectedWeek((prev) => prev ?? currentWeek);
   }, [currentWeek]);
 
-  const isCommissioner = league?.creatorId === userProfile?.uid;
+  const isCommissioner = isLeagueCommissioner(league, userProfile?.uid);
 
   // Check if matchup is a rivalry
   const isRivalryMatchup = (matchup) => {

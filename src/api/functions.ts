@@ -478,6 +478,10 @@ export const updateLeagueSettings = createCallable<
   },
   { success: boolean; changed: number; message: string }
 >('updateLeagueSettings');
+export const setCoCommissioner = createCallable<
+  { leagueId: string; memberId: string; grant: boolean },
+  { success: boolean; changed: boolean; message: string }
+>('setCoCommissioner');
 export const transferCommissioner = createCallable<
   { leagueId: string; newCommissionerUid: string },
   { success: boolean; message: string }

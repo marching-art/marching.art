@@ -30,8 +30,10 @@ import toast from 'react-hot-toast';
 import { Heading } from '../../ui';
 import { useEscapeKey } from '../../../hooks/useEscapeKey';
 import { getRosterSize, getActiveMemberCount, isMemberActive } from '../../../utils/leagueActivity';
+import { isLeagueCommissioner } from '../../../utils/leaguePermissions';
 import LeagueSettingsForm from './LeagueSettingsForm';
 import CommissionerTransfer from './CommissionerTransfer';
+import CoCommissionerManager from './CoCommissionerManager';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -115,6 +117,7 @@ const SettingsTab = ({
   currentWeek = 1,
   onBack,
   onSettingsSaved,
+  isOwner = false,
 }) => {
   const inviteCode = useLeagueInviteCode(league);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -251,10 +254,12 @@ const SettingsTab = ({
         name: displayName || `Director ${uid.slice(0, 6)}`,
         corpsName: activeCorps?.corpsName || null,
         isActive: isMemberActive(league, uid),
-        isCommissioner: uid === league?.creatorId,
+        isOwner: uid === league?.creatorId,
+        isCommissioner: isLeagueCommissioner(league, uid),
       };
     });
     return rows.sort((a, b) => {
+      if (a.isOwner !== b.isOwner) return a.isOwner ? -1 : 1;
       if (a.isCommissioner !== b.isCommissioner) return a.isCommissioner ? -1 : 1;
       if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
       return a.name.localeCompare(b.name);
@@ -563,11 +568,15 @@ const SettingsTab = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-white truncate">{member.name}</span>
-                  {member.isCommissioner && (
+                  {member.isOwner ? (
                     <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand bg-surface-raised flex-shrink-0">
                       Commissioner
                     </span>
-                  )}
+                  ) : member.isCommissioner ? (
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase text-secondary bg-surface-raised flex-shrink-0">
+                      Co-Commish
+                    </span>
+                  ) : null}
                 </div>
                 <span
                   className={`text-[10px] ${member.isActive ? 'text-green-500' : 'text-muted'}`}
@@ -578,9 +587,9 @@ const SettingsTab = ({
                 </span>
               </div>
 
-              {member.isCommissioner ? (
-                // The commissioner cannot remove themselves — the league would
-                // be left with nobody able to run it. Leaving is the exit.
+              {member.isOwner ? (
+                // The owner cannot remove themselves — the league would be left
+                // with nobody able to run it. Leaving is the exit.
                 <span className="text-[10px] text-muted flex-shrink-0">—</span>
               ) : (
                 <button
@@ -605,7 +614,12 @@ const SettingsTab = ({
           forever" or "leave", and leaving used to orphan the league entirely:
           every commissioner gate is creatorId === uid, so the league lost the
           ability to run itself with no way to recover. */}
-      <CommissionerTransfer league={league} roster={roster} onTransferred={onSettingsSaved} />
+      {isOwner && (
+        <>
+          <CoCommissionerManager league={league} roster={roster} onChanged={onSettingsSaved} />
+          <CommissionerTransfer league={league} roster={roster} onTransferred={onSettingsSaved} />
+        </>
+      )}
 
       {/* Removal is irreversible from the commissioner's side and moves
           CorpsCoin, so it always goes through an explicit confirmation. */}

@@ -303,12 +303,18 @@ writes `inviteCode: leagueData.inviteCode || null`
 (`leagueInvitations.js:99`) — always `null` since the code moved to
 `meta/private`, and a leak if a legacy doc still carries it.
 
-### C6 · P2 — No commissioner tools that a real league needs
+### C6 · P2 — No commissioner tools that a real league needs — MOSTLY FIXED
 
 No co-commissioner role, no ability to correct a matchup result, no pinned
 announcement, no league rules/description-with-formatting, no way to schedule
 or lock a season format, no member-visible audit of commissioner actions beyond
 removals.
+
+Fixed: co-commissioners (`setCoCommissioner`, up to four, owner-only to grant
+or revoke — a co-commissioner who could appoint peers could take the league over
+from the inside), an editable league description that serves as the rules
+document (C2), and the commissioner audit view (D3). Still outstanding: matchup
+result correction, pinned announcements, and scheduled format locks.
 
 ### C7 · P3 — The rookie circuit had no gate and an accidental commissioner — FIXED
 
@@ -674,13 +680,13 @@ Small, isolated, high ratio of value to risk:
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
   can rank on one comparable scale. The table is now honest about the limitation
   rather than fixed of it.
-- **C6** — co-commissioners, result correction, pinned announcements, league
-  rules documents, scheduled format locks. The audit view (D3) and settings
-  editing (C2) landed; the rest of the commissioner toolkit has not.
+- **C6 (remainder)** — matchup result correction, pinned announcements, and
+  scheduled format locks. Co-commissioners, the editable description, and the
+  audit view have landed.
 - **F7 (remainder)** — several league files still carry `@ts-nocheck`.
-  `StandingsTab` and `MatchupsTab` are back under the line and `MatchupsTab` now
-  reads through React Query instead of duplicating the season and schedule
-  fetches into local state; the rest of the folder is not yet migrated to
-  TypeScript.
+  `StandingsTab`, `MatchupsTab` and `callable/leagues.js` are back under the
+  line, and `MatchupsTab` reads through React Query instead of duplicating the
+  season and schedule fetches into local state; the rest of the folder is not
+  yet migrated to TypeScript.
 - **Phase 4** — alternate league formats (Survivor / Pick'em / One-Night Slate),
   dynasty mode, and the deeper discovery work.

@@ -86,7 +86,7 @@ users/{uid}/corpsCoinHistory/{id} # CorpsCoin ledger (subcollection — every tr
                                   #   callable-only reads, even for the owner)
 users/{uid}/podium/{state,career} # Podium simulation state + career
 users/{uid}/notifications/…       # In-app + league notifications
-leagues/{leagueId}                # League config
+leagues/{leagueId}                # League config (owner + commissioners[], settings, tag)
 leagues/{leagueId}/standings/current
 leagues/{leagueId}/matchups/week-{n}
 leagues/{leagueId}/activity/{id}  # League feed events
@@ -175,18 +175,18 @@ the domain logic lives in `helpers/` so it can be shared and unit-tested.
 
 ### Callable groups (`functions/src/callable/`)
 
-| Area             | Files                                                                                                                     |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Users & profile  | `users.js`, `profile.js`                                                                                                  |
-| Corps & lineups  | `corps.js`, `registerCorps.js`, `lineups.js`, `corpsDuplicates.js`                                                        |
-| Economy & shop   | `economy.js`, `shop.js`, `prestige.js`, `seasonLadder.js`, `legacy.js` (Legacy Endowments — the recurring sink)           |
-| Daily loop       | `dailyOps.js`, `dailyChallenges.js`, `dailyPredictions.js`, `journey.js`                                                  |
-| Leagues          | `leagues.js`, `leagueAdmin.js`, `leagueRoster.js`, `leagueInvitations.js`, `leaguePools.js`, `rookieLeague.js`            |
-| Social / content | `comments.js`, `articleComments.js`, `commentModeration.js`                                                               |
-| Podium           | `podium.js`, `podiumStaff.js`, `podiumRoute.js`, `podiumJoint.js`, `podiumFan.js`, `podiumHost.js`, `podiumValidation.js` |
-| Supporters       | `supporters.js` (BMAC link/wall/visibility — see [`docs/BMAC_SUPPORTERS.md`](docs/BMAC_SUPPORTERS.md))                    |
-| Integrations     | `youtube.js`                                                                                                              |
-| Admin            | `admin.js`                                                                                                                |
+| Area             | Files                                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Users & profile  | `users.js`, `profile.js`                                                                                                        |
+| Corps & lineups  | `corps.js`, `registerCorps.js`, `lineups.js`, `corpsDuplicates.js`                                                              |
+| Economy & shop   | `economy.js`, `shop.js`, `prestige.js`, `seasonLadder.js`, `legacy.js` (Legacy Endowments — the recurring sink)                 |
+| Daily loop       | `dailyOps.js`, `dailyChallenges.js`, `dailyPredictions.js`, `journey.js`                                                        |
+| Leagues          | `leagues.js`, `leagueAdmin.js`, `leagueChat.js`, `leagueRoster.js`, `leagueInvitations.js`, `leaguePools.js`, `rookieLeague.js` |
+| Social / content | `comments.js`, `articleComments.js`, `commentModeration.js`                                                                     |
+| Podium           | `podium.js`, `podiumStaff.js`, `podiumRoute.js`, `podiumJoint.js`, `podiumFan.js`, `podiumHost.js`, `podiumValidation.js`       |
+| Supporters       | `supporters.js` (BMAC link/wall/visibility — see [`docs/BMAC_SUPPORTERS.md`](docs/BMAC_SUPPORTERS.md))                          |
+| Integrations     | `youtube.js`                                                                                                                    |
+| Admin            | `admin.js`                                                                                                                      |
 
 ### Scheduled jobs (`functions/src/scheduled/`)
 

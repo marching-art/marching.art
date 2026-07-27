@@ -10,9 +10,8 @@ const {
   createLeagueActivity,
   invitationId,
 } = require("../helpers/leagueHelpers");
-const { consumeRateBudget } = require("../helpers/rateLimit");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
-const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { escrowedTotal, deleteLeagueSubcollections } = require("../helpers/leagueLifecycle");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
@@ -24,6 +23,7 @@ const {
   getActiveSeasonUid,
 } = require("../helpers/leagueActivity");
 const { fetchWeeklyScoreIndex, getWeekScore } = require("../helpers/leagueScoring");
+const { isLeagueCommissioner, pickSuccessor } = require("../helpers/leaguePermissions");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -526,14 +526,14 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
           members: admin.firestore.FieldValue.arrayRemove(uid),
         };
 
-        // Commissioner succession. Every commissioner gate is
-        // `creatorId === uid`, and leaving used to remove the creator from
-        // `members` while leaving creatorId pointing at them — so the league
-        // permanently lost the ability to generate matchups, invite, remove
-        // members, or open its own settings, with no way to recover. The
-        // longest-tenured remaining member inherits it.
+        // Commissioner succession. Every commissioner gate keys off the
+        // owner, and leaving used to remove the creator from `members` while
+        // leaving creatorId pointing at them — so the league permanently lost
+        // the ability to generate matchups, invite, remove members, or open its
+        // own settings, with no way to recover. A co-commissioner inherits it
+        // if there is one (helpers/leaguePermissions.js).
         if (leagueData.creatorId === uid) {
-          successorUid = (leagueData.members || []).find((m) => m !== uid) || null;
+          successorUid = pickSuccessor(leagueData, uid);
           if (successorUid) {
             update.creatorId = successorUid;
             logger.info(
@@ -632,8 +632,8 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   const leagueData = leagueDoc.data();
 
   // Only commissioner can generate matchups
-  if (leagueData.creatorId !== uid) {
-    throw new HttpsError("permission-denied", "Only the commissioner can generate matchups.");
+  if (!isLeagueCommissioner(leagueData, uid)) {
+    throw new HttpsError("permission-denied", "Only a commissioner can generate matchups.");
   }
 
   const members = leagueData.members || [];
@@ -781,8 +781,8 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   if (!leagueDoc.exists) {
     throw new HttpsError("not-found", "League not found.");
   }
-  if (leagueDoc.data().creatorId !== uid && !hasAdminClaim(request)) {
-    throw new HttpsError("permission-denied", "Only the commissioner can update matchup results.");
+  if (!isLeagueCommissioner(leagueDoc.data(), uid) && !hasAdminClaim(request)) {
+    throw new HttpsError("permission-denied", "Only a commissioner can update matchup results.");
   }
 
   // Registry-derived, like every other matchup site. The literal list this
@@ -936,134 +936,3 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
 
 // Standings updater lives in helpers/leagueStandings.js — shared with the
 // automatic weekly resolution in the nightly scoring run.
-
-
-// Post a message to league chat
-// Chat messages are stored verbatim and rendered to every league member, so
-// both the size and the rate of writes are server-capped: 1000 chars (same as
-// article comments' MAX_COMMENT_LENGTH) and 10 messages per minute per user.
-// Budget docs live in a server-only collection (no client rule matches it).
-const MAX_LEAGUE_MESSAGE_LENGTH = 1000;
-const CHAT_RATE_COLLECTION = "leagueChatRateLimits";
-const CHAT_MAX_MESSAGES_PER_WINDOW = 10;
-const CHAT_RATE_WINDOW_MS = 60 * 1000; // 1 minute
-
-exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-
-  const { leagueId, message } = request.data;
-  const uid = request.auth.uid;
-
-  if (!leagueId || typeof message !== 'string' || !message.trim()) {
-    throw new HttpsError("invalid-argument", "League ID and message are required.");
-  }
-  // The id is interpolated into a Firestore doc path below.
-  assertDocId(leagueId, "league ID");
-
-  const trimmedMessage = message.trim();
-  if (trimmedMessage.length > MAX_LEAGUE_MESSAGE_LENGTH) {
-    throw new HttpsError("invalid-argument",
-      `Message too long (max ${MAX_LEAGUE_MESSAGE_LENGTH} characters).`);
-  }
-
-  const db = getDb();
-
-  // Abuse throttle (shared league bucket) — humans chat fast; this only stops scripts.
-  await assertWriteBudget(db, uid, "leagueSocial", { max: 120 });
-
-  const leagueRef = db.doc(paths.league(leagueId));
-
-  // Verify user is a member
-  const leagueDoc = await leagueRef.get();
-  if (!leagueDoc.exists) {
-    throw new HttpsError("not-found", "League not found.");
-  }
-
-  const leagueData = leagueDoc.data();
-  if (!leagueData.members.includes(uid)) {
-    throw new HttpsError("permission-denied", "You must be a league member to post.");
-  }
-
-  const allowed = await consumeRateBudget(
-    db, CHAT_RATE_COLLECTION, uid, CHAT_MAX_MESSAGES_PER_WINDOW, CHAT_RATE_WINDOW_MS
-  );
-  if (!allowed) {
-    throw new HttpsError("resource-exhausted",
-      "You're posting too quickly. Please wait a moment and try again.");
-  }
-
-  const messageRef = leagueRef.collection('chat').doc();
-  await messageRef.set({
-    userId: uid,
-    message: trimmedMessage,
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-
-  return { success: true, message: "Message posted!", messageId: messageRef.id };
-});
-
-/**
- * Remove a chat message.
- *
- * League chat had no moderation surface at all: no delete, no report, no mute,
- * while storing messages verbatim and rendering them to every member with no
- * recourse. A persistent social space needs this to exist before it is needed,
- * not after.
- *
- * Authors can remove their own message; the commissioner can remove anyone's.
- * A commissioner removal is written to the activity feed for the same reason
- * removeLeagueMember is — members are entitled to see moderation happen.
- */
-exports.deleteLeagueMessage = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-  const { leagueId, messageId } = request.data || {};
-  const uid = request.auth.uid;
-
-  if (!leagueId || !messageId) {
-    throw new HttpsError("invalid-argument", "A league ID and message ID are required.");
-  }
-  assertDocId(leagueId, "league ID");
-  assertDocId(messageId, "message ID");
-
-  const db = getDb();
-  await assertWriteBudget(db, uid, "leagueSocial", { max: 60 });
-
-  const leagueRef = db.doc(paths.league(leagueId));
-  const messageRef = leagueRef.collection('chat').doc(messageId);
-
-  const { wasCommissionerAction } = await db.runTransaction(async (transaction) => {
-    const [leagueDoc, messageDoc] = await Promise.all([
-      transaction.get(leagueRef),
-      transaction.get(messageRef),
-    ]);
-
-    if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
-    if (!messageDoc.exists) throw new HttpsError("not-found", "That message no longer exists.");
-
-    const leagueData = leagueDoc.data();
-    const isCommissioner = leagueData.creatorId === uid || hasAdminClaim(request);
-    const isAuthor = messageDoc.data().userId === uid;
-
-    if (!isAuthor && !isCommissioner) {
-      throw new HttpsError(
-        "permission-denied",
-        "You can only delete your own messages."
-      );
-    }
-
-    transaction.delete(messageRef);
-    return { wasCommissionerAction: !isAuthor };
-  });
-
-  if (wasCommissionerAction) {
-    await createLeagueActivity(db, leagueId, {
-      type: 'message_removed',
-      title: 'Message Removed',
-      message: 'The commissioner removed a chat message.',
-      userId: uid,
-      metadata: { messageId },
-    });
-  }
-
-  return { success: true, message: "Message deleted." };
-});

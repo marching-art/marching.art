@@ -29,6 +29,7 @@ import { useLeagueChat } from '../../hooks/useLeagueChat';
 import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeagueDetailHeader from './LeagueDetailHeader';
 import LeaguePoolCard from './LeaguePoolCard';
+import { isLeagueCommissioner, isLeagueOwner } from '../../utils/leaguePermissions';
 
 const LeagueDetailView = ({
   league,
@@ -62,8 +63,12 @@ const LeagueDetailView = ({
   const [isLeaving, setIsLeaving] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
 
-  // Use auth userId directly for commissioner check (more reliable than profile.uid)
-  const isCommissioner = league.creatorId === userId;
+  // Use auth userId directly for commissioner checks (more reliable than
+  // profile.uid). Shared with the backend rule (utils/leaguePermissions):
+  // co-commissioners can run the league, only the owner can hand it over or
+  // change who the commissioners are.
+  const isCommissioner = isLeagueCommissioner(league, userId);
+  const isOwner = isLeagueOwner(league, userId);
 
   const {
     memberProfiles,
@@ -325,6 +330,7 @@ const LeagueDetailView = ({
             <SettingsTab
               key="settings"
               league={league}
+              isOwner={isOwner}
               userProfile={userProfile}
               memberProfiles={memberProfiles}
               currentWeek={currentWeek}

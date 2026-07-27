@@ -243,6 +243,7 @@ type CloudFunctionName =
   | 'deleteLeagueMessage'
   | 'updateLeagueSettings'
   | 'transferCommissioner'
+  | 'setCoCommissioner'
   | 'selectShows'
   | 'updateLineup';
 

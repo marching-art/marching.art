@@ -21,6 +21,9 @@ export interface RosterMember {
   name: string;
   corpsName: string | null;
   isActive: boolean;
+  /** The single league owner. */
+  isOwner: boolean;
+  /** Owner or co-commissioner — anyone who can run the league day to day. */
   isCommissioner: boolean;
 }
 
@@ -105,7 +108,7 @@ const CommissionerTransfer = ({
   const [pending, setPending] = useState<RosterMember | null>(null);
   const [transferring, setTransferring] = useState(false);
 
-  const candidates = roster.filter((m) => !m.isCommissioner);
+  const candidates = roster.filter((m) => !m.isOwner);
   if (candidates.length === 0) return null;
 
   const handleTransfer = async () => {

@@ -16,6 +16,7 @@ const { createLeagueActivity } = require("../helpers/leagueHelpers");
 const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { refreshLeagueActivity } = require("../helpers/leagueActivity");
+const { isLeagueCommissioner, isLeagueOwner } = require("../helpers/leaguePermissions");
 
 /**
  * Commissioner control: remove a member from the league.
@@ -62,13 +63,23 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
     }
     const leagueData = leagueDoc.data();
 
-    if (leagueData.creatorId !== uid && !hasAdminClaim(request)) {
-      throw new HttpsError("permission-denied", "Only the commissioner can remove members.");
+    if (!isLeagueCommissioner(leagueData, uid) && !hasAdminClaim(request)) {
+      throw new HttpsError("permission-denied", "Only a commissioner can remove members.");
     }
     if (memberId === leagueData.creatorId) {
       throw new HttpsError(
         "failed-precondition",
-        "The commissioner cannot be removed. Leave the league instead."
+        "The league owner cannot be removed. They must leave, or hand the league over first."
+      );
+    }
+    // A co-commissioner cannot remove a peer — only the owner can change who
+    // runs the league. Otherwise two co-commissioners could race to remove
+    // each other.
+    if (memberId !== uid && isLeagueCommissioner(leagueData, memberId) && !isLeagueOwner(leagueData, uid)
+        && !hasAdminClaim(request)) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the league owner can remove another commissioner."
       );
     }
     if (!(leagueData.members || []).includes(memberId)) {

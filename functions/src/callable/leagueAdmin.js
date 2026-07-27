@@ -25,6 +25,11 @@ const { paths } = require("../helpers/paths");
 const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
 const { createLeagueActivity } = require("../helpers/leagueHelpers");
 const { createUserNotification } = require("../helpers/userNotifications");
+const {
+  isLeagueCommissioner,
+  isLeagueOwner,
+  MAX_CO_COMMISSIONERS,
+} = require("../helpers/leaguePermissions");
 
 const MAX_NAME_LENGTH = 50;
 const MIN_NAME_LENGTH = 3;
@@ -179,8 +184,8 @@ exports.updateLeagueSettings = onCall({ cors: true }, async (request) => {
   if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
 
   const league = leagueDoc.data();
-  if (league.creatorId !== uid && !hasAdminClaim(request)) {
-    throw new HttpsError("permission-denied", "Only the commissioner can change league settings.");
+  if (!isLeagueCommissioner(league, uid) && !hasAdminClaim(request)) {
+    throw new HttpsError("permission-denied", "Only a commissioner can change league settings.");
   }
 
   const { updates, changes } = buildLeagueSettingsUpdate(settings, league);
@@ -225,10 +230,12 @@ exports.transferCommissioner = onCall({ cors: true }, async (request) => {
     if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
     const league = leagueDoc.data();
 
-    if (league.creatorId !== uid && !hasAdminClaim(request)) {
+    // Owner-only, deliberately: a co-commissioner who could transfer ownership
+    // could hand the league to themselves and lock the owner out.
+    if (!isLeagueOwner(league, uid) && !hasAdminClaim(request)) {
       throw new HttpsError(
         "permission-denied",
-        "Only the commissioner can hand the league over."
+        "Only the league owner can hand the league over."
       );
     }
     if (newCommissionerUid === league.creatorId) {
@@ -280,3 +287,115 @@ exports.transferCommissioner = onCall({ cors: true }, async (request) => {
 
 module.exports.buildLeagueSettingsUpdate = buildLeagueSettingsUpdate;
 module.exports.LEAGUE_TAGS = LEAGUE_TAGS;
+
+/**
+ * Add or remove a co-commissioner.
+ *
+ * Owner-only. A co-commissioner who could appoint other co-commissioners, or
+ * remove the ones already there, could take the league over from the inside —
+ * which is exactly the failure mode sharing the job is meant to avoid.
+ */
+exports.setCoCommissioner = onCall({ cors: true }, async (request) => {
+  assertAuth(request);
+  const { leagueId, memberId, grant } = request.data || {};
+  const uid = request.auth.uid;
+
+  if (!leagueId || !memberId || typeof grant !== "boolean") {
+    throw new HttpsError(
+      "invalid-argument",
+      "A league ID, a member ID, and grant (boolean) are required."
+    );
+  }
+  assertDocId(leagueId, "league ID");
+
+  const db = getDb();
+  await assertWriteBudget(db, uid, "leagueAdmin", { max: 20 });
+
+  const leagueRef = db.doc(paths.league(leagueId));
+
+  const outcome = await db.runTransaction(async (transaction) => {
+    const leagueDoc = await transaction.get(leagueRef);
+    if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
+    const league = leagueDoc.data();
+
+    if (!isLeagueOwner(league, uid) && !hasAdminClaim(request)) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the league owner can change who the commissioners are."
+      );
+    }
+    if (memberId === league.creatorId) {
+      throw new HttpsError(
+        "failed-precondition",
+        "The league owner already has every commissioner power."
+      );
+    }
+    if (!(league.members || []).includes(memberId)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "A commissioner has to be a member of the league."
+      );
+    }
+
+    const existing = Array.isArray(league.commissioners) ? league.commissioners : [];
+    const alreadyHas = existing.includes(memberId);
+    if (grant === alreadyHas) {
+      return { changed: false, grant };
+    }
+    if (grant && existing.length >= MAX_CO_COMMISSIONERS) {
+      throw new HttpsError(
+        "failed-precondition",
+        `A league can have at most ${MAX_CO_COMMISSIONERS} co-commissioners.`
+      );
+    }
+
+    transaction.update(leagueRef, {
+      commissioners: grant
+        ? admin.firestore.FieldValue.arrayUnion(memberId)
+        : admin.firestore.FieldValue.arrayRemove(memberId),
+    });
+    return { changed: true, grant, leagueName: league.name || "your league" };
+  });
+
+  if (!outcome.changed) {
+    return { success: true, changed: false, message: "Nothing to change." };
+  }
+
+  const memberDoc = await db.doc(paths.userProfile(memberId)).get();
+  const memberName = memberDoc.exists
+    ? memberDoc.data().displayName || memberDoc.data().username || "A director"
+    : "A director";
+
+  // Logged like every other commissioner action — members are entitled to see
+  // who gained or lost power over their league.
+  await createLeagueActivity(db, leagueId, {
+    type: "commissioner_changed",
+    title: outcome.grant ? "New Co-Commissioner" : "Co-Commissioner Removed",
+    message: outcome.grant
+      ? `${memberName} is now a co-commissioner.`
+      : `${memberName} is no longer a co-commissioner.`,
+    userId: uid,
+    metadata: { memberId, grant: outcome.grant },
+  });
+
+  if (outcome.grant) {
+    await createUserNotification(db, memberId, {
+      leagueId,
+      leagueName: outcome.leagueName,
+      type: "commissioner_changed",
+      title: "You're a Co-Commissioner",
+      message: `You can now help run ${outcome.leagueName}.`,
+    });
+  }
+
+  logger.info(
+    `League ${leagueId}: ${uid} ${outcome.grant ? "granted" : "revoked"} co-commissioner for ${memberId}.`
+  );
+  return {
+    success: true,
+    changed: true,
+    message: outcome.grant
+      ? `${memberName} is now a co-commissioner.`
+      : `${memberName} is no longer a co-commissioner.`,
+  };
+});

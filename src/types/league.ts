@@ -12,7 +12,10 @@ export interface League {
   id: string;
   name: string;
   description: string;
+  /** The league owner — one director, the only one who can hand it over. */
   creatorId: string;
+  /** Additional directors who can run the league (see utils/leaguePermissions). */
+  commissioners?: string[];
   createdAt: Timestamp;
 
   // Membership

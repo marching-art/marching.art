@@ -98,10 +98,13 @@ const {
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
-  postLeagueMessage,
-  deleteLeagueMessage,
 } = require("./src/callable/leagues");
-const { updateLeagueSettings, transferCommissioner } = require("./src/callable/leagueAdmin");
+const { postLeagueMessage, deleteLeagueMessage } = require("./src/callable/leagueChat");
+const {
+  updateLeagueSettings,
+  transferCommissioner,
+  setCoCommissioner,
+} = require("./src/callable/leagueAdmin");
 const { removeLeagueMember } = require("./src/callable/leagueRoster");
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { joinLeaguePool } = require("./src/callable/leaguePools");
@@ -295,6 +298,7 @@ module.exports = {
   removeLeagueMember,
   updateLeagueSettings,
   transferCommissioner,
+  setCoCommissioner,
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,

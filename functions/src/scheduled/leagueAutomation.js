@@ -29,6 +29,7 @@ const {
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
 const { detectRivalries, generateLeagueRecapsForWeek } = require("../helpers/leagueRecaps");
+const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
 const {
   isClassActiveThisSeason,
   computeSeasonActivity,
@@ -381,8 +382,8 @@ exports.triggerMatchupGeneration = onCall(
 
     const league = leagueDoc.data();
 
-    if (league.creatorId !== uid) {
-      throw new HttpsError("permission-denied", "Only the commissioner can trigger matchup generation.");
+    if (!isLeagueCommissioner(league, uid)) {
+      throw new HttpsError("permission-denied", "Only a commissioner can trigger matchup generation.");
     }
 
     const targetWeek = week || (await getCurrentWeek(db)) + 1;
