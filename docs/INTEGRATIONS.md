@@ -19,7 +19,7 @@ embed helpers.
 | Channel            | Secret                              | Posts                                                                                 |
 | ------------------ | ----------------------------------- | ------------------------------------------------------------------------------------- |
 | scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, season champions |
-| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock                             |
+| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, Eastern Classic night lineups |
 | **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                          |
 | **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                       |
 | **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                 |
@@ -149,6 +149,44 @@ collects nobody's vote. Three event posts go to the server's
   with `deploy_target: all` and `set_discord_webhook_urls` checked, or
   `firebase functions:secrets:set DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` via the
   CLI.
+
+---
+
+## Discord (Eastern Classic night lineups → #announcements)
+
+The Eastern Classic is one event across two nights (days 41-42): registering
+once covers both, and every corps performs exactly one night, seeded by season
+score and snaked so the nights carry equal strength
+(`helpers/easternSplit.js`, [`PODIUM.md`](PODIUM.md) §5.11). The split is
+computed after the **day-38** scoring run and published to
+`eastern-classic/{seasonUid}` — the "who got Friday?" moment the design calls
+for. Until this post existed it landed silently, and a director only learned
+their night by opening the app.
+
+- **Code:** `functions/src/helpers/easternClassicDiscord.js` (embed + post),
+  wired as `runEasternClassicStage` in
+  `functions/src/scheduled/nightlyStages.js`. It announces off state someone
+  else wrote, so it runs **after fantasy scoring** in both callers:
+  `scheduled/dailyProcessors.js` (2 AM, after the Podium stage) and
+  `scheduled/dropDispatcher.js` (in the tick, right after the score drop, so
+  the lineups reach the server in the same moment as the scores that seeded
+  them). Isolated like every other stage — a Discord failure never touches
+  scoring.
+- **Contents:** one field per night, listing each fantasy class with its
+  headcount and roster (strongest seed first, clamped with a `+N more` tail so
+  a big class can't blow Discord's 1024-character field limit). When the Podium
+  stage has already written its own snake that night, the Podium **headcount**
+  joins each field — that doc is uid-keyed, so it contributes numbers, not
+  names.
+- **Idempotency + window:** one lease, `{seasonUid}_eastern_preview_day38`,
+  contended by every night in the **days 38-40** window. The normal case posts
+  on day 38; a night when Discord was unreachable (or when the preview landed
+  late) re-claims the failed lease and re-posts the next night, still ahead of
+  the event. Outside the window, and before the preview exists, the stage is a
+  no-op that claims nothing.
+- **Setup:** shares `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` with the Fan Favorite
+  posts — no new secret. The `scoreDropDispatcher` job declares it alongside
+  the scores webhook.
 
 ---
 

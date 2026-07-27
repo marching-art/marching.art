@@ -26,6 +26,10 @@
  * The Fan Favorite stage posts the community ballot's openings and results to
  * the #announcements channel (helpers/podium/fanFavoriteDiscord.js) — its own
  * webhook secret, DISCORD_ANNOUNCEMENTS_WEBHOOK_URL, disabled the same way.
+ *
+ * The Eastern Classic stage shares that channel and secret: it reads out the
+ * two-night split published by the day-38 scoring run
+ * (helpers/easternClassicDiscord.js).
  */
 
 const { logger } = require("firebase-functions/v2");
@@ -280,9 +284,61 @@ async function runPodiumReportStage(
   return { status: "ran", competitionDay, announcement };
 }
 
+/**
+ * Run the Eastern Classic stage: announce the published two-night lineups to
+ * the Discord #announcements channel (helpers/easternClassicDiscord.js).
+ *
+ * Unlike the Fan Favorite and Podium Report stages this is NOT Podium-gated —
+ * the split it reads out is a fantasy-class event that predates Podium, and
+ * the Podium half of the post is additive when present.
+ *
+ * Runs AFTER fantasy scoring, which is what publishes the preview (day 38);
+ * calling it on other nights is a cheap no-op (an out-of-window day never
+ * reads the doc at all).
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} webhookUrl - #announcements webhook; falsy disables the stage.
+ * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @param {Object} [options]
+ * @param {number} [options.competitionDay] - The day just scored; derived via
+ *   the 2 AM game-day reset when omitted, which is correct for the legacy 2 AM
+ *   callers. The drop dispatcher passes the planner's day, since it runs at
+ *   the drop instant where that derivation is off by one.
+ * @returns {Promise<{status: string, competitionDay?: number,
+ *   announcement?: {kind: string, status: string}}>}
+ */
+async function runEasternClassicStage(
+  db,
+  webhookUrl,
+  fetchImpl,
+  { competitionDay: competitionDayOverride = null } = {}
+) {
+  if (!webhookUrl) return { status: "disabled" };
+
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) return { status: "no-season" };
+  const seasonData = seasonDoc.data();
+  if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
+
+  const competitionDay =
+    competitionDayOverride ??
+    toCompetitionDay(getCompletedCalendarDay(seasonData.schedule.startDate.toDate()), seasonData);
+
+  const { announceEasternPreview } = require("../helpers/easternClassicDiscord");
+  const announcement = await announceEasternPreview(db, {
+    seasonUid: seasonData.seasonUid,
+    seasonName: seasonDisplayName(seasonData),
+    competitionDay,
+    webhookUrl,
+    fetchImpl,
+  });
+  return { status: "ran", competitionDay, announcement };
+}
+
 module.exports = {
   runPodiumStage,
   runDiscordStage,
   runFanFavoriteStage,
   runPodiumReportStage,
+  runEasternClassicStage,
 };
