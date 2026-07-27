@@ -253,12 +253,21 @@ const HeadToHeadSection = ({
           records[opponentId] = { wins: 0, losses: 0, ties: 0, lastWeek: 0 };
         }
 
-        const userScore = weeklyResults?.[week]?.[userProfile.uid] || 0;
-        const oppScore = weeklyResults?.[week]?.[opponentId] || 0;
+        // The matchup's own stored result is authoritative — it is what was
+        // folded into the standings. Fall back to the derived weekly scores
+        // only for a week that has not resolved yet.
+        if (matchup.completed && matchup.winner) {
+          if (matchup.winner === userProfile.uid) records[opponentId].wins++;
+          else if (matchup.winner === opponentId) records[opponentId].losses++;
+          else records[opponentId].ties++;
+        } else {
+          const userScore = weeklyResults?.[week]?.[userProfile.uid] || 0;
+          const oppScore = weeklyResults?.[week]?.[opponentId] || 0;
 
-        if (userScore > oppScore) records[opponentId].wins++;
-        else if (oppScore > userScore) records[opponentId].losses++;
-        else if (userScore > 0 || oppScore > 0) records[opponentId].ties++;
+          if (userScore > oppScore) records[opponentId].wins++;
+          else if (oppScore > userScore) records[opponentId].losses++;
+          else if (userScore > 0 || oppScore > 0) records[opponentId].ties++;
+        }
 
         records[opponentId].lastWeek = Math.max(records[opponentId].lastWeek, parseInt(week));
       });

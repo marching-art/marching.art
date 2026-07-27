@@ -240,6 +240,9 @@ type CloudFunctionName =
   | 'leaveLeague'
   | 'removeLeagueMember'
   | 'postLeagueMessage'
+  | 'deleteLeagueMessage'
+  | 'updateLeagueSettings'
+  | 'transferCommissioner'
   | 'selectShows'
   | 'updateLineup';
 

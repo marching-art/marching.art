@@ -7,7 +7,7 @@
 // computation), the live feeds live in hooks/useLeagueLiveStandings and
 // hooks/useLeagueChat, and the table math itself lives in utils/leagueStats.
 
-import React, { useState, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Swords, MessageSquare, BarChart3, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -30,8 +30,33 @@ import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeagueDetailHeader from './LeagueDetailHeader';
 import LeaguePoolCard from './LeaguePoolCard';
 
-const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
-  const [activeTab, setActiveTab] = useState('standings');
+const LeagueDetailView = ({
+  league,
+  userProfile,
+  userId,
+  onBack,
+  onLeave,
+  initialTab,
+  onTabChange,
+}) => {
+  // The tab lives in the URL too, so a link can point at a specific view of a
+  // league — "look at the matchups tab" is a thing members say to each other.
+  const [activeTab, setActiveTab] = useState(initialTab || 'standings');
+
+  const selectTab = useCallback(
+    (tab) => {
+      setActiveTab(tab);
+      onTabChange?.(tab);
+    },
+    [onTabChange]
+  );
+
+  // A back/forward navigation changes the route, not our state.
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) setActiveTab(initialTab);
+    // Only react to route changes; selectTab already handles in-app taps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab]);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -61,8 +86,16 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
     isProvisional: standingsProvisional,
   } = useLeagueLiveStandings(league?.id, computedStandings);
 
-  // Real-time chat (api helper: newest 50, delivered oldest-first)
-  const messages = useLeagueChat(league?.id);
+  // Real-time chat, with older history on demand and a read marker that
+  // finally makes the league card's unread dot mean something.
+  const {
+    messages,
+    unreadCount,
+    hasMore: hasMoreMessages,
+    isLoadingMore: loadingMoreMessages,
+    loadOlder: loadOlderMessages,
+    markRead: markChatRead,
+  } = useLeagueChat(league?.id);
 
   const handleLeaveConfirm = async () => {
     setIsLeaving(true);
@@ -146,7 +179,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
     { id: 'standings', label: 'Standings', icon: BarChart3 },
     { id: 'matchups', label: 'Matchups', icon: Swords },
     { id: 'activity', label: 'Activity', icon: Bell },
-    { id: 'chat', label: 'Chat', icon: MessageSquare, badge: messages.length > 0 },
+    // The badge is unread messages, not "any messages have ever been sent".
+    {
+      id: 'chat',
+      label: 'Chat',
+      icon: MessageSquare,
+      badge: unreadCount > 0,
+      badgeCount: unreadCount,
+    },
   ];
 
   return (
@@ -163,10 +203,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         tabs={tabs}
         activeTab={activeTab}
         onBack={onBack}
-        onOpenSettings={() => setActiveTab('settings')}
+        onOpenSettings={() => selectTab('settings')}
         onLeaveClick={() => setShowLeaveModal(true)}
         onCopyInvite={handleCopyInvite}
-        onTabChange={setActiveTab}
+        onTabChange={selectTab}
       />
 
       {/* SCROLLABLE CONTENT */}
@@ -264,7 +304,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                   }
                 }
               }}
-              onChatOpen={() => setActiveTab('chat')}
+              onChatOpen={() => selectTab('chat')}
             />
           )}
           {activeTab === 'chat' && (
@@ -275,6 +315,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               userProfile={userProfile}
               memberProfiles={memberProfiles}
               isCommissioner={isCommissioner}
+              hasMore={hasMoreMessages}
+              isLoadingMore={loadingMoreMessages}
+              onLoadOlder={loadOlderMessages}
+              onMarkRead={markChatRead}
             />
           )}
           {activeTab === 'settings' && isCommissioner && (
@@ -284,7 +328,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               userProfile={userProfile}
               memberProfiles={memberProfiles}
               currentWeek={currentWeek}
-              onBack={() => setActiveTab('standings')}
+              onBack={() => selectTab('standings')}
             />
           )}
         </AnimatePresence>

@@ -634,8 +634,13 @@ function App() {
                       }
                     />
 
+                    {/* A league needs a URL. Detail used to be component state,
+                        so there was no shareable link, no browser back, nothing
+                        to restore on refresh — and the champion notification
+                        written at season archival links to /leagues/{id}, which
+                        landed on the catch-all. */}
                     <Route
-                      path="/leagues"
+                      path="/leagues/:leagueId?/:tab?"
                       element={
                         <ProtectedRoute>
                           <GameShell>

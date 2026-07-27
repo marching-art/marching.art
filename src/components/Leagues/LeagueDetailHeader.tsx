@@ -29,6 +29,8 @@ export interface LeagueDetailTab {
   icon: LucideIcon;
   /** Renders the unread dot when the tab is not the active one. */
   badge?: boolean;
+  /** Unread count, rendered next to the dot when there is one. */
+  badgeCount?: number;
 }
 
 export interface LeagueDetailHeaderProps {
@@ -242,7 +244,16 @@ const LeagueDetailHeader = ({
           >
             <Icon className="w-4 h-4" />
             <span className="hidden sm:inline">{tab.label}</span>
-            {tab.badge && !isActive && <span className="w-1.5 h-1.5 rounded-none bg-purple-500" />}
+            {tab.badge && !isActive && (
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-none bg-purple-500" />
+                {tab.badgeCount ? (
+                  <span className="text-[9px] font-bold font-data tabular-nums text-purple-400">
+                    {tab.badgeCount > 99 ? '99+' : tab.badgeCount}
+                  </span>
+                ) : null}
+              </span>
+            )}
           </button>
         );
       })}

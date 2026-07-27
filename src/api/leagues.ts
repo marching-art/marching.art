@@ -43,7 +43,11 @@ const DEFAULT_PAGE_SIZE = 12;
 export async function getMyLeagues(uid: string): Promise<League[]> {
   return withErrorHandling(async () => {
     const leaguesRef = collection(db, paths.leagues());
-    const q = query(leaguesRef, where('members', 'array-contains', uid), limit(20));
+    // Bounded by `maxMembers`-capped leagues a director can realistically be
+    // in, not by the old `limit(20)` — which silently dropped a league for
+    // anyone in 21, with no pagination and no indication in the UI that
+    // anything was missing.
+    const q = query(leaguesRef, where('members', 'array-contains', uid), limit(100));
 
     const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => ({
@@ -353,6 +357,40 @@ export function subscribeToChat(
       onError?.(error);
     }
   );
+}
+
+/**
+ * Page backwards through chat history.
+ *
+ * `subscribeToChat` streams only the newest 50, and there was no way to reach
+ * anything older — a league that talks for a season lost its own history off
+ * the top of the window. Returns oldest-first, ready to prepend.
+ */
+export async function getOlderChatMessages(
+  leagueId: string,
+  before: unknown,
+  pageLimit = 50
+): Promise<ChatMessage[]> {
+  const chatRef = collection(db, paths.leagueChat(leagueId));
+  const q = query(chatRef, orderBy('createdAt', 'desc'), startAfter(before), limit(pageLimit));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as ChatMessage).reverse();
+}
+
+/**
+ * Delete a chat message. The author can remove their own; the commissioner can
+ * remove anyone's. League chat had no moderation surface at all — no delete, no
+ * report, no mute — while storing messages verbatim and rendering them to every
+ * member. ChatTab even received `isCommissioner` and discarded it.
+ */
+export async function deleteChatMessage(leagueId: string, messageId: string): Promise<ApiResponse> {
+  return withErrorHandling(async () => {
+    const result = await callFunctionTracked<{ leagueId: string; messageId: string }, ApiResponse>(
+      'deleteLeagueMessage',
+      { leagueId, messageId }
+    );
+    return result.data;
+  }, 'Failed to delete message');
 }
 
 /**

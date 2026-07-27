@@ -99,6 +99,7 @@ const {
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
+  deleteLeagueMessage,
 } = require("./src/callable/leagues");
 const { updateLeagueSettings, transferCommissioner } = require("./src/callable/leagueAdmin");
 const { removeLeagueMember } = require("./src/callable/leagueRoster");
@@ -297,6 +298,7 @@ module.exports = {
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
+  deleteLeagueMessage,
   inviteDirectorToLeague,
   respondToLeagueInvitation,
   rescindLeagueInvitation,

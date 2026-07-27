@@ -39,7 +39,7 @@ const MatchupsTab = ({
   const [selectedMatchup, setSelectedMatchup] = useState(null);
   const [currentWeek, setCurrentWeek] = useState(1);
   const [weeksWithMatchups, setWeeksWithMatchups] = useState(new Set());
-  const [weeklyResults, _setWeeklyResults] = useState({});
+  // Derived below from the matchup documents themselves — see weeklyResults.
   const [viewMode, setViewMode] = useState('week'); // 'week' | 'season'
 
   const isCommissioner = league?.creatorId === userProfile?.uid;
@@ -104,6 +104,31 @@ const MatchupsTab = ({
 
     fetchData();
   }, [league?.id]);
+
+  // Per-week scores, read off the matchup documents the backend already wrote.
+  //
+  // This was `useState({})` whose setter was never called, so every head-to-head
+  // record in this tab rendered as 0-0-0 for every opponent, all season. The
+  // resolved matchup docs carry `scores` keyed by uid (helpers/weeklyMatchups.js),
+  // which is the same number the standings were folded from — so deriving it
+  // here costs nothing and cannot disagree with the table.
+  const weeklyResults = useMemo(() => {
+    const byWeek = {};
+    for (const [week, weekData] of Object.entries(matchupsByClass)) {
+      const scores = {};
+      for (const corpsClass of CORPS_CLASSES) {
+        for (const matchup of weekData?.[`${corpsClass}Matchups`] || []) {
+          for (const [uid, score] of Object.entries(matchup.scores || {})) {
+            // Summed, not overwritten: a director fielding two classes has two
+            // matchups in the same week.
+            scores[uid] = (scores[uid] || 0) + (Number(score) || 0);
+          }
+        }
+      }
+      byWeek[week] = scores;
+    }
+    return byWeek;
+  }, [matchupsByClass]);
 
   // Get matchups for selected week, organized by class
   const weekMatchups = useMemo(() => {

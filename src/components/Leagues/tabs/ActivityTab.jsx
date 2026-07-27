@@ -6,6 +6,7 @@ import React from 'react';
 import { m } from 'framer-motion';
 import { Activity } from 'lucide-react';
 import LeagueActivityFeed from '../LeagueActivityFeed';
+import LeagueHallOfFame from '../LeagueHallOfFame';
 import { LeagueStatsOverview, AchievementsCard, PowerRankingsCard } from './ActivityTabStatsCards';
 import { WeeklyRecapCard, EnhancedRivalriesCard } from './ActivityTabRecapCards';
 
@@ -90,6 +91,10 @@ const ActivityTab = ({
           />
         </div>
       </div>
+
+      {/* The league's permanent record. Season archival has always written
+          champions[] onto the league document; nothing ever showed it. */}
+      <LeagueHallOfFame league={league} userProfile={userProfile} />
     </m.div>
   );
 };

@@ -985,3 +985,69 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
 
   return { success: true, message: "Message posted!", messageId: messageRef.id };
 });
+
+/**
+ * Remove a chat message.
+ *
+ * League chat had no moderation surface at all: no delete, no report, no mute,
+ * while storing messages verbatim and rendering them to every member with no
+ * recourse. A persistent social space needs this to exist before it is needed,
+ * not after.
+ *
+ * Authors can remove their own message; the commissioner can remove anyone's.
+ * A commissioner removal is written to the activity feed for the same reason
+ * removeLeagueMember is — members are entitled to see moderation happen.
+ */
+exports.deleteLeagueMessage = onCall({ cors: true }, async (request) => {
+  assertAuth(request);
+  const { leagueId, messageId } = request.data || {};
+  const uid = request.auth.uid;
+
+  if (!leagueId || !messageId) {
+    throw new HttpsError("invalid-argument", "A league ID and message ID are required.");
+  }
+  assertDocId(leagueId, "league ID");
+  assertDocId(messageId, "message ID");
+
+  const db = getDb();
+  await assertWriteBudget(db, uid, "leagueSocial", { max: 60 });
+
+  const leagueRef = db.doc(paths.league(leagueId));
+  const messageRef = leagueRef.collection('chat').doc(messageId);
+
+  const { wasCommissionerAction } = await db.runTransaction(async (transaction) => {
+    const [leagueDoc, messageDoc] = await Promise.all([
+      transaction.get(leagueRef),
+      transaction.get(messageRef),
+    ]);
+
+    if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
+    if (!messageDoc.exists) throw new HttpsError("not-found", "That message no longer exists.");
+
+    const leagueData = leagueDoc.data();
+    const isCommissioner = leagueData.creatorId === uid || hasAdminClaim(request);
+    const isAuthor = messageDoc.data().userId === uid;
+
+    if (!isAuthor && !isCommissioner) {
+      throw new HttpsError(
+        "permission-denied",
+        "You can only delete your own messages."
+      );
+    }
+
+    transaction.delete(messageRef);
+    return { wasCommissionerAction: !isAuthor };
+  });
+
+  if (wasCommissionerAction) {
+    await createLeagueActivity(db, leagueId, {
+      type: 'message_removed',
+      title: 'Message Removed',
+      message: 'The commissioner removed a chat message.',
+      userId: uid,
+      metadata: { messageId },
+    });
+  }
+
+  return { success: true, message: "Message deleted." };
+});
