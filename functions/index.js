@@ -105,6 +105,7 @@ const {
   transferCommissioner,
   setCoCommissioner,
 } = require("./src/callable/leagueAdmin");
+const { setLeagueScoringFormat } = require("./src/callable/leagueFormat");
 const { removeLeagueMember } = require("./src/callable/leagueRoster");
 const {
   recomputeLeagueStandings,
@@ -305,6 +306,7 @@ module.exports = {
   updateLeagueSettings,
   transferCommissioner,
   setCoCommissioner,
+  setLeagueScoringFormat,
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,

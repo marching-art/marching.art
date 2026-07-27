@@ -52,9 +52,22 @@ const paths = {
   leagueStandings: (leagueId) => `artifacts/${ns()}/leagues/${leagueId}/standings/current`,
   leagueActivity: (leagueId) => `artifacts/${ns()}/leagues/${leagueId}/activity`,
   leagueMatchups: (leagueId) => `artifacts/${ns()}/leagues/${leagueId}/matchups`,
+  /**
+   * Where a season's matchups go when it ends. Live `matchups/week-N` documents
+   * are MOVED here at rollover — they used to be left in place, which meant the
+   * generator saw week 1 already existed and skipped it, so a league that
+   * completed one season never got matchups again (see resetLeaguesForNewSeason).
+   */
+  leagueMatchupHistory: (leagueId) =>
+    `artifacts/${ns()}/leagues/${leagueId}/matchupHistory`,
+  leagueMatchupHistoryWeek: (leagueId, seasonUid, week) =>
+    `artifacts/${ns()}/leagues/${leagueId}/matchupHistory/${seasonUid}_week-${week}`,
   leagueMatchupWeek: (leagueId, week) =>
     `artifacts/${ns()}/leagues/${leagueId}/matchups/week-${week}`,
   leagueWeekRecap: (leagueId, week) => `artifacts/${ns()}/leagues/${leagueId}/recaps/week-${week}`,
+  /** Finished seasons' weekly recaps — same rollover treatment as matchups. */
+  leagueRecapHistoryWeek: (leagueId, seasonUid, week) =>
+    `artifacts/${ns()}/leagues/${leagueId}/recapHistory/${seasonUid}_week-${week}`,
   leagueMeta: (leagueId, docId) => `artifacts/${ns()}/leagues/${leagueId}/meta/${docId}`,
 
   // --- League invitations ---

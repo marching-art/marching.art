@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational sections for the league Matchups tab: schedule overview,
 // season history, head-to-head, empty state, and the versus strip.
 // Extracted verbatim from MatchupsTab.jsx.
@@ -19,11 +18,52 @@ import {
   Medal,
 } from 'lucide-react';
 import { getSoundSportRating } from '../../../utils/scoresUtils';
+import { formatTally, type CaptionsBlock } from '../../../utils/captionWars';
+// Two matchup shapes legitimately meet in this file: the raw `pair`-keyed
+// documents the weekly strip renders, and the flattened `user1`/`user2`
+// pairings utils/leagueStats derives for the tables.
+import type { LeagueMatchup } from '../../../utils/leagueStats';
+import CaptionStrip from '../CaptionStrip';
 import { useLeagueInviteCode } from '../../../hooks/useLeagues';
 import { Heading } from '../../ui';
 
+interface MemberProfiles {
+  [uid: string]: { displayName?: string; username?: string } | undefined;
+}
+
+/** One pairing as the matchup documents store it, flattened for a week. */
+export interface TabMatchup {
+  pair?: [string, string | null];
+  week?: number;
+  corpsClass?: string;
+  status?: string;
+  completed?: boolean;
+  isBye?: boolean;
+  winner?: string | null;
+  scores?: Record<string, number>;
+  captions?: CaptionsBlock;
+  /** Synthetic React key, attached when a week is flattened for render. */
+  id?: string;
+}
+
+/** A standings row, as much of one as these parts read. */
+interface TabStanding {
+  uid: string;
+  wins: number;
+  losses: number;
+}
+
 // Corps class display configuration
-const CORPS_CLASS_CONFIG = {
+const CORPS_CLASS_CONFIG: Record<
+  string,
+  {
+    name: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+  }
+> = {
   worldClass: {
     name: 'World Class',
     icon: Trophy,
@@ -69,6 +109,12 @@ const SeasonScheduleOverview = ({
   weeksWithMatchups,
   onSelectWeek,
   selectedWeek,
+}: {
+  currentWeek: number;
+  totalWeeks: number;
+  weeksWithMatchups: Set<number>;
+  onSelectWeek: (week: number) => void;
+  selectedWeek: number;
 }) => {
   return (
     <div className="bg-surface-card border border-line mb-4">
@@ -147,12 +193,22 @@ const SeasonScheduleOverview = ({
 };
 
 // Your Season History - Shows user's matchup record by week
-const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, onMatchupClick }) => {
+const YourSeasonHistory = ({
+  userMatchupHistory,
+  memberProfiles,
+  userProfile,
+  onMatchupClick,
+}: {
+  userMatchupHistory: Array<TabMatchup & { week: number; result?: string }>;
+  memberProfiles?: MemberProfiles;
+  userProfile?: { uid?: string } | null;
+  onMatchupClick?: (matchup: TabMatchup) => void;
+}) => {
   if (!userMatchupHistory || userMatchupHistory.length === 0) return null;
 
-  const getDisplayName = (uid) => {
+  const getDisplayName = (uid?: string) => {
     if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles[uid];
+    const profile = uid ? memberProfiles?.[uid] : undefined;
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     return profile?.username || name || `User ${uid?.slice(0, 6)}`;
@@ -172,7 +228,8 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
       <div className="p-3">
         <div className="flex gap-1 overflow-x-auto pb-2">
           {userMatchupHistory.map((match, idx) => {
-            const opponentId = match.pair[0] === userProfile?.uid ? match.pair[1] : match.pair[0];
+            const opponentId =
+              match.pair?.[0] === userProfile?.uid ? match.pair?.[1] : match.pair?.[0];
             const isBye = !opponentId;
             const won = match.winner === userProfile?.uid;
             // Ties are stored as winner:'tie' (both the automatic weekly
@@ -235,12 +292,22 @@ const HeadToHeadSection = ({
   weeklyMatchups,
   weeklyResults,
   onSelectOpponent: _onSelectOpponent,
+}: {
+  standings?: TabStanding[];
+  memberProfiles?: MemberProfiles;
+  userProfile?: { uid?: string } | null;
+  weeklyMatchups?: Record<number, LeagueMatchup[]>;
+  weeklyResults?: Record<number, Record<string, number>>;
+  onSelectOpponent?: (uid: string) => void;
 }) => {
   // Calculate head-to-head records
   const h2hRecords = useMemo(() => {
     if (!userProfile?.uid || !weeklyMatchups) return [];
 
-    const records = {};
+    const records: Record<
+      string,
+      { wins: number; losses: number; ties: number; lastWeek: number }
+    > = {};
 
     Object.entries(weeklyMatchups).forEach(([week, matchups]) => {
       matchups.forEach((matchup) => {
@@ -261,8 +328,9 @@ const HeadToHeadSection = ({
           else if (matchup.winner === opponentId) records[opponentId].losses++;
           else records[opponentId].ties++;
         } else {
-          const userScore = weeklyResults?.[week]?.[userProfile.uid] || 0;
-          const oppScore = weeklyResults?.[week]?.[opponentId] || 0;
+          const weekNum = Number(week);
+          const userScore = weeklyResults?.[weekNum]?.[userProfile.uid] || 0;
+          const oppScore = weeklyResults?.[weekNum]?.[opponentId] || 0;
 
           if (userScore > oppScore) records[opponentId].wins++;
           else if (oppScore > userScore) records[opponentId].losses++;
@@ -284,8 +352,8 @@ const HeadToHeadSection = ({
 
   if (h2hRecords.length === 0) return null;
 
-  const getDisplayName = (uid) => {
-    const profile = memberProfiles[uid];
+  const getDisplayName = (uid?: string) => {
+    const profile = uid ? memberProfiles?.[uid] : undefined;
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     return profile?.username || name || `User ${uid?.slice(0, 6)}`;
@@ -371,7 +439,17 @@ const HeadToHeadSection = ({
 };
 
 // Empty State Component
-const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner }) => {
+const EmptyMatchupsState = ({
+  selectedWeek,
+  currentWeek,
+  league,
+  isCommissioner,
+}: {
+  selectedWeek: number;
+  currentWeek: number;
+  league?: { id?: string; members?: string[] } | null;
+  isCommissioner?: boolean;
+}) => {
   const inviteCode = useLeagueInviteCode(league);
   const isPastWeek = selectedWeek < currentWeek;
   const isCurrentWeek = selectedWeek === currentWeek;
@@ -400,7 +478,7 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
       <p className="text-sm text-muted mb-4 max-w-sm mx-auto">
         {isPastWeek && 'This week had no matchups generated or recorded.'}
         {isCurrentWeek &&
-          (league?.members?.length < 2
+          ((league?.members?.length ?? 0) < 2
             ? 'Need at least 2 league members to generate matchups.'
             : isCommissioner
               ? "Generate matchups to start this week's competition!"
@@ -410,12 +488,12 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
 
       {isCurrentWeek && (
         <div className="flex flex-col items-center gap-3">
-          {league?.members?.length >= 2 ? (
+          {(league?.members?.length ?? 0) >= 2 ? (
             <>
               <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/30">
                 <Users className="w-4 h-4 text-green-500" />
                 <span className="text-xs text-green-400">
-                  {league.members.length} members ready to compete
+                  {league?.members?.length ?? 0} members ready to compete
                 </span>
               </div>
               {isCommissioner && (
@@ -472,6 +550,15 @@ const VersusStrip = memo(
     onClick,
     featured = false,
     showClass = false,
+  }: {
+    matchup: TabMatchup;
+    getDisplayName: (uid?: string | null) => string;
+    getStanding: (uid?: string | null) => TabStanding | null | undefined;
+    userProfile?: { uid?: string } | null;
+    isRivalry?: boolean;
+    onClick?: () => void;
+    featured?: boolean;
+    showClass?: boolean;
   }) => {
     const [p1_uid, p2_uid] = matchup.pair || [null, null];
     const isBye = !p2_uid;
@@ -480,14 +567,14 @@ const VersusStrip = memo(
       name: getDisplayName(p1_uid),
       standing: getStanding(p1_uid),
       isUser: p1_uid === userProfile?.uid,
-      score: matchup.scores?.[p1_uid] || 0,
+      score: (p1_uid && matchup.scores?.[p1_uid]) || 0,
     };
 
     const away = {
       name: getDisplayName(p2_uid),
       standing: p2_uid ? getStanding(p2_uid) : null,
       isUser: p2_uid === userProfile?.uid,
-      score: matchup.scores?.[p2_uid] || 0,
+      score: (p2_uid && matchup.scores?.[p2_uid]) || 0,
     };
 
     const homeWon = matchup.completed && matchup.winner === p1_uid;
@@ -495,7 +582,7 @@ const VersusStrip = memo(
     // 'tie' is the stored convention; legacy docs used null for ties.
     const isTie = matchup.completed && (matchup.winner === 'tie' || !matchup.winner);
 
-    const classConfig = CORPS_CLASS_CONFIG[matchup.corpsClass];
+    const classConfig = matchup.corpsClass ? CORPS_CLASS_CONFIG[matchup.corpsClass] : undefined;
     // SoundSport is a ratings-only format — a SoundSport matchup must show the
     // earned rating tiers, never the numeric scores.
     const isSoundSport = matchup.corpsClass === 'soundSport';
@@ -567,6 +654,19 @@ const VersusStrip = memo(
             <div className="flex-shrink-0 text-center min-w-[70px]">
               {isBye ? (
                 <div className="px-2 py-1 bg-surface-raised text-muted text-xs">WIN</div>
+              ) : matchup.completed && matchup.captions ? (
+                /* Caption Wars: the tally is the result, the totals are the
+                   supporting detail rather than the other way round. */
+                <div>
+                  <div className="text-sm font-bold font-data tabular-nums text-white">
+                    {formatTally(matchup.captions, homeWon ? p1_uid : p2_uid)}
+                  </div>
+                  {!isSoundSport && (
+                    <div className="text-[10px] text-muted font-data tabular-nums">
+                      {home.score.toFixed(0)}-{away.score.toFixed(0)}
+                    </div>
+                  )}
+                </div>
               ) : matchup.completed || matchup.status === 'live' ? (
                 <div className="flex items-center justify-center gap-1">
                   <span
@@ -634,6 +734,10 @@ const VersusStrip = memo(
               </div>
             )}
           </div>
+
+          {!isBye && matchup.completed && matchup.captions && (
+            <CaptionStrip captions={matchup.captions} p1Uid={p1_uid} p2Uid={p2_uid} />
+          )}
         </div>
       </button>
     );

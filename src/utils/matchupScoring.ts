@@ -2,18 +2,31 @@
  * Matchup Scoring Utilities
  *
  * Calculates battle points for head-to-head matchups using multiple dimensions:
- * - Caption Battles (8 pts): Win each caption = 1 pt
+ * - Caption Battles (3 pts): Win each caption GROUP = 1 pt
  * - Total Score Battle (1 pt): Higher weekly total
  * - High Single Battle (1 pt): Best individual show performance
  * - Momentum Battle (1 pt): Better week-over-week improvement
  *
- * Maximum possible: 11 battle points
+ * Maximum possible: 6 battle points
+ *
+ * The caption battles compare General Effect, Visual and Music — the three
+ * groups the scorer actually persists on every show result. They used to
+ * compare all eight lineup captions, which nothing anywhere records per show:
+ * the detail view manufactured them by dividing each group evenly
+ * (`GE1 = GE2 = geScore / 2`), so GE1 and GE2 always had the same winner, as
+ * did the three visual and the three music captions. Eight battles were really
+ * three, silently weighted 2 / 3 / 3 — the inverse of the real judging ratio,
+ * where General Effect is worth the most. It also produced eight season-long
+ * "best caption win rate" leaderboards that were three answers printed twice
+ * and thrice.
+ *
+ * Storing the eight is not the fix: they are deliberately unrecorded because
+ * publishing them would let an opponent read a director's lineup straight off
+ * the recap (docs/CAPTION_WARS_SPEC.md §7).
  */
 
-import { GAME_CONFIG } from '../config';
 import type {
-  Caption,
-  CaptionScores,
+  CaptionGroupScores,
   CaptionBattle,
   BattleResult,
   BattleType,
@@ -23,22 +36,33 @@ import type {
   CaptionWinRate,
   ExtendedHeadToHead,
 } from '../types';
+import { CAPTION_CATEGORIES, type CaptionKey } from './captionWars';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-/** All captions in order */
-export const CAPTIONS: Caption[] = GAME_CONFIG.captions as unknown as Caption[];
+/**
+ * The battle dimensions, in judging order. Re-exported from the same module the
+ * Caption Wars format reads, so a matchup card and a league running that format
+ * can never disagree about what a caption is.
+ */
+export const CAPTIONS: CaptionKey[] = CAPTION_CATEGORIES.map((c) => c.key);
 
-/** Battle point thresholds */
+/**
+ * Battle point thresholds.
+ *
+ * Rescaled with the maximum, which dropped from 11 to 6 when the caption
+ * battles stopped being eight copies of three. A one-point win out of six is
+ * the clutch one; four or more is a hiding.
+ */
 export const BATTLE_THRESHOLDS = {
   /** Margin to be considered a clutch win */
-  clutchMargin: 2,
+  clutchMargin: 1,
   /** Margin to be considered a blowout */
-  blowoutMargin: 5,
+  blowoutMargin: 4,
   /** Minimum caption battles won to claim "caption domination" */
-  captionDominationThreshold: 5,
+  captionDominationThreshold: 3,
 } as const;
 
 /** Points awarded for each battle type */
@@ -66,8 +90,8 @@ export const MAX_BATTLE_POINTS =
 export function calculateCaptionBattles(
   homeUserId: string,
   awayUserId: string,
-  homeCaptions: CaptionScores,
-  awayCaptions: CaptionScores
+  homeCaptions: CaptionGroupScores,
+  awayCaptions: CaptionGroupScores
 ): CaptionBattle[] {
   return CAPTIONS.map((caption) => {
     const homeScore = homeCaptions[caption] ?? 0;
@@ -115,7 +139,7 @@ function createBattleResult(
   awayUserId: string,
   homeValue: number,
   awayValue: number,
-  caption?: Caption
+  caption?: CaptionKey
 ): BattleResult {
   const differential = homeValue - awayValue;
   let winnerId: string | null = null;
@@ -296,8 +320,8 @@ export function calculateMatchupBattles(
 /**
  * Initialize empty caption win rates
  */
-export function initializeCaptionWinRates(): Record<Caption, CaptionWinRate> {
-  const rates = {} as Record<Caption, CaptionWinRate>;
+export function initializeCaptionWinRates(): Record<CaptionKey, CaptionWinRate> {
+  const rates = {} as Record<CaptionKey, CaptionWinRate>;
   for (const caption of CAPTIONS) {
     rates[caption] = {
       caption,
@@ -333,9 +357,9 @@ export function calculateSeasonStats(
     avgBattlePointsFor: 0,
     avgBattlePointsAgainst: 0,
     captionWinRates: initializeCaptionWinRates(),
-    bestCaption: 'GE1',
+    bestCaption: 'ge',
     bestCaptionWinRate: 0,
-    worstCaption: 'GE1',
+    worstCaption: 'ge',
     worstCaptionWinRate: 1,
     totalScoreBattlesWon: 0,
     highSingleBattlesWon: 0,
@@ -362,7 +386,7 @@ export function calculateSeasonStats(
   let longestLossStreak = 0;
 
   // Track caption differentials for average calculation
-  const captionDifferentials: Record<Caption, number[]> = {} as Record<Caption, number[]>;
+  const captionDifferentials: Record<CaptionKey, number[]> = {} as Record<CaptionKey, number[]>;
   for (const caption of CAPTIONS) {
     captionDifferentials[caption] = [];
   }
@@ -512,7 +536,7 @@ export function calculateHeadToHead(
     user1TotalBattlePoints: 0,
     user2TotalBattlePoints: 0,
     captionDomination: {} as Record<
-      Caption,
+      CaptionKey,
       { user1Wins: number; user2Wins: number; dominantUserId: string | null }
     >,
     avgMargin: 0,
@@ -658,15 +682,17 @@ export function calculateWinProbability(
 /**
  * Get caption display name
  */
-export function getCaptionDisplayName(caption: Caption): string {
-  return GAME_CONFIG.captionNames[caption] || caption;
+export function getCaptionDisplayName(caption: CaptionKey): string {
+  return CAPTION_CATEGORIES.find((c) => c.key === caption)?.label || caption;
 }
 
 /**
  * Aggregate caption scores from multiple shows
  */
-export function aggregateCaptionScores(shows: { captions?: CaptionScores }[]): CaptionScores {
-  const totals: CaptionScores = {};
+export function aggregateCaptionScores(
+  shows: { captions?: CaptionGroupScores }[]
+): CaptionGroupScores {
+  const totals: CaptionGroupScores = {};
 
   for (const show of shows) {
     if (!show.captions) continue;
@@ -692,7 +718,7 @@ export function createWeeklyPerformance(
     showName: string;
     score: number;
     placement?: number;
-    captions?: CaptionScores;
+    captions?: CaptionGroupScores;
   }[],
   previousWeekScore?: number
 ): WeeklyUserPerformance {

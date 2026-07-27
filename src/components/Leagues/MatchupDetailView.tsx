@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // MatchupDetailView - Enhanced head-to-head matchup comparison with battle point system
 // Features: Battle points, caption battles, rivalry history, detailed breakdown
 
@@ -10,50 +9,140 @@ import { queryClient, queryKeys } from '../../lib/queryClient';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
 import RivalryHistoryCard from './RivalryHistoryCard';
+import CaptionWarsScoreboard from './CaptionWarsScoreboard';
 import { Heading } from '../ui';
-import { MatchupOverviewPanel, MatchupShowsPanel } from './MatchupDetailParts';
+import type { CaptionsBlock } from '../../utils/captionWars';
+import type {
+  CaptionGroupScores,
+  ExtendedHeadToHead,
+  MatchupBattleBreakdown,
+  RivalryData,
+} from '../../types';
+import { MatchupOverviewPanel, MatchupShowsPanel, type SideBreakdown } from './MatchupDetailParts';
 import {
   calculateMatchupBattles,
   calculateHeadToHead,
   createWeeklyPerformance,
 } from '../../utils/matchupScoring';
 
+/**
+ * The three caption groups a show result actually carries.
+ *
+ * This file used to manufacture all eight lineup captions here by dividing each
+ * group evenly — `GE1 = GE2 = geScore / 2` — and render them as judged numbers.
+ * They were never real: both directors got the same even split, so GE1 and GE2
+ * always had the identical winner, as did the three visual and the three music
+ * captions. The eight are deliberately unrecorded per show, because publishing
+ * them would let an opponent read a director's lineup straight off the recap
+ * (docs/CAPTION_WARS_SPEC.md §7), so the fix is to show the three that exist.
+ */
+/** One scored day, as fantasy_recaps writes it. */
+interface DayRecap {
+  offSeasonDay: number;
+  shows?: Array<{
+    showId?: string;
+    eventName?: string;
+    results?: Array<{
+      uid: string;
+      totalScore?: number;
+      geScore?: number;
+      visualScore?: number;
+      musicScore?: number;
+      placement?: number;
+    }>;
+  }>;
+}
+
+/** One show as the battle system consumes it. */
+/** One show as createWeeklyPerformance consumes it. */
+interface ShowEntry {
+  showId: string;
+  showName: string;
+  score: number;
+  placement?: number;
+  captions?: CaptionGroupScores;
+}
+
+interface DetailMatchup {
+  user1: string;
+  user2: string;
+  week?: number;
+  status?: string;
+  corpsClass?: string;
+  captions?: CaptionsBlock;
+}
+
+interface MatchupDetailViewProps {
+  matchup: DetailMatchup;
+  league?: { id?: string } | null;
+  userProfile?: { uid?: string } | null;
+  memberProfiles?: Record<
+    string,
+    | {
+        displayName?: string;
+        username?: string;
+        corps?: Record<string, { corpsName?: string; name?: string } | undefined>;
+      }
+    | undefined
+  >;
+  standings?: Array<{ uid: string; wins: number; losses: number; totalPoints?: number }>;
+  currentWeek?: number;
+  onBack?: () => void;
+  rivalry?: RivalryData | null;
+  recaps?: DayRecap[] | null;
+}
+
+const captionGroupScores = (result: {
+  geScore?: number;
+  visualScore?: number;
+  musicScore?: number;
+}) => ({
+  ge: result.geScore || 0,
+  visual: result.visualScore || 0,
+  music: result.musicScore || 0,
+});
+
 const MatchupDetailView = ({
   matchup,
   league,
   userProfile,
   memberProfiles,
-  standings,
+  standings = [],
   currentWeek: _currentWeek,
   onBack,
   rivalry = null,
   recaps: recapsProp = null, // OPTIMIZATION: Accept pre-fetched recaps to avoid duplicate query
-}) => {
+}: MatchupDetailViewProps) => {
   const [weeklyScores, setWeeklyScores] = useState({ user1: 0, user2: 0 });
   const [loading, setLoading] = useState(true);
-  const [scoreBreakdown, setScoreBreakdown] = useState({ user1: null, user2: null });
-  const [battleBreakdown, setBattleBreakdown] = useState(null);
-  const [headToHead, setHeadToHead] = useState(null);
-  const [activeView, setActiveView] = useState('battles'); // 'battles' | 'overview' | 'captions' | 'rivalry'
+  const [scoreBreakdown, setScoreBreakdown] = useState<{
+    user1: SideBreakdown | null;
+    user2: SideBreakdown | null;
+  }>({ user1: null, user2: null });
+  const [battleBreakdown, setBattleBreakdown] = useState<MatchupBattleBreakdown | null>(null);
+  const [headToHead, setHeadToHead] = useState<ExtendedHeadToHead | null>(null);
+  const [activeView, setActiveView] = useState<'battles' | 'overview' | 'captions' | 'rivalry'>(
+    'battles'
+  );
 
   // Get user stats from standings
   const user1Stats = standings.find((s) => s.uid === matchup.user1);
   const user2Stats = standings.find((s) => s.uid === matchup.user2);
 
   // Helper to get display name
-  const getDisplayName = (uid) => {
+  const getDisplayName = (uid?: string) => {
     if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles?.[uid];
+    const profile = uid ? memberProfiles?.[uid] : undefined;
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     return profile?.username || name || `Director ${uid?.slice(0, 6)}`;
   };
 
   // Get corps name for a user
-  const getCorpsName = (uid) => {
-    const profile = memberProfiles?.[uid];
+  const getCorpsName = (uid?: string) => {
+    const profile = uid ? memberProfiles?.[uid] : undefined;
     if (profile?.corps) {
-      const activeCorps = Object.values(profile.corps).find((c) => c.corpsName || c.name);
+      const activeCorps = Object.values(profile.corps).find((c) => c?.corpsName || c?.name);
       return activeCorps?.corpsName || activeCorps?.name || null;
     }
     return null;
@@ -90,16 +179,29 @@ const MatchupDetailView = ({
         }
 
         if (recaps && recaps.length > 0) {
+          // The matchup always carries a week in practice; this is the one
+          // place that has to say so for the arithmetic below.
+          const week = matchup.week ?? 0;
           let score1 = 0,
             score2 = 0;
           let prevWeekScore1 = 0,
             prevWeekScore2 = 0;
-          const breakdown1 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };
-          const breakdown2 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };
-          const user1Shows = [];
-          const user2Shows = [];
+          const breakdown1: SideBreakdown = {
+            shows: [],
+            geTotal: 0,
+            visualTotal: 0,
+            musicTotal: 0,
+          };
+          const breakdown2: SideBreakdown = {
+            shows: [],
+            geTotal: 0,
+            visualTotal: 0,
+            musicTotal: 0,
+          };
+          const user1Shows: ShowEntry[] = [];
+          const user2Shows: ShowEntry[] = [];
 
-          recaps.forEach((dayRecap) => {
+          (recaps as DayRecap[]).forEach((dayRecap) => {
             const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
 
             // Current week data
@@ -109,20 +211,11 @@ const MatchupDetailView = ({
                   if (result.uid === matchup.user1) {
                     score1 += result.totalScore || 0;
                     const showData = {
-                      showId: show.showId || show.eventName,
-                      showName: show.eventName,
+                      showId: show.showId || show.eventName || '',
+                      showName: show.eventName || '',
                       score: result.totalScore || 0,
                       placement: result.placement,
-                      captions: result.captions || {
-                        GE1: (result.geScore || 0) / 2,
-                        GE2: (result.geScore || 0) / 2,
-                        VP: (result.visualScore || 0) / 3,
-                        VA: (result.visualScore || 0) / 3,
-                        CG: (result.visualScore || 0) / 3,
-                        B: (result.musicScore || 0) / 3,
-                        MA: (result.musicScore || 0) / 3,
-                        P: (result.musicScore || 0) / 3,
-                      },
+                      captions: captionGroupScores(result),
                     };
                     user1Shows.push(showData);
                     breakdown1.shows.push({
@@ -139,20 +232,11 @@ const MatchupDetailView = ({
                   if (result.uid === matchup.user2) {
                     score2 += result.totalScore || 0;
                     const showData = {
-                      showId: show.showId || show.eventName,
-                      showName: show.eventName,
+                      showId: show.showId || show.eventName || '',
+                      showName: show.eventName || '',
                       score: result.totalScore || 0,
                       placement: result.placement,
-                      captions: result.captions || {
-                        GE1: (result.geScore || 0) / 2,
-                        GE2: (result.geScore || 0) / 2,
-                        VP: (result.visualScore || 0) / 3,
-                        VA: (result.visualScore || 0) / 3,
-                        CG: (result.visualScore || 0) / 3,
-                        B: (result.musicScore || 0) / 3,
-                        MA: (result.musicScore || 0) / 3,
-                        P: (result.musicScore || 0) / 3,
-                      },
+                      captions: captionGroupScores(result),
                     };
                     user2Shows.push(showData);
                     breakdown2.shows.push({
@@ -171,7 +255,7 @@ const MatchupDetailView = ({
             }
 
             // Previous week data (for momentum calculation)
-            if (weekNum === matchup.week - 1) {
+            if (weekNum === (matchup.week ?? 0) - 1) {
               dayRecap.shows?.forEach((show) => {
                 show.results?.forEach((result) => {
                   if (result.uid === matchup.user1) {
@@ -192,20 +276,20 @@ const MatchupDetailView = ({
           if (user1Shows.length > 0 || user2Shows.length > 0) {
             const user1Performance = createWeeklyPerformance(
               matchup.user1,
-              matchup.week,
+              week,
               user1Shows,
               prevWeekScore1 > 0 ? prevWeekScore1 : undefined
             );
             const user2Performance = createWeeklyPerformance(
               matchup.user2,
-              matchup.week,
+              week,
               user2Shows,
               prevWeekScore2 > 0 ? prevWeekScore2 : undefined
             );
 
             const battles = calculateMatchupBattles(
-              `${league?.id || 'league'}-w${matchup.week}`,
-              matchup.week,
+              `${league?.id || 'league'}-w${week}`,
+              week,
               matchup.user1,
               matchup.user2,
               user1Performance,
@@ -216,10 +300,10 @@ const MatchupDetailView = ({
           }
 
           // Calculate head-to-head history from all past matchups
-          const allBreakdowns = [];
-          for (let week = 1; week < matchup.week; week++) {
-            const weekUser1Shows = [];
-            const weekUser2Shows = [];
+          const allBreakdowns: MatchupBattleBreakdown[] = [];
+          for (let pastWeek = 1; pastWeek < week; pastWeek++) {
+            const weekUser1Shows: ShowEntry[] = [];
+            const weekUser2Shows: ShowEntry[] = [];
             let weekPrevScore1 = 0;
             let weekPrevScore2 = 0;
 
@@ -230,38 +314,20 @@ const MatchupDetailView = ({
                   show.results?.forEach((result) => {
                     if (result.uid === matchup.user1) {
                       weekUser1Shows.push({
-                        showId: show.showId || show.eventName,
-                        showName: show.eventName,
+                        showId: show.showId || show.eventName || '',
+                        showName: show.eventName || '',
                         score: result.totalScore || 0,
                         placement: result.placement,
-                        captions: result.captions || {
-                          GE1: (result.geScore || 0) / 2,
-                          GE2: (result.geScore || 0) / 2,
-                          VP: (result.visualScore || 0) / 3,
-                          VA: (result.visualScore || 0) / 3,
-                          CG: (result.visualScore || 0) / 3,
-                          B: (result.musicScore || 0) / 3,
-                          MA: (result.musicScore || 0) / 3,
-                          P: (result.musicScore || 0) / 3,
-                        },
+                        captions: captionGroupScores(result),
                       });
                     }
                     if (result.uid === matchup.user2) {
                       weekUser2Shows.push({
-                        showId: show.showId || show.eventName,
-                        showName: show.eventName,
+                        showId: show.showId || show.eventName || '',
+                        showName: show.eventName || '',
                         score: result.totalScore || 0,
                         placement: result.placement,
-                        captions: result.captions || {
-                          GE1: (result.geScore || 0) / 2,
-                          GE2: (result.geScore || 0) / 2,
-                          VP: (result.visualScore || 0) / 3,
-                          VA: (result.visualScore || 0) / 3,
-                          CG: (result.visualScore || 0) / 3,
-                          B: (result.musicScore || 0) / 3,
-                          MA: (result.musicScore || 0) / 3,
-                          P: (result.musicScore || 0) / 3,
-                        },
+                        captions: captionGroupScores(result),
                       });
                     }
                   });
@@ -329,9 +395,14 @@ const MatchupDetailView = ({
     return (weeklyScores.user1 / total) * 100;
   }, [weeklyScores]);
 
-  const tabs = [
+  const tabs: Array<{
+    id: 'battles' | 'rivalry' | 'overview' | 'captions';
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: boolean;
+  }> = [
     { id: 'battles', label: 'Battles', icon: Swords },
-    { id: 'rivalry', label: 'Rivalry', icon: Flame, badge: headToHead?.totalMatchups > 0 },
+    { id: 'rivalry', label: 'Rivalry', icon: Flame, badge: (headToHead?.totalMatchups ?? 0) > 0 },
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'captions', label: 'Shows', icon: Trophy },
   ];
@@ -621,6 +692,21 @@ const MatchupDetailView = ({
           );
         })}
       </div>
+
+      {/* How the week was actually decided, when this league runs Caption
+          Wars. Above the tabs because it IS the result, not a detail of it. */}
+      {matchup.captions && (
+        <div className="px-4 pb-4">
+          <CaptionWarsScoreboard
+            captions={matchup.captions}
+            homeUid={matchup.user1}
+            awayUid={matchup.user2}
+            homeDisplayName={getDisplayName(matchup.user1)}
+            awayDisplayName={getDisplayName(matchup.user2)}
+            hideScores={matchup.corpsClass === 'soundSport'}
+          />
+        </div>
+      )}
 
       {/* Tab Content */}
       <AnimatePresence mode="wait">

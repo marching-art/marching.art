@@ -109,6 +109,13 @@ const TRANSACTION_TYPES = {
   // forfeits the fee; being removed is not the member's choice, and without
   // the refund a commissioner could farm the pool by kicking every joiner.
   LEAGUE_ENTRY_REFUND: "league_entry_refund",
+  // An alternate scoring format, bought by a commissioner for one season out
+  // of their OWN balance (callable/leagueFormat.js). Never charged per member:
+  // the format is a property of a matchup, so both sides play the same one, and
+  // charging each member to keep playing would be pay-to-play in a league they
+  // already paid an entry fee to join. It also never touches the prize pool,
+  // which is members' escrow.
+  LEAGUE_FORMAT: "league_format",
   COSMETIC_PURCHASE: "cosmetic_purchase",
   // Legacy Endowment: the recurring, uncapped sink (helpers/legacyCatalog.js).
   // Distinct from COSMETIC_PURCHASE so the weekly mint-vs-sink readout can show

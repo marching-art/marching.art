@@ -20,6 +20,7 @@ const { processAllInPages } = require("./firestorePaging");
 const { buildMatchupResultPushes } = require("./matchupResults");
 const { sendPushNotification, PUSH_TYPES } = require("./pushService");
 const { MATCHUP_CLASSES: CORPS_CLASSES } = require("./classRegistry");
+const { captionsWonBy, CAPTION_CATEGORIES } = require("./captionWars");
 
 /**
  * Detect rivalries from a league's matchup history.
@@ -111,8 +112,19 @@ function generateWeeklyRecap(weekMatchups, standings, memberProfiles) {
       closestMatch: null,
       highestScorer: null,
       playerOfWeek: null,
+      // Caption Wars only. Null on a league resolving on totals, so the recap
+      // card can tell "no sweeps this week" from "this league does not have
+      // sweeps".
+      captions: null,
     },
   };
+
+  // Sweeps and 2-1s, on a league running Caption Wars. Under this format the
+  // close game is the 2-1, not the narrow points margin — a director can lose
+  // by a tenth and still be swept 3-0.
+  const sweeps = [];
+  let thrillers = 0;
+  let captionMatchups = 0;
 
   let closestMargin = Infinity;
   let biggestUpsetMargin = 0;
@@ -170,6 +182,22 @@ function generateWeeklyRecap(weekMatchups, standings, memberProfiles) {
         }
       }
 
+      if (matchup.captions) {
+        captionMatchups++;
+        for (const uid of [p1, p2]) {
+          const { won, lost } = captionsWonBy(matchup.captions, uid);
+          if (won === CAPTION_CATEGORIES.length) {
+            sweeps.push({
+              player: memberProfiles[uid]?.displayName || uid,
+              playerId: uid,
+              corpsClass,
+            });
+          } else if (won === 2 && lost === 1) {
+            thrillers++;
+          }
+        }
+      }
+
       const maxScore = Math.max(score1, score2);
       if (maxScore > highestScore) {
         highestScore = maxScore;
@@ -182,6 +210,21 @@ function generateWeeklyRecap(weekMatchups, standings, memberProfiles) {
         };
       }
     }
+  }
+
+  if (captionMatchups > 0) {
+    recap.stats.captions = { matchups: captionMatchups, sweeps, thrillers };
+  }
+
+  if (sweeps.length > 0) {
+    const names = sweeps.map((s) => s.player);
+    recap.highlights.push({
+      type: "caption_sweep",
+      text:
+        names.length === 1
+          ? `${names[0]} swept all three captions this week.`
+          : `${names.length} directors swept all three captions: ${names.join(", ")}.`,
+    });
   }
 
   if (recap.stats.biggestUpset) {

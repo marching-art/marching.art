@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Small helper components for LeagueDetailView: the inline smack-talk input
 // and the leave-league confirmation modal. Extracted verbatim from
 // LeagueDetailView.jsx.
@@ -10,13 +9,23 @@ import toast from 'react-hot-toast';
 import { postLeagueMessageCF as postLeagueMessage } from '../../api/functions';
 
 // Quick Smack Talk Input - Compact inline form
-export const SmackTalkInput = ({ leagueId, userProfile: _userProfile, disabled = false }) => {
+interface SmackTalkInputProps {
+  leagueId?: string;
+  userProfile?: { uid?: string } | null;
+  disabled?: boolean;
+}
+
+export const SmackTalkInput = ({
+  leagueId,
+  userProfile: _userProfile,
+  disabled = false,
+}: SmackTalkInputProps) => {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
-  const handleSend = async (e) => {
+  const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!message.trim() || sending) return;
+    if (!message.trim() || sending || !leagueId) return;
 
     setSending(true);
     try {
@@ -54,6 +63,17 @@ export const SmackTalkInput = ({ leagueId, userProfile: _userProfile, disabled =
 };
 
 // Leave League Confirmation Modal
+interface LeaveLeagueModalProps {
+  leagueName?: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading?: boolean;
+  entryFee?: number;
+  isCommissioner?: boolean;
+  isLastMember?: boolean;
+  escrowReturned?: number;
+}
+
 export const LeaveLeagueModal = ({
   leagueName,
   onClose,
@@ -63,9 +83,9 @@ export const LeaveLeagueModal = ({
   isCommissioner = false,
   isLastMember = false,
   escrowReturned = 0,
-}) => {
+}: LeaveLeagueModalProps) => {
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleEscape);

@@ -1,7 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
 import type { CorpsClass } from './corps';
-import type { CaptionScores } from './season';
 import type { LifetimeStats } from './user';
 
 // =============================================================================
@@ -71,15 +70,26 @@ export interface LeagueSettings {
    * (functions/src/helpers/leagueChampion.js). The one league setting that
    * changes how a season ends.
    *
-   * `scoringFormat`, `matchupType` and `playoffSize` used to live here and were
-   * read by nothing — settings a commissioner appeared to choose that could not
-   * affect their league. Alternate formats are real future work
-   * (docs/GAMIFICATION.md); until they exist, the fields are gone.
+   * `matchupType` and `playoffSize` used to live here too and were read by
+   * nothing — settings a commissioner appeared to choose that could not affect
+   * their league. They are gone. `scoringFormat` came back below, with an
+   * implementation behind it.
    */
   finalsSize: number;
   prizePool: number;
   /** CorpsCoin fee charged to every joiner (creator included), paid into the prize pool */
   entryFee?: number;
+  /**
+   * How this league decides its weekly matchups. Absent means `total` — one
+   * comparison of the week's score, the default.
+   *
+   * Bought for ONE season by the commissioner (callable/leagueFormat.js), which
+   * is why it is paired with the season it was bought for: resolution requires
+   * BOTH, so a value left behind by a previous season can never switch a league
+   * into a paid format nobody bought. See docs/CAPTION_WARS_SPEC.md.
+   */
+  scoringFormat?: 'total' | 'captionWars';
+  scoringFormatSeasonUid?: string;
 }
 
 export interface LeagueStanding {
@@ -130,10 +140,6 @@ export interface Matchup {
   homeScore: number;
   awayScore: number;
 
-  // Caption breakdowns
-  homeCaptions?: CaptionScores;
-  awayCaptions?: CaptionScores;
-
   // Result (after completion)
   winnerId?: string;
   margin?: number;
@@ -162,10 +168,6 @@ export interface MatchupResult {
   // Final scores
   homeScore: number;
   awayScore: number;
-
-  // Caption breakdown
-  homeCaptions: CaptionScores;
-  awayCaptions: CaptionScores;
 
   // Winner
   winnerId: string;

@@ -467,6 +467,211 @@ describe("processWeeklyMatchups", () => {
   });
 });
 
+// Caption Wars — a league that opted into deciding its weeks as a best-of-three
+// across GE, Visual and Music (helpers/captionWars.js). The point of these
+// tests is that the format changes ONLY which uid lands in `winner`: every
+// reward, token, standings write and stored field around it is untouched.
+describe("processWeeklyMatchups with Caption Wars", () => {
+  const captionWarsLeague = (seasonUid = "season-1") => ({
+    name: "Caption League",
+    settings: { scoringFormat: "captionWars", scoringFormatSeasonUid: seasonUid },
+  });
+
+  /** A week where bob posts the higher total but banks all of it in GE. */
+  const upsetDays = (week) => {
+    const firstDay = week * 7 - 6;
+    return [
+      [
+        `fantasy_recaps/season-1/days/${firstDay}`,
+        {
+          offSeasonDay: firstDay,
+          shows: [
+            {
+              results: [
+                {
+                  uid: "alice",
+                  corpsClass: "worldClass",
+                  totalScore: 86,
+                  geScore: 30,
+                  visualScore: 28,
+                  musicScore: 28,
+                },
+                {
+                  uid: "bob",
+                  corpsClass: "worldClass",
+                  totalScore: 94,
+                  geScore: 40,
+                  visualScore: 27,
+                  musicScore: 27,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ];
+  };
+
+  const setup = (leagueData) => {
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        { worldClassMatchups: [{ pair: ["alice", "bob"] }] },
+      ],
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      ...upsetDays(3),
+    ]);
+    return makeFakeDb({ leagues: [{ id: "league-1", data: leagueData }], docs });
+  };
+
+  const resolvedMatchup = (writes) =>
+    writes.find((w) => w.path === `${leaguesPath}/league-1/matchups/week-3`).data
+      .worldClassMatchups[0];
+
+  test("the week goes to the director who took two captions, not the higher total", async () => {
+    const { db, writes } = setup(captionWarsLeague());
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const resolved = resolvedMatchup(writes);
+    assert.equal(resolved.winner, "alice");
+    assert.deepEqual(resolved.captions.tally, { alice: 2, bob: 1 });
+    assert.equal(resolved.captions.ge.winner, "bob");
+    assert.equal(resolved.captions.visual.winner, "alice");
+    assert.equal(resolved.captions.music.winner, "alice");
+
+    // `scores` still holds the weekly TOTAL, so points-for/against, the
+    // percentile and the record book keep meaning the same thing in both
+    // formats — bob's higher total is recorded even though he lost the week.
+    assert.deepEqual(resolved.scores, { alice: 86, bob: 94 });
+    assert.deepEqual(resolved.normalized, { alice: 50, bob: 100 });
+  });
+
+  test("the weekly-win bonus follows the caption winner, not the higher score", async () => {
+    const { db, writes } = setup(captionWarsLeague());
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const paid = writes.find(
+      (w) => w.path === profilePath("alice") && w.data?.corpsCoin !== undefined
+    );
+    assert.ok(paid, "the caption winner is paid the weekly-win bonus");
+    assert.equal(
+      writes.filter((w) => w.path === profilePath("bob") && w.data?.corpsCoin !== undefined).length,
+      0,
+      "the higher total is not paid for losing the week"
+    );
+
+    // The record increments follow too.
+    const aliceRecord = writes.find(
+      (w) => w.path === profilePath("alice") && w.data?.["seasons.season-1.records.worldClass"]
+    );
+    assert.ok(aliceRecord.data["seasons.season-1.records.worldClass"].w);
+  });
+
+  test("standings are folded from the caption winner", async () => {
+    const standingsPath = `${leaguesPath}/league-1/standings/current`;
+    const emptyRecord = () => ({
+      wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0,
+      currentStreak: 0, streakType: null,
+    });
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        { worldClassMatchups: [{ pair: ["alice", "bob"] }] },
+      ],
+      [standingsPath, { records: { alice: emptyRecord(), bob: emptyRecord() } }],
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      ...upsetDays(3),
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-1", data: captionWarsLeague() }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const standingsWrite = writes.find(
+      (w) => w.type === "docUpdate" && w.path === standingsPath
+    );
+    assert.equal(standingsWrite.data.records.alice.wins, 1);
+    assert.equal(standingsWrite.data.records.bob.wins, 0);
+    // Points still track the totals, so the loser's bigger week is on the board.
+    assert.equal(standingsWrite.data.records.bob.pointsFor, 94);
+  });
+
+  // The regression guard on the whole feature: a league that did not opt in
+  // must resolve exactly as it always has, and carry no captions block.
+  test("a league on the default format is untouched", async () => {
+    const { db, writes } = setup({ name: "Ordinary League" });
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const resolved = resolvedMatchup(writes);
+    assert.equal(resolved.winner, "bob", "the higher total wins on the default format");
+    assert.equal(resolved.captions, undefined, "no captions block is written");
+  });
+
+  // A stale `settings.scoringFormat` left over from before the field was
+  // deleted, or an unlock bought for a previous season, must never switch a
+  // league into a paid format nobody bought this year.
+  test("an unlock from another season does not apply", async () => {
+    const { db, writes } = setup(captionWarsLeague("season-0"));
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const resolved = resolvedMatchup(writes);
+    assert.equal(resolved.winner, "bob");
+    assert.equal(resolved.captions, undefined);
+  });
+
+  test("a director who sat the week out loses every caption", async () => {
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        { worldClassMatchups: [{ pair: ["alice", "ghost"] }] },
+      ],
+      [profilePath("alice"), {}],
+      [profilePath("ghost"), {}],
+      ...upsetDays(3),
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-1", data: captionWarsLeague() }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const resolved = resolvedMatchup(writes);
+    assert.equal(resolved.winner, "alice");
+    assert.deepEqual(resolved.captions.tally, { alice: 3, ghost: 0 });
+    assert.deepEqual(resolved.shows, { alice: 1, ghost: 0 });
+  });
+
+  test("a bye carries no captions block", async () => {
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        {
+          worldClassMatchups: [
+            { pair: ["alice", null], winner: "alice", completed: true, isBye: true },
+          ],
+        },
+      ],
+      [profilePath("alice"), {}],
+      ...upsetDays(3),
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-1", data: captionWarsLeague() }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const resolved = resolvedMatchup(writes);
+    assert.equal(resolved.isBye, true);
+    assert.equal(resolved.captions, undefined);
+  });
+});
+
 // Weekly-participation XP — the "compete in the weekly shows" earner that was
 // advertised in XP_SOURCES but never paid (awardXP had no callers). Paid at
 // the week boundary from the week's committed recap docs, once per

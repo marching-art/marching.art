@@ -530,6 +530,23 @@ export async function getLeagueMatchups(
 }
 
 /**
+ * Every archived season's matchup weeks, as `{ id, ...data }`.
+ *
+ * Rollover MOVES finished weeks here so the live collection only ever holds the
+ * current season (see resetLeaguesForNewSeason — leaving them in place made the
+ * generator skip every week of the next season). Ids are `{seasonUid}_week-N`,
+ * which is deliberately not `week-N`: every reader that walks the live
+ * collection filters on that shape, so history can never be mistaken for
+ * current work.
+ */
+export async function getLeagueMatchupHistory(
+  leagueId: string
+): Promise<Array<{ id: string } & DocumentData>> {
+  const snapshot = await getDocs(collection(db, paths.leagueMatchupHistory(leagueId)));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
  * Fetch a single week's matchup document for a league, or null if absent.
  */
 export async function getLeagueMatchupWeek(

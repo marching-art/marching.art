@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // ChatTab - Dark-mode messenger styling
 // Design System: #111 received bubbles, #0057B8 sent bubbles, Commissioner badge
 
@@ -7,6 +6,44 @@ import { m, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Clock, Crown, Trash2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { deleteChatMessage } from '../../../api/leagues';
+
+/** Firestore timestamps carry toDate(); anything else goes through Date. */
+const toDate = (value: MaybeTimestamp): Date => {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof value.toDate === 'function'
+  ) {
+    return value.toDate();
+  }
+  return new Date((value as string | number | Date) ?? Date.now());
+};
+
+/** A Firestore timestamp, or anything Date accepts. */
+type MaybeTimestamp = { toDate?: () => Date } | string | number | Date | null | undefined;
+
+interface ChatMessage {
+  id: string;
+  userId?: string;
+  message?: string;
+  createdAt?: MaybeTimestamp;
+}
+
+interface ChatTabProps {
+  league?: { id?: string; creatorId?: string } | null;
+  messages: ChatMessage[];
+  userProfile?: { uid?: string } | null;
+  memberProfiles?: Record<string, { displayName?: string; username?: string }>;
+  isCommissioner?: boolean;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadOlder?: () => void;
+  onMarkRead?: () => void;
+}
+
+/** A date separator or a message, in render order. */
+type ChatRow = { type: 'date'; date: Date } | ({ type: 'message' } & ChatMessage);
 
 const ChatTab = ({
   league,
@@ -18,9 +55,9 @@ const ChatTab = ({
   isLoadingMore = false,
   onLoadOlder,
   onMarkRead,
-}) => {
-  const messagesEndRef = useRef(null);
-  const [deletingId, setDeletingId] = useState(null);
+}: ChatTabProps) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -35,35 +72,35 @@ const ChatTab = ({
 
   // League chat had no moderation surface at all: no delete, no report, no
   // mute, while rendering verbatim messages to every member with no recourse.
-  const handleDelete = async (message) => {
-    if (!window.confirm('Delete this message?')) return;
+  const handleDelete = async (message: ChatMessage) => {
+    if (!window.confirm('Delete this message?') || !league?.id) return;
     setDeletingId(message.id);
     try {
       await deleteChatMessage(league.id, message.id);
       toast.success('Message deleted.');
     } catch (error) {
-      toast.error(error.message || 'Failed to delete message');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete message');
     } finally {
       setDeletingId(null);
     }
   };
 
   // Get display name
-  const getDisplayName = (uid) => {
+  const getDisplayName = (uid?: string) => {
     if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles?.[uid];
+    const profile = uid ? memberProfiles?.[uid] : undefined;
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     return profile?.username || name || `Director ${uid?.slice(0, 6)}`;
   };
 
   // Format timestamp
-  const formatTime = (timestamp) => {
+  const formatTime = (timestamp: MaybeTimestamp) => {
     if (!timestamp) return '';
 
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = toDate(timestamp);
     const now = new Date();
-    const diffMs = now - date;
+    const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -78,12 +115,12 @@ const ChatTab = ({
   };
 
   // Group messages by date
-  const groupMessagesByDate = (msgs) => {
-    const groups = [];
-    let currentDate = null;
+  const groupMessagesByDate = (msgs: ChatMessage[]): ChatRow[] => {
+    const groups: ChatRow[] = [];
+    let currentDate: string | null = null;
 
     msgs.forEach((msg) => {
-      const msgDate = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt);
+      const msgDate = toDate(msg.createdAt);
       const dateStr = msgDate.toDateString();
 
       if (dateStr !== currentDate) {
@@ -96,7 +133,7 @@ const ChatTab = ({
     return groups;
   };
 
-  const formatDateSeparator = (date) => {
+  const formatDateSeparator = (date: Date) => {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CREATE LEAGUE MODAL - DATA-TERMINAL STYLE
 // =============================================================================
@@ -8,13 +7,31 @@ import { X, Users, Lock, Trophy, Copy, Check, Share2, Link2 } from 'lucide-react
 import Portal from '../Portal';
 import toast from 'react-hot-toast';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import type { LeagueCreationData } from '../../types';
 
-const CreateLeagueModal = ({ onClose, onCreate }) => {
+/** Exactly what createLeague accepts — no prizePool, which is server escrow. */
+type LeagueFormData = LeagueCreationData & {
+  settings: { finalsSize: number; entryFee: number };
+};
+
+interface CreatedLeague extends LeagueFormData {
+  inviteCode: string;
+  leagueId?: string;
+}
+
+interface CreateLeagueModalProps {
+  onClose: () => void;
+  onCreate: (data: LeagueCreationData) => Promise<{
+    data?: { inviteCode?: string; leagueId?: string };
+  } | void>;
+}
+
+const CreateLeagueModal = ({ onClose, onCreate }: CreateLeagueModalProps) => {
   // Close on Escape key
   useEscapeKey(onClose);
 
-  const [step, setStep] = useState('create'); // 'create' | 'success'
-  const [formData, setFormData] = useState({
+  const [step, setStep] = useState<'create' | 'success'>('create');
+  const [formData, setFormData] = useState<LeagueFormData>({
     name: '',
     description: '',
     isPublic: true,
@@ -27,10 +44,10 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
     },
   });
   const [processing, setProcessing] = useState(false);
-  const [createdLeague, setCreatedLeague] = useState(null);
+  const [createdLeague, setCreatedLeague] = useState<CreatedLeague | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setProcessing(true);
 
@@ -44,7 +61,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
       setStep('success');
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      toast.error(error.message || 'Failed to create league');
+      toast.error(error instanceof Error ? error.message : 'Failed to create league');
     } finally {
       setProcessing(false);
     }
@@ -225,7 +242,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       max="20"
                       value={formData.maxMembers}
                       onChange={(e) =>
-                        setFormData({ ...formData, maxMembers: parseInt(e.target.value) })
+                        setFormData({ ...formData, maxMembers: parseInt(e.target.value, 10) })
                       }
                       className="w-full h-2 bg-line rounded-none appearance-none cursor-pointer accent-interactive"
                     />

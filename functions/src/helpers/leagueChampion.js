@@ -26,6 +26,11 @@
  *      standings earn you the right to be there.
  *   3. ELIGIBILITY — only directors registered for the season being archived
  *      (isActiveThisSeason), never the profile-wide marker alone.
+ *   4. CONSOLATION — everyone BELOW the cut runs the same race for a second,
+ *      lesser title. A league of 20 with a field of 12 left eight directors
+ *      with nothing to play for from the moment they were mathematically out,
+ *      which is the week most of them stop showing up. Same rule, same data,
+ *      no extra reads.
  *
  * Pure: takes rows and maps, returns a decision. The Firestore reads live in
  * helpers/season.js.
@@ -37,9 +42,18 @@ const { compareStandingRows } = require("./leagueStandings");
 const DEFAULT_FINALS_SIZE = 12;
 
 /**
+ * Smallest consolation field worth deciding.
+ *
+ * A director who is the only one below the cut cannot win anything by beating
+ * nobody, and a "Consolation Champion" of one reads as a consolation prize in
+ * the worst sense. Two is a race.
+ */
+const MIN_CONSOLATION_FIELD = 2;
+
+/**
  * @typedef {Object} ChampionInput
- * @property {Array<Object>} standings - standings/current rows (uid, wins, …)
- * @property {Set<string>|Array<string>} eligibleUids - members registered for
+ * @property {Array<Object>} [standings] - standings/current rows (uid, wins, …)
+ * @property {Set<string>|Array<string>} [eligibleUids] - members registered for
  *   the season being archived
  * @property {Map<string, {score: number, shows: number}>} [finalsScores] -
  *   uid -> championship-week total; omit to decide on seed alone
@@ -54,7 +68,9 @@ const DEFAULT_FINALS_SIZE = 12;
  *   seed: number|null,
  *   record: Object|null,
  *   finalsScore: number|null,
- *   qualifiers: Array<{uid: string, seed: number, finalsScore: number}>
+ *   qualifiers: Array<{uid: string, seed: number, finalsScore: number}>,
+ *   consolation: {uid: string, seed: number, decidedBy: string,
+ *     finalsScore: number|null, record: Object, fieldSize: number}|null
  * }}
  */
 function selectLeagueChampion({
@@ -80,6 +96,7 @@ function selectLeagueChampion({
       record: null,
       finalsScore: null,
       qualifiers: [],
+      consolation: null,
     };
   }
 
@@ -114,7 +131,62 @@ function selectLeagueChampion({
     },
     finalsScore: anyFinalsScore ? winner.finalsScore : null,
     qualifiers: qualifiers.map(({ uid, seed, finalsScore }) => ({ uid, seed, finalsScore })),
+    consolation: selectConsolationWinner(seeded.slice(cut), cut, finalsScores),
   };
 }
 
-module.exports = { selectLeagueChampion, DEFAULT_FINALS_SIZE };
+/**
+ * The best of the directors who missed the cut.
+ *
+ * Decided exactly like the title — championship week among the field, falling
+ * back to the best seed when nobody in it competed — so a league has one rule
+ * for "who won", applied twice. Seeds continue from the cut rather than
+ * restarting at 1: a director who finished 13th finished 13th, and renumbering
+ * them the #1 seed of anything overstates it.
+ *
+ * Recognition only. It pays no prize pool, because the pool is escrowed entry
+ * fees that were advertised as the champion's, and it mints no CorpsCoin,
+ * because the game needs sinks rather than another faucet. What it pays is a
+ * permanent line in the league's history, which is the thing the last three
+ * weeks of a lost season were missing.
+ *
+ * @param {Array<Object>} belowCut - seeded standings rows below the finals cut
+ * @param {number} cut - the finals size, so seeds continue rather than restart
+ * @param {Map<string, {score: number, shows: number}>} finalsScores
+ */
+function selectConsolationWinner(belowCut, cut, finalsScores) {
+  if (belowCut.length < MIN_CONSOLATION_FIELD) return null;
+
+  const field = belowCut.map((row, index) => ({
+    uid: row.uid,
+    seed: cut + index + 1,
+    finalsScore: finalsScores.get(row.uid)?.score ?? 0,
+    row,
+  }));
+
+  const anyFinalsScore = field.some((entry) => (finalsScores.get(entry.uid)?.shows || 0) > 0);
+  const winner = anyFinalsScore
+    ? field.slice().sort((a, b) => b.finalsScore - a.finalsScore || a.seed - b.seed)[0]
+    : field[0];
+
+  return {
+    uid: winner.uid,
+    seed: winner.seed,
+    decidedBy: anyFinalsScore ? "finals" : "standings",
+    finalsScore: anyFinalsScore ? winner.finalsScore : null,
+    record: {
+      wins: winner.row.wins || 0,
+      losses: winner.row.losses || 0,
+      ties: winner.row.ties || 0,
+      totalPoints: winner.row.totalPoints || 0,
+    },
+    fieldSize: field.length,
+  };
+}
+
+module.exports = {
+  selectLeagueChampion,
+  selectConsolationWinner,
+  DEFAULT_FINALS_SIZE,
+  MIN_CONSOLATION_FIELD,
+};

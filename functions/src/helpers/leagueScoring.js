@@ -27,6 +27,21 @@
 
 const { logger } = require("firebase-functions/v2");
 
+/**
+ * One corps' week, as folded from the recap days.
+ *
+ * @typedef {Object} WeekScoreEntry
+ * @property {string} uid
+ * @property {string} corpsClass
+ * @property {number} score - total across every show attended this week
+ * @property {number} shows - shows attended
+ * @property {number} ge - General Effect across the week (0–40 per show)
+ * @property {number} visual - Visual across the week (0–30 per show)
+ * @property {number} music - Music across the week (0–30 per show)
+ * @property {number} classPercentile - finish against this corps' own class, 0–100
+ * @property {number} classFieldSize - how many corps that class fielded
+ */
+
 /** Competition days covered by a week. Week 1 = days 1..7. */
 function weekDayRange(week) {
   const lastDay = week * 7;
@@ -46,7 +61,7 @@ function scoreKey(uid, corpsClass) {
  * point, and what the "latest score" comparison threw away.
  *
  * @param {Array<{exists: boolean, data: function}>} dayDocs
- * @returns {{index: Map<string, {score: number, shows: number}>, daysFound: number}}
+ * @returns {{index: Map<string, WeekScoreEntry>, daysFound: number}}
  */
 function buildWeeklyScoreIndex(dayDocs) {
   const index = new Map();
@@ -64,8 +79,21 @@ function buildWeeklyScoreIndex(dayDocs) {
           corpsClass: result.corpsClass,
           score: 0,
           shows: 0,
+          ge: 0,
+          visual: 0,
+          music: 0,
         };
         entry.score += Number(result.totalScore) || 0;
+        // The three caption groups the scorer already persists on every show
+        // result (helpers/scoring.js): GE 0–40, Visual 0–30, Music 0–30. Summed
+        // exactly like `score`, so competing twice counts twice in every
+        // category equally. Only the Caption Wars format reads these; carrying
+        // them always costs one addition over documents already in memory, and
+        // means the format can never disagree with the total about which shows
+        // a week contained.
+        entry.ge += Number(result.geScore) || 0;
+        entry.visual += Number(result.visualScore) || 0;
+        entry.music += Number(result.musicScore) || 0;
         entry.shows += 1;
         index.set(key, entry);
       }
@@ -155,13 +183,22 @@ async function fetchWeeklyScoreIndex(db, seasonUid, week) {
  * One corps' week. A corps that did not compete scores 0 with 0 shows — that
  * is a real result (you forfeited the week), not missing data.
  *
- * @param {Map<string, {score: number, shows: number}>} index
+ * @param {Map<string, WeekScoreEntry>} index
+ * @returns {WeekScoreEntry}
  */
 function getWeekScore(index, uid, corpsClass) {
   return (
     index.get(scoreKey(uid, corpsClass)) || {
+      uid,
+      corpsClass,
       score: 0,
       shows: 0,
+      // Zero in every caption too, so a Caption Wars matchup against a director
+      // who sat the week out is a 3-0 sweep rather than a comparison against
+      // undefined. Forfeiting a week forfeits every category.
+      ge: 0,
+      visual: 0,
+      music: 0,
       // Did not compete: last in their field, by definition.
       classPercentile: 0,
       classFieldSize: 0,
@@ -174,7 +211,7 @@ function getWeekScore(index, uid, corpsClass) {
  * same index — so participation XP and matchup resolution can never disagree
  * about who showed up.
  *
- * @param {Map<string, {score: number, shows: number}>} index
+ * @param {Map<string, WeekScoreEntry>} index
  * @returns {Map<string, Set<string>>} uid -> set of corps classes
  */
 function participatingClassesByUid(index) {

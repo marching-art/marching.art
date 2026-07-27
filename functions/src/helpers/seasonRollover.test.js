@@ -70,11 +70,23 @@ function makeFakeDb({ profiles = [], leagues = [], docs = new Map() } = {}) {
       }
       writes.push({ type: "docSet", path, data, options });
     },
-    // resetLeaguesForNewSeason reaches leagues/{id}/standings/{docId} through
-    // the league ref, the same way createLeague and joinLeague do.
+    // resetLeaguesForNewSeason reaches leagues/{id}/standings/{docId} and
+    // leagues/{id}/matchups through the league ref, the same way createLeague
+    // and joinLeague do.
     collection(sub) {
+      const prefix = `${path}/${sub}/`;
       return {
-        doc: (id) => makeDocRef(`${path}/${sub}/${id ?? `auto-${++autoId}`}`),
+        doc: (id) => makeDocRef(`${prefix}${id ?? `auto-${++autoId}`}`),
+        async get() {
+          const found = [...docs.keys()]
+            .filter((key) => key.startsWith(prefix) && !key.slice(prefix.length).includes("/"))
+            .map((key) => ({
+              id: key.slice(prefix.length),
+              ref: makeDocRef(key),
+              data: () => docs.get(key),
+            }));
+          return { empty: found.length === 0, size: found.length, docs: found };
+        },
       };
     },
   });
@@ -385,6 +397,54 @@ describe("archiveSeasonResultsLogic", () => {
       ]),
     });
 
+  // A league of twenty with a field of twelve used to leave eight directors
+  // with nothing to play for the moment they were mathematically out. The
+  // consolation title is the same race on the same week — recognition only, so
+  // it moves no CorpsCoin and never touches the prize pool.
+  test("records the consolation title alongside the champion", async () => {
+    const { db, writes } = makeLeagueFixture(
+      { members: ["alice", "bob", "carol", "dave"], settings: { finalsSize: 2 } },
+      [
+        [
+          profilePath("carol"),
+          { activeSeasonId: "old-season", username: "carol", corps: { worldClass: { corpsName: "C" } } },
+        ],
+        [
+          profilePath("dave"),
+          { activeSeasonId: "old-season", username: "dave", corps: { worldClass: { corpsName: "D" } } },
+        ],
+        [
+          `${leaguesPath}/league-1/standings/current`,
+          {
+            standings: [
+              { uid: "alice", wins: 3, losses: 0, ties: 0, totalPoints: 270, pointsAgainst: 240 },
+              { uid: "bob", wins: 2, losses: 1, ties: 0, totalPoints: 260, pointsAgainst: 250 },
+              { uid: "carol", wins: 1, losses: 2, ties: 0, totalPoints: 250, pointsAgainst: 260 },
+              { uid: "dave", wins: 0, losses: 3, ties: 0, totalPoints: 240, pointsAgainst: 270 },
+            ],
+          },
+        ],
+      ]
+    );
+
+    await archiveSeasonResultsLogic(db, { seasonUid: "old-season", seasonName: "Old Season" });
+
+    const leagueWrite = writes.find((w) => w.path === `${leaguesPath}/league-1`);
+    const entry = JSON.stringify(leagueWrite.data.champions);
+    assert.match(entry, /"winnerId":"alice"/);
+    assert.match(entry, /"consolation":\{"winnerId":"carol"/);
+    // Seeds continue from the cut: third is third, not the #1 seed of anything.
+    assert.match(entry, /"seed":3/);
+
+    // Recognition only — no achievement, no coin, nothing out of the pool.
+    const carolWrites = writes.filter((w) => w.path === profilePath("carol"));
+    assert.equal(
+      carolWrites.filter((w) => w.data?.corpsCoin !== undefined || w.data?.achievements).length,
+      0,
+      "the consolation title must move no CorpsCoin and grant no achievement"
+    );
+  });
+
   test("archives the champion for the PASSED-IN season and pays pool + achievement CC", async () => {
     const { db, writes } = makeLeagueFixture();
 
@@ -496,6 +556,164 @@ describe("resetLeaguesForNewSeason", () => {
     assert.ok(live, "the live table must be reset");
     assert.deepEqual(live.data.standings, []);
     assert.deepEqual(live.data.records, {});
+  });
+
+  // Standings were reset here from the start; matchups never were. They are
+  // keyed by week number alone, so last season's week-1 was still sitting there
+  // when the new season began — and the generator skips a week whose document
+  // already exists. A league that completed one season never had matchups
+  // generated again: every week looked done, the weekly resolution found
+  // nothing to resolve, and the table never moved.
+  test("moves the finished season's matchups out of the live collection", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set(`${leaguesPath}/league-1/matchups/week-1`, {
+      worldClassMatchups: [{ pair: ["alice", "bob"], winner: "alice", completed: true }],
+    });
+    docs.set(`${leaguesPath}/league-1/matchups/week-7`, {
+      worldClassMatchups: [{ pair: ["alice", "bob"], winner: "bob", completed: true }],
+    });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    // Kept as history, stamped with the season it belonged to...
+    const archived = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1/matchupHistory/old-season_week-1`
+    );
+    assert.ok(archived, "the finished season's matchups must be kept as history");
+    assert.equal(archived.data.seasonUid, "old-season");
+    assert.equal(archived.data.worldClassMatchups.length, 1);
+
+    // ...and MOVED, not copied. Leaving the live document in place is the bug.
+    for (const week of [1, 7]) {
+      assert.ok(
+        writes.some(
+          (w) => w.type === "delete" && w.path === `${leaguesPath}/league-1/matchups/week-${week}`
+        ),
+        `week-${week} must be cleared from the live collection`
+      );
+    }
+  });
+
+  // The Activity tab reads recaps/week-{currentWeek}. Recaps are keyed by week
+  // number alone and were never reset, so for most of every week of every
+  // season after the first, members were shown last season's highlights,
+  // upsets and top scorer as if they had just happened.
+  test("moves the finished season's weekly recaps out of the live collection", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set(`${leaguesPath}/league-1/recaps/week-1`, {
+      week: 1,
+      highlights: [{ type: "upset", text: "Upset Alert!" }],
+    });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const archived = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1/recapHistory/old-season_week-1`
+    );
+    assert.ok(archived, "the finished season's recaps must be kept as history");
+    assert.equal(archived.data.seasonUid, "old-season");
+    assert.ok(
+      writes.some(
+        (w) => w.type === "delete" && w.path === `${leaguesPath}/league-1/recaps/week-1`
+      ),
+      "the live recap must be cleared"
+    );
+  });
+
+  // Rivalries are derived from the live matchup collection, which rollover
+  // empties — so a stale doc would keep displaying last season's grudges until
+  // the Monday job next ran.
+  test("clears detected rivalries", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    assert.ok(
+      writes.some(
+        (w) => w.type === "delete" && w.path === `${leaguesPath}/league-1/meta/rivalries`
+      )
+    );
+  });
+
+  // The pointer names the circuit new directors are placed into, and that
+  // circuit is now full of members from a season that has ended.
+  test("retires the rookie-circuit pointer so new directors get a fresh one", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set("game-settings/rookie-league", { leagueId: "league-1", counter: 3 });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const pointerWrite = writes.find((w) => w.path === "game-settings/rookie-league");
+    assert.ok(pointerWrite, "the pointer must be retired");
+    assert.equal(pointerWrite.data.leagueId, null);
+    // The counter survives, so circuits keep numbering upward.
+    assert.equal(docs.get("game-settings/rookie-league").counter, 3);
+  });
+
+  // A pinned announcement sits above every tab. One about a season that has
+  // ended is worse than none at all.
+  test("unpins the commissioner's announcement", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    league.data.announcement = { text: 'Draft night moved to Thursday.' };
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const leagueWrite = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1` && w.data?.seasonId === "new-season"
+    );
+    assert.ok(leagueWrite.data.announcement, "announcement must be explicitly cleared");
+  });
+
+  // An alternate scoring format is bought for ONE season. Clearing it here is
+  // what makes it a recurring CorpsCoin sink rather than a one-time unlock, and
+  // it stops a departed commissioner leaving their league on a format none of
+  // the current members chose.
+  test("resets the scoring format, which is bought one season at a time", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    league.data.settings = {
+      entryFee: 500,
+      scoringFormat: "captionWars",
+      scoringFormatSeasonUid: "old-season",
+    };
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    const leagueWrite = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1` && w.data?.seasonId === "new-season"
+    );
+    assert.equal(leagueWrite.data["settings.scoringFormat"], "total");
+    assert.ok(
+      leagueWrite.data["settings.scoringFormatSeasonUid"],
+      "the season pin must be explicitly cleared"
+    );
+    // The rest of settings — entry fee, prize pool, finals size — is untouched.
+    assert.equal(leagueWrite.data["settings.entryFee"], undefined);
+  });
+
+  test("leaves documents that are not week-N alone", async () => {
+    const docs = new Map();
+    const league = leagueWithStandings(docs);
+    docs.set(`${leaguesPath}/league-1/matchups/notes`, { anything: true });
+    const { db, writes } = makeFakeDb({ leagues: [league], docs });
+
+    await resetLeaguesForNewSeason(db, "old-season", "new-season");
+
+    assert.equal(
+      writes.filter((w) => w.path.includes("/matchups/notes")).length,
+      0
+    );
   });
 
   test("zeroes season participation so the league goes dark until members return", async () => {

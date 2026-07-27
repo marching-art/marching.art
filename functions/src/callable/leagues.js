@@ -639,10 +639,27 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   const members = leagueData.members || [];
   const matchupRef = leagueRef.collection('matchups').doc(`week-${week}`);
 
-  // Check if matchups already exist
+  // Resolved before the existence check below, which needs it. Pairing is
+  // season-scoped anyway: only directors registered for the LIVE season are
+  // paired, because rollover preserves corpsName (helpers/season.js), so
+  // testing corps[class].corpsName alone used to pair every director who had
+  // ever named a corps into every future season — real directors drew absent
+  // opponents who score 0, and ghost-inflated odd counts handed out bogus byes.
+  // See helpers/leagueActivity.js.
+  const seasonUid = await getActiveSeasonUid(db);
+  if (!seasonUid) {
+    throw new HttpsError("failed-precondition", "No active season.");
+  }
+
+  // A week belonging to a PREVIOUS season is not "already generated" — matchup
+  // documents are keyed by week number alone, so before rollover archived them
+  // last season's week-N sat here and made this endpoint permanently refuse.
   const existingMatchup = await matchupRef.get();
   if (existingMatchup.exists) {
-    throw new HttpsError("already-exists", "Matchups for this week already exist.");
+    const existingSeason = existingMatchup.data().seasonUid;
+    if (!existingSeason || existingSeason === seasonUid) {
+      throw new HttpsError("already-exists", "Matchups for this week already exist.");
+    }
   }
 
   // Batch fetch all member profiles to get their corps classes
@@ -668,17 +685,6 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
 
   // Group members by their active corps classes. Registry-derived (Phase
   // 7.4) so Podium corps join league matchups automatically at launch.
-  //
-  // Only directors REGISTERED FOR THE LIVE SEASON are paired. Testing
-  // corps[class].corpsName alone is not enough: rollover preserves corpsName
-  // (helpers/season.js), so every director who ever named a corps used to be
-  // paired forever — real directors were matched against absent accounts that
-  // score 0, and odd ghost counts handed out bogus byes. See
-  // helpers/leagueActivity.js.
-  const seasonUid = await getActiveSeasonUid(db);
-  if (!seasonUid) {
-    throw new HttpsError("failed-precondition", "No active season.");
-  }
   const corpsClasses = MATCHUP_CLASSES;
   const membersByClass = Object.fromEntries(corpsClasses.map((c) => [c, []]));
 
@@ -698,6 +704,9 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   // Generate matchups for each corps class using smart pairing
   const matchupData = {
     week,
+    // Stamped so rollover and the generator can tell this season's matchups
+    // from a previous season's (see resetLeaguesForNewSeason).
+    seasonUid,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     generatedBy: uid
   };

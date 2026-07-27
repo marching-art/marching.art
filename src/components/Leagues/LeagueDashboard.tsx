@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueDashboard - Visual stat cards and league overview
 // Design System: Card-based dashboard with engaging visualizations
 
@@ -26,6 +25,26 @@ import {
   TOTAL_SEASON_WEEKS,
 } from '../../utils/seasonProgress';
 
+import type { StandingRow } from './tabs/ActivityTabStatsCards';
+import type { SeasonMatchupStats } from '../../types';
+
+type CardColor = 'yellow' | 'purple' | 'green' | 'red' | 'blue' | 'orange';
+type IconComponent = React.ComponentType<{ className?: string }>;
+
+interface MemberProfiles {
+  [uid: string]: { displayName?: string; username?: string } | undefined;
+}
+
+/** A pairing as the league detail view flattens it for the week. */
+export interface DashboardMatchup {
+  user1?: string;
+  user2?: string;
+  week?: number;
+  status?: string;
+  corpsClass?: string;
+  completed?: boolean;
+}
+
 // Stat Card - Main building block
 const StatCard = ({
   title,
@@ -37,6 +56,16 @@ const StatCard = ({
   trend,
   onClick,
   children,
+}: {
+  title: string;
+  value: React.ReactNode;
+  subtitle?: React.ReactNode;
+  icon: IconComponent;
+  color?: CardColor;
+  size?: 'sm' | 'md' | 'lg';
+  trend?: 'up' | 'down' | 'same' | null;
+  onClick?: () => void;
+  children?: React.ReactNode;
 }) => {
   const colorClasses = {
     yellow: 'text-secondary bg-surface-raised border-line',
@@ -89,11 +118,19 @@ const StatCard = ({
 };
 
 // Your Position Card - Prominent display of user's current standing
-const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
+const YourPositionCard = ({
+  userStats,
+  totalMembers,
+  onViewStandings,
+}: {
+  userStats?: (StandingRow & { currentRank?: number; rank?: number }) | null;
+  totalMembers: number;
+  onViewStandings?: () => void;
+}) => {
   if (!userStats) return null;
 
   const rank = userStats.currentRank || userStats.rank || 1;
-  const ordinalSuffix = (n) => {
+  const ordinalSuffix = (n: number) => {
     const s = ['th', 'st', 'nd', 'rd'];
     const v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
@@ -151,7 +188,7 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
 
         {/* Visual rank indicator */}
         <div className="flex flex-col items-center">
-          {userStats.streak > 0 && (
+          {(userStats.streak ?? 0) > 0 && (
             <div
               className={`flex items-center gap-1 px-2 py-1 text-sm font-bold ${
                 userStats.streakType === 'W'
@@ -176,7 +213,21 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
 };
 
 // Next Matchup Preview Card
-const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive, onClick }) => {
+const NextMatchupCard = ({
+  matchup,
+  opponent,
+  opponentStats,
+  currentWeek,
+  isLive,
+  onClick,
+}: {
+  matchup?: DashboardMatchup | null;
+  opponent?: string;
+  opponentStats?: StandingRow | null;
+  currentWeek?: number;
+  isLive?: boolean;
+  onClick?: () => void;
+}) => {
   if (!matchup) return null;
 
   return (
@@ -227,8 +278,16 @@ const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive
 };
 
 // Quick Stats Row
-const QuickStatsRow = ({ stats, leagueStats, userId }) => {
-  const userLeagueStats = leagueStats?.[userId];
+const QuickStatsRow = ({
+  stats,
+  leagueStats,
+  userId,
+}: {
+  stats?: StandingRow | null;
+  leagueStats?: Record<string, SeasonMatchupStats>;
+  userId?: string;
+}) => {
+  const userLeagueStats = userId ? leagueStats?.[userId] : undefined;
 
   return (
     <div className="grid grid-cols-4 gap-2">
@@ -263,10 +322,16 @@ const QuickStatsRow = ({ stats, leagueStats, userId }) => {
 // League Leaders Mini Display
 const LeagueLeadersMini = ({
   standings,
-  memberProfiles,
+  memberProfiles = {},
   userId,
   leagueStats,
   onViewLeaderboards,
+}: {
+  standings: StandingRow[];
+  memberProfiles?: MemberProfiles;
+  userId?: string;
+  leagueStats?: Record<string, SeasonMatchupStats>;
+  onViewLeaderboards?: () => void;
 }) => {
   const topThree = standings.slice(0, 3);
 
@@ -454,8 +519,8 @@ const SeasonProgressBar = () => {
 // Main Dashboard Component
 const LeagueDashboard = ({
   userStats,
-  standings,
-  memberProfiles,
+  standings = [],
+  memberProfiles = {},
   userProfile,
   currentWeek,
   weeklyMatchups,
@@ -463,10 +528,21 @@ const LeagueDashboard = ({
   onViewStandings,
   onViewMatchup,
   onViewLeaderboards,
+}: {
+  userStats?: (StandingRow & { currentRank?: number }) | null;
+  standings?: StandingRow[];
+  memberProfiles?: MemberProfiles;
+  userProfile?: { uid?: string } | null;
+  currentWeek?: number;
+  weeklyMatchups?: Record<number, DashboardMatchup[]>;
+  leagueStats?: Record<string, SeasonMatchupStats>;
+  onViewStandings?: () => void;
+  onViewMatchup?: (matchup: DashboardMatchup) => void;
+  onViewLeaderboards?: () => void;
 }) => {
   // Find user's current week matchup
   const currentMatchup = useMemo(() => {
-    const weekMatchups = weeklyMatchups?.[currentWeek] || [];
+    const weekMatchups = (currentWeek ? weeklyMatchups?.[currentWeek] : undefined) || [];
     return weekMatchups.find((m) => m.user1 === userProfile?.uid || m.user2 === userProfile?.uid);
   }, [weeklyMatchups, currentWeek, userProfile?.uid]);
 
@@ -475,7 +551,7 @@ const LeagueDashboard = ({
     if (!currentMatchup) return null;
     const opponentId =
       currentMatchup.user1 === userProfile?.uid ? currentMatchup.user2 : currentMatchup.user1;
-    const profile = memberProfiles[opponentId];
+    const profile = opponentId ? memberProfiles[opponentId] : undefined;
     const stats = standings.find((s) => s.uid === opponentId);
     return {
       id: opponentId,
@@ -516,7 +592,7 @@ const LeagueDashboard = ({
         opponentStats={opponentInfo?.stats}
         currentWeek={currentWeek}
         isLive={isMatchupLive}
-        onClick={() => onViewMatchup?.(currentMatchup)}
+        onClick={() => currentMatchup && onViewMatchup?.(currentMatchup)}
       />
 
       {/* League Leaders Mini */}

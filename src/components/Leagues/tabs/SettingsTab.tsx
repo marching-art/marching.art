@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // SettingsTab - Commissioner settings for league management
 // Includes matchup generation, league settings, and invite code management
 
@@ -35,6 +34,7 @@ import LeagueSettingsForm from './LeagueSettingsForm';
 import CommissionerTransfer from './CommissionerTransfer';
 import CoCommissionerManager from './CoCommissionerManager';
 import ResultCorrection from './ResultCorrection';
+import ScoringFormatCard from './ScoringFormatCard';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -54,7 +54,19 @@ const CORPS_CLASS_CONFIG = {
  * the removed director can undo, and it moves CorpsCoin, so it never fires
  * straight off a tap.
  */
-const ConfirmRemoveMemberModal = ({ member, entryFee, onCancel, onConfirm, isRemoving }) => {
+const ConfirmRemoveMemberModal = ({
+  member,
+  entryFee = 0,
+  onCancel,
+  onConfirm,
+  isRemoving,
+}: {
+  member: RosterMember;
+  entryFee?: number;
+  onCancel: () => void;
+  onConfirm: () => void;
+  isRemoving?: boolean;
+}) => {
   useEscapeKey(onCancel);
   return (
     <div
@@ -111,6 +123,47 @@ const ConfirmRemoveMemberModal = ({ member, entryFee, onCancel, onConfirm, isRem
   );
 };
 
+/** One roster row, as the member-management list builds it. */
+interface RosterMember {
+  uid: string;
+  name: string;
+  corpsName?: string | null;
+  isActive?: boolean;
+  isOwner?: boolean;
+  isCommissioner?: boolean;
+}
+
+interface MemberProfile {
+  displayName?: string;
+  username?: string;
+  corps?: Record<string, { corpsName?: string } | undefined>;
+}
+
+interface SettingsTabProps {
+  league?: {
+    id?: string;
+    name?: string;
+    seasonId?: string;
+    creatorId?: string;
+    members?: string[];
+    commissioners?: string[];
+    settings?: {
+      entryFee?: number;
+      prizePool?: number;
+      finalsSize?: number;
+      scoringFormat?: string;
+      scoringFormatSeasonUid?: string;
+    };
+    [key: string]: unknown;
+  } | null;
+  userProfile?: { uid?: string } | null;
+  memberProfiles?: Record<string, MemberProfile | undefined>;
+  currentWeek?: number;
+  onBack?: () => void;
+  onSettingsSaved?: () => void;
+  isOwner?: boolean;
+}
+
 const SettingsTab = ({
   league,
   userProfile: _userProfile,
@@ -119,23 +172,31 @@ const SettingsTab = ({
   onBack,
   onSettingsSaved,
   isOwner = false,
-}) => {
+}: SettingsTabProps) => {
   const inviteCode = useLeagueInviteCode(league);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
   const [generating, setGenerating] = useState(false);
-  const [existingMatchups, setExistingMatchups] = useState({});
+  /** A `week-N` document, keyed by week: `{ id, seasonUid, <class>Matchups }`. */
+  const [existingMatchups, setExistingMatchups] = useState<
+    Record<number, { id: string; seasonUid?: string; [key: string]: unknown }>
+  >({});
   const [_checkingMatchups, setCheckingMatchups] = useState(true);
-  const [lastGeneratedResult, setLastGeneratedResult] = useState(null);
-  const [pendingRemoval, setPendingRemoval] = useState(null);
-  const [removingId, setRemovingId] = useState(null);
+  const [lastGeneratedResult, setLastGeneratedResult] = useState<{
+    success: boolean;
+    week?: number;
+    matchups?: Record<string, number>;
+    error?: string;
+  } | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<RosterMember | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const removeMemberMutation = useRemoveLeagueMember(league?.id);
 
   // Stable identity: this feeds the roster useMemo below and is handed to
   // ResultCorrection, so a fresh closure each render would defeat both.
   const getMemberName = useCallback(
-    (uid) => {
+    (uid: string) => {
       const profile = memberProfiles[uid] || {};
       const displayName =
         profile.displayName && profile.displayName !== 'Director'
@@ -155,7 +216,10 @@ const SettingsTab = ({
       setCheckingMatchups(true);
 
       try {
-        const matchupsFound = {};
+        const matchupsFound: Record<
+          number,
+          { id: string; seasonUid?: string; [key: string]: unknown }
+        > = {};
         const docs = await getLeagueMatchups(league.id);
         docs.forEach((doc) => {
           const weekMatch = doc.id.match(/^week-(\d+)$/);
@@ -174,7 +238,7 @@ const SettingsTab = ({
 
   const handleCopyInvite = async () => {
     try {
-      await navigator.clipboard.writeText(inviteCode);
+      await navigator.clipboard.writeText(inviteCode || '');
       setInviteCopied(true);
       toast.success('Invite code copied!');
       setTimeout(() => setInviteCopied(false), 2000);
@@ -204,15 +268,17 @@ const SettingsTab = ({
 
     try {
       const result = await triggerMatchupGeneration({
-        leagueId: league.id,
+        leagueId: league?.id || '',
         week: selectedWeek,
         forceRegenerate: isRegenerate,
       });
 
       if (result.data?.success) {
+        // A freshly generated week is present; the stamp only matters for the
+        // preseason check, and this week is by definition the live season's.
         setExistingMatchups((prev) => ({
           ...prev,
-          [selectedWeek]: result.data.matchups,
+          [selectedWeek]: { id: `week-${selectedWeek}`, seasonUid: league?.seasonId },
         }));
         setLastGeneratedResult({
           success: true,
@@ -227,28 +293,40 @@ const SettingsTab = ({
       console.error('Error generating matchups:', error);
       setLastGeneratedResult({
         success: false,
-        error: error.message || 'Failed to generate matchups',
+        error: error instanceof Error ? error.message : 'Failed to generate matchups',
       });
-      toast.error(error.message || 'Failed to generate matchups');
+      toast.error(error instanceof Error ? error.message : 'Failed to generate matchups');
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleRemoveMember = async (member) => {
+  const handleRemoveMember = async (member: RosterMember) => {
     setRemovingId(member.uid);
     try {
       const result = await removeMemberMutation.mutateAsync(member.uid);
       toast.success(result?.message || `${member.name} was removed.`);
       setPendingRemoval(null);
     } catch (error) {
-      toast.error(error.message || 'Failed to remove member');
+      toast.error(error instanceof Error ? error.message : 'Failed to remove member');
     } finally {
       setRemovingId(null);
     }
   };
 
   const weekHasMatchups = existingMatchups[selectedWeek];
+
+  // Whether the league's scoring format is still changeable, read exactly the
+  // way the server reads it (callable/leagueFormat.js seasonUnderway): a week
+  // left behind by a previous season is not this season's business, and an
+  // unstamped week predates stamping, which rollover would have cleared.
+  const seasonUnderway = useMemo(
+    () =>
+      Object.values(existingMatchups).some(
+        (doc) => !doc?.seasonUid || doc.seasonUid === league?.seasonId
+      ),
+    [existingMatchups, league?.seasonId]
+  );
   const memberCount = getRosterSize(league);
   const activeCount = getActiveMemberCount(league);
   const canGenerate = memberCount >= 2;
@@ -400,7 +478,9 @@ const SettingsTab = ({
             {weekHasMatchups && (
               <div className="mt-2 pt-2 border-t border-line flex flex-wrap gap-2">
                 {Object.entries(CORPS_CLASS_CONFIG).map(([key, config]) => {
-                  const count = existingMatchups[selectedWeek]?.[`${key}Matchups`]?.length || 0;
+                  const count =
+                    (existingMatchups[selectedWeek]?.[`${key}Matchups`] as unknown[] | undefined)
+                      ?.length || 0;
                   if (count === 0) return null;
                   const Icon = config.icon;
                   return (
@@ -536,6 +616,14 @@ const SettingsTab = ({
           moment it was created (no updateLeague* callable existed at all). */}
       <LeagueSettingsForm league={league} memberCount={memberCount} onSaved={onSettingsSaved} />
 
+      {/* Alternate scoring format — a purchase, and locked once the season
+          starts, so it is its own card rather than a field on the form. */}
+      <ScoringFormatCard
+        league={league}
+        seasonUnderway={seasonUnderway}
+        onChanged={onSettingsSaved}
+      />
+
       {/* Read-only league facts */}
       <div className="bg-surface-card border border-line">
         <div className="divide-y divide-line-subtle">
@@ -543,19 +631,19 @@ const SettingsTab = ({
             <span className="text-sm text-muted">Prize Pool</span>
             <span className="text-sm font-bold text-brand">
               {/* Escrowed entry fees only — no phantom seeded pool */}
-              {(league.settings?.prizePool || 0).toLocaleString()} CC
+              {(league?.settings?.prizePool || 0).toLocaleString()} CC
             </span>
           </div>
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-muted">Members</span>
             <span className="text-sm font-bold text-white">
-              {memberCount} / {league.maxMembers || 20}
+              {memberCount} / {(league?.maxMembers as number) || 20}
             </span>
           </div>
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-muted">Competing this season</span>
             <span
-              className={`text-sm font-bold ${activeCount > 0 ? 'text-green-500' : 'text-muted'}`}
+              className={`text-sm font-bold ${(activeCount ?? 0) > 0 ? 'text-green-500' : 'text-muted'}`}
             >
               {activeCount === null ? 'Unknown' : `${activeCount} / ${memberCount}`}
             </span>
@@ -648,7 +736,7 @@ const SettingsTab = ({
       {pendingRemoval && (
         <ConfirmRemoveMemberModal
           member={pendingRemoval}
-          entryFee={league.settings?.entryFee || 0}
+          entryFee={league?.settings?.entryFee || 0}
           onCancel={() => setPendingRemoval(null)}
           onConfirm={() => handleRemoveMember(pendingRemoval)}
           isRemoving={removingId === pendingRemoval.uid}

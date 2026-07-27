@@ -11,7 +11,7 @@
 // who won and how.
 
 import React from 'react';
-import { Crown, Trophy, Minus } from 'lucide-react';
+import { Award, Crown, Trophy, Minus } from 'lucide-react';
 
 import { CORPS_CLASS_SHORT_LABELS } from '../../utils/corps';
 import type { LeagueChampionEntry } from './LeagueHallOfFame';
@@ -22,7 +22,7 @@ export interface FinalsSeed {
   wins: number;
   losses: number;
   ties?: number;
-  totalPoints: number;
+  totalPoints?: number;
   corpsClasses?: string[];
 }
 
@@ -41,6 +41,12 @@ interface LeagueFinalsBracketProps {
 
 /** How many just-missed seeds to show below the line. */
 const BUBBLE_SIZE = 3;
+
+/**
+ * Smallest consolation field worth naming — matches MIN_CONSOLATION_FIELD in
+ * functions/src/helpers/leagueChampion.js.
+ */
+const MIN_CONSOLATION_FIELD = 2;
 
 const SeedRow = ({
   seed,
@@ -121,6 +127,14 @@ const LeagueFinalsBracket = ({
   const isChampionshipWeek = currentWeek >= totalWeeks;
   const weeksRemaining = Math.max(0, totalWeeks - currentWeek);
 
+  // Everyone below the cut runs a second race on the same week. Without it a
+  // league of twenty left eight directors with nothing to play for the moment
+  // they were mathematically out — which is the week most of them stop showing
+  // up. The bubble seeds are part of this field, not a separate group.
+  const consolationField = standings.slice(cut);
+  const hasConsolation = consolationField.length >= MIN_CONSOLATION_FIELD;
+  const consolationWinner = champion?.consolation?.winnerId || null;
+
   if (standings.length === 0) return null;
 
   return (
@@ -168,7 +182,7 @@ const LeagueFinalsBracket = ({
           <div className="px-4 py-1.5 bg-surface-sunken border-y border-line-subtle flex items-center gap-2">
             <Minus className="w-3 h-3 text-muted" />
             <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
-              On the bubble
+              {hasConsolation ? 'Consolation — on the bubble' : 'On the bubble'}
             </span>
           </div>
           <div className="divide-y divide-line-subtle opacity-70">
@@ -179,12 +193,38 @@ const LeagueFinalsBracket = ({
                 label={`#${seed.rank}`}
                 getDisplayName={getDisplayName}
                 viewerUid={viewerUid}
-                isChampion={false}
+                isChampion={seed.uid === consolationWinner}
                 qualified={false}
               />
             ))}
           </div>
         </>
+      )}
+
+      {!everyoneQualifies && hasConsolation && (
+        <div className="px-4 py-2.5 border-t border-line bg-surface-sunken flex items-start gap-2">
+          <Award className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 mt-0.5" />
+          <span className="text-[11px] text-muted">
+            {consolationWinner ? (
+              <>
+                <span className="text-white font-bold">
+                  {consolationWinner === viewerUid
+                    ? 'You'
+                    : champion?.consolation?.winnerUsername || 'Unknown'}
+                </span>{' '}
+                took the consolation title
+                {champion?.consolation?.seed ? ` from #${champion.consolation.seed}` : ''}, best of
+                the {consolationField.length} below the cut.
+              </>
+            ) : (
+              <>
+                The {consolationField.length} directors below the cut run their own race on
+                championship week for the consolation title. No prize pool — the season still ends
+                with something to win.
+              </>
+            )}
+          </span>
+        </div>
       )}
 
       {champion?.winnerId && (

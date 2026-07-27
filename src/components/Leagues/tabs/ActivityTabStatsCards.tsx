@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Activity tab stats cards: league stats overview, achievements, and power
 // rankings. Extracted verbatim from ActivityTab.jsx.
 
@@ -19,12 +18,37 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+/** A standings row, as much of one as these cards read. */
+interface StandingRow {
+  uid: string;
+  wins: number;
+  losses: number;
+  ties?: number;
+  totalPoints?: number;
+  streak?: number;
+  streakType?: 'W' | 'L' | null;
+  /** Form over the member's three most recent scored weeks. */
+  trend?: 'up' | 'down' | 'same';
+}
+
+interface MemberProfiles {
+  [uid: string]: { displayName?: string; username?: string } | undefined;
+}
+
+interface StatsCardProps {
+  standings?: StandingRow[];
+  memberProfiles?: MemberProfiles;
+  leagueStats?: Record<string, unknown>;
+  userProfile?: { uid?: string } | null;
+  currentWeek?: number;
+}
+
 const LeagueStatsOverview = ({
   standings,
   memberProfiles,
   leagueStats: _leagueStats,
   currentWeek,
-}) => {
+}: StatsCardProps) => {
   // Calculate league-wide stats
   const stats = useMemo(() => {
     if (!standings || standings.length === 0) return null;
@@ -48,10 +72,14 @@ const LeagueStatsOverview = ({
     );
 
     // Find longest streak
-    let longestStreak = { player: null, count: 0, type: null };
+    let longestStreak: { player: string | null; count: number; type: 'W' | 'L' | null } = {
+      player: null,
+      count: 0,
+      type: null,
+    };
     standings.forEach((s) => {
-      if (s.streak > longestStreak.count) {
-        longestStreak = { player: s.uid, count: s.streak, type: s.streakType };
+      if ((s.streak ?? 0) > longestStreak.count) {
+        longestStreak = { player: s.uid, count: s.streak ?? 0, type: s.streakType ?? null };
       }
     });
 
@@ -84,8 +112,8 @@ const LeagueStatsOverview = ({
     );
   }
 
-  const getDisplayName = (uid) => {
-    const profile = memberProfiles[uid];
+  const getDisplayName = (uid?: string | null) => {
+    const profile = uid ? memberProfiles?.[uid] : undefined;
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     return profile?.username || name || `User ${uid?.slice(0, 6)}`;
@@ -208,15 +236,29 @@ const LeagueStatsOverview = ({
 };
 
 // Achievements Card - Shows league milestones and badges
-const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
+type AchievementColor = 'yellow' | 'orange' | 'purple' | 'red' | 'gray' | 'green';
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: AchievementColor;
+  earned: boolean;
+}
+
+const AchievementsCard = ({ standings, leagueStats, userProfile }: StatsCardProps) => {
   // Calculate achievements
   const achievements = useMemo(() => {
-    const list = [];
+    const list: Achievement[] = [];
 
     if (!standings || standings.length === 0) return list;
 
     const userStanding = standings.find((s) => s.uid === userProfile?.uid);
-    const userLeagueStats = leagueStats?.[userProfile?.uid];
+    const userLeagueStats = userProfile?.uid
+      ? (leagueStats?.[userProfile.uid] as
+          { blowoutWins?: number; clutchWins?: number } | undefined)
+      : undefined;
 
     if (userStanding) {
       // Perfect Record
@@ -232,7 +274,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
       }
 
       // Win Streak achievements
-      if (userStanding.streak >= 3 && userStanding.streakType === 'W') {
+      if ((userStanding.streak ?? 0) >= 3 && userStanding.streakType === 'W') {
         list.push({
           id: 'hot_streak',
           title: 'Hot Streak',
@@ -268,7 +310,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
 
     if (userLeagueStats) {
       // Clutch performer
-      if (userLeagueStats.clutchWins >= 2) {
+      if ((userLeagueStats.clutchWins ?? 0) >= 2) {
         list.push({
           id: 'clutch',
           title: 'Clutch Performer',
@@ -280,7 +322,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
       }
 
       // Blowout artist
-      if (userLeagueStats.blowoutWins >= 2) {
+      if ((userLeagueStats.blowoutWins ?? 0) >= 2) {
         list.push({
           id: 'dominator',
           title: 'Dominator',
@@ -294,7 +336,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
 
     // Add locked achievements if few earned
     if (list.length < 3) {
-      const locked = [
+      const locked: Achievement[] = [
         {
           id: 'locked_1',
           title: 'Season Champion',
@@ -384,7 +426,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
 };
 
 // Power Rankings - Predictive standings based on trends
-const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
+const PowerRankingsCard = ({ standings, memberProfiles, userProfile }: StatsCardProps) => {
   // Calculate power rankings based on recent performance
   const powerRankings = useMemo(() => {
     if (!standings || standings.length === 0) return [];
@@ -398,9 +440,9 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
 
         // Bonus for streak
         if (s.streakType === 'W') {
-          powerScore += s.streak * 5;
+          powerScore += (s.streak ?? 0) * 5;
         } else if (s.streakType === 'L') {
-          powerScore -= s.streak * 3;
+          powerScore -= (s.streak ?? 0) * 3;
         }
 
         // Points bonus
@@ -424,9 +466,9 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
       }));
   }, [standings]);
 
-  const getDisplayName = (uid) => {
+  const getDisplayName = (uid?: string) => {
     if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles[uid];
+    const profile = uid ? memberProfiles?.[uid] : undefined;
     const name = profile?.displayName;
     if (name && name !== 'Director') return name;
     return profile?.username || name || `User ${uid?.slice(0, 6)}`;
@@ -508,3 +550,4 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
 };
 
 export { LeagueStatsOverview, AchievementsCard, PowerRankingsCard };
+export type { StandingRow };

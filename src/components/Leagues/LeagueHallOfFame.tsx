@@ -29,6 +29,19 @@ export interface LeagueChampionEntry {
   seed?: number;
   decidedBy?: 'finals' | 'standings' | 'none';
   finalsField?: string[];
+  /**
+   * The best of the directors who missed the finals cut, decided by the same
+   * rule on the same week. Null when the field below the cut was too small to
+   * be a race (functions/src/helpers/leagueChampion.js).
+   */
+  consolation?: {
+    winnerId?: string;
+    winnerUsername?: string;
+    seed?: number;
+    decidedBy?: 'finals' | 'standings';
+    record?: { wins: number; losses: number; ties: number; totalPoints?: number };
+    fieldSize?: number;
+  } | null;
 }
 
 interface LeagueHallOfFameProps {
@@ -186,6 +199,21 @@ const LeagueHallOfFame = ({ league, userProfile }: LeagueHallOfFameProps) => {
                   </span>
                 </div>
                 <RecordLine champion={champion} />
+                {/* The season had a second race, and the directors who ran it
+                    deserve to see it recorded. */}
+                {champion.consolation?.winnerId && (
+                  <span className="text-[10px] text-muted">
+                    Consolation:{' '}
+                    <span className="text-white">
+                      {champion.consolation.winnerId === userProfile?.uid
+                        ? 'You'
+                        : champion.consolation.winnerUsername || 'Unknown'}
+                    </span>
+                    {champion.consolation.fieldSize
+                      ? ` (best of ${champion.consolation.fieldSize} below the cut)`
+                      : ''}
+                  </span>
+                )}
               </div>
 
               {typeof champion.score === 'number' && champion.score > 0 && (

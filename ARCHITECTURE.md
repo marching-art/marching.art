@@ -89,6 +89,15 @@ users/{uid}/notifications/…       # In-app + league notifications
 leagues/{leagueId}                # League config (owner + commissioners[], settings, tag)
 leagues/{leagueId}/standings/current
 leagues/{leagueId}/matchups/week-{n}
+leagues/{leagueId}/matchupHistory/{seasonUid}_week-{n}
+leagues/{leagueId}/recapHistory/{seasonUid}_week-{n}
+                                  # Finished seasons' matchups and recaps, MOVED
+                                  #   here at rollover. Both used to be keyed by
+                                  #   week number alone and never reset, which
+                                  #   silently ended a league's second season
+                                  #   (see helpers/leagueSeasonReset.js)
+leagues/{leagueId}/standings/{seasonUid}
+                                  # Archived season tables
 leagues/{leagueId}/activity/{id}  # League feed events
 leagues/{leagueId}/recaps/week-{n}
 leagues/{leagueId}/chat/{id}     # League chat (paged; author + commissioner delete)

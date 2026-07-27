@@ -18,6 +18,7 @@
  */
 
 const admin = require("firebase-admin");
+const { captionsWonBy } = require("./captionWars");
 
 /**
  * Pure fold: applies resolved pairs to a records map and derives the sorted
@@ -40,6 +41,11 @@ const EMPTY_RECORD = {
   // performance. See helpers/leagueScoring.js applyClassPercentiles.
   normalizedFor: 0,
   normalizedWeeks: 0,
+  // Categories taken and dropped, in a league running Caption Wars
+  // (helpers/captionWars.js). Zero for everyone on the default format, where
+  // the term below is a constant and the ordering is unchanged.
+  captionsWon: 0,
+  captionsLost: 0,
   currentStreak: 0,
   streakType: null,
 };
@@ -57,6 +63,14 @@ function foldPairsIntoStandings(baseRecords, pairs) {
     if (typeof value !== 'number' || Number.isNaN(value)) return;
     record.normalizedFor += value;
     record.normalizedWeeks += 1;
+  };
+
+  // Only Caption Wars matchups carry these; a pair from a `total` league passes
+  // undefined and the counters stay where they are.
+  const addCaptions = (record, captions) => {
+    if (!captions) return;
+    record.captionsWon += Number(captions.won) || 0;
+    record.captionsLost += Number(captions.lost) || 0;
   };
 
   // Every director in a resolved pair gets a row. The fold used to be guarded
@@ -92,6 +106,7 @@ function foldPairsIntoStandings(baseRecords, pairs) {
         records[pair.player1].pointsFor += pair.player1Score || 0;
         records[pair.player1].pointsAgainst += pair.player2Score || 0;
         addNormalized(records[pair.player1], pair.player1Normalized);
+        addCaptions(records[pair.player1], pair.player1Captions);
         records[pair.player1].currentStreak = 0;
         records[pair.player1].streakType = null;
       }
@@ -100,6 +115,7 @@ function foldPairsIntoStandings(baseRecords, pairs) {
         records[pair.player2].pointsFor += pair.player2Score || 0;
         records[pair.player2].pointsAgainst += pair.player1Score || 0;
         addNormalized(records[pair.player2], pair.player2Normalized);
+        addCaptions(records[pair.player2], pair.player2Captions);
         records[pair.player2].currentStreak = 0;
         records[pair.player2].streakType = null;
       }
@@ -115,6 +131,10 @@ function foldPairsIntoStandings(baseRecords, pairs) {
           records[pair.winner],
           pair.winner === pair.player1 ? pair.player1Normalized : pair.player2Normalized
         );
+        addCaptions(
+          records[pair.winner],
+          pair.winner === pair.player1 ? pair.player1Captions : pair.player2Captions
+        );
         records[pair.winner].currentStreak = records[pair.winner].streakType === 'W'
           ? records[pair.winner].currentStreak + 1
           : 1;
@@ -128,6 +148,10 @@ function foldPairsIntoStandings(baseRecords, pairs) {
         addNormalized(
           records[loser],
           loser === pair.player1 ? pair.player1Normalized : pair.player2Normalized
+        );
+        addCaptions(
+          records[loser],
+          loser === pair.player1 ? pair.player1Captions : pair.player2Captions
         );
         records[loser].currentStreak = records[loser].streakType === 'L'
           ? records[loser].currentStreak + 1
@@ -151,6 +175,9 @@ function foldPairsIntoStandings(baseRecords, pairs) {
       normalizedScore: data.normalizedWeeks
         ? (data.normalizedFor || 0) / data.normalizedWeeks
         : null,
+      // Caption Wars only; 0-0 everywhere else, which sorts as a constant.
+      captionsWon: data.captionsWon || 0,
+      captionsLost: data.captionsLost || 0,
       streak: data.currentStreak || 0,
       streakType: data.streakType || null,
     }))
@@ -168,17 +195,31 @@ function foldPairsIntoStandings(baseRecords, pairs) {
  * matchups. Ranking on raw wins alone rewarded whoever happened to be paired
  * most often. Ties count as half a win, the standard convention.
  *
- * The tiebreaker is the NORMALIZED score, not raw points. Matchups are
+ * In a league running Caption Wars the first tiebreak is the CATEGORY RECORD,
+ * because that is the format they actually played: two directors at 4-2 are
+ * separated first by how they got there, and 12 categories to 6 is a more
+ * dominant 4-2 than 7 to 11. It sits above the normalized score so the Finals
+ * field is seeded on the league's own format, falling through only when two
+ * directors' category records are identical too. On the default format both
+ * counters are zero for everyone, the term is a constant, and the ordering
+ * below is exactly what it always was.
+ *
+ * The next tiebreaker is the NORMALIZED score, not raw points. Matchups are
  * class-segregated but the table is league-wide, so raw points compare a ~90
  * World Class week against a ~60 SoundSport week — the old tiebreaker sorted a
  * mixed-class league by class rather than by performance. A mean class
  * percentile means the same thing in every class. Raw points stay as the next
  * tiebreak for leagues (and legacy rows) that carry no normalized figure.
  *
- * Order: win% → wins → normalized → points for → points against (fewer is
- * better) → uid, so the result is total and deterministic rather than
- * dependent on object key order.
+ * Order: win% → wins → category record → normalized → points for → points
+ * against (fewer is better) → uid, so the result is total and deterministic
+ * rather than dependent on object key order.
  */
+
+/** Categories taken less categories dropped. Zero on the default format. */
+function captionMargin(row) {
+  return (row.captionsWon || 0) - (row.captionsLost || 0);
+}
 function winPercentage(row) {
   const wins = row.wins || 0;
   const losses = row.losses || 0;
@@ -192,6 +233,7 @@ function compareStandingRows(a, b) {
   const pctDiff = winPercentage(b) - winPercentage(a);
   if (pctDiff !== 0) return pctDiff;
   if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
+  if (captionMargin(b) !== captionMargin(a)) return captionMargin(b) - captionMargin(a);
   // Only when BOTH sides have one — comparing a director who has a normalized
   // figure against one who does not would rank on data availability.
   if (typeof a.normalizedScore === 'number' && typeof b.normalizedScore === 'number') {
@@ -286,6 +328,11 @@ function rebuildStandingsFromMatchups(weekDocs, corpsClasses, members = null) {
           player2Score: matchup.scores?.[p2] || 0,
           player1Normalized: matchup.normalized?.[p1],
           player2Normalized: matchup.normalized?.[p2],
+          // Read off the stored block rather than recomputed, so a rebuild
+          // after a commissioner correction cannot make the category column
+          // disagree with the matchup card. Absent on the default format.
+          player1Captions: matchup.captions ? captionsWonBy(matchup.captions, p1) : undefined,
+          player2Captions: matchup.captions ? captionsWonBy(matchup.captions, p2) : undefined,
           winner: matchup.winner ?? "tie",
           completed: true,
           corpsClass,
@@ -321,4 +368,5 @@ module.exports = {
   updateStandings,
   compareStandingRows,
   winPercentage,
+  captionMargin,
 };

@@ -244,6 +244,7 @@ type CloudFunctionName =
   | 'updateLeagueSettings'
   | 'transferCommissioner'
   | 'setCoCommissioner'
+  | 'setLeagueScoringFormat'
   | 'recomputeLeagueStandings'
   | 'overrideMatchupResult'
   | 'selectShows'
@@ -311,6 +312,9 @@ export const paths = {
   leaguePool: (leagueId: string, gameDay: string) =>
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/pools/${gameDay}`,
   leagueMatchups: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups`,
+  /** Finished seasons' matchups, moved here at rollover. */
+  leagueMatchupHistory: (leagueId: string) =>
+    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchupHistory`,
   leagueMatchupWeek: (leagueId: string, week: number | string) =>
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups/week-${week}`,
   leagueWeekRecap: (leagueId: string, week: number | string) =>

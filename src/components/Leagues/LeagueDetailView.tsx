@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LeagueDetailView - Command Center for league competition
 // Design System: App Shell layout with fixed header, sticky tabs, scrollable content
 //
@@ -30,6 +29,41 @@ import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeagueDetailHeader from './LeagueDetailHeader';
 import LeaguePoolCard from './LeaguePoolCard';
 import { isLeagueCommissioner, isLeagueOwner } from '../../utils/leaguePermissions';
+import type { CaptionsBlock } from '../../utils/captionWars';
+import type { LeagueChampionEntry } from './LeagueHallOfFame';
+import type { League } from '../../types';
+import type { ProfileDoc } from '../../store/profileStore';
+
+/**
+ * The league document plus the two fields the client layers on: the archived
+ * champions the Hall of Fame reads, and the prediction-pool carry.
+ */
+type LeagueDoc = Partial<League> & {
+  champions?: LeagueChampionEntry[];
+  /** Unclaimed prediction-pool escrow, rolled into the next pool. */
+  poolCarry?: number;
+};
+
+/** A matchup opened into the detail view. */
+interface SelectedMatchup {
+  user1: string;
+  user2: string;
+  week?: number;
+  status?: string;
+  corpsClass?: string;
+  captions?: CaptionsBlock;
+  isUserMatchup?: boolean;
+}
+
+interface LeagueDetailViewProps {
+  league: LeagueDoc;
+  userProfile?: ProfileDoc | null;
+  userId?: string;
+  onBack?: () => void;
+  onLeave: () => Promise<void> | void;
+  initialTab?: string;
+  onTabChange?: (tab: string) => void;
+}
 
 const LeagueDetailView = ({
   league,
@@ -39,13 +73,13 @@ const LeagueDetailView = ({
   onLeave,
   initialTab,
   onTabChange,
-}) => {
+}: LeagueDetailViewProps) => {
   // The tab lives in the URL too, so a link can point at a specific view of a
   // league — "look at the matchups tab" is a thing members say to each other.
   const [activeTab, setActiveTab] = useState(initialTab || 'standings');
 
   const selectTab = useCallback(
-    (tab) => {
+    (tab: string) => {
       setActiveTab(tab);
       onTabChange?.(tab);
     },
@@ -58,7 +92,7 @@ const LeagueDetailView = ({
     // Only react to route changes; selectTab already handles in-app taps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab]);
-  const [selectedMatchup, setSelectedMatchup] = useState(null);
+  const [selectedMatchup, setSelectedMatchup] = useState<SelectedMatchup | null>(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -150,7 +184,7 @@ const LeagueDetailView = ({
   }, [standings, userProfile]);
 
   // Get rivalry for selected matchup
-  const getMatchupRivalry = (matchup) => {
+  const getMatchupRivalry = (matchup: SelectedMatchup) => {
     if (!userProfile?.uid) return null;
     const opponentId =
       matchup.user1 === userProfile.uid
@@ -271,8 +305,8 @@ const LeagueDetailView = ({
               onMatchupClick={(matchup) => {
                 if (matchup) {
                   setSelectedMatchup({
-                    user1: matchup.user1,
-                    user2: matchup.user2,
+                    user1: matchup.user1 || '',
+                    user2: matchup.user2 || '',
                     week: currentWeek,
                     isUserMatchup:
                       matchup.user1 === userProfile?.uid || matchup.user2 === userProfile?.uid,

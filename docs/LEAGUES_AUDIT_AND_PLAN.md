@@ -691,23 +691,122 @@ Small, isolated, high ratio of value to risk:
 
 ---
 
+### E7 · P0 — Matchups were never cleared at rollover — FIXED
+
+Found while building the cross-season record book, and the most damaging
+defect in the whole audit.
+
+`resetLeaguesForNewSeason` archives `standings/current` to
+`standings/{oldSeasonUid}` and resets the live table — its own comment says
+leagues used to be "entirely season-blind" and that state "simply accumulated".
+But it only ever fixed standings. Matchup documents are keyed by **week number
+alone** (`matchups/week-N`) and were never touched, so when a second season
+began, last season's `week-1` was still sitting in the live collection.
+
+The generator skips a week whose document already exists. So:
+
+- a league that completed one season **never had matchups generated again** —
+  every week already "existed";
+- the weekly resolution found every matchup already `completed` and resolved
+  nothing, so the standings table never moved for the rest of the season;
+- pairing history, rivalry detection, the record book and the standings rebuild
+  all silently blended two seasons.
+
+Fixed three ways, because the fix and the recovery are different problems:
+
+1. rollover now **moves** finished weeks to `matchupHistory/{seasonUid}_week-N`
+   (moves, not copies — leaving the live document in place _is_ the bug);
+2. generated weeks carry a `seasonUid` stamp, and the generator regenerates over
+   a week stamped with a previous season, so this self-heals going forward;
+3. `scripts/archiveStaleLeagueMatchups.js` repairs leagues already stuck, whose
+   documents predate the stamp. Its rule only treats an unstamped week as stale
+   when the league has already archived a prior season's standings — getting
+   this wrong in the aggressive direction would delete a live season's matchups.
+
+The archived weeks are what make the Record Book genuinely all-time.
+
+### E8 · P1 — The rest of the rollover sweep — FIXED
+
+E7 was found by accident, which is a bad way to find something that severe, so
+every piece of league state was then walked against the question _"is this
+season-scoped, and does rollover handle it?"_. Three more gaps:
+
+| State                         | Key               | Was                                                                                                                                                                                                                                                                                            |
+| ----------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recaps/week-N`               | week number alone | Same shape as matchups. The Activity tab reads `recaps/week-{currentWeek}`, so for most of every week of every season after the first, members saw **last season's** highlights, upset and top scorer as if they had just happened. Now archived to `recapHistory/`.                           |
+| `meta/rivalries`              | none              | Derived from the live matchup collection, which rollover empties — so it displayed last season's grudges until the Monday job next ran. Now cleared.                                                                                                                                           |
+| `game-settings/rookie-league` | none              | Names the circuit new directors are placed into. After rollover that circuit is full of members from a season that has ended, so every newcomer was dropped into a league of ghosts. Now retired, and the next joiner provisions a fresh circuit. The counter survives so numbering continues. |
+
+Plus the pinned announcement, which is topical and sat above every tab into the
+next season, and two more copies of the fatal skip-if-exists guard — the
+commissioner's `generateMatchups` and `triggerMatchupGeneration` both refused a
+week whose document belonged to a previous season.
+
+Deliberately **not** reset, and why: `champions[]` (the Hall of Fame),
+`commissioners[]`, the league's tag and settings, `meta/private` (the invite
+code), `chat` (a conversation, not season state), `activity` (its own
+chronological history, read with a limit), and `poolCarry` — unclaimed
+prediction-pool escrow whose entire purpose is to roll into the next pool.
+
+Outside leagues the sweep found nothing: every other season-scoped path already
+carries the season (`fantasy_recaps/{seasonUid}`, `show_registrations/{seasonUid}`,
+`schedules/{seasonId}`, …), Podium manages its own rollover against a stored
+`seasonUid`, and the profile's prediction and challenge buckets are pruned.
+
 ## Still outstanding
+
+Everything below is the last of it. One item is operational and needs
+production credentials; the rest is a single known limitation.
 
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
   can rank on one comparable scale. The table is now honest about the limitation
   rather than fixed of it.
-- **F7 (remainder)** — the larger league components still carry `@ts-nocheck`.
-  Every file added in this work is TypeScript, `LeaguePoolCard` and
-  `ActivityTab` were migrated (ratchet lowered 209 → 207), `StandingsTab`,
-  `MatchupsTab` and `callable/leagues.js` are back under the size line, and
-  `MatchupsTab` reads through React Query instead of duplicating the season and
-  schedule fetches into local state. The remaining migration is mechanical.
-- **Phase 4 — alternate league formats** (Survivor / Pick'em / One-Night Slate).
-  These are a game-design decision, not a defect: each needs rules that make it
-  fun, not just code that makes it run. `scoringFormat` and `matchupType` were
-  deleted rather than left as the appearance of the feature, so there is nothing
-  half-built to trip over when the formats are actually designed.
-- **Dynasty mode** — multi-season persistent standings and retired numbers. The
-  cross-season groundwork is in place (the Hall of Champions reads
-  `champions[]`, entries carry record/seed/decidedBy, and the Record Book
-  derives from matchup history), so this is now additive rather than structural.
+- ~~**F7**~~ — **done.** Every file under `components/Leagues` and the Leagues
+  page is TypeScript; no `@ts-nocheck` remains in the league subsystem, and the
+  repo-wide ratchet fell 207 → 188. The migration was mostly mechanical, but it
+  found a crash (the Matchups tab's Season view), two constants left stale by
+  the caption-battle change, a rank badge that had never rendered, and an
+  empty state that hid itself in the one case it existed for.
+- ~~**Phase 4 — alternate league formats**~~ — **shipped as Caption Wars**
+  (docs/CAPTION_WARS_SPEC.md). Weeks decided as a best-of-three across General
+  Effect, Visual and Music, bought by the commissioner for one season at a time.
+  It needed no scoring change and no backfill, because those three groups are
+  already persisted on every show result — and it cannot go finer, because the
+  eight lineup captions are deliberately unrecorded per show.
+
+  `settings.scoringFormat` came back with an implementation behind it, paired
+  with the season uid it was bought for so a stale value can never switch a
+  league into a format nobody paid for. Survivor and Pick'em remain undesigned.
+
+- **Consolation bracket** — ~~outstanding~~ shipped. Everyone below the finals
+  cut runs the same race on championship week for a second, lesser title,
+  decided by the same function on the same data. Recognition only: no prize
+  pool, no CorpsCoin.
+- ~~**Dynasty mode**~~ — **done.** The all-time table ranks every director
+  across every season the league has played, titles first. It hides itself in a
+  league's first season, where it would just be the standings again.
+- ~~**Per-member career pages**~~ — **done.** Record season by season, titles,
+  best week, and head-to-head against every opponent, ordered by who you keep
+  drawing. Both derive from the matchup weeks the Record Book already loads,
+  through the same parsing and ordering, so the three views can never disagree
+  about what a week is or when it happened.
+
+## Operational, not code
+
+One item needs running against production and cannot be done from a development
+environment:
+
+```
+node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run
+node functions/src/scripts/archiveStaleLeagueMatchups.js --commit
+```
+
+Any league that completed a season BEFORE the rollover fix landed still has last
+season's `matchups/week-N` documents sitting in its live collection, unstamped.
+Rollover now archives them and the generator regenerates over a stale stamp, so
+this cannot recur — but a league already in that state stays frozen until the
+script moves them, because an unstamped document is indistinguishable from this
+season's work by any rule the running code can apply.
+
+Read the dry-run output before committing: it names every league and week it
+would move.

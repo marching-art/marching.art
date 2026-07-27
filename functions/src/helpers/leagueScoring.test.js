@@ -87,6 +87,56 @@ describe("buildWeeklyScoreIndex", () => {
   });
 });
 
+// The three caption groups the scorer persists on every show result, carried
+// through the same fold as the total so the Caption Wars format can never
+// disagree with it about which shows a week contained.
+describe("caption groups", () => {
+  const show = (uid, totalScore, geScore, visualScore, musicScore) => ({
+    uid,
+    corpsClass: "worldClass",
+    totalScore,
+    geScore,
+    visualScore,
+    musicScore,
+  });
+
+  test("sums each caption group across the week alongside the total", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([show("alice", 86, 30, 28, 28)]),
+      day([show("alice", 88, 32, 28, 28)]),
+    ]);
+
+    const alice = getWeekScore(index, "alice", "worldClass");
+    assert.equal(alice.score, 174);
+    assert.equal(alice.ge, 62);
+    assert.equal(alice.visual, 56);
+    assert.equal(alice.music, 56);
+  });
+
+  test("a corps that did not compete forfeits every category, not just the total", () => {
+    const { index } = buildWeeklyScoreIndex([day([show("alice", 86, 30, 28, 28)])]);
+
+    const missing = getWeekScore(index, "absent", "worldClass");
+    assert.equal(missing.ge, 0);
+    assert.equal(missing.visual, 0);
+    assert.equal(missing.music, 0);
+  });
+
+  // Recap days written before the caption groups existed, or a malformed
+  // result, must not poison a week's captions with NaN.
+  test("results with no caption fields contribute zero", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([{ uid: "bob", corpsClass: "worldClass", totalScore: 86 }]),
+    ]);
+
+    const bob = getWeekScore(index, "bob", "worldClass");
+    assert.equal(bob.score, 86);
+    assert.equal(bob.ge, 0);
+    assert.equal(bob.visual, 0);
+    assert.equal(bob.music, 0);
+  });
+});
+
 // League standings are league-wide but matchups are class-segregated, so a
 // mixed-class league used to rank its members on numbers that were never
 // comparable: a World Class week is ~90 points and a SoundSport week ~60, which

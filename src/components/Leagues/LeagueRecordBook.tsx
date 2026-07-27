@@ -9,7 +9,7 @@
 // nothing to keep in sync.
 
 import React, { useMemo } from 'react';
-import { Flame, Gauge, Swords, Timer, TrendingUp } from 'lucide-react';
+import { Flame, Gauge, Music, Swords, Timer, TrendingUp, Zap } from 'lucide-react';
 
 import { computeLeagueRecords, type RecordWeekDoc } from '../../utils/leagueRecords';
 import { CORPS_CLASS_SHORT_LABELS } from '../../utils/corps';
@@ -124,6 +124,32 @@ const LeagueRecordBook = ({
     });
   }
 
+  // Caption Wars only — a league on the default format has neither, and both
+  // read as nothing rather than as a zero.
+  if (records.mostSweeps) {
+    const r = records.mostSweeps;
+    lines.push({
+      key: 'sweeps',
+      icon: Zap,
+      label: 'Most caption sweeps',
+      headline: `${name(r.uid)} — ${r.count}`,
+      detail: `${r.count === 1 ? 'week' : 'weeks'} taking all three captions`,
+      highlight: r.uid === viewerUid,
+    });
+  }
+
+  if (records.longestCaptionStreak) {
+    const r = records.longestCaptionStreak;
+    lines.push({
+      key: 'caption-streak',
+      icon: Music,
+      label: `Longest run in ${r.label}`,
+      headline: `${name(r.uid)} — ${r.length} straight`,
+      detail: `through week ${r.endedWeek}`,
+      highlight: r.uid === viewerUid,
+    });
+  }
+
   if (records.longestWinStreak) {
     const r = records.longestWinStreak;
     lines.push({
@@ -148,7 +174,9 @@ const LeagueRecordBook = ({
           </span>
         </div>
         <span className="text-[10px] font-data tabular-nums text-muted">
-          {records.weeksCounted} {records.weeksCounted === 1 ? 'week' : 'weeks'}
+          {records.seasonsCounted > 1
+            ? `${records.seasonsCounted} seasons`
+            : `${records.weeksCounted} ${records.weeksCounted === 1 ? 'week' : 'weeks'}`}
         </span>
       </div>
 

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tab panels for MatchupDetailView: season-stats overview and per-show
 // caption comparison, plus the CaptionCompare bar. Extracted verbatim.
 
@@ -6,13 +5,52 @@ import React from 'react';
 import { m } from 'framer-motion';
 import { Award, Flame, Target, Trophy } from 'lucide-react';
 
+/** One director's week, as MatchupDetailView folds it out of the recaps. */
+export interface SideBreakdown {
+  shows: Array<{
+    eventName?: string;
+    score: number;
+    geScore?: number;
+    visualScore?: number;
+    musicScore?: number;
+  }>;
+  geTotal: number;
+  visualTotal: number;
+  musicTotal: number;
+}
+
+export interface ScoreBreakdown {
+  user1?: SideBreakdown | null;
+  user2?: SideBreakdown | null;
+}
+
+export interface SideStats {
+  wins: number;
+  losses: number;
+  totalPoints?: number;
+  streak?: number;
+  streakType?: 'W' | 'L' | null;
+}
+
+type CompareColor = 'purple' | 'blue' | 'green';
+
 // Caption comparison bar component
-const CaptionCompare = ({ label, score1, score2, color }) => {
+const CaptionCompare = ({
+  label,
+  score1,
+  score2,
+  color,
+}: {
+  label: string;
+  score1: number;
+  score2: number;
+  color: CompareColor;
+}) => {
   const total = score1 + score2;
   const percent1 = total > 0 ? (score1 / total) * 100 : 50;
   const percent2 = total > 0 ? (score2 / total) * 100 : 50;
 
-  const colorClasses = {
+  const colorClasses: Record<CompareColor, { bg1: string; bg2: string }> = {
     purple: { bg1: 'bg-purple-500', bg2: 'bg-purple-400/50' },
     blue: { bg1: 'bg-blue-500', bg2: 'bg-blue-400/50' },
     green: { bg1: 'bg-green-500', bg2: 'bg-green-400/50' },
@@ -51,7 +89,19 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
 
 // OPTIMIZATION #6: Wrap with React.memo to prevent unnecessary re-renders
 
-export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, loading }) => (
+interface MatchupOverviewPanelProps {
+  scoreBreakdown: ScoreBreakdown;
+  user1Stats?: SideStats | null;
+  user2Stats?: SideStats | null;
+  loading?: boolean;
+}
+
+export const MatchupOverviewPanel = ({
+  scoreBreakdown,
+  user1Stats,
+  user2Stats,
+  loading,
+}: MatchupOverviewPanelProps) => (
   <m.div
     key="overview"
     initial={{ opacity: 0, y: 10 }}
@@ -96,18 +146,22 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
             <div className="flex items-center justify-center gap-4">
               <span
                 className={`font-bold text-lg ${
-                  user1Stats.totalPoints > user2Stats.totalPoints ? 'text-secondary' : 'text-white'
+                  (user1Stats.totalPoints ?? 0) > (user2Stats.totalPoints ?? 0)
+                    ? 'text-secondary'
+                    : 'text-white'
                 }`}
               >
-                {user1Stats.totalPoints.toFixed(0)}
+                {(user1Stats.totalPoints ?? 0).toFixed(0)}
               </span>
               <span className="text-muted/20">|</span>
               <span
                 className={`font-bold text-lg ${
-                  user2Stats.totalPoints > user1Stats.totalPoints ? 'text-secondary' : 'text-white'
+                  (user2Stats.totalPoints ?? 0) > (user1Stats.totalPoints ?? 0)
+                    ? 'text-secondary'
+                    : 'text-white'
                 }`}
               >
-                {user2Stats.totalPoints.toFixed(0)}
+                {(user2Stats.totalPoints ?? 0).toFixed(0)}
               </span>
             </div>
           </div>
@@ -143,7 +197,8 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
 
     {/* Quick Caption Comparison */}
     {!loading &&
-      (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
+      ((scoreBreakdown.user1?.shows.length ?? 0) > 0 ||
+        (scoreBreakdown.user2?.shows.length ?? 0) > 0) && (
         <div className="glass rounded-none p-4">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
             <Target className="w-4 h-4 text-secondary" />
@@ -173,7 +228,19 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
   </m.div>
 );
 
-export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loading }) => (
+interface MatchupShowsPanelProps {
+  matchup: { user1: string; user2: string };
+  scoreBreakdown: ScoreBreakdown;
+  getDisplayName: (uid: string) => string;
+  loading?: boolean;
+}
+
+export const MatchupShowsPanel = ({
+  matchup,
+  scoreBreakdown,
+  getDisplayName,
+  loading,
+}: MatchupShowsPanelProps) => (
   <m.div
     key="captions"
     initial={{ opacity: 0, y: 10 }}
@@ -183,7 +250,8 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
   >
     {/* Detailed Caption Breakdown */}
     {!loading &&
-      (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
+      ((scoreBreakdown.user1?.shows.length ?? 0) > 0 ||
+        (scoreBreakdown.user2?.shows.length ?? 0) > 0) && (
         <div className="glass rounded-none p-4">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
             <Target className="w-4 h-4 text-secondary" />
@@ -257,7 +325,10 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
           </div>
         ))}
 
-        {scoreBreakdown.user1?.shows.length === 0 && scoreBreakdown.user2?.shows.length === 0 && (
+        {/* `?.length === 0` was never true for a side with no breakdown at
+            all — undefined === 0 is false — so this empty state used to hide
+            itself in exactly the case it exists for. */}
+        {!scoreBreakdown.user1?.shows.length && !scoreBreakdown.user2?.shows.length && (
           <div className="p-8 text-center text-muted/40">No shows scored yet this week</div>
         )}
       </div>
