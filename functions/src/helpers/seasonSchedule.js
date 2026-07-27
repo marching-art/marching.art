@@ -327,7 +327,7 @@ async function addShowToDay(seasonId, dayNumber, show) {
   const week = Math.ceil(dayNumber / 7);
   const existingDayShows = competitions.filter(comp => comp.day === dayNumber);
 
-  competitions.push({
+  const competition = {
     id: `${seasonId}_day${dayNumber}_${existingDayShows.length}`,
     name: show.eventName,
     location: show.location || "",
@@ -337,7 +337,17 @@ async function addShowToDay(seasonId, dayNumber, show) {
     type: show.isChampionship ? "championship" : "regular",
     allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
     mandatory: show.mandatory || false,
-  });
+  };
+  // Provenance. Player-hosted events (callable/podiumHost.js) pass these and
+  // they used to be dropped on the floor, leaving a user-created show
+  // indistinguishable from a scraped DCI one in competitions[]. The drop
+  // pipeline needs the difference: a hosted show never appears in a DCI recap,
+  // so counting it would hold every night's scores open waiting for a recap
+  // that cannot exist (helpers/dropPlanner.js isDciSourcedShow).
+  if (show.eventTier) competition.eventTier = show.eventTier;
+  if (show.hostUid) competition.hostUid = show.hostUid;
+
+  competitions.push(competition);
 
   // Sort by day
   competitions.sort((a, b) => a.day - b.day);

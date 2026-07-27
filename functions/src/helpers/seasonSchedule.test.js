@@ -97,3 +97,76 @@ describe("mergeScheduleRefresh eventTier tagging", () => {
     assert.equal(midwest.eventTier, undefined);
   });
 });
+
+// ---------------------------------------------------------------------------
+// addShowToDay provenance: a player-hosted show must be distinguishable from a
+// scraped DCI one, or the drop pipeline holds the night's scores open waiting
+// for a dci.org recap that will never exist (helpers/dropPlanner.js).
+// ---------------------------------------------------------------------------
+
+const { isDciSourcedShow } = require("./dropPlanner");
+
+/**
+ * Run addShowToDay against an in-memory schedules/{id} doc. seasonSchedule.js
+ * destructures getDb at require time, so the fake config has to be in the
+ * module cache before it loads (same cache-swap idiom as
+ * newsArticleShared.test.js); both entries are restored afterwards.
+ */
+async function addShowWithFakeDb(existing, dayNumber, show) {
+  const stored = { competitions: [...existing] };
+  const fakeDb = {
+    doc: () => ({
+      async get() { return { exists: true, data: () => stored }; },
+      async set(data) { Object.assign(stored, data); },
+    }),
+  };
+
+  const configPath = require.resolve("../config");
+  const modulePath = require.resolve("./seasonSchedule");
+  const realConfig = require.cache[configPath];
+  const realModule = require.cache[modulePath];
+
+  require.cache[configPath] = /** @type {*} */ ({
+    id: configPath,
+    filename: configPath,
+    loaded: true,
+    exports: { ...require("../config"), getDb: () => fakeDb },
+  });
+  delete require.cache[modulePath];
+  try {
+    const { addShowToDay } = require("./seasonSchedule");
+    await addShowToDay("s26", dayNumber, show);
+  } finally {
+    if (realConfig) require.cache[configPath] = realConfig;
+    else delete require.cache[configPath];
+    if (realModule) require.cache[modulePath] = realModule;
+    else delete require.cache[modulePath];
+  }
+  return stored.competitions;
+}
+
+describe("addShowToDay provenance", () => {
+  test("persists eventTier and hostUid for a player-hosted show", async () => {
+    const competitions = await addShowWithFakeDb([], 10, {
+      eventName: "Rohn Invitational",
+      location: "Denver, CO",
+      eventTier: "hosted",
+      hostUid: "user-1",
+    });
+    const added = competitions.find((c) => c.name === "Rohn Invitational");
+    assert.equal(added.eventTier, "hosted");
+    assert.equal(added.hostUid, "user-1");
+    // And the drop planner therefore doesn't count it as an owed DCI recap.
+    assert.equal(isDciSourcedShow(added), false);
+  });
+
+  test("leaves a show with neither marker alone", async () => {
+    const competitions = await addShowWithFakeDb([], 10, {
+      eventName: "Some Show",
+      location: "Boise, ID",
+    });
+    const added = competitions.find((c) => c.name === "Some Show");
+    assert.equal(added.eventTier, undefined);
+    assert.equal(added.hostUid, undefined);
+  });
+});

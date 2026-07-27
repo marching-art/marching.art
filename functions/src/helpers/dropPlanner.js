@@ -72,6 +72,12 @@ const EARLIEST_SCORES_HOUR_ET = 18;
 // so a slipped drop can never cross into the next plan's date.
 const LATE_CLAMP_LEAD_MIN = 15;
 
+// The legacy pipeline's scoring hour (the 2 AM ET run the drop dispatcher
+// replaced). Still the reference point for "how long is it reasonable to wait
+// on DCI?": the dispatcher holds a half-posted night open until this instant,
+// takes one more scrape, and then scores with whatever arrived.
+const LEGACY_SCORING_HOUR_ET = 2;
+
 function pad(n) {
   return String(n).padStart(2, "0");
 }
@@ -101,6 +107,30 @@ function showDateFor(now) {
  */
 function zoneForShow(show) {
   return timezoneFor(show && show.location) || (show && show.timezone) || DEFAULT_ZONE;
+}
+
+/**
+ * True when a scheduled show came from the DCI event scrape — i.e. one that
+ * will eventually appear in a dci.org recap. Player-hosted events
+ * (callable/podiumHost.js -> addShowToDay) are marching.art's own and never
+ * will, so counting them would hold a night's scores open forever waiting on a
+ * recap that cannot exist.
+ *
+ * Hosted shows carry `eventTier: "hosted"` and `hostUid`. Shows created before
+ * addShowToDay persisted those fall back to the `date` check: every scraped
+ * event has one (helpers/scheduleRefresh.js skips dateless events outright),
+ * while addShowToDay stores `date: null`. The heuristic errs toward NOT
+ * counting a show, which only ever gives up waiting sooner — never the
+ * opposite.
+ *
+ * @param {object} show - A competitions[] entry.
+ * @returns {boolean}
+ */
+function isDciSourcedShow(show) {
+  if (!show) return false;
+  if (show.hostUid) return false;
+  if (show.eventTier === "hosted") return false;
+  return Boolean(show.date);
 }
 
 /**
@@ -137,6 +167,7 @@ function showCalendarDay(seasonStartDate, now = new Date()) {
  *   tzMismatches: Array<object>, hasScheduledShows: boolean|null,
  *   expectedShowCount: number,
  *   scrapeInstant: Date|null, scrapeRetryUntil: Date|null,
+ *   legacyScoringInstant: Date|null,
  *   dropInstant: Date, plannedDropInstant: Date,
  *   dropLabel: string, needsScrape: boolean,
  * }} null when there is nothing to score tonight (before season, spring
@@ -170,7 +201,7 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
       seasonType, competitionDay, showDateET,
       timeZones: [], scoresAt: null, ignoredScoresAt: [], tzMismatches: [],
       hasScheduledShows: null, expectedShowCount: 0,
-      scrapeInstant: null, scrapeRetryUntil: null,
+      scrapeInstant: null, scrapeRetryUntil: null, legacyScoringInstant: null,
       dropInstant, plannedDropInstant: dropInstant,
       dropLabel: easternLabel(dropInstant), needsScrape: false,
     };
@@ -181,6 +212,9 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
   const dayBoundary = wallClockToUtc(year, month, date + 1, SHOW_DAY_RESET_HOURS, 0, EASTERN_ZONE);
   const lateClamp = new Date(dayBoundary.getTime() - LATE_CLAMP_LEAD_MIN * MS_PER_MIN);
   const earliestPlausibleScores = wallClockToUtc(year, month, date, EARLIEST_SCORES_HOUR_ET, 0, EASTERN_ZONE);
+  // The legacy 2 AM ET scoring run, the morning after the shows.
+  const legacyScoringInstant =
+    wallClockToUtc(year, month, date + 1, LEGACY_SCORING_HOUR_ET, 0, EASTERN_ZONE);
 
   // Live season: gather tonight's shows and their zones + real announced times.
   const todaysShows = competitions.filter((c) => c && c.day === competitionDay);
@@ -245,13 +279,14 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
   return {
     seasonType, competitionDay, showDateET,
     timeZones, scoresAt, ignoredScoresAt, tzMismatches, hasScheduledShows,
-    // How many DCI events tonight's schedule expects. competitions[] is built
-    // from dci.org's own event list (helpers/seasonSchedule.js
-    // mergeScheduleRefresh), so it is directly comparable to the number of
-    // events the scrape finds listed for tonight — that comparison is what
-    // tells the dispatcher the recaps are still trickling in.
-    expectedShowCount: todaysShows.length,
-    scrapeInstant, scrapeRetryUntil: lateClamp,
+    // How many DCI recaps tonight owes. competitions[] is built from dci.org's
+    // own event list (helpers/scheduleRefresh.js mergeScheduleRefresh), so the
+    // scraped entries are directly comparable to the events the scrape finds
+    // listed for tonight — that comparison is what tells the dispatcher the
+    // recaps are still trickling in. Player-hosted shows are excluded: they
+    // never appear on dci.org.
+    expectedShowCount: todaysShows.filter(isDciSourcedShow).length,
+    scrapeInstant, scrapeRetryUntil: lateClamp, legacyScoringInstant,
     dropInstant, plannedDropInstant,
     dropLabel: easternLabel(dropInstant), needsScrape: true,
   };
@@ -262,7 +297,9 @@ module.exports = {
   showDateFor,
   showCalendarDay,
   zoneForShow,
+  isDciSourcedShow,
   SHOW_DAY_RESET_HOURS,
+  LEGACY_SCORING_HOUR_ET,
   CHAMPIONSHIP_WEEK_START_DAY,
   CHAMPIONSHIP_WEEK_ZONE,
   SCRAPE_BUFFER_AFTER_SCORES_MIN,

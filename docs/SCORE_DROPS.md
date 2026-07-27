@@ -56,29 +56,46 @@ The announced "Scores Announced" time is when scores are read in the stadium;
 the recap reaches dci.org some time after. Retries are therefore budgeted by
 what an attempt **costs**, because the cheap failure is the common one:
 
-| Attempt                                                   | Cost               | Budget                     |
-| --------------------------------------------------------- | ------------------ | -------------------------- |
-| Probe — fetched `/scores`, tonight not listed yet         | 1 request          | `MAX_LISTING_PROBES` (12)  |
-| Scrape — fetched tonight's recap pages, still failed      | 1 per event        | `MAX_SCRAPE_ATTEMPTS` (3)  |
+| Attempt                                              | Cost        | Budget                    |
+| ------------------------------------------------------ | ----------- | ------------------------- |
+| Probe — fetched `/scores`, nothing new to pull       | 1 request   | `MAX_LISTING_PROBES` (16) |
+| Scrape — fetched tonight's recap pages, still failed | 1 per event | `MAX_SCRAPE_ATTEMPTS` (3) |
 
 A dark day before championship week gets one of each. The dispatcher charges
 every attempt to the recap budget optimistically (a scrape that hangs to the
 function timeout must stay charged) and refunds it to the probe counter when
-the result reports `fetchedRecaps: false`.
+the result reports `fetchedRecaps: false`. 16 probes covers the whole window
+at the 15-minute cadence, so in practice the clamp bounds the night and the
+budget is a runaway guard.
 
-Two further rules keep a night from publishing half-real scores:
+### Accounting for every scheduled show
 
-- `lastScrapedDate` is stamped only when **every** listed recap produced rows.
-  A partial run leaves the night unstamped and writes `scrape_runs` status
-  `partial`, which the 4:30 AM watchdog reads as unhealthy.
-- DCI posts a night's recaps one event at a time, so a scrape that found fewer
-  events than `competitions[]` expects keeps re-scraping for the rest through a
-  `COMPLETENESS_GRACE_MIN` (60 min) window past the drop. The grace bounds the
-  wait so a stale schedule (a cancelled show still carried) delays the drop by
-  at most an hour instead of holding it to the clamp.
+A night's scores are only fully real once **every DCI show on the schedule for
+that day** has a recap archived. The dispatcher holds the drop until then:
 
-Any night that scores without all of its recaps is stamped
-`usedRegressionFallback` on the plan doc.
+- **What's owed** — `plan.expectedShowCount`, the day's `competitions[]`
+  entries that came from the DCI scrape, or dci.org's own listing count if
+  that's higher (a show added since the last schedule refresh). Player-hosted
+  events are excluded (`isDciSourcedShow`): they're marching.art's own and
+  never appear in a DCI recap, so counting them would hold the night open
+  forever. They're identified by `eventTier: "hosted"` / `hostUid`, which
+  `addShowToDay` persists, falling back to "has no `date`" for shows created
+  before it did.
+- **What's in hand** — `drop_plans/{date}.scrapedRecapUrls`, the recaps
+  actually archived tonight. Counting archived rather than listed events covers
+  both a night DCI is still posting and a listed recap that failed to scrape.
+- **Cost of re-checking** — the archived URLs are passed back to the scraper as
+  a skip list, so a re-check fetches the listing and only genuinely new events.
+  A tick with nothing new is a probe, not a recap attempt.
+- **When it gives up** — `legacyScoringInstant` (2 AM ET, the old scoring hour)
+  plus one tick. The 2:00 AM tick takes a final scrape and the 2:15 tick scores
+  with whatever arrived. Anything still missing is a manual
+  "Scrape DCI Scores Now" in the morning.
+
+`lastScrapedDate` is stamped only when every recap a run pulled produced rows;
+a partial run leaves it unstamped and writes `scrape_runs` status `partial`,
+which the 4:30 AM watchdog reads as unhealthy. Any night that scores short is
+stamped `usedRegressionFallback` with `recapsArchived` / `recapsOwed`.
 
 ### What the client shows
 
