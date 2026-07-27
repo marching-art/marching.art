@@ -128,3 +128,102 @@ describe("selectLeagueChampion", () => {
     assert.deepEqual(result.qualifiers, []);
   });
 });
+
+// A league of twenty with a finals field of twelve left eight directors with
+// nothing to play for from the moment they were mathematically out — which is
+// the week most of them stop showing up. The consolation title is the same race
+// on the same week, decided by the same rule.
+describe("consolation title", () => {
+  const field = (n) =>
+    Array.from({ length: n }, (_, i) => row(`d${i + 1}`, n - i, i));
+  const uids = (n) => field(n).map((r) => r.uid);
+
+  test("crowns the best of the directors below the cut", () => {
+    const result = selectLeagueChampion({
+      standings: field(6),
+      eligibleUids: uids(6),
+      finalsSize: 4,
+    });
+
+    assert.equal(result.championUid, "d1");
+    // Seeds continue from the cut: 13th is 13th, not the #1 seed of anything.
+    assert.deepEqual(result.consolation, {
+      uid: "d5",
+      seed: 5,
+      decidedBy: "standings",
+      finalsScore: null,
+      record: { wins: 2, losses: 4, ties: 0, totalPoints: 0 },
+      fieldSize: 2,
+    });
+  });
+
+  test("championship week decides it, exactly as it decides the title", () => {
+    const result = selectLeagueChampion({
+      standings: field(6),
+      eligibleUids: uids(6),
+      finalsSize: 4,
+      // The lower seed below the cut has the better Finals night.
+      finalsScores: new Map([
+        ["d5", { score: 70, shows: 1 }],
+        ["d6", { score: 88, shows: 1 }],
+      ]),
+    });
+
+    assert.equal(result.consolation.uid, "d6");
+    assert.equal(result.consolation.decidedBy, "finals");
+    assert.equal(result.consolation.finalsScore, 88);
+  });
+
+  test("a Finals night nobody below the cut competed in falls back to the seed", () => {
+    const result = selectLeagueChampion({
+      standings: field(6),
+      eligibleUids: uids(6),
+      finalsSize: 4,
+      // Only a qualifier competed — the consolation field all sat it out.
+      finalsScores: new Map([["d1", { score: 95, shows: 1 }]]),
+    });
+
+    assert.equal(result.consolation.uid, "d5");
+    assert.equal(result.consolation.decidedBy, "standings");
+    assert.equal(result.consolation.finalsScore, null);
+  });
+
+  // Winning by beating nobody is not a title, and a "Consolation Champion" of
+  // one reads as a consolation prize in the worst sense.
+  test("a field of one is not a race", () => {
+    const result = selectLeagueChampion({
+      standings: field(5),
+      eligibleUids: uids(5),
+      finalsSize: 4,
+    });
+    assert.equal(result.consolation, null);
+  });
+
+  test("a league where everyone qualifies has no consolation", () => {
+    const result = selectLeagueChampion({
+      standings: field(4),
+      eligibleUids: uids(4),
+      finalsSize: 12,
+    });
+    assert.equal(result.consolation, null);
+  });
+
+  test("a league with no standings at all has none either", () => {
+    const result = selectLeagueChampion({ standings: [], eligibleUids: [] });
+    assert.equal(result.consolation, null);
+  });
+
+  // Directors who did not register for the season are not in anyone's field.
+  test("ineligible directors are excluded before the cut is drawn", () => {
+    const result = selectLeagueChampion({
+      standings: field(6),
+      eligibleUids: ["d1", "d2", "d5", "d6"],
+      finalsSize: 2,
+    });
+
+    assert.equal(result.championUid, "d1");
+    assert.equal(result.consolation.uid, "d5");
+    assert.equal(result.consolation.seed, 3);
+    assert.equal(result.consolation.fieldSize, 2);
+  });
+});

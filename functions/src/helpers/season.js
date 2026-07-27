@@ -783,12 +783,36 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
         seed: decision.seed,
         decidedBy: decision.decidedBy,
         finalsField: decision.qualifiers.map((q) => q.uid),
+        // The best of the directors who missed the cut, decided by the same
+        // rule on the same week. Recognition only — it pays no prize pool and
+        // mints no CorpsCoin — but a league of twenty used to leave eight
+        // members with nothing to play for the moment they were mathematically
+        // out. Null when the field below the cut was too small to be a race.
+        consolation: decision.consolation
+          ? {
+              winnerId: decision.consolation.uid,
+              winnerUsername:
+                profileByUid.get(decision.consolation.uid)?.username ||
+                profileByUid.get(decision.consolation.uid)?.displayName ||
+                "Unknown",
+              seed: decision.consolation.seed,
+              decidedBy: decision.consolation.decidedBy,
+              record: decision.consolation.record,
+              fieldSize: decision.consolation.fieldSize,
+            }
+          : null,
         archivedAt: new Date(),
       };
       batch.update(leagueRef, {
         champions: admin.firestore.FieldValue.arrayUnion(championEntry),
       });
       logger.info(`Archived winner for league '${league.name}': ${leagueWinner.username}`);
+      if (championEntry.consolation) {
+        logger.info(
+          `League '${league.name}' consolation: ${championEntry.consolation.winnerUsername} ` +
+            `(seed #${championEntry.consolation.seed} of ${championEntry.consolation.fieldSize} below the cut).`
+        );
+      }
 
       // --- ACHIEVEMENT LOGIC ---
       // Shape matches the server catalog (helpers/achievements.js) and what

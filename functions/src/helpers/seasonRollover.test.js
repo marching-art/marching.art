@@ -397,6 +397,54 @@ describe("archiveSeasonResultsLogic", () => {
       ]),
     });
 
+  // A league of twenty with a field of twelve used to leave eight directors
+  // with nothing to play for the moment they were mathematically out. The
+  // consolation title is the same race on the same week — recognition only, so
+  // it moves no CorpsCoin and never touches the prize pool.
+  test("records the consolation title alongside the champion", async () => {
+    const { db, writes } = makeLeagueFixture(
+      { members: ["alice", "bob", "carol", "dave"], settings: { finalsSize: 2 } },
+      [
+        [
+          profilePath("carol"),
+          { activeSeasonId: "old-season", username: "carol", corps: { worldClass: { corpsName: "C" } } },
+        ],
+        [
+          profilePath("dave"),
+          { activeSeasonId: "old-season", username: "dave", corps: { worldClass: { corpsName: "D" } } },
+        ],
+        [
+          `${leaguesPath}/league-1/standings/current`,
+          {
+            standings: [
+              { uid: "alice", wins: 3, losses: 0, ties: 0, totalPoints: 270, pointsAgainst: 240 },
+              { uid: "bob", wins: 2, losses: 1, ties: 0, totalPoints: 260, pointsAgainst: 250 },
+              { uid: "carol", wins: 1, losses: 2, ties: 0, totalPoints: 250, pointsAgainst: 260 },
+              { uid: "dave", wins: 0, losses: 3, ties: 0, totalPoints: 240, pointsAgainst: 270 },
+            ],
+          },
+        ],
+      ]
+    );
+
+    await archiveSeasonResultsLogic(db, { seasonUid: "old-season", seasonName: "Old Season" });
+
+    const leagueWrite = writes.find((w) => w.path === `${leaguesPath}/league-1`);
+    const entry = JSON.stringify(leagueWrite.data.champions);
+    assert.match(entry, /"winnerId":"alice"/);
+    assert.match(entry, /"consolation":\{"winnerId":"carol"/);
+    // Seeds continue from the cut: third is third, not the #1 seed of anything.
+    assert.match(entry, /"seed":3/);
+
+    // Recognition only — no achievement, no coin, nothing out of the pool.
+    const carolWrites = writes.filter((w) => w.path === profilePath("carol"));
+    assert.equal(
+      carolWrites.filter((w) => w.data?.corpsCoin !== undefined || w.data?.achievements).length,
+      0,
+      "the consolation title must move no CorpsCoin and grant no achievement"
+    );
+  });
+
   test("archives the champion for the PASSED-IN season and pays pool + achievement CC", async () => {
     const { db, writes } = makeLeagueFixture();
 
