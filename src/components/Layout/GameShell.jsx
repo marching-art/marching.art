@@ -12,6 +12,7 @@ import { ShellContext } from './shellContext';
 import { useAuth } from '../../context/AuthContext';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import SiteLinksMenu from './SiteLinksMenu';
+import NotificationBell from '../Notifications/NotificationBell';
 import BottomNav from '../BottomNav';
 import { useTickerData } from '../../hooks/useTickerData';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
@@ -93,6 +94,11 @@ const TopNav = () => {
         >
           <MessageCircle className="w-5 h-5" />
         </a>
+
+        {/* The inbox lives here — GameShell's header is on every authenticated
+            page, desktop and mobile — so it is mounted exactly once and the
+            session holds a single notifications listener. */}
+        <NotificationBell uid={user?.uid} />
 
         {/* Guides + site links. GameShell has no footer (fixed layout), so this
             is the app's only route to the public pages and the legal links. */}
