@@ -764,11 +764,21 @@ carries the season (`fantasy_recaps/{seasonUid}`, `show_registrations/{seasonUid
   `MatchupsTab` and `callable/leagues.js` are back under the size line, and
   `MatchupsTab` reads through React Query instead of duplicating the season and
   schedule fetches into local state. The remaining migration is mechanical.
-- **Phase 4 — alternate league formats** (Survivor / Pick'em / One-Night Slate).
-  These are a game-design decision, not a defect: each needs rules that make it
-  fun, not just code that makes it run. `scoringFormat` and `matchupType` were
-  deleted rather than left as the appearance of the feature, so there is nothing
-  half-built to trip over when the formats are actually designed.
+- ~~**Phase 4 — alternate league formats**~~ — **shipped as Caption Wars**
+  (docs/CAPTION_WARS_SPEC.md). Weeks decided as a best-of-three across General
+  Effect, Visual and Music, bought by the commissioner for one season at a time.
+  It needed no scoring change and no backfill, because those three groups are
+  already persisted on every show result — and it cannot go finer, because the
+  eight lineup captions are deliberately unrecorded per show.
+
+  `settings.scoringFormat` came back with an implementation behind it, paired
+  with the season uid it was bought for so a stale value can never switch a
+  league into a format nobody paid for. Survivor and Pick'em remain undesigned.
+
+- **Consolation bracket** — ~~outstanding~~ shipped. Everyone below the finals
+  cut runs the same race on championship week for a second, lesser title,
+  decided by the same function on the same data. Recognition only: no prize
+  pool, no CorpsCoin.
 - **Dynasty mode** — multi-season persistent standings and retired numbers. The
   cross-season groundwork is now complete: the Hall of Champions reads
   `champions[]` with record/seed/decidedBy, archived standings live at
@@ -776,3 +786,23 @@ carries the season (`fantasy_recaps/{seasonUid}`, `show_registrations/{seasonUid
   Record Book already spans seasons. What remains is presentation.
 - **Per-member career-in-this-league pages** — head-to-head records against
   every opponent, season by season. All the data is now reachable.
+
+## Operational, not code
+
+One item needs running against production and cannot be done from a development
+environment:
+
+```
+node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run
+node functions/src/scripts/archiveStaleLeagueMatchups.js --commit
+```
+
+Any league that completed a season BEFORE the rollover fix landed still has last
+season's `matchups/week-N` documents sitting in its live collection, unstamped.
+Rollover now archives them and the generator regenerates over a stale stamp, so
+this cannot recur — but a league already in that state stays frozen until the
+script moves them, because an unstamped document is indistinguishable from this
+season's work by any rule the running code can apply.
+
+Read the dry-run output before committing: it names every league and week it
+would move.
