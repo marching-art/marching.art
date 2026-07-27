@@ -79,9 +79,12 @@ const AchievementTrackerPanel = memo(
                         {a.current}/{a.goal}
                       </span>
                     </div>
-                    <span className="text-[10px] font-bold text-brand-subtle font-data">
-                      {a.pct}%
-                    </span>
+                    {/* Full-strength gold, not brand-subtle: #A16207 is only
+                        3.5:1 on surface-card, which fails WCAG AA for text
+                        (axe flagged it in the e2e a11y scan). The dim tone
+                        stays on the bar fill and icon below, where the 3:1
+                        non-text threshold applies. */}
+                    <span className="text-[10px] font-bold text-brand font-data">{a.pct}%</span>
                   </div>
                   <div className="ml-8 h-1 bg-surface-raised rounded-full overflow-hidden">
                     <div
