@@ -11,6 +11,7 @@
         "firebase-debug.*.log",
         "*.local",
         "**/*.test.js",
+        "rehearsal",
         "pressboxImporter",
         "dciArchiveImporter",
         "src/scripts/cleanupLeakedProfileEmails.js"
