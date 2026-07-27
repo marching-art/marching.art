@@ -251,7 +251,7 @@ const LeagueDetailView = ({
               weeklyMatchups={weeklyMatchups}
               lastUpdated={standingsLastUpdated}
               isProvisional={standingsProvisional}
-              playoffSize={league.settings?.playoffSize || league.settings?.finalsSize || 4}
+              playoffSize={league.settings?.finalsSize || 12}
               onMatchupClick={(matchup) => {
                 if (matchup) {
                   setSelectedMatchup({

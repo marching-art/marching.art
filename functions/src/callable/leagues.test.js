@@ -195,9 +195,13 @@ describe("createLeague input validation", () => {
         description: "A fine league",
         maxMembers: 12,
         settings: {
-          matchupType: "h2h",
           finalsSize: 10,
           entryFee: 0,
+          // Settings that were stored but read by nothing — three knobs a
+          // commissioner appeared to set that could not affect their league.
+          matchupType: "h2h",
+          scoringFormat: "total",
+          playoffSize: 8,
           // Malicious/unknown keys that must NOT land in the stored doc:
           prizePool: 999999,
           isAdmin: true,
@@ -215,14 +219,31 @@ describe("createLeague input validation", () => {
     assert.equal(leagueWrite.data.description, "A fine league");
     assert.equal(leagueWrite.data.maxMembers, 12);
     assert.deepEqual(leagueWrite.data.settings, {
-      matchupType: "h2h",
-      playoffSize: 4,
-      scoringFormat: "circuit",
+      // finalsSize is the only real knob: it decides the finals field the
+      // champion is drawn from and the standings cut line.
       finalsSize: 10,
       // Escrow invariant: both always server-derived from the validated fee
       entryFee: 0,
       prizePool: 0,
     });
+  });
+
+  test("rejects a nonsense finals size instead of storing it", async () => {
+    const { db } = makeFakeDb(seasonDocs());
+    setDbForTesting(db);
+
+    await assert.rejects(
+      createLeague.run(
+        authedRequest("u1", { name: "Bad Finals", settings: { finalsSize: 0 } })
+      ),
+      /Finals size/
+    );
+    await assert.rejects(
+      createLeague.run(
+        authedRequest("u1", { name: "Bad Finals", settings: { finalsSize: 3.5 } })
+      ),
+      /Finals size/
+    );
   });
 
   test("defaults maxMembers to 20 and seeds prizePool from the entry fee", async () => {

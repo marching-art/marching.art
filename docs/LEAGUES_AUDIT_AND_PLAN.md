@@ -148,8 +148,11 @@ Fixed: `finalsSize` decides a real finals field and championship week decides
 the title among it (A4); `playoffSize` is wired through to the standings cut
 line so it reflects the league's own setting; and `LeagueFinalsBracket` draws
 the field the cut line points at — seeds, who is in, who is on the bubble, and
-who won and how once the season is archived. `scoringFormat` and `matchupType`
-remain stored-and-unread; they are the last of this group.
+who won and how once the season is archived. `scoringFormat`, `matchupType`
+and the duplicate `playoffSize` are gone: three settings a commissioner
+appeared to choose that could not affect their league. `finalsSize` is the one
+real knob, and it is now validated at creation rather than merely defaulted.
+Alternate formats remain real future work (`docs/GAMIFICATION.md`).
 
 ### A7 · P2 — Pairing had no rematch avoidance and no bye rotation — FIXED
 
@@ -668,17 +671,16 @@ Small, isolated, high ratio of value to risk:
 
 ## Still outstanding
 
-- **A6 (last piece)** — `scoringFormat` and `matchupType` are still stored and
-  never read. Implement the formats or delete the fields.
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
   can rank on one comparable scale. The table is now honest about the limitation
   rather than fixed of it.
 - **C6** — co-commissioners, result correction, pinned announcements, league
   rules documents, scheduled format locks. The audit view (D3) and settings
   editing (C2) landed; the rest of the commissioner toolkit has not.
-- **F7 (remainder)** — `MatchupsTab` still fetches into local `useState` rather
-  than reusing `useLeagueDetail`'s React Query entries, and several league files
-  remain `@ts-nocheck`'d. `StandingsTab` is back under the line; the rest of the
-  folder is not yet migrated.
+- **F7 (remainder)** — several league files still carry `@ts-nocheck`.
+  `StandingsTab` and `MatchupsTab` are back under the line and `MatchupsTab` now
+  reads through React Query instead of duplicating the season and schedule
+  fetches into local state; the rest of the folder is not yet migrated to
+  TypeScript.
 - **Phase 4** — alternate league formats (Survivor / Pick'em / One-Night Slate),
   dynasty mode, and the deeper discovery work.

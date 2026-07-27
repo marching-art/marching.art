@@ -60,6 +60,17 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
 
   // Commissioner-set entry fee: validated here, charged to every joiner
   // (including the creator, below) and paid into the prize pool.
+  // Validated, not just defaulted: this is the only league setting that
+  // changes how the season ends, so a nonsense value must be rejected at the
+  // door rather than surfacing as a broken cut line in week 7.
+  const finalsSize = settings.finalsSize === undefined ? 12 : settings.finalsSize;
+  if (!Number.isInteger(finalsSize) || finalsSize < 1 || finalsSize > 50) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Finals size must be a whole number between 1 and 50."
+    );
+  }
+
   const entryFee = Number(settings.entryFee) || 0;
   if (!Number.isInteger(entryFee) || entryFee < 0 || entryFee > MAX_LEAGUE_ENTRY_FEE) {
     throw new HttpsError(
@@ -132,10 +143,15 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       settings: {
         // Whitelisted keys only — never spread arbitrary client-supplied
         // settings into the stored doc.
-        matchupType: settings.matchupType || 'weekly', // weekly, h2h
-        playoffSize: settings.playoffSize || 4,
-        scoringFormat: settings.scoringFormat || 'circuit',
-        finalsSize: settings.finalsSize || 12,
+        //
+        // `matchupType`, `scoringFormat` and `playoffSize` used to be stored
+        // here and read by NOTHING — three settings a commissioner appeared to
+        // choose that could not affect their league. `finalsSize` is the one
+        // real knob: it decides the finals field the champion is drawn from
+        // (helpers/leagueChampion.js) and the cut line the standings table
+        // draws. `playoffSize` was a second name for the same idea and is gone
+        // with them.
+        finalsSize,
         // Applied last so client values can't override the validated fee
         // or the pool. The prize pool is PURE ESCROW: it holds only entry
         // fees actually debited from members (creator's fee here, joiners'

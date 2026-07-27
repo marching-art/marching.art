@@ -159,10 +159,7 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
         updatedAt: new Date(),
       },
       settings: {
-        matchupType: 'weekly',
-        playoffSize: 4,
         finalsSize: 4,
-        scoringFormat: 'circuit',
         entryFee: 0,
         // Pure escrow like every league (see createLeague): the rookie
         // circuit has no entry fee, so its pool stays 0 — champions here
