@@ -345,7 +345,7 @@ describe("nightly Eastern Classic announcement stage", () => {
     });
     assert.equal(result.status, "ran");
     assert.deepEqual(result.announcement, { kind: "eastern-preview", status: "posted" });
-    assert.match(posted.embeds[0].title, /Eastern Classic night lineups/);
+    assert.match(posted.embeds[0].title, /Eastern Classic/);
     assert.equal(db.writes["scoring_runs/test_season_eastern_preview_day38"].status, "completed");
   });
 

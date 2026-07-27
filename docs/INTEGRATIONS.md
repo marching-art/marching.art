@@ -178,6 +178,12 @@ their night by opening the app.
   stage has already written its own snake that night, the Podium **headcount**
   joins each field — that doc is uid-keyed, so it contributes numbers, not
   names.
+- **It is a PREVIEW, and says so.** The authoritative split is recomputed from
+  **final** enrollment on night one (`easternSplit.resolveEasternNightSet`),
+  and week-6 show selections stay editable until then — so a corps that joins
+  or drops on days 39-40 is re-seeded. The embed's footer states this outright;
+  copy that read as final would make a late registrant think the post had lost
+  them.
 - **Idempotency + window:** one lease, `{seasonUid}_eastern_preview_day38`,
   contended by every night in the **days 38-40** window. The normal case posts
   on day 38; a night when Discord was unreachable (or when the preview landed

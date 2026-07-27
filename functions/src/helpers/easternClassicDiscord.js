@@ -158,16 +158,24 @@ function buildEasternPreviewPayload({ seasonName, data }) {
     .join(" · ");
 
   return payloadOf({
-    title: "🎺 Eastern Classic night lineups are set",
+    title: "🎺 Eastern Classic — here's who marches which night",
     url: SCHEDULE_URL,
     description:
       `${seasonName} — ${eventName} is one show across two nights ` +
       `(Days ${nights[0]} and ${nights[1]}). One registration covers both, and every corps ` +
       "performs exactly one night — seeded by season score and split so the two nights " +
-      `carry equal strength. ${total} corps march: ${splitLine}.`,
+      `carry equal strength. ${total} corps so far: ${splitLine}.`,
     color: COLORS.lineup,
     fields: perNight.map((n, i) => buildNightField(n.night, i, n.entries, n.podium)),
-    footer: { text: "Your night is on the schedule — no second registration needed." },
+    // Honest framing: the final split is recomputed from FINAL enrollment on
+    // night one (easternSplit.resolveEasternNightSet), and week-6 selections
+    // are still editable until then — so this lineup is a preview, and saying
+    // otherwise would make a late registrant think the post had lost them.
+    footer: {
+      text:
+        "Seeded off tonight's standings — corps that join or drop before show night " +
+        "are re-seeded into the final split. One registration covers both nights.",
+    },
   });
 }
 

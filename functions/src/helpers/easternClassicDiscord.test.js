@@ -89,9 +89,12 @@ describe("Eastern Classic lineup embed", () => {
     });
     const embed = payload.embeds[0];
 
-    assert.match(embed.title, /Eastern Classic night lineups/);
+    assert.match(embed.title, /Eastern Classic/);
     assert.match(embed.description, /Days 41 and 42/);
-    assert.match(embed.description, /6 corps march: 3 on Night 1 · 3 on Night 2/);
+    assert.match(embed.description, /6 corps so far: 3 on Night 1 · 3 on Night 2/);
+    // The split is recomputed from final enrollment on night one, so the post
+    // must not read as final.
+    assert.match(embed.footer.text, /re-seeded into the final split/);
 
     assert.equal(embed.fields.length, 2);
     assert.equal(embed.fields[0].name, "Night 1 · Day 41");
@@ -128,7 +131,7 @@ describe("Eastern Classic lineup embed", () => {
     assert.match(embed.fields[0].value, /\*\*Podium\*\* \(2\)$/);
     assert.match(embed.fields[1].value, /\*\*Podium\*\* \(1\)$/);
     // The Podium corps count toward the totals in the description.
-    assert.match(embed.description, /9 corps march: 5 on Night 1 · 4 on Night 2/);
+    assert.match(embed.description, /9 corps so far: 5 on Night 1 · 4 on Night 2/);
   });
 
   test("a long class roster is clamped with a +N more tail", () => {
