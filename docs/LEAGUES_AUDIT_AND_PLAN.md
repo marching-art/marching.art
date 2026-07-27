@@ -755,15 +755,18 @@ carries the season (`fantasy_recaps/{seasonUid}`, `show_registrations/{seasonUid
 
 ## Still outstanding
 
+Everything below is the last of it. One item is operational and needs
+production credentials; the rest is a single known limitation.
+
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
   can rank on one comparable scale. The table is now honest about the limitation
   rather than fixed of it.
-- **F7 (remainder)** — the larger league components still carry `@ts-nocheck`.
-  Every file added in this work is TypeScript, `LeaguePoolCard` and
-  `ActivityTab` were migrated (ratchet lowered 209 → 207), `StandingsTab`,
-  `MatchupsTab` and `callable/leagues.js` are back under the size line, and
-  `MatchupsTab` reads through React Query instead of duplicating the season and
-  schedule fetches into local state. The remaining migration is mechanical.
+- ~~**F7**~~ — **done.** Every file under `components/Leagues` and the Leagues
+  page is TypeScript; no `@ts-nocheck` remains in the league subsystem, and the
+  repo-wide ratchet fell 207 → 188. The migration was mostly mechanical, but it
+  found a crash (the Matchups tab's Season view), two constants left stale by
+  the caption-battle change, a rank badge that had never rendered, and an
+  empty state that hid itself in the one case it existed for.
 - ~~**Phase 4 — alternate league formats**~~ — **shipped as Caption Wars**
   (docs/CAPTION_WARS_SPEC.md). Weeks decided as a best-of-three across General
   Effect, Visual and Music, bought by the commissioner for one season at a time.
@@ -779,13 +782,14 @@ carries the season (`fantasy_recaps/{seasonUid}`, `show_registrations/{seasonUid
   cut runs the same race on championship week for a second, lesser title,
   decided by the same function on the same data. Recognition only: no prize
   pool, no CorpsCoin.
-- **Dynasty mode** — multi-season persistent standings and retired numbers. The
-  cross-season groundwork is now complete: the Hall of Champions reads
-  `champions[]` with record/seed/decidedBy, archived standings live at
-  `standings/{seasonUid}`, archived matchups at `matchupHistory/`, and the
-  Record Book already spans seasons. What remains is presentation.
-- **Per-member career-in-this-league pages** — head-to-head records against
-  every opponent, season by season. All the data is now reachable.
+- ~~**Dynasty mode**~~ — **done.** The all-time table ranks every director
+  across every season the league has played, titles first. It hides itself in a
+  league's first season, where it would just be the standings again.
+- ~~**Per-member career pages**~~ — **done.** Record season by season, titles,
+  best week, and head-to-head against every opponent, ordered by who you keep
+  drawing. Both derive from the matchup weeks the Record Book already loads,
+  through the same parsing and ordering, so the three views can never disagree
+  about what a week is or when it happened.
 
 ## Operational, not code
 
