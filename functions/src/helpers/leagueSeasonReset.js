@@ -54,9 +54,15 @@ const { SCORING_FORMATS } = require("./captionWars");
  * reachable on its own through the admin manualTrigger, where wiping live
  * standings mid-season would be destructive.
  *
- * Batches are chunked — archiveSeasonResultsLogic's single un-chunked batch is
- * already near Firestore's 500-op ceiling as leagues grow, and this writes up
- * to three ops per league.
+ * Batches are chunked, which is worth doing for its own sake — bounded memory
+ * and a bounded request size on a job that scales with the league count — but
+ * not for the reason this comment used to give. It cited a 500-op ceiling that
+ * Firestore's published quotas no longer contain (they cap a request at 10 MiB
+ * and 500 field transformations on a single document), and named
+ * archiveSeasonResultsLogic's un-chunked batch as being near it. Measured, that
+ * batch is nowhere near: its bulk is one ~240-byte notification per member, so
+ * a commit has room for tens of thousands of memberships. Neither function is
+ * in danger; this one is chunked and that one is not, and both are fine.
  */
 async function resetLeaguesForNewSeason(db, oldSeasonUid, newSeasonUid) {
   const leaguesSnapshot = await db.collection(paths.leagues()).get();

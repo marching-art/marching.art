@@ -105,8 +105,10 @@ exports.generateWeeklyMatchups = onSchedule(
       let matchupsGenerated = 0;
       let errors = [];
 
-      // Page through every league so growth past a single query's 500-doc cap
-      // doesn't silently drop leagues (see helpers/firestorePaging).
+      // Page through every league rather than reading them all at once: this
+      // job does per-league profile and standings reads, so an unbounded fetch
+      // grows its memory and its time with the league count until the 540s
+      // timeout cuts it off mid-scan (see helpers/firestorePaging).
       const leaguesRef = db.collection(paths.leagues());
       const leagueResults = await processAllInPages(leaguesRef, 500, async (leagueDoc) => {
         try {

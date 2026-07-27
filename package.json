@@ -59,6 +59,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
+    "rehearse": "npm --prefix firestore-tests exec -- firebase emulators:exec --only firestore --project demo-rehearsal --config functions/rehearsal/firebase.json 'node functions/rehearsal/run.js'",
+    "rehearse:scale": "npm --prefix firestore-tests exec -- firebase emulators:exec --only firestore --project demo-rehearsal --config functions/rehearsal/firebase.json 'node functions/rehearsal/run.js --scale'",
     "typecheck": "tsc --noEmit && tsc -p functions",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

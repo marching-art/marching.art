@@ -17,6 +17,7 @@
  * double-count the same week into wins/losses/streaks.
  */
 
+const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { captionsWonBy } = require("./captionWars");
 
@@ -253,21 +254,45 @@ function compareStandingRows(a, b) {
  * standings doc MUST have been read through the same transaction (Firestore
  * requires all reads before writes) and is passed in as standingsDoc.
  *
+ * A MISSING document is written rather than skipped. `createLeague` is the only
+ * thing that seeds standings/current, so a league that reached the season by any
+ * other route — restored from a backup, repaired by hand, created by a future
+ * path that forgets — used to play its whole season into a document that was
+ * never there: every week resolved, every result was dropped here without a
+ * log line, the table stayed empty, and archival crowned nobody because it
+ * found no rows. That is the same failure the row-level `ensureRecord` above
+ * was added to fix, one level up, and it fails exactly as quietly.
+ *
+ * Writing it is safe: the fold seeds a row for every director in a resolved
+ * pair, so a document built this way holds the same table it would have held
+ * had it existed all along — minus any week that was already lost, which no
+ * amount of guarding here can bring back.
+ *
  * @param {FirebaseFirestore.Transaction} t
  * @param {FirebaseFirestore.DocumentSnapshot} standingsDoc snapshot of
  *   standings/current read via t.get()
  * @param {Array} pairs resolved matchup pairs
  */
 function applyStandingsInTransaction(t, standingsDoc, pairs) {
-  if (!standingsDoc.exists) return;
+  const existing = standingsDoc.exists ? standingsDoc.data().records : null;
+  if (!standingsDoc.exists) {
+    logger.warn(
+      `Standings document ${standingsDoc.ref.path} did not exist; creating it from this ` +
+        "week's results. Weeks resolved before now were not recorded in it."
+    );
+  }
 
-  const { records, standings } = foldPairsIntoStandings(standingsDoc.data().records, pairs);
+  const { records, standings } = foldPairsIntoStandings(existing, pairs);
 
-  t.update(standingsDoc.ref, {
-    records,
-    standings, // Array format for frontend API
-    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-  });
+  t.set(
+    standingsDoc.ref,
+    {
+      records,
+      standings, // Array format for frontend API
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
 }
 
 /**

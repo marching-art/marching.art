@@ -204,7 +204,10 @@ exports.processDailyLiveScores = onSchedule({
   await runDiscordStageIsolated(db);
 });
 
-// Note: Legacy H2H matchup generation removed.
-// Leagues now use circuit-style scoring where all members compete at weekly "tour stops"
-// and are ranked by their fantasy_recaps scores. No matchup generation needed.
-// Circuit standings are calculated client-side from existing fantasy_recaps data.
+// Note: league matchups are NOT generated here. They are ensured daily by
+// scheduled/leagueAutomation.js generateWeeklyMatchups (6 AM ET, after this
+// job) and RESOLVED by this one, inside runScoringDay's week boundary
+// (helpers/scoring.js -> processWeeklyMatchups). Standings are folded server
+// side from those resolved matchups (helpers/leagueStandings.js); the client
+// computes a table only as a labelled provisional fallback when the league has
+// no rows yet (src/hooks/useLeagueLiveStandings.ts).
