@@ -179,11 +179,15 @@ director appear in one ranked table having never played each other, with
 "cross-class normalized matchups" as future work; until then the table needs to
 be honest about what it is.
 
-Fixed by being honest: a league that actually mixes classes now labels each row
-with the class(es) that director fields, and says plainly that records combine
-every class and that Points are not comparable across them. Normalized
-cross-class scoring is still future work — this stops the table from implying
-something untrue in the meantime.
+Fixed. Two parts. First, honesty: a league that mixes classes labels each row
+with the class(es) that director fields. Second, the real fix: every corps is
+now ranked against **its own class field across the whole game** each week, and
+that percentile — not raw points — is what breaks ties in the table. A World
+Class week is ~90 points and a SoundSport week ~60, so the old points tiebreaker
+quietly sorted a mixed-class league by class rather than by performance. "82nd
+percentile of your class" means the same thing everywhere. Raw points stay
+visible (they are meaningful within a class) and remain the fallback tiebreak
+for legacy rows that carry no percentile.
 
 ### A9 · P3 — Two divergent copies of the pairing algorithm — FIXED
 
@@ -617,11 +621,12 @@ champion is the director who won the league.
    the champion notification link that currently 404s, deep links from chat and
    push, and OG share cards for a league's standings.
 
-2. **Surface league history.** The `champions[]` array is already being
-   written — build a **League Hall of Fame** panel: past champions, their
-   corps, their score, dynasty streaks. Add all-time head-to-head records, a
-   league records book (highest week, biggest blowout, longest streak), and
-   per-member career-in-this-league pages.
+2. **Surface league history.** _(Done)_ The Hall of Champions renders
+   `champions[]` with dynasty streaks and title counts, and the Record Book
+   derives the league's all-time marks — highest week, best finish against your
+   own class, biggest blowout, closest call, longest win streak — from the
+   matchup documents the weekly resolution already writes. Per-member
+   career-in-this-league pages remain unbuilt.
 
 3. **Make the activity feed the front page.** It already ingests matchups,
    joins, pool results, champions, removals. Add: weekly recap cards inline,
@@ -691,10 +696,18 @@ Small, isolated, high ratio of value to risk:
 - **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
   can rank on one comparable scale. The table is now honest about the limitation
   rather than fixed of it.
-- **F7 (remainder)** — several league files still carry `@ts-nocheck`.
-  `StandingsTab`, `MatchupsTab` and `callable/leagues.js` are back under the
-  line, and `MatchupsTab` reads through React Query instead of duplicating the
-  season and schedule fetches into local state; the rest of the folder is not
-  yet migrated to TypeScript.
-- **Phase 4** — alternate league formats (Survivor / Pick'em / One-Night Slate),
-  dynasty mode, and the deeper discovery work.
+- **F7 (remainder)** — the larger league components still carry `@ts-nocheck`.
+  Every file added in this work is TypeScript, `LeaguePoolCard` and
+  `ActivityTab` were migrated (ratchet lowered 209 → 207), `StandingsTab`,
+  `MatchupsTab` and `callable/leagues.js` are back under the size line, and
+  `MatchupsTab` reads through React Query instead of duplicating the season and
+  schedule fetches into local state. The remaining migration is mechanical.
+- **Phase 4 — alternate league formats** (Survivor / Pick'em / One-Night Slate).
+  These are a game-design decision, not a defect: each needs rules that make it
+  fun, not just code that makes it run. `scoringFormat` and `matchupType` were
+  deleted rather than left as the appearance of the feature, so there is nothing
+  half-built to trip over when the formats are actually designed.
+- **Dynasty mode** — multi-season persistent standings and retired numbers. The
+  cross-season groundwork is in place (the Hall of Champions reads
+  `champions[]`, entries carry record/seed/decidedBy, and the Record Book
+  derives from matchup history), so this is now additive rather than structural.

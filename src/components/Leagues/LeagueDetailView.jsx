@@ -76,6 +76,7 @@ const LeagueDetailView = ({
     currentWeek,
     weeklyMatchups,
     weeklyResults,
+    matchupDocs,
     computedStandings,
     loading,
     loadError,
@@ -301,6 +302,7 @@ const LeagueDetailView = ({
               rivalries={rivalries}
               weeklyMatchups={weeklyMatchups}
               weeklyResults={weeklyResults}
+              matchupDocs={matchupDocs}
               currentWeek={currentWeek}
               onMatchupClick={(activity) => {
                 if (activity.type === 'matchup_result' && activity.metadata?.week) {

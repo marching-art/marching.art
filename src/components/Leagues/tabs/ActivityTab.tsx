@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // ActivityTab - League insights dashboard with stats, achievements, and activity feed
 // Design System: Card-based dashboard with engaging visualizations
 
@@ -7,8 +6,27 @@ import { m } from 'framer-motion';
 import { Activity } from 'lucide-react';
 import LeagueActivityFeed from '../LeagueActivityFeed';
 import LeagueHallOfFame from '../LeagueHallOfFame';
+import LeagueRecordBook from '../LeagueRecordBook';
+import { ENABLED_CLASSES } from '../../../utils/classRegistry';
 import { LeagueStatsOverview, AchievementsCard, PowerRankingsCard } from './ActivityTabStatsCards';
 import { WeeklyRecapCard, EnhancedRivalriesCard } from './ActivityTabRecapCards';
+import type { RecordWeekDoc } from '../../../utils/leagueRecords';
+import type { LeagueChampionEntry } from '../LeagueHallOfFame';
+
+interface ActivityTabProps {
+  league?: { id?: string; champions?: LeagueChampionEntry[] } | null;
+  userProfile?: { uid?: string } | null;
+  standings?: unknown[];
+  memberProfiles?: Record<string, { displayName?: string; username?: string }>;
+  leagueStats?: Record<string, unknown>;
+  rivalries?: unknown[];
+  weeklyMatchups?: Record<number, unknown[]>;
+  weeklyResults?: Record<number, Record<string, number>>;
+  currentWeek?: number;
+  onMatchupClick?: (activity: { type?: string; metadata?: { week?: number } }) => void;
+  onChatOpen?: () => void;
+  matchupDocs?: RecordWeekDoc[];
+}
 
 // Main Activity Tab Component
 const ActivityTab = ({
@@ -23,7 +41,17 @@ const ActivityTab = ({
   currentWeek,
   onMatchupClick,
   onChatOpen,
-}) => {
+  matchupDocs = [],
+}: ActivityTabProps) => {
+  const getDisplayName = (uid: string) => {
+    const profile = memberProfiles?.[uid] || {};
+    const displayName =
+      profile.displayName && profile.displayName !== 'Director'
+        ? profile.displayName
+        : profile.username;
+    return displayName || `Director ${String(uid).slice(0, 6)}`;
+  };
+
   return (
     <m.div
       initial={{ opacity: 0 }}
@@ -81,7 +109,7 @@ const ActivityTab = ({
             showFilters={true}
             maxItems={10}
             compact={true}
-            onActivityTap={(activity) => {
+            onActivityTap={(activity: { type?: string; metadata?: { week?: number } }) => {
               if (activity.type === 'matchup_result' && activity.metadata?.week) {
                 onMatchupClick?.(activity);
               } else if (activity.type === 'new_message') {
@@ -91,6 +119,15 @@ const ActivityTab = ({
           />
         </div>
       </div>
+
+      {/* What happened along the way — derived from the matchup documents the
+          weekly resolution already writes, and previously invisible. */}
+      <LeagueRecordBook
+        matchupDocs={matchupDocs}
+        corpsClasses={ENABLED_CLASSES}
+        getDisplayName={getDisplayName}
+        viewerUid={userProfile?.uid}
+      />
 
       {/* The league's permanent record. Season archival has always written
           champions[] onto the league document; nothing ever showed it. */}

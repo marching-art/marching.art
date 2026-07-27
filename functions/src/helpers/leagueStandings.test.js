@@ -97,7 +97,12 @@ describe("foldPairsIntoStandings", () => {
     const { records } = foldPairsIntoStandings(base, [
       { player1: "alice", player2: "bob", winner: "alice", completed: false },
     ]);
-    assert.deepEqual(records, base);
+    // Every field the input carried survives untouched; the normalized
+    // counters are simply defaulted in.
+    assert.equal(records.alice.wins, base.alice.wins);
+    assert.equal(records.alice.pointsFor, base.alice.pointsFor);
+    assert.equal(records.bob.losses, base.bob.losses);
+    assert.equal(records.alice.normalizedWeeks, 0);
   });
 
   // The fold used to guard every branch with `if (records[uid])`, so a member
@@ -145,6 +150,58 @@ describe("foldPairsIntoStandings", () => {
 // all: the incremental fold counts each pair exactly once, so "unfold the old
 // result and fold the new one" is exactly the arithmetic that goes wrong
 // quietly. Deriving the whole table sidesteps it.
+// Matchups are class-segregated but the table is league-wide, so raw points
+// compare a ~90 World Class week against a ~60 SoundSport week — the old
+// tiebreaker sorted a mixed-class league by class rather than by performance.
+describe("normalized (cross-class) ranking", () => {
+  const pair = (p1, p2, s1, s2, n1, n2) => ({
+    player1: p1,
+    player2: p2,
+    player1Score: s1,
+    player2Score: s2,
+    player1Normalized: n1,
+    player2Normalized: n2,
+    winner: s1 > s2 ? p1 : p2,
+    completed: true,
+  });
+
+  test("ranks equal records on class percentile, not raw points", () => {
+    const { standings } = foldPairsIntoStandings({}, [
+      // World Class: big raw numbers, middling against its own field.
+      pair("worldPro", "worldFoe", 92, 88, 55, 20),
+      // SoundSport: small raw numbers, dominant against its own field.
+      pair("soundStar", "soundFoe", 61, 55, 98, 15),
+    ]);
+
+    const order = standings.map((row) => row.uid);
+    assert.ok(
+      order.indexOf("soundStar") < order.indexOf("worldPro"),
+      "the director who dominated their own class should rank first"
+    );
+    assert.equal(standings[0].normalizedScore, 98);
+  });
+
+  test("averages the percentile across weeks rather than summing it", () => {
+    const { standings } = foldPairsIntoStandings({}, [
+      pair("alice", "bob", 90, 80, 80, 20),
+      pair("alice", "bob", 90, 80, 60, 20),
+    ]);
+    const alice = standings.find((row) => row.uid === "alice");
+    assert.equal(alice.normalizedScore, 70);
+  });
+
+  test("falls back to raw points when neither side carries a percentile", () => {
+    // Matchups resolved before normalization existed carry none, and ranking
+    // on data availability would be worse than ranking on raw points.
+    const { standings } = foldPairsIntoStandings({}, [
+      { player1: "a", player2: "b", player1Score: 95, player2Score: 90, winner: "a", completed: true },
+      { player1: "c", player2: "d", player1Score: 99, player2Score: 10, winner: "c", completed: true },
+    ]);
+    assert.equal(standings[0].normalizedScore, null);
+    assert.equal(standings[0].uid, "c");
+  });
+});
+
 describe("rebuildStandingsFromMatchups", () => {
   const classes = ["worldClass", "soundSport"];
   const week = (n, worldClass = [], soundSport = []) => ({

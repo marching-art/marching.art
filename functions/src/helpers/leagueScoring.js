@@ -72,7 +72,57 @@ function buildWeeklyScoreIndex(dayDocs) {
     }
   }
 
+  applyClassPercentiles(index);
   return { index, daysFound };
+}
+
+/**
+ * Rank each corps against the rest of ITS OWN CLASS and store the result as a
+ * 0–100 percentile.
+ *
+ * League standings are league-wide but matchups are class-segregated, so a
+ * mixed-class league ranked its members on numbers that were never comparable:
+ * a World Class week is ~90 points and a SoundSport week ~60, which meant the
+ * points tiebreaker quietly sorted by class rather than by performance. A
+ * percentile answers the question that actually transfers — "how did you do
+ * against your own field this week" — and 82nd percentile means the same thing
+ * in every class.
+ *
+ * The reference population is every corps in that class across the whole game
+ * for the week, not just the league, because a league of three is far too small
+ * a field to rank against.
+ *
+ * Percentile is the fraction of its own class this corps finished AT OR AHEAD
+ * OF. The best corps in a class is 100 and a lone entrant is 100 — they led
+ * their field — while last of four is 25. Tied corps share a value rather than
+ * one arbitrarily edging the other. (The textbook mid-rank definition never
+ * reaches 100, which reads wrong to a director who just won their class.)
+ */
+function applyClassPercentiles(index) {
+  const byClass = new Map();
+  for (const entry of index.values()) {
+    if (!byClass.has(entry.corpsClass)) byClass.set(entry.corpsClass, []);
+    byClass.get(entry.corpsClass).push(entry);
+  }
+
+  for (const entries of byClass.values()) {
+    const sorted = [...entries].sort((a, b) => a.score - b.score);
+    const total = sorted.length;
+    for (const entry of entries) {
+      // Everyone this corps finished ahead of, plus everyone level with it
+      // (itself included) — so ties share a value and the class winner is 100.
+      let below = 0;
+      let tied = 0;
+      for (const other of sorted) {
+        if (other.score < entry.score) below += 1;
+        else if (other.score === entry.score) tied += 1;
+      }
+      entry.classPercentile = total === 0 ? 0 : ((below + tied) / total) * 100;
+      entry.classFieldSize = total;
+    }
+  }
+
+  return index;
 }
 
 /**
@@ -108,7 +158,15 @@ async function fetchWeeklyScoreIndex(db, seasonUid, week) {
  * @param {Map<string, {score: number, shows: number}>} index
  */
 function getWeekScore(index, uid, corpsClass) {
-  return index.get(scoreKey(uid, corpsClass)) || { score: 0, shows: 0 };
+  return (
+    index.get(scoreKey(uid, corpsClass)) || {
+      score: 0,
+      shows: 0,
+      // Did not compete: last in their field, by definition.
+      classPercentile: 0,
+      classFieldSize: 0,
+    }
+  );
 }
 
 /**
@@ -132,6 +190,7 @@ function participatingClassesByUid(index) {
 module.exports = {
   weekDayRange,
   scoreKey,
+  applyClassPercentiles,
   buildWeeklyScoreIndex,
   fetchWeeklyScoreIndex,
   getWeekScore,

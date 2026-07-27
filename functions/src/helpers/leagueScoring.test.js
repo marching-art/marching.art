@@ -35,12 +35,9 @@ describe("buildWeeklyScoreIndex", () => {
     assert.equal(daysFound, 2);
     // Competing twice counts twice. The old "latest show" comparison threw the
     // first performance away entirely.
-    assert.deepEqual(getWeekScore(index, "alice", "worldClass"), {
-      uid: "alice",
-      corpsClass: "worldClass",
-      score: 162.5,
-      shows: 2,
-    });
+    const alice = getWeekScore(index, "alice", "worldClass");
+    assert.equal(alice.score, 162.5);
+    assert.equal(alice.shows, 2);
   });
 
   test("keeps a director's classes separate", () => {
@@ -62,7 +59,11 @@ describe("buildWeeklyScoreIndex", () => {
 
     // This is the whole point: sitting the week out is a forfeited week, not a
     // stale score carried forward from whenever the corps last performed.
-    assert.deepEqual(getWeekScore(index, "absent", "worldClass"), { score: 0, shows: 0 });
+    const absent = getWeekScore(index, "absent", "worldClass");
+    assert.equal(absent.score, 0);
+    assert.equal(absent.shows, 0);
+    // Last in their field, by definition.
+    assert.equal(absent.classPercentile, 0);
   });
 
   test("daysFound distinguishes an unscored week from an empty one", () => {
@@ -80,12 +81,60 @@ describe("buildWeeklyScoreIndex", () => {
       ]),
     ]);
 
-    assert.deepEqual(getWeekScore(index, "bob", "worldClass"), {
-      uid: "bob",
-      corpsClass: "worldClass",
-      score: 0,
-      shows: 1,
-    });
+    const bob = getWeekScore(index, "bob", "worldClass");
+    assert.equal(bob.score, 0);
+    assert.equal(bob.shows, 1);
+  });
+});
+
+// League standings are league-wide but matchups are class-segregated, so a
+// mixed-class league used to rank its members on numbers that were never
+// comparable: a World Class week is ~90 points and a SoundSport week ~60, which
+// meant the points tiebreaker quietly sorted by class rather than by
+// performance.
+describe("class percentiles", () => {
+  test("ranks each corps against its own class, not the whole field", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([
+        { uid: "worldTop", corpsClass: "worldClass", totalScore: 95 },
+        { uid: "worldMid", corpsClass: "worldClass", totalScore: 90 },
+        { uid: "worldLow", corpsClass: "worldClass", totalScore: 85 },
+        // Would rank last overall on raw points, but leads its own class.
+        { uid: "soundTop", corpsClass: "soundSport", totalScore: 62 },
+        { uid: "soundLow", corpsClass: "soundSport", totalScore: 55 },
+      ]),
+    ]);
+
+    assert.equal(getWeekScore(index, "worldTop", "worldClass").classPercentile, 100);
+    assert.equal(getWeekScore(index, "soundTop", "soundSport").classPercentile, 100);
+    // The best SoundSport week beats the worst World Class week once each is
+    // measured against its own field — which is the entire point.
+    assert.ok(
+      getWeekScore(index, "soundTop", "soundSport").classPercentile >
+        getWeekScore(index, "worldLow", "worldClass").classPercentile
+    );
+  });
+
+  test("tied corps share a percentile rather than one edging the other", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([
+        { uid: "a", corpsClass: "worldClass", totalScore: 90 },
+        { uid: "b", corpsClass: "worldClass", totalScore: 90 },
+      ]),
+    ]);
+
+    assert.equal(
+      getWeekScore(index, "a", "worldClass").classPercentile,
+      getWeekScore(index, "b", "worldClass").classPercentile
+    );
+  });
+
+  test("a lone entrant leads their field", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([{ uid: "solo", corpsClass: "aClass", totalScore: 70 }]),
+    ]);
+    assert.equal(getWeekScore(index, "solo", "aClass").classPercentile, 100);
+    assert.equal(getWeekScore(index, "solo", "aClass").classFieldSize, 1);
   });
 });
 

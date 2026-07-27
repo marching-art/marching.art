@@ -872,6 +872,10 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
           shows: { [p1_uid]: p1_week.shows, [p2_uid]: p2_week.shows },
+          normalized: {
+            [p1_uid]: p1_week.classPercentile,
+            [p2_uid]: p2_week.classPercentile,
+          },
           winner,
           completed: true
         };
@@ -883,6 +887,8 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           player2: p2_uid,
           player1Score: p1_score,
           player2Score: p2_score,
+          player1Normalized: p1_week.classPercentile,
+          player2Normalized: p2_week.classPercentile,
           winner,
           completed: true,
           corpsClass

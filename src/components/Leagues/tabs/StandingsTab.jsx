@@ -378,6 +378,16 @@ const StandingsTab = ({
                       <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-16">
                         PF
                       </th>
+                      {/* Only shown where it does work: in a single-class
+                          league raw points already compare fine. */}
+                      {isMixedClassLeague && (
+                        <th
+                          className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-14"
+                          title="Average finish against your own class field"
+                        >
+                          CLS
+                        </th>
+                      )}
                       <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted w-14">
                         STRK
                       </th>
@@ -491,6 +501,17 @@ const StandingsTab = ({
                               </span>
                             </td>
 
+                            {/* Class finish — the cross-class comparable */}
+                            {isMixedClassLeague && (
+                              <td className="text-right py-2 px-2">
+                                <span className="font-data tabular-nums text-sm text-muted">
+                                  {typeof stats.normalizedScore === 'number'
+                                    ? `${Math.round(stats.normalizedScore)}%`
+                                    : '—'}
+                                </span>
+                              </td>
+                            )}
+
                             {/* Streak */}
                             <td className="text-center py-2 px-2">
                               {stats.streak > 0 ? (
@@ -524,7 +545,7 @@ const StandingsTab = ({
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                               >
-                                <td colSpan={6} className="p-0">
+                                <td colSpan={isMixedClassLeague ? 7 : 6} className="p-0">
                                   <SeasonStatsCard
                                     stats={leagueStats[stats.uid]}
                                     displayName={getDisplayName(stats.uid)}
@@ -539,7 +560,7 @@ const StandingsTab = ({
                           {/* Playoff Line Indicator */}
                           {isPlayoffLine && idx < enhancedStandings.length - 1 && (
                             <tr>
-                              <td colSpan={6} className="py-0">
+                              <td colSpan={isMixedClassLeague ? 7 : 6} className="py-0">
                                 <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border-y border-green-500/30">
                                   <div className="flex-1 h-px bg-green-500/30" />
                                   <span className="text-[9px] uppercase tracking-wider text-green-500 font-bold">
@@ -587,6 +608,11 @@ const StandingsTab = ({
                   <span>
                     <strong>PF</strong> = Points For
                   </span>
+                  {isMixedClassLeague && (
+                    <span>
+                      <strong>CLS</strong> = Avg. finish vs. your own class
+                    </span>
+                  )}
                   <span>
                     <strong>STRK</strong> = Streak
                   </span>

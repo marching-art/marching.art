@@ -263,6 +263,13 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           // Shows attended, so the matchup card can say "did not compete"
           // rather than implying a 0.0 performance.
           shows: { [p1_uid]: p1_week.shows, [p2_uid]: p2_week.shows },
+          // How each corps did against its OWN class this week, so a
+          // mixed-class league can rank its members on a comparable number
+          // (helpers/leagueScoring.js applyClassPercentiles).
+          normalized: {
+            [p1_uid]: p1_week.classPercentile,
+            [p2_uid]: p2_week.classPercentile,
+          },
           winner: winnerUid ?? "tie",
           completed: true,
         };
@@ -273,6 +280,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           player2: p2_uid,
           player1Score: p1_score,
           player2Score: p2_score,
+          player1Normalized: p1_week.classPercentile,
+          player2Normalized: p2_week.classPercentile,
           winner: winnerUid ?? "tie",
           completed: true,
           corpsClass,
