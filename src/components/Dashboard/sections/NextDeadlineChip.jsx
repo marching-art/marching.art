@@ -11,13 +11,15 @@ import { useSeasonDeadlines } from '../../../hooks/useSeasonClock';
 import { formatCountdown, formatEtShort, formatEtDayTime } from '../../../utils/seasonClock';
 
 const NextDeadlineChip = ({ variant = 'chip' }) => {
-  const { scoresAt, scoresInMs, scoresExact, trade } = useSeasonDeadlines();
+  const { scoresAt, scoresInMs, scoresExact, scoresPending, trade } = useSeasonDeadlines();
   const [expanded, setExpanded] = useState(false);
 
   const tooltipLines = [
-    scoresExact
-      ? `Scores drop ${formatEtDayTime(scoresAt)}`
-      : `Scores drop by ${formatEtDayTime(scoresAt)} — exact time depends on the night's westernmost show`,
+    scoresPending
+      ? `Tonight's scores are processing — waiting on DCI to post the recap for ${formatEtDayTime(scoresAt)}'s shows`
+      : scoresExact
+        ? `Scores drop ${formatEtDayTime(scoresAt)}`
+        : `Scores drop by ${formatEtDayTime(scoresAt)} — exact time depends on the night's westernmost show`,
   ];
   let tradeLabel = null;
   if (trade?.status === 'locked') {
@@ -62,12 +64,23 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     );
   }
 
+  // While the drop is pending there is no honest time to count down to — the
+  // backend is waiting on DCI — so the chip says so instead.
   const countdown = (
     <>
-      <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
+      <Clock
+        className={`w-3 h-3 flex-shrink-0 ${scoresPending ? 'text-amber-400 animate-pulse' : 'text-cyan-400'}`}
+        aria-hidden="true"
+      />
       <span className="text-[10px] font-bold uppercase tracking-wider text-muted whitespace-nowrap">
-        Scores in{' '}
-        <span className="text-cyan-400 font-data tabular-nums">{formatCountdown(scoresInMs)}</span>
+        {scoresPending ? (
+          <span className="text-amber-400">Scores processing</span>
+        ) : (
+          <>
+            Scores in{' '}
+            <span className="text-cyan-400 font-data tabular-nums">{formatCountdown(scoresInMs)}</span>
+          </>
+        )}
       </span>
     </>
   );

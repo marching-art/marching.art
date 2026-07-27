@@ -26,7 +26,7 @@ import { WeekPills, ShowsList, ChampionshipWeekDisplay } from './ScheduleParts';
 
 const Schedule = () => {
   const { user } = useAuth();
-  const { scoresAt, scoresInMs, scoresExact } = useSeasonDeadlines();
+  const { scoresAt, scoresInMs, scoresExact, scoresPending } = useSeasonDeadlines();
   const [loading, setLoading] = useState(true);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
@@ -201,15 +201,22 @@ const Schedule = () => {
               <p className="text-[10px] text-muted">
                 Week {currentWeek} of 7 • {getWeekDateRange(currentWeek)}
               </p>
-              <p className="text-[10px] text-cyan-400 flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" aria-hidden="true" />
-                Scores drop in{' '}
-                <span className="font-bold font-data tabular-nums">
-                  {formatCountdown(scoresInMs)}
-                </span>{' '}
-                ({scoresExact ? '' : 'by '}
-                {formatEtShort(scoresAt)})
-              </p>
+              {scoresPending ? (
+                <p className="text-[10px] text-amber-400 flex items-center gap-1">
+                  <Clock className="w-2.5 h-2.5 animate-pulse" aria-hidden="true" />
+                  Scores processing — waiting on DCI results
+                </p>
+              ) : (
+                <p className="text-[10px] text-cyan-400 flex items-center gap-1">
+                  <Clock className="w-2.5 h-2.5" aria-hidden="true" />
+                  Scores drop in{' '}
+                  <span className="font-bold font-data tabular-nums">
+                    {formatCountdown(scoresInMs)}
+                  </span>{' '}
+                  ({scoresExact ? '' : 'by '}
+                  {formatEtShort(scoresAt)})
+                </p>
+              )}
             </div>
           </div>
 

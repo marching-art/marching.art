@@ -135,6 +135,7 @@ function showCalendarDay(seasonStartDate, now = new Date()) {
  *   seasonType: string, competitionDay: number, showDateET: string,
  *   timeZones: string[], scoresAt: Date|null, ignoredScoresAt: Array<object>,
  *   tzMismatches: Array<object>, hasScheduledShows: boolean|null,
+ *   expectedShowCount: number,
  *   scrapeInstant: Date|null, scrapeRetryUntil: Date|null,
  *   dropInstant: Date, plannedDropInstant: Date,
  *   dropLabel: string, needsScrape: boolean,
@@ -168,7 +169,7 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
     return {
       seasonType, competitionDay, showDateET,
       timeZones: [], scoresAt: null, ignoredScoresAt: [], tzMismatches: [],
-      hasScheduledShows: null,
+      hasScheduledShows: null, expectedShowCount: 0,
       scrapeInstant: null, scrapeRetryUntil: null,
       dropInstant, plannedDropInstant: dropInstant,
       dropLabel: easternLabel(dropInstant), needsScrape: false,
@@ -244,6 +245,12 @@ function planDrop({ seasonData, competitions = [], now = new Date() }) {
   return {
     seasonType, competitionDay, showDateET,
     timeZones, scoresAt, ignoredScoresAt, tzMismatches, hasScheduledShows,
+    // How many DCI events tonight's schedule expects. competitions[] is built
+    // from dci.org's own event list (helpers/seasonSchedule.js
+    // mergeScheduleRefresh), so it is directly comparable to the number of
+    // events the scrape finds listed for tonight — that comparison is what
+    // tells the dispatcher the recaps are still trickling in.
+    expectedShowCount: todaysShows.length,
     scrapeInstant, scrapeRetryUntil: lateClamp,
     dropInstant, plannedDropInstant,
     dropLabel: easternLabel(dropInstant), needsScrape: true,

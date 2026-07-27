@@ -42,14 +42,58 @@ scrape pass per night**:
 
 - Scrape fires at the westernmost show's real "Scores Announced" time
   (enriched `scoresAt`) + 10 min, floored at drop − 15 min, clamped ≤ 2:45 AM.
-- A failed/zero-row attempt retries on later ticks (max 3 attempts total).
-- Scoring waits for the scrape, but is force-released by an exhausted retry
-  budget, a dark day, or the 2:45 AM clamp — a night is never orphaned; the
-  strategy falls back to regression and the watchdog reports the scrape.
+- Scoring waits for the scrape, but is force-released by exhausted retries, a
+  dark day, or the 2:45 AM clamp — a night is never orphaned; the strategy
+  falls back to regression and the watchdog reports the scrape.
 
 Tonight's plan is persisted to **`drop_plans/{showDateET}`** (public,
 backend-written): drop/scrape instants, zones, mode, attempt counts. This is
 the audit trail and the client's countdown target.
+
+### Waiting for DCI
+
+The announced "Scores Announced" time is when scores are read in the stadium;
+the recap reaches dci.org some time after. Retries are therefore budgeted by
+what an attempt **costs**, because the cheap failure is the common one:
+
+| Attempt                                                   | Cost               | Budget                     |
+| --------------------------------------------------------- | ------------------ | -------------------------- |
+| Probe — fetched `/scores`, tonight not listed yet         | 1 request          | `MAX_LISTING_PROBES` (12)  |
+| Scrape — fetched tonight's recap pages, still failed      | 1 per event        | `MAX_SCRAPE_ATTEMPTS` (3)  |
+
+A dark day before championship week gets one of each. The dispatcher charges
+every attempt to the recap budget optimistically (a scrape that hangs to the
+function timeout must stay charged) and refunds it to the probe counter when
+the result reports `fetchedRecaps: false`.
+
+Two further rules keep a night from publishing half-real scores:
+
+- `lastScrapedDate` is stamped only when **every** listed recap produced rows.
+  A partial run leaves the night unstamped and writes `scrape_runs` status
+  `partial`, which the 4:30 AM watchdog reads as unhealthy.
+- DCI posts a night's recaps one event at a time, so a scrape that found fewer
+  events than `competitions[]` expects keeps re-scraping for the rest through a
+  `COMPLETENESS_GRACE_MIN` (60 min) window past the drop. The grace bounds the
+  wait so a stale schedule (a cancelled show still carried) delays the drop by
+  at most an hour instead of holding it to the clamp.
+
+Any night that scores without all of its recaps is stamped
+`usedRegressionFallback` on the plan doc.
+
+### What the client shows
+
+`useDropPlan` (`src/hooks/useSeasonClock.js`) keeps the plan authoritative
+**past** its own drop instant, because the drop instant is when scoring may
+first run, not proof it did. Three states:
+
+- drop ahead → countdown to `dropInstant` (exact).
+- drop passed, no `scoredAt`, before `scrapeRetryUntil` → `scoresPending`;
+  surfaces show "Scores processing", never a countdown.
+- `scoredAt` set → tonight is done, and the next estimate is taken from
+  `scrapeRetryUntil` so the countdown targets **tomorrow** night.
+
+Rolling the countdown forward on a pending drop is what made the chip promise
+11 PM and then jump to "3 hours" the moment 11 PM arrived.
 
 ## 3. Kill switch / rollout
 

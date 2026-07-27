@@ -145,6 +145,13 @@ async function writeScrapeRunStatus(db, date, fields) {
  * not recap pages directly. The detailed per-caption recap lives at the same
  * slug under /scores/recap/{slug}/, so we derive it from the final-scores link.
  *
+ * Every return carries `fetchedRecaps`: false means the attempt cost a single
+ * listing fetch and never touched a recap page (tonight isn't posted yet, the
+ * listing came back empty, or we didn't run at all). The drop dispatcher
+ * budgets those cheap probes separately from real multi-recap scrapes, which
+ * is what lets a night keep waiting for a late DCI recap instead of scoring on
+ * regression data — see scheduled/dropDispatcher.js.
+ *
  * @param {object} [options]
  * @param {boolean} [options.force=false] - When true, bypass the "already
  *   scraped today" guard so an admin can re-run the scrape on demand.
@@ -165,7 +172,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
   // Skip if not in live season
   if (!seasonDoc.exists || seasonDoc.data().status !== "live-season") {
     logger.info("Scraper skipped: No active live season.");
-    return { scraped: false, reason: "no-live-season" };
+    return { scraped: false, reason: "no-live-season", fetchedRecaps: false };
   }
 
   const seasonData = seasonDoc.data();
@@ -184,7 +191,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
   const lastScrapedDate = seasonData.lastScrapedDate;
   if (!force && lastScrapedDate === today) {
     logger.info(`Scraper skipped: Already scraped today (${today}).`);
-    return { scraped: false, reason: "already-scraped-today", lastScrapedDate };
+    return { scraped: false, reason: "already-scraped-today", lastScrapedDate, fetchedRecaps: false };
   }
 
   // When the drop dispatcher owns the pipeline but this call came from a
@@ -215,7 +222,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
       failed: 0,
       lastError: "no dated final-scores rows found on the dci.org scores page",
     });
-    return { scraped: false, reason: "no-recap-found" };
+    return { scraped: false, reason: "no-recap-found", fetchedRecaps: false };
   }
 
   // Target date: pinned to the caller's expected show date when given (the
@@ -241,7 +248,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
       failed: 0,
       lastError: `no events listed for expected date ${dateKey}`,
     });
-    return { scraped: false, reason: "no-events-for-date", dateKey };
+    return { scraped: false, reason: "no-events-for-date", dateKey, fetchedRecaps: false };
   }
 
   logger.info(`Latest competition date ${latestDateKey}: scraping events.`);
@@ -257,33 +264,47 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
   const errors = results
     .filter((r) => r.error)
     .map(({ recapUrl, error }) => ({ recapUrl, error }));
-  const anySucceeded = succeeded > 0;
+  // The night is done only when EVERY event listed for it produced rows. DCI
+  // publishes a night's recaps one event at a time, so "1 of 3 up" is a
+  // half-posted night, not a finished one.
+  const allSucceeded = succeeded > 0 && failed === 0;
+  const status = succeeded === 0 ? "failed" : failed === 0 ? "completed" : "partial";
 
-  // Record the night's outcome for the watchdog and admin diagnostics.
+  // Record the night's outcome for the watchdog and admin diagnostics. Only
+  // "completed" reads as healthy (scoringWatchdog.js findScrapeRunProblem), so
+  // a night stuck at partial still raises the 4:30 AM alert.
   await writeScrapeRunStatus(db, runKey, {
-    status: anySucceeded ? "completed" : "failed",
-    ...(anySucceeded ? { completedAt: new Date() } : { failedAt: new Date() }),
+    status,
+    ...(allSucceeded ? { completedAt: new Date() } : { failedAt: new Date() }),
     latestDateKey,
     attempted: recapUrls.length,
     succeeded,
     failed,
     totalCount,
     ...(errors.length > 0 ? { errors } : {}),
-    ...(anySucceeded ? {} : { lastError: errors[0]?.error || "all recaps failed" }),
+    ...(allSucceeded ? {} : { lastError: errors[0]?.error || "all recaps failed" }),
   });
 
-  // Stamp last scraped date ONLY when at least one recap actually produced
-  // rows. A night where every recap failed (Cloudflare block, markup change,
-  // unpublished recaps) must NOT be stamped — the stamp is what blocks the
-  // same-day guard above, so stamping a zero-score night would silently
-  // prevent any retry before the 2 AM scorer runs.
-  if (anySucceeded) {
+  // Stamp last scraped date ONLY when every listed recap produced rows. The
+  // stamp is what satisfies the same-day guard above AND what tells the drop
+  // dispatcher the night's data is in hand, so stamping a partial night would
+  // publish fantasy scores with regression fallback standing in for the shows
+  // DCI simply hasn't posted yet. Leaving it unstamped costs nothing on a
+  // healthy night and buys a retry on every other kind — re-scraping is
+  // idempotent (processLiveScoreRecap only fills blanks unless overwrite).
+  if (allSucceeded) {
     await db.doc("game-settings/season").update({
       lastScrapedDate: runKey,
     });
     logger.info(
       `Scraping completed for ${runKey}: ${succeeded}/${recapUrls.length} event(s) on ` +
       `${latestDateKey}, ${totalCount} total corps scores.`
+    );
+  } else if (succeeded > 0) {
+    logger.warn(
+      `Scraping PARTIAL for ${runKey}: ${succeeded}/${recapUrls.length} event(s) on ` +
+      `${latestDateKey} produced scores (${totalCount} corps). lastScrapedDate NOT ` +
+      "stamped — the remaining recaps are probably still unposted, so a retry can finish the night."
     );
   } else {
     logger.error(
@@ -298,7 +319,8 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null } = {}) {
     eventCount: recapUrls.length,
     succeededEvents: succeeded,
     failedEvents: failed,
-    stampedLastScrapedDate: anySucceeded,
+    stampedLastScrapedDate: allSucceeded,
+    fetchedRecaps: recapUrls.length > 0,
     count: totalCount,
     events: results,
     scrapedDate: runKey,

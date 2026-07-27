@@ -98,7 +98,7 @@ const CaptionSelectionModal = ({
   // Lineup) plus the current caption-change window (unlimited / weekly /
   // championship / lockouts). `trade` mirrors the backend rules in
   // functions/src/helpers/captionWindows.js and ticks with the clock.
-  const { scoresInMs, trade: changeInfo } = useSeasonDeadlines(30000, corpsClass);
+  const { scoresInMs, scoresPending, trade: changeInfo } = useSeasonDeadlines(30000, corpsClass);
   const seasonUid = useSeasonStore((s) => s.seasonData?.seasonUid);
 
   // Changes remaining in the current allotment (weekly 3 / championship 2 per
@@ -711,10 +711,19 @@ const CaptionSelectionModal = ({
           {/* Footer */}
           <div className="px-4 py-3 border-t border-line bg-surface-sunken flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
             <p className="text-[10px] text-muted leading-snug min-w-0 hidden sm:block">
-              Locked lineups are scored nightly at 2 AM ET — next run in{' '}
-              <span className="text-cyan-400 font-bold font-data tabular-nums">
-                {formatCountdown(scoresInMs)}
-              </span>
+              {scoresPending ? (
+                <>
+                  Locked lineups are scored once the night&apos;s DCI results post —{' '}
+                  <span className="text-amber-400 font-bold">scores are processing now</span>
+                </>
+              ) : (
+                <>
+                  Locked lineups are scored after the night&apos;s last show — next run in{' '}
+                  <span className="text-cyan-400 font-bold font-data tabular-nums">
+                    {formatCountdown(scoresInMs)}
+                  </span>
+                </>
+              )}
             </p>
             <div className="flex justify-end gap-2 flex-shrink-0 ml-auto">
               <button
