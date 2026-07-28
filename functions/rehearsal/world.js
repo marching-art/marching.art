@@ -26,11 +26,15 @@
  * Two directors are deliberately broken: `dq_lineup` never finishes its lineup
  * (must never be scored), and `dq_finals` skips championship week entirely
  * (must forfeit rather than carry a stale score into the title).
+ *
+ * The Podium field, its careers and the prior seasons it has already played
+ * live in podiumWorld.js, which this module seeds alongside the fantasy cast.
  */
 
 const admin = require("firebase-admin");
 const { paths } = require("../src/helpers/paths");
 const { writeScheduleToCollection } = require("../src/helpers/seasonSchedule");
+const { seedPodiumWorld } = require("./podiumWorld");
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -159,15 +163,22 @@ function buildSchedule(startDate) {
   // The Eastern Classic two-night split (days 41 and 42), one event over two
   // nights. helpers/easternSplit.js persists the snake assignment on day 41
   // and day 42 must score its exact complement.
-  const easternNights = { eventName: "marching.art Eastern Classic", nights: [41, 42] };
-  for (const day of easternNights.nights) {
+  //
+  // `multiNight` is shaped exactly as generateOffSeasonSchedule writes it
+  // (scheduleGeneration.js): a `nights` ARRAY and nothing else. An earlier
+  // draft seeded `{eventKey, night, nights: 2}`, and because easternSplit.js
+  // gates on `Array.isArray(multiNight.nights)`, every run resolved the split
+  // through the legacy uid-parity fallback instead — the check passed, on code
+  // that is not the code production runs.
+  const easternNights = [41, 42];
+  for (const day of easternNights) {
     dayEntry(day).shows.push({
       eventName: "marching.art Eastern Classic",
       location: "Allentown, PA",
       date: dateFor(day),
       isChampionship: false,
       eventTier: "major",
-      multiNight: { eventKey: "eastern-classic", night: day === 41 ? 1 : 2, nights: 2 },
+      multiNight: { nights: [...easternNights] },
     });
   }
 
@@ -386,10 +397,11 @@ async function seedWorld(db, { seed = 20260808, startingCoin = 5000 } = {}) {
     },
   });
 
-  // Podium and the drop dispatcher are separate subsystems with their own
-  // season-boundary work; this rehearsal covers the fantasy and league paths,
-  // so both stay off and the legacy 2 AM ordering applies.
-  await db.doc("game-settings/features").set({ podiumClass: false, dropScheduling: false });
+  // Podium is ON: it is live in production, and its season boundary — careers,
+  // divisions, the budget refund, the Fan Favorite — has never run anywhere.
+  // The drop dispatcher stays off, so the legacy 2 AM ordering applies and
+  // every day is settled by the same call the schedulers make.
+  await db.doc("game-settings/features").set({ podiumClass: true, dropScheduling: false });
 
   await db.doc(`dci-data/${SEASON_UID}`).set({
     corpsValues: POOL.map((c) => ({
@@ -455,9 +467,11 @@ async function seedWorld(db, { seed = 20260808, startingCoin = 5000 } = {}) {
   }
 
   const leagues = await createLeagues(db);
+  const podium = await seedPodiumWorld(db, { seasonUid: SEASON_UID, startingCoin });
 
   return {
     seed,
+    podium,
     seasonUid: SEASON_UID,
     seasonName: SEASON_UID,
     springTrainingDays: SPRING_TRAINING_DAYS,

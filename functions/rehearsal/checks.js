@@ -24,6 +24,7 @@ const {
   checkProfiles,
   checkIdempotency,
 } = require("./checksLeagues");
+const { runPodiumChecks } = require("./checksPodium");
 
 // ---------------------------------------------------------------------------
 // A. The season ran at all
@@ -318,6 +319,7 @@ async function runChecks(db, world, played) {
   findings.push(...(await checkPayouts(db, world, played)));
   findings.push(...(await checkRollover(db, world, played)));
   findings.push(...(await checkProfiles(db, world, played)));
+  findings.push(...(await runPodiumChecks(db, world, played)));
   findings.push(...(await checkArchivalScale(db, world, played)));
   // Last: it re-runs the rollover, which mutates the state every other check
   // reads.
