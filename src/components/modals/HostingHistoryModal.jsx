@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // HOSTING HISTORY MODAL - a director's cross-season hosting resume
 // =============================================================================
@@ -19,8 +18,19 @@ import { getHostingHistory } from '../../api/podium';
 import { formatSeasonName, formatEventName } from '../../utils/season';
 import { VENUE_TIERS } from '../Podium/podiumConstants';
 
+/** @typedef {import('../../api/podium').HostedEventRecord} HostedEventRecord */
+/**
+ * @typedef {Object} HostingHistory
+ * @property {boolean} success
+ * @property {HostedEventRecord[]} events
+ * @property {import('../../api/podium').HostingTotals} totals
+ * @property {Record<string, {hosted: number, successful: number, earned: number}>} byTier
+ */
+
+/** @type {Record<string, string>} */
 const TIER_LABELS = Object.fromEntries(VENUE_TIERS.map((t) => [t.id, t.label]));
 
+/** @type {Record<string, string>} */
 const CLASS_LABELS = {
   soundSport: 'SoundSport',
   aClass: 'A Class',
@@ -29,19 +39,22 @@ const CLASS_LABELS = {
   podiumClass: 'Podium',
 };
 
+/** @param {number} [n] */
 const cc = (n) => `${(n || 0).toLocaleString()} CC`;
 
-/** One show, expandable to its attendee roster. */
+/**
+ * One show, expandable to its attendee roster.
+ * @param {{event: HostedEventRecord}} props
+ */
 function HostedEventRow({ event }) {
   const [open, setOpen] = useState(false);
   const attendees = event.attendees || [];
   const net = (event.payout || 0) - (event.rentalCC || 0);
   // Capacity capped the payout: the roster drew more corps than the venue pays
   // for. Worth calling out — it's the signal to book a bigger venue.
-  const cappedBy =
-    event.paidOut && event.directorCount > (event.attendance || 0)
-      ? event.directorCount - event.attendance
-      : 0;
+  const directorCount = event.directorCount || 0;
+  const attendance = event.attendance || 0;
+  const cappedBy = event.paidOut && directorCount > attendance ? directorCount - attendance : 0;
 
   return (
     <div className="bg-background border border-line-muted">
@@ -138,13 +151,14 @@ function HostedEventRow({ event }) {
   );
 }
 
+/** @param {{onClose: () => void}} props */
 const HostingHistoryModal = ({ onClose }) => {
   useEscapeKey(onClose);
   const dialogRef = useRef(null);
   // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
   useFocusTrap(dialogRef);
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(/** @type {HostingHistory | null} */ (null));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -168,11 +182,12 @@ const HostingHistoryModal = ({ onClose }) => {
   // Shows group under the season they ran in; the callable already returns
   // them newest-first, so insertion order is the render order.
   const seasons = useMemo(() => {
+    /** @type {Map<string, HostedEventRecord[]>} */
     const grouped = new Map();
     for (const event of data?.events || []) {
       const key = event.seasonUid || 'unknown';
       if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key).push(event);
+      (grouped.get(key) || []).push(event);
     }
     return [...grouped.entries()];
   }, [data]);
@@ -228,7 +243,7 @@ const HostingHistoryModal = ({ onClose }) => {
               <div className="py-8 text-center text-sm text-muted">
                 Could not load your hosting history. Try again in a moment.
               </div>
-            ) : totals?.eventsHosted === 0 ? (
+            ) : !totals || totals.eventsHosted === 0 ? (
               <div className="py-8 text-center space-y-2">
                 <Landmark className="w-8 h-8 text-muted mx-auto" />
                 <div className="text-sm text-secondary">You haven&apos;t hosted a show yet.</div>

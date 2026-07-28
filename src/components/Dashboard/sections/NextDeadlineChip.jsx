@@ -69,12 +69,12 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
   const countdown = (
     <>
       <Clock
-        className={`w-3 h-3 flex-shrink-0 ${scoresPending ? 'text-amber-400 animate-pulse' : 'text-cyan-400'}`}
+        className={`w-3 h-3 flex-shrink-0 ${scoresPending ? 'text-warning animate-pulse' : 'text-cyan-400'}`}
         aria-hidden="true"
       />
       <span className="text-[10px] font-bold uppercase tracking-wider text-muted whitespace-nowrap">
         {scoresPending ? (
-          <span className="text-amber-400">Scores processing</span>
+          <span className="text-warning">Scores processing</span>
         ) : (
           <>
             Scores in{' '}
