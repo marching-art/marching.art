@@ -7,6 +7,11 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { defineSecret } = require("firebase-functions/params");
 const axios = require("axios");
+// Replaces "DCI" with "marching.art" in an event name for in-game branding.
+// Applied wherever schedules are imported from scraped DCI data, and wherever a
+// director names a show themselves (podium/hostedEvents). Re-exported below
+// because most callers reach it through the season barrel.
+const { brandEventName } = require("./branding");
 
 // Fields carried from an enriched scraped event onto a stored show/competition.
 // Kept in one place so generate + refresh + write all stay in sync.
@@ -404,14 +409,6 @@ function shuffleArray(array) {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
-}
-
-/**
- * Replaces "DCI" with "marching.art" in an event name for in-game branding.
- * Applied automatically wherever schedules are imported from scraped DCI data.
- */
-function brandEventName(name) {
-  return typeof name === "string" ? name.replace(/DCI/g, "marching.art") : name;
 }
 
 // The three marching.art regional majors (design §5.11). In off-seasons they are

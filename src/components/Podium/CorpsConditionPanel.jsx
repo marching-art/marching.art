@@ -20,6 +20,7 @@ import {
   CalendarDays,
   ChevronRight,
 } from 'lucide-react';
+import { formatEventName } from '../../utils/season';
 import { BLOCKS } from './podiumConstants';
 
 // Costs mirror functions balanceConfig condition.foodTiers — charged from
@@ -476,7 +477,7 @@ export default function CorpsConditionPanel({ podium }) {
             {routePreview.map((leg) => {
               // Name the stop: majors show their branded event label, self-picks
               // show the show the director registered for, all with the venue city.
-              const name = leg.label || leg.eventName;
+              const name = formatEventName(leg.label || leg.eventName);
               return (
                 <div
                   key={leg.day}

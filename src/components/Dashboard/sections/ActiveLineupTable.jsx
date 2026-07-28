@@ -4,6 +4,7 @@
 
 import React, { memo } from 'react';
 import { Edit, TrendingUp, TrendingDown, Minus, Lock, MapPin } from 'lucide-react';
+import { formatEventName } from '../../../utils/season';
 import { CAPTIONS } from './constants';
 
 // Skeleton row for loading state
@@ -148,7 +149,7 @@ const ActiveLineupTable = memo(
               <span className="text-muted flex-shrink-0">·</span>
               <span className="truncate text-secondary">
                 Day {nextShow.day}
-                {nextShow.eventName ? ` · ${nextShow.eventName}` : ''}
+                {nextShow.eventName ? ` · ${formatEventName(nextShow.eventName)}` : ''}
                 {nextShow.location ? ` · ${nextShow.location}` : ''}
               </span>
             </div>

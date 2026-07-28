@@ -18,6 +18,7 @@ import { useHaptic } from '../../hooks/useHaptic';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/seasonClock';
+import { formatEventName } from '../../utils/season';
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
 import RunningOrder from './RunningOrder';
@@ -241,7 +242,7 @@ const ShowRegistrationModal = ({
       if (dayConflict && !isAlreadyAtShow) {
         haptic('error');
         toast.error(
-          `This corps is already attending ${dayConflict.eventName} that day — ` +
+          `This corps is already attending ${formatEventName(dayConflict.eventName)} that day — ` +
             'corps can attend one show per day.'
         );
         return;
@@ -354,7 +355,9 @@ const ShowRegistrationModal = ({
     <>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-bold text-white leading-tight">{show.eventName}</h2>
+          <h2 className="text-base font-bold text-white leading-tight">
+            {formatEventName(show.eventName)}
+          </h2>
           <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted">
             <span className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-interactive" />

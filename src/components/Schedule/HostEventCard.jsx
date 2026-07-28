@@ -16,6 +16,7 @@ import { useProfileStore } from '../../store/profileStore';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 import { HOSTABLE_VENUES, scheduledVenueIds } from '../../utils/venues';
+import { formatEventName } from '../../utils/season';
 import { VENUE_TIERS, HOSTING_RULES } from '../Podium/podiumConstants';
 
 // Cap the rendered dropdown so a bare focus (empty query) doesn't paint all
@@ -118,7 +119,11 @@ export default function HostEventCard({ seasonUid }) {
         day: Number(day),
         location: selectedVenue.label,
       });
-      setSuccess(`${result.data.eventName} is on the schedule for Day ${result.data.day}.`);
+      // The server brands the name it stores (DCI -> marching.art), so echo
+      // back what it returned rather than what was typed into the box.
+      setSuccess(
+        `${formatEventName(result.data.eventName)} is on the schedule for Day ${result.data.day}.`
+      );
       setEventName('');
       setSelectedVenue(null);
       setVenueQuery('');
@@ -324,7 +329,8 @@ export default function HostEventCard({ seasonUid }) {
           {events.map((event) => (
             <div key={event.id} className="flex items-center justify-between text-[10px]">
               <span className="text-secondary truncate pr-2">
-                <span className="text-muted tabular-nums">D{event.day}</span> {event.eventName}
+                <span className="text-muted tabular-nums">D{event.day}</span>{' '}
+                {formatEventName(event.eventName)}
                 <span className="text-muted"> · {event.location}</span>
               </span>
               <span className="text-muted tabular-nums flex-shrink-0">

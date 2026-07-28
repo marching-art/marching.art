@@ -15,14 +15,24 @@ import type { Timestamp } from 'firebase/firestore';
 
 import type { DayRecap, NormalizedScore, RecapDate, RecapResult } from '../types/recap';
 
+import { formatEventName } from './season';
+
 /**
  * Display/event name for a recap day.
  * Legacy chain: recap-level showName → eventName → name (older single-doc
  * recap arrays carried the show name on the recap itself), then the first
  * show's eventName (current per-day format).
+ *
+ * Branded on the way out (formatEventName), so a name stored with "DCI" in it
+ * — a scraped tour event, or a director-hosted show named before the host
+ * callable started branding — still reads as a marching.art show.
  */
 export function getRecapEventName(recap: DayRecap): string {
-  return recap.showName || recap.eventName || recap.name || recap.shows?.[0]?.eventName || 'Show';
+  return (
+    formatEventName(
+      recap.showName || recap.eventName || recap.name || recap.shows?.[0]?.eventName
+    ) || 'Show'
+  );
 }
 
 /**

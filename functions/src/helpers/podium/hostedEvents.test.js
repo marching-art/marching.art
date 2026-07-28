@@ -23,6 +23,15 @@ describe("validateHostRequest", () => {
     assert.equal(result.tier.capacity, 30);
   });
 
+  test("brands DCI out of a director-chosen show name", () => {
+    const result = validateHostRequest({ ...good, eventName: "  DCI Cityname  " }, 10);
+    assert.equal(result.eventName, "marching.art Cityname");
+    // Length is checked against what the director typed, not the longer
+    // branded string, so a name that fits the box is never rejected for it.
+    const longName = `DCI ${"a".repeat(56)}`; // 60 chars typed, 69 branded
+    assert.equal(validateHostRequest({ ...good, eventName: longName }, 10).eventName.length, 69);
+  });
+
   test("rejects unknown tiers, bad names, and unknown cities", () => {
     assert.throws(() => validateHostRequest({ ...good, venueTier: "colosseum" }, 10));
     assert.throws(() => validateHostRequest({ ...good, eventName: "ab" }, 10));

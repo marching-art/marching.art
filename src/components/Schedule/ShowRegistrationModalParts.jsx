@@ -3,6 +3,7 @@
 // Extracted from ShowRegistrationModal.jsx for file-size hygiene.
 
 import { Check } from 'lucide-react';
+import { formatEventName } from '../../utils/season';
 import { CLASS_CONFIG, sameDayShowFor } from './showRegistrationConfig';
 
 // =============================================================================
@@ -143,7 +144,7 @@ const CorpsSelectionItem = ({
         </div>
         {sameDayShow && (
           <div className="mt-0.5 text-[10px] text-red-400 truncate">
-            Already attending {sameDayShow.eventName} this day
+            Already attending {formatEventName(sameDayShow.eventName)} this day
           </div>
         )}
       </div>

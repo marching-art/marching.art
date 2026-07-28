@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, ChevronRight, Trophy } from 'lucide-react';
 import { isEventPast } from '../utils/scheduleUtils';
+import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 
 // =============================================================================
@@ -197,7 +198,7 @@ const ShowCard = ({
       }}
       role={isPast ? undefined : 'button'}
       tabIndex={isPast ? undefined : 0}
-      aria-label={isPast ? undefined : `Open registration for ${show.eventName}`}
+      aria-label={isPast ? undefined : `Open registration for ${formatEventName(show.eventName)}`}
       className={`
         bg-surface-card border rounded-none overflow-hidden
         ${isMajor ? 'border-brand/40' : 'border-line'}
@@ -215,7 +216,7 @@ const ShowCard = ({
               </div>
             )}
             <h3 className="text-sm font-bold text-white truncate leading-tight">
-              {show.eventName}
+              {formatEventName(show.eventName)}
             </h3>
             <div className="flex items-center gap-3 mt-1 text-[10px] text-muted">
               <span className="flex items-center gap-1 font-data">
@@ -494,7 +495,7 @@ const ChampionshipEventCard = ({
             <div className="flex items-center gap-2 mb-1">
               <Trophy className="w-4 h-4 text-secondary flex-shrink-0" />
               <h3 className="text-sm font-bold text-white truncate leading-tight">
-                {event.eventName}
+                {formatEventName(event.eventName)}
               </h3>
             </div>
             <div className="flex items-center gap-3 mt-1 text-[10px] text-muted">
