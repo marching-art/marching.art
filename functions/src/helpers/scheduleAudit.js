@@ -32,7 +32,7 @@
 
 const { brandEventName } = require("./season");
 
-// Mirrors getMaxShowsForWeek in callable/lineups.js (module-local there):
+// Mirrors getMaxShowsForWeek in helpers/showSelection.js:
 // regular weeks allow 4 shows, the final week allows 7 (one per day).
 function maxShowsForWeek(week, totalWeeks = 7) {
   return week === totalWeeks ? 7 : 4;

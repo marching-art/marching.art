@@ -202,7 +202,7 @@ const Schedule = () => {
                 Week {currentWeek} of 7 • {getWeekDateRange(currentWeek)}
               </p>
               {scoresPending ? (
-                <p className="text-[10px] text-amber-400 flex items-center gap-1">
+                <p className="text-[10px] text-warning flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5 animate-pulse" aria-hidden="true" />
                   Scores processing — waiting on DCI results
                 </p>

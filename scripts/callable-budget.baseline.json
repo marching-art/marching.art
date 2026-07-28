@@ -9,6 +9,7 @@
     "functions/src/callable/lineups.js#getActiveLineupKeys": "Read-only: lists active lineup keys.",
     "functions/src/callable/lineups.js#validateLineup": "Validation endpoint; only write is a self-heal flag update on the CALLER'S OWN profile when a stale lineup is detected.",
     "functions/src/callable/podiumFan.js#getFanFavorite": "Read-only: fetches fan-favorite standings and the caller's own ballot.",
+    "functions/src/callable/podiumHost.js#getHostingHistory": "Read-only: fetches the caller's own hosting history (events, rosters, earnings).",
     "functions/src/callable/podiumJoint.js#getJointOverlaps": "Read-only: lists overlap candidates for joint rehearsals.",
     "functions/src/callable/podiumJoint.js#getJointRehearsals": "Read-only: lists the caller's joint rehearsal proposals.",
     "functions/src/callable/podiumRoute.js#getPodiumRegistrationPreview": "Read-only: previews podium registration state; a budget charge would add a billed read per call.",

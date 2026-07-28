@@ -714,7 +714,7 @@ const CaptionSelectionModal = ({
               {scoresPending ? (
                 <>
                   Locked lineups are scored once the night&apos;s DCI results post —{' '}
-                  <span className="text-amber-400 font-bold">scores are processing now</span>
+                  <span className="text-warning font-bold">scores are processing now</span>
                 </>
               ) : (
                 <>

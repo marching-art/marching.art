@@ -16,13 +16,13 @@ only that channel's posts. Shared plumbing lives in
 the secret definitions, the poster, the lease-guarded `postOnce`, and the
 embed helpers.
 
-| Channel            | Secret                              | Posts                                                                                 |
-| ------------------ | ----------------------------------- | ------------------------------------------------------------------------------------- |
-| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, championship-week cuts, season champions |
+| Channel            | Secret                              | Posts                                                                                                            |
+| ------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, championship-week cuts, season champions    |
 | **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, registration deadlines, Eastern Classic night lineups |
-| **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                          |
-| **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                       |
-| **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                 |
+| **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                                                     |
+| **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                                                  |
+| **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                                            |
 
 Two rules hold across every channel:
 
@@ -172,7 +172,7 @@ computed and announced to nobody but the logs.
   "top 25, ties included" would eventually disagree with the one that counts,
   and a post naming a corps the scorer then leaves out is worse than no post.
   The recap is used only to put names and scores on the uids it returns.
-- **Class filter:** the participant list is ranked *before* `classFilter` is
+- **Class filter:** the participant list is ranked _before_ `classFilter` is
   applied, so the announcement re-applies that filter. This keeps the count
   truthful (an ineligible row occupies a slot but never marches) and
   guarantees a SoundSport score can never reach a public embed — SoundSport is
@@ -206,7 +206,7 @@ director met it as an error message when it was already too late.
   `{seasonUid}_discord_reglock_day{weeksRemaining}`. `weeksRemaining` holds the
   same value for seven days, so the daily job posts on the first day of the
   window and is quiet for the rest; World, Open and A each get their own post.
-- **Copy:** the footer states that the lock only affects *starting* a corps —
+- **Copy:** the footer states that the lock only affects _starting_ a corps —
   without it, a director who already has one reads the post as a threat to the
   corps they're running.
 - **Not a push:** the audience is directors who have **not** registered in a

@@ -26,6 +26,7 @@ const venues = require("./venues");
 const divisions = require("./divisions");
 const staffMarket = require("./staffMarket");
 const joint = require("./joint");
+const { runScrimmagePass } = require("./scrimmagePass");
 const { processCoinAwardsBatch } = require("../scoringAwards");
 const { SHOW_PARTICIPATION_REWARDS } = require("../classRegistry");
 const { ChunkedWriter } = require("../chunkedWriter");
@@ -547,124 +548,8 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     // For every pair whose joint rehearsal was today: each side gets the
     // PRIVATE head-to-head diagnostic on its own state, the shared entry is
     // consumed, and the pair emits one public feed line for the recap.
-    const jointFeed = [];
-    const scrimmagedPairs = new Set();
-    // Batch the pair reads: one chunked getAll over every corps involved in a
-    // joint rehearsal today (fresh reads on purpose — see the merge-write note
-    // below) instead of two sequential reads per pair.
-    const jointStateByUid = new Map();
-    if (jointToday.length > 0) {
-      const jointUids = [
-        ...new Set(jointToday.flatMap((e) => [e.uid, e.partnerUid]).filter(Boolean)),
-      ];
-      try {
-        for (let i = 0; i < jointUids.length; i += GETALL_CHUNK) {
-          const chunk = jointUids.slice(i, i + GETALL_CHUNK);
-          const snaps = await db.getAll(...chunk.map((uid) => store.stateRef(db, uid)));
-          snaps.forEach((snap, j) => jointStateByUid.set(chunk[j], snap));
-        }
-      } catch (error) {
-        logger.error(`[podium] scrimmage state reads failed: ${error.message}`);
-      }
-    }
-    const scrimmageWriter = new ChunkedWriter(db);
-    for (const entry of jointToday) {
-      try {
-        const mySnapshot = jointStateByUid.get(entry.uid);
-        if (!mySnapshot || !mySnapshot.exists) continue;
-        const myState = store.hydrateState(mySnapshot.data());
-        const partnerSnapshot = entry.partnerUid
-          ? jointStateByUid.get(entry.partnerUid) || null
-          : null;
-        let scrimmage = null;
-        let headToHead = myState.headToHead || null;
-        if (
-          partnerSnapshot &&
-          partnerSnapshot.exists &&
-          partnerSnapshot.data().seasonUid === seasonUid
-        ) {
-          const partnerState = store.hydrateState(partnerSnapshot.data());
-          const report = joint.scrimmageReport(
-            myState, partnerState, competitionDay, seasonUid, store.curves, store.balance
-          );
-          // Enrich the stored report into the Tale of the Tape artifact: where
-          // it happened and the outcome from this corps' perspective (§5.12).
-          const outcome =
-            report.mine.total > report.theirs.total
-              ? "win"
-              : report.mine.total < report.theirs.total
-                ? "loss"
-                : "tie";
-          const venue = entry.city ? venues.venueFor(entry.city) : null;
-          scrimmage = {
-            ...report,
-            partnerUid: entry.partnerUid,
-            city: entry.city || null,
-            stadium: venue ? venues.stadiumFor(venue.venueId) : null,
-            outcome,
-          };
-          // Head-to-head season record, keyed by partner — the profile's
-          // "who's been rehearsing with whom" log.
-          const prior = (myState.headToHead && myState.headToHead[entry.partnerUid]) || {
-            wins: 0,
-            losses: 0,
-            ties: 0,
-            joints: 0,
-          };
-          headToHead = {
-            ...(myState.headToHead || {}),
-            [entry.partnerUid]: {
-              partnerCorpsName: entry.partnerCorpsName || prior.partnerCorpsName || null,
-              wins: prior.wins + (outcome === "win" ? 1 : 0),
-              losses: prior.losses + (outcome === "loss" ? 1 : 0),
-              ties: prior.ties + (outcome === "tie" ? 1 : 0),
-              joints: prior.joints + 1,
-              last: {
-                day: competitionDay,
-                myTotal: report.mine.total,
-                theirTotal: report.theirs.total,
-                outcome,
-              },
-            },
-          };
-          const pairKey = [entry.uid, entry.partnerUid].sort().join("_");
-          if (!scrimmagedPairs.has(pairKey)) {
-            scrimmagedPairs.add(pairKey);
-            jointFeed.push({
-              corpsA: entry.corpsName || null,
-              corpsB: entry.partnerCorpsName || null,
-              city: entry.city,
-            });
-          }
-        }
-        // Merge-write ONLY this pass's fields: a full-doc set here would
-        // clobber any block the director allocated between the main loop's
-        // write and this pass (players do play at 2 AM). Drop just today's
-        // joint from the pending list, leaving other weeks' joints intact.
-        const remainingJoints = joint
-          .pendingJoints(myState)
-          .filter((j) => j.day !== competitionDay);
-        scrimmageWriter.set(
-          store.stateRef(db, entry.uid),
-          {
-            ...(scrimmage ? { scrimmage } : {}),
-            ...(headToHead ? { headToHead } : {}),
-            jointRehearsals: remainingJoints,
-            jointRehearsal: null,
-          },
-          { merge: true }
-        );
-      } catch (error) {
-        logger.error(`[podium] scrimmage pass failed for ${entry.uid}: ${error.message}`);
-      }
-    }
-    // Isolated like the per-entry writes it replaces: a scrimmage write
-    // failure never fails the night's scoring.
-    try {
-      await scrimmageWriter.commit();
-    } catch (error) {
-      logger.error(`[podium] scrimmage pass writes failed: ${error.message}`);
-    }
+    // Self-isolating (see scrimmagePass.js) — never fails the night.
+    const jointFeed = await runScrimmagePass(db, { seasonUid, competitionDay, jointToday });
 
     // --- 2c. Participation CC/XP pass ----------------------------------------
     // Same batch path fantasy uses (increment + history subcollection).
