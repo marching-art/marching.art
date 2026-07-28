@@ -396,6 +396,63 @@ describe("archiveAndResetProfiles participation gate", () => {
   });
 });
 
+describe("archiveAndResetProfiles career bests", () => {
+  // A profile carrying a PARTIAL lifetimeStats skipped the whole-object
+  // fallback, and `Math.max(undefined, n)` is NaN. Once a career best is NaN it
+  // stays NaN forever, the profile renders NaN, and the lifetime leaderboard
+  // (which coalesces with `|| 0`) reads it as zero — the two disagree
+  // permanently. Found by the championship-week rehearsal.
+  test("a partial lifetimeStats does not poison the career bests with NaN", async () => {
+    const { db, writes } = makeFakeDb({
+      profiles: [
+        {
+          uid: "partial",
+          data: {
+            // Every field but the two the archival maxes against.
+            lifetimeStats: { totalSeasons: 3 },
+            corps: { worldClass: participatingCorps(90) },
+          },
+        },
+      ],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("partial")
+    ).data;
+
+    assert.equal(Number.isNaN(update.lifetimeStats.bestSeasonScore), false);
+    assert.equal(Number.isNaN(update.lifetimeStats.bestWeeklyScore), false);
+    assert.equal(update.lifetimeStats.bestSeasonScore, 90);
+    // The fields that WERE present are carried, not reset by the defaults.
+    assert.equal(update.lifetimeStats.totalSeasons, 4);
+  });
+
+  test("a stored null career best is coalesced, not maxed against", async () => {
+    const { db, writes } = makeFakeDb({
+      profiles: [
+        {
+          uid: "nulled",
+          data: {
+            lifetimeStats: { totalSeasons: 1, bestSeasonScore: null, bestWeeklyScore: null },
+            corps: { worldClass: participatingCorps(77) },
+          },
+        },
+      ],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("nulled")
+    ).data;
+
+    assert.equal(update.lifetimeStats.bestSeasonScore, 77);
+    assert.equal(Number.isNaN(update.lifetimeStats.bestWeeklyScore), false);
+  });
+});
+
 describe("archiveSeasonResultsLogic", () => {
   const leagueMembers = ["alice", "bob"];
   const makeLeagueFixture = (leagueData = {}, extraDocs = null) =>

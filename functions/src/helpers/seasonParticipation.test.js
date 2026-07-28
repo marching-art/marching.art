@@ -154,3 +154,46 @@ describe("corpsSeason", () => {
     assert.equal(season.participated, false);
   });
 });
+
+describe("both scoring pipelines count (rehearsal: Podium seasons attended nothing)", () => {
+  // Podium keeps its own recap collection for pipeline isolation, and its day
+  // documents carry the same `shows: [{results}]` shape. Folding only
+  // `fantasy_recaps` meant a Podium corps archived with showsAttended 0 and a
+  // best week of zero, and a whole Podium season added nothing to
+  // lifetimeStats.totalShows — the championship-week rehearsal caught it on the
+  // first run that turned Podium on.
+  const podiumDay = (competitionDay, results) => ({
+    id: String(competitionDay),
+    exists: true,
+    // Podium recap docs carry `competitionDay`, not `offSeasonDay`, so the
+    // fold has to fall back to the document id — which is the day number.
+    data: () => ({ competitionDay, shows: [show("Podium Prelims", results)] }),
+  });
+
+  test("a Podium recap day folds exactly like a fantasy one", () => {
+    const index = buildParticipationIndex([
+      podiumDay(28, [result("director", "podiumClass", 70)]),
+      podiumDay(35, [result("director", "podiumClass", 75)]),
+    ]);
+    const season = corpsSeason(index, "director", "podiumClass", { totalSeasonScore: 75 });
+
+    assert.equal(season.participated, true);
+    assert.equal(season.shows, 2);
+    // Days 28 and 35 are in different weeks, so the best week is one show.
+    assert.equal(season.bestWeek, 75);
+  });
+
+  test("the two pipelines never collide: both number their days 1-49", () => {
+    // Same day number, different pipelines, different directors. Folded
+    // separately and merged by `uid_corpsClass`, so neither overwrites the
+    // other — which is why fetchSeasonParticipation must not merge the day
+    // DOCUMENTS into one list.
+    const fantasy = buildParticipationIndex([day(28, [show("Regional", [result("f", "worldClass", 90)])])]);
+    const podium = buildParticipationIndex([podiumDay(28, [result("p", "podiumClass", 70)])]);
+    const merged = new Map([...fantasy, ...podium]);
+
+    assert.equal(merged.get(participationKey("f", "worldClass")).shows, 1);
+    assert.equal(merged.get(participationKey("p", "podiumClass")).shows, 1);
+    assert.equal(merged.size, 2);
+  });
+});

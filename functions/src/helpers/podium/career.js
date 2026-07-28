@@ -157,6 +157,13 @@ function applySeasonResult(career, { seasonUid, seasonIndex, state }, cfg) {
         reputationAfter: after,
         seasonRank: state.seasonRank ?? null,
         seasonRankOf: state.seasonRankOf ?? null,
+        // The division this corps COMPETED in, and the medals it won there.
+        // Both are read back by a re-sweep, which no longer has the finished
+        // season's state doc to read (the director has re-registered by then)
+        // and would otherwise rebuild the season's frozen standings with an
+        // empty medal count and NEXT season's division seat.
+        division: divisions.normalizeDivision(state.division),
+        medals: state.medals || {},
       },
     ],
   };
@@ -182,13 +189,27 @@ const FINAL_STANDINGS_CAP = 200;
 const PROFILE_HISTORY_CAP = 30;
 
 /**
- * Append the just-archived season to the PUBLIC profile résumé —
+ * Write the just-archived season into the PUBLIC profile résumé —
  * `corps.podiumClass.seasonHistory`, the same array shape the fantasy
  * classes archive, so the profile's Season History section renders Podium
  * rows with no special-casing (Phase 6.7, design §14.3.b). Registered-but-
- * never-performed seasons leave no row. Idempotent per season (both the
- * nightly sweep and lazy self-archival call this on their once-only branch,
- * and a seasonId guard makes double-calls harmless).
+ * never-performed seasons leave no row.
+ *
+ * A row for the season may ALREADY EXIST, and in production it always does:
+ * the season rollover's profile sweep (helpers/season.js
+ * archiveAndResetProfiles) writes a row for every corps class it finds on the
+ * profile, podiumClass included — and it runs the night BEFORE this does,
+ * because the Podium boundary is settled by the first nightly stage of the new
+ * season. That row is built from the fantasy fields: it has the display copy's
+ * `totalSeasonScore` and a placement, but no final score, no medals, and no
+ * show concept (Podium stores a plain string where the fantasy reader expects
+ * `{theme}`).
+ *
+ * So this UPGRADES rather than skips. The Podium result is merged over
+ * whatever is already there, keeping the rollover's fields (lineup history,
+ * shows attended, archivedAt) and supplying the ones only Podium knows. Still
+ * idempotent: the merged values are derived from the finished state, so a
+ * second call rewrites the identical row.
  */
 async function appendProfileSeasonHistory(db, uid, seasonUid, state) {
   if (state.lastTotal == null) return false;
@@ -196,8 +217,7 @@ async function appendProfileSeasonHistory(db, uid, seasonUid, state) {
   const snapshot = await ref.get();
   const corps = snapshot.exists ? snapshot.data().corps || {} : {};
   const existing = (corps.podiumClass && corps.podiumClass.seasonHistory) || [];
-  if (existing.some((row) => row && row.seasonId === seasonUid)) return false;
-  const entry = {
+  const podiumResult = {
     seasonId: seasonUid,
     seasonName: seasonUid,
     corpsName: state.corpsName || null,
@@ -207,14 +227,13 @@ async function appendProfileSeasonHistory(db, uid, seasonUid, state) {
     showConcept: state.showConcept || null,
     medals: state.medals || {},
   };
+  const index = existing.findIndex((row) => row && row.seasonId === seasonUid);
+  const seasonHistory =
+    index >= 0
+      ? existing.map((row, i) => (i === index ? { ...row, ...podiumResult } : row))
+      : [...existing.slice(-(PROFILE_HISTORY_CAP - 1)), podiumResult];
   await ref.set(
-    {
-      corps: {
-        podiumClass: {
-          seasonHistory: [...existing.slice(-(PROFILE_HISTORY_CAP - 1)), entry],
-        },
-      },
-    },
+    { corps: { podiumClass: { seasonHistory } } },
     { merge: true }
   );
   return true;
@@ -262,12 +281,51 @@ function applyBudgetRefund(transaction, db, uid, profileSnapshot, report, season
 }
 
 /**
+ * The season a corps played, as its career recorded it — searching retired
+ * lineages too. A director who founds a new corps (`freshStart`) banks the
+ * whole career into `retiredCareers`, so the season it just played is no
+ * longer on the live career at all; a re-sweep that only looked there would
+ * drop that corps out of the season's frozen standings entirely.
+ */
+function archivedSeasonEntry(career, seasonUid) {
+  const lineages = [career, ...((career && career.retiredCareers) || [])];
+  for (const lineage of lineages) {
+    const entry = (lineage && lineage.history ? lineage.history : []).find(
+      (h) => h && h.seasonUid === seasonUid
+    );
+    if (entry) return entry;
+  }
+  return null;
+}
+
+/**
  * Archive every corps of a just-ended season into careers, then freeze the
  * season's champion + final standings into the public recap parent doc
  * (`podium-recaps/{seasonUid}`) — the permanent record the Scores archive and
  * profile résumés read. Runs once per rollover under its own lease (caller
- * provides it). Best-effort per corps; idempotent (re-sweeps skip archived
- * careers but still rebuild the identical standings doc).
+ * provides it).
+ *
+ * A re-sweep is a real scenario, not a theoretical one: the stage marks a
+ * failed sweep for retry and re-claims it the following night, by which point
+ * directors have re-registered and the finished season's state docs are gone.
+ * Everything here is written to survive that, in one of two ways:
+ *
+ *  - **Retryable, per corps or per document.** Career archival and the budget
+ *    refund are guarded by each corps' own `lastSeasonUid` /
+ *    `lastRefundedSeasonUid` markers; the Hall of Champions merge, the records
+ *    mark, the profile résumé row and the Fan Favorite crowning are each
+ *    idempotent on their own terms. A sweep that failed partway finishes the
+ *    rest tomorrow.
+ *
+ *  - **Once-only.** The division re-seat, alone, cannot be re-run: it promotes
+ *    each corps relative to the seat it currently holds, and a retry would read
+ *    the seats this assessment just assigned and promote the whole field again.
+ *    `divisionsSeatedAt` on the archive doc is what makes it once.
+ *
+ * Everything a rebuild needs about a corps whose state is gone — the division
+ * it competed in, the medals it won — is carried on its archived career entry
+ * (`applySeasonResult`) precisely so the rebuild is faithful rather than a
+ * degraded guess.
  */
 async function archivePodiumSeason(db, previousSeason) {
   const roster = await store.rosterCollection(db, previousSeason.seasonUid).get();
@@ -326,6 +384,13 @@ async function archivePodiumSeason(db, previousSeason) {
         }
         return result;
       });
+      // What the corps did this season. The live state is the source while it
+      // still holds the finished season; once the director has re-registered
+      // (lazy self-archival, or simply a night later) the career's archived
+      // entry is — which is why that entry carries the competing division and
+      // the medals, rather than being reconstructed from whatever the corps
+      // looks like now.
+      const entry = archivedSeasonEntry(career, previousSeason.seasonUid);
       if (state) {
         swept.push({
           uid,
@@ -333,26 +398,21 @@ async function archivePodiumSeason(db, previousSeason) {
           lastTotal: state.lastTotal ?? null,
           lastScoredDay: state.lastScoredDay ?? null,
           medals: state.medals || {},
-          division: divisions.normalizeDivision(state.division || career.division),
+          division: divisions.normalizeDivision(state.division || (entry && entry.division)),
           underCutoffSeasons: career.underCutoffSeasons || 0,
         });
-      } else {
-        // The state was already replaced (lazy self-archival at re-registration
-        // for the new season) — recover the finished season from the career.
-        const entry = (career.history || []).find(
-          (h) => h && h.seasonUid === previousSeason.seasonUid
-        );
-        if (entry) {
-          swept.push({
-            uid,
-            corpsName: entry.corpsName || null,
-            lastTotal: entry.finalsTotal ?? null,
-            lastScoredDay: entry.finalsDay ?? null,
-            medals: {},
-            division: divisions.normalizeDivision(career.division),
-            underCutoffSeasons: career.underCutoffSeasons || 0,
-          });
-        }
+      } else if (entry) {
+        swept.push({
+          uid,
+          corpsName: entry.corpsName || null,
+          lastTotal: entry.finalsTotal ?? null,
+          lastScoredDay: entry.finalsDay ?? null,
+          // Pre-migration entries carry neither field; `career.division` is
+          // the best remaining guess for a season archived before they landed.
+          medals: entry.medals || {},
+          division: divisions.normalizeDivision(entry.division || career.division),
+          underCutoffSeasons: career.underCutoffSeasons || 0,
+        });
       }
     } catch (error) {
       logger.error(`[podium] career archival failed for ${uid}: ${error.message}`);
@@ -365,12 +425,25 @@ async function archivePodiumSeason(db, previousSeason) {
   // director's own state and banks the finished season onto its resume as it
   // ages into the next season at re-registration (staffMarket.ageStaff).
 
+  const archiveRef = db.doc(`podium-recaps/${previousSeason.seasonUid}`);
+  const storedArchive = (await archiveRef.get()).data() || {};
+
   // --- Division re-seat (design §5.7, decision 26) --------------------------
   // Assess the veteran pool against published percentile cutoffs and write
   // each corps' next-season seat into its career. If the corps already
   // re-registered for the new season (rollover-night race), its live state
   // and profile display are re-stamped with the assessed seat so nobody
   // plays a whole season in yesterday's division.
+  //
+  // ONCE-ONLY, unlike everything else in this function. The assessment
+  // promotes each corps RELATIVE TO THE SEAT IT CURRENTLY HOLDS, and by the
+  // time a retried sweep runs — a night later, because that is when the lease
+  // frees — the field has re-registered into the seats this very assessment
+  // assigned. Running it again would read those as the corps' current
+  // divisions and promote every one of them a second time: a corps that earned
+  // Open Class would wake up in World, having never competed there.
+  // `underCutoffSeasons` would double-count the same way, demoting on a single
+  // bad season instead of two. `divisionsSeatedAt` is what makes it once.
   const assessment = divisions.assessDivisions(
     swept.map((entry) => ({
       uid: entry.uid,
@@ -380,32 +453,59 @@ async function archivePodiumSeason(db, previousSeason) {
     })),
     store.balance
   );
-  for (const [uid, seat] of Object.entries(assessment.next)) {
-    try {
-      await careerRef(db, uid).set(
-        {
-          division: seat.division,
-          underCutoffSeasons: seat.underCutoffSeasons,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-      const liveState = await store.stateRef(db, uid).get();
-      if (liveState.exists && liveState.data().seasonUid !== previousSeason.seasonUid) {
-        await store.stateRef(db, uid).set({ division: seat.division }, { merge: true });
-        await store
-          .profileRef(db, uid)
-          .set({ corps: { podiumClass: { division: seat.division } } }, { merge: true });
+  if (storedArchive.divisionsSeatedAt) {
+    logger.info(
+      `[podium] divisions for ${previousSeason.seasonUid} were already seated at ` +
+        `${storedArchive.divisionsSeatedAt}; not re-seating.`
+    );
+  } else {
+    for (const [uid, seat] of Object.entries(assessment.next)) {
+      try {
+        await careerRef(db, uid).set(
+          {
+            division: seat.division,
+            underCutoffSeasons: seat.underCutoffSeasons,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+        const liveState = await store.stateRef(db, uid).get();
+        if (liveState.exists && liveState.data().seasonUid !== previousSeason.seasonUid) {
+          await store.stateRef(db, uid).set({ division: seat.division }, { merge: true });
+          await store
+            .profileRef(db, uid)
+            .set({ corps: { podiumClass: { division: seat.division } } }, { merge: true });
+        }
+      } catch (error) {
+        logger.error(`[podium] division seat write failed for ${uid}: ${error.message}`);
       }
-    } catch (error) {
-      logger.error(`[podium] division seat write failed for ${uid}: ${error.message}`);
     }
   }
+
+  // The frozen record only ever gets MORE complete. A rebuild reconstructs
+  // every corps whose director has re-registered from its archived career
+  // entry, which is faithful — but only as far back as the career history
+  // window reaches, and a retired lineage eventually falls off the
+  // `retiredCareers` tail. A season's permanent standings must not quietly
+  // lose a corps years later, so a shorter rebuild is discarded in favour of
+  // what is already on file.
+  const storedStandings = Array.isArray(storedArchive.finalStandings)
+    ? storedArchive.finalStandings
+    : [];
+  const rebuiltIsPoorer = storedStandings.length > finalStandings.length;
+  if (rebuiltIsPoorer) {
+    logger.warn(
+      `[podium] rebuilt standings for ${previousSeason.seasonUid} hold ` +
+        `${finalStandings.length} corps against ${storedStandings.length} already on file; ` +
+        "keeping the record as archived."
+    );
+  }
+  const record = rebuiltIsPoorer ? storedStandings : finalStandings;
 
   // Champions per division — the FMA rise: every division crowns its own.
   const divisionChampions = {};
   for (const division of divisions.DIVISIONS) {
-    const top = finalStandings.find((entry) => entry.division === division);
+    const top = record.find((entry) => entry.division === division);
     if (top) {
       divisionChampions[division] = {
         uid: top.uid,
@@ -416,12 +516,12 @@ async function archivePodiumSeason(db, previousSeason) {
     }
   }
 
-  await db.doc(`podium-recaps/${previousSeason.seasonUid}`).set(
+  await archiveRef.set(
     {
       seasonUid: previousSeason.seasonUid,
       seasonIndex: previousSeason.index,
-      champion: finalStandings[0] || null,
-      finalStandings,
+      champion: record[0] || null,
+      finalStandings: record,
       divisionChampions,
       divisions: {
         cutoffs: assessment.cutoffs,
@@ -429,6 +529,7 @@ async function archivePodiumSeason(db, previousSeason) {
       },
       corpsCount: roster.size,
       archivedAt: new Date().toISOString(),
+      divisionsSeatedAt: storedArchive.divisionsSeatedAt || new Date().toISOString(),
     },
     { merge: true }
   );
@@ -440,7 +541,7 @@ async function archivePodiumSeason(db, previousSeason) {
   // their profile trophy case (`trophies.championships`, fantasy shape) —
   // the trophy-case client renders corpsClass podiumClass as the
   // metal-colored Gem. Isolated: a Hall failure never fails archival.
-  if (finalStandings.length > 0) {
+  if (record.length > 0) {
     try {
       const metals = ["gold", "silver", "bronze"];
       // Finals hardware per DIVISION (the FMA rise: every division medals
@@ -448,7 +549,7 @@ async function archivePodiumSeason(db, previousSeason) {
       // per-user corpsClass+seasonName dedupe still holds.
       let hallChampions = [];
       for (const division of [...divisions.DIVISIONS].reverse()) {
-        const divisionStandings = finalStandings.filter((entry) => entry.division === division);
+        const divisionStandings = record.filter((entry) => entry.division === division);
         if (divisionStandings.length === 0) continue;
         const eventName = `Podium ${divisions.DIVISION_LABELS[division]} Finals`;
         const champions = [];
@@ -521,10 +622,10 @@ async function archivePodiumSeason(db, previousSeason) {
 
   // Records Book season-total mark (§14.1.6). Isolated; strictly-better
   // merge makes re-sweeps harmless.
-  if (finalStandings.length > 0) {
+  if (record.length > 0) {
     try {
       const { updateSeasonBestRecords } = require("../gameRecords");
-      const top = finalStandings[0];
+      const top = record[0];
       await updateSeasonBestRecords(
         db,
         [{ corpsClass: "podiumClass", value: top.lastTotal, corpsName: top.corpsName, uid: top.uid }],
@@ -551,7 +652,7 @@ async function archivePodiumSeason(db, previousSeason) {
 
   logger.info(
     `[podium] archived season ${previousSeason.seasonUid} (index ${previousSeason.index}): ` +
-      `${archived} careers, ${finalStandings.length} in final standings.`
+      `${archived} careers, ${record.length} in final standings.`
   );
   return archived;
 }

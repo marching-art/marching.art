@@ -26,6 +26,28 @@ const { getCompletedGameDayET } = require("../src/helpers/gameDay");
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
+ * Re-pin the season so `calendarDay` is the day that just ended.
+ *
+ * The calendar-day form is the primitive: Podium runs on calendar days, not
+ * competition days (it processes spring training, which has no competition day
+ * at all), and the off-season the rollover starts has no spring-training offset
+ * to convert through. Day 0 is the legitimate "the season starts tomorrow"
+ * position — that is where a director registers before day 1 is ever processed.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {number} calendarDay - 0 or more.
+ * @returns {Promise<Date>} the season start date now stored.
+ */
+async function pinToCompletedCalendarDay(db, calendarDay) {
+  const completed = getCompletedGameDayET(new Date());
+  const startDate = new Date(completed.getTime() - (calendarDay - 1) * MS_PER_DAY);
+  await db.doc("game-settings/season").update({
+    "schedule.startDate": admin.firestore.Timestamp.fromDate(startDate),
+  });
+  return startDate;
+}
+
+/**
  * Re-pin the season so `competitionDay` is the day that just ended.
  *
  * @param {FirebaseFirestore.Firestore} db
@@ -34,13 +56,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  * @returns {Promise<Date>} the season start date now stored.
  */
 async function pinToCompletedDay(db, competitionDay, world) {
-  const calendarDay = world.springTrainingDays + competitionDay;
-  const completed = getCompletedGameDayET(new Date());
-  const startDate = new Date(completed.getTime() - (calendarDay - 1) * MS_PER_DAY);
-  await db.doc("game-settings/season").update({
-    "schedule.startDate": admin.firestore.Timestamp.fromDate(startDate),
-  });
-  return startDate;
+  return pinToCompletedCalendarDay(db, world.springTrainingDays + competitionDay);
 }
 
 /**
@@ -59,4 +75,4 @@ async function expireSeason(db) {
   return endDate;
 }
 
-module.exports = { pinToCompletedDay, expireSeason, MS_PER_DAY };
+module.exports = { pinToCompletedDay, pinToCompletedCalendarDay, expireSeason, MS_PER_DAY };

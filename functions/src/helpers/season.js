@@ -164,13 +164,21 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     const uid = doc.ref.parent.parent.id;
     const profileData = doc.data();
     const corpsData = profileData.corps || {};
-    const lifetimeStats = profileData.lifetimeStats || {
+    // Defaulted FIELD BY FIELD, not as a whole object. A profile carrying a
+    // partial `lifetimeStats` — one written before a field existed, or by any
+    // path that sets only the counters it cares about — skipped the fallback
+    // entirely, and the two Math.max calls below then wrote `Math.max(undefined,
+    // n)`, which is NaN. Once a career best is NaN it stays NaN forever (every
+    // later Math.max propagates it), the profile renders NaN, and the lifetime
+    // leaderboard reads it as zero — the two disagree permanently.
+    const lifetimeStats = {
       totalSeasons: 0,
       totalShows: 0,
       totalPoints: 0,
       bestSeasonScore: 0,
       bestWeeklyScore: 0,
       leagueChampionships: 0,
+      ...(profileData.lifetimeStats || {}),
     };
 
     // Archive current season data and reset corps
@@ -252,12 +260,17 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
         seasonShowCount += showsAttended;
         seasonPointsTotal += corps.totalSeasonScore || 0;
 
-        // Update lifetime stats
+        // Update lifetime stats. Both sides are coalesced: a stored null (as
+        // opposed to a missing key, which the defaults above cover) would
+        // otherwise poison the career best with NaN for good.
         lifetimeStats.bestSeasonScore = Math.max(
-          lifetimeStats.bestSeasonScore,
+          lifetimeStats.bestSeasonScore || 0,
           corps.totalSeasonScore || 0
         );
-        lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
+        lifetimeStats.bestWeeklyScore = Math.max(
+          lifetimeStats.bestWeeklyScore || 0,
+          highestWeeklyScore || 0
+        );
       }
 
       resetCorps[corpsClass] = {

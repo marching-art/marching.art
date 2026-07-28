@@ -13,6 +13,12 @@ const AREA_TITLES = {
   payout: "What the title paid",
   rollover: "Season rollover",
   profile: "Profiles after reset",
+  podiumSeason: "Podium: the season ran",
+  podiumBoundary: "Podium: the season boundary",
+  podiumMoney: "Podium: the Corps Budget refund",
+  podiumDivisions: "Podium: next season's divisions",
+  podiumFan: "Podium: the Fan Favorite",
+  podiumReturn: "Podium: coming back",
   scale: "Scale",
   idempotency: "Doing it twice",
 };

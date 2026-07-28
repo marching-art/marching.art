@@ -185,3 +185,124 @@ describe("applyBudgetRefund (end-of-season CC sweep)", () => {
     assert.equal(txn.updates.length, 0);
   });
 });
+
+describe("what an archived season has to remember (rehearsal: the re-sweep)", () => {
+  // A sweep that fails is re-claimed the following night, by which point the
+  // director has re-registered and the finished season's state doc is gone.
+  // The rebuild then reads the career entry — so the entry has to carry the
+  // division the corps COMPETED in and the medals it won there, or the frozen
+  // standings come back with an empty medal count and next season's seat.
+  test("the history entry carries the competing division and its medals", () => {
+    const state = {
+      ...finishedState(80),
+      division: "openClass",
+      medals: { gold: 6, silver: 1, bronze: 1 },
+    };
+    const updated = applySeasonResult(
+      initCareer(),
+      { seasonUid: "s1", seasonIndex: 1, state },
+      balance
+    );
+    const entry = updated.history[0];
+
+    assert.equal(entry.division, "openClass");
+    assert.deepEqual(entry.medals, { gold: 6, silver: 1, bronze: 1 });
+  });
+
+  test("a corps with no division recorded archives as A Class, never undefined", () => {
+    const updated = applySeasonResult(
+      initCareer(),
+      { seasonUid: "s1", seasonIndex: 1, state: finishedState(80) },
+      balance
+    );
+    assert.equal(updated.history[0].division, "aClass");
+    assert.deepEqual(updated.history[0].medals, {});
+  });
+});
+
+describe("the profile résumé row (rehearsal: the rollover got there first)", () => {
+  // The season rollover's profile sweep writes a fantasy-shaped row for every
+  // corps class on the profile, podiumClass included, the night BEFORE Podium
+  // archives. appendProfileSeasonHistory used to see that row and return early,
+  // so the Podium result — final score, medals, show concept — never landed.
+  const { appendProfileSeasonHistory } = require("./career");
+
+  /** A profile doc whose seasonHistory can be inspected after the write. */
+  function fakeProfile(seasonHistory) {
+    const written = [];
+    return {
+      written,
+      ref: {
+        get: async () => ({
+          exists: true,
+          data: () => ({ corps: { podiumClass: { seasonHistory } } }),
+        }),
+        set: async (data) => written.push(data),
+      },
+    };
+  }
+
+  function fakeDb(profile) {
+    return { doc: () => profile.ref };
+  }
+
+  const podiumState = {
+    corpsName: "Vanguard Ascent",
+    lastTotal: 76.7,
+    seasonRank: 1,
+    showConcept: "a rehearsal season",
+    medals: { gold: 6 },
+  };
+
+  test("an existing rollover row is upgraded, not skipped", async () => {
+    // Exactly what archiveAndResetProfiles leaves behind for a Podium corps.
+    const profile = fakeProfile([
+      {
+        seasonId: "s1",
+        seasonName: "s1",
+        corpsClass: "podiumClass",
+        corpsName: "Vanguard Ascent",
+        totalSeasonScore: 76.7,
+        placement: 1,
+        lineup: null,
+        showConcept: null,
+        archivedAt: "yesterday",
+      },
+    ]);
+
+    const wrote = await appendProfileSeasonHistory(fakeDb(profile), "u1", "s1", podiumState);
+
+    assert.equal(wrote, true);
+    const rows = profile.written[0].corps.podiumClass.seasonHistory;
+    assert.equal(rows.length, 1, "the row is upgraded in place, never duplicated");
+    assert.equal(rows[0].finalScore, 76.7);
+    assert.deepEqual(rows[0].medals, { gold: 6 });
+    assert.equal(rows[0].showConcept, "a rehearsal season");
+    // The rollover's own fields survive the merge.
+    assert.equal(rows[0].corpsClass, "podiumClass");
+    assert.equal(rows[0].archivedAt, "yesterday");
+  });
+
+  test("re-running writes the identical row", async () => {
+    const first = fakeProfile([]);
+    await appendProfileSeasonHistory(fakeDb(first), "u1", "s1", podiumState);
+    const row = first.written[0].corps.podiumClass.seasonHistory[0];
+
+    const second = fakeProfile([row]);
+    await appendProfileSeasonHistory(fakeDb(second), "u1", "s1", podiumState);
+    const rows = second.written[0].corps.podiumClass.seasonHistory;
+
+    assert.equal(rows.length, 1);
+    assert.deepEqual(rows[0], row);
+  });
+
+  test("a season the corps never performed in leaves no row", async () => {
+    const profile = fakeProfile([]);
+    const wrote = await appendProfileSeasonHistory(fakeDb(profile), "u1", "s1", {
+      corpsName: "Ghost",
+      lastTotal: null,
+    });
+    assert.equal(wrote, false);
+    assert.equal(profile.written.length, 0);
+  });
+});
