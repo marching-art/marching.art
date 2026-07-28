@@ -64,7 +64,7 @@ const {
   commitPodiumBudget,
   hirePodiumClinician,
 } = require("./src/callable/podium");
-const { hostEvent } = require("./src/callable/podiumHost");
+const { hostEvent, getHostingHistory } = require("./src/callable/podiumHost");
 const { getPodiumState, getPodiumRegistrationPreview } = require("./src/callable/podiumRoute");
 const {
   getPodiumStaffMarket,
@@ -366,6 +366,7 @@ module.exports = {
   retrainPodiumStaff,
   acknowledgePodiumStaffOutlook,
   hostEvent,
+  getHostingHistory,
   getPodiumState,
   getPodiumRegistrationPreview,
   getJointOverlaps,

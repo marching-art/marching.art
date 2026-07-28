@@ -9,11 +9,37 @@ const { logger } = require("firebase-functions/v2");
 const store = require("../helpers/podium/store");
 const hostedEvents = require("../helpers/podium/hostedEvents");
 const { podiumContext } = require("./podium");
+const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertWriteBudget } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { discordEventsWebhookUrl } = require("../helpers/discord");
 const { announceHostedEvent } = require("../helpers/hostedEventDiscord");
 const { seasonDisplayName } = require("../helpers/seasonDisplay");
+
+/**
+ * A director's hosting résumé: every show they've hosted across every season,
+ * each show's attendee roster, and the CorpsCoin each one cost and returned.
+ *
+ * Self-only. The event docs are public (firestore.rules allows read on
+ * `hosted-events/**`) and the rosters mirror the already-public recaps, so
+ * nothing here is secret — but the cross-season collection-group query is
+ * scoped to the caller so it stays a bounded, self-serve read rather than a
+ * way to enumerate the whole hosting economy one uid at a time.
+ *
+ * Deliberately NOT behind podiumContext: hosting history is a record of past
+ * seasons, so it must keep answering when the Podium flag is off or no season
+ * is active — podiumContext would throw in both cases.
+ */
+exports.getHostingHistory = onCall({ cors: true }, async (request) => {
+  const uid = assertAuth(request);
+  const db = getDb();
+  try {
+    return { success: true, ...(await hostedEvents.hostingHistory(db, uid)) };
+  } catch (error) {
+    logger.error(`getHostingHistory failed for ${uid}: ${error.message}`);
+    throw new HttpsError("internal", "Could not load hosting history.");
+  }
+});
 
 exports.hostEvent = onCall({ cors: true, secrets: [discordEventsWebhookUrl] }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
