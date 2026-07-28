@@ -526,6 +526,14 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
           members: admin.firestore.FieldValue.arrayRemove(uid),
         };
 
+        // A co-commissioner who leaves gives up the job with the seat. Every
+        // league gate reads `commissioners` (helpers/leaguePermissions.js), so
+        // leaving the uid behind left someone who is no longer a member able to
+        // change settings, generate matchups, invite, and remove members.
+        if (Array.isArray(leagueData.commissioners) && leagueData.commissioners.includes(uid)) {
+          update.commissioners = admin.firestore.FieldValue.arrayRemove(uid);
+        }
+
         // Commissioner succession. Every commissioner gate keys off the
         // owner, and leaving used to remove the creator from `members` while
         // leaving creatorId pointing at them — so the league permanently lost

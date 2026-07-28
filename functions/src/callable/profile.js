@@ -5,6 +5,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+const { detachMemberFromLeague } = require("../helpers/leagueLifecycle");
 
 /**
  * Update user profile information
@@ -436,6 +437,19 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
         displayName: null,
         username: null,
       });
+    }
+
+    // Leagues first, while the profile still says which ones they are in.
+    // A league's roster lives on the LEAGUE document, so deleting the profile
+    // and stopping left this uid in every `members` array it had ever joined —
+    // padding the member count, holding a standings row, and unremovable by the
+    // commissioner, whose only escape hatch wrote to the profile that had just
+    // been deleted. Each league is best-effort and cannot fail the deletion;
+    // whatever this misses, removeLeagueMember can now clear by hand.
+    const leagueIds = profileDoc.exists ? profileDoc.data().leagueIds || [] : [];
+    for (const leagueId of leagueIds) {
+      const outcome = await detachMemberFromLeague(db, leagueId, userId);
+      logger.info(`Account deletion ${userId}: league ${leagueId} ${outcome}.`);
     }
 
     // Single atomic commit for all Firestore deletions
