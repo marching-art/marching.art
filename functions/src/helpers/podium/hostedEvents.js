@@ -107,13 +107,135 @@ function scheduledVenueIds(competitions) {
 }
 
 /**
+ * Roll a host's raw event docs into the shape the history view renders (pure).
+ *
+ * Money comes off the EVENT DOCS, not the CorpsCoin ledger: `rentalCC` is
+ * stamped at booking and `payout` at settlement, so the two sides of a show's
+ * P&L are already colocated and exact. Deriving them from the ledger instead
+ * would mean scanning an unindexed, ever-growing per-user collection and
+ * string-matching descriptions to attribute a row to a show.
+ *
+ * Newest first: season descending (seasonUid sorts lexicographically in
+ * chronological order — `live_2026-26`, `finale_2026-27`), then day.
+ */
+function summarizeHosting(events) {
+  const sorted = [...events].sort((a, b) => {
+    const season = String(b.seasonUid || "").localeCompare(String(a.seasonUid || ""));
+    if (season !== 0) return season;
+    return (b.day || 0) - (a.day || 0);
+  });
+  const totals = {
+    eventsHosted: sorted.length,
+    eventsSettled: 0,
+    rentalSpent: 0,
+    earned: 0,
+    net: 0,
+    corpsDrawn: 0,
+    bestDraw: 0,
+    successful: 0,
+  };
+  const byTier = {};
+  for (const event of sorted) {
+    const tierRecord = byTier[event.venueTier] || { hosted: 0, successful: 0, earned: 0 };
+    tierRecord.hosted += 1;
+    totals.rentalSpent += event.rentalCC || 0;
+    if (event.paidOut) {
+      totals.eventsSettled += 1;
+      totals.earned += event.payout || 0;
+      tierRecord.earned += event.payout || 0;
+      // Pre-roster events only ever stored the capped count; fall back to it
+      // so history from before the roster existed still reports a draw.
+      const drawn = event.corpsCount != null ? event.corpsCount : event.attendance || 0;
+      totals.corpsDrawn += drawn;
+      totals.bestDraw = Math.max(totals.bestDraw, drawn);
+      if (event.successful) {
+        totals.successful += 1;
+        tierRecord.successful += 1;
+      }
+    }
+    byTier[event.venueTier] = tierRecord;
+  }
+  totals.net = totals.earned - totals.rentalSpent;
+  return { events: sorted, totals, byTier };
+}
+
+/**
+ * Every show a director has ever hosted, across all seasons, with each show's
+ * attendee roster and its CorpsCoin in/out.
+ *
+ * One collection-group query on `events` filtered by `hostUid`. Note that
+ * `artifacts/{ns}/show_registrations/{seasonUid}/events` shares the collection
+ * ID — those docs carry no `hostUid`, so the equality filter excludes them,
+ * and the filter is what keeps this query cheap (a host has at most
+ * `maxEventsPerSeasonPerHost` events per season). Ordering is done in memory
+ * rather than in the query so no composite index is required.
+ */
+async function hostingHistory(db, hostUid) {
+  const snapshot = await db.collectionGroup("events").where("hostUid", "==", hostUid).get();
+  const events = snapshot.docs.map((doc) => {
+    const seasonDoc = doc.ref.parent.parent;
+    return { id: doc.id, seasonUid: seasonDoc ? seasonDoc.id : null, ...doc.data() };
+  });
+  return summarizeHosting(events);
+}
+
+/**
+ * Build the attendee roster for one event from the day's recap results (pure).
+ *
+ * Two counts come out of this and they are NOT the same number, deliberately:
+ *   - `rows` is one entry per CORPS that performed — what a host means by
+ *     "who came to my show", and what the history view lists.
+ *   - `directors` is the count of DISTINCT uids, which is what attendance
+ *     (and therefore the payout) has always been measured in — the alt-farm
+ *     guard in §5.10. A director fielding three corps at one show is one
+ *     paying unit, not three.
+ *
+ * Capacity capping is left to the caller: the roster records everyone who
+ * actually performed even when the venue oversold, so a host can see the
+ * draw they earned alongside the draw they were paid for.
+ *
+ * @returns {{rows: Array<object>, directors: Set<string>}}
+ */
+function collectAttendees(fantasyShow, podiumResults) {
+  const rows = [];
+  const directors = new Set();
+  const seen = new Set(); // uid+class dedupe — a corps scores once per show
+  const add = (result, corpsClass) => {
+    if (!result || !result.uid) return;
+    const key = `${result.uid}_${corpsClass}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    directors.add(result.uid);
+    rows.push({
+      uid: result.uid,
+      corpsName: result.corpsName || "Unnamed Corps",
+      corpsClass,
+      displayName: result.displayName || null,
+      totalScore: typeof result.totalScore === "number" ? result.totalScore : null,
+    });
+  };
+  for (const result of (fantasyShow && fantasyShow.results) || []) {
+    add(result, result.corpsClass || "unknown");
+  }
+  for (const result of podiumResults || []) {
+    add(result, "podiumClass");
+  }
+  // Highest score first: the roster doubles as the show's result sheet.
+  rows.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+  return { rows, directors };
+}
+
+/**
  * Pay hosts for events on the completed competition day. Attendance =
  * distinct directors with scored results at the event in the fantasy recap,
  * PLUS Podium corps that performed that day when this event was the day's
  * tour stop (the Podium processor routes corps to the day's first scheduled
  * location) — capped at capacity. Also advances the host's hosting résumé
- * (`hosting.byTier`), which gates the venue ladder. Safe to call once per
- * day (the caller runs it inside the once-per-day Podium stage completion).
+ * (`hosting.byTier`), which gates the venue ladder, and stamps the attendee
+ * roster onto the event doc so the host can see WHO came (the roster used to
+ * be computed here and thrown away, leaving only a count). Safe to call once
+ * per day (the caller runs it inside the once-per-day Podium stage
+ * completion).
  */
 async function payoutHostedEvents(db, seasonData, competitionDay) {
   const seasonUid = seasonData.seasonUid;
@@ -124,19 +246,20 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
   const recapShows = recapSnapshot.exists ? recapSnapshot.data().shows || [] : [];
 
   // Podium corps now register for a specific show, so credit the host by
-  // eventName (mirroring the fantasy path below). Build eventName -> [uids]
-  // from the per-show podium recap. Legacy flat recaps fall back to matching
-  // the day's first scheduled location.
-  const podiumUidsByEvent = new Map();
-  let podiumLegacyUids = [];
+  // eventName (mirroring the fantasy path below). Build eventName -> [results]
+  // from the per-show podium recap — full result objects, not bare uids, so
+  // the attendee roster below can name the corps. Legacy flat recaps fall back
+  // to matching the day's first scheduled location.
+  const podiumResultsByEvent = new Map();
+  let podiumLegacyResults = [];
   let podiumLegacyLocation = null;
   try {
     const podiumRecap = await store.recapDayRef(db, seasonUid, competitionDay).get();
     const podiumData = podiumRecap.exists ? podiumRecap.data() : null;
     if (podiumData && podiumData.shows) {
       for (const show of podiumData.shows) {
-        const uids = (show.results || []).map((r) => r.uid).filter(Boolean);
-        if (show.eventName) podiumUidsByEvent.set(show.eventName, uids);
+        const results = (show.results || []).filter((r) => r && r.uid);
+        if (show.eventName) podiumResultsByEvent.set(show.eventName, results);
       }
     } else if (podiumData && podiumData.results) {
       // Legacy per-day recap: attribute to the day's first scheduled location.
@@ -148,7 +271,7 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
         );
         podiumLegacyLocation = todays.length > 0 ? todays[0].location : null;
       }
-      podiumLegacyUids = podiumData.results.map((r) => r.uid).filter(Boolean);
+      podiumLegacyResults = podiumData.results.filter((r) => r && r.uid);
     }
   } catch (error) {
     logger.warn(`[hosted-events] podium attendance lookup failed: ${error.message}`);
@@ -167,16 +290,15 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
       if (!tier) continue;
 
       const show = recapShows.find((s) => s.eventName === event.eventName);
-      const uids = new Set();
-      for (const result of (show && show.results) || []) {
-        if (result.uid) uids.add(result.uid);
-      }
       // Podium performers at this event (by eventName; legacy: by location).
-      for (const uid of podiumUidsByEvent.get(event.eventName) || []) uids.add(uid);
-      if (podiumLegacyLocation && event.location === podiumLegacyLocation) {
-        for (const uid of podiumLegacyUids) uids.add(uid);
-      }
-      const attendance = Math.min(uids.size, tier.capacity);
+      const podiumResults = [
+        ...(podiumResultsByEvent.get(event.eventName) || []),
+        ...(podiumLegacyLocation && event.location === podiumLegacyLocation
+          ? podiumLegacyResults
+          : []),
+      ];
+      const { rows: attendees, directors } = collectAttendees(show, podiumResults);
+      const attendance = Math.min(directors.size, tier.capacity);
       const payout = attendance * tier.payoutPerCorpsCC;
       const successful = attendance >= (tier.successAttendance || Infinity);
 
@@ -210,7 +332,19 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
         }
       });
       await eventDoc.ref.set(
-        { paidOut: true, attendance, payout, successful, paidAt: new Date().toISOString() },
+        {
+          paidOut: true,
+          attendance,
+          payout,
+          successful,
+          paidAt: new Date().toISOString(),
+          // The roster (every corps) and the paying unit count (distinct
+          // directors, uncapped) sit alongside `attendance` (capped) so the
+          // history view can explain a payout that hit the capacity ceiling.
+          attendees,
+          corpsCount: attendees.length,
+          directorCount: directors.size,
+        },
         { merge: true }
       );
       paid += payout;
@@ -229,5 +363,8 @@ module.exports = {
   tierLockReason,
   validateHostRequest,
   scheduledVenueIds,
+  collectAttendees,
+  summarizeHosting,
+  hostingHistory,
   payoutHostedEvents,
 };

@@ -7,6 +7,7 @@
 // the Schedule page renders it unconditionally.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { Landmark, Loader2, MapPin, Check } from 'lucide-react';
 import { db } from '../../api';
@@ -315,23 +316,35 @@ export default function HostEventCard({ seasonUid }) {
       {error && <div className="text-[11px] text-red-400">{error}</div>}
       {success && <div className="text-[11px] text-green-400">{success}</div>}
 
-      {/* This season's hosted events */}
+      {/* Every director's hosted shows this season — this is the "what's
+          already booked" board, NOT your résumé (it reads the whole season
+          collection). Your own shows are marked; the cross-season history
+          with attendee rosters and earnings lives on your profile. */}
       {events && events.length > 0 && (
         <div className="pt-2 border-t border-line-subtle space-y-1">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-muted">
-            Hosted This Season
-          </div>
-          {events.map((event) => (
-            <div key={event.id} className="flex items-center justify-between text-[10px]">
-              <span className="text-secondary truncate pr-2">
-                <span className="text-muted tabular-nums">D{event.day}</span> {event.eventName}
-                <span className="text-muted"> · {event.location}</span>
-              </span>
-              <span className="text-muted tabular-nums flex-shrink-0">
-                {event.paidOut ? `${event.attendance} corps · +${event.payout} CC` : 'upcoming'}
-              </span>
+          <div className="flex items-center justify-between">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-muted">
+              All Hosted Shows This Season
             </div>
-          ))}
+            <Link to="/profile" className="text-[9px] uppercase tracking-wider text-interactive">
+              Your history
+            </Link>
+          </div>
+          {events.map((event) => {
+            const mine = event.hostUid === currentUid;
+            return (
+              <div key={event.id} className="flex items-center justify-between text-[10px]">
+                <span className={`truncate pr-2 ${mine ? 'text-white' : 'text-secondary'}`}>
+                  <span className="text-muted tabular-nums">D{event.day}</span> {event.eventName}
+                  <span className="text-muted"> · {event.location}</span>
+                  {mine && <span className="text-brand"> · yours</span>}
+                </span>
+                <span className="text-muted tabular-nums flex-shrink-0">
+                  {event.paidOut ? `${event.attendance} corps · +${event.payout} CC` : 'upcoming'}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
