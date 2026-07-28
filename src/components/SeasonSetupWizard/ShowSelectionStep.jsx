@@ -10,6 +10,7 @@ import { useScheduleStore } from '../../store/scheduleStore';
 import { Heading } from '../ui';
 import { compareCorpsClasses } from '../../utils/corps';
 import { isEventPast } from '../../utils/scheduleUtils';
+import { formatEventName } from '../../utils/season';
 import { competitionDayToDate } from '../../utils/competitionCalendar';
 
 // Class config for badges
@@ -285,7 +286,7 @@ const ShowSelectionStep = ({
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
                                   <h3 className="text-sm font-bold text-white truncate leading-tight">
-                                    {show.eventName}
+                                    {formatEventName(show.eventName)}
                                   </h3>
                                   {show.location && (
                                     <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted">

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { CLASS_LABELS, getSoundSportRating } from './constants';
 import { getConceptTitle, describeConceptStyle } from '../../../utils/showConcept';
+import { formatEventName } from '../../../utils/season';
 import JargonTooltip from '../../JargonTooltip';
 
 // Map the canonical corps-class keys to their JargonTooltip definition keys so
@@ -336,7 +337,7 @@ const SeasonScorecard = memo(
                     ? getSoundSportRating(bestRecent.score).rating
                     : bestRecent.score.toFixed(2)}
                 </span>
-                {bestRecent.eventName ? ` at ${bestRecent.eventName}` : ''}
+                {bestRecent.eventName ? ` at ${formatEventName(bestRecent.eventName)}` : ''}
               </span>
             </p>
           )}

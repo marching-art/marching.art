@@ -4,6 +4,7 @@
 import React from 'react';
 import { m } from 'framer-motion';
 import { Award, Flame, Target, Trophy } from 'lucide-react';
+import { formatEventName } from '../../utils/season';
 
 /** One director's week, as MatchupDetailView folds it out of the recaps. */
 export interface SideBreakdown {
@@ -299,7 +300,7 @@ export const MatchupShowsPanel = ({
                 </span>
               </div>
               <div>
-                <p className="text-sm text-white">{show.eventName}</p>
+                <p className="text-sm text-white">{formatEventName(show.eventName)}</p>
                 <p className="text-xs text-muted/40">{getDisplayName(matchup.user1)}</p>
               </div>
             </div>
@@ -317,7 +318,7 @@ export const MatchupShowsPanel = ({
                 </span>
               </div>
               <div>
-                <p className="text-sm text-white">{show.eventName}</p>
+                <p className="text-sm text-white">{formatEventName(show.eventName)}</p>
                 <p className="text-xs text-muted/40">{getDisplayName(matchup.user2)}</p>
               </div>
             </div>

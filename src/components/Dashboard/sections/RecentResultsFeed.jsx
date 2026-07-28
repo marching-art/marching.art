@@ -4,6 +4,7 @@
 
 import React, { memo } from 'react';
 import { Activity, Medal } from 'lucide-react';
+import { formatEventName } from '../../../utils/season';
 import { getSoundSportRating } from './constants';
 
 const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
@@ -36,7 +37,7 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
             return (
               <div key={idx} className="px-4 py-3 flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{result.eventName}</p>
+                  <p className="text-sm text-white truncate">{formatEventName(result.eventName)}</p>
                   <p className="text-[10px] text-muted">{result.date || 'Recent'}</p>
                 </div>
                 <div className="text-right ml-3">

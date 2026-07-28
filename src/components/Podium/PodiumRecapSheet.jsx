@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
+import { formatEventName } from '../../utils/season';
 import { TeamAvatar } from '../ui/TeamAvatar';
 import { ShareButton } from '../scores/SheetPrimitives';
 import { SHEET_CARD } from '../scores/sheetTokens';
@@ -71,7 +72,7 @@ function formatShowAsText(show, day, seasonName) {
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
   const head = fallbackMasthead(day);
   const lines = [
-    `${show.eventName || head.name}${show.location ? ` — ${show.location}` : ''} · Day ${day} of 49`,
+    `${formatEventName(show.eventName) || head.name}${show.location ? ` — ${show.location}` : ''} · Day ${day} of 49`,
     '',
   ];
   for (const row of [...(show.results || [])].sort((a, b) => a.place - b.place)) {
@@ -143,7 +144,7 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName }) {
       {/* Per-show masthead */}
       <div className="flex items-baseline justify-between border-b border-line-muted pb-1.5">
         <div className="text-[13px] font-bold text-white truncate">
-          {show.eventName || head.name}
+          {formatEventName(show.eventName) || head.name}
         </div>
         {(show.location || head.site) && (
           <div className="text-[10px] uppercase tracking-wider text-muted flex-shrink-0 pl-2">

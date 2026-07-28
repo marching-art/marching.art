@@ -52,6 +52,7 @@ import RecentResultsFeed from '../components/Dashboard/sections/RecentResultsFee
 import RivalsPanel from '../components/Dashboard/sections/RivalsPanel';
 import AchievementTrackerPanel from '../components/Dashboard/sections/AchievementTrackerPanel';
 import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
+import { formatEventName } from '../utils/season';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
 
@@ -687,7 +688,9 @@ const GuestDashboard = () => {
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm text-white truncate">{show.eventName}</div>
+                        <div className="text-sm text-white truncate">
+                          {formatEventName(show.eventName)}
+                        </div>
                         <div className="text-xs text-muted truncate">{show.location}</div>
                       </div>
                       {show.isSelected && (

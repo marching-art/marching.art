@@ -16,7 +16,7 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getHostingHistory } from '../../api/podium';
-import { formatSeasonName } from '../../utils/season';
+import { formatSeasonName, formatEventName } from '../../utils/season';
 import { VENUE_TIERS } from '../Podium/podiumConstants';
 
 const TIER_LABELS = Object.fromEntries(VENUE_TIERS.map((t) => [t.id, t.label]));
@@ -38,9 +38,10 @@ function HostedEventRow({ event }) {
   const net = (event.payout || 0) - (event.rentalCC || 0);
   // Capacity capped the payout: the roster drew more corps than the venue pays
   // for. Worth calling out — it's the signal to book a bigger venue.
-  const cappedBy = event.paidOut && event.directorCount > (event.attendance || 0)
-    ? event.directorCount - event.attendance
-    : 0;
+  const cappedBy =
+    event.paidOut && event.directorCount > (event.attendance || 0)
+      ? event.directorCount - event.attendance
+      : 0;
 
   return (
     <div className="bg-background border border-line-muted">
@@ -52,7 +53,7 @@ function HostedEventRow({ event }) {
         className="w-full flex items-center gap-3 p-3 text-left disabled:cursor-default hover:bg-white/5 transition-colors"
       >
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-white truncate">{event.eventName}</div>
+          <div className="text-sm text-white truncate">{formatEventName(event.eventName)}</div>
           <div className="text-[10px] text-muted truncate">
             {TIER_LABELS[event.venueTier] || event.venueTier} · {event.location} · Day {event.day}
           </div>
@@ -72,7 +73,9 @@ function HostedEventRow({ event }) {
             </>
           ) : (
             <>
-              <div className="text-sm text-secondary font-data tabular-nums">−{cc(event.rentalCC)}</div>
+              <div className="text-sm text-secondary font-data tabular-nums">
+                −{cc(event.rentalCC)}
+              </div>
               <div className="text-[10px] text-muted uppercase tracking-wider">Upcoming</div>
             </>
           )}
@@ -106,8 +109,8 @@ function HostedEventRow({ event }) {
           </div>
           {cappedBy > 0 && (
             <div className="text-[10px] text-brand">
-              {cappedBy} more director{cappedBy === 1 ? '' : 's'} drew than this venue pays for —
-              a bigger venue would have earned more.
+              {cappedBy} more director{cappedBy === 1 ? '' : 's'} drew than this venue pays for — a
+              bigger venue would have earned more.
             </div>
           )}
           <div className="space-y-1">
@@ -208,7 +211,11 @@ const HostingHistoryModal = ({ onClose }) => {
                 )}
               </div>
             </div>
-            <button onClick={onClose} className="p-1 text-muted hover:text-white" aria-label="Close">
+            <button
+              onClick={onClose}
+              className="p-1 text-muted hover:text-white"
+              aria-label="Close"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -273,9 +280,7 @@ const HostingHistoryModal = ({ onClose }) => {
                   </span>
                   <span>
                     Best draw:{' '}
-                    <span className="text-secondary font-data tabular-nums">
-                      {totals.bestDraw}
-                    </span>{' '}
+                    <span className="text-secondary font-data tabular-nums">{totals.bestDraw}</span>{' '}
                     · {totals.successful} successful
                   </span>
                 </div>

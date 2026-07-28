@@ -31,6 +31,7 @@
 
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("../paths");
+const { brandEventName } = require("../branding");
 const venues = require("./venues");
 const store = require("./store");
 
@@ -59,6 +60,11 @@ function tierLockReason(profileData, venueTier, cfg) {
 /**
  * Validate a hosting request (pure). Throws Error with a message on
  * violation; the callable maps it to an HttpsError.
+ *
+ * The returned eventName is BRANDED (brandEventName): a director naming their
+ * show "DCI Cityname" hosts "marching.art Cityname", exactly as a scraped tour
+ * event would be. Branding runs after the length check so the limit applies to
+ * what the director actually typed, not to the longer substituted string.
  * @returns {{eventName, venueTier, tier, day, venue}}
  */
 function validateHostRequest({ eventName, venueTier, day, location }, currentCompetitionDay) {
@@ -85,7 +91,7 @@ function validateHostRequest({ eventName, venueTier, day, location }, currentCom
   if (!venue) {
     throw new Error("Venue city not recognized — use a \"City, State\" from the tour map.");
   }
-  return { eventName: eventName.trim(), venueTier, tier, day, venue };
+  return { eventName: brandEventName(eventName.trim()), venueTier, tier, day, venue };
 }
 
 /**

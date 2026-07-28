@@ -9,6 +9,7 @@ import {
   formatDayKey,
   showCalendarDay,
 } from '../../utils/scheduleUtils';
+import { formatEventName } from '../../utils/season';
 import RunningOrder from '../Schedule/RunningOrder';
 import {
   CAPTION_LABELS,
@@ -209,7 +210,9 @@ const NextPerformancePanel = ({
           <div className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
             {nextLive ? 'Your corps is competing' : 'Your corps competes next'}
           </div>
-          <div className="text-sm text-white font-medium">{nextCompetition.eventName}</div>
+          <div className="text-sm text-white font-medium">
+            {formatEventName(nextCompetition.eventName)}
+          </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
             {formatStart(nextCompetition) && (
               <span className="font-data">{formatStart(nextCompetition)}</span>
