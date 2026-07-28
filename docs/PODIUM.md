@@ -1273,7 +1273,9 @@ published on the standings page; promotion/relegation + petition-up (§5.7).
 day-39 lineup publication, combined standings view (§5.11).
 6.2 Director-hosted events (all classes): `hostEvent` callable, venue tiers, open enrollment,
 attendance payouts with alt-farm guards (distinct active corps only), event history pages
-(§5.10, §14.1.8).
+(§5.10, §14.1.8). **Shipped**, including the cross-season hosting résumé: the payout pass
+stamps the attendee roster onto each event doc, and `getHostingHistory` returns every show a
+director has hosted with its roster and its CorpsCoin in/out (profile → Hosting).
 6.3 Regional-anchor UX for fantasy classes (the majors as marquee days).
 6.4 Fan Favorite ballots at majors (reuse `dailyPredictions`); per-show medal counters.
 6.5 Podium into `dci-stats`, `gameRecords`, season archives, Hall of Champions (class-filtered).
@@ -1281,7 +1283,8 @@ attendance payouts with alt-farm guards (distinct active corps only), event hist
 classes (condensed columns), PNG/text share affordances, Caption Leaders view with the
 class-appropriate caption sets (§5.4 privacy rule).
 6.7 Profile résumé for **all classes**: season selector, per-season score tables, show-concept/
-repertoire history, hosting history, trophy case on every corps a director fields (§14.3.b).
+repertoire history, ~~hosting history~~ (shipped with 6.2), trophy case on every corps a
+director fields (§14.3.b).
 
 ### Phase 7 — Social & the return loops _(2–3 wks)_
 

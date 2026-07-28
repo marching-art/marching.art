@@ -214,6 +214,61 @@ export const hostEvent = createCallable<
   { success: boolean; eventId: string; day: number; eventName: string }
 >('hostEvent');
 
+/** One corps that performed at a hosted show — the roster is stamped at payout. */
+export interface HostedEventAttendee {
+  uid: string;
+  corpsName: string;
+  corpsClass: string;
+  displayName: string | null;
+  totalScore: number | null;
+}
+
+export interface HostedEventRecord {
+  id: string;
+  seasonUid: string | null;
+  eventName: string;
+  venueTier: string;
+  day: number;
+  location: string;
+  rentalCC: number;
+  capacity: number;
+  paidOut: boolean;
+  createdAt?: string;
+  // Settlement fields — present only once the nightly payout has run.
+  payout?: number;
+  /** Distinct directors PAID, capped at venue capacity. */
+  attendance?: number;
+  /** Corps on the roster, uncapped. Absent on shows settled before rosters. */
+  corpsCount?: number;
+  directorCount?: number;
+  successful?: boolean;
+  paidAt?: string;
+  attendees?: HostedEventAttendee[];
+}
+
+export interface HostingTotals {
+  eventsHosted: number;
+  eventsSettled: number;
+  rentalSpent: number;
+  earned: number;
+  net: number;
+  corpsDrawn: number;
+  bestDraw: number;
+  successful: number;
+}
+
+// Cross-season hosting résumé (design §5.10 / decision 27): every show this
+// director has hosted, who came, and what each one cost and returned.
+export const getHostingHistory = createCallable<
+  void,
+  {
+    success: boolean;
+    events: HostedEventRecord[];
+    totals: HostingTotals;
+    byTier: Record<string, { hosted: number; successful: number; earned: number }>;
+  }
+>('getHostingHistory');
+
 // Joint rehearsals (design §5.12): the human handshake. Proposals expire
 // unanswered at the day's block allocation; accepting freezes the Full
 // Ensemble bonus (repeat-pair decayed) and books the scrimmage report.

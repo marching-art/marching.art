@@ -5,7 +5,12 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { validateHostRequest, scheduledVenueIds } = require("./hostedEvents");
+const {
+  validateHostRequest,
+  scheduledVenueIds,
+  collectAttendees,
+  summarizeHosting,
+} = require("./hostedEvents");
 const venues = require("./venues");
 
 const good = {
@@ -65,5 +70,108 @@ describe("scheduledVenueIds", () => {
   test("handles empty/undefined input", () => {
     assert.equal(scheduledVenueIds([]).size, 0);
     assert.equal(scheduledVenueIds(undefined).size, 0);
+  });
+});
+
+describe("collectAttendees", () => {
+  const fantasyShow = {
+    eventName: "The Rohn Invitational",
+    results: [
+      { uid: "u1", corpsClass: "worldClass", corpsName: "Blue Devils", displayName: "chris", totalScore: 97.2 },
+      { uid: "u1", corpsClass: "openClass", corpsName: "Second Corps", totalScore: 88.1 },
+      { uid: "u2", corpsClass: "worldClass", corpsName: "Cavaliers", totalScore: 95.4 },
+    ],
+  };
+
+  test("lists one row per corps but counts directors once (alt-farm guard)", () => {
+    const { rows, directors } = collectAttendees(fantasyShow, []);
+    assert.equal(rows.length, 3, "three corps performed");
+    assert.equal(directors.size, 2, "two distinct directors pay out");
+  });
+
+  test("merges podium performers and ranks the roster by score", () => {
+    const { rows, directors } = collectAttendees(fantasyShow, [
+      { uid: "u3", corpsName: "Podium Corps", totalScore: 99.0 },
+    ]);
+    assert.equal(directors.size, 3);
+    assert.equal(rows[0].corpsName, "Podium Corps", "highest score leads the roster");
+    assert.equal(rows[0].corpsClass, "podiumClass");
+    assert.equal(rows[rows.length - 1].corpsName, "Second Corps");
+  });
+
+  test("dedupes a corps appearing twice and skips results with no uid", () => {
+    const { rows, directors } = collectAttendees(
+      { results: [...fantasyShow.results, fantasyShow.results[0], { corpsName: "Ghost" }] },
+      []
+    );
+    assert.equal(rows.length, 3);
+    assert.equal(directors.size, 2);
+  });
+
+  test("handles a missing show and missing podium results", () => {
+    const { rows, directors } = collectAttendees(null, null);
+    assert.equal(rows.length, 0);
+    assert.equal(directors.size, 0);
+  });
+});
+
+describe("summarizeHosting", () => {
+  const events = [
+    {
+      id: "a", seasonUid: "live_2025-25", day: 10, venueTier: "highSchool",
+      rentalCC: 150, paidOut: true, payout: 375, attendance: 15, corpsCount: 15, successful: true,
+    },
+    {
+      id: "b", seasonUid: "live_2026-26", day: 12, venueTier: "collegeBowl",
+      rentalCC: 400, paidOut: true, payout: 700, attendance: 20, corpsCount: 22, successful: false,
+    },
+    {
+      id: "c", seasonUid: "live_2026-26", day: 30, venueTier: "highSchool",
+      rentalCC: 150, paidOut: false,
+    },
+  ];
+
+  test("orders newest season first, then latest day", () => {
+    const { events: sorted } = summarizeHosting(events);
+    assert.deepEqual(sorted.map((e) => e.id), ["c", "b", "a"]);
+  });
+
+  test("totals CorpsCoin in and out, counting rental on unsettled shows", () => {
+    const { totals } = summarizeHosting(events);
+    assert.equal(totals.eventsHosted, 3);
+    assert.equal(totals.eventsSettled, 2);
+    assert.equal(totals.rentalSpent, 700, "all three rentals are already spent");
+    assert.equal(totals.earned, 1075);
+    assert.equal(totals.net, 375);
+    assert.equal(totals.successful, 1);
+  });
+
+  test("draw uses the uncapped roster count and tracks the best show", () => {
+    const { totals } = summarizeHosting(events);
+    assert.equal(totals.corpsDrawn, 37, "22 corps drawn even though 20 were paid");
+    assert.equal(totals.bestDraw, 22);
+  });
+
+  test("falls back to attendance for events settled before rosters existed", () => {
+    const { totals } = summarizeHosting([
+      { id: "old", seasonUid: "live_2024-24", day: 5, venueTier: "highSchool",
+        rentalCC: 150, paidOut: true, payout: 250, attendance: 10, successful: true },
+    ]);
+    assert.equal(totals.corpsDrawn, 10);
+    assert.equal(totals.bestDraw, 10);
+  });
+
+  test("groups the résumé by venue tier", () => {
+    const { byTier } = summarizeHosting(events);
+    assert.deepEqual(byTier.highSchool, { hosted: 2, successful: 1, earned: 375 });
+    assert.deepEqual(byTier.collegeBowl, { hosted: 1, successful: 0, earned: 700 });
+  });
+
+  test("handles a director who has never hosted", () => {
+    const { events: sorted, totals, byTier } = summarizeHosting([]);
+    assert.deepEqual(sorted, []);
+    assert.equal(totals.eventsHosted, 0);
+    assert.equal(totals.net, 0);
+    assert.deepEqual(byTier, {});
   });
 });

@@ -18,6 +18,7 @@ import {
   BookOpen,
   Archive,
   History,
+  Landmark,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
@@ -52,6 +53,10 @@ const CorpsCoinModal = lazyWithRetry(
   () => import('../components/modals/CorpsCoinModal'),
   'CorpsCoinModal'
 );
+const HostingHistoryModal = lazyWithRetry(
+  () => import('../components/modals/HostingHistoryModal'),
+  'HostingHistoryModal'
+);
 import SettingsModal from '../components/Profile/SettingsModal';
 
 // =============================================================================
@@ -77,6 +82,7 @@ const Profile = () => {
   const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCorpsCoin, setShowCorpsCoin] = useState(false);
+  const [showHosting, setShowHosting] = useState(false);
   const [visitorCommissionsLeagues, setVisitorCommissionsLeagues] = useState(false);
 
   // Resolve @username → uid. The usernames/{lower} doc holds { uid } and is
@@ -571,6 +577,16 @@ const Profile = () => {
                   <History className="w-5 h-5 text-secondary mb-1" />
                   <span className="text-xs text-muted">Corps History</span>
                 </Link>
+                {/* Hosting resume (design §5.10): shows hosted, who came, and
+                    what each one earned — none of which was visible before. */}
+                <button
+                  type="button"
+                  onClick={() => setShowHosting(true)}
+                  className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+                >
+                  <Landmark className="w-5 h-5 text-brand mb-1" />
+                  <span className="text-xs text-muted">Hosting</span>
+                </button>
               </>
             )}
           </div>
@@ -629,6 +645,13 @@ const Profile = () => {
       {showCorpsCoin && isOwnProfile && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <CorpsCoinModal onClose={() => setShowCorpsCoin(false)} />
+        </Suspense>
+      )}
+
+      {/* HOSTING HISTORY MODAL (own profile only) */}
+      {showHosting && isOwnProfile && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <HostingHistoryModal onClose={() => setShowHosting(false)} />
         </Suspense>
       )}
 
