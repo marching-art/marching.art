@@ -195,9 +195,11 @@ export function useRemoveLeagueMember(leagueId: string | undefined) {
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
+    // No toast here: the only caller (Leagues/tabs/SettingsTab) catches the
+    // rejection to clear its own pending state and toasts there, so raising one
+    // from the hook as well showed the same failure twice.
     onError: (error: Error) => {
       console.error('Remove league member error:', error);
-      toast.error(error.message || 'Failed to remove member.');
     },
   });
 }

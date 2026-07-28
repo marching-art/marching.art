@@ -9,6 +9,7 @@ const assert = require("node:assert/strict");
 const {
   escrowedTotal,
   deleteLeagueSubcollections,
+  planMemberDetachment,
   LEAGUE_SUBCOLLECTIONS,
 } = require("./leagueLifecycle");
 
@@ -117,5 +118,66 @@ describe("deleteLeagueSubcollections", () => {
       },
     };
     assert.equal(await deleteLeagueSubcollections({ batch: () => {} }, leagueRef), 0);
+  });
+});
+
+// A league's roster lives on the LEAGUE document, so deleting an account has to
+// go and find every league the director was in. Getting this wrong is what left
+// unremovable ghosts on rosters.
+describe("planMemberDetachment", () => {
+  test("does nothing for someone who is not on the roster", () => {
+    assert.equal(planMemberDetachment({ members: ["a", "b"] }, "c"), null);
+    assert.equal(planMemberDetachment({}, "a"), null);
+    assert.equal(planMemberDetachment({ members: ["a"] }, ""), null);
+  });
+
+  test("dissolves a league whose last member is going", () => {
+    const plan = planMemberDetachment({ members: ["a"], creatorId: "a" }, "a");
+    assert.equal(plan.dissolve, true);
+    assert.equal(plan.successorUid, null);
+  });
+
+  test("detaches a plain member without touching the commissioners", () => {
+    const plan = planMemberDetachment(
+      { members: ["owner", "b"], creatorId: "owner", commissioners: ["c"] },
+      "b"
+    );
+    assert.deepEqual(plan, { dissolve: false, dropCommissioner: false, successorUid: null });
+  });
+
+  // Losing the seat means losing the job — `commissioners` is what every league
+  // gate reads, so a uid left behind there is a non-member who can still run the
+  // league.
+  test("strips a departing co-commissioner of the job", () => {
+    const plan = planMemberDetachment(
+      { members: ["owner", "b"], creatorId: "owner", commissioners: ["b"] },
+      "b"
+    );
+    assert.equal(plan.dropCommissioner, true);
+    assert.equal(plan.successorUid, null);
+  });
+
+  // Every commissioner gate keys off the owner, so a league whose owner vanishes
+  // without succession permanently loses the ability to run itself.
+  test("hands an owner's league to a co-commissioner", () => {
+    const plan = planMemberDetachment(
+      { members: ["owner", "b", "c"], creatorId: "owner", commissioners: ["c"] },
+      "owner"
+    );
+    assert.equal(plan.dissolve, false);
+    assert.equal(plan.successorUid, "c");
+  });
+
+  test("falls back to any remaining member when there is no co-commissioner", () => {
+    const plan = planMemberDetachment({ members: ["owner", "b"], creatorId: "owner" }, "owner");
+    assert.equal(plan.successorUid, "b");
+  });
+
+  test("tolerates a league whose commissioners field is missing or malformed", () => {
+    const plan = planMemberDetachment(
+      { members: ["owner", "b"], creatorId: "owner", commissioners: { b: true } },
+      "b"
+    );
+    assert.equal(plan.dropCommissioner, false);
   });
 });

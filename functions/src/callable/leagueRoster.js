@@ -37,6 +37,9 @@ const { isLeagueCommissioner, isLeagueOwner } = require("../helpers/leaguePermis
  *    fee on the way in.
  *  - the removal is written to the league activity feed, so a commissioner
  *    cannot quietly purge rivals mid-season.
+ *  - a member whose profile document is gone is still removable. The roster
+ *    lives on the league, not on the profile, so a deleted account leaves a
+ *    uid behind that only this callable can clear.
  */
 exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -89,33 +92,57 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
     const standingsDoc = await transaction.get(standingsRef);
     const memberProfileDoc = await transaction.get(memberProfileRef);
 
+    // A league's roster is stored on the LEAGUE, so a director whose profile
+    // document is gone is still in `members` — an account deletion used to
+    // detach nothing (helpers/leagueLifecycle.js detachMemberFromLeague now
+    // does). That ghost is precisely who a commissioner wants to prune, and
+    // this callable could not do it: `transaction.update` against a document
+    // that does not exist fails the WHOLE transaction with NOT_FOUND, which
+    // reached the commissioner as an opaque internal error with the roster
+    // unchanged. There is no profile to write and no account to pay, so the
+    // profile write and the refund are both skipped.
+    const memberProfileExists = memberProfileDoc.exists;
+
     // Refund the entry fee out of the escrowed pool. Clamped to what the pool
     // actually holds so a refund can never mint coin that was never escrowed.
+    // A deleted account's fee stays in the pool and is paid out to the members
+    // who are still playing for it.
     const entryFee = leagueData.settings?.entryFee || 0;
     const prizePool = leagueData.settings?.prizePool || 0;
-    const refundAmount = Math.min(entryFee, prizePool);
+    const refundAmount = memberProfileExists ? Math.min(entryFee, prizePool) : 0;
 
     transaction.update(leagueRef, {
       members: admin.firestore.FieldValue.arrayRemove(memberId),
+      // Losing the seat means losing the job. `commissioners` is what every
+      // league gate reads (helpers/leaguePermissions.js), so leaving the uid
+      // behind left a removed co-commissioner able to change settings,
+      // generate matchups, invite, and remove members from a league they are
+      // no longer in.
+      ...(Array.isArray(leagueData.commissioners) &&
+      leagueData.commissioners.includes(memberId)
+        ? { commissioners: admin.firestore.FieldValue.arrayRemove(memberId) }
+        : {}),
       ...(refundAmount > 0
         ? { 'settings.prizePool': admin.firestore.FieldValue.increment(-refundAmount) }
         : {}),
     });
 
-    const memberUpdate = {
-      leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId),
-    };
-    if (refundAmount > 0) {
-      memberUpdate.corpsCoin = admin.firestore.FieldValue.increment(refundAmount);
-      addCoinHistoryEntryToTransaction(transaction, db, memberId, {
-        type: TRANSACTION_TYPES.LEAGUE_ENTRY_REFUND,
-        amount: refundAmount,
-        balance: (memberProfileDoc.data()?.corpsCoin || 0) + refundAmount,
-        description: `Entry fee refunded — removed from ${leagueData.name}`,
-        leagueId,
-      });
+    if (memberProfileExists) {
+      const memberUpdate = {
+        leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId),
+      };
+      if (refundAmount > 0) {
+        memberUpdate.corpsCoin = admin.firestore.FieldValue.increment(refundAmount);
+        addCoinHistoryEntryToTransaction(transaction, db, memberId, {
+          type: TRANSACTION_TYPES.LEAGUE_ENTRY_REFUND,
+          amount: refundAmount,
+          balance: (memberProfileDoc.data()?.corpsCoin || 0) + refundAmount,
+          description: `Entry fee refunded — removed from ${leagueData.name}`,
+          leagueId,
+        });
+      }
+      transaction.update(memberProfileRef, memberUpdate);
     }
-    transaction.update(memberProfileRef, memberUpdate);
 
     // Drop their standings record so the removed director stops appearing in
     // the table and in matchup pairing weights.
