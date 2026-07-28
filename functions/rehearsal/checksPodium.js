@@ -370,23 +370,62 @@ async function checkPodiumBoundary(db, world, played, recaps, cast) {
       resumeIssues.push(`${entry.uid} has ${rows.length} résumé rows for the season`);
       continue;
     }
-    if (rows[0].finalScore == null) {
-      resumeIssues.push(
-        `${entry.uid}'s row carries no finalScore (${JSON.stringify(Object.keys(rows[0]))})`
-      );
+    const row = rows[0];
+    if (row.finalScore == null) {
+      resumeIssues.push(`${entry.uid}'s row carries no finalScore`);
+    }
+    if (row.medals == null) {
+      resumeIssues.push(`${entry.uid}'s row carries no medals`);
+    }
+    if (row.showConcept == null) {
+      resumeIssues.push(`${entry.uid}'s row lost its show concept`);
+    }
+    if (row.placement !== entry.place) {
+      resumeIssues.push(`${entry.uid} finished ${entry.place} but its row says ${row.placement}`);
     }
   }
   findings.push(
     resumeIssues.length === 0
-      ? pass("podiumBoundary", "the profile résumé carries the Podium season", "top 5 checked")
+      ? pass(
+          "podiumBoundary",
+          "the profile résumé carries the Podium season",
+          "top 5 checked: final score, medals, show concept and placement"
+        )
       : fail(
           "podiumBoundary",
           "the profile résumé carries the Podium season",
           `${resumeIssues.join("; ")}. The season-rollover profile sweep (helpers/season.js ` +
-            "archiveAndResetProfiles) pushes a fantasy-shaped row for every corps class it finds, " +
-            "including podiumClass, and it runs BEFORE the Podium archival night. " +
-            "appendProfileSeasonHistory then finds a row for the season already there and returns " +
-            "early, so the Podium row — final score, medals, show concept — is never written"
+            "archiveAndResetProfiles) writes a fantasy-shaped row for every corps class it finds, " +
+            "podiumClass included, the night BEFORE the Podium archival night — so " +
+            "appendProfileSeasonHistory has to upgrade that row rather than skip it"
+        )
+  );
+
+  // A Podium season has to count toward a career like any other. Podium keeps
+  // its own recap collection, so a participation index that reads only
+  // `fantasy_recaps` sees a Podium corps attend nothing all year.
+  const lifetimeIssues = [];
+  for (const entry of standings.slice(0, 3)) {
+    const stats = cast.get(entry.uid)?.profile?.lifetimeStats || {};
+    if (!(stats.totalShows > 0)) {
+      lifetimeIssues.push(`${entry.uid} finished the season having attended ${stats.totalShows} shows`);
+    }
+    if (!(stats.bestWeeklyScore > 0)) {
+      lifetimeIssues.push(`${entry.uid}'s best week is ${stats.bestWeeklyScore}`);
+    }
+  }
+  findings.push(
+    lifetimeIssues.length === 0
+      ? pass(
+          "podiumBoundary",
+          "a Podium season counts toward lifetime stats",
+          `champion attended ${cast.get(standings[0].uid)?.profile?.lifetimeStats?.totalShows} shows`
+        )
+      : fail(
+          "podiumBoundary",
+          "a Podium season counts toward lifetime stats",
+          `${lifetimeIssues.join("; ")} — helpers/seasonParticipation.js folds the recap days a ` +
+            "season actually produced, and Podium writes its own"
         )
   );
 
@@ -435,6 +474,7 @@ async function checkPodiumSweepTwice(db, played, cast) {
 
   const paidTwice = [];
   const changedRep = [];
+  const repromoted = [];
   for (const uid of walletsBefore.keys()) {
     const [profile, careerDoc] = await Promise.all([
       db.doc(paths.userProfile(uid)).get(),
@@ -449,7 +489,30 @@ async function checkPodiumSweepTwice(db, played, cast) {
     if (before && now && before.reputation !== now.reputation) {
       changedRep.push(`${uid}: reputation ${before.reputation} -> ${now.reputation}`);
     }
+    if (before && now && before.division !== now.division) {
+      repromoted.push(`${uid}: ${before.division} -> ${now.division}`);
+    }
   }
+
+  // The division re-seat promotes each corps relative to the seat it CURRENTLY
+  // holds — so a second assessment, reading the seats the first one assigned,
+  // would promote the whole field again. A corps that earned Open Class would
+  // wake up in World Class having never competed there, and the second
+  // below-cutoff count would demote on one bad season instead of two.
+  findings.push(
+    repromoted.length === 0
+      ? pass(
+          "podiumBoundary",
+          "sweeping the season twice re-seats nobody",
+          "every division seat held"
+        )
+      : fail(
+          "podiumBoundary",
+          "sweeping the season twice re-seats nobody",
+          `a second sweep promoted the field off the seats the first one assigned: ` +
+            `${repromoted.join("; ")}`
+        )
+  );
 
   findings.push(
     paidTwice.length === 0

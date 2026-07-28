@@ -226,26 +226,47 @@ async function checkPodiumFanFavorite(db, played, cast, recaps) {
   const seasonUid = played.rollover.oldSeasonUid;
   const fan = (await db.doc(`podium-fan/${seasonUid}`).get()).data() || null;
 
-  // The Eastern Classic prelims ballot opens when night 1 is scored, but the
-  // major spans two nights and its candidate list is the union of both. For the
-  // whole of the day between them, a fan can only vote for the corps that
-  // happened to be seeded into night 1 — a head start at the one major where
-  // the field is split. Cosmetic award, so this is a call for the team rather
-  // than a defect: close the ballot's candidate list until both nights are in,
-  // or accept the asymmetry.
-  const night1 = new Set(rowsFor(recaps.get(41)).map((r) => r.uid));
-  const night2 = new Set(rowsFor(recaps.get(42)).map((r) => r.uid));
-  if (night1.size > 0 && night2.size > 0) {
-    findings.push(
-      warn(
-        "podiumFan",
-        "the Eastern ballot opens before half the field has performed",
-        `${night1.size} night-1 corps are votable from the morning of day 42; the ${night2.size} ` +
-          "night-2 corps only become candidates a day later, inside a 4-day window " +
-          "(fanFavorite.candidatesForMajor unions both nights, openPrelimsMajor opens on day 41)"
-      )
-    );
+  // A ballot must never be open on a day it has no field to offer. Candidates
+  // come from the major's recap days, which are written by the run that scores
+  // each night — so a window opening on the show day itself can only reject
+  // every vote cast in it, and the Eastern Classic (one major, two nights)
+  // would spend a whole day offering only the corps seeded into night 1.
+  const fanFavorite = require("../src/helpers/podium/fanFavorite");
+  const cfg = require("../src/helpers/podium/store").balance;
+  const emptyWindows = [];
+  const partialWindows = [];
+  for (const major of fanFavorite.MAJORS) {
+    const nights = major === 41 ? [41, 42] : [major];
+    const field = new Set(nights.flatMap((night) => rowsFor(recaps.get(night)).map((r) => r.uid)));
+    for (let day = 1; day <= 49; day++) {
+      if (fanFavorite.openPrelimsMajor(day, cfg) !== major) continue;
+      // Recaps exist for every night strictly before the active day.
+      const votable = new Set(
+        nights.filter((night) => night < day).flatMap((night) => rowsFor(recaps.get(night)).map((r) => r.uid))
+      );
+      if (votable.size === 0) emptyWindows.push(`major ${major} is open on day ${day} with no field`);
+      else if (votable.size < field.size) {
+        partialWindows.push(
+          `major ${major} is open on day ${day} with ${votable.size} of ${field.size} corps votable`
+        );
+      }
+    }
   }
+  findings.push(
+    emptyWindows.length === 0 && partialWindows.length === 0
+      ? pass(
+          "podiumFan",
+          "a ballot is only open when its whole field is votable",
+          "every prelims window opens the morning after its major's last night"
+        )
+      : fail(
+          "podiumFan",
+          "a ballot is only open when its whole field is votable",
+          [...emptyWindows, ...partialWindows].join("; ") +
+            " — candidatesForMajor reads the recap days, so a window that opens before they are " +
+            "written offers a partial field or none at all"
+        )
+  );
 
   const rejected = played.podium.rejectedVotes || [];
   findings.push(

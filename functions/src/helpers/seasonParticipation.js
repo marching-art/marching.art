@@ -108,7 +108,21 @@ function buildParticipationIndex(dayDocs) {
 }
 
 /**
- * Read and fold every recap day of a season.
+ * Read and fold every recap day of a season, across BOTH scoring pipelines.
+ *
+ * Podium keeps its own recap collection (`podium-recaps`) for total pipeline
+ * isolation, and its day documents carry the same `shows: [{results}]` shape
+ * with the same `uid`/`corpsClass`/`totalScore` fields. Folding only the
+ * fantasy recaps meant a Podium corps came back with zero shows: its season
+ * archived as `showsAttended: 0` with a best week of zero, and a whole Podium
+ * season added nothing to `lifetimeStats.totalShows`. Participation itself
+ * still resolved, but only through the `totalSeasonScore > 0` fallback.
+ *
+ * The two indexes are folded separately and merged rather than reading the day
+ * documents into one list: both collections number their days 1-49, so a
+ * single day map would have one pipeline's day overwrite the other's. The
+ * merged keys are disjoint (`uid_corpsClass`, and no corps is in two classes),
+ * so the merge is a plain union.
  *
  * Never throws: a rollover must not be blocked by a missing or unreadable recap
  * subcollection. An empty index makes every caller fall back to the profile's
@@ -121,20 +135,24 @@ function buildParticipationIndex(dayDocs) {
  * @returns {Promise<Map<string, CorpsParticipation>>}
  */
 async function fetchSeasonParticipation(db, seasonUid) {
-  try {
-    const snapshot = await db.collection(`fantasy_recaps/${seasonUid}/days`).get();
-    const index = buildParticipationIndex(snapshot.docs);
-    logger.info(
-      `Season participation for ${seasonUid}: ${index.size} corps across ${snapshot.size} recap days.`
-    );
-    return index;
-  } catch (error) {
-    logger.error(
-      `Could not read recap days for ${seasonUid}; season figures fall back to ` +
-        `profile scores: ${error.message}`
-    );
-    return new Map();
+  const index = new Map();
+  let days = 0;
+  for (const collection of [`fantasy_recaps/${seasonUid}/days`, `podium-recaps/${seasonUid}/days`]) {
+    try {
+      const snapshot = await db.collection(collection).get();
+      days += snapshot.size;
+      for (const [key, entry] of buildParticipationIndex(snapshot.docs)) {
+        index.set(key, entry);
+      }
+    } catch (error) {
+      logger.error(
+        `Could not read ${collection} for ${seasonUid}; season figures for that pipeline fall ` +
+          `back to profile scores: ${error.message}`
+      );
+    }
   }
+  logger.info(`Season participation for ${seasonUid}: ${index.size} corps across ${days} recap days.`);
+  return index;
 }
 
 /**

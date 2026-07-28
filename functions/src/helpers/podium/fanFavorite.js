@@ -3,9 +3,11 @@
  * productized as a two-level ballot. Purely cosmetic: zero score impact.
  *
  *   PRELIMS — each major (Southwestern day 28, Southeastern day 35, the
- *   Eastern Classic days 41-42) opens a ballot for `voteWindowDays` days.
- *   Any signed-in user casts ONE vote per major for any Podium corps that
- *   performed there. The top `finalistsPerMajor` per major advance.
+ *   Eastern Classic days 41-42) opens a ballot the morning after its last
+ *   night, once the results it draws candidates from exist, and closes
+ *   `voteWindowDays` days after that last night. Any signed-in user casts ONE
+ *   vote per major for any Podium corps that performed there. The top
+ *   `finalistsPerMajor` per major advance.
  *
  *   FINALS — championship week (from `finalsFromDay`), one ballot across
  *   the union of finalists. The winner is crowned at season archival:
@@ -33,16 +35,36 @@ function ballotRef(db, seasonUid, voterUid) {
   return db.doc(`podium-fan/${seasonUid}/ballots/${voterUid}`);
 }
 
+/** The last night a major is performed on (the Eastern spans two). */
+function lastNightOf(major) {
+  return major === 41 ? 42 : major;
+}
+
+/**
+ * First competition day a major's prelims ballot accepts votes: the day AFTER
+ * its last night.
+ *
+ * A ballot is only votable once the recaps it draws its candidates from exist,
+ * and a day's recap is written by the run that scores that night. Opening on
+ * the show day itself gave every major a first day with no candidates at all —
+ * `castFanFavoriteVote` rejected every ballot with "vote for a corps that
+ * performed at this major" — and gave the Eastern Classic something worse: it
+ * spans two nights, so for a whole day only the corps seeded into night 1 were
+ * votable, a head start at the one major where the field is split.
+ */
+function prelimsOpensOn(major) {
+  return lastNightOf(major) + 1;
+}
+
 /** Last competition day a major's prelims ballot accepts votes. */
 function prelimsClosesOn(major, cfg) {
-  const lastNight = major === 41 ? 42 : major; // Eastern spans two nights
-  return lastNight + cfg.fanFavorite.voteWindowDays - 1;
+  return lastNightOf(major) + cfg.fanFavorite.voteWindowDays - 1;
 }
 
 /** The major whose prelims ballot is open on `competitionDay`, or null. */
 function openPrelimsMajor(competitionDay, cfg) {
   for (const major of MAJORS) {
-    if (competitionDay >= major && competitionDay <= prelimsClosesOn(major, cfg)) {
+    if (competitionDay >= prelimsOpensOn(major) && competitionDay <= prelimsClosesOn(major, cfg)) {
       return major;
     }
   }
@@ -209,6 +231,7 @@ module.exports = {
   RESULTS_PER_MAJOR,
   fanDocRef,
   ballotRef,
+  prelimsOpensOn,
   prelimsClosesOn,
   openPrelimsMajor,
   finalsOpen,
