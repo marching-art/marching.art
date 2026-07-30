@@ -319,7 +319,15 @@ export function computeLeagueRecords(
     // The STORED winner, not the higher score. Under Caption Wars those can
     // differ: a director who banked their whole week in one caption can post
     // the bigger number and still lose it.
-    const winnerUid = matchup.winner === p2 ? p2 : p1;
+    //
+    // It must also BE one of the two directors. Reading this as "p2, else p1"
+    // silently credited p1 with any winner value that was not p2 — a completed
+    // matchup left without one, or repaired by hand — and let it set a margin
+    // record naming the wrong director. The career table treats the same
+    // matchup as a tie and the streak walk as a loss for both, so guessing here
+    // put three views of one week in disagreement.
+    const winnerUid = matchup.winner === p1 || matchup.winner === p2 ? matchup.winner : null;
+    if (!winnerUid) continue;
     const loserUid = winnerUid === p1 ? p2 : p1;
     const winnerScore = matchup.scores?.[winnerUid] ?? 0;
     const loserScore = matchup.scores?.[loserUid] ?? 0;

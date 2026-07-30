@@ -160,25 +160,35 @@ function generateWeeklyRecap(weekMatchups, standings, memberProfiles) {
         };
       }
 
-      const rank1 = standings[p1]?.rank || 999;
-      const rank2 = standings[p2]?.rank || 999;
+      // Only a DECIDED matchup contains an upset. A tie stores winner: "tie",
+      // which is not a uid: the old branch read it as "not p1" and therefore
+      // treated p2 as the winner, naming p2's rank as the winning rank and p1
+      // as the loser. With no profile under the key "tie" the fallback printed
+      // the string itself, and a drawn week between the top seed and an
+      // also-ran published "Upset Alert! tie (ranked #8) defeated Alice
+      // (ranked #1)!". Anything that is not one of the two directors is not a
+      // result this block can describe.
       const winner = matchup.winner;
-      const loser = winner === p1 ? p2 : p1;
-      const winnerRank = winner === p1 ? rank1 : rank2;
-      const loserRank = winner === p1 ? rank2 : rank1;
+      if (winner === p1 || winner === p2) {
+        const loser = winner === p1 ? p2 : p1;
+        const rank1 = standings[p1]?.rank || 999;
+        const rank2 = standings[p2]?.rank || 999;
+        const winnerRank = winner === p1 ? rank1 : rank2;
+        const loserRank = winner === p1 ? rank2 : rank1;
 
-      if (winnerRank > loserRank + 2) {
-        const upsetMagnitude = winnerRank - loserRank;
-        if (upsetMagnitude > biggestUpsetMargin) {
-          biggestUpsetMargin = upsetMagnitude;
-          recap.stats.biggestUpset = {
-            winner: memberProfiles[winner]?.displayName || winner,
-            loser: memberProfiles[loser]?.displayName || loser,
-            winnerRank,
-            loserRank,
-            magnitude: upsetMagnitude,
-            corpsClass,
-          };
+        if (winnerRank > loserRank + 2) {
+          const upsetMagnitude = winnerRank - loserRank;
+          if (upsetMagnitude > biggestUpsetMargin) {
+            biggestUpsetMargin = upsetMagnitude;
+            recap.stats.biggestUpset = {
+              winner: memberProfiles[winner]?.displayName || winner,
+              loser: memberProfiles[loser]?.displayName || loser,
+              winnerRank,
+              loserRank,
+              magnitude: upsetMagnitude,
+              corpsClass,
+            };
+          }
         }
       }
 

@@ -112,3 +112,61 @@ describe("generateWeeklyRecap caption stats", () => {
     assert.equal(recap.stats.captions, null);
   });
 });
+
+// The upset highlight names a director and their seed, so it has to be sure it
+// is looking at a matchup somebody actually won.
+describe("generateWeeklyRecap upsets", () => {
+  const standings = { alice: { rank: 1 }, bob: { rank: 8 } };
+
+  test("a real upset names the lower seed who won", () => {
+    // Bob is #8, Alice is #1, and Bob takes it.
+    const recap = generateWeeklyRecap(
+      week([plain("alice", "bob", 80, 90)]),
+      standings,
+      profiles
+    );
+    assert.deepEqual(
+      {
+        winner: recap.stats.biggestUpset.winner,
+        loser: recap.stats.biggestUpset.loser,
+        winnerRank: recap.stats.biggestUpset.winnerRank,
+        loserRank: recap.stats.biggestUpset.loserRank,
+      },
+      { winner: "Bob", loser: "Alice", winnerRank: 8, loserRank: 1 }
+    );
+  });
+
+  // Regression: winner "tie" is not a uid. Reading it as "not p1" made p2 the
+  // winner, swapped both ranks, and — with no profile under the key "tie" —
+  // published "Upset Alert! tie (ranked #8) defeated Alice (ranked #1)!".
+  test("a tie is not an upset", () => {
+    const recap = generateWeeklyRecap(
+      week([plain("alice", "bob", 80, 80)]),
+      standings,
+      profiles
+    );
+    assert.equal(recap.stats.biggestUpset, null);
+    assert.equal(
+      recap.highlights.some((h) => h.type === "upset"),
+      false
+    );
+  });
+
+  // Same shape, reached a different way: a completed matchup that never had a
+  // winner written must not have one inferred for it.
+  test("a completed matchup with no winner is not an upset", () => {
+    const recap = generateWeeklyRecap(
+      week([
+        {
+          pair: ["alice", "bob"],
+          scores: { alice: 80, bob: 75 },
+          winner: null,
+          completed: true,
+        },
+      ]),
+      standings,
+      profiles
+    );
+    assert.equal(recap.stats.biggestUpset, null);
+  });
+});
