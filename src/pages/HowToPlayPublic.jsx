@@ -302,7 +302,23 @@ const HowToPlayPublic = () => {
               Field a separate corps in each class you have unlocked, each with its own lineup and
               ranking.
             </li>
+            <li className="flex items-start gap-2">
+              <ChevronRight className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
+              Play a head-to-head season: weekly matchups inside your class, standings, a Finals
+              field, and a champion who takes the league prize pool.
+            </li>
+            <li className="flex items-start gap-2">
+              <ChevronRight className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
+              Leagues keep a record book, a hall of champions, rivalry history, and a chat room that
+              all carry from season to season.
+            </li>
           </ul>
+          <p className="text-sm text-secondary leading-relaxed mt-4">
+            A league can also run <strong className="text-white">Caption Wars</strong>, an alternate
+            format where a week is a best-of-three across General Effect, Visual and Music instead
+            of a comparison of total scores. Win two captions and you win the week — which means you
+            can outscore your opponent and still lose. Nobody&apos;s lineup changes.
+          </p>
         </section>
 
         {/* Glossary */}

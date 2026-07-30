@@ -11,10 +11,8 @@ import toast from 'react-hot-toast';
 import { db, paths } from '../../api/client';
 import { joinLeaguePool } from '../../api/functions';
 import { getGameDay } from '../../utils/dailyChallenges';
-
-// Mirrors POOL_ANTE in functions/src/helpers/leaguePools.js — the server
-// validates the real amount; this only drives display.
-const POOL_ANTE = 25;
+// The server validates the real amount; this only drives display.
+import { LEAGUE_POOL_ANTE_CC as POOL_ANTE } from '../../utils/leagueEconomy';
 
 /** The pool document, narrowed to what this card renders. */
 interface PoolDoc {

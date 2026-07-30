@@ -2,12 +2,21 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CAPTION_CATEGORIES,
+  CAPTION_WARS_SEASON_COST,
   captionsWonBy,
   formatTally,
   hasCaptionRecords,
   isSweep,
   type CaptionsBlock,
 } from './captionWars';
+
+// Backend source of truth. helpers/captionWars.js is dependency-free CommonJS,
+// so vitest can load it directly — the same trick progressionGuide.test.js uses
+// to pin the XP tables.
+import {
+  CAPTION_WARS_SEASON_COST as SERVER_SEASON_COST,
+  CAPTION_CATEGORIES as SERVER_CATEGORIES,
+} from '../../functions/src/helpers/captionWars.js';
 
 // The block the backend stores on a resolved Caption Wars matchup.
 const decided: CaptionsBlock = {
@@ -35,6 +44,22 @@ const partlyUndecided: CaptionsBlock = {
 describe('CAPTION_CATEGORIES', () => {
   it('is the three groups the scorer persists, in stored order', () => {
     expect(CAPTION_CATEGORIES.map((c) => c.key)).toEqual(['ge', 'visual', 'music']);
+  });
+
+  // The client reads a block the server wrote; a category the server stores
+  // under a key the client does not know would silently render as undecided.
+  it('mirrors the server category keys and their order', () => {
+    expect(CAPTION_CATEGORIES.map((c) => c.key)).toEqual(
+      SERVER_CATEGORIES.map((c: { key: string }) => c.key)
+    );
+  });
+});
+
+describe('CAPTION_WARS_SEASON_COST', () => {
+  // The purchase card and the game guide both quote this. A price a commissioner
+  // reads in one place and is charged in another must be the same number.
+  it('is the price the server actually charges', () => {
+    expect(CAPTION_WARS_SEASON_COST).toBe(SERVER_SEASON_COST);
   });
 });
 

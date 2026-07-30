@@ -69,7 +69,7 @@ const CAPTION_CATEGORIES = [
  * bought for means a legacy value can never switch a league into a paid format
  * nobody bought, and a rollover bug can only ever fail back to the default.
  *
- * @param {Object} leagueData - the league document data
+ * @param {any} leagueData - the league document data
  * @param {string} seasonUid - the season being resolved
  */
 function isCaptionWarsLeague(leagueData, seasonUid) {
@@ -100,6 +100,7 @@ function isCaptionWarsLeague(leagueData, seasonUid) {
  * @returns {{captions: Object, winner: string}} winner is a uid or "tie"
  */
 function resolveCaptionWars(p1Uid, p2Uid, p1Week, p2Week) {
+  /** @type {Record<string, any>} */
   const captions = {};
   const tally = { [p1Uid]: 0, [p2Uid]: 0 };
 
@@ -107,8 +108,10 @@ function resolveCaptionWars(p1Uid, p2Uid, p1Week, p2Week) {
   const p2Total = Number(p2Week?.score) || 0;
 
   for (const { key, field } of CAPTION_CATEGORIES) {
-    const p1 = Number(p1Week?.[field]) || 0;
-    const p2 = Number(p2Week?.[field]) || 0;
+    // `field` is one of the entry's own keys by construction; the casts only
+    // tell checkJs that, since it cannot follow the CAPTION_CATEGORIES table.
+    const p1 = Number(/** @type {any} */ (p1Week)?.[field]) || 0;
+    const p2 = Number(/** @type {any} */ (p2Week)?.[field]) || 0;
 
     let winner;
     if (p1 > p2) winner = p1Uid;
@@ -138,7 +141,7 @@ function resolveCaptionWars(p1Uid, p2Uid, p1Week, p2Week) {
  * card. Returns zeros for a matchup with no block (a `"total"` league, a bye,
  * or a week resolved before the format existed).
  *
- * @param {Object|undefined} captions
+ * @param {any} captions
  * @param {string} uid
  */
 function captionsWonBy(captions, uid) {

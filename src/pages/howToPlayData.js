@@ -6,6 +6,13 @@
 
 import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
 import { REGISTRATION_LOCK_WEEKS } from '../utils/classRegistry';
+import { CAPTION_CATEGORIES, CAPTION_WARS_SEASON_COST } from '../utils/captionWars';
+import {
+  LEAGUE_WEEKLY_WIN_CC,
+  LEAGUE_POOL_ANTE_CC,
+  DEFAULT_FINALS_SIZE,
+} from '../utils/leagueEconomy';
+import { XP_SOURCES } from '../utils/captionPricing';
 
 // The guide labels each caption by id + full name (from the canonical source)
 // with its own longer explanatory copy.
@@ -185,6 +192,242 @@ export const REP_TIERS = [
   'Champion Status',
 ];
 
+// =============================================================================
+// LEAGUES
+// =============================================================================
+// Numbers come from the mirrored server constants imported above so the guide
+// cannot promise a payout the game does not make. Behaviour described here is
+// the behaviour in functions/src/helpers/{leagueScoring,weeklyMatchups,
+// leagueStandings,leagueChampion,leagueSeasonReset}.js — the code is the
+// reference, not docs/LEAGUES_AUDIT_AND_PLAN.md, which records how it got here.
+
+// Re-exported so the guide's sections and search index take every game fact
+// from this module, the way they already do for captions, classes and XP.
+export { LEAGUE_WEEKLY_WIN_CC, LEAGUE_POOL_ANTE_CC };
+
+/** What a league is and how you get into one. */
+export const LEAGUE_BASICS = [
+  {
+    title: 'Public or private',
+    desc: 'Anyone can browse and join a public league. A private one takes an invite code from the commissioner, or a direct invitation to your profile you can accept or decline.',
+  },
+  {
+    title: 'Entry fee and prize pool',
+    desc: 'A league can charge a CorpsCoin entry fee. Every fee is escrowed into the league prize pool and paid out to the champion at the end of the season — nothing is skimmed, and the fee is fixed when the league is created so it can never be raised on you mid-season.',
+  },
+  {
+    title: 'One matchup per class you field',
+    desc: 'Matchups are paired inside each corps class. A director fielding three classes plays three separate matchups a week, and the standings table adds them all up.',
+  },
+  {
+    title: 'Membership is permanent, participation is per season',
+    desc: "You stay on the roster between seasons. Each new season you're counted as active once you register a corps, so a league goes quiet at rollover and lights back up as its members return.",
+  },
+];
+
+/** How a single league week is decided and what winning pays. */
+export const LEAGUE_WEEK_RULES = [
+  {
+    title: 'Your week is every show you competed in',
+    desc: 'A week sums all seven days of scores, not just your latest result. Competing twice counts twice.',
+  },
+  {
+    title: 'Sitting out is a loss, not a hold',
+    desc: 'A director who does not compete scores zero for the week. Your last result does not carry forward to cover you.',
+  },
+  {
+    title: 'Byes count as a win',
+    desc: 'An odd roster means somebody sits out each week. The bye rotates to whoever has had it least, and pairing avoids rematches by seeding you against the nearby opponent you have faced fewest times.',
+  },
+  {
+    title: 'Winning pays',
+    desc: `Every matchup you win is worth ${LEAGUE_WEEKLY_WIN_CC} CC and ${XP_SOURCES.leagueWin} XP, per class. Byes and ties pay nothing.`,
+  },
+];
+
+/**
+ * The league's ordering rule, in order — mirrors compareStandingRows in
+ * functions/src/helpers/leagueStandings.js, which the table, the Finals cut
+ * line and the champion selector all share so they can never disagree.
+ */
+export const STANDINGS_TIEBREAKERS = [
+  {
+    rule: 'Win percentage',
+    desc: 'Ties count as half a win. Percentage rather than raw wins, because byes and part-season classes mean members do not all play the same number of matchups.',
+  },
+  { rule: 'Total wins', desc: 'The straightforward tiebreak when two win percentages are level.' },
+  {
+    rule: 'Category record',
+    desc: 'Caption Wars leagues only. Two directors at 4-2 are separated by how they got there — 12 categories to 6 is a more dominant 4-2 than 7 to 11. Zero for everyone on standard scoring, where this term does nothing.',
+  },
+  {
+    rule: 'Normalized score',
+    desc: 'Your mean finishing percentile against your own class field. Matchups are class-segregated but the table is league-wide, so ranking on raw points would sort a mixed-class league by class instead of by performance.',
+  },
+  { rule: 'Points for', desc: 'Total points scored across the season.' },
+  {
+    rule: 'Points against',
+    desc: 'Fewer is better — the last tiebreak before the order is settled.',
+  },
+];
+
+/** How a league season ends. */
+export const LEAGUE_POSTSEASON = [
+  {
+    title: 'The Finals field',
+    desc: `The top seeds in the regular-season standings qualify — ${DEFAULT_FINALS_SIZE} by default, and the commissioner sets the size when the league is created. The standings table draws the cut line all season so you can see where you stand against it.`,
+  },
+  {
+    title: 'The champion',
+    desc: 'Championship week decides the title among the qualifiers. If nobody in the field competes that week, the regular-season leader takes it outright — the standings earn you the right to be there.',
+  },
+  {
+    title: 'The prize pool',
+    desc: "The whole escrowed pool goes to the champion, along with anything left carrying over from the league's prediction pools.",
+  },
+  {
+    title: 'The consolation title',
+    desc: 'Everyone below the cut runs the same race for a second, lesser title on championship week, so a season that is mathematically over still has something to play for. Recognition only — no CorpsCoin.',
+  },
+  {
+    title: 'What survives the rollover',
+    desc: 'Your league keeps its roster, its champions, its chat and its activity history forever. Standings, matchups, recaps and rivalries archive to the season they belong to, and the scoring format resets to standard.',
+  },
+];
+
+/** Everything a league is between matchups. */
+export const LEAGUE_CLUBHOUSE = [
+  {
+    title: 'Chat',
+    desc: 'A league-wide room with unread markers. Your own messages are yours to delete; commissioners can moderate anyone.',
+  },
+  {
+    title: 'Activity feed',
+    desc: 'Every result, join, settings change and championship, in order, so nothing about your league happens off-screen.',
+  },
+  {
+    title: 'Weekly recaps',
+    desc: 'Written as soon as the week resolves: the highest score, the closest call, who is hot, and in a Caption Wars league, the sweeps and the 2-1 thrillers.',
+  },
+  {
+    title: 'Record book',
+    desc: 'Highest single week, biggest blowout, closest call, longest win streak, and the best finish against a class field. Caption Wars leagues also track career sweeps and the longest run holding one category.',
+  },
+  {
+    title: 'Rivalries',
+    desc: 'The league detects who you keep drawing and keeps the head-to-head history in front of both of you.',
+  },
+  {
+    title: 'Hall of Fame and career pages',
+    desc: 'An all-time table ranked titles-first with dynasty streaks, plus a page per member: record season by season, titles, best week, and head-to-head against every opponent.',
+  },
+  {
+    title: 'Prediction pools',
+    desc: `A daily side game. Buy in for ${LEAGUE_POOL_ANTE_CC} CC and every entrant who posts a perfect prediction day splits the pot. If nobody is perfect it carries into the next day's pool — and anything still carrying at season's end goes to the champion. Fully escrowed: every coin paid out was staked by a member.`,
+  },
+];
+
+/** What running a league lets you do. */
+export const LEAGUE_COMMISSIONER_TOOLS = [
+  {
+    title: 'Settings',
+    desc: 'Name, description, public or private, roster cap, and the size of the Finals field. The entry fee is the one thing fixed at creation, because members escrowed real CorpsCoin against it.',
+  },
+  {
+    title: 'Co-commissioners',
+    desc: 'Up to four, to share the running of the league. Only the owner can appoint or remove them.',
+  },
+  {
+    title: 'Handing it over',
+    desc: 'Transfer the league outright to another member. Leaving a league you run promotes a successor rather than orphaning it.',
+  },
+  {
+    title: 'Fixing a result',
+    desc: 'Override a matchup that resolved wrong and the whole table rebuilds from every resolved week, so a correction can never leave the standings half-updated.',
+  },
+  {
+    title: 'Announcements',
+    desc: 'Pin a message above every tab for the season.',
+  },
+  {
+    title: 'Scoring format',
+    desc: 'Put the league on Caption Wars for the season. See the next section.',
+  },
+];
+
+// =============================================================================
+// CAPTION WARS
+// =============================================================================
+// The alternate scoring format, mirrored from functions/src/helpers/
+// captionWars.js (categories, resolution) and functions/src/callable/
+// leagueFormat.js (who pays, when, and what it does not touch).
+
+/** What the commissioner pays, for one season, out of their own balance. */
+export const CAPTION_WARS_COST = CAPTION_WARS_SEASON_COST;
+
+/**
+ * The three categories, tied back to the caption groups the scorer already
+ * persists — same names, same 40/30/30 ceilings, so the format and the score
+ * are visibly one idea.
+ */
+export const CAPTION_WARS_CATEGORIES = CAPTION_CATEGORIES.map((c) => {
+  const group = SCORING_MODEL.find((g) => g.group === c.label);
+  return {
+    key: c.key,
+    label: c.label,
+    short: c.short,
+    max: group?.max,
+    captions: group?.captions,
+  };
+});
+
+export const CAPTION_WARS_RULES = [
+  {
+    title: 'Win two, win the week',
+    desc: "Each week your General Effect, Visual and Music totals are compared against your opponent's separately. Take two of the three and you take the week.",
+  },
+  {
+    title: 'You can win on points and lose the week',
+    desc: 'General Effect is worth 40 and the other two 30 each, which is the real DCI ratio. Win GE by twelve, lose Visual and Music by a point apiece, and you lose a week you would have won comfortably on totals. That is the format working, not a bug.',
+  },
+  {
+    title: 'Your lineup never changes',
+    desc: 'You draft the same eight captions in the same game. A league turning this on does not ask you to build a different corps.',
+  },
+  {
+    title: 'A category is never drawn',
+    desc: 'A tied category goes to whoever posted the higher weekly total. Only when the totals are level too is a category left undecided — and the other two still decide the week.',
+  },
+  {
+    title: 'Category record breaks ties in the standings',
+    desc: 'Sitting directly under wins, above every score-based tiebreak, so the Finals field is seeded on the format the league actually played.',
+  },
+  {
+    title: 'Three categories, permanently',
+    desc: 'Your eight individual caption scores are never published — an opponent could read your entire lineup off the recap. These three groups blend two, three and three of them, and they were already on the matchup breakdown before this format existed.',
+  },
+];
+
+/** The purchase, stated the way the commissioner meets it. */
+export const CAPTION_WARS_PURCHASE = [
+  {
+    title: `${CAPTION_WARS_COST.toLocaleString()} CC, paid by the commissioner`,
+    desc: 'Out of their own balance, never per member — the format is a property of a matchup, so both sides must be playing the same one. Nobody can buy an advantage with it.',
+  },
+  {
+    title: 'The prize pool is untouched',
+    desc: "That pool is members' escrow. It funds the championship and nothing else.",
+  },
+  {
+    title: 'Before the season starts, or not at all',
+    desc: "The format locks once the league's first week is generated. Switching mid-season would mix two formats inside one standings table.",
+  },
+  {
+    title: 'One season, no refunds',
+    desc: 'It does not renew. The rollover puts the league back on standard scoring, and a commissioner who wants it again buys it again. Turning it off early is free but does not refund.',
+  },
+];
+
 export const GLOSSARY = [
   {
     term: 'DCI',
@@ -248,6 +491,22 @@ export const FAQ = [
   {
     q: 'Can I create a new corps after the season has started?',
     a: 'Yes, as long as that class is still open. Each ranked class stops accepting new corps a set number of weeks before finals so a late entry still has time to compete: World Class locks 6 weeks out, Open Class 5, and A Class 4, while SoundSport stays open all season. You also need the class unlocked, no active corps already in it, and a corps name nobody has claimed this season.',
+  },
+  {
+    q: 'How do league matchups work?',
+    a: `Every week your league pairs you against another member inside each class you field, and the matchup is decided on your total score for that week — every show you competed in across all seven days, not just your latest result. Not competing scores zero, so sitting a week out is a loss rather than a hold. An odd roster gives somebody a bye, which counts as a win and rotates to whoever has had it least. Each matchup you win pays ${LEAGUE_WEEKLY_WIN_CC} CC and ${XP_SOURCES.leagueWin} XP; byes and ties pay nothing.`,
+  },
+  {
+    q: 'What is Caption Wars?',
+    a: `An alternate scoring format a commissioner can put their league on for a season. Instead of one comparison of the week's total score, the week is a best-of-three across the same three groups the game already scores you on — General Effect, Visual and Music. Win two of the three and you win the week, whatever the totals say. Nobody's lineup changes: you draft the same eight captions in the same game, and the three groups were already on the matchup breakdown. It costs the commissioner ${CAPTION_WARS_COST.toLocaleString()} CC out of their own balance, covers one season, and can only be switched on before the league's first week is generated. It never touches the league prize pool.`,
+  },
+  {
+    q: 'I scored more points than my opponent and still lost the week. Why?',
+    a: 'Your league is running Caption Wars, where a week is a best-of-three across General Effect, Visual and Music rather than a comparison of totals. General Effect is worth 40 points and the other two 30 each — the real DCI ratio — so winning General Effect by a wide margin while dropping Visual and Music by a little loses the week 2-1. Your matchup breakdown shows all three verdicts, so you can see exactly which category went where.',
+  },
+  {
+    q: 'What happens to my league when the season ends?',
+    a: 'The champion is decided among the Finals field — the top seeds in your regular-season standings — on championship week, and the whole escrowed prize pool goes to them. Everyone below the cut plays for a consolation title, which is recognition rather than CorpsCoin. Then the league rolls over: standings, matchups, recaps and rivalries archive to the season they belong to, the scoring format resets to standard, and week 1 starts everyone at 0-0. Your roster, your champions, your chat and your activity history all carry over permanently.',
   },
   {
     q: 'Can I move my corps to a different class mid-season?',

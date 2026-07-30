@@ -7,6 +7,18 @@
 // per show, because publishing them would let an opponent read a director's
 // lineup straight off the recap. These three aggregate 2, 3 and 3 of them.
 
+/**
+ * What a commissioner pays to run Caption Wars for ONE season, out of their own
+ * balance. Mirrors CAPTION_WARS_SEASON_COST in
+ * functions/src/helpers/captionWars.js; captionWars.test.ts imports that module
+ * directly and fails the build if the two drift.
+ *
+ * Lives here rather than in the purchase card because the game guide quotes it
+ * too, and a price a player reads in one place and pays in another must be the
+ * same number.
+ */
+export const CAPTION_WARS_SEASON_COST = 2000;
+
 /** The three categories, in the order they are shown and stored. */
 export const CAPTION_CATEGORIES = [
   { key: 'ge', label: 'General Effect', short: 'GE' },
