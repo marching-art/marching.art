@@ -231,6 +231,25 @@ describe('caption records', () => {
     expect(records.biggestBlowout).toMatchObject({ winnerUid: 'a', loserUid: 'b' });
   });
 
+  // Regression: the winner has to BE one of the two directors. "p2, else p1"
+  // credited p1 with any other value, so a completed matchup that never had a
+  // winner written set a margin record naming a director who did not win it —
+  // while the career table counted the same week as a tie.
+  it('sets no margin record when the stored winner is not one of the pair', () => {
+    const orphaned = {
+      pair: ['a', 'b'] as [string, string],
+      scores: { a: 95, b: 60 },
+      winner: null,
+      completed: true,
+    };
+    const records = computeLeagueRecords([week(1, [orphaned])], CLASSES);
+    expect(records.biggestBlowout).toBeNull();
+    expect(records.closestCall).toBeNull();
+    // The week still happened, and the scores in it are still real.
+    expect(records.weeksCounted).toBe(1);
+    expect(records.highestWeek).toMatchObject({ uid: 'a', score: 95 });
+  });
+
   it('a league on the default format has no caption records', () => {
     const records = computeLeagueRecords([week(1, [decided('a', 'b', 90, 80)])], CLASSES);
     expect(records.mostSweeps).toBeNull();

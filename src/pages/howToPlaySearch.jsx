@@ -13,6 +13,15 @@ import {
   REGISTRATION_WINDOWS,
   SEASON_START_OPTIONS,
   MIDSEASON_CORPS_RULES,
+  LEAGUE_BASICS,
+  LEAGUE_WEEK_RULES,
+  LEAGUE_POSTSEASON,
+  LEAGUE_CLUBHOUSE,
+  LEAGUE_COMMISSIONER_TOOLS,
+  STANDINGS_TIEBREAKERS,
+  CAPTION_WARS_CATEGORIES,
+  CAPTION_WARS_RULES,
+  CAPTION_WARS_PURCHASE,
 } from './howToPlayData';
 import { XP_SOURCE_GUIDE, PROGRESSION_AXES } from '../data/progressionGuide';
 
@@ -68,6 +77,65 @@ const SEARCH_SOURCES = [
     title: r.title,
     text: r.desc,
   })),
+  // Leagues. Every entry a member might go looking for mid-argument — how a
+  // week is decided, what breaks a tie, who gets paid — jumps to the section
+  // that says so.
+  ...LEAGUE_BASICS.map((b) => ({
+    id: 'leagues',
+    section: 'Leagues',
+    title: b.title,
+    text: b.desc,
+  })),
+  ...LEAGUE_WEEK_RULES.map((r) => ({
+    id: 'leagues',
+    section: 'League Matchups',
+    title: r.title,
+    text: r.desc,
+  })),
+  ...STANDINGS_TIEBREAKERS.map((t, i) => ({
+    id: 'leagues',
+    section: 'Standings Tiebreakers',
+    title: `${i + 1}. ${t.rule}`,
+    text: t.desc,
+  })),
+  ...LEAGUE_POSTSEASON.map((p) => ({
+    id: 'leagues',
+    section: 'League Finals',
+    title: p.title,
+    text: p.desc,
+  })),
+  ...LEAGUE_CLUBHOUSE.map((c) => ({
+    id: 'leagues',
+    section: 'League Clubhouse',
+    title: c.title,
+    text: c.desc,
+  })),
+  ...LEAGUE_COMMISSIONER_TOOLS.map((c) => ({
+    id: 'leagues',
+    section: 'Commissioner Tools',
+    title: c.title,
+    text: c.desc,
+  })),
+  // Caption Wars. The categories carry the "caption wars" phrase in their text
+  // so searching the format's name finds the format, not only its rules.
+  ...CAPTION_WARS_CATEGORIES.map((cat) => ({
+    id: 'captionWars',
+    section: 'Caption Wars',
+    title: `${cat.label} category`,
+    text: `One of the three Caption Wars categories, worth up to ${cat.max} points a show. Built from ${cat.captions}.`,
+  })),
+  ...CAPTION_WARS_RULES.map((r) => ({
+    id: 'captionWars',
+    section: 'Caption Wars',
+    title: r.title,
+    text: r.desc,
+  })),
+  ...CAPTION_WARS_PURCHASE.map((p) => ({
+    id: 'captionWars',
+    section: 'Caption Wars Cost',
+    title: p.title,
+    text: p.desc,
+  })),
   ...GLOSSARY.map((g) => ({ id: 'glossary', section: 'Glossary', title: g.term, text: g.def })),
   ...FAQ.map((f) => ({ id: 'faq', section: 'FAQ', title: f.q, text: f.a })),
 ];
@@ -77,8 +145,15 @@ const SEARCH_SOURCES = [
  */
 export const SearchResults = ({ query, onNavigate }) => {
   const q = query.toLowerCase();
+  // The section label counts as part of an entry. A player searching "caption
+  // wars" or "standings" wants that whole part of the guide, and the individual
+  // rules under those headings — "Win two, win the week" — do not repeat the
+  // name of the thing they belong to.
   const results = SEARCH_SOURCES.filter(
-    (e) => e.title.toLowerCase().includes(q) || e.text.toLowerCase().includes(q)
+    (e) =>
+      e.title.toLowerCase().includes(q) ||
+      e.text.toLowerCase().includes(q) ||
+      e.section.toLowerCase().includes(q)
   );
 
   if (results.length === 0) {

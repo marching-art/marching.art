@@ -6,7 +6,6 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heading } from '../components/ui';
 import {
   Compass,
   Rocket,
@@ -16,7 +15,6 @@ import {
   TrendingUp,
   Calendar,
   Coins,
-  Users,
   Medal,
   Book,
   HelpCircle,
@@ -29,6 +27,8 @@ import {
   Clock,
   Shield,
 } from 'lucide-react';
+import { Card, DataRow, SectionHead } from './howToPlayPrimitives';
+import { LeaguesSection, CaptionWarsSection } from './howToPlayLeagueSections';
 import {
   CAPTIONS,
   CLASSES,
@@ -41,6 +41,8 @@ import {
   REGISTRATION_WINDOWS,
   SEASON_START_OPTIONS,
   MIDSEASON_CORPS_RULES,
+  CAPTION_WARS_COST,
+  LEAGUE_WEEKLY_WIN_CC,
 } from './howToPlayData';
 import {
   XP_PER_LEVEL,
@@ -65,41 +67,6 @@ const CAPTION_GROUPS = [
 ];
 
 const findCaption = (abbr) => CAPTIONS.find((c) => c.abbr === abbr);
-
-// =============================================================================
-// PRIMITIVES
-// =============================================================================
-
-const Card = ({ className = '', children }) => (
-  <div className={`bg-surface-sunken border border-white/10 rounded-none p-4 ${className}`}>
-    {children}
-  </div>
-);
-
-const DataRow = ({ label, value, accent = false }) => (
-  <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-    <span className="text-muted text-xs">{label}</span>
-    <span className={`text-xs font-bold ${accent ? 'text-interactive' : 'text-white'}`}>
-      {value}
-    </span>
-  </div>
-);
-
-const SectionHead = ({ icon: Icon, title, kicker }) => (
-  <div className="mb-4">
-    {kicker && (
-      <p className="text-[10px] font-bold uppercase tracking-wider text-interactive mb-1">
-        {kicker}
-      </p>
-    )}
-    <div className="flex items-center gap-3">
-      <span className="w-9 h-9 bg-interactive/20 rounded-none flex items-center justify-center flex-shrink-0">
-        <Icon className="w-4 h-4 text-interactive" />
-      </span>
-      <Heading level="title">{title}</Heading>
-    </div>
-  </div>
-);
 
 // =============================================================================
 // SECTIONS
@@ -555,6 +522,7 @@ const EconomySection = () => (
           <DataRow label="Show participation" value="50–200 CC" />
           <DataRow label="Correct predictions" value="+10 CC each" />
           <DataRow label="Level-up stipend" value="100 CC" />
+          <DataRow label="Weekly league win" value={`${LEAGUE_WEEKLY_WIN_CC} CC`} />
           <DataRow label="Streak milestones" value="up to 1,000 CC" accent />
         </Card>
       </div>
@@ -564,29 +532,14 @@ const EconomySection = () => (
           <DataRow label="A Class unlock" value="1,000 CC" />
           <DataRow label="Open Class unlock" value="2,500 CC" />
           <DataRow label="World Class unlock" value="5,000 CC" />
+          <DataRow
+            label="Caption Wars (per league season)"
+            value={`${CAPTION_WARS_COST.toLocaleString()} CC`}
+          />
           <DataRow label="Streak Freeze" value="300 CC" accent />
         </Card>
       </div>
     </div>
-  </>
-);
-
-const LeaguesSection = () => (
-  <>
-    <SectionHead icon={Users} kicker="Play with friends" title="Leagues & Leaderboards" />
-    <ul className="space-y-2 text-sm text-secondary">
-      {[
-        'Create public or private leagues with join codes and go head-to-head with friends.',
-        'Global leaderboards for every ranked class, updated as scores come in.',
-        'Win your weekly league matchup for bonus XP.',
-        'Field a separate corps in each class you have unlocked, each with its own ranking.',
-      ].map((line) => (
-        <li key={line} className="flex items-start gap-2">
-          <ChevronRight className="w-4 h-4 text-interactive flex-shrink-0 mt-0.5" />
-          {line}
-        </li>
-      ))}
-    </ul>
   </>
 );
 
@@ -710,6 +663,7 @@ const SECTION_CONTENT = {
   season: SeasonSection,
   economy: EconomySection,
   leagues: LeaguesSection,
+  captionWars: CaptionWarsSection,
   podium: PodiumSection,
   glossary: GlossarySection,
   faq: FaqSection,

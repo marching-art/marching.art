@@ -16,10 +16,10 @@ import { Loader2, Music, Swords } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { setLeagueScoringFormat } from '../../../api/functions';
-import { CAPTION_CATEGORIES } from '../../../utils/captionWars';
-
-/** Matches CAPTION_WARS_SEASON_COST in functions/src/helpers/captionWars.js. */
-const SEASON_COST = 2000;
+import {
+  CAPTION_CATEGORIES,
+  CAPTION_WARS_SEASON_COST as SEASON_COST,
+} from '../../../utils/captionWars';
 
 interface ScoringFormatCardProps {
   league?: {

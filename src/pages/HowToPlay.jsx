@@ -29,6 +29,7 @@ import {
   Book,
   HelpCircle,
   Search,
+  Swords,
 } from 'lucide-react';
 import { GuideSection } from './howToPlaySections';
 import { SearchResults } from './howToPlaySearch';
@@ -44,6 +45,7 @@ const SECTIONS = [
   { id: 'season', label: 'Season Calendar', icon: Calendar },
   { id: 'economy', label: 'CorpsCoin', icon: Coins },
   { id: 'leagues', label: 'Leagues', icon: Users },
+  { id: 'captionWars', label: 'Caption Wars', icon: Swords },
   { id: 'podium', label: 'Podium Class', icon: Medal },
   { id: 'glossary', label: 'Glossary', icon: Book },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },

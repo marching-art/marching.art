@@ -45,6 +45,32 @@ describe('HowToPlay (/guide)', () => {
     expect(link).toHaveAttribute('href', '/podium-guide');
   });
 
+  it('explains Caption Wars, including the price and the losing-on-points case', () => {
+    renderGuide();
+    expect(screen.getAllByText('Caption Wars').length).toBeGreaterThan(0);
+    expect(screen.getByText('Win two, win the week')).toBeInTheDocument();
+    expect(screen.getByText('You can win on points and lose the week')).toBeInTheDocument();
+    // The purchase is a commissioner's, and the guide must quote the real price.
+    expect(screen.getByText(/2,000 CC, paid by the commissioner/)).toBeInTheDocument();
+  });
+
+  it('documents how a league week is decided and what breaks a standings tie', () => {
+    renderGuide();
+    expect(screen.getByText('Your week is every show you competed in')).toBeInTheDocument();
+    expect(screen.getByText('Sitting out is a loss, not a hold')).toBeInTheDocument();
+    expect(screen.getByText('Win percentage')).toBeInTheDocument();
+    expect(screen.getByText('The Finals field')).toBeInTheDocument();
+  });
+
+  it('finds Caption Wars from the search box', () => {
+    renderGuide();
+    fireEvent.change(screen.getByLabelText('Search the game guide'), {
+      target: { value: 'caption wars' },
+    });
+    expect(screen.getAllByText('Caption Wars').length).toBeGreaterThan(0);
+    expect(screen.getByText('Win two, win the week')).toBeInTheDocument();
+  });
+
   it('filters to search results when typing a query', () => {
     renderGuide();
     fireEvent.change(screen.getByLabelText('Search the game guide'), {
