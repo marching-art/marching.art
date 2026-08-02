@@ -12,6 +12,9 @@
  *   announcements DISCORD_ANNOUNCEMENTS_WEBHOOK_URL  Fan Favorite ballots,
  *                                                    season start,
  *                                                    lineup lock,
+ *                                                    championship-week
+ *                                                    caption windows,
+ *                                                    registration deadlines,
  *                                                    Eastern Classic night
  *                                                    lineups
  *   news          DISCORD_NEWS_WEBHOOK_URL           published articles,
