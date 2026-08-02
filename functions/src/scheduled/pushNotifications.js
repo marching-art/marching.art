@@ -486,6 +486,11 @@ exports.lineupLockReminderPushJob = onSchedule(
       // and rarely fall on the same day. Isolated: never blocks the job.
       await announceRegistrationDeadlines(db, season);
 
+      // Championship week's caption rules are announced the day BEFORE they
+      // start biting, and day 43 is a blackout day — getLineupLockContext
+      // returns null on it, so this must sit above the early return too.
+      await announceChampionshipWeekWindows(db, season);
+
       const context = getLineupLockContext(season);
       if (!context) {
         logger.info("No caption-change lock tonight, skipping lineup reminders");
@@ -616,5 +621,33 @@ async function announceRegistrationDeadlines(db, season) {
     }
   } catch (error) {
     logger.error(`[registration-lock] Discord announcement failed: ${error.message}`);
+  }
+}
+
+/**
+ * Post the Championship Week caption-change guide to #announcements on day 43
+ * (helpers/championshipWeekAnnounce.js) — which days are closed to everyone,
+ * and which days each class may change captions on. Never throws.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} season - game-settings/season data.
+ */
+async function announceChampionshipWeekWindows(db, season) {
+  const webhookUrl = discordAnnouncementsWebhookUrl.value();
+  if (!webhookUrl) return;
+  try {
+    const { announceChampionshipWeek } = require("../helpers/championshipWeekAnnounce");
+    const result = await announceChampionshipWeek(db, {
+      seasonUid: season.seasonUid,
+      seasonName: seasonDisplayName(season),
+      seasonData: season,
+      webhookUrl,
+    });
+    // Quiet on the 48 days a season that aren't day 43.
+    if (result.status !== "not-today") {
+      logger.info(`[championship-week] Discord announcement: ${result.status}`);
+    }
+  } catch (error) {
+    logger.error(`[championship-week] Discord announcement failed: ${error.message}`);
   }
 }

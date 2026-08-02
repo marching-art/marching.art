@@ -19,7 +19,7 @@ embed helpers.
 | Channel            | Secret                              | Posts                                                                                                            |
 | ------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, championship-week cuts, season champions    |
-| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, registration deadlines, Eastern Classic night lineups |
+| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, championship-week caption windows, registration deadlines, Eastern Classic night lineups |
 | **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                                                     |
 | **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                                                  |
 | **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                                            |
@@ -211,6 +211,39 @@ director met it as an error message when it was already too late.
   corps they're running.
 - **Not a push:** the audience is directors who have **not** registered in a
   class, which is exactly the group the per-corps push fan-outs cannot target.
+
+---
+
+## Discord (championship-week caption windows → #announcements)
+
+Championship week is the one week the caption-change rules change shape
+(`helpers/captionWindows.js`): **days 43-44 are closed to every class**, then
+days 45-49 give **2 changes per class per day** — but only to the classes still
+competing that day (`CHAMPIONSHIP_CLASS_DAYS`). A class off the day's list is
+locked out even when its corps advanced and is still marching later in the week.
+
+Every other lock is announced the evening it lands, which is right for a
+deadline and wrong for a rule change: by the day-45 post, two days of "why is
+my lineup frozen?" have already happened, and an Open Class director reading
+"changes close tonight" on day 48 can't tell the post isn't about them.
+
+- **Code:** `functions/src/helpers/championshipWeekAnnounce.js`, called from
+  `scheduled/pushNotifications.js`'s daily 4 PM ET job — the same host, for the
+  same two reasons, as registration deadlines above. It sits **before** that
+  job's lineup-lock early return, and must: day 43 is a blackout day, so
+  `getLineupLockContext` returns null on it.
+- **Timing:** posts on **day 43** — the Sunday championship week opens on, and
+  the first day changes are closed — so the closure is read before it is met.
+- **Idempotency:** one lease, `{seasonUid}_discord_champweek_day43`.
+- **Copy:** the same schedule twice, because directors ask it both ways: day by
+  day (which classes may change today) and by class (which days *my* corps may
+  change). Both are generated from `CHAMPIONSHIP_CLASS_DAYS` and
+  `CHAMPIONSHIP_TRADE_LIMIT`, and the tests assert every claim against
+  `getCaptionChangeWindow` itself — a post that says "open" where `saveLineup`
+  says "closed" is worse than no post. Weekday dates and the 8 PM ET close time
+  are derived from the season's own `startDate`, never hardcoded.
+- **Footer:** every class gets the same 3 change days and the same 6 total
+  changes — the answer to "why does World Class get the last two days?".
 
 ---
 
