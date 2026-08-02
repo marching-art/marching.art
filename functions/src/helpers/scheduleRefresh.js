@@ -12,6 +12,7 @@ const {
   scrapeUpcomingDciEvents,
   brandEventName,
   regionalTierForEventName,
+  applyMultiNightMajors,
 } = require("./seasonSchedule");
 
 /**
@@ -37,6 +38,8 @@ function showMatchKey(day, name) {
  *   - A scraped event that matches an existing show enriches it in place, keeping
  *     the same id/day/week/type so directors' selections stay valid.
  *   - Only genuinely new events are appended (with a stable, collision-free id).
+ *   - A branded major spanning consecutive days is stamped `multiNight` over the
+ *     merged schedule (seasonSchedule.applyMultiNightMajors).
  *   - Idempotent: re-running with the same scrape adds nothing.
  *
  * @param {Array<object>} existing - Current competitions[] (mutated in place).
@@ -121,6 +124,10 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
   }
 
   const competitions = [...existing, ...added].sort((a, b) => a.day - b.day);
+  // A major's second night can arrive on a later refresh than its first (the
+  // scrape only lists upcoming events), so the two-night metadata is derived
+  // over the MERGED schedule, not just the events added this pass.
+  applyMultiNightMajors(competitions);
   const unchangedCount = existing.length - enrichedCount;
   return { competitions, enrichedCount, addedCount, unchangedCount };
 }

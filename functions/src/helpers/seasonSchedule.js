@@ -399,6 +399,10 @@ async function writeScheduleToCollection(seasonId, schedule) {
     });
   });
 
+  // Derive two-night metadata for the live-season majors (off-season shows
+  // arrive with it already set, and re-deriving is a no-op there).
+  applyMultiNightMajors(competitions);
+
   await db.doc(`schedules/${seasonId}`).set({ competitions });
   logger.info(`Wrote ${competitions.length} competitions to schedules/${seasonId}`);
 }
@@ -430,6 +434,48 @@ function regionalTierForEventName(name) {
   return MAJOR_EVENT_NAME_RE.test(String(name || "")) ? "regional" : null;
 }
 
+/**
+ * Stamp `multiNight` onto a branded major that runs under one name across
+ * consecutive competition days — the Eastern Classic's two nights in
+ * Allentown (design §5.11).
+ *
+ * Off-season schedules get this from scheduleGeneration.placeMajor, which
+ * places the event on both days itself. Live seasons keep the real scraped
+ * events, so the metadata has to be DERIVED from the days the event actually
+ * landed on. Without it the two-night behaviour hung entirely on
+ * easternSplit.js's name fallback: the split ran, but the schedule page and
+ * the registration modal both presented the nights as two ordinary shows.
+ *
+ * Scoped deliberately: only the branded majors, and only when their days form
+ * one unbroken run. "One registration covers every night, and the field is
+ * split across them" is a claim worth making about the events designed that
+ * way — not about any name that happens to repeat across the tour.
+ *
+ * Mutates entries in place and is safe to re-run (the refresh path calls it
+ * on every merge).
+ *
+ * @param {Array<{name?: string, day?: number, multiNight?: object}>} competitions
+ * @returns {Array} The same array, for chaining.
+ */
+function applyMultiNightMajors(competitions) {
+  const byName = new Map();
+  for (const comp of competitions || []) {
+    if (!comp || !regionalTierForEventName(comp.name)) continue;
+    if (!Number.isInteger(comp.day)) continue;
+    const entries = byName.get(comp.name) || [];
+    entries.push(comp);
+    byName.set(comp.name, entries);
+  }
+
+  for (const entries of byName.values()) {
+    const nights = [...new Set(entries.map((c) => c.day))].sort((a, b) => a - b);
+    if (nights.length < 2) continue;
+    if (!nights.every((day, i) => i === 0 || day === nights[i - 1] + 1)) continue;
+    for (const comp of entries) comp.multiNight = { nights };
+  }
+  return competitions;
+}
+
 module.exports = {
   ENRICHMENT_FIELDS,
   applyEnrichment,
@@ -446,4 +492,5 @@ module.exports = {
   shuffleArray,
   brandEventName,
   regionalTierForEventName,
+  applyMultiNightMajors,
 };

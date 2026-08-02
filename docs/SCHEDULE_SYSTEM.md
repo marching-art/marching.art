@@ -52,6 +52,27 @@ The larger season pipeline (`startNewOffSeason` in `season.js`): build a
 `enrichOffSeasonSchedule` (heritage layer, gated — see §4) →
 `writeScheduleToCollection`.
 
+### Live seasons
+
+A live season's calendar is the REAL DCI tour, scraped from dci.org's events
+list (`functions-scraper/index.js`) and mapped onto competition days by date:
+`generateLiveSeasonSchedule` at season start, then `mergeScheduleRefresh`
+(additive, never destructive) on every refresh as more events are posted.
+Names are branded at ingest (`brandEventName`: "DCI X" → "marching.art X") and
+the branded majors are tagged `eventTier: "regional"` by name match
+(`regionalTierForEventName`).
+
+**Multi-night events.** DCI runs the Eastern Classic as two consecutive nights
+in Allentown listed under one name, so identity is `(name, date)` — never name
+alone — at every step of ingest. A name-only de-dup in the scraper silently
+dropped night two for the whole season: it was never on the schedule, never
+registerable, and never scored, while the two-night split
+(`helpers/easternSplit.js`) still assigned half the field to it. Once both
+nights are on the schedule, `applyMultiNightMajors` (`seasonSchedule.js`)
+derives the `multiNight: { nights: [...] }` metadata that the off-season
+generator's `placeMajor` sets directly — one registration covers every night,
+and the field is split across them.
+
 ---
 
 ## 3. Storage & consumption
