@@ -211,7 +211,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: firestore-tests/package-lock.json
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5.6.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -294,7 +294,7 @@ jobs:
       # The Firestore emulator needs a JDK; firebase-tools requires >= 21
       # (same setup the rules-emulator job uses — without it the emulators
       # refuse to start on the runner's default JDK).
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5.6.0
         with:
           distribution: 'temurin'
           java-version: '21'
