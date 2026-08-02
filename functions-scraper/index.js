@@ -183,10 +183,24 @@ async function scrapeUpcomingDciEventsLogic(year) {
       };
     });
 
-    const seenNames = new Set();
+    // De-duplicate on (name, date), NOT on name alone. DCI runs multi-night
+    // events under ONE name — the Eastern Classic is two consecutive nights in
+    // Allentown, both listed as "DCI Eastern Classic" — so a name-only key
+    // discarded every night after the first before the schedule builders ever
+    // saw it. The season schedule then carried night one and nothing else:
+    // night two was never scheduled, never registerable, and never scored,
+    // while the corps the two-night split assigned to it (helpers/
+    // easternSplit.js) sat out the event entirely.
+    //
+    // The duplicates this is here to drop — the same card re-extracted when a
+    // pagination swap re-renders the list — carry the same name AND date, so
+    // they are still collapsed.
+    const seenEvents = new Set();
     const validEvents = parsedEvents.filter((event) => {
-      if (!event.date || seenNames.has(event.eventName)) return false;
-      seenNames.add(event.eventName);
+      if (!event.date) return false;
+      const key = `${event.eventName}|${event.date}`;
+      if (seenEvents.has(key)) return false;
+      seenEvents.add(key);
       return true;
     });
 

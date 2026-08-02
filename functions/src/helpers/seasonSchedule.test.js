@@ -7,7 +7,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { regionalTierForEventName } = require("./seasonSchedule");
+const { regionalTierForEventName, applyMultiNightMajors } = require("./seasonSchedule");
 const { mergeScheduleRefresh } = require("./scheduleRefresh");
 
 describe("regionalTierForEventName", () => {
@@ -95,6 +95,106 @@ describe("mergeScheduleRefresh eventTier tagging", () => {
     );
     const midwest = competitions.find((c) => c.name === "Midwestern Championship");
     assert.equal(midwest.eventTier, undefined);
+  });
+});
+
+describe("applyMultiNightMajors", () => {
+  test("stamps both nights of a major that spans consecutive days", () => {
+    const competitions = [
+      { name: "marching.art Eastern Classic", day: 41 },
+      { name: "marching.art Eastern Classic", day: 42 },
+      { name: "Four Flags Spectacular", day: 42 },
+    ];
+    applyMultiNightMajors(competitions);
+    assert.deepEqual(competitions[0].multiNight, { nights: [41, 42] });
+    assert.deepEqual(competitions[1].multiNight, { nights: [41, 42] });
+    // An ordinary show sharing night two is untouched.
+    assert.equal(competitions[2].multiNight, undefined);
+  });
+
+  test("leaves a single-night major alone", () => {
+    const competitions = [{ name: "marching.art Southeastern Championship", day: 35 }];
+    applyMultiNightMajors(competitions);
+    assert.equal(competitions[0].multiNight, undefined);
+  });
+
+  test("ignores a major name that repeats on non-consecutive days", () => {
+    // Not one event over two nights — two separate shows that share a name.
+    const competitions = [
+      { name: "marching.art Eastern Classic", day: 20 },
+      { name: "marching.art Eastern Classic", day: 41 },
+    ];
+    applyMultiNightMajors(competitions);
+    assert.equal(competitions[0].multiNight, undefined);
+    assert.equal(competitions[1].multiNight, undefined);
+  });
+
+  test("is idempotent", () => {
+    const competitions = [
+      { name: "marching.art Eastern Classic", day: 41 },
+      { name: "marching.art Eastern Classic", day: 42 },
+    ];
+    applyMultiNightMajors(competitions);
+    applyMultiNightMajors(competitions);
+    assert.deepEqual(competitions[0].multiNight, { nights: [41, 42] });
+  });
+});
+
+describe("mergeScheduleRefresh two-night majors", () => {
+  const startDate = new Date("2026-06-01T00:00:00Z");
+  const springTrainingDays = 21;
+  const dateForDay = (day) =>
+    new Date(startDate.getTime() + (day + springTrainingDays - 1) * 86400000).toISOString();
+  const eastern = (day) => ({
+    eventName: "marching.art Eastern Classic",
+    location: "Allentown, PA",
+    date: dateForDay(day),
+  });
+
+  test("keeps BOTH nights of a same-named major on their own days", () => {
+    // The de-dup inside the merge is per-day; the two nights must survive it,
+    // or day 42 has no Eastern Classic to score (the whole point of the
+    // scraper's (name, date) de-dup key upstream).
+    const { competitions, addedCount } = mergeScheduleRefresh(
+      [], [eastern(41), eastern(42)], "live_2026-26", startDate, springTrainingDays
+    );
+    assert.equal(addedCount, 2);
+    assert.deepEqual(competitions.map((c) => c.day), [41, 42]);
+  });
+
+  test("stamps multiNight across the merged schedule", () => {
+    const { competitions } = mergeScheduleRefresh(
+      [], [eastern(41), eastern(42)], "live_2026-26", startDate, springTrainingDays
+    );
+    for (const comp of competitions) {
+      assert.deepEqual(comp.multiNight, { nights: [41, 42] });
+    }
+  });
+
+  test("stamps night one in place when night two arrives on a later refresh", () => {
+    // The scrape only lists UPCOMING events, so the second night can land on a
+    // refresh after the first is already on the schedule.
+    const first = mergeScheduleRefresh(
+      [], [eastern(41)], "live_2026-26", startDate, springTrainingDays
+    );
+    assert.equal(first.competitions[0].multiNight, undefined);
+
+    const second = mergeScheduleRefresh(
+      first.competitions, [eastern(41), eastern(42)], "live_2026-26", startDate, springTrainingDays
+    );
+    assert.equal(second.addedCount, 1);
+    assert.deepEqual(second.competitions.map((c) => c.multiNight), [
+      { nights: [41, 42] },
+      { nights: [41, 42] },
+    ]);
+  });
+
+  test("still collapses a genuine duplicate of the same event on one day", () => {
+    const { competitions, addedCount } = mergeScheduleRefresh(
+      [], [eastern(41), eastern(41)], "live_2026-26", startDate, springTrainingDays
+    );
+    assert.equal(addedCount, 1);
+    assert.equal(competitions.length, 1);
   });
 });
 

@@ -217,6 +217,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
   const [testEmail, setTestEmail] = useState('');
   const [newsDay, setNewsDay] = useState('');
   const [summaryDay, setSummaryDay] = useState('');
+  const [rescoreDay, setRescoreDay] = useState('');
   const [sweepResult, setSweepResult] = useState(null);
   const [statsRefresh, setStatsRefresh] = useState(0);
 
@@ -320,6 +321,35 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     try {
       await callAdminFunction('manualTrigger', { jobName: jobId });
       if (jobId === 'updateEconomyStats') setStatsRefresh((n) => n + 1);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // Re-score one live-season competition day. The repair path for a night that
+  // scored against a schedule that was missing a show: fix the schedule, then
+  // re-run that exact day. force=true is required — the first run holds the
+  // day's completed lease — and it re-applies that day's coin/XP awards, so it
+  // is a deliberate, confirmed action rather than a button.
+  const handleRescoreDay = async () => {
+    const day = parseInt(rescoreDay, 10);
+    if (!day || day < 1 || day > 49) return toast.error('Enter a valid day (1-49)');
+    if (
+      !window.confirm(
+        `Re-score live season day ${day}?\n\nThis re-runs scoring for that day and RE-APPLIES its ` +
+          'coin and XP awards to every corps that scores. Only do this after fixing the data the ' +
+          'day scored against.'
+      )
+    )
+      return;
+    setLoading('rescoreDay');
+    try {
+      await callAdminFunction('manualTrigger', {
+        jobName: 'processLiveSeasonScores',
+        scoredDay: day,
+        force: true,
+      });
+      setRescoreDay('');
     } finally {
       setLoading(null);
     }
@@ -471,6 +501,40 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
                 <BookOpen className="w-3 h-3" />
               )}
               {loading === 'seasonSummary' ? 'Generating...' : 'Generate'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Re-score a live-season day (schedule/data repair path) */}
+      <div className="bg-surface-card border border-line overflow-hidden">
+        <SectionHeader title="Re-score Live Season Day" icon={RefreshCw} />
+        <div className="p-3">
+          <p className="text-[11px] text-muted mb-2">
+            Re-run scoring for one competition day (1-49) after fixing the data it scored against —
+            e.g. a show missing from the schedule. Re-applies that day&apos;s coin and XP awards.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="1"
+              max="49"
+              placeholder="Day #"
+              value={rescoreDay}
+              onChange={(e) => setRescoreDay(e.target.value)}
+              className="w-20 px-3 py-2 bg-surface-sunken border border-line text-xs text-white font-data tabular-nums focus:outline-none focus:border-interactive"
+            />
+            <button
+              onClick={handleRescoreDay}
+              disabled={loading === 'rescoreDay' || !rescoreDay || !seasonData}
+              className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-interactive/10 text-interactive border border-interactive/20 hover:bg-interactive hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading === 'rescoreDay' ? (
+                <RefreshCw className="w-3 h-3 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3 h-3" />
+              )}
+              {loading === 'rescoreDay' ? 'Scoring…' : 'Re-score'}
             </button>
           </div>
         </div>

@@ -243,12 +243,24 @@ exports.manualTrigger = onCall({
         throw new HttpsError("failed-precondition", "No active live season found.");
       }
       const seasonData = seasonDoc.data();
-      // Match whichever pipeline owns the night, including the spring-training
-      // offset: under drop scheduling a manual evening run targets TONIGHT's
-      // show date (the day the dispatcher scores); legacy uses the 2 AM-reset
-      // "yesterday" the 2 AM scheduler would.
+      // An explicit day is the repair path: a night that scored against an
+      // incomplete schedule (a show missing from schedules/{seasonUid}) can
+      // only be re-scored after the schedule is corrected, and by then
+      // "tonight" is some other day. Off-season scoring already takes a
+      // scoredDay override; this is its live-season twin. Pair it with
+      // force=true — the first run holds the day's completed lease.
+      const dayOverride = request.data.scoredDay;
+      if (dayOverride !== undefined &&
+          (!Number.isInteger(dayOverride) || dayOverride < 1 || dayOverride > 49)) {
+        throw new HttpsError("invalid-argument", "scoredDay must be an integer competition day 1-49.");
+      }
+      // Otherwise match whichever pipeline owns the night, including the
+      // spring-training offset: under drop scheduling a manual evening run
+      // targets TONIGHT's show date (the day the dispatcher scores); legacy
+      // uses the 2 AM-reset "yesterday" the 2 AM scheduler would.
       const springTrainingDays = seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS;
-      const scoredDay = (await getManualRunCalendarDay(db, seasonData)) - springTrainingDays;
+      const scoredDay = dayOverride ??
+        ((await getManualRunCalendarDay(db, seasonData)) - springTrainingDays);
       if (scoredDay < 1) {
         throw new HttpsError("failed-precondition", `Season is in spring training (competition day ${scoredDay}). No scoring yet.`);
       }
