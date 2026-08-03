@@ -1,20 +1,26 @@
-// Historical shadows chart (decision 29): the committed shadow data renders
-// as ghost lines and the player's scoreHistory as the emphasized series.
+// Historical shadows chart (decision 29): this season's drawn cast renders as
+// ghost lines and the player's scoreHistory as the emphasized series.
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import PodiumTrajectoryCard from './PodiumTrajectoryCard';
-import shadowData from '../../data/historicalShadows.json';
+import { selectSeasonShadows } from '../../utils/historicalShadows';
 
 /** @param {any} state */
 const podiumWith = (state) => ({ data: { state } });
 
 describe('PodiumTrajectoryCard', () => {
-  it('renders every committed shadow with a direct end-label', () => {
+  it('renders every drawn shadow with a direct end-label', () => {
     render(
-      <PodiumTrajectoryCard podium={podiumWith({ corpsName: 'Test Corps', scoreHistory: [] })} />
+      <PodiumTrajectoryCard
+        podium={podiumWith({
+          corpsName: 'Test Corps',
+          seasonUid: 'finale_2026-27',
+          scoreHistory: [],
+        })}
+      />
     );
-    for (const shadow of shadowData.shadows) {
+    for (const shadow of selectSeasonShadows('finale_2026-27')) {
       expect(screen.getByText(new RegExp(`${shadow.corps} '\\d{2}`))).toBeInTheDocument();
     }
     expect(screen.getByText(/Your line starts after your first scored show/)).toBeInTheDocument();
@@ -25,6 +31,7 @@ describe('PodiumTrajectoryCard', () => {
       <PodiumTrajectoryCard
         podium={podiumWith({
           corpsName: 'Test Corps',
+          seasonUid: 'finale_2026-27',
           scoreHistory: [
             { day: 10, total: 62.5 },
             { day: 17, total: 68.1 },
@@ -36,24 +43,31 @@ describe('PodiumTrajectoryCard', () => {
     expect(screen.getByText('Test Corps')).toBeInTheDocument();
   });
 
-  it('committed shadows keep the DCI shape — community corps never near the elite', () => {
-    const finals = Object.fromEntries(shadowData.shadows.map((s) => [s.corps, s.finals]));
-    expect(finals['Carolina Crown']).toBeGreaterThan(95);
-    expect(finals['Jersey Surf']).toBeLessThan(80);
-    expect(finals['Pioneer']).toBeLessThan(80);
-    for (const shadow of shadowData.shadows) {
-      expect(shadow.totals).toHaveLength(49);
-    }
+  it('draws a different cast after a season reset', () => {
+    /** @param {string} seasonUid */
+    const labels = (seasonUid) => {
+      const { container, unmount } = render(
+        <PodiumTrajectoryCard podium={podiumWith({ corpsName: 'Test Corps', seasonUid })} />
+      );
+      const text = [...container.querySelectorAll('text')].map((n) => n.textContent).join('|');
+      unmount();
+      return text;
+    };
+    expect(labels('crescendo_2026-27')).not.toBe(labels('finale_2026-27'));
   });
 
-  it('draws on the full 2000-2025 corpus, not just the 2000-2012 backfill', () => {
-    const years = shadowData.shadows.map((s) => s.year);
-    for (const year of years) {
-      expect(year).toBeGreaterThanOrEqual(2000);
-      expect(year).toBeLessThanOrEqual(2025);
+  it('the drawn cast keeps the DCI shape and spans the full 49-day season', () => {
+    const cast = selectSeasonShadows('finale_2026-27');
+    // One ghost near the top of the sheet and one down in the low 70s, so
+    // there is a line to chase at every level of the field.
+    expect(cast[0].finals).toBeGreaterThan(94.5);
+    expect(cast[cast.length - 1].finals).toBeLessThan(73.5);
+    for (const shadow of cast) {
+      expect(shadow.totals).toHaveLength(49);
+      // Drawn from the full 2000-2025 corpus, not just the 2000-2012 backfill.
+      expect(shadow.year).toBeGreaterThanOrEqual(2000);
+      expect(shadow.year).toBeLessThanOrEqual(2025);
     }
-    // At least one arc must come from the modern (post-2012) era the wider
-    // corpus unlocked — otherwise the chart quietly regressed to 2000-2012.
-    expect(years.some((y) => y > 2012)).toBe(true);
+    expect(cast.some((s) => s.year > 2012)).toBe(true);
   });
 });

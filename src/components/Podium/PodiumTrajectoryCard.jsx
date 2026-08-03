@@ -1,14 +1,16 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumTrajectoryCard — historical shadows (design §6, decision 29): your
-// season score line drawn against real corps arcs (Crown '13, Bluecoats '24,
-// Boston '13, Blue Stars '09, Mandarins, Cascades, Surf, Pioneer) from the
-// committed 2000-2025 corpus. Shadows are muted context lines identified by
+// season score line drawn against eight real corps arcs from the committed
+// 2000-2025 corpus. The cast is drawn per season from the banded pool
+// (utils/historicalShadows.js) — one arc per finals band from ~70 to ~98, no
+// repeated corps or year — so every season reset hands out new ghosts while
+// the spread stays balanced. Shadows are muted context lines identified by
 // direct end-labels, never by color; your corps is the single emphasized
 // series. Chasing a named ghost is the point.
 
 import React, { useMemo, useState } from 'react';
 import { TrendingUp } from 'lucide-react';
-import shadowData from '../../data/historicalShadows.json';
+import { selectSeasonShadows } from '../../utils/historicalShadows';
 
 const W = 960;
 const H = 240;
@@ -25,9 +27,11 @@ export default function PodiumTrajectoryCard({ podium }) {
     () => (state?.scoreHistory || []).filter((e) => e && e.day >= 1 && e.day <= 49),
     [state]
   );
+  // Re-drawn only when the season changes: the cast is this season's, and it
+  // must not reshuffle underneath the director between renders.
+  const shadows = useMemo(() => selectSeasonShadows(state?.seasonUid), [state?.seasonUid]);
 
   if (!state) return null;
-  const shadows = shadowData.shadows || [];
   if (shadows.length === 0) return null;
 
   // Y domain: fit everything visible, floored generously.
@@ -69,7 +73,7 @@ export default function PodiumTrajectoryCard({ podium }) {
           <TrendingUp className="w-3 h-3" /> Trajectory vs. history
         </span>
         <span className="text-[9px] text-muted">
-          Real DCI season arcs (2000&ndash;2025) · gray lines are the ghosts
+          Real DCI season arcs (2000&ndash;2025) · this season&rsquo;s ghosts
         </span>
       </div>
 

@@ -1,18 +1,31 @@
 /**
- * Build the historical-shadow trajectories (design §6 "historical shadows",
- * decision 29): real corps season arcs the Podium trajectory chart renders
- * as ghost lines. Modeled on a CAST of corps, not just Crown — the famous
- * climbs (Crown, Bluecoats, Boston Crusaders), the mid-pack (Mandarins,
- * Seattle Cascades, Blue Stars) and the community-corps reality (Jersey
- * Surf, Pioneer).
+ * Build the historical-shadow POOL (design §6 "historical shadows", decision
+ * 29): real corps season arcs the Podium trajectory chart renders as ghost
+ * lines behind the director's own score line.
+ *
+ * This used to emit ONE hand-picked cast of eight corps, so every director saw
+ * the same eight ghosts every season forever. It now emits a banded POOL, and
+ * the client (src/utils/historicalShadows.ts) draws eight arcs out of it keyed
+ * by seasonUid — a fresh, still-balanced cast at every season reset.
+ *
+ * The pool is bucketed into eight finals bands spanning 70-98 (BANDS below),
+ * eight arcs per band. Selection takes exactly one arc from each band, so the
+ * rendered chart always spans the full competitive spectrum: there is a ghost
+ * to chase whether you finish 71st percentile or are pushing for a medal.
+ *
+ * Eligibility is World Class only, resolved per year from the committed
+ * final_rankings_YYYY.json ranked field (falling back to the union of every
+ * ranked field for the years those files don't cover). That fence is what
+ * keeps a Division II/III sheet season — where a small corps could post a 91 —
+ * out of the same band as a World Class finalist.
  *
  * Reads the committed local corpus (pressboxImporter/output/
  * historical_scores_*.json, 2000-2025 — per-corps, per-day totals normalized
- * to competition days 1-49), picks each corps' densest representative season,
- * linearly interpolates the gaps, and writes src/data/historicalShadows.json
- * for the client chart. Pure local data; no Firestore.
+ * to competition days 1-49), linearly interpolates the gaps, and writes
+ * src/data/historicalShadows.json. Pure local data; no Firestore.
  *
  * Run:  cd functions && node src/scripts/buildHistoricalShadows.js
+ *       npx prettier --write src/data/historicalShadows.json   (from the repo root)
  */
 
 const fs = require("fs");
@@ -21,40 +34,41 @@ const path = require("path");
 const LOCAL_DATA_DIR = path.join(__dirname, "../../pressboxImporter/output");
 const OUTPUT_PATH = path.join(__dirname, "../../../src/data/historicalShadows.json");
 
-// The cast: 8 arcs across the competitive spectrum, drawn from the full
-// 2000-2025 corpus. `pick` chooses the corps' best season (elite icons) or
-// its MEDIAN season (typical year) — median also filters out Division II/III
-// sheet seasons, whose inflated scores would otherwise masquerade as a
-// community corps hitting 95. `minYear` fences off years a corps spent on the
-// Div II/III sheet.
-//
-// The tier a corps anchors is its historical identity, not necessarily where
-// it finished in 2025: Boston Crusaders and Blue Stars both climbed to the
-// elite in the modern era, so `max` would collapse them into a third and
-// fourth line clustered against Crown/Bluecoats at ~98 and erase the finalist
-// and mid-pack bands. `median` holds each corps in its representative tier so
-// the ghosts stay spread from the low-70s to ~99 — the whole point of the
-// chart is a ghost to chase at every level.
-const CAST = [
-  { corps: "Carolina Crown", tierLabel: "Elite climb", pick: "max" },
-  { corps: "Bluecoats", tierLabel: "Elite climb", pick: "max" },
-  { corps: "Boston Crusaders", tierLabel: "Finalist", pick: "median" },
-  { corps: "Blue Stars", tierLabel: "Finalist", pick: "median", minYear: 2008 },
-  { corps: "Mandarins", tierLabel: "Mid-pack", pick: "median" },
-  { corps: "Seattle Cascades", tierLabel: "Mid-pack", pick: "median" },
-  { corps: "Jersey Surf", tierLabel: "Community", pick: "median", minYear: 2010 },
-  { corps: "Pioneer", tierLabel: "Community", pick: "median" },
-];
+/**
+ * Band edges for the finals distribution, low to high: eight buckets across
+ * 70-98.5. The client picks one arc per band, which is what makes the chart's
+ * spread a property of the DATA rather than of whoever curated the cast.
+ * Anything finishing under 70 or over 98.5 is left out: below 70 the ghost is
+ * no longer a target for a Podium corps, and the 99s are three or four dynasty
+ * seasons that would crowd the top band with the same two corps.
+ */
+const BANDS = [70, 73.5, 77, 80.5, 84, 87.5, 91, 94.5, 98.5];
+/** Arcs kept per band. Eight gives the seasonal rotation room without bloating
+ *  the client bundle (the whole pool ships with the app). */
+const PER_BAND = 8;
+/** A season needs this many scored days before its shape is trustworthy. */
+const MIN_SCORED_DAYS = 15;
+/** Era split for the per-band mix, so the pool never drifts into all-2000s
+ *  arcs just because early seasons had denser score reporting. */
+const MODERN_FROM = 2013;
 
-function loadYears() {
+function loadCorpus() {
   const years = {};
+  const rankedByYear = {};
   for (const file of fs.readdirSync(LOCAL_DATA_DIR)) {
-    const match = file.match(/^historical_scores_(\d{4})\.json$/);
-    if (!match) continue;
-    const parsed = JSON.parse(fs.readFileSync(path.join(LOCAL_DATA_DIR, file), "utf8"));
-    years[match[1]] = parsed.data || [];
+    const scores = file.match(/^historical_scores_(\d{4})\.json$/);
+    if (scores) {
+      const parsed = JSON.parse(fs.readFileSync(path.join(LOCAL_DATA_DIR, file), "utf8"));
+      years[scores[1]] = parsed.data || [];
+      continue;
+    }
+    const rankings = file.match(/^final_rankings_(\d{4})\.json$/);
+    if (rankings) {
+      const parsed = JSON.parse(fs.readFileSync(path.join(LOCAL_DATA_DIR, file), "utf8"));
+      rankedByYear[rankings[1]] = new Set((parsed.data || []).map((row) => row.corps));
+    }
   }
-  return years;
+  return { years, rankedByYear };
 }
 
 /** {day -> total} observed for a corps in one year's event list. */
@@ -96,70 +110,131 @@ function interpolate(byDay) {
   return out;
 }
 
+/** Band index for a finals score, or -1 when it falls outside 70-98.5. */
+function bandFor(finals) {
+  for (let i = 0; i < BANDS.length - 1; i++) {
+    if (finals >= BANDS[i] && finals < BANDS[i + 1]) return i;
+  }
+  return -1;
+}
+
+/**
+ * Every World Class season in the corpus dense enough to draw, banded.
+ * A corps counts as World Class in a year when it appears in that year's
+ * ranked field; for the years with no rankings file (2020-2021, 2023-2024) we
+ * fall back to "has ever been ranked", which is the best the corpus supports.
+ */
+function buildCandidates({ years, rankedByYear }) {
+  const everRanked = new Set();
+  for (const set of Object.values(rankedByYear)) for (const corps of set) everRanked.add(corps);
+
+  const candidates = [];
+  for (const [year, events] of Object.entries(years)) {
+    const eligible = rankedByYear[year] || everRanked;
+    for (const corps of eligible) {
+      const byDay = observedDays(events, corps);
+      const scoredDays = Object.keys(byDay).length;
+      if (scoredDays < MIN_SCORED_DAYS) continue;
+      const totals = interpolate(byDay);
+      const finals = totals[48];
+      const band = bandFor(finals);
+      if (band < 0) continue;
+      candidates.push({ corps, year: Number(year), band, observedDays: scoredDays, finals, totals });
+    }
+  }
+  return candidates;
+}
+
+/**
+ * Reduce one band to PER_BAND arcs: distinct corps, distinct years, and an
+ * even split between the modern and classic eras. Density (scored days) breaks
+ * ties, since a denser season needs less interpolation to draw honestly.
+ */
+function pickBand(candidates) {
+  const byDensity = [...candidates].sort(
+    (a, b) => b.observedDays - a.observedDays || b.year - a.year
+  );
+  const modern = byDensity.filter((c) => c.year >= MODERN_FROM);
+  const classic = byDensity.filter((c) => c.year < MODERN_FROM);
+  const picked = [];
+  const usedCorps = new Set();
+  const usedYears = new Set();
+
+  const take = (list) => {
+    const next = list.find((c) => !usedCorps.has(c.corps) && !usedYears.has(c.year));
+    if (!next) return false;
+    picked.push(next);
+    usedCorps.add(next.corps);
+    usedYears.add(next.year);
+    return true;
+  };
+
+  // Alternate eras first so neither can monopolize the band, then top up from
+  // whatever still has distinct corps/years left.
+  while (picked.length < PER_BAND) {
+    const tookModern = take(modern);
+    if (picked.length >= PER_BAND) break;
+    const tookClassic = take(classic);
+    if (!tookModern && !tookClassic) break;
+  }
+  while (picked.length < PER_BAND) {
+    // Year uniqueness is a nice-to-have inside a band (the client dedupes
+    // years across the eight it draws); corps uniqueness is not negotiable.
+    const next = byDensity.find((c) => !usedCorps.has(c.corps) && !picked.includes(c));
+    if (!next) break;
+    picked.push(next);
+    usedCorps.add(next.corps);
+    usedYears.add(next.year);
+  }
+  return picked.sort((a, b) => b.finals - a.finals);
+}
+
 function main() {
-  const years = loadYears();
-  const shadows = [];
-  for (const { corps, tierLabel, pick, minYear } of CAST) {
-    // Among adequately dense seasons (>=15 scored days, falling back to >=8
-    // when a corps never hits 15), take the corps' best or median season.
-    let candidates = [];
-    for (const minDays of [15, 8]) {
-      for (const [year, events] of Object.entries(years)) {
-        if (minYear && Number(year) < minYear) continue;
-        const byDay = observedDays(events, corps);
-        const count = Object.keys(byDay).length;
-        if (count < minDays) continue;
-        candidates.push({ year, byDay, count, finals: interpolate(byDay)[48] });
-      }
-      if (candidates.length > 0) break;
+  const corpus = loadCorpus();
+  const candidates = buildCandidates(corpus);
+  const pool = [];
+  for (let band = 0; band < BANDS.length - 1; band++) {
+    const inBand = pickBand(candidates.filter((c) => c.band === band));
+    if (inBand.length < PER_BAND) {
+      console.warn(
+        `THIN BAND ${BANDS[band]}-${BANDS[band + 1]}: only ${inBand.length} arcs available`
+      );
     }
-    candidates.sort((a, b) => a.finals - b.finals);
-    const best =
-      candidates.length === 0
-        ? null
-        : pick === "median"
-          ? candidates[Math.floor(candidates.length / 2)]
-          : candidates[candidates.length - 1];
-    if (!best) {
-      console.warn(`SKIP ${corps}: no season with >=8 scored days in the local corpus`);
-      continue;
-    }
-    const totals = interpolate(best.byDay);
-    shadows.push({
-      corps,
-      year: Number(best.year),
-      tierLabel,
-      observedDays: best.count,
-      finals: totals[48],
-      totals,
-    });
+    for (const arc of inBand) pool.push(arc);
     console.log(
-      `${corps} ${best.year}: ${best.count} scored days, ` +
-        `opener ${totals[0]} -> finals ${totals[48]}`
+      `band ${BANDS[band]}-${BANDS[band + 1]}: ` +
+        inBand.map((a) => `${a.corps} '${String(a.year).slice(2)} ${a.finals.toFixed(1)}`).join(", ")
     );
   }
-  shadows.sort((a, b) => b.finals - a.finals);
+
   fs.writeFileSync(
     OUTPUT_PATH,
     JSON.stringify(
       {
         meta: {
           note:
-            "Historical shadow trajectories (design decision 29) — real corps season " +
-            "arcs from the 2000-2025 local corpus, densest representative season per " +
-            "corps, linearly interpolated to competition days 1-49. Regenerate with " +
-            "functions/src/scripts/buildHistoricalShadows.js.",
+            "Historical shadow POOL (design decision 29) — real World Class season arcs " +
+            "from the 2000-2025 local corpus, linearly interpolated to competition days " +
+            "1-49 and bucketed into finals bands spanning 70-98. The Podium trajectory " +
+            "chart draws one arc per band, chosen by seasonUid, so the cast rotates every " +
+            "season reset. Regenerate with functions/src/scripts/buildHistoricalShadows.js.",
           generatedFrom: "pressboxImporter/output",
+          bands: BANDS,
+          perBand: PER_BAND,
         },
-        shadows,
+        pool,
       },
       null,
       2
     )
   );
-  console.log(`\nWrote ${shadows.length} shadows to ${OUTPUT_PATH}`);
+  const years = new Set(pool.map((a) => a.year));
+  const corps = new Set(pool.map((a) => a.corps));
+  console.log(
+    `\nWrote ${pool.length} pooled arcs (${corps.size} corps, ${years.size} years) to ${OUTPUT_PATH}`
+  );
 }
 
 if (require.main === module) main();
 
-module.exports = { observedDays, interpolate, CAST };
+module.exports = { observedDays, interpolate, bandFor, pickBand, BANDS, PER_BAND };
