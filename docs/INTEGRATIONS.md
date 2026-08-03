@@ -16,13 +16,13 @@ only that channel's posts. Shared plumbing lives in
 the secret definitions, the poster, the lease-guarded `postOnce`, and the
 embed helpers.
 
-| Channel            | Secret                              | Posts                                                                                                            |
-| ------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, championship-week cuts, season champions    |
+| Channel            | Secret                              | Posts                                                                                                                                               |
+| ------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, championship-week cuts, season champions                                       |
 | **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, championship-week caption windows, registration deadlines, Eastern Classic night lineups |
-| **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                                                     |
-| **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                                                  |
-| **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                                            |
+| **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                                                                                        |
+| **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                                                                                     |
+| **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                                                                               |
 
 Two rules hold across every channel:
 
@@ -236,7 +236,7 @@ my lineup frozen?" have already happened, and an Open Class director reading
   the first day changes are closed — so the closure is read before it is met.
 - **Idempotency:** one lease, `{seasonUid}_discord_champweek_day43`.
 - **Copy:** the same schedule twice, because directors ask it both ways: day by
-  day (which classes may change today) and by class (which days *my* corps may
+  day (which classes may change today) and by class (which days _my_ corps may
   change). Both are generated from `CHAMPIONSHIP_CLASS_DAYS` and
   `CHAMPIONSHIP_TRADE_LIMIT`, and the tests assert every claim against
   `getCaptionChangeWindow` itself — a post that says "open" where `saveLineup`
