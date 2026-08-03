@@ -15,6 +15,9 @@ const {
   collectEnrollees,
   snakeSplitByClass,
   computeSplit,
+  diffLineups,
+  hasLineupChange,
+  lineupIndex,
   resolveEasternNightSet,
 } = require("./easternSplit");
 
@@ -64,6 +67,40 @@ const EASTERN_SHOW = {
   eventName: "marching.art Eastern Classic",
   multiNight: { nights: [41, 42] },
 };
+
+/**
+ * Run `fn` with publishEasternPreview's two lazy dependencies stubbed: the
+ * schedule read (which would hit the real Firestore config) and the in-app
+ * notification fan-out (which needs an initialized firebase-admin). Every
+ * notification the run would send is collected into `sink`.
+ */
+async function withStubbedDeps(dayEventData, sink, fn) {
+  const stub = (path, exports) => ({ id: path, filename: path, loaded: true, exports });
+  const schedulePath = require.resolve("./seasonSchedule");
+  const notifyPath = require.resolve("./userNotifications");
+  const realSchedule = require.cache[schedulePath];
+  const realNotify = require.cache[notifyPath];
+
+  require.cache[schedulePath] = /** @type {*} */ (
+    stub(schedulePath, { getScheduleDay: async () => dayEventData })
+  );
+  require.cache[notifyPath] = /** @type {*} */ (
+    stub(notifyPath, {
+      createUserNotifications: async (_db, entries) => {
+        sink.push(...entries);
+        return { written: entries.length, skipped: 0 };
+      },
+    })
+  );
+  try {
+    return await fn();
+  } finally {
+    if (realSchedule) require.cache[schedulePath] = realSchedule;
+    else delete require.cache[schedulePath];
+    if (realNotify) require.cache[notifyPath] = realNotify;
+    else delete require.cache[notifyPath];
+  }
+}
 
 // --- pure pieces ------------------------------------------------------------
 
@@ -197,6 +234,142 @@ describe("collectEnrollees / computeSplit", () => {
     const p = seasonNightParity("s2026_summer");
     assert.equal(typeof p, "boolean");
     assert.equal(seasonNightParity("s2026_summer"), p);
+  });
+});
+
+// --- change detection -------------------------------------------------------
+
+describe("lineupIndex / diffLineups", () => {
+  const lineup = (pairs) =>
+    lineupIndex({
+      41: pairs.filter(([, night]) => night === 41).map(([key], i) => ({
+        key, uid: key.split("_")[0], corpsClass: "worldClass", corpsName: key, seed: i + 1,
+      })),
+      42: pairs.filter(([, night]) => night === 42).map(([key], i) => ({
+        key, uid: key.split("_")[0], corpsClass: "worldClass", corpsName: key, seed: i + 1,
+      })),
+    });
+
+  test("flattens both nights into one key -> placement map", () => {
+    const index = lineup([["a_worldClass", 41], ["b_worldClass", 42]]);
+    assert.equal(index["a_worldClass"].night, 41);
+    assert.equal(index["b_worldClass"].night, 42);
+    assert.equal(index["a_worldClass"].uid, "a");
+  });
+
+  test("reports moved, added and dropped corps", () => {
+    const before = lineup([["a_worldClass", 41], ["b_worldClass", 42], ["c_worldClass", 41]]);
+    const after = lineup([["a_worldClass", 42], ["b_worldClass", 42], ["d_worldClass", 41]]);
+    const changes = diffLineups(before, after);
+
+    assert.deepEqual(changes.moved.map((e) => [e.key, e.from, e.to]), [["a_worldClass", 41, 42]]);
+    assert.deepEqual(changes.added.map((e) => e.key), ["d_worldClass"]);
+    assert.deepEqual(changes.removed.map((e) => e.key), ["c_worldClass"]);
+    assert.ok(hasLineupChange(changes));
+  });
+
+  test("a pure re-seed inside the same night is NOT a change", () => {
+    // Seeds churn every time anyone's score moves; announcing that would mean
+    // an 'updated lineup' post nearly every night.
+    const before = lineupIndex({
+      41: [{ key: "a_worldClass", uid: "a", corpsClass: "worldClass", corpsName: "A", seed: 1 }],
+      42: [],
+    });
+    const after = lineupIndex({
+      41: [{ key: "a_worldClass", uid: "a", corpsClass: "worldClass", corpsName: "A", seed: 4 }],
+      42: [],
+    });
+    assert.ok(!hasLineupChange(diffLineups(before, after)));
+  });
+
+  test("no previous lineup means no change to report", () => {
+    assert.ok(!hasLineupChange(diffLineups({}, {})));
+    assert.ok(!hasLineupChange(null));
+  });
+});
+
+// --- republishing a lineup that moved ---------------------------------------
+
+describe("publishEasternPreview", () => {
+  const { publishEasternPreview } = require("./easternSplit");
+  const seasonData = { seasonUid: "s_pub" };
+  const dayEventData = { offSeasonDay: 41, shows: [EASTERN_SHOW] };
+  const roster = (n) => Array.from({ length: n }, (_, i) => ({ uid: `u${i}`, score: 80 - i }));
+
+  test("day 38 publishes revision 0; an unchanged day 39 leaves the revision alone", async () => {
+    const db = fakeDb();
+    const sink = [];
+    const snapshot = snapshotWithCorps(roster(6));
+
+    const first = await withStubbedDeps(dayEventData, sink, () =>
+      publishEasternPreview(db, seasonData, snapshot, 38)
+    );
+    assert.equal(first.revision, 0);
+    assert.equal(first.changed, true);
+    assert.equal(sink.length, 0, "nobody is told about the FIRST lineup — it is the lineup");
+
+    const second = await withStubbedDeps(dayEventData, sink, () =>
+      publishEasternPreview(db, seasonData, snapshot, 39)
+    );
+    assert.equal(second.changed, false);
+    assert.equal(second.revision, 0);
+    assert.equal(db._docs["eastern-classic/s_pub"].preview.revision, 0);
+    // Refreshed anyway, so seeds and names never go stale in the app.
+    assert.equal(db._docs["eastern-classic/s_pub"].preview.computedAfterDay, 39);
+    assert.equal(sink.length, 0);
+  });
+
+  test("a late registration re-seeds the snake: revision bumps and moved directors are told", async () => {
+    const db = fakeDb();
+    const sink = [];
+    await withStubbedDeps(dayEventData, sink, () =>
+      publishEasternPreview(db, seasonData, snapshotWithCorps(roster(6)), 38)
+    );
+    const before = db._docs["eastern-classic/s_pub"].preview.assignments;
+
+    // A top-seeded corps registers on day 39, shifting every snake index.
+    const withLatecomer = snapshotWithCorps([{ uid: "late", score: 99 }, ...roster(6)]);
+    const result = await withStubbedDeps(dayEventData, sink, () =>
+      publishEasternPreview(db, seasonData, withLatecomer, 39)
+    );
+
+    assert.equal(result.changed, true);
+    assert.equal(result.revision, 1);
+    assert.deepEqual(result.changes.added.map((e) => e.uid), ["late"]);
+    assert.ok(result.changes.moved.length > 0, "a re-seed must move somebody");
+    assert.notDeepEqual(db._docs["eastern-classic/s_pub"].preview.assignments, before);
+
+    // One inbox entry per moved corps, naming the new night, deduped per
+    // revision so a re-run cannot double-notify.
+    assert.equal(sink.length, result.changes.moved.length);
+    for (const entry of sink) {
+      assert.equal(entry.type, "eastern_night_change");
+      assert.match(entry.message, /now performs Night [12] \(Day 4[12]\)/);
+      assert.match(entry.dedupeKey, /^eastern_night_s_pub_r1_/);
+    }
+    // The corps that just joined is seeing its night for the first time.
+    assert.ok(!sink.some((entry) => entry.uid === "late"));
+  });
+
+  test("silent outside days 38-40, and never over a locked final split", async () => {
+    const sink = [];
+    for (const day of [37, 41, 42]) {
+      const db = fakeDb();
+      const result = await withStubbedDeps(dayEventData, sink, () =>
+        publishEasternPreview(db, seasonData, snapshotWithCorps(roster(4)), day)
+      );
+      assert.equal(result, null, `day ${day} must not republish`);
+      assert.deepEqual(db._docs, {});
+    }
+
+    const locked = fakeDb({
+      "eastern-classic/s_pub": { final: { assignments: { 41: [], 42: [] } } },
+    });
+    const result = await withStubbedDeps(dayEventData, sink, () =>
+      publishEasternPreview(locked, seasonData, snapshotWithCorps(roster(4)), 40)
+    );
+    assert.equal(result, null);
+    assert.equal(locked._docs["eastern-classic/s_pub"].preview, undefined);
   });
 });
 

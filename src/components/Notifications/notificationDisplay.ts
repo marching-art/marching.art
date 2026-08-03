@@ -13,6 +13,7 @@
 import {
   ArrowLeftRight,
   Bell,
+  CalendarClock,
   Check,
   Clock,
   Flame,
@@ -56,6 +57,7 @@ const DISPLAY_BY_TYPE: Record<AppNotificationType, NotificationDisplay> = {
   matchup_start: { Icon: Swords, color: 'text-purple-400', bg: 'bg-purple-500/20' },
   score_drop: { Icon: Trophy, color: 'text-blue-400', bg: 'bg-blue-500/20' },
   lineup_lock: { Icon: Clock, color: 'text-orange-400', bg: 'bg-orange-500/20' },
+  eastern_night_change: { Icon: CalendarClock, color: 'text-amber-400', bg: 'bg-amber-500/20' },
   streak_broken: { Icon: Flame, color: 'text-red-400', bg: 'bg-red-500/20' },
 };
 

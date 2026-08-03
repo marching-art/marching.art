@@ -15,6 +15,15 @@
  *   - PUBLISHED IN ADVANCE: after the day-38 nightly run a preview lineup is
  *     written to the public `eastern-classic/{seasonUid}` doc — the day-39
  *     community moment ("who got Friday?").
+ *   - REPUBLISHED WHILE IT CAN STILL MOVE: week-6 show selections stay
+ *     editable until show night, and the seeding is a snake over whoever is
+ *     enrolled — so one late registration re-seeds the corps below it and can
+ *     flip a night that was already published. The preview is therefore
+ *     recomputed after every run in the days 38-40 window. A recompute that
+ *     moves nobody between nights keeps the current `revision`; one that does
+ *     bumps it, tells the moved directors in-app, and leaves the Discord
+ *     announcer (helpers/easternClassicDiscord.js) a changed lineup to post
+ *     an update off.
  *   - PERSISTED ASSIGNMENT: the day-41 run computes the FINAL split from
  *     final enrollment and persists it; the day-42 run scores the stored
  *     complement. The v0 build recomputed the split from live enrollment on
@@ -32,6 +41,10 @@ const { logger } = require("firebase-functions/v2");
 // preview lineup (post-Atlanta standings; visible to players on day 39).
 const EASTERN_NIGHTS = [41, 42];
 const PREVIEW_TRIGGER_DAY = 38;
+// The last run that can still republish a moved lineup in time to matter: the
+// night before the event. Day 41's run computes the FINAL split, but it does
+// so while scoring night one, which is too late to warn anybody.
+const PREVIEW_THROUGH_DAY = EASTERN_NIGHTS[0] - 1;
 
 function splitDocRef(db, seasonUid) {
   return db.doc(`eastern-classic/${seasonUid}`);
@@ -130,6 +143,74 @@ function snakeSplitByClass(enrollees, nights, parity) {
   return assignments;
 }
 
+/**
+ * Flatten a night -> entries assignment map into a key -> placement index,
+ * the form both the change detector and the announcer compare on.
+ *
+ * @param {Object} assignments - {night: [{key, uid, corpsClass, corpsName, seed}]}
+ * @returns {Object} {key: {uid, corpsClass, corpsName, seed, night}}
+ */
+function lineupIndex(assignments) {
+  const lineup = {};
+  for (const [night, entries] of Object.entries(assignments || {})) {
+    for (const entry of entries || []) {
+      if (!entry || !entry.key) continue;
+      lineup[entry.key] = {
+        uid: entry.uid,
+        corpsClass: entry.corpsClass,
+        corpsName: entry.corpsName ?? null,
+        seed: entry.seed ?? null,
+        night: Number(night),
+      };
+    }
+  }
+  return lineup;
+}
+
+/**
+ * What changed between two lineups (both from `lineupIndex`).
+ *
+ * Only NIGHT membership counts as a change. Seeds churn every time anyone's
+ * season score moves — a corps sliding from seed 6 to seed 7 inside the same
+ * night is not news, and treating it as such would mean an "updated lineup"
+ * post almost every night. What a director needs to be told is that the day
+ * they're marching is no longer the day they were told.
+ *
+ * @returns {{moved: Array, added: Array, removed: Array}} Entries carry the
+ *   lineup fields plus `key`; `moved` also carries `from`/`to` nights.
+ */
+function diffLineups(previous, current) {
+  const before = previous || {};
+  const after = current || {};
+  const moved = [];
+  const added = [];
+  const removed = [];
+
+  for (const key of Object.keys(after).sort()) {
+    const entry = after[key];
+    const priorEntry = before[key];
+    if (!priorEntry) {
+      added.push({ key, ...entry });
+    } else if (priorEntry.night !== entry.night) {
+      moved.push({ key, ...entry, from: priorEntry.night, to: entry.night });
+    }
+  }
+  for (const key of Object.keys(before).sort()) {
+    if (!after[key]) removed.push({ key, ...before[key] });
+  }
+  return { moved, added, removed };
+}
+
+/** True when a diff carries anything worth telling directors about. */
+function hasLineupChange(changes) {
+  if (!changes) return false;
+  return (
+    (changes.moved || []).length > 0 ||
+    (changes.added || []).length > 0 ||
+    (changes.removed || []).length > 0
+  );
+}
+
 /** Build one split ({assignments, counts}) from current enrollment. */
 function computeSplit(profilesSnapshot, eventName, week, seasonUid, nights) {
   const enrollees = collectEnrollees(profilesSnapshot, eventName, week);
@@ -186,14 +267,70 @@ async function resolveEasternNightSet(db, seasonData, profilesSnapshot, dayEvent
   return new Set(nightEntries.map((entry) => entry.key));
 }
 
+/** "Night 1 (Day 41)" — how a night reads inside inbox prose. */
+function nightLabel(night, nights) {
+  const index = nights.indexOf(Number(night));
+  return index >= 0 ? `Night ${index + 1} (Day ${night})` : `Day ${night}`;
+}
+
 /**
- * Publish the preview lineup after the day-38 run — players see "who got
- * Friday?" on day 39. Best-effort: the caller isolates failures so the
- * nightly scorer is never at risk; the final split at day 41 does not
- * depend on the preview existing.
+ * Tell the directors whose corps just changed nights, in their own inbox.
+ *
+ * Only MOVED corps are notified. A corps that just registered is seeing its
+ * night for the first time (it was never told anything else) and a corps that
+ * dropped the show has no night to be told about — the moved ones are the
+ * only directors holding a published assignment that is now wrong.
+ *
+ * Best-effort by construction: `createUserNotifications` never throws, and
+ * the dedupe key is keyed to the revision so a re-run of the same publish
+ * overwrites rather than duplicating the inbox entry.
+ */
+async function notifyMovedDirectors(db, seasonUid, nights, revision, moved) {
+  if (!moved || moved.length === 0) return { written: 0, skipped: 0 };
+  const { createUserNotifications } = require("./userNotifications");
+  return createUserNotifications(
+    db,
+    moved.map((entry) => ({
+      uid: entry.uid,
+      type: "eastern_night_change",
+      title: "Your Eastern Classic night changed",
+      message:
+        `${entry.corpsName || "Your corps"} now performs ${nightLabel(entry.to, nights)}, ` +
+        `not ${nightLabel(entry.from, nights)}. The lineup re-seeds as corps register, ` +
+        "and one registration still covers both nights.",
+      link: "/schedule",
+      dedupeKey: `eastern_night_${seasonUid}_r${revision}_${entry.corpsClass}`,
+      metadata: {
+        seasonUid,
+        corpsClass: entry.corpsClass,
+        night: entry.to,
+        previousNight: entry.from,
+        revision,
+      },
+    }))
+  );
+}
+
+/**
+ * Publish (or republish) the preview lineup after a days-38-40 run — players
+ * see "who got Friday?" on day 39, and any re-seeding after that is
+ * republished while there is still time to act on it.
+ *
+ * The doc is refreshed on every run in the window so seeds and names stay
+ * current, but `revision` only advances when a corps actually changes nights
+ * (or joins/leaves the field). That makes the revision the thing downstream
+ * announcements key off: an unchanged night means an unchanged revision means
+ * no post and no notification.
+ *
+ * Best-effort: the caller isolates failures so the nightly scorer is never at
+ * risk; the final split at day 41 does not depend on the preview existing.
+ *
+ * @returns {Promise<?{preview: Object, revision: number, changed: boolean,
+ *   changes: ?{moved: Array, added: Array, removed: Array}}>} Null when the
+ *   day is outside the window or the season has no two-night show.
  */
 async function publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay) {
-  if (scoredDay !== PREVIEW_TRIGGER_DAY) return null;
+  if (scoredDay < PREVIEW_TRIGGER_DAY || scoredDay > PREVIEW_THROUGH_DAY) return null;
   const { getScheduleDay } = require("./seasonSchedule");
   const dayEventData = await getScheduleDay(seasonData.seasonUid, EASTERN_NIGHTS[0]);
   const show = findTwoNightShow(dayEventData);
@@ -201,32 +338,71 @@ async function publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay
   const nights = (show.multiNight && show.multiNight.nights) || EASTERN_NIGHTS;
   const week = Math.ceil(nights[0] / 7);
 
+  const ref = splitDocRef(db, seasonData.seasonUid);
+  const snapshot = await ref.get();
+  const existing = (snapshot.exists ? snapshot.data() : null) || {};
+  // A finalized split is the one the scorer uses; a preview must never be
+  // written over the top of it as though it were still in play.
+  if (existing.final && existing.final.assignments) return null;
+
+  const previous = existing.preview && existing.preview.assignments ? existing.preview : null;
   const preview = computeSplit(profilesSnapshot, show.eventName, week, seasonData.seasonUid, nights);
-  await splitDocRef(db, seasonData.seasonUid).set(
+  const changes = previous
+    ? diffLineups(lineupIndex(previous.assignments), lineupIndex(preview.assignments))
+    : null;
+  const changed = !previous || hasLineupChange(changes);
+  const revision = changed ? (previous ? (previous.revision || 0) + 1 : 0) : previous.revision || 0;
+
+  await ref.set(
     {
       seasonUid: seasonData.seasonUid,
       eventName: show.eventName,
       nights,
-      preview: { ...preview, computedAfterDay: scoredDay, publishedAt: new Date().toISOString() },
+      preview: {
+        ...preview,
+        computedAfterDay: scoredDay,
+        publishedAt: new Date().toISOString(),
+        revision,
+      },
     },
     { merge: true }
   );
+
+  if (!changed) {
+    logger.info(
+      `[eastern-split] preview refreshed after day ${scoredDay}: no night changes ` +
+        `(revision ${revision} stands).`
+    );
+    return { preview, revision, changed: false, changes };
+  }
+
   logger.info(
-    `[eastern-split] preview published after day ${scoredDay}: ` +
-      `${preview.enrolled} enrolled (${nights.map((n) => preview.counts[String(n)]).join("/")}).`
+    `[eastern-split] preview revision ${revision} published after day ${scoredDay}: ` +
+      `${preview.enrolled} enrolled (${nights.map((n) => preview.counts[String(n)]).join("/")})` +
+      (changes
+        ? `, ${changes.moved.length} moved / ${changes.added.length} added / ` +
+          `${changes.removed.length} dropped.`
+        : ".")
   );
-  return preview;
+  if (changes) {
+    await notifyMovedDirectors(db, seasonData.seasonUid, nights, revision, changes.moved);
+  }
+  return { preview, revision, changed: true, changes };
 }
 
 module.exports = {
   EASTERN_NIGHTS,
   PREVIEW_TRIGGER_DAY,
+  PREVIEW_THROUGH_DAY,
   splitDocRef,
   isTwoNightShow,
   findTwoNightShow,
   seasonNightParity,
   collectEnrollees,
   snakeSplitByClass,
+  lineupIndex,
+  diffLineups,
+  hasLineupChange,
   computeSplit,
   resolveEasternNightSet,
   publishEasternPreview,
