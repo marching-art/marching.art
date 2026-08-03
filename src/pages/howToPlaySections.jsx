@@ -82,9 +82,10 @@ const OverviewSection = () => (
     <p className="text-sm text-secondary leading-relaxed mb-4">
       marching.art is fantasy sports for the marching arts. Instead of drafting quarterbacks, you
       draft <strong className="text-white">caption performances</strong> — General Effect, Visual,
-      and Music — from 50 years of Drum Corps International history, build a lineup within a point
-      budget, and earn points from real competition scores. It is free, runs year-round, and takes
-      about two minutes to start.
+      and Music — from real Drum Corps International seasons, build a lineup within a point budget,
+      and earn points from real competition scores. Summer seasons draft the corps on tour;
+      off-seasons draft from 25+ years of DCI history. It is free, runs year-round, and takes about
+      two minutes to start.
     </p>
 
     {/* The journey, in order */}

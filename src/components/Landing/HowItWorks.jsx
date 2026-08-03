@@ -32,13 +32,13 @@ const STEPS = [
     ),
     details: [
       <>
-        Choose performers from 50+ years of{' '}
-        <JargonTooltip termKey="corps">drum corps</JargonTooltip> legends
+        Draft the <JargonTooltip termKey="corps">corps</JargonTooltip> on tour each summer, or from
+        25+ years of history off-season
       </>,
       'Stay within your point budget based on your class level',
       <>
-        Mix and match from different eras to build your dream{' '}
-        <JargonTooltip termKey="corps">corps</JargonTooltip>
+        Off-season pools mix eras, so you can build a{' '}
+        <JargonTooltip termKey="corps">corps</JargonTooltip> across decades
       </>,
     ],
   },
@@ -50,19 +50,19 @@ const STEPS = [
     iconBg: 'bg-surface-raised',
     summary: (
       <>
-        Your lineup scores when <JargonTooltip termKey="dci">DCI</JargonTooltip> performs
+        Your lineup scores on every <JargonTooltip termKey="dci">DCI</JargonTooltip> show night
       </>
     ),
     details: [
       <>
         Points are calculated from actual <JargonTooltip termKey="dci">DCI</JargonTooltip>{' '}
-        competition scores
+        competition scores — live in summer, historical off-season
       </>,
       <>
         Watch your <JargonTooltip termKey="corps">corps</JargonTooltip> climb as the season
         progresses
       </>,
-      'Scores update after every show throughout the summer',
+      'Scores drop the night of each show, year-round — the game never goes dark',
     ],
   },
   {
