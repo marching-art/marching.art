@@ -24,6 +24,7 @@ import type { LeagueNotificationType } from './league';
  *   - functions/src/scheduled/pushNotifications.js → matchup_start, score_drop,
  *     lineup_lock
  *   - functions/src/scheduled/emailNotifications.js → streak_broken
+ *   - functions/src/helpers/easternSplit.js → eastern_night_change
  * Keep this in sync when a new server writer lands; unknown types still render
  * (see notificationDisplay.ts) but lose their specific icon.
  */
@@ -31,6 +32,7 @@ export type ServerNotificationType =
   | 'matchup_start' // Weekly league matchup is about to begin
   | 'score_drop' // Last night's scores are in
   | 'lineup_lock' // Lineup lock deadline approaching
+  | 'eastern_night_change' // Eastern Classic re-seeded this corps onto the other night
   | 'streak_broken'; // Login streak ended
 
 /** Every notification `type` the inbox knows how to style. */

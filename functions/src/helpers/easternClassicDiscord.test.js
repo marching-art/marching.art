@@ -171,6 +171,76 @@ describe("Eastern Classic lineup embed", () => {
   });
 });
 
+describe("Eastern Classic lineup-update embed", () => {
+  const changes = {
+    moved: [{ ...entry("Blue Devils", "worldClass", 2), from: 41, to: 42 }],
+    added: [{ ...entry("Phantom Regiment", "worldClass", 1), night: 41 }],
+    removed: [{ ...entry("Spartans", "aClass", 2), night: 42 }],
+  };
+
+  test("names what moved, then restates the whole lineup", () => {
+    const payload = easternClassicDiscord.buildEasternUpdatePayload({
+      seasonName: "Season 12",
+      data: splitDoc(),
+      changes,
+    });
+    const embed = payload.embeds[0];
+
+    assert.match(embed.title, /lineup updated/i);
+    assert.match(embed.description, /1 corps has changed nights \(1 joined, 1 dropped\)/);
+
+    assert.deepEqual(
+      embed.fields.map((f) => f.name),
+      [
+        "🔀 Changed nights",
+        "➕ Newly registered",
+        "➖ No longer registered",
+        "Night 1 · Day 41",
+        "Night 2 · Day 42",
+      ]
+    );
+    // The actionable line: the corps and the day it now marches.
+    assert.equal(
+      embed.fields[0].value,
+      "**Blue Devils** (World Class) — now Night 2 · Day 42"
+    );
+    assert.equal(
+      embed.fields[1].value,
+      "**Phantom Regiment** (World Class) — Night 1 · Day 41"
+    );
+    assert.match(embed.fields[2].value, /Spartans\*\* \(A Class\) — withdrawn/);
+    // Still not final: the split locks from enrollment on show night.
+    assert.match(embed.footer.text, /Still a preview/);
+  });
+
+  test("empty change categories are dropped, not posted as empty fields", () => {
+    const payload = easternClassicDiscord.buildEasternUpdatePayload({
+      seasonName: "Season 12",
+      data: splitDoc(),
+      changes: { moved: changes.moved, added: [], removed: [] },
+    });
+    assert.deepEqual(
+      payload.embeds[0].fields.map((f) => f.name),
+      ["🔀 Changed nights", "Night 1 · Day 41", "Night 2 · Day 42"]
+    );
+  });
+
+  test("null when nothing material changed, or when no lineup is published", () => {
+    assert.equal(
+      easternClassicDiscord.buildEasternUpdatePayload({
+        seasonName: "S",
+        data: splitDoc(),
+        changes: { moved: [], added: [], removed: [] },
+      }),
+      null
+    );
+    assert.equal(
+      easternClassicDiscord.buildEasternUpdatePayload({ seasonName: "S", data: null, changes }),
+      null
+    );
+  });
+});
+
 describe("Eastern Classic announcement window", () => {
   test("posts on the publishing night, once", async () => {
     const db = fakeDb({ "eastern-classic/s12": splitDoc() });
@@ -188,13 +258,12 @@ describe("Eastern Classic announcement window", () => {
     assert.equal(posts.length, 1);
     assert.match(posts[0].payload.embeds[0].title, /Eastern Classic/);
 
-    // Every later night in the window contends for the same lease.
+    // Every later night re-reads the split. Nothing moved, so nothing is said.
     const second = await easternClassicDiscord.announceEasternPreview(db, {
       ...args,
       competitionDay: 39,
     });
-    assert.equal(second.status, "skipped");
-    assert.equal(second.reason, "completed");
+    assert.equal(second.status, "unchanged");
     assert.equal(posts.length, 1);
   });
 
@@ -238,6 +307,137 @@ describe("Eastern Classic announcement window", () => {
       assert.equal(result.status, "out-of-window", `day ${competitionDay} should be silent`);
     }
     assert.equal(posts.length, 0);
+  });
+
+  test("a re-seeded lineup posts an update naming the corps that moved", async () => {
+    const docs = { "eastern-classic/s12": splitDoc() };
+    const db = fakeDb(docs);
+    const posts = [];
+    const args = {
+      seasonUid: "s12",
+      seasonName: "Season 12",
+      webhookUrl: "https://discord.test/hook",
+      fetchImpl: recordingFetch(posts),
+    };
+
+    const first = await easternClassicDiscord.announceEasternPreview(db, {
+      ...args,
+      competitionDay: 38,
+    });
+    assert.equal(first.status, "posted");
+    // What was announced is remembered, so the next night diffs against the
+    // lineup directors were actually shown.
+    assert.equal(docs["eastern-classic/s12"].announced.lineup["blue devils_worldClass"].night, 41);
+
+    // Day 39: the republish swapped Blue Devils onto night two.
+    docs["eastern-classic/s12"].preview = {
+      assignments: {
+        41: [entry("Carolina Crown", "worldClass", 4), entry("Raiders", "aClass", 1)],
+        42: [
+          entry("Blue Devils", "worldClass", 1),
+          entry("Bluecoats", "worldClass", 2),
+          entry("Boston Crusaders", "worldClass", 3),
+          entry("Spartans", "aClass", 2),
+        ],
+      },
+      counts: { 41: 2, 42: 4 },
+      enrolled: 6,
+      revision: 1,
+    };
+
+    const update = await easternClassicDiscord.announceEasternPreview(db, {
+      ...args,
+      competitionDay: 39,
+    });
+    assert.equal(update.status, "posted");
+    assert.equal(update.kind, "eastern-lineup-update");
+    assert.equal(update.moved, 1);
+    assert.equal(posts.length, 2);
+    assert.match(posts[1].payload.embeds[0].title, /lineup updated/i);
+    assert.equal(
+      posts[1].payload.embeds[0].fields[0].value,
+      "**Blue Devils** (World Class) — now Night 2 · Day 42"
+    );
+
+    // Day 40 with nothing further changed: silent, and no second update.
+    const quiet = await easternClassicDiscord.announceEasternPreview(db, {
+      ...args,
+      competitionDay: 40,
+    });
+    assert.equal(quiet.status, "unchanged");
+    assert.equal(posts.length, 2);
+  });
+
+  test("a failed update re-posts cumulatively the next night, not partially", async () => {
+    const docs = { "eastern-classic/s12": splitDoc() };
+    const db = fakeDb(docs);
+    const args = { seasonUid: "s12", seasonName: "Season 12", webhookUrl: "https://d.test/h" };
+
+    await easternClassicDiscord.announceEasternPreview(db, {
+      ...args,
+      competitionDay: 38,
+      fetchImpl: recordingFetch([]),
+    });
+
+    // Day 39 moves Blue Devils, and Discord is down.
+    docs["eastern-classic/s12"].preview = {
+      assignments: {
+        41: [entry("Carolina Crown", "worldClass", 4), entry("Raiders", "aClass", 1)],
+        42: [entry("Blue Devils", "worldClass", 1), entry("Bluecoats", "worldClass", 2)],
+      },
+      revision: 1,
+    };
+    const failed = await easternClassicDiscord.announceEasternPreview(db, {
+      ...args,
+      competitionDay: 39,
+      fetchImpl: failingFetch,
+    });
+    assert.equal(failed.status, "failed");
+
+    // Day 40 moves Raiders too. The baseline is still the announced lineup,
+    // so BOTH moves are in the post that finally lands.
+    docs["eastern-classic/s12"].preview = {
+      assignments: {
+        41: [entry("Carolina Crown", "worldClass", 4)],
+        42: [
+          entry("Blue Devils", "worldClass", 1),
+          entry("Bluecoats", "worldClass", 2),
+          entry("Raiders", "aClass", 1),
+        ],
+      },
+      revision: 2,
+    };
+    const posts = [];
+    const recovered = await easternClassicDiscord.announceEasternPreview(db, {
+      ...args,
+      competitionDay: 40,
+      fetchImpl: recordingFetch(posts),
+    });
+    assert.equal(recovered.status, "posted");
+    assert.equal(recovered.moved, 2);
+    assert.match(posts[0].payload.embeds[0].fields[0].value, /Blue Devils/);
+    assert.match(posts[0].payload.embeds[0].fields[0].value, /Raiders/);
+  });
+
+  test("a lineup announced before this code shipped adopts its baseline instead of re-posting", async () => {
+    const docs = {
+      "eastern-classic/s12": splitDoc(),
+      // The day-38 post already went out under the old, post-once behaviour.
+      "scoring_runs/s12_eastern_preview_day38": { status: "completed" },
+    };
+    const db = fakeDb(docs);
+    const posts = [];
+    const result = await easternClassicDiscord.announceEasternPreview(db, {
+      seasonUid: "s12",
+      seasonName: "Season 12",
+      competitionDay: 39,
+      webhookUrl: "https://d.test/h",
+      fetchImpl: recordingFetch(posts),
+    });
+
+    assert.equal(result.status, "skipped");
+    assert.equal(posts.length, 0, "the lineup must not be announced twice");
+    assert.ok(docs["eastern-classic/s12"].announced, "later moves are still announceable");
   });
 
   test("a season with no published preview claims no lease", async () => {

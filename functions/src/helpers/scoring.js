@@ -44,6 +44,8 @@ const {
   isTwoNightShow,
   resolveEasternNightSet,
   publishEasternPreview,
+  PREVIEW_TRIGGER_DAY,
+  PREVIEW_THROUGH_DAY,
 } = require("./easternSplit");
 
 
@@ -713,9 +715,11 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
   }
 
   // Post-day-38 (Atlanta standings final): publish the Eastern Classic
-  // night-lineup preview — the day-39 community moment. Isolated: the
-  // preview is decorative and must never fail the scoring run.
-  if (scoredDay === 38) {
+  // night-lineup preview — the day-39 community moment — and republish it on
+  // days 39-40, since late registrations re-seed the snake and can move a
+  // corps off the night it was already told it had. Isolated: the preview is
+  // decorative and must never fail the scoring run.
+  if (scoredDay >= PREVIEW_TRIGGER_DAY && scoredDay <= PREVIEW_THROUGH_DAY) {
     try {
       await publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay);
     } catch (error) {

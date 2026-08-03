@@ -256,7 +256,8 @@ score and snaked so the nights carry equal strength
 computed after the **day-38** scoring run and published to
 `eastern-classic/{seasonUid}` — the "who got Friday?" moment the design calls
 for. Until this post existed it landed silently, and a director only learned
-their night by opening the app.
+their night by opening the app. The lineup keeps moving after that first post,
+so the announcement is not a one-shot: see "When the seeding moves" below.
 
 - **Code:** `functions/src/helpers/easternClassicDiscord.js` (embed + post),
   wired as `runEasternClassicStage` in
@@ -279,12 +280,29 @@ their night by opening the app.
   or drops on days 39-40 is re-seeded. The embed's footer states this outright;
   copy that read as final would make a late registrant think the post had lost
   them.
-- **Idempotency + window:** one lease, `{seasonUid}_eastern_preview_day38`,
-  contended by every night in the **days 38-40** window. The normal case posts
-  on day 38; a night when Discord was unreachable (or when the preview landed
-  late) re-claims the failed lease and re-posts the next night, still ahead of
-  the event. Outside the window, and before the preview exists, the stage is a
-  no-op that claims nothing.
+- **When the seeding moves, it says so again.** The split is a snake over
+  whoever is enrolled, so one registration on day 39 re-seeds everyone below it
+  and can flip nights that were already announced. `publishEasternPreview` now
+  recomputes the preview after **every** run in the days-38-40 window and bumps
+  `preview.revision` when a corps actually changes nights (a pure re-seed
+  inside the same night is not a change — seeds churn nightly, and announcing
+  that would mean a post almost every night). The stage then posts an
+  **update** embed: a `🔀 Changed nights` field naming each corps and the day
+  it now marches, `➕`/`➖` fields for joins and drops, and the full current
+  lineup so the post stands alone. Directors whose corps moved also get an
+  `eastern_night_change` entry in their in-app inbox, deduped per revision.
+- **Idempotency + window:** the first post takes one lease,
+  `{seasonUid}_eastern_preview_day38`, contended by every night in the **days
+  38-40** window; a night when Discord was unreachable (or when the preview
+  landed late) re-claims the failed lease and re-posts the next night, still
+  ahead of the event. Updates take `{seasonUid}_eastern_update_day{N}` — at
+  most one per night. Each successful post records what it announced on the
+  split doc (`announced.lineup`), and the next run diffs the live lineup
+  against **that**, not against the previous revision: a failed update
+  therefore collapses into one cumulative update the next night instead of
+  losing a change nobody ever saw. Outside the window, before the preview
+  exists, and on a night when nothing moved, the stage is a no-op that claims
+  nothing.
 - **Setup:** shares `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` with the Fan Favorite
   posts — no new secret. The `scoreDropDispatcher` job declares it alongside
   the scores webhook.

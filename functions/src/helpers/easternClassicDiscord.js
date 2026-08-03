@@ -24,13 +24,38 @@
  * with the day-38 score drop, but a night when Discord was unreachable (or
  * when the preview landed late) self-heals on the next run, still ahead of
  * the event.
+ *
+ * THE SEEDING MOVES AFTER THE POST. Week-6 selections stay editable, and the
+ * split is a snake over whoever is enrolled — so one registration on day 39
+ * re-seeds everyone below it and can flip nights that were already announced.
+ * The first post's footer admitted this ("corps that join or drop before show
+ * night are re-seeded") and then left the director to go and check. So this
+ * module does not post once: after each republish (`easternSplit
+ * .publishEasternPreview`) it compares the live lineup against the one it
+ * actually announced — kept on the split doc as `announced.lineup` — and when
+ * a corps has changed nights, joined or dropped, it posts an UPDATE naming
+ * exactly what moved. Diffing against what was announced, rather than against
+ * the previous revision, is what makes a night of Discord downtime collapse
+ * into one cumulative update instead of losing a change nobody ever saw.
  */
 
 const { COLORS, clampName, joinLines, link, payloadOf, postOnce } = require("./discord");
-const { EASTERN_NIGHTS, PREVIEW_TRIGGER_DAY, splitDocRef } = require("./easternSplit");
+const {
+  EASTERN_NIGHTS,
+  PREVIEW_TRIGGER_DAY,
+  diffLineups,
+  hasLineupChange,
+  lineupIndex,
+  splitDocRef,
+} = require("./easternSplit");
 
 /** Log tag on every announcement this module posts. */
 const TAG = "eastern-classic";
+
+// The two posts this module can make: the first read-out of a published
+// lineup, and every later "it moved" correction to it.
+const PREVIEW_KIND = "eastern-preview";
+const UPDATE_KIND = "eastern-lineup-update";
 
 // The preview is written by the day-38 run; the post stops being news once
 // the first night is actually scored.
@@ -53,6 +78,12 @@ const CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport"];
 const ROSTER_CHARS_MAX = 170;
 
 const SCHEDULE_URL = link("/schedule");
+
+/** "Night 1 · Day 41" — one label shape across every field in every post. */
+function nightLabel(night, nights) {
+  const index = nights.indexOf(Number(night));
+  return index >= 0 ? `Night ${index + 1} · Day ${night}` : `Day ${night}`;
+}
 
 /**
  * Corps names for one class, strongest seed first, clamped to a character
@@ -179,11 +210,123 @@ function buildEasternPreviewPayload({ seasonName, data }) {
   });
 }
 
+/** Strongest class first, strongest seed first — the order every list uses. */
+function byClassThenSeed(a, b) {
+  const rankA = CLASS_ORDER.indexOf(a.corpsClass);
+  const rankB = CLASS_ORDER.indexOf(b.corpsClass);
+  const orderA = rankA === -1 ? CLASS_ORDER.length : rankA;
+  const orderB = rankB === -1 ? CLASS_ORDER.length : rankB;
+  return orderA - orderB || (a.seed || 0) - (b.seed || 0) || a.key.localeCompare(b.key);
+}
+
+/** "**Blue Devils** (World Class)" — the subject of every change line. */
+function changeSubject(entry) {
+  const name = clampName(entry.corpsName || "Unnamed corps", 40);
+  return `**${name}** (${CLASS_LABELS[entry.corpsClass] || entry.corpsClass})`;
+}
+
 /**
- * Announce the published night lineups, once, any time in the days-38-40
- * window. Reads `eastern-classic/{seasonUid}`; a season with no preview yet
- * (or no Eastern Classic at all) is a no-op that claims no lease, so the
- * nightly stage can call this unconditionally.
+ * One "what changed" field, or null when that category is empty.
+ *
+ * @param {string} name - Field heading.
+ * @param {Array<Object>} entries - Lineup diff entries.
+ * @param {(entry: Object) => string} describe - The tail of each line.
+ */
+function buildChangeField(name, entries, describe) {
+  if (!entries || entries.length === 0) return null;
+  const lines = [...entries]
+    .sort(byClassThenSeed)
+    .map((entry) => `${changeSubject(entry)} — ${describe(entry)}`);
+  return { name, value: joinLines(lines) };
+}
+
+/**
+ * The "the lineup moved" embed: what changed since the last post, then the
+ * full current lineup so the post stands on its own.
+ *
+ * @param {Object} params
+ * @param {string} params.seasonName
+ * @param {Object} params.data - The `eastern-classic/{seasonUid}` doc.
+ * @param {{moved: Array, added: Array, removed: Array}} params.changes - The
+ *   diff between the announced lineup and the live one.
+ * @returns {?Object} Webhook payload, or null when nothing material changed.
+ */
+function buildEasternUpdatePayload({ seasonName, data, changes }) {
+  const assignments = data && data.preview && data.preview.assignments;
+  if (!assignments || !hasLineupChange(changes)) return null;
+
+  const nights =
+    Array.isArray(data.nights) && data.nights.length === 2 ? data.nights : EASTERN_NIGHTS;
+  const podiumCounts = podiumCountsByNight(data.podium && data.podium.assignments, nights);
+  const perNight = nights.map((night) => ({
+    night,
+    entries: assignments[String(night)] || [],
+    podium: podiumCounts[String(night)] || 0,
+  }));
+
+  const eventName = clampName(data.eventName || "marching.art Eastern Classic", 80);
+  const { moved = [], added = [], removed = [] } = changes;
+  // The headline number is the moved corps: those are the directors holding a
+  // night that is no longer theirs. Joins and drops are the reason it moved.
+  const headline = moved.length > 0
+    ? `${moved.length} corps ${moved.length === 1 ? "has" : "have"} changed nights`
+    : "the field has changed";
+  const reasons = [
+    added.length > 0 ? `${added.length} joined` : null,
+    removed.length > 0 ? `${removed.length} dropped` : null,
+  ].filter(Boolean);
+
+  const fields = [
+    buildChangeField("🔀 Changed nights", moved, (entry) => `now ${nightLabel(entry.to, nights)}`),
+    buildChangeField("➕ Newly registered", added, (entry) => nightLabel(entry.night, nights)),
+    buildChangeField("➖ No longer registered", removed, () => "withdrawn from the event"),
+    ...perNight.map((n, i) => buildNightField(n.night, i, n.entries, n.podium)),
+  ].filter(Boolean);
+
+  return payloadOf({
+    title: "🔄 Eastern Classic lineup updated — check your night",
+    url: SCHEDULE_URL,
+    description:
+      `${seasonName} — since the lineup was posted, ${headline}` +
+      `${reasons.length > 0 ? ` (${reasons.join(", ")})` : ""}. ${eventName} seeds by season ` +
+      "score and splits the field so both nights carry equal strength, so a corps joining or " +
+      "leaving re-seeds the corps around it. Here is where every corps stands now.",
+    color: COLORS.lineup,
+    fields,
+    footer: {
+      text:
+        "Still a preview — the final split is locked from enrollment on show night. " +
+        "One registration covers both nights.",
+    },
+  });
+}
+
+/**
+ * Remember the lineup this module just put on the channel, so the next run
+ * diffs against what directors were actually told rather than against
+ * whatever the split doc happened to hold.
+ */
+async function recordAnnouncedLineup(ref, preview, lineup) {
+  await ref.set(
+    {
+      announced: {
+        revision: preview.revision || 0,
+        postedAt: new Date().toISOString(),
+        lineup,
+      },
+    },
+    { merge: true }
+  );
+}
+
+/**
+ * Announce the published night lineups any time in the days-38-40 window —
+ * the first time as a lineup post, and after that as an update whenever the
+ * re-seeded lineup no longer matches the one that was announced.
+ *
+ * Reads `eastern-classic/{seasonUid}`; a season with no preview yet (or no
+ * Eastern Classic at all) is a no-op that claims no lease, so the nightly
+ * stage can call this unconditionally.
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {Object} params
@@ -198,44 +341,84 @@ async function announceEasternPreview(
   db,
   { seasonUid, seasonName, competitionDay, webhookUrl, fetchImpl }
 ) {
-  const kind = "eastern-preview";
   if (
     typeof competitionDay !== "number" ||
     competitionDay < ANNOUNCE_FROM_DAY ||
     competitionDay > ANNOUNCE_THROUGH_DAY
   ) {
-    return { kind, status: "out-of-window", competitionDay };
+    return { kind: PREVIEW_KIND, status: "out-of-window", competitionDay };
   }
 
-  const snapshot = await splitDocRef(db, seasonUid).get();
-  const payload = buildEasternPreviewPayload({
-    seasonName,
-    data: snapshot.exists ? snapshot.data() : null,
-  });
-  if (!payload) return { kind, status: "not-published", competitionDay };
+  const ref = splitDocRef(db, seasonUid);
+  const snapshot = await ref.get();
+  const data = snapshot.exists ? snapshot.data() : null;
+  const preview = data && data.preview;
+  if (!preview || !preview.assignments) {
+    return { kind: PREVIEW_KIND, status: "not-published", competitionDay };
+  }
+  const lineup = lineupIndex(preview.assignments);
+  const announced = data.announced && data.announced.lineup ? data.announced.lineup : null;
 
-  return postOnce(db, {
-    kind,
+  if (!announced) {
+    const payload = buildEasternPreviewPayload({ seasonName, data });
+    if (!payload) return { kind: PREVIEW_KIND, status: "not-published", competitionDay };
+    const result = await postOnce(db, {
+      kind: PREVIEW_KIND,
+      tag: TAG,
+      leaseKey: `${seasonUid}_eastern_preview`,
+      // Keyed to the publishing day, not tonight's, so every night in the
+      // window contends for the same lease and only the first one posts.
+      leaseDay: PREVIEW_TRIGGER_DAY,
+      payload,
+      webhookUrl,
+      fetchImpl,
+    });
+    // "completed" means a run before this code shipped already posted the
+    // lineup without leaving a baseline behind. Adopt the current one so the
+    // season still gets its updates, rather than re-posting the lineup.
+    if (result.status === "posted" || result.reason === "completed") {
+      await recordAnnouncedLineup(ref, preview, lineup);
+    }
+    return result;
+  }
+
+  const changes = diffLineups(announced, lineup);
+  if (!hasLineupChange(changes)) {
+    return { kind: UPDATE_KIND, status: "unchanged", competitionDay };
+  }
+
+  const payload = buildEasternUpdatePayload({ seasonName, data, changes });
+  if (!payload) return { kind: UPDATE_KIND, status: "not-published", competitionDay };
+  const result = await postOnce(db, {
+    kind: UPDATE_KIND,
     tag: TAG,
-    leaseKey: `${seasonUid}_eastern_preview`,
-    // Keyed to the publishing day, not tonight's, so every night in the
-    // window contends for the same lease and only the first one posts.
-    leaseDay: PREVIEW_TRIGGER_DAY,
+    // One update per night at most. A failed post leaves the baseline alone,
+    // so the next night re-diffs from the same place and posts one cumulative
+    // update instead of dropping the change.
+    leaseKey: `${seasonUid}_eastern_update`,
+    leaseDay: competitionDay,
     payload,
     webhookUrl,
     fetchImpl,
   });
+  if (result.status === "posted") await recordAnnouncedLineup(ref, preview, lineup);
+  return { ...result, moved: changes.moved.length };
 }
 
 module.exports = {
   TAG,
+  PREVIEW_KIND,
+  UPDATE_KIND,
   ANNOUNCE_FROM_DAY,
   ANNOUNCE_THROUGH_DAY,
   CLASS_LABELS,
+  nightLabel,
   rosterNames,
   seededByClass,
   podiumCountsByNight,
   buildNightField,
+  buildChangeField,
   buildEasternPreviewPayload,
+  buildEasternUpdatePayload,
   announceEasternPreview,
 };
