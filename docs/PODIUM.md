@@ -1548,12 +1548,15 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     pro-rata salary + 25% buyout premium (a sink — no player-to-player CC surface), the seller
     recoups the remainder. Retraining moves a person to a new specialty for life (half boost for
     the rest of that season). The 3-day clinician stays as-is.
-29. **Historical shadows ship as a CAST, not just Crown**: 8 committed real season arcs from the
-    2000-2025 corpus (Crown '13, Bluecoats '24, Boston '13, Blue Stars '09, Mandarins '14,
-    Cascades '16, Surf '13, Pioneer '04 — best season for the two elite icons, median season for
-    the rest, which also filters Div II sheet artifacts and holds each corps in its historical
-    tier even where it has since climbed to the elite). Rendered as muted ghost lines under the
-    corps' own score line (state.scoreHistory) in the Podium zone.
+29. **Historical shadows ship as a ROTATING CAST, not just Crown**: the build script
+    (`functions/src/scripts/buildHistoricalShadows.js`) mines the 2000-2025 corpus for World
+    Class season arcs — eligibility resolved per year from that year's `final_rankings` field, so
+    Div II/III sheet artifacts never land next to a finalist — and buckets them into 8 finals
+    bands spanning 70-98, 8 arcs per band. The client (`src/utils/historicalShadows.ts`) draws
+    exactly ONE arc per band, seeded by `seasonUid`: the cast rotates at every season reset while
+    the ghosts always ladder from ~70 to ~98, and no corps or year repeats inside a cast (a
+    deterministic backtracking search, not a greedy pass, is what guarantees that). Rendered as
+    muted ghost lines under the corps' own score line (state.scoreHistory) in the Podium zone.
 30. **Fan Favorite is a two-level ballot** (resolves gap §14.1.5): prelims at each major (3-day
     window, one vote per signed-in user — fans included — for a Podium corps that performed),
     top 3 per major advance; the finals ballot runs Championship Week; the winner is crowned at
