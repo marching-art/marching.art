@@ -98,6 +98,25 @@ function formatShowStart(show) {
 // URGENCY TRIGGERS HOOK
 // =============================================================================
 
+/**
+ * Is the game currently running a live (summer) season?
+ *
+ * The `game-settings/season` doc's canonical field is `status`
+ * ('live-season' | 'off-season') — that is what both season creators in
+ * `functions/src/helpers/season.js` actually write, and what seasonStore reads.
+ * This hook used to key off `seasonData.seasonType`, a field nothing ever
+ * writes, so every consumer saw 'off' year-round: the season-progress trigger
+ * and SeasonCountdown could never fire, and live/off-season copy could not be
+ * told apart. Read `status` first and keep `seasonType` as a fallback in case a
+ * future doc carries it.
+ *
+ * @param {Object|null} seasonData
+ * @returns {boolean}
+ */
+function isLiveSeasonDoc(seasonData) {
+  return seasonData?.status === 'live-season' || seasonData?.seasonType === 'live';
+}
+
 export function useUrgencyTriggers() {
   // Season data from global store. currentDay/currentWeek are derived once in
   // the store from the canonical season clock (utils/seasonProgress) — read
@@ -114,6 +133,7 @@ export function useUrgencyTriggers() {
 
   // Calculate all urgency triggers
   const triggers = useMemo(() => {
+    const isLive = isLiveSeasonDoc(seasonData);
     const result = {
       // Primary triggers (shown prominently)
       primary: null,
@@ -131,7 +151,7 @@ export function useUrgencyTriggers() {
       nextShowStartLabel: null,
 
       // Season info
-      seasonType: seasonData?.seasonType || 'off',
+      seasonType: isLive ? 'live' : 'off',
       currentWeek: 0,
       currentDay: 0,
       weeksRemaining: weeksRemaining || 0,
@@ -205,16 +225,21 @@ export function useUrgencyTriggers() {
     // 1. LIVE SHOWS NOW (highest priority) — only when a show is genuinely on the
     //    field right now. Count reflects shows actually performing, not every show
     //    dated today. Scores archive overnight, so the copy says "performing now".
+    //    Off-season shows aren't corps on a field: the schedule is generated and
+    //    scored from historical results, so the copy must not claim a live tour.
     if (result.isLiveShowNow) {
       // liveShows is populated when we have real timing; fall back to today's count
       // for the unenriched evening-heuristic path.
       const liveCount = result.liveShows.length || result.showsToday.length;
+      const plural = liveCount > 1 ? 's' : '';
       triggers.push({
         id: 'live_now',
         level: URGENCY_LEVELS.HIGH,
         type: 'live',
-        message: `${liveCount} show${liveCount > 1 ? 's' : ''} performing now`,
-        subMessage: 'Live from the DCI tour',
+        message: isLive
+          ? `${liveCount} show${plural} performing now`
+          : `${liveCount} show${plural} scoring tonight`,
+        subMessage: isLive ? 'Live from the DCI tour' : 'Off-season — scored from DCI history',
         icon: 'activity',
         pulse: true,
       });
@@ -225,7 +250,7 @@ export function useUrgencyTriggers() {
         id: 'shows_today',
         level: URGENCY_LEVELS.HIGH,
         type: 'show_day',
-        message: 'Live scores tonight',
+        message: isLive ? 'Live scores tonight' : 'Scores drop tonight',
         // Prefer the real first-show time when we scraped it; otherwise fall back
         // to a simple count of today's shows.
         subMessage: result.nextShowStartLabel
@@ -289,14 +314,16 @@ export function useUrgencyTriggers() {
       }
     }
 
-    // 7. SEASON PROGRESS (informational)
-    if (result.currentWeek > 0 && seasonData.seasonType === 'live') {
+    // 7. SEASON PROGRESS (informational) — live season only, matching the
+    //    original intent. This branch was previously unreachable because it
+    //    tested the never-written `seasonType` field.
+    if (result.currentWeek > 0 && isLive) {
       triggers.push({
         id: 'season_progress',
         level: URGENCY_LEVELS.LOW,
         type: 'progress',
         message: `Week ${result.currentWeek} of ${seasonData.totalWeeks || 7}`,
-        subMessage: seasonData.seasonType === 'live' ? 'Live Season' : 'Off-Season',
+        subMessage: 'Live Season',
         icon: 'trending-up',
         pulse: false,
       });

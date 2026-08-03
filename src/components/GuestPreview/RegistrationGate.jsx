@@ -57,7 +57,7 @@ const GATE_CONFIGS = {
     iconBg: 'bg-orange-500/20',
     title: 'Build Your Corps',
     description: 'Create a free account to draft your own lineup and track scores.',
-    benefit: 'Pick from 50+ years of DCI legends',
+    benefit: 'Draft real DCI corps seasons, priced on real results',
     ctaText: 'Create Your Corps',
   },
 

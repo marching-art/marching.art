@@ -93,11 +93,16 @@ const HeroBanner = ({ onDismiss }) => {
               </span>
             </Heading>
 
-            {/* Subhead */}
+            {/* Subhead — the draft pool is the season's dci-data corpsValues:
+                the touring corps during a live season, and a pool drawn from
+                the historical final_rankings corpus (2000–present) off-season.
+                Keep this copy matched to that; it must not promise a span the
+                data doesn't cover. */}
             <p className="text-base lg:text-lg text-muted mb-6 max-w-xl">
-              Build your dream <JargonTooltip termKey="corps">corps</JargonTooltip> from 50 years of{' '}
-              <JargonTooltip termKey="dci">DCI</JargonTooltip> history. Earn points from real show
-              scores. Climb the leaderboard.
+              Build your dream <JargonTooltip termKey="corps">corps</JargonTooltip> from real{' '}
+              <JargonTooltip termKey="dci">DCI</JargonTooltip> seasons — the corps on tour each
+              summer, 25+ years of history the rest of the year. Earn points from real show scores.
+              Climb the leaderboard.
             </p>
 
             {/* Feature pills */}

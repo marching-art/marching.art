@@ -28,7 +28,7 @@ import { Heading } from '../components/ui';
 const PAGE_FAQ = [
   {
     q: 'What is fantasy drum corps?',
-    a: 'Fantasy drum corps is a fantasy sports game for the marching arts. On marching.art you draft caption performances (General Effect, Visual, Color Guard, Brass, Percussion, and more) from 50 years of DCI history, build a corps lineup within a point budget, and earn points from real competition scores as the season unfolds.',
+    a: 'Fantasy drum corps is a fantasy sports game for the marching arts. On marching.art you draft caption performances (General Effect, Visual, Color Guard, Brass, Percussion, and more) from real DCI seasons — the corps on tour each summer, or 25+ years of DCI history off-season — build a corps lineup within a point budget, and earn points from real competition scores as the season unfolds.',
   },
   {
     q: 'Is marching.art free to play?',
@@ -69,7 +69,7 @@ const HowToPlayPublic = () => {
   useSEO({
     title: 'How to Play Fantasy Drum Corps — Free DCI Fantasy Game | marching.art',
     description:
-      'Learn how fantasy drum corps works: draft 8 DCI captions from 50 years of history, manage a point budget, and score points from real competition results. Free to play.',
+      'Learn how fantasy drum corps works: draft 8 DCI captions from real corps seasons, manage a point budget, and score points from real competition results. Free to play.',
     path: '/how-to-play',
   });
 
@@ -92,9 +92,10 @@ const HowToPlayPublic = () => {
           Fantasy drum corps works like fantasy football for the marching arts. Instead of drafting
           quarterbacks and running backs, you draft{' '}
           <strong className="text-white">caption performances</strong> — General Effect, Visual,
-          Color Guard, Brass, Percussion, and more — from 50 years of Drum Corps International (DCI)
-          history. Your fantasy corps earns points from real competition scores, and you climb
-          leaderboards against directors worldwide.
+          Color Guard, Brass, Percussion, and more — from real Drum Corps International (DCI)
+          seasons: the corps on tour each summer, or 25+ years of DCI history off-season. Your
+          fantasy corps earns points from real competition scores, and you climb leaderboards
+          against directors worldwide.
         </p>
         <p className="text-muted mb-8">
           marching.art is free to play, runs year-round, and takes about two minutes to get started.
