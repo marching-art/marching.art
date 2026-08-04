@@ -178,5 +178,22 @@ SoundSport cannot enter the World Championship (Days 47–49) or Open/A events
 (Days 45–46). Champions receive gold/silver/bronze trophies; results feed the
 Hall of Champions and the Records Book.
 
+### Caption scores on Days 47–49
+
+The three World Championship nights are scored on **real results only** — no
+caption score is projected on them. The DCI field thins out across the week (25
+corps march Semifinals, 12 march Finals), so a lineup will usually hold corps
+that didn't march the night being scored. Those corps carry the last score they
+actually earned, used exactly as published:
+
+- A corps that placed 17th at Semifinals scores its **Semifinals** captions
+  again on Finals night.
+- A corps eliminated at Prelims carries its **Prelims** captions through both
+  Semifinals and Finals.
+
+Only a corps with no result anywhere in the season falls back to a projection,
+and the nightly run logs a warning when that happens. Days 45–46 (Open & A
+Class) use the normal scoring rules.
+
 The exact championship placement, event branding, and advancement logic live in
 `functions/src/helpers/scheduleGeneration.js` — see [`SCHEDULE_SYSTEM.md`](SCHEDULE_SYSTEM.md).

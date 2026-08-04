@@ -75,12 +75,16 @@ const regressionCache = new Map();
 // would otherwise be re-normalized millions of times in one run.
 const normalizedNameCache = new Map();
 
+// Memo for the championship carry-forward lookup (getCachedRecentScore).
+const recentScoreCache = new Map();
+
 /**
  * Clear the per-run caches. Should be called at the start of each scoring run.
  */
 function clearRegressionCache() {
   regressionCache.clear();
   normalizedNameCache.clear();
+  recentScoreCache.clear();
 }
 
 /**
@@ -237,6 +241,71 @@ function getScoreForDay(day, corps, year, caption, historicalData) {
   }
 
   return normalizedMatch;
+}
+
+/**
+ * The corps' most recent real caption score BEFORE a given day.
+ *
+ * Championship week is scored on real results only (see the carry-forward
+ * rule in scoring.js): a corps that didn't advance carries the last score it
+ * actually earned rather than being handed a projection for a night it never
+ * took the field.
+ *
+ * Strictly earlier than `day` — never a later result, so this reads the same
+ * during a live season (where only earlier days exist) as it does replaying
+ * an archived one.
+ *
+ * @param {number} day - Competition day to look back from (exclusive).
+ * @param {string} corps
+ * @param {string|number} year - historical_scores document id.
+ * @param {string} caption
+ * @param {Object} historicalData - year -> events.
+ * @returns {number|null} The score, or null if the corps has none before `day`.
+ */
+function getMostRecentScoreBeforeDay(day, corps, year, caption, historicalData) {
+  const events = historicalData[year];
+  if (!events || events.length === 0) return null;
+
+  const target = normalizeCorpsName(corps);
+  let bestDay = -Infinity;
+  let bestScore = null;
+  let bestExact = false;
+
+  for (const event of events) {
+    const eventDay = event.offSeasonDay;
+    if (eventDay == null || eventDay >= day) continue;
+
+    for (const scoreData of (event.scores || [])) {
+      const value = scoreData?.captions?.[caption];
+      if (!(value > 0)) continue;
+
+      const exact = scoreData.corps === corps;
+      if (!exact && normalizeCorpsName(scoreData.corps) !== target) continue;
+      // A later day wins; on the same day an exact name match wins.
+      if (eventDay > bestDay || (eventDay === bestDay && exact && !bestExact)) {
+        bestDay = eventDay;
+        bestScore = value;
+        bestExact = exact;
+      }
+    }
+  }
+
+  return bestScore;
+}
+
+/**
+ * Cached getMostRecentScoreBeforeDay. Championship nights resolve the same
+ * handful of (corps, caption) pairs for every lineup that picked them, and
+ * each uncached lookup scans the season, so this collapses ~40,000 scans into
+ * one per pair. Cleared with the regression cache at the start of each run.
+ */
+function getCachedRecentScore(corpsName, year, caption, day, historicalData) {
+  const cacheKey = `${corpsName}|${year}|${caption}|${day}`;
+  if (recentScoreCache.has(cacheKey)) return recentScoreCache.get(cacheKey);
+
+  const score = getMostRecentScoreBeforeDay(day, corpsName, year, caption, historicalData);
+  recentScoreCache.set(cacheKey, score);
+  return score;
 }
 
 /**
@@ -482,6 +551,8 @@ module.exports = {
   getScoreForDay,
   countDataPointsForCorps,
   countRealScoresForDay,
+  getMostRecentScoreBeforeDay,
+  getCachedRecentScore,
   projectCaptionScore,
   normalizeCorpsName,
   CAPTION_MAX,
