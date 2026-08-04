@@ -365,8 +365,26 @@ export interface FanFavoriteCandidate {
   uid: string;
   corpsName: string | null;
   division: string;
+  /** Every prelims vote the corps drew, across all three majors. */
   prelimVotes?: number;
   finalsVotes?: number;
+  /** Corps names the winner finished dead even with, when the ballot tied. */
+  tiedWith?: string[];
+}
+
+/** A row of a published tally (`prelimsResults[major]`, `finalsResults`). */
+export interface FanFavoriteResultRow {
+  uid: string;
+  corpsName: string | null;
+  division: string;
+  votes: number;
+  /** Competition place: tied corps share one, and the next corps skips it. */
+  place: number;
+  /** UIDs this row is genuinely tied with — same votes, same season record. */
+  tiedWith: string[];
+  /** Season-wide prelims votes — the first tiebreaker, shown so a broken tie
+   *  reads as a reason rather than a coin flip. */
+  seasonVotes: number;
 }
 
 export const getFanFavorite = createCallable<

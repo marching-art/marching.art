@@ -145,6 +145,45 @@ describe("Fan Favorite embeds", () => {
     assert.equal(unvoted.embeds[0].fields.length, 0);
   });
 
+  test("medals follow the row's place, so a tie doesn't print a fake podium", () => {
+    const payload = fanFavoriteDiscord.buildFinalsOpenPayload({
+      seasonName: "Season 12",
+      finalists: [{ uid: "a", corpsName: "Blue Stars", prelimVotes: 4 }],
+      prelimsResults: {
+        28: [
+          { uid: "a", corpsName: "Blue Stars", votes: 2, place: 1, seasonVotes: 2 },
+          { uid: "b", corpsName: "Colts", votes: 2, place: 1, seasonVotes: 2 },
+          // Behind a two-way tie for first, the next corps is THIRD.
+          { uid: "c", corpsName: "Cavaliers", votes: 1, place: 3, seasonVotes: 3 },
+        ],
+      },
+    });
+    const value = payload.embeds[0].fields[0].value;
+    assert.match(value, /🥇 \*\*Blue Stars\*\* — 2 votes/);
+    assert.match(value, /🥇 \*\*Colts\*\* — 2 votes/);
+    assert.ok(!value.includes("🥈"), "second place was not awarded — nobody finished second");
+    // A corps ahead of its count on the season says why it outranks a tie.
+    assert.match(value, /🥉 \*\*Cavaliers\*\* — 1 vote _\(3 votes across the majors\)_/);
+  });
+
+  test("a crown the ballot tied is announced as a tie", () => {
+    const payload = fanFavoriteDiscord.buildWinnerPayload({
+      seasonName: "Season 12",
+      winner: { corpsName: "Blue Stars", finalsVotes: 5, tiedWith: ["Colts"] },
+      finalsResults: [
+        { corpsName: "Blue Stars", votes: 5, place: 1 },
+        { corpsName: "Colts", votes: 5, place: 1 },
+      ],
+    });
+    assert.match(payload.embeds[0].description, /dead even with \*\*Colts\*\*/);
+    // An outright win is never described as a tie.
+    const outright = fanFavoriteDiscord.buildWinnerPayload({
+      seasonName: "Season 12",
+      winner: { corpsName: "Blue Stars", finalsVotes: 7 },
+    });
+    assert.ok(!outright.embeds[0].description.includes("dead even"));
+  });
+
   test("a huge ballot is truncated inside Discord's field limit", () => {
     const lines = Array.from({ length: 200 }, (_, i) => `• Corps Number ${i}`);
     const value = fanFavoriteDiscord.joinLines(lines);

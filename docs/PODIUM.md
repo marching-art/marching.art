@@ -1561,7 +1561,14 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     window, one vote per signed-in user — fans included — for a Podium corps that performed),
     top 3 per major advance; the finals ballot runs Championship Week; the winner is crowned at
     archival (season-record banner + profile trophy). Ballots private, results public, cosmetic
-    forever. **The ballot is announced where the community actually is:** each opening and each
+    forever. **Every vote counts wherever it was cast, and no placing is arbitrary:** ballots
+    rank on votes at that major, then the corps' season-wide prelims votes, then how many majors
+    those came from — so a corps polling across all three outranks one that drew the same count
+    at a single major, and a finalist's published vote total is its whole season rather than only
+    the majors it advanced from. Corps still level after all three measures are genuinely tied:
+    they share a competition place (1224), published results never cut through a tie group, and a
+    tie ON the finalist cut line advances everyone in it rather than picking between corps the
+    room rated equally. A tied crown is announced as tied. **The ballot is announced where the community actually is:** each opening and each
     result posts to Discord #announcements — prelims ballot open (with the candidate field),
     finals ballot open (with every major's prelims tally), and the crowning (with the finals
     tally). A ritual nobody is told about is a ritual nobody votes in. See

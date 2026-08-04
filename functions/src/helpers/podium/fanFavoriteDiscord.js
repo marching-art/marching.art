@@ -72,9 +72,26 @@ function votes(count) {
   return `${n} vote${n === 1 ? "" : "s"}`;
 }
 
-/** Ranked "medal — corps — votes" lines for a published tally. */
+/**
+ * Ranked "medal — corps — votes" lines for a published tally.
+ *
+ * Medals follow the row's PLACE, not its position in the array, so a
+ * three-way tie on two votes prints three golds and the next corps takes
+ * fourth. Handing out 🥇🥈🥉 by array index invented a podium out of a tie —
+ * the rows were identical and the order between them was a name sort.
+ *
+ * A tied row that outranks its neighbours on season-wide votes notes that,
+ * since otherwise two corps show the same count in different places.
+ */
 function resultLines(rows) {
-  return rows.map((row, index) => `${place(index)} **${clampName(row.corpsName)}** — ${votes(row.votes)}`);
+  return rows.map((row, index) => {
+    const rank = Number(row.place) || index + 1;
+    const season =
+      Number(row.seasonVotes) > Number(row.votes)
+        ? ` _(${votes(row.seasonVotes)} across the majors)_`
+        : "";
+    return `${place(rank - 1)} **${clampName(row.corpsName)}** — ${votes(row.votes)}${season}`;
+  });
 }
 
 /**
@@ -165,7 +182,7 @@ function buildFinalsOpenPayload({ seasonName, finalists, prelimsResults }) {
  *
  * @param {Object} params
  * @param {string} params.seasonName
- * @param {{corpsName: string, finalsVotes: number}} params.winner
+ * @param {{corpsName: string, finalsVotes: number, tiedWith?: string[]}} params.winner
  * @param {Array<{corpsName: string, votes: number}>} [params.finalsResults]
  * @returns {Object|null}
  */
@@ -181,13 +198,20 @@ function buildWinnerPayload({ seasonName, winner, finalsResults }) {
     Number(winner.finalsVotes) > 0
       ? `with ${votes(winner.finalsVotes)} in the finals`
       : "on the strength of the prelims ballots — the finals drew no votes";
+  // A dead-even finals is reported as one, not dressed up as a win.
+  const tied = (winner.tiedWith || []).filter(Boolean);
+  const tieNote =
+    tied.length > 0
+      ? ` The ballot finished dead even with ${tied.map((name) => `**${clampName(name)}**`).join(", ")} — ` +
+        `the crown goes on one plaque, but the room split it.`
+      : "";
 
   return payloadOf({
     title: `💗 ${clampName(winner.corpsName)} is the ${seasonName} Fan Favorite`,
     url: PODIUM_URL,
     description:
       `The community's ballot is closed. **${clampName(winner.corpsName)}** takes the crown ` +
-      `${margin}. The trophy goes to their director's case and onto the season record — ` +
+      `${margin}.${tieNote} The trophy goes to their director's case and onto the season record — ` +
       `hardware voted for entirely by the room.`,
     color: COLORS.fan,
     fields,
