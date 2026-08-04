@@ -7,10 +7,11 @@
  *
  * Two rules the checks follow:
  *
- *  1. Never assert an exact score. helpers/scoringMath.js adds a deliberate
- *     ±0.25 jitter to every regressed caption, so any check pinned to a number
- *     would be flaky by construction. Assert orderings, memberships, counts and
- *     conservation instead — all of which the jitter cannot move.
+ *  1. Never assert an exact score. helpers/scoringMath.js projects any caption
+ *     the corps has no real result for, and the projection model is free to
+ *     change; a check pinned to a number would break on a scoring improvement
+ *     rather than on a bug. Assert orderings, memberships, counts and
+ *     conservation instead — none of which the projection can move.
  *  2. Prefer a check that would have caught a bug the audits already found.
  *     Those are the paths with a demonstrated ability to break.
  */

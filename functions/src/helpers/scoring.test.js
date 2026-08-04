@@ -9,6 +9,9 @@ const {
   logarithmicRegression,
   getScoreForDay,
   getRealisticCaptionScore,
+  projectCaptionScore,
+  normalizeCorpsName,
+  countRealScoresForDay,
   liveSeasonYear,
 } = require("./scoring");
 
@@ -154,5 +157,178 @@ describe("getRealisticCaptionScore", () => {
       getRealisticCaptionScore("Blue Devils", 2019, "GE1", 5, historicalData),
       19.5
     );
+  });
+
+  // The rule the whole scoring run rests on: a published score is the score.
+  // No jitter, no rounding to the 0.05 grid projections use, no averaging.
+  test("never perturbs a real score, however awkward its precision", () => {
+    const historicalData = {
+      2026: [
+        { offSeasonDay: 44, scores: [{ corps: "Bluecoats", captions: { GE1: 19.637 } }] },
+      ],
+    };
+    for (let i = 0; i < 25; i++) {
+      assert.equal(
+        getRealisticCaptionScore("Bluecoats", 2026, "GE1", 44, historicalData),
+        19.637
+      );
+    }
+  });
+
+  test("projects (never returns 0) when the corps' name spelling drifted", () => {
+    const historicalData = {
+      2025: [
+        { offSeasonDay: 10, scores: [{ corps: "The Cavaliers", captions: { GE1: 15.0 } }] },
+        { offSeasonDay: 20, scores: [{ corps: "The Cavaliers", captions: { GE1: 16.2 } }] },
+        { offSeasonDay: 30, scores: [{ corps: "The Cavaliers", captions: { GE1: 17.1 } }] },
+      ],
+    };
+    const score = getRealisticCaptionScore("Cavaliers", 2025, "GE1", 35, historicalData);
+    assert.ok(score > 16 && score < 18.5, `expected a projection near the trend, got ${score}`);
+  });
+});
+
+describe("projectCaptionScore", () => {
+  // A top corps' real season: strong, improving, topping out just over 19.
+  // The old exponential-on-score fit projected 20+ for this shape from about
+  // day 45 on, and scoring.js's Math.min(20, ...) flattened every one of them
+  // to exactly 20.000 — so every lineup with a top corps in GE1 and GE2 read
+  // a perfect 40.0 General Effect.
+  const TOP_CORPS = [
+    [3, 14.2], [8, 15.1], [13, 16.0], [18, 16.8], [23, 17.4],
+    [28, 17.9], [33, 18.4], [38, 18.8], [41, 19.0],
+  ];
+
+  test("never reaches the 20-point caption ceiling, even at finals", () => {
+    for (let day = 41; day <= 49; day++) {
+      const score = projectCaptionScore(TOP_CORPS, day, `Bluecoats|2026|GE1|${day}`);
+      assert.ok(score < 20, `day ${day} projected ${score}`);
+    }
+  });
+
+  test("stays close to what the corps has actually scored", () => {
+    // Day 44 is three days past the last real result of 19.0. A projection
+    // is allowed to inch up, not to leap a full point.
+    const score = projectCaptionScore(TOP_CORPS, 44, "Bluecoats|2026|GE1|44");
+    assert.ok(score >= 18.5 && score <= 19.2, `projected ${score}`);
+  });
+
+  test("is deterministic — re-scoring a day reproduces the same number", () => {
+    const first = projectCaptionScore(TOP_CORPS, 44, "Bluecoats|2026|GE1|44");
+    for (let i = 0; i < 10; i++) {
+      assert.equal(projectCaptionScore(TOP_CORPS, 44, "Bluecoats|2026|GE1|44"), first);
+    }
+  });
+
+  test("varies between captions rather than returning one flat value", () => {
+    const ge1 = projectCaptionScore(TOP_CORPS, 44, "Bluecoats|2026|GE1|44");
+    const ge2 = projectCaptionScore(TOP_CORPS, 44, "Bluecoats|2026|GE2|44");
+    // Same history, different caption seeds: within one jitter tick of each
+    // other, but not mechanically identical.
+    assert.ok(Math.abs(ge1 - ge2) <= 0.15);
+  });
+
+  test("lands on the 0.05 grid real caption scores use", () => {
+    const score = projectCaptionScore(TOP_CORPS, 44, "Bluecoats|2026|GE1|44");
+    assert.equal(Math.round(score * 100) % 5, 0, `${score} is off-grid`);
+  });
+
+  test("a struggling corps is not dragged up toward the ceiling", () => {
+    const midCorps = [[3, 10.0], [17, 12.8], [31, 14.6], [41, 15.5]];
+    const score = projectCaptionScore(midCorps, 49, "Some Corps|2026|GE1|49");
+    assert.ok(score > 14.5 && score < 16.6, `projected ${score}`);
+  });
+
+  test("a declining corps projects down, never below zero", () => {
+    const declining = [[10, 12.0], [20, 11.0], [30, 9.5], [40, 8.0]];
+    const score = projectCaptionScore(declining, 49, "Some Corps|2026|GE1|49");
+    assert.ok(score >= 0 && score < 8.5, `projected ${score}`);
+  });
+
+  test("a single data point projects from that point, bounded", () => {
+    const score = projectCaptionScore([[10, 15.0]], 44, "Some Corps|2026|GE1|44");
+    assert.ok(score >= 14.0 && score <= 16.0, `projected ${score}`);
+  });
+
+  test("returns 0 with no data", () => {
+    assert.equal(projectCaptionScore([], 44, "x"), 0);
+  });
+
+  test("clamps source data that already sits at the ceiling", () => {
+    const perfect = [[10, 20], [20, 20], [30, 20]];
+    const score = projectCaptionScore(perfect, 44, "Some Corps|2026|GE1|44");
+    assert.ok(score < 20, `projected ${score}`);
+  });
+});
+
+describe("normalizeCorpsName", () => {
+  test("collapses casing, punctuation, accents and a leading 'The'", () => {
+    assert.equal(normalizeCorpsName("The Cavaliers"), "cavaliers");
+    assert.equal(normalizeCorpsName("Blue Devils"), "blue devils");
+    assert.equal(normalizeCorpsName("  BLUE   devils "), "blue devils");
+    assert.equal(normalizeCorpsName("Genesis"), "genesis");
+  });
+
+  test("keeps distinct corps distinct", () => {
+    assert.notEqual(normalizeCorpsName("Blue Devils B"), normalizeCorpsName("Blue Devils"));
+    assert.notEqual(normalizeCorpsName("Blue Stars"), normalizeCorpsName("Blue Knights"));
+  });
+
+  test("survives empty/missing input", () => {
+    assert.equal(normalizeCorpsName(undefined), "");
+    assert.equal(normalizeCorpsName(null), "");
+  });
+});
+
+describe("getScoreForDay name matching", () => {
+  const historicalData = {
+    2026: [
+      {
+        offSeasonDay: 44,
+        scores: [
+          { corps: "The Cavaliers", captions: { GE1: 17.5 } },
+          { corps: "Blue Devils", captions: { GE1: 19.4 } },
+        ],
+      },
+    ],
+  };
+
+  test("an exact match always wins", () => {
+    assert.equal(getScoreForDay(44, "Blue Devils", 2026, "GE1", historicalData), 19.4);
+  });
+
+  test("falls back to a normalized match when nothing matches exactly", () => {
+    assert.equal(getScoreForDay(44, "Cavaliers", 2026, "GE1", historicalData), 17.5);
+  });
+
+  test("does not match a different corps", () => {
+    assert.equal(getScoreForDay(44, "Blue Stars", 2026, "GE1", historicalData), null);
+  });
+
+  test("tolerates an event row with no scores array", () => {
+    const malformed = { 2026: [{ offSeasonDay: 44, scores: undefined }] };
+    assert.equal(getScoreForDay(44, "Blue Devils", 2026, "GE1", malformed), null);
+  });
+});
+
+describe("countRealScoresForDay", () => {
+  const historicalData = {
+    2026: [
+      { offSeasonDay: 44, scores: [{ corps: "Bluecoats" }, { corps: "Blue Devils" }] },
+      { offSeasonDay: 44, scores: [{ corps: "Bluecoats" }, { corps: "Crossmen" }] },
+      { offSeasonDay: 45, scores: [{ corps: "Boston Crusaders" }] },
+    ],
+  };
+
+  test("counts events and distinct corps for the day", () => {
+    assert.deepEqual(countRealScoresForDay(44, 2026, historicalData), { events: 2, corps: 3 });
+  });
+
+  test("reports nothing for a day with no scraped results", () => {
+    assert.deepEqual(countRealScoresForDay(48, 2026, historicalData), { events: 0, corps: 0 });
+  });
+
+  test("reports nothing for a year that was never fetched", () => {
+    assert.deepEqual(countRealScoresForDay(44, 1999, historicalData), { events: 0, corps: 0 });
   });
 });

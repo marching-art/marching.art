@@ -17,7 +17,11 @@ const {
   getRealisticCaptionScore,
   getScoreForDay,
   countDataPointsForCorps,
+  countRealScoresForDay,
   logarithmicRegression,
+  projectCaptionScore,
+  normalizeCorpsName,
+  CAPTION_MAX,
 } = require("./scoringMath");
 const {
   buildChampionshipConfig,
@@ -157,7 +161,7 @@ function scoreShowsForDay({
   // uid across every corps and show scored today. Committed as
   // captionStats.{caption} increments in commitDailyScoring.
   const captionPoints = new Map(); // uid -> { GE1: points, ... }
-  const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0 };
+  const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0, captionsAtCap: 0 };
 
   // --- ONE-TIME PROFILE PRE-SCAN (OPTIMIZATION #7) ---
   // The loop used to re-scan every profile doc for every show —
@@ -218,7 +222,14 @@ function scoreShowsForDay({
       // Hard cap each caption at 20 points. Competitive scores come ONLY
       // from the historical data — no game system (show concepts,
       // purchases, streaks) may ever modify them.
-      const captionScore = Math.min(20, baseCaptionScore);
+      //
+      // This is a data guard, not a scoring rule: real scores are already
+      // out of 20 and projections are bounded strictly below 20, so the cap
+      // should never bind. When it silently did (the old unbounded
+      // projection), every corps it touched came out at an identical 20.000
+      // — hence the count, which is surfaced as a warning by the caller.
+      const captionScore = Math.min(CAPTION_MAX, baseCaptionScore);
+      if (baseCaptionScore > CAPTION_MAX) stats.captionsAtCap++;
 
       if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
       else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -658,7 +669,14 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
   }
   // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
 
-  const getBaseCaptionScore = strategy.baseScore({ seasonData, scoredDay, historicalData });
+  // Where tonight's caption numbers came from. A live-season night whose
+  // shows were scraped should be overwhelmingly `real`; an all-projected
+  // night means the scrape didn't land before the drop and is the one thing
+  // that most needs to be visible in the logs.
+  const baseScoreSources = { real: 0, projected: 0 };
+  const getBaseCaptionScore = strategy.baseScore({
+    seasonData, scoredDay, historicalData, sources: baseScoreSources,
+  });
 
   // Eastern Classic nights: resolve the persisted snake split so day 42
   // scores the exact complement of day 41 (Phase 6.1, design §5.11). On
@@ -681,6 +699,29 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
 
   // Log scoring statistics for diagnostics
   logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
+
+  const captionLookups = baseScoreSources.real + baseScoreSources.projected;
+  if (captionLookups > 0) {
+    const realPct = Math.round((baseScoreSources.real / captionLookups) * 100);
+    logger.info(
+      `Day ${scoredDay} caption sources: ${baseScoreSources.real} real scraped ` +
+      `(${realPct}%), ${baseScoreSources.projected} projected.`
+    );
+    if (baseScoreSources.real === 0) {
+      logger.warn(
+        `Day ${scoredDay} scored entirely on projections — no scraped result matched ` +
+        `any lineup caption. If DCI published results for this date, the scrape ` +
+        `either missed the night or archived it under a different day/corps name.`
+      );
+    }
+  }
+  if (stats.captionsAtCap > 0) {
+    logger.warn(
+      `Day ${scoredDay}: ${stats.captionsAtCap} caption score(s) hit the ${CAPTION_MAX}-point ` +
+      `ceiling and were capped. Projections are bounded below the ceiling, so this ` +
+      `means the archived data itself carries an out-of-range caption value.`
+    );
+  }
 
   const { opCount, batchCount } = await commitDailyScoring({
     db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
@@ -873,26 +914,51 @@ const LIVE_SEASON_STRATEGY = {
       seasonStartDate.getUTCDate() + springTrainingDays + (scoredDay - 1),
     ));
   },
-  baseScore: ({ seasonData, scoredDay, historicalData }) => {
+  baseScore: ({ seasonData, scoredDay, historicalData, sources = null }) => {
     const currentYear = liveSeasonYear(seasonData);
+
+    // One line per night answering "did we actually have last night's scores?"
+    const coverage = countRealScoresForDay(scoredDay, currentYear, historicalData);
+    if (coverage.corps > 0) {
+      logger.info(
+        `Live day ${scoredDay}: ${coverage.events} scraped recap(s) archived for ` +
+        `${currentYear} covering ${coverage.corps} corps.`
+      );
+    } else {
+      logger.warn(
+        `Live day ${scoredDay}: no scraped results archived for ${currentYear}. ` +
+        `Every caption tonight will be projected — check the live scraper and ` +
+        `whether DCI had published this date's recap before the drop.`
+      );
+    }
+
     return (corpsName, sourceYear, caption) => {
       let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
 
-      if (baseCaptionScore === null) {
-        const currentYearDataPoints = countDataPointsForCorps(
-          corpsName, currentYear.toString(), caption, historicalData
-        );
+      if (baseCaptionScore !== null) {
+        // A real result from tonight. Used exactly as DCI published it.
+        if (sources) sources.real++;
+        return baseCaptionScore;
+      }
 
-        // OPTIMIZATION #1: Use cached regression score
-        if (currentYearDataPoints >= 3) {
-          baseCaptionScore = getCachedRegressionScore(
-            corpsName, currentYear.toString(), caption, scoredDay, historicalData
-          );
-        } else {
-          baseCaptionScore = getCachedRegressionScore(
-            corpsName, sourceYear, caption, scoredDay, historicalData
-          );
-        }
+      // The corps has no result for tonight (it wasn't at a scored show, or
+      // DCI hasn't published one). Project from its own season so far when
+      // there is enough of it, otherwise from its source year.
+      if (sources) sources.projected++;
+
+      const currentYearDataPoints = countDataPointsForCorps(
+        corpsName, currentYear.toString(), caption, historicalData
+      );
+
+      // OPTIMIZATION #1: Use cached regression score
+      if (currentYearDataPoints >= 3) {
+        baseCaptionScore = getCachedRegressionScore(
+          corpsName, currentYear.toString(), caption, scoredDay, historicalData
+        );
+      } else {
+        baseCaptionScore = getCachedRegressionScore(
+          corpsName, sourceYear, caption, scoredDay, historicalData
+        );
       }
 
       return baseCaptionScore;
@@ -1010,6 +1076,9 @@ module.exports = {
   getRealisticCaptionScore,
   getScoreForDay,
   logarithmicRegression,
+  projectCaptionScore,
+  normalizeCorpsName,
+  countRealScoresForDay,
   processAndArchiveOffSeasonScoresLogic,
   calculateCorpsStatisticsLogic,
   processAndScoreLiveSeasonDayLogic,

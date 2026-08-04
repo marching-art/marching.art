@@ -79,9 +79,10 @@ const POOL = [
  * green. Every jitter below draws from here, seeded per run and printed in the
  * report so a red run can be replayed exactly.
  *
- * (helpers/scoringMath.js adds its own ±0.25 Math.random jitter to regressed
- * captions, which the checks account for by never asserting an exact score —
- * only orderings and invariants.)
+ * (helpers/scoringMath.js projects captions a corps has no real score for.
+ * Those projections are now seeded off corps/year/caption/day rather than
+ * Math.random, so they are reproducible too — but the checks still assert
+ * only orderings and invariants, never an exact score.)
  */
 function makeRng(seed) {
   let state = seed >>> 0 || 1;
