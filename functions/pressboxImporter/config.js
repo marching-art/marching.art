@@ -23,16 +23,31 @@ const MANIFEST_PATH = path.join(__dirname, "manifest.json");
 // (see functions/src/helpers/scraping.js and masterParser.js).
 const CAPTION_KEYS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
-// Maps a (group header, caption header) pair from a 2000-2013 recap sheet to
-// a modern caption key. Group and caption text are lowercased and
-// whitespace-normalized before matching. Judge counts vary by event
-// (championships used doubled GE panels, e.g. "Visual #1"/"Visual #2");
-// multiple judge columns that resolve to the same key are averaged, matching
-// the live scraper's processCaption behavior.
+// Maps a (group header, caption header) pair from a recap sheet to a modern
+// caption key. Group and caption text are lowercased and whitespace-normalized
+// before matching. Judge counts vary by event (championships used doubled GE
+// panels, e.g. "Visual #1"/"Visual #2"); multiple judge columns that resolve
+// to the same key are averaged, matching the live scraper's processCaption
+// behavior.
+//
+// The General Effect captions are labelled two different ways across the
+// archive, and only the older one used to be recognized:
+//
+//   2000-2013   General Effect | Visual   General Effect | Music
+//   2014-2025   General Effect | 1        General Effect | 2
+//
+// DCI renamed them on the 2014 sheet. Every season from 2014 on therefore
+// parsed with GE1 = GE2 = 0 — 40% of each corps' score silently missing,
+// and invisible because parse.js only cross-checks its caption math against
+// the sheet's subtotal when all eight captions are present, which they never
+// were. "1" and "2" map to GE1/GE2 in that order, matching how the live
+// dci.org scraper keys "General Effect 1" and "General Effect 2".
 function mapCaption(group, caption) {
   if (/general effect/.test(group)) {
     if (/^visual/.test(caption)) return "GE1";
     if (/^music/.test(caption)) return "GE2";
+    if (/^1\b/.test(caption)) return "GE1";
+    if (/^2\b/.test(caption)) return "GE2";
     return null;
   }
   if (/^visual/.test(group)) {

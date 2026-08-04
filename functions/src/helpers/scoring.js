@@ -17,7 +17,11 @@ const {
   getRealisticCaptionScore,
   getScoreForDay,
   countDataPointsForCorps,
-  logarithmicRegression,
+  countRealScoresForDay,
+  getCachedRecentScore,
+  projectCaptionScore,
+  normalizeCorpsName,
+  CAPTION_MAX,
 } = require("./scoringMath");
 const {
   buildChampionshipConfig,
@@ -55,6 +59,47 @@ const {
 // must be excluded from scoring entirely — otherwise it lands in the recap and
 // standings with a meaningless 0.000.
 const LINEUP_CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
+
+// World Championship week: Prelims (47), Semifinals (48), Finals (49).
+//
+// Nothing is projected on these three nights. The championship is decided on
+// what corps actually scored, and most of the field stops competing partway
+// through it — only 25 corps march Semifinals and only 12 march Finals — so a
+// projection here would invent a championship result for a corps that was
+// already packing up. A corps with no result for the night carries the last
+// score it really earned, unmodified: the 17th-place corps scores its
+// Semifinals sheet again on Finals night, and a corps that didn't survive
+// Prelims carries its Prelims sheet through both later nights.
+//
+// Days 45 and 46 (Open and A Class Prelims/Finals) deliberately keep the
+// normal projection rules — the same argument applies to them, but the rule
+// as specified covers World Championship week.
+const CHAMPIONSHIP_CARRY_FORWARD_DAYS = new Set([47, 48, 49]);
+
+/**
+ * The score a corps carries into a championship night it has no result for:
+ * its most recent real caption score, taken verbatim.
+ *
+ * Years are tried in order, so the live season looks at the current season
+ * first and only falls back to the corps' source year when it has no
+ * current-year result at all (a corps that didn't tour).
+ *
+ * @param {string} corpsName
+ * @param {string} caption
+ * @param {number} scoredDay
+ * @param {Array<string|number>} years - Most authoritative first.
+ * @param {Object} historicalData
+ * @returns {number|null} The carried score, or null if there is nothing to carry.
+ */
+function carryForwardScore(corpsName, caption, scoredDay, years, historicalData) {
+  for (const year of years) {
+    const recent = getCachedRecentScore(
+      corpsName, String(year), caption, scoredDay, historicalData
+    );
+    if (recent !== null) return recent;
+  }
+  return null;
+}
 
 /**
  * True only when a lineup has a non-empty selection for every scoring caption.
@@ -157,7 +202,7 @@ function scoreShowsForDay({
   // uid across every corps and show scored today. Committed as
   // captionStats.{caption} increments in commitDailyScoring.
   const captionPoints = new Map(); // uid -> { GE1: points, ... }
-  const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0 };
+  const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0, captionsAtCap: 0 };
 
   // --- ONE-TIME PROFILE PRE-SCAN (OPTIMIZATION #7) ---
   // The loop used to re-scan every profile doc for every show —
@@ -218,7 +263,14 @@ function scoreShowsForDay({
       // Hard cap each caption at 20 points. Competitive scores come ONLY
       // from the historical data — no game system (show concepts,
       // purchases, streaks) may ever modify them.
-      const captionScore = Math.min(20, baseCaptionScore);
+      //
+      // This is a data guard, not a scoring rule: real scores are already
+      // out of 20 and projections are bounded strictly below 20, so the cap
+      // should never bind. When it silently did (the old unbounded
+      // projection), every corps it touched came out at an identical 20.000
+      // — hence the count, which is surfaced as a warning by the caller.
+      const captionScore = Math.min(CAPTION_MAX, baseCaptionScore);
+      if (baseCaptionScore > CAPTION_MAX) stats.captionsAtCap++;
 
       if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
       else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -658,7 +710,14 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
   }
   // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
 
-  const getBaseCaptionScore = strategy.baseScore({ seasonData, scoredDay, historicalData });
+  // Where tonight's caption numbers came from. A live-season night whose
+  // shows were scraped should be overwhelmingly `real`; an all-projected
+  // night means the scrape didn't land before the drop and is the one thing
+  // that most needs to be visible in the logs.
+  const baseScoreSources = { real: 0, projected: 0, carried: 0 };
+  const getBaseCaptionScore = strategy.baseScore({
+    seasonData, scoredDay, historicalData, sources: baseScoreSources,
+  });
 
   // Eastern Classic nights: resolve the persisted snake split so day 42
   // scores the exact complement of day 41 (Phase 6.1, design §5.11). On
@@ -681,6 +740,38 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
 
   // Log scoring statistics for diagnostics
   logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
+
+  const captionLookups =
+    baseScoreSources.real + baseScoreSources.projected + baseScoreSources.carried;
+  if (captionLookups > 0) {
+    const realPct = Math.round((baseScoreSources.real / captionLookups) * 100);
+    logger.info(
+      `Day ${scoredDay} caption sources: ${baseScoreSources.real} real scraped ` +
+      `(${realPct}%), ${baseScoreSources.carried} carried forward, ` +
+      `${baseScoreSources.projected} projected.`
+    );
+    if (baseScoreSources.real === 0 && baseScoreSources.carried === 0) {
+      logger.warn(
+        `Day ${scoredDay} scored entirely on projections — no scraped result matched ` +
+        `any lineup caption. If DCI published results for this date, the scrape ` +
+        `either missed the night or archived it under a different day/corps name.`
+      );
+    }
+    if (CHAMPIONSHIP_CARRY_FORWARD_DAYS.has(scoredDay) && baseScoreSources.projected > 0) {
+      logger.warn(
+        `Day ${scoredDay} is a championship night, which is scored on real results ` +
+        `only, but ${baseScoreSources.projected} caption(s) had neither a result for ` +
+        `tonight nor any earlier result to carry, and fell back to a projection.`
+      );
+    }
+  }
+  if (stats.captionsAtCap > 0) {
+    logger.warn(
+      `Day ${scoredDay}: ${stats.captionsAtCap} caption score(s) hit the ${CAPTION_MAX}-point ` +
+      `ceiling and were capped. Projections are bounded below the ceiling, so this ` +
+      `means the archived data itself carries an out-of-range caption value.`
+    );
+  }
 
   const { opCount, batchCount } = await commitDailyScoring({
     db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
@@ -737,9 +828,36 @@ const OFF_SEASON_STRATEGY = {
   // The actual calendar date for this off-season day (no spring training).
   recapDate: (seasonData, scoredDay) =>
     new Date(seasonData.schedule.startDate.toDate().getTime() + (scoredDay - 1) * 24 * 60 * 60 * 1000),
-  // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
-  baseScore: ({ scoredDay, historicalData }) => (corpsName, sourceYear, caption) =>
-    getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData),
+  baseScore: ({ scoredDay, historicalData, sources = null }) => {
+    const carryForwardNight = CHAMPIONSHIP_CARRY_FORWARD_DAYS.has(scoredDay);
+
+    return (corpsName, sourceYear, caption) => {
+      if (carryForwardNight) {
+        const actual = getScoreForDay(scoredDay, corpsName, sourceYear, caption, historicalData);
+        if (actual !== null) {
+          if (sources) sources.real++;
+          return actual;
+        }
+        const carried = carryForwardScore(
+          corpsName, caption, scoredDay, [sourceYear], historicalData
+        );
+        if (carried !== null) {
+          if (sources) sources.carried++;
+          return carried;
+        }
+        // Nothing to carry: the corps has no result at all this season, so
+        // the normal path below is the only thing left.
+        if (sources) sources.projected++;
+      }
+
+      // Ordinary days are deliberately uncounted here: this path resolves a
+      // real score itself when the source year has one for the day, and
+      // telling the two apart would cost the per-caption season scan the
+      // regression cache exists to avoid.
+      // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
+      return getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
+    };
+  },
 };
 
 async function processAndArchiveOffSeasonScoresLogic({ force = false, scoredDay: scoredDayOverride = null } = {}) {
@@ -873,26 +991,63 @@ const LIVE_SEASON_STRATEGY = {
       seasonStartDate.getUTCDate() + springTrainingDays + (scoredDay - 1),
     ));
   },
-  baseScore: ({ seasonData, scoredDay, historicalData }) => {
+  baseScore: ({ seasonData, scoredDay, historicalData, sources = null }) => {
     const currentYear = liveSeasonYear(seasonData);
+
+    // One line per night answering "did we actually have last night's scores?"
+    const coverage = countRealScoresForDay(scoredDay, currentYear, historicalData);
+    if (coverage.corps > 0) {
+      logger.info(
+        `Live day ${scoredDay}: ${coverage.events} scraped recap(s) archived for ` +
+        `${currentYear} covering ${coverage.corps} corps.`
+      );
+    } else {
+      logger.warn(
+        `Live day ${scoredDay}: no scraped results archived for ${currentYear}. ` +
+        `Every caption tonight will be projected — check the live scraper and ` +
+        `whether DCI had published this date's recap before the drop.`
+      );
+    }
+
     return (corpsName, sourceYear, caption) => {
       let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
 
-      if (baseCaptionScore === null) {
-        const currentYearDataPoints = countDataPointsForCorps(
-          corpsName, currentYear.toString(), caption, historicalData
-        );
+      if (baseCaptionScore !== null) {
+        // A real result from tonight. Used exactly as DCI published it.
+        if (sources) sources.real++;
+        return baseCaptionScore;
+      }
 
-        // OPTIMIZATION #1: Use cached regression score
-        if (currentYearDataPoints >= 3) {
-          baseCaptionScore = getCachedRegressionScore(
-            corpsName, currentYear.toString(), caption, scoredDay, historicalData
-          );
-        } else {
-          baseCaptionScore = getCachedRegressionScore(
-            corpsName, sourceYear, caption, scoredDay, historicalData
-          );
+      // Championship week: carry the corps' last real sheet rather than
+      // invent one for a night it did not march.
+      if (CHAMPIONSHIP_CARRY_FORWARD_DAYS.has(scoredDay)) {
+        const carried = carryForwardScore(
+          corpsName, caption, scoredDay, [currentYear, sourceYear], historicalData
+        );
+        if (carried !== null) {
+          if (sources) sources.carried++;
+          return carried;
         }
+      }
+
+      // The corps has no result for tonight (it wasn't at a scored show, or
+      // DCI hasn't published one). Project from its own season so far when
+      // there is enough of it, otherwise from its source year.
+      if (sources) sources.projected++;
+
+      const currentYearDataPoints = countDataPointsForCorps(
+        corpsName, currentYear.toString(), caption, historicalData
+      );
+
+      // OPTIMIZATION #1: Use cached regression score
+      if (currentYearDataPoints >= 3) {
+        baseCaptionScore = getCachedRegressionScore(
+          corpsName, currentYear.toString(), caption, scoredDay, historicalData
+        );
+      } else {
+        baseCaptionScore = getCachedRegressionScore(
+          corpsName, sourceYear, caption, scoredDay, historicalData
+        );
       }
 
       return baseCaptionScore;
@@ -1009,12 +1164,17 @@ module.exports = {
   simpleLinearRegression,
   getRealisticCaptionScore,
   getScoreForDay,
-  logarithmicRegression,
+  projectCaptionScore,
+  normalizeCorpsName,
+  countRealScoresForDay,
   processAndArchiveOffSeasonScoresLogic,
   calculateCorpsStatisticsLogic,
   processAndScoreLiveSeasonDayLogic,
   // Exported for unit testing the shared scoring core
   scoreShowsForDay,
+  OFF_SEASON_STRATEGY,
+  LIVE_SEASON_STRATEGY,
+  CHAMPIONSHIP_CARRY_FORWARD_DAYS,
   hasCompleteLineup,
   computeSeasonRankings,
   diffSeasonRankings,
