@@ -5,13 +5,15 @@
 // Browse all shows by week, register corps for competitions
 // Laws: Dense data, data-terminal aesthetic, mobile-optimized touch targets
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import { Calendar, Clock, Map as MapIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
 import { ShowRegistrationModal, HostEventCard } from '../components/Schedule';
+import { ModalLoadingFallback } from '../components/ui';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { formatCountdown, formatEtShort } from '../utils/seasonClock';
 import { competitionDayToDate } from '../utils/competitionCalendar';
 import { useSeasonDeadlines } from '../hooks/useSeasonClock';
@@ -19,6 +21,14 @@ import { usePodiumEnabled } from '../hooks/useFeatures';
 import { usePodium } from '../hooks/usePodium';
 import { CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import { WeekPills, ShowsList, ChampionshipWeekDisplay } from './ScheduleParts';
+
+// The tour map carries the projected US geography (~80 KB) plus the poster
+// renderer — lazy so browsing the schedule never pays for it. lazyWithRetry (not
+// raw React.lazy) so a stale chunk hash after a deploy self-recovers.
+const TourMapModal = lazyWithRetry(
+  () => import('../components/Schedule/TourMapModal'),
+  'TourMapModal'
+);
 
 // =============================================================================
 // MAIN SCHEDULE COMPONENT
@@ -30,6 +40,7 @@ const Schedule = () => {
   const [loading, setLoading] = useState(true);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
+  const [tourMapOpen, setTourMapOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(null);
 
   // Profile store - uses real-time listener for automatic updates after registration
@@ -46,6 +57,10 @@ const Schedule = () => {
   // Schedule store - pre-computed data from global listener
   const showsByWeek = useScheduleStore((state) => state.showsByWeek);
   const scheduleLoading = useScheduleStore((state) => state.loading);
+
+  // Every show of the season, flattened — the tour map plots a corps' stops
+  // across all seven weeks, not just the week being browsed.
+  const allShows = useMemo(() => Object.values(showsByWeek).flat(), [showsByWeek]);
 
   // Podium attendance lives outside the fantasy corps.selectedShows a card
   // reads, so surface it separately. Self-picks badge the SPECIFIC show (by
@@ -234,6 +249,18 @@ const Schedule = () => {
                 {registrationStats.total}
               </div>
             </div>
+
+            {/* The season as a route: every stop this director's corps play,
+                on one shareable map. */}
+            {user && (
+              <button
+                onClick={() => setTourMapOpen(true)}
+                className="h-9 px-3 flex items-center gap-1.5 border border-line text-[10px] font-bold uppercase tracking-wider text-secondary hover:border-interactive hover:text-interactive active:bg-white/5 rounded-none transition-colors"
+              >
+                <MapIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="hidden xs:inline">Tour</span> Map
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -276,6 +303,20 @@ const Schedule = () => {
         {/* Director-hosted events (all classes) — flag-gated, self-hiding */}
         {user && <HostEventCard seasonUid={seasonUid} />}
       </div>
+
+      {/* TOUR MAP */}
+      {tourMapOpen && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <TourMapModal
+            userProfile={userProfile}
+            competitions={allShows}
+            getActualDate={getActualDate}
+            seasonName={formatSeasonName?.() || ''}
+            podiumAttendance={podiumAttendance}
+            onClose={() => setTourMapOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* REGISTRATION MODAL */}
       {registrationModal && selectedShow && (
