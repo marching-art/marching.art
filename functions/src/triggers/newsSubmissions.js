@@ -10,6 +10,7 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { brevoApiKey } = require("../helpers/emailService");
 const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
+const { cloudinarySecrets } = require("../helpers/mediaService");
 const {
   AUTO_PUBLISH_THRESHOLD,
   computeNextAutoPublishAt,
@@ -249,9 +250,15 @@ exports.listPendingSubmissions = onCall(
 exports.approveSubmission = onCall(
   {
     cors: true,
-    timeoutSeconds: 120,
+    // Approving with "generate" runs two Gemini calls back to back (visual-detail
+    // extraction, then the paid image model, which itself retries a 429 up to
+    // three times 15s apart) before the upload. 120s left no headroom for that.
+    timeoutSeconds: 300,
     memory: "1GiB",
-    secrets: [geminiApiKey],
+    // Cloudinary creds are required by the image upload inside publishSubmission;
+    // without them the upload falls through to the Firebase Storage fallback and
+    // the article publishes with no image at all.
+    secrets: [geminiApiKey, ...cloudinarySecrets],
   },
   async (request) => {
     assertAdmin(request);
@@ -293,7 +300,7 @@ exports.approveSubmission = onCall(
         }
       }
 
-      const { articlePath, imageUrl: finalImageUrl } = await publishSubmission(db, {
+      const { articlePath, imageUrl: finalImageUrl, imageGenerationFailed } = await publishSubmission(db, {
         submissionRef,
         submission,
         submissionId,
@@ -327,9 +334,12 @@ exports.approveSubmission = onCall(
 
       return {
         success: true,
-        message: "Article approved and published successfully",
+        message: imageGenerationFailed
+          ? "Article published, but the AI image could not be generated. Use Regenerate Image on the article to retry."
+          : "Article approved and published successfully",
         articlePath,
         imageUrl: finalImageUrl,
+        imageGenerationFailed: !!imageGenerationFailed,
       };
     } catch (error) {
       logger.error("Error approving submission:", error);

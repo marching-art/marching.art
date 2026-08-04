@@ -88,7 +88,13 @@ const SubmissionsManagement = () => {
         imageOption: effectiveOption,
       });
       if (result.data.success) {
-        toast.success('Article approved and published!');
+        // A publish can succeed while the AI image fails; say so rather than
+        // reporting a clean success and leaving the article silently imageless.
+        if (result.data.imageGenerationFailed) {
+          toast(result.data.message, { icon: '⚠️', duration: 6000 });
+        } else {
+          toast.success('Article approved and published!');
+        }
         // Remove from list or update status
         setSubmissions((prev) => prev.filter((s) => s.id !== submission.id));
         setPreviewSubmission(null);

@@ -296,7 +296,13 @@ ${lines.join("\n")}`;
   try {
     // Pin the quality (paid) image model, matching the nightly Fantasy Daily article.
     const imageData = await generateImageWithImagen(imagePrompt, { model: PAID_IMAGE_MODEL });
-    if (!imageData) return null;
+    if (!imageData) {
+      logger.warn("Image model returned no image for user article:", {
+        submissionId: submission._submissionId || null,
+        model: PAID_IMAGE_MODEL,
+      });
+      return null;
+    }
 
     const uploadResult = await uploadFromUrl(imageData, {
       folder: "marching-art/user-articles",
@@ -311,7 +317,13 @@ ${lines.join("\n")}`;
       });
       return uploadResult.url;
     }
-    logger.warn("User-article image upload returned failure:", uploadResult.error);
+    // uploadFromUrl swallows its own failures and hands back a placeholder, so
+    // this branch is the only signal that an image was generated but never
+    // stored — log loudly rather than publishing an imageless article quietly.
+    logger.error("User-article image upload failed; publishing without an image:", {
+      submissionId: submission._submissionId || null,
+      error: uploadResult.error || "unknown upload error",
+    });
     return null;
   } catch (err) {
     logger.error("Failed to generate Fantasy Daily-style image for user article:", err.message);
@@ -429,7 +441,14 @@ async function publishSubmission(db, {
 
   logger.info("Submission published:", { submissionId, articlePath, autoPublished, hasImage: !!finalImageUrl });
 
-  return { articlePath, imageUrl: finalImageUrl };
+  // True when an AI image was asked for but none made it onto the article, so
+  // the caller can say so instead of reporting an unqualified success.
+  const imageGenerationFailed = imageOption === "generate" && !finalImageUrl;
+  if (imageGenerationFailed) {
+    logger.warn("Submission published without its requested AI image:", { submissionId, articlePath });
+  }
+
+  return { articlePath, imageUrl: finalImageUrl, imageGenerationFailed };
 }
 
 module.exports = {
