@@ -20,7 +20,17 @@
 // DCA sections and sheets that don't map (e.g. 2000-2003 Division II/III
 // Execution/Ensemble sheets) are skipped and counted in the report.
 //
-// Usage: node parse.js   (after node harvest.js)
+// Usage: node parse.js                  (after node harvest.js)
+//        node parse.js --years 2014,2015 (re-parse only those years)
+//
+// --years exists because the upstream archive is not immutable. The
+// 2000-2012 documents were re-published at some point with most of their
+// event TITLES stripped: re-parsing them today yields "DCI Competition -
+// Normal, Illinois" where the committed output still says "DCI Central
+// Illinois" (2005 alone drops from 121 titled events to 27). The scores
+// themselves are unchanged, but those names now exist only in output/, so a
+// blanket re-parse silently destroys them. Re-parse the years you mean to,
+// and the report keeps the entries for the years you left alone.
 
 const fs = require("fs");
 const path = require("path");
@@ -323,8 +333,20 @@ function main() {
   const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"));
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const report = {};
+  const args = process.argv.slice(2);
+  const yearFilter = args.includes("--years")
+    ? args[args.indexOf("--years") + 1].split(",")
+    : YEARS;
+
+  // Years this run isn't touching keep both their output file and their
+  // report entry, so report.json always describes what is actually on disk.
+  const reportPath = path.join(OUTPUT_DIR, "report.json");
+  const report = (yearFilter !== YEARS && fs.existsSync(reportPath))
+    ? JSON.parse(fs.readFileSync(reportPath, "utf-8"))
+    : {};
+
   for (const year of YEARS) {
+    if (!yearFilter.includes(year)) continue;
     const docs = manifest[year] || [];
     const stats = {
       skippedBlocks: 0, wrongYearBlocks: 0,

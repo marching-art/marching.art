@@ -14,10 +14,10 @@
 // regression rather than on noise. Measured at the time of writing:
 //
 //   season   holdouts   MAE this model   MAE previous model   pinned at 20.0
-//   2015         3024            0.398                0.489        0 vs 6
-//   2019         3660            0.360                0.507        0 vs 39
-//   2024         2658            0.385                0.600        0 vs 78
-//   2025         2549            0.326                0.496        0 vs 72
+//   2015         4842            0.407                0.499        0 vs 7
+//   2019         4940            0.346                0.499        0 vs 59
+//   2024         3544            0.376                0.582        0 vs 94
+//   2025         3391            0.316                0.481        0 vs 94
 
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");

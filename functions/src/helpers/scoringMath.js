@@ -19,23 +19,23 @@ const MIN_HEADROOM = 0.05;
 // ---------------------------------------------------------------------------
 // Projection constants, calibrated against the local DCI corpus
 // (functions/pressboxImporter/output/historical_scores_*.json: 23 seasons,
-// 2,119 events, 131,731 real caption scores). Every value below was chosen by
+// 2,455 events, 158,200 real caption scores). Every value below was chosen by
 // holdout: hide one real result, project it from the rest, measure the error
-// over ~100k predictions. See the model note on projectCaptionScore.
+// over ~115k predictions. See the model note on projectCaptionScore.
 // ---------------------------------------------------------------------------
 
 // Weight on the two bracketing shows when projecting a day INSIDE the range
 // the corps actually competed in. A corps' nearest real results either side of
 // a date carry more signal than its season trend, but not all of it: an even
-// split of the two beat both pure neighbour interpolation (MAE 0.498) and a
-// pure trend fit (0.515) at MAE 0.474.
+// split of the two beat both pure neighbour interpolation (MAE 0.480) and a
+// pure trend fit (0.569) at MAE 0.458.
 const BRACKET_WEIGHT = 0.5;
 
 // Damping for projections OUTSIDE that range. A season trend is good evidence
 // about tomorrow and poor evidence about ten days out, so the horizon
 // saturates: gap days out is treated as gap / (1 + gap / TREND_DAMPING_DAYS).
-// Undamped extrapolation of the same fit ran to a 0.729 MAE and produced
-// absurd outliers; damped it is 0.573.
+// Undamped extrapolation of the same fit ran to a 0.696 MAE and produced
+// absurd outliers; damped it is 0.555.
 const TREND_DAMPING_DAYS = 6;
 
 // The fit rarely passes exactly through the corps' most recent result. That
@@ -395,12 +395,12 @@ function seededUnitValue(seed) {
  *
  * Calibrated by holdout against 23 seasons of real DCI results: hide one
  * actual caption score, project it from the rest, measure the error. Mean
- * absolute error, ~230k predictions:
+ * absolute error, ~257k predictions:
  *
  *                          inside range   outside range
- *   this model                    0.518           0.573
- *   plain linear fit              0.506           0.662
- *   previous model (below)        0.570           0.698
+ *   this model                    0.500           0.554
+ *   plain linear fit              0.491           0.646
+ *   previous model (below)        0.553           0.679
  *
  * The previous model fit the score directly with an exponential (log-linear
  * on the score), which grows without bound. It projected 20+ for 3.7% of
