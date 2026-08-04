@@ -255,10 +255,11 @@ const Schedule = () => {
             {user && (
               <button
                 onClick={() => setTourMapOpen(true)}
-                className="h-9 px-3 flex items-center gap-1.5 border border-line text-[10px] font-bold uppercase tracking-wider text-secondary hover:border-interactive hover:text-interactive active:bg-white/5 rounded-none transition-colors"
+                aria-label="Open tour map"
+                title="Tour Map"
+                className="w-9 h-9 flex items-center justify-center border border-line text-secondary hover:border-interactive hover:text-interactive active:bg-white/5 rounded-none transition-colors"
               >
-                <MapIcon className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="hidden xs:inline">Tour</span> Map
+                <MapIcon className="w-4 h-4" aria-hidden="true" />
               </button>
             )}
           </div>
