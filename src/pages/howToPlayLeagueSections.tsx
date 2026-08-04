@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; matches howToPlaySections.jsx
 // GAME GUIDE — LEAGUE SECTIONS (/guide). The Leagues and Caption Wars section
 // bodies, split out of howToPlaySections.jsx to keep that file under its size
 // cap. Ordering + icons live in HowToPlay.jsx's SECTIONS list. Every fact here
