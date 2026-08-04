@@ -222,6 +222,8 @@ export interface ApproveSubmissionResult {
   message: string;
   articlePath?: string;
   imageUrl?: string | null;
+  /** True when 'generate' was requested but no image made it onto the article. */
+  imageGenerationFailed?: boolean;
 }
 
 export const approveSubmission = createCallable<ApproveSubmissionData, ApproveSubmissionResult>(

@@ -16,7 +16,19 @@
 
 const crypto = require("crypto");
 const { logger } = require("firebase-functions/v2");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
+
+// Cloudinary credentials are Secret Manager secrets, so they only exist in
+// process.env of functions that declare them. Declaring them here — in the one
+// module that actually reads them — lets every upload path spread
+// `cloudinarySecrets` into its `secrets` option instead of re-deriving the
+// three names, which is how the submission publish paths silently ended up
+// without them and fell through to the Firebase Storage fallback.
+const cloudinaryCloudName = defineSecret("CLOUDINARY_CLOUD_NAME");
+const cloudinaryApiKey = defineSecret("CLOUDINARY_API_KEY");
+const cloudinaryApiSecret = defineSecret("CLOUDINARY_API_SECRET");
+const cloudinarySecrets = [cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret];
 
 // The cloudinary SDK is required lazily: every function in the deploy unit
 // loads this module at cold start (index.js requires all modules), and only
@@ -432,6 +444,13 @@ module.exports = {
 
   // Configuration
   initializeCloudinary,
+
+  // Secret params — spread `cloudinarySecrets` into the `secrets` option of any
+  // function whose code path can reach uploadFromUrl.
+  cloudinaryCloudName,
+  cloudinaryApiKey,
+  cloudinaryApiSecret,
+  cloudinarySecrets,
 
   // Constants
   PLACEHOLDER_IMAGES,

@@ -7,6 +7,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
+const { cloudinarySecrets } = require("../helpers/mediaService");
 const { publishSubmission } = require("../helpers/newsSubmissionsShared");
 
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
@@ -17,7 +18,9 @@ exports.autoPublishScheduledSubmissions = onSchedule(
     timeZone: "America/New_York",
     timeoutSeconds: 540,
     memory: "1GiB",
-    secrets: [geminiApiKey],
+    // Same image path as the admin approve flow — publishSubmission uploads the
+    // generated image, so this job needs the Cloudinary creds too.
+    secrets: [geminiApiKey, ...cloudinarySecrets],
   },
   async () => {
     const db = getDb();
