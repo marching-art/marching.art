@@ -6,7 +6,6 @@ const assert = require("node:assert/strict");
 
 const {
   simpleLinearRegression,
-  logarithmicRegression,
   getScoreForDay,
   getRealisticCaptionScore,
   projectCaptionScore,
@@ -52,21 +51,6 @@ describe("simpleLinearRegression", () => {
 
   test("returns zeros for empty input", () => {
     assert.deepEqual(simpleLinearRegression([]), { m: 0, c: 0 });
-  });
-});
-
-describe("logarithmicRegression", () => {
-  test("recovers an exponential curve via log-linear fit", () => {
-    const data = [
-      [1, Math.E],
-      [2, Math.E ** 2],
-      [3, Math.E ** 3],
-    ];
-    const reg = logarithmicRegression(data);
-    assert.equal(typeof reg.predict, "function");
-    // slope 1, intercept 0 in log-space => predict(x) ~= e^x
-    assert.ok(Math.abs(reg.predict(1) - Math.E) < 1e-6);
-    assert.ok(Math.abs(reg.predict(4) - Math.E ** 4) < 1e-6);
   });
 });
 
@@ -194,6 +178,9 @@ describe("projectCaptionScore", () => {
   // day 45 on, and scoring.js's Math.min(20, ...) flattened every one of them
   // to exactly 20.000 — so every lineup with a top corps in GE1 and GE2 read
   // a perfect 40.0 General Effect.
+  //
+  // (Accuracy is guarded separately, against 23 seasons of real results —
+  // see scoringMath.corpus.test.js. These tests pin the contract.)
   const TOP_CORPS = [
     [3, 14.2], [8, 15.1], [13, 16.0], [18, 16.8], [23, 17.4],
     [28, 17.9], [33, 18.4], [38, 18.8], [41, 19.0],
@@ -248,6 +235,39 @@ describe("projectCaptionScore", () => {
   test("a single data point projects from that point, bounded", () => {
     const score = projectCaptionScore([[10, 15.0]], 44, "Some Corps|2026|GE1|44");
     assert.ok(score >= 14.0 && score <= 16.0, `projected ${score}`);
+  });
+
+  // Inside the range of days a corps actually competed in, its neighbouring
+  // shows carry most of the signal — a corps that sat at 17.5 on day 20 and
+  // 17.6 on day 24 was not somewhere else on day 22, whatever the season-long
+  // trend through its early shows suggests.
+  test("a day inside the season reads off the shows either side of it", () => {
+    const dipped = [[5, 12.0], [10, 14.0], [20, 17.5], [24, 17.6], [30, 18.4]];
+    const score = projectCaptionScore(dipped, 22, "Some Corps|2026|GE1|22");
+    assert.ok(score >= 17.2 && score <= 17.9, `projected ${score} between 17.5 and 17.6`);
+  });
+
+  // A trend is evidence about tomorrow, not about three weeks out. Without
+  // damping, extending a fit that far compounds into a runaway number.
+  test("extending a trend a long way does not run away", () => {
+    const early = [[3, 13.0], [6, 14.2], [9, 15.1], [12, 15.8]];
+    const near = projectCaptionScore(early, 14, "Some Corps|2026|GE1|14");
+    const far = projectCaptionScore(early, 45, "Some Corps|2026|GE1|45");
+    assert.ok(near >= 15.5 && near <= 16.5, `day 14 projected ${near}`);
+    // 33 days past the last real show: still bounded by the band, and still
+    // recognisably this corps rather than a finalist.
+    assert.ok(far > near, `day 45 (${far}) should not fall below day 14 (${near})`);
+    assert.ok(far <= 18.9, `day 45 projected ${far} — too far above a 15.8 corps`);
+  });
+
+  // The band widens with distance because real corps do: they beat their own
+  // prior best ~40% of the time, by more the longer they have been off.
+  test("the band opens up with distance from the corps' real season", () => {
+    const flat = [[10, 15.0], [12, 15.0], [14, 15.0]];
+    const nextDay = projectCaptionScore(flat, 15, "Some Corps|2026|GE1|15");
+    const weeksLater = projectCaptionScore(flat, 40, "Some Corps|2026|GE1|40");
+    assert.ok(nextDay <= 15.0 + 0.95, `day 15 projected ${nextDay}`);
+    assert.ok(weeksLater <= 15.0 + 3.0, `day 40 projected ${weeksLater}`);
   });
 
   test("returns 0 with no data", () => {
