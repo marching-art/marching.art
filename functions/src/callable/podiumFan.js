@@ -75,7 +75,13 @@ exports.castFanFavoriteVote = onCall({ cors: true }, async (request) => {
     if (!finalists.some((f) => f.uid === corpsUid)) {
       throw new HttpsError("invalid-argument", "Vote for one of the finalists.");
     }
-    await fanFavorite.ballotRef(db, seasonUid, uid).set({ finals: corpsUid }, { merge: true });
+    // `finalsAt` is when THIS vote landed — a switched vote re-stamps, because
+    // the time that matters is the one the standing vote arrived at. It feeds
+    // the crown cascade's "first to the count" step (helpers/podium/
+    // fanFavorite.arrivalOf); a ballot never read it back to the voter.
+    await fanFavorite
+      .ballotRef(db, seasonUid, uid)
+      .set({ finals: corpsUid, finalsAt: new Date().toISOString() }, { merge: true });
     return { success: true, stage: "finals", vote: corpsUid };
   }
 

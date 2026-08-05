@@ -178,11 +178,73 @@ function buildFinalsOpenPayload({ seasonName, finalists, prelimsResults }) {
 }
 
 /**
+ * Why a tied crown went where it went, in one sentence.
+ *
+ * A ballot that prints two corps on the same vote count and then hands the
+ * trophy to one of them owes the room a reason — otherwise the only available
+ * reading is that somebody's thumb was on it. Each branch names the measure
+ * (`winner.tiebreak.rule`, from fanFavorite.decideCrown) and, where the
+ * measure is a count, prints the two numbers it turned on — so the call can be
+ * checked against the published tallies rather than taken on faith.
+ *
+ * Seasons crowned before the cascade existed carry `tiedWith` with no
+ * `tiebreak`; they keep the copy they were announced under.
+ */
+function tiebreakNote(winner) {
+  const tied = (winner.tiedWith || []).filter(Boolean);
+  if (tied.length === 0) return "";
+  const names = tied.map((name) => `**${clampName(name)}**`).join(", ");
+  const crowned = `**${clampName(winner.corpsName)}**`;
+  const tiebreak = winner.tiebreak || {};
+  const rival = `**${clampName(tiebreak.rival || tied[0])}**`;
+  const level = ` The finals ballot finished level with ${names}`;
+
+  switch (tiebreak.rule) {
+    case "seasonVotes":
+      return (
+        `${level}, so the crown went to the season: ${crowned} drew ` +
+        `${votes(tiebreak.winnerValue)} across the three majors to ${rival}'s ` +
+        `${votes(tiebreak.rivalValue)}.`
+      );
+    case "majorsPolled":
+      return (
+        `${level} on the season's votes too, so the crown went to the corps that ` +
+        `polled widest: ${crowned} drew support at ${tiebreak.winnerValue} of the three ` +
+        `majors, ${rival} at ${tiebreak.rivalValue}.`
+      );
+    case "majorLead":
+      return (
+        `${level} on every season total, so the crown went to the most recent room to ` +
+        `separate them — the ${MAJOR_LABELS[tiebreak.major] || `Day ${tiebreak.major}`}, ` +
+        `where ${crowned} took ${votes(tiebreak.winnerValue)} to ${rival}'s ` +
+        `${votes(tiebreak.rivalValue)}.`
+      );
+    case "firstToCount":
+      return (
+        `${level} on every vote the season counted, so the crown went to whoever got ` +
+        `there first: ${crowned} reached the winning total ahead of ${rival}.`
+      );
+    case "draw":
+      return (
+        `${level}, and nothing in the ballots separated them — not the season's votes, ` +
+        `not the majors they polled at, not the order the votes landed in. The crown was ` +
+        `settled by a seeded draw — a coin flip, and it is being called one. The room ` +
+        `split this trophy between ${crowned} and ${rival}; the plaque holds one name.`
+      );
+    default:
+      // Pre-cascade seasons: a dead-even crown, reported as one.
+      return `${level} — the crown goes on one plaque, but the room split it.`;
+  }
+}
+
+/**
  * "{corps} is the Fan Favorite" — the finals results and the crown.
  *
  * @param {Object} params
  * @param {string} params.seasonName
- * @param {{corpsName: string, finalsVotes: number, tiedWith?: string[]}} params.winner
+ * @param {{corpsName: string, finalsVotes: number, tiedWith?: string[],
+ *          tiebreak?: {rule: string, rival?: string, major?: number,
+ *                      winnerValue?: number|string, rivalValue?: number|string}}} params.winner
  * @param {Array<{corpsName: string, votes: number}>} [params.finalsResults]
  * @returns {Object|null}
  */
@@ -198,13 +260,8 @@ function buildWinnerPayload({ seasonName, winner, finalsResults }) {
     Number(winner.finalsVotes) > 0
       ? `with ${votes(winner.finalsVotes)} in the finals`
       : "on the strength of the prelims ballots — the finals drew no votes";
-  // A dead-even finals is reported as one, not dressed up as a win.
-  const tied = (winner.tiedWith || []).filter(Boolean);
-  const tieNote =
-    tied.length > 0
-      ? ` The ballot finished dead even with ${tied.map((name) => `**${clampName(name)}**`).join(", ")} — ` +
-        `the crown goes on one plaque, but the room split it.`
-      : "";
+  // A crown the ballot didn't decide outright says what did decide it.
+  const tieNote = tiebreakNote(winner);
 
   return payloadOf({
     title: `💗 ${clampName(winner.corpsName)} is the ${seasonName} Fan Favorite`,

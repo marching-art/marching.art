@@ -213,3 +213,276 @@ describe("Fan Favorite ranking (decision 30)", () => {
     assert.ok(rows.every((r) => r.votes === 0));
   });
 });
+
+// --- The crown cascade -----------------------------------------------------
+//
+// Everywhere else a tie stands. The crown can't — one corps gets the trophy —
+// so the finals ballot keeps asking questions after the three ranking
+// measures run out: who led at the most recent major, who reached the total
+// first, and finally a declared draw. Every case here also checks the REASON
+// recorded on the decision, because that reason is what the crowning
+// announcement prints.
+
+const SEASON = "s-crown";
+
+/** rankBallot rows for a finals tally over `uids`, given a prelims record. */
+function finalsRows(finalsCounts, uids, ballot) {
+  const field = Object.fromEntries(uids.map((uid) => [uid, byUid[uid]]));
+  return fanFavorite.rankBallot(finalsCounts, field, totalsFor(ballot));
+}
+
+/** perMajor, the shape readBallots returns, from a {major: {uid: votes}} map. */
+function perMajorOf(ballot) {
+  return Object.fromEntries(
+    fanFavorite.MAJORS.map((major) => [String(major), ballot[major] || {}])
+  );
+}
+
+function crown(ballot, finalsCounts, uids, { finalsTimes = {}, seasonUid = SEASON } = {}) {
+  return fanFavorite.decideCrown(finalsRows(finalsCounts, uids, ballot), {
+    seasonUid,
+    perMajor: perMajorOf(ballot),
+    finalsTimes,
+  });
+}
+
+describe("Fan Favorite crown cascade (decision 30)", () => {
+  test("an outright winner is crowned with no tiebreak to explain", () => {
+    const ballot = { 28: { altitude: 2, houston: 1 } };
+    const { winner, tiebreak } = crown(ballot, { altitude: 5, houston: 3 }, [
+      "altitude",
+      "houston",
+    ]);
+    assert.equal(winner.uid, "altitude");
+    assert.equal(tiebreak, null, "nobody else was on the winner's count");
+  });
+
+  test("a crown level on finals votes is decided by the season, and says so", () => {
+    // Both took 4 in the finals; Altitude drew 5 votes across the majors to
+    // Houston's 2. A reader seeing two corps on 4 votes in different places
+    // gets the number that separated them.
+    const ballot = { 28: { altitude: 3, houston: 2 }, 35: { altitude: 2 } };
+    const { winner, tiebreak } = crown(ballot, { altitude: 4, houston: 4 }, [
+      "altitude",
+      "houston",
+    ]);
+    assert.equal(winner.uid, "altitude");
+    assert.equal(tiebreak.rule, "seasonVotes");
+    assert.equal(tiebreak.winnerValue, 5);
+    assert.equal(tiebreak.rivalValue, 2);
+    assert.equal(tiebreak.rival, "Houston Knights");
+    assert.deepEqual(tiebreak.tiedWith, ["Houston Knights"]);
+  });
+
+  test("level on the season too, the widest-polling corps takes it", () => {
+    // Three season votes each: Altitude from two majors, Houston from one.
+    const ballot = { 28: { altitude: 2, houston: 3 }, 35: { altitude: 1 } };
+    const { winner, tiebreak } = crown(ballot, { altitude: 2, houston: 2 }, [
+      "altitude",
+      "houston",
+    ]);
+    assert.equal(winner.uid, "altitude");
+    assert.equal(tiebreak.rule, "majorsPolled");
+    assert.equal(tiebreak.winnerValue, 2);
+    assert.equal(tiebreak.rivalValue, 1);
+  });
+
+  test("still level, the most recent major to separate them decides", () => {
+    // Identical on every total (3 votes, 2 majors each). Houston led the
+    // Southwestern; Altitude led the Eastern — the last room to see them both,
+    // and the one that counts.
+    const ballot = {
+      28: { altitude: 1, houston: 2 },
+      41: { altitude: 2, houston: 1 },
+    };
+    const { winner, tiebreak } = crown(ballot, { altitude: 3, houston: 3 }, [
+      "altitude",
+      "houston",
+    ]);
+    assert.equal(winner.uid, "altitude", "the Eastern outranks the Southwestern");
+    assert.equal(tiebreak.rule, "majorLead");
+    assert.equal(tiebreak.major, 41);
+    assert.equal(tiebreak.winnerValue, 2);
+    assert.equal(tiebreak.rivalValue, 1);
+  });
+
+  test("level at every major, the corps that got to the total first takes it", () => {
+    const ballot = {
+      35: { altitude: 1, houston: 1 },
+      41: { altitude: 1, houston: 1 },
+    };
+    const finalsTimes = {
+      altitude: ["2026-08-01T10:00:00.000Z", "2026-08-02T09:00:00.000Z"],
+      houston: ["2026-08-01T09:00:00.000Z", "2026-08-02T11:00:00.000Z"],
+    };
+    const { winner, tiebreak } = crown(
+      ballot,
+      { altitude: 2, houston: 2 },
+      ["altitude", "houston"],
+      { finalsTimes }
+    );
+    // Houston's FIRST vote came in earlier; Altitude reached two votes first,
+    // and reaching the total is the race.
+    assert.equal(winner.uid, "altitude");
+    assert.equal(tiebreak.rule, "firstToCount");
+    assert.equal(tiebreak.winnerValue, "2026-08-02T09:00:00.000Z");
+  });
+
+  test("an unstamped ballot is never read as an early one", () => {
+    // Ballots cast before votes were stamped carry no time. Treating a missing
+    // stamp as "very early" would crown a corps on the absence of data, so the
+    // measure goes silent and the cascade falls to the draw.
+    const ballot = { 41: { altitude: 1, houston: 1 } };
+    const { tiebreak } = crown(
+      ballot,
+      { altitude: 2, houston: 2 },
+      ["altitude", "houston"],
+      {
+        finalsTimes: {
+          altitude: ["2026-08-01T10:00:00.000Z", null],
+          houston: ["2026-08-02T10:00:00.000Z", "2026-08-02T11:00:00.000Z"],
+        },
+      }
+    );
+    assert.equal(tiebreak.rule, "draw");
+  });
+
+  test("a crown nothing separated is a declared draw — and a repeatable one", () => {
+    // Identical everywhere the ballot measured. Something has to go on the
+    // plaque, so a seeded draw picks; crownWinner is idempotent, so the same
+    // season must always draw the same corps.
+    const ballot = { 41: { altitude: 1, houston: 1 } };
+    const args = [ballot, { altitude: 2, houston: 2 }, ["altitude", "houston"]];
+    const first = crown(...args);
+    const second = crown(...args);
+    assert.equal(first.tiebreak.rule, "draw");
+    assert.equal(first.winner.uid, second.winner.uid, "a re-run crowns the same corps");
+    assert.ok(["altitude", "houston"].includes(first.winner.uid));
+    // Seeded on the SEASON, so a uid is not permanently lucky.
+    assert.notEqual(
+      fanFavorite.drawTicket("s-1", "altitude"),
+      fanFavorite.drawTicket("s-2", "altitude")
+    );
+  });
+
+  test("every corps on the winner's count is named, however many there are", () => {
+    const ballot = { 41: { altitude: 3, houston: 2, shadow: 1 } };
+    const { winner, tiebreak } = crown(ballot, { altitude: 2, houston: 2, shadow: 2 }, [
+      "altitude",
+      "houston",
+      "shadow",
+    ]);
+    assert.equal(winner.uid, "altitude");
+    assert.deepEqual(tiebreak.tiedWith, ["Houston Knights", "Shadow Regiment"]);
+    assert.equal(tiebreak.rival, "Houston Knights", "decided against the closest corps");
+  });
+
+  test("the cascade decides on ballots alone — it cannot reach a score", () => {
+    // The Fan Favorite is the one trophy the field can't score for, so the
+    // cascade is pure over the BALLOTS: no db handle, and synchronous, which a
+    // recap read could not be. Wiring in a score would break this signature.
+    const ballot = { 41: { altitude: 1, houston: 1 } };
+    const decision = fanFavorite.decideCrown(
+      finalsRows({ altitude: 2, houston: 2 }, ["altitude", "houston"], ballot),
+      { seasonUid: SEASON, perMajor: perMajorOf(ballot), finalsTimes: {} }
+    );
+    assert.equal(fanFavorite.decideCrown.length, 2, "(ranked, context) — no db");
+    assert.ok(!(decision instanceof Promise), "a recap read would have to be async");
+    assert.equal(decision.tiebreak.rule, "draw");
+  });
+});
+
+// --- Crowning --------------------------------------------------------------
+
+/** Fake Firestore: the ballots collection, the fan doc, and profile writes. */
+function fakeDb(docs, ballots) {
+  const writes = {};
+  const makeDocRef = (path) => ({
+    path,
+    get: async () => ({
+      exists: Object.prototype.hasOwnProperty.call(docs, path),
+      data: () => docs[path],
+    }),
+    set: async (data, options) => {
+      writes[path] = options && options.merge ? { ...(writes[path] || {}), ...data } : data;
+      docs[path] = { ...(docs[path] || {}), ...data };
+    },
+  });
+  return {
+    writes,
+    doc: makeDocRef,
+    collection: (path) => ({
+      doc: (id) => makeDocRef(`${path}/${id}`),
+      get: async () => ({
+        docs: (ballots[path] || []).map((data) => ({ data: () => data })),
+      }),
+    }),
+  };
+}
+
+describe("Fan Favorite crowning (decision 30)", () => {
+  const finalists = [
+    { uid: "altitude", corpsName: "Altitude", division: "worldClass" },
+    { uid: "houston", corpsName: "Houston Knights", division: "worldClass" },
+  ];
+
+  test("a tied crown records what decided it, and leads its own results", async () => {
+    // Two votes each in the finals; Altitude polled 2 across the majors to
+    // Houston's 1, so the season breaks it.
+    const db = fakeDb(
+      { "podium-fan/s1": { seasonUid: "s1", finalists } },
+      {
+        "podium-fan/s1/ballots": [
+          { prelims: { 28: "altitude", 35: "altitude" }, finals: "altitude" },
+          { prelims: { 28: "houston" }, finals: "altitude" },
+          { finals: "houston" },
+          { finals: "houston" },
+        ],
+      }
+    );
+
+    const winner = await fanFavorite.crownWinner(db, "s1");
+    assert.equal(winner.corpsName, "Altitude");
+    assert.equal(winner.finalsVotes, 2);
+    assert.equal(winner.tiebreak.rule, "seasonVotes");
+    assert.equal(winner.tiebreak.winnerValue, 2);
+    assert.equal(winner.tiebreak.rivalValue, 1);
+    assert.deepEqual(winner.tiedWith, ["Houston Knights"]);
+
+    const published = db.writes["podium-fan/s1"];
+    // Two corps, the same printed count, different places — the exact sight
+    // that reads as a coin flip, which is why `tiebreak` above says what it
+    // actually turned on. The crowned corps leads its own tally.
+    assert.deepEqual(
+      published.finalsResults.map((row) => [row.corpsName, row.votes, row.place]),
+      [
+        ["Altitude", 2, 1],
+        ["Houston Knights", 2, 2],
+      ]
+    );
+    assert.equal(published.finalsResults[0].seasonVotes, 2, "the reason is published too");
+    // Cosmetic hardware, unchanged by any of this.
+    const profilePath = Object.keys(db.writes).find((path) =>
+      path.includes("users/altitude/profile")
+    );
+    assert.equal(db.writes[profilePath].trophies.fanFavorites[0].type, "fanFavorite");
+  });
+
+  test("an outright crown carries no tiebreak at all", async () => {
+    const db = fakeDb(
+      { "podium-fan/s2": { seasonUid: "s2", finalists } },
+      {
+        "podium-fan/s2/ballots": [
+          { finals: "altitude", finalsAt: "2026-08-01T10:00:00.000Z" },
+          { finals: "altitude", finalsAt: "2026-08-01T11:00:00.000Z" },
+          { finals: "houston", finalsAt: "2026-08-01T12:00:00.000Z" },
+        ],
+      }
+    );
+
+    const winner = await fanFavorite.crownWinner(db, "s2");
+    assert.equal(winner.corpsName, "Altitude");
+    assert.equal(winner.tiebreak, undefined, "nobody was on its count");
+    assert.equal(winner.tiedWith, undefined);
+  });
+});
