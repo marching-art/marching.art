@@ -30,17 +30,19 @@ export const TIERS: LadderTier[] = [
   { tier: 12, xp: 3600, coin: 300, exclusive: 'Laureate title' },
 ];
 
+/** The profile fields the ladder is derived from. */
+export interface LadderProfile {
+  xp?: number;
+  xpAtSeasonStart?: number;
+  seasonLadder?: { seasonUid?: string; claimed?: number[] } | null;
+}
+
 /**
  * XP earned since this season started. `xpAtSeasonStart` is stamped by the
  * season rollover; before it exists (a director who has never rolled over) the
  * ladder has no baseline and reads as zero rather than crediting lifetime XP.
  */
-export function getSeasonXP(
-  profile: {
-    xp?: number;
-    xpAtSeasonStart?: number;
-  } | null
-): number {
+export function getSeasonXP(profile: Pick<LadderProfile, 'xp' | 'xpAtSeasonStart'> | null): number {
   if (typeof profile?.xpAtSeasonStart !== 'number') return 0;
   return Math.max(0, (profile.xp || 0) - profile.xpAtSeasonStart);
 }
@@ -53,11 +55,7 @@ export function getSeasonXP(
  * season's rewards.
  */
 export function getClaimableLadderTiers(
-  profile: {
-    xp?: number;
-    xpAtSeasonStart?: number;
-    seasonLadder?: { seasonUid?: string; claimed?: number[] } | null;
-  } | null,
+  profile: LadderProfile | null,
   seasonUid?: string | null
 ): LadderTier[] {
   if (!profile) return [];

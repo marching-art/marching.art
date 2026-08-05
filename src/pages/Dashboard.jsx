@@ -7,7 +7,7 @@
 
 import React, { useMemo, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
@@ -88,6 +88,8 @@ import {
   JourneyPanel,
   SeasonProgressHub,
   DirectorsReport,
+  NextActionPanel,
+  NoCorpsCard,
   CLASS_DISPLAY_NAMES,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
@@ -99,6 +101,7 @@ import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import { useScheduleStore } from '../store/scheduleStore';
 
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useNextAction } from '../hooks/useNextAction';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { CORPS_CLASS_ORDER } from '../utils/corps';
@@ -341,6 +344,16 @@ const Dashboard = () => {
     return recentResults.reduce((a, b) => ((a.score || 0) > (b.score || 0) ? a : b));
   }, [recentResults]);
 
+  // The one imperative the mobile stack opens with. Ranked from real game
+  // state (utils/nextAction); null for Podium, which guides itself.
+  const nextAction = useNextAction({
+    profile,
+    activeCorps,
+    activeCorpsClass,
+    recentResults,
+    seasonUid: seasonData?.seasonUid,
+  });
+
   // Report the first view of each new scored day — the conversion event for the
   // nightly drop and its Discord/push announcements. Effective day, not raw
   // currentDay, so it tracks what is actually on screen.
@@ -420,6 +433,19 @@ const Dashboard = () => {
           </div>
         ) : activeCorps ? (
           <div className="p-3 md:p-4">
+            {/* Mobile only: the one thing to do next, stated before the stack
+                begins. Desktop's grid answers this spatially, so the panel
+                hides itself at lg. Sits outside the grid so it can lead the
+                mobile stack without disturbing the desktop row/column tracks. */}
+            <div className="lg:hidden mb-4">
+              <NextActionPanel
+                action={nextAction}
+                onOpenLineup={() => openCaptionSelection()}
+                onOpenConcept={() => setShowConceptModal(true)}
+                onRegisterCorps={() => setShowRegistration(true)}
+              />
+            </div>
+
             {/* 2/3 + 1/3 grid. Zone C (My Corps) leads the DOM and holds the
                 left column; the right sidebar (scorecard, Today, The Season) is
                 grouped into a single grid cell so its row tracks aren't
@@ -604,28 +630,7 @@ const Dashboard = () => {
             </div>
           </div>
         ) : (
-          /* No Corps State */
-          <div className="flex items-center justify-center min-h-[60vh] p-4">
-            <div className="bg-surface-card border border-line max-w-sm w-full">
-              <div className="bg-surface-raised px-4 py-3 border-b border-line">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Start Your Season
-                </h3>
-              </div>
-              <div className="p-6 text-center">
-                <Trophy className="w-12 h-12 text-muted mx-auto mb-4" />
-                <p className="text-sm text-muted mb-4">
-                  Create your first fantasy corps to begin competing.
-                </p>
-                <button
-                  onClick={() => setShowRegistration(true)}
-                  className="w-full py-3 bg-interactive text-white text-sm font-bold hover:bg-interactive-hover"
-                >
-                  Register Corps
-                </button>
-              </div>
-            </div>
-          </div>
+          <NoCorpsCard onRegister={() => setShowRegistration(true)} />
         )}
       </div>
 
