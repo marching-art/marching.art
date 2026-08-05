@@ -22,6 +22,53 @@ const MAJOR_ROUTE_LABELS = {
 };
 
 /**
+ * Where the corps is standing right now (design §5.12 "current location"): the
+ * venue of its most recent show, else its hometown before the first show. Every
+ * upcoming leg is priced from here, so the route sheet leads with it.
+ * @returns {{venueId, city, region, lat, lng}|null} null when the corps has no
+ *   show behind it and its hometown isn't in the gazetteer.
+ */
+function currentVenueOf(state) {
+  return state.lastVenue || venues.venueFor(state.location) || null;
+}
+
+/**
+ * Display form of the current location for the route sheet: the city label, the
+ * stadium when one is on file, whether the corps is still at its hometown, and
+ * the show day that put it where it is. `city` falls back to the raw hometown
+ * string when that hometown isn't on the tour map — the route can't be priced
+ * from an unmapped town, and saying so beats showing a blank origin.
+ */
+function buildCurrentLocation(state, uid, competitionDay, easternAssignments) {
+  const venue = currentVenueOf(state);
+  const atHome = !state.lastVenue;
+  // The show that moved the corps here — the most recent show day on or before
+  // today. Only meaningful once a show has actually been performed.
+  let sinceDay = null;
+  if (!atHome) {
+    for (let day = Math.min(Math.max(0, competitionDay), 49); day >= 1; day--) {
+      if (store.isShowDayFor(state, uid, day, easternAssignments)) {
+        sinceDay = day;
+        break;
+      }
+    }
+  }
+  return {
+    venueId: venue ? venue.venueId : null,
+    city: venue ? `${venue.city}, ${venue.region}` : state.location || null,
+    stadium: venue ? venues.stadiumFor(venue.venueId) : null,
+    // False when the hometown isn't in the gazetteer: legs from it are free and
+    // mileage-less, which the client explains rather than silently showing.
+    mapped: Boolean(venue),
+    atHome,
+    sinceDay,
+  };
+}
+
+// Exported for unit tests; the callables below are the production entry points.
+exports.buildCurrentLocation = buildCurrentLocation;
+
+/**
  * Upcoming route: the single tour view (design §5.3). One ordered chain of
  * travel legs through the corps' next show days — the self-picked shows the
  * director has added to the schedule PLUS the auto-attended majors and
@@ -70,7 +117,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
   }
 
   const legs = [];
-  let cursor = state.lastVenue || venues.venueFor(state.location) || null;
+  let cursor = currentVenueOf(state);
   for (const day of upcoming) {
     // Joint-rehearsal day: a rehearsal leg, not a show. The partner's city
     // hosts; the proposer's copy carries the frozen travel tier (the acceptor's
@@ -235,6 +282,9 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   const routePreview = await buildRoutePreview(
     db, seasonData, state, uid, competitionDay, easternAssignments
   );
+  // Resolved independently of the route so the origin still shows when there
+  // are no upcoming shows left to route.
+  const currentLocation = buildCurrentLocation(state, uid, competitionDay, easternAssignments);
   const careerSnapshot = await career.careerRef(db, uid).get();
   const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
   const division = divisions.normalizeDivision(state.division);
@@ -269,6 +319,7 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     easternNightFinal: Boolean(easternAssignments && easternAssignments[uid]),
     autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
     routePreview,
+    currentLocation,
     career: careerData
       ? {
         reputation: careerData.reputation,

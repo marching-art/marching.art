@@ -56,6 +56,18 @@ export interface PodiumRouteLeg {
   ensembleBonusPct?: number;
 }
 
+// Where the corps is standing right now (design §5.12): the venue of its most
+// recent show, else its hometown before the first show. The origin every leg in
+// `routePreview` is priced from.
+export interface PodiumCurrentLocation {
+  venueId: string | null;
+  city: string | null; // "City, ST", or the raw hometown when unmapped
+  stadium: string | null;
+  mapped: boolean; // false when the hometown isn't in the venue gazetteer
+  atHome: boolean; // no show performed yet — still at the hometown
+  sinceDay: number | null; // the show day that moved the corps here
+}
+
 // Next-season payroll warning (design §5.6): when a corps' aged staff payroll
 // can't fit the division commitment cap, the director will have to release or
 // retrain someone at re-registration. Surfaced in-season so they can act early.
@@ -74,6 +86,7 @@ export interface PodiumStateResponse {
   isShowDay?: boolean;
   autoDays?: number[];
   routePreview?: PodiumRouteLeg[];
+  currentLocation?: PodiumCurrentLocation;
   staffOutlook?: PodiumStaffOutlook;
   state?: Record<string, unknown>;
 }
