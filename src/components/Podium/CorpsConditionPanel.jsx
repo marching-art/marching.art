@@ -19,6 +19,7 @@ import {
   Moon,
   CalendarDays,
   ChevronRight,
+  MapPin,
 } from 'lucide-react';
 import { formatEventName } from '../../utils/season';
 import { BLOCKS } from './podiumConstants';
@@ -50,6 +51,43 @@ function SectionLabel({ icon: Icon, children, className = '' }) {
   );
 }
 
+// "You are here" — the origin the whole itinerary is priced from (design
+// §5.12): the corps sits at its most recent show venue, or at its hometown
+// until the first show. Rendered above the legs so the first leg's mileage has
+// a visible starting point, and kept on screen even when nothing is booked.
+function CurrentLocationRow({ location, hasRoute }) {
+  if (!location || !location.city) return null;
+  const detail = !location.mapped
+    ? // An unmapped hometown has no coordinates, so no leg out of it can be
+      // priced — the first booked show shows no miles until the corps competes.
+      "Not on the tour map — travel out of here isn't priced until your first show."
+    : location.atHome
+      ? hasRoute
+        ? 'Hometown — the tour rolls out from here.'
+        : 'Hometown — the tour starts once you add a show.'
+      : `Last show venue${location.sinceDay ? ` · since day ${location.sinceDay}` : ''}${
+          hasRoute ? ' — the next leg is routed from here.' : '.'
+        }`;
+  return (
+    <div className="mb-1.5 flex items-start gap-2 rounded-none border border-line bg-surface-sunken px-3 py-2">
+      <MapPin
+        className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${location.mapped ? 'text-interactive' : 'text-muted'}`}
+      />
+      <div className="min-w-0">
+        <div className="text-[11px] font-bold text-white truncate" title={location.city}>
+          {location.city}
+          {location.stadium && (
+            <span className="font-normal text-muted"> · {location.stadium}</span>
+          )}
+        </div>
+        <div className="text-[9px] text-muted leading-relaxed">
+          <span className="uppercase font-bold tracking-wider">Now</span> · {detail}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Route itinerary shares one column template between its header and rows so
 // the day / show / travel / heat / stamina columns line up across the width.
 const ROUTE_COLS = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto_auto] gap-x-3 items-center';
@@ -57,6 +95,7 @@ const ROUTE_COLS = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto_auto] gap-x-
 export default function CorpsConditionPanel({ podium }) {
   const state = podium.data?.state;
   const routePreview = podium.data?.routePreview || [];
+  const currentLocation = podium.data?.currentLocation || null;
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
   const [editingTemplate, setEditingTemplate] = useState(false);
@@ -452,6 +491,8 @@ export default function CorpsConditionPanel({ podium }) {
             <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
+
+        <CurrentLocationRow location={currentLocation} hasRoute={routePreview.length > 0} />
 
         {routePreview.length === 0 ? (
           <p className="text-[11px] text-muted">
