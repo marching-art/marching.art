@@ -39,7 +39,10 @@ export default function PodiumZone({ podium: podiumProp }) {
     );
   }
 
-  if (podium.error) {
+  // Only a FATAL error (nothing loaded) replaces the whole zone. A transient
+  // error while state is present — e.g. a bounced rehearsal block — is shown
+  // inline by the planner, so it must not nuke the surface.
+  if (podium.error && !podium.data) {
     return (
       <div className="bg-surface-card border border-line rounded-none p-4 text-xs text-red-400">
         {podium.error}

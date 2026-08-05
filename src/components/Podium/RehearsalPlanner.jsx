@@ -29,8 +29,8 @@ function ConditionBar({ label, value, icon: Icon, color }) {
 }
 
 export default function RehearsalPlanner({ podium }) {
-  const { data, lastPanel, allocate, declareRestDay } = podium;
-  const [busy, setBusy] = useState(null); // blockType being allocated
+  const { data, lastPanel, queueAllocate, declareRestDay, pending = {} } = podium;
+  const [restBusy, setRestBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
 
   const state = data?.state;
@@ -52,11 +52,19 @@ export default function RehearsalPlanner({ podium }) {
 
   // Server-authoritative block budget (stamina-adjusted). Falls back to the
   // freshness-normalized local count if an older backend hasn't shipped these.
-  const blocksUsedToday = data.blocksUsedToday ?? today.blocksUsed ?? 0;
+  const confirmedUsed = data.blocksUsedToday ?? today.blocksUsed ?? 0;
   const maxBlocksToday = data.maxBlocksToday ?? null;
-  const blocksRemainingToday =
+  const confirmedRemaining =
     data.blocksRemainingToday ??
-    (maxBlocksToday !== null ? Math.max(0, maxBlocksToday - blocksUsedToday) : null);
+    (maxBlocksToday !== null ? Math.max(0, maxBlocksToday - confirmedUsed) : null);
+
+  // Optimistic view: taps accepted into the queue but not yet server-confirmed
+  // count toward "used" so the grid reflects them instantly and stops accepting
+  // taps once the day's budget is spoken for (design §6.1 one-thumb entry).
+  const pendingTotal = Object.values(pending).reduce((sum, n) => sum + n, 0);
+  const blocksUsedToday = confirmedUsed + pendingTotal;
+  const blocksRemainingToday =
+    confirmedRemaining !== null ? Math.max(0, confirmedRemaining - pendingTotal) : null;
   const dayType = seasonOver
     ? 'Season complete'
     : today.restDay
@@ -67,29 +75,29 @@ export default function RehearsalPlanner({ podium }) {
           ? 'Spring training'
           : 'Rehearsal day';
 
-  const handleAllocate = async (blockType) => {
-    setBusy(blockType);
+  // Accept the tap instantly — the queue drains it in the background, so a
+  // director can enter a whole day's blocks in a rapid thumb-run without the
+  // grid freezing between each. Errors surface via podium.error (the queue
+  // clears and resyncs on a bounce).
+  const handleAllocate = (blockType) => {
     setActionError(null);
-    try {
-      await allocate(blockType);
-    } catch (err) {
-      setActionError(err?.message || 'Could not allocate block.');
-    } finally {
-      setBusy(null);
-    }
+    queueAllocate(blockType);
   };
 
   const handleRest = async () => {
-    setBusy('rest');
+    setRestBusy(true);
     setActionError(null);
     try {
       await declareRestDay();
     } catch (err) {
       setActionError(err?.message || 'Could not declare a rest day.');
     } finally {
-      setBusy(null);
+      setRestBusy(false);
     }
   };
+
+  // A drain is in progress while any block is still pending confirmation.
+  const draining = pendingTotal > 0;
 
   // The block grid retires when there is nothing left to allocate: the season
   // is over, a rest day was declared, or the day's blocks are all used. Without
@@ -171,27 +179,34 @@ export default function RehearsalPlanner({ podium }) {
 
       {/* Block allocator + schedule panel */}
       <div className="flex flex-col lg:flex-row gap-3">
-        {/* Block grid (fundraiser lives inside the grid) */}
+        {/* Block grid (fundraiser lives inside the grid). Buttons stay live
+            while allocations drain — only the day's remaining budget gates
+            them — so a director can tap a full day's blocks in one thumb-run. */}
         {!exhausted && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 content-start">
             {BLOCKS.map((block) => {
-              const usedCount = (today.blocks || []).filter((b) => b === block.id).length;
+              const confirmedCount = (today.blocks || []).filter((b) => b === block.id).length;
+              const pendingCount = pending[block.id] || 0;
+              const count = confirmedCount + pendingCount;
+              const budgetSpent = blocksRemainingToday !== null && blocksRemainingToday <= 0;
               return (
                 <button
                   key={block.id}
-                  disabled={busy !== null}
+                  disabled={budgetSpent}
                   onClick={() => handleAllocate(block.id)}
                   className="text-left px-3 py-2.5 rounded-none border border-line hover:border-interactive hover:bg-interactive/10 transition-colors press-feedback disabled:opacity-50"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white">{block.label}</span>
                     <span className="flex items-center gap-1">
-                      {usedCount > 0 && (
+                      {count > 0 && (
                         <span className="text-[10px] font-bold text-interactive tabular-nums">
-                          ×{usedCount}
+                          ×{count}
                         </span>
                       )}
-                      {busy === block.id && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
+                      {/* A block still confirming shows a quiet spinner, but the
+                          button stays tappable. */}
+                      {pendingCount > 0 && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
                     </span>
                   </div>
                   <div className="text-[10px] text-muted mt-0.5">{block.detail}</div>
@@ -199,13 +214,20 @@ export default function RehearsalPlanner({ podium }) {
               );
             })}
             <button
-              disabled={busy !== null}
+              disabled={blocksRemainingToday !== null && blocksRemainingToday <= 0}
               onClick={() => handleAllocate('fundraiser')}
               className="text-left px-3 py-2.5 rounded-none border border-brand-subtle hover:border-brand hover:bg-brand/10 transition-colors press-feedback disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-brand">Fundraiser</span>
-                {busy === 'fundraiser' && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
+                {(pending.fundraiser || 0) > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-[10px] font-bold text-brand tabular-nums">
+                      ×{pending.fundraiser}
+                    </span>
+                    <Loader2 className="w-3 h-3 animate-spin text-muted" />
+                  </span>
+                )}
               </div>
               <div className="text-[10px] text-muted mt-0.5">
                 Convert a block to Corps Budget income (+3 Budget per block) — no caption growth
@@ -261,10 +283,10 @@ export default function RehearsalPlanner({ podium }) {
             )}
           </div>
 
-          {!exhausted && (today.blocksUsed || 0) === 0 && (
+          {!exhausted && blocksUsedToday === 0 && (
             <button
               onClick={handleRest}
-              disabled={busy !== null}
+              disabled={restBusy || draining}
               className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-line text-muted hover:text-white hover:border-charcoal-500 transition-colors press-feedback disabled:opacity-50"
             >
               <Moon className="w-3 h-3" /> Rest day
@@ -309,7 +331,11 @@ export default function RehearsalPlanner({ podium }) {
         </div>
       )}
 
-      {actionError && <div className="text-[11px] text-red-400">{actionError}</div>}
+      {/* A rest-day failure (actionError) or a bounced block from the queue
+          (podium.error) — both worth showing. */}
+      {(actionError || podium.error) && (
+        <div className="text-[11px] text-red-400">{actionError || podium.error}</div>
+      )}
     </div>
   );
 }
