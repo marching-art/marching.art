@@ -54,12 +54,18 @@ export default function PodiumZone({ podium: podiumProp }) {
     return <PodiumRegistration podium={podium} />;
   }
 
+  // Order matters most on mobile, where these eight panels are a long single
+  // column. Lead with the daily decision loop — a between-seasons alert, then
+  // the rehearsal verb and the caption progress that tells you what to spend
+  // blocks on — so a returning director lands on today's work, not the season
+  // furniture. The strategic panels (trajectory, condition, staff, joint) and
+  // the community vote follow.
   return (
     <div className="space-y-4">
       <StaffOutlookBanner podium={podium} />
-      <FanFavoriteCard />
       <RehearsalPlanner podium={podium} />
       <PodiumCaptionPanel podium={podium} />
+      <FanFavoriteCard />
       <PodiumTrajectoryCard podium={podium} />
       <CorpsConditionPanel podium={podium} />
       <PodiumStaffPanel podium={podium} />
