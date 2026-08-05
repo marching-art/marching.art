@@ -23,12 +23,48 @@
  * GAMIFICATION.md.)
  */
 /**
+ * Facts a challenge may need that the profile document alone cannot answer.
+ *
+ * Podium keeps its competitive state in a server-only subcollection
+ * (helpers/podium/store.js), so `profile.corps.podiumClass` carries display
+ * copies only — no shows, no concept. A verifier reading the profile therefore
+ * cannot see that a Podium director registered for a show or named their show,
+ * which is why those facts are passed in instead.
+ *
+ * @typedef {Object} ChallengeContext
+ * @property {boolean} [predictionAvailable] - False when the director has too
+ *   few scored results for any prediction question to exist today.
+ * @property {{hasShows: boolean, hasConcept: boolean}|null} [podium] - Podium
+ *   state for this director, or null when they have no Podium corps.
+ */
+
+/**
  * @typedef {Object} Challenge
  * @property {string} id
  * @property {string} label
  * @property {number} xp
- * @property {(profile: any, gameDay?: string) => boolean} verify
+ * @property {(profile: any, gameDay?: string, context?: ChallengeContext) => boolean} verify
+ * @property {((profile: any, context?: ChallengeContext) => boolean)} [available]
+ *   - Whether this director could satisfy the challenge at all today. A
+ *     challenge that is unavailable drops out of the day's REQUIRED set (see
+ *     getRequiredChallengeIds) so the weekly arc stays winnable; it can still
+ *     be claimed if somehow satisfied.
  */
+
+/** Classes that draft a caption lineup (registry capability, not a literal). */
+const { FANTASY_CLASSES } = require("./classRegistry");
+
+/**
+ * True when the director fields at least one lineup-drafting corps. Podium is
+ * a director simulation with no caption lineup at all, so a Podium-only
+ * director has none.
+ * @param {any} profile
+ * @returns {boolean}
+ */
+function hasLineupBearingCorps(profile) {
+  const corps = profile?.corps || {};
+  return FANTASY_CLASSES.some((cls) => Boolean(corps[cls] && corps[cls].corpsName));
+}
 
 /** @type {Challenge[]} */
 const CHALLENGE_POOL = [
@@ -41,6 +77,10 @@ const CHALLENGE_POOL = [
       Object.values(profile.corps || {}).some(
         (c) => c && c.lineup && Object.keys(c.lineup).length > 0
       ),
+    // A Podium-only director has no lineup and never will — Podium's daily
+    // verb is allocating rehearsal blocks. Requiring this of them made their
+    // full set impossible, which silently locked them out of the weekly arc.
+    available: (profile) => hasLineupBearingCorps(profile),
   },
   {
     id: "make-prediction",
@@ -48,22 +88,28 @@ const CHALLENGE_POOL = [
     xp: 10,
     verify: (profile, gameDay) =>
       Object.keys(profile.predictions?.[gameDay ?? ""]?.picks || {}).length > 0,
+    // Fewer than two scored results means no question exists to answer.
+    available: (_profile, context) => context?.predictionAvailable !== false,
   },
   {
     id: "register-show",
     label: "Register for a show",
     xp: 10,
-    verify: (profile) =>
+    // Podium registers for shows too (setPodiumShows) — its picks just live in
+    // the podium subcollection rather than on the corps map.
+    verify: (profile, _gameDay, context) =>
       Object.values(profile.corps || {}).some(
         (c) => c && Object.keys(c.selectedShows || {}).length > 0
-      ),
+      ) || Boolean(context?.podium?.hasShows),
   },
   {
     id: "set-show-concept",
     label: "Set your show concept",
     xp: 10,
-    verify: (profile) =>
-      Object.values(profile.corps || {}).some((c) => c && c.showConcept?.theme),
+    // Podium names its show at registration; same subcollection caveat.
+    verify: (profile, _gameDay, context) =>
+      Object.values(profile.corps || {}).some((c) => c && c.showConcept?.theme) ||
+      Boolean(context?.podium?.hasConcept),
   },
 ];
 
@@ -186,7 +232,7 @@ function hashString(str) {
  * The three challenges offered on a given game day, deterministic from the
  * day string so client and server always agree without a round trip.
  * @param {string} gameDay - Value from getGameDay()
- * @returns {Array<{id: string, label: string, xp: number}>}
+ * @returns {Challenge[]}
  */
 function getChallengesForGameDay(gameDay) {
   const seed = hashString(gameDay);
@@ -197,6 +243,37 @@ function getChallengesForGameDay(gameDay) {
     .sort((a, b) => a.order - b.order)
     .slice(0, CHALLENGES_PER_DAY)
     .map((entry) => entry.challenge);
+}
+
+/**
+ * The challenge ids that count toward "the full set" today for this director.
+ *
+ * A challenge the director genuinely cannot satisfy is excluded rather than
+ * left to sit incomplete forever: the weekly arc pays for completing the full
+ * set on five days, so an impossible member would lock the payout for the
+ * whole population it applies to. Claims are unaffected — an excluded
+ * challenge can still be claimed if it somehow verifies.
+ *
+ * @param {string} gameDay - Value from getGameDay()
+ * @param {any} profile - The user's profile document data
+ * @param {ChallengeContext} [context]
+ * @returns {string[]}
+ */
+function getRequiredChallengeIds(gameDay, profile, context = {}) {
+  return getChallengesForGameDay(gameDay)
+    .filter((challenge) => !challenge.available || challenge.available(profile, context))
+    .map((challenge) => challenge.id);
+}
+
+/**
+ * Whether today's rotation contains anything whose verification depends on
+ * Podium state, so the caller only pays for that read when it can matter.
+ * @param {string} gameDay - Value from getGameDay()
+ * @returns {boolean}
+ */
+function rotationNeedsPodiumContext(gameDay) {
+  const ids = getChallengesForGameDay(gameDay).map((c) => c.id);
+  return ids.includes("register-show") || ids.includes("set-show-concept");
 }
 
 /**
@@ -227,5 +304,8 @@ module.exports = {
   getWeekKey,
   advanceWeeklyLoop,
   getChallengesForGameDay,
+  getRequiredChallengeIds,
+  rotationNeedsPodiumContext,
+  hasLineupBearingCorps,
   pruneOldChallenges,
 };

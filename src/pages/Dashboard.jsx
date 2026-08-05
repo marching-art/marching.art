@@ -68,6 +68,8 @@ import { canEditCorpsThisSeason } from '../utils/corps';
 import { useDashboardModals } from '../hooks/useDashboardModals';
 import DashboardModalHost from '../components/Dashboard/DashboardModalHost';
 import { usePodiumEnabled } from '../hooks/useFeatures';
+import { usePodium } from '../hooks/usePodium';
+import { derivePodiumChallengeFacts } from '../utils/podiumChallenges';
 import {
   useLineupScores,
   useRecentResults,
@@ -155,6 +157,14 @@ const Dashboard = () => {
   // director-sim surface and the no-corps state runs Podium registration.
   const podiumEnabled = usePodiumEnabled();
   const isPodiumSelected = podiumEnabled && activeCorpsClass === 'podiumClass';
+
+  // Podium state is hoisted here (not owned by PodiumZone) so it loads once and
+  // the shared Director's Report can read its show/concept facts — the two
+  // things a Podium director's daily challenges need that the profile can't
+  // carry. Enabled only when Podium is the active surface, so fantasy-only
+  // directors never fetch it.
+  const podium = usePodium(isPodiumSelected);
+  const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
 
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
@@ -287,7 +297,14 @@ const Dashboard = () => {
     zoneClass,
     attention: zoneAttention,
     revealPanel,
-  } = useDashboardZones({ profile, recentResults, activeCorpsClass, lineupCount });
+  } = useDashboardZones({
+    profile,
+    recentResults,
+    activeCorpsClass,
+    lineupCount,
+    isPodium: isPodiumSelected,
+    podium: podiumFacts,
+  });
 
   // The one imperative the mobile stack opens with. Ranked from real game
   // state (utils/nextAction); null for Podium, which guides itself.
@@ -380,7 +397,7 @@ const Dashboard = () => {
           /* Podium tab, no corps yet — the four-step founding flow */
           <div className="p-3 md:p-4 flex justify-center">
             <Suspense fallback={<ModalLoadingFallback />}>
-              <PodiumZone />
+              <PodiumZone podium={podium} />
             </Suspense>
           </div>
         ) : activeCorps ? (
@@ -435,7 +452,7 @@ const Dashboard = () => {
                      (design §6): rehearsal planner + caption progress. */
                   <Suspense fallback={<ModalLoadingFallback />}>
                     <div data-tour="lineup">
-                      <PodiumZone />
+                      <PodiumZone podium={podium} />
                     </div>
                   </Suspense>
                 ) : (
@@ -529,6 +546,7 @@ const Dashboard = () => {
                     recentResults={recentResults}
                     corpsClass={activeCorpsClass}
                     seasonUid={seasonData?.seasonUid}
+                    podium={podiumFacts}
                     onLineupClick={() => openCaptionSelection()}
                     onConceptClick={() => setShowConceptModal(true)}
                   />

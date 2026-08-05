@@ -19,7 +19,7 @@ import { useProfileStore } from '../../../store/profileStore';
 import {
   getGameDay,
   getWeekKey,
-  getChallengesForGameDay,
+  getAvailableChallengesForGameDay,
   WEEKLY_LOOP_TARGET_DAYS,
   WEEKLY_LOOP_BONUS,
 } from '../../../utils/dailyChallenges';
@@ -31,18 +31,24 @@ import {
 // questions, so the row would point at a panel that doesn't exist and the
 // day's set could never complete (the server excuses it the same way).
 const DailyChallenges = memo(
-  ({ onLineupClick, onConceptClick, embedded = false, predictionAvailable = true }) => {
+  ({
+    onLineupClick,
+    onConceptClick,
+    embedded = false,
+    predictionAvailable = true,
+    podium = null,
+  }) => {
     const { trigger: haptic } = useHaptic();
     const profile = useProfileStore((state) => state.profile);
     const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
 
     const gameDay = getGameDay();
+    // The context the challenge predicates need beyond the profile: prediction
+    // availability, and the Podium show/concept facts the profile can't carry.
+    const context = useMemo(() => ({ predictionAvailable, podium }), [predictionAvailable, podium]);
     const challenges = useMemo(
-      () =>
-        getChallengesForGameDay(gameDay).filter(
-          (c) => c.id !== 'make-prediction' || predictionAvailable
-        ),
-      [gameDay, predictionAvailable]
+      () => getAvailableChallengesForGameDay(gameDay, profile, context),
+      [gameDay, profile, context]
     );
 
     const completedIds = useMemo(() => {
@@ -67,12 +73,14 @@ const DailyChallenges = memo(
       for (const challenge of challenges) {
         const key = `${gameDay}:${challenge.id}`;
         if (completedIds.has(challenge.id) || attemptedRef.current.has(key)) continue;
-        if (challenge.check && challenge.check(profile, gameDay)) {
+        // `context` lets a Podium director's register-show / set-show-concept
+        // auto-claim off subcollection facts the profile can't show.
+        if (challenge.check && challenge.check(profile, gameDay, context)) {
           attemptedRef.current.add(key);
           completeDailyChallenge(challenge.id);
         }
       }
-    }, [profile, challenges, completedIds, gameDay, completeDailyChallenge]);
+    }, [profile, challenges, completedIds, gameDay, completeDailyChallenge, context]);
 
     const handleAction = (challenge) => {
       haptic?.();

@@ -23,16 +23,17 @@ import PredictionGamePanel from './PredictionGamePanel';
 import { getClaimableLadderTiers } from './seasonLadderTiers';
 
 const DirectorsReport = memo(
-  ({ recentResults, corpsClass, seasonUid, onLineupClick, onConceptClick }) => {
+  ({ recentResults, corpsClass, seasonUid, podium = null, onLineupClick, onConceptClick }) => {
     const profile = useProfileStore((state) => state.profile);
     const [claimingTier, setClaimingTier] = useState(null);
 
     // The day's set — login + challenge rotation + predictions — computed by
     // the shared resolver so this card and the mobile Next Action hero can
-    // never disagree about "Today · X of Y".
+    // never disagree about "Today · X of Y". `podium` carries the show/concept
+    // facts that keep a Podium-only director's set winnable.
     const { loginDone, streak, predictionAvailable, doneCount, totalCount, allDone } = useMemo(
-      () => computeDirectorsReport({ profile, recentResults, corpsClass }),
-      [profile, recentResults, corpsClass]
+      () => computeDirectorsReport({ profile, recentResults, corpsClass, podium }),
+      [profile, recentResults, corpsClass, podium]
     );
 
     // --- Pending Season Ladder claims (bonus row, not counted in the set) ---
@@ -126,6 +127,7 @@ const DirectorsReport = memo(
           onLineupClick={onLineupClick}
           onConceptClick={onConceptClick}
           predictionAvailable={predictionAvailable}
+          podium={podium}
         />
 
         {/* Predictions (embedded); SoundSport gets the placement-only set */}

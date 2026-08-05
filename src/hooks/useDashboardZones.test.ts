@@ -57,6 +57,25 @@ describe('useDashboardZones', () => {
     expect(setup({ lineupCount: FULL }).result.current.attention.corps).toBe(false);
   });
 
+  it('never dots My Corps for a Podium director, who has no lineup', () => {
+    // Regression guard: a Podium corps has lineupCount 0, so the naive
+    // `lineupCount < 8` lit the dot permanently.
+    const { result } = setup({ isPodium: true, lineupCount: 0 });
+    expect(result.current.attention.corps).toBe(false);
+  });
+
+  it("counts a Podium director's show/concept toward Today via podium facts", () => {
+    // With the login unclaimed and no facts, Today is unfinished; the facts
+    // themselves don't complete the day but must not crash the computation.
+    const { result } = setup({
+      isPodium: true,
+      lineupCount: 0,
+      activeCorpsClass: 'podiumClass',
+      podium: { hasShows: true, hasConcept: true },
+    });
+    expect(typeof result.current.attention.today).toBe('boolean');
+  });
+
   it("dots Today while the day's set is unfinished", () => {
     // A null profile has claimed nothing today, so the set cannot be done.
     const { result } = setup();

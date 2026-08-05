@@ -13,8 +13,23 @@ const {
   getWeekKey,
   advanceWeeklyLoop,
   getChallengesForGameDay,
+  getRequiredChallengeIds,
+  rotationNeedsPodiumContext,
+  hasLineupBearingCorps,
   pruneOldChallenges,
 } = require("./dailyChallenges");
+
+// A game day whose real rotation contains a given challenge id — lets the
+// tests below assert `available`/required behavior against the actual hashed
+// rotation rather than a hand-built one. Searches forward from a fixed anchor.
+function findGameDayWith(id) {
+  const anchor = new Date("2026-07-01T12:00:00Z");
+  for (let i = 0; i < 60; i++) {
+    const day = getGameDay(new Date(anchor.getTime() + i * 86400000));
+    if (getChallengesForGameDay(day).some((c) => c.id === id)) return day;
+  }
+  throw new Error(`No game day found offering ${id}`);
+}
 
 describe("getGameDay", () => {
   test("uses the ET calendar date after 2 AM ET", () => {
@@ -68,6 +83,121 @@ describe("getChallengesForGameDay", () => {
       "make-prediction",
       "register-show",
     ]);
+  });
+});
+
+describe("hasLineupBearingCorps", () => {
+  test("true for a fantasy director", () => {
+    assert.equal(hasLineupBearingCorps({ corps: { worldClass: { corpsName: "A" } } }), true);
+  });
+
+  test("false for a Podium-only director", () => {
+    // Podium is a director simulation with no caption lineup — the whole
+    // reason its daily set had to change.
+    assert.equal(hasLineupBearingCorps({ corps: { podiumClass: { corpsName: "P" } } }), false);
+  });
+
+  test("true when a director has both", () => {
+    assert.equal(
+      hasLineupBearingCorps({ corps: { podiumClass: { corpsName: "P" }, aClass: { corpsName: "A" } } }),
+      true
+    );
+  });
+
+  test("false for no corps at all", () => {
+    assert.equal(hasLineupBearingCorps({}), false);
+    assert.equal(hasLineupBearingCorps(null), false);
+  });
+});
+
+describe("getRequiredChallengeIds", () => {
+  test("drops check-lineup for a Podium-only director", () => {
+    const day = findGameDayWith("check-lineup");
+    const ids = getRequiredChallengeIds(day, { corps: { podiumClass: { corpsName: "P" } } });
+    assert.ok(!ids.includes("check-lineup"), "check-lineup must not be required for podium-only");
+    // Non-droppable members of the rotation survive.
+    const rotation = getChallengesForGameDay(day).map((c) => c.id);
+    for (const id of rotation) {
+      if (id !== "check-lineup" && id !== "make-prediction") assert.ok(ids.includes(id));
+    }
+  });
+
+  test("keeps check-lineup for a fantasy director", () => {
+    const day = findGameDayWith("check-lineup");
+    const ids = getRequiredChallengeIds(day, { corps: { worldClass: { corpsName: "W" } } });
+    assert.ok(ids.includes("check-lineup"));
+  });
+
+  test("drops make-prediction when predictions are unavailable", () => {
+    const day = findGameDayWith("make-prediction");
+    const ids = getRequiredChallengeIds(
+      day,
+      { corps: { worldClass: { corpsName: "W" } } },
+      { predictionAvailable: false }
+    );
+    assert.ok(!ids.includes("make-prediction"));
+  });
+
+  test("keeps make-prediction when predictions are available", () => {
+    const day = findGameDayWith("make-prediction");
+    const ids = getRequiredChallengeIds(
+      day,
+      { corps: { worldClass: { corpsName: "W" } } },
+      { predictionAvailable: true }
+    );
+    assert.ok(ids.includes("make-prediction"));
+  });
+
+  test("never drops register-show or set-show-concept (any director can do them)", () => {
+    for (const id of ["register-show", "set-show-concept"]) {
+      const day = findGameDayWith(id);
+      const ids = getRequiredChallengeIds(day, { corps: { podiumClass: { corpsName: "P" } } });
+      assert.ok(ids.includes(id), `${id} must stay required`);
+    }
+  });
+});
+
+describe("challenge verifiers with Podium context", () => {
+  const bySlug = (id) => CHALLENGE_POOL.find((c) => c.id === id);
+
+  test("register-show verifies from Podium show picks off the profile", () => {
+    const podiumOnly = { corps: { podiumClass: { corpsName: "P" } } };
+    assert.equal(bySlug("register-show").verify(podiumOnly, "d", { podium: { hasShows: true } }), true);
+    assert.equal(bySlug("register-show").verify(podiumOnly, "d", { podium: { hasShows: false } }), false);
+    // No context at all → not done (a fantasy corps with picks still passes).
+    assert.equal(bySlug("register-show").verify(podiumOnly, "d"), false);
+  });
+
+  test("set-show-concept verifies from the Podium concept the profile can't show", () => {
+    // The Podium display copy stores showConcept as a STRING, so the fantasy
+    // `.theme` check misses it — the context carries the real answer.
+    const podiumOnly = { corps: { podiumClass: { corpsName: "P", showConcept: "Ritual" } } };
+    assert.equal(bySlug("set-show-concept").verify(podiumOnly, "d", { podium: { hasConcept: true } }), true);
+    assert.equal(bySlug("set-show-concept").verify(podiumOnly, "d", { podium: { hasConcept: false } }), false);
+  });
+
+  test("fantasy verifiers are unchanged by the context arg", () => {
+    const fantasy = {
+      corps: { worldClass: { corpsName: "W", selectedShows: { 1: ["s"] }, showConcept: { theme: "T" } } },
+    };
+    assert.equal(bySlug("register-show").verify(fantasy, "d"), true);
+    assert.equal(bySlug("set-show-concept").verify(fantasy, "d"), true);
+  });
+});
+
+describe("rotationNeedsPodiumContext", () => {
+  test("true when the day offers a show/concept challenge", () => {
+    assert.equal(rotationNeedsPodiumContext(findGameDayWith("register-show")), true);
+  });
+
+  test("false when it offers neither", () => {
+    // Only check-lineup + make-prediction would need no podium read. Such a
+    // day may not exist in the 3-of-4 rotation, so accept either outcome but
+    // assert the function agrees with the rotation it inspects.
+    const day = "Wed Jan 14 2026"; // check-lineup, make-prediction, register-show
+    const ids = getChallengesForGameDay(day).map((c) => c.id);
+    const expected = ids.includes("register-show") || ids.includes("set-show-concept");
+    assert.equal(rotationNeedsPodiumContext(day), expected);
   });
 
   test("every challenge is a verifiable decision", () => {

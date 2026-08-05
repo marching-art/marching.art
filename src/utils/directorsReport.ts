@@ -11,8 +11,19 @@
 // challenge/prediction buckets are written by the callables that award them,
 // so this reads what the server already decided rather than guessing.
 
-import { getGameDay, getChallengesForGameDay } from './dailyChallenges';
+import { getGameDay, getAvailableChallengesForGameDay } from './dailyChallenges';
 import { buildQuestions } from './dailyPredictions';
+
+/**
+ * The two Podium facts the profile alone can't answer, because Podium keeps
+ * its show picks and (as a string, not a `{theme}`) its concept in a
+ * server-only subcollection. Sourced from usePodium at the dashboard level and
+ * passed in; null when the director has no Podium corps.
+ */
+export interface PodiumChallengeFacts {
+  hasShows: boolean;
+  hasConcept: boolean;
+}
 
 /** One of the day's three rotating challenges. */
 export interface DailyChallenge {
@@ -38,6 +49,9 @@ export interface DirectorsReportProfile {
   engagement?: { lastLogin?: unknown; loginStreak?: number } | null;
   challenges?: Record<string, Array<{ id: string; completed?: boolean }>> | null;
   predictions?: Record<string, { resolved?: boolean; picks?: Record<string, unknown> }> | null;
+  // Read by the challenge-availability predicates (check-lineup needs a
+  // lineup-bearing corps; the show/concept checks read the corps map).
+  corps?: Record<string, { corpsName?: string; [key: string]: unknown } | null> | null;
 }
 
 /** A scored result feeding the prediction catalog. */
@@ -93,9 +107,11 @@ export function computeDirectorsReport(options: {
   profile: DirectorsReportProfile | null;
   recentResults: RecentResult[];
   corpsClass: string | null;
+  /** Podium show/concept facts, or null for a director with no Podium corps. */
+  podium?: PodiumChallengeFacts | null;
   now?: Date;
 }): DirectorsReportState {
-  const { profile, recentResults, corpsClass, now } = options;
+  const { profile, recentResults, corpsClass, podium = null, now } = options;
   const gameDay = now ? getGameDay(now) : getGameDay();
 
   const lastLogin = toDate(profile?.engagement?.lastLogin);
@@ -105,9 +121,11 @@ export function computeDirectorsReport(options: {
   const questions: PredictionQuestion[] = buildQuestions(recentResults || [], corpsClass);
   const predictionAvailable = questions.length > 0;
 
-  const challenges: DailyChallenge[] = getChallengesForGameDay(gameDay).filter(
-    (c: DailyChallenge) => c.id !== 'make-prediction' || predictionAvailable
-  );
+  // Same filter the server applies to the required set: drop challenges this
+  // director genuinely can't satisfy today (make-prediction with no questions,
+  // check-lineup for a Podium-only director) so the count stays winnable.
+  const context = { predictionAvailable, podium };
+  const challenges: DailyChallenge[] = getAvailableChallengesForGameDay(gameDay, profile, context);
 
   const bucket = profile?.challenges?.[gameDay] || [];
   const completedIds = new Set(bucket.filter((c) => c.completed).map((c) => c.id));

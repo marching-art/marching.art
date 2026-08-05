@@ -14,6 +14,7 @@ import {
 import {
   computeDirectorsReport,
   type DirectorsReportProfile,
+  type PodiumChallengeFacts,
   type RecentResult,
 } from '../utils/directorsReport';
 
@@ -23,6 +24,17 @@ export interface UseDashboardZonesOptions {
   activeCorpsClass: string | null;
   /** Filled caption slots in the active corps. */
   lineupCount: number;
+  /**
+   * True when the active class is Podium, which has no caption lineup — so the
+   * lineup-completeness dot must not apply (without this, a Podium director saw
+   * a permanent My-Corps dot, since their lineupCount is always 0).
+   */
+  isPodium?: boolean;
+  /**
+   * Podium show/concept facts, threaded into the Today count so the tab dot
+   * agrees with the Director's Report for a Podium director.
+   */
+  podium?: PodiumChallengeFacts | null;
 }
 
 export interface DashboardZoneState {
@@ -40,6 +52,8 @@ export function useDashboardZones({
   recentResults,
   activeCorpsClass,
   lineupCount,
+  isPodium = false,
+  podium = null,
 }: UseDashboardZonesOptions): DashboardZoneState {
   const [activeZone, setActiveZone] = useState<DashboardZoneId>(DEFAULT_DASHBOARD_ZONE);
 
@@ -49,19 +63,22 @@ export function useDashboardZones({
   );
 
   // The same computation the Director's Report renders, so a dot on the Today
-  // tab can never disagree with the count inside it.
+  // tab can never disagree with the count inside it — including the Podium
+  // show/concept facts that keep a Podium director's set winnable.
   const daily = useMemo(
-    () => computeDirectorsReport({ profile, recentResults, corpsClass: activeCorpsClass }),
-    [profile, recentResults, activeCorpsClass]
+    () => computeDirectorsReport({ profile, recentResults, corpsClass: activeCorpsClass, podium }),
+    [profile, recentResults, activeCorpsClass, podium]
   );
 
   // Dots on the tabs the director is not currently looking at — the ambient
   // "there is something over here" a flat stack can never give. Only the two
   // signals this page holds exactly: the Season zone's rewards are claimed from
   // the Director's Report, which lives under Today, so it has none of its own.
+  // Podium has no lineup, so the lineup-completeness dot must not apply to it
+  // (a richer Podium corps signal belongs with the Podium next-action work).
   const attention = useMemo(
-    () => ({ corps: lineupCount < 8, today: !daily.allDone }),
-    [lineupCount, daily.allDone]
+    () => ({ corps: !isPodium && lineupCount < 8, today: !daily.allDone }),
+    [isPodium, lineupCount, daily.allDone]
   );
 
   // A panel the Next Action hero points at may live in a zone that is

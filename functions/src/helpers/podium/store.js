@@ -413,6 +413,29 @@ function showPickFor(state, day) {
   return picks[day] || picks[String(day)] || null;
 }
 
+/**
+ * The two facts the daily-challenge verifiers can't read off the profile,
+ * because Podium keeps its show picks and (as a string, not a `{theme}` object)
+ * its show concept in this server-only state doc. Returns null when the
+ * director has no Podium corps for the active season, so a stale prior-season
+ * state can never satisfy this season's challenges.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} uid
+ * @param {string} seasonUid - active season, to reject stale state
+ * @returns {Promise<{hasShows: boolean, hasConcept: boolean}|null>}
+ */
+async function loadPodiumChallengeFacts(db, uid, seasonUid) {
+  const snapshot = await stateRef(db, uid).get();
+  if (!snapshot.exists) return null;
+  const state = snapshot.data();
+  if (seasonUid && state.seasonUid !== seasonUid) return null;
+  return {
+    hasShows: selectedDaysOf(state).length > 0,
+    hasConcept: typeof state.showConcept === "string" && state.showConcept.trim().length > 0,
+  };
+}
+
 /** True when `competitionDay` is a show day for this corps. */
 function isShowDayFor(state, uid, competitionDay, easternAssignments) {
   if (competitionDay < 1 || competitionDay > 49) return false;
@@ -649,6 +672,7 @@ module.exports = {
   isShowDayFor,
   selectedDaysOf,
   showPickFor,
+  loadPodiumChallengeFacts,
   profileRef,
   stateRef,
   rosterRef,

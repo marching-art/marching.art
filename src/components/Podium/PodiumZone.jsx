@@ -2,6 +2,11 @@
 // tab is selected (Phase 2, design §6). Handles its own three states:
 // loading, unregistered (four-step setup), and the daily loop
 // (RehearsalPlanner + PodiumCaptionPanel).
+//
+// The Podium state is loaded by the Dashboard (which also reads its
+// challenge facts for the shared Director's Report) and passed in, so it is
+// fetched exactly once. Falls back to loading its own when no prop is given,
+// keeping the component usable in isolation (e.g. tests).
 
 import React from 'react';
 import { Loader2 } from 'lucide-react';
@@ -16,8 +21,15 @@ import JointRehearsalPanel from './JointRehearsalPanel';
 import FanFavoriteCard from './FanFavoriteCard';
 import StaffOutlookBanner from './StaffOutlookBanner';
 
-export default function PodiumZone() {
-  const podium = usePodium(true);
+/**
+ * @param {{ podium?: ReturnType<typeof usePodium> }} props
+ */
+export default function PodiumZone({ podium: podiumProp }) {
+  // Self-load only when the Dashboard didn't hand us its instance. The hook
+  // runs unconditionally (rules of hooks) but no-ops its fetch when disabled,
+  // so passing an instance avoids the duplicate getPodiumState call.
+  const ownPodium = usePodium(!podiumProp);
+  const podium = podiumProp || ownPodium;
 
   if (podium.loading && !podium.data) {
     return (

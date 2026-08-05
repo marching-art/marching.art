@@ -54,6 +54,29 @@ export const getGameDay = (date = new Date()) => {
  * Both sides pin the same fixed-date expectations in their tests to catch
  * drift.
  */
+// Canonical class ids that field a caption lineup. Mirrors the server's
+// FANTASY_CLASSES (classRegistry capability), so a Podium-only director — who
+// has no lineup — is correctly recognized as unable to satisfy check-lineup.
+import { CORPS_CLASS_ORDER } from './corps';
+
+/** True when the director has at least one lineup-drafting corps. */
+const hasLineupBearingCorps = (profile) =>
+  CORPS_CLASS_ORDER.some((cls) => Boolean(profile?.corps?.[cls]?.corpsName));
+
+/**
+ * The challenge pool. Mirrors functions/src/helpers/dailyChallenges.js.
+ *
+ * `check(profile, gameDay, context)` is the client's optimistic "is this done"
+ * predicate (drives auto-claim and the Today count); the server re-verifies.
+ * `available(profile, context)` is whether this director could satisfy it at
+ * all today — an unavailable challenge drops out of the required set so the
+ * count and the weekly arc stay winnable (Podium-only directors have no
+ * lineup; a brand-new director has no prediction questions).
+ *
+ * `context` carries the two facts the profile alone can't answer: Podium keeps
+ * its show picks and (as a string) its concept in a server-only subcollection,
+ * surfaced here as `context.podium = { hasShows, hasConcept }`.
+ */
 export const CHALLENGE_POOL = [
   {
     id: 'check-lineup',
@@ -65,6 +88,10 @@ export const CHALLENGE_POOL = [
       Object.values(profile?.corps || {}).some(
         (c) => c && c.lineup && Object.keys(c.lineup).length > 0
       ),
+    // Podium is a director simulation with no caption lineup — its daily verb
+    // is allocating rehearsal blocks. Requiring this of a Podium-only director
+    // once made their full set impossible.
+    available: (profile) => hasLineupBearingCorps(profile),
   },
   {
     id: 'make-prediction',
@@ -74,16 +101,19 @@ export const CHALLENGE_POOL = [
     xp: 10,
     check: (profile, gameDay) =>
       Object.keys(profile?.predictions?.[gameDay]?.picks || {}).length > 0,
+    available: (_profile, context) => context?.predictionAvailable !== false,
   },
   {
     id: 'register-show',
     label: 'Register for a show',
     link: '/schedule',
     xp: 10,
-    check: (profile) =>
+    // Podium registers for shows too (setPodiumShows); its picks live in the
+    // podium subcollection, surfaced via context.podium.hasShows.
+    check: (profile, _gameDay, context) =>
       Object.values(profile?.corps || {}).some(
         (c) => c && Object.keys(c.selectedShows || {}).length > 0
-      ),
+      ) || Boolean(context?.podium?.hasShows),
   },
   {
     id: 'set-show-concept',
@@ -91,7 +121,11 @@ export const CHALLENGE_POOL = [
     link: null,
     action: 'concept',
     xp: 10,
-    check: (profile) => Object.values(profile?.corps || {}).some((c) => c && c.showConcept?.theme),
+    // Podium names its show at registration; its concept is a string, not a
+    // {theme} object, so the fantasy check misses it — context carries it.
+    check: (profile, _gameDay, context) =>
+      Object.values(profile?.corps || {}).some((c) => c && c.showConcept?.theme) ||
+      Boolean(context?.podium?.hasConcept),
   },
 ];
 
@@ -144,3 +178,19 @@ export const getChallengesForGameDay = (gameDay) => {
     .slice(0, CHALLENGES_PER_DAY)
     .map((entry) => entry.challenge);
 };
+
+/**
+ * Today's challenges with the ones this director genuinely can't satisfy
+ * removed. Mirrors the server's getRequiredChallengeIds — the same filter that
+ * decides the weekly-arc "full set", so the client count and the server payout
+ * agree. Returns the challenge objects (the UI needs their labels/links).
+ *
+ * @param {string} gameDay - Value from getGameDay()
+ * @param {any} profile - The user's profile document data
+ * @param {{predictionAvailable?: boolean, podium?: {hasShows: boolean, hasConcept: boolean}|null}} [context]
+ * @returns {Array<{id: string, label: string, xp: number}>}
+ */
+export const getAvailableChallengesForGameDay = (gameDay, profile, context = {}) =>
+  getChallengesForGameDay(gameDay).filter(
+    (challenge) => !challenge.available || challenge.available(profile, context)
+  );

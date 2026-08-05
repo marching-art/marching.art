@@ -149,6 +149,64 @@ describe('computeDirectorsReport — a brand-new director', () => {
   });
 });
 
+describe('computeDirectorsReport — a Podium-only director', () => {
+  // No lineup-bearing corps, and their shows/concept live off the profile.
+  const podiumProfile = { corps: { podiumClass: { corpsName: 'Riverside' } } };
+
+  it('drops check-lineup from the set — Podium has no lineup', () => {
+    const rotation = getChallengesForGameDay(GAME_DAY).map((c) => c.id);
+    const state = computeDirectorsReport({
+      profile: podiumProfile,
+      recentResults: [],
+      corpsClass: 'podiumClass',
+      now: NOW,
+    });
+    if (rotation.includes('check-lineup')) {
+      expect(state.challenges.some((c) => c.id === 'check-lineup')).toBe(false);
+    }
+    // The total must not count a challenge they can never do.
+    expect(state.totalCount).toBe(1 + state.challenges.length + state.questions.length);
+  });
+
+  it('keeps show/concept challenges, which a Podium director can satisfy', () => {
+    const rotation = getChallengesForGameDay(GAME_DAY).map((c) => c.id);
+    const state = computeDirectorsReport({
+      profile: podiumProfile,
+      recentResults: [],
+      corpsClass: 'podiumClass',
+      podium: { hasShows: true, hasConcept: true },
+      now: NOW,
+    });
+    for (const id of ['register-show', 'set-show-concept']) {
+      if (rotation.includes(id)) expect(state.challenges.some((c) => c.id === id)).toBe(true);
+    }
+  });
+
+  it('can reach a complete day with only the challenges it can do', () => {
+    // Complete every available challenge; login done; no predictions.
+    const available = computeDirectorsReport({
+      profile: podiumProfile,
+      recentResults: [],
+      corpsClass: 'podiumClass',
+      podium: { hasShows: true, hasConcept: true },
+      now: NOW,
+    }).challenges;
+
+    const state = computeDirectorsReport({
+      profile: {
+        ...podiumProfile,
+        engagement: { lastLogin: NOW },
+        challenges: { [GAME_DAY]: available.map((c) => ({ id: c.id, completed: true })) },
+      },
+      recentResults: [],
+      corpsClass: 'podiumClass',
+      podium: { hasShows: true, hasConcept: true },
+      now: NOW,
+    });
+    expect(state.allDone).toBe(true);
+  });
+});
+
 describe('computeDirectorsReport — SoundSport', () => {
   it('uses the placement-only question set', () => {
     const state = computeDirectorsReport({
