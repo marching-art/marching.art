@@ -141,6 +141,7 @@ const BottomNav: React.FC = () => {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom select-none"
         aria-label="Mobile navigation"
+        data-tour="bottom-nav"
       >
         {/* Accent line at top - solid, no gradient per design laws */}
         <div className="h-px w-full bg-line" />

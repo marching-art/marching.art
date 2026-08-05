@@ -376,7 +376,7 @@ const Dashboard = () => {
                 begins. Desktop's grid answers this spatially, so the panel
                 hides itself at lg. Sits outside the grid so it can lead the
                 mobile stack without disturbing the desktop row/column tracks. */}
-            <div className="lg:hidden mb-4">
+            <div className="lg:hidden mb-4" data-tour="next-action">
               <NextActionPanel
                 action={nextAction}
                 onOpenLineup={() => openCaptionSelection()}
@@ -402,7 +402,7 @@ const Dashboard = () => {
               {/* Mobile section map. Inside the grid (the sidebar wrapper is
                   `contents` on mobile, so these are all siblings) with
                   `order-2`, which puts it directly under the scorecard. */}
-              <div className="order-2 lg:hidden">
+              <div className="order-2 lg:hidden" data-tour="zone-tabs">
                 <ZoneTabs active={activeZone} onChange={setActiveZone} attention={zoneAttention} />
               </div>
               {/* ZONE C — MY CORPS (2/3): the strategic work — build, tune,
@@ -598,7 +598,12 @@ const Dashboard = () => {
           <NoCorpsCard onRegister={() => setShowRegistration(true)} />
         )}
       </div>
-      <DashboardModalHost modals={modals} data={dashboardData} quickStartSteps={quickStartSteps} />
+      <DashboardModalHost
+        modals={modals}
+        data={dashboardData}
+        quickStartSteps={quickStartSteps}
+        onRequestZone={setActiveZone}
+      />
     </div>
   );
 };
