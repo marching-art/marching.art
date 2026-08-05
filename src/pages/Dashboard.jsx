@@ -53,7 +53,9 @@ import {
 } from '../components/Dashboard';
 
 import { ModalLoadingFallback } from '../components/ui';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useDashboardZones } from '../hooks/useDashboardZones';
+import { useDashboardRefresh } from '../hooks/useDashboardRefresh';
 import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import { useScheduleStore } from '../store/scheduleStore';
 
@@ -273,6 +275,10 @@ const Dashboard = () => {
     [lineupCount, thisWeekShows.length, myLeagues?.length]
   );
 
+  // Pull-to-refresh re-fetches the nightly-drop caches (the live listeners
+  // behind profile and season need no help).
+  const handleRefresh = useDashboardRefresh(seasonData?.seasonUid);
+
   // Mobile section state: which zone shows, which others have something
   // waiting, and how to reveal a panel buried in a hidden one.
   const {
@@ -331,8 +337,15 @@ const Dashboard = () => {
         </Suspense>
       )}
 
-      {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+      {/* SCROLLABLE CONTENT — PullToRefresh owns the single scroll container,
+          as it already does on Scores and Leagues. Without it the gesture did
+          nothing here and worked everywhere else, which reads as the page
+          being stuck. */}
+      <PullToRefresh
+        onRefresh={handleRefresh}
+        className="flex-1 min-h-0"
+        contentClassName="pb-20 md:pb-4"
+      >
         {/* Control Bar - Class Tabs + Director HUD */}
         <div data-tour="control-bar">
           <ControlBar
@@ -597,7 +610,7 @@ const Dashboard = () => {
         ) : (
           <NoCorpsCard onRegister={() => setShowRegistration(true)} />
         )}
-      </div>
+      </PullToRefresh>
       <DashboardModalHost
         modals={modals}
         data={dashboardData}
