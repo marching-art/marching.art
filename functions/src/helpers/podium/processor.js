@@ -613,6 +613,15 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         logger.warn(`[podium] director-name enrichment skipped: ${error.message}`);
       }
     }
+    // The cut tonight's scores just decided (§5.7), published WITH the results
+    // that decided it — Prelims and Semifinals nights are the whole reason
+    // anyone opens the sheet. Computed from the same function tomorrow's run
+    // will gate on, reading this very document, so the sheet can never promise
+    // a slot the scorer then withholds. Null on the other 46 nights.
+    const championshipCut =
+      recapShows.length > 0
+        ? store.championshipCutFor({ shows: recapShows }, competitionDay, store.balance)
+        : null;
     if (recapShows.length > 0 || jointFeed.length > 0) {
       await store.recapDayRef(db, seasonUid, competitionDay).set({
         seasonUid,
@@ -620,6 +629,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         calendarDay,
         processedAt: new Date().toISOString(),
         shows: recapShows,
+        ...(championshipCut ? { championshipCut } : {}),
         // Public smoke, private fire: who rehearsed together — never the
         // scrimmage numbers (§5.12).
         ...(jointFeed.length > 0 ? { jointRehearsals: jointFeed } : {}),

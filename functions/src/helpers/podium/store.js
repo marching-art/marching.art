@@ -230,6 +230,90 @@ function advancingUids(priorRecap, competitionDay, cfg) {
   return advancing;
 }
 
+// Short name for the round a cut feeds, for the copy on the recap sheet.
+const CHAMPIONSHIP_ROUND_SHORT_NAME = Object.freeze({
+  46: "Open & A Class Finals",
+  48: "Semifinals",
+  49: "Finals",
+});
+
+/**
+ * The cut TONIGHT's results just decided, ready to publish with the recap.
+ *
+ * `advancingUids` answers the question backwards — on the night of a cut round
+ * it looks at the round before. The recap sheet needs it forwards: the night
+ * Prelims are scored is the night players want to know who survived, a full day
+ * before the processor asks. So this calls the SAME function with tonight's
+ * recap and tomorrow's day number, which is exactly the call tomorrow's
+ * processing run will make with exactly this document. A second implementation
+ * of "top 25, ties included" would eventually disagree with the one that
+ * decides who actually gets scored, and a sheet that promises a corps the
+ * scorer then leaves out is worse than no marking at all.
+ *
+ * Cut sizes come from `cfg` (balance.championship.advancement) rather than
+ * constants, so a retuned bracket restates itself in the published copy.
+ *
+ * @param {Object} recap The day's recap ({shows: [{results: [...]}]}).
+ * @param {number} competitionDay The night just scored.
+ * @param {Object} cfg store.balance (or an override-merged copy).
+ * @returns {?{toDay: number, eventName: string, roundName: string, rule: string,
+ *   perDivision: boolean, uids: string[], advancingCount: number,
+ *   fieldCount: number, missedCount: number, cutLine: ?number}}
+ *   Null on every night that decides nothing.
+ */
+function championshipCutFor(recap, competitionDay, cfg) {
+  const toDay = competitionDay + 1;
+  const spec = CHAMPIONSHIP_ADVANCEMENT[toDay];
+  if (!spec || spec.priorDay !== competitionDay) return null;
+
+  const advancing = advancingUids(recap, toDay, cfg);
+  if (!advancing || advancing.size === 0) return null;
+
+  const allResults = (recap && Array.isArray(recap.shows) ? recap.shows : []).flatMap(
+    (show) => show.results || []
+  );
+  const sizes = (cfg && cfg.championship && cfg.championship.advancement) || {};
+
+  // Only the divisions this cut actually judges count as "the field": on the
+  // Open & A night nobody else is competing for a slot anyway, but the guard
+  // keeps the counts honest if that ever changes.
+  const eligible = spec.perDivision
+    ? allResults.filter((r) =>
+      spec.perDivision.some(
+        (cut) => cut.division === divisions.normalizeDivision(r.division)
+      )
+    )
+    : allResults;
+  const advancingResults = eligible.filter((r) => advancing.has(r.uid));
+
+  const rule = spec.perDivision
+    ? `${spec.perDivision
+      .slice()
+      // Highest cut first reads as the natural billing (Open, then A).
+      .sort((a, b) => (sizes[b.advanceKey] || 0) - (sizes[a.advanceKey] || 0))
+      .map(
+        (cut) =>
+          `Top ${sizes[cut.advanceKey] || 0} ${divisions.DIVISION_LABELS[cut.division] || cut.division}`
+      )
+      .join(" · ")} advance`
+    : `Top ${sizes[spec.overallKey] || 0} advance to ${CHAMPIONSHIP_ROUND_SHORT_NAME[toDay] || `Day ${toDay}`}`;
+
+  return {
+    toDay,
+    eventName: CHAMPIONSHIP_EVENT_BY_DAY[toDay] || `Day ${toDay}`,
+    roundName: CHAMPIONSHIP_ROUND_SHORT_NAME[toDay] || `Day ${toDay}`,
+    rule,
+    perDivision: Boolean(spec.perDivision),
+    uids: advancingResults.map((r) => r.uid),
+    advancingCount: advancingResults.length,
+    fieldCount: eligible.length,
+    missedCount: Math.max(0, eligible.length - advancingResults.length),
+    cutLine: advancingResults.length
+      ? Math.min(...advancingResults.map((r) => Number(r.totalScore) || 0))
+      : null,
+  };
+}
+
 /**
  * Max self-selected shows per competition week. Weeks 4-6 spend one of four
  * slots on a major; week 7's championship days (45-49) are auto-attended, so
@@ -555,6 +639,7 @@ module.exports = {
   championshipDaysFor,
   championshipEventFor,
   advancingUids,
+  championshipCutFor,
   maxPicksForWeek,
   easternNightFor,
   loadEasternAssignments,
