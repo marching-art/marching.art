@@ -23,6 +23,11 @@
  * days and is disabled entirely when the DISCORD_SCORES_WEBHOOK_URL secret
  * is unset/empty.
  *
+ * The Podium score-drop stage posts Podium Class's own nightly results to the
+ * same scores channel (helpers/podium/scoreDropDiscord.js) as a separate
+ * message — the two boards are scored by different jobs at different hours and
+ * are never cross-ranked, so they never share one post.
+ *
  * The Fan Favorite stage posts the community ballot's openings and results to
  * the #announcements channel (helpers/podium/fanFavoriteDiscord.js) — its own
  * webhook secret, DISCORD_ANNOUNCEMENTS_WEBHOOK_URL, disabled the same way.
@@ -241,6 +246,55 @@ async function runFanFavoriteStage(
 }
 
 /**
+ * Run the Podium score-drop stage: post tonight's Podium Class results to the
+ * Discord #scores channel (helpers/podium/scoreDropDiscord.js), alongside — not
+ * inside — the fantasy drop, which the two boards' separate scoring jobs and
+ * never-cross-ranked rule both call for.
+ *
+ * Runs AFTER the Podium stage, which writes the recap it reads (including the
+ * championship-week cut that rides along in finals week). Lease-guarded per
+ * (season, day), so a night with no recap, a rest night, or spring training
+ * costs nothing and claims nothing.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} webhookUrl - #scores webhook; falsy disables the stage.
+ * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @param {Object} [options]
+ * @param {number} [options.competitionDay] - The day the Podium stage just
+ *   processed; derived via the 2 AM reset when omitted.
+ * @returns {Promise<{status: string, competitionDay?: number,
+ *   announcement?: {kind: string, status: string}}>}
+ */
+async function runPodiumScoreDropStage(
+  db,
+  webhookUrl,
+  fetchImpl,
+  { competitionDay: competitionDayOverride = null } = {}
+) {
+  if (!webhookUrl) return { status: "disabled" };
+  if (!(await isPodiumEnabled(db))) return { status: "podium-disabled" };
+
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) return { status: "no-season" };
+  const seasonData = seasonDoc.data();
+  if (!seasonData.schedule || !seasonData.schedule.startDate) return { status: "no-schedule" };
+
+  const competitionDay =
+    competitionDayOverride ??
+    toCompetitionDay(getCompletedCalendarDay(seasonData.schedule.startDate.toDate()), seasonData);
+
+  const { announcePodiumScoreDrop } = require("../helpers/podium/scoreDropDiscord");
+  const announcement = await announcePodiumScoreDrop(db, {
+    seasonUid: seasonData.seasonUid,
+    seasonName: seasonDisplayName(seasonData),
+    competitionDay,
+    webhookUrl,
+    fetchImpl,
+  });
+  return { status: "ran", competitionDay, announcement };
+}
+
+/**
  * Run the Podium Report stage: post the week's power-rankings column to the
  * Discord #news channel (helpers/podium/podiumReportDiscord.js). Same shape
  * as the Fan Favorite stage — self-contained, lease-guarded per week, and
@@ -339,6 +393,7 @@ module.exports = {
   runPodiumStage,
   runDiscordStage,
   runFanFavoriteStage,
+  runPodiumScoreDropStage,
   runPodiumReportStage,
   runEasternClassicStage,
 };

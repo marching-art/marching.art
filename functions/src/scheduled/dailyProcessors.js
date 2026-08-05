@@ -8,6 +8,7 @@ const {
   runPodiumStage,
   runDiscordStage,
   runFanFavoriteStage,
+  runPodiumScoreDropStage,
   runPodiumReportStage,
   runEasternClassicStage,
 } = require("./nightlyStages");
@@ -56,6 +57,7 @@ async function runPodiumStageIsolated(db) {
   // The announcement stages read the state the stage above just wrote, so
   // they run after it — and, being read-only over that state, they run even
   // when it failed (they simply find nothing new to announce).
+  await runPodiumScoreDropStageIsolated(db, competitionDay);
   await runFanFavoriteStageIsolated(db, competitionDay);
   await runPodiumReportStageIsolated(db, competitionDay);
 }
@@ -78,6 +80,27 @@ async function runFanFavoriteStageIsolated(db, competitionDay) {
     }
   } catch (error) {
     logger.error(`[fan-favorite] stage failed (scoring unaffected): ${error.message}`);
+  }
+}
+
+/**
+ * Post tonight's Podium Class results to the Discord #scores channel — the
+ * Podium half of the nightly drop, its own message beside the fantasy one.
+ * Isolated like every other stage; no-op while DISCORD_SCORES_WEBHOOK_URL is
+ * unset, and its per-day lease makes reruns post-at-most-once.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {number|null} competitionDay - The day the Podium stage processed.
+ */
+async function runPodiumScoreDropStageIsolated(db, competitionDay) {
+  try {
+    const result = await runPodiumScoreDropStage(db, discordScoresWebhookUrl.value(), undefined, {
+      competitionDay,
+    });
+    if (result.status === "ran" && result.announcement?.status === "posted") {
+      logger.info(`[podium-drop] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[podium-drop] stage failed (scoring unaffected): ${error.message}`);
   }
 }
 
