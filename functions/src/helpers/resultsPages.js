@@ -16,6 +16,9 @@
 const { CLASS_LABELS } = require("./scoreDrop");
 const { SITE_URL, escapeHtml, clamp } = require("./shareCards");
 const { COLORS, FONT_STACK } = require("./designTokens");
+// Championship-week cuts, from the same function that decides who the scorer
+// actually enrolls the next night — never a second implementation of "top 25".
+const { cutForDrop } = require("./championshipCuts");
 
 // Ranked-class display order for the public sheets (mirrors RECAP_CLASS_ORDER
 // in src/pages/ScoresParts.jsx).
@@ -29,7 +32,7 @@ const RESULTS_CLASS_ORDER = ["worldClass", "openClass", "aClass"];
  *
  * @param {Object} recap fantasy_recaps day doc data ({shows: [...]}).
  * @returns {{
- *   byClass: Map<string, Array<{corpsName: string, displayName: string,
+ *   byClass: Map<string, Array<{uid: string, corpsName: string, displayName: string,
  *     total: number, ge: number|null, vis: number|null, mus: number|null, rank: number}>>,
  *   soundSport: Array<{corpsName: string, displayName: string, medal: string|null}>,
  *   shows: string[],
@@ -56,6 +59,7 @@ function aggregateDayResults(recap) {
       if (!RESULTS_CLASS_ORDER.includes(result.corpsClass)) continue;
       const key = `${result.uid}_${result.corpsClass}`;
       const entry = totals.get(key) || {
+        uid: result.uid,
         corpsClass: result.corpsClass,
         corpsName: result.corpsName || "",
         displayName: result.displayName || "",
@@ -91,6 +95,9 @@ function aggregateDayResults(recap) {
       corpsClass,
       entries.map((entry, index) => ({
         rank: index + 1,
+        // Carried through so a championship-week cut can be matched back onto
+        // the row it belongs to (the cut is decided per uid + class).
+        uid: entry.uid,
         corpsName: entry.corpsName,
         displayName: entry.displayName,
         total: entry.total,
@@ -136,6 +143,10 @@ const PAGE_CSS = `
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   td.total { color: ${COLORS.brand}; font-weight: 700; }
   .dir { color: ${COLORS.textMuted}; font-size: 12px; }
+  .cut { margin: 20px 0 0; padding: 10px 12px; background: ${COLORS.surfaceCard}; border-left: 3px solid ${COLORS.success}; font-size: 14px; }
+  .adv-tag { color: ${COLORS.success}; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+  .adv-count { color: ${COLORS.success}; font-size: 11px; letter-spacing: 1px; }
+  tr.adv td { background: ${COLORS.surfaceRaised}; }
   .nav { display: flex; gap: 16px; flex-wrap: wrap; margin: 28px 0 0; }
   .cta { margin-top: 32px; padding: 16px; background: ${COLORS.surfaceCard}; border: 1px solid ${COLORS.line}; }
   .open-in-app { display: inline-block; margin-top: 16px; padding: 8px 14px; background: ${COLORS.interactive}; color: ${COLORS.textMain}; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
@@ -289,6 +300,23 @@ const fmtScore = (value) =>
   typeof value === "number" && Number.isFinite(value) ? value.toFixed(3) : "—";
 
 /**
+ * The cut banner over a championship-week night's tables: the rule, how many
+ * survive it, and where the line fell.
+ *
+ * @param {?Object} cut From championshipCuts.cutForDrop.
+ * @param {number} day The night being rendered.
+ * @returns {string} Markup, or "" on a night that decides nothing.
+ */
+function cutBannerHtml(cut, day) {
+  if (!cut) return "";
+  const missed =
+    cut.missed > 0 && typeof cut.cutLine === "number"
+      ? ` ${cut.missed} ${cut.missed === 1 ? "corps misses" : "corps miss"} the cut, at ${cut.cutLine.toFixed(3)}.`
+      : "";
+  return `<p class="cut"><strong>${escapeHtml(cut.rule)}.</strong> ${cut.advancing.length} corps advance from Day ${day} to ${escapeHtml(clamp(cut.eventName, 90))} on Day ${cut.announcedDay}.${escapeHtml(missed)}</p>`;
+}
+
+/**
  * Day results page: per-class standings tables + SoundSport medal list.
  *
  * @param {Object} params
@@ -306,23 +334,37 @@ function buildDayResultsHtml({ seasonUid, seasonName, day, recap, days = [] }) {
   const displaySeason = seasonName || seasonUid;
   const base = `/results/${seasonUid}`;
 
+  // On the three nights that end in a cut, the page says who marches tomorrow
+  // — the single most interesting fact about a prelims or semifinals night, and
+  // the reason anyone opens the page at all. Null on every other night.
+  const cut = cutForDrop(recap, day);
+  const advancing = new Set(
+    (cut ? cut.advancing : []).map((row) => `${row.uid}_${row.corpsClass}`)
+  );
+
   const sections = [];
   for (const classKey of RESULTS_CLASS_ORDER) {
     const entries = byClass.get(classKey);
     if (!entries) continue;
     const rows = entries
-      .map(
-        (e) => `<tr>
+      .map((e) => {
+        const advances = advancing.has(`${e.uid}_${classKey}`);
+        return `<tr${advances ? ` class="adv"` : ""}>
 <td class="num">${e.rank}</td>
-<td>${escapeHtml(clamp(e.corpsName, 60))}${e.displayName ? ` <span class="dir">· ${escapeHtml(clamp(e.displayName, 40))}</span>` : ""}</td>
+<td>${escapeHtml(clamp(e.corpsName, 60))}${e.displayName ? ` <span class="dir">· ${escapeHtml(clamp(e.displayName, 40))}</span>` : ""}${advances ? ` <span class="adv-tag">Advances</span>` : ""}</td>
 <td class="num">${fmtScore(e.ge)}</td>
 <td class="num">${fmtScore(e.vis)}</td>
 <td class="num">${fmtScore(e.mus)}</td>
 <td class="num total">${fmtScore(e.total)}</td>
-</tr>`
-      )
+</tr>`;
+      })
       .join("\n");
-    sections.push(`<h2>${escapeHtml(CLASS_LABELS[classKey] || classKey)}</h2>
+    const advancingInClass = cut
+      ? entries.filter((e) => advancing.has(`${e.uid}_${classKey}`)).length
+      : 0;
+    sections.push(`<h2>${escapeHtml(CLASS_LABELS[classKey] || classKey)}${
+      cut ? ` <span class="adv-count">${advancingInClass} advance</span>` : ""
+    }</h2>
 <div class="scroll"><table>
 <thead><tr><th class="num">#</th><th>Corps</th><th class="num">GE</th><th class="num">VIS</th><th class="num">MUS</th><th class="num">Total</th></tr></thead>
 <tbody>
@@ -400,6 +442,7 @@ ${rows}
     bodyHtml: `<div class="kicker">Fantasy Drum Corps</div>
 <h1>Day ${day} — ${escapeHtml(displaySeason)}</h1>
 <p class="sub">${shows.length > 0 ? `${shows.length} ${showWord} scored${showList ? ` · ${escapeHtml(showList)}` : ""}` : "Nightly fantasy results"}</p>
+${cutBannerHtml(cut, day)}
 ${sections.join("\n")}
 <div class="nav">${nav}</div>
 ${openInAppHtml(seasonUid)}`,

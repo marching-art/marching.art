@@ -5,6 +5,8 @@ import {
   getCaptionBreakdown,
   mergeTwoNightShows,
   computeRankDeltas,
+  computeAdvancement,
+  advancementKey,
   RATING_CONFIG,
 } from './scoresUtils';
 
@@ -206,5 +208,130 @@ describe('computeRankDeltas', () => {
 
   it('is empty for empty input', () => {
     expect(computeRankDeltas([]).size).toBe(0);
+  });
+});
+
+describe('computeAdvancement', () => {
+  // Mirrors the recap rows the Scores page holds: uid + class + total.
+  const corps = (uid: string, corpsClass: string, score: number) => ({
+    uid,
+    corpsName: uid,
+    corpsClass,
+    score,
+    totalScore: score,
+  });
+
+  // n corps of one class, descending from `top` in 0.1 steps.
+  const field = (corpsClass: string, n: number, top: number, prefix = corpsClass) =>
+    Array.from({ length: n }, (_, i) => corps(`${prefix}-${i + 1}`, corpsClass, top - i * 0.1));
+
+  const advancingNames = (result: ReturnType<typeof computeAdvancement>) =>
+    [...(result?.advancing ?? [])].map((key) => key.split('_')[0]);
+
+  it('returns null on nights that decide nothing', () => {
+    const scores = field('worldClass', 20, 90);
+    for (const day of [1, 41, 44, 46, 49]) {
+      expect(computeAdvancement(scores, day)).toBeNull();
+    }
+    expect(computeAdvancement(scores, null)).toBeNull();
+    expect(computeAdvancement([], 47)).toBeNull();
+  });
+
+  it('cuts day 45 per class — top 8 Open, top 4 A', () => {
+    const result = computeAdvancement(
+      [...field('openClass', 12, 80), ...field('aClass', 9, 75)],
+      45
+    )!;
+    expect(result.perClass).toBe(true);
+    expect(result.advancesToDay).toBe(46);
+    expect(result.advancingCount).toBe(12); // 8 Open + 4 A
+    expect(result.fieldCount).toBe(21);
+    expect(result.missedCount).toBe(9);
+    // Open Class 9th and A Class 5th are out; the classes are cut separately,
+    // so an A Class corps never loses a slot to a higher-scoring Open corps.
+    expect(result.advancing.has(advancementKey(corps('openClass-8', 'openClass', 0)))).toBe(true);
+    expect(result.advancing.has(advancementKey(corps('openClass-9', 'openClass', 0)))).toBe(false);
+    expect(result.advancing.has(advancementKey(corps('aClass-4', 'aClass', 0)))).toBe(true);
+    expect(result.advancing.has(advancementKey(corps('aClass-5', 'aClass', 0)))).toBe(false);
+    // Cut line is the lowest advancing score across both classes (A Class 4th).
+    expect(result.cutLine).toBeCloseTo(74.7, 5);
+  });
+
+  it('ignores World Class rows on day 45 (not competing for a slot)', () => {
+    const result = computeAdvancement(
+      [...field('worldClass', 10, 95), ...field('openClass', 3, 80), ...field('aClass', 2, 75)],
+      45
+    )!;
+    expect(result.advancingCount).toBe(5);
+    expect(result.fieldCount).toBe(5);
+    expect(result.missedCount).toBe(0);
+    expect(advancingNames(result).some((name) => name.startsWith('worldClass'))).toBe(false);
+  });
+
+  it('cuts day 47 to the top 25 across all three classes', () => {
+    const result = computeAdvancement(
+      [...field('worldClass', 20, 95), ...field('openClass', 10, 85), ...field('aClass', 10, 80)],
+      47
+    )!;
+    expect(result.perClass).toBe(false);
+    expect(result.advancesToDay).toBe(48);
+    expect(result.advancingCount).toBe(25);
+    expect(result.fieldCount).toBe(40);
+    expect(result.missedCount).toBe(15);
+    // Ranked across classes: all 20 World, then the top 5 Open.
+    expect(result.advancing.has(advancementKey(corps('openClass-5', 'openClass', 0)))).toBe(true);
+    expect(result.advancing.has(advancementKey(corps('openClass-6', 'openClass', 0)))).toBe(false);
+    expect(result.cutLine).toBeCloseTo(84.6, 5);
+  });
+
+  it('advances everyone tied on the cut line (matching the scorer)', () => {
+    const tied = [
+      ...field('worldClass', 24, 95),
+      corps('tie-a', 'worldClass', 70),
+      corps('tie-b', 'worldClass', 70),
+      corps('tie-c', 'worldClass', 70),
+      corps('below', 'worldClass', 69.9),
+    ];
+    const result = computeAdvancement(tied, 47)!;
+    // 24 clear qualifiers plus all three corps sharing 25th place.
+    expect(result.advancingCount).toBe(27);
+    expect(advancingNames(result)).toEqual(expect.arrayContaining(['tie-a', 'tie-b', 'tie-c']));
+    expect(result.advancing.has(advancementKey(corps('below', 'worldClass', 0)))).toBe(false);
+    expect(result.cutLine).toBe(70);
+  });
+
+  it('cuts day 48 to the top 12 for Finals', () => {
+    const result = computeAdvancement(field('worldClass', 25, 95), 48)!;
+    expect(result.advancesToDay).toBe(49);
+    expect(result.advancingCount).toBe(12);
+    expect(result.missedCount).toBe(13);
+    expect(result.advancing.has(advancementKey(corps('worldClass-13', 'worldClass', 0)))).toBe(
+      false
+    );
+  });
+
+  it('advances the whole field when it is smaller than the cut', () => {
+    const result = computeAdvancement(field('worldClass', 8, 90), 48)!;
+    expect(result.advancingCount).toBe(8);
+    expect(result.missedCount).toBe(0);
+  });
+
+  it('never advances SoundSport (ratings-only, no championship bracket)', () => {
+    const result = computeAdvancement(
+      [...field('worldClass', 3, 90), corps('ss', 'soundSport', 99)],
+      47
+    )!;
+    expect(result.fieldCount).toBe(3);
+    expect(advancingNames(result)).not.toContain('ss');
+  });
+
+  it('keys by uid AND class so one director can field two corps', () => {
+    const rows = [
+      { uid: 'u1', corpsName: 'World Corps', corpsClass: 'worldClass', score: 95 },
+      { uid: 'u1', corpsName: 'A Corps', corpsClass: 'aClass', score: 60 },
+    ];
+    const result = computeAdvancement([...rows, ...field('worldClass', 24, 90)], 48)!;
+    expect(result.advancing.has(advancementKey(rows[0]))).toBe(true);
+    expect(result.advancing.has(advancementKey(rows[1]))).toBe(false);
   });
 });
