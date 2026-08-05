@@ -302,7 +302,7 @@ export default function RehearsalPlanner({ podium }) {
 
       {/* Action Complete panel */}
       {lastPanel && (
-        <div className="border border-[#2f4f2f] bg-[#12240f] rounded-none px-3 py-2">
+        <div className="border border-green-500/30 bg-green-500/10 rounded-none px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
             Action complete — {BLOCKS.find((b) => b.id === lastPanel.blockType)?.label}
             {lastPanel.repeatMult < 1 && (

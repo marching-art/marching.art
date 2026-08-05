@@ -48,6 +48,20 @@ export default function PodiumCaptionPanel({ podium }) {
         </span>
       </div>
 
+      {/* Visible legend for the two-bar rows. The bars carried a hover-only
+          title, which a touch device never sees — so on a phone the top bar
+          (content) and bottom bar (clean) had no key at all. */}
+      <div className="flex items-center gap-4 text-[9px] font-bold uppercase tracking-wider text-muted">
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-1.5 bg-interactive" aria-hidden="true" />
+          Content
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-1.5 bg-green-500" aria-hidden="true" />
+          Clean
+        </span>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
         {PODIUM_CAPTIONS.map((caption) => {
           const cap = state.captions[caption] || {};
