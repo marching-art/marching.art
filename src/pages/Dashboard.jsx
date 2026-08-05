@@ -97,6 +97,7 @@ import {
 
 import { ModalLoadingFallback } from '../components/ui';
 import { getSeasonsUntilUnlock } from '../utils/classUnlocks';
+import { classHasLineup } from '../utils/classRegistry';
 import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import { useScheduleStore } from '../store/scheduleStore';
 
@@ -675,7 +676,11 @@ const Dashboard = () => {
         </Suspense>
       )}
 
-      {showCaptionSelection && activeCorps && seasonData && (
+      {/* Podium has no caption lineup (classRegistry hasLineup:false), so the
+          editor must not open onto it — its budget would be undefined. The
+          gate lives here because every route into the editor passes through
+          it, including the Lineup nav tab and a ?panel=lineup deep link. */}
+      {showCaptionSelection && activeCorps && seasonData && classHasLineup(activeCorpsClass) && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <CaptionSelectionModal
             onClose={closeCaptionSelection}

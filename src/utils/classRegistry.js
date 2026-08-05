@@ -62,6 +62,22 @@ export function getClass(classId) {
 }
 
 /**
+ * True when the class drafts an 8-caption lineup.
+ *
+ * Podium is the counter-example: it is a director simulation with a rehearsal
+ * model instead of a draft, so it has no point cap and nothing to open a
+ * caption editor onto. Surfaces that can route to the lineup editor — the
+ * mobile nav's Lineup tab, `?panel=lineup` — must gate on this, or the editor
+ * renders against an undefined budget.
+ *
+ * @param {string} classId
+ */
+export function classHasLineup(classId) {
+  const entry = getClass(classId);
+  return Boolean(entry?.enabled && entry.capabilities?.hasLineup);
+}
+
+/**
  * True when the id/alias names an enabled class.
  * @param {string} classId
  */
