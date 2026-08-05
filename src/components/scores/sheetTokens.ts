@@ -32,6 +32,40 @@ export const STANDINGS_SORTS: SortOption[] = [
   { id: 'MUS', label: 'MUS' },
 ];
 
+// Section order every sheet shows its classes in: World → Open → A. Both boards
+// section the same way — the fantasy recaps split a show's field by
+// `corpsClass`, the Podium sheets split theirs by `division` (§5.7: every
+// division crowns its own) — so the grouping itself lives here.
+export const CLASS_SECTION_ORDER = ['worldClass', 'openClass', 'aClass'];
+
+export interface ClassSection<T> {
+  cls: string | null | undefined;
+  rows: T[];
+}
+
+/**
+ * Group rows into class sections: the known classes first in World → Open → A
+ * order, then any unrecognized class in encounter order — an unexpected value
+ * is still shown rather than dropped. Empty classes produce no section.
+ */
+export function groupByClass<T>(
+  rows: readonly T[],
+  classOf: (row: T) => string | null | undefined
+): Array<ClassSection<T>> {
+  const byClass = new Map<string | null | undefined, T[]>();
+  for (const row of rows) {
+    const cls = classOf(row);
+    const bucket = byClass.get(cls);
+    if (bucket) bucket.push(row);
+    else byClass.set(cls, [row]);
+  }
+  const known = CLASS_SECTION_ORDER.filter((cls) => byClass.has(cls));
+  const rest = [...byClass.keys()].filter(
+    (cls) => typeof cls !== 'string' || !CLASS_SECTION_ORDER.includes(cls)
+  );
+  return [...known, ...rest].map((cls) => ({ cls, rows: byClass.get(cls) as T[] }));
+}
+
 export interface CaptionTriple {
   ge: number | null;
   vis: number | null;

@@ -1,10 +1,11 @@
-// Component tests for the Podium Class recap sheet's championship-week cut
-// markers. Podium runs the fantasy finals-week bracket in parallel on its own
-// board, so Prelims and Semifinals nights have to answer the same question the
-// fantasy sheets do: who marches tomorrow.
+// Component tests for the Podium Class recap sheet: the division split (World /
+// Open / A, ranked independently — the same shape the fantasy recaps use) and
+// the championship-week cut markers. Podium runs the fantasy finals-week
+// bracket in parallel on its own board, so Prelims and Semifinals nights have to
+// answer the same question the fantasy sheets do: who marches tomorrow.
 //
 // The cut itself is decided server-side and published with the recap
-// (helpers/podium/store.championshipCutFor), so these tests pin the RENDERING
+// (helpers/podium/store.championshipCutFor), so those tests pin the RENDERING
 // of that field — the sheet must never invent a cut of its own.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -57,8 +58,97 @@ const withRecap = (day: number, recap: object) => {
   });
 };
 
+/**
+ * The rendered sheet, read back as division sections: one `tbody` per division,
+ * whose first row is the division header and the rest the corps in it.
+ */
+const sectionsOf = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll('tbody')).map((tbody) => {
+    const [header, ...rows] = Array.from(tbody.querySelectorAll('tr'));
+    return {
+      label: header.querySelector('th')?.textContent ?? '',
+      summary: header.querySelector('td')?.textContent ?? '',
+      corps: rows.map((tr) => tr.querySelector('td')?.textContent ?? ''),
+    };
+  });
+
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+describe('PodiumRecapSheet — division split', () => {
+  it('splits a mixed show into World / Open / A, each ranked from first', async () => {
+    // Interleaved on the way in, and carrying the SHOW-wide `place` the
+    // processor writes, so the sheet cannot be right by accident of input order.
+    const results = [
+      { ...row('A-1', 6, 75, 'aClass'), corpsName: 'A One' },
+      { ...row('World-1', 1, 95, 'worldClass'), corpsName: 'World One' },
+      { ...row('Open-1', 4, 85, 'openClass'), corpsName: 'Open One' },
+      { ...row('World-2', 2, 94, 'worldClass'), corpsName: 'World Two' },
+      { ...row('A-2', 7, 74, 'aClass'), corpsName: 'A Two' },
+      { ...row('Open-2', 5, 84, 'openClass'), corpsName: 'Open Two' },
+      { ...row('World-3', 3, 93, 'worldClass'), corpsName: 'World Three' },
+    ];
+    withRecap(20, { competitionDay: 20, shows: [{ eventName: 'Mixed Classic', results }] });
+
+    const { container } = wrap(<RecapSheet seasonUid="season-1" />);
+    await screen.findByText(/mixed classic/i);
+
+    const sections = sectionsOf(container);
+    expect(sections.map((s) => s.label)).toEqual(['World Class', 'Open Class', 'A Class']);
+    expect(sections.map((s) => s.summary)).toEqual(['3 corps', '2 corps', '2 corps']);
+    // Every division counts from 1 — its winner is the corps that won IT, not
+    // whoever placed first in the mixed field.
+    expect(sections.map((s) => s.corps[0])).toEqual([
+      expect.stringContaining('1.'),
+      expect.stringContaining('1.'),
+      expect.stringContaining('1.'),
+    ]);
+    expect(sections[1].corps[0]).toContain('Open One');
+    expect(sections[2].corps[1]).toContain('A Two');
+  });
+
+  it('still sections a single-division show', async () => {
+    withRecap(20, {
+      competitionDay: 20,
+      shows: [{ eventName: 'Midwest Classic', results: field(4, 80, 'openClass', 'Open') }],
+    });
+
+    const { container } = wrap(<RecapSheet seasonUid="season-1" />);
+    await screen.findByText(/midwest classic/i);
+
+    const sections = sectionsOf(container);
+    expect(sections).toHaveLength(1);
+    expect(sections[0].label).toBe('Open Class');
+    expect(sections[0].summary).toBe('4 corps');
+  });
+
+  it('counts the advancing corps per division on a per-division cut night', async () => {
+    const open = field(10, 80, 'openClass', 'Open');
+    const aClass = field(6, 70, 'aClass', 'A');
+    withRecap(45, {
+      competitionDay: 45,
+      shows: [{ eventName: 'Open and A Class Prelims', results: [...open, ...aClass] }],
+      championshipCut: {
+        toDay: 46,
+        rule: 'Top 8 Open Class · Top 4 A Class advance',
+        perDivision: true,
+        uids: [...open.slice(0, 8), ...aClass.slice(0, 4)].map((r) => r.uid),
+        advancingCount: 12,
+        fieldCount: 16,
+        missedCount: 4,
+        cutLine: 68.5,
+      },
+    });
+
+    const { container } = wrap(<RecapSheet seasonUid="season-1" />);
+    await screen.findByText(/open and a class prelims/i);
+
+    expect(sectionsOf(container).map((s) => s.summary)).toEqual([
+      '8 advance · 10 corps',
+      '4 advance · 6 corps',
+    ]);
+  });
 });
 
 describe('PodiumRecapSheet — championship-week cuts', () => {

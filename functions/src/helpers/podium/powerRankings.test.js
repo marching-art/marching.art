@@ -95,6 +95,24 @@ describe("buildDailyStandings", () => {
     assert.equal(day2.entries[1].note, "Up 2 — the day's biggest move.");
   });
 
+  test("carries each corps' division so the sheet can split World/Open/A", () => {
+    const sheet = buildDailyStandings(
+      [
+        { uid: "a", corpsName: "Corps a", lastTotal: 90, division: "worldClass" },
+        { uid: "b", corpsName: "Corps b", lastTotal: 80, division: "openClass" },
+        // A corps whose state predates divisions falls back to A Class, never
+        // undefined — the sheet always has a section to file it under.
+        corps("c", 70),
+      ],
+      null,
+      4
+    );
+    assert.deepEqual(
+      sheet.entries.map((e) => e.division),
+      ["worldClass", "openClass", "aClass"]
+    );
+  });
+
   test("carries the GE/VIS/MUS breakdown onto each entry", () => {
     const withCaptions = { uid: "a", corpsName: "Corps a", lastTotal: 80, lastGe: 30.1, lastVis: 25.2, lastMus: 24.7 };
     const sheet = buildDailyStandings([withCaptions, corps("b", 78)], null, 3);

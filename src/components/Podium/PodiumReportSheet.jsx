@@ -8,7 +8,11 @@
 // It uses the SAME box-score layout as the Fantasy class standings
 // (pages/ScoresParts → ClassStandingsGrid): sheet card, sort pills, GE/VIS/MUS
 // caption columns, box-toppers in gold, a movement arrow per row, share, and a
-// wordmark footer — so every scoring surface reads as one system.
+// wordmark footer — so every scoring surface reads as one system. The field is
+// SPLIT BY DIVISION (World / Open / A), each ranked on its own, because that is
+// the standing a corps actually competes for (§5.7: every division crowns its
+// own). Archived seasons scored before divisions rode on the standings doc have
+// no `division` on their entries and still render as one undivided sheet.
 //
 // The WEEKLY narrative write-up (who's peaking, who's slipping, biggest mover)
 // stays separate: it ships as the auto-generated "The Podium Report" news
@@ -29,8 +33,15 @@ import {
   ShareButton,
   TrendIndicator,
 } from '../scores/SheetPrimitives';
-import { SHEET_CARD, TOTAL_W, TREND_W, STANDINGS_SORTS, captionTops } from '../scores/sheetTokens';
-import { formatStandingsAsText } from '../../utils/scoresUtils';
+import {
+  SHEET_CARD,
+  TOTAL_W,
+  TREND_W,
+  STANDINGS_SORTS,
+  captionTops,
+  groupByClass,
+} from '../scores/sheetTokens';
+import { CLASS_LABELS, formatStandingsAsText } from '../../utils/scoresUtils';
 import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 
 // GE/VIS/MUS for one standings entry. Columns populate for days scored after the
@@ -41,40 +52,87 @@ const captionsOf = (entry) => ({
   mus: entry?.mus ?? null,
 });
 
+/**
+ * uid → the corps' rank WITHIN ITS DIVISION in a standings column. The column's
+ * entries arrive in overall score order, so a running per-division counter is
+ * that division's ranking. Used against the previous snapshot to measure
+ * movement inside the division a corps actually competes in — an overall delta
+ * would report a "climb" a corps earned only because someone in another
+ * division dropped past it.
+ */
+function divisionRanksOf(column) {
+  const counts = new Map();
+  const ranks = new Map();
+  for (const entry of column?.entries || []) {
+    if (!entry?.uid) continue;
+    const division = entry.division;
+    const rank = (counts.get(division) || 0) + 1;
+    counts.set(division, rank);
+    ranks.set(entry.uid, rank);
+  }
+  return ranks;
+}
+
 // The Podium Class standings sheet for one snapshot (a day, or a week for
-// archived seasons on the weekly fallback). `periodLabel` is e.g. "Day 12".
-function PodiumStandings({ column, periodLabel, seasonName, userCorpsName }) {
+// archived seasons on the weekly fallback). `periodLabel` is e.g. "Day 12";
+// `previousColumn` is the snapshot before it (null for the first one), which is
+// where the movement arrows come from.
+function PodiumStandings({ column, previousColumn, periodLabel, seasonName, userCorpsName }) {
   const [sortBy, setSortBy] = useState('total');
 
-  const rows = useMemo(() => {
-    const base = (column?.entries || []).map((entry) => ({
-      entry,
-      captions: captionsOf(entry),
-    }));
-    if (sortBy === 'total') return base;
+  // World → Open → A, each ranked on its own scores. Entries with no division
+  // (archived seasons) fall into one unlabeled section, i.e. the sheet as it
+  // read before the split.
+  const sections = useMemo(() => {
+    const previousRanks = divisionRanksOf(previousColumn);
     const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
-    return [...base].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
-  }, [column, sortBy]);
-
-  const tops = useMemo(() => captionTops(rows.map((r) => r.captions)), [rows]);
+    return groupByClass(column?.entries || [], (entry) => entry.division).map(({ cls, rows }) => {
+      const ranked = rows.map((entry, index) => {
+        const previousRank = previousRanks.get(entry.uid);
+        return {
+          entry,
+          captions: captionsOf(entry),
+          place: index + 1,
+          delta: previousRank == null ? null : previousRank - (index + 1),
+        };
+      });
+      return {
+        cls,
+        label: CLASS_LABELS[cls] || null,
+        tops: captionTops(ranked.map((r) => r.captions)),
+        rows: key
+          ? [...ranked].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1))
+          : ranked,
+      };
+    });
+  }, [column, previousColumn, sortBy]);
 
   if (!column || !(column.entries || []).length) return null;
 
   const activeCap = sortBy === 'total' ? null : sortBy;
-  const title =
-    sortBy === 'total' ? 'Podium Class · Standings' : `Podium Class · ${sortBy} Leaders`;
+  const suffix = sortBy === 'total' ? 'Standings' : `${sortBy} Leaders`;
+  const title = `Podium Class · ${suffix}`;
   const subtitle = `${periodLabel} · ${column.fieldSize} corps`;
 
+  // One share block per division, mirroring the on-screen split.
   const shareText = () =>
-    formatStandingsAsText(
-      { title, subtitle, seasonName },
-      rows.map(({ entry, captions }, idx) => ({
-        place: sortBy === 'total' ? entry.rank : idx + 1,
-        corpsName: entry.corpsName,
-        total: entry.total,
-        captions,
-      }))
-    );
+    sections
+      .map((section) =>
+        formatStandingsAsText(
+          {
+            title: `${section.label || 'Podium Class'} · ${suffix}`,
+            subtitle,
+            seasonName,
+          },
+          section.rows.map(({ entry, captions, place }, idx) => ({
+            place: sortBy === 'total' ? place : idx + 1,
+            corpsName: entry.corpsName,
+            total: entry.total,
+            captions,
+          }))
+        )
+      )
+      .join('\n\n');
 
   return (
     <div className={`${SHEET_CARD} space-y-2.5`}>
@@ -89,64 +147,81 @@ function PodiumStandings({ column, periodLabel, seasonName, userCorpsName }) {
         <SortPills options={STANDINGS_SORTS} value={sortBy} onChange={setSortBy} />
       </div>
 
-      <BoxScoreHead
-        active={activeCap}
-        totalLabel="Score"
-        trailing={<span className={TREND_W} aria-hidden="true" />}
-      />
-
-      <div>
-        {rows.map(({ entry, captions }, idx) => {
-          const isUserCorps =
-            userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
-
-          return (
-            <div
-              key={entry.uid || entry.corpsName || idx}
-              className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
-                isUserCorps ? 'bg-interactive/10' : ''
-              }`}
-            >
-              {/* Username + profile link + avatar under the corps name, exactly
-                  like the recap rows and the fantasy standings. */}
-              <CorpsIdentity
-                place={sortBy === 'total' ? entry.rank : idx + 1}
-                name={entry.corpsName}
-                isMine={isUserCorps}
-                displayName={entry.displayName}
-                uid={entry.uid}
-                avatarUrl={entry.avatarUrl}
-              />
-              <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
-                <CaptionValue
-                  value={captions?.ge}
-                  isTop={captions?.ge === tops.ge}
-                  active={activeCap === 'GE'}
-                />
-                <CaptionValue
-                  value={captions?.vis}
-                  isTop={captions?.vis === tops.vis}
-                  active={activeCap === 'VIS'}
-                />
-                <CaptionValue
-                  value={captions?.mus}
-                  isTop={captions?.mus === tops.mus}
-                  active={activeCap === 'MUS'}
-                />
-                <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
-                  {typeof entry.total === 'number' ? entry.total.toFixed(3) : '—'}
-                </span>
-                <span className={`${TREND_W} flex items-center justify-center flex-shrink-0`}>
-                  <TrendIndicator delta={entry.delta} />
-                </span>
-              </div>
+      {/* One block per division — its own header, ranking and box-toppers,
+          the same split the recap sheets and the fantasy classes show. */}
+      {sections.map((section) => (
+        <div key={section.cls || 'all'} className="space-y-1.5">
+          {section.label && (
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
+                {section.label}
+              </span>
+              <span className="text-[9px] text-muted tabular-nums">
+                {section.rows.length} corps
+              </span>
             </div>
-          );
-        })}
-      </div>
+          )}
+
+          <BoxScoreHead
+            active={activeCap}
+            totalLabel="Score"
+            trailing={<span className={TREND_W} aria-hidden="true" />}
+          />
+
+          <div>
+            {section.rows.map(({ entry, captions, place, delta }, idx) => {
+              const isUserCorps =
+                userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+
+              return (
+                <div
+                  key={entry.uid || entry.corpsName || idx}
+                  className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
+                    isUserCorps ? 'bg-interactive/10' : ''
+                  }`}
+                >
+                  {/* Username + profile link + avatar under the corps name,
+                      exactly like the recap rows and the fantasy standings. */}
+                  <CorpsIdentity
+                    place={sortBy === 'total' ? place : idx + 1}
+                    name={entry.corpsName}
+                    isMine={isUserCorps}
+                    displayName={entry.displayName}
+                    uid={entry.uid}
+                    avatarUrl={entry.avatarUrl}
+                  />
+                  <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
+                    <CaptionValue
+                      value={captions?.ge}
+                      isTop={captions?.ge === section.tops.ge}
+                      active={activeCap === 'GE'}
+                    />
+                    <CaptionValue
+                      value={captions?.vis}
+                      isTop={captions?.vis === section.tops.vis}
+                      active={activeCap === 'VIS'}
+                    />
+                    <CaptionValue
+                      value={captions?.mus}
+                      isTop={captions?.mus === section.tops.mus}
+                      active={activeCap === 'MUS'}
+                    />
+                    <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
+                      {typeof entry.total === 'number' ? entry.total.toFixed(3) : '—'}
+                    </span>
+                    <span className={`${TREND_W} flex items-center justify-center flex-shrink-0`}>
+                      <TrendIndicator delta={delta} />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
       <SheetFooter
-        note="Daily standings · box-toppers in gold · weekly column in the news"
+        note="Split by division · box-toppers in gold · weekly column in the news"
         action={<ShareButton getText={shareText} />}
       />
     </div>
@@ -216,10 +291,17 @@ export default function PodiumReportSheet({ seasonUid, seasonName, userCorpsName
     };
   }, [seasonUid]);
 
-  const selected = useMemo(
-    () => snapshots.find((s) => s.key === selectedKey) || snapshots[snapshots.length - 1] || null,
-    [snapshots, selectedKey]
-  );
+  // The selected snapshot and the one before it — movement inside a division is
+  // measured between two adjacent sheets (see divisionRanksOf), so the sheet
+  // needs both.
+  const { selected, previous } = useMemo(() => {
+    const index = snapshots.findIndex((s) => s.key === selectedKey);
+    const at = index === -1 ? snapshots.length - 1 : index;
+    return {
+      selected: snapshots[at] || null,
+      previous: at > 0 ? snapshots[at - 1] : null,
+    };
+  }, [snapshots, selectedKey]);
 
   if (loading) {
     return (
@@ -262,6 +344,7 @@ export default function PodiumReportSheet({ seasonUid, seasonName, userCorpsName
 
       <PodiumStandings
         column={selected.column}
+        previousColumn={previous?.column || null}
         periodLabel={selected.periodLabel}
         seasonName={seasonName}
         userCorpsName={userCorpsName}
