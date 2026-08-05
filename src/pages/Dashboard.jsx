@@ -169,9 +169,7 @@ const Dashboard = () => {
     setSlotPickerClass,
     unretiring,
     showCaptionSelection,
-    setShowCaptionSelection,
     selectedCaption,
-    setSelectedCaption,
     showConceptModal,
     setShowConceptModal,
     showDeleteConfirm,
@@ -209,6 +207,7 @@ const Dashboard = () => {
     handleUnretireCorps,
     handleConfirmClassPurchase,
     openCaptionSelection,
+    closeCaptionSelection,
     handleNewsSubmission,
     handleUniformDesign,
   } = useDashboardModals(user, dashboardData);
@@ -679,14 +678,8 @@ const Dashboard = () => {
       {showCaptionSelection && activeCorps && seasonData && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <CaptionSelectionModal
-            onClose={() => {
-              setShowCaptionSelection(false);
-              setSelectedCaption(null);
-            }}
-            onSubmit={() => {
-              setShowCaptionSelection(false);
-              setSelectedCaption(null);
-            }}
+            onClose={closeCaptionSelection}
+            onSubmit={closeCaptionSelection}
             corpsClass={activeCorpsClass}
             currentLineup={activeCorps.lineup || {}}
             seasonId={seasonData.seasonUid}
@@ -802,7 +795,7 @@ const Dashboard = () => {
         isOpen={showQuickStartGuide}
         onClose={() => setShowQuickStartGuide(false)}
         onAction={(action) => {
-          if (action === 'lineup') setShowCaptionSelection(true);
+          if (action === 'lineup') openCaptionSelection();
         }}
         completedSteps={[
           ...(lineupCount === 8 ? ['lineup'] : []),
