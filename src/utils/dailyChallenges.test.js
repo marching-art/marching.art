@@ -7,9 +7,29 @@ import { describe, test, expect, vi, afterEach } from 'vitest';
 import {
   getGameDay,
   getChallengesForGameDay,
+  getAvailableChallengesForGameDay,
   CHALLENGE_POOL,
   CHALLENGES_PER_DAY,
 } from './dailyChallenges';
+
+/**
+ * A game day whose real rotation offers a given challenge id.
+ * @param {string} id
+ */
+const findGameDayWith = (id) => {
+  const anchor = new Date('2026-07-01T12:00:00Z');
+  for (let i = 0; i < 60; i++) {
+    const day = getGameDay(new Date(anchor.getTime() + i * 86400000));
+    if (getChallengesForGameDay(day).some((c) => c.id === id)) return day;
+  }
+  throw new Error(`No game day offers ${id}`);
+};
+/** @param {string} id */
+const byId = (id) => {
+  const challenge = CHALLENGE_POOL.find((c) => c.id === id);
+  if (!challenge) throw new Error(`No challenge ${id}`);
+  return challenge;
+};
 
 describe('getGameDay', () => {
   afterEach(() => {
@@ -105,5 +125,80 @@ describe('CHALLENGE_POOL', () => {
     expect(CHALLENGE_POOL.map((c) => c.id).sort()).toEqual(
       server.CHALLENGE_POOL.map((c) => c.id).sort()
     );
+  });
+});
+
+describe('getAvailableChallengesForGameDay (Podium-aware required set)', () => {
+  const fantasy = { corps: { worldClass: { corpsName: 'W' } } };
+  const podiumOnly = { corps: { podiumClass: { corpsName: 'P' } } };
+
+  test('drops check-lineup for a Podium-only director', () => {
+    const day = findGameDayWith('check-lineup');
+    const ids = getAvailableChallengesForGameDay(day, podiumOnly).map((c) => c.id);
+    expect(ids).not.toContain('check-lineup');
+  });
+
+  test('keeps check-lineup for a fantasy director', () => {
+    const day = findGameDayWith('check-lineup');
+    const ids = getAvailableChallengesForGameDay(day, fantasy).map((c) => c.id);
+    expect(ids).toContain('check-lineup');
+  });
+
+  test('drops make-prediction when predictions are unavailable', () => {
+    const day = findGameDayWith('make-prediction');
+    const ids = getAvailableChallengesForGameDay(day, fantasy, {
+      predictionAvailable: false,
+    }).map((c) => c.id);
+    expect(ids).not.toContain('make-prediction');
+  });
+
+  test('never drops register-show or set-show-concept', () => {
+    for (const id of ['register-show', 'set-show-concept']) {
+      const day = findGameDayWith(id);
+      expect(getAvailableChallengesForGameDay(day, podiumOnly).map((c) => c.id)).toContain(id);
+    }
+  });
+});
+
+describe('challenge checks with Podium context', () => {
+  const podiumOnly = { corps: { podiumClass: { corpsName: 'P' } } };
+
+  test('register-show auto-claim fires off Podium show picks', () => {
+    // Before the fix, a Podium director could never auto-claim this — their
+    // picks live in the subcollection, invisible to the profile.
+    expect(byId('register-show').check(podiumOnly, 'd', { podium: { hasShows: true } })).toBe(true);
+    expect(byId('register-show').check(podiumOnly, 'd', { podium: { hasShows: false } })).toBe(
+      false
+    );
+    expect(byId('register-show').check(podiumOnly, 'd')).toBe(false);
+  });
+
+  test('set-show-concept auto-claim fires off the Podium concept', () => {
+    expect(byId('set-show-concept').check(podiumOnly, 'd', { podium: { hasConcept: true } })).toBe(
+      true
+    );
+    expect(byId('set-show-concept').check(podiumOnly, 'd', { podium: { hasConcept: false } })).toBe(
+      false
+    );
+  });
+
+  test('fantasy checks are unchanged by the context argument', () => {
+    const fantasy = {
+      corps: { worldClass: { selectedShows: { 1: ['s'] }, showConcept: { theme: 'T' } } },
+    };
+    expect(byId('register-show').check(fantasy, 'd')).toBe(true);
+    expect(byId('set-show-concept').check(fantasy, 'd')).toBe(true);
+  });
+
+  test('available predicates mirror the server exactly', async () => {
+    const server = await import('../../functions/src/helpers/dailyChallenges.js');
+    // check-lineup and make-prediction are the two droppable ones on both sides.
+    const droppable = CHALLENGE_POOL.filter((c) => c.available)
+      .map((c) => c.id)
+      .sort();
+    const serverDroppable = server.CHALLENGE_POOL.filter((c) => c.available)
+      .map((c) => c.id)
+      .sort();
+    expect(droppable).toEqual(serverDroppable);
   });
 });

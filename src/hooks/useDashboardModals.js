@@ -20,6 +20,23 @@ import {
 } from '../api/functions';
 import { CLASS_DISPLAY_NAMES } from '../components/Dashboard/sections/constants';
 import { useModalQueue, MODAL_PRIORITY } from './useModalQueue';
+import { useModalRoute } from './useModalRoute';
+
+/**
+ * Panels a director opens deliberately, so each gets a URL and a back button
+ * that closes it (hooks/useModalRoute).
+ *
+ * The queued interrupts — season recap, onboarding tour, achievement, class
+ * unlock, season setup — are deliberately absent: they are not places anyone
+ * navigated to, and letting a back gesture dismiss a one-shot ceremony would
+ * skip it for good. The destructive confirms (delete/retire/move) are absent
+ * for the same reason in reverse: a confirm is a question, not a destination.
+ *
+ * `quickstart` is here mostly so it exists at all: the Quick Start guide had
+ * no caller anywhere in the app, so nothing could open it. A URL gives the
+ * help menu and the mobile More sheet something to link to.
+ */
+export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart'];
 
 export function useDashboardModals(user, dashboardData) {
   const location = useLocation();
@@ -42,19 +59,39 @@ export function useDashboardModals(user, dashboardData) {
   const modalQueue = useModalQueue();
   // Stable enqueue reference (memoized in the hook) for the modal-queue effects below
   const { enqueue: enqueueModal } = modalQueue;
-  const [showRegistration, setShowRegistration] = useState(false);
+
+  // The three panels below live in the URL rather than in component state, so
+  // each is linkable and each closes on a back gesture. Their `show*` /
+  // `set*` names are kept so every existing call site reads unchanged.
+  const modalRoute = useModalRoute(DASHBOARD_PANELS);
+  const { open: openPanel, close: closePanel } = modalRoute;
+
+  const showRegistration = modalRoute.isOpen('register');
+  const setShowRegistration = useCallback(
+    (next) => (next ? openPanel('register') : closePanel()),
+    [openPanel, closePanel]
+  );
+  const showCaptionSelection = modalRoute.isOpen('lineup');
+  const selectedCaption = showCaptionSelection ? modalRoute.detail : null;
+  const showConceptModal = modalRoute.isOpen('concept');
+  const setShowConceptModal = useCallback(
+    (next) => (next ? openPanel('concept') : closePanel()),
+    [openPanel, closePanel]
+  );
+  const showQuickStartGuide = modalRoute.isOpen('quickstart');
+  const setShowQuickStartGuide = useCallback(
+    (next) => (next ? openPanel('quickstart') : closePanel()),
+    [openPanel, closePanel]
+  );
+
   const [registrationDefaultClass, setRegistrationDefaultClass] = useState(null);
   const [slotPickerClass, setSlotPickerClass] = useState(null);
   const [unretiring, setUnretiring] = useState(false);
-  const [showCaptionSelection, setShowCaptionSelection] = useState(false);
-  const [selectedCaption, setSelectedCaption] = useState(null);
-  const [showConceptModal, setShowConceptModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [transferring, setTransferring] = useState(false);
-  const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(null);
   const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showNewsSubmission, setShowNewsSubmission] = useState(false);
@@ -116,6 +153,7 @@ export function useDashboardModals(user, dashboardData) {
       showRegistration ||
       showCaptionSelection ||
       showConceptModal ||
+      showQuickStartGuide ||
       showDeleteConfirm ||
       showMoveCorps ||
       showRetireConfirm ||
@@ -131,6 +169,7 @@ export function useDashboardModals(user, dashboardData) {
     showRegistration,
     showCaptionSelection,
     showConceptModal,
+    showQuickStartGuide,
     showDeleteConfirm,
     showMoveCorps,
     showRetireConfirm,
@@ -155,7 +194,7 @@ export function useDashboardModals(user, dashboardData) {
   const handleSetupNewClass = useCallback(() => {
     modalQueue.dequeue();
     setShowRegistration(true);
-  }, [modalQueue]);
+  }, [modalQueue, setShowRegistration]);
 
   const handleDeclineSetup = useCallback(() => {
     modalQueue.dequeue();
@@ -270,7 +309,7 @@ export function useDashboardModals(user, dashboardData) {
         toast.error(error.message || 'Failed to register corps');
       }
     },
-    [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile]
+    [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile, setShowRegistration]
   );
 
   const handleClassUnlock = useCallback((classKey) => {
@@ -315,10 +354,13 @@ export function useDashboardModals(user, dashboardData) {
     }
   }, [classToPurchase, refreshProfile]);
 
-  const openCaptionSelection = useCallback((captionId = null) => {
-    setSelectedCaption(captionId);
-    setShowCaptionSelection(true);
-  }, []);
+  // `captionId` rides along as ?slot=, so a link can open the editor already
+  // focused on the slot that needs attention.
+  const openCaptionSelection = useCallback(
+    (captionId = null) => openPanel('lineup', captionId),
+    [openPanel]
+  );
+  const closeCaptionSelection = useCallback(() => closePanel(), [closePanel]);
 
   const handleNewsSubmission = useCallback(async (formData) => {
     setSubmittingNews(true);
@@ -371,9 +413,7 @@ export function useDashboardModals(user, dashboardData) {
     setSlotPickerClass,
     unretiring,
     showCaptionSelection,
-    setShowCaptionSelection,
     selectedCaption,
-    setSelectedCaption,
     showConceptModal,
     setShowConceptModal,
     showDeleteConfirm,
@@ -412,6 +452,7 @@ export function useDashboardModals(user, dashboardData) {
     handleUnretireCorps,
     handleConfirmClassPurchase,
     openCaptionSelection,
+    closeCaptionSelection,
     handleNewsSubmission,
     handleUniformDesign,
   };

@@ -3,8 +3,12 @@
 // Walks a new director through every core mechanic, one step at a time, with
 // server-validated XP + CorpsCoin rewards per step. Completion lives in
 // profile.journey (server-only field), awarded by the completeJourneyStep
-// callable. Step ids/rewards mirror functions/src/helpers/journey.js —
-// keep the two lists in sync.
+// callable.
+//
+// The step table and its readiness rules live in utils/journeyProgress (shared
+// with the mobile Next Action hero, which counts claimable steps); this file
+// owns only how each step is presented — its icon and which surface its
+// shortcut opens.
 
 import React, { memo, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -24,126 +28,40 @@ import {
 import toast from 'react-hot-toast';
 import { completeJourneyStep, joinRookieLeague } from '../../../api/functions';
 import { showXPGain, showCoinGain } from '../../xpFeedbackTrigger';
+import { getJourneySteps, JOURNEY_STEPS } from '../../../utils/journeyProgress';
 
-const STEPS = [
-  {
-    id: 'full_lineup',
-    title: 'Field a Full Corps',
-    description: 'Fill all 8 caption slots in your lineup',
-    xp: 50,
-    coin: 50,
-    icon: Music,
-    ready: (s) => s.hasFullLineup,
-    action: { type: 'lineup', label: 'Edit Lineup' },
-  },
-  {
-    id: 'register_shows',
-    title: 'Hit the Road',
-    description: 'Register your corps for shows this week',
-    xp: 50,
-    coin: 50,
+// How each shared step is presented here: its icon, and the shortcut offered
+// while it is still out of reach. Keyed by the step ids in journeyProgress.
+const STEP_PRESENTATION = {
+  full_lineup: { icon: Music, action: { type: 'lineup', label: 'Edit Lineup' } },
+  register_shows: {
     icon: Calendar,
-    ready: (s) => s.hasShows,
     action: { type: 'link', label: 'View Schedule', to: '/schedule' },
   },
-  {
-    id: 'show_concept',
-    title: 'Design Your Show',
-    description: 'Set a show concept — matching styles earn nightly CorpsCoin bonuses',
-    xp: 50,
-    coin: 50,
-    icon: Palette,
-    ready: (s) => s.hasConcept,
-    action: { type: 'concept', label: 'Set Concept' },
-  },
-  {
-    id: 'check_scores',
-    title: 'Read the Recaps',
-    description:
-      'Scores drop nightly — 9 PM ET in the off-season, late evening in live season — check your first recap',
-    xp: 25,
-    coin: 0,
-    icon: Trophy,
-    // Trust step: claimable once the corps actually has results to read
-    ready: (s) => s.hasResults,
-    action: { type: 'link', label: 'View Scores', to: '/scores' },
-  },
-  {
-    id: 'make_prediction',
-    title: 'Call Your Shot',
-    description: 'Submit a daily prediction from the dashboard panel',
-    xp: 25,
-    coin: 25,
-    icon: Target,
-    ready: (s) => s.hasPrediction,
-    action: null,
-  },
-  {
-    id: 'caption_trade',
-    title: 'Work the Trade Window',
-    description: 'Make a caption change in a weekly window (3/week after Day 14)',
-    xp: 50,
-    coin: 50,
-    icon: Repeat,
-    ready: (s) => s.hasTraded,
-    action: { type: 'lineup', label: 'Edit Lineup' },
-  },
-  {
-    id: 'join_league',
-    title: 'Find Your Circuit',
-    description: 'Join a league for weekly head-to-head matchups',
-    xp: 75,
-    coin: 100,
-    icon: Users,
-    ready: (s) => s.hasLeague,
-    action: { type: 'rookieLeague', label: 'Quick Join' },
-  },
-  {
-    id: 'finish_season',
-    title: 'Complete a Season',
-    description: 'Stay with your corps through Finals',
-    xp: 100,
-    coin: 100,
-    icon: Flag,
-    ready: (s) => s.hasFinishedSeason,
-    action: null,
-  },
-];
+  show_concept: { icon: Palette, action: { type: 'concept', label: 'Set Concept' } },
+  check_scores: { icon: Trophy, action: { type: 'link', label: 'View Scores', to: '/scores' } },
+  make_prediction: { icon: Target, action: null },
+  caption_trade: { icon: Repeat, action: { type: 'lineup', label: 'Edit Lineup' } },
+  join_league: { icon: Users, action: { type: 'rookieLeague', label: 'Quick Join' } },
+  finish_season: { icon: Flag, action: null },
+};
 
 const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept }) => {
   const [claiming, setClaiming] = useState(null); // stepId being claimed
-  const journey = profile?.journey;
-
-  const state = useMemo(() => {
-    const corpsList = Object.values(profile?.corps || {}).filter(Boolean);
-    return {
-      hasFullLineup: corpsList.some((c) => c.lineup && Object.keys(c.lineup).length === 8),
-      hasShows: corpsList.some((c) =>
-        Object.values(c.selectedShows || {}).some((w) => Array.isArray(w) && w.length > 0)
-      ),
-      hasConcept: corpsList.some((c) => !!(c.showConcept && c.showConcept.theme)),
-      hasResults: (resultCount || 0) > 0,
-      hasPrediction: Object.keys(profile?.predictions || {}).length > 0,
-      hasTraded: corpsList.some((c) => (c.weeklyTrades?.used || 0) > 0),
-      hasLeague: (profile?.leagueIds || []).length > 0,
-      hasFinishedSeason: (profile?.lifetimeStats?.totalSeasons || 0) >= 1,
-    };
-  }, [profile, resultCount]);
 
   const steps = useMemo(
     () =>
-      STEPS.map((step) => ({
+      getJourneySteps(profile, resultCount).map((step) => ({
         ...step,
-        done: !!journey?.[step.id],
-        ready: !journey?.[step.id] && step.ready(state),
+        ...STEP_PRESENTATION[step.id],
       })),
-    [journey, state]
+    [profile, resultCount]
   );
 
   const doneCount = steps.filter((s) => s.done).length;
 
   // The journey is finished — retire the panel
-  if (!profile || doneCount === STEPS.length) return null;
+  if (!profile || doneCount === JOURNEY_STEPS.length) return null;
 
   const handleClaim = async (step) => {
     setClaiming(step.id);
@@ -185,7 +103,12 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
   };
 
   return (
-    <div className="bg-surface-card border border-line overflow-hidden">
+    // scroll-mt clears the fixed shell chrome plus the sticky ControlBar when
+    // the Next Action hero scrolls the page to a claimable step.
+    <div
+      id="journey-panel"
+      className="bg-surface-card border border-line overflow-hidden scroll-mt-24"
+    >
       {/* Header */}
       <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
@@ -193,13 +116,13 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
           First Season Journey
         </h3>
         <span className="text-[10px] font-bold text-muted font-data tabular-nums">
-          {doneCount}/{STEPS.length}
+          {doneCount}/{JOURNEY_STEPS.length}
         </span>
       </div>
       <div className="h-1 bg-surface-raised">
         <div
           className="h-full bg-interactive transition-all duration-500"
-          style={{ width: `${(doneCount / STEPS.length) * 100}%` }}
+          style={{ width: `${(doneCount / JOURNEY_STEPS.length) * 100}%` }}
         />
       </div>
 
@@ -213,7 +136,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
                     step.done
                       ? 'bg-green-500/20'
-                      : step.ready
+                      : step.claimable
                         ? 'bg-interactive/20'
                         : 'bg-surface-raised border border-line'
                   }`}
@@ -221,7 +144,9 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   {step.done ? (
                     <Check className="w-3 h-3 text-green-400" />
                   ) : (
-                    <Icon className={`w-3 h-3 ${step.ready ? 'text-interactive' : 'text-muted'}`} />
+                    <Icon
+                      className={`w-3 h-3 ${step.claimable ? 'text-interactive' : 'text-muted'}`}
+                    />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -236,7 +161,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                     </span>
                   )}
                 </div>
-                {step.ready && (
+                {step.claimable && (
                   <button
                     onClick={() => handleClaim(step)}
                     disabled={claiming === step.id}
@@ -247,7 +172,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   </button>
                 )}
               </div>
-              {!step.done && !step.ready && (
+              {!step.done && !step.claimable && (
                 <div className="ml-8 mt-1 flex items-center justify-between gap-2">
                   <p className="text-[10px] text-muted">{step.description}</p>
                   {step.action?.type === 'link' && (

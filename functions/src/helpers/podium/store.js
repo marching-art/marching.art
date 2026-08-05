@@ -413,6 +413,74 @@ function showPickFor(state, day) {
   return picks[day] || picks[String(day)] || null;
 }
 
+/**
+ * Today's rehearsal-block budget for a READ (getPodiumState). Mirrors the cap
+ * allocateRehearsalBlock enforces, so the planner's "used / cap" and "N left"
+ * are the server's own numbers — stamina penalty included — not a hardcoded
+ * 12/8/20.
+ *
+ * Freshness-aware: getPodiumState never rolls the day (rollToday runs on
+ * writes), so a `state.today` left over from a prior calendar day is treated as
+ * a fresh day — 0 used, no rest declared, and the cap keyed off the current
+ * stamina the new day would begin with — exactly what the next write normalizes.
+ *
+ * @param {object} state hydrated podium state
+ * @param {{calendarDay: number, competitionDay: number, isShowDay: boolean}} dayCtx
+ * @returns {{maxBlocksToday: number, blocksUsedToday: number,
+ *   blocksRemainingToday: number, restDayToday: boolean}}
+ */
+function computeTodayBlockBudget(state, { calendarDay, competitionDay, isShowDay }) {
+  const isSpringTraining = competitionDay < 1;
+  const todayIsCurrent = Boolean(state.today && state.today.calendarDay === calendarDay);
+  const blocksUsedToday = todayIsCurrent ? state.today.blocksUsed || 0 : 0;
+  const restDayToday = todayIsCurrent ? Boolean(state.today.restDay) : false;
+  const staminaForCap =
+    todayIsCurrent && typeof state.today.startStamina === "number"
+      ? state.today.startStamina
+      : state.condition
+        ? state.condition.stamina
+        : balance.condition.lowStaminaThreshold;
+  const maxBlocksToday = engine.blocksAvailable(
+    state,
+    { isShowDay, isSpringTraining, staminaForCap },
+    balance
+  );
+  const blocksRemainingToday = restDayToday ? 0 : Math.max(0, maxBlocksToday - blocksUsedToday);
+  return { maxBlocksToday, blocksUsedToday, blocksRemainingToday, restDayToday };
+}
+
+/** Base per-plan-type block caps (not stamina-adjusted) — the plan-editor caps. */
+function planBlockCaps() {
+  return {
+    rehearsal: balance.rehearsal.blocksPerDay,
+    showDay: balance.rehearsal.blocksOnShowDay,
+    springTraining: balance.rehearsal.blocksPerDaySpringTraining,
+  };
+}
+
+/**
+ * The two facts the daily-challenge verifiers can't read off the profile,
+ * because Podium keeps its show picks and (as a string, not a `{theme}` object)
+ * its show concept in this server-only state doc. Returns null when the
+ * director has no Podium corps for the active season, so a stale prior-season
+ * state can never satisfy this season's challenges.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} uid
+ * @param {string} seasonUid - active season, to reject stale state
+ * @returns {Promise<{hasShows: boolean, hasConcept: boolean}|null>}
+ */
+async function loadPodiumChallengeFacts(db, uid, seasonUid) {
+  const snapshot = await stateRef(db, uid).get();
+  if (!snapshot.exists) return null;
+  const state = snapshot.data();
+  if (seasonUid && state.seasonUid !== seasonUid) return null;
+  return {
+    hasShows: selectedDaysOf(state).length > 0,
+    hasConcept: typeof state.showConcept === "string" && state.showConcept.trim().length > 0,
+  };
+}
+
 /** True when `competitionDay` is a show day for this corps. */
 function isShowDayFor(state, uid, competitionDay, easternAssignments) {
   if (competitionDay < 1 || competitionDay > 49) return false;
@@ -649,6 +717,9 @@ module.exports = {
   isShowDayFor,
   selectedDaysOf,
   showPickFor,
+  computeTodayBlockBudget,
+  planBlockCaps,
+  loadPodiumChallengeFacts,
   profileRef,
   stateRef,
   rosterRef,

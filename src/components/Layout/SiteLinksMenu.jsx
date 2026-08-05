@@ -18,6 +18,10 @@ import { HelpCircle, ExternalLink } from 'lucide-react';
 import { DISCORD_URL } from '../../utils/siteLinks';
 
 const MENU_LINKS = [
+  // Routed panel on the dashboard (hooks/useDashboardModals DASHBOARD_PANELS).
+  // The Quick Start guide existed but had no caller anywhere in the app, so
+  // nobody had ever seen it.
+  { to: '/dashboard?panel=quickstart', label: 'Quick Start' },
   { to: '/guide', label: 'Game Guide' },
   { to: '/how-to-play', label: 'How to Play' },
   { to: '/podium-guide', label: 'Podium Guide' },

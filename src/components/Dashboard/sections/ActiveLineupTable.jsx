@@ -77,7 +77,18 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
                 )}
               </>
             ) : (
-              <span className="text-sm text-muted italic">Empty slot</span>
+              /* An unfilled slot is the one moment a director is deciding what
+                 this caption is, so spend the space on its name rather than on
+                 the word "empty". "VP" means nothing until you have read
+                 "Visual Proficiency" once, and a tooltip cannot help here —
+                 the whole row is the button that opens the editor.
+
+                 The guest dashboard already subtitles every row with the full
+                 name, so the signed-in product was the less informative of the
+                 two. Doing it only on empty slots costs no extra row height on
+                 a phone, where a filled row already carries a corps, a year, a
+                 score, and a trend. */
+              <span className="text-sm text-muted truncate">{caption.fullName}</span>
             )}
           </div>
 

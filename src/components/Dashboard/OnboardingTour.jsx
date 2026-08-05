@@ -1,7 +1,18 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Dashboard/OnboardingTour.jsx
-// Contextual tooltips for first-time dashboard visitors
-import React, { useState, useEffect } from 'react';
+// First-run tour of the dashboard.
+//
+// Desktop anchors a tooltip beside each target — the layout is all on screen,
+// so pointing at parts of it works. Mobile does not get that treatment: the
+// tooltip was a fixed 320px box on a 360px screen, its "left" placement for the
+// scorecard computed off-screen and was clamped into a corner, and it never
+// repositioned on scroll, resize, or rotate. So on mobile the card is simply
+// docked above the bottom nav — no anchoring math to get wrong — and the target
+// is scrolled to and outlined instead.
+//
+// The step lists themselves live in tourSteps.ts, one per device.
+
+import React, { useEffect, useState } from 'react';
 import { m } from 'framer-motion';
 import {
   X,
@@ -12,79 +23,74 @@ import {
   Calendar,
   Users,
   Music,
+  Target,
+  Layers,
+  Compass,
 } from 'lucide-react';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { DESKTOP_TOUR_STEPS, MOBILE_TOUR_STEPS } from './tourSteps';
 
-const TOUR_STEPS = [
-  {
-    id: 'welcome',
-    title: 'Welcome to Your Dashboard!',
-    description: "This is your command center. Let's take a quick tour of the key features.",
-    icon: Sparkles,
-    target: null, // Full screen welcome
-    position: 'center',
-  },
-  {
-    id: 'control-bar',
-    title: 'Corps Command Bar',
-    description:
-      'Switch between your corps and competition classes here, and keep an eye on your CorpsCoin and XP as you play.',
-    icon: Users,
-    target: '[data-tour="control-bar"]',
-    position: 'bottom',
-  },
-  {
-    id: 'lineup',
-    title: 'Your Active Lineup',
-    description:
-      'These are your eight caption picks. Tap any caption row (or Manage) to change a selection — your score comes from how these corps perform.',
-    icon: Music,
-    target: '[data-tour="lineup"]',
-    position: 'bottom',
-  },
-  {
-    id: 'recent-results',
-    title: 'Recent Results',
-    description:
-      'After each show is scored, your results land here so you can see how your lineup performed night to night.',
-    icon: Calendar,
-    target: '[data-tour="recent-results"]',
-    position: 'top',
-  },
-  {
-    id: 'scorecard',
-    title: 'Season Scorecard',
-    description:
-      'Track your season score and rank here. Daily challenges and rivals live in this sidebar too — check back every day!',
-    icon: Trophy,
-    target: '[data-tour="scorecard"]',
-    position: 'left',
-  },
-];
+const ICONS = {
+  sparkles: Sparkles,
+  target: Target,
+  music: Music,
+  layers: Layers,
+  compass: Compass,
+  trophy: Trophy,
+  calendar: Calendar,
+  users: Users,
+};
 
-const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
+const OnboardingTour = ({ isOpen, onClose, onComplete, onRequestZone }) => {
+  const isMobile = useIsMobile();
+  const steps = isMobile ? MOBILE_TOUR_STEPS : DESKTOP_TOUR_STEPS;
+
   const [currentStep, setCurrentStep] = useState(0);
   const [tooltipPosition, setTooltipPosition] = useState({ top: '50%', left: '50%' });
 
-  const step = TOUR_STEPS[currentStep];
-  const Icon = step.icon;
+  // Device can change mid-tour (rotation, a resized desktop window). The step
+  // lists differ, so clamp rather than index past the end of the new one.
+  const stepIndex = Math.min(currentStep, steps.length - 1);
+  const step = steps[stepIndex];
+  const Icon = ICONS[step.icon];
+
+  // A mobile step may live in a zone that is not showing. Ask the dashboard to
+  // switch before the positioning effect looks for the target, or the tour
+  // points at a display:none element.
+  useEffect(() => {
+    if (!isOpen || !isMobile || !step.zone) return;
+    onRequestZone?.(step.zone);
+  }, [isOpen, isMobile, step.zone, onRequestZone]);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // Position tooltip based on target element; fall back to a centered
-    // card whenever the anchor is missing so the tour never points at nothing.
-    const target = step.target ? document.querySelector(step.target) : null;
-    if (target) {
-      target.scrollIntoView({ block: 'center' });
-      const rect = target.getBoundingClientRect();
-      setTooltipPosition(calculatePosition(rect, step.position));
+    // Give a zone switch (or any pending layout) a frame to land before
+    // measuring, so the first mobile step of a zone is not measured against
+    // the element's pre-reveal position.
+    let cleanup = () => {};
+    const frame = requestAnimationFrame(() => {
+      const target = step.target ? document.querySelector(step.target) : null;
+      if (!target) {
+        setTooltipPosition({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+        return;
+      }
 
-      // Add highlight to target
+      target.scrollIntoView({ block: 'center' });
       target.classList.add('tour-highlight');
-      return () => target.classList.remove('tour-highlight');
-    }
-    setTooltipPosition({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
-  }, [currentStep, isOpen, step]);
+      cleanup = () => target.classList.remove('tour-highlight');
+
+      // Mobile docks the card; only desktop anchors it to the target.
+      if (!isMobile) {
+        setTooltipPosition(calculatePosition(target.getBoundingClientRect(), step.position));
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      cleanup();
+    };
+  }, [stepIndex, isOpen, step, isMobile]);
 
   const calculatePosition = (rect, position) => {
     const padding = 16;
@@ -119,17 +125,15 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
   };
 
   const handleNext = () => {
-    if (currentStep < TOUR_STEPS.length - 1) {
-      setCurrentStep((prev) => prev + 1);
+    if (stepIndex < steps.length - 1) {
+      setCurrentStep(stepIndex + 1);
     } else {
       handleComplete();
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    if (stepIndex > 0) setCurrentStep(stepIndex - 1);
   };
 
   const handleComplete = () => {
@@ -143,6 +147,13 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
 
   if (!isOpen) return null;
 
+  // Mobile docks the card to the bottom of the screen, clear of the nav
+  // (.above-bottom-nav owns that math). Desktop anchors it to the target.
+  const cardStyle = isMobile ? undefined : tooltipPosition;
+  const cardClass = isMobile
+    ? 'fixed z-50 left-3 right-3 above-bottom-nav bg-surface-card border border-line rounded-none overflow-hidden'
+    : 'fixed z-50 w-80 bg-surface-card border border-line rounded-none overflow-hidden';
+
   return (
     <>
       {/* Backdrop */}
@@ -154,35 +165,40 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         onClick={handleSkip}
       />
 
-      {/* Tooltip */}
       <m.div
-        key={currentStep}
+        key={stepIndex}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        style={tooltipPosition}
+        style={cardStyle}
         onClick={(e) => e.stopPropagation()}
-        className="fixed z-50 w-80 bg-surface-card border border-line rounded-none overflow-hidden"
+        className={cardClass}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tour-step-title"
       >
         {/* Header */}
         <div className="p-4 bg-surface-raised border-b border-line">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-none bg-interactive/20 flex items-center justify-center">
-                <Icon className="w-5 h-5 text-interactive" />
+              <div className="w-10 h-10 rounded-none bg-interactive/20 flex items-center justify-center flex-shrink-0">
+                <Icon className="w-5 h-5 text-interactive" aria-hidden="true" />
               </div>
-              <div>
-                <h3 className="font-bold text-white">{step.title}</h3>
+              <div className="min-w-0">
+                <h3 id="tour-step-title" className="font-bold text-white">
+                  {step.title}
+                </h3>
                 <p className="text-xs text-muted">
-                  Step {currentStep + 1} of {TOUR_STEPS.length}
+                  Step {stepIndex + 1} of {steps.length}
                 </p>
               </div>
             </div>
             <button
               onClick={handleSkip}
-              className="p-1.5 hover:bg-white/10 rounded-none transition-colors"
+              aria-label="Skip tour"
+              className="min-w-touch min-h-touch -mr-2 flex items-center justify-center text-muted hover:text-white transition-colors"
             >
-              <X className="w-4 h-4 text-muted" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -193,15 +209,15 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-surface-sunken border-t border-line flex items-center justify-between">
-          <div className="flex gap-1.5">
-            {TOUR_STEPS.map((_, idx) => (
+        <div className="p-4 bg-surface-sunken border-t border-line flex items-center justify-between gap-3">
+          <div className="flex gap-1.5 flex-shrink-0">
+            {steps.map((s, idx) => (
               <div
-                key={idx}
+                key={s.id}
                 className={`w-2 h-2 rounded-none transition-colors ${
-                  idx === currentStep
+                  idx === stepIndex
                     ? 'bg-interactive'
-                    : idx < currentStep
+                    : idx < stepIndex
                       ? 'bg-green-400'
                       : 'bg-line'
                 }`}
@@ -210,10 +226,10 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            {currentStep > 0 && (
+            {stepIndex > 0 && (
               <button
                 onClick={handleBack}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted hover:text-white transition-colors"
+                className="flex items-center gap-1 px-3 min-h-touch text-sm text-muted hover:text-white transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -221,9 +237,9 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             )}
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-4 py-1.5 bg-interactive text-white rounded-none text-sm font-bold hover:bg-interactive-hover transition-colors"
+              className="flex items-center gap-1 px-4 min-h-touch bg-interactive text-white rounded-none text-sm font-bold hover:bg-interactive-hover transition-colors press-feedback"
             >
-              {currentStep < TOUR_STEPS.length - 1 ? (
+              {stepIndex < steps.length - 1 ? (
                 <>
                   Next
                   <ChevronRight className="w-4 h-4" />
@@ -241,7 +257,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         .tour-highlight {
           position: relative;
           z-index: 45;
-          box-shadow: 0 0 0 3px rgba(0, 87, 184, 0.6);
+          box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.7);
           border-radius: 2px;
         }
       `}</style>

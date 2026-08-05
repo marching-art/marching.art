@@ -7,7 +7,7 @@
  * context — the client never trusts its own clock for "today").
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getPodiumState,
   getPodiumRegistrationPreview,
@@ -30,6 +30,12 @@ export function usePodium(enabled) {
   // every consumer that reads `podium.data?.x`.
   const [data, setData] = useState(/** @type {any} */ (null)); // PodiumStateResponse
   const [lastPanel, setLastPanel] = useState(null); // most recent Action Complete panel
+  // Optimistic block queue (see queueAllocate). `pending` is a per-block-type
+  // count of taps accepted but not yet confirmed by the server, so the grid can
+  // stay live while allocations drain one at a time in the background.
+  const [pending, setPending] = useState(/** @type {Record<string, number>} */ ({}));
+  const queueRef = useRef(/** @type {string[]} */ ([]));
+  const drainingRef = useRef(false);
 
   const reload = useCallback(async () => {
     if (!enabled) return;
@@ -38,6 +44,10 @@ export function usePodium(enabled) {
     try {
       const result = await getPodiumState();
       setData(result.data);
+      // The fetched state is the truth; drop any optimistic block queue so the
+      // grid reflects it rather than double-counting confirmed taps.
+      queueRef.current = [];
+      setPending({});
     } catch (err) {
       setError(err?.message || 'Failed to load Podium state.');
     } finally {
@@ -49,27 +59,105 @@ export function usePodium(enabled) {
     reload();
   }, [reload]);
 
+  // Latest data, readable synchronously inside the drain loop (which runs
+  // between renders, so it can't rely on the `data` closure being current).
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
+  // Apply one confirmed allocation's payload to the state. Shared by the
+  // direct `allocate` and the queue drain.
+  const applyAllocation = useCallback((payload) => {
+    setLastPanel(payload.panel);
+    setData((previous) =>
+      previous && previous.state
+        ? {
+            ...previous,
+            state: {
+              ...previous.state,
+              today: payload.today,
+              condition: payload.condition,
+            },
+            // Server-authoritative budget moves with each confirmed block.
+            blocksUsedToday: payload.today?.blocksUsed ?? previous.blocksUsedToday,
+            blocksRemainingToday:
+              typeof payload.blocksRemaining === 'number'
+                ? payload.blocksRemaining
+                : previous.blocksRemainingToday,
+          }
+        : previous
+    );
+  }, []);
+
   const allocate = useCallback(
-    async (blockType) => {
-      const blockIndex = data?.state?.today?.blocksUsed ?? undefined;
-      const result = await allocateRehearsalBlock({ blockType, blockIndex });
-      const payload = result.data;
-      setLastPanel(payload.panel);
-      setData((previous) =>
-        previous && previous.state
-          ? {
-              ...previous,
-              state: {
-                ...previous.state,
-                today: payload.today,
-                condition: payload.condition,
-              },
-            }
-          : previous
-      );
-      return payload;
+    async (blockType, blockIndex) => {
+      // The server validates blockIndex against the live blocksUsed. When not
+      // told explicitly (a direct call), read the latest confirmed count.
+      const index =
+        typeof blockIndex === 'number'
+          ? blockIndex
+          : (dataRef.current?.state?.today?.blocksUsed ?? undefined);
+      const result = await allocateRehearsalBlock({ blockType, blockIndex: index });
+      applyAllocation(result.data);
+      return result.data;
     },
-    [data]
+    [applyAllocation]
+  );
+
+  // Serialized allocation queue — the one-thumb path (design §6.1). Each tap is
+  // accepted instantly (optimistic `pending` bump) and drained one at a time in
+  // the background, so the grid never freezes for a round-trip. Strictly
+  // sequential: the server validates blockIndex against the live blocksUsed, so
+  // only one allocate is ever in flight and the index advances from each
+  // server confirmation (not from React state, which lags the loop). A rejected
+  // block clears the rest of the optimistic queue and resyncs to the truth.
+  const allocateRef = useRef(allocate);
+  allocateRef.current = allocate;
+
+  const drainQueue = useCallback(async () => {
+    if (drainingRef.current) return;
+    drainingRef.current = true;
+    try {
+      // Seed the index from the confirmed count at drain start; advance it from
+      // each server response so queued blocks get consecutive indices even
+      // though React's `data` hasn't re-rendered between iterations.
+      let nextIndex = dataRef.current?.state?.today?.blocksUsed ?? 0;
+      while (queueRef.current.length > 0) {
+        const blockType = queueRef.current[0];
+        try {
+          const payload = await allocateRef.current(blockType, nextIndex);
+          nextIndex =
+            typeof payload.today?.blocksUsed === 'number'
+              ? payload.today.blocksUsed
+              : nextIndex + 1;
+        } catch (err) {
+          queueRef.current = [];
+          setPending({});
+          // Resync first (reload clears `error` on entry), then surface the
+          // bounce reason so it survives the refetch and stays visible.
+          await reload();
+          setError(err?.message || 'Could not allocate that block.');
+          return;
+        }
+        queueRef.current.shift();
+        setPending((prev) => {
+          const next = { ...prev };
+          if (next[blockType] > 1) next[blockType] -= 1;
+          else delete next[blockType];
+          return next;
+        });
+      }
+    } finally {
+      drainingRef.current = false;
+    }
+  }, [reload]);
+
+  const queueAllocate = useCallback(
+    (blockType) => {
+      queueRef.current.push(blockType);
+      setPending((prev) => ({ ...prev, [blockType]: (prev[blockType] || 0) + 1 }));
+      drainQueue();
+    },
+    [drainQueue]
   );
 
   const declareRestDay = useCallback(async () => {
@@ -150,8 +238,10 @@ export function usePodium(enabled) {
     error,
     data,
     lastPanel,
+    pending,
     reload,
     allocate,
+    queueAllocate,
     declareRestDay,
     register,
     loadRegistrationPreview,

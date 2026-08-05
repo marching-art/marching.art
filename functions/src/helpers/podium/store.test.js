@@ -146,3 +146,79 @@ describe("buildSeasonFinancialReport", () => {
     );
   });
 });
+
+describe("planBlockCaps", () => {
+  test("returns the base per-day-type caps from balance config", () => {
+    const caps = store.planBlockCaps();
+    assert.equal(caps.rehearsal, store.balance.rehearsal.blocksPerDay);
+    assert.equal(caps.showDay, store.balance.rehearsal.blocksOnShowDay);
+    assert.equal(caps.springTraining, store.balance.rehearsal.blocksPerDaySpringTraining);
+  });
+});
+
+describe("computeTodayBlockBudget", () => {
+  const rested = { condition: { stamina: 80, morale: 60 } };
+  const dayCtx = (over = {}) => ({
+    calendarDay: 10,
+    competitionDay: 10,
+    isShowDay: false,
+    ...over,
+  });
+
+  test("a full rehearsal day exposes the 12-block cap and none used yet", () => {
+    const state = { ...rested, today: { calendarDay: 10, blocksUsed: 0 } };
+    const b = store.computeTodayBlockBudget(state, dayCtx());
+    assert.equal(b.maxBlocksToday, store.balance.rehearsal.blocksPerDay);
+    assert.equal(b.blocksUsedToday, 0);
+    assert.equal(b.blocksRemainingToday, store.balance.rehearsal.blocksPerDay);
+  });
+
+  test("counts blocks already used today and reports what's left", () => {
+    const state = { ...rested, today: { calendarDay: 10, blocksUsed: 5 } };
+    const b = store.computeTodayBlockBudget(state, dayCtx());
+    assert.equal(b.blocksUsedToday, 5);
+    assert.equal(b.blocksRemainingToday, store.balance.rehearsal.blocksPerDay - 5);
+  });
+
+  test("a show day uses the lighter 8-block cap", () => {
+    const state = { ...rested, today: { calendarDay: 10, blocksUsed: 0 } };
+    const b = store.computeTodayBlockBudget(state, dayCtx({ isShowDay: true }));
+    assert.equal(b.maxBlocksToday, store.balance.rehearsal.blocksOnShowDay);
+  });
+
+  test("spring training (pre-Day-1) uses the 20-block cap", () => {
+    const state = { ...rested, today: { calendarDay: 3, blocksUsed: 0 } };
+    const b = store.computeTodayBlockBudget(state, dayCtx({ calendarDay: 3, competitionDay: -2 }));
+    assert.equal(b.maxBlocksToday, store.balance.rehearsal.blocksPerDaySpringTraining);
+  });
+
+  test("a start-of-day low-stamina snapshot shrinks the cap", () => {
+    // startStamina below the threshold applies the block penalty, keyed off the
+    // day's opening stamina (not the live drained value).
+    const state = {
+      condition: { stamina: 5, morale: 50 },
+      today: { calendarDay: 10, blocksUsed: 0, startStamina: 10 },
+    };
+    const b = store.computeTodayBlockBudget(state, dayCtx());
+    assert.equal(
+      b.maxBlocksToday,
+      store.balance.rehearsal.blocksPerDay - store.balance.condition.lowStaminaBlockPenalty
+    );
+  });
+
+  test("a stale prior-day today reads as a fresh day: 0 used, full cap", () => {
+    // getPodiumState never rolls the day, so yesterday's usage must not leak in.
+    const state = { ...rested, today: { calendarDay: 9, blocksUsed: 12, restDay: false } };
+    const b = store.computeTodayBlockBudget(state, dayCtx({ calendarDay: 10 }));
+    assert.equal(b.blocksUsedToday, 0);
+    assert.equal(b.blocksRemainingToday, store.balance.rehearsal.blocksPerDay);
+    assert.equal(b.restDayToday, false);
+  });
+
+  test("a declared rest day leaves nothing to allocate", () => {
+    const state = { ...rested, today: { calendarDay: 10, blocksUsed: 0, restDay: true } };
+    const b = store.computeTodayBlockBudget(state, dayCtx());
+    assert.equal(b.restDayToday, true);
+    assert.equal(b.blocksRemainingToday, 0);
+  });
+});

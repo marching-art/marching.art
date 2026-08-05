@@ -29,19 +29,42 @@ function ConditionBar({ label, value, icon: Icon, color }) {
 }
 
 export default function RehearsalPlanner({ podium }) {
-  const { data, lastPanel, allocate, declareRestDay } = podium;
-  const [busy, setBusy] = useState(null); // blockType being allocated
+  const { data, lastPanel, queueAllocate, declareRestDay, pending = {} } = podium;
+  const [restBusy, setRestBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
 
   const state = data?.state;
   if (!state) return null;
 
-  const today = state.today || { blocksUsed: 0, blocks: [], restDay: false };
+  const rawToday = state.today || { blocksUsed: 0, blocks: [], restDay: false };
+  // state.today can lag the real day (rollToday runs on writes, not reads), so
+  // trust the server's freshness-aware today fields and blank a stale block
+  // list rather than showing yesterday's plan as today's.
+  const todayIsCurrent = rawToday.calendarDay === data.calendarDay;
+  const today = todayIsCurrent
+    ? rawToday
+    : { blocksUsed: 0, blocks: [], restDay: false, calendarDay: data.calendarDay };
   const condition = state.condition || { stamina: 0, morale: 0 };
   const budget = state.budget || { balance: 0 };
   const competitionDay = data.competitionDay;
   const isSpringTraining = competitionDay < 1;
   const seasonOver = competitionDay > 49;
+
+  // Server-authoritative block budget (stamina-adjusted). Falls back to the
+  // freshness-normalized local count if an older backend hasn't shipped these.
+  const confirmedUsed = data.blocksUsedToday ?? today.blocksUsed ?? 0;
+  const maxBlocksToday = data.maxBlocksToday ?? null;
+  const confirmedRemaining =
+    data.blocksRemainingToday ??
+    (maxBlocksToday !== null ? Math.max(0, maxBlocksToday - confirmedUsed) : null);
+
+  // Optimistic view: taps accepted into the queue but not yet server-confirmed
+  // count toward "used" so the grid reflects them instantly and stops accepting
+  // taps once the day's budget is spoken for (design §6.1 one-thumb entry).
+  const pendingTotal = Object.values(pending).reduce((sum, n) => sum + n, 0);
+  const blocksUsedToday = confirmedUsed + pendingTotal;
+  const blocksRemainingToday =
+    confirmedRemaining !== null ? Math.max(0, confirmedRemaining - pendingTotal) : null;
   const dayType = seasonOver
     ? 'Season complete'
     : today.restDay
@@ -52,36 +75,44 @@ export default function RehearsalPlanner({ podium }) {
           ? 'Spring training'
           : 'Rehearsal day';
 
-  const handleAllocate = async (blockType) => {
-    setBusy(blockType);
+  // Accept the tap instantly — the queue drains it in the background, so a
+  // director can enter a whole day's blocks in a rapid thumb-run without the
+  // grid freezing between each. Errors surface via podium.error (the queue
+  // clears and resyncs on a bounce).
+  const handleAllocate = (blockType) => {
     setActionError(null);
-    try {
-      await allocate(blockType);
-    } catch (err) {
-      setActionError(err?.message || 'Could not allocate block.');
-    } finally {
-      setBusy(null);
-    }
+    queueAllocate(blockType);
   };
 
   const handleRest = async () => {
-    setBusy('rest');
+    setRestBusy(true);
     setActionError(null);
     try {
       await declareRestDay();
     } catch (err) {
       setActionError(err?.message || 'Could not declare a rest day.');
     } finally {
-      setBusy(null);
+      setRestBusy(false);
     }
   };
 
-  const exhausted = seasonOver || today.restDay;
+  // A drain is in progress while any block is still pending confirmation.
+  const draining = pendingTotal > 0;
+
+  // The block grid retires when there is nothing left to allocate: the season
+  // is over, a rest day was declared, or the day's blocks are all used. Without
+  // the last case the grid stayed live and every tap bounced off the server's
+  // resource-exhausted guard.
+  const blocksDone = blocksRemainingToday !== null && blocksRemainingToday <= 0;
+  const exhausted = seasonOver || today.restDay || blocksDone;
   const isShowDay = Boolean(data.isShowDay) && !seasonOver;
 
   return (
     <div
-      className={`bg-surface-card border rounded-none p-4 space-y-4 ${
+      id="podium-planner"
+      // scroll-mt clears the fixed shell chrome + sticky ControlBar when the
+      // Next Action hero scrolls the page here.
+      className={`bg-surface-card border rounded-none p-4 space-y-4 scroll-mt-24 ${
         isShowDay ? 'border-interactive ring-1 ring-interactive/40' : 'border-line'
       }`}
     >
@@ -148,27 +179,34 @@ export default function RehearsalPlanner({ podium }) {
 
       {/* Block allocator + schedule panel */}
       <div className="flex flex-col lg:flex-row gap-3">
-        {/* Block grid (fundraiser lives inside the grid) */}
+        {/* Block grid (fundraiser lives inside the grid). Buttons stay live
+            while allocations drain — only the day's remaining budget gates
+            them — so a director can tap a full day's blocks in one thumb-run. */}
         {!exhausted && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 content-start">
             {BLOCKS.map((block) => {
-              const usedCount = (today.blocks || []).filter((b) => b === block.id).length;
+              const confirmedCount = (today.blocks || []).filter((b) => b === block.id).length;
+              const pendingCount = pending[block.id] || 0;
+              const count = confirmedCount + pendingCount;
+              const budgetSpent = blocksRemainingToday !== null && blocksRemainingToday <= 0;
               return (
                 <button
                   key={block.id}
-                  disabled={busy !== null}
+                  disabled={budgetSpent}
                   onClick={() => handleAllocate(block.id)}
                   className="text-left px-3 py-2.5 rounded-none border border-line hover:border-interactive hover:bg-interactive/10 transition-colors press-feedback disabled:opacity-50"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white">{block.label}</span>
                     <span className="flex items-center gap-1">
-                      {usedCount > 0 && (
+                      {count > 0 && (
                         <span className="text-[10px] font-bold text-interactive tabular-nums">
-                          ×{usedCount}
+                          ×{count}
                         </span>
                       )}
-                      {busy === block.id && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
+                      {/* A block still confirming shows a quiet spinner, but the
+                          button stays tappable. */}
+                      {pendingCount > 0 && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
                     </span>
                   </div>
                   <div className="text-[10px] text-muted mt-0.5">{block.detail}</div>
@@ -176,13 +214,20 @@ export default function RehearsalPlanner({ podium }) {
               );
             })}
             <button
-              disabled={busy !== null}
+              disabled={blocksRemainingToday !== null && blocksRemainingToday <= 0}
               onClick={() => handleAllocate('fundraiser')}
               className="text-left px-3 py-2.5 rounded-none border border-brand-subtle hover:border-brand hover:bg-brand/10 transition-colors press-feedback disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-brand">Fundraiser</span>
-                {busy === 'fundraiser' && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
+                {(pending.fundraiser || 0) > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-[10px] font-bold text-brand tabular-nums">
+                      ×{pending.fundraiser}
+                    </span>
+                    <Loader2 className="w-3 h-3 animate-spin text-muted" />
+                  </span>
+                )}
               </div>
               <div className="text-[10px] text-muted mt-0.5">
                 Convert a block to Corps Budget income (+3 Budget per block) — no caption growth
@@ -197,10 +242,25 @@ export default function RehearsalPlanner({ podium }) {
             <span className="text-[10px] uppercase font-bold tracking-wider text-muted">
               Blocks today
             </span>
+            {/* Show the cap, not just the count — a director needs to know how
+                many blocks they still have (the number the server enforces,
+                stamina penalty included), or the loop is guesswork. */}
             <span className="text-lg font-bold text-white tabular-nums leading-none">
-              {today.blocksUsed || 0}
+              {blocksUsedToday}
+              {maxBlocksToday !== null && (
+                <span className="text-sm text-muted font-normal"> / {maxBlocksToday}</span>
+              )}
             </span>
           </div>
+          {!seasonOver && !today.restDay && blocksRemainingToday !== null && (
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-right">
+              {blocksRemainingToday > 0 ? (
+                <span className="text-interactive">{blocksRemainingToday} left</span>
+              ) : (
+                <span className="text-green-400">All blocks used</span>
+              )}
+            </div>
+          )}
 
           <div className="mt-2 flex-1 space-y-1 min-h-[2rem]">
             {today.blocks?.length > 0 ? (
@@ -223,10 +283,10 @@ export default function RehearsalPlanner({ podium }) {
             )}
           </div>
 
-          {!exhausted && (today.blocksUsed || 0) === 0 && (
+          {!exhausted && blocksUsedToday === 0 && (
             <button
               onClick={handleRest}
-              disabled={busy !== null}
+              disabled={restBusy || draining}
               className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-line text-muted hover:text-white hover:border-charcoal-500 transition-colors press-feedback disabled:opacity-50"
             >
               <Moon className="w-3 h-3" /> Rest day
@@ -242,7 +302,7 @@ export default function RehearsalPlanner({ podium }) {
 
       {/* Action Complete panel */}
       {lastPanel && (
-        <div className="border border-[#2f4f2f] bg-[#12240f] rounded-none px-3 py-2">
+        <div className="border border-green-500/30 bg-green-500/10 rounded-none px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
             Action complete — {BLOCKS.find((b) => b.id === lastPanel.blockType)?.label}
             {lastPanel.repeatMult < 1 && (
@@ -271,7 +331,11 @@ export default function RehearsalPlanner({ podium }) {
         </div>
       )}
 
-      {actionError && <div className="text-[11px] text-red-400">{actionError}</div>}
+      {/* A rest-day failure (actionError) or a bounced block from the queue
+          (podium.error) — both worth showing. */}
+      {(actionError || podium.error) && (
+        <div className="text-[11px] text-red-400">{actionError || podium.error}</div>
+      )}
     </div>
   );
 }

@@ -31,8 +31,12 @@ const ordinal = (n) => {
  * numeric scores are deliberately hidden behind medal ratings, and the
  * server rejects score-based picks for it.
  *
- * @param {Array<{score: number, placement: number, eventName: string}>} recentResults
- * @param {string} [corpsClass]
+ * Result rows are partial by nature — a recap row carries a placement only for
+ * ranked classes, and SoundSport rows carry no numeric score at all — so every
+ * field is optional and the body guards each one.
+ *
+ * @param {Array<{score?: number, placement?: number, eventName?: string}>} recentResults
+ * @param {string|null} [corpsClass]
  * @returns {Array<{id: string, text: string, options: string[], xp: number, threshold: number}>}
  */
 export const buildQuestions = (recentResults, corpsClass) => {
@@ -64,7 +68,12 @@ export const buildQuestions = (recentResults, corpsClass) => {
     return questions;
   }
 
-  const scores = recentResults.map((r) => r.score).filter(Boolean);
+  // Same rows the old `.filter(Boolean)` kept (a missing, zero, or NaN score
+  // is not something to build a threshold from), written so the result is a
+  // plain number[] rather than (number|undefined)[].
+  const scores = recentResults.flatMap((r) =>
+    typeof r.score === 'number' && r.score > 0 ? [r.score] : []
+  );
   if (scores.length < 2) return [];
 
   const avg = scores.slice(0, 3).reduce((s, v) => s + v, 0) / Math.min(scores.length, 3);

@@ -194,6 +194,19 @@
     }
   }
 
+  /* Float a fixed element clear of the mobile bottom nav, with a 12px gap —
+     the same clearance .toaster-container uses. For overlays that must stay
+     above the nav rather than under it (the onboarding tour card). */
+  .above-bottom-nav {
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  @media (min-width: 1024px) {
+    .above-bottom-nav {
+      bottom: 24px;
+    }
+  }
+
   /* Press feedback - haptic-like visual response */
   .press-feedback {
     transition:

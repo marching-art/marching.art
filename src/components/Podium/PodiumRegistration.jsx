@@ -4,10 +4,19 @@
 // audition presets), 4) march. No payments anywhere.
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, ChevronLeft, Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
+import {
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  AlertTriangle,
+  TrendingUp,
+  Minus,
+  Plus,
+} from 'lucide-react';
 import {
   PODIUM_CAPTIONS,
   CAPTION_LABELS,
+  CHALLENGE_PRESETS,
   AUDITION_PRESETS,
   SPECIALTY_LABELS,
   TIER_LABELS,
@@ -257,29 +266,79 @@ export default function PodiumRegistration({ podium }) {
               Locked for the season.
             </p>
           </div>
+          {/* One-tap starting points — set every caption at once, then tune.
+              Wires the CHALLENGE_PRESETS the game defines (balanced / early &
+              clean / August book). A preset is "active" only while all eight
+              still sit at its level. */}
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(CHALLENGE_PRESETS).map(([id, preset]) => {
+              const active = PODIUM_CAPTIONS.every((c) => challenge[c] === preset.levels);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() =>
+                    setChallenge(Object.fromEntries(PODIUM_CAPTIONS.map((c) => [c, preset.levels])))
+                  }
+                  className={`min-h-touch px-3 text-[10px] font-bold uppercase tracking-wider rounded-none border transition-colors press-feedback ${
+                    active
+                      ? 'border-interactive bg-interactive/15 text-white'
+                      : 'border-line text-muted hover:text-white'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+          {/* Per-caption stepper: precise on touch where an 8-position slider
+              (~23px/step) is not. Each control is a 44px tap target. */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
             {PODIUM_CAPTIONS.map((caption) => (
-              <label key={caption} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-[11px] font-bold text-white">
+              <div key={caption} className="flex items-center gap-3">
+                <span className="flex-1 min-w-0 text-[11px] font-bold text-white">
                   {caption}
                   <span className="block text-[9px] font-normal text-muted truncate">
                     {CAPTION_LABELS[caption]}
                   </span>
                 </span>
-                <input
-                  type="range"
-                  min={1}
-                  max={8}
-                  value={challenge[caption]}
-                  onChange={(e) =>
-                    setChallenge((prev) => ({ ...prev, [caption]: Number(e.target.value) }))
-                  }
-                  className="flex-1 accent-interactive"
-                />
-                <span className="w-5 text-right text-xs font-bold text-interactive tabular-nums">
-                  {challenge[caption]}
-                </span>
-              </label>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    aria-label={`Lower ${CAPTION_LABELS[caption]} challenge`}
+                    disabled={challenge[caption] <= 1}
+                    onClick={() =>
+                      setChallenge((prev) => ({
+                        ...prev,
+                        [caption]: Math.max(1, prev[caption] - 1),
+                      }))
+                    }
+                    className="min-w-touch min-h-touch flex items-center justify-center rounded-none border border-line text-muted hover:text-white hover:border-line-strong disabled:opacity-40 press-feedback"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span
+                    className="w-6 text-center text-sm font-bold text-interactive tabular-nums"
+                    aria-live="polite"
+                  >
+                    {challenge[caption]}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`Raise ${CAPTION_LABELS[caption]} challenge`}
+                    disabled={challenge[caption] >= 8}
+                    onClick={() =>
+                      setChallenge((prev) => ({
+                        ...prev,
+                        [caption]: Math.min(8, prev[caption] + 1),
+                      }))
+                    }
+                    className="min-w-touch min-h-touch flex items-center justify-center rounded-none border border-line text-muted hover:text-white hover:border-line-strong disabled:opacity-40 press-feedback"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
           <div>

@@ -10,10 +10,15 @@ const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
 const { completeDailyChallenge } = require("./dailyOps");
-const { getGameDay, getChallengesForGameDay } = require("../helpers/dailyChallenges");
+const {
+  getGameDay,
+  getChallengesForGameDay,
+  getRequiredChallengeIds,
+} = require("../helpers/dailyChallenges");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
+const podiumStatePath = (uid) => `artifacts/${NS}/users/${uid}/podium/state`;
 
 // Today's real rotation — the callable uses the real clock, so tests pick
 // challenge ids relative to the actual current game day.
@@ -292,6 +297,88 @@ describe("completeDailyChallenge", () => {
     assert.equal(result.weeklyArcDays, 1, "the day must count without make-prediction");
     const loop = writes[0].data["engagement.weeklyLoop"];
     assert.deepEqual(loop.countedDays, [gameDay]);
+  });
+
+  // A Podium-only director keeps show picks and concept in the podium
+  // subcollection, not on the profile — so before the context fix these two
+  // challenges could never verify, and check-lineup could never complete,
+  // which locked them out of the daily set and the weekly arc entirely.
+  const podiumOnlyProfile = () => ({
+    uid: "p1",
+    xp: 100,
+    xpLevel: 1,
+    activeSeasonId: "s1",
+    unlockedClasses: ["soundSport"],
+    corps: { podiumClass: { corpsName: "Riverside Cadets", class: "podiumClass" } },
+    predictions: {},
+  });
+  const podiumStateDoc = () => ({
+    seasonUid: "s1",
+    showConcept: "A Ritual in Blue",
+    selectedShows: { 3: { eventName: "Allentown", location: "PA" } },
+  });
+
+  test("a Podium-only director can complete a show/concept challenge", async () => {
+    const target = todaysChallenges.find(
+      (c) => c.id === "register-show" || c.id === "set-show-concept"
+    );
+    if (!target) return; // today's rotation offers neither — nothing to prove
+    const docs = new Map([
+      [profilePath("p1"), podiumOnlyProfile()],
+      [podiumStatePath("p1"), podiumStateDoc()],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await completeDailyChallenge.run(authedRequest("p1", { challengeId: target.id }));
+    assert.equal(result.success, true, "podium fact must verify off the subcollection");
+    assert.equal(result.xpAwarded, target.xp);
+    assert.equal(writes[0].data.challenges[gameDay][0].id, target.id);
+  });
+
+  test("the weekly arc counts a Podium-only director's completed set", async () => {
+    // Their required set excludes check-lineup (no lineup) and make-prediction
+    // (no podium recaps → no questions). Complete everything that remains.
+    const context = { predictionAvailable: false, podium: { hasShows: true, hasConcept: true } };
+    const required = getRequiredChallengeIds(gameDay, podiumOnlyProfile(), context);
+    assert.ok(required.length > 0, "a podium-only director must have a satisfiable set");
+    assert.ok(!required.includes("check-lineup"), "check-lineup must not be required");
+
+    const preDone = required.slice(0, -1);
+    const last = required[required.length - 1];
+    const docs = new Map([
+      [
+        profilePath("p1"),
+        {
+          ...podiumOnlyProfile(),
+          challenges: { [gameDay]: preDone.map((id) => ({ id, completed: true })) },
+        },
+      ],
+      [podiumStatePath("p1"), podiumStateDoc()],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await completeDailyChallenge.run(authedRequest("p1", { challengeId: last }));
+    assert.equal(result.success, true);
+    assert.equal(result.weeklyArcDays, 1, "the podium director's set must count toward the arc");
+    const loop = writes[0].data["engagement.weeklyLoop"];
+    assert.deepEqual(loop.countedDays, [gameDay]);
+  });
+
+  test("a stale prior-season Podium state does not satisfy this season's challenge", async () => {
+    const target = todaysChallenges.find((c) => c.id === "register-show");
+    if (!target) return;
+    const docs = new Map([
+      [profilePath("p1"), podiumOnlyProfile()], // activeSeasonId: 's1'
+      [podiumStatePath("p1"), { ...podiumStateDoc(), seasonUid: "s0" }], // last season
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await completeDailyChallenge.run(authedRequest("p1", { challengeId: target.id }));
+    assert.equal(result.success, false, "a stale-season podium state must not verify");
+    assert.equal(writes.length, 0);
   });
 
   test("pays the weekly-arc bonus exactly when the 5th full-set day lands", async () => {

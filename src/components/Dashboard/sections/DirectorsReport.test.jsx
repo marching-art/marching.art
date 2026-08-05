@@ -57,6 +57,9 @@ describe('DirectorsReport', () => {
       xp: 100,
       xpAtSeasonStart: 0,
       engagement: { loginStreak: 4, lastLogin: new Date() },
+      // A lineup-bearing corps: the report only renders for a director who has
+      // one, and check-lineup is only part of the set when a lineup exists.
+      corps: { worldClass: { corpsName: 'Test Corps', lineup: { GE1: 'Blue Devils|2024' } } },
       challenges: {},
       predictions: {},
       seasonLadder: null,

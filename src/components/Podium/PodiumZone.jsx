@@ -2,6 +2,11 @@
 // tab is selected (Phase 2, design §6). Handles its own three states:
 // loading, unregistered (four-step setup), and the daily loop
 // (RehearsalPlanner + PodiumCaptionPanel).
+//
+// The Podium state is loaded by the Dashboard (which also reads its
+// challenge facts for the shared Director's Report) and passed in, so it is
+// fetched exactly once. Falls back to loading its own when no prop is given,
+// keeping the component usable in isolation (e.g. tests).
 
 import React from 'react';
 import { Loader2 } from 'lucide-react';
@@ -16,8 +21,15 @@ import JointRehearsalPanel from './JointRehearsalPanel';
 import FanFavoriteCard from './FanFavoriteCard';
 import StaffOutlookBanner from './StaffOutlookBanner';
 
-export default function PodiumZone() {
-  const podium = usePodium(true);
+/**
+ * @param {{ podium?: ReturnType<typeof usePodium> }} props
+ */
+export default function PodiumZone({ podium: podiumProp }) {
+  // Self-load only when the Dashboard didn't hand us its instance. The hook
+  // runs unconditionally (rules of hooks) but no-ops its fetch when disabled,
+  // so passing an instance avoids the duplicate getPodiumState call.
+  const ownPodium = usePodium(!podiumProp);
+  const podium = podiumProp || ownPodium;
 
   if (podium.loading && !podium.data) {
     return (
@@ -27,7 +39,10 @@ export default function PodiumZone() {
     );
   }
 
-  if (podium.error) {
+  // Only a FATAL error (nothing loaded) replaces the whole zone. A transient
+  // error while state is present — e.g. a bounced rehearsal block — is shown
+  // inline by the planner, so it must not nuke the surface.
+  if (podium.error && !podium.data) {
     return (
       <div className="bg-surface-card border border-line rounded-none p-4 text-xs text-red-400">
         {podium.error}
@@ -39,12 +54,18 @@ export default function PodiumZone() {
     return <PodiumRegistration podium={podium} />;
   }
 
+  // Order matters most on mobile, where these eight panels are a long single
+  // column. Lead with the daily decision loop — a between-seasons alert, then
+  // the rehearsal verb and the caption progress that tells you what to spend
+  // blocks on — so a returning director lands on today's work, not the season
+  // furniture. The strategic panels (trajectory, condition, staff, joint) and
+  // the community vote follow.
   return (
     <div className="space-y-4">
       <StaffOutlookBanner podium={podium} />
-      <FanFavoriteCard />
       <RehearsalPlanner podium={podium} />
       <PodiumCaptionPanel podium={podium} />
+      <FanFavoriteCard />
       <PodiumTrajectoryCard podium={podium} />
       <CorpsConditionPanel podium={podium} />
       <PodiumStaffPanel podium={podium} />
