@@ -16,6 +16,7 @@ import NotificationBell from '../Notifications/NotificationBell';
 import BottomNav from '../BottomNav';
 import { useTickerData } from '../../hooks/useTickerData';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   LayoutDashboard,
   Calendar,
@@ -597,6 +598,8 @@ const TickerBar = () => {
 // =============================================================================
 
 const GameShell = ({ children }) => {
+  const isMobile = useIsMobile();
+
   // Enable fixed one-screen layout for GameShell pages
   useEffect(() => {
     document.documentElement.classList.add('game-shell-active');
@@ -609,10 +612,11 @@ const GameShell = ({ children }) => {
   // public routes are counted too — they were invisible when this lived here.
 
   const shellContextValue = {
-    // 56px top nav + ticker: 32px (h-8) on sm+, 40px (h-10) on mobile.
+    // 56px top nav, plus the 32px (h-8) ticker on sm+. Below sm the ticker is
+    // hidden, so the header is the nav alone.
     // Currently unconsumed — if you use it, prefer the responsive values.
     headerHeight: 88,
-    headerHeightMobile: 96,
+    headerHeightMobile: 56,
   };
 
   return (
@@ -621,16 +625,30 @@ const GameShell = ({ children }) => {
         {/* Fixed Top Navigation */}
         <TopNav />
 
-        {/* Fixed Ticker Bar */}
-        <TickerBar />
+        {/* Fixed Ticker Bar — sm and up only.
+            A stock ticker is a peripheral-vision affordance: it needs
+            horizontal room to be scanned rather than watched. At 390px it
+            shows about two items at a time and scrolls, so it cannot be read,
+            only stared at — while costing 40px of a ~700px viewport on every
+            page, permanently, and animating the whole time. Everything it
+            carries is on /scores, and the one thing a phone actually needs
+            from it — the next deadline — is on the dashboard's own
+            NextDeadlineChip strip and in the schedule's countdown.
+
+            Unmounted rather than CSS-hidden: a hidden ticker would still run
+            its recap query, its resize listener, and its marquee. The one
+            page that shares that query (the dashboard) issues it itself, so
+            nothing else pays for this. useIsMobile is pinned to the same
+            `sm` breakpoint the layout below uses, so the two cannot drift. */}
+        {!isMobile && <TickerBar />}
 
         {/* Main Content Area - Fixed position fills space between headers and footer */}
-        {/* On mobile: top-nav (56px) + ticker (40px) = 96px */}
-        {/* On desktop: top-nav (56px) + ticker (32px) = 88px */}
+        {/* Below sm: top-nav (56px) only — the ticker is hidden there. */}
+        {/* sm and up: top-nav (56px) + ticker (32px) = 88px */}
         <main
           id="main-content"
           role="main"
-          className="fixed top-[96px] sm:top-[88px] left-0 right-0 bg-background overflow-hidden main-content-bottom"
+          className="fixed top-14 sm:top-[88px] left-0 right-0 bg-background overflow-hidden main-content-bottom"
         >
           {/* Full-width wrapper so each page's own scroll container spans the
               viewport — this keeps scrollbars flush against the right edge of
