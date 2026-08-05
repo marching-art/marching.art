@@ -15,79 +15,31 @@ import React, { memo, useMemo, useState } from 'react';
 import { ClipboardList, Check, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../../../store/profileStore';
-import { getGameDay, getChallengesForGameDay } from '../../../utils/dailyChallenges';
-import { buildQuestions } from '../../../utils/dailyPredictions';
+import { computeDirectorsReport } from '../../../utils/directorsReport';
 import { claimLadderTier } from '../../../api/functions';
 import { showCoinGain } from '../../xpFeedbackTrigger';
 import DailyChallenges from './DailyChallenges';
 import PredictionGamePanel from './PredictionGamePanel';
-import { TIERS as LADDER_TIERS } from './seasonLadderTiers';
-
-const toDate = (value) => {
-  if (!value) return null;
-  if (typeof value.toDate === 'function') return value.toDate();
-  if (value instanceof Date) return value;
-  return null;
-};
+import { getClaimableLadderTiers } from './seasonLadderTiers';
 
 const DirectorsReport = memo(
   ({ recentResults, corpsClass, seasonUid, onLineupClick, onConceptClick }) => {
     const profile = useProfileStore((state) => state.profile);
     const [claimingTier, setClaimingTier] = useState(null);
 
-    const gameDay = getGameDay();
-
-    // --- Login row: claimed automatically on app load (claimDailyLogin) ---
-    const lastLogin = toDate(profile?.engagement?.lastLogin);
-    const loginDone = !!lastLogin && getGameDay(lastLogin) === gameDay;
-    const streak = profile?.engagement?.loginStreak || 0;
-
-    // --- Predictions: picked or resolved both count as "done for today" ---
-    const questions = useMemo(
-      () => buildQuestions(recentResults, corpsClass),
-      [recentResults, corpsClass]
+    // The day's set — login + challenge rotation + predictions — computed by
+    // the shared resolver so this card and the mobile Next Action hero can
+    // never disagree about "Today · X of Y".
+    const { loginDone, streak, predictionAvailable, doneCount, totalCount, allDone } = useMemo(
+      () => computeDirectorsReport({ profile, recentResults, corpsClass }),
+      [profile, recentResults, corpsClass]
     );
-    // No questions (fewer than two scored results) means make-prediction is
-    // genuinely impossible today — drop it from the set instead of pinning
-    // "Today · N of M" below M forever (the server excuses it the same way
-    // when counting weekly-arc days).
-    const predictionAvailable = questions.length > 0;
-
-    // --- Challenges: same server-authoritative state DailyChallenges renders ---
-    const challenges = useMemo(
-      () =>
-        getChallengesForGameDay(gameDay).filter(
-          (c) => c.id !== 'make-prediction' || predictionAvailable
-        ),
-      [gameDay, predictionAvailable]
-    );
-    const challengesDone = useMemo(() => {
-      const bucket = profile?.challenges?.[gameDay] || [];
-      const ids = new Set(bucket.filter((c) => c.completed).map((c) => c.id));
-      return challenges.filter((c) => ids.has(c.id)).length;
-    }, [profile?.challenges, gameDay, challenges]);
-    const predictionBucket = profile?.predictions?.[gameDay] || {};
-    const predictionsDone = predictionBucket.resolved
-      ? questions.length
-      : Math.min(Object.keys(predictionBucket.picks || {}).length, questions.length);
 
     // --- Pending Season Ladder claims (bonus row, not counted in the set) ---
-    const seasonXP =
-      typeof profile?.xpAtSeasonStart === 'number'
-        ? Math.max(0, (profile.xp || 0) - profile.xpAtSeasonStart)
-        : 0;
-    const claimedTiers = useMemo(() => {
-      const state = profile?.seasonLadder;
-      if (!state || (seasonUid && state.seasonUid !== seasonUid)) return [];
-      return state.claimed || [];
-    }, [profile?.seasonLadder, seasonUid]);
-    const claimableTiers = LADDER_TIERS.filter(
-      (t) => seasonXP >= t.xp && !claimedTiers.includes(t.tier)
+    const claimableTiers = useMemo(
+      () => getClaimableLadderTiers(profile, seasonUid),
+      [profile, seasonUid]
     );
-
-    const doneCount = (loginDone ? 1 : 0) + challengesDone + predictionsDone;
-    const totalCount = 1 + challenges.length + questions.length;
-    const allDone = totalCount > 0 && doneCount >= totalCount;
 
     const handleClaimTier = async (tier) => {
       setClaimingTier(tier.tier);
@@ -116,7 +68,10 @@ const DirectorsReport = memo(
          it recedes to the neutral chrome — the eye should move on. Border-only
          accent keeps it within the no-glow/no-gradient design laws. */
       <div
-        className={`bg-surface-card overflow-hidden border transition-colors duration-500 ${
+        id="directors-report"
+        // scroll-mt clears the fixed shell chrome (top nav + ticker) plus the
+        // sticky ControlBar when the Next Action hero scrolls the page here.
+        className={`bg-surface-card overflow-hidden border transition-colors duration-500 scroll-mt-24 ${
           allDone ? 'border-line' : 'border-interactive'
         }`}
       >
