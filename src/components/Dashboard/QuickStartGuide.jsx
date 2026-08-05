@@ -230,12 +230,14 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                             </ul>
                           </div>
 
+                          {/* Only `onAction` — no `onClose` alongside it. Both
+                              this guide and the lineup editor are routed
+                              panels now, so opening the editor already closes
+                              this; calling close as well would pop the entry
+                              the editor just pushed and land back here. */}
                           {step.action.target === 'lineup' ? (
                             <button
-                              onClick={() => {
-                                onAction?.(step.action.target);
-                                onClose();
-                              }}
+                              onClick={() => onAction?.(step.action.target)}
                               className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-none text-white font-semibold ${colors.button} transition-colors`}
                             >
                               {step.action.label}

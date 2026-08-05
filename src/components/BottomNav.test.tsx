@@ -91,6 +91,16 @@ describe('BottomNav', () => {
     expect(screen.queryByRole('link', { name: /needs attention/ })).not.toBeInTheDocument();
   });
 
+  it('offers the Quick Start guide, which had no caller at all before', () => {
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    const sheet = screen.getByRole('navigation', { name: 'More destinations' });
+    expect(within(sheet).getByRole('link', { name: 'Quick Start' })).toHaveAttribute(
+      'href',
+      '/dashboard?panel=quickstart'
+    );
+  });
+
   it('keeps the moved destinations reachable in the More sheet', () => {
     renderNav();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));

@@ -25,6 +25,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
+  BookOpen,
   Calendar,
   LayoutDashboard,
   MoreHorizontal,
@@ -78,8 +79,16 @@ const PRIMARY_ITEMS: NavItem[] = [
   { to: '/scores', prefetch: '/scores', label: 'Scores', icon: Trophy },
 ];
 
-/** Destinations that moved into the More sheet. */
+/** Destinations that moved into the More sheet, plus the help entry. */
 const MORE_ITEMS: NavItem[] = [
+  // The Quick Start guide had no caller anywhere in the app until it was
+  // given a URL; this is the mobile way back to it.
+  {
+    to: '/dashboard?panel=quickstart',
+    prefetch: '/dashboard',
+    label: 'Quick Start',
+    icon: BookOpen,
+  },
   { to: '/', prefetch: '/', label: 'News', icon: Newspaper },
   { to: '/leagues', prefetch: '/leagues', label: 'Leagues', icon: Users },
   { to: '/profile', prefetch: '/profile', label: 'Profile', icon: User },

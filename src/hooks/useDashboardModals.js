@@ -31,8 +31,12 @@ import { useModalRoute } from './useModalRoute';
  * navigated to, and letting a back gesture dismiss a one-shot ceremony would
  * skip it for good. The destructive confirms (delete/retire/move) are absent
  * for the same reason in reverse: a confirm is a question, not a destination.
+ *
+ * `quickstart` is here mostly so it exists at all: the Quick Start guide had
+ * no caller anywhere in the app, so nothing could open it. A URL gives the
+ * help menu and the mobile More sheet something to link to.
  */
-export const DASHBOARD_PANELS = ['lineup', 'concept', 'register'];
+export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart'];
 
 export function useDashboardModals(user, dashboardData) {
   const location = useLocation();
@@ -74,6 +78,11 @@ export function useDashboardModals(user, dashboardData) {
     (next) => (next ? openPanel('concept') : closePanel()),
     [openPanel, closePanel]
   );
+  const showQuickStartGuide = modalRoute.isOpen('quickstart');
+  const setShowQuickStartGuide = useCallback(
+    (next) => (next ? openPanel('quickstart') : closePanel()),
+    [openPanel, closePanel]
+  );
 
   const [registrationDefaultClass, setRegistrationDefaultClass] = useState(null);
   const [slotPickerClass, setSlotPickerClass] = useState(null);
@@ -83,7 +92,6 @@ export function useDashboardModals(user, dashboardData) {
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [transferring, setTransferring] = useState(false);
-  const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(null);
   const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showNewsSubmission, setShowNewsSubmission] = useState(false);
@@ -145,6 +153,7 @@ export function useDashboardModals(user, dashboardData) {
       showRegistration ||
       showCaptionSelection ||
       showConceptModal ||
+      showQuickStartGuide ||
       showDeleteConfirm ||
       showMoveCorps ||
       showRetireConfirm ||
@@ -160,6 +169,7 @@ export function useDashboardModals(user, dashboardData) {
     showRegistration,
     showCaptionSelection,
     showConceptModal,
+    showQuickStartGuide,
     showDeleteConfirm,
     showMoveCorps,
     showRetireConfirm,
