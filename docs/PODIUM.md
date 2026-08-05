@@ -1568,10 +1568,22 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     the majors it advanced from. Corps still level after all three measures are genuinely tied:
     they share a competition place (1224), published results never cut through a tie group, and a
     tie ON the finalist cut line advances everyone in it rather than picking between corps the
-    room rated equally. A tied crown is announced as tied. **The ballot is announced where the community actually is:** each opening and each
+    room rated equally. **The crown is the one tie that can't stand** — a trophy has one name on
+    it — so a finals ballot that ends level runs a cascade of further questions, all of them
+    asked of the ballots: who led at the most recent major that separated them (Eastern, then
+    Southeastern, then Southwestern), then who reached the tied total first (finals votes carry
+    a `finalsAt` stamp; an unstamped vote makes the measure silent rather than early), and
+    finally a draw seeded on the season — deterministic, so re-running archival crowns the same
+    corps. **A corps' scores are deliberately absent from that cascade.** The Fan Favorite is the
+    one trophy the field can't score for, and a tiebreaker that reached for the recap sheet would
+    hand it to the deepest championship run every time — an Open or A Class corps tied with a
+    World Class one would lose on the bracket rather than on the room. Whatever decides it,
+    `winner.tiebreak` records the rule and the two numbers it turned on, and **both the crowning
+    announcement and the Podium card print that reason** — including the draw, which is called a
+    coin flip rather than dressed up as a win. **The ballot is announced where the community actually is:** each opening and each
     result posts to Discord #announcements — prelims ballot open (with the candidate field),
     finals ballot open (with every major's prelims tally), and the crowning (with the finals
-    tally). A ritual nobody is told about is a ritual nobody votes in. See
+    tally and, when it was tied, what broke it). A ritual nobody is told about is a ritual nobody votes in. See
     [`INTEGRATIONS.md`](INTEGRATIONS.md) → "Discord (Fan Favorite ballots)".
 31. **The Podium Report replaces one DCI article** (resolves 7.3's remainder): on Podium week
     boundaries the deterministic power-rankings column runs as news Article 3 in place of the

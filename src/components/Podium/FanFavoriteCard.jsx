@@ -11,6 +11,33 @@ import { usePodiumEnabled } from '../../hooks/useFeatures';
 const MAJOR_NAMES = { 28: 'Southwestern', 35: 'Southeastern', 41: 'Eastern Classic' };
 const DIVISION_SHORT = { aClass: 'A', openClass: 'Open', worldClass: 'World' };
 
+const votes = (n) => `${n} vote${Number(n) === 1 ? '' : 's'}`;
+
+// Why a tied crown went where it went, matching the Discord crowning post
+// (helpers/podium/fanFavoriteDiscord.tiebreakNote). A ballot that shows two
+// corps on the same count and hands the trophy to one of them owes the room
+// the reason on the page too, not only in the announcement.
+const TIEBREAK_REASONS = {
+  seasonVotes: (t) =>
+    `season-long support — ${votes(t.winnerValue)} across the majors to ${votes(t.rivalValue)}`,
+  majorsPolled: (t) =>
+    `breadth of support — ${t.winnerValue} majors polled to ${t.rivalValue}`,
+  majorLead: (t) =>
+    `the ${MAJOR_NAMES[t.major] || `Day ${t.major}`}, the last major to separate them ` +
+    `(${t.winnerValue}–${t.rivalValue})`,
+  firstToCount: () => 'reaching the winning total first',
+  draw: () => 'a seeded draw — nothing in the ballots separated them',
+};
+
+/** One sentence on a tied crown, or null when the ballot decided outright. */
+function tiebreakLine(winner) {
+  const tied = (winner.tiedWith || []).filter(Boolean);
+  if (tied.length === 0) return null;
+  const reason = winner.tiebreak && TIEBREAK_REASONS[winner.tiebreak.rule];
+  const level = `Level on the finals count with ${tied.join(', ')}`;
+  return reason ? `${level} — decided on ${reason(winner.tiebreak)}.` : `${level}.`;
+}
+
 export default function FanFavoriteCard() {
   const enabled = usePodiumEnabled();
   const [data, setData] = useState(null);
@@ -48,6 +75,9 @@ export default function FanFavoriteCard() {
     }
   };
 
+  const decidedNote =
+    data.stage === 'decided' && data.winner ? tiebreakLine(data.winner) : null;
+
   const title =
     data.stage === 'decided'
       ? 'Fan Favorite — decided'
@@ -67,9 +97,12 @@ export default function FanFavoriteCard() {
       </div>
 
       {data.stage === 'decided' && data.winner ? (
-        <div className="text-sm text-white">
-          <span className="font-bold text-pink-300">{data.winner.corpsName}</span> is this
-          season&apos;s Fan Favorite.
+        <div className="space-y-1">
+          <div className="text-sm text-white">
+            <span className="font-bold text-pink-300">{data.winner.corpsName}</span> is this
+            season&apos;s Fan Favorite.
+          </div>
+          {decidedNote && <div className="text-[10px] text-muted">{decidedNote}</div>}
         </div>
       ) : (
         <div className="flex flex-wrap gap-1.5">

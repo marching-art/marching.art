@@ -18,12 +18,24 @@
  * that survive all three are real — tied corps share a place, and everyone
  * tied on the finalist cut line advances. Nothing is decided by document ID.
  *
+ * THE CROWN (see `decideCrown`) is the one place a tie cannot stand: a trophy
+ * has one name on it. So the finals ballot carries the three measures above
+ * and then, only for corps still level: who led at the most recent major, who
+ * reached the tied total first, and — if the room truly said nothing to
+ * separate them — a seeded draw that is announced AS a draw. The corps' scores
+ * are deliberately absent from that ladder. The Fan Favorite is the one trophy
+ * the field can't score for, and a tiebreaker that reached for the recap sheet
+ * would hand it to the deepest championship run every time. Whatever decides
+ * it, `winner.tiebreak` records the rule and its numbers, and the crowning
+ * announcement says so out loud (fanFavoriteDiscord.buildWinnerPayload).
+ *
  * Ballots: podium-fan/{seasonUid}/ballots/{voterUid} (server-only — votes
  * are private). Tallies/finalists/winner: podium-fan/{seasonUid} (public).
  */
 
 const { logger } = require("firebase-functions/v2");
 const store = require("./store");
+const engine = require("./engine");
 
 const MAJORS = [28, 35, 41]; // 41 covers the two-night Eastern (41-42)
 
@@ -113,21 +125,10 @@ async function candidatesForMajor(db, seasonUid, majorDay) {
   return [...seen.values()];
 }
 
-/** Tally every ballot's votes for one prelims major (or the finals). */
-async function tally(db, seasonUid, field) {
-  const snapshot = await db.collection(`podium-fan/${seasonUid}/ballots`).get();
-  /** @type {Object<string, number>} */
-  const counts = {};
-  for (const doc of snapshot.docs) {
-    const vote = field === "finals" ? doc.data().finals : (doc.data().prelims || {})[field];
-    if (vote) counts[vote] = (counts[vote] || 0) + 1;
-  }
-  return counts;
-}
-
 /**
- * Read every ballot ONCE and return both the per-major tallies and each corps'
- * season-wide prelims record.
+ * Read every ballot ONCE: the per-major prelims tallies, each corps'
+ * season-wide prelims record, and the finals tally with the times its votes
+ * landed.
  *
  * The season-wide record is what makes a vote cast at a major a corps didn't
  * win still count for something: it is the first tiebreaker everywhere below,
@@ -135,17 +136,30 @@ async function tally(db, seasonUid, field) {
  * count at a single major. (It also collapses what used to be one full
  * collection read per major into one read total.)
  *
+ * `finals.times` carries every finals vote's `finalsAt` — including the
+ * `null`s from ballots cast before votes were stamped, because a corps whose
+ * arrival time is only partly known has no arrival time at all (see
+ * `arrivalOf`), and silently treating a missing stamp as "very early" would
+ * decide a crown on the absence of data.
+ *
  * @returns {Promise<{perMajor: Object<string, Object<string, number>>,
- *                    totals: Object<string, {votes: number, majors: Set<number>}>}>}
+ *                    totals: Object<string, {votes: number, majors: Set<number>}>,
+ *                    finals: {counts: Object<string, number>,
+ *                             times: Object<string, Array<?string>>}}>}
  */
-async function readPrelimsBallots(db, seasonUid) {
+async function readBallots(db, seasonUid) {
   const snapshot = await db.collection(`podium-fan/${seasonUid}/ballots`).get();
   /** @type {Object<string, Object<string, number>>} */
   const perMajor = Object.fromEntries(MAJORS.map((major) => [String(major), {}]));
   /** @type {Object<string, {votes: number, majors: Set<number>}>} */
   const totals = {};
+  /** @type {Object<string, number>} */
+  const finalsCounts = {};
+  /** @type {Object<string, Array<?string>>} */
+  const finalsTimes = {};
   for (const doc of snapshot.docs) {
-    const prelims = doc.data().prelims || {};
+    const ballot = doc.data();
+    const prelims = ballot.prelims || {};
     for (const major of MAJORS) {
       const vote = prelims[String(major)];
       if (!vote) continue;
@@ -155,8 +169,14 @@ async function readPrelimsBallots(db, seasonUid) {
       totals[vote].votes += 1;
       totals[vote].majors.add(major);
     }
+    if (ballot.finals) {
+      finalsCounts[ballot.finals] = (finalsCounts[ballot.finals] || 0) + 1;
+      (finalsTimes[ballot.finals] = finalsTimes[ballot.finals] || []).push(
+        ballot.finalsAt || null
+      );
+    }
   }
-  return { perMajor, totals };
+  return { perMajor, totals, finals: { counts: finalsCounts, times: finalsTimes } };
 }
 
 /** A corps' season-wide prelims record, defaulted for one that drew no votes. */
@@ -191,12 +211,20 @@ function tieKey(row) {
  */
 function compareRows(a, b) {
   return (
-    b.votes - a.votes ||
-    b.totalVotes - a.totalVotes ||
-    b.majorsPolled - a.majorsPolled ||
+    compareBallotMeasures(a, b) ||
     String(a.corpsName || "").localeCompare(String(b.corpsName || "")) ||
     String(a.uid).localeCompare(String(b.uid))
   );
+}
+
+/**
+ * The three measures every ballot ranks on, with no display tail: votes here,
+ * season-wide prelims votes, majors polled. Two rows this returns 0 for are
+ * tied on everything the ballot published — `tieKey` is the same statement as
+ * a string, and the crown cascade starts where this stops.
+ */
+function compareBallotMeasures(a, b) {
+  return b.votes - a.votes || b.totalVotes - a.totalVotes || b.majorsPolled - a.majorsPolled;
 }
 
 /**
@@ -206,7 +234,7 @@ function compareRows(a, b) {
  *
  * @param {Object<string, number>} counts - uid → votes on this ballot.
  * @param {Object<string, Object>} byUid - uid → eligible candidate.
- * @param {Object} totals - from `readPrelimsBallots`.
+ * @param {Object} totals - from `readBallots`.
  */
 function rankBallot(counts, byUid, totals) {
   const rows = Object.keys(byUid)
@@ -275,7 +303,7 @@ async function publishFinalists(db, seasonUid, cfg) {
   const existing = await fanRef.get();
   if (existing.exists && existing.data().finalists) return existing.data().finalists;
 
-  const { perMajor, totals } = await readPrelimsBallots(db, seasonUid);
+  const { perMajor, totals } = await readBallots(db, seasonUid);
   const finalists = new Map();
   // Per-major ranked tallies, published alongside the finalists: the ballot's
   // RESULTS, not just its survivors (votes are private, counts are public —
@@ -325,6 +353,142 @@ async function publishFinalists(db, seasonUid, cfg) {
   return list;
 }
 
+// ---------------------------------------------------------------------------
+// The crown cascade
+// ---------------------------------------------------------------------------
+// Everywhere else a tie is allowed to stand: tied corps share a place, and a
+// tie on the finalist cut line advances everyone in it. The crown can't — one
+// corps gets the trophy — so it keeps asking the ballots questions until one
+// of them answers, and reports which one did.
+
+/** Majors newest-first: a tied crown asks the most recent room first. */
+const RECENCY_ORDER = [...MAJORS].reverse();
+
+/**
+ * The most recent major where these two drew different prelims support, and
+ * what each drew there — or null when all three majors rated them identically.
+ *
+ * Reading the majors newest-first is a lexicographic comparison of the vote
+ * vector (41, 35, 28), so it stays a proper ordering however many corps are
+ * tied: whoever was ahead at the last room to see them both goes first.
+ */
+function majorLeadOf(a, b, perMajor) {
+  for (const major of RECENCY_ORDER) {
+    const counts = (perMajor || {})[String(major)] || {};
+    const forA = counts[a.uid] || 0;
+    const forB = counts[b.uid] || 0;
+    if (forA !== forB) return { major, forA, forB };
+  }
+  return null;
+}
+
+function compareMajorLead(a, b, perMajor) {
+  const lead = majorLeadOf(a, b, perMajor);
+  return lead ? lead.forB - lead.forA : 0;
+}
+
+/**
+ * When a corps reached the total it finished on: the timestamp of the finals
+ * vote that got it there. Null when any of its votes is unstamped (ballots
+ * cast before `castFanFavoriteVote` recorded `finalsAt`) — a partly-known
+ * arrival is not an arrival, and `compareArrival` skips the measure rather
+ * than rank a corps by which of its voters happened to be logged.
+ */
+function arrivalOf(finalsTimes, uid) {
+  const stamps = (finalsTimes || {})[uid] || [];
+  if (stamps.length === 0 || stamps.some((stamp) => !stamp)) return null;
+  return [...stamps].sort()[stamps.length - 1];
+}
+
+/** Earlier arrival wins. Unknown on either side means the measure is silent. */
+function compareArrival(a, b) {
+  if (!a || !b || a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+/**
+ * The draw of last resort: a deterministic ticket per corps, seeded on the
+ * season and the uid.
+ *
+ * Deterministic because `crownWinner` must be idempotent — a re-run at
+ * archival has to crown the same corps — and seeded on `seasonUid` so it is
+ * not a standing property of a uid that could be gamed across seasons. This is
+ * a coin, and the announcement calls it one.
+ */
+function drawTicket(seasonUid, uid) {
+  return engine.seededUnit(`${seasonUid}|fanFavorite|${uid}`);
+}
+
+function compareDraw(seasonUid, a, b) {
+  return (
+    drawTicket(seasonUid, b.uid) - drawTicket(seasonUid, a.uid) ||
+    String(a.uid).localeCompare(String(b.uid))
+  );
+}
+
+/**
+ * Which measure separated the crowned corps from the one closest to it, and
+ * the two numbers that did it — the "why" the crowning announcement prints.
+ */
+function crownRuleFor(winner, rival, { perMajor, finalsTimes }) {
+  if (winner.totalVotes !== rival.totalVotes) {
+    return { rule: "seasonVotes", winnerValue: winner.totalVotes, rivalValue: rival.totalVotes };
+  }
+  if (winner.majorsPolled !== rival.majorsPolled) {
+    return { rule: "majorsPolled", winnerValue: winner.majorsPolled, rivalValue: rival.majorsPolled };
+  }
+  const lead = majorLeadOf(winner, rival, perMajor);
+  if (lead) {
+    return { rule: "majorLead", major: lead.major, winnerValue: lead.forA, rivalValue: lead.forB };
+  }
+  const winnerArrival = arrivalOf(finalsTimes, winner.uid);
+  const rivalArrival = arrivalOf(finalsTimes, rival.uid);
+  if (compareArrival(winnerArrival, rivalArrival) !== 0) {
+    return { rule: "firstToCount", winnerValue: winnerArrival, rivalValue: rivalArrival };
+  }
+  return { rule: "draw" };
+}
+
+/**
+ * Crown one corps out of the ranked finals field, and record what decided it.
+ *
+ * The tie that matters here is on the number the announcement prints — the
+ * finals vote count — so every corps level on THAT is in the cascade, even
+ * ones the season-wide measures separate a line later. Two corps shown with
+ * the same count in different places is exactly the moment a reader assumes a
+ * coin flip; `tiebreak` is the answer to that.
+ *
+ * Pure: every measure comes from the ballots already read. Nothing here reads
+ * a score, a recap, or a placement — see the module header.
+ *
+ * @param {Array<Object>} ranked - `rankBallot` output for the finals ballot.
+ * @param {{seasonUid: string, perMajor: Object, finalsTimes: Object}} context
+ * @returns {{winner: Object, tiebreak: ?Object}} `tiebreak` is null for an
+ *   outright win — nobody else was on the winner's count.
+ */
+function decideCrown(ranked, { seasonUid, perMajor, finalsTimes }) {
+  const leader = ranked[0];
+  const level = ranked.filter((row) => row.votes === leader.votes);
+  if (level.length === 1) return { winner: leader, tiebreak: null };
+
+  const ordered = [...level].sort(
+    (a, b) =>
+      compareBallotMeasures(a, b) ||
+      compareMajorLead(a, b, perMajor) ||
+      compareArrival(arrivalOf(finalsTimes, a.uid), arrivalOf(finalsTimes, b.uid)) ||
+      compareDraw(seasonUid, a, b)
+  );
+  const [winner, rival] = ordered;
+  return {
+    winner,
+    tiebreak: {
+      ...crownRuleFor(winner, rival, { perMajor, finalsTimes }),
+      rival: rival.corpsName || rival.uid,
+      tiedWith: ordered.slice(1).map((row) => row.corpsName || row.uid),
+    },
+  };
+}
+
 /**
  * Crown the winner at season archival. Idempotent; returns the winner or
  * null when there were no finals votes (falls back to prelim vote order).
@@ -338,28 +502,34 @@ async function crownWinner(db, seasonUid) {
   const finalists = data.finalists || [];
   if (finalists.length === 0) return null;
 
-  const counts = await tally(db, seasonUid, "finals");
-  const { totals } = await readPrelimsBallots(db, seasonUid);
+  const { perMajor, totals, finals } = await readBallots(db, seasonUid);
   const byUid = Object.fromEntries(finalists.map((f) => [f.uid, f]));
   // Rank the WHOLE finals field, including finalists who drew no finals votes:
   // a corps on the ballot placed last, it didn't vanish. It also makes the
   // documented "no finals votes at all" fallback fall out for free — every row
   // sits at zero, so the comparator drops through to the prelims record.
-  const ranked = rankBallot(counts, byUid, totals);
-  const winnerRow = ranked[0];
+  const ranked = rankBallot(finals.counts, byUid, totals);
+  const { winner: winnerRow, tiebreak } = decideCrown(ranked, {
+    seasonUid,
+    perMajor,
+    finalsTimes: finals.times,
+  });
   const winner = {
     ...byUid[winnerRow.uid],
     finalsVotes: winnerRow.votes,
-    // A crown the ballot didn't actually decide says so. `compareRows` still
-    // returns one corps first (something has to be written to the trophy), but
-    // a name-sort tail is not a mandate and shouldn't be reported as one.
-    ...(winnerRow.tiedWith.length > 0
-      ? { tiedWith: winnerRow.tiedWith.map((uid) => byUid[uid].corpsName || uid) }
-      : {}),
+    // A crown the ballot didn't decide outright says which measure did, and
+    // who it was decided against — the announcement reads straight off this.
+    ...(tiebreak ? { tiebreak, tiedWith: tiebreak.tiedWith } : {}),
   };
   // The finals tally, public like the prelims one — the result the ballot
-  // produced, not only the corps it crowned.
-  const finalsResults = ranked.map(publishable);
+  // produced, not only the corps it crowned. The crowned corps leads it: it
+  // shares its place with whoever it tied (the places are the ballot's, and
+  // the ballot really did tie them), but the corps holding the trophy should
+  // not be printed second in its own results.
+  const finalsResults = [
+    winnerRow,
+    ...ranked.filter((row) => row.uid !== winnerRow.uid),
+  ].map(publishable);
   await fanRef.set(
     { winner, finalsResults, crownedAt: new Date().toISOString() },
     { merge: true }
@@ -404,11 +574,14 @@ module.exports = {
   MAJORS,
   RESULTS_PER_MAJOR,
   RESULTS_MAX,
-  readPrelimsBallots,
+  readBallots,
   compareRows,
+  compareBallotMeasures,
   rankBallot,
   advancingRows,
   publishedDepth,
+  decideCrown,
+  drawTicket,
   fanDocRef,
   ballotRef,
   prelimsOpensOn,
@@ -416,7 +589,6 @@ module.exports = {
   openPrelimsMajor,
   finalsOpen,
   candidatesForMajor,
-  tally,
   publishFinalists,
   crownWinner,
 };

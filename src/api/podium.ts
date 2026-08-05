@@ -381,8 +381,26 @@ export interface FanFavoriteCandidate {
   /** Every prelims vote the corps drew, across all three majors. */
   prelimVotes?: number;
   finalsVotes?: number;
-  /** Corps names the winner finished dead even with, when the ballot tied. */
+  /** Corps names the winner finished level with on the finals count. */
   tiedWith?: string[];
+  /** What decided a tied crown (helpers/podium/fanFavorite.decideCrown) —
+   *  absent on an outright win, and on seasons crowned before the cascade. */
+  tiebreak?: FanFavoriteTiebreak;
+}
+
+/**
+ * The measure that broke a tied crown, and the two numbers it turned on.
+ * `winnerValue`/`rivalValue` are vote counts for every rule but `firstToCount`
+ * (ISO timestamps) and `draw` (nothing — the ballots said nothing).
+ */
+export interface FanFavoriteTiebreak {
+  rule: 'seasonVotes' | 'majorsPolled' | 'majorLead' | 'firstToCount' | 'draw';
+  /** The corps the crown was decided against — the closest of `tiedWith`. */
+  rival: string;
+  /** For `majorLead`: the major whose room separated them (28 | 35 | 41). */
+  major?: number;
+  winnerValue?: number | string;
+  rivalValue?: number | string;
 }
 
 /** A row of a published tally (`prelimsResults[major]`, `finalsResults`). */

@@ -166,22 +166,66 @@ describe("Fan Favorite embeds", () => {
     assert.match(value, /🥉 \*\*Cavaliers\*\* — 1 vote _\(3 votes across the majors\)_/);
   });
 
-  test("a crown the ballot tied is announced as a tie", () => {
-    const payload = fanFavoriteDiscord.buildWinnerPayload({
-      seasonName: "Season 12",
-      winner: { corpsName: "Blue Stars", finalsVotes: 5, tiedWith: ["Colts"] },
-      finalsResults: [
-        { corpsName: "Blue Stars", votes: 5, place: 1 },
-        { corpsName: "Colts", votes: 5, place: 1 },
-      ],
+  test("a crown the ballot tied says WHICH tiebreaker decided it", () => {
+    // Two corps on five votes and one trophy: the post prints the rule and the
+    // two numbers it turned on, so the call can be checked against the results
+    // instead of taken on faith.
+    const crown = (tiebreak) =>
+      fanFavoriteDiscord.buildWinnerPayload({
+        seasonName: "Season 12",
+        winner: {
+          corpsName: "Blue Stars",
+          finalsVotes: 5,
+          tiedWith: ["Colts"],
+          tiebreak: { rival: "Colts", ...tiebreak },
+        },
+        finalsResults: [
+          { corpsName: "Blue Stars", votes: 5, place: 1 },
+          { corpsName: "Colts", votes: 5, place: 1 },
+        ],
+      }).embeds[0].description;
+
+    const season = crown({ rule: "seasonVotes", winnerValue: 9, rivalValue: 6 });
+    assert.match(season, /level with \*\*Colts\*\*/);
+    assert.match(season, /9 votes across the three majors to \*\*Colts\*\*'s 6 votes/);
+
+    const breadth = crown({ rule: "majorsPolled", winnerValue: 3, rivalValue: 2 });
+    assert.match(breadth, /polled widest/);
+    assert.match(breadth, /support at 3 of the three majors, \*\*Colts\*\* at 2/);
+
+    const recent = crown({ rule: "majorLead", major: 41, winnerValue: 4, rivalValue: 2 });
+    assert.match(recent, /most recent room to separate them — the Eastern Classic/);
+    assert.match(recent, /4 votes to \*\*Colts\*\*'s 2 votes/);
+
+    const arrival = crown({
+      rule: "firstToCount",
+      winnerValue: "2026-08-02T09:00:00.000Z",
+      rivalValue: "2026-08-02T11:00:00.000Z",
     });
-    assert.match(payload.embeds[0].description, /dead even with \*\*Colts\*\*/);
-    // An outright win is never described as a tie.
+    assert.match(arrival, /reached the winning total ahead of \*\*Colts\*\*/);
+
+    // The one step that is a coin flip is named as a coin flip.
+    const draw = crown({ rule: "draw" });
+    assert.match(draw, /nothing in the ballots separated them/);
+    assert.match(draw, /seeded draw — a coin flip, and it is being called one/);
+    assert.match(draw, /the plaque holds one name/);
+  });
+
+  test("an outright crown claims no tiebreaker, and old crowns keep their copy", () => {
     const outright = fanFavoriteDiscord.buildWinnerPayload({
       seasonName: "Season 12",
       winner: { corpsName: "Blue Stars", finalsVotes: 7 },
     });
-    assert.ok(!outright.embeds[0].description.includes("dead even"));
+    assert.ok(!outright.embeds[0].description.includes("finished level"));
+    assert.ok(!outright.embeds[0].description.includes("tiebreak"));
+
+    // Seasons crowned before the cascade existed have `tiedWith` and no rule —
+    // they are still announced as the dead-even ballots they were.
+    const legacy = fanFavoriteDiscord.buildWinnerPayload({
+      seasonName: "Season 11",
+      winner: { corpsName: "Blue Stars", finalsVotes: 5, tiedWith: ["Colts"] },
+    });
+    assert.match(legacy.embeds[0].description, /the room split it/);
   });
 
   test("a huge ballot is truncated inside Discord's field limit", () => {
