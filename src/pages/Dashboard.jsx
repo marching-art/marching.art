@@ -20,29 +20,9 @@ import { lazyWithRetry } from '../utils/lazyWithRetry';
 // the page error boundary. Installed mobile PWAs are the common victim: they
 // run cached entry code that imports an old chunk hash which 404s the first
 // time a not-yet-opened modal is triggered.
-const CaptionSelectionModal = lazyWithRetry(
-  () => import('../components/CaptionSelection/CaptionSelectionModal'),
-  'CaptionSelectionModal'
-);
 const SeasonSetupWizard = lazyWithRetry(
   () => import('../components/SeasonSetupWizard'),
   'SeasonSetupWizard'
-);
-const UniformDesignModal = lazyWithRetry(
-  () => import('../components/modals/UniformDesignModal'),
-  'UniformDesignModal'
-);
-const NewsSubmissionModal = lazyWithRetry(
-  () => import('../components/modals/NewsSubmissionModal'),
-  'NewsSubmissionModal'
-);
-const ClassPurchaseModal = lazyWithRetry(
-  () => import('../components/modals/ClassPurchaseModal'),
-  'ClassPurchaseModal'
-);
-const NewCorpsSlotModal = lazyWithRetry(
-  () => import('../components/modals/NewCorpsSlotModal'),
-  'NewCorpsSlotModal'
 );
 const RenameDuplicateCorpsModal = lazyWithRetry(
   () => import('../components/modals/RenameDuplicateCorpsModal'),
@@ -55,29 +35,8 @@ const PodiumJourneyPanel = lazyWithRetry(
   () => import('../components/Podium/PodiumJourneyPanel'),
   'PodiumJourneyPanel'
 );
-const StreakModal = lazyWithRetry(() => import('../components/modals/StreakModal'), 'StreakModal');
-const CorpsCoinModal = lazyWithRetry(
-  () => import('../components/modals/CorpsCoinModal'),
-  'CorpsCoinModal'
-);
-const SeasonRecapModal = lazyWithRetry(
-  () => import('../components/modals/SeasonRecapModal'),
-  'SeasonRecapModal'
-);
-const ShowConceptModal = lazyWithRetry(
-  () => import('../components/modals/ShowConceptModal'),
-  'ShowConceptModal'
-);
 
 import {
-  ClassUnlockCongratsModal,
-  CorpsRegistrationModal,
-  DeleteConfirmModal,
-  RetireConfirmModal,
-  MoveCorpsModal,
-  AchievementModal,
-  OnboardingTour,
-  QuickStartGuide,
   // OPTIMIZATION #4: Import extracted section components
   ControlBar,
   ActiveLineupTable,
@@ -90,14 +49,11 @@ import {
   DirectorsReport,
   NextActionPanel,
   NoCorpsCard,
-  CLASS_DISPLAY_NAMES,
-  CLASS_UNLOCK_LEVELS,
-  CLASS_UNLOCK_COSTS,
+  ZoneTabs,
 } from '../components/Dashboard';
 
 import { ModalLoadingFallback } from '../components/ui';
-import { getSeasonsUntilUnlock } from '../utils/classUnlocks';
-import { classHasLineup } from '../utils/classRegistry';
+import { useDashboardZones } from '../hooks/useDashboardZones';
 import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import { useScheduleStore } from '../store/scheduleStore';
 
@@ -106,8 +62,9 @@ import { useNextAction } from '../hooks/useNextAction';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { CORPS_CLASS_ORDER } from '../utils/corps';
-import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
+import { canEditCorpsThisSeason } from '../utils/corps';
 import { useDashboardModals } from '../hooks/useDashboardModals';
+import DashboardModalHost from '../components/Dashboard/DashboardModalHost';
 import { usePodiumEnabled } from '../hooks/useFeatures';
 import {
   useLineupScores,
@@ -150,8 +107,6 @@ const Dashboard = () => {
   // Narrow per-field selectors (not a bare useSeasonStore()) so this heavy page
   // re-renders only when a value it actually uses changes, not on every
   // season-store write. Matches the store's documented selector contract.
-  const weeksRemaining = useSeasonStore((s) => s.weeksRemaining);
-  const isRegistrationLocked = useSeasonStore((s) => s.isRegistrationLocked);
   const currentDay = useSeasonStore((s) => s.currentDay);
 
   // Calculate if scores are available (for hiding Last Score/Trend columns on Day 1)
@@ -160,58 +115,23 @@ const Dashboard = () => {
 
   // Modal state, modal-queue effects, and modal action handlers
   // (extracted to src/hooks/useDashboardModals.js)
+  const modals = useDashboardModals(user, dashboardData);
   const {
     modalQueue,
-    showRegistration,
     setShowRegistration,
-    registrationDefaultClass,
     setRegistrationDefaultClass,
-    slotPickerClass,
     setSlotPickerClass,
-    unretiring,
-    showCaptionSelection,
-    selectedCaption,
-    showConceptModal,
     setShowConceptModal,
-    showDeleteConfirm,
-    setShowDeleteConfirm,
-    showMoveCorps,
     setShowMoveCorps,
-    showRetireConfirm,
     setShowRetireConfirm,
-    retiring,
-    transferring,
-    showQuickStartGuide,
-    setShowQuickStartGuide,
-    classToPurchase,
-    setClassToPurchase,
-    showUniformDesign,
     setShowUniformDesign,
-    showNewsSubmission,
     setShowNewsSubmission,
-    submittingNews,
-    showStreakModal,
     setShowStreakModal,
-    showWalletModal,
     setShowWalletModal,
-    handleTourComplete,
-    handleSetupNewClass,
-    handleDeclineSetup,
-    handleAchievementClose,
-    handleSeasonRecapClose,
     handleSeasonSetupFinish,
-    handleDeleteCorps,
-    handleRetireCorps,
-    handleMoveCorps,
-    handleCorpsRegistration,
     handleClassUnlock,
-    handleUnretireCorps,
-    handleConfirmClassPurchase,
     openCaptionSelection,
-    closeCaptionSelection,
-    handleNewsSubmission,
-    handleUniformDesign,
-  } = useDashboardModals(user, dashboardData);
+  } = modals;
 
   // Destructure dashboard data
   const {
@@ -222,9 +142,7 @@ const Dashboard = () => {
     seasonData,
     currentWeek,
     corpsNeedingSetup,
-    newlyUnlockedClass,
     clearNewlyUnlockedClass,
-    newAchievement,
     refreshProfile,
     handleCorpsSwitch,
     unlockedClasses, // Includes admin override - admins have all classes
@@ -344,6 +262,27 @@ const Dashboard = () => {
     return recentResults.reduce((a, b) => ((a.score || 0) > (b.score || 0) ? a : b));
   }, [recentResults]);
 
+  // Which Quick Start steps are already done — the guide is rendered by the
+  // modal host, but only this page holds the three facts it checks.
+  const quickStartSteps = useMemo(
+    () => [
+      ...(lineupCount === 8 ? ['lineup'] : []),
+      ...(thisWeekShows.length > 0 ? ['schedule'] : []),
+      ...(myLeagues?.length > 0 ? ['league'] : []),
+    ],
+    [lineupCount, thisWeekShows.length, myLeagues?.length]
+  );
+
+  // Mobile section state: which zone shows, which others have something
+  // waiting, and how to reveal a panel buried in a hidden one.
+  const {
+    activeZone,
+    setActiveZone,
+    zoneClass,
+    attention: zoneAttention,
+    revealPanel,
+  } = useDashboardZones({ profile, recentResults, activeCorpsClass, lineupCount });
+
   // The one imperative the mobile stack opens with. Ranked from real game
   // state (utils/nextAction); null for Podium, which guides itself.
   const nextAction = useNextAction({
@@ -443,6 +382,7 @@ const Dashboard = () => {
                 onOpenLineup={() => openCaptionSelection()}
                 onOpenConcept={() => setShowConceptModal(true)}
                 onRegisterCorps={() => setShowRegistration(true)}
+                onRevealPanel={revealPanel}
               />
             </div>
 
@@ -451,17 +391,32 @@ const Dashboard = () => {
                 grouped into a single grid cell so its row tracks aren't
                 stretched by the taller left column — that stretching used to pad
                 blank space between the scorecard, Today, and The Season on the
-                Podium tab. `order-*` restores the mobile stack order (scorecard
-                → today → my corps → season); `items-start` keeps each desktop
-                column top-aligned. */}
+                Podium tab. `items-start` keeps each desktop column top-aligned.
+
+                On mobile the same markup is a tabbed surface instead of a
+                ten-panel stack: the scorecard leads (order-1), the zone tabs
+                follow (order-2), and the three lower zones share the remaining
+                slot — only the selected one is shown (utils/dashboardZones).
+                Every zone is `lg:block`, so the desktop grid is untouched. */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:items-start">
+              {/* Mobile section map. Inside the grid (the sidebar wrapper is
+                  `contents` on mobile, so these are all siblings) with
+                  `order-2`, which puts it directly under the scorecard. */}
+              <div className="order-2 lg:hidden">
+                <ZoneTabs active={activeZone} onChange={setActiveZone} attention={zoneAttention} />
+              </div>
               {/* ZONE C — MY CORPS (2/3): the strategic work — build, tune,
                   and tonight's performances. `order-3` drops it into the
                   My-Corps slot of the mobile stack. */}
-              <div className="order-3 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-1 space-y-4">
-                <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted -mb-2 lg:sr-only">
-                  My Corps
-                </h2>
+              <div
+                id="zone-my-corps"
+                role="tabpanel"
+                aria-labelledby="zone-tab-corps"
+                className={`order-3 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-1 space-y-4 ${zoneClass('corps')}`}
+              >
+                {/* The tab bar names the section on mobile; the heading is for
+                    desktop screen readers, where there are no tabs. */}
+                <h2 className="sr-only">My Corps</h2>
                 {isPodiumSelected ? (
                   /* Podium Class — director sim replaces the lineup surfaces
                      (design §6): rehearsal planner + caption progress. */
@@ -545,8 +500,13 @@ const Dashboard = () => {
                 {/* ZONE B — TODAY: the whole daily set in one card (second in
                     the mobile stack so the to-do list is one scroll from the
                     score) */}
-                <div className="order-2 lg:order-none space-y-4">
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted -mb-2">
+                <div
+                  id="zone-today"
+                  role="tabpanel"
+                  aria-labelledby="zone-tab-today"
+                  className={`order-4 lg:order-none space-y-4 ${zoneClass('today')}`}
+                >
+                  <h2 className="hidden lg:block text-[10px] font-bold uppercase tracking-wider text-muted -mb-2">
                     Today
                   </h2>
 
@@ -580,8 +540,13 @@ const Dashboard = () => {
 
                 {/* ZONE D — THE SEASON: how am I advancing, who am I chasing,
                     what just happened */}
-                <div className="order-4 lg:order-none space-y-4">
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted -mb-2">
+                <div
+                  id="zone-season"
+                  role="tabpanel"
+                  aria-labelledby="zone-tab-season"
+                  className={`order-5 lg:order-none space-y-4 ${zoneClass('season')}`}
+                >
+                  <h2 className="hidden lg:block text-[10px] font-bold uppercase tracking-wider text-muted -mb-2">
                     The Season
                   </h2>
 
@@ -633,202 +598,7 @@ const Dashboard = () => {
           <NoCorpsCard onRegister={() => setShowRegistration(true)} />
         )}
       </div>
-
-      {/* MODALS */}
-      {modalQueue.isActive('classUnlock') && newlyUnlockedClass && (
-        <ClassUnlockCongratsModal
-          unlockedClass={newlyUnlockedClass}
-          onSetup={handleSetupNewClass}
-          onDecline={handleDeclineSetup}
-        />
-      )}
-
-      {showRegistration && (
-        <CorpsRegistrationModal
-          onClose={() => {
-            setShowRegistration(false);
-            setRegistrationDefaultClass(null);
-            clearNewlyUnlockedClass();
-          }}
-          onSubmit={handleCorpsRegistration}
-          unlockedClasses={unlockedClasses}
-          defaultClass={registrationDefaultClass || newlyUnlockedClass}
-        />
-      )}
-
-      {slotPickerClass && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <NewCorpsSlotModal
-            onClose={() => setSlotPickerClass(null)}
-            onStartNew={() => {
-              const targetClass = slotPickerClass;
-              setSlotPickerClass(null);
-              setRegistrationDefaultClass(targetClass);
-              setShowRegistration(true);
-            }}
-            onUnretire={(retiredIndex) => handleUnretireCorps(slotPickerClass, retiredIndex)}
-            corpsClass={slotPickerClass}
-            retiredCorps={(profile?.retiredCorps || [])
-              .map((record, retiredIndex) => ({ record, retiredIndex }))
-              .filter((entry) => entry.record?.corpsClass === slotPickerClass)}
-            processing={unretiring}
-          />
-        </Suspense>
-      )}
-
-      {/* Podium has no caption lineup (classRegistry hasLineup:false), so the
-          editor must not open onto it — its budget would be undefined. The
-          gate lives here because every route into the editor passes through
-          it, including the Lineup nav tab and a ?panel=lineup deep link. */}
-      {showCaptionSelection && activeCorps && seasonData && classHasLineup(activeCorpsClass) && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <CaptionSelectionModal
-            onClose={closeCaptionSelection}
-            onSubmit={closeCaptionSelection}
-            corpsClass={activeCorpsClass}
-            currentLineup={activeCorps.lineup || {}}
-            seasonId={seasonData.seasonUid}
-            initialCaption={selectedCaption}
-          />
-        </Suspense>
-      )}
-
-      {showConceptModal && activeCorps && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <ShowConceptModal
-            onClose={() => setShowConceptModal(false)}
-            corpsClass={activeCorpsClass}
-            corpsName={activeCorps.corpsName || activeCorps.name}
-            currentConcept={activeCorps.showConcept}
-          />
-        </Suspense>
-      )}
-
-      {showDeleteConfirm && activeCorps && (
-        <DeleteConfirmModal
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={handleDeleteCorps}
-          corpsName={activeCorps.corpsName || activeCorps.name}
-          corpsClass={activeCorpsClass}
-        />
-      )}
-
-      {showRetireConfirm && activeCorps && (
-        <RetireConfirmModal
-          onClose={() => setShowRetireConfirm(false)}
-          onConfirm={handleRetireCorps}
-          corpsName={activeCorps.corpsName || activeCorps.name}
-          corpsClass={activeCorpsClass}
-          retiring={retiring}
-          inLeague={false}
-          hasPendingWork={corpsHasPendingWork(activeCorps)}
-        />
-      )}
-
-      {showMoveCorps && activeCorps && (
-        <MoveCorpsModal
-          onClose={() => setShowMoveCorps(false)}
-          onMove={handleMoveCorps}
-          currentClass={activeCorpsClass}
-          corpsName={activeCorps.corpsName || activeCorps.name}
-          unlockedClasses={unlockedClasses}
-          existingCorps={corps}
-          transferring={transferring}
-          hasPendingWork={corpsHasPendingWork(activeCorps)}
-        />
-      )}
-
-      {/* OPTIMIZATION #9: Lazy-loaded modals wrapped with Suspense */}
-      {showUniformDesign && activeCorps && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <UniformDesignModal
-            onClose={() => setShowUniformDesign(false)}
-            onSubmit={handleUniformDesign}
-            currentDesign={activeCorps.uniformDesign}
-            corpsName={activeCorps.corpsName || activeCorps.name}
-          />
-        </Suspense>
-      )}
-
-      {showNewsSubmission && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <NewsSubmissionModal
-            onClose={() => setShowNewsSubmission(false)}
-            onSubmit={handleNewsSubmission}
-            isSubmitting={submittingNews}
-          />
-        </Suspense>
-      )}
-
-      {modalQueue.isActive('achievement') && newAchievement && (
-        <AchievementModal
-          onClose={handleAchievementClose}
-          achievements={profile?.achievements || []}
-          newAchievement={newAchievement}
-        />
-      )}
-
-      {/* End-of-season results + payout ceremony (one-shot, written by rollover) */}
-      {modalQueue.isActive('seasonRecap') && profile?.pendingSeasonRecap && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <SeasonRecapModal recap={profile.pendingSeasonRecap} onClose={handleSeasonRecapClose} />
-        </Suspense>
-      )}
-
-      {showStreakModal && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <StreakModal
-            onClose={() => setShowStreakModal(false)}
-            corpsCoin={profile?.corpsCoin || 0}
-          />
-        </Suspense>
-      )}
-
-      {showWalletModal && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <CorpsCoinModal onClose={() => setShowWalletModal(false)} />
-        </Suspense>
-      )}
-
-      <OnboardingTour
-        isOpen={modalQueue.isActive('onboarding')}
-        onClose={() => modalQueue.dequeue()}
-        onComplete={handleTourComplete}
-      />
-
-      <QuickStartGuide
-        isOpen={showQuickStartGuide}
-        onClose={() => setShowQuickStartGuide(false)}
-        onAction={(action) => {
-          if (action === 'lineup') openCaptionSelection();
-        }}
-        completedSteps={[
-          ...(lineupCount === 8 ? ['lineup'] : []),
-          ...(thisWeekShows.length > 0 ? ['schedule'] : []),
-          ...(myLeagues?.length > 0 ? ['league'] : []),
-        ]}
-      />
-
-      {classToPurchase && profile && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <ClassPurchaseModal
-            classKey={classToPurchase}
-            className={CLASS_DISPLAY_NAMES[classToPurchase]}
-            coinCost={CLASS_UNLOCK_COSTS[classToPurchase]}
-            currentBalance={profile.corpsCoin || 0}
-            levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
-            currentLevel={profile.xpLevel || 1}
-            weeksRemaining={weeksRemaining}
-            seasonsUntilUnlock={getSeasonsUntilUnlock(
-              profile?.lifetimeStats?.totalSeasons,
-              classToPurchase
-            )}
-            isRegistrationLocked={isRegistrationLocked(classToPurchase)}
-            onConfirm={handleConfirmClassPurchase}
-            onClose={() => setClassToPurchase(null)}
-          />
-        </Suspense>
-      )}
+      <DashboardModalHost modals={modals} data={dashboardData} quickStartSteps={quickStartSteps} />
     </div>
   );
 };

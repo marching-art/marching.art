@@ -103,6 +103,13 @@ export interface NextActionPanelProps {
   onOpenLineup: () => void;
   onOpenConcept: () => void;
   onRegisterCorps: () => void;
+  /**
+   * How to bring a panel elsewhere on the page into view. The dashboard
+   * supplies this because a target can live in a mobile zone that is currently
+   * hidden, which has to be revealed before it can be scrolled to. Without it
+   * the panel falls back to a plain scroll.
+   */
+  onRevealPanel?: (panelId: string) => void;
 }
 
 const NextActionPanel: React.FC<NextActionPanelProps> = ({
@@ -110,6 +117,7 @@ const NextActionPanel: React.FC<NextActionPanelProps> = ({
   onOpenLineup,
   onOpenConcept,
   onRegisterCorps,
+  onRevealPanel,
 }) => {
   const navigate = useNavigate();
   const { prefersReducedMotion } = useReducedMotion();
@@ -141,6 +149,10 @@ const NextActionPanel: React.FC<NextActionPanelProps> = ({
         // The claim lives on a panel further down this page — the panel owns
         // the server call, so the hero moves the director to it rather than
         // duplicating the mutation.
+        if (onRevealPanel) {
+          onRevealPanel(target.to);
+          break;
+        }
         const el = document.getElementById(target.to);
         el?.scrollIntoView({
           behavior: prefersReducedMotion ? 'auto' : 'smooth',

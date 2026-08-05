@@ -135,6 +135,31 @@ describe('NextActionPanel', () => {
     document.body.removeChild(target);
   });
 
+  it('asks the dashboard to reveal a panel when it can', () => {
+    // On mobile the target may sit in a hidden zone; only the dashboard can
+    // switch to it, so a plain scroll would land on display:none.
+    const onRevealPanel = vi.fn();
+    render(
+      <MemoryRouter>
+        <NextActionPanel
+          action={{
+            id: 'claim_reward',
+            title: 'A reward is ready',
+            detail: 'Field a Full Corps.',
+            cta: 'Claim',
+            target: { type: 'scroll', to: 'journey-panel' },
+            progress: null,
+            tone: 'reward',
+          }}
+          {...handlers}
+          onRevealPanel={onRevealPanel}
+        />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Claim' }));
+    expect(onRevealPanel).toHaveBeenCalledWith('journey-panel');
+  });
+
   it('renders no button when the action is only informational', () => {
     // A shut caption window must not offer a control that cannot work.
     renderPanel({

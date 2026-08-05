@@ -17,6 +17,7 @@ export { default as SeasonProgressHub } from './SeasonProgressHub';
 export { default as DirectorsReport } from './DirectorsReport';
 export { default as NextActionPanel } from './NextActionPanel';
 export { default as NoCorpsCard } from './NoCorpsCard';
+export { default as ZoneTabs } from './ZoneTabs';
 
 // Re-export constants for convenience
 export * from './constants';
