@@ -36,12 +36,27 @@ export default function RehearsalPlanner({ podium }) {
   const state = data?.state;
   if (!state) return null;
 
-  const today = state.today || { blocksUsed: 0, blocks: [], restDay: false };
+  const rawToday = state.today || { blocksUsed: 0, blocks: [], restDay: false };
+  // state.today can lag the real day (rollToday runs on writes, not reads), so
+  // trust the server's freshness-aware today fields and blank a stale block
+  // list rather than showing yesterday's plan as today's.
+  const todayIsCurrent = rawToday.calendarDay === data.calendarDay;
+  const today = todayIsCurrent
+    ? rawToday
+    : { blocksUsed: 0, blocks: [], restDay: false, calendarDay: data.calendarDay };
   const condition = state.condition || { stamina: 0, morale: 0 };
   const budget = state.budget || { balance: 0 };
   const competitionDay = data.competitionDay;
   const isSpringTraining = competitionDay < 1;
   const seasonOver = competitionDay > 49;
+
+  // Server-authoritative block budget (stamina-adjusted). Falls back to the
+  // freshness-normalized local count if an older backend hasn't shipped these.
+  const blocksUsedToday = data.blocksUsedToday ?? today.blocksUsed ?? 0;
+  const maxBlocksToday = data.maxBlocksToday ?? null;
+  const blocksRemainingToday =
+    data.blocksRemainingToday ??
+    (maxBlocksToday !== null ? Math.max(0, maxBlocksToday - blocksUsedToday) : null);
   const dayType = seasonOver
     ? 'Season complete'
     : today.restDay
@@ -76,7 +91,12 @@ export default function RehearsalPlanner({ podium }) {
     }
   };
 
-  const exhausted = seasonOver || today.restDay;
+  // The block grid retires when there is nothing left to allocate: the season
+  // is over, a rest day was declared, or the day's blocks are all used. Without
+  // the last case the grid stayed live and every tap bounced off the server's
+  // resource-exhausted guard.
+  const blocksDone = blocksRemainingToday !== null && blocksRemainingToday <= 0;
+  const exhausted = seasonOver || today.restDay || blocksDone;
   const isShowDay = Boolean(data.isShowDay) && !seasonOver;
 
   return (
@@ -197,10 +217,25 @@ export default function RehearsalPlanner({ podium }) {
             <span className="text-[10px] uppercase font-bold tracking-wider text-muted">
               Blocks today
             </span>
+            {/* Show the cap, not just the count — a director needs to know how
+                many blocks they still have (the number the server enforces,
+                stamina penalty included), or the loop is guesswork. */}
             <span className="text-lg font-bold text-white tabular-nums leading-none">
-              {today.blocksUsed || 0}
+              {blocksUsedToday}
+              {maxBlocksToday !== null && (
+                <span className="text-sm text-muted font-normal"> / {maxBlocksToday}</span>
+              )}
             </span>
           </div>
+          {!seasonOver && !today.restDay && blocksRemainingToday !== null && (
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-right">
+              {blocksRemainingToday > 0 ? (
+                <span className="text-interactive">{blocksRemainingToday} left</span>
+              ) : (
+                <span className="text-green-400">All blocks used</span>
+              )}
+            </div>
+          )}
 
           <div className="mt-2 flex-1 space-y-1 min-h-[2rem]">
             {today.blocks?.length > 0 ? (

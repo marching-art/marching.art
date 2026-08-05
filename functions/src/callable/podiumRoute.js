@@ -279,6 +279,16 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   const state = snapshot.data();
   const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
   const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
+
+  // Today's block budget (used / cap / remaining) and the plan-editor caps,
+  // both server-authoritative so the client stops hardcoding 12/8/20 and the
+  // planner can show how many blocks are actually left (stamina penalty and
+  // all). See store.computeTodayBlockBudget for the freshness handling.
+  const { maxBlocksToday, blocksUsedToday, blocksRemainingToday } = store.computeTodayBlockBudget(
+    state,
+    { calendarDay, competitionDay, isShowDay }
+  );
+  const blockCaps = store.planBlockCaps();
   const routePreview = await buildRoutePreview(
     db, seasonData, state, uid, competitionDay, easternAssignments
   );
@@ -311,6 +321,11 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     calendarDay,
     competitionDay,
     isShowDay,
+    // Today's rehearsal budget (server-authoritative; see above).
+    maxBlocksToday,
+    blocksUsedToday,
+    blocksRemainingToday,
+    blockCaps,
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
     commitmentCap,

@@ -79,11 +79,24 @@ export interface PodiumStaffOutlook {
   acknowledged: boolean; // director has dismissed this exact payroll figure
 }
 
+/** Base per-plan-type block caps (not stamina-adjusted). */
+export interface PodiumBlockCaps {
+  rehearsal: number;
+  showDay: number;
+  springTraining: number;
+}
+
 export interface PodiumStateResponse {
   exists: boolean;
   calendarDay: number;
   competitionDay: number;
   isShowDay?: boolean;
+  /** Today's rehearsal-block budget, server-authoritative (stamina-adjusted). */
+  maxBlocksToday?: number;
+  blocksUsedToday?: number;
+  blocksRemainingToday?: number;
+  /** Base caps for the assistant-director plan editor (per day type). */
+  blockCaps?: PodiumBlockCaps;
   autoDays?: number[];
   routePreview?: PodiumRouteLeg[];
   currentLocation?: PodiumCurrentLocation;

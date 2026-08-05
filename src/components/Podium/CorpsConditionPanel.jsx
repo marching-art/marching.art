@@ -122,14 +122,18 @@ export default function CorpsConditionPanel({ podium }) {
 
   // The assistant director keeps one plan per day type (§5.2). Each runs on the
   // matching unplayed day; a type with no plan falls back to the rehearsal plan.
+  // Caps come from the server (getPodiumState.blockCaps) so the editor, its
+  // copy, and the server's maxBlocksForPlanType can't drift; the fallbacks keep
+  // it usable against an older backend.
+  const caps = podium.data?.blockCaps || { rehearsal: 12, showDay: 8, springTraining: 20 };
   const PLAN_TYPES = [
     {
       id: 'rehearsal',
       tab: 'Rehearsal',
       plan: state.planTemplate || [],
-      maxBlocks: 12,
+      maxBlocks: caps.rehearsal,
       runsOn: "rehearsal days you don't log in",
-      hint: 'The full grind — up to 12 blocks. This is the fallback for any day type you leave unplanned.',
+      hint: `The full grind — up to ${caps.rehearsal} blocks. This is the fallback for any day type you leave unplanned.`,
       empty:
         'No rehearsal-day plan — days you miss are lost entirely. Set one and the assistant rehearses it at 85% yield while you’re away.',
     },
@@ -137,21 +141,19 @@ export default function CorpsConditionPanel({ podium }) {
       id: 'show',
       tab: 'Show day',
       plan: state.showDayPlan || [],
-      maxBlocks: 8,
+      maxBlocks: caps.showDay,
       runsOn: "show days you don't log in",
-      hint: 'A lighter pre-performance routine — only 8 blocks, and the corps competes that night.',
-      empty:
-        'No show-day plan — unplayed show days fall back to your rehearsal plan. Set a lighter routine here (8 blocks) for performance days.',
+      hint: `A lighter pre-performance routine — only ${caps.showDay} blocks, and the corps competes that night.`,
+      empty: `No show-day plan — unplayed show days fall back to your rehearsal plan. Set a lighter routine here (${caps.showDay} blocks) for performance days.`,
     },
     {
       id: 'springTraining',
       tab: 'Spring training',
       plan: state.springTrainingPlan || [],
-      maxBlocks: 20,
+      maxBlocks: caps.springTraining,
       runsOn: "spring-training days you don't log in",
-      hint: 'Install-heavy camp days — up to 20 blocks, weighted toward content over clean.',
-      empty:
-        'No spring-training plan — unplayed camp days fall back to your rehearsal plan. Set an install-heavy plan here (20 blocks) for the preseason.',
+      hint: `Install-heavy camp days — up to ${caps.springTraining} blocks, weighted toward content over clean.`,
+      empty: `No spring-training plan — unplayed camp days fall back to your rehearsal plan. Set an install-heavy plan here (${caps.springTraining} blocks) for the preseason.`,
     },
   ];
   const activePlanType = PLAN_TYPES.find((p) => p.id === planType) || PLAN_TYPES[0];
