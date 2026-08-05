@@ -16,7 +16,7 @@ import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
 import { formatEventName } from '../../utils/season';
 import { TeamAvatar } from '../ui/TeamAvatar';
-import { ShareButton } from '../scores/SheetPrimitives';
+import { AdvancesTag, CutBanner, ShareButton } from '../scores/SheetPrimitives';
 import { SHEET_CARD } from '../scores/sheetTokens';
 import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 import { PODIUM_CAPTIONS } from './podiumConstants';
@@ -68,16 +68,21 @@ function sortResults(results, sortBy) {
  * (wrap in a code block) and group chats, the way FMA recaps circulated. One
  * block per show, matching the per-show cards on screen.
  */
-function formatShowAsText(show, day, seasonName) {
+function formatShowAsText(show, day, seasonName, cut) {
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
   const head = fallbackMasthead(day);
+  const advancing = new Set(cut?.uids || []);
   const lines = [
     `${formatEventName(show.eventName) || head.name}${show.location ? ` — ${show.location}` : ''} · Day ${day} of 49`,
+    // A pasted championship sheet has to carry the cut too — it is the whole
+    // story of the night, and a plain list of scores hides it.
+    ...(cut ? [`${cut.rule} (marked ">")`] : []),
     '',
   ];
   for (const row of [...(show.results || [])].sort((a, b) => a.place - b.place)) {
+    const name = `${advancing.has(row.uid) ? '> ' : ''}${row.corpsName || 'Unknown'}`;
     lines.push(
-      `${String(row.place).padStart(2)}. ${(row.corpsName || 'Unknown').padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
+      `${String(row.place).padStart(2)}. ${name.padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
     );
   }
   lines.push('');
@@ -129,13 +134,24 @@ function SortBar({ sortBy, onChange }) {
 // One show = one card (matching the fantasy recap cards): its own frame,
 // masthead, box score, and footer/share. The day's sort control lives above
 // the cards, so a card is a pure box score.
-function ShowCard({ show, day, sortBy, seasonName, userCorpsName }) {
+function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) {
   const results = useMemo(() => sortResults(show.results || [], sortBy), [show.results, sortBy]);
   const tops = useBoxToppers(results);
   const showDivisionTag = useMemo(
     () => new Set(results.map((r) => r.division || 'aClass')).size > 1,
     [results]
   );
+  // Who marches the next round, as the processor published it with this recap
+  // (helpers/podium/store.championshipCutFor). Empty on all 46 other nights.
+  const advancing = useMemo(() => new Set(cut?.uids || []), [cut]);
+  // The cut line only reads as a line when the sheet is ranked by total AND the
+  // cut ranks one combined field. Day 45 cuts Open and A separately, so in a
+  // mixed total-ranked list the survivors do not sit in one block — there the
+  // chips carry it alone.
+  const cutLineAfter =
+    cut && !cut.perDivision && sortBy === 'total'
+      ? results.findLastIndex((row) => advancing.has(row.uid))
+      : -1;
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
   const head = fallbackMasthead(day);
 
@@ -184,12 +200,17 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName }) {
             </tr>
           </thead>
           <tbody>
-            {results.map((row) => {
+            {results.map((row, rowIndex) => {
               const isMine = userCorpsName && row.corpsName === userCorpsName;
+              const advances = advancing.has(row.uid);
               return (
                 <tr
                   key={row.uid}
-                  className={`border-b border-line-subtle ${isMine ? 'bg-interactive/10' : ''}`}
+                  className={`border-b ${
+                    rowIndex === cutLineAfter && rowIndex < results.length - 1
+                      ? 'border-green-500/60'
+                      : 'border-line-subtle'
+                  } ${isMine ? 'bg-interactive/10' : ''} ${cut && !advances ? 'opacity-60' : ''}`}
                 >
                   <td className="py-1.5 pr-2 sticky left-0 bg-surface-card">
                     {/* Place · avatar · corps name — the corps avatar is shown
@@ -210,6 +231,7 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName }) {
                               {(row.division || 'aClass').replace('Class', '')}
                             </span>
                           )}
+                          {advances && <AdvancesTag toDay={cut.toDay} />}
                         </div>
                         {/* Director credit + profile link under the corps name —
                             displayed the same way as the other classes. */}
@@ -261,11 +283,20 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName }) {
       {/* Wordmark footer + per-show share — same spot as the fantasy cards */}
       <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-muted">
         <span className="truncate">
-          Box-toppers in <span className="text-brand font-bold">gold</span> · full captions — Podium
-          Class only
+          {cut ? (
+            <>
+              <span className="text-green-400 font-bold">ADV</span> = marches Day {cut.toDay} ·{' '}
+              {cut.rule}
+            </>
+          ) : (
+            <>
+              Box-toppers in <span className="text-brand font-bold">gold</span> · full captions —
+              Podium Class only
+            </>
+          )}
         </span>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <ShareButton getText={() => formatShowAsText(show, day, seasonName)} />
+          <ShareButton getText={() => formatShowAsText(show, day, seasonName, cut)} />
           <span className="font-bold text-muted">
             marching.art{seasonName ? ` · ${seasonName}` : ''}
           </span>
@@ -334,6 +365,10 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
 
   const selected = days.find((d) => d.day === selectedDay) || days[days.length - 1];
   const shows = showsOf(selected.recap);
+  // The cut this night decided, published with the recap by the processor
+  // (§5.7). Podium runs the fantasy bracket in parallel on its own board, so
+  // Prelims and Semifinals nights carry the same "who marches tomorrow" answer.
+  const cut = selected.recap.championshipCut || null;
 
   return (
     <div className="p-3 md:p-4 space-y-3">
@@ -363,6 +398,17 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
         </div>
       </div>
 
+      {/* Championship-week cut — what tonight's scores decided */}
+      {cut && (
+        <CutBanner
+          rule={cut.rule}
+          toDay={cut.toDay}
+          advancingCount={cut.advancingCount}
+          missedCount={cut.missedCount}
+          cutLine={cut.cutLine}
+        />
+      )}
+
       {/* One framed card per show (matching the fantasy recap cards) */}
       {shows.length === 0 ? (
         <div className="p-8 text-center text-[11px] text-muted">
@@ -377,6 +423,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
             sortBy={sortBy}
             seasonName={seasonName}
             userCorpsName={userCorpsName}
+            cut={cut}
           />
         ))
       )}

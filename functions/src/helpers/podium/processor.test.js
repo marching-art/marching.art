@@ -205,3 +205,130 @@ describe("championship advancement (store.advancingUids)", () => {
     assert.equal(store.advancingUids({ shows: [] }, 48, cfg), null);
   });
 });
+
+describe("championship cut published with the recap (store.championshipCutFor)", () => {
+  const cfg = { championship: { advancement: { aClassFinals: 4, openClassFinals: 8, worldSemifinals: 25, worldFinals: 12 } } };
+
+  const combinedPrelims = (counts) => ({
+    shows: [
+      {
+        eventName: "marching.art World Championship Prelims",
+        results: Object.entries(counts).flatMap(([division, count]) =>
+          Array.from({ length: count }, (_, i) => ({
+            uid: `${division}-${i}`,
+            division,
+            totalScore: 90 - i - { worldClass: 0, openClass: 0.3, aClass: 0.6 }[division],
+          }))
+        ),
+      },
+    ],
+  });
+
+  test("nights that decide nothing publish no cut", () => {
+    const field = combinedPrelims({ worldClass: 30 });
+    for (const day of [1, 41, 44, 46, 49]) {
+      assert.equal(store.championshipCutFor(field, day, cfg), null);
+    }
+    assert.equal(store.championshipCutFor({ shows: [] }, 47, cfg), null);
+    assert.equal(store.championshipCutFor(null, 47, cfg), null);
+  });
+
+  test("day 47 Prelims publish the top-25 cut into Semifinals", () => {
+    const cut = store.championshipCutFor(
+      combinedPrelims({ worldClass: 15, openClass: 15, aClass: 15 }),
+      47,
+      cfg
+    );
+    assert.equal(cut.toDay, 48);
+    assert.equal(cut.eventName, "marching.art World Championship Semifinals");
+    assert.equal(cut.rule, "Top 25 advance to Semifinals");
+    assert.equal(cut.perDivision, false);
+    assert.equal(cut.advancingCount, 25);
+    assert.equal(cut.fieldCount, 45);
+    assert.equal(cut.missedCount, 20);
+    assert.ok(cut.uids.includes("worldClass-0"));
+    assert.ok(!cut.uids.includes("aClass-14"));
+  });
+
+  test("day 48 Semifinals publish the top-12 cut into Finals", () => {
+    const cut = store.championshipCutFor(
+      combinedPrelims({ worldClass: 10, openClass: 8, aClass: 6 }),
+      48,
+      cfg
+    );
+    assert.equal(cut.toDay, 49);
+    assert.equal(cut.rule, "Top 12 advance to Finals");
+    assert.equal(cut.advancingCount, 12);
+  });
+
+  test("day 45 publishes the per-division cut, billed Open then A", () => {
+    const recap = {
+      shows: [
+        {
+          eventName: "Open and A Class Prelims",
+          results: [
+            ...Array.from({ length: 12 }, (_, i) => ({
+              uid: `openClass-${i}`,
+              division: "openClass",
+              totalScore: 80 - i,
+            })),
+            ...Array.from({ length: 10 }, (_, i) => ({
+              uid: `aClass-${i}`,
+              division: "aClass",
+              totalScore: 70 - i,
+            })),
+          ],
+        },
+      ],
+    };
+    const cut = store.championshipCutFor(recap, 45, cfg);
+    assert.equal(cut.toDay, 46);
+    assert.equal(cut.rule, "Top 8 Open Class · Top 4 A Class advance");
+    assert.equal(cut.perDivision, true);
+    assert.equal(cut.advancingCount, 12); // 8 Open + 4 A
+    assert.equal(cut.fieldCount, 22);
+    assert.equal(cut.cutLine, 67); // A Class 4th place
+    assert.ok(cut.uids.includes("openClass-7") && !cut.uids.includes("openClass-8"));
+    assert.ok(cut.uids.includes("aClass-3") && !cut.uids.includes("aClass-4"));
+  });
+
+  test("names exactly who the next night's gate will admit", () => {
+    // The published list and the list the processor gates on are the same
+    // function over the same document — this pins them together.
+    const recap = combinedPrelims({ worldClass: 20, openClass: 12 });
+    const cut = store.championshipCutFor(recap, 47, cfg);
+    const gate = store.advancingUids(recap, 48, cfg);
+    assert.deepEqual([...cut.uids].sort(), [...gate].sort());
+  });
+
+  test("restates a retuned bracket rather than the old copy", () => {
+    const tuned = { championship: { advancement: { worldSemifinals: 16 } } };
+    const cut = store.championshipCutFor(combinedPrelims({ worldClass: 30 }), 47, tuned);
+    assert.equal(cut.rule, "Top 16 advance to Semifinals");
+    assert.equal(cut.advancingCount, 16);
+  });
+
+  test("ties on the cut line all advance", () => {
+    const recap = {
+      shows: [
+        {
+          eventName: "marching.art World Championship Semifinals",
+          results: [
+            ...Array.from({ length: 11 }, (_, i) => ({
+              uid: `clear-${i}`,
+              division: "worldClass",
+              totalScore: 90 - i,
+            })),
+            { uid: "tie-a", division: "worldClass", totalScore: 70 },
+            { uid: "tie-b", division: "worldClass", totalScore: 70 },
+            { uid: "out", division: "worldClass", totalScore: 69.9 },
+          ],
+        },
+      ],
+    };
+    const cut = store.championshipCutFor(recap, 48, cfg);
+    assert.equal(cut.advancingCount, 13); // 11 clear + both corps tied at 12th
+    assert.equal(cut.cutLine, 70);
+    assert.ok(!cut.uids.includes("out"));
+  });
+});

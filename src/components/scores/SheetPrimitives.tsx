@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Share2, Check, MapPin } from 'lucide-react';
+import { Share2, Check, MapPin, Scissors } from 'lucide-react';
 import { TeamAvatar } from '../ui/TeamAvatar';
 import { shareOrCopy } from '../../utils/shareSheet';
 import { CAP_W, TOTAL_W, GOLD } from './sheetTokens';
@@ -162,6 +162,59 @@ export const SheetFooter = ({ note, action }: { note?: ReactNode; action?: React
     <div className="flex items-center gap-2 flex-shrink-0">
       {action}
       <span className="font-bold text-muted">marching.art</span>
+    </div>
+  </div>
+);
+
+// =============================================================================
+// CHAMPIONSHIP-WEEK CUT MARKERS
+// =============================================================================
+// Three nights of championship week end with a cut, on both boards: the fantasy
+// classes (utils/scoresUtils.computeAdvancement, mirroring the scorer) and
+// Podium Class (published with the recap by helpers/podium/store —
+// championshipCutFor). The two arrive as different objects but say the same
+// thing, so they render through these, and the two boards mark a cut
+// identically.
+
+// Chip beside the corps name on a row that marches the next round.
+export const AdvancesTag = ({ toDay }: { toDay?: number | null }) => (
+  <span
+    title={toDay ? `Advances to Day ${toDay}` : 'Advances'}
+    className="flex-shrink-0 text-[8px] font-bold uppercase tracking-wider px-1 py-[1px] bg-green-500/15 text-green-400"
+  >
+    Adv
+  </span>
+);
+
+// Banner over a cut night's sheet: the rule, how many survive it, where the
+// line fell.
+export const CutBanner = ({
+  rule,
+  toDay,
+  advancingCount,
+  missedCount = 0,
+  cutLine = null,
+}: {
+  rule: string;
+  toDay: number;
+  advancingCount: number;
+  missedCount?: number;
+  cutLine?: number | null;
+}) => (
+  <div className="flex items-center gap-2 px-2 py-1.5 bg-green-500/5 border-l-2 border-green-500/60">
+    <Scissors className="w-3 h-3 text-green-400 flex-shrink-0" aria-hidden="true" />
+    <div className="min-w-0 text-[10px] leading-tight">
+      <span className="font-bold uppercase tracking-wider text-green-400">{rule}</span>
+      <span className="text-muted">
+        {' · '}
+        {advancingCount} advance to Day {toDay}
+        {missedCount > 0 && cutLine != null && (
+          <>
+            {' · '}
+            {missedCount} miss the cut at <span className="tabular-nums">{cutLine.toFixed(3)}</span>
+          </>
+        )}
+      </span>
     </div>
   </div>
 );

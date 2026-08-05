@@ -11,7 +11,7 @@
 // sheets stay condensed to GE/VIS/MUS; full per-caption columns are Podium-only.
 
 import React, { useMemo, memo, useState } from 'react';
-import { Trophy, MapPin, Calendar, Scissors } from 'lucide-react';
+import { Trophy, MapPin, Calendar } from 'lucide-react';
 import { formatEventName } from '../utils/season';
 import {
   CLASS_LABELS,
@@ -31,7 +31,9 @@ import { scoresShareUrl } from '../utils/shareSheet';
 // Shared box-score primitives — the single source of truth for the sheet look,
 // used by both these Fantasy sheets and the Podium Class sheets.
 import {
+  AdvancesTag,
   BlueRibbonIcon,
+  CutBanner,
   SheetMasthead,
   BoxScoreHead,
   CorpsIdentity,
@@ -80,43 +82,12 @@ const buildClassRows = (classScores, sortBy) => {
   return [...withPlace].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
 };
 
-// =============================================================================
-// CHAMPIONSHIP-WEEK CUT MARKERS — days 45/47/48 end with a cut, and the recap
+// Championship-week cut markers — days 45/47/48 end with a cut, and the recap
 // sheet is where players learn whether they survived it. The advancing set is
 // computed from the night's whole field (utils/scoresUtils.computeAdvancement,
-// which mirrors the scorer's buildChampionshipConfig) and threaded down here.
-// =============================================================================
-
-// Chip beside the corps name on a row that marches tomorrow.
-const AdvancesTag = ({ advancesToDay }) => (
-  <span
-    title={`Advances to Day ${advancesToDay}`}
-    className="flex-shrink-0 text-[8px] font-bold uppercase tracking-wider px-1 py-[1px] bg-green-500/15 text-green-400"
-  >
-    Adv
-  </span>
-);
-
-// Banner under the masthead stating the night's cut rule and its outcome.
-const CutBanner = ({ advancement }) => (
-  <div className="flex items-center gap-2 px-2 py-1.5 bg-green-500/5 border-l-2 border-green-500/60">
-    <Scissors className="w-3 h-3 text-green-400 flex-shrink-0" aria-hidden="true" />
-    <div className="min-w-0 text-[10px] leading-tight">
-      <span className="font-bold uppercase tracking-wider text-green-400">{advancement.rule}</span>
-      <span className="text-muted">
-        {' · '}
-        {advancement.advancingCount} advance to Day {advancement.advancesToDay}
-        {advancement.missedCount > 0 && advancement.cutLine != null && (
-          <>
-            {' · '}
-            {advancement.missedCount} miss the cut at{' '}
-            <span className="tabular-nums">{advancement.cutLine.toFixed(3)}</span>
-          </>
-        )}
-      </span>
-    </div>
-  </div>
-);
+// which mirrors the scorer's buildChampionshipConfig) and threaded down here;
+// the chip and banner themselves are shared with the Podium board
+// (components/scores/SheetPrimitives).
 
 const RecapDataGrid = memo(
   ({
@@ -204,7 +175,15 @@ const RecapDataGrid = memo(
         <SheetMasthead title={formatEventName(eventName)} location={location} date={date} />
 
         {/* Championship-week cut — what tonight's scores decided */}
-        {advancement && <CutBanner advancement={advancement} />}
+        {advancement && (
+          <CutBanner
+            rule={advancement.rule}
+            toDay={advancement.advancesToDay}
+            advancingCount={advancement.advancingCount}
+            missedCount={advancement.missedCount}
+            cutLine={advancement.cutLine}
+          />
+        )}
 
         {sections.map((section) => (
           <div key={section.cls} className="space-y-1.5">
@@ -260,9 +239,7 @@ const RecapDataGrid = memo(
                       displayName={score.displayName}
                       uid={score.uid}
                       avatarUrl={score.avatarUrl}
-                      tag={
-                        advances ? <AdvancesTag advancesToDay={advancement.advancesToDay} /> : null
-                      }
+                      tag={advances ? <AdvancesTag toDay={advancement.advancesToDay} /> : null}
                     />
                     <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                       <CaptionValue

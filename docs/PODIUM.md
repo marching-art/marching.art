@@ -1023,15 +1023,15 @@ Podium populates identically).
 
 ### 7.2 New/changed documents
 
-| Path                                  | Purpose                                                                                                                                                              |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `podium-config/curves`                | Runtime overrides for the percentile bands, delta bounds, and archetype params from the corpus job (§4.1); the committed baseline is `helpers/podium/curveData.json` |
-| `podium-config/balance`               | Tunables: block yields, decay rates, condition coefficients — hot-adjustable without deploys                                                                         |
-| `podium-config/podiumSeasons`         | The season ledger that makes dormancy countable for returning directors (§5.13)                                                                                      |
-| `fantasy_recaps/{seasonUid}/days/{d}` | Existing docs; Podium results appear as entries with `corpsClass: 'podiumClass'`                                                                                     |
-| `podium-recaps/{seasonUid}/…`         | Podium's own day results, power rankings, and standings — never mixed into the fantasy ranking pass                                                                  |
-| `game-settings/season`                | Unchanged — Podium reads the same schedule                                                                                                                           |
-| `firestore.rules`                     | Podium fields writable only via functions (all mutations go through callables)                                                                                       |
+| Path                                  | Purpose                                                                                                                                                                                                                                                                    |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `podium-config/curves`                | Runtime overrides for the percentile bands, delta bounds, and archetype params from the corpus job (§4.1); the committed baseline is `helpers/podium/curveData.json`                                                                                                       |
+| `podium-config/balance`               | Tunables: block yields, decay rates, condition coefficients — hot-adjustable without deploys                                                                                                                                                                               |
+| `podium-config/podiumSeasons`         | The season ledger that makes dormancy countable for returning directors (§5.13)                                                                                                                                                                                            |
+| `fantasy_recaps/{seasonUid}/days/{d}` | Existing docs; Podium results appear as entries with `corpsClass: 'podiumClass'`                                                                                                                                                                                           |
+| `podium-recaps/{seasonUid}/…`         | Podium's own day results, power rankings, and standings — never mixed into the fantasy ranking pass. On days 45/47/48 the day doc also carries `championshipCut` (the rule, who advances, where the line fell) so the recap sheet can mark the cut on the night it happens |
+| `game-settings/season`                | Unchanged — Podium reads the same schedule                                                                                                                                                                                                                                 |
+| `firestore.rules`                     | Podium fields writable only via functions (all mutations go through callables)                                                                                                                                                                                             |
 
 > The venue gazetteer shipped as a **committed JSON file**
 > (`helpers/podium/venueGazetteer.json`, timezone-stamped by
