@@ -50,6 +50,10 @@ export const DEFAULT_DASHBOARD_ZONE: DashboardZoneId = 'corps';
 const PANEL_ZONES: Record<string, DashboardZoneId> = {
   'directors-report': 'today',
   'journey-panel': 'today',
+  // Podium's rehearsal planner and plan editor live in My Corps (Zone C),
+  // where PodiumZone renders.
+  'podium-planner': 'corps',
+  'podium-plan-editor': 'corps',
 };
 
 /** The zone containing a panel id, or null when it is not inside one. */

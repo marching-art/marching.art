@@ -69,6 +69,7 @@ import { useDashboardModals } from '../hooks/useDashboardModals';
 import DashboardModalHost from '../components/Dashboard/DashboardModalHost';
 import { usePodiumEnabled } from '../hooks/useFeatures';
 import { usePodium } from '../hooks/usePodium';
+import { usePodiumNextAction } from '../hooks/usePodiumNextAction';
 import { derivePodiumChallengeFacts } from '../utils/podiumChallenges';
 import {
   useLineupScores,
@@ -306,15 +307,19 @@ const Dashboard = () => {
     podium: podiumFacts,
   });
 
-  // The one imperative the mobile stack opens with. Ranked from real game
-  // state (utils/nextAction); null for Podium, which guides itself.
-  const nextAction = useNextAction({
+  // The one imperative the mobile stack opens with. Fantasy classes rank it
+  // from utils/nextAction; Podium — a different game — ranks it on its own
+  // rules (utils/podiumNextAction). The hero renders whichever fits the active
+  // class.
+  const fantasyNextAction = useNextAction({
     profile,
     activeCorps,
     activeCorpsClass,
     recentResults,
     seasonUid: seasonData?.seasonUid,
   });
+  const podiumNextAction = usePodiumNextAction(podium.data, isPodiumSelected);
+  const nextAction = isPodiumSelected ? podiumNextAction : fantasyNextAction;
 
   // Report the first view of each new scored day — the conversion event for the
   // nightly drop and its Discord/push announcements. Effective day, not raw

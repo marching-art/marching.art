@@ -55,7 +55,12 @@ export type NextActionId =
   | 'claim_reward'
   | 'set_concept'
   | 'daily_report'
-  | 'all_clear';
+  | 'all_clear'
+  // Podium (director-simulation) actions — resolved by utils/podiumNextAction,
+  // rendered by the same hero.
+  | 'podium_rehearse'
+  | 'podium_rest'
+  | 'podium_plan';
 
 /**
  * What the primary button does.

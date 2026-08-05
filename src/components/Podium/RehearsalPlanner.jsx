@@ -101,7 +101,10 @@ export default function RehearsalPlanner({ podium }) {
 
   return (
     <div
-      className={`bg-surface-card border rounded-none p-4 space-y-4 ${
+      id="podium-planner"
+      // scroll-mt clears the fixed shell chrome + sticky ControlBar when the
+      // Next Action hero scrolls the page here.
+      className={`bg-surface-card border rounded-none p-4 space-y-4 scroll-mt-24 ${
         isShowDay ? 'border-interactive ring-1 ring-interactive/40' : 'border-line'
       }`}
     >

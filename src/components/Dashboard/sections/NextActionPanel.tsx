@@ -19,12 +19,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Activity,
   Calendar,
   CheckCircle2,
   ClipboardList,
   Flag,
   Gift,
   Lock,
+  Moon,
   Music,
   Palette,
   Trophy,
@@ -45,6 +47,10 @@ const ICONS: Record<NextActionId, LucideIcon> = {
   set_concept: Palette,
   daily_report: ClipboardList,
   all_clear: CheckCircle2,
+  // Podium (director sim)
+  podium_rehearse: Activity,
+  podium_rest: Moon,
+  podium_plan: ClipboardList,
 };
 
 /**

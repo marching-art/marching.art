@@ -294,7 +294,7 @@ export default function CorpsConditionPanel({ podium }) {
       {/* Assistant director — the fallback plan for days you don't log in.
           One plan per day type (§5.2): rehearsal, show day, spring training.
           Mirrors the daily Rehearsal Planner: block palette + running order. */}
-      <div>
+      <div id="podium-plan-editor" className="scroll-mt-24">
         <div className="flex items-center justify-between mb-1.5">
           <SectionLabel icon={UserCog}>Assistant director</SectionLabel>
           <button
