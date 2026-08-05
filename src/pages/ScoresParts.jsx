@@ -48,7 +48,9 @@ import {
   TOTAL_W,
   TREND_W,
   STANDINGS_SORTS,
+  CLASS_SECTION_ORDER,
   captionTops,
+  groupByClass,
 } from '../components/scores/sheetTokens';
 
 // =============================================================================
@@ -63,9 +65,6 @@ import {
 // sections, each independently ranked and box-topped — the fantasy recaps read
 // like the per-class standings instead of one mixed list.
 // =============================================================================
-
-// Class display order within a show (SoundSport is filtered upstream).
-const RECAP_CLASS_ORDER = ['worldClass', 'openClass', 'aClass'];
 
 // Rank a class's scores (already total-desc, so index+1 is the finishing place)
 // and apply the active caption sort — the place stays fixed under a sort, the
@@ -104,31 +103,21 @@ const RecapDataGrid = memo(
     // Group the show's corps by class, then rank/sort within each class.
     const sections = useMemo(() => {
       if (!scores || scores.length === 0) return [];
-      const byClass = new Map();
-      for (const score of scores) {
-        const cls = score.corpsClass || 'aClass';
-        if (!byClass.has(cls)) byClass.set(cls, []);
-        byClass.get(cls).push(score);
-      }
-      // Known classes first (World → Open → A), then any stragglers, so an
-      // unexpected class is still shown rather than dropped.
-      const order = [
-        ...RECAP_CLASS_ORDER.filter((cls) => byClass.has(cls)),
-        ...[...byClass.keys()].filter((cls) => !RECAP_CLASS_ORDER.includes(cls)),
-      ];
-      return order.map((cls) => {
-        const rows = buildClassRows(byClass.get(cls), sortBy);
-        const advancingCount = advancement
-          ? rows.filter(({ score }) => advancement.advancing.has(advancementKey(score))).length
-          : 0;
-        return {
-          cls,
-          label: CLASS_LABELS[cls] || cls,
-          rows,
-          tops: captionTops(rows.map((r) => r.captions)),
-          advancingCount,
-        };
-      });
+      return groupByClass(scores, (score) => score.corpsClass || 'aClass').map(
+        ({ cls, rows: classScores }) => {
+          const rows = buildClassRows(classScores, sortBy);
+          const advancingCount = advancement
+            ? rows.filter(({ score }) => advancement.advancing.has(advancementKey(score))).length
+            : 0;
+          return {
+            cls,
+            label: CLASS_LABELS[cls] || cls,
+            rows,
+            tops: captionTops(rows.map((r) => r.captions)),
+            advancingCount,
+          };
+        }
+      );
     }, [scores, sortBy, advancement]);
 
     const activeCap = sortBy === 'total' ? null : sortBy;
@@ -164,7 +153,7 @@ const RecapDataGrid = memo(
     // Link the share to the day's card for the sheet's top class present
     // (World → Open → A order). The /share URL unfurls with a live standings
     // image wherever the copied text is pasted.
-    const topRankedClass = sections.find((s) => RECAP_CLASS_ORDER.includes(s.cls))?.cls;
+    const topRankedClass = sections.find((s) => CLASS_SECTION_ORDER.includes(s.cls))?.cls;
     const shareUrl = () =>
       seasonId && typeof offSeasonDay === 'number' && topRankedClass
         ? scoresShareUrl(seasonId, offSeasonDay, topRankedClass)

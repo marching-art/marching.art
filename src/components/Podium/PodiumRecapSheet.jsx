@@ -4,10 +4,15 @@
 // masthead, wordmark footer. Reads the public podium-recaps collection.
 //
 // Podium is scored PER SHOW (a recap day carries `shows: [{eventName, location,
-// results}]`), so each day renders one box score per show. Rows can be sorted
-// by class (division) or by any caption. Full captions are shown because
-// Podium is a virtual engine — nothing to harvest, unlike the drafted fantasy
-// classes (which stay GE/Vis/Mus-only).
+// results}]`), so each day renders one box score per show. Each show's field is
+// SPLIT BY DIVISION — World / Open / A, each ranked and box-topped on its own,
+// the same way the fantasy recaps split a show by class (pages/ScoresParts →
+// RecapDataGrid). Every division crowns its own winner (§5.7), so a division's
+// block is the sheet that matters to the corps in it. Rows can be sorted by any
+// caption; the split and the placements hold under the sort.
+//
+// Full captions are shown because Podium is a virtual engine — nothing to
+// harvest, unlike the drafted fantasy classes (which stay GE/Vis/Mus-only).
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -15,9 +20,10 @@ import { collection, getDocs } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
 import { formatEventName } from '../../utils/season';
+import { CLASS_LABELS } from '../../utils/scoresUtils';
 import { TeamAvatar } from '../ui/TeamAvatar';
 import { AdvancesTag, CutBanner, ShareButton } from '../scores/SheetPrimitives';
-import { SHEET_CARD } from '../scores/sheetTokens';
+import { SHEET_CARD, groupByClass } from '../scores/sheetTokens';
 import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
@@ -47,28 +53,47 @@ function showsOf(recap) {
   return [];
 }
 
-const DIVISION_ORDER = { worldClass: 0, openClass: 1, aClass: 2 };
-
-function sortResults(results, sortBy) {
-  const rows = [...results];
-  if (sortBy === 'class') {
-    return rows.sort(
-      (a, b) =>
-        DIVISION_ORDER[a.division || 'aClass'] - DIVISION_ORDER[b.division || 'aClass'] ||
-        b.totalScore - a.totalScore
-    );
+/** Bold the top value in each caption column — real recaps mark box-toppers. */
+function boxToppersOf(results) {
+  const tops = {};
+  for (const caption of PODIUM_CAPTIONS) {
+    tops[caption] = Math.max(0, ...results.map((r) => r.captions?.[caption] ?? 0));
   }
-  if (sortBy === 'total') return rows.sort((a, b) => b.totalScore - a.totalScore);
-  // Caption sort: highest value in the chosen caption first.
-  return rows.sort((a, b) => (b.captions?.[sortBy] ?? 0) - (a.captions?.[sortBy] ?? 0));
+  return tops;
+}
+
+/**
+ * A show's field, split into division sections (World → Open → A). Each section
+ * is ranked on its OWN scores — a division's winner is the corps that won that
+ * division, not whoever happened to place first in a mixed field — and carries
+ * its own box-toppers. A caption sort reorders the rows inside a section while
+ * the placements stay put, exactly like the fantasy recaps.
+ */
+function buildSections(results, sortBy) {
+  return groupByClass(results || [], (row) => row.division || 'aClass').map(({ cls, rows }) => {
+    const ranked = [...rows]
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .map((row, index) => ({ row, place: index + 1 }));
+    return {
+      cls,
+      label: CLASS_LABELS[cls] || cls,
+      tops: boxToppersOf(rows),
+      rows:
+        sortBy === 'total'
+          ? ranked
+          : [...ranked].sort(
+              (a, b) => (b.row.captions?.[sortBy] ?? 0) - (a.row.captions?.[sortBy] ?? 0)
+            ),
+    };
+  });
 }
 
 /**
  * Format a single show as a monospace text sheet — pastes cleanly into Discord
  * (wrap in a code block) and group chats, the way FMA recaps circulated. One
- * block per show, matching the per-show cards on screen.
+ * block per show and one stanza per division, matching what is on screen.
  */
-function formatShowAsText(show, day, seasonName, cut) {
+function formatShowAsText(show, day, seasonName, cut, sections) {
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
   const head = fallbackMasthead(day);
   const advancing = new Set(cut?.uids || []);
@@ -77,32 +102,25 @@ function formatShowAsText(show, day, seasonName, cut) {
     // A pasted championship sheet has to carry the cut too — it is the whole
     // story of the night, and a plain list of scores hides it.
     ...(cut ? [`${cut.rule} (marked ">")`] : []),
-    '',
   ];
-  for (const row of [...(show.results || [])].sort((a, b) => a.place - b.place)) {
-    const name = `${advancing.has(row.uid) ? '> ' : ''}${row.corpsName || 'Unknown'}`;
-    lines.push(
-      `${String(row.place).padStart(2)}. ${name.padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
-    );
+  for (const section of sections) {
+    lines.push('');
+    if (section.label) lines.push(section.label);
+    for (const { row, place } of [...section.rows].sort((a, b) => a.place - b.place)) {
+      const name = `${advancing.has(row.uid) ? '> ' : ''}${row.corpsName || 'Unknown'}`;
+      lines.push(
+        `${String(place).padStart(2)}. ${name.padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
+      );
+    }
   }
   lines.push('');
   lines.push(`marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Class`);
   return '```\n' + lines.join('\n') + '\n```';
 }
 
-/** Bold the top value in each caption column — real recaps mark box-toppers. */
-function useBoxToppers(results) {
-  return useMemo(() => {
-    const tops = {};
-    for (const caption of PODIUM_CAPTIONS) {
-      tops[caption] = Math.max(0, ...results.map((r) => r.captions?.[caption] ?? 0));
-    }
-    return tops;
-  }, [results]);
-}
-
+// Sorting by class is gone: the sheet is always split by division now, so the
+// only question left is which column orders the rows inside a division.
 const SORT_OPTIONS = [
-  { id: 'class', label: 'Class' },
   { id: 'total', label: 'Total' },
   ...PODIUM_CAPTIONS.map((c) => ({ id: c, label: c })),
 ];
@@ -135,23 +153,10 @@ function SortBar({ sortBy, onChange }) {
 // masthead, box score, and footer/share. The day's sort control lives above
 // the cards, so a card is a pure box score.
 function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) {
-  const results = useMemo(() => sortResults(show.results || [], sortBy), [show.results, sortBy]);
-  const tops = useBoxToppers(results);
-  const showDivisionTag = useMemo(
-    () => new Set(results.map((r) => r.division || 'aClass')).size > 1,
-    [results]
-  );
+  const sections = useMemo(() => buildSections(show.results, sortBy), [show.results, sortBy]);
   // Who marches the next round, as the processor published it with this recap
   // (helpers/podium/store.championshipCutFor). Empty on all 46 other nights.
   const advancing = useMemo(() => new Set(cut?.uids || []), [cut]);
-  // The cut line only reads as a line when the sheet is ranked by total AND the
-  // cut ranks one combined field. Day 45 cuts Open and A separately, so in a
-  // mixed total-ranked list the survivors do not sit in one block — there the
-  // chips carry it alone.
-  const cutLineAfter =
-    cut && !cut.perDivision && sortBy === 'total'
-      ? results.findLastIndex((row) => advancing.has(row.uid))
-      : -1;
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
   const head = fallbackMasthead(day);
 
@@ -199,84 +204,121 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
               <th className="pl-2 text-right text-white">Total</th>
             </tr>
           </thead>
-          <tbody>
-            {results.map((row, rowIndex) => {
-              const isMine = userCorpsName && row.corpsName === userCorpsName;
-              const advances = advancing.has(row.uid);
-              return (
-                <tr
-                  key={row.uid}
-                  className={`border-b ${
-                    rowIndex === cutLineAfter && rowIndex < results.length - 1
-                      ? 'border-green-500/60'
-                      : 'border-line-subtle'
-                  } ${isMine ? 'bg-interactive/10' : ''} ${cut && !advances ? 'opacity-60' : ''}`}
-                >
-                  <td className="py-1.5 pr-2 sticky left-0 bg-surface-card">
-                    {/* Place · avatar · corps name — the corps avatar is shown
-                        the same way as the other classes (see CorpsIdentity in
-                        ScoresParts). */}
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-muted flex-shrink-0">{row.place}.</span>
-                      <TeamAvatar name={row.corpsName} logoUrl={row.avatarUrl} size="xs" />
-                      <div className="min-w-0">
-                        <div className="flex items-baseline gap-1.5 min-w-0">
-                          <span
-                            className={`font-bold truncate ${isMine ? 'text-interactive' : 'text-white'}`}
-                          >
-                            {row.corpsName}
-                          </span>
-                          {showDivisionTag && (
-                            <span className="text-[8px] font-bold uppercase text-muted flex-shrink-0">
-                              {(row.division || 'aClass').replace('Class', '')}
-                            </span>
-                          )}
-                          {advances && <AdvancesTag toDay={cut.toDay} />}
-                        </div>
-                        {/* Director credit + profile link under the corps name —
-                            displayed the same way as the other classes. */}
-                        {row.displayName &&
-                          (row.uid ? (
-                            <Link
-                              to={`/profile/${row.uid}`}
-                              className="block text-[10px] text-muted hover:text-interactive truncate"
-                            >
-                              {row.displayName}
-                            </Link>
-                          ) : (
-                            <span className="block text-[10px] text-muted truncate">
-                              {row.displayName}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
+          {/* One tbody per division — its own header row, its own ranking, its
+              own box-toppers, all sharing the table's columns so the numbers
+              still line up down the whole sheet. */}
+          {sections.map((section) => {
+            const advancingCount = cut
+              ? section.rows.filter(({ row }) => advancing.has(row.uid)).length
+              : 0;
+            // The cut line only reads as a line while the section is in score
+            // order; under a caption sort the rows no longer run from survivor
+            // to eliminated, so there the chips carry it alone. Splitting by
+            // division makes the line work on the per-division nights too
+            // (Day 45 cuts Open and A on their own standings).
+            const cutLineAfter =
+              cut && sortBy === 'total'
+                ? section.rows.findLastIndex(({ row }) => advancing.has(row.uid))
+                : -1;
+
+            return (
+              <tbody key={section.cls || 'other'}>
+                <tr className="border-b border-line">
+                  <th
+                    scope="rowgroup"
+                    className="text-left pt-3 pb-1 pr-2 sticky left-0 bg-surface-card text-[9px] font-bold uppercase tracking-wider text-muted"
+                  >
+                    {section.label}
+                  </th>
+                  <td
+                    colSpan={PODIUM_CAPTIONS.length + 4}
+                    className="pt-3 pb-1 text-right text-[9px] uppercase tracking-wider text-muted"
+                  >
+                    {advancingCount > 0 && (
+                      <span className="text-green-400 font-bold">{advancingCount} advance · </span>
+                    )}
+                    {section.rows.length} corps
                   </td>
-                  {PODIUM_CAPTIONS.map((caption) => {
-                    const value = row.captions?.[caption];
-                    const isTop = value != null && value === tops[caption];
-                    return (
-                      <td
-                        key={caption}
-                        className={`px-1.5 text-right ${
-                          isTop
-                            ? 'font-bold text-brand'
-                            : sortBy === caption
-                              ? 'text-white'
-                              : 'text-secondary'
-                        }`}
-                      >
-                        {fmt(value)}
-                      </td>
-                    );
-                  })}
-                  <td className="px-1.5 text-right text-muted">{fmt(row.geScore)}</td>
-                  <td className="px-1.5 text-right text-muted">{fmt(row.visualScore)}</td>
-                  <td className="px-1.5 text-right text-muted">{fmt(row.musicScore)}</td>
-                  <td className="pl-2 text-right font-bold text-white">{fmt(row.totalScore)}</td>
                 </tr>
-              );
-            })}
-          </tbody>
+                {section.rows.map(({ row, place }, rowIndex) => {
+                  const isMine = userCorpsName && row.corpsName === userCorpsName;
+                  const advances = advancing.has(row.uid);
+                  return (
+                    <tr
+                      key={row.uid}
+                      className={`border-b ${
+                        rowIndex === cutLineAfter && rowIndex < section.rows.length - 1
+                          ? 'border-green-500/60'
+                          : 'border-line-subtle'
+                      } ${isMine ? 'bg-interactive/10' : ''} ${
+                        cut && !advances ? 'opacity-60' : ''
+                      }`}
+                    >
+                      <td className="py-1.5 pr-2 sticky left-0 bg-surface-card">
+                        {/* Place · avatar · corps name — the corps avatar is
+                            shown the same way as the other classes (see
+                            CorpsIdentity in ScoresParts). */}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-muted flex-shrink-0">{place}.</span>
+                          <TeamAvatar name={row.corpsName} logoUrl={row.avatarUrl} size="xs" />
+                          <div className="min-w-0">
+                            <div className="flex items-baseline gap-1.5 min-w-0">
+                              <span
+                                className={`font-bold truncate ${isMine ? 'text-interactive' : 'text-white'}`}
+                              >
+                                {row.corpsName}
+                              </span>
+                              {advances && <AdvancesTag toDay={cut.toDay} />}
+                            </div>
+                            {/* Director credit + profile link under the corps
+                                name — displayed the same way as the other
+                                classes. */}
+                            {row.displayName &&
+                              (row.uid ? (
+                                <Link
+                                  to={`/profile/${row.uid}`}
+                                  className="block text-[10px] text-muted hover:text-interactive truncate"
+                                >
+                                  {row.displayName}
+                                </Link>
+                              ) : (
+                                <span className="block text-[10px] text-muted truncate">
+                                  {row.displayName}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      </td>
+                      {PODIUM_CAPTIONS.map((caption) => {
+                        const value = row.captions?.[caption];
+                        const isTop = value != null && value === section.tops[caption];
+                        return (
+                          <td
+                            key={caption}
+                            className={`px-1.5 text-right ${
+                              isTop
+                                ? 'font-bold text-brand'
+                                : sortBy === caption
+                                  ? 'text-white'
+                                  : 'text-secondary'
+                            }`}
+                          >
+                            {fmt(value)}
+                          </td>
+                        );
+                      })}
+                      <td className="px-1.5 text-right text-muted">{fmt(row.geScore)}</td>
+                      <td className="px-1.5 text-right text-muted">{fmt(row.visualScore)}</td>
+                      <td className="px-1.5 text-right text-muted">{fmt(row.musicScore)}</td>
+                      <td className="pl-2 text-right font-bold text-white">
+                        {fmt(row.totalScore)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            );
+          })}
         </table>
       </div>
 
@@ -290,13 +332,13 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
             </>
           ) : (
             <>
-              Box-toppers in <span className="text-brand font-bold">gold</span> · full captions —
-              Podium Class only
+              Split by division · box-toppers in <span className="text-brand font-bold">gold</span>{' '}
+              · full captions — Podium Class only
             </>
           )}
         </span>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <ShareButton getText={() => formatShowAsText(show, day, seasonName, cut)} />
+          <ShareButton getText={() => formatShowAsText(show, day, seasonName, cut, sections)} />
           <span className="font-bold text-muted">
             marching.art{seasonName ? ` · ${seasonName}` : ''}
           </span>

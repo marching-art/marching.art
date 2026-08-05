@@ -59,6 +59,9 @@ function toEntry(entry, index, previousByUid, biggestRiserUid, periodLabel) {
     // picture each corps like the recap rows and fantasy classes.
     displayName: entry.displayName ?? null,
     avatarUrl: entry.avatarUrl ?? null,
+    // The division this corps competes in, so the standings sheet can split the
+    // field into World/Open/A the way every other score sheet does (§5.7).
+    division: entry.division || "aClass",
     total: entry.lastTotal ?? null,
     // GE/Visual/Music breakdown so the standings sheet shows caption columns.
     ge: entry.lastGe ?? null,
