@@ -31,6 +31,7 @@ const COLORS = {
   brand: "#EAB308", // brand — identity and reward only
   interactive: "#60A5FA", // interactive — links and actions (foreground tone)
   interactiveHover: "#93C5FD", // interactive.hover
+  success: "#00C853", // success — the championship-week advancement accent
 };
 
 // Matches the app's font-sans stack closely enough for a static page; the

@@ -223,6 +223,175 @@ export function formatStandingsAsText(meta: ShareSheetMeta, rows: ShareRow[]): s
 }
 
 // =============================================================================
+// CHAMPIONSHIP WEEK ADVANCEMENT (days 45, 47, 48 — "who marches tomorrow")
+// =============================================================================
+// Three nights of championship week end with a cut. The scorer decides them in
+// functions/src/helpers/scoringAwards.js (buildChampionshipConfig) when it
+// builds the NEXT night's field; the same rules are mirrored here so the recap
+// sheet can mark the cut on the night it happens instead of leaving players to
+// count rows themselves. Discord already announces this (helpers/
+// championshipCuts.js) — this is the in-app rendering of the same fact.
+//
+// Kept deliberately in lockstep with the server:
+//   - Day 45 is a per-class cut with a STRICT slice (top 8 Open, top 4 A) —
+//     no tie inclusion, matching `slice(0, 8)` / `slice(0, 4)`.
+//   - Days 47 and 48 rank the whole field across World/Open/A and then include
+//     everyone tied with the last qualifying score, matching the server's
+//     `filter(r => r.totalScore >= nthPlaceScore)`.
+// A tie exactly on a strict day-45 boundary is resolved by sort order in both
+// places; the client sorts the same recap rows the server does, so the two
+// agree in practice, but that one case is an ordering coincidence rather than
+// a guarantee.
+
+/** Classes that compete for a championship-week slot (SoundSport never does). */
+const ADVANCEMENT_CLASSES = ['worldClass', 'openClass', 'aClass'];
+
+export interface AdvancementRow {
+  uid?: string;
+  corps?: string;
+  corpsName?: string;
+  corpsClass?: string;
+  score?: number;
+  totalScore?: number;
+}
+
+interface CutRule {
+  /** The night the advancing corps march. */
+  advancesToDay: number;
+  /** Full name of the show they advance to. */
+  eventName: string;
+  /** Short label for badges and banners. */
+  shortName: string;
+  /** Display copy for the rule — never used to compute anything. */
+  rule: string;
+  /** Per-class cut sizes (day 45), or null for a single cross-class cut. */
+  perClass: Array<{ corpsClass: string; take: number }> | null;
+  /** Cross-class cut size, or null when the cut is per class. */
+  take: number | null;
+}
+
+/** The nights that end in a cut, keyed by the night whose results decide it. */
+export const ADVANCEMENT_CUTS: Record<number, CutRule> = {
+  45: {
+    advancesToDay: 46,
+    eventName: 'Open and A Class Finals',
+    shortName: 'Open & A Class Finals',
+    rule: 'Top 8 Open Class · Top 4 A Class advance',
+    perClass: [
+      { corpsClass: 'openClass', take: 8 },
+      { corpsClass: 'aClass', take: 4 },
+    ],
+    take: null,
+  },
+  47: {
+    advancesToDay: 48,
+    eventName: 'marching.art World Championship Semifinals',
+    shortName: 'Semifinals',
+    rule: 'Top 25 advance to Semifinals',
+    perClass: null,
+    take: 25,
+  },
+  48: {
+    advancesToDay: 49,
+    eventName: 'marching.art World Championship Finals',
+    shortName: 'Finals',
+    rule: 'Top 12 advance to Finals',
+    perClass: null,
+    take: 12,
+  },
+};
+
+export interface AdvancementResult {
+  /** The night being displayed (the one whose results decide the cut). */
+  scoredDay: number;
+  advancesToDay: number;
+  eventName: string;
+  shortName: string;
+  rule: string;
+  /** True when the cut is really two separate competitions (day 45). */
+  perClass: boolean;
+  /** Keys (see advancementKey) of every corps that marches tomorrow. */
+  advancing: Set<string>;
+  advancingCount: number;
+  /** Eligible corps on the night, advancing or not. */
+  fieldCount: number;
+  missedCount: number;
+  /** Lowest advancing score — the cut line. Null when nobody advances. */
+  cutLine: number | null;
+}
+
+/**
+ * Identity for an advancement lookup. A director can field one corps per
+ * class, so the class is part of the key; corps name is the fallback for
+ * legacy recaps written without uids.
+ */
+export function advancementKey(row: AdvancementRow): string {
+  const id = row.uid || row.corpsName || row.corps || '';
+  return `${id}_${row.corpsClass || ''}`;
+}
+
+const advancementScore = (row: AdvancementRow): number => row.score ?? row.totalScore ?? 0;
+
+/**
+ * Who advances out of a championship-week night, or null on any night that
+ * decides nothing (every night outside days 45/47/48, and any night with no
+ * eligible results).
+ *
+ * @param scores Every eligible result from the night, across all of its shows —
+ *   the server ranks the day's whole field, not one show at a time.
+ * @param day The competition day those results were scored on.
+ */
+export function computeAdvancement(
+  scores: AdvancementRow[] | null | undefined,
+  day: number | null | undefined
+): AdvancementResult | null {
+  const cut = day != null ? ADVANCEMENT_CUTS[day] : null;
+  if (!cut) return null;
+
+  const field = (scores || []).filter((row) => ADVANCEMENT_CLASSES.includes(row.corpsClass || ''));
+  if (field.length === 0) return null;
+
+  const ranked = [...field].sort((a, b) => advancementScore(b) - advancementScore(a));
+
+  let advancingRows: AdvancementRow[];
+  if (cut.perClass) {
+    // Two separate competitions — one cross-class ranking would be nonsense.
+    advancingRows = cut.perClass.flatMap(({ corpsClass, take }) =>
+      ranked.filter((row) => row.corpsClass === corpsClass).slice(0, take)
+    );
+  } else {
+    const take = cut.take as number;
+    advancingRows =
+      ranked.length > take
+        ? // Ties on the cut line all advance, exactly as the scorer enrolls them.
+          ranked.filter((row) => advancementScore(row) >= advancementScore(ranked[take - 1]))
+        : ranked;
+  }
+
+  const advancing = new Set(advancingRows.map(advancementKey));
+  // The per-class branch can only be counted against its own eligible classes:
+  // on day 45 a World Class row in the recap is not competing for a slot.
+  const fieldCount = cut.perClass
+    ? field.filter((row) => cut.perClass?.some((entry) => entry.corpsClass === row.corpsClass))
+        .length
+    : field.length;
+
+  return {
+    scoredDay: day as number,
+    advancesToDay: cut.advancesToDay,
+    eventName: cut.eventName,
+    shortName: cut.shortName,
+    rule: cut.rule,
+    perClass: Boolean(cut.perClass),
+    advancing,
+    advancingCount: advancing.size,
+    fieldCount,
+    missedCount: Math.max(0, fieldCount - advancing.size),
+    cutLine: advancingRows.length ? Math.min(...advancingRows.map(advancementScore)) : null,
+  };
+}
+
+// =============================================================================
 // TWO-NIGHT EVENT COMBINED STANDINGS (Eastern Classic, days 41-42 — §5.11)
 // =============================================================================
 

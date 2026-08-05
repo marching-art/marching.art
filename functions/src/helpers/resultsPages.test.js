@@ -112,6 +112,47 @@ describe("buildDayResultsHtml", () => {
     assert.ok(!html.includes("82.000"));
   });
 
+  test("marks who advances on a championship-week cut night", () => {
+    // Day 47 Prelims: 30 corps, the top 25 march Semifinals. The advancing set
+    // comes from the scorer's own buildChampionshipConfig via cutForDrop, so
+    // this page can never name a corps the scorer then leaves out.
+    const prelims = {
+      shows: [
+        {
+          eventName: "marching.art World Championship Prelims",
+          results: Array.from({ length: 30 }, (_, i) => ({
+            uid: `u${i + 1}`,
+            corpsClass: "worldClass",
+            corpsName: `Corps ${i + 1}`,
+            totalScore: Number((95 - i * 0.5).toFixed(3)),
+            geScore: 30,
+            visualScore: 30,
+            musicScore: 30,
+          })),
+        },
+      ],
+    };
+    const page = buildDayResultsHtml({
+      seasonUid: "season42",
+      day: 47,
+      recap: prelims,
+      days: [46, 47, 48],
+    });
+    assert.ok(page.includes("Top 25 from Prelims"));
+    assert.ok(page.includes("25 corps advance from Day 47"));
+    assert.ok(page.includes("5 corps miss the cut, at 83.000"));
+    assert.ok(page.includes("25 advance"));
+    // One "Advances" tag per advancing corps.
+    assert.equal((page.match(/class="adv-tag"/g) || []).length, 25);
+  });
+
+  test("says nothing about advancement on an ordinary night", () => {
+    // The .adv-tag rule is always in the stylesheet; what must be absent is
+    // any row actually wearing it, plus the cut banner.
+    assert.ok(!html.includes('class="adv-tag"'));
+    assert.ok(!html.includes("advance from Day"));
+  });
+
   test("returns null for an empty recap", () => {
     assert.equal(
       buildDayResultsHtml({ seasonUid: "s", day: 1, recap: { shows: [] }, days: [] }),

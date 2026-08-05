@@ -33,6 +33,7 @@ describe("designTokens", () => {
     assert.equal(COLORS.brand, colors.brand.DEFAULT, "brand.DEFAULT");
     assert.equal(COLORS.interactive, colors.interactive.DEFAULT, "interactive.DEFAULT");
     assert.equal(COLORS.interactiveHover, colors.interactive.hover, "interactive.hover");
+    assert.equal(COLORS.success, colors.success, "success");
   });
 
   test("keeps gold out of the generic link role", () => {

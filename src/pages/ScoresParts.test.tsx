@@ -202,3 +202,55 @@ describe('FantasyRecapsView — lazy mode (materialized standings)', () => {
     expect(screen.getByText(/loading day 2/i)).toBeInTheDocument();
   });
 });
+
+describe('FantasyRecapsView — championship-week cuts', () => {
+  // A prelims field big enough to be cut: 30 World Class corps, 95.000 down.
+  const prelimsField = (n: number) =>
+    Array.from({ length: n }, (_, i) => showScore(`Corps ${i + 1}`, 95 - i * 0.5));
+
+  const cutNight = (day: number, eventName: string, n: number) =>
+    show(eventName, day, prelimsField(n));
+
+  it('marks the top 25 as advancing on World Championship Prelims (day 47)', () => {
+    wrap(<RecapsView shows={[cutNight(47, 'marching.art World Championship Prelims', 30)]} />);
+    // Stated in the banner over the sheet and again in its footer legend.
+    expect(screen.getAllByText(/top 25 advance to semifinals/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/25 advance to day 48/i)).toBeInTheDocument();
+    expect(screen.getByText(/5 miss the cut at/i)).toBeInTheDocument();
+    // One ADV tag per advancing corps, and none for the five that are out.
+    expect(screen.getAllByText('Adv')).toHaveLength(25);
+  });
+
+  it('marks the top 12 as advancing on Semifinals (day 48)', () => {
+    wrap(<RecapsView shows={[cutNight(48, 'World Championship Semifinals', 20)]} />);
+    expect(screen.getAllByText(/top 12 advance to finals/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Adv')).toHaveLength(12);
+  });
+
+  it('cuts day 45 per class — top 8 Open, top 4 A', () => {
+    const openField = Array.from({ length: 10 }, (_, i) => ({
+      ...showScore(`Open ${i + 1}`, 80 - i * 0.5),
+      corpsClass: 'openClass',
+    }));
+    const aField = Array.from({ length: 6 }, (_, i) => ({
+      ...showScore(`A ${i + 1}`, 70 - i * 0.5),
+      corpsClass: 'aClass',
+    }));
+    wrap(<RecapsView shows={[show('Open and A Class Prelims', 45, [...openField, ...aField])]} />);
+    expect(screen.getAllByText(/top 8 open class · top 4 a class advance/i).length).toBeGreaterThan(
+      0
+    );
+    expect(screen.getAllByText('Adv')).toHaveLength(12);
+  });
+
+  it('leaves ordinary competition nights untouched', () => {
+    wrap(<RecapsView shows={[show('Midwest Classic', 20, prelimsField(30))]} />);
+    expect(screen.queryAllByText('Adv')).toHaveLength(0);
+    expect(screen.queryByText(/advance to day/i)).not.toBeInTheDocument();
+  });
+
+  it('leaves Finals night untouched — nothing advances past it', () => {
+    wrap(<RecapsView shows={[cutNight(49, 'marching.art World Championship Finals', 12)]} />);
+    expect(screen.queryAllByText('Adv')).toHaveLength(0);
+  });
+});

@@ -11,23 +11,21 @@
 // sheets stay condensed to GE/VIS/MUS; full per-caption columns are Podium-only.
 
 import React, { useMemo, memo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Trophy, Music, ChevronRight, MapPin, Medal, Users, Calendar } from 'lucide-react';
-import { TeamAvatar } from '../components/ui/TeamAvatar';
+import { Trophy, MapPin, Calendar, Scissors } from 'lucide-react';
 import { formatEventName } from '../utils/season';
 import {
-  RATING_CONFIG,
   CLASS_LABELS,
-  getSoundSportRating,
-  seededShuffle,
   getCaptionBreakdown,
   mergeTwoNightShows,
   formatStandingsAsText,
   computeRankDeltas,
+  computeAdvancement,
+  advancementKey,
   TWO_NIGHT_DAYS,
 } from '../utils/scoresUtils';
 import { useHorizontalTabSlide } from '../components/scores/useHorizontalTabSlide';
 import { PillTabControl } from '../components/scores/PillTabControl';
+import { SoundSportMedalList } from '../components/scores/SoundSportMedalList';
 import { useDayRecapShows } from '../hooks/useScoresData';
 import { scoresShareUrl } from '../utils/shareSheet';
 // Shared box-score primitives — the single source of truth for the sheet look,
@@ -82,6 +80,44 @@ const buildClassRows = (classScores, sortBy) => {
   return [...withPlace].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
 };
 
+// =============================================================================
+// CHAMPIONSHIP-WEEK CUT MARKERS — days 45/47/48 end with a cut, and the recap
+// sheet is where players learn whether they survived it. The advancing set is
+// computed from the night's whole field (utils/scoresUtils.computeAdvancement,
+// which mirrors the scorer's buildChampionshipConfig) and threaded down here.
+// =============================================================================
+
+// Chip beside the corps name on a row that marches tomorrow.
+const AdvancesTag = ({ advancesToDay }) => (
+  <span
+    title={`Advances to Day ${advancesToDay}`}
+    className="flex-shrink-0 text-[8px] font-bold uppercase tracking-wider px-1 py-[1px] bg-green-500/15 text-green-400"
+  >
+    Adv
+  </span>
+);
+
+// Banner under the masthead stating the night's cut rule and its outcome.
+const CutBanner = ({ advancement }) => (
+  <div className="flex items-center gap-2 px-2 py-1.5 bg-green-500/5 border-l-2 border-green-500/60">
+    <Scissors className="w-3 h-3 text-green-400 flex-shrink-0" aria-hidden="true" />
+    <div className="min-w-0 text-[10px] leading-tight">
+      <span className="font-bold uppercase tracking-wider text-green-400">{advancement.rule}</span>
+      <span className="text-muted">
+        {' · '}
+        {advancement.advancingCount} advance to Day {advancement.advancesToDay}
+        {advancement.missedCount > 0 && advancement.cutLine != null && (
+          <>
+            {' · '}
+            {advancement.missedCount} miss the cut at{' '}
+            <span className="tabular-nums">{advancement.cutLine.toFixed(3)}</span>
+          </>
+        )}
+      </span>
+    </div>
+  </div>
+);
+
 const RecapDataGrid = memo(
   ({
     scores,
@@ -92,6 +128,7 @@ const RecapDataGrid = memo(
     offSeasonDay,
     userCorpsName,
     sortBy = 'total',
+    advancement = null,
   }) => {
     // Group the show's corps by class, then rank/sort within each class.
     const sections = useMemo(() => {
@@ -110,14 +147,18 @@ const RecapDataGrid = memo(
       ];
       return order.map((cls) => {
         const rows = buildClassRows(byClass.get(cls), sortBy);
+        const advancingCount = advancement
+          ? rows.filter(({ score }) => advancement.advancing.has(advancementKey(score))).length
+          : 0;
         return {
           cls,
           label: CLASS_LABELS[cls] || cls,
           rows,
           tops: captionTops(rows.map((r) => r.captions)),
+          advancingCount,
         };
       });
-    }, [scores, sortBy]);
+    }, [scores, sortBy, advancement]);
 
     const activeCap = sortBy === 'total' ? null : sortBy;
 
@@ -128,11 +169,18 @@ const RecapDataGrid = memo(
           formatStandingsAsText(
             {
               title: `${formatEventName(eventName)} — ${section.label}`,
-              subtitle: [location, date].filter(Boolean).join(' · ') || null,
+              subtitle:
+                [location, date, advancement && `${advancement.rule} (marked ">")`]
+                  .filter(Boolean)
+                  .join(' · ') || null,
             },
             section.rows.map(({ score, captions, place }) => ({
               place,
-              corpsName: score.corpsName || score.corps,
+              // The pasted sheet has to carry the cut too — it is the whole
+              // story of the night, and a plain list of scores hides it.
+              corpsName: `${advancement?.advancing.has(advancementKey(score)) ? '> ' : ''}${
+                score.corpsName || score.corps
+              }`,
               total: score.score ?? score.totalScore ?? 0,
               captions,
             }))
@@ -155,6 +203,9 @@ const RecapDataGrid = memo(
       <div className={`${SHEET_CARD} space-y-3`}>
         <SheetMasthead title={formatEventName(eventName)} location={location} date={date} />
 
+        {/* Championship-week cut — what tonight's scores decided */}
+        {advancement && <CutBanner advancement={advancement} />}
+
         {sections.map((section) => (
           <div key={section.cls} className="space-y-1.5">
             {/* Per-class subheader — same shape as the Eastern combined sheet */}
@@ -163,22 +214,43 @@ const RecapDataGrid = memo(
                 {section.label}
               </span>
               <span className="text-[9px] text-muted tabular-nums">
+                {advancement && (
+                  <span className="text-green-400 font-bold">
+                    {section.advancingCount} advance ·{' '}
+                  </span>
+                )}
                 {section.rows.length} corps
               </span>
             </div>
             <BoxScoreHead active={activeCap} />
             <div>
-              {section.rows.map(({ score, captions, place }) => {
+              {section.rows.map(({ score, captions, place }, rowIndex) => {
                 const isUserCorps =
                   userCorpsName &&
                   (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
                     score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
+                const advances = advancement
+                  ? advancement.advancing.has(advancementKey(score))
+                  : false;
+                // The cut line is only meaningful while the sheet is in score
+                // order; under a caption sort the rows no longer run from
+                // survivor to eliminated, so only the per-row tags remain.
+                const nextRow = section.rows[rowIndex + 1];
+                const isCutLine = Boolean(
+                  advancement &&
+                  sortBy === 'total' &&
+                  advances &&
+                  nextRow &&
+                  !advancement.advancing.has(advancementKey(nextRow.score))
+                );
 
                 return (
                   <div
                     key={score.uid || score.corpsName || place}
-                    className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
-                      isUserCorps ? 'bg-interactive/10' : ''
+                    className={`flex items-center gap-2 px-1 py-1.5 border-b last:border-b-0 ${
+                      isCutLine ? 'border-green-500/60' : 'border-line-subtle'
+                    } ${isUserCorps ? 'bg-interactive/10' : ''} ${
+                      advancement && !advances ? 'opacity-60' : ''
                     }`}
                   >
                     <CorpsIdentity
@@ -188,6 +260,9 @@ const RecapDataGrid = memo(
                       displayName={score.displayName}
                       uid={score.uid}
                       avatarUrl={score.avatarUrl}
+                      tag={
+                        advances ? <AdvancesTag advancesToDay={advancement.advancesToDay} /> : null
+                      }
                     />
                     <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                       <CaptionValue
@@ -217,7 +292,11 @@ const RecapDataGrid = memo(
         ))}
 
         <SheetFooter
-          note="Split by class · GE/VIS/MUS shown · box-toppers in gold"
+          note={
+            advancement
+              ? `ADV = marches Day ${advancement.advancesToDay} · ${advancement.rule}`
+              : 'Split by class · GE/VIS/MUS shown · box-toppers in gold'
+          }
           action={<ShareButton getText={shareText} getUrl={shareUrl} />}
         />
       </div>
@@ -435,6 +514,20 @@ const FantasyRecapsView = ({
     [lazy, easternN1, easternN2, shows]
   );
 
+  // Championship-week cut for this night, if it is one of the three that end in
+  // one. Derived from the day's ENTIRE field (every show, flattened) because
+  // that is the field the scorer ranks when it builds tomorrow's lineup — a
+  // per-show cut would be a different, wrong answer if a night ever carried
+  // more than one event. Null on all 46 other nights, so nothing changes there.
+  const advancement = useMemo(
+    () =>
+      computeAdvancement(
+        dayShows.flatMap((show) => show.scores || []),
+        activeDay
+      ),
+    [dayShows, activeDay]
+  );
+
   if (days.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -499,6 +592,7 @@ const FantasyRecapsView = ({
             offSeasonDay={show.offSeasonDay}
             userCorpsName={userCorpsName}
             sortBy={sortBy}
+            advancement={advancement}
           />
         ))
       ) : (
@@ -507,196 +601,6 @@ const FantasyRecapsView = ({
           <p className="text-muted text-sm">No shows on this day</p>
         </div>
       )}
-    </div>
-  );
-};
-
-// =============================================================================
-// SOUNDSPORT MEDAL LIST - GROUPED BY EVENT (rating-based, no numeric scores)
-// Keeps its green medal identity but adopts the Podium sheet card + masthead.
-// =============================================================================
-
-// Mock event names for shows that may not have proper names
-const MOCK_EVENT_NAMES = [
-  'SoundSport International Music & Food Festival',
-  'DCI Indianapolis SoundSport',
-  'Atlanta SoundSport Showcase',
-  'Midwest SoundSport Classic',
-  'SoundSport Championship Series',
-  'Summer Music Games SoundSport',
-];
-
-const SoundSportMedalList = ({ shows }) => {
-  // Group results by event, preserving show context
-  const groupedResults = useMemo(() => {
-    const groups = [];
-    let mockNameIndex = 0;
-
-    shows
-      .filter((show) => show.scores?.some((s) => s.corpsClass === 'soundSport'))
-      .forEach((show) => {
-        const soundSportScores = show.scores
-          .filter((s) => s.corpsClass === 'soundSport')
-          .map((score) => ({
-            ...score,
-            rating: getSoundSportRating(score.score),
-          }));
-
-        if (soundSportScores.length > 0) {
-          // Find best in show (highest score at this event)
-          const maxScore = Math.max(...soundSportScores.map((s) => s.score || 0));
-          const bestInShowCorps =
-            soundSportScores.find((s) => s.score === maxScore)?.corps ||
-            soundSportScores.find((s) => s.score === maxScore)?.corpsName;
-
-          // Mark best in show
-          soundSportScores.forEach((score) => {
-            const corpsName = score.corps || score.corpsName;
-            score.isBestInShow = corpsName === bestInShowCorps;
-          });
-
-          // Use show eventName or mock one for display
-          const eventName =
-            show.eventName || MOCK_EVENT_NAMES[mockNameIndex % MOCK_EVENT_NAMES.length];
-
-          // Shuffle to avoid implied rankings (SoundSport is rating-based, not placement-based)
-          // Use deterministic shuffle so order is consistent on re-renders
-          const shuffledScores = seededShuffle(soundSportScores, eventName);
-          mockNameIndex++;
-
-          groups.push({
-            eventName,
-            date: show.date || 'TBD',
-            location: show.location || 'Various Locations',
-            scores: shuffledScores,
-          });
-        }
-      });
-
-    return groups;
-  }, [shows]);
-
-  // Aggregate stats across all groups
-  const stats = useMemo(() => {
-    const counts = { Gold: 0, Silver: 0, Bronze: 0, Participation: 0, total: 0 };
-    groupedResults.forEach((group) => {
-      group.scores.forEach((r) => {
-        counts[r.rating]++;
-        counts.total++;
-      });
-    });
-    return counts;
-  }, [groupedResults]);
-
-  if (groupedResults.length === 0) {
-    return (
-      <div className="p-8 text-center">
-        <Music className="w-8 h-8 text-muted mx-auto mb-2" />
-        <p className="text-muted text-sm">No SoundSport results yet</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {/* Stats summary card */}
-      <div className={`${SHEET_CARD} flex items-center justify-between`}>
-        <div className="flex items-center gap-2">
-          <Music className="w-4 h-4 text-green-500" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            SoundSport Results
-          </span>
-        </div>
-        <div className="flex items-center gap-3 text-[10px]">
-          <span className="flex items-center gap-1 text-brand">
-            <Medal className="w-3 h-3" />
-            {stats.Gold}
-          </span>
-          <span className="flex items-center gap-1 text-secondary">
-            <Medal className="w-3 h-3" />
-            {stats.Silver}
-          </span>
-          <span className="flex items-center gap-1 text-orange-400">
-            <Medal className="w-3 h-3" />
-            {stats.Bronze}
-          </span>
-          <span className="text-muted">
-            <Users className="w-3 h-3 inline mr-1" />
-            {stats.total}
-          </span>
-        </div>
-      </div>
-
-      {/* Grouped Results by Event — one sheet card per event */}
-      {groupedResults.map((group, groupIdx) => (
-        <div key={groupIdx} className={`${SHEET_CARD} space-y-2.5`}>
-          <SheetMasthead
-            title={formatEventName(group.eventName)}
-            location={group.location}
-            date={group.date}
-          />
-          <div>
-            {group.scores.map((result, idx) => {
-              const config = RATING_CONFIG[result.rating];
-              return (
-                <div
-                  key={idx}
-                  className="px-1 py-1.5 flex items-center justify-between gap-2 border-b border-line-subtle last:border-b-0"
-                >
-                  {/* Left: Medal Icon + Avatar + Ensemble Name + Director */}
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div
-                      className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}
-                    >
-                      <Medal className={`w-4 h-4 ${config.text}`} />
-                    </div>
-                    <TeamAvatar
-                      name={result.corps || result.corpsName}
-                      logoUrl={result.avatarUrl}
-                      size="xs"
-                    />
-                    <div className="min-w-0">
-                      <span className="font-bold text-white text-[11px] block truncate">
-                        {result.corps || result.corpsName}
-                      </span>
-                      {result.displayName &&
-                        (result.uid ? (
-                          <Link
-                            to={`/profile/${result.uid}`}
-                            className="text-[10px] text-muted hover:text-interactive block truncate"
-                          >
-                            {result.displayName}
-                          </Link>
-                        ) : (
-                          <span className="text-[10px] text-muted block truncate">
-                            {result.displayName}
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-
-                  {/* Right: Best in Show + Rating Badge */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {result.isBestInShow && <BlueRibbonIcon className="w-5 h-5" />}
-                    <span className={`text-[10px] font-bold uppercase px-2 py-1 ${config.badge}`}>
-                      {result.rating}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      {/* One scoring-explainer link for the whole page, not per show */}
-      <Link
-        to="/guide"
-        className="flex items-center gap-2 text-[10px] text-green-400 hover:text-green-300 font-bold uppercase tracking-wider transition-colors px-1 pt-1"
-      >
-        About SoundSport scoring
-        <ChevronRight className="w-3 h-3" />
-      </Link>
     </div>
   );
 };
