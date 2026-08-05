@@ -10,6 +10,7 @@ const {
   runPodiumStage,
   runDiscordStage,
   runFanFavoriteStage,
+  runPodiumScoreDropStage,
   runEasternClassicStage,
 } = require("./nightlyStages");
 const { resetFeatureCache } = require("../helpers/features");
@@ -291,6 +292,85 @@ describe("nightly Fan Favorite announcement stage", () => {
     });
     assert.equal(result.status, "ran");
     assert.deepEqual(result.announcements, []);
+  });
+});
+
+describe("nightly Podium score-drop stage", () => {
+  const okFetch = async () => ({ ok: true, status: 204, text: async () => "" });
+  const season = {
+    status: "off-season",
+    seasonUid: "test_season",
+    name: "Offseason IX",
+    schedule: { startDate: startDaysAgo(10) },
+  };
+
+  beforeEach(() => resetFeatureCache());
+
+  test("disabled when no #scores webhook is configured", async () => {
+    const db = fakeDb({ "game-settings/features": { podiumClass: true } });
+    assert.deepEqual(await runPodiumScoreDropStage(db, ""), { status: "disabled" });
+    assert.deepEqual(await runPodiumScoreDropStage(db, undefined), { status: "disabled" });
+  });
+
+  test("silent while Podium is flagged off", async () => {
+    const db = fakeDb({ "game-settings/season": season });
+    const result = await runPodiumScoreDropStage(db, "https://d.test/s", okFetch);
+    assert.equal(result.status, "podium-disabled");
+  });
+
+  test("no season doc: skipped safely", async () => {
+    const db = fakeDb({ "game-settings/features": { podiumClass: true } });
+    assert.equal(
+      (await runPodiumScoreDropStage(db, "https://d.test/s", okFetch)).status,
+      "no-season"
+    );
+  });
+
+  test("posts the night the Podium stage just processed", async () => {
+    let posted = null;
+    const fetchImpl = async (url, options) => {
+      posted = JSON.parse(options.body);
+      return { ok: true, status: 204, text: async () => "" };
+    };
+    const db = fakeDb({
+      "game-settings/features": { podiumClass: true },
+      "game-settings/season": season,
+      "podium-recaps/test_season/days/12": {
+        shows: [
+          {
+            eventName: "Marion Regional",
+            results: [
+              { uid: "u1", corpsName: "Colts", division: "openClass", totalScore: 78.4 },
+              { uid: "u2", corpsName: "Cavaliers", division: "worldClass", totalScore: 81.2 },
+            ],
+          },
+        ],
+      },
+    });
+
+    // The day is the one the Podium stage reported, not a clock derivation.
+    const result = await runPodiumScoreDropStage(db, "https://d.test/s", fetchImpl, {
+      competitionDay: 12,
+    });
+    assert.equal(result.status, "ran");
+    assert.deepEqual(result.announcement, { kind: "podium-drop-day-12", status: "posted" });
+    assert.match(posted.embeds[0].title, /Day 12 Podium Class Scores/);
+    // Ranked within the show, regardless of the order the recap stored.
+    assert.match(posted.embeds[0].fields[0].value, /🥇 \*\*Cavaliers\*\*/);
+    assert.equal(db.writes["scoring_runs/test_season_discord_podium_day12"].status, "completed");
+  });
+
+  test("a night Podium did not score announces nothing", async () => {
+    const db = fakeDb({
+      "game-settings/features": { podiumClass: true },
+      "game-settings/season": season,
+    });
+    const result = await runPodiumScoreDropStage(db, "https://d.test/s", okFetch, {
+      competitionDay: 20,
+    });
+    assert.equal(result.status, "ran");
+    assert.equal(result.announcement.status, "no-recap");
+    assert.deepEqual(db.writes, {});
   });
 });
 

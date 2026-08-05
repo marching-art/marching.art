@@ -18,7 +18,7 @@ embed helpers.
 
 | Channel            | Secret                              | Posts                                                                                                                                               |
 | ------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), all-time records, championship-week cuts, season champions                                       |
+| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), the Podium Class drop, all-time records, championship-week cuts, season champions                |
 | **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, championship-week caption windows, registration deadlines, Eastern Classic night lineups |
 | **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles, the weekly Podium Report                                                                                                        |
 | **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                                                                                     |
@@ -106,6 +106,40 @@ The companion morning push (`scoreDropPushJob` in
 `functions/src/scheduled/pushNotifications.js`, 8 AM ET) notifies each
 director who performed last night via FCM, gated by the existing
 `pushPreferences.scoreUpdate` setting.
+
+### The Podium Class drop
+
+Podium scores every night on its own board, and until it had a drop of its own
+those results landed on a page nobody was told had updated. It posts to the
+**same channel** — a score drop is a score drop — as a **separate message**,
+for two reasons: the two boards are never cross-ranked
+([`PODIUM.md`](PODIUM.md) §7.2), and one message mixing them invites exactly
+that comparison; and they are scored by different jobs at different hours
+(Podium at 9 PM ET nightly), so there is no single moment that could carry
+both.
+
+Podium is scored **per show**, so the post reads the night out show by show —
+each show's own podium, divisions named per row — and never composes a
+cross-show ranking. A tour night can carry a dozen self-selected shows, so the
+biggest fields lead and the rest are counted in the footer. The night's high
+score is stated as a number, not as a placement.
+
+In championship week the cut the night decided rides the same message, read
+straight off `recap.championshipCut` — the field the processor published with
+the recap (`store.championshipCutFor`), the same one the recap sheet renders.
+Nothing in the announcement path re-derives who advances.
+
+- **Code:** `functions/src/helpers/podium/scoreDropDiscord.js`, wired as
+  `runPodiumScoreDropStage` in `functions/src/scheduled/nightlyStages.js` and
+  run right after the Podium stage by both callers
+  (`scheduled/dailyProcessors.js` at 2 AM, and `scheduled/dropDispatcher.js`'s
+  9 PM `podiumNightly` once drop scheduling is on). Isolated the same way as
+  every other stage.
+- **Idempotency:** one `scoring_runs` lease per night,
+  `{seasonUid}_discord_podium_day{N}`. Nights with no recap, rest nights and
+  spring training claim nothing at all.
+- **Setup:** shares `DISCORD_SCORES_WEBHOOK_URL` with the fantasy drop — no
+  new secret. Both jobs already declare it.
 
 ---
 

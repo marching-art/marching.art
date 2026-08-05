@@ -634,10 +634,10 @@ exports.podiumNightly = onSchedule({
   // Errors are swallowed below (isolation contract), so scheduler retries
   // would never fire; the podium stage's own leases self-heal next night.
   retryCount: 0,
-  // The Fan Favorite ballots (#announcements) and the weekly Podium Report
-  // (#news) ride this job — both announce off the state the Podium stage
-  // writes — so it needs both webhooks.
-  secrets: [discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
+  // Three announcements ride this job, all off the state the Podium stage
+  // writes: the Podium score drop (#scores), the Fan Favorite ballots
+  // (#announcements) and the weekly Podium Report (#news).
+  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
 }, async () => {
   const db = getDb();
   if (!(await isDropSchedulingEnabled(db))) {
@@ -670,6 +670,22 @@ exports.podiumNightly = onSchedule({
     // logged and swallowed, never propagated into scheduler retries of the
     // fantasy pipeline (which no longer shares this job anyway).
     logger.error(`[podium-nightly] failed: ${error.message}`);
+  }
+
+  // Tonight's Podium results (#scores channel) — the Podium half of the score
+  // drop, its own message beside the fantasy one, off the recap the stage
+  // above just wrote. Isolated the same way, and lease-guarded per (season,
+  // day) so a re-run posts nothing twice.
+  try {
+    const { runPodiumScoreDropStage } = require("./nightlyStages");
+    const result = await runPodiumScoreDropStage(db, discordScoresWebhookUrl.value(), undefined, {
+      competitionDay,
+    });
+    if (result.status === "ran" && result.announcement?.status === "posted") {
+      logger.info(`[podium-drop] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[podium-drop] stage failed (Podium unaffected): ${error.message}`);
   }
 
   // Fan Favorite ballot announcements (#announcements channel), off the state
