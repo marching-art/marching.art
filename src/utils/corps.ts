@@ -302,6 +302,26 @@ export function canEditCorpsThisSeason(corps: CorpsRecord | null | undefined): b
 }
 
 /**
+ * True when the director has finished at least one season with any corps.
+ *
+ * A completed season is archived onto its corps as a `seasonHistory` entry at
+ * rollover (see the profile's Season History / CorpsHistory surfaces), and a
+ * corps carries that history with it across class moves. A director with any
+ * such entry is past the new-player phase — used to retire first-run scaffolding
+ * like the Quick Start guide.
+ */
+export function hasCompletedSeason(
+  profile: { corps?: Record<string, unknown> | null } | null | undefined
+): boolean {
+  const corps = profile?.corps;
+  if (!corps) return false;
+  return Object.values(corps).some((entry) => {
+    const history = (entry as { seasonHistory?: unknown[] } | null)?.seasonHistory;
+    return Array.isArray(history) && history.length > 0;
+  });
+}
+
+/**
  * True when the corps has work (lineup or show schedule) that would be wiped
  * by a retire/transfer/unretire. Callers use this to decide whether to
  * surface the "this will reset your lineup and shows" warning.

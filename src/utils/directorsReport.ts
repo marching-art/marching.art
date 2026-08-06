@@ -48,7 +48,10 @@ export interface PredictionQuestion {
 export interface DirectorsReportProfile {
   engagement?: { lastLogin?: unknown; loginStreak?: number } | null;
   challenges?: Record<string, Array<{ id: string; completed?: boolean }>> | null;
-  predictions?: Record<string, { resolved?: boolean; picks?: Record<string, unknown> }> | null;
+  predictions?: Record<
+    string,
+    { resolved?: boolean; picks?: Record<string, unknown>; corpsClass?: string | null }
+  > | null;
   // Read by the challenge-availability predicates (check-lineup needs a
   // lineup-bearing corps; the show/concept checks read the corps map).
   corps?: Record<string, { corpsName?: string; [key: string]: unknown } | null> | null;
@@ -118,7 +121,26 @@ export function computeDirectorsReport(options: {
   const loginDone = !!lastLogin && getGameDay(lastLogin) === gameDay;
   const streak = profile?.engagement?.loginStreak || 0;
 
-  const questions: PredictionQuestion[] = buildQuestions(recentResults || [], corpsClass);
+  // Predictions are a once-per-day activity, not once-per-corps. The server
+  // ties each day's prediction bucket to the FIRST class that answers
+  // (`bucket.corpsClass`, submitPrediction) and won't let a second class open
+  // its own set that day. So the day's prediction work belongs to whichever
+  // class owns the bucket — read it before building the active class's set.
+  const predictionBucket = profile?.predictions?.[gameDay] || {};
+  const predictionBucketClass = predictionBucket.corpsClass ?? null;
+
+  // The active class only owes prediction work when it owns today's bucket, or
+  // when no one has started predictions yet. If another class already claimed
+  // the day's predictions, this class has none of its own to make — surfacing
+  // its (differently-counted) questions here would leave the daily set short of
+  // its total and nag "finish today's report" for work the game won't let the
+  // director do on this tab.
+  const activeClassOwnsPredictions =
+    predictionBucketClass === null || predictionBucketClass === corpsClass;
+
+  const questions: PredictionQuestion[] = activeClassOwnsPredictions
+    ? buildQuestions(recentResults || [], corpsClass)
+    : [];
   const predictionAvailable = questions.length > 0;
 
   // Same filter the server applies to the required set: drop challenges this
@@ -131,7 +153,6 @@ export function computeDirectorsReport(options: {
   const completedIds = new Set(bucket.filter((c) => c.completed).map((c) => c.id));
   const challengesDone = challenges.filter((c) => completedIds.has(c.id)).length;
 
-  const predictionBucket = profile?.predictions?.[gameDay] || {};
   const predictionsDone = predictionBucket.resolved
     ? questions.length
     : Math.min(Object.keys(predictionBucket.picks || {}).length, questions.length);

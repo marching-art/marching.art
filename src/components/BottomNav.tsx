@@ -40,6 +40,8 @@ import {
 import { m } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { adminHelpers } from '../api';
+import { useProfileStore } from '../store/profileStore';
+import { hasCompletedSeason } from '../utils/corps';
 import { triggerHaptic } from '../hooks/useHaptic';
 import { prefetchRoute } from '../lib/prefetch';
 import { useNavBadges } from '../hooks/useNavBadges';
@@ -79,16 +81,19 @@ const PRIMARY_ITEMS: NavItem[] = [
   { to: '/scores', prefetch: '/scores', label: 'Scores', icon: Trophy },
 ];
 
-/** Destinations that moved into the More sheet, plus the help entry. */
+// The Quick Start guide had no caller anywhere in the app until it was given a
+// URL; this is the mobile way back to it. It leads the sheet for new directors
+// but retires once they've finished a season (see hasCompletedSeason) — a
+// veteran doesn't need first-run scaffolding taking the top slot.
+const QUICK_START_ITEM: NavItem = {
+  to: '/dashboard?panel=quickstart',
+  prefetch: '/dashboard',
+  label: 'Quick Start',
+  icon: BookOpen,
+};
+
+/** Destinations that moved into the More sheet. */
 const MORE_ITEMS: NavItem[] = [
-  // The Quick Start guide had no caller anywhere in the app until it was
-  // given a URL; this is the mobile way back to it.
-  {
-    to: '/dashboard?panel=quickstart',
-    prefetch: '/dashboard',
-    label: 'Quick Start',
-    icon: BookOpen,
-  },
   { to: '/', prefetch: '/', label: 'News', icon: Newspaper },
   { to: '/leagues', prefetch: '/leagues', label: 'Leagues', icon: Users },
   { to: '/profile', prefetch: '/profile', label: 'Profile', icon: User },
@@ -113,6 +118,8 @@ const BottomNav: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const badges = useNavBadges();
+  const profile = useProfileStore((state) => state.profile);
+  const showQuickStart = !hasCompletedSeason(profile);
 
   // Check if user is admin (mirrors the desktop TopNav in GameShell)
   useEffect(() => {
@@ -129,7 +136,11 @@ const BottomNav: React.FC = () => {
     setMoreOpen(false);
   }, [location.pathname, location.search]);
 
-  const moreItems = isAdmin ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS;
+  const moreItems: NavItem[] = [
+    ...(showQuickStart ? [QUICK_START_ITEM] : []),
+    ...MORE_ITEMS,
+    ...(isAdmin ? [ADMIN_ITEM] : []),
+  ];
   const lineupOpen = searchParams.get('panel') === 'lineup';
 
   const isActive = (item: NavItem) => {

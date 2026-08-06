@@ -23,6 +23,12 @@ vi.mock('../hooks/useNavBadges', () => ({
   useNavBadges: () => mockBadges,
 }));
 
+let mockProfile: { corps?: Record<string, unknown> | null } | null = null;
+vi.mock('../store/profileStore', () => ({
+  useProfileStore: (selector: (s: { profile: unknown }) => unknown) =>
+    selector({ profile: mockProfile }),
+}));
+
 import BottomNav from './BottomNav';
 
 const renderNav = (path = '/dashboard') =>
@@ -36,6 +42,7 @@ describe('BottomNav', () => {
   beforeEach(() => {
     mockBadges = { lineup: false, schedule: false };
     isAdmin.mockResolvedValue(false);
+    mockProfile = null;
   });
 
   it('puts the daily loop on the bar, in order', () => {
@@ -91,7 +98,7 @@ describe('BottomNav', () => {
     expect(screen.queryByRole('link', { name: /needs attention/ })).not.toBeInTheDocument();
   });
 
-  it('offers the Quick Start guide, which had no caller at all before', () => {
+  it('offers the Quick Start guide to a new director', () => {
     renderNav();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     const sheet = screen.getByRole('navigation', { name: 'More destinations' });
@@ -99,6 +106,17 @@ describe('BottomNav', () => {
       'href',
       '/dashboard?panel=quickstart'
     );
+  });
+
+  it('retires Quick Start once the director has finished a season', () => {
+    // First-run scaffolding shouldn't take the top slot in a veteran's sheet.
+    mockProfile = { corps: { worldClass: { seasonHistory: [{ seasonName: '2025' }] } } };
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    const sheet = screen.getByRole('navigation', { name: 'More destinations' });
+    expect(within(sheet).queryByRole('link', { name: 'Quick Start' })).not.toBeInTheDocument();
+    // The rest of the sheet is unaffected.
+    expect(within(sheet).getByRole('link', { name: 'News' })).toBeInTheDocument();
   });
 
   it('keeps the moved destinations reachable in the More sheet', () => {

@@ -114,6 +114,59 @@ describe('computeDirectorsReport — the day’s set', () => {
   });
 });
 
+describe('computeDirectorsReport — predictions are once per day, not per corps', () => {
+  // The server ties each day's prediction bucket to the first class that
+  // answers and won't open a second set that day. A director who finishes the
+  // day's predictions on one corps must not be nagged to "finish today's
+  // report" on another — the box used to hang exactly here.
+  it('drops predictions for a class that does not own the day’s bucket', () => {
+    const state = computeDirectorsReport({
+      // The day's bucket was claimed by SoundSport; the director is now on World.
+      profile: {
+        predictions: {
+          [GAME_DAY]: { corpsClass: 'soundSport', picks: { podium: 'Yes' } },
+        },
+      },
+      recentResults: TWO_RESULTS,
+      corpsClass: 'worldClass',
+      now: NOW,
+    });
+    // No prediction work is owed here, so it can't hold the total short.
+    expect(state.questions).toEqual([]);
+    expect(state.predictionAvailable).toBe(false);
+    expect(state.predictionsDone).toBe(0);
+    expect(state.totalCount).toBe(1 + state.challenges.length);
+  });
+
+  it('still counts predictions for the class that owns the bucket', () => {
+    const state = computeDirectorsReport({
+      profile: {
+        predictions: {
+          [GAME_DAY]: { corpsClass: 'worldClass', picks: { 'over-under': 'Over' } },
+        },
+      },
+      recentResults: TWO_RESULTS,
+      corpsClass: 'worldClass',
+      now: NOW,
+    });
+    expect(state.questions.length).toBeGreaterThan(0);
+    expect(state.predictionsDone).toBe(1);
+  });
+
+  it('treats a bucket with no recorded class as the active class’s own', () => {
+    // Legacy/first-pick buckets may not carry corpsClass — fall back to the
+    // prior behavior rather than silently dropping the set.
+    const state = computeDirectorsReport({
+      profile: { predictions: { [GAME_DAY]: { picks: { 'over-under': 'Over' } } } },
+      recentResults: TWO_RESULTS,
+      corpsClass: 'worldClass',
+      now: NOW,
+    });
+    expect(state.questions.length).toBeGreaterThan(0);
+    expect(state.predictionsDone).toBe(1);
+  });
+});
+
 describe('computeDirectorsReport — a brand-new director', () => {
   // Fewer than two scored results means the game cannot pose a prediction
   // question. Leaving make-prediction in the set would pin the count below
