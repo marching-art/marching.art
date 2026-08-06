@@ -1,4 +1,3 @@
-// @ts-nocheck -- test file
 // Focused on the optimistic block queue (queueAllocate), the one-thumb entry
 // path: taps are accepted instantly, drained strictly one-at-a-time so the
 // server's blockIndex check never sees a gap, and a bounce clears the queue
@@ -9,8 +8,8 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 const getPodiumState = vi.fn();
 const allocateRehearsalBlock = vi.fn();
 vi.mock('../api/podium', () => ({
-  getPodiumState: (...a) => getPodiumState(...a),
-  allocateRehearsalBlock: (...a) => allocateRehearsalBlock(...a),
+  getPodiumState: (...a: unknown[]) => getPodiumState(...a),
+  allocateRehearsalBlock: (...a: unknown[]) => allocateRehearsalBlock(...a),
   // Unused by these tests, but the hook imports them.
   getPodiumRegistrationPreview: vi.fn(),
   setPodiumRestDay: vi.fn(),
@@ -26,7 +25,7 @@ vi.mock('../api/podium', () => ({
 import { usePodium } from './usePodium';
 
 /** A getPodiumState payload with `used` blocks in. */
-const stateWith = (used) => ({
+const stateWith = (used: number) => ({
   data: {
     exists: true,
     calendarDay: 10,
@@ -75,7 +74,7 @@ describe('usePodium — optimistic block queue', () => {
     // Record the order allocations are SENT, and the concurrency.
     let inFlight = 0;
     let maxConcurrent = 0;
-    const sent = [];
+    const sent: string[] = [];
     allocateRehearsalBlock.mockImplementation(async ({ blockType }) => {
       inFlight += 1;
       maxConcurrent = Math.max(maxConcurrent, inFlight);
@@ -108,7 +107,7 @@ describe('usePodium — optimistic block queue', () => {
   });
 
   it('reads the blockIndex the previous confirmation advanced', async () => {
-    const indices = [];
+    const indices: number[] = [];
     allocateRehearsalBlock.mockImplementation(async ({ blockIndex }) => {
       indices.push(blockIndex);
       const used = indices.length;

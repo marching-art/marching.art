@@ -150,10 +150,10 @@ The Fan Favorite is a community ritual (see [`PODIUM.md`](PODIUM.md) decision
 collects nobody's vote. Three event posts go to the server's
 **#announcements** channel:
 
-| Post             | When                                                                                                                        | Contents                                                         |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| **Prelims open** | the night a major is scored (days 28, 35, and **42** for the two-night Eastern, whose field isn't complete until night two) | candidate corps by division, the day voting closes, vote link    |
-| **Finals open**  | the night finalists publish (day 44)                                                                                        | each major's prelims **results** with vote counts, the finalists |
+| Post             | When                                                                                                                        | Contents                                                                                                                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Prelims open** | the night a major is scored (days 28, 35, and **42** for the two-night Eastern, whose field isn't complete until night two) | candidate corps by division, the day voting closes, vote link                                                                                                                                                 |
+| **Finals open**  | the night finalists publish (day 44)                                                                                        | each major's prelims **results** with vote counts, the finalists                                                                                                                                              |
 | **Crowned**      | season archival (first night of the next season)                                                                            | the finals results, the winner, and — when the ballot finished level — which tiebreaker decided the crown and the two numbers it turned on (a seeded draw is named as a coin flip, never dressed up as a win) |
 
 - **Code:** `functions/src/helpers/podium/fanFavoriteDiscord.js` (embeds +

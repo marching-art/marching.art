@@ -1,10 +1,23 @@
-// @ts-nocheck -- test file
 // Render tests for the lineup roster. Pins the vocabulary an empty slot
 // teaches, and the states a director reads it in.
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import ActiveLineupTable from './ActiveLineupTable';
+import ActiveLineupTableImport from './ActiveLineupTable';
+
+// ActiveLineupTable is still grandfathered under @ts-nocheck, so checkJs infers
+// its props as an empty `object`. Describe the props this test drives it with
+// so the render calls type-check; drop this alias once the component is typed.
+/**
+ * @type {import('react').ComponentType<{
+ *   lineup: Record<string, string>;
+ *   lineupScoreData: object;
+ *   loading: boolean;
+ *   onManageLineup: () => void;
+ *   onSlotClick: (slot?: string) => void;
+ * }>}
+ */
+const ActiveLineupTable = ActiveLineupTableImport;
 
 const FULL = {
   GE1: 'Blue Devils|2014',
