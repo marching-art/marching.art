@@ -273,7 +273,7 @@ const PodiumPreview = () => {
       {/* HEADER */}
       <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line flex items-center px-4">
         <Link
-          to="/podium"
+          to="/podium-guide"
           className="inline-flex items-center gap-1.5 text-muted hover:text-white transition-colors press-feedback min-h-touch px-2 -ml-2"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -289,14 +289,14 @@ const PodiumPreview = () => {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Link
-            to="/podium"
+            to="/login"
             className="flex items-center gap-1.5 px-3 h-9 text-sm text-muted hover:text-white transition-colors"
           >
             <LogIn className="w-4 h-4" />
             <span className="hidden sm:inline">Sign In</span>
           </Link>
           <Link
-            to="/podium"
+            to="/register"
             className="flex items-center gap-1.5 px-4 h-9 text-black text-sm font-bold rounded-none transition-colors"
             style={{ backgroundColor: GOLD }}
           >
@@ -332,7 +332,7 @@ const PodiumPreview = () => {
               </div>
             </div>
             <Link
-              to="/podium"
+              to="/register"
               className="flex items-center justify-center gap-2 px-4 h-10 text-black text-sm font-bold rounded-none whitespace-nowrap"
               style={{ backgroundColor: GOLD }}
             >
@@ -511,7 +511,7 @@ const PodiumPreview = () => {
               compete on the nightly box score, and climb toward Champion Status.
             </p>
             <Link
-              to="/podium"
+              to="/register"
               className="mt-4 inline-flex items-center gap-2 h-11 px-6 text-black font-bold text-sm uppercase tracking-wider rounded-none"
               style={{ backgroundColor: GOLD }}
             >
@@ -559,7 +559,7 @@ const PodiumPreview = () => {
               nightly box scores, a full tour, staff, divisions, and the climb to Champion Status.
             </p>
             <Link
-              to="/podium"
+              to="/register"
               className="mt-5 w-full h-11 flex items-center justify-center gap-2 text-black font-bold text-sm uppercase tracking-wider rounded-none"
               style={{ backgroundColor: GOLD }}
             >

@@ -23,18 +23,37 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { autoFillLineup } from '../utils/lineupAutoFill';
 import { getStoredGuestLineup, clearGuestPreviewData } from '../hooks/useGuestPreview';
 import { importGuestLineup } from '../utils/guestLineupImport';
-import { CAPTIONS, SOUNDSPORT_POINT_LIMIT, STEPS } from './onboardingConstants';
+import {
+  CAPTIONS,
+  SOUNDSPORT_POINT_LIMIT,
+  getStepSequence,
+  GAME_MODE_PODIUM,
+  GAME_MODE_SOUNDSPORT,
+} from './onboardingConstants';
+import { usePodiumEnabled } from '../hooks/useFeatures';
 // Activation funnel: onboarding is the one flow where a drop-off is an
 // account never created, so both the step reached AND the reason a step was
 // refused are reported (`reason` is what says which gate is costing signups).
 import { trackFunnelEvent, errorCodeOf, CLIENT_FUNNEL_EVENTS } from '../api/funnel';
 import { GuidedCaptionSelection } from './OnboardingParts';
-import { StepWelcome, StepCorps, CelebrationModal } from './OnboardingSteps';
+import {
+  StepWelcome,
+  StepChooseGame,
+  StepPodiumHandoff,
+  StepCorps,
+  CelebrationModal,
+} from './OnboardingSteps';
 
 const Onboarding = () => {
   useBodyScroll();
   const { user } = useAuth();
   const navigate = useNavigate();
+  // marching.art is two games in one. When Podium Class is enabled, onboarding
+  // offers the choice up front instead of steering everyone into SoundSport.
+  const podiumEnabled = usePodiumEnabled();
+  // null until the director picks (or when Podium is disabled — the legacy
+  // SoundSport-only flow ignores this). 'podium' | 'soundSport'.
+  const [gameMode, setGameMode] = useState(null);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(() => ({
     // Registration already asked for the director name (stored on the Firebase
@@ -69,6 +88,12 @@ const Onboarding = () => {
       setFormData((prev) => (prev.displayName ? prev : { ...prev, displayName: user.displayName }));
     }
   }, [user?.displayName]);
+
+  // The visible step sequence depends on whether Podium is enabled and which
+  // game the director picked. `step` is a 1-based index into this list.
+  const steps = useMemo(() => getStepSequence(podiumEnabled, gameMode), [podiumEnabled, gameMode]);
+  const currentStepId = steps[step - 1]?.id;
+  const isLastStep = step >= steps.length;
 
   // Fetch season data (on mount, and again via the step-3 Retry button — a
   // failure here used to strand the user on a perpetual "Loading available
@@ -235,7 +260,7 @@ const Onboarding = () => {
   };
 
   const handleNext = () => {
-    if (step === 1) {
+    if (currentStepId === 'welcome') {
       if (!formData.displayName.trim()) {
         toast.error('Please enter your director name');
         trackBlocked('missing_display_name');
@@ -252,7 +277,12 @@ const Onboarding = () => {
         return;
       }
     }
-    if (step === 2 && !formData.corpsName.trim()) {
+    if (currentStepId === 'choose' && !gameMode) {
+      toast.error('Please choose a game to start with');
+      trackBlocked('missing_game_mode');
+      return;
+    }
+    if (currentStepId === 'corps' && !formData.corpsName.trim()) {
       toast.error('Please enter a name for your corps');
       trackBlocked('missing_corps_name');
       return;
@@ -336,12 +366,23 @@ const Onboarding = () => {
         // Non-blocking - continue even if this fails
       }
 
+      // Point the dashboard at SoundSport. A director who arrived via /podium
+      // (which pre-sets this key to 'podiumClass') but then chose SoundSport
+      // must land on the corps they just built, not the Podium founding flow.
+      try {
+        localStorage.setItem(`selectedCorps_${user.uid}`, 'soundSport');
+      } catch {
+        // localStorage unavailable — the dashboard defaults to the first corps,
+        // which is SoundSport here anyway.
+      }
+
       // The guest-preview draft has served its purpose — clean up so a future
       // signed-out visit starts fresh.
       clearGuestPreviewData();
 
       trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_COMPLETED, {
         lineup_points: getLineupPoints(),
+        game_mode: GAME_MODE_SOUNDSPORT,
       });
 
       // Show celebration before navigating
@@ -355,6 +396,78 @@ const Onboarding = () => {
       });
       if (error?.code === 'functions/already-exists') {
         // Username was claimed between the availability check and submit.
+        toast.error('That username was just taken. Please choose another.');
+        setUsernameStatus({
+          checking: false,
+          valid: false,
+          message: 'This username is already taken',
+        });
+        setStep(1);
+      } else {
+        toast.error('Failed to create profile. Please try again.');
+      }
+      setLoading(false);
+    }
+  };
+
+  // Podium branch: create the director profile and hand off to the four-step
+  // founding flow on the dashboard. No SoundSport corps is created and no
+  // fantasy show auto-registration runs — a Podium corps is founded (and
+  // auto-entered at the majors) by registerPodiumCorps on the dashboard.
+  const handlePodiumSubmit = async () => {
+    if (usernameStatus.valid !== true) {
+      toast.error('Please choose a valid, available username');
+      trackBlocked('username_unavailable');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Base profile + username reservation (server-side, idempotent) — same
+      // callable the SoundSport branch uses.
+      await createUserProfile({
+        username: formData.username.trim().toLowerCase(),
+        displayName: formData.displayName.trim(),
+      });
+
+      // Onboarding-specific fields. Deliberately no `corps.soundSport` (the
+      // director chose Podium) and no `isFirstVisit` — the dashboard's
+      // first-visit tour is written for the fantasy lineup surface and would
+      // point at the wrong panels for a Podium director. The Podium corps and
+      // its own onboarding live under the user's /podium subcollection.
+      await mergeProfile(user.uid, {
+        location: '',
+        bio: '',
+        favoriteCorps: '',
+        staff: [],
+        onboardingCompletedAt: new Date().toISOString(),
+      });
+
+      // Point the dashboard at the Podium tab so it renders the founding flow
+      // straight away — the dashboard restores its active class from this key
+      // and honors 'podiumClass' even before a Podium corps exists.
+      try {
+        localStorage.setItem(`selectedCorps_${user.uid}`, 'podiumClass');
+      } catch {
+        // localStorage unavailable — the dashboard falls back to its default
+        // tab; the director can still pick Podium from the corps switcher.
+      }
+
+      clearGuestPreviewData();
+
+      trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_COMPLETED, {
+        game_mode: GAME_MODE_PODIUM,
+      });
+
+      setShowCelebration(true);
+    } catch (error) {
+      console.error('Error creating Podium profile:', error);
+      trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, {
+        step,
+        outcome: 'error',
+        reason: errorCodeOf(error),
+      });
+      if (error?.code === 'functions/already-exists') {
         toast.error('That username was just taken. Please choose another.');
         setUsernameStatus({
           checking: false,
@@ -438,43 +551,48 @@ const Onboarding = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="bg-surface-card border border-line rounded-none p-6 sm:p-8">
-            {/* Progress Bar */}
+            {/* Progress Bar — driven by the dynamic step sequence, so it grows
+                a "Choose Game" node once Podium is enabled and re-shapes when the
+                director picks a game. */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                {STEPS.map((s, idx) => (
-                  <React.Fragment key={s.number}>
-                    <div className={`flex items-center gap-2 ${idx > 0 ? 'flex-1' : ''}`}>
-                      {idx > 0 && (
-                        <div
-                          className={`flex-1 h-1 mx-2 rounded-full ${
-                            step > idx ? 'bg-interactive' : 'bg-charcoal-700'
-                          }`}
-                        />
-                      )}
-                      <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                          step === s.number
-                            ? 'bg-interactive text-white'
-                            : step > s.number
-                              ? 'bg-green-500 text-white'
-                              : 'bg-charcoal-700 text-muted'
-                        }`}
-                      >
-                        {step > s.number ? (
-                          <Check className="w-5 h-5" />
-                        ) : (
-                          <s.icon className="w-5 h-5" />
+                {steps.map((s, idx) => {
+                  const stepNumber = idx + 1;
+                  return (
+                    <React.Fragment key={s.id}>
+                      <div className={`flex items-center gap-2 ${idx > 0 ? 'flex-1' : ''}`}>
+                        {idx > 0 && (
+                          <div
+                            className={`flex-1 h-1 mx-2 rounded-full ${
+                              step > idx ? 'bg-interactive' : 'bg-charcoal-700'
+                            }`}
+                          />
                         )}
+                        <div
+                          className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                            step === stepNumber
+                              ? 'bg-interactive text-white'
+                              : step > stepNumber
+                                ? 'bg-green-500 text-white'
+                                : 'bg-charcoal-700 text-muted'
+                          }`}
+                        >
+                          {step > stepNumber ? (
+                            <Check className="w-5 h-5" />
+                          ) : (
+                            <s.icon className="w-5 h-5" />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </React.Fragment>
-                ))}
+                    </React.Fragment>
+                  );
+                })}
               </div>
               <div className="flex justify-between text-xs text-muted">
-                {STEPS.map((s) => (
+                {steps.map((s, idx) => (
                   <span
-                    key={s.number}
-                    className={step === s.number ? 'text-interactive font-semibold' : ''}
+                    key={s.id}
+                    className={step === idx + 1 ? 'text-interactive font-semibold' : ''}
                   >
                     {s.title}
                   </span>
@@ -482,13 +600,14 @@ const Onboarding = () => {
               </div>
             </div>
 
-            {/* Step Content */}
+            {/* Step Content — keyed on the current step id (not a fixed index)
+                so the branch a director takes renders the right panel. */}
             <div className="min-h-[380px]">
               <AnimatePresence mode="wait">
-                {/* Step 1: Welcome + Director Name */}
-                {step === 1 && (
+                {/* Welcome + Director Name */}
+                {currentStepId === 'welcome' && (
                   <StepWelcome
-                    key="step1"
+                    key="welcome"
                     formData={formData}
                     setFormData={setFormData}
                     usernameStatus={usernameStatus}
@@ -496,15 +615,25 @@ const Onboarding = () => {
                   />
                 )}
 
-                {/* Step 2: Create Corps */}
-                {step === 2 && (
-                  <StepCorps key="step2" formData={formData} setFormData={setFormData} />
+                {/* Choose Your Game (Podium vs SoundSport) */}
+                {currentStepId === 'choose' && (
+                  <StepChooseGame key="choose" gameMode={gameMode} setGameMode={setGameMode} />
                 )}
 
-                {/* Step 3: Build Lineup (Guided Caption Selection) */}
-                {step === 3 && (
+                {/* Podium branch: hand off to the dashboard founding flow */}
+                {currentStepId === 'found' && (
+                  <StepPodiumHandoff key="found" displayName={formData.displayName} />
+                )}
+
+                {/* SoundSport branch: Create Corps */}
+                {currentStepId === 'corps' && (
+                  <StepCorps key="corps" formData={formData} setFormData={setFormData} />
+                )}
+
+                {/* SoundSport branch: Build Lineup (Guided Caption Selection) */}
+                {currentStepId === 'lineup' && (
                   <m.div
-                    key="step3"
+                    key="lineup"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
@@ -596,22 +725,43 @@ const Onboarding = () => {
                 </button>
               )}
 
-              {step < STEPS.length ? (
+              {!isLastStep ? (
                 <button
                   onClick={handleNext}
                   disabled={
-                    (step === 1 &&
+                    (currentStepId === 'welcome' &&
                       (!formData.displayName.trim() ||
                         !formData.username.trim() ||
                         usernameStatus.valid !== true)) ||
-                    (step === 2 && !formData.corpsName.trim())
+                    (currentStepId === 'choose' && !gameMode) ||
+                    (currentStepId === 'corps' && !formData.corpsName.trim())
                   }
                   className="flex-1 px-6 py-3 bg-interactive text-white rounded-none hover:bg-interactive-hover transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Continue
                   <ArrowRight className="w-5 h-5" />
                 </button>
+              ) : currentStepId === 'found' ? (
+                /* Podium branch finish — create the profile and hand off */
+                <button
+                  onClick={handlePodiumSubmit}
+                  disabled={loading}
+                  className="flex-1 px-6 py-3 bg-interactive text-white rounded-none hover:bg-interactive-hover transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      Take the Podium
+                      <PartyPopper className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
               ) : (
+                /* SoundSport branch finish */
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !isLineupValid}
@@ -633,7 +783,7 @@ const Onboarding = () => {
             </div>
 
             {/* Skip lineup option */}
-            {step === 3 && !isLineupComplete && (
+            {currentStepId === 'lineup' && !isLineupComplete && (
               <button
                 onClick={() => {
                   // Exact fill: all remaining captions with distinct corps,
@@ -666,13 +816,22 @@ const Onboarding = () => {
         </m.div>
       </div>
 
-      {/* Celebration Modal */}
+      {/* Celebration Modal — the Podium branch hands off to the founding flow,
+          so its copy and CTA differ, and it skips the SoundSport-only rookie
+          league offer. */}
       <CelebrationModal
         show={showCelebration}
         displayName={formData.displayName}
         corpsName={formData.corpsName}
         onComplete={handleCelebrationComplete}
-        onJoinLeague={handleJoinRookieLeague}
+        onJoinLeague={gameMode === GAME_MODE_PODIUM ? undefined : handleJoinRookieLeague}
+        headline={gameMode === GAME_MODE_PODIUM ? 'WELCOME, DIRECTOR!' : "YOU'RE ALL SET!"}
+        detail={
+          gameMode === GAME_MODE_PODIUM
+            ? 'Your director profile is ready — time to found your corps'
+            : undefined
+        }
+        ctaLabel={gameMode === GAME_MODE_PODIUM ? 'Found Your Corps' : 'Go to Dashboard'}
       />
     </div>
   );

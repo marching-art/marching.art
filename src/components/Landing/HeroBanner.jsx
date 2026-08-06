@@ -10,7 +10,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, Zap, ChevronRight, X, Play, Clock } from 'lucide-react';
+import { Trophy, Users, Zap, ChevronRight, X, Play, Clock, Medal, Target } from 'lucide-react';
 import JargonTooltip from '../JargonTooltip';
 import { Heading } from '../ui';
 import { useUrgencyTriggers } from '../../hooks/useUrgencyTriggers';
@@ -86,11 +86,8 @@ const HeroBanner = ({ onDismiss }) => {
 
             {/* Headline */}
             <Heading level="display" className="leading-tight mb-3">
-              The fantasy drum corps game.
-              <span className="text-muted">
-                {' '}
-                Draft legendary performers. Compete with fans worldwide.
-              </span>
+              Two drum corps games, one account.
+              <span className="text-muted"> Run your own corps, or draft a fantasy lineup.</span>
             </Heading>
 
             {/* Subhead — the draft pool is the season's dci-data corpsValues:
@@ -104,6 +101,48 @@ const HeroBanner = ({ onDismiss }) => {
               summer, 25+ years of history the rest of the year. Earn points from real show scores.
               Climb the leaderboard.
             </p>
+
+            {/* Two ways to play — the site is genuinely two games, so name both
+                up front and let a new visitor start with either. */}
+            <div className="grid sm:grid-cols-2 gap-3 mb-6">
+              <Link
+                to="/podium-guide"
+                className="group flex items-start gap-3 p-3 bg-surface-sunken border border-line rounded-none hover:border-line-strong transition-colors press-feedback"
+              >
+                <div
+                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-none"
+                  style={{ backgroundColor: 'rgba(201,162,39,0.13)' }}
+                >
+                  <Medal className="w-4 h-4" style={{ color: '#c9a227' }} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1 text-sm font-bold text-white">
+                    Podium Class
+                    <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <p className="text-xs text-muted mt-0.5">
+                    Found and run your own corps — a full season simulation.
+                  </p>
+                </div>
+              </Link>
+              <Link
+                to="/how-to-play"
+                className="group flex items-start gap-3 p-3 bg-surface-sunken border border-line rounded-none hover:border-line-strong transition-colors press-feedback"
+              >
+                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-none bg-interactive/15">
+                  <Target className="w-4 h-4 text-interactive" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1 text-sm font-bold text-white">
+                    SoundSport
+                    <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <p className="text-xs text-muted mt-0.5">
+                    Draft a fantasy lineup from real DCI history.
+                  </p>
+                </div>
+              </Link>
+            </div>
 
             {/* Feature pills */}
             <div className="flex flex-wrap gap-3 mb-6">
