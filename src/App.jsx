@@ -56,7 +56,6 @@ const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'), 'Onboarding
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
 const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
 const Landing = lazyWithRetry(() => import('./pages/Landing'), 'Landing');
-const PodiumLanding = lazyWithRetry(() => import('./pages/PodiumLanding'), 'PodiumLanding');
 const PodiumPreview = lazyWithRetry(() => import('./pages/PodiumPreview'), 'PodiumPreview');
 const RetiredCorpsGallery = lazyWithRetry(
   () => import('./pages/RetiredCorpsGallery'),
@@ -361,22 +360,12 @@ function App() {
                         </RedirectIfAuthed>
                       }
                     />
-                    {/* Podium Class recruiting page — signup/login focused on
-                        the Podium director-sim class. Public; bounces
-                        authenticated users to the dashboard like /login and
-                        /register do. */}
-                    <Route
-                      path="/podium"
-                      element={
-                        user ? (
-                          <Navigate to="/dashboard" />
-                        ) : (
-                          <Suspense fallback={<LoadingScreen fullScreen />}>
-                            <PodiumLanding />
-                          </Suspense>
-                        )
-                      }
-                    />
+                    {/* The dedicated Podium recruiting/signup page was retired
+                        once onboarding began offering the Podium-vs-SoundSport
+                        choice up front — it became a duplicate signup path. The
+                        path is kept as a redirect so inbound links land on the
+                        public Podium guide (its informational successor). */}
+                    <Route path="/podium" element={<Navigate to="/podium-guide" replace />} />
                     {/* Podium "try it out" demo — the interactive Podium daily
                         loop, no signup. Signed-in users go to the real thing. */}
                     <Route

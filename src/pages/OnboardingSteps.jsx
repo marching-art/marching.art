@@ -14,6 +14,7 @@ import {
   Star,
   Zap,
   ChevronRight,
+  Check,
   Sparkles,
   PartyPopper,
   AtSign,
@@ -21,7 +22,11 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
-import { GAME_FEATURES } from './onboardingConstants';
+import { GAME_FEATURES, GAME_MODES, GAME_MODE_PODIUM } from './onboardingConstants';
+
+// Gold accent for the Podium Class card — the class's signature color, also
+// used on the public Podium guide and the demo.
+const PODIUM_GOLD = '#c9a227';
 
 // Step 1: Welcome + Director Name + Username
 export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameChange }) => (
@@ -139,6 +144,165 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
   </m.div>
 );
 
+// Step: Choose Your Game — marching.art is two games in one, so a new director
+// picks which one to set up first. Each card is a full-width, thumb-friendly
+// button; the selected one is outlined in its accent color.
+export const StepChooseGame = ({ gameMode, setGameMode }) => (
+  <m.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    className="space-y-5"
+  >
+    <div className="text-center mb-2">
+      <div className="inline-flex items-center justify-center w-16 h-16 bg-interactive/20 rounded-none mb-4">
+        <Sparkles className="w-8 h-8 text-interactive" />
+      </div>
+      <Heading level="display" as="h2" className="mb-2">
+        Choose your game
+      </Heading>
+      <p className="text-muted text-sm">
+        Two very different ways to play — start with either one. You can play the other anytime from
+        your dashboard.
+      </p>
+    </div>
+
+    <div className="space-y-3">
+      {GAME_MODES.map((mode) => {
+        const Icon = mode.icon;
+        const selected = gameMode === mode.id;
+        const isPodium = mode.id === GAME_MODE_PODIUM;
+        // Podium leans on its gold accent; SoundSport uses the app's interactive
+        // color via utility classes.
+        const selectedStyle = isPodium
+          ? { borderColor: PODIUM_GOLD, boxShadow: `inset 0 0 0 1px ${PODIUM_GOLD}` }
+          : undefined;
+        return (
+          <button
+            key={mode.id}
+            type="button"
+            onClick={() => setGameMode(mode.id)}
+            aria-pressed={selected}
+            className={`w-full text-left p-4 rounded-none border transition-colors press-feedback ${
+              selected
+                ? isPodium
+                  ? 'bg-surface-sunken'
+                  : 'border-interactive bg-interactive/10'
+                : 'border-line bg-charcoal-800/50 hover:border-line-strong'
+            }`}
+            style={selected ? selectedStyle : undefined}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="p-2 rounded-none flex-shrink-0"
+                style={isPodium ? { backgroundColor: `${PODIUM_GOLD}22` } : undefined}
+              >
+                <Icon
+                  className={`w-5 h-5 ${isPodium ? '' : 'text-interactive'}`}
+                  style={isPodium ? { color: PODIUM_GOLD } : undefined}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white">{mode.label}</h3>
+                  {selected && (
+                    <span
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${
+                        isPodium ? '' : 'text-interactive'
+                      }`}
+                      style={isPodium ? { color: PODIUM_GOLD } : undefined}
+                    >
+                      <Check className="w-3 h-3" />
+                      Selected
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs font-semibold text-secondary uppercase tracking-wider mt-0.5">
+                  {mode.tagline}
+                </p>
+                <p className="text-sm text-muted mt-1.5">{mode.description}</p>
+                <ul className="mt-2 space-y-1">
+                  {mode.bullets.map((bullet) => (
+                    <li key={bullet} className="flex items-start gap-2 text-xs text-muted">
+                      <span
+                        className="mt-0.5"
+                        style={isPodium ? { color: PODIUM_GOLD } : undefined}
+                        aria-hidden="true"
+                      >
+                        •
+                      </span>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  </m.div>
+);
+
+// Step: Podium handoff — the four-step founding flow (identity, show, design,
+// march) lives on the dashboard, so this last onboarding step just sets the
+// expectation and hands off. No form fields; the "start" button in the parent
+// creates the director profile and drops the user into the founding flow.
+export const StepPodiumHandoff = ({ displayName }) => (
+  <m.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    className="space-y-6"
+  >
+    <div className="text-center mb-2">
+      <div
+        className="inline-flex items-center justify-center w-16 h-16 rounded-none mb-4"
+        style={{ backgroundColor: `${PODIUM_GOLD}22` }}
+      >
+        <PartyPopper className="w-8 h-8" style={{ color: PODIUM_GOLD }} />
+      </div>
+      <Heading level="display" as="h2" className="mb-2">
+        Ready to found your corps
+      </Heading>
+      <p className="text-muted text-sm">
+        {displayName ? `You're all set, ${displayName}. ` : ''}
+        Next you&apos;ll name your corps, set your show concept, and design your season — the
+        director&apos;s chair is waiting.
+      </p>
+    </div>
+
+    <div className="p-4 rounded-none bg-charcoal-800/50 border border-line space-y-3">
+      {[
+        'Name your corps and hometown',
+        'Set this season’s show concept',
+        'Tune challenge levels and auditions',
+        'March — you’re auto-entered at the majors',
+      ].map((label, idx) => (
+        <div key={label} className="flex items-center gap-3">
+          <div
+            className="flex items-center justify-center w-6 h-6 rounded-none text-[11px] font-bold flex-shrink-0"
+            style={{ backgroundColor: `${PODIUM_GOLD}22`, color: PODIUM_GOLD }}
+          >
+            {idx + 1}
+          </div>
+          <span className="text-sm text-secondary">{label}</span>
+        </div>
+      ))}
+    </div>
+
+    <div className="p-3 rounded-none bg-green-500/10 border border-green-500/20">
+      <div className="flex items-center gap-2">
+        <Zap className="w-4 h-4 text-green-400" />
+        <p className="text-sm text-green-300">
+          Founding a corps is <span className="font-bold">100% free</span> — money buys margin,
+          never a single point.
+        </p>
+      </div>
+    </div>
+  </m.div>
+);
+
 // Step 2: Create Corps
 export const StepCorps = ({ formData, setFormData }) => (
   <m.div
@@ -198,8 +362,19 @@ export const StepCorps = ({ formData, setFormData }) => (
   </m.div>
 );
 
-// Celebration modal shown after the profile is created, before navigating away
-export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJoinLeague }) => (
+// Celebration modal shown after the profile is created, before navigating away.
+// Copy is parametrized so the Podium branch (which hands off to the founding
+// flow) can differ from the SoundSport branch (whose corps already competes).
+export const CelebrationModal = ({
+  show,
+  displayName,
+  corpsName,
+  onComplete,
+  onJoinLeague,
+  headline = "YOU'RE ALL SET!",
+  detail,
+  ctaLabel = 'Go to Dashboard',
+}) => (
   <AnimatePresence>
     {show && (
       <m.div
@@ -233,7 +408,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             transition={{ delay: 0.3 }}
             className="text-4xl font-black text-interactive mb-3"
           >
-            YOU'RE ALL SET!
+            {headline}
           </m.h2>
 
           <m.p
@@ -251,7 +426,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             transition={{ delay: 0.7 }}
             className="text-muted mb-8"
           >
-            {corpsName} is ready to compete
+            {detail || `${corpsName} is ready to compete`}
           </m.p>
 
           <m.button
@@ -261,7 +436,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             onClick={onComplete}
             className="px-8 py-4 bg-interactive text-white rounded-none font-bold uppercase tracking-wide hover:bg-interactive-hover transition-colors flex items-center gap-2 mx-auto"
           >
-            Go to Dashboard
+            {ctaLabel}
             <ChevronRight className="w-5 h-5" />
           </m.button>
 

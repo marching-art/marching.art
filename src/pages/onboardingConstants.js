@@ -2,7 +2,7 @@
 // SoundSport point budget, wizard steps, and welcome-step feature blurbs.
 // Extracted verbatim from Onboarding.jsx.
 
-import { Star, Flag, Music, Target, Users, Trophy } from 'lucide-react';
+import { Star, Flag, Music, Target, Users, Trophy, Medal, Layers } from 'lucide-react';
 import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
 
 // Caption definitions for the guided selection
@@ -52,27 +52,113 @@ export const CATEGORY_COLORS = {
 // Point limit for SoundSport
 export const SOUNDSPORT_POINT_LIMIT = 90;
 
+// -----------------------------------------------------------------------------
+// Dual-game onboarding
+// -----------------------------------------------------------------------------
+// marching.art is two games in one. Rather than steer every new director into
+// SoundSport, onboarding offers the choice up front. Each mode metadata block
+// drives one selectable card on the "Choose your game" step and, downstream,
+// which branch of the wizard runs.
+
+export const GAME_MODE_PODIUM = 'podium';
+export const GAME_MODE_SOUNDSPORT = 'soundSport';
+
+export const GAME_MODES = [
+  {
+    id: GAME_MODE_PODIUM,
+    label: 'Podium Class',
+    tagline: 'Run your own corps',
+    icon: Medal,
+    // Gold — the same accent the /podium recruiting page uses for this class.
+    accent: 'podium',
+    description:
+      'A full season simulation. Found a corps, run daily rehearsals, route a tour, and climb to Champion Status.',
+    bullets: [
+      'Make the daily director calls',
+      'Manage condition, staff, and budget',
+      'Score against real DCI history',
+    ],
+    // Onboarding hands off to the four-step founding flow on the dashboard.
+    cta: 'Take the podium',
+  },
+  {
+    id: GAME_MODE_SOUNDSPORT,
+    label: 'SoundSport',
+    tagline: 'Draft a fantasy lineup',
+    icon: Target,
+    accent: 'interactive',
+    description:
+      'Fantasy drum corps. Draft historical performances for eight captions and earn points from real show scores.',
+    bullets: [
+      'Pick 8 captions from DCI history',
+      'Compete in leagues with friends',
+      'Climb the global leaderboard',
+    ],
+    cta: 'Draft my lineup',
+  },
+];
+
+// Per-step chrome (title + progress icon) for the wizard. The visible sequence
+// is assembled at runtime from these by getStepSequence — it depends on whether
+// Podium is enabled and which game the director picked.
+export const STEP_META = {
+  welcome: { id: 'welcome', title: 'Welcome', icon: Star },
+  choose: { id: 'choose', title: 'Choose Game', icon: Layers },
+  corps: { id: 'corps', title: 'Create Corps', icon: Flag },
+  lineup: { id: 'lineup', title: 'Build Lineup', icon: Music },
+  found: { id: 'found', title: 'Found Corps', icon: Medal },
+};
+
+/**
+ * The ordered list of step ids the wizard shows.
+ *
+ * - Podium disabled: the legacy SoundSport-only flow (no choice offered).
+ * - Podium enabled, no choice yet: welcome → choose.
+ * - SoundSport chosen: welcome → choose → create corps → build lineup.
+ * - Podium chosen: welcome → choose → found (a handoff; the four-step founding
+ *   flow itself lives on the dashboard).
+ *
+ * @param {boolean} podiumEnabled
+ * @param {string|null} gameMode
+ * @returns {Array<{id: string, title: string, icon: any}>}
+ */
+export function getStepSequence(podiumEnabled, gameMode) {
+  if (!podiumEnabled) {
+    return [STEP_META.welcome, STEP_META.corps, STEP_META.lineup];
+  }
+  if (gameMode === GAME_MODE_SOUNDSPORT) {
+    return [STEP_META.welcome, STEP_META.choose, STEP_META.corps, STEP_META.lineup];
+  }
+  if (gameMode === GAME_MODE_PODIUM) {
+    return [STEP_META.welcome, STEP_META.choose, STEP_META.found];
+  }
+  return [STEP_META.welcome, STEP_META.choose];
+}
+
+// Kept for backward compatibility (the legacy SoundSport-only sequence).
 export const STEPS = [
   { number: 1, title: 'Welcome', icon: Star },
   { number: 2, title: 'Create Corps', icon: Flag },
   { number: 3, title: 'Build Lineup', icon: Music },
 ];
 
-// Game features for the welcome step
+// Game features for the welcome step. Kept game-neutral now that the welcome
+// screen introduces a platform with two games rather than SoundSport alone —
+// the specifics of each game live on the "Choose your game" step.
 export const GAME_FEATURES = [
   {
-    icon: Target,
-    title: 'Draft Your Lineup',
-    description: 'Pick historical corps performances for each scoring caption',
+    icon: Layers,
+    title: 'Two games, one account',
+    description: 'Run a corps in Podium Class or draft a fantasy lineup in SoundSport',
   },
   {
     icon: Users,
-    title: 'Compete in Leagues',
-    description: 'Join leagues with friends and compete for bragging rights',
+    title: 'Compete with fans worldwide',
+    description: 'Join leagues, chase rivals, and top the leaderboards',
   },
   {
     icon: Trophy,
-    title: 'Climb the Ranks',
-    description: 'Earn points based on real DCI scores and top the leaderboards',
+    title: 'Powered by real DCI history',
+    description: 'Every score traces back to actual drum corps results',
   },
 ];
