@@ -1,4 +1,3 @@
-// @ts-nocheck -- test file
 // Render tests for the first-run tour. The step content lives in
 // tourSteps.test.ts; this pins the behaviour that used to be broken on
 // phones — a fixed-width tooltip doing off-screen positioning math, and
@@ -44,7 +43,14 @@ describe('OnboardingTour', () => {
   });
 
   it('renders nothing when closed', () => {
-    const { container } = render(<OnboardingTour isOpen={false} onClose={onClose} />);
+    const { container } = render(
+      <OnboardingTour
+        isOpen={false}
+        onClose={onClose}
+        onComplete={onComplete}
+        onRequestZone={onRequestZone}
+      />
+    );
     expect(container.firstChild).toBeNull();
   });
 

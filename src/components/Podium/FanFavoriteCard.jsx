@@ -20,8 +20,7 @@ const votes = (n) => `${n} vote${Number(n) === 1 ? '' : 's'}`;
 const TIEBREAK_REASONS = {
   seasonVotes: (t) =>
     `season-long support — ${votes(t.winnerValue)} across the majors to ${votes(t.rivalValue)}`,
-  majorsPolled: (t) =>
-    `breadth of support — ${t.winnerValue} majors polled to ${t.rivalValue}`,
+  majorsPolled: (t) => `breadth of support — ${t.winnerValue} majors polled to ${t.rivalValue}`,
   majorLead: (t) =>
     `the ${MAJOR_NAMES[t.major] || `Day ${t.major}`}, the last major to separate them ` +
     `(${t.winnerValue}–${t.rivalValue})`,
@@ -75,8 +74,7 @@ export default function FanFavoriteCard() {
     }
   };
 
-  const decidedNote =
-    data.stage === 'decided' && data.winner ? tiebreakLine(data.winner) : null;
+  const decidedNote = data.stage === 'decided' && data.winner ? tiebreakLine(data.winner) : null;
 
   const title =
     data.stage === 'decided'
