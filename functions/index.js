@@ -182,6 +182,7 @@ const {
 } = require("./src/scheduled/dropDispatcher");
 const { scoringWatchdog } = require("./src/scheduled/scoringWatchdog");
 const { scrapeCanary } = require("./src/scheduled/scrapeCanary");
+const { pendingApprovalsDigest } = require("./src/scheduled/pendingApprovalsDigest");
 const {
   generateWeeklyMatchups,
   generateWeeklyRecaps,
@@ -399,6 +400,10 @@ module.exports = {
   // Afternoon dci.org markup-drift canary — turns a scraper-breaking site
   // redesign into a 1 PM email instead of a 2 AM scoring incident.
   scrapeCanary,
+  // Twice-daily reminder of anything sitting in the moderation queues
+  // (pending article submissions, comments awaiting moderation, reported
+  // comments) — the safety net behind the immediate per-event admin emails.
+  pendingApprovalsDigest,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
   economyStatsJob,
