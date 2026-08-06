@@ -61,6 +61,13 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false 
     [submitPrediction, corpsClass, latestEvent, haptic]
   );
 
+  // Predictions lock to one class per game day: the server ties the day's
+  // bucket to the first class that answers (bucket.corpsClass) and won't open a
+  // second set. Once another corps has claimed today's predictions, this class
+  // has none to make — hide the panel rather than offer questions whose picks
+  // would land in the wrong class's bucket and resolve against its recaps.
+  if (bucket.corpsClass && bucket.corpsClass !== corpsClass) return null;
+
   // Don't render if not enough data to generate questions
   if (questions.length === 0) return null;
 
