@@ -41,6 +41,7 @@ const EMAIL_TYPES = {
   MILESTONE_ACHIEVED: "milestone_achieved",
   ADMIN_ARTICLE_SUBMISSION: "admin_article_submission",
   ADMIN_COMMENT_REPORT: "admin_comment_report",
+  ADMIN_PENDING_DIGEST: "admin_pending_digest",
   ADMIN_GENERIC_ALERT: "admin_generic_alert",
 };
 
@@ -497,6 +498,73 @@ function adminCommentReportEmailTemplate({
 }
 
 /**
+ * Admin notification template — periodic digest of everything awaiting review.
+ *
+ * Sent by the pendingApprovalsDigest scheduled job when at least one queue is
+ * non-empty. It's the safety net behind the immediate per-event admin emails
+ * (article submitted, comment reported): if one of those is missed, this
+ * reminds admins that items are still sitting in the queue. It also covers the
+ * one queue with no immediate email — comments held for moderation.
+ *
+ * All values are server-computed integer counts; no user-supplied strings are
+ * interpolated, so nothing here needs escaping.
+ */
+function adminPendingApprovalsDigestEmailTemplate({
+  pendingArticles = 0,
+  pendingComments = 0,
+  pendingReports = 0,
+}) {
+  const articles = Math.max(0, Number(pendingArticles) || 0);
+  const comments = Math.max(0, Number(pendingComments) || 0);
+  const reports = Math.max(0, Number(pendingReports) || 0);
+  const total = articles + comments + reports;
+
+  const submissionsUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=submissions`;
+  const moderationUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=moderation`;
+
+  // One stat row per non-empty queue. label/url are trusted constants; count is
+  // a coerced integer — nothing user-supplied reaches the markup.
+  const row = (count, label, url) =>
+    count > 0
+      ? `
+      <tr>
+        <td style="padding: 12px 14px; background-color: #0f172a; border-radius: 4px;">
+          <span style="display: inline-block; min-width: 40px; font-size: 22px; font-weight: 700; color: #0057B8;">${count}</span>
+          <a href="${url}" style="color: #f1f5f9; text-decoration: none; font-weight: 600;">${label}</a>
+        </td>
+      </tr>
+      <tr><td style="height: 8px; line-height: 8px;">&nbsp;</td></tr>`
+      : "";
+
+  const content = `
+    <div class="content">
+      <h2 style="color: #ffffff; margin-bottom: 8px;">${total} item${total === 1 ? "" : "s"} awaiting review</h2>
+      <p style="color: #cbd5e1;">
+        Here's what's currently sitting in the moderation queues on marching.art.
+      </p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0;">
+        ${row(articles, "article submission" + (articles === 1 ? "" : "s") + " pending approval", submissionsUrl)}
+        ${row(comments, "comment" + (comments === 1 ? "" : "s") + " awaiting moderation", moderationUrl)}
+        ${row(reports, "reported comment" + (reports === 1 ? "" : "s") + " to review", moderationUrl)}
+      </table>
+
+      <p style="text-align: center;">
+        <a href="${submissionsUrl}" class="button">Open the admin queue →</a>
+      </p>
+
+      <div class="divider"></div>
+      <p style="font-size: 12px; color: #64748b;">
+        You're receiving this because you're an admin. This digest only goes out
+        when something is waiting.
+      </p>
+    </div>
+  `;
+
+  return emailWrapper(content, `${total} item${total === 1 ? "" : "s"} awaiting review on marching.art`);
+}
+
+/**
  * Win-back campaign email template (7 days inactive)
  */
 function winBackEmailTemplate({ username, daysMissed, streakLost, corpsCoinBalance }) {
@@ -660,6 +728,23 @@ async function sendAdminCommentReportEmail(email, data) {
 }
 
 /**
+ * Notify a single admin with a digest of everything awaiting review.
+ */
+async function sendAdminPendingApprovalsDigestEmail(email, data) {
+  const html = adminPendingApprovalsDigestEmailTemplate(data);
+  const total =
+    (Number(data?.pendingArticles) || 0) +
+    (Number(data?.pendingComments) || 0) +
+    (Number(data?.pendingReports) || 0);
+  return sendEmail({
+    to: email,
+    subject: `[Admin] ${total} item${total === 1 ? "" : "s"} awaiting review`,
+    html,
+    emailType: EMAIL_TYPES.ADMIN_PENDING_DIGEST,
+  });
+}
+
+/**
  * Notify a single admin with a free-form operational alert (plain text body,
  * HTML-escaped). Used for security/audit events that have no dedicated
  * template — e.g. a supporter link claimed with a mismatched email.
@@ -781,6 +866,7 @@ module.exports = {
   sendMilestoneEmail,
   sendAdminArticleSubmissionEmail,
   sendAdminCommentReportEmail,
+  sendAdminPendingApprovalsDigestEmail,
   sendAdminGenericAlertEmail,
 
   // Admin fan-out helpers
@@ -793,4 +879,5 @@ module.exports = {
   winBackEmailTemplate,
   adminArticleSubmissionEmailTemplate,
   adminCommentReportEmailTemplate,
+  adminPendingApprovalsDigestEmailTemplate,
 };

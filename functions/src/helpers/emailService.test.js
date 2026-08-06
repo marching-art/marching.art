@@ -13,6 +13,7 @@ const {
   winBackEmailTemplate,
   adminArticleSubmissionEmailTemplate,
   adminCommentReportEmailTemplate,
+  adminPendingApprovalsDigestEmailTemplate,
 } = require("./emailService");
 
 const XSS = '<script>alert("xss")</script>';
@@ -82,6 +83,40 @@ test("admin comment report email escapes reason, excerpt, and names", () => {
   assert.ok(!html.includes(XSS));
   assert.ok(html.includes(XSS_ESCAPED));
   assert.ok(html.includes("/article/art%3C1%3E"));
+});
+
+test("pending-approvals digest renders per-queue counts, links, and total", () => {
+  const html = adminPendingApprovalsDigestEmailTemplate({
+    pendingArticles: 2,
+    pendingComments: 5,
+    pendingReports: 1,
+  });
+  // Total (2 + 5 + 1 = 8) in the heading and preheader.
+  assert.ok(html.includes("8 items awaiting review"));
+  // Each queue's count is rendered.
+  assert.ok(html.includes(">2<"));
+  assert.ok(html.includes(">5<"));
+  assert.ok(html.includes(">1<"));
+  // Deep links to the two admin tabs.
+  assert.ok(html.includes("https://marching.art/admin?tab=submissions"));
+  assert.ok(html.includes("https://marching.art/admin?tab=moderation"));
+  // Singular vs. plural is respected.
+  assert.ok(html.includes("reported comment to review"));
+  assert.ok(html.includes("comments awaiting moderation"));
+});
+
+test("pending-approvals digest hides empty queues and coerces bad counts", () => {
+  const html = adminPendingApprovalsDigestEmailTemplate({
+    pendingArticles: 3,
+    pendingComments: 0,
+    pendingReports: "not-a-number",
+  });
+  // Only the article row survives: total is 3.
+  assert.ok(html.includes("3 items awaiting review"));
+  assert.ok(html.includes("article submissions pending approval"));
+  // Empty / invalid queues produce no row.
+  assert.ok(!html.includes("awaiting moderation"));
+  assert.ok(!html.includes("to review"));
 });
 
 test("trusted URLs and layout are not escaped", () => {
