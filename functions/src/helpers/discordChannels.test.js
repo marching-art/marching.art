@@ -190,13 +190,16 @@ describe("season clock (#announcements)", () => {
 });
 
 describe("the Podium Report (#news)", () => {
-  const column = {
-    week: 3,
+  // A daily standings sheet: full field, in rank order, with day-over-day
+  // movement. delta is prevRank - rank, so positive is a climb.
+  const sheet = {
+    day: 12,
     fieldSize: 42,
     entries: [
-      { rank: 1, corpsName: "Blue Devils", total: 91.2, delta: 1, note: "New at the top." },
+      { rank: 1, corpsName: "Blue Devils", total: 91.2, delta: 1, note: "Takes over at #1." },
       { rank: 2, corpsName: "Colts", total: 90.1, delta: -1 },
-      { rank: 3, corpsName: "Raiders", total: 88.4, delta: 6 },
+      { rank: 3, corpsName: "Raiders", total: 88.4, delta: 6, note: "Up 6 — the day's biggest move." },
+      { rank: 4, corpsName: "Cavaliers", total: 87.0, delta: -3 },
     ],
   };
 
@@ -206,38 +209,42 @@ describe("the Podium Report (#news)", () => {
     assert.equal(movementLabel(0), "—");
   });
 
-  test("leads with the column's own note and calls out climbers", () => {
-    const embed = buildPodiumReportPayload({ column, week: 3, seasonName: "Season 12" }).embeds[0];
-    assert.match(embed.title, /Week 3/);
-    assert.match(embed.description, /^New at the top\./);
+  test("leads with a commentative lede and calls out the day's movers", () => {
+    const embed = buildPodiumReportPayload({ sheet, day: 12, seasonName: "Season 12" }).embeds[0];
+    assert.match(embed.title, /Day 12/);
+    // The lede names the leader, the margin to second, and the day.
+    assert.match(embed.description, /Blue Devils/);
+    assert.match(embed.description, /Colts/);
     assert.match(embed.fields[0].name, /42 corps ranked/);
     assert.match(embed.fields[0].value, /🥇 \*\*Blue Devils\*\* — 91\.200 ▲1/);
-    assert.match(embed.fields[1].name, /Biggest climbers/);
+    assert.match(embed.fields[1].name, /Movers/);
+    // Biggest climb (Raiders, +6) and steepest slide (Cavaliers, -3).
     assert.match(embed.fields[1].value, /▲6 \*\*Raiders\*\* — now 3/);
+    assert.match(embed.fields[1].value, /▼3 \*\*Cavaliers\*\* — now 4/);
   });
 
-  test("posts the week's column once, then stays quiet", async () => {
-    const db = fakeDb({ "podium-recaps/s1/power/3": column });
+  test("posts the day's sheet once, then stays quiet", async () => {
+    const db = fakeDb({ "podium-recaps/s1/standings/12": sheet });
     const posts = [];
     const args = {
       seasonUid: "s1",
       seasonName: "Season 12",
-      competitionDay: 21,
+      competitionDay: 12,
       webhookUrl: "https://d.test/news",
       fetchImpl: okFetch(posts),
     };
     assert.equal((await announcePodiumReport(db, args)).status, "posted");
     assert.equal((await announcePodiumReport(db, args)).status, "skipped");
     assert.equal(posts.length, 1);
-    assert.equal(db.writes["scoring_runs/s1_discord_podreport_day3"].status, "completed");
+    assert.equal(db.writes["scoring_runs/s1_discord_podreport_day12"].status, "completed");
   });
 
-  test("quiet before the first column and when none is published", async () => {
+  test("quiet before the first day and when no sheet is published", async () => {
     const posts = [];
     const base = { seasonUid: "s1", seasonName: "S", webhookUrl: "u", fetchImpl: okFetch(posts) };
     assert.equal(
-      (await announcePodiumReport(fakeDb({}), { ...base, competitionDay: 5 })).status,
-      "no-week"
+      (await announcePodiumReport(fakeDb({}), { ...base, competitionDay: 0 })).status,
+      "no-day"
     );
     assert.equal(
       (await announcePodiumReport(fakeDb({}), { ...base, competitionDay: 14 })).status,

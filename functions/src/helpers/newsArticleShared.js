@@ -223,6 +223,7 @@ const NEWS_CATEGORIES = {
   DCI_RECAP: "dci",
   FANTASY: "fantasy",
   ANALYSIS: "analysis",
+  PODIUM: "podium", // The daily Podium Report power-rankings column
   DAILY: "daily", // New unified category
 };
 
@@ -235,8 +236,9 @@ function getCategoryFromType(articleType) {
   // Analysis articles - check specific types before prefix matching
   if (articleType === "dci_recap") return NEWS_CATEGORIES.ANALYSIS;
   if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
-  // The Podium Report (decision 31) is the weekly power-rankings column.
-  if (articleType === "podium_report") return NEWS_CATEGORIES.ANALYSIS;
+  // The Podium Report (decision 31) is the daily Podium Class power-rankings
+  // column; it gets its own category rather than riding under Analysis.
+  if (articleType === "podium_report") return NEWS_CATEGORIES.PODIUM;
   // Season summary is a season-to-date analytical deep dive (Article 6).
   if (articleType === "season_summary") return NEWS_CATEGORIES.ANALYSIS;
   // DCI and Fantasy articles by prefix

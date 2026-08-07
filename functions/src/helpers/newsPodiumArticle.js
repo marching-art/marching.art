@@ -1,24 +1,30 @@
 /**
- * The Podium Report news article (Phase 7.3 / decision 31): on Podium week
- * boundaries the weekly power-rankings column (written by the nightly Podium
- * processor to podium-recaps/{seasonUid}/power/{week}) replaces the DCI
- * caption deep-dive (Article 3) in the daily news run.
+ * The Podium Report news article (Phase 7.3 / decision 31): a DAILY,
+ * commentative power-rankings column for the director-run Podium Class.
  *
- * Deliberately NOT LLM-written: the column is deterministic, data-true
- * player-facing content — composing it directly means player corps names
- * and ranks can never be hallucinated. Text-only like every DCI article.
+ * It runs every processing night off the daily standings sheet the nightly
+ * Podium processor writes to `podium-recaps/{seasonUid}/standings/{day}`
+ * (buildDailyStandings), and occupies the Article 3 slot in the news run — so
+ * the daily batch stays at five articles, with the Podium Report standing in
+ * for the DCI caption deep-dive whenever a standings sheet exists.
+ *
+ * Deliberately NOT LLM-written: the standings sheet is deterministic,
+ * data-true player-facing content, and podiumReportProse composes the magazine
+ * voice straight from it — so player corps names, ranks, scores and margins can
+ * never be hallucinated. Text-only like every DCI article.
  */
 
-const DIVISION_LABELS = { aClass: "A Class", openClass: "Open Class", worldClass: "World Class" };
+const { analyzeStandings, composeNarrative } = require("./podium/podiumReportProse");
 
 /**
- * The latest published Podium power week ≤ the current competition week, or
- * null when Podium has no column yet.
+ * The latest published daily Podium standings sheet on or before the given
+ * competition day, or null when Podium has no sheet yet. Scans back a short
+ * window because a day can pass without a processing run.
  */
-async function loadLatestPodiumReport(db, seasonUid, competitionDay) {
-  const currentWeek = Math.floor(Math.max(0, competitionDay) / 7);
-  for (let week = Math.min(7, currentWeek); week >= 1; week--) {
-    const snapshot = await db.doc(`podium-recaps/${seasonUid}/power/${week}`).get();
+async function loadLatestPodiumStandings(db, seasonUid, competitionDay) {
+  const day = Math.max(0, Math.floor(competitionDay));
+  for (let d = day; d >= Math.max(1, day - 7); d--) {
+    const snapshot = await db.doc(`podium-recaps/${seasonUid}/standings/${d}`).get();
     if (snapshot.exists) return snapshot.data();
   }
   return null;
@@ -27,51 +33,49 @@ async function loadLatestPodiumReport(db, seasonUid, competitionDay) {
 /**
  * Compose the article (pure). Returns the standard article shape.
  */
-function composePodiumReportArticle(report, reportDay) {
-  const entries = report.entries || [];
-  const top = entries[0];
-  const mover = entries.find((entry) => /biggest move/.test(entry.note || ""));
+function composePodiumReportArticle(sheet, reportDay) {
+  const analysis = analyzeStandings(sheet);
+  if (!analysis) return null;
 
-  const lines = entries.map((entry) => {
-    const total = entry.total != null ? entry.total.toFixed(3) : "—";
-    const division = entry.division ? ` (${DIVISION_LABELS[entry.division] || entry.division})` : "";
-    return `${entry.rank}. ${entry.corpsName || "Unknown corps"}${division} — ${total}. ${entry.note || ""}`.trim();
-  });
+  const day = analysis.day != null ? analysis.day : reportDay;
+  const { leader, climber, fieldSize } = analysis;
 
   const summaryParts = [];
-  if (top) {
-    summaryParts.push(`${top.corpsName} leads the Podium Class field at ${top.total?.toFixed(3)}`);
+  if (leader) {
+    summaryParts.push(
+      `${leader.corpsName} tops the Podium Class field` +
+        (typeof leader.total === "number" ? ` at ${leader.total.toFixed(3)}` : "")
+    );
   }
-  if (mover && mover !== top) {
-    summaryParts.push(`${mover.corpsName} makes the week's biggest move`);
+  if (climber && climber !== leader) {
+    summaryParts.push(`${climber.corpsName} is the day's biggest riser`);
   }
-  summaryParts.push(`${report.fieldSize} corps ranked`);
+  summaryParts.push(`${fieldSize} corps ranked`);
 
   return {
     type: "podium_report",
-    headline: `The Podium Report — Week ${report.week} Power Rankings`,
+    headline: `The Podium Report — Day ${day}`,
     summary: `${summaryParts.join("; ")}.`,
-    narrative:
-      `Every week the Podium Report re-seats the director-run field on current scores — ` +
-      `who's peaking, who's slipping, and who just arrived.\n\n` +
-      `${lines.join("\n")}\n\n` +
-      `Power rankings are computed from the nightly recap scores; the full box scores for ` +
-      `all eight captions live in the Scores tab under Podium Class.`,
+    narrative: composeNarrative(analysis),
     imageUrl: null,
     reportDay,
-    podiumWeek: report.week,
+    podiumDay: day,
   };
 }
 
 /**
- * Generate the Podium Report article for the day, or null when no column
- * exists yet (caller falls back to the DCI recap).
+ * Generate the Podium Report article for the day, or null when no standings
+ * sheet exists yet (caller falls back to the DCI recap).
  */
 async function generatePodiumReportArticle({ db, seasonUid, competitionDay, reportDay }) {
   if (!seasonUid || competitionDay == null) return null;
-  const report = await loadLatestPodiumReport(db, seasonUid, competitionDay);
-  if (!report || !(report.entries || []).length) return null;
-  return composePodiumReportArticle(report, reportDay);
+  const sheet = await loadLatestPodiumStandings(db, seasonUid, competitionDay);
+  if (!sheet || !(sheet.entries || []).length) return null;
+  return composePodiumReportArticle(sheet, reportDay);
 }
 
-module.exports = { generatePodiumReportArticle, composePodiumReportArticle, loadLatestPodiumReport };
+module.exports = {
+  generatePodiumReportArticle,
+  composePodiumReportArticle,
+  loadLatestPodiumStandings,
+};

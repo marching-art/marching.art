@@ -30,7 +30,7 @@ const HallOfChampions = lazyWithRetry(() => import('./HallOfChampions'), 'HallOf
 // Supporters wall — nested here beside Hall of Champions (only loaded on open).
 const SupportersWall = lazyWithRetry(() => import('./SupportersWall'), 'SupportersWallTab');
 // Podium Class tab (flag-gated) — a sub-tabbed panel: the DCI-style recap box
-// scores and The Podium Report (weekly power rankings), split into two
+// scores and The Podium Report (daily power rankings), split into two
 // sub-views so the two dense surfaces no longer stack on one page.
 const PodiumScoresPanel = lazyWithRetry(
   () => import('../components/Podium/PodiumScoresPanel'),

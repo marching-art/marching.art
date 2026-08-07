@@ -4,7 +4,7 @@
 // Pure helpers and category config extracted from NewsFeed.jsx so they can be
 // unit-tested independently of the (large) presentational component.
 
-import { Newspaper, Trophy, Flame, BookOpen, type LucideIcon } from 'lucide-react';
+import { Newspaper, Trophy, Flame, BookOpen, Medal, type LucideIcon } from 'lucide-react';
 
 export interface NewsCategory {
   id: string;
@@ -16,6 +16,7 @@ export const CATEGORIES: NewsCategory[] = [
   { id: 'all', label: 'All Stories', icon: Newspaper },
   { id: 'dci', label: 'DCI Recaps', icon: Trophy },
   { id: 'fantasy', label: 'Fantasy', icon: Flame },
+  { id: 'podium', label: 'Podium', icon: Medal },
   { id: 'analysis', label: 'Analysis', icon: BookOpen },
 ];
 
@@ -192,6 +193,14 @@ export function getCategoryConfig(category: string): CategoryConfig {
         textClass: 'text-orange-400',
         bgLightClass: 'bg-orange-500/20',
         icon: Flame,
+      };
+    case 'podium':
+      return {
+        label: 'PODIUM',
+        bgClass: 'bg-brand',
+        textClass: 'text-brand',
+        bgLightClass: 'bg-brand/20',
+        icon: Medal,
       };
     case 'analysis':
       return {

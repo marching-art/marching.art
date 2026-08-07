@@ -14,11 +14,12 @@
 // own). Archived seasons scored before divisions rode on the standings doc have
 // no `division` on their entries and still render as one undivided sheet.
 //
-// The WEEKLY narrative write-up (who's peaking, who's slipping, biggest mover)
-// stays separate: it ships as the auto-generated "The Podium Report" news
-// article (functions/src/helpers/newsPodiumArticle.js), which reads the weekly
-// `power` column. Archived seasons that predate daily standings fall back to
-// that weekly `power` collection so their standings view still renders.
+// The DAILY narrative write-up (who's peaking, who's slipping, biggest mover)
+// stays separate: it ships every night as the auto-generated "The Podium
+// Report" news article (functions/src/helpers/newsPodiumArticle.js), a
+// commentative magazine column composed straight from this same daily
+// `standings` sheet. Archived seasons that predate daily standings fall back to
+// the weekly `power` collection so their standings view still renders.
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
@@ -221,7 +222,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
       ))}
 
       <SheetFooter
-        note="Split by division · box-toppers in gold · weekly column in the news"
+        note="Split by division · box-toppers in gold · daily column in the news"
         action={<ShareButton getText={shareText} />}
       />
     </div>

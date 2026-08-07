@@ -283,36 +283,35 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
         reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
       }));
 
-      // Article 3: on Podium week boundaries the Podium Report power
-      // rankings replace the DCI caption deep-dive (decision 31) — the
-      // column is deterministic player-facing data, composed directly so
-      // corps names and ranks can never be hallucinated. Every other night
-      // stays the DCI recap.
+      // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
+      await persist(await generateDciRecapArticle({
+        reportDay, dayScores, trendData, seasonContext, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+      }));
+
+      // Article 4: the Podium Report daily power rankings (decision 31) take
+      // this slot on every night the Podium Class has a standings sheet — the
+      // column is deterministic player-facing data, composed directly so corps
+      // names and ranks can never be hallucinated. It replaces the Fantasy
+      // Market Report here so the daily batch keeps five articles in the mix
+      // 2 DCI / 1 Analysis / 1 Podium / 1 Fantasy. Nights with no Podium sheet
+      // (off-season, non-Podium seasons) fall back to the market report.
       let podiumArticle = null;
-      if (reportDay % 7 === 0) {
-        try {
-          const { generatePodiumReportArticle } = require("./newsPodiumArticle");
-          const candidate = await generatePodiumReportArticle({
-            db, seasonUid: seasonId, competitionDay: reportDay, reportDay,
-          });
-          if (candidate && candidate.podiumWeek === reportDay / 7) podiumArticle = candidate;
-        } catch (podiumError) {
-          logger.warn(`Podium Report article unavailable (falling back to DCI recap): ${podiumError.message}`);
-        }
+      try {
+        const { generatePodiumReportArticle } = require("./newsPodiumArticle");
+        podiumArticle = await generatePodiumReportArticle({
+          db, seasonUid: seasonId, competitionDay: reportDay, reportDay,
+        });
+      } catch (podiumError) {
+        logger.warn(`Podium Report article unavailable (falling back to Fantasy Market Report): ${podiumError.message}`);
       }
       if (podiumArticle) {
         await persist(podiumArticle);
       } else {
-        // DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
-        await persist(await generateDciRecapArticle({
-          reportDay, dayScores, trendData, seasonContext, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+        // FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
+        await persist(await generateFantasyRecapArticle({
+          reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
         }));
       }
-
-      // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
-      await persist(await generateFantasyRecapArticle({
-        reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
-      }));
     }
 
     // Article 5: FANTASY DAILY - Fantasy competition results with score breakdown

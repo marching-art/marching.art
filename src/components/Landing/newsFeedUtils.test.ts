@@ -100,6 +100,7 @@ describe('getCategoryConfig', () => {
   it('returns distinct config per known category', () => {
     expect(getCategoryConfig('dci').label).toBe('DCI RECAP');
     expect(getCategoryConfig('fantasy').label).toBe('FANTASY');
+    expect(getCategoryConfig('podium').label).toBe('PODIUM');
     expect(getCategoryConfig('analysis').label).toBe('ANALYSIS');
   });
 
@@ -111,8 +112,8 @@ describe('getCategoryConfig', () => {
 });
 
 describe('CATEGORIES', () => {
-  it('lists the four filter categories with icons', () => {
-    expect(CATEGORIES.map((c) => c.id)).toEqual(['all', 'dci', 'fantasy', 'analysis']);
+  it('lists the five filter categories with icons', () => {
+    expect(CATEGORIES.map((c) => c.id)).toEqual(['all', 'dci', 'fantasy', 'podium', 'analysis']);
     for (const c of CATEGORIES) expect(c.icon).toBeTruthy();
   });
 });
