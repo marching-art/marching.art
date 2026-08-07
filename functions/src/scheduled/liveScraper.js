@@ -3,7 +3,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 // cheerio is required lazily (cold-start weight; only the scrape path parses HTML).
-const { scrapeDciScoresLogic, finalScoresToRecapUrl } = require("../helpers/scraping");
+const { scrapeDciScoresLogic, finalScoresToRecapUrl, eventUrlToRecapUrl } = require("../helpers/scraping");
 const { dciFetch, scraperApiKey } = require("../helpers/dciFetch");
 const { competitionDayToDateUTC } = require("../helpers/scheduleGeneration");
 
@@ -37,6 +37,53 @@ async function fetchScoresListing() {
   });
 
   return listedEvents;
+}
+
+/**
+ * Derive recap URLs straight from the live season's stored schedule, for a
+ * single target night. The schedule already carries each scraped show's
+ * /events/{slug}/ detail URL (helpers/seasonSchedule.js ENRICHMENT_FIELDS), and
+ * the recap lives at the identical slug under /scores/recap/, so we can point at
+ * a night's recap pages without waiting for dci.org to link them on /scores/.
+ *
+ * This is the fix for DCI posting a recap but overlooking the /scores/ listing:
+ * fetchScoresListing() alone goes blind there, but the schedule knows exactly
+ * where the scores will be.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {object} seasonData - game-settings/season data (needs seasonUid).
+ * @param {string} targetDateKey - YYYY-MM-DD (Eastern) night to derive URLs for.
+ * @returns {Promise<Array<{recapUrl: string, dateKey: string}>>}
+ */
+async function deriveScheduleRecapEvents(db, seasonData, targetDateKey) {
+  const seasonId = seasonData?.seasonUid;
+  if (!seasonId || !targetDateKey) return [];
+
+  let competitions = [];
+  try {
+    const scheduleDoc = await db.doc(`schedules/${seasonId}`).get();
+    competitions = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
+  } catch (error) {
+    logger.warn(`Could not read schedule for URL derivation: ${error.message}`);
+    return [];
+  }
+
+  const events = [];
+  const seen = new Set();
+  for (const comp of competitions) {
+    // Only scraped DCI shows carry a /events/ URL; player-hosted events never do.
+    const recapUrl = eventUrlToRecapUrl(comp.url);
+    if (!recapUrl || !comp.date) continue;
+    // comp.date is stored at UTC midnight for the event's calendar day, which is
+    // the same calendar date the night is keyed on. The recap page's own date is
+    // still cross-checked in scrapeDciScoresLogic (expectedDateKey), so a stale
+    // or mis-slugged URL can never archive under the wrong day.
+    const dateKey = String(comp.date).slice(0, 10);
+    if (dateKey !== targetDateKey || seen.has(recapUrl)) continue;
+    seen.add(recapUrl);
+    events.push({ recapUrl, dateKey });
+  }
+  return events;
 }
 
 /**
@@ -226,49 +273,70 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null, skipRecap
   }
 
   // A single competition night frequently has 2-3 events, so we scrape EVERY
-  // event sharing the most-recent date rather than just the latest single link.
+  // event sharing the target date rather than just the latest single link.
   const listedEvents = await fetchScoresListing();
-
-  if (listedEvents.length === 0) {
-    logger.info("No dated final-scores rows found on the dci.org scores page.");
-    // A listing page with no rows during live season is a scrape failure
-    // (blocked or broken markup), not a quiet night — record it so the
-    // watchdog can alert instead of the night silently vanishing.
-    await writeScrapeRunStatus(db, today, {
-      status: "failed",
-      failedAt: new Date(),
-      attempted: 0,
-      succeeded: 0,
-      failed: 0,
-      lastError: "no dated final-scores rows found on the dci.org scores page",
-    });
-    return { scraped: false, reason: "no-recap-found", fetchedRecaps: false };
-  }
 
   // Target date: pinned to the caller's expected show date when given (the
   // dispatcher scrapes tonight's shows and must never fall back to an older
   // night); otherwise all events sharing the most-recent listed date belong to
   // the latest competition night — compute the max date explicitly rather than
-  // trusting listing order.
-  const latestDateKey = dateKey || listedEvents.reduce(
-    (max, e) => (e.dateKey > max ? e.dateKey : max),
-    listedEvents[0].dateKey
-  );
+  // trusting listing order. With no dateKey AND an empty listing there is no
+  // night to target (legacy 1:30 AM path only), so it stays null.
+  const latestDateKey = dateKey || (listedEvents.length
+    ? listedEvents.reduce((max, e) => (e.dateKey > max ? e.dateKey : max), listedEvents[0].dateKey)
+    : null);
 
-  if (dateKey && !listedEvents.some((e) => e.dateKey === dateKey)) {
-    // Tonight's events aren't on the listing yet (posted late, or the page is
-    // stale). Record a failure — WITHOUT stamping lastScrapedDate — so the
-    // dispatcher's next gate tick retries until its clamp.
-    logger.warn(`No dci.org events listed for expected date ${dateKey} yet; will retry.`);
+  // DCI frequently posts a night's /scores/recap/{slug}/ pages without linking
+  // them on /scores/, so the listing above can miss events whose scores are
+  // already up. The schedule stores each show's /events/ detail URL, and the
+  // recap lives at the identical slug — derive those directly and fold them in
+  // so the scrape finds tonight's scores even when the listing hasn't caught up.
+  const scheduleEvents = latestDateKey
+    ? await deriveScheduleRecapEvents(db, seasonData, latestDateKey)
+    : [];
+
+  // Listing first so its authoritative M/D/YYYY dateKey wins on the dedupe in
+  // scrapeRecapsForDateKeys; schedule-derived entries share the same recap URL
+  // form, so they only add events the listing hasn't surfaced.
+  const candidateEvents = [...listedEvents, ...scheduleEvents];
+  // Events dci.org actually LISTED for tonight, vs. ones we only know from the
+  // schedule. Drives the probe-vs-scrape cost classification below: an event the
+  // listing shows exists but whose recap won't parse is an expensive failure;
+  // a schedule-only URL that yields nothing is just DCI not having posted yet.
+  const listedForNightCount = listedEvents.filter((e) => e.dateKey === latestDateKey).length;
+
+  if (candidateEvents.length === 0) {
+    logger.info("No dated final-scores rows on dci.org and no schedule URLs to derive.");
+    // A live-season night with neither a listing row nor a schedule URL is a
+    // scrape failure (blocked/broken markup, or no schedule yet), not a quiet
+    // night — record it so the watchdog can alert instead of it silently
+    // vanishing.
     await writeScrapeRunStatus(db, today, {
       status: "failed",
       failedAt: new Date(),
       attempted: 0,
       succeeded: 0,
       failed: 0,
-      lastError: `no events listed for expected date ${dateKey}`,
+      lastError: "no final-scores rows on dci.org and no schedule URLs to derive",
     });
-    return { scraped: false, reason: "no-events-for-date", dateKey, fetchedRecaps: false };
+    return { scraped: false, reason: "no-recap-found", fetchedRecaps: false };
+  }
+
+  if (!candidateEvents.some((e) => e.dateKey === latestDateKey)) {
+    // Tonight's events aren't on the listing yet AND the schedule has no URL for
+    // them (posted late, or a stale/empty schedule). Record a failure — WITHOUT
+    // stamping lastScrapedDate — so the dispatcher's next gate tick retries until
+    // its clamp.
+    logger.warn(`No dci.org events (listed or scheduled) for expected date ${latestDateKey} yet; will retry.`);
+    await writeScrapeRunStatus(db, today, {
+      status: "failed",
+      failedAt: new Date(),
+      attempted: 0,
+      succeeded: 0,
+      failed: 0,
+      lastError: `no events for expected date ${latestDateKey}`,
+    });
+    return { scraped: false, reason: "no-events-for-date", dateKey: latestDateKey, fetchedRecaps: false };
   }
 
   logger.info(`Latest competition date ${latestDateKey}: scraping events.`);
@@ -277,7 +345,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null, skipRecap
   // caller's/wall-clock key.
   const runKey = stampWithEventDate ? latestDateKey : today;
   const { recapUrls, results, totalCount, listedCount, succeededUrls } =
-    await scrapeRecapsForDateKeys(listedEvents, new Set([latestDateKey]), { skipRecapUrls });
+    await scrapeRecapsForDateKeys(candidateEvents, new Set([latestDateKey]), { skipRecapUrls });
 
   // Everything listed for tonight was already scraped on an earlier tick — the
   // remaining events simply aren't up yet. Cost so far: the one listing fetch.
@@ -363,7 +431,13 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null, skipRecap
     succeededEvents: succeeded,
     failedEvents: failed,
     stampedLastScrapedDate: allSucceeded,
-    fetchedRecaps: true,
+    // Cost classification for the dispatcher's budgets. Rows scraped, or a recap
+    // dci.org LISTED that failed to parse (Cloudflare/markup), is a real recap
+    // attempt (expensive budget). But when the only URLs came from the schedule
+    // — DCI hasn't listed the night — and none produced rows, the recap simply
+    // isn't posted yet: report a cheap probe so the night keeps waiting on the
+    // probe budget instead of spending its 3 expensive attempts before scores go up.
+    fetchedRecaps: totalCount > 0 || listedForNightCount > 0,
     count: totalCount,
     events: results,
     scrapedDate: runKey,
@@ -371,6 +445,7 @@ async function scrapeLatestLiveScores({ force = false, dateKey = null, skipRecap
 }
 
 exports.scrapeLatestLiveScores = scrapeLatestLiveScores;
+exports.deriveScheduleRecapEvents = deriveScheduleRecapEvents;
 
 /**
  * Admin backfill: scrape dci.org scores for a specific competition-day range

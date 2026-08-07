@@ -36,6 +36,27 @@ function finalScoresToRecapUrl(finalScoresUrl) {
 }
 
 /**
+ * Derive a per-caption recap URL from an /events/ detail URL. dci.org serves an
+ * event's scores at the identical slug moved out of /events/ and into /scores/:
+ * the summary lives at /scores/{slug}/ and the detailed per-caption recap this
+ * scraper parses lives at /scores/recap/{slug}/.
+ * e.g. https://www.dci.org/events/2026-dci-world-championship-prelims/
+ *   ->  https://www.dci.org/scores/recap/2026-dci-world-championship-prelims/
+ *
+ * This is what lets the live scraper find scores DCI has posted but not yet
+ * linked on its /scores/ listing: the schedule already stores each show's
+ * /events/ URL, so the recap page can be probed directly.
+ *
+ * @param {string} eventUrl - An /events/{slug}/ detail URL.
+ * @returns {string|null} The derived /scores/recap/{slug}/ URL, or null when the
+ *   input is not an /events/ URL.
+ */
+function eventUrlToRecapUrl(eventUrl) {
+  if (typeof eventUrl !== "string" || !eventUrl.includes("/events/")) return null;
+  return eventUrl.replace("/events/", "/scores/recap/");
+}
+
+/**
  * Extract all URLs from a Yoast sitemap body, whichever form it arrives in.
  *
  * dciFetch routes through a JS-rendering proxy (Cloudflare bypass), and Yoast
@@ -490,6 +511,7 @@ module.exports = {
   scrapeDciScoresLogic,
   parseRecapDateUTC,
   finalScoresToRecapUrl,
+  eventUrlToRecapUrl,
   extractSitemapLocs,
   discoverAllRecapUrls,
   discoverAllEventUrls,
