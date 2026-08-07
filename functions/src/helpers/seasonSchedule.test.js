@@ -8,7 +8,42 @@ const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { regionalTierForEventName, applyMultiNightMajors } = require("./seasonSchedule");
-const { mergeScheduleRefresh } = require("./scheduleRefresh");
+const { mergeScheduleRefresh, buildScrapedEventUrlIndex } = require("./scheduleRefresh");
+
+describe("buildScrapedEventUrlIndex", () => {
+  test("keeps { url, date } for events with both, dropping the rest", () => {
+    const index = buildScrapedEventUrlIndex([
+      { url: "https://www.dci.org/events/2026-dci-prelims/", date: "2026-08-06T00:00:00.000Z", eventName: "x" },
+      { date: "2026-08-06T00:00:00.000Z" }, // no url
+      { url: "https://www.dci.org/events/2026-dci-semis/" }, // no date
+    ]);
+    assert.deepEqual(index, [
+      { url: "https://www.dci.org/events/2026-dci-prelims/", date: "2026-08-06T00:00:00.000Z" },
+    ]);
+  });
+
+  test("dedupes by URL and tolerates empty/nullish input", () => {
+    const index = buildScrapedEventUrlIndex([
+      { url: "https://www.dci.org/events/2026-dci-x/", date: "2026-08-06T00:00:00.000Z" },
+      { url: "https://www.dci.org/events/2026-dci-x/", date: "2026-08-06T00:00:00.000Z" },
+    ]);
+    assert.equal(index.length, 1);
+    assert.deepEqual(buildScrapedEventUrlIndex([]), []);
+    assert.deepEqual(buildScrapedEventUrlIndex(undefined), []);
+  });
+
+  test("captures championship-week events that never enter competitions[]", () => {
+    // The whole point: prelims/semis/finals are dropped from competitions[]
+    // (day > 44) but must still be reachable by URL for the score scraper.
+    const index = buildScrapedEventUrlIndex([
+      {
+        url: "https://www.dci.org/events/2026-dci-world-championship-prelims/",
+        date: "2026-08-06T00:00:00.000Z",
+      },
+    ]);
+    assert.equal(index[0].url, "https://www.dci.org/events/2026-dci-world-championship-prelims/");
+  });
+});
 
 describe("regionalTierForEventName", () => {
   test("tags the three branded majors as regional", () => {

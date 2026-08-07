@@ -59,26 +59,36 @@ async function deriveScheduleRecapEvents(db, seasonData, targetDateKey) {
   const seasonId = seasonData?.seasonUid;
   if (!seasonId || !targetDateKey) return [];
 
-  let competitions = [];
+  let data = null;
   try {
     const scheduleDoc = await db.doc(`schedules/${seasonId}`).get();
-    competitions = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
+    data = scheduleDoc.exists ? scheduleDoc.data() : null;
   } catch (error) {
     logger.warn(`Could not read schedule for URL derivation: ${error.message}`);
     return [];
   }
+  if (!data) return [];
+
+  // Two sources, unioned: the in-game competitions[] (days 1-44, which carry a
+  // /events/ URL when enriched) and scrapedEventUrls[] — every scraped event's
+  // { url, date }, championship week included. competitions[] never holds
+  // day >= 45, so scrapedEventUrls is what makes prelims/semis/finals reachable.
+  const sources = [
+    ...(Array.isArray(data.competitions) ? data.competitions : []),
+    ...(Array.isArray(data.scrapedEventUrls) ? data.scrapedEventUrls : []),
+  ];
 
   const events = [];
   const seen = new Set();
-  for (const comp of competitions) {
-    // Only scraped DCI shows carry a /events/ URL; player-hosted events never do.
-    const recapUrl = eventUrlToRecapUrl(comp.url);
-    if (!recapUrl || !comp.date) continue;
-    // comp.date is stored at UTC midnight for the event's calendar day, which is
-    // the same calendar date the night is keyed on. The recap page's own date is
-    // still cross-checked in scrapeDciScoresLogic (expectedDateKey), so a stale
-    // or mis-slugged URL can never archive under the wrong day.
-    const dateKey = String(comp.date).slice(0, 10);
+  for (const entry of sources) {
+    // Only scraped DCI shows carry an /events/ URL; player-hosted events never do.
+    const recapUrl = eventUrlToRecapUrl(entry.url);
+    if (!recapUrl || !entry.date) continue;
+    // The stored date is UTC midnight for the event's calendar day, the same
+    // date the night is keyed on. The recap page's own date is still
+    // cross-checked in scrapeDciScoresLogic (expectedDateKey), so a stale or
+    // mis-slugged URL can never archive under the wrong day.
+    const dateKey = String(entry.date).slice(0, 10);
     if (dateKey !== targetDateKey || seen.has(recapUrl)) continue;
     seen.add(recapUrl);
     events.push({ recapUrl, dateKey });
@@ -496,13 +506,23 @@ async function scrapeLiveScoresForDayRange({ startDay, endDay, overwrite = false
   );
 
   const listedEvents = await fetchScoresListing();
-  if (listedEvents.length === 0) {
-    logger.info("Day-range backfill: no final-scores rows on the dci.org scores page.");
+
+  // Fold in recap URLs derived straight from the schedule for each requested
+  // date, so a backfill reaches events DCI has posted but not linked on /scores/
+  // (championship week, which never enters competitions[], relies on this).
+  const scheduleEvents = [];
+  for (const dk of dateKeySet) {
+    scheduleEvents.push(...await deriveScheduleRecapEvents(db, seasonData, dk));
+  }
+  const candidateEvents = [...listedEvents, ...scheduleEvents];
+
+  if (candidateEvents.length === 0) {
+    logger.info("Day-range backfill: no final-scores rows on dci.org and no schedule URLs to derive.");
     return { scraped: false, reason: "no-recap-found", requestedDates };
   }
 
   const { recapUrls, results, totalCount } =
-    await scrapeRecapsForDateKeys(listedEvents, dateKeySet, { overwrite });
+    await scrapeRecapsForDateKeys(candidateEvents, dateKeySet, { overwrite });
 
   if (recapUrls.length === 0) {
     logger.info(
