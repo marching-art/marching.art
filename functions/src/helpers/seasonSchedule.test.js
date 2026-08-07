@@ -11,11 +11,25 @@ const { regionalTierForEventName, applyMultiNightMajors } = require("./seasonSch
 const { mergeScheduleRefresh, buildScrapedEventUrlIndex } = require("./scheduleRefresh");
 
 describe("buildScrapedEventUrlIndex", () => {
-  test("keeps { url, date } for events with both, dropping the rest", () => {
+  const LINEUP = [{ order: 1, corps: "Blue Devils" }];
+
+  test("keeps { url, date } for competitive events, dropping those missing url/date", () => {
     const index = buildScrapedEventUrlIndex([
-      { url: "https://www.dci.org/events/2026-dci-prelims/", date: "2026-08-06T00:00:00.000Z", eventName: "x" },
-      { date: "2026-08-06T00:00:00.000Z" }, // no url
-      { url: "https://www.dci.org/events/2026-dci-semis/" }, // no date
+      { url: "https://www.dci.org/events/2026-dci-prelims/", date: "2026-08-06T00:00:00.000Z", lineup: LINEUP, eventName: "x" },
+      { date: "2026-08-06T00:00:00.000Z", lineup: LINEUP }, // no url
+      { url: "https://www.dci.org/events/2026-dci-semis/", lineup: LINEUP }, // no date
+    ]);
+    assert.deepEqual(index, [
+      { url: "https://www.dci.org/events/2026-dci-prelims/", date: "2026-08-06T00:00:00.000Z" },
+    ]);
+  });
+
+  test("excludes non-scoring events with no lineup (cinema/education showcases)", () => {
+    const index = buildScrapedEventUrlIndex([
+      { url: "https://www.dci.org/events/2026-dci-prelims/", date: "2026-08-06T00:00:00.000Z", lineup: LINEUP },
+      // "Big, Loud & Live" cinema broadcast: real date + URL, but no lineup.
+      { url: "https://www.dci.org/events/2026-dci-2026-big-loud-live/", date: "2026-08-06T00:00:00.000Z" },
+      { url: "https://www.dci.org/events/2026-shining-a-light/", date: "2026-08-06T00:00:00.000Z", lineup: [] },
     ]);
     assert.deepEqual(index, [
       { url: "https://www.dci.org/events/2026-dci-prelims/", date: "2026-08-06T00:00:00.000Z" },
@@ -24,8 +38,8 @@ describe("buildScrapedEventUrlIndex", () => {
 
   test("dedupes by URL and tolerates empty/nullish input", () => {
     const index = buildScrapedEventUrlIndex([
-      { url: "https://www.dci.org/events/2026-dci-x/", date: "2026-08-06T00:00:00.000Z" },
-      { url: "https://www.dci.org/events/2026-dci-x/", date: "2026-08-06T00:00:00.000Z" },
+      { url: "https://www.dci.org/events/2026-dci-x/", date: "2026-08-06T00:00:00.000Z", lineup: LINEUP },
+      { url: "https://www.dci.org/events/2026-dci-x/", date: "2026-08-06T00:00:00.000Z", lineup: LINEUP },
     ]);
     assert.equal(index.length, 1);
     assert.deepEqual(buildScrapedEventUrlIndex([]), []);
@@ -39,6 +53,7 @@ describe("buildScrapedEventUrlIndex", () => {
       {
         url: "https://www.dci.org/events/2026-dci-world-championship-prelims/",
         date: "2026-08-06T00:00:00.000Z",
+        lineup: LINEUP,
       },
     ]);
     assert.equal(index[0].url, "https://www.dci.org/events/2026-dci-world-championship-prelims/");

@@ -177,8 +177,12 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic", ext
     const eventDate = parseRecapDateUTC(dateText);
     if (!eventDate) {
       const dateError = `no parseable event date on recap (date text: "${dateText}")`;
-      logger.error(
-        `[scrapeDciScoresLogic] ${dateError} for ${urlToScrape}; refusing to publish.`
+      // Not an error to alarm on: a recap with no date is either a non-scoring
+      // event (a cinema broadcast / showcase that will never post scores) or a
+      // competition whose recap simply isn't up yet. Either way we skip it and
+      // move on — warn, don't error.
+      logger.warn(
+        `[scrapeDciScoresLogic] ${dateError} for ${urlToScrape}; skipping (no scores to publish).`
       );
       return { eventName, eventLocation, eventDate: null, year: null, count: 0, error: dateError };
     }

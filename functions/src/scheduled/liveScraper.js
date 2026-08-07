@@ -151,7 +151,10 @@ async function scrapeRecapsForDateKeys(
         // summary.error carries the specific reason when the scrape itself
         // rejected the page (unparseable/mismatched event date).
         const error = summary?.error || "0 rows parsed from response";
-        logger.error(`Recap ${recapUrl} failed: ${error}; treating as a failed scrape.`);
+        // Non-aborting and expected on any night still in progress (recaps not
+        // posted yet) — warn rather than error. It's only recorded so the night
+        // isn't stamped complete on empty data; the loop moves on to the next.
+        logger.warn(`Recap ${recapUrl} produced no scores: ${error}; skipping.`);
         results.push({
           recapUrl,
           eventName: summary?.eventName || null,
