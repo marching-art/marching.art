@@ -84,6 +84,51 @@ describe("deriveScheduleRecapEvents", () => {
     assert.equal(events.length, 1);
   });
 
+  test("derives from scrapedEventUrls[] — championship week absent from competitions[]", async () => {
+    const db = makeDb({
+      "schedules/live_2026": {
+        competitions: [], // championship week is never carried here
+        scrapedEventUrls: [
+          {
+            url: "https://www.dci.org/events/2026-dci-world-championship-prelims/",
+            date: "2026-08-06T00:00:00.000Z",
+          },
+          {
+            url: "https://www.dci.org/events/2026-dci-world-championship-finals/",
+            date: "2026-08-08T00:00:00.000Z",
+          },
+        ],
+      },
+    });
+
+    const events = await deriveScheduleRecapEvents(db, SEASON, "2026-08-06");
+    assert.deepEqual(events, [
+      {
+        recapUrl: "https://www.dci.org/scores/recap/2026-dci-world-championship-prelims/",
+        dateKey: "2026-08-06",
+      },
+    ]);
+  });
+
+  test("unions competitions[] and scrapedEventUrls[], deduping shared URLs", async () => {
+    const shared = "https://www.dci.org/events/2026-dci-regional/";
+    const db = makeDb({
+      "schedules/live_2026": {
+        competitions: [{ url: shared, date: "2026-08-06T00:00:00.000Z" }],
+        scrapedEventUrls: [
+          { url: shared, date: "2026-08-06T00:00:00.000Z" }, // dupe of the competition
+          { url: "https://www.dci.org/events/2026-dci-extra/", date: "2026-08-06T00:00:00.000Z" },
+        ],
+      },
+    });
+
+    const events = await deriveScheduleRecapEvents(db, SEASON, "2026-08-06");
+    assert.deepEqual(events.map((e) => e.recapUrl).sort(), [
+      "https://www.dci.org/scores/recap/2026-dci-extra/",
+      "https://www.dci.org/scores/recap/2026-dci-regional/",
+    ]);
+  });
+
   test("returns [] when no season, no target date, or no schedule doc", async () => {
     const db = makeDb({});
     assert.deepEqual(await deriveScheduleRecapEvents(db, {}, "2026-08-06"), []);

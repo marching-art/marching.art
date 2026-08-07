@@ -663,12 +663,45 @@ exports.scrapeLiveScoresNow = onCall({
   logger.info(`Admin ${request.auth.uid} manually triggered a live DCI score scrape.`);
 
   try {
-    const result = await scrapeLatestLiveScores({ force: true });
+    // Target the night explicitly so the scrape can reach events DCI has posted
+    // but not yet linked on /scores/. An admin may pass an exact date; otherwise
+    // we use the drop planner's current show date (the same 3 AM ET reset scoring
+    // uses), which — unlike the old "latest listed date" default — resolves even
+    // for championship-week nights that never appear in competitions[].
+    let dateKey = null;
+    const explicitDate = request.data?.date;
+    if (typeof explicitDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(explicitDate)) {
+      dateKey = explicitDate;
+    } else {
+      try {
+        const db = getDb();
+        const seasonDoc = await db.doc("game-settings/season").get();
+        const seasonData = seasonDoc.exists ? seasonDoc.data() : null;
+        let competitions = [];
+        if (seasonData?.status === "live-season" && seasonData.seasonUid) {
+          const scheduleDoc = await db.doc(`schedules/${seasonData.seasonUid}`).get();
+          competitions = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
+        }
+        const { planDrop } = require("../helpers/dropPlanner");
+        const plan = seasonData ? planDrop({ seasonData, competitions }) : null;
+        // Only live-season plans drive a dci.org scrape; off-season has no recap.
+        if (plan && plan.seasonType === "live-season") dateKey = plan.showDateET;
+      } catch (planError) {
+        // Fall back to the legacy "latest listed" behavior if planning fails —
+        // never block the manual scrape on the date derivation.
+        logger.warn(`Could not derive target date for manual scrape: ${planError.message}`);
+      }
+    }
+
+    const result = await scrapeLatestLiveScores({ force: true, ...(dateKey ? { dateKey } : {}) });
 
     if (!result.scraped) {
       const reasonMessages = {
         "no-live-season": "No active live season — scraping only runs during a live DCI season.",
         "no-recap-found": "No recap link was found on the DCI scores page.",
+        "no-events-for-date": `No DCI events (listed or scheduled) for ${result.dateKey || dateKey} ` +
+          "yet — scores may not be posted, or the schedule needs a refresh to capture the event URL.",
+        "no-new-events": "Every event for this night has already been scraped.",
         "already-scraped-today": "Already scraped today (this shouldn't happen on a forced run).",
       };
       return {

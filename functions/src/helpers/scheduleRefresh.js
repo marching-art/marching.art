@@ -133,6 +133,29 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
 }
 
 /**
+ * Build a compact { url, date } index of every scraped DCI event, for storing
+ * alongside the in-game schedule. This is what lets the live score scraper find
+ * a night's scores by URL even when dci.org hasn't linked them on /scores/ yet:
+ * competitions[] only carries days 1-44 (mergeScheduleRefresh drops championship
+ * week), but the scraper still needs prelims/semis/finals URLs, and every other
+ * show's, to derive their /scores/recap/ pages directly.
+ *
+ * Deduped by URL, dropping entries with no url or no date. Kept intentionally
+ * small (two fields) so it stays well inside the schedule doc's size budget.
+ *
+ * @param {Array<object>} events - Scraped events (each may carry url + date).
+ * @returns {Array<{url: string, date: string}>}
+ */
+function buildScrapedEventUrlIndex(events) {
+  const byUrl = new Map();
+  for (const event of events || []) {
+    if (!event || !event.url || !event.date) continue;
+    if (!byUrl.has(event.url)) byUrl.set(event.url, { url: event.url, date: event.date });
+  }
+  return [...byUrl.values()];
+}
+
+/**
  * Refreshes the live season schedule with newly scraped DCI events.
  *
  * ADDITIVE, never destructive: existing shows are enriched in place with real
@@ -195,7 +218,13 @@ async function refreshLiveSeasonSchedule() {
       existing, upcomingEvents, seasonId, startDate, springTrainingDays
     );
 
-    await scheduleRef.set({ competitions }, { merge: true });
+    // Persist every scraped event's URL by date (championship week included, even
+    // though those shows never enter competitions[]) so the live score scraper
+    // can derive their /scores/recap/ pages directly — the schedule, not the lossy
+    // /scores/ listing, is the source of truth for where a night's scores will be.
+    const scrapedEventUrls = buildScrapedEventUrlIndex(scrapedEvents);
+
+    await scheduleRef.set({ competitions, scrapedEventUrls }, { merge: true });
 
     // Update the season document with refresh timestamp
     await db.doc("game-settings/season").update({
@@ -217,5 +246,6 @@ async function refreshLiveSeasonSchedule() {
 module.exports = {
   showMatchKey,
   mergeScheduleRefresh,
+  buildScrapedEventUrlIndex,
   refreshLiveSeasonSchedule,
 };
