@@ -325,8 +325,11 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
 
 
     // Mid-season joiners start from the corpus catch-up baseline: the engine
-    // seeds day-1 state; content advances toward the median pace for the
-    // current day (§9 catch-up: playable, never advantaged).
+    // seeds day-1 state; content advances PART of the way toward the median
+    // pace for the current day (§9 catch-up: playable, never advantaged). The
+    // coefficient is deliberately below the median-pace fraction so a fresh
+    // joiner still starts clearly behind a director who has been rehearsing —
+    // catch-up closes the hopeless gap, it does not hand over earned progress.
     const engineState = engine.createSeasonState(
       { challenge, auditions: auditionShares, repTier: startingTier },
       store.curves,
@@ -334,7 +337,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     );
     const competitionDay = toCompetitionDay(calendarDay, seasonData);
     if (competitionDay > 1) {
-      const catchUp = Math.min(0.85, (competitionDay - 1) / 49) * 0.35;
+      const catchUp = Math.min(0.85, (competitionDay - 1) / 49) * 0.2;
       for (const caption of engine.CAPTIONS) {
         engineState.captions[caption].content = Math.min(1, engineState.captions[caption].content + catchUp);
         engineState.captions[caption].clean = Math.min(1, engineState.captions[caption].clean + catchUp * 0.6);
