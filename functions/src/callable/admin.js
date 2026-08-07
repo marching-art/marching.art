@@ -654,7 +654,9 @@ exports.manualTrigger = onCall({
  */
 exports.scrapeLiveScoresNow = onCall({
   cors: true,
-  timeoutSeconds: 300,
+  // A night can have several events, each a slow (10-40s) JS-rendered recap
+  // fetch, so give the manual scrape the same headroom as the dispatcher.
+  timeoutSeconds: 540,
   memory: "512MiB",
   secrets: [scraperApiKey],
 }, async (request) => {
@@ -736,7 +738,8 @@ exports.scrapeLiveScoresNow = onCall({
  */
 exports.backfillLiveScoresForDayRange = onCall({
   cors: true,
-  timeoutSeconds: 300,
+  // A multi-day range fetches many slow JS-rendered recaps; give it headroom.
+  timeoutSeconds: 540,
   memory: "512MiB",
   secrets: [scraperApiKey],
 }, async (request) => {

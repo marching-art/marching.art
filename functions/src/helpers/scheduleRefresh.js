@@ -133,23 +133,37 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
 }
 
 /**
- * Build a compact { url, date } index of every scraped DCI event, for storing
- * alongside the in-game schedule. This is what lets the live score scraper find
- * a night's scores by URL even when dci.org hasn't linked them on /scores/ yet:
- * competitions[] only carries days 1-44 (mergeScheduleRefresh drops championship
- * week), but the scraper still needs prelims/semis/finals URLs, and every other
- * show's, to derive their /scores/recap/ pages directly.
+ * Build a compact { url, date } index of every scraped DCI event that will
+ * actually be scored, for storing alongside the in-game schedule. This is what
+ * lets the live score scraper find a night's scores by URL even when dci.org
+ * hasn't linked them on /scores/ yet: competitions[] only carries days 1-44
+ * (mergeScheduleRefresh drops championship week), but the scraper still needs
+ * prelims/semis/finals URLs, and every other show's, to derive their
+ * /scores/recap/ pages directly.
  *
- * Deduped by URL, dropping entries with no url or no date. Kept intentionally
- * small (two fields) so it stays well inside the schedule doc's size budget.
+ * ONLY competitive events are indexed — ones whose detail page carried a
+ * performing-corps lineup. dci.org's schedule also lists non-scoring events
+ * (the "Big, Loud & Live" cinema broadcast, education showcases) that have a
+ * date and a URL but will NEVER post scores; deriving recap URLs for those made
+ * the scraper fetch a slow, scoreless page per event every run, which is what
+ * pushed the function past its deadline. A lineup is the reliable competitive
+ * signal: a scored show always has one, a cinema/broadcast event never does.
  *
- * @param {Array<object>} events - Scraped events (each may carry url + date).
+ * Deduped by URL, dropping entries with no url, no date, or no lineup. Kept
+ * intentionally small (two fields) so it stays well inside the doc size budget.
+ *
+ * @param {Array<object>} events - Scraped events (each may carry url + date +
+ *   an enriched lineup[]).
  * @returns {Array<{url: string, date: string}>}
  */
 function buildScrapedEventUrlIndex(events) {
   const byUrl = new Map();
   for (const event of events || []) {
     if (!event || !event.url || !event.date) continue;
+    // No performing-corps lineup => not a scored competition (cinema broadcast,
+    // education showcase). Skip it so the scraper never wastes a fetch on a page
+    // that has no scores to find.
+    if (!Array.isArray(event.lineup) || event.lineup.length === 0) continue;
     if (!byUrl.has(event.url)) byUrl.set(event.url, { url: event.url, date: event.date });
   }
   return [...byUrl.values()];
