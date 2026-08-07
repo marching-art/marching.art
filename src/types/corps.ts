@@ -12,7 +12,13 @@ import type { EnsembleProfileInfo } from './user';
 // UI. Helpers in utils/corps.ts normalize between the two. podiumClass is the
 // director-simulation class (no fantasy lineup; scores earned, not drafted).
 export type CorpsClass =
-  'soundSport' | 'aClass' | 'open' | 'world' | 'openClass' | 'worldClass' | 'podiumClass';
+  | 'soundSport'
+  | 'aClass'
+  | 'open'
+  | 'world'
+  | 'openClass'
+  | 'worldClass'
+  | 'podiumClass';
 
 /**
  * Corps Uniform Design - Director-customizable appearance for fantasy corps
@@ -66,7 +72,8 @@ export interface CorpsData {
   // Per-season show concept (reset at rollover; saved via saveShowConcept).
   // Legacy profiles may carry a free-text string here — treat as unset.
   showConcept?:
-    { showName?: string | null; theme: string; musicSource: string; drillStyle: string } | string;
+    | { showName?: string | null; theme: string; musicSource: string; drillStyle: string }
+    | string;
 
   // Uniform Design (director-customizable, preserved across seasons)
   uniformDesign?: CorpsUniformDesign;
