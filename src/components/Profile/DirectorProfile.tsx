@@ -6,7 +6,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { m, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
   User,
   Trophy,
@@ -20,7 +20,6 @@ import {
   Clock,
   Target,
   Shield,
-  X,
   Palette,
   RefreshCw,
   Edit3,
@@ -28,6 +27,7 @@ import {
   Share2,
   UserPlus,
   Settings,
+  Link as LinkIcon,
 } from 'lucide-react';
 import type { UserProfile, CorpsClass } from '../../types';
 import {
@@ -35,6 +35,8 @@ import {
   resolveCorpsForClass,
   isCorpsClassUnlocked,
 } from '../../utils/corps';
+import CustomAvatarModal from './CustomAvatarModal';
+import AvatarSelectorModal from './AvatarSelectorModal';
 import {
   StatusIndicator,
   StatPill,
@@ -53,7 +55,6 @@ import {
 import type { AvatarAction } from './DirectorProfileParts';
 import { getSupporterTier } from '../../utils/supporterTiers';
 import {
-  getClassDisplay,
   getDirectorStatus,
   getStandingDisplay,
   getDisplayTitle,
@@ -81,6 +82,7 @@ interface DirectorProfileProps {
   onDesignUniform?: () => void;
   onSelectAvatarCorps?: (corpsClass: CorpsClass) => Promise<void>;
   onRegenerateAvatar?: (corpsClass: CorpsClass) => Promise<void>;
+  onSetCustomAvatar?: (corpsClass: CorpsClass, imageUrl: string) => Promise<void>;
   onShare?: () => void;
   onSettings?: () => void;
   onInviteToLeague?: () => void;
@@ -98,6 +100,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   onDesignUniform,
   onSelectAvatarCorps,
   onRegenerateAvatar,
+  onSetCustomAvatar,
   onShare,
   onSettings,
   onInviteToLeague,
@@ -105,6 +108,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 }) => {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const [showCustomAvatar, setShowCustomAvatar] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
 
   // Computed values
@@ -112,6 +116,17 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   const standing = useMemo(() => getStandingDisplay(profile), [profile]);
   const avatarData = useMemo(() => getCorpsAvatarUrl(profile), [profile]);
   const corpsWithAvatars = useMemo(() => getCorpsWithAvatars(profile), [profile]);
+  // Every registered corps (name set) — the pool a custom-URL avatar can target,
+  // including those that have no avatar yet (unlike corpsWithAvatars).
+  const registeredCorps = useMemo(() => {
+    if (!profile.corps) return [];
+    return PROFILE_CORPS_CLASS_ORDER.map((cls) => ({
+      corpsClass: cls as CorpsClass,
+      corps: resolveCorpsForClass(profile.corps, cls),
+    }))
+      .filter(({ corps }) => corps?.corpsName)
+      .map(({ corpsClass, corps }) => ({ corpsClass, corpsName: corps!.corpsName as string }));
+  }, [profile]);
   const equippedTitle = getEquippedCosmetic(profile, 'title');
   const equippedFrame = getEquippedCosmetic(profile, 'frame');
   // Supporter flair is always-on while active. An equipped shop frame wins the
@@ -165,6 +180,16 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         label: 'Change',
         icon: User,
         onClick: () => setShowAvatarSelector(true),
+      },
+    // Point the corps logo/uniform icon at a director-supplied image URL,
+    // in place of the AI art. Hidden when an admin has banned custom links or
+    // the director has no registered corps to attach one to.
+    onSetCustomAvatar &&
+      !profile.customAvatarBanned &&
+      registeredCorps.length > 0 && {
+        label: 'Link URL',
+        icon: LinkIcon,
+        onClick: () => setShowCustomAvatar(true),
       },
   ].filter(Boolean) as AvatarAction[];
 
@@ -234,81 +259,25 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             {/* Avatar selector modal */}
             <AnimatePresence>
               {showAvatarSelector && (
-                <m.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-                  onClick={() => setShowAvatarSelector(false)}
-                >
-                  <m.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-surface-card border border-line w-full max-w-sm"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="px-4 py-3 border-b border-line bg-surface-raised flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                        Select Profile Avatar
-                      </span>
-                      <button
-                        onClick={() => setShowAvatarSelector(false)}
-                        className="p-1 text-muted hover:text-white"
-                        aria-label="Close modal"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
+                <AvatarSelectorModal
+                  corpsWithAvatars={corpsWithAvatars}
+                  selectedCorpsClass={avatarData.corpsClass}
+                  saving={savingAvatar}
+                  onSelect={handleSelectAvatar}
+                  onClose={() => setShowAvatarSelector(false)}
+                />
+              )}
+            </AnimatePresence>
 
-                    <div className="p-4 grid grid-cols-2 gap-3">
-                      {corpsWithAvatars.map((corps) => {
-                        const isSelected = avatarData.corpsClass === corps.corpsClass;
-                        const classConfig = getClassDisplay(corps.corpsClass);
-                        return (
-                          <button
-                            key={corps.corpsClass}
-                            onClick={() => handleSelectAvatar(corps.corpsClass)}
-                            disabled={savingAvatar}
-                            className={`relative border-2 p-1 transition-all ${
-                              isSelected
-                                ? 'border-interactive bg-interactive/10'
-                                : 'border-line hover:border-line-strong'
-                            } ${savingAvatar ? 'opacity-50' : ''}`}
-                          >
-                            {/* OPTIMIZATION #7: Added lazy loading for corps avatar */}
-                            <img
-                              src={corps.avatarUrl}
-                              alt={corps.corpsName}
-                              className="w-full aspect-square object-cover"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1">
-                              <div className="text-[10px] text-white font-bold truncate">
-                                {corps.corpsName}
-                              </div>
-                              <div className={`text-[9px] ${classConfig.color}`}>
-                                {classConfig.short}
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <div className="absolute top-1 right-1 w-5 h-5 bg-interactive flex items-center justify-center">
-                                <Star className="w-3 h-3 text-white" />
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="px-4 pb-4">
-                      <p className="text-[10px] text-muted text-center">
-                        Choose which corps uniform to display on your profile
-                      </p>
-                    </div>
-                  </m.div>
-                </m.div>
+            {/* Custom (image-URL) avatar modal */}
+            <AnimatePresence>
+              {showCustomAvatar && onSetCustomAvatar && (
+                <CustomAvatarModal
+                  corpsOptions={registeredCorps}
+                  initialCorpsClass={avatarData.corpsClass}
+                  onClose={() => setShowCustomAvatar(false)}
+                  onSubmit={onSetCustomAvatar}
+                />
               )}
             </AnimatePresence>
           </div>

@@ -56,7 +56,11 @@ function touchesProtectedProfileFields() {
     // Hosting resume (hosting.byTier) gates the venue ladder — written only
     // by the nightly hosted-event payout pass; a client write would unlock
     // the NFL Stadium for free.
-    'hosting'
+    'hosting',
+    // Custom-avatar ban. Set only by the adminModerateCorpsAvatar callable; a
+    // banned director must not be able to lift their own block by writing this
+    // field, and the setCorpsAvatarFromUrl callable trusts it.
+    'customAvatarBanned'
   ]);
 }
 
@@ -117,7 +121,13 @@ function corpsClassUntouched(corpsClass) {
       .affectedKeys()
       .hasAny(['lineup', 'lineupKey', 'weeklyTrades', 'mustRename', 'corpsName',
                'totalSeasonScore', 'seasonRank', 'seasonRankOf', 'seasonHistory',
-               'medals', 'division', 'selectedShows']);
+               'medals', 'division', 'selectedShows',
+               // avatarUrl/avatarSource are set only by the avatar callables
+               // (AI generation and setCorpsAvatarFromUrl): both re-host the
+               // image to a CSP-allowlisted host and enforce size/crop, and
+               // setCorpsAvatarFromUrl also checks the custom-avatar ban — a
+               // direct client write would bypass all of that.
+               'avatarUrl', 'avatarSource']);
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
@@ -151,7 +161,11 @@ function touchesProtectedCorpsFields() {
      // class on the profile), so its selectedShows must be server-only as well;
      // corpsClassUntouched only covers the three competitive classes + podium.
      request.resource.data.get(['corps', 'soundSport', 'selectedShows'], null)
-       != resource.data.get(['corps', 'soundSport', 'selectedShows'], null));
+       != resource.data.get(['corps', 'soundSport', 'selectedShows'], null) ||
+     // avatarUrl is set only by the avatar callables (see the competitive-class
+     // guard above); soundSport gets the same server-only treatment.
+     request.resource.data.get(['corps', 'soundSport', 'avatarUrl'], null)
+       != resource.data.get(['corps', 'soundSport', 'avatarUrl'], null));
 }
 
 // SIZE/TYPE CAPS on owner-writable free-text profile fields. profile/data is

@@ -261,3 +261,37 @@ export interface GenerateAvatarResult {
 export const generateCorpsAvatar = createCallable<GenerateAvatarData, GenerateAvatarResult>(
   'generateCorpsAvatar'
 );
+
+// Set a corps avatar from a director-supplied image URL (in place of AI art).
+// The server fetches, size-checks, crops to a square, and re-hosts the image.
+export interface SetCorpsAvatarFromUrlData {
+  corpsClass: string;
+  imageUrl: string;
+}
+
+export const setCorpsAvatarFromUrl = createCallable<
+  SetCorpsAvatarFromUrlData,
+  GenerateAvatarResult
+>('setCorpsAvatarFromUrl');
+
+// Admin moderation for corps avatars: remove art (one corps or all) and/or
+// toggle the per-account block on applying a custom URL.
+export interface AdminModerateCorpsAvatarData {
+  userId: string;
+  /** Omit to remove every corps' avatar when removeAvatar is true. */
+  corpsClass?: string;
+  removeAvatar?: boolean;
+  banCustomAvatar?: boolean;
+}
+
+export interface AdminModerateCorpsAvatarResult {
+  success: boolean;
+  removedCount: number;
+  customAvatarBanned?: boolean;
+  message: string;
+}
+
+export const adminModerateCorpsAvatar = createCallable<
+  AdminModerateCorpsAvatarData,
+  AdminModerateCorpsAvatarResult
+>('adminModerateCorpsAvatar');

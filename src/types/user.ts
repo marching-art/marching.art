@@ -163,6 +163,11 @@ export interface UserProfile {
   // Profile avatar selection - which corps uniform to display
   profileAvatarCorps?: CorpsClass;
 
+  // When true, an admin has revoked this director's ability to apply their own
+  // URL as corps art (setCorpsAvatarFromUrl rejects). Server-only per Firestore
+  // rules so a banned user cannot lift their own block.
+  customAvatarBanned?: boolean;
+
   // Settings
   settings?: UserSettings;
 }
