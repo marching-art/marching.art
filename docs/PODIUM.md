@@ -623,8 +623,8 @@ Phase-4 scope, listed because it is _why_ FMA survived abandonment:
 - **Press releases:** corps announcements (show reveal, staff hires) as structured posts —
   FMA's most active forum board, productized.
 - **Rankings column:** the nightly job already computes everything a "power rankings" article
-  needs; the existing news-generation pipeline can publish a weekly Podium column with caption
-  awards automatically.
+  needs; the existing news-generation pipeline publishes a daily Podium column with caption
+  awards automatically (decision 31).
 - **Leagues:** Podium corps join existing leagues; weekly head-to-head uses Podium scores within
   Podium matchups only.
 
@@ -1585,11 +1585,15 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     finals ballot open (with every major's prelims tally), and the crowning (with the finals
     tally and, when it was tied, what broke it). A ritual nobody is told about is a ritual nobody votes in. See
     [`INTEGRATIONS.md`](INTEGRATIONS.md) → "Discord (Fan Favorite ballots)".
-31. **The Podium Report replaces one DCI article** (resolves 7.3's remainder): on Podium week
-    boundaries the deterministic power-rankings column runs as news Article 3 in place of the
-    DCI caption deep-dive — composed directly from the column doc, never LLM-written, so player
-    corps names and ranks cannot be hallucinated. The recap sheet gains a Discord-ready
-    share/copy affordance.
+31. **The Podium Report is a daily news article** (resolves 7.3's remainder): every processing
+    night the deterministic power-rankings column runs as a news article (Article 4, in place of
+    the Fantasy Market Report) and as a #news Discord post — composed straight from that night's
+    daily standings sheet, never LLM-written, so player corps names and ranks cannot be
+    hallucinated. It reads like a commentative news magazine (leader and margin, the night's
+    biggest riser and steepest faller, each division's leader) and carries its own **Podium**
+    news category, keeping the daily batch at five articles in the mix 2 DCI / 1 Analysis /
+    1 Podium / 1 Fantasy. (Originally shipped weekly, off the `power` column; now daily off the
+    `standings` sheet.) The recap sheet gains a Discord-ready share/copy affordance.
 32. **The commitment cap was never meant to be the starting grant** (amends decision 24's
     number, keeps its principle): 1,000 CC is what a season comfortably COSTS, not the ceiling.
     Caps are 2,500 (A) / 4,000 (Open) / 6,000 (World) — division-equal (a veteran's stockpile
