@@ -13,6 +13,7 @@ const {
   analyzeStandings,
   leadSentence,
   moversSentence,
+  chaseSentence,
   divisionSentence,
   arrivalsSentence,
   composeNarrative,
@@ -127,7 +128,7 @@ describe("prose is deterministic and data-true", () => {
     const lede = leadSentence(a);
     assert.match(lede, /Day 12/);
     assert.match(lede, /Devils/);
-    assert.match(lede, /1\.1 back/);
+    assert.match(lede, /1\.100 back/);
     assert.match(lede, /Colts/);
   });
 
@@ -136,6 +137,16 @@ describe("prose is deterministic and data-true", () => {
     const movers = moversSentence(a);
     assert.match(movers, /Raiders is the night's biggest riser, up 6 to 3rd/);
     assert.match(movers, /Cavaliers slides 3 to 4th/);
+  });
+
+  test("chase sentence names the pack behind the top two, with the spread when tight", () => {
+    const a = analyzeStandings(sheet);
+    const chase = chaseSentence(a);
+    // Ranks 3–4 here (Raiders, Cavaliers); the top two are the lede's story.
+    assert.match(chase, /Raiders \(88\.400\)/);
+    assert.match(chase, /Cavaliers \(87\.000\)/);
+    assert.match(chase, /give chase/);
+    assert.doesNotMatch(chase, /Devils|Colts/);
   });
 
   test("division sentence lists each division's leader", () => {
@@ -158,11 +169,24 @@ describe("prose is deterministic and data-true", () => {
     assert.match(arrivalsSentence(a), /Rookie arrives in the rankings/);
   });
 
-  test("narrative is stable for identical input and quotes the board verbatim", () => {
+  test("narrative reads as a magazine column: subheads, prose, no numbered dump", () => {
     const one = composeNarrative(analyzeStandings(sheet));
     const two = composeNarrative(analyzeStandings(sheet));
-    assert.equal(one, two);
-    assert.match(one, /1\. Devils \(World Class\) — 91\.200\./);
+    assert.equal(one, two); // deterministic
+
+    // Paragraphs are blank-line separated so the editorial renderer keeps them
+    // apart (a single newline collapses into a run-on wall).
+    assert.ok(one.includes("\n\n"));
+    assert.doesNotMatch(one, /[^\n]\n[^\n]/); // no lone newline inside a line
+
+    // Understated subheads, not a "1. … 2. …" ranking dump.
+    assert.match(one, /\*\*The chase\.\*\*/);
+    assert.match(one, /\*\*Movers\.\*\*/);
+    assert.doesNotMatch(one, /^\d+\.\s/m);
+
+    // Still data-true: the leader, score and margin lead the piece.
+    assert.match(one, /Devils/);
+    assert.match(one, /91\.200/);
     assert.match(one, /no ballots, no bias, just the board/);
   });
 });

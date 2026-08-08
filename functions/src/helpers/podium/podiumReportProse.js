@@ -147,7 +147,7 @@ function leadSentence(analysis) {
     const margin = marginPhrase(leadMargin);
     return (
       `${dayTag} on the floor: ${leader.corpsName} ${summit}${scoreClause}, ` +
-      `${margin} over ${runnerUp.corpsName} — ${leadMargin} back.`
+      `${margin} over ${runnerUp.corpsName} — ${fmtScore(leadMargin)} back.`
     );
   }
   return `${dayTag} on the floor: ${leader.corpsName} ${summit}${scoreClause}.`;
@@ -176,6 +176,28 @@ function moversSentence(analysis) {
   return `${parts.join(", ")}.`;
 }
 
+/**
+ * The chase sentence: the pack running behind the top two (ranks 3–6), named
+ * with scores, and — when they are genuinely bunched — how little separates
+ * them. Data-true: the spread is only ever the gap the numbers give, and it is
+ * called out only when it is actually tight.
+ */
+function chaseSentence(analysis) {
+  const pack = analysis.ranked.slice(2, 6);
+  if (pack.length === 0) return null;
+  const named = pack.map((e) => `${e.corpsName} (${fmtScore(e.total)})`);
+
+  let spreadClause = "";
+  const totals = pack.map((e) => e.total).filter((t) => typeof t === "number");
+  if (totals.length >= 2) {
+    const spread = Number((totals[0] - totals[totals.length - 1]).toFixed(3));
+    if (spread <= 0.75) spreadClause = `, separated by just ${spread.toFixed(3)}`;
+  }
+
+  const verb = pack.length === 1 ? "gives chase" : "give chase";
+  return `${humanList(named)} ${verb}${spreadClause}.`;
+}
+
 /** The division-leaders sentence, only when the field spans more than one. */
 function divisionSentence(analysis) {
   const leaders = analysis.divisionLeaders;
@@ -197,37 +219,39 @@ function arrivalsSentence(analysis) {
 }
 
 /**
- * The top of the board as numbered lines, capped at `limit`, each carrying its
- * score and the standings note the processor already wrote for it.
+ * The full article narrative — a commentative news-magazine column, not a
+ * ranking dump. Flowing prose with understated **subheads** (the news feed's
+ * editorial renderer turns a leading "**Head.**" into a small accent subhead),
+ * each frame a different angle on the same night: the lede, the chase pack, the
+ * movers, the division crowns, and any new arrivals, closed with the column's
+ * standing kicker. The full numbered board lives in the Scores tab, so the
+ * article reads and the sheet ranks.
+ *
+ * Paragraphs are separated by blank lines because that is the only break the
+ * renderer honours — a single newline would collapse into a run-on wall.
  */
-function leaderboardLines(analysis, limit) {
-  return analysis.ranked.slice(0, limit).map((entry) => {
-    const division = entry.division ? ` (${DIVISION_LABELS[entry.division] || entry.division})` : "";
-    const note = entry.note ? ` ${entry.note}` : "";
-    return `${entry.rank}. ${entry.corpsName}${division} — ${fmtScore(entry.total)}.${note}`.trim();
-  });
-}
+function composeNarrative(analysis) {
+  const paragraphs = [];
 
-/**
- * The full article narrative: a commentative lede, the movers, the division
- * leaders, any arrivals, then the top of the board and a standing sign-off.
- * `topN` bounds the printed leaderboard (the field can be 100 corps deep).
- */
-function composeNarrative(analysis, { topN = 10 } = {}) {
-  const opening = analysis.openingDay
-    ? `${leadSentence(analysis)} Opening night sets the first order of the season — everyone ` +
-      `on the board is new to it, and the chase starts here.`
-    : leadSentence(analysis);
+  paragraphs.push(
+    analysis.openingDay
+      ? `${leadSentence(analysis)} Opening night sets the first order of the season — every ` +
+          `corps on the board is new to it, and the chase starts here.`
+      : leadSentence(analysis)
+  );
 
-  const paragraphs = [opening];
+  const chase = chaseSentence(analysis);
+  if (chase) paragraphs.push(`**The chase.** ${chase}`);
+
   const movers = analysis.openingDay ? null : moversSentence(analysis);
-  if (movers) paragraphs.push(movers);
-  const divisions = divisionSentence(analysis);
-  if (divisions) paragraphs.push(divisions);
-  const arrivals = arrivalsSentence(analysis);
-  if (arrivals) paragraphs.push(arrivals);
+  if (movers) paragraphs.push(`**Movers.** ${movers}`);
 
-  paragraphs.push(leaderboardLines(analysis, topN).join("\n"));
+  const divisions = divisionSentence(analysis);
+  if (divisions) paragraphs.push(`**By division.** ${divisions}`);
+
+  const arrivals = arrivalsSentence(analysis);
+  if (arrivals) paragraphs.push(`**New faces.** ${arrivals}`);
+
   paragraphs.push(
     "The Podium Report re-seats the director-run field every night on the numbers that just " +
       "posted — no ballots, no bias, just the board. Full box scores for all eight captions live " +
@@ -246,8 +270,8 @@ module.exports = {
   analyzeStandings,
   leadSentence,
   moversSentence,
+  chaseSentence,
   divisionSentence,
   arrivalsSentence,
-  leaderboardLines,
   composeNarrative,
 };

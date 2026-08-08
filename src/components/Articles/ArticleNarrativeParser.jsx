@@ -433,9 +433,16 @@ function parseSections(narrative) {
 // subheads (magazine style), NOT the colored section boxes used for the fantasy
 // market report. DCI pieces and the fantasy results recap all use this style.
 function isEditorialArticle(articleType) {
-  return ['dci_recap', 'dci_daily', 'dci_feature', 'fantasy_daily', 'season_summary'].includes(
-    articleType
-  );
+  return [
+    'dci_recap',
+    'dci_daily',
+    'dci_feature',
+    'fantasy_daily',
+    'season_summary',
+    // The Podium Report is a commentative magazine column — clean prose with
+    // understated **subheads**, never the fantasy market-report boxes.
+    'podium_report',
+  ].includes(articleType);
 }
 
 /**
