@@ -30,7 +30,7 @@ import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
-import { generateCorpsAvatar } from '../api/functions';
+import { generateCorpsAvatar, setCorpsAvatarFromUrl } from '../api/functions';
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
@@ -306,6 +306,54 @@ const Profile = () => {
     [user, refetch]
   );
 
+  // Handle setting a corps avatar from a director-supplied image URL. The
+  // server fetches, size-checks, crops to a square, and re-hosts the image,
+  // returning the stored URL — mirror the regenerate flow's cache update.
+  const handleSetCustomAvatar = useCallback(
+    async (corpsClass, imageUrl) => {
+      if (!user) return;
+      try {
+        toast.loading('Setting custom avatar...', { id: 'custom-avatar' });
+        const result = await setCorpsAvatarFromUrl({ corpsClass, imageUrl });
+        if (result.data.success) {
+          const newAvatarUrl = result.data.avatarUrl;
+          if (newAvatarUrl) {
+            queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
+              if (!oldData) return oldData;
+              return {
+                ...oldData,
+                corps: {
+                  ...oldData.corps,
+                  [corpsClass]: {
+                    ...oldData.corps?.[corpsClass],
+                    avatarUrl: newAvatarUrl,
+                    avatarSource: 'custom',
+                    avatarGeneratedAt: new Date().toISOString(),
+                  },
+                },
+                profileAvatarCorps: corpsClass,
+              };
+            });
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            refetch();
+          }
+          toast.success('Custom avatar saved!', { id: 'custom-avatar' });
+        } else {
+          toast.error(result.data.message || 'Failed to set custom avatar', {
+            id: 'custom-avatar',
+          });
+        }
+      } catch (err) {
+        // Surface the server's message (bad URL, too large, banned, etc.) so
+        // the modal can show it — rethrow after toasting.
+        toast.error(err.message || 'Failed to set custom avatar', { id: 'custom-avatar' });
+        throw err;
+      }
+    },
+    [user, queryClient, refetch]
+  );
+
   // Handle avatar regeneration
   const handleRegenerateAvatar = useCallback(
     async (corpsClass) => {
@@ -479,6 +527,7 @@ const Profile = () => {
           onDesignUniform={() => setShowUniformDesign(true)}
           onSelectAvatarCorps={handleSelectAvatarCorps}
           onRegenerateAvatar={handleRegenerateAvatar}
+          onSetCustomAvatar={handleSetCustomAvatar}
           onShare={handleShareProfile}
           onSettings={() => setShowSettings(true)}
           onInviteToLeague={() => setShowInviteModal(true)}

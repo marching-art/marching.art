@@ -331,6 +331,14 @@ await check(
   )
 );
 
+// customAvatarBanned gates the setCorpsAvatarFromUrl callable; a banned director
+// must not be able to lift their own block by writing the field directly.
+await freshSeed();
+await check(
+  'owner cannot lift their own custom-avatar ban',
+  assertFails(updateDoc(doc(authed(), profilePath), { customAvatarBanned: false }))
+);
+
 // Legacy Endowments: the recurring CorpsCoin sink. `legacy.total` renders on
 // public profiles and grants milestone titles, so a client write would mint a
 // free legacy and its honors without ever spending a coin.
@@ -449,6 +457,30 @@ await check(
         { eventName: 'SoundSport Anytown', day: 9 },
         { eventName: 'SoundSport Elsewhere', day: 9 },
       ],
+    })
+  )
+);
+
+// avatarUrl is written only by the avatar callables (AI generation and
+// setCorpsAvatarFromUrl), which re-host the image to a CSP-allowlisted host and
+// enforce size/crop + the custom-avatar ban. A direct client write would set an
+// arbitrary URL and bypass all of that, so it must be rejected on every class.
+await freshSeed();
+await check(
+  'owner cannot set a competitive-class avatarUrl directly (bypasses re-host/ban)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.worldClass.avatarUrl': 'https://evil.example.com/anything.png',
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot set a soundSport avatarUrl directly (bypasses re-host/ban)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.soundSport.avatarUrl': 'https://evil.example.com/anything.png',
     })
   )
 );

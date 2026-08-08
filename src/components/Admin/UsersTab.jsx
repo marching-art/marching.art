@@ -4,9 +4,20 @@
 import { useState, useEffect } from 'react';
 import { getUserEngagementStats, getAllUserProfiles } from '../../api/admin';
 import { fixProfileFields } from '../../api/functions';
-import { setUserRole } from '../../api/functions';
+import { setUserRole, adminModerateCorpsAvatar } from '../../api/functions';
 import toast from 'react-hot-toast';
-import { Flame, Search, Shield, Terminal, UserCheck, UserX, Users, Wrench, X } from 'lucide-react';
+import {
+  Flame,
+  ImageOff,
+  Search,
+  Shield,
+  Terminal,
+  UserCheck,
+  UserX,
+  Users,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';
 
 const UsersTab = () => {
@@ -25,6 +36,7 @@ const UsersTab = () => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
   const [fixingProfiles, setFixingProfiles] = useState(false);
+  const [moderatingUid, setModeratingUid] = useState(null);
 
   useEffect(() => {
     loadUserStats();
@@ -85,6 +97,46 @@ const UsersTab = () => {
       toast.error(error.message || 'Failed to fix profiles');
     } finally {
       setFixingProfiles(false);
+    }
+  };
+
+  // Wipe every stored corps avatar (AI + custom) for one director.
+  const handleRemoveArt = async (u) => {
+    if (!window.confirm(`Remove ALL corps avatars for ${u.username}?`)) return;
+    setModeratingUid(u.uid);
+    try {
+      const result = await adminModerateCorpsAvatar({ userId: u.uid, removeAvatar: true });
+      toast.success(result.data.message);
+      setUsers((prev) => prev.map((x) => (x.uid === u.uid ? { ...x, hasAvatar: false } : x)));
+    } catch (error) {
+      toast.error(error.message || 'Failed to remove avatars');
+    } finally {
+      setModeratingUid(null);
+    }
+  };
+
+  // Toggle the per-account block on applying a custom image-URL avatar.
+  const handleToggleBan = async (u) => {
+    const next = !u.customAvatarBanned;
+    if (
+      !window.confirm(
+        next
+          ? `Ban ${u.username} from applying their own image-URL avatars?`
+          : `Restore ${u.username}'s ability to apply image-URL avatars?`
+      )
+    )
+      return;
+    setModeratingUid(u.uid);
+    try {
+      const result = await adminModerateCorpsAvatar({ userId: u.uid, banCustomAvatar: next });
+      toast.success(result.data.message);
+      setUsers((prev) =>
+        prev.map((x) => (x.uid === u.uid ? { ...x, customAvatarBanned: next } : x))
+      );
+    } catch (error) {
+      toast.error(error.message || 'Failed to update ban');
+    } finally {
+      setModeratingUid(null);
     }
   };
 
@@ -209,6 +261,7 @@ const UsersTab = () => {
                     <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">
                       Last Login
                     </th>
+                    <th className="text-left px-4 py-2 text-[10px] text-muted uppercase">Avatar</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -236,6 +289,36 @@ const UsersTab = () => {
                         {user.lastLogin && !isNaN(user.lastLogin.getTime())
                           ? user.lastLogin.toLocaleDateString()
                           : '—'}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleRemoveArt(user)}
+                            disabled={moderatingUid === user.uid || !user.hasAvatar}
+                            title="Remove all corps avatars"
+                            className="flex items-center gap-1 px-1.5 py-1 border border-line text-[10px] text-muted hover:text-white hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <ImageOff className="w-3 h-3" />
+                            Remove
+                          </button>
+                          <button
+                            onClick={() => handleToggleBan(user)}
+                            disabled={moderatingUid === user.uid}
+                            title={
+                              user.customAvatarBanned
+                                ? 'Restore custom image-URL avatars'
+                                : 'Ban custom image-URL avatars'
+                            }
+                            className={`flex items-center gap-1 px-1.5 py-1 border text-[10px] disabled:opacity-40 ${
+                              user.customAvatarBanned
+                                ? 'border-red-500/50 text-red-400 hover:bg-red-500/10'
+                                : 'border-line text-muted hover:text-white hover:border-line-strong'
+                            }`}
+                          >
+                            <UserX className="w-3 h-3" />
+                            {user.customAvatarBanned ? 'Banned' : 'Ban URL'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

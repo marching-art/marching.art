@@ -189,6 +189,10 @@ export interface AdminUserProfile {
   totalLogins: number;
   corps: string[];
   createdAt: Date | null;
+  /** True when at least one corps has a stored avatar (AI or custom). */
+  hasAvatar: boolean;
+  /** Admin block on applying a director-supplied URL as corps art. */
+  customAvatarBanned: boolean;
 }
 
 /**
@@ -229,6 +233,12 @@ export async function getAllUserProfiles(): Promise<AdminUserProfile[]> {
       totalLogins: data.engagement?.totalLogins || 0,
       corps: data.corps ? Object.keys(data.corps) : [],
       createdAt: data.createdAt?.toDate?.() || null,
+      hasAvatar: data.corps
+        ? Object.values(data.corps).some(
+            (c) => c && typeof c === 'object' && (c as { avatarUrl?: string }).avatarUrl
+          )
+        : false,
+      customAvatarBanned: data.customAvatarBanned === true,
     };
   });
 

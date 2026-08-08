@@ -81,6 +81,10 @@ export interface CorpsData {
   // Corps Avatar (AI-generated based on uniform design, preserved across seasons)
   avatarUrl?: string;
   avatarGeneratedAt?: string; // ISO timestamp of when avatar was generated
+  // How the current avatar was produced: AI generation vs a director-supplied
+  // URL (setCorpsAvatarFromUrl). Absent on legacy/AI avatars. Written only by
+  // the avatar callables (server-only per Firestore rules).
+  avatarSource?: 'ai' | 'custom';
 
   // Season stats
   totalSeasonScore: number;

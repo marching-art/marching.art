@@ -264,6 +264,8 @@ const {
 const {
   generateCorpsAvatar,
   regenerateAllAvatars,
+  setCorpsAvatarFromUrl,
+  adminModerateCorpsAvatar,
 } = require("./src/triggers/avatarGeneration");
 const {
   bmacWebhook,
@@ -509,6 +511,8 @@ module.exports = {
   // Avatar Generation
   generateCorpsAvatar,
   regenerateAllAvatars,
+  setCorpsAvatarFromUrl,
+  adminModerateCorpsAvatar,
 
   // YouTube Search
   searchYoutubeVideo,
