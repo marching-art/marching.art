@@ -628,7 +628,8 @@ export default function PodiumRegistration({ podium }) {
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   <span>
                     You&apos;re <span className="font-bold tabular-nums">{shortfall}</span> CC
-                    short. Commit more (up to {maxCommit}) or release a staffer to found the corps.
+                    short. Commit more (up to {maxCommit}) or release a staffer to{' '}
+                    {decision === 'continue' ? 'continue the corps' : 'found the corps'}.
                   </span>
                 </div>
               )}
@@ -662,7 +663,8 @@ export default function PodiumRegistration({ podium }) {
             title={overBudget ? 'Your staff payroll exceeds your commitment.' : undefined}
             className="flex items-center gap-2 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-interactive text-white hover:bg-interactive-hover disabled:opacity-60 press-feedback"
           >
-            {submitting && <Loader2 className="w-3 h-3 animate-spin" />} Found the corps
+            {submitting && <Loader2 className="w-3 h-3 animate-spin" />}{' '}
+            {decision === 'continue' ? 'Continue the corps' : 'Found the corps'}
           </button>
         )}
       </div>
