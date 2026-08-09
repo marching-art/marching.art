@@ -472,10 +472,84 @@ async function rolloverFromOldSeason(db, oldSeason, newSeasonUid) {
     await resetLeaguesForNewSeason(db, seasonUid, newSeasonUid);
     await archiveAndResetProfiles(db, seasonUid, newSeasonUid);
     await clearActiveLineups(db, seasonUid);
+    // Settle the Podium season boundary now — advancement (division re-seat) and
+    // each corps' season-start assessment — so a returning director sees where
+    // their corps stands going into the new season AT REGISTRATION, rather than
+    // only after the first competition night runs (design §5.7 + §5.13). Fully
+    // isolated: it never throws, so a Podium hiccup can't fail the rollover.
+    await settlePodiumSeasonBoundary(db);
     await markSeasonRolloverCompleted(db, seasonUid);
   } catch (error) {
     await markSeasonRolloverFailed(db, seasonUid, error);
     throw error;
+  }
+}
+
+/**
+ * Settle the Podium season boundary at rollover (design §5.7 + §5.13).
+ *
+ * Runs the SAME idempotent archival sweep the nightly stage runs — archive each
+ * corps' career, re-seat divisions against the published percentile cutoffs, and
+ * publish every corps' season-start assessment — but at the MOMENT the new
+ * season starts, before registration opens, instead of waiting for the new
+ * season's first competition night. That is what lets a returning director see
+ * their advancement (promoted / relegated / held class + status) at registration
+ * and make an informed continue / retire / start-new decision, rather than
+ * marching a whole season before learning where they stand.
+ *
+ * Shares the nightly stage's `{seasonUid}_podium_archive` lease and the sweep's
+ * own once-only guards (`divisionsSeatedAt`, `lastSeasonUid`), so the two never
+ * double-process: whichever runs first seats the divisions and completes the
+ * lease; the other no-ops. If this fails it marks the lease failed and the
+ * nightly stage self-heals exactly as before. Isolated end-to-end — every error
+ * is swallowed so a Podium failure can never fail the core season rollover.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function settlePodiumSeasonBoundary(db) {
+  try {
+    const { isPodiumEnabled } = require("./features");
+    if (!(await isPodiumEnabled(db))) return;
+
+    const career = require("./podium/career");
+    const {
+      claimScoringRun,
+      markScoringRunCompleted,
+      markScoringRunFailed,
+    } = require("./scoringRunGuard");
+
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists) return;
+    const seasonData = seasonDoc.data();
+
+    // Advance the Podium season index for the just-started season and read back
+    // the season that ended. Idempotent: the nightly stage's later call sees the
+    // index already advanced and re-derives `previous` from history.
+    const seasonIndex = await career.ensureSeasonIndex(db, seasonData);
+    const previousSeason = seasonIndex.previous || (await career.latestPreviousSeason(db));
+    if (!previousSeason || previousSeason.seasonUid === seasonData.seasonUid) return;
+
+    const archiveKey = `${previousSeason.seasonUid}_podium_archive`;
+    // kind "announce": a failed sweep self-heals on the next nightly run, so the
+    // watchdog treats it as a warning, not a critical scoring incident.
+    const lease = await claimScoringRun(db, archiveKey, 0, { kind: "announce" });
+    if (!lease.claimed) return; // already seated (or being seated) elsewhere
+    try {
+      const archived = await career.archivePodiumSeason(db, previousSeason);
+      await markScoringRunCompleted(db, archiveKey, 0, { archived });
+      logger.info(
+        `[podium] season boundary settled at rollover for ${previousSeason.seasonUid} ` +
+          `(${archived} archived); advancement + assessment available at registration.`
+      );
+    } catch (error) {
+      await markScoringRunFailed(db, archiveKey, 0, error);
+      logger.error(
+        `[podium] boundary settlement at rollover failed (nightly will retry): ${error.message}`
+      );
+    }
+  } catch (error) {
+    // Never let a Podium settlement failure fail the season rollover.
+    logger.error(`[podium] boundary settlement at rollover skipped: ${error.message}`);
   }
 }
 
@@ -1000,6 +1074,7 @@ module.exports = {
   archiveAndResetProfiles,
   resetLeaguesForNewSeason,
   rolloverFromOldSeason,
+  settlePodiumSeasonBoundary,
   corpsParticipatedThisSeason,
   refreshLiveSeasonSchedule,
   mergeScheduleRefresh,

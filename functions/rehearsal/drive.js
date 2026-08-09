@@ -145,15 +145,19 @@ async function playSeason(db, world, { onDay = () => {}, log = () => {} } = {}) 
 /**
  * The Podium season boundary, in the order production will meet it.
  *
- * `archivePodiumSeason` does not run at rollover — it runs on the first nightly
- * stage of the NEW season, which is a night AFTER directors can already have
- * re-registered. Both sides of that race settle the same money (the previous
- * season's unspent Corps Budget) and both are written to be once-only, so the
- * rehearsal deliberately puts a director on each side of it:
+ * The boundary is settled AT ROLLOVER now: `startNewOffSeason` (called just
+ * above) runs `archivePodiumSeason` before registration opens, so the previous
+ * season's unspent Corps Budget is refunded, divisions are re-seated, and each
+ * corps' season-start assessment is published the moment the new season begins —
+ * which is what lets a returning director see their advancement and decide their
+ * corps' fate at registration. The nightly stage still runs the identical sweep
+ * as a self-healing fallback, guarded to be once-only. This rehearsal proves the
+ * boundary survives the re-registration race from every side:
  *
- *   1. `pd_early` registers first, and is refunded by registration's own lazy
- *      self-archival.
- *   2. The archival night runs, sweeping everybody else.
+ *   1. `pd_early` comes back on day 0 — already refunded and re-seated by the
+ *      rollover settlement — and re-registering must not pay it a second time.
+ *   2. The first nightly stage re-runs the sweep and must no-op (lease already
+ *      completed at rollover; the per-corps guards would refuse it regardless).
  *   3. The rest re-register afterwards, and must be told they are owed nothing.
  *
  * @param {FirebaseFirestore.Firestore} db
@@ -162,19 +166,22 @@ async function playSeason(db, world, { onDay = () => {}, log = () => {} } = {}) 
 async function settlePodiumBoundary(db, log) {
   const cast = Object.fromEntries(podiumWorld.PODIUM_DIRECTORS.map((d) => [d.uid, d]));
 
-  // Day 0 of the new season: registration is open, no night has run.
+  // Day 0 of the new season: registration is open and the rollover has already
+  // settled the boundary. pd_early returns to an already-refunded, re-seated
+  // corps — re-registering must not double-pay it.
   await pinToCompletedCalendarDay(db, 0);
   const beforeSweep = {
     pd_early: { uid: "pd_early", ...(await podiumWorld.registerCorps(db, cast.pd_early)) },
   };
-  log("pd_early re-registered before the archival sweep");
+  log("pd_early re-registered after the rollover settlement");
 
-  // The first night of the new season: the sweep.
+  // The first night of the new season: the nightly archival is now a fallback
+  // and must no-op, because rollover already swept the boundary.
   await pinToCompletedCalendarDay(db, 1);
   const archivalNight = await podiumWorld.runPodiumNight(db);
-  log(`archival night: ${JSON.stringify(archivalNight)}`);
+  log(`archival night (fallback, expected no-op): ${JSON.stringify(archivalNight)}`);
 
-  // Everyone else comes back after the sweep has settled them.
+  // Everyone else comes back after the boundary has settled them.
   const afterSweep = {};
   afterSweep.pd_ace = { uid: "pd_ace", ...(await podiumWorld.registerCorps(db, cast.pd_ace)) };
   afterSweep.pd_broke = { uid: "pd_broke", ...(await podiumWorld.registerCorps(db, cast.pd_broke)) };
