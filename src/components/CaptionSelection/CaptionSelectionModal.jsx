@@ -267,14 +267,16 @@ const CaptionSelectionModal = ({
   // spelled out next to the button rather than hidden behind a hover.
   const confirmHint = useMemo(() => {
     if (changesBlocked) {
-      if (changeInfo?.status === 'locked') return 'Changes are locked overnight — reopen at 2 AM ET.';
+      if (changeInfo?.status === 'locked')
+        return 'Changes are locked overnight — reopen at 2 AM ET.';
       if (changeInfo?.phase === 'blackout') return 'Changes are closed on Days 43-44.';
       if (changeInfo?.phase === 'championship') return 'This class has finished competing.';
       return 'The season has ended — changes are closed.';
     }
     if (!isComplete) return `Pick all 8 captions — ${selectionCount}/8 chosen.`;
     if (isOverLimit) return `Over budget by ${totalPoints - pointLimit}. Swap for cheaper corps.`;
-    if (!isInitialSetup && changeCount === 0) return 'No changes yet — edit a caption to enable saving.';
+    if (!isInitialSetup && changeCount === 0)
+      return 'No changes yet — edit a caption to enable saving.';
     return null;
   }, [
     changesBlocked,
@@ -666,7 +668,9 @@ const CaptionSelectionModal = ({
                         {['General Effect', 'Visual', 'Music'].map((category) => (
                           <div key={category}>
                             <div className="flex items-center gap-1.5 px-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-muted/70">
-                              <span className={`w-1.5 h-1.5 rounded-none ${categoryColors[category]}`} />
+                              <span
+                                className={`w-1.5 h-1.5 rounded-none ${categoryColors[category]}`}
+                              />
                               {category}
                             </div>
                             <div className="space-y-1">

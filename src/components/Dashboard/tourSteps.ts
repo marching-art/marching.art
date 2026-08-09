@@ -23,14 +23,7 @@
 import type { DashboardZoneId } from '../../utils/dashboardZones';
 
 export type TourIcon =
-  | 'sparkles'
-  | 'target'
-  | 'music'
-  | 'layers'
-  | 'compass'
-  | 'trophy'
-  | 'calendar'
-  | 'users';
+  'sparkles' | 'target' | 'music' | 'layers' | 'compass' | 'trophy' | 'calendar' | 'users';
 
 export interface TourStep {
   id: string;

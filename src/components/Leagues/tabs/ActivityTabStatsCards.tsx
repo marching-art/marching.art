@@ -257,8 +257,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }: StatsCardProp
     const userStanding = standings.find((s) => s.uid === userProfile?.uid);
     const userLeagueStats = userProfile?.uid
       ? (leagueStats?.[userProfile.uid] as
-          | { blowoutWins?: number; clutchWins?: number }
-          | undefined)
+          { blowoutWins?: number; clutchWins?: number } | undefined)
       : undefined;
 
     if (userStanding) {
