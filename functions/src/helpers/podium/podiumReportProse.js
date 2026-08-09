@@ -4,25 +4,34 @@
  * The Podium Report used to publish once a week off the `power` column. It now
  * runs EVERY processing night off the daily standings sheet
  * (`podium-recaps/{seasonUid}/standings/{day}`, built by buildDailyStandings),
- * and reads like a commentative news magazine rather than a bare ranking dump.
+ * and reads like a feature in a news magazine — a Sports-Illustrated-meets-
+ * Vanity-Fair column that sets a scene and tells the night's story — rather than
+ * the bare ranking dump or quick-glance summary it began as.
  *
- * The voice is editorial, but every clause is still composed straight from the
- * standings numbers — no LLM, no randomness. Corps names, ranks, scores and
- * margins can never be hallucinated because nothing here invents them: the same
- * standings doc always yields the same column. That is the whole reason this
- * article is data-composed rather than model-written (decision 31), and the
- * magazine voice must not cost us that guarantee.
+ * The voice is editorial and warm, but every clause is still composed straight
+ * from the standings numbers — no LLM, no randomness. Corps names, ranks, scores,
+ * caption books and margins can never be hallucinated because nothing here
+ * invents them: the same standings doc always yields the same column. That is the
+ * whole reason this article is data-composed rather than model-written (decision
+ * 31), and the magazine voice must not cost us that guarantee — so the caption
+ * analysis names only the GE/Visual/Music numbers actually on the sheet, and goes
+ * silent when the breakdown is missing.
  *
  * `analyzeStandings` turns a standings doc into the handful of facts a night's
  * story is built from (leader, margin, mover, faller, arrivals, division
- * leaders). `composeNarrative` and `leadSentence` render those facts as prose
- * for the news article and the Discord post respectively, so both surfaces read
- * in one voice.
+ * leaders). `composeNarrative` renders those facts — plus the leader's caption
+ * book and the field's shape — as a full feature for the news article, while
+ * `leadSentence` renders the lede alone for the Discord post, so both surfaces
+ * read in one voice.
  */
 
 const DIVISION_LABELS = { aClass: "A Class", openClass: "Open Class", worldClass: "World Class" };
 // World → Open → A: the order every other score sheet lists divisions in (§5.7).
 const DIVISION_ORDER = ["worldClass", "openClass", "aClass"];
+// The three books every Podium score is built from, in the standings entry's
+// own field names. The article never cites a caption the sheet does not carry.
+const CAPTION_LABELS = { ge: "General Effect", vis: "Visual", mus: "Music" };
+const CAPTION_KEYS = ["ge", "vis", "mus"];
 
 /** "1st", "2nd", "3rd", "11th"… for prose that names a placement. */
 function ordinal(n) {
@@ -66,6 +75,31 @@ function marginPhrase(margin) {
   if (margin >= 0.5) return "with a working margin";
   if (margin >= 0.15) return "by a slim edge";
   return "by a whisker";
+}
+
+/**
+ * The three caption scores for an entry, strongest book first. Returns [] unless
+ * all three are on the sheet, so the caption commentary only ever runs when the
+ * numbers to back it are actually there.
+ */
+function captionBook(entry) {
+  if (!entry) return [];
+  const book = CAPTION_KEYS.map((key) => ({ key, label: CAPTION_LABELS[key], score: entry[key] }));
+  if (book.some((c) => typeof c.score !== "number")) return [];
+  return book.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * The commentator's read on the lead, one register warmer than marginPhrase and
+ * used to open the feature's analysis of the top of the board. Every branch is
+ * still keyed only to the gap the numbers give.
+ */
+function leadCharacter(margin) {
+  if (margin == null) return "alone at the top";
+  if (margin >= 1.5) return "out in front and breathing easy";
+  if (margin >= 0.5) return "in front with real daylight";
+  if (margin >= 0.15) return "in front, but only just";
+  return "clinging to the top by their fingernails";
 }
 
 /**
@@ -153,7 +187,81 @@ function leadSentence(analysis) {
   return `${dayTag} on the floor: ${leader.corpsName} ${summit}${scoreClause}.`;
 }
 
-/** One movers sentence: the night's biggest climb and, if any, its biggest slide. */
+/**
+ * The shape of the field the leader sits atop: how deep it is and how much
+ * scoring stretches between first and last. A feature sets the scene before it
+ * tells the story; this is the scene, drawn only from the totals on the board.
+ */
+function fieldScene(analysis) {
+  const { ranked, fieldSize } = analysis;
+  const totals = ranked.map((e) => e.total).filter((t) => typeof t === "number");
+  if (totals.length < 2) return null;
+  const spread = Number((totals[0] - totals[totals.length - 1]).toFixed(3));
+  const n = fieldSize || ranked.length;
+  return (
+    `${n} corps answered the bell tonight, and ${fmtScore(spread)} of scoring is all that ` +
+    `stretches between the top of the board and the bottom of it.`
+  );
+}
+
+/**
+ * The feature's centerpiece: how the night's top number was actually built,
+ * read off the caption sheet, and where the corps in second is landing its
+ * counterpunches. This is the paragraph that turns a ranking into a story — but
+ * it invents nothing, naming only the caption scores the standings carry, so it
+ * goes quiet the moment the breakdown is missing (returns null).
+ */
+function leaderStory(analysis) {
+  const { leader, runnerUp, leadMargin } = analysis;
+  const book = captionBook(leader);
+  if (book.length === 0) return null;
+
+  const [top, mid, bottom] = book;
+  const sentences = [
+    `Pull the ${fmtScore(leader.total)} apart and it is a ${top.label} story before it is anything ` +
+      `else: ${fmtScore(top.score)} in ${top.label} is the sturdiest of ${leader.corpsName}'s three ` +
+      `books, with ${mid.label} (${fmtScore(mid.score)}) and ${bottom.label} (${fmtScore(bottom.score)}) ` +
+      `carrying the rest of the weight.`,
+  ];
+
+  const rBook = captionBook(runnerUp);
+  if (rBook.length > 0 && leadMargin != null) {
+    // Caption by caption, where the challenger does best against the leader.
+    let best = null;
+    for (const key of CAPTION_KEYS) {
+      const diff = Number(((runnerUp[key] || 0) - (leader[key] || 0)).toFixed(3));
+      if (!best || diff > best.diff) best = { key, diff, label: CAPTION_LABELS[key] };
+    }
+    const rs = fmtScore(runnerUp[best.key]);
+    const ls = fmtScore(leader[best.key]);
+    const gap = fmtScore(leadMargin);
+    if (best.diff > 0) {
+      sentences.push(
+        `${runnerUp.corpsName} is not going quietly — it takes the ${best.label} caption outright, ` +
+          `${rs} to ${ls}, and if it can bank a few more nights like that the ${gap} between them ` +
+          `stops looking so safe.`
+      );
+    } else if (best.diff === 0) {
+      sentences.push(
+        `${runnerUp.corpsName} can at least say it drew even somewhere — ${best.label} is level at ${rs} — ` +
+          `but it surrenders ground on the other two, and the ${gap} is the arithmetic of that.`
+      );
+    } else {
+      sentences.push(
+        `${runnerUp.corpsName} runs closest in ${best.label}, ${rs} to ${ls}, and still comes up short ` +
+          `on every caption; a ${gap} margin does not hold together any other way.`
+      );
+    }
+  }
+  return sentences.join(" ");
+}
+
+/**
+ * The movers beat: the night's biggest climb and, when there is one, its
+ * steepest slide — then, if the climber's score is on the sheet, the number the
+ * jump was built on. Two sentences at most, and only ever the movement and
+ * totals the standings record.
+ */
 function moversSentence(analysis) {
   const { climber, faller } = analysis;
   if (!climber && !faller) return null;
@@ -173,7 +281,11 @@ function moversSentence(analysis) {
         : `${faller.corpsName}, down ${Math.abs(faller.delta)} to ${ordinal(faller.rank)}`
     );
   }
-  return `${parts.join(", ")}.`;
+  const base = `${parts.join(", ")}.`;
+  if (climber && typeof climber.total === "number") {
+    return `${base} The climb rides on a ${fmtScore(climber.total)} on the night.`;
+  }
+  return base;
 }
 
 /**
@@ -219,13 +331,21 @@ function arrivalsSentence(analysis) {
 }
 
 /**
- * The full article narrative — a commentative news-magazine column, not a
- * ranking dump. Flowing prose with understated **subheads** (the news feed's
- * editorial renderer turns a leading "**Head.**" into a small accent subhead),
- * each frame a different angle on the same night: the lede, the chase pack, the
- * movers, the division crowns, and any new arrivals, closed with the column's
- * standing kicker. The full numbered board lives in the Scores tab, so the
- * article reads and the sheet ranks.
+ * The full article narrative — a feature-length column, not a quick-glance
+ * summary. The register sits somewhere between a Sports Illustrated game story
+ * and a Vanity Fair profile: scene first, then the analysis, then the field it
+ * all plays out against, in flowing prose with understated **subheads** (the
+ * news feed's editorial renderer turns a leading "**Head.**" into a small accent
+ * subhead). The frames — the lede and the shape of the night, how the lead was
+ * built off the caption sheet, the chase pack, the movers, the division crowns,
+ * and any new arrivals — each take a different angle on the same board, and the
+ * column signs off on its standing kicker.
+ *
+ * The voice is warmer than the numbers, but it is still only ever the numbers:
+ * every clause is composed straight from the standings doc (decision 31), so the
+ * magazine tone can never cost us a hallucinated corps, rank, score or margin.
+ * The full numbered board lives in the Scores tab, so the article reads and the
+ * sheet ranks.
  *
  * Paragraphs are separated by blank lines because that is the only break the
  * renderer honours — a single newline would collapse into a run-on wall.
@@ -233,15 +353,31 @@ function arrivalsSentence(analysis) {
 function composeNarrative(analysis) {
   const paragraphs = [];
 
-  paragraphs.push(
-    analysis.openingDay
-      ? `${leadSentence(analysis)} Opening night sets the first order of the season — every ` +
-          `corps on the board is new to it, and the chase starts here.`
-      : leadSentence(analysis)
-  );
+  // Lede — the column's own lede, then the character of the lead and the shape
+  // of the field, so the piece opens on a scene rather than a scoreline.
+  const lede = [leadSentence(analysis)];
+  if (analysis.openingDay) {
+    lede.push(
+      "Opening night sets the first order of the season — every corps on the board is new to it, " +
+        "and the chase starts here."
+    );
+  } else {
+    lede.push(`For now ${analysis.leader.corpsName} is ${leadCharacter(analysis.leadMargin)}.`);
+    const scene = fieldScene(analysis);
+    if (scene) lede.push(scene);
+  }
+  paragraphs.push(lede.join(" "));
+
+  // The centerpiece: how the night's top number was built, off the caption sheet.
+  const lead = leaderStory(analysis);
+  if (lead) paragraphs.push(`**The lead.** ${lead}`);
 
   const chase = chaseSentence(analysis);
-  if (chase) paragraphs.push(`**The chase.** ${chase}`);
+  if (chase) {
+    paragraphs.push(
+      `**The chase.** Behind the top two, the pack is doing its own math. ${chase}`
+    );
+  }
 
   const movers = analysis.openingDay ? null : moversSentence(analysis);
   if (movers) paragraphs.push(`**Movers.** ${movers}`);
@@ -253,9 +389,10 @@ function composeNarrative(analysis) {
   if (arrivals) paragraphs.push(`**New faces.** ${arrivals}`);
 
   paragraphs.push(
-    "The Podium Report re-seats the director-run field every night on the numbers that just " +
-      "posted — no ballots, no bias, just the board. Full box scores for all eight captions live " +
-      "in the Scores tab under Podium Class."
+    "None of it is a matter of opinion. The Podium Report re-seats the director-run field every " +
+      "night on the numbers that just posted — no ballots, no bias, just the board — and it will " +
+      "do it again tomorrow. Full box scores for all eight captions live in the Scores tab under " +
+      "Podium Class."
   );
   return paragraphs.join("\n\n");
 }
@@ -267,8 +404,12 @@ module.exports = {
   fmtScore,
   humanList,
   marginPhrase,
+  captionBook,
+  leadCharacter,
   analyzeStandings,
   leadSentence,
+  fieldScene,
+  leaderStory,
   moversSentence,
   chaseSentence,
   divisionSentence,
