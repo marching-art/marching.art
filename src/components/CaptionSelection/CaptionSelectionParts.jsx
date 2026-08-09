@@ -12,6 +12,7 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   History,
   X,
   PartyPopper,
@@ -509,13 +510,20 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
 // -----------------------------------------------------------------------------
 // CAPTION BUTTON (for Your Lineup panel)
 // -----------------------------------------------------------------------------
-const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) => {
+// Compact single-line caption row for the "Your Lineup" board. Kept dense on
+// purpose so all 8 captions fit on one mobile screen without scrolling the
+// modal; the corps list (opened by tapping a row) is where scrolling happens.
+// `changed` marks a slot edited since the last save so the batch confirm is
+// legible ("here's what I'm about to submit").
+const CaptionButton = ({ caption, selected, isActive, changed, onClick, categoryColor }) => {
   const hasValue = !!selected;
+  const year = selected?.year != null ? String(selected.year).slice(-2) : '';
 
   return (
     <button
       onClick={onClick}
-      className={`w-full min-h-touch flex items-center justify-between p-2.5 border transition-all ${
+      aria-label={`${caption.name}: ${hasValue ? `${selected.name}, cost ${selected.points}` : 'not selected'}. Tap to choose a corps.`}
+      className={`w-full min-h-touch flex items-center gap-2 pl-2 pr-1.5 py-1.5 border text-left transition-all ${
         isActive
           ? 'border-interactive bg-interactive/10'
           : hasValue
@@ -523,24 +531,31 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
             : 'border-line hover:border-interactive hover:bg-interactive/10'
       }`}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <div className={`w-1.5 h-4 rounded-none ${categoryColor}`} />
-        <div className="text-left min-w-0">
-          <div className="text-xs font-bold text-white">{caption.id}</div>
-          <div className="text-[10px] text-muted truncate">{caption.name}</div>
-        </div>
-      </div>
+      <div className={`w-1 self-stretch rounded-none flex-shrink-0 ${categoryColor}`} />
+      <span className="text-xs font-bold text-white w-9 flex-shrink-0">{caption.id}</span>
       {hasValue ? (
-        <div className="flex items-center gap-2">
-          <div className="text-right min-w-0">
-            <div className="text-xs text-white truncate max-w-[100px]">{selected.name}</div>
-            <div className="text-[10px] font-data text-interactive">Cost {selected.points}</div>
-          </div>
-          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-        </div>
+        <span className="flex-1 min-w-0 text-sm text-white truncate">
+          {selected.name}
+          {year && <span className="text-[10px] text-muted"> &rsquo;{year}</span>}
+        </span>
       ) : (
-        <div className="text-[10px] text-interactive font-bold">+ DRAFT</div>
+        <span className="flex-1 min-w-0 text-[11px] text-muted truncate">{caption.name}</span>
       )}
+      {hasValue ? (
+        <span className="text-[10px] font-data font-bold text-interactive flex-shrink-0">
+          {selected.points}
+        </span>
+      ) : (
+        <span className="text-[10px] font-bold text-interactive flex-shrink-0">+ PICK</span>
+      )}
+      {changed && (
+        <span
+          className="w-1.5 h-1.5 rounded-full bg-warning flex-shrink-0"
+          title="Unsaved change"
+          aria-label="unsaved change"
+        />
+      )}
+      <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" aria-hidden="true" />
     </button>
   );
 };
