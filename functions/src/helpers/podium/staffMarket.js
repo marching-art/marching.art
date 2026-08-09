@@ -185,6 +185,7 @@ function ageStaff(member, cfg, completed) {
  * @returns {{
  *   staff: Array<{specialty:string, id:string|null, tier:string,
  *                 nextTier:string|null, salary:number, nextSalary:number,
+ *                 contract:{seasons:number, remaining:number}|null, locked:boolean,
  *                 retiring:boolean, kept:boolean, lapseReason:string|null}>,
  *   payroll:number, kept:string[], lapsed:string[], affordable:boolean
  * }}
@@ -194,6 +195,14 @@ function projectRetention(roster, budget, cfg, keepOrder) {
     .filter((m) => m && m.specialty)
     .map((member) => {
       const next = ageStaff(member, cfg); // no `completed`: numbers only, no resume row
+      // Contract lock as it stands NEXT season: ageStaff decrements the lock and
+      // holds the salary while seasons remain, so `remaining > 0` is exactly the
+      // condition under which nextSalary is the frozen contract rate rather than
+      // the floated tenured rate. Surfacing it lets the re-registration screen
+      // show a still-contracted staffer as locked-at-their-original-price
+      // instead of a bare keep/drop with no explanation for the held cost.
+      const nextContract = next && next.contract ? next.contract : null;
+      const locked = Boolean(nextContract && nextContract.remaining > 0);
       return {
         specialty: member.specialty,
         id: member.id || null,
@@ -202,6 +211,12 @@ function projectRetention(roster, budget, cfg, keepOrder) {
         retiring: next === null,
         nextTier: next ? next.tier : null,
         nextSalary: next ? next.salaryPerSeason : 0,
+        // The lock's length and how many of those seasons (including the one
+        // being registered) are still held. null once the staffer retires.
+        contract: nextContract
+          ? { seasons: nextContract.seasons || 0, remaining: nextContract.remaining || 0 }
+          : null,
+        locked,
         kept: false,
         lapseReason: null,
       };

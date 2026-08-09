@@ -161,4 +161,32 @@ describe("projectRetention — the CC-vs-payroll funding preview", () => {
     assert.equal(plan.payroll, 0);
     assert.equal(plan.affordable, true);
   });
+
+  test("a multi-season contract projects as locked at its signed price", () => {
+    // Just-signed 3-season contract, one season played. Re-registering it next
+    // season must hold the original salary and surface the lock so the UI can
+    // show it as contract-held rather than a keep/drop with a mystery cost.
+    const signed = mintStaff(
+      { id: "b_x", specialty: "B", tier: "apprentice", seasons: 3, day: 0 },
+      balance
+    );
+    const plan = projectRetention({ B: signed }, 99999, balance);
+    const b = plan.staff.find((s) => s.specialty === "B");
+    assert.equal(b.locked, true, "still under contract next season");
+    assert.equal(b.nextSalary, signed.salaryPerSeason, "price held at the signed rate");
+    // Two of the three signed seasons (the one being registered + one more)
+    // remain locked after this re-registration.
+    assert.deepEqual(b.contract, { seasons: 3, remaining: 2 });
+  });
+
+  test("a lapsed lock projects as unlocked and floats to the tenured rate", () => {
+    // A journeyman carried past its (1-season) lock: the salary floats and no
+    // lock is reported, so the UI shows the true rising cost.
+    const floated = carried("B", 4);
+    const plan = projectRetention({ B: floated }, 99999, balance);
+    const b = plan.staff.find((s) => s.specialty === "B");
+    assert.equal(b.locked, false);
+    assert.equal(b.contract.remaining, 0);
+    assert.ok(b.nextSalary >= b.salary, "floated rate never dips below the lapsed one");
+  });
 });

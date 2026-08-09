@@ -550,14 +550,19 @@ export default function PodiumRegistration({ podium }) {
                 </span>
               </div>
               <p className="text-[10px] text-muted">
-                Tenure raised your staff&apos;s salaries. Uncheck anyone you&apos;re letting go —
-                their seat reopens and their tenure ends. Whatever you keep must fit your
-                commitment.
+                Tenure raised your staff&apos;s salaries — except where a multi-season contract
+                still holds one at its signed price. Uncheck anyone you&apos;re letting go — their
+                seat reopens and their tenure ends. Whatever you keep must fit your commitment.
               </p>
 
               {activeStaff.map((s) => {
                 const kept = keptStaff.has(s.specialty);
                 const promoted = s.nextTier && s.nextTier !== s.tier;
+                // A multi-season contract holds this staffer's salary at the
+                // price it was signed at, so re-registering them costs the same
+                // as last season — no matter how far tenure has raised the
+                // underlying rate. Surface it so the lock reads as a lock.
+                const locked = s.locked && s.contract && s.contract.remaining > 0;
                 return (
                   <label
                     key={s.specialty}
@@ -581,11 +586,23 @@ export default function PodiumRegistration({ podium }) {
                           <span className="text-brand"> · promoted from {TIER_LABELS[s.tier]}</span>
                         )}
                       </span>
+                      {locked && (
+                        <span className="block text-[9px] font-normal text-interactive">
+                          Under contract · {s.contract.remaining} of {s.contract.seasons} season
+                          {s.contract.seasons > 1 ? 's' : ''} — price locked
+                        </span>
+                      )}
                     </span>
-                    <span className="text-[11px] tabular-nums text-secondary">
-                      {s.nextSalary} CC
-                      {s.nextSalary > s.salary && (
-                        <span className="text-muted"> (was {s.salary})</span>
+                    <span className="text-[11px] tabular-nums text-right shrink-0">
+                      <span className={locked ? 'text-interactive' : 'text-secondary'}>
+                        {s.nextSalary} CC
+                      </span>
+                      {locked ? (
+                        <span className="block text-[9px] text-muted">locked</span>
+                      ) : (
+                        s.nextSalary > s.salary && (
+                          <span className="text-muted"> (was {s.salary})</span>
+                        )
                       )}
                     </span>
                   </label>

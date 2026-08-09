@@ -247,6 +247,13 @@ export interface PodiumStaffProjection {
   nextTier: string | null;
   salary: number;
   nextSalary: number;
+  // Multi-season contract lock as it stands next season (design §5.6): the
+  // length signed and how many of those seasons — including the one being
+  // registered — are still held at the original price. `locked` is true while
+  // the lock holds nextSalary at the contract rate; null/false once it lapses
+  // or the staffer retires.
+  contract: { seasons: number; remaining: number } | null;
+  locked: boolean;
   retiring: boolean;
 }
 
