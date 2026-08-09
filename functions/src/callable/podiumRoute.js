@@ -266,6 +266,11 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
       nextTier: s.nextTier,
       salary: s.salary,
       nextSalary: s.nextSalary,
+      // Multi-season contract lock (design §5.6): the reconfirm screen shows a
+      // still-contracted staffer as held at their original price rather than a
+      // bare keep/drop, so a rising tenured rate never reads as a surprise raise.
+      contract: s.contract,
+      locked: s.locked,
       retiring: s.retiring,
     })),
     // The season-start assessment (§5.7/§5.13): the corps' complete evaluation
