@@ -283,6 +283,29 @@
       "openClass": 3
     }
   },
+  "assessment": {
+    "note": "Season-start assessment (§5.7/§5.13). The two competitive axes — division (class) and reputation tier (status) — are computed elsewhere; this section governs the SEPARATE director activity rating, which recognizes engagement WITHOUT ever moving reputation (the §5.13 results-only covenant). Activity is scored per corps from the season-long accumulator the nightly processor writes, then ranked against the field into named recognition tiers.",
+    "activity": {
+      "weights": {
+        "activeDays": 1.0,
+        "restDays": 0.6,
+        "blocksAllocated": 0.12,
+        "showsAttended": 1.5
+      },
+      "autoRunPenalty": 0.5,
+      "tiers": [
+        { "key": "dormant", "label": "Dormant", "minPercentile": 0 },
+        { "key": "casual", "label": "Casual", "minPercentile": 20 },
+        { "key": "committed", "label": "Committed", "minPercentile": 45 },
+        { "key": "dedicated", "label": "Dedicated", "minPercentile": 72 },
+        { "key": "ironCorps", "label": "Iron Corps", "minPercentile": 90 }
+      ],
+      "recognition": {
+        "ironCorps": { "coin": 500, "xp": 300 },
+        "dedicated": { "coin": 200, "xp": 120 }
+      }
+    }
+  },
   "budget": {
     "commitmentCap": 2500,
     "commitmentCapByDivision": {

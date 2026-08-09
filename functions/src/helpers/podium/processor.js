@@ -25,6 +25,7 @@ const store = require("./store");
 const venues = require("./venues");
 const divisions = require("./divisions");
 const staffMarket = require("./staffMarket");
+const assessment = require("./assessment");
 const joint = require("./joint");
 const { runScrimmagePass } = require("./scrimmagePass");
 const { processCoinAwardsBatch } = require("../scoringAwards");
@@ -523,6 +524,30 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           musicScore: score.musicScore,
           captions: score.captions,
         });
+      }
+
+      // --- 2a. Season-long activity accumulator (the assessment's engagement
+      // axis, §5.13). Written server-side from the same day facts the funnel
+      // reads, so it is authoritative and can't be gamed. It NEVER touches
+      // reputation — it feeds only the separate activity rating the season-start
+      // assessment publishes. Guarded by lastCountedDay so an idempotent
+      // re-processing of a day never double-counts. The `assistant` flag (set
+      // when the autopilot supplied the blocks) is what separates a director who
+      // showed up from one the assistant carried.
+      if (!state.activity) state.activity = assessment.initActivity();
+      if ((state.activity.lastCountedDay || 0) < calendarDay) {
+        const playedSelf = (dayInfo.blocksUsed || 0) > 0 && !dayInfo.assistant;
+        if (playedSelf) {
+          state.activity.activeDays += 1;
+          state.activity.blocksAllocated += dayInfo.blocksUsed || 0;
+        } else if (dayInfo.restDay) {
+          state.activity.activeDays += 1; // declaring a rest day is an active call
+          state.activity.restDays += 1;
+        } else if (dayInfo.assistant) {
+          state.activity.autoRunDays += 1;
+        }
+        if (isShowDay && score) state.activity.showsAttended += 1;
+        state.activity.lastCountedDay = calendarDay;
       }
 
       // Roll `today` so tomorrow starts clean even if the player never opens

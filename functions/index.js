@@ -66,6 +66,7 @@ const {
 } = require("./src/callable/podium");
 const { hostEvent, getHostingHistory } = require("./src/callable/podiumHost");
 const { getPodiumState, getPodiumRegistrationPreview } = require("./src/callable/podiumRoute");
+const { retirePodiumCorps, unretirePodiumCorps } = require("./src/callable/podiumLifecycle");
 const {
   getPodiumStaffMarket,
   hirePodiumStaff,
@@ -372,6 +373,8 @@ module.exports = {
   getHostingHistory,
   getPodiumState,
   getPodiumRegistrationPreview,
+  retirePodiumCorps,
+  unretirePodiumCorps,
   getJointOverlaps,
   proposeJointRehearsal,
   respondJointRehearsal,

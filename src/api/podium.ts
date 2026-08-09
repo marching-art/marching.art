@@ -17,6 +17,9 @@ export interface PodiumRegistration {
   // A staffer omitted from the list is voluntarily released; when absent, the
   // roster is kept priciest-first and a shortfall sheds the cheapest.
   staffPriority?: string[];
+  // Bank the old lineage and found a brand-new corps at tier 1 (§5.13). Omit to
+  // continue the existing corps (identity + reputation carried).
+  freshStart?: boolean;
 }
 
 export interface PodiumBlockResult {
@@ -132,6 +135,90 @@ export interface PodiumSeasonReport {
   generatedAt?: string;
 }
 
+// The season-start assessment (design §5.7 + §5.13): the complete evaluation a
+// corps gets against last season's field, shown BEFORE the director decides its
+// fate. Three earned, published axes — CLASS (division), STATUS (reputation
+// tier / organizational level), and the SEPARATE activity rating that never
+// moves status — plus how it stacked up head-to-head.
+export type PodiumChangeKind = 'promoted' | 'relegated' | 'held';
+
+export interface PodiumAssessmentClass {
+  previous: string;
+  previousLabel: string;
+  next: string;
+  nextLabel: string;
+  change: PodiumChangeKind;
+  cutoffs: { openClass: number | null; worldClass: number | null } | null;
+}
+
+export interface PodiumAssessmentStatus {
+  previousTier: number;
+  previousLabel: string;
+  nextTier: number;
+  nextLabel: string;
+  change: PodiumChangeKind;
+  reputationBefore: number;
+  reputationAfter: number;
+  reputationDelta: number;
+  heritageApplied: boolean;
+}
+
+export interface PodiumAssessmentActivity {
+  tier: string;
+  label: string;
+  percentile: number;
+  recognition: { coin: number; xp: number } | null;
+}
+
+export interface PodiumAssessment {
+  seasonUid: string;
+  seasonIndex: number | null;
+  assessedForSeasonUid: string | null;
+  corpsName: string | null;
+  competed: boolean;
+  performance: {
+    finalsTotal: number | null;
+    finalsDay: number | null;
+    seasonRank: number | null;
+    seasonRankOf: number | null;
+    tierPerformance: number | null;
+    peerPercentile: number | null;
+    medals: Record<string, number>;
+  };
+  class: PodiumAssessmentClass;
+  status: PodiumAssessmentStatus;
+  activity: PodiumAssessmentActivity | null;
+  context: { seasonsPlayed: number | null; missedSeasons: number; dormancyApplied: boolean };
+  decisions: string[];
+  generatedAt?: string;
+}
+
+export interface PodiumCarryover {
+  corpsName: string | null;
+  location: string | null;
+  showConcept: string | null;
+  reputation: number;
+  tier: string;
+}
+
+export interface PodiumRetiredLineage {
+  index: number;
+  corpsName: string | null;
+  seasonsPlayed: number;
+  reputation: number;
+  tierLabel: string;
+}
+
+// The named class + status a reputation resolves to — shared by the retire /
+// un-retire results so a confirmation can show exactly where the corps lands.
+export interface PodiumStatus {
+  reputation: number;
+  tier: number;
+  tierLabel: string;
+  division: string;
+  divisionLabel: string;
+}
+
 export const registerPodiumCorps = createCallable<
   PodiumRegistration,
   {
@@ -180,8 +267,43 @@ export const getPodiumRegistrationPreview = createCallable<
     lastSeasonReport: PodiumSeasonReport | null;
     estimatedSeasonBudget: number | null;
     staff: PodiumStaffProjection[];
+    // The season-start assessment for the carried-over corps (null first-timer).
+    assessment: PodiumAssessment | null;
+    // The carried corps identity, so the screen continues it rather than
+    // founding one from scratch.
+    carryover: PodiumCarryover | null;
+    // Banked lineages the director can un-retire (each re-assessed on selection).
+    retiredLineages: PodiumRetiredLineage[];
   }
 >('getPodiumRegistrationPreview');
+
+// Retire the active corps — banks the whole lineage (recoverable via un-retire).
+// A status change, so it must be confirmed.
+export const retirePodiumCorps = createCallable<
+  { confirm: boolean },
+  {
+    success: boolean;
+    retired: { corpsName: string | null; seasonsPlayed: number; status: PodiumStatus };
+  }
+>('retirePodiumCorps');
+
+// Un-retire a banked lineage. Without `confirm` it PREVIEWS the resulting status
+// (dormancy charged) so the director sees where the corps will land; with
+// `confirm: true` it commits the restore.
+export const unretirePodiumCorps = createCallable<
+  { lineageIndex: number; confirm?: boolean },
+  {
+    success: boolean;
+    committed: boolean;
+    preview: {
+      corpsName: string | null;
+      seasonsPlayed: number;
+      missedSeasons: number;
+      statusBefore: PodiumStatus;
+      statusAfter: PodiumStatus;
+    };
+  }
+>('unretirePodiumCorps');
 
 export const allocateRehearsalBlock = createCallable<
   { blockType: string; blockIndex?: number },

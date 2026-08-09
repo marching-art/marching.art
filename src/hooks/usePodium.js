@@ -20,6 +20,8 @@ import {
   commitPodiumBudget,
   hirePodiumClinician,
   acknowledgePodiumStaffOutlook,
+  retirePodiumCorps,
+  unretirePodiumCorps,
 } from '../api/podium';
 
 export function usePodium(enabled) {
@@ -233,6 +235,31 @@ export function usePodium(enabled) {
     return result.data;
   }, [reload]);
 
+  // Retire the active corps (banks the lineage; recoverable via un-retire). The
+  // caller confirms first — this is a status change.
+  const retireCorps = useCallback(async () => {
+    const result = await retirePodiumCorps({ confirm: true });
+    await reload();
+    return result.data;
+  }, [reload]);
+
+  // Un-retire a banked lineage. Called first without confirm to PREVIEW the
+  // resulting status (the "are you sure?" surface), then again with confirm to
+  // commit the restore.
+  const previewUnretire = useCallback(async (lineageIndex) => {
+    const result = await unretirePodiumCorps({ lineageIndex, confirm: false });
+    return result.data;
+  }, []);
+
+  const unretireCorps = useCallback(
+    async (lineageIndex) => {
+      const result = await unretirePodiumCorps({ lineageIndex, confirm: true });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
   return {
     loading,
     error,
@@ -251,5 +278,8 @@ export function usePodium(enabled) {
     commitBudget,
     hireClinician,
     acknowledgeStaffOutlook,
+    retireCorps,
+    previewUnretire,
+    unretireCorps,
   };
 }

@@ -11,6 +11,7 @@ const jointHelper = require("../helpers/podium/joint");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
 const staffMarket = require("../helpers/podium/staffMarket");
+const assessment = require("../helpers/podium/assessment");
 const { podiumContext } = require("./podium");
 
 // Branded names for the fixed majors on the route sheet.
@@ -267,8 +268,52 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
       nextSalary: s.nextSalary,
       retiring: s.retiring,
     })),
+    // The season-start assessment (§5.7/§5.13): the corps' complete evaluation
+    // against last season's field — class, status, peer standing, activity —
+    // published by the archival sweep, shown BEFORE the director decides. Null
+    // for a first-time director (no prior season to assess). `assessment.decisions`
+    // gains "unretire" here when banked lineages exist.
+    assessment: careerData && careerData.pendingAssessment
+      ? {
+        ...careerData.pendingAssessment,
+        decisions: [
+          ...(careerData.pendingAssessment.decisions || ["continue", "retire", "startNew"]),
+          ...((careerData.retiredCareers || []).length > 0 ? ["unretire"] : []),
+        ],
+      }
+      : null,
+    // The carried-over corps identity, so the screen greets "continue <Name>"
+    // instead of a blank founding form.
+    carryover: hasCarried
+      ? {
+        corpsName: staleSnapshot.data().corpsName || null,
+        location: staleSnapshot.data().location || null,
+        showConcept: staleSnapshot.data().showConcept || null,
+        reputation: careerData ? careerData.reputation || 0 : 0,
+        tier: engineTierLabel(careerData),
+      }
+      : null,
+    // Banked lineages a director can un-retire (each re-assessed on selection).
+    retiredLineages: (careerData && careerData.retiredCareers ? careerData.retiredCareers : []).map(
+      (lineage, index) => ({
+        index,
+        corpsName: lineage.corpsName || null,
+        seasonsPlayed: lineage.seasonsPlayed || 0,
+        reputation: Math.round((lineage.reputation || 0) * 10) / 10,
+        tierLabel: assessment.tierLabel(engineTierForCareer(lineage)),
+      })
+    ),
   };
 });
+
+/** Named tier label for a career's current reputation (helper for the preview). */
+function engineTierForCareer(careerData) {
+  const engine = require("../helpers/podium/engine");
+  return engine.tierForReputation((careerData && careerData.reputation) || 0, store.balance);
+}
+function engineTierLabel(careerData) {
+  return assessment.tierLabel(engineTierForCareer(careerData));
+}
 
 exports.getPodiumState = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);

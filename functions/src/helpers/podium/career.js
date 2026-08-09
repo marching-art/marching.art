@@ -25,6 +25,7 @@ const economy = require("../economy");
 const engine = require("./engine");
 const store = require("./store");
 const divisions = require("./divisions");
+const assessment = require("./assessment");
 
 const SEASONS_DOC = "podium-config/podiumSeasons";
 
@@ -164,6 +165,10 @@ function applySeasonResult(career, { seasonUid, seasonIndex, state }, cfg) {
         // empty medal count and NEXT season's division seat.
         division: divisions.normalizeDivision(state.division),
         medals: state.medals || {},
+        // The season's engagement accumulator, carried onto the entry so a
+        // re-sweep (state doc already gone) can still rate the corps' activity
+        // for the season-start assessment.
+        activity: state.activity || null,
       },
     ],
   };
@@ -179,6 +184,45 @@ function applyDormancy(career, missedSeasons, cfg) {
     ...career,
     reputation: engine.updateReputation(career.reputation, 0, { dormantSeasons: missedSeasons }, cfg),
   };
+}
+
+/**
+ * Bank a live career lineage for retirement (pure, §5.13 "attached to the corps,
+ * not the director"). Retiring preserves the whole lineage — reputation,
+ * historical peak, trophy history, division — so it can be un-retired later; it
+ * just steps off the active roster. Staff are per-season employment (§5.6) and
+ * simply lapse, so they are not banked. `retiredAtIndex` timestamps the lineage
+ * against the global season ledger so a future un-retire can charge the dormancy
+ * decay of the seasons it sat out.
+ */
+function bankLineage(careerData, retiredAtIndex) {
+  const banked = { ...careerData };
+  delete banked.retiredCareers;
+  delete banked.pendingAssessment;
+  banked.retiredAtIndex = retiredAtIndex;
+  banked.retiredAt = new Date().toISOString();
+  return banked;
+}
+
+/**
+ * Restore a retired lineage as an active career (pure, §5.13 comeback arc). The
+ * seasons it sat retired are charged as dormancy against its reputation — the
+ * governing invariant is that a corps NEVER returns stronger than it left — but
+ * its historical peak is preserved, so heritage credit still accelerates the
+ * re-climb toward it. Returns { career, missedSeasons, reputationBefore,
+ * reputationAfter } so the caller can show the resulting status BEFORE the
+ * director confirms.
+ */
+function restoreLineage(banked, currentIndex, cfg) {
+  const retiredAtIndex = banked.retiredAtIndex ?? banked.lastPlayedIndex ?? currentIndex;
+  const missedSeasons = Math.max(0, currentIndex - retiredAtIndex);
+  const before = banked.reputation || 0;
+  const after = applyDormancy({ reputation: before, historicalPeak: banked.historicalPeak || 0 }, missedSeasons, cfg)
+    .reputation;
+  const restored = { ...banked, reputation: after };
+  delete restored.retiredAtIndex;
+  delete restored.retiredAt;
+  return { career: restored, missedSeasons, reputationBefore: before, reputationAfter: after };
 }
 
 // The archived-standings doc keeps every realistic field size well under the
@@ -339,7 +383,7 @@ async function archivePodiumSeason(db, previousSeason) {
       // re-reading state AND career inside the transaction guarantees the
       // sweep never clobbers a just-committed registration (both sides are
       // idempotent via the lastSeasonUid / seasonUid guards).
-      const { state, career } = await db.runTransaction(async (transaction) => {
+      const result = await db.runTransaction(async (transaction) => {
         // Profile read joins the txn so the budget refund credits corpsCoin
         // atomically with the career archival that gates it.
         const [stateSnapshot, careerSnapshot, profileSnapshot] = await Promise.all([
@@ -374,9 +418,30 @@ async function archivePodiumSeason(db, previousSeason) {
             updated.lastSeasonReport = report;
           }
           transaction.set(careerRef(db, uid), updated);
-          return { state: txnState, career: txnCareer, didArchive: true };
+          return {
+            state: txnState,
+            career: txnCareer,
+            didArchive: true,
+            // Assessment inputs (§5.7/§5.13): the reputation move this season
+            // produced, and the tier-relative performance it was earned on.
+            reputationBefore: txnCareer.reputation || 0,
+            reputationAfter: updated.reputation || 0,
+            historicalPeakBefore: txnCareer.historicalPeak || 0,
+            tierPerformance: finalsPercentile(txnState),
+          };
         }
-        return { state: txnState, career: txnCareer, didArchive: false };
+        // Already archived (re-sweep, or the director re-registered and lazily
+        // self-archived): the reputation move lives on the frozen history entry.
+        const prior = archivedSeasonEntry(txnCareer, previousSeason.seasonUid);
+        return {
+          state: txnState,
+          career: txnCareer,
+          didArchive: false,
+          reputationBefore: prior?.reputationBefore ?? txnCareer.reputation ?? 0,
+          reputationAfter: prior?.reputationAfter ?? txnCareer.reputation ?? 0,
+          historicalPeakBefore: txnCareer.historicalPeak || 0,
+          tierPerformance: prior?.percentile ?? (txnState ? finalsPercentile(txnState) : null),
+        };
       }).then(async (result) => {
         if (result.didArchive) {
           await appendProfileSeasonHistory(db, uid, previousSeason.seasonUid, result.state);
@@ -384,6 +449,7 @@ async function archivePodiumSeason(db, previousSeason) {
         }
         return result;
       });
+      const { state, career } = result;
       // What the corps did this season. The live state is the source while it
       // still holds the finished season; once the director has re-registered
       // (lazy self-archival, or simply a night later) the career's archived
@@ -391,15 +457,39 @@ async function archivePodiumSeason(db, previousSeason) {
       // the medals, rather than being reconstructed from whatever the corps
       // looks like now.
       const entry = archivedSeasonEntry(career, previousSeason.seasonUid);
+      // Assessment fields shared by both swept shapes: the reputation move, the
+      // engagement accumulator, and the heritage flag — everything the
+      // season-start assessment needs beyond division + finals total.
+      const assessmentFields = {
+        reputationBefore: result.reputationBefore ?? 0,
+        reputationAfter: result.reputationAfter ?? 0,
+        tierPerformance: result.tierPerformance ?? null,
+        historicalPeakBefore: result.historicalPeakBefore ?? 0,
+        // Heritage credit accelerated the climb when the corps re-earned ground
+        // below its historical peak (engine.updateReputation, §5.13).
+        heritageApplied:
+          (result.reputationAfter ?? 0) > (result.reputationBefore ?? 0) &&
+          (result.historicalPeakBefore ?? 0) >
+            (result.reputationBefore ?? 0) +
+              (store.balance.reputation.tierThresholds["3"] -
+                store.balance.reputation.tierThresholds["2"]),
+      };
       if (state) {
         swept.push({
           uid,
           corpsName: state.corpsName || null,
           lastTotal: state.lastTotal ?? null,
           lastScoredDay: state.lastScoredDay ?? null,
+          seasonRank: state.seasonRank ?? null,
+          seasonRankOf: state.seasonRankOf ?? null,
           medals: state.medals || {},
           division: divisions.normalizeDivision(state.division || (entry && entry.division)),
           underCutoffSeasons: career.underCutoffSeasons || 0,
+          activity: state.activity || (entry && entry.activity) || null,
+          seasonsPlayed: result.didArchive
+            ? (career.seasonsPlayed || 0) + 1
+            : career.seasonsPlayed || 0,
+          ...assessmentFields,
         });
       } else if (entry) {
         swept.push({
@@ -407,11 +497,16 @@ async function archivePodiumSeason(db, previousSeason) {
           corpsName: entry.corpsName || null,
           lastTotal: entry.finalsTotal ?? null,
           lastScoredDay: entry.finalsDay ?? null,
+          seasonRank: entry.seasonRank ?? null,
+          seasonRankOf: entry.seasonRankOf ?? null,
           // Pre-migration entries carry neither field; `career.division` is
           // the best remaining guess for a season archived before they landed.
           medals: entry.medals || {},
           division: divisions.normalizeDivision(entry.division || career.division),
           underCutoffSeasons: career.underCutoffSeasons || 0,
+          activity: entry.activity || null,
+          seasonsPlayed: career.seasonsPlayed || 0,
+          ...assessmentFields,
         });
       }
     } catch (error) {
@@ -444,7 +539,7 @@ async function archivePodiumSeason(db, previousSeason) {
   // Open Class would wake up in World, having never competed there.
   // `underCutoffSeasons` would double-count the same way, demoting on a single
   // bad season instead of two. `divisionsSeatedAt` is what makes it once.
-  const assessment = divisions.assessDivisions(
+  const divisionAssessment = divisions.assessDivisions(
     swept.map((entry) => ({
       uid: entry.uid,
       division: entry.division,
@@ -459,7 +554,7 @@ async function archivePodiumSeason(db, previousSeason) {
         `${storedArchive.divisionsSeatedAt}; not re-seating.`
     );
   } else {
-    for (const [uid, seat] of Object.entries(assessment.next)) {
+    for (const [uid, seat] of Object.entries(divisionAssessment.next)) {
       try {
         await careerRef(db, uid).set(
           {
@@ -480,6 +575,64 @@ async function archivePodiumSeason(db, previousSeason) {
         logger.error(`[podium] division seat write failed for ${uid}: ${error.message}`);
       }
     }
+  }
+
+  // --- Season-start assessment (design §5.7 + §5.13) ------------------------
+  // Publish each corps' complete evaluation onto its career as `pendingAssessment`
+  // so the between-seasons screen shows CLASS (division), STATUS (reputation
+  // tier), how it stacked up against last season's field, and its SEPARATE
+  // activity rating — all BEFORE the director chooses to continue, retire, start
+  // a new corps, or un-retire one. Field-relative activity is rated here, once
+  // the whole pool's engagement is known. Idempotent: every value is derived
+  // from the frozen season, so a re-sweep rewrites the identical object. A
+  // director who has already registered for the new season never sees it (the
+  // dashboard shows their live corps, not the assessment); registration clears
+  // it. Isolated: an assessment failure never fails archival.
+  try {
+    const seasonDoc = await db.doc("game-settings/season").get();
+    const currentSeasonUid = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
+    const activityRatings = assessment.buildActivityRatings(
+      swept.map((e) => ({ uid: e.uid, activity: e.activity })),
+      store.balance
+    );
+    for (const e of swept) {
+      const seat = divisionAssessment.next[e.uid];
+      const built = assessment.buildAssessment(
+        {
+          seasonUid: previousSeason.seasonUid,
+          seasonIndex: previousSeason.index,
+          assessedForSeasonUid: currentSeasonUid,
+          state: {
+            corpsName: e.corpsName,
+            lastTotal: e.lastTotal,
+            lastScoredDay: e.lastScoredDay,
+            seasonRank: e.seasonRank,
+            seasonRankOf: e.seasonRankOf,
+            medals: e.medals,
+            division: e.division,
+            seasonsPlayed: e.seasonsPlayed,
+          },
+          reputationBefore: e.reputationBefore,
+          reputationAfter: e.reputationAfter,
+          finalsPerformance: e.tierPerformance,
+          previousDivision: e.division,
+          nextDivision: seat ? seat.division : e.division,
+          divisionCutoffs: divisionAssessment.cutoffs,
+          activityRating: activityRatings.get(e.uid),
+          missedSeasons: 0,
+          heritageApplied: e.heritageApplied,
+          decisions: ["continue", "retire", "startNew"],
+        },
+        store.balance
+      );
+      try {
+        await careerRef(db, e.uid).set({ pendingAssessment: built }, { merge: true });
+      } catch (error) {
+        logger.error(`[podium] pending assessment write failed for ${e.uid}: ${error.message}`);
+      }
+    }
+  } catch (error) {
+    logger.error(`[podium] season-start assessment failed (archival unaffected): ${error.message}`);
   }
 
   // The frozen record only ever gets MORE complete. A rebuild reconstructs
@@ -524,8 +677,8 @@ async function archivePodiumSeason(db, previousSeason) {
       finalStandings: record,
       divisionChampions,
       divisions: {
-        cutoffs: assessment.cutoffs,
-        nextSeasonCounts: assessment.counts,
+        cutoffs: divisionAssessment.cutoffs,
+        nextSeasonCounts: divisionAssessment.counts,
       },
       corpsCount: roster.size,
       archivedAt: new Date().toISOString(),
@@ -667,6 +820,8 @@ module.exports = {
   finalsPercentile,
   applySeasonResult,
   applyDormancy,
+  bankLineage,
+  restoreLineage,
   buildFinalStandings,
   appendProfileSeasonHistory,
   applyBudgetRefund,
