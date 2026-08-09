@@ -69,9 +69,9 @@ function checkPodiumMoney(world, played, cast) {
       : fail("podiumMoney", "every wallet matches its own coin history", drifted.join("; "))
   );
 
-  // The refund is paid ONCE. Both the nightly sweep and registration's lazy
-  // self-archival settle the same money, and `pd_early` deliberately sits
-  // between them: it re-registered before the sweep ran.
+  // The refund is paid ONCE. The rollover settlement, registration's lazy
+  // self-archival, and the nightly fallback all settle the same money, and
+  // `pd_early` deliberately re-registers into an already-settled boundary.
   const doublePaid = [];
   const missing = [];
   for (const { director, career, history } of cast.values()) {
@@ -94,7 +94,7 @@ function checkPodiumMoney(world, played, cast) {
       ? pass(
           "podiumMoney",
           "the Corps Budget refund is paid exactly once",
-          "including pd_early, who re-registered before the sweep swept it"
+          "including pd_early, which the rollover settled before it re-registered"
         )
       : fail(
           "podiumMoney",
@@ -191,10 +191,11 @@ async function checkPodiumDivisions(db, played, cast) {
         )
   );
 
-  // The rollover-night race: pd_early re-registered into the new season BEFORE
-  // the sweep assessed the divisions, so the sweep has to re-stamp its live
-  // state and profile with the seat it just earned. Without that, a director
-  // who came back early plays a whole season in last season's division.
+  // The seat a returning director inherits: the rollover settlement assessed the
+  // divisions before registration opened, so pd_early re-registers straight into
+  // the seat it earned — its live state and profile must both carry it. (Should
+  // a director instead re-register ahead of the settlement, the nightly fallback
+  // re-stamps the seat; either way nobody plays a season in last year's class.)
   const early = cast.get("pd_early");
   const seat = early.career && early.career.division;
   const liveSeat = early.state && early.state.division;
