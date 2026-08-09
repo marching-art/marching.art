@@ -1,7 +1,13 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { startNewOffSeason, startNewLiveSeason, isLiveSeasonTime, scraperInvokeKey } = require("../helpers/season");
+const {
+  startNewOffSeason,
+  startNewLiveSeason,
+  isLiveSeasonTime,
+  getFinalsDateOverrides,
+  scraperInvokeKey,
+} = require("../helpers/season");
 const { scraperApiKey } = require("../helpers/dciFetch");
 const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
 const { buildSeasonStartPayload } = require("../helpers/seasonAnnounce");
@@ -24,8 +30,11 @@ exports.seasonScheduler = onSchedule({
   // that contains `now`. isLiveSeasonTime and getNextOffSeasonWindow partition
   // the year exactly, so this is the single source of truth for the routing —
   // no duplicated finals math here (helpers/scheduleGeneration.js).
+  // Manual finals-date overrides (game-settings/config) win over the computed
+  // 2nd Saturday when routing live-vs-off, matching what startNew*Season use.
+  const finalsOverrides = await getFinalsDateOverrides(getDb());
   const startCurrentPhase = async () => {
-    if (isLiveSeasonTime(now)) {
+    if (isLiveSeasonTime(now, finalsOverrides)) {
       logger.info("It's time for the live season! Starting now.");
       await startNewLiveSeason();
     } else {

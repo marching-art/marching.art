@@ -441,15 +441,46 @@ const OFF_SEASON_LENGTH_DAYS = 49;
 const FIXED_SEASON_DAYS = OFF_SEASON_COUNT * OFF_SEASON_LENGTH_DAYS + 49; // 343
 
 /**
- * The next DCI finals (2nd Saturday of August, UTC midnight): this year's if it
- * hasn't happened yet, otherwise next year's.
+ * The DCI finals date for a year: a manual override when one is on record,
+ * otherwise the computed 2nd Saturday of August (computeFinalsDateUTC).
+ *
+ * The override is the safety valve for the rare year DCI schedules finals off
+ * the 2nd Saturday. `overrides` is a plain map keyed by finals year (number or
+ * string) to a "YYYY-MM-DD" UTC date; a malformed entry is ignored so a bad
+ * override can never break the season calendar — it just falls back to the
+ * computed date. Only the season-window layer consults overrides;
+ * calculateOffSeasonDay / competitionDayToDateUTC stay on the pure 2nd-Saturday
+ * rule because they map HISTORICAL DCI events, which follow their own real dates.
+ *
+ * @param {number} year - Finals year.
+ * @param {Object<string|number, string>} [overrides] - Year -> "YYYY-MM-DD".
+ * @returns {Date} UTC-midnight finals date.
+ */
+function resolveFinalsDateUTC(year, overrides = {}) {
+  const raw = overrides && (overrides[year] != null ? overrides[year] : overrides[String(year)]);
+  if (raw != null) {
+    const s = String(raw);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const d = new Date(`${s}T00:00:00.000Z`);
+      // Round-trip guard rejects impossible dates like 2029-02-31.
+      if (!Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s) return d;
+    }
+    // Malformed override: fall through to the computed 2nd Saturday.
+  }
+  return computeFinalsDateUTC(year);
+}
+
+/**
+ * The next DCI finals (UTC midnight): this year's if it hasn't happened yet,
+ * otherwise next year's. Honors manual overrides via resolveFinalsDateUTC.
  * @param {Date} now
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
  * @returns {Date}
  */
-function upcomingFinalsUTC(now) {
-  const thisYear = computeFinalsDateUTC(now.getUTCFullYear());
+function upcomingFinalsUTC(now, overrides = {}) {
+  const thisYear = resolveFinalsDateUTC(now.getUTCFullYear(), overrides);
   return now.getTime() >= thisYear.getTime()
-    ? computeFinalsDateUTC(now.getUTCFullYear() + 1)
+    ? resolveFinalsDateUTC(now.getUTCFullYear() + 1, overrides)
     : thisYear;
 }
 
@@ -461,8 +492,8 @@ function upcomingFinalsUTC(now) {
  * @param {Date} finalsDate
  * @returns {number}
  */
-function springTrainingDaysFor(finalsDate) {
-  const prevFinals = computeFinalsDateUTC(finalsDate.getUTCFullYear() - 1);
+function springTrainingDaysFor(finalsDate, overrides = {}) {
+  const prevFinals = resolveFinalsDateUTC(finalsDate.getUTCFullYear() - 1, overrides);
   const gapDays = Math.round((finalsDate.getTime() - prevFinals.getTime()) / MILLIS_IN_DAY);
   return gapDays - FIXED_SEASON_DAYS;
 }
@@ -473,8 +504,8 @@ function springTrainingDaysFor(finalsDate) {
  * @param {Date} finalsDate
  * @returns {Date}
  */
-function liveSeasonStartFor(finalsDate) {
-  return new Date(finalsDate.getTime() - (48 + springTrainingDaysFor(finalsDate)) * MILLIS_IN_DAY);
+function liveSeasonStartFor(finalsDate, overrides = {}) {
+  return new Date(finalsDate.getTime() - (48 + springTrainingDaysFor(finalsDate, overrides)) * MILLIS_IN_DAY);
 }
 
 // Off-seasons in the order the backward layout builds them: Finale sits closest
@@ -495,11 +526,12 @@ const OFF_SEASON_TYPES_BACKWARD = ["Finale", "Crescendo", "Scherzo", "Adagio", "
  * isLiveSeasonTime.
  *
  * @param {Date} [now]
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
  * @returns {{startDate: Date, endDate: Date, seasonType: string, finalsYear: number}|null}
  */
-function getNextOffSeasonWindow(now = new Date()) {
-  const nextFinalsDate = upcomingFinalsUTC(now);
-  const liveSeasonStartDate = liveSeasonStartFor(nextFinalsDate);
+function getNextOffSeasonWindow(now = new Date(), overrides = {}) {
+  const nextFinalsDate = upcomingFinalsUTC(now, overrides);
+  const liveSeasonStartDate = liveSeasonStartFor(nextFinalsDate, overrides);
   const seasonWindows = [];
 
   for (let i = 0; i < OFF_SEASON_COUNT; i++) {
@@ -527,12 +559,13 @@ function getNextOffSeasonWindow(now = new Date()) {
  * the previous finals and competition day 49 lands on the real finals date.
  *
  * @param {Date} [now]
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
  * @returns {{startDate: Date, finalsDate: Date, springTrainingDays: number, seasonEndDate: Date, finalsYear: number}}
  */
-function getLiveSeasonWindow(now = new Date()) {
-  const finalsDate = upcomingFinalsUTC(now);
-  const startDate = liveSeasonStartFor(finalsDate);
-  const springTrainingDays = springTrainingDaysFor(finalsDate);
+function getLiveSeasonWindow(now = new Date(), overrides = {}) {
+  const finalsDate = upcomingFinalsUTC(now, overrides);
+  const startDate = liveSeasonStartFor(finalsDate, overrides);
+  const springTrainingDays = springTrainingDaysFor(finalsDate, overrides);
   // endDate is the first moment of the day AFTER finals so finals day is fully
   // included (mirrors the off-season convention).
   const seasonEndDate = new Date(finalsDate.getTime() + MILLIS_IN_DAY);
@@ -547,11 +580,32 @@ function getLiveSeasonWindow(now = new Date()) {
  * spans [previous finals + 1, live start), live time spans [live start, finals].
  *
  * @param {Date} [now]
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
  * @returns {boolean}
  */
-function isLiveSeasonTime(now = new Date()) {
-  const { startDate, seasonEndDate } = getLiveSeasonWindow(now);
+function isLiveSeasonTime(now = new Date(), overrides = {}) {
+  const { startDate, seasonEndDate } = getLiveSeasonWindow(now, overrides);
   return now.getTime() >= startDate.getTime() && now.getTime() < seasonEndDate.getTime();
+}
+
+/**
+ * Read the manual finals-date overrides from game-settings/config. Returns a
+ * plain { [year]: "YYYY-MM-DD" } map, or {} when none are set or the read fails
+ * (the season calendar then uses the computed 2nd-Saturday dates). Set/cleared
+ * via the admin "setFinalsDateOverride" trigger.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @returns {Promise<Object<string, string>>}
+ */
+async function getFinalsDateOverrides(db) {
+  try {
+    const doc = await db.doc("game-settings/config").get();
+    const raw = doc.exists ? doc.data().finalsDateOverrides : null;
+    return raw && typeof raw === "object" ? raw : {};
+  } catch (error) {
+    logger.warn(`Could not read finals-date overrides; using computed dates: ${error.message}`);
+    return {};
+  }
 }
 
 module.exports = {
@@ -564,4 +618,6 @@ module.exports = {
   getNextOffSeasonWindow,
   getLiveSeasonWindow,
   isLiveSeasonTime,
+  resolveFinalsDateUTC,
+  getFinalsDateOverrides,
 };

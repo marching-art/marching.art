@@ -49,6 +49,7 @@ const {
   getNextOffSeasonWindow,
   getLiveSeasonWindow,
   isLiveSeasonTime,
+  getFinalsDateOverrides,
 } = require("./scheduleGeneration");
 const {
   showMatchKey,
@@ -484,8 +485,11 @@ async function startNewLiveSeason() {
   // Anchor everything on the next DCI finals. Spring training is variable so the
   // six preceding off-seasons pack in right after the previous finals and
   // competition day 49 lands exactly on the real finals date (getLiveSeasonWindow).
+  // Manual finals-date overrides (game-settings/config) win over the computed
+  // 2nd Saturday for the rare year DCI moves finals.
+  const finalsOverrides = await getFinalsDateOverrides(db);
   const { startDate, finalsDate, springTrainingDays, seasonEndDate, finalsYear } =
-    getLiveSeasonWindow(new Date());
+    getLiveSeasonWindow(new Date(), finalsOverrides);
   const year = finalsYear;
   const previousYear = (finalsYear - 1).toString();
 
@@ -560,7 +564,8 @@ async function startNewOffSeason() {
     };
   }
 
-  const offWindow = getNextOffSeasonWindow();
+  const finalsOverrides = await getFinalsDateOverrides(db);
+  const offWindow = getNextOffSeasonWindow(new Date(), finalsOverrides);
   if (!offWindow) {
     // now is in the live-season run-up; the scheduler should have routed here to
     // startNewLiveSeason via isLiveSeasonTime. Fail loudly rather than fabricate
@@ -989,6 +994,7 @@ module.exports = {
   getNextOffSeasonWindow,
   getLiveSeasonWindow,
   isLiveSeasonTime,
+  getFinalsDateOverrides,
   archiveSeasonResultsLogic,
   // Exported for tests (rollover pipeline internals)
   archiveAndResetProfiles,

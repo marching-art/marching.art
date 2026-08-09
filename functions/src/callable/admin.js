@@ -1,4 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const {
@@ -381,6 +382,45 @@ exports.manualTrigger = onCall({
       return {
         success: true,
         message: `Heritage schedule enrichment ${enabled ? "ENABLED" : "DISABLED"} for future off-seasons.`,
+      };
+    }
+    case "setFinalsDateOverride": {
+      // Manual safety valve for the rare year DCI schedules finals off the 2nd
+      // Saturday of August. Stored as game-settings/config.finalsDateOverrides,
+      // a { [year]: "YYYY-MM-DD" } map the season-calendar math consults before
+      // the computed date (helpers/scheduleGeneration.js resolveFinalsDateUTC).
+      // Pass { year, date } to set or { year, date: null } to clear. It reshapes
+      // FUTURE season windows only, so it takes effect at the next rollover.
+      const year = Number(request.data.year);
+      if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+        throw new HttpsError("invalid-argument", "year must be a 4-digit year (2000-2100).");
+      }
+      const date = request.data.date;
+      const clearing = date === null || date === undefined || date === "";
+      if (!clearing) {
+        if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          throw new HttpsError("invalid-argument", "date must be 'YYYY-MM-DD' or null to clear.");
+        }
+        const parsed = new Date(`${date}T00:00:00.000Z`);
+        if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+          throw new HttpsError("invalid-argument", `Invalid calendar date: ${date}.`);
+        }
+        // Finals is always a Saturday in August. Warn but allow — the admin is
+        // explicitly overriding, and this is the escape hatch for the unusual year.
+        if (parsed.getUTCMonth() !== 7 || parsed.getUTCDay() !== 6) {
+          logger.warn(`Finals override for ${year} (${date}) is not a Saturday in August.`);
+        }
+      }
+      const configRef = getDb().doc("game-settings/config");
+      await configRef.set(
+        { finalsDateOverrides: { [String(year)]: clearing ? FieldValue.delete() : date } },
+        { merge: true }
+      );
+      return {
+        success: true,
+        message: clearing
+          ? `Cleared finals-date override for ${year}; the season calendar will use the computed 2nd Saturday of August.`
+          : `Set finals-date override: ${year} finals = ${date}. Takes effect at the next season rollover.`,
       };
     }
     case "auditShowSelections":

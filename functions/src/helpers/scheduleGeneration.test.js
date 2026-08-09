@@ -14,6 +14,7 @@ const {
   getNextOffSeasonWindow,
   getLiveSeasonWindow,
   isLiveSeasonTime,
+  resolveFinalsDateUTC,
 } = require("./scheduleGeneration");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -132,6 +133,39 @@ describe("getLiveSeasonWindow — variable spring training", () => {
       assert.equal(iso(day49), iso(computeFinalsDateUTC(year)));
       assert.ok([21, 28].includes(w.springTrainingDays), `spring ${w.springTrainingDays} for ${year}`);
     }
+  });
+});
+
+describe("resolveFinalsDateUTC — manual override safety valve", () => {
+  test("with no override, returns the computed 2nd Saturday of August", () => {
+    assert.equal(iso(resolveFinalsDateUTC(2027)), "2027-08-14");
+    assert.equal(iso(resolveFinalsDateUTC(2027, {})), "2027-08-14");
+  });
+
+  test("a valid override wins over the computed date (string or number key)", () => {
+    assert.equal(iso(resolveFinalsDateUTC(2029, { 2029: "2029-08-18" })), "2029-08-18");
+    assert.equal(iso(resolveFinalsDateUTC(2029, { "2029": "2029-08-18" })), "2029-08-18");
+  });
+
+  test("a malformed or impossible override is ignored (falls back to computed)", () => {
+    assert.equal(iso(resolveFinalsDateUTC(2029, { 2029: "not-a-date" })), iso(computeFinalsDateUTC(2029)));
+    assert.equal(iso(resolveFinalsDateUTC(2029, { 2029: "2029-02-31" })), iso(computeFinalsDateUTC(2029)));
+    assert.equal(iso(resolveFinalsDateUTC(2029, { 2028: "2028-08-12" })), iso(computeFinalsDateUTC(2029)));
+  });
+
+  test("an override reshapes spring training and pins day 49 to the override date", () => {
+    // Move 2029 finals one week later than the 2nd Saturday (Aug 11 -> Aug 18).
+    const overrides = { 2029: "2029-08-18" };
+    const w = getLiveSeasonWindow(new Date(Date.UTC(2028, 11, 15)), overrides);
+    assert.equal(iso(w.finalsDate), "2029-08-18");
+    const day49 = new Date(w.startDate.getTime() + (w.springTrainingDays + 48) * DAY_MS);
+    assert.equal(iso(day49), "2029-08-18");
+    // A week later than the computed date lengthens the 2028->2029 gap by 7,
+    // so spring training grows from 21 to 28 to absorb it; off-seasons stay 49.
+    assert.equal(w.springTrainingDays, 28);
+    // The off-seasons still pack in with no gap: the last one ends on live start.
+    const finaleEnd = getNextOffSeasonWindow(new Date(Date.UTC(2029, 5, 1)), overrides);
+    assert.ok(finaleEnd); // still off-season in early June under the later finals
   });
 });
 
