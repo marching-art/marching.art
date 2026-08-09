@@ -393,6 +393,9 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       ...careerData,
       corpsName: trimmedName,
       division,
+      // The season-start decision is now made (continue/start-new), so consume
+      // the pending assessment — it must not linger and re-surface next season.
+      pendingAssessment: null,
       // Bank the refund marker + report alongside the archived career so the
       // between-seasons preview can show last season's settlement and the sweep
       // never re-refunds this season.

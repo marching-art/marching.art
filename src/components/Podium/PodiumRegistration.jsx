@@ -3,7 +3,7 @@
 // 1) corps identity, 2) show concept, 3) design (challenge sliders + one-tap
 // audition presets), 4) march. No payments anywhere.
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ChevronRight,
   ChevronLeft,
@@ -21,6 +21,7 @@ import {
   SPECIALTY_LABELS,
   TIER_LABELS,
 } from './podiumConstants';
+import PodiumSeasonAssessment from './PodiumSeasonAssessment';
 
 const STEPS = ['Corps', 'Show', 'Design', 'March'];
 
@@ -38,6 +39,12 @@ export default function PodiumRegistration({ podium }) {
   const [error, setError] = useState(null);
   const [done, setDone] = useState(null);
 
+  // The between-seasons decision (design §5.13). Null until the returning
+  // director chooses — while null with an assessment on file, the Season
+  // Assessment screen shows instead of the setup wizard. 'startNew' banks the
+  // old lineage and founds a fresh corps (freshStart).
+  const [decision, setDecision] = useState(null); // null | 'continue' | 'startNew'
+
   // Between-seasons funding preview (design §5.6): carried staff and what they
   // cost next season vs. the CC the director can commit. Absent for a
   // first-time corps — the preview call reports hasCarriedStaff:false.
@@ -46,32 +53,55 @@ export default function PodiumRegistration({ podium }) {
   const [keptStaff, setKeptStaff] = useState(null); // Set, initialized from preview
 
   const loadPreview = podium.loadRegistrationPreview;
-  useEffect(() => {
-    let cancelled = false;
-    if (!loadPreview) return undefined;
-    loadPreview()
-      .then((data) => {
-        if (cancelled || !data) return;
-        setPreview(data);
-        const active = (data.staff || []).filter((s) => !s.retiring);
-        setKeptStaff(new Set(active.map((s) => s.specialty)));
-        // Pre-fund from the data-driven estimate (last season's operating spend
-        // + this season's aged payroll) when the director can afford it, so a
-        // returning corps starts at a realistic budget; fall back to covering
-        // payroll, then clamp to the most they could commit.
-        const maxCommit = Math.min(data.commitmentCap || 0, data.corpsCoin || 0);
-        if (data.hasCarriedStaff) {
-          const suggested = data.estimatedSeasonBudget || data.payroll || 0;
-          setBudgetCommitment(Math.min(maxCommit, suggested));
-        }
-      })
-      .catch(() => {
-        /* preview is advisory — registration still works without it */
-      });
-    return () => {
-      cancelled = true;
-    };
+  const refreshPreview = useCallback(async () => {
+    if (!loadPreview) return;
+    try {
+      const data = await loadPreview();
+      if (!data) return;
+      setPreview(data);
+      const active = (data.staff || []).filter((s) => !s.retiring);
+      setKeptStaff(new Set(active.map((s) => s.specialty)));
+      // Pre-fund from the data-driven estimate (last season's operating spend
+      // + this season's aged payroll) when the director can afford it, so a
+      // returning corps starts at a realistic budget; fall back to covering
+      // payroll, then clamp to the most they could commit.
+      const maxCommit = Math.min(data.commitmentCap || 0, data.corpsCoin || 0);
+      if (data.hasCarriedStaff) {
+        const suggested = data.estimatedSeasonBudget || data.payroll || 0;
+        setBudgetCommitment(Math.min(maxCommit, suggested));
+      }
+    } catch {
+      /* preview is advisory — registration still works without it */
+    }
   }, [loadPreview]);
+
+  useEffect(() => {
+    refreshPreview();
+  }, [refreshPreview]);
+
+  // Returning directors see the Season Assessment first; a first-time corps (no
+  // assessment, no carried identity) drops straight into the setup wizard.
+  const hasAssessment = Boolean(preview && (preview.assessment || preview.carryover));
+
+  // Continue the carried-over corps: prefill its identity (renaming still
+  // allowed) and enter the wizard.
+  const chooseContinue = () => {
+    const carry = preview?.carryover;
+    if (carry) {
+      if (carry.corpsName) setCorpsName(carry.corpsName);
+      if (carry.location) setLocation(carry.location);
+      if (carry.showConcept) setShowConcept(carry.showConcept);
+    }
+    setDecision('continue');
+  };
+
+  // Start a brand-new corps: clear the carried identity and found fresh.
+  const chooseStartNew = () => {
+    setCorpsName('');
+    setLocation('');
+    setShowConcept('');
+    setDecision('startNew');
+  };
 
   const auditions = useMemo(() => {
     const preset = AUDITION_PRESETS.find((p) => p.id === auditionPreset);
@@ -135,6 +165,8 @@ export default function PodiumRegistration({ podium }) {
         auditions,
         budgetCommitment: budgetCommitment > 0 ? budgetCommitment : undefined,
         staffPriority,
+        // Start-new banks the old lineage and founds a fresh corps at tier 1.
+        freshStart: decision === 'startNew' ? true : undefined,
       });
       setDone(result);
     } catch (err) {
@@ -194,6 +226,24 @@ export default function PodiumRegistration({ podium }) {
     );
   }
 
+  // Returning director, decision not yet made: the Season Assessment reward
+  // moment — class + status + peer standing + activity — with the four fates
+  // (continue / start new / retire / un-retire), each confirmed. First-timers
+  // skip straight to the wizard.
+  if (hasAssessment && decision === null) {
+    return (
+      <PodiumSeasonAssessment
+        assessment={preview.assessment}
+        carryover={preview.carryover}
+        retiredLineages={preview.retiredLineages || []}
+        podium={podium}
+        onContinue={chooseContinue}
+        onStartNew={chooseStartNew}
+        onChanged={refreshPreview}
+      />
+    );
+  }
+
   return (
     <div className="bg-surface-card border border-line rounded-none p-4 md:p-6 space-y-5 max-w-2xl">
       {/* Stepper */}
@@ -210,9 +260,21 @@ export default function PodiumRegistration({ podium }) {
         ))}
       </div>
 
+      {hasAssessment && (
+        <button
+          type="button"
+          onClick={() => setDecision(null)}
+          className="text-[11px] text-muted hover:text-white inline-flex items-center gap-1"
+        >
+          <ChevronLeft className="w-3 h-3" /> Back to season assessment
+        </button>
+      )}
+
       {step === 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-bold text-white">Found your corps</h2>
+          <h2 className="text-sm font-bold text-white">
+            {decision === 'continue' ? 'Continue your corps' : 'Found your corps'}
+          </h2>
           <p className="text-xs text-muted">
             One drum corps, yours for as long as you keep marching it. Reputation attaches to the
             corps — its name is the thing you&apos;ll spend seasons building.{' '}
