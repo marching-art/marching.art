@@ -5,6 +5,8 @@
 // historical score events into the category totals, caption scores, and trends
 // the dashboard renders. Kept free of React/Firestore so they are unit-testable.
 
+import { SEASON_FINAL_DAY } from './seasonProgress';
+
 // A single caption -> score map (e.g. { GE1: 19.5, VP: 18.2, ... }).
 export type CaptionScores = Record<string, number | undefined>;
 
@@ -124,12 +126,24 @@ export function getNextSelectedShow(
  * ticker, and Live Scores box (it previously existed as four near-identical
  * copies, one of which wrongly read the browser-local hour).
  *
+ * FINALS EXCEPTION: `currentDay` is clamped at SEASON_FINAL_DAY (49) by
+ * getSeasonProgress, so once finals night is in progress it never advances
+ * again. For every earlier day, `currentDay - 1` reveals that day when the
+ * clock rolls to the next day at 2 AM; but the day-49 scores would never
+ * reveal that way, because `currentDay` cannot roll to 50. At the finals clamp
+ * the effective day is therefore day 49 itself. This does not leak the finals
+ * results early: the day-49 recap does not exist until it is scored (at the
+ * 2 AM run, exactly when every other day reveals), so "reveal up to 49"
+ * surfaces nothing before the scores are in. Mirrors the finals special case
+ * in seasonProgress.getMaxVisibleArticleDay, so finals scores and finals
+ * articles reveal together.
+ *
  * @param currentDay The active season day (2 AM ET reset).
  * @returns The effective day, or null if no scores are available yet.
  */
 export function getEffectiveDay(currentDay: number): number | null {
   if (!currentDay) return null;
-  const effectiveDay = currentDay - 1;
+  const effectiveDay = currentDay >= SEASON_FINAL_DAY ? SEASON_FINAL_DAY : currentDay - 1;
   return effectiveDay >= 1 ? effectiveDay : null;
 }
 

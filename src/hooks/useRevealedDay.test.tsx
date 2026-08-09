@@ -79,6 +79,18 @@ describe('useRevealedDay', () => {
     expect(result.current).toBe(11);
   });
 
+  it('reveals day 49 at the finals clamp with no plan doc', async () => {
+    // currentDay is clamped at 49, so the currentDay - 1 fallback would pin the
+    // boundary at 48 forever after the finals 2 AM run and hide the finals
+    // scores. getEffectiveDay's finals exception lifts it to 49.
+    vi.mocked(getDropPlan).mockResolvedValue(null);
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useRevealedDay(49), { wrapper: Wrapper });
+
+    await waitFor(() => expect(getDropPlan).toHaveBeenCalled());
+    expect(result.current).toBe(49);
+  });
+
   it('returns null on day 1 with nothing scored', async () => {
     vi.mocked(getDropPlan).mockResolvedValue(null);
     const { Wrapper } = createWrapper();
