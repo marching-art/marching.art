@@ -10,8 +10,12 @@ const {
   ordinal,
   humanList,
   marginPhrase,
+  captionBook,
+  leadCharacter,
   analyzeStandings,
   leadSentence,
+  fieldScene,
+  leaderStory,
   moversSentence,
   chaseSentence,
   divisionSentence,
@@ -53,6 +57,23 @@ describe("small helpers", () => {
     assert.equal(marginPhrase(0.6), "with a working margin");
     assert.equal(marginPhrase(0.2), "by a slim edge");
     assert.equal(marginPhrase(0.05), "by a whisker");
+  });
+
+  test("leadCharacter keys to the gap the same way marginPhrase does", () => {
+    assert.match(leadCharacter(2), /breathing easy/);
+    assert.match(leadCharacter(0.6), /real daylight/);
+    assert.match(leadCharacter(0.2), /only just/);
+    assert.match(leadCharacter(0.05), /fingernails/);
+  });
+
+  test("captionBook sorts the three books strongest-first, or [] when incomplete", () => {
+    assert.deepEqual(
+      captionBook({ ge: 20, vis: 25, mus: 22 }).map((c) => c.key),
+      ["vis", "mus", "ge"]
+    );
+    // No commentary without the full breakdown to back it.
+    assert.deepEqual(captionBook({ ge: 20, vis: 25 }), []);
+    assert.deepEqual(captionBook(null), []);
   });
 });
 
@@ -188,5 +209,70 @@ describe("prose is deterministic and data-true", () => {
     assert.match(one, /Devils/);
     assert.match(one, /91\.200/);
     assert.match(one, /no ballots, no bias, just the board/);
+  });
+});
+
+describe("feature-length prose", () => {
+  // A sheet carrying the GE/Visual/Music books the standings actually store, so
+  // the caption commentary has numbers to read.
+  const captionSheet = {
+    day: 20,
+    fieldSize: 4,
+    entries: [
+      entry({ rank: 1, uid: "a", corpsName: "Altitude", total: 74.25, delta: 3, ge: 30, vis: 24, mus: 20.25, division: "worldClass" }),
+      entry({ rank: 2, uid: "b", corpsName: "Black Gold", total: 73.053, delta: -1, ge: 28, vis: 24.5, mus: 20.553, division: "worldClass" }),
+      entry({ rank: 3, uid: "c", corpsName: "Dragon Corps", total: 72.356, delta: 1, ge: 27, vis: 24, mus: 21.356, division: "openClass" }),
+      entry({ rank: 4, uid: "d", corpsName: "Fogwalkers", total: 71.0, delta: -2, ge: 26, vis: 24, mus: 21.0, division: "aClass" }),
+    ],
+  };
+
+  test("fieldScene draws the depth and the spread, and only that", () => {
+    const scene = fieldScene(analyzeStandings(captionSheet));
+    assert.match(scene, /4 corps/);
+    // Spread is first-minus-last: 74.250 − 71.000 = 3.250.
+    assert.match(scene, /3\.250/);
+  });
+
+  test("leaderStory reads the caption book and names the challenger's best answer", () => {
+    const story = leaderStory(analyzeStandings(captionSheet));
+    // Altitude's strongest book is General Effect (30.000).
+    assert.match(story, /General Effect story/);
+    assert.match(story, /30\.000/);
+    // Black Gold outscores the leader in Visual (24.500 to 24.000), so the story
+    // names that as the caption it takes outright.
+    assert.match(story, /Black Gold/);
+    assert.match(story, /Visual caption outright/);
+    assert.match(story, /24\.500 to 24\.000/);
+  });
+
+  test("leaderStory goes silent when the caption breakdown is missing", () => {
+    // A sheet with no ge/vis/mus gives the caption analysis nothing to read.
+    const bare = {
+      day: 3,
+      fieldSize: 2,
+      entries: [
+        entry({ rank: 1, uid: "a", corpsName: "Alpha", total: 80 }),
+        entry({ rank: 2, uid: "b", corpsName: "Beta", total: 79 }),
+      ],
+    };
+    assert.equal(leaderStory(analyzeStandings(bare)), null);
+  });
+
+  test("the full column carries the feature frames when the numbers are there", () => {
+    const article = composeNarrative(analyzeStandings(captionSheet));
+    // The scene-setting lede beats.
+    assert.match(article, /Altitude is in front and breathing easy|real daylight/);
+    assert.match(article, /answered the bell/);
+    // The centerpiece caption analysis.
+    assert.match(article, /\*\*The lead\.\*\*/);
+    assert.match(article, /General Effect/);
+    // Movers now hangs a score on the climb.
+    assert.match(article, /\*\*Movers\.\*\*/);
+    assert.match(article, /The climb rides on a 74\.250/);
+    // Still one voice, still blank-line paragraphs, still no numbered dump.
+    assert.ok(article.includes("\n\n"));
+    assert.doesNotMatch(article, /[^\n]\n[^\n]/);
+    assert.doesNotMatch(article, /^\d+\.\s/m);
+    assert.match(article, /no ballots, no bias, just the board/);
   });
 });
