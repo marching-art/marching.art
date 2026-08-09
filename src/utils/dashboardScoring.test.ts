@@ -35,6 +35,14 @@ describe('getEffectiveDay', () => {
     expect(getEffectiveDay(1)).toBeNull(); // 1 - 1 = 0 -> null
     expect(getEffectiveDay(0)).toBeNull();
   });
+
+  // currentDay is clamped at 49 (SEASON_FINAL_DAY) by getSeasonProgress, so it
+  // never rolls to 50. Without the finals exception, the day-49 (finals) recap
+  // could never reveal — currentDay - 1 would stay pinned at 48 forever after
+  // the finals 2 AM run, which is the "day 49 scores don't display" bug.
+  it('reveals day 49 at the finals clamp', () => {
+    expect(getEffectiveDay(49)).toBe(49);
+  });
 });
 
 describe('processCategoryTotals', () => {
