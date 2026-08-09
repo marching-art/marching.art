@@ -110,9 +110,7 @@ interface RecapDateSource {
 
 /** `game-settings/season`'s schedule object as competitionDayToDate reads it. */
 type SeasonScheduleLike =
-  | { startDate?: unknown; springTrainingDays?: number; [key: string]: unknown }
-  | null
-  | undefined;
+  { startDate?: unknown; springTrainingDays?: number; [key: string]: unknown } | null | undefined;
 
 // =============================================================================
 // HELPERS
