@@ -248,6 +248,46 @@ const CaptionSelectionModal = ({
   const isComplete = Object.keys(selections).length === 8;
   const selectionCount = Object.keys(selections).length;
 
+  // Captions edited since the lineup was opened, versus the last saved lineup.
+  // Drives the per-row "unsaved" dot and the change count on the confirm
+  // button so the batch save reads as "confirm these N changes". Suppressed
+  // during initial setup, where every slot is trivially a "change".
+  const changedCaptions = useMemo(() => {
+    const base = currentLineup || {};
+    const changed = new Set();
+    captions.forEach((c) => {
+      if ((base[c.id] || null) !== (selections[c.id] || null)) changed.add(c.id);
+    });
+    return changed;
+  }, [selections, currentLineup, captions]);
+  const changeCount = isInitialSetup ? 0 : changedCaptions.size;
+
+  // Proactive, touch-friendly reason the confirm button is unavailable — the
+  // native title tooltip never fires on touch, so mobile users need this
+  // spelled out next to the button rather than hidden behind a hover.
+  const confirmHint = useMemo(() => {
+    if (changesBlocked) {
+      if (changeInfo?.status === 'locked') return 'Changes are locked overnight — reopen at 2 AM ET.';
+      if (changeInfo?.phase === 'blackout') return 'Changes are closed on Days 43-44.';
+      if (changeInfo?.phase === 'championship') return 'This class has finished competing.';
+      return 'The season has ended — changes are closed.';
+    }
+    if (!isComplete) return `Pick all 8 captions — ${selectionCount}/8 chosen.`;
+    if (isOverLimit) return `Over budget by ${totalPoints - pointLimit}. Swap for cheaper corps.`;
+    if (!isInitialSetup && changeCount === 0) return 'No changes yet — edit a caption to enable saving.';
+    return null;
+  }, [
+    changesBlocked,
+    changeInfo,
+    isComplete,
+    selectionCount,
+    isOverLimit,
+    totalPoints,
+    pointLimit,
+    isInitialSetup,
+    changeCount,
+  ]);
+
   const getSelectedCorps = (captionId) => {
     const sel = selections[captionId];
     if (!sel) return null;
@@ -283,25 +323,26 @@ const CaptionSelectionModal = ({
     setMobileView('lineup');
   };
 
-  // Move to next empty caption or stay on current
   const handleCorpsSelect = (captionId, corps) => {
     handleSelectionChange(captionId, corps);
 
-    // Find next empty caption
+    // Drafting flow: jump to the next still-empty caption so filling all 8 is a
+    // fast tap-through. `selections` is the pre-update snapshot, which is fine
+    // here — we only test OTHER captions for emptiness.
     const currentIndex = captions.findIndex((c) => c.id === captionId);
-    for (let i = currentIndex + 1; i < captions.length; i++) {
-      if (!selections[captions[i].id]) {
-        setActiveCaption(captions[i].id);
-        return;
-      }
+    const searchOrder = [...captions.slice(currentIndex + 1), ...captions.slice(0, currentIndex)];
+    const nextEmpty = searchOrder.find((c) => !selections[c.id]);
+    if (nextEmpty) {
+      setActiveCaption(nextEmpty.id);
+      return;
     }
-    // Check from beginning
-    for (let i = 0; i < currentIndex; i++) {
-      if (!selections[captions[i].id]) {
-        setActiveCaption(captions[i].id);
-        return;
-      }
-    }
+
+    // No empty slots left — the weekly-change case, where the point is to swap a
+    // few already-filled captions and confirm them together. Return to the
+    // lineup board (mobile) so the user sees every pending change accumulate and
+    // can pick the next caption to swap, or hit Confirm, rather than being
+    // stranded in this one caption's picker after each edit.
+    setMobileView('lineup');
   };
 
   const handleSaveTemplate = (name) => {
@@ -596,20 +637,10 @@ const CaptionSelectionModal = ({
                 <div
                   className={`w-full lg:w-80 flex-shrink-0 border-r border-line overflow-y-auto min-h-0 ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}
                 >
-                  <div className="p-4 space-y-4">
-                    {/* Draft Helper */}
-                    <DraftHelper
-                      suggestions={draftSuggestions}
-                      onSelectSuggestion={(corps, captionId) => {
-                        if (captionId) {
-                          handleSelectionChange(captionId, corps);
-                        }
-                      }}
-                      selections={selections}
-                      activeCaption={activeCaption}
-                    />
-
-                    {/* Your Lineup - Caption List */}
+                  <div className="p-3">
+                    {/* Your Lineup - Caption List, grouped by caption family so
+                        all 8 slots read as three quick-to-scan sections and fit
+                        one mobile screen without scrolling the modal. */}
                     <div className="bg-background border border-line">
                       <div className="p-3 border-b border-line flex items-center justify-between">
                         <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
@@ -625,21 +656,30 @@ const CaptionSelectionModal = ({
                           </button>
                         )}
                       </div>
-                      <div className="p-2 space-y-1">
-                        {captions.map((caption) => {
-                          const sel = getSelectedCorps(caption.id);
-                          const isActive = activeCaption === caption.id;
-                          return (
-                            <CaptionButton
-                              key={caption.id}
-                              caption={caption}
-                              selected={sel}
-                              isActive={isActive}
-                              onClick={() => handleCaptionClick(caption.id)}
-                              categoryColor={categoryColors[caption.category]}
-                            />
-                          );
-                        })}
+                      <div className="p-2 space-y-2">
+                        {['General Effect', 'Visual', 'Music'].map((category) => (
+                          <div key={category}>
+                            <div className="flex items-center gap-1.5 px-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-muted/70">
+                              <span className={`w-1.5 h-1.5 rounded-none ${categoryColors[category]}`} />
+                              {category}
+                            </div>
+                            <div className="space-y-1">
+                              {captions
+                                .filter((c) => c.category === category)
+                                .map((caption) => (
+                                  <CaptionButton
+                                    key={caption.id}
+                                    caption={caption}
+                                    selected={getSelectedCorps(caption.id)}
+                                    isActive={activeCaption === caption.id}
+                                    changed={changedCaptions.has(caption.id) && !isInitialSetup}
+                                    onClick={() => handleCaptionClick(caption.id)}
+                                    categoryColor={categoryColors[caption.category]}
+                                  />
+                                ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -676,6 +716,20 @@ const CaptionSelectionModal = ({
                         </div>
                       </div>
 
+                      {/* Draft Helper — caption-specific suggestions live with
+                          the picker (where they apply) rather than crowding the
+                          lineup board. Collapsed by default. */}
+                      <div className="px-3 pt-2 flex-shrink-0">
+                        <DraftHelper
+                          suggestions={draftSuggestions}
+                          onSelectSuggestion={(corps, captionId) => {
+                            if (captionId) handleSelectionChange(captionId, corps);
+                          }}
+                          selections={selections}
+                          activeCaption={activeCaption}
+                        />
+                      </div>
+
                       {/* Corps Search + List */}
                       <CorpsSelectionList
                         corpsList={filteredCorps}
@@ -710,21 +764,32 @@ const CaptionSelectionModal = ({
 
           {/* Footer */}
           <div className="px-4 py-3 border-t border-line bg-surface-sunken flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
-            <p className="text-[10px] text-muted leading-snug min-w-0 hidden sm:block">
-              {scoresPending ? (
-                <>
-                  Locked lineups are scored once the night&apos;s DCI results post —{' '}
-                  <span className="text-warning font-bold">scores are processing now</span>
-                </>
+            <div className="min-w-0 flex-1">
+              {/* When the confirm is unavailable, show why — inline and on every
+                  screen size — instead of relying on a hover tooltip that never
+                  fires on touch. Otherwise fall back to the scoring countdown. */}
+              {confirmHint ? (
+                <p className="text-[10px] font-bold text-warning leading-snug flex items-start gap-1">
+                  <AlertCircle className="w-3 h-3 flex-shrink-0 mt-px" /> {confirmHint}
+                </p>
               ) : (
-                <>
-                  Locked lineups are scored after the night&apos;s last show — next run in{' '}
-                  <span className="text-cyan-400 font-bold font-data tabular-nums">
-                    {formatCountdown(scoresInMs)}
-                  </span>
-                </>
+                <p className="text-[10px] text-muted leading-snug hidden sm:block">
+                  {scoresPending ? (
+                    <>
+                      Locked lineups are scored once the night&apos;s DCI results post —{' '}
+                      <span className="text-warning font-bold">scores are processing now</span>
+                    </>
+                  ) : (
+                    <>
+                      Locked lineups are scored after the night&apos;s last show — next run in{' '}
+                      <span className="text-cyan-400 font-bold font-data tabular-nums">
+                        {formatCountdown(scoresInMs)}
+                      </span>
+                    </>
+                  )}
+                </p>
               )}
-            </p>
+            </div>
             <div className="flex justify-end gap-2 flex-shrink-0 ml-auto">
               <button
                 onClick={onClose}
@@ -735,7 +800,14 @@ const CaptionSelectionModal = ({
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={!isComplete || isOverLimit || saving || loading || changesBlocked}
+                disabled={
+                  !isComplete ||
+                  isOverLimit ||
+                  saving ||
+                  loading ||
+                  changesBlocked ||
+                  (!isInitialSetup && changeCount === 0)
+                }
                 title={
                   changesBlocked
                     ? 'Caption changes are currently closed — see the change-window indicator above'
@@ -752,6 +824,11 @@ const CaptionSelectionModal = ({
                   <>
                     <Trophy className="w-4 h-4" />
                     Changes {changeInfo?.status === 'locked' ? 'Locked' : 'Closed'}
+                  </>
+                ) : !isInitialSetup && changeCount > 0 ? (
+                  <>
+                    <Trophy className="w-4 h-4" />
+                    Confirm {changeCount} Change{changeCount === 1 ? '' : 's'}
                   </>
                 ) : (
                   <>
