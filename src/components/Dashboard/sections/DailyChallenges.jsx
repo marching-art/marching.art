@@ -37,12 +37,16 @@ const DailyChallenges = memo(
     embedded = false,
     predictionAvailable = true,
     podium = null,
+    // The parent (Director's Report) passes a clock-driven game day so the
+    // rotation rolls over at 2 AM ET even in a tab left open across the
+    // boundary. Falls back to a fresh compute when rendered standalone.
+    gameDay: gameDayProp = null,
   }) => {
     const { trigger: haptic } = useHaptic();
     const profile = useProfileStore((state) => state.profile);
     const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
 
-    const gameDay = getGameDay();
+    const gameDay = gameDayProp ?? getGameDay();
     // The context the challenge predicates need beyond the profile: prediction
     // availability, and the Podium show/concept facts the profile can't carry.
     const context = useMemo(() => ({ predictionAvailable, podium }), [predictionAvailable, podium]);
