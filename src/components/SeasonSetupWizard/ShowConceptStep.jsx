@@ -15,7 +15,14 @@ import {
   DRILL_STYLES,
   isStructuredConcept,
 } from '../../utils/showConcept';
-import { ALL_CLASSES, getCorpsClassName } from './constants';
+import { getCorpsClassName } from './constants';
+// Portfolio order (fantasy classes + Podium). Show concepts are pure identity
+// (title/theme/music/drill) and apply to EVERY enabled class, not just the
+// lineup-bearing ones — a Podium Class corps designs a show the same way, so
+// season setup lists it here alongside the fantasy corps. The saveShowConcept
+// callable already accepts podiumClass; the design bonus stays cosmetic for
+// Podium since it fields no lineup.
+import { PROFILE_CORPS_CLASS_ORDER } from '../../utils/corps';
 
 const PickerRow = ({ label, options, value, onChange }) => (
   <div>
@@ -45,9 +52,9 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
   // Every named corps can get a concept; default to the highest class
   const namedCorps = useMemo(
     () =>
-      ALL_CLASSES.filter((classId) => localUserProfile?.corps?.[classId]?.corpsName).map(
-        (classId) => ({ classId, corps: localUserProfile.corps[classId] })
-      ),
+      PROFILE_CORPS_CLASS_ORDER.filter(
+        (classId) => localUserProfile?.corps?.[classId]?.corpsName
+      ).map((classId) => ({ classId, corps: localUserProfile.corps[classId] })),
     [localUserProfile]
   );
 
