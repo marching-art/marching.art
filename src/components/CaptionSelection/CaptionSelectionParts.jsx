@@ -550,7 +550,7 @@ const CaptionButton = ({ caption, selected, isActive, changed, onClick, category
       )}
       {changed && (
         <span
-          className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"
+          className="w-1.5 h-1.5 rounded-full bg-warning flex-shrink-0"
           title="Unsaved change"
           aria-label="unsaved change"
         />

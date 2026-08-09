@@ -540,19 +540,25 @@ const CaptionSelectionModal = ({
                   isInitialSetup={isInitialSetup}
                   changeInfo={changeInfo}
                 />
+                {/* Icon-only on mobile so the header action row stays a single
+                    line and doesn't push the lineup below the fold; labels
+                    return at sm+. */}
                 <button
                   onClick={handleQuickFill}
                   disabled={loading || selectionCount === 8}
-                  className="min-h-touch px-3 bg-green-600 hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase flex items-center gap-1 press-feedback"
+                  className="min-h-touch min-w-touch px-3 justify-center bg-green-600 hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase flex items-center gap-1 press-feedback"
                   title="Auto-fill empty positions with balanced picks"
+                  aria-label="Quick fill empty positions"
                 >
-                  <Wand2 className="w-3 h-3" /> Quick Fill
+                  <Wand2 className="w-3 h-3" /> <span className="hidden sm:inline">Quick Fill</span>
                 </button>
                 <button
                   onClick={() => setShowTemplateModal(true)}
-                  className="min-h-touch px-3 border border-line text-muted text-xs font-bold uppercase hover:border-line-strong hover:text-white active:text-white flex items-center gap-1 press-feedback"
+                  className="min-h-touch min-w-touch px-3 justify-center border border-line text-muted text-xs font-bold uppercase hover:border-line-strong hover:text-white active:text-white flex items-center gap-1 press-feedback"
+                  title="Lineup templates"
+                  aria-label="Lineup templates"
                 >
-                  <Save className="w-3 h-3" /> Templates
+                  <Save className="w-3 h-3" /> <span className="hidden sm:inline">Templates</span>
                 </button>
                 <button
                   onClick={onClose}
