@@ -1,7 +1,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { startNewOffSeason, startNewLiveSeason, scraperInvokeKey } = require("../helpers/season");
+const { startNewOffSeason, startNewLiveSeason, isLiveSeasonTime, scraperInvokeKey } = require("../helpers/season");
 const { scraperApiKey } = require("../helpers/dciFetch");
 const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
 const { buildSeasonStartPayload } = require("../helpers/seasonAnnounce");
@@ -19,16 +19,32 @@ exports.seasonScheduler = onSchedule({
   const seasonSettingsRef = getDb().doc("game-settings/season");
   const seasonDoc = await seasonSettingsRef.get();
 
+  // Start whichever phase the calendar says we're in right now: the live season
+  // during its run-up (spring training through finals), otherwise the off-season
+  // that contains `now`. isLiveSeasonTime and getNextOffSeasonWindow partition
+  // the year exactly, so this is the single source of truth for the routing —
+  // no duplicated finals math here (helpers/scheduleGeneration.js).
+  const startCurrentPhase = async () => {
+    if (isLiveSeasonTime(now)) {
+      logger.info("It's time for the live season! Starting now.");
+      await startNewLiveSeason();
+    } else {
+      logger.info("Starting a new off-season.");
+      await startNewOffSeason();
+    }
+    await announceSeasonStart(getDb());
+  };
+
   if (!seasonDoc.exists) {
-    logger.info("No season document found. Starting first off-season.");
-    await startNewOffSeason();
+    logger.info("No season document found. Bootstrapping the current season.");
+    await startCurrentPhase();
     return;
   }
 
   const seasonData = seasonDoc.data();
   if (!seasonData.schedule || !seasonData.schedule.endDate) {
-    logger.warn("Season doc is malformed. Starting new off-season to correct.");
-    await startNewOffSeason();
+    logger.warn("Season doc is malformed. Starting the current season to correct.");
+    await startCurrentPhase();
     return;
   }
 
@@ -39,39 +55,7 @@ exports.seasonScheduler = onSchedule({
   }
 
   logger.info(`Season ${seasonData.name} has ended. Starting next season.`);
-
-  // Calculate when the live season should start (69 days before second Saturday in August)
-  const findSecondSaturday = (year) => {
-    const firstOfAugust = new Date(Date.UTC(year, 7, 1));
-    const dayOfWeek = firstOfAugust.getUTCDay();
-    const daysToAdd = (6 - dayOfWeek + 7) % 7;
-    const firstSaturday = 1 + daysToAdd;
-    return new Date(Date.UTC(year, 7, firstSaturday + 7));
-  };
-
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  let nextFinalsDate = findSecondSaturday(currentYear);
-
-  // If we're past this year's finals, use next year
-  if (today >= nextFinalsDate) {
-    nextFinalsDate = findSecondSaturday(currentYear + 1);
-  }
-
-  const millisInDay = 24 * 60 * 60 * 1000;
-  const liveSeasonStartDate = new Date(nextFinalsDate.getTime() - 69 * millisInDay);
-
-  // If we're in the live season window, start live season
-  // Otherwise start the appropriate off-season
-  if (today >= liveSeasonStartDate && today < nextFinalsDate) {
-    logger.info("It's time for the live season! Starting now.");
-    await startNewLiveSeason();
-  } else {
-    logger.info("Starting a new off-season.");
-    await startNewOffSeason();
-  }
-
-  await announceSeasonStart(getDb());
+  await startCurrentPhase();
 });
 
 /**

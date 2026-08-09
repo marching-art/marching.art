@@ -14,7 +14,7 @@ const {
   regionalTierForEventName,
 } = require("./seasonSchedule");
 
-async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, _finalsDate) {
+async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, _finalsDate, springTrainingDays = SPRING_TRAINING_DAYS) {
   logger.info(`Generating live season schedule for ${seasonLength} days, starting on day ${startDay}.`);
 
   // Create schedule structure matching off-season format
@@ -48,7 +48,7 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
       // offSeasonDay 1 = startDate + 21 days, offSeasonDay 49 = finalsDate.
       const diffFromStart = eventDate.getTime() - startDate.getTime();
       const calendarDay = Math.floor(diffFromStart / millisInDay) + 1;
-      const dayNumber = calendarDay - SPRING_TRAINING_DAYS;
+      const dayNumber = calendarDay - springTrainingDays;
 
       // Only include events within days 1-44 (non-championship days)
       if (dayNumber >= 1 && dayNumber <= 44) {
@@ -429,56 +429,129 @@ function getThematicOffSeasonName(seasonType, finalsYear) {
   return `${seasonType.toLowerCase()}_${startYear}-${finalsYear.toString().slice(-2)}`;
 }
 
-function getNextOffSeasonWindow() {
-  const now = new Date();
-  const currentYear = now.getFullYear();
+// A game year is six 49-day off-seasons plus a 49-day live-season competition
+// stretch = 343 fixed days. The remaining calendar days between two consecutive
+// DCI finals (364 or 371 — 52 or 53 weeks) are the live season's SPRING
+// TRAINING. Making spring training the variable buffer keeps every off-season a
+// fixed 49 days and pins competition day 49 to the real DCI finals date, while
+// the first off-season begins the day after the previous finals with no dead
+// gap. See docs/SCHEDULE_SYSTEM.md.
+const OFF_SEASON_COUNT = 6;
+const OFF_SEASON_LENGTH_DAYS = 49;
+const FIXED_SEASON_DAYS = OFF_SEASON_COUNT * OFF_SEASON_LENGTH_DAYS + 49; // 343
 
-  const findSecondSaturday = (year) => {
-    const firstOfAugust = new Date(Date.UTC(year, 7, 1));
-    const dayOfWeek = firstOfAugust.getUTCDay();
-    const daysToAdd = (6 - dayOfWeek + 7) % 7;
-    const firstSaturday = 1 + daysToAdd;
-    return new Date(Date.UTC(year, 7, firstSaturday + 7));
-  };
+/**
+ * The next DCI finals (2nd Saturday of August, UTC midnight): this year's if it
+ * hasn't happened yet, otherwise next year's.
+ * @param {Date} now
+ * @returns {Date}
+ */
+function upcomingFinalsUTC(now) {
+  const thisYear = computeFinalsDateUTC(now.getUTCFullYear());
+  return now.getTime() >= thisYear.getTime()
+    ? computeFinalsDateUTC(now.getUTCFullYear() + 1)
+    : thisYear;
+}
 
-  let nextFinalsDate = findSecondSaturday(currentYear);
-  if (now >= nextFinalsDate) {
-    nextFinalsDate = findSecondSaturday(currentYear + 1);
-  }
+/**
+ * Spring-training length (calendar days) for the live season ending on
+ * `finalsDate`: the slack between consecutive finals once the six off-seasons
+ * and the 49 competition days are accounted for. 21 in a 364-day year, 28 in a
+ * 371-day (53-week) year.
+ * @param {Date} finalsDate
+ * @returns {number}
+ */
+function springTrainingDaysFor(finalsDate) {
+  const prevFinals = computeFinalsDateUTC(finalsDate.getUTCFullYear() - 1);
+  const gapDays = Math.round((finalsDate.getTime() - prevFinals.getTime()) / MILLIS_IN_DAY);
+  return gapDays - FIXED_SEASON_DAYS;
+}
 
-  const millisInDay = 24 * 60 * 60 * 1000;
-  const liveSeasonStartDate = new Date(nextFinalsDate.getTime() - 69 * millisInDay);
-  const seasonTypes = ["Finale", "Crescendo", "Scherzo", "Adagio", "Allegro", "Overture"];
+/**
+ * The live season's calendar start (spring-training day 1) for a finals date:
+ * competition day 1 is finals - 48 days, and spring training precedes it.
+ * @param {Date} finalsDate
+ * @returns {Date}
+ */
+function liveSeasonStartFor(finalsDate) {
+  return new Date(finalsDate.getTime() - (48 + springTrainingDaysFor(finalsDate)) * MILLIS_IN_DAY);
+}
+
+// Off-seasons in the order the backward layout builds them: Finale sits closest
+// to the live season, Overture furthest back (right after the previous finals).
+const OFF_SEASON_TYPES_BACKWARD = ["Finale", "Crescendo", "Scherzo", "Adagio", "Allegro", "Overture"];
+
+/**
+ * The off-season window `now` falls in.
+ *
+ * The six 49-day off-seasons are laid out BACKWARD from the next live season's
+ * start, which itself sits exactly six off-seasons after the previous finals
+ * (spring training absorbs the yearly 364/371-day slack). The upshot: the first
+ * off-season (Overture) begins the day AFTER finals — no dead gap — and the last
+ * (Finale) ends the day the live season begins.
+ *
+ * Returns null once `now` is in the live-season run-up (past the sixth
+ * off-season); the scheduler reads that as "start the live season next" via
+ * isLiveSeasonTime.
+ *
+ * @param {Date} [now]
+ * @returns {{startDate: Date, endDate: Date, seasonType: string, finalsYear: number}|null}
+ */
+function getNextOffSeasonWindow(now = new Date()) {
+  const nextFinalsDate = upcomingFinalsUTC(now);
+  const liveSeasonStartDate = liveSeasonStartFor(nextFinalsDate);
   const seasonWindows = [];
 
-  for (let i = 0; i < seasonTypes.length; i++) {
-    // endDate is the first moment of the day AFTER day 49, so day 49 is fully included
-    // This prevents the scheduler (which runs at 3 AM) from triggering on day 49
-    const seasonEndDate = new Date(liveSeasonStartDate.getTime() - (i * 49 * millisInDay));
-    const seasonStartDate = new Date(seasonEndDate.getTime() - 49 * millisInDay);
+  for (let i = 0; i < OFF_SEASON_COUNT; i++) {
+    // endDate is the first moment of the day AFTER day 49, so day 49 is fully
+    // included and the 3 AM scheduler triggers the next morning, not on day 49.
+    const seasonEndDate = new Date(liveSeasonStartDate.getTime() - i * OFF_SEASON_LENGTH_DAYS * MILLIS_IN_DAY);
+    const seasonStartDate = new Date(seasonEndDate.getTime() - OFF_SEASON_LENGTH_DAYS * MILLIS_IN_DAY);
     seasonWindows.push({
       startDate: seasonStartDate,
       endDate: seasonEndDate,
-      seasonType: seasonTypes[i],
+      seasonType: OFF_SEASON_TYPES_BACKWARD[i],
     });
   }
 
   seasonWindows.reverse();
-  const nextWindow = seasonWindows.find((window) => now < window.endDate);
+  const currentWindow = seasonWindows.find((window) => now.getTime() < window.endDate.getTime());
+  if (!currentWindow) return null;
 
-  if (nextWindow) {
-    return { ...nextWindow, finalsYear: nextFinalsDate.getFullYear() };
-  }
+  return { ...currentWindow, finalsYear: nextFinalsDate.getUTCFullYear() };
+}
 
-  const overtureStartDate = new Date(nextFinalsDate.getTime() + 1 * millisInDay);
-  const overtureEndDate = new Date(overtureStartDate.getTime() + 48 * millisInDay);
+/**
+ * The upcoming (or in-progress) live season window, anchored on the next DCI
+ * finals. Spring training is variable so the six off-seasons pack in right after
+ * the previous finals and competition day 49 lands on the real finals date.
+ *
+ * @param {Date} [now]
+ * @returns {{startDate: Date, finalsDate: Date, springTrainingDays: number, seasonEndDate: Date, finalsYear: number}}
+ */
+function getLiveSeasonWindow(now = new Date()) {
+  const finalsDate = upcomingFinalsUTC(now);
+  const startDate = liveSeasonStartFor(finalsDate);
+  const springTrainingDays = springTrainingDaysFor(finalsDate);
+  // endDate is the first moment of the day AFTER finals so finals day is fully
+  // included (mirrors the off-season convention).
+  const seasonEndDate = new Date(finalsDate.getTime() + MILLIS_IN_DAY);
+  return { startDate, finalsDate, springTrainingDays, seasonEndDate, finalsYear: finalsDate.getUTCFullYear() };
+}
 
-  return {
-    startDate: overtureStartDate,
-    endDate: overtureEndDate,
-    seasonType: "Overture",
-    finalsYear: nextFinalsDate.getFullYear(),
-  };
+/**
+ * True when `now` is in the live-season run-up (spring training onward) and
+ * before that season's finals — i.e. past the sixth off-season. The scheduler
+ * uses this to route a rollover to the live season vs an off-season. It is the
+ * exact complement of getNextOffSeasonWindow returning a window: off-season time
+ * spans [previous finals + 1, live start), live time spans [live start, finals].
+ *
+ * @param {Date} [now]
+ * @returns {boolean}
+ */
+function isLiveSeasonTime(now = new Date()) {
+  const { startDate, seasonEndDate } = getLiveSeasonWindow(now);
+  return now.getTime() >= startDate.getTime() && now.getTime() < seasonEndDate.getTime();
 }
 
 module.exports = {
@@ -489,4 +562,6 @@ module.exports = {
   computeFinalsDateUTC,
   getThematicOffSeasonName,
   getNextOffSeasonWindow,
+  getLiveSeasonWindow,
+  isLiveSeasonTime,
 };

@@ -47,6 +47,8 @@ const {
   calculateOffSeasonDay,
   getThematicOffSeasonName,
   getNextOffSeasonWindow,
+  getLiveSeasonWindow,
+  isLiveSeasonTime,
 } = require("./scheduleGeneration");
 const {
   showMatchKey,
@@ -479,9 +481,13 @@ async function rolloverFromOldSeason(db, oldSeason, newSeasonUid) {
 async function startNewLiveSeason() {
   logger.info("Generating new live season...");
   const db = getDb();
-  const today = new Date();
-  const year = today.getFullYear();
-  const previousYear = (year - 1).toString();
+  // Anchor everything on the next DCI finals. Spring training is variable so the
+  // six preceding off-seasons pack in right after the previous finals and
+  // competition day 49 lands exactly on the real finals date (getLiveSeasonWindow).
+  const { startDate, finalsDate, springTrainingDays, seasonEndDate, finalsYear } =
+    getLiveSeasonWindow(new Date());
+  const year = finalsYear;
+  const previousYear = (finalsYear - 1).toString();
 
   let oldSeason = null;
   const oldSeasonDoc = await db.doc("game-settings/season").get();
@@ -503,37 +509,20 @@ async function startNewLiveSeason() {
     points: c.points,
   }));
 
-  // Calculate finals date (2nd Saturday of August)
-  const augustFirst = new Date(year, 7, 1);
-  const dayOfWeek = augustFirst.getDay();
-  const daysToAdd = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
-  const millisInDay = 24 * 60 * 60 * 1000;
-  const firstSaturday = new Date(augustFirst.getTime() + daysToAdd * millisInDay);
-  const finalsDate = new Date(firstSaturday.getTime() + 7 * millisInDay);
-
-  // Season is 70 days total: 21 days spring training + 49 days competition
-  // Start date is 69 days before finals (day 70 = finals)
-  const startDate = new Date(finalsDate.getTime() - 69 * millisInDay);
-
-  // Season naming
-  const startYear = startDate.getFullYear();
-  const endYear = finalsDate.getFullYear();
-  const seasonYearSuffix = `${startYear}-${endYear.toString().slice(-2)}`;
+  // Season naming: start calendar year to finals year (two digits).
+  const seasonYearSuffix = `${startDate.getFullYear()}-${finalsDate.getFullYear().toString().slice(-2)}`;
   const seasonName = `live_${seasonYearSuffix}`;
 
   const dataDocId = seasonName;
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
 
-  // Generate schedule with offSeasonDay structure (1-49 competition days)
-  // Pass startDate and finalsDate so we can map scraped events to the correct days
-  const schedule = await generateLiveSeasonSchedule(49, 1, year, startDate, finalsDate);
+  // Generate schedule with offSeasonDay structure (1-49 competition days).
+  // startDate/finalsDate map scraped events onto competition days; springTrainingDays
+  // is this season's actual (variable) spring-training length so the mapping is exact.
+  const schedule = await generateLiveSeasonSchedule(49, 1, year, startDate, finalsDate, springTrainingDays);
 
   // Write schedule to schedules collection (competitions array format)
   await writeScheduleToCollection(dataDocId, schedule);
-
-  // endDate is the first moment of the day AFTER finals, so finals day is fully included
-  // This prevents the scheduler (which runs at 3 AM) from triggering on finals day
-  const seasonEndDate = new Date(finalsDate.getTime() + millisInDay);
 
   const newSeasonData = {
     name: seasonName,
@@ -545,12 +534,12 @@ async function startNewLiveSeason() {
     schedule: {
       startDate: Timestamp.fromDate(startDate),
       endDate: Timestamp.fromDate(seasonEndDate),
-      springTrainingDays: 21, // First 21 calendar days are spring training
+      springTrainingDays, // variable (21 or 28) — see getLiveSeasonWindow
     },
   };
 
   await db.doc("game-settings/season").set(newSeasonData);
-  logger.info(`Successfully started the ${newSeasonData.name}.`);
+  logger.info(`Successfully started the ${newSeasonData.name} (spring training ${springTrainingDays} days).`);
 
   if (oldSeason) {
     await rolloverFromOldSeason(db, oldSeason, dataDocId);
@@ -571,7 +560,16 @@ async function startNewOffSeason() {
     };
   }
 
-  const { startDate, endDate, seasonType, finalsYear } = getNextOffSeasonWindow();
+  const offWindow = getNextOffSeasonWindow();
+  if (!offWindow) {
+    // now is in the live-season run-up; the scheduler should have routed here to
+    // startNewLiveSeason via isLiveSeasonTime. Fail loudly rather than fabricate
+    // an off-season on top of the live calendar.
+    throw new Error(
+      "startNewOffSeason called during the live-season run-up (no off-season window)."
+    );
+  }
+  const { startDate, endDate, seasonType, finalsYear } = offWindow;
   const seasonLength = 49;
   const rankingsSnapshot = await db.collection("final_rankings").get();
   if (rankingsSnapshot.empty) {
@@ -989,6 +987,8 @@ module.exports = {
   calculateOffSeasonDay,
   getThematicOffSeasonName,
   getNextOffSeasonWindow,
+  getLiveSeasonWindow,
+  isLiveSeasonTime,
   archiveSeasonResultsLogic,
   // Exported for tests (rollover pipeline internals)
   archiveAndResetProfiles,
