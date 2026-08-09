@@ -167,11 +167,25 @@ export function buildTourStops({
     for (const comp of competitions) {
       if (comp?.eventName && events.has(comp.eventName)) addStop(comp);
     }
-    for (const comp of [...competitions, ...championshipEvents]) {
-      if (autoDays.has(Number(comp?.day)) && isPodiumAutoAnchor(comp)) {
-        addStop(comp, { auto: true });
-      }
-    }
+    // Auto-attended anchors: exactly ONE per auto-day. Championship-week days
+    // take their canonical name from championshipEvents — the same source the
+    // Schedule page's Championship Week renders — so a season-schedule copy of
+    // the same championship under a scraped/historical name (e.g. "…Division I
+    // World Championship Prelims") can't double-book the day against the
+    // canonical "…World Championship Prelims". Majors aren't in
+    // championshipEvents, so they fall through to the schedule. Guarding by day
+    // (not day+name) is what collapses the two differently-named copies into
+    // one stop.
+    const anchoredDays = new Set<number>();
+    const addAutoAnchor = (source: TourSource) => {
+      const day = Number(source?.day);
+      if (!autoDays.has(day) || anchoredDays.has(day)) return;
+      if (!isPodiumAutoAnchor(source)) return;
+      anchoredDays.add(day);
+      addStop(source, { auto: true });
+    };
+    for (const event of championshipEvents) addAutoAnchor(event);
+    for (const comp of competitions) addAutoAnchor(comp);
   } else {
     const selectedShows = corps?.selectedShows || {};
     for (let week = 1; week <= TOTAL_WEEKS; week++) {
