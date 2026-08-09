@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Pending-approvals digest (scheduled): counts everything sitting in the
 // moderation queues and, when at least one queue is non-empty, alerts admins.
 //
