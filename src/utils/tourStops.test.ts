@@ -199,6 +199,37 @@ describe('buildTourStops', () => {
       expect(stops.map((s) => s.eventName)).toEqual(['DCI Eastern Classic']);
     });
 
+    it('books one championship stop when the schedule names it differently', () => {
+      // Regression: the season schedule can carry a championship-week show under
+      // a scraped/historical name ("…Division I World Championship Prelims")
+      // while championshipEvents carries the canonical "…World Championship
+      // Prelims". Both land on the same auto-day; the corps must not be double
+      // booked, and the surviving stop is the canonical one.
+      const stops = buildTourStops({
+        corps: null,
+        corpsClass: 'podiumClass',
+        competitions: [
+          ...competitions,
+          {
+            eventName: 'marching.art Division I World Championship Prelims',
+            location: 'Indianapolis, IN',
+            day: 47,
+            week: 7,
+            isChampionship: true,
+          },
+        ],
+        championshipEvents: CHAMPIONSHIP_EVENTS,
+        podiumAttendance: { events: new Set(), autoDays: new Set([47]) },
+      });
+
+      expect(stops).toHaveLength(1);
+      expect(stops[0]).toMatchObject({
+        day: 47,
+        eventName: 'marching.art World Championship Prelims',
+        auto: true,
+      });
+    });
+
     it('never auto-attends the SoundSport festival', () => {
       const stops = buildTourStops({
         corps: null,
