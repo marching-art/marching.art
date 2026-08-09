@@ -519,8 +519,17 @@ const Dashboard = () => {
                     bestInShowCount={bestInShowCount}
                     canManage={canEditCorpsThisSeason(activeCorps)}
                     canMove={
-                      Object.values(corps || {}).filter(Boolean).length <
-                      (unlockedClasses?.length || 0)
+                      // Movable when any unlocked class other than the current
+                      // one has no corps — the exact set MoveCorpsModal offers
+                      // as transfer targets. The old length comparison counted
+                      // every `corps` entry (including the always-open
+                      // podiumClass display entry, which is never in
+                      // `unlockedClasses`) against the unlocked-class count, so a
+                      // director who founded a Podium corps saw the count reach
+                      // parity and the Move button wrongly disabled.
+                      (unlockedClasses || []).some(
+                        (cls) => cls !== activeCorpsClass && !corps?.[cls]
+                      )
                     }
                     lockReason={
                       canEditCorpsThisSeason(activeCorps)
