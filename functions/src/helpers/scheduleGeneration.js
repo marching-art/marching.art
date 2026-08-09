@@ -14,7 +14,7 @@ const {
   regionalTierForEventName,
 } = require("./seasonSchedule");
 
-async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, _finalsDate) {
+async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, _finalsDate, springTrainingDays = SPRING_TRAINING_DAYS) {
   logger.info(`Generating live season schedule for ${seasonLength} days, starting on day ${startDay}.`);
 
   // Create schedule structure matching off-season format
@@ -48,7 +48,7 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
       // offSeasonDay 1 = startDate + 21 days, offSeasonDay 49 = finalsDate.
       const diffFromStart = eventDate.getTime() - startDate.getTime();
       const calendarDay = Math.floor(diffFromStart / millisInDay) + 1;
-      const dayNumber = calendarDay - SPRING_TRAINING_DAYS;
+      const dayNumber = calendarDay - springTrainingDays;
 
       // Only include events within days 1-44 (non-championship days)
       if (dayNumber >= 1 && dayNumber <= 44) {
@@ -429,56 +429,183 @@ function getThematicOffSeasonName(seasonType, finalsYear) {
   return `${seasonType.toLowerCase()}_${startYear}-${finalsYear.toString().slice(-2)}`;
 }
 
-function getNextOffSeasonWindow() {
-  const now = new Date();
-  const currentYear = now.getFullYear();
+// A game year is six 49-day off-seasons plus a 49-day live-season competition
+// stretch = 343 fixed days. The remaining calendar days between two consecutive
+// DCI finals (364 or 371 — 52 or 53 weeks) are the live season's SPRING
+// TRAINING. Making spring training the variable buffer keeps every off-season a
+// fixed 49 days and pins competition day 49 to the real DCI finals date, while
+// the first off-season begins the day after the previous finals with no dead
+// gap. See docs/SCHEDULE_SYSTEM.md.
+const OFF_SEASON_COUNT = 6;
+const OFF_SEASON_LENGTH_DAYS = 49;
+const FIXED_SEASON_DAYS = OFF_SEASON_COUNT * OFF_SEASON_LENGTH_DAYS + 49; // 343
 
-  const findSecondSaturday = (year) => {
-    const firstOfAugust = new Date(Date.UTC(year, 7, 1));
-    const dayOfWeek = firstOfAugust.getUTCDay();
-    const daysToAdd = (6 - dayOfWeek + 7) % 7;
-    const firstSaturday = 1 + daysToAdd;
-    return new Date(Date.UTC(year, 7, firstSaturday + 7));
-  };
-
-  let nextFinalsDate = findSecondSaturday(currentYear);
-  if (now >= nextFinalsDate) {
-    nextFinalsDate = findSecondSaturday(currentYear + 1);
+/**
+ * The DCI finals date for a year: a manual override when one is on record,
+ * otherwise the computed 2nd Saturday of August (computeFinalsDateUTC).
+ *
+ * The override is the safety valve for the rare year DCI schedules finals off
+ * the 2nd Saturday. `overrides` is a plain map keyed by finals year (number or
+ * string) to a "YYYY-MM-DD" UTC date; a malformed entry is ignored so a bad
+ * override can never break the season calendar — it just falls back to the
+ * computed date. Only the season-window layer consults overrides;
+ * calculateOffSeasonDay / competitionDayToDateUTC stay on the pure 2nd-Saturday
+ * rule because they map HISTORICAL DCI events, which follow their own real dates.
+ *
+ * @param {number} year - Finals year.
+ * @param {Object<string|number, string>} [overrides] - Year -> "YYYY-MM-DD".
+ * @returns {Date} UTC-midnight finals date.
+ */
+function resolveFinalsDateUTC(year, overrides = {}) {
+  const raw = overrides && (overrides[year] != null ? overrides[year] : overrides[String(year)]);
+  if (raw != null) {
+    const s = String(raw);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const d = new Date(`${s}T00:00:00.000Z`);
+      // Round-trip guard rejects impossible dates like 2029-02-31.
+      if (!Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s) return d;
+    }
+    // Malformed override: fall through to the computed 2nd Saturday.
   }
+  return computeFinalsDateUTC(year);
+}
 
-  const millisInDay = 24 * 60 * 60 * 1000;
-  const liveSeasonStartDate = new Date(nextFinalsDate.getTime() - 69 * millisInDay);
-  const seasonTypes = ["Finale", "Crescendo", "Scherzo", "Adagio", "Allegro", "Overture"];
+/**
+ * The next DCI finals (UTC midnight): this year's if it hasn't happened yet,
+ * otherwise next year's. Honors manual overrides via resolveFinalsDateUTC.
+ * @param {Date} now
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
+ * @returns {Date}
+ */
+function upcomingFinalsUTC(now, overrides = {}) {
+  const thisYear = resolveFinalsDateUTC(now.getUTCFullYear(), overrides);
+  return now.getTime() >= thisYear.getTime()
+    ? resolveFinalsDateUTC(now.getUTCFullYear() + 1, overrides)
+    : thisYear;
+}
+
+/**
+ * Spring-training length (calendar days) for the live season ending on
+ * `finalsDate`: the slack between consecutive finals once the six off-seasons
+ * and the 49 competition days are accounted for. 21 in a 364-day year, 28 in a
+ * 371-day (53-week) year.
+ * @param {Date} finalsDate
+ * @returns {number}
+ */
+function springTrainingDaysFor(finalsDate, overrides = {}) {
+  const prevFinals = resolveFinalsDateUTC(finalsDate.getUTCFullYear() - 1, overrides);
+  const gapDays = Math.round((finalsDate.getTime() - prevFinals.getTime()) / MILLIS_IN_DAY);
+  return gapDays - FIXED_SEASON_DAYS;
+}
+
+/**
+ * The live season's calendar start (spring-training day 1) for a finals date:
+ * competition day 1 is finals - 48 days, and spring training precedes it.
+ * @param {Date} finalsDate
+ * @returns {Date}
+ */
+function liveSeasonStartFor(finalsDate, overrides = {}) {
+  return new Date(finalsDate.getTime() - (48 + springTrainingDaysFor(finalsDate, overrides)) * MILLIS_IN_DAY);
+}
+
+// Off-seasons in the order the backward layout builds them: Finale sits closest
+// to the live season, Overture furthest back (right after the previous finals).
+const OFF_SEASON_TYPES_BACKWARD = ["Finale", "Crescendo", "Scherzo", "Adagio", "Allegro", "Overture"];
+
+/**
+ * The off-season window `now` falls in.
+ *
+ * The six 49-day off-seasons are laid out BACKWARD from the next live season's
+ * start, which itself sits exactly six off-seasons after the previous finals
+ * (spring training absorbs the yearly 364/371-day slack). The upshot: the first
+ * off-season (Overture) begins the day AFTER finals — no dead gap — and the last
+ * (Finale) ends the day the live season begins.
+ *
+ * Returns null once `now` is in the live-season run-up (past the sixth
+ * off-season); the scheduler reads that as "start the live season next" via
+ * isLiveSeasonTime.
+ *
+ * @param {Date} [now]
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
+ * @returns {{startDate: Date, endDate: Date, seasonType: string, finalsYear: number}|null}
+ */
+function getNextOffSeasonWindow(now = new Date(), overrides = {}) {
+  const nextFinalsDate = upcomingFinalsUTC(now, overrides);
+  const liveSeasonStartDate = liveSeasonStartFor(nextFinalsDate, overrides);
   const seasonWindows = [];
 
-  for (let i = 0; i < seasonTypes.length; i++) {
-    // endDate is the first moment of the day AFTER day 49, so day 49 is fully included
-    // This prevents the scheduler (which runs at 3 AM) from triggering on day 49
-    const seasonEndDate = new Date(liveSeasonStartDate.getTime() - (i * 49 * millisInDay));
-    const seasonStartDate = new Date(seasonEndDate.getTime() - 49 * millisInDay);
+  for (let i = 0; i < OFF_SEASON_COUNT; i++) {
+    // endDate is the first moment of the day AFTER day 49, so day 49 is fully
+    // included and the 3 AM scheduler triggers the next morning, not on day 49.
+    const seasonEndDate = new Date(liveSeasonStartDate.getTime() - i * OFF_SEASON_LENGTH_DAYS * MILLIS_IN_DAY);
+    const seasonStartDate = new Date(seasonEndDate.getTime() - OFF_SEASON_LENGTH_DAYS * MILLIS_IN_DAY);
     seasonWindows.push({
       startDate: seasonStartDate,
       endDate: seasonEndDate,
-      seasonType: seasonTypes[i],
+      seasonType: OFF_SEASON_TYPES_BACKWARD[i],
     });
   }
 
   seasonWindows.reverse();
-  const nextWindow = seasonWindows.find((window) => now < window.endDate);
+  const currentWindow = seasonWindows.find((window) => now.getTime() < window.endDate.getTime());
+  if (!currentWindow) return null;
 
-  if (nextWindow) {
-    return { ...nextWindow, finalsYear: nextFinalsDate.getFullYear() };
+  return { ...currentWindow, finalsYear: nextFinalsDate.getUTCFullYear() };
+}
+
+/**
+ * The upcoming (or in-progress) live season window, anchored on the next DCI
+ * finals. Spring training is variable so the six off-seasons pack in right after
+ * the previous finals and competition day 49 lands on the real finals date.
+ *
+ * @param {Date} [now]
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
+ * @returns {{startDate: Date, finalsDate: Date, springTrainingDays: number, seasonEndDate: Date, finalsYear: number}}
+ */
+function getLiveSeasonWindow(now = new Date(), overrides = {}) {
+  const finalsDate = upcomingFinalsUTC(now, overrides);
+  const startDate = liveSeasonStartFor(finalsDate, overrides);
+  const springTrainingDays = springTrainingDaysFor(finalsDate, overrides);
+  // endDate is the first moment of the day AFTER finals so finals day is fully
+  // included (mirrors the off-season convention).
+  const seasonEndDate = new Date(finalsDate.getTime() + MILLIS_IN_DAY);
+  return { startDate, finalsDate, springTrainingDays, seasonEndDate, finalsYear: finalsDate.getUTCFullYear() };
+}
+
+/**
+ * True when `now` is in the live-season run-up (spring training onward) and
+ * before that season's finals — i.e. past the sixth off-season. The scheduler
+ * uses this to route a rollover to the live season vs an off-season. It is the
+ * exact complement of getNextOffSeasonWindow returning a window: off-season time
+ * spans [previous finals + 1, live start), live time spans [live start, finals].
+ *
+ * @param {Date} [now]
+ * @param {Object} [overrides] - Finals-date overrides (see resolveFinalsDateUTC).
+ * @returns {boolean}
+ */
+function isLiveSeasonTime(now = new Date(), overrides = {}) {
+  const { startDate, seasonEndDate } = getLiveSeasonWindow(now, overrides);
+  return now.getTime() >= startDate.getTime() && now.getTime() < seasonEndDate.getTime();
+}
+
+/**
+ * Read the manual finals-date overrides from game-settings/config. Returns a
+ * plain { [year]: "YYYY-MM-DD" } map, or {} when none are set or the read fails
+ * (the season calendar then uses the computed 2nd-Saturday dates). Set/cleared
+ * via the admin "setFinalsDateOverride" trigger.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @returns {Promise<Object<string, string>>}
+ */
+async function getFinalsDateOverrides(db) {
+  try {
+    const doc = await db.doc("game-settings/config").get();
+    const raw = doc.exists ? doc.data().finalsDateOverrides : null;
+    return raw && typeof raw === "object" ? raw : {};
+  } catch (error) {
+    logger.warn(`Could not read finals-date overrides; using computed dates: ${error.message}`);
+    return {};
   }
-
-  const overtureStartDate = new Date(nextFinalsDate.getTime() + 1 * millisInDay);
-  const overtureEndDate = new Date(overtureStartDate.getTime() + 48 * millisInDay);
-
-  return {
-    startDate: overtureStartDate,
-    endDate: overtureEndDate,
-    seasonType: "Overture",
-    finalsYear: nextFinalsDate.getFullYear(),
-  };
 }
 
 module.exports = {
@@ -489,4 +616,8 @@ module.exports = {
   computeFinalsDateUTC,
   getThematicOffSeasonName,
   getNextOffSeasonWindow,
+  getLiveSeasonWindow,
+  isLiveSeasonTime,
+  resolveFinalsDateUTC,
+  getFinalsDateOverrides,
 };
