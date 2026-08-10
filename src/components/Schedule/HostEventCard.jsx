@@ -6,11 +6,9 @@
 // the Podium rollout (game-settings/features.podiumClass) and self-hiding, so
 // the Schedule page renders it unconditionally.
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { Landmark, Loader2, MapPin, Check } from 'lucide-react';
-import { db } from '../../api';
 import { hostEvent } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import { useProfileStore } from '../../store/profileStore';
@@ -24,14 +22,16 @@ import { VENUE_TIERS, HOSTING_RULES } from '../Podium/podiumConstants';
 // ~390 cities. A real search narrows well below this.
 const VENUE_RESULTS_LIMIT = 40;
 
-export default function HostEventCard({ seasonUid }) {
+// `events` and `onReload` come from the parent (Schedule) via the shared
+// useHostedEvents hook, so this card and the schedule's hosted-show badges read
+// one fetch of hosted-events/{seasonUid}/events rather than two.
+export default function HostEventCard({ seasonUid, events = null, onReload }) {
   const enabled = usePodiumEnabled();
   const profile = useProfileStore((state) => state.profile);
   const currentUid = useProfileStore((state) => state._currentUid);
   const currentDay = useSeasonStore((state) => state.currentDay);
   const competitions = useScheduleStore((state) => state.competitions);
 
-  const [events, setEvents] = useState(null);
   const [eventName, setEventName] = useState('');
   // The location picker keeps the confirmed venue separate from the search box
   // text, so submit only ever sends a KNOWN, un-taken city.
@@ -63,22 +63,6 @@ export default function HostEventCard({ seasonUid }) {
     }
     return [...available, ...taken].slice(0, VENUE_RESULTS_LIMIT);
   }, [venueQuery, takenVenueIds]);
-
-  const loadEvents = useCallback(async () => {
-    if (!seasonUid) return;
-    try {
-      const snapshot = await getDocs(
-        query(collection(db, 'hosted-events', seasonUid, 'events'), orderBy('day'))
-      );
-      setEvents(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-    } catch {
-      setEvents([]); // list is decorative — the form still works
-    }
-  }, [seasonUid]);
-
-  useEffect(() => {
-    if (events === null) loadEvents();
-  }, [events, loadEvents]);
 
   if (!enabled || !seasonUid) return null;
 
@@ -129,8 +113,7 @@ export default function HostEventCard({ seasonUid }) {
       setSelectedVenue(null);
       setVenueQuery('');
       setDay('');
-      setEvents(null); // refetch with the new event
-      await loadEvents();
+      if (onReload) await onReload(); // refetch so the new event appears here + on the schedule
     } catch (err) {
       setError(err?.message || 'Hosting failed.');
     } finally {

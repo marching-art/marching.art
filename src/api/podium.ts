@@ -381,6 +381,9 @@ export interface HostedEventAttendee {
 export interface HostedEventRecord {
   id: string;
   seasonUid: string | null;
+  hostUid?: string;
+  /** Host's display name, stamped at booking (absent on shows hosted before this). */
+  hostName?: string | null;
   eventName: string;
   venueTier: string;
   day: number;

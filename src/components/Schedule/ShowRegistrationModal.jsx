@@ -16,13 +16,17 @@ import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useHostedShowRegistrations } from '../../hooks/useHostedEvents';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/seasonClock';
 import { formatEventName } from '../../utils/season';
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
 import RunningOrder from './RunningOrder';
-import CorpsSelectionItem, { PodiumSelectionRow } from './ShowRegistrationModalParts';
+import CorpsSelectionItem, {
+  PodiumSelectionRow,
+  HostedShowPanel,
+} from './ShowRegistrationModalParts';
 import {
   CLASS_CONFIG,
   PODIUM_EASTERN_DAYS,
@@ -42,12 +46,22 @@ const ShowRegistrationModal = ({
   userProfile,
   formattedDate,
   eventDate,
+  hostedEvent = null,
   onClose,
   onSuccess,
 }) => {
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
   const { trigger: haptic } = useHaptic();
+
+  // Director-hosted show (design §5.10): rented by a director, open enrollment
+  // for every class. The panel surfaces who's coming and how many of the venue's
+  // performance slots are left, so a director sees the room before registering.
+  // `hostedEvent` (the hosting record) carries capacity + host name; eventTier is
+  // the fallback when the record hasn't loaded. The hook returns exactly what
+  // HostedShowPanel renders, so it spreads straight in below.
+  const isHosted = Boolean(hostedEvent) || show.eventTier === 'hosted';
+  const hostedShow = useHostedShowRegistrations({ enabled: isHosted, show, hostedEvent });
 
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
   const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
@@ -413,6 +427,10 @@ const ShowRegistrationModal = ({
           <RunningOrder show={show} />
         </div>
       )}
+
+      {/* Director-hosted show (§5.10): who's coming + how many venue slots are
+          left. Shown before the corps picker so the room is visible up front. */}
+      {isHosted && <HostedShowPanel {...hostedShow} />}
 
       {/* marching.art Major banner (§5.11): exclusive day, full-field
           convergence — the season's shared reference points */}

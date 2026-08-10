@@ -126,6 +126,9 @@ exports.hostEvent = onCall({ cors: true, secrets: [discordEventsWebhookUrl] }, a
     });
     transaction.set(eventRef, {
       hostUid: uid,
+      // Stamp the host's display name at booking so the schedule can label the
+      // show ("Hosted by …") without a second profile read per hosted show.
+      hostName: (profileSnapshotPre.exists && profileSnapshotPre.data().username) || null,
       eventName,
       venueTier,
       day,

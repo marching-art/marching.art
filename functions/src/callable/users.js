@@ -178,8 +178,17 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
 exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   assertAuth(request);
 
-  const { week, eventName, date } = request.data;
-  if (!week || !eventName || !date) {
+  const { week, eventName } = request.data;
+  // Director-hosted shows carry no calendar date (date === null): they're placed
+  // on a competition day, not a scraped tour date. Only week + eventName are
+  // required; normalize a missing date to null so the index key (`date ?? ""`)
+  // and the legacy per-profile match below both treat "no date" consistently.
+  const date = request.data.date ?? null;
+  // Optional competition day. When provided, Podium corps that picked this show
+  // for that day are folded into the roster below (their picks live outside the
+  // fantasy registration index). Callers that don't pass it get fantasy only.
+  const day = Number.isInteger(request.data.day) ? request.data.day : null;
+  if (!week || !eventName) {
     throw new HttpsError("invalid-argument", "Missing required show data.");
   }
 
@@ -200,62 +209,101 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   const eventKey = showRegistrationEventKey(week, eventName, date);
   const indexRef = db.doc(paths.showRegistrationEvent(activeSeasonId, eventKey));
   const indexSnap = await indexRef.get();
+
+  // Fantasy corps registered for this show (from the index, else a one-time
+  // profile scan that materializes the index). `uid` is carried through so
+  // callers can dedupe a director's corps into one attendee/slot.
+  let registrations;
   if (indexSnap.exists) {
-    const registrations = Object.values(indexSnap.data().registrations || {}).map((entry) => ({
+    registrations = Object.values(indexSnap.data().registrations || {}).map((entry) => ({
+      uid: entry.uid || null,
       corpsName: entry.corpsName || "Unnamed Corps",
       corpsClass: entry.corpsClass,
       username: entry.username,
     }));
-    return { registrations };
-  }
+  } else {
+    // Legacy fallback (index doc absent — e.g. selections that predate the
+    // index and haven't been rebuilt yet): scan profiles, then materialize the
+    // result so this event pays the scan at most once. The nightly rebuild in
+    // the lifetime-leaderboard job replaces the doc from source-of-truth
+    // profiles regardless.
+    registrations = [];
+    const indexEntries = {};
+    // Field projection: Only fetch fields needed for registration display
+    const q = db.collectionGroup("profile")
+      .where("activeSeasonId", "==", activeSeasonId)
+      .select("corps", "username");
+    const querySnapshot = await q.get();
 
-  // Legacy fallback (index doc absent — e.g. selections that predate the
-  // index and haven't been rebuilt yet): scan profiles, then materialize the
-  // result so this event pays the scan at most once. The nightly rebuild in
-  // the lifetime-leaderboard job replaces the doc from source-of-truth
-  // profiles regardless.
-  const registrations = [];
-  const indexEntries = {};
-  // Field projection: Only fetch fields needed for registration display
-  const q = db.collectionGroup("profile")
-    .where("activeSeasonId", "==", activeSeasonId)
-    .select("corps", "username");
-  const querySnapshot = await q.get();
+    querySnapshot.forEach((doc) => {
+      const profile = doc.data();
+      const userCorps = profile.corps || {};
+      const uid = doc.ref.parent.parent?.id;
 
-  querySnapshot.forEach((doc) => {
-    const profile = doc.data();
-    const userCorps = profile.corps || {};
-    const uid = doc.ref.parent.parent?.id;
+      for (const corpsClass in userCorps) {
+        const corps = userCorps[corpsClass];
+        const showsForWeek = corps.selectedShows ? corps.selectedShows[`week${week}`] : [];
 
-    for (const corpsClass in userCorps) {
-      const corps = userCorps[corpsClass];
-      const showsForWeek = corps.selectedShows ? corps.selectedShows[`week${week}`] : [];
-
-      if (showsForWeek && showsForWeek.some((s) => s.eventName === eventName && s.date === date)) {
-        registrations.push({
-          corpsName: corps.corpsName || "Unnamed Corps",
-          corpsClass: corpsClass,
-          username: profile.username,
-        });
-        if (uid) {
-          indexEntries[registrationEntryKey(uid, corpsClass)] = {
-            uid,
-            corpsClass,
+        if (
+          showsForWeek &&
+          showsForWeek.some((s) => s.eventName === eventName && (s.date ?? null) === date)
+        ) {
+          registrations.push({
+            uid: uid || null,
             corpsName: corps.corpsName || "Unnamed Corps",
-            username: profile.username || null,
-          };
+            corpsClass: corpsClass,
+            username: profile.username,
+          });
+          if (uid) {
+            indexEntries[registrationEntryKey(uid, corpsClass)] = {
+              uid,
+              corpsClass,
+              corpsName: corps.corpsName || "Unnamed Corps",
+              username: profile.username || null,
+            };
+          }
         }
       }
-    }
-  });
+    });
 
-  try {
-    await indexRef.set({ week, eventName, date, registrations: indexEntries });
-  } catch (indexError) {
-    logger.warn("Could not materialize show-registration index doc:", indexError);
+    try {
+      await indexRef.set({ week, eventName, date, registrations: indexEntries });
+    } catch (indexError) {
+      logger.warn("Could not materialize show-registration index doc:", indexError);
+    }
   }
 
-  return { registrations: registrations };
+  // Podium corps pick shows day-based, in their own podium/state docs — outside
+  // the fantasy registration index. When the caller passes the show's day (the
+  // hosted-show roster does), fold in every Podium corps whose pick for that day
+  // names this show, so the roster and slot count include the Podium field.
+  // Bounded read: the array-contains query returns only corps with SOME pick on
+  // that day, not the whole Podium roster; a stale prior-season state is skipped
+  // by the seasonUid check.
+  if (day != null) {
+    try {
+      const podiumSnap = await db
+        .collectionGroup("podium")
+        .where("selectedShowDays", "array-contains", day)
+        .get();
+      for (const doc of podiumSnap.docs) {
+        const state = doc.data();
+        if (state.seasonUid !== activeSeasonId) continue;
+        const pick = state.selectedShows ? state.selectedShows[day] : null;
+        if (!pick || pick.eventName !== eventName) continue;
+        registrations.push({
+          uid: doc.ref.parent.parent?.id || null,
+          corpsName: state.corpsName || "Podium Corps",
+          corpsClass: "podiumClass",
+          username: null,
+        });
+      }
+    } catch (podiumError) {
+      logger.warn("Could not fold Podium corps into show registrations:", podiumError.message);
+    }
+  }
+
+  return { registrations };
 });
 
 exports.getUserRankings = onCall({ cors: true }, async (request) => {
