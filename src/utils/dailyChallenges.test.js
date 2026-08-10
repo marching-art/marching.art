@@ -170,14 +170,16 @@ describe('getAvailableChallengesForGameDay (Podium-aware required set)', () => {
 describe('join-league-pool check + availability', () => {
   test('auto-claim fires off today’s entered-pool fact in context', () => {
     const member = { leagueIds: ['L1'] };
-    expect(byId('join-league-pool').check(member, 'd', { leaguePool: { hasEntered: true } })).toBe(
+    // `check` is optional on the pool type (check-lineup is action-gated), so
+    // reach it through optional chaining.
+    expect(byId('join-league-pool').check?.(member, 'd', { leaguePool: { hasEntered: true } })).toBe(
       true
     );
-    expect(byId('join-league-pool').check(member, 'd', { leaguePool: { hasEntered: false } })).toBe(
-      false
-    );
+    expect(
+      byId('join-league-pool').check?.(member, 'd', { leaguePool: { hasEntered: false } })
+    ).toBe(false);
     // No context → not done (the profile alone can't show pool entry).
-    expect(byId('join-league-pool').check(member, 'd')).toBe(false);
+    expect(byId('join-league-pool').check?.(member, 'd')).toBe(false);
   });
 
   test('available only to directors in at least one league', () => {

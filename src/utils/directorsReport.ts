@@ -65,6 +65,9 @@ export interface DirectorsReportProfile {
   // Read by the challenge-availability predicates (check-lineup needs a
   // lineup-bearing corps; the show/concept checks read the corps map).
   corps?: Record<string, { corpsName?: string; [key: string]: unknown } | null> | null;
+  // Read by join-league-pool's availability (dropped for a director with no
+  // league).
+  leagueIds?: string[] | null;
 }
 
 /** A scored result feeding the prediction catalog. */

@@ -8,7 +8,7 @@ const assert = require("node:assert/strict");
 const {
   CHALLENGE_POOL,
   CHALLENGES_PER_DAY,
-  WEEKLY_LOOP_BONUS,
+  WEEKLY_LOOP_MILESTONES,
   getGameDay,
   getWeekKey,
   advanceWeeklyLoop,
@@ -257,35 +257,91 @@ describe("weekly arc helpers", () => {
     assert.deepEqual(incomplete.weeklyLoop.countedDays, []);
   });
 
-  test("advanceWeeklyLoop pays the bonus once at the 5th day, then never again", () => {
-    const week = ["Mon Jan 12 2026", "Tue Jan 13 2026", "Wed Jan 14 2026", "Thu Jan 15 2026"];
+  test("advanceWeeklyLoop pays each milestone once, on the day it is reached", () => {
+    const week = [
+      "Mon Jan 12 2026",
+      "Tue Jan 13 2026",
+      "Wed Jan 14 2026",
+      "Thu Jan 15 2026",
+      "Fri Jan 16 2026",
+      "Sat Jan 17 2026",
+      "Sun Jan 18 2026",
+    ];
     let loop;
+    const bonuses = [];
     for (const day of week) {
       const step = advanceWeeklyLoop(loop, day, true);
-      assert.equal(step.bonus, null, `no bonus before day 5 (${day})`);
+      bonuses.push(step.bonus);
       loop = step.weeklyLoop;
     }
-
-    const fifth = advanceWeeklyLoop(loop, "Fri Jan 16 2026", true);
-    assert.deepEqual(fifth.bonus, WEEKLY_LOOP_BONUS);
-    assert.equal(fifth.weeklyLoop.rewarded, true);
-
-    // A 6th day counts but never re-pays
-    const sixth = advanceWeeklyLoop(fifth.weeklyLoop, "Sat Jan 17 2026", true);
-    assert.equal(sixth.bonus, null);
-    assert.equal(sixth.weeklyLoop.countedDays.length, 6);
+    // Milestones at 3 / 5 / 7 days; nothing on the days between.
+    assert.equal(bonuses[0], null);
+    assert.equal(bonuses[1], null);
+    assert.deepEqual(bonuses[2], { xp: 40, coin: 40, tiers: [3] });
+    assert.equal(bonuses[3], null);
+    assert.deepEqual(bonuses[4], { xp: 60, coin: 60, tiers: [5] });
+    assert.equal(bonuses[5], null);
+    assert.deepEqual(bonuses[6], { xp: 50, coin: 50, tiers: [7] });
+    assert.deepEqual(loop.rewardedDays, [3, 5, 7]);
   });
 
   test("advanceWeeklyLoop resets for a new week", () => {
     const prior = {
       weekKey: "Mon Jan 12 2026",
-      countedDays: ["Mon Jan 12 2026", "Tue Jan 13 2026"],
-      rewarded: true,
+      countedDays: ["Mon Jan 12 2026", "Tue Jan 13 2026", "Wed Jan 14 2026"],
+      rewardedDays: [3],
     };
     const nextWeek = advanceWeeklyLoop(prior, "Mon Jan 19 2026", true);
     assert.equal(nextWeek.weeklyLoop.weekKey, "Mon Jan 19 2026");
     assert.deepEqual(nextWeek.weeklyLoop.countedDays, ["Mon Jan 19 2026"]);
-    assert.equal(nextWeek.weeklyLoop.rewarded, false);
+    assert.deepEqual(nextWeek.weeklyLoop.rewardedDays, []);
+  });
+
+  test("migrates a legacy `rewarded: true` loop without re-paying 3/5, and still pays 7", () => {
+    // Legacy state: the old single 5-day bonus already paid this week.
+    const legacy = {
+      weekKey: getWeekKey("Fri Jan 16 2026"),
+      countedDays: [
+        "Mon Jan 12 2026",
+        "Tue Jan 13 2026",
+        "Wed Jan 14 2026",
+        "Thu Jan 15 2026",
+        "Fri Jan 16 2026",
+      ],
+      rewarded: true,
+    };
+    const sixth = advanceWeeklyLoop(legacy, "Sat Jan 17 2026", true);
+    assert.equal(sixth.bonus, null, "no re-pay of the 3/5-day tiers the legacy flag covered");
+    assert.deepEqual(sixth.weeklyLoop.rewardedDays, [3, 5]);
+
+    const seventh = advanceWeeklyLoop(sixth.weeklyLoop, "Sun Jan 18 2026", true);
+    assert.deepEqual(seventh.bonus, { xp: 50, coin: 50, tiers: [7] });
+    assert.deepEqual(seventh.weeklyLoop.rewardedDays, [3, 5, 7]);
+  });
+
+  test("a legacy partial week catches up multiple milestones in one summed payout", () => {
+    // 4 counted days, never rewarded (never hit the old 5-day mark). The next
+    // full-set day crosses both the 3- and 5-day milestones at once.
+    const legacyPartial = {
+      weekKey: getWeekKey("Fri Jan 16 2026"),
+      countedDays: ["Mon Jan 12 2026", "Tue Jan 13 2026", "Wed Jan 14 2026", "Thu Jan 15 2026"],
+      rewarded: false,
+    };
+    const fifth = advanceWeeklyLoop(legacyPartial, "Fri Jan 16 2026", true);
+    assert.deepEqual(fifth.bonus, { xp: 100, coin: 100, tiers: [3, 5] });
+    assert.deepEqual(fifth.weeklyLoop.rewardedDays, [3, 5]);
+  });
+
+  test("WEEKLY_LOOP_MILESTONES 5-day cumulative stays 100/100 (economy-neutral)", () => {
+    const throughFive = WEEKLY_LOOP_MILESTONES.filter((m) => m.days <= 5);
+    assert.equal(
+      throughFive.reduce((s, m) => s + m.coin, 0),
+      100
+    );
+    assert.equal(
+      throughFive.reduce((s, m) => s + m.xp, 0),
+      100
+    );
   });
 });
 

@@ -36,6 +36,8 @@
  *   few scored results for any prediction question to exist today.
  * @property {{hasShows: boolean, hasConcept: boolean}|null} [podium] - Podium
  *   state for this director, or null when they have no Podium corps.
+ * @property {{hasEntered: boolean}|null} [leaguePool] - Whether the director has
+ *   entered today's league prediction pool, or null when they have no league.
  */
 
 /**
@@ -133,14 +135,42 @@ const CHALLENGE_POOL = [
 const CHALLENGES_PER_DAY = 2;
 
 /**
- * Weekly arc: complete the full daily challenge set on
- * WEEKLY_LOOP_TARGET_DAYS distinct game days within one ET week (Mon-Sun)
- * to earn a bonus. State lives at profile.engagement.weeklyLoop
- * { weekKey, countedDays: [gameDay...], rewarded } — countedDays makes the
- * per-day increment idempotent; rewarded makes the payout idempotent.
+ * Weekly arc: complete the full daily challenge set on distinct game days
+ * within one ET week (Mon-Sun) to earn milestone rewards. State lives at
+ * profile.engagement.weeklyLoop { weekKey, countedDays: [gameDay...],
+ * rewardedDays: [milestone.days...] } — countedDays makes the per-day
+ * increment idempotent; rewardedDays makes each milestone pay exactly once.
+ *
+ * The arc is a graduated ladder rather than a single all-or-nothing payout, so
+ * consistency is rewarded as it builds (and a perfect week pays the most):
+ *   3 days → 40 XP / 40 CC
+ *   5 days → 60 XP / 60 CC   (cumulative 100/100 — the old single-bonus total)
+ *   7 days → 50 XP / 50 CC   (perfect week; cumulative 150/150)
+ * The 5-day total is unchanged, so this adds earlier gratification and a
+ * perfect-week ceiling without re-tuning the existing reward downward.
  */
-const WEEKLY_LOOP_TARGET_DAYS = 5;
-const WEEKLY_LOOP_BONUS = { xp: 100, coin: 100 };
+const WEEKLY_LOOP_MILESTONES = [
+  { days: 3, xp: 40, coin: 40 },
+  { days: 5, xp: 60, coin: 60 },
+  { days: 7, xp: 50, coin: 50 },
+];
+// The top of the ladder — used for progress copy and the legacy migration.
+const WEEKLY_LOOP_TARGET_DAYS = WEEKLY_LOOP_MILESTONES[WEEKLY_LOOP_MILESTONES.length - 1].days;
+
+/**
+ * Milestone days a loop has already been paid for, tolerant of the legacy
+ * `{ rewarded: boolean }` shape: a true legacy flag only ever meant the old
+ * single 5-day bonus had paid, which under the ladder covers every milestone
+ * up to and including 5 (so those never re-pay) while leaving the new 7-day
+ * perfect-week tier still earnable this week.
+ * @param {{rewardedDays?: number[], rewarded?: boolean}|undefined} loop
+ * @returns {number[]}
+ */
+function normalizeRewardedDays(loop) {
+  if (Array.isArray(loop?.rewardedDays)) return loop.rewardedDays;
+  if (loop?.rewarded) return WEEKLY_LOOP_MILESTONES.filter((m) => m.days <= 5).map((m) => m.days);
+  return [];
+}
 
 /**
  * ET-week identifier (the Monday of the week the game day belongs to, in the
@@ -161,32 +191,46 @@ function getWeekKey(gameDay) {
 /**
  * Advance the weekly-arc state for a game day. Pure state machine so the
  * transaction in completeDailyChallenge stays thin and this stays testable:
- * a day is counted once (countedDays dedupes), a stale week resets, and the
- * bonus pays exactly once per week (`rewarded`).
+ * a day is counted once (countedDays dedupes), a stale week resets, and each
+ * milestone pays exactly once (rewardedDays). When a single counted day crosses
+ * more than one milestone at once (only possible for a legacy loop catching up
+ * across the migration), their rewards are summed into one payout.
  *
- * @param {{weekKey?: string, countedDays?: string[], rewarded?: boolean}|undefined} prevLoop
+ * @param {{weekKey?: string, countedDays?: string[], rewardedDays?: number[], rewarded?: boolean}|undefined} prevLoop
  *   - profile.engagement.weeklyLoop
  * @param {string} gameDay - Value from getGameDay()
  * @param {boolean} setComplete - Whether today's full challenge set is now done
- * @returns {{weeklyLoop: Object, bonus: {xp:number, coin:number}|null}}
+ * @returns {{weeklyLoop: Object, bonus: {xp:number, coin:number, tiers:number[]}|null}}
  */
 function advanceWeeklyLoop(prevLoop, gameDay, setComplete) {
   const weekKey = getWeekKey(gameDay);
   const loop =
     prevLoop?.weekKey === weekKey
-      ? { weekKey, countedDays: prevLoop.countedDays || [], rewarded: !!prevLoop.rewarded }
-      : { weekKey, countedDays: [], rewarded: false };
+      ? {
+          weekKey,
+          countedDays: prevLoop.countedDays || [],
+          rewardedDays: normalizeRewardedDays(prevLoop),
+        }
+      : { weekKey, countedDays: [], rewardedDays: [] };
 
   if (!setComplete || loop.countedDays.includes(gameDay)) {
     return { weeklyLoop: loop, bonus: null };
   }
 
   const countedDays = [...loop.countedDays, gameDay];
-  const earnedBonus = countedDays.length >= WEEKLY_LOOP_TARGET_DAYS && !loop.rewarded;
-  return {
-    weeklyLoop: { weekKey, countedDays, rewarded: loop.rewarded || earnedBonus },
-    bonus: earnedBonus ? WEEKLY_LOOP_BONUS : null,
-  };
+  const newlyEarned = WEEKLY_LOOP_MILESTONES.filter(
+    (m) => countedDays.length >= m.days && !loop.rewardedDays.includes(m.days)
+  );
+  const rewardedDays = [...loop.rewardedDays, ...newlyEarned.map((m) => m.days)];
+  const bonus = newlyEarned.length
+    ? {
+        xp: newlyEarned.reduce((sum, m) => sum + m.xp, 0),
+        coin: newlyEarned.reduce((sum, m) => sum + m.coin, 0),
+        tiers: newlyEarned.map((m) => m.days),
+      }
+    : null;
+
+  return { weeklyLoop: { weekKey, countedDays, rewardedDays }, bonus };
 }
 
 /** Day-buckets of completion history kept on the profile document. */
@@ -331,7 +375,7 @@ module.exports = {
   CHALLENGES_PER_DAY,
   MAX_CHALLENGE_DAYS_KEPT,
   WEEKLY_LOOP_TARGET_DAYS,
-  WEEKLY_LOOP_BONUS,
+  WEEKLY_LOOP_MILESTONES,
   getGameDay,
   getWeekKey,
   advanceWeeklyLoop,

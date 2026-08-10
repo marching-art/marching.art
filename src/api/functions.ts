@@ -375,7 +375,7 @@ export interface CompleteDailyChallengeResult {
   challenge?: { id: string; label: string; xp: number };
   completedToday?: number;
   weeklyArcDays?: number;
-  weeklyArcBonus?: { xp: number; coin: number } | null;
+  weeklyArcBonus?: { xp: number; coin: number; tiers?: number[] } | null;
   newLevel?: number;
   classUnlocked?: string | null;
 }

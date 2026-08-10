@@ -13,7 +13,6 @@ const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
-  WEEKLY_LOOP_TARGET_DAYS,
   getGameDay,
   advanceWeeklyLoop,
   getChallengesForGameDay,
@@ -477,7 +476,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         addCoinHistoryEntryToTransaction(transaction, db, uid, {
           type: "weekly_arc",
           amount: weeklyArcBonus.coin,
-          description: `Weekly arc complete — ${WEEKLY_LOOP_TARGET_DAYS} full daily sets this week`,
+          description: `Weekly arc — ${weeklyArcBonus.tiers.join(" & ")}-day milestone`,
         });
       }
 

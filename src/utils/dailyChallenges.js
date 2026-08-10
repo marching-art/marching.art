@@ -129,9 +129,18 @@ export const CHALLENGE_POOL = [
 
 export const CHALLENGES_PER_DAY = 2;
 
-/** Weekly arc target/bonus — mirrors the server (helpers/dailyChallenges.js). */
-export const WEEKLY_LOOP_TARGET_DAYS = 5;
-export const WEEKLY_LOOP_BONUS = { xp: 100, coin: 100 };
+/**
+ * Weekly arc milestone ladder — mirrors the server (helpers/dailyChallenges.js).
+ * Completing the full daily set on N distinct ET-week days pays at each tier:
+ *   3 days → 40/40, 5 days → 60/60 (cumulative 100/100), 7 days → 50/50.
+ */
+export const WEEKLY_LOOP_MILESTONES = [
+  { days: 3, xp: 40, coin: 40 },
+  { days: 5, xp: 60, coin: 60 },
+  { days: 7, xp: 50, coin: 50 },
+];
+export const WEEKLY_LOOP_TARGET_DAYS =
+  WEEKLY_LOOP_MILESTONES[WEEKLY_LOOP_MILESTONES.length - 1].days;
 
 /**
  * ET-week identifier (the Monday of the game day's week), mirroring the

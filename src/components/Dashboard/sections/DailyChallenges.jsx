@@ -24,8 +24,7 @@ import {
   getGameDay,
   getWeekKey,
   getAvailableChallengesForGameDay,
-  WEEKLY_LOOP_TARGET_DAYS,
-  WEEKLY_LOOP_BONUS,
+  WEEKLY_LOOP_MILESTONES,
 } from '../../../utils/dailyChallenges';
 
 // `embedded` renders the same content without the outer card chrome, for
@@ -72,10 +71,13 @@ const DailyChallenges = memo(
     const completedCount = challenges.filter((c) => completedIds.has(c.id)).length;
     const totalCount = challenges.length;
 
-    // Weekly arc progress (server-owned; countedDays are full-set days)
+    // Weekly arc progress (server-owned; countedDays are full-set days).
     const weeklyLoop = profile?.engagement?.weeklyLoop;
     const arcDays =
       weeklyLoop?.weekKey === getWeekKey(gameDay) ? weeklyLoop.countedDays?.length || 0 : 0;
+    // The next milestone still ahead on the ladder — drives the progress copy
+    // and the reward shown. Null once a perfect week is reached.
+    const nextMilestone = WEEKLY_LOOP_MILESTONES.find((m) => arcDays < m.days) || null;
 
     // Auto-claim: when the verifying state for a challenge is already
     // satisfied, claim it — the server re-verifies before paying, and no-ops
@@ -221,15 +223,25 @@ const DailyChallenges = memo(
           </div>
         )}
 
-        {/* Weekly arc — a week-long pursuit on top of the daily set */}
+        {/* Weekly arc — a graduated, week-long pursuit on top of the daily set.
+            Shows the next milestone's target and reward, or a perfect-week
+            marker once every tier is earned. */}
         <div className="px-4 py-2 border-t border-line-subtle flex items-center gap-2">
           <CalendarCheck className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-          <span className="text-[10px] text-muted flex-1">
-            Weekly arc: full set on {arcDays}/{WEEKLY_LOOP_TARGET_DAYS} days
-          </span>
-          <span className="text-[10px] font-bold text-emerald-400 font-data">
-            +{WEEKLY_LOOP_BONUS.coin} CC
-          </span>
+          {nextMilestone ? (
+            <>
+              <span className="text-[10px] text-muted flex-1">
+                Weekly arc: full set on {arcDays}/{nextMilestone.days} days
+              </span>
+              <span className="text-[10px] font-bold text-emerald-400 font-data">
+                +{nextMilestone.coin} CC
+              </span>
+            </>
+          ) : (
+            <span className="text-[10px] font-bold text-emerald-400 flex-1">
+              Perfect week — every weekly-arc milestone earned!
+            </span>
+          )}
         </div>
       </div>
     );
