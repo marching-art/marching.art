@@ -121,4 +121,26 @@ function standardizeLocation(location) {
   return trimmed;
 }
 
-module.exports = { standardizeLocation, US_STATES, CA_PROVINCES };
+/**
+ * True when a location string carries no real venue: it is missing/blank or the
+ * "Unknown Location" placeholder the scrapers and importer stamp on an event
+ * whose venue couldn't be parsed (see triggers/scoreProcessing.js,
+ * helpers/scraping.js, pressboxImporter/parse.js). The off-season schedule
+ * generator uses this to keep placeholder-venue shows out of the season it
+ * builds — an "Unknown Location" show reads as broken on the schedule.
+ *
+ * Conservative: a present-but-unrecognized region ("Somewhere, Freedonia") is
+ * NOT treated as unknown — it's a real place standardizeLocation just can't
+ * abbreviate — so legitimate historical venues are never dropped.
+ *
+ * @param {*} location - Raw location value.
+ * @returns {boolean}
+ */
+function isUnknownLocation(location) {
+  if (location == null) return true;
+  const trimmed = String(location).trim();
+  if (!trimmed) return true;
+  return /^unknown(\s+location)?$/i.test(trimmed);
+}
+
+module.exports = { standardizeLocation, isUnknownLocation, US_STATES, CA_PROVINCES };

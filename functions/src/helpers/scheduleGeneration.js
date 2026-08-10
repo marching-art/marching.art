@@ -5,7 +5,7 @@
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { enrichEventsWithDetails } = require("./eventDetails");
-const { standardizeLocation } = require("./locationFormat");
+const { standardizeLocation, isUnknownLocation } = require("./locationFormat");
 const {
   applyEnrichment,
   SPRING_TRAINING_DAYS,
@@ -183,7 +183,12 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
       // Classic) are excluded too: their days are hard-coded below as
       // branded marching.art majors, and letting the source events into
       // the random pool would double them up on neighboring days.
+      //
+      // Shows whose archived venue is missing or the "Unknown Location"
+      // placeholder are dropped as well: they'd render as a broken entry on
+      // the schedule, so they must never be placed on the off-season schedule.
       if (event.eventName && event.offSeasonDay &&
+          !isUnknownLocation(event.location) &&
           !event.eventName.toLowerCase().includes("open class") &&
           !event.eventName.startsWith("DCI Competition - ") &&
           !/southwestern|southeastern|eastern classic|dci east\b/i.test(event.eventName)) {

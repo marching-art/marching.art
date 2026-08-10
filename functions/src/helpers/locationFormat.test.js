@@ -3,7 +3,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { standardizeLocation } = require("./locationFormat");
+const { standardizeLocation, isUnknownLocation } = require("./locationFormat");
 
 describe("standardizeLocation", () => {
   test("folds a full US state name to its two-letter code", () => {
@@ -75,5 +75,30 @@ describe("standardizeLocation", () => {
 
   test("trims surrounding whitespace", () => {
     assert.equal(standardizeLocation("  Rockford, Illinois  "), "Rockford, IL");
+  });
+});
+
+describe("isUnknownLocation", () => {
+  test("treats missing / blank values as unknown", () => {
+    assert.equal(isUnknownLocation(null), true);
+    assert.equal(isUnknownLocation(undefined), true);
+    assert.equal(isUnknownLocation(""), true);
+    assert.equal(isUnknownLocation("   "), true);
+  });
+
+  test("treats the 'Unknown Location' placeholder as unknown (any case, trimmed)", () => {
+    assert.equal(isUnknownLocation("Unknown Location"), true);
+    assert.equal(isUnknownLocation("unknown location"), true);
+    assert.equal(isUnknownLocation("UNKNOWN LOCATION"), true);
+    assert.equal(isUnknownLocation("  Unknown Location  "), true);
+    assert.equal(isUnknownLocation("Unknown"), true);
+  });
+
+  test("treats a real venue as known — even one it can't abbreviate", () => {
+    assert.equal(isUnknownLocation("Rockford, IL"), false);
+    assert.equal(isUnknownLocation("Allentown, Pennsylvania"), false);
+    assert.equal(isUnknownLocation("Somewhere, Freedonia"), false);
+    // A city that merely mentions "unknown" mid-string is still a real place.
+    assert.equal(isUnknownLocation("Unknown City, TN"), false);
   });
 });
