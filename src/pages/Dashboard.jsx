@@ -71,6 +71,8 @@ import { usePodiumEnabled } from '../hooks/useFeatures';
 import { usePodium } from '../hooks/usePodium';
 import { usePodiumNextAction } from '../hooks/usePodiumNextAction';
 import { derivePodiumChallengeFacts } from '../utils/podiumChallenges';
+import { useLeaguePoolFacts } from '../hooks/useLeaguePoolFacts';
+import { getGameDay } from '../utils/dailyChallenges';
 import {
   useLineupScores,
   useRecentResults,
@@ -166,6 +168,11 @@ const Dashboard = () => {
   // directors never fetch it.
   const podium = usePodium(isPodiumSelected);
   const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
+
+  // Whether the director has entered today's league prediction pool — the
+  // per-day fact the join-league-pool daily challenge verifies, read off the
+  // leagues' pool docs (not the profile) the same way podiumFacts are.
+  const leaguePoolFacts = useLeaguePoolFacts(profile?.leagueIds, getGameDay());
 
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
@@ -552,6 +559,7 @@ const Dashboard = () => {
                     corpsClass={activeCorpsClass}
                     seasonUid={seasonData?.seasonUid}
                     podium={podiumFacts}
+                    leaguePool={leaguePoolFacts}
                     onLineupClick={() => openCaptionSelection()}
                     onConceptClick={() => setShowConceptModal(true)}
                   />

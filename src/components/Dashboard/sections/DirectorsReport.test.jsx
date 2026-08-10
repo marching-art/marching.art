@@ -73,23 +73,23 @@ describe('DirectorsReport', () => {
   });
 
   it('assembles the daily count: login done, challenges and predictions open', () => {
-    // login(1 done) + 3 challenges(0) + 3 predictions(0) → 1 of 7
+    // login(1 done) + today's challenges(0) + today's predictions(0). The
+    // rotation size varies (2-of-3 pool, league-gated), so pin only the done
+    // count and the "X of Y" shape, not Y.
     renderReport();
-    expect(screen.getByText(/Today · 1 of 7 done/)).toBeInTheDocument();
+    expect(screen.getByText(/Today · 1 of \d+ done/)).toBeInTheDocument();
     expect(screen.getByText(/4 day streak/)).toBeInTheDocument();
   });
 
   it('counts completed challenges and picked predictions', () => {
-    const todaysChallengeId = 'check-lineup';
-    mockProfile.challenges = { [gameDay]: [{ id: todaysChallengeId, completed: true }] };
+    // check-lineup is action-gated but still records completion in the bucket;
+    // combined with a saved prediction pick, the done count must move past 1.
+    mockProfile.challenges = { [gameDay]: [{ id: 'check-lineup', completed: true }] };
     mockProfile.predictions = {
       [gameDay]: { picks: { 'over-under': { pick: 'Over' } }, resolved: false },
     };
     renderReport();
-    // login(1) + up-to-1 completed challenge + 1 pick — at minimum 2 of 7;
-    // exactly 3 when today's rotation includes check-lineup. Assert the
-    // count moved past 1 rather than pinning the rotation.
-    expect(screen.queryByText(/Today · 1 of 7 done/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Today · 1 of \d+ done/)).not.toBeInTheDocument();
   });
 
   it('surfaces a pending Season Ladder claim with its CC amount', () => {

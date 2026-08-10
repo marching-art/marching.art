@@ -66,13 +66,31 @@ function hasLineupBearingCorps(profile) {
   return FANTASY_CLASSES.some((cls) => Boolean(corps[cls] && corps[cls].corpsName));
 }
 
-/** @type {Challenge[]} */
+/**
+ * @type {Challenge[]}
+ *
+ * Every challenge here is a GENUINE same-day action — its verifier reads state
+ * that is written the day the director does the thing, so a fresh game day
+ * starts incomplete and the challenge only claims once the work is actually
+ * done today.
+ *
+ * This is why `register-show` and `set-show-concept` were removed from the
+ * daily rotation: both verify persistent, season-scoped state (a show map that
+ * stays non-empty all season, a show concept set once), so on every day after
+ * the first they auto-claimed off stale state — free XP with no agency, and a
+ * phantom "+10 XP" toast whenever the game day rolled over in an open tab.
+ * Registering for a show and naming a concept are taught and rewarded once, in
+ * their proper place, by the First Season Journey questline (journey.js).
+ */
 const CHALLENGE_POOL = [
   {
     id: "check-lineup",
     label: "Review your lineup",
     xp: 10,
-    // Reviewing a lineup requires having one.
+    // Reviewing a lineup requires having one. The CLIENT claims this on the
+    // review action (the row click), NOT by auto-claiming off a lineup merely
+    // existing — otherwise it, too, would phantom-complete every day. The
+    // server verify only guarantees a lineup is present to review.
     verify: (profile) =>
       Object.values(profile.corps || {}).some(
         (c) => c && c.lineup && Object.keys(c.lineup).length > 0
@@ -92,28 +110,23 @@ const CHALLENGE_POOL = [
     available: (_profile, context) => context?.predictionAvailable !== false,
   },
   {
-    id: "register-show",
-    label: "Register for a show",
+    id: "join-league-pool",
+    label: "Enter today's league pool",
     xp: 10,
-    // Podium registers for shows too (setPodiumShows) — its picks just live in
-    // the podium subcollection rather than on the corps map.
-    verify: (profile, _gameDay, context) =>
-      Object.values(profile.corps || {}).some(
-        (c) => c && Object.keys(c.selectedShows || {}).length > 0
-      ) || Boolean(context?.podium?.hasShows),
-  },
-  {
-    id: "set-show-concept",
-    label: "Set your show concept",
-    xp: 10,
-    // Podium names its show at registration; same subcollection caveat.
-    verify: (profile, _gameDay, context) =>
-      Object.values(profile.corps || {}).some((c) => c && c.showConcept?.theme) ||
-      Boolean(context?.podium?.hasConcept),
+    // League prediction pools are the game's nightly social heartbeat. Entries
+    // live at leagues/{id}/pools/{gameDay}.entrants[uid] — a genuinely per-day
+    // fact off the profile, surfaced through context.leaguePool (loaded by
+    // loadLeaguePoolChallengeFacts) exactly as the Podium facts were.
+    verify: (_profile, _gameDay, context) => Boolean(context?.leaguePool?.hasEntered),
+    // Only a director in at least one league can enter a pool; drop it for
+    // everyone else so their required set stays winnable (the same reason
+    // check-lineup drops for a Podium-only director).
+    available: (profile) =>
+      Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0,
   },
 ];
 
-const CHALLENGES_PER_DAY = 3;
+const CHALLENGES_PER_DAY = 2;
 
 /**
  * Weekly arc: complete the full daily challenge set on
@@ -268,12 +281,27 @@ function getRequiredChallengeIds(gameDay, profile, context = {}) {
 /**
  * Whether today's rotation contains anything whose verification depends on
  * Podium state, so the caller only pays for that read when it can matter.
+ *
+ * The two challenges that ever needed it (register-show / set-show-concept)
+ * were retired from the daily pool, so this is currently always false — kept
+ * as the single gate the callable checks, so re-introducing a Podium-verified
+ * challenge only touches this function and the pool.
  * @param {string} gameDay - Value from getGameDay()
  * @returns {boolean}
  */
 function rotationNeedsPodiumContext(gameDay) {
   const ids = getChallengesForGameDay(gameDay).map((c) => c.id);
   return ids.includes("register-show") || ids.includes("set-show-concept");
+}
+
+/**
+ * Whether today's rotation contains the join-league-pool challenge, so the
+ * callable only reads the director's league pool docs when it can matter.
+ * @param {string} gameDay - Value from getGameDay()
+ * @returns {boolean}
+ */
+function rotationNeedsLeaguePoolContext(gameDay) {
+  return getChallengesForGameDay(gameDay).some((c) => c.id === "join-league-pool");
 }
 
 /**
@@ -306,6 +334,7 @@ module.exports = {
   getChallengesForGameDay,
   getRequiredChallengeIds,
   rotationNeedsPodiumContext,
+  rotationNeedsLeaguePoolContext,
   hasLineupBearingCorps,
   pruneOldChallenges,
 };

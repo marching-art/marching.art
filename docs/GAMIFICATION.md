@@ -51,7 +51,7 @@ your biography passes.
 | Weekly participation | 150                                 | Compete in ≥1 show in a week, once per class/week |
 | League matchup win   | 100                                 | Byes and ties award nothing                       |
 | Daily prediction     | 15 / correct                        | + a perfect-day bonus                             |
-| Daily challenges     | 10 each, 3/day                      | + a 100 XP / 100 CC weekly-loop bonus             |
+| Daily challenges     | 10 each, 2/day                      | + a 100 XP / 100 CC weekly-loop bonus             |
 | Streak milestones    | 50–1,000                            | At 3/7/14/30/60/100 days                          |
 | Season completion    | 200 / 300 / 400 / 500 by final rank | Guaranteed 200 for finishing                      |
 | First Season Journey | 425 one-time                        | The onboarding questline                          |
@@ -234,8 +234,13 @@ The returning director's home is the **Director's Report** dashboard
 **Daily systems** (all server-authoritative and idempotent):
 
 - **Daily login** — +25 XP, streak increment, milestone bonuses.
-- **Daily challenges** — 3 rotating micro-tasks, 10 XP each, plus a weekly-loop
-  bonus (`dailyChallenges.js`).
+- **Daily challenges** — 2 rotating micro-tasks (from a pool of three genuinely
+  daily actions: review your lineup, make today's prediction, enter your league
+  prediction pool), 10 XP each, plus a weekly-loop bonus (`dailyChallenges.js`).
+  Every challenge verifies a same-day action, so none auto-complete off stale
+  season state. (The old `register-show` / `set-show-concept` challenges were
+  retired from the daily pool for exactly that reason — they're taught and paid
+  once by the First Season Journey instead.)
 - **Daily predictions** — predict tonight's outcomes, resolve tomorrow; 15 XP +
   10 CC per correct pick, +25 CC for a perfect day (`dailyPredictions.js`).
 

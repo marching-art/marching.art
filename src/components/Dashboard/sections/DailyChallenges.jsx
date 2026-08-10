@@ -1,15 +1,19 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
-// DailyChallenges — the day's three rotating objectives. Every challenge is
-// now a DECISION with a server-verified outcome (make a prediction, register
-// for a show, set a show concept, review your lineup) — the old pool of
-// "visit page X" rows that auto-completed on navigation is retired
-// (GAMIFICATION.md: a task with no agency has no value).
+// DailyChallenges — the day's rotating objectives (2 of a 3-challenge pool).
+// Every challenge is a DECISION with a server-verified, GENUINELY SAME-DAY
+// outcome: make today's prediction, enter today's league pool, or review your
+// lineup. None verify persistent season state, so a fresh game day always
+// starts incomplete — the old register-show / set-show-concept rows (which
+// auto-completed off a show map or concept set once and fired a phantom "+XP"
+// toast every rollover) are retired to the First Season Journey.
 //
-// Completion flow: rows point the player at the thing to do; once the
-// verifying profile state appears (a pick saved, a show registered, ...) the
-// component auto-claims and the completeDailyChallenge callable re-verifies
-// before awarding XP. Completing the full set on 5 days in an ET week pays
-// the weekly-arc bonus (server-owned, engagement.weeklyLoop).
+// Completion flow: the prediction and league-pool rows auto-claim once their
+// per-day state appears (a pick saved today, a pool entered today); the
+// lineup row is action-gated — it claims on the review click, not on load, so
+// it never phantom-completes off a lineup that merely exists. The
+// completeDailyChallenge callable re-verifies before awarding XP. Completing
+// the full set on 5 days in an ET week pays the weekly-arc bonus (server-owned,
+// engagement.weeklyLoop).
 
 import React, { memo, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -37,6 +41,7 @@ const DailyChallenges = memo(
     embedded = false,
     predictionAvailable = true,
     podium = null,
+    leaguePool = null,
     // The parent (Director's Report) passes a clock-driven game day so the
     // rotation rolls over at 2 AM ET even in a tab left open across the
     // boundary. Falls back to a fresh compute when rendered standalone.
@@ -48,8 +53,12 @@ const DailyChallenges = memo(
 
     const gameDay = gameDayProp ?? getGameDay();
     // The context the challenge predicates need beyond the profile: prediction
-    // availability, and the Podium show/concept facts the profile can't carry.
-    const context = useMemo(() => ({ predictionAvailable, podium }), [predictionAvailable, podium]);
+    // availability, the Podium show/concept facts, and today's league-pool
+    // entry fact — none of which the profile document alone can answer.
+    const context = useMemo(
+      () => ({ predictionAvailable, podium, leaguePool }),
+      [predictionAvailable, podium, leaguePool]
+    );
     const challenges = useMemo(
       () => getAvailableChallengesForGameDay(gameDay, profile, context),
       [gameDay, profile, context]
@@ -71,14 +80,18 @@ const DailyChallenges = memo(
     // Auto-claim: when the verifying state for a challenge is already
     // satisfied, claim it — the server re-verifies before paying, and no-ops
     // for anything not actually done. One attempt per challenge per day.
+    //
+    // Only challenges with a `check` predicate participate. `check` reads
+    // per-day state (a prediction saved today), so auto-claiming it reflects a
+    // genuine same-day action. Challenges without a `check` — check-lineup — are
+    // deliberately action-gated: they claim on the row click (handleAction), not
+    // on load, so they never phantom-complete off persistent state.
     const attemptedRef = useRef(new Set());
     useEffect(() => {
       if (!profile) return;
       for (const challenge of challenges) {
         const key = `${gameDay}:${challenge.id}`;
         if (completedIds.has(challenge.id) || attemptedRef.current.has(key)) continue;
-        // `context` lets a Podium director's register-show / set-show-concept
-        // auto-claim off subcollection facts the profile can't show.
         if (challenge.check && challenge.check(profile, gameDay, context)) {
           attemptedRef.current.add(key);
           completeDailyChallenge(challenge.id);
@@ -94,6 +107,12 @@ const DailyChallenges = memo(
       // (the server still verifies a lineup exists).
       if (challenge.action === 'lineup') completeDailyChallenge(challenge.id);
     };
+
+    // With the pool trimmed to genuinely-daily challenges, a director can now
+    // have none available today (a Podium-only director has no lineup, and a
+    // brand-new director has no prediction question yet). Render nothing rather
+    // than an empty "0/0 — all complete" shell.
+    if (totalCount === 0) return null;
 
     return (
       <div

@@ -25,6 +25,16 @@ export interface PodiumChallengeFacts {
   hasConcept: boolean;
 }
 
+/**
+ * The per-day league-pool fact the join-league-pool challenge needs: has the
+ * director entered today's prediction pool in any of their leagues? Read off
+ * the leagues' pool docs (useLeaguePoolFacts) and passed in, because pool
+ * entries live off the profile.
+ */
+export interface LeaguePoolChallengeFacts {
+  hasEntered: boolean;
+}
+
 /** One of the day's three rotating challenges. */
 export interface DailyChallenge {
   id: string;
@@ -112,9 +122,11 @@ export function computeDirectorsReport(options: {
   corpsClass: string | null;
   /** Podium show/concept facts, or null for a director with no Podium corps. */
   podium?: PodiumChallengeFacts | null;
+  /** Today's league-pool entry fact, or null for a director with no league. */
+  leaguePool?: LeaguePoolChallengeFacts | null;
   now?: Date;
 }): DirectorsReportState {
-  const { profile, recentResults, corpsClass, podium = null, now } = options;
+  const { profile, recentResults, corpsClass, podium = null, leaguePool = null, now } = options;
   const gameDay = now ? getGameDay(now) : getGameDay();
 
   const lastLogin = toDate(profile?.engagement?.lastLogin);
@@ -146,7 +158,7 @@ export function computeDirectorsReport(options: {
   // Same filter the server applies to the required set: drop challenges this
   // director genuinely can't satisfy today (make-prediction with no questions,
   // check-lineup for a Podium-only director) so the count stays winnable.
-  const context = { predictionAvailable, podium };
+  const context = { predictionAvailable, podium, leaguePool };
   const challenges: DailyChallenge[] = getAvailableChallengesForGameDay(gameDay, profile, context);
 
   const bucket = profile?.challenges?.[gameDay] || [];

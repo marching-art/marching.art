@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 import { useProfileStore } from '../../../store/profileStore';
 import { computeDirectorsReport } from '../../../utils/directorsReport';
 import { getGameDay } from '../../../utils/dailyChallenges';
-import { useNow } from '../../../hooks/useSeasonClock';
+import { useNow } from '../../../hooks/useNow';
 import { claimLadderTier } from '../../../api/functions';
 import { showCoinGain } from '../../xpFeedbackTrigger';
 import DailyChallenges from './DailyChallenges';
@@ -25,7 +25,15 @@ import PredictionGamePanel from './PredictionGamePanel';
 import { getClaimableLadderTiers } from './seasonLadderTiers';
 
 const DirectorsReport = memo(
-  ({ recentResults, corpsClass, seasonUid, podium = null, onLineupClick, onConceptClick }) => {
+  ({
+    recentResults,
+    corpsClass,
+    seasonUid,
+    podium = null,
+    leaguePool = null,
+    onLineupClick,
+    onConceptClick,
+  }) => {
     const profile = useProfileStore((state) => state.profile);
     const [claimingTier, setClaimingTier] = useState(null);
 
@@ -45,8 +53,8 @@ const DirectorsReport = memo(
     // through is what makes the set roll over on the 2 AM ET boundary; the
     // per-minute recompute is trivial for a single card.
     const { loginDone, streak, predictionAvailable, doneCount, totalCount, allDone } = useMemo(
-      () => computeDirectorsReport({ profile, recentResults, corpsClass, podium, now }),
-      [profile, recentResults, corpsClass, podium, now]
+      () => computeDirectorsReport({ profile, recentResults, corpsClass, podium, leaguePool, now }),
+      [profile, recentResults, corpsClass, podium, leaguePool, now]
     );
 
     // --- Pending Season Ladder claims (bonus row, not counted in the set) ---
@@ -142,6 +150,7 @@ const DirectorsReport = memo(
           onConceptClick={onConceptClick}
           predictionAvailable={predictionAvailable}
           podium={podium}
+          leaguePool={leaguePool}
         />
 
         {/* Predictions (embedded); SoundSport gets the placement-only set */}
