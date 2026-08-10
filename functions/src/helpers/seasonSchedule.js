@@ -12,6 +12,10 @@ const axios = require("axios");
 // director names a show themselves (podium/hostedEvents). Re-exported below
 // because most callers reach it through the season barrel.
 const { brandEventName } = require("./branding");
+// Canonicalizes a show location to "City, ST" (two-letter state/province code).
+// Applied at every write choke point so competitions[] never stores mixed
+// "City, Illinois" / "City, IL" spellings of one venue (see locationFormat.js).
+const { standardizeLocation } = require("./locationFormat");
 
 // Fields carried from an enriched scraped event onto a stored show/competition.
 // Kept in one place so generate + refresh + write all stay in sync.
@@ -289,7 +293,7 @@ async function updateScheduleDay(seasonId, dayNumber, shows) {
     competitions.push({
       id: `${seasonId}_day${dayNumber}_${idx}`,
       name: show.eventName,
-      location: show.location || "",
+      location: standardizeLocation(show.location) || "",
       date: show.date || null,
       day: dayNumber,
       week: week,
@@ -335,7 +339,7 @@ async function addShowToDay(seasonId, dayNumber, show) {
   const competition = {
     id: `${seasonId}_day${dayNumber}_${existingDayShows.length}`,
     name: show.eventName,
-    location: show.location || "",
+    location: standardizeLocation(show.location) || "",
     date: show.date || null,
     day: dayNumber,
     week: week,
@@ -382,7 +386,7 @@ async function writeScheduleToCollection(seasonId, schedule) {
       const competition = {
         id: `${seasonId}_day${day.offSeasonDay}_${idx}`,
         name: show.eventName,
-        location: show.location || "",
+        location: standardizeLocation(show.location) || "",
         date: show.date || null,
         day: day.offSeasonDay,
         week: week,

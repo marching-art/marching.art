@@ -5,6 +5,7 @@
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { enrichEventsWithDetails } = require("./eventDetails");
+const { standardizeLocation } = require("./locationFormat");
 const {
   applyEnrichment,
   SPRING_TRAINING_DAYS,
@@ -61,7 +62,7 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
           if (!alreadyExists) {
             const show = {
               eventName: event.eventName,
-              location: event.location,
+              location: standardizeLocation(event.location),
               date: event.date,
               isChampionship: false,
             };
@@ -189,7 +190,10 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         const showData = {
           eventName: event.eventName,
           date: event.date,
-          location: event.location,
+          // Standardize the region to a two-letter code up front so the
+          // `usedLocations` de-dup below treats "Rockford, Illinois" and
+          // "Rockford, IL" as the same venue (see helpers/locationFormat.js).
+          location: standardizeLocation(event.location),
           scores: event.scores,
           offSeasonDay: event.offSeasonDay,
         };
@@ -254,9 +258,9 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     usedLocations.add(location);
   };
 
-  placeMajor([28], "marching.art Southwestern Championship", "Dallas, Texas");
-  placeMajor([35], "marching.art Southeastern Championship", "Atlanta, Georgia");
-  placeMajor([41, 42], "marching.art Eastern Classic", "Allentown, Pennsylvania");
+  placeMajor([28], "marching.art Southwestern Championship", "Dallas, TX");
+  placeMajor([35], "marching.art Southeastern Championship", "Atlanta, GA");
+  placeMajor([41, 42], "marching.art Eastern Classic", "Allentown, PA");
 
   const remainingDays = schedule.filter((d) => d.shows.length === 0);
   const twoShowDayCount = Math.floor(remainingDays.length * 0.2);
