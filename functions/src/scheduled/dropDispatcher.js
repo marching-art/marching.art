@@ -73,7 +73,6 @@ const { isDropSchedulingEnabled } = require("../helpers/features");
 const {
   discordScoresWebhookUrl,
   discordAnnouncementsWebhookUrl,
-  discordNewsWebhookUrl,
 } = require("../helpers/discord");
 const { scraperApiKey } = require("../helpers/dciFetch");
 
@@ -659,10 +658,11 @@ exports.podiumNightly = onSchedule({
   // Errors are swallowed below (isolation contract), so scheduler retries
   // would never fire; the podium stage's own leases self-heal next night.
   retryCount: 0,
-  // Three announcements ride this job, all off the state the Podium stage
-  // writes: the Podium score drop (#scores), the Fan Favorite ballots
-  // (#announcements) and the weekly Podium Report (#news).
-  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
+  // Two announcements ride this job, both off the state the Podium stage
+  // writes: the Podium score drop (#scores) and the Fan Favorite ballots
+  // (#announcements). The Podium Report reaches #news as a syndicated news
+  // article (triggers/newsDiscord.js), so it needs no separate post here.
+  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
 
@@ -727,19 +727,9 @@ exports.podiumNightly = onSchedule({
     logger.error(`[fan-favorite] stage failed (Podium unaffected): ${error.message}`);
   }
 
-  // The weekly Podium Report column (#news), same isolation and its own
-  // per-week lease.
-  try {
-    const { runPodiumReportStage } = require("./nightlyStages");
-    const result = await runPodiumReportStage(db, discordNewsWebhookUrl.value(), undefined, {
-      competitionDay,
-    });
-    if (result.status === "ran" && result.announcement?.status === "posted") {
-      logger.info(`[podium-report] result: ${JSON.stringify(result)}`);
-    }
-  } catch (error) {
-    logger.error(`[podium-report] stage failed (Podium unaffected): ${error.message}`);
-  }
+  // The Podium Report reaches #news as a syndicated news article
+  // (triggers/newsDiscord.js off the nightly generation run), so there is no
+  // separate standings post here — a second one only duplicated the article.
 });
 
 module.exports.dueActions = dueActions;
