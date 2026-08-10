@@ -232,7 +232,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         <div className="flex">
           {/* LEFT: Avatar/Uniform - Large (equipped shop frame renders as ring) */}
           <div
-            className={`flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-background border-r border-line relative group ${avatarRingClass}`}
+            className={`flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-surface-card border-r border-line relative group ${avatarRingClass}`}
           >
             {/* OPTIMIZATION #7: Added lazy loading for profile avatar */}
             <div className="aspect-square w-full">
