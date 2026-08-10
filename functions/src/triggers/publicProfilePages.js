@@ -23,10 +23,20 @@ const {
 } = require("../helpers/publicProfilePages");
 
 /**
+ * The response object as typed by firebase-functions' onRequest handler.
+ * Deriving it from onRequest (rather than `import("express").Response`) pins
+ * the type to the @types/express copy firebase-functions bundles: jwks-rsa
+ * (via firebase-admin) drags a second, incompatible major to the top level,
+ * and the two Response types are not assignable to each other.
+ *
+ * @typedef {Parameters<Parameters<typeof onRequest>[0]>[1]} ExpressResponse
+ */
+
+/**
  * Same styled error responses as the results pages — a crawler or a phone
  * hitting a dead username gets a real page with a way back into the site.
  *
- * @param {import("express").Response} res
+ * @param {ExpressResponse} res
  * @param {number} status
  * @param {{title: string, heading: string, message: string, cacheControl: string}} params
  */

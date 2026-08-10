@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Shared reader for a season's director-hosted events
 // (hosted-events/{seasonUid}/events — public read; see helpers/podium/hostedEvents.js).
 //
@@ -20,7 +19,7 @@ import { getShowRegistrations } from '../api/functions';
  *   error — the list is decorative, so consumers still function without it).
  */
 export function useHostedEvents(seasonUid) {
-  const [events, setEvents] = useState(null);
+  const [events, setEvents] = useState(/** @type {Array<object>|null} */ (null));
 
   const load = useCallback(async () => {
     if (!seasonUid) {
@@ -56,7 +55,7 @@ export function useHostedEvents(seasonUid) {
  * (i.e. the show is actually hosted) — system shows never pay for it. Returns
  * everything HostedShowPanel renders, so a consumer can spread it straight in.
  *
- * @param {{enabled: boolean, show: object, hostedEvent?: object|null}} params
+ * @param {{enabled: boolean, show: Record<string, any>, hostedEvent?: Record<string, any>|null}} params
  *   `show` is the transformed schedule show; `hostedEvent` is its hosting record
  *   (carries capacity + host name), null until it loads.
  * @returns {{hostName: string|null, capacity: number|null,
@@ -70,7 +69,7 @@ export function useHostedShowRegistrations({ enabled, show, hostedEvent }) {
   const day = Number.isInteger(show?.day) ? show.day : null;
   const capacity = hostedEvent?.capacity ?? null;
   const hostName = hostedEvent?.hostName ?? null;
-  const [attendees, setAttendees] = useState(null);
+  const [attendees, setAttendees] = useState(/** @type {Array<Record<string, any>>|null} */ (null));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

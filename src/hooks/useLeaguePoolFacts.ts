@@ -40,7 +40,9 @@ export function useLeaguePoolFacts(
         ids.map((id) => getDoc(doc(db, paths.leaguePool(id, gameDay))))
       );
       const hasEntered = snaps.some(
-        (snap) => snap.exists() && Boolean((snap.data() as { entrants?: Record<string, unknown> })?.entrants?.[uid])
+        (snap) =>
+          snap.exists() &&
+          Boolean((snap.data() as { entrants?: Record<string, unknown> })?.entrants?.[uid])
       );
       return { hasEntered };
     },

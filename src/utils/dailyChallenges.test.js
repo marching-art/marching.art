@@ -172,9 +172,9 @@ describe('join-league-pool check + availability', () => {
     const member = { leagueIds: ['L1'] };
     // `check` is optional on the pool type (check-lineup is action-gated), so
     // reach it through optional chaining.
-    expect(byId('join-league-pool').check?.(member, 'd', { leaguePool: { hasEntered: true } })).toBe(
-      true
-    );
+    expect(
+      byId('join-league-pool').check?.(member, 'd', { leaguePool: { hasEntered: true } })
+    ).toBe(true);
     expect(
       byId('join-league-pool').check?.(member, 'd', { leaguePool: { hasEntered: false } })
     ).toBe(false);

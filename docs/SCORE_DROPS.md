@@ -174,13 +174,13 @@ the scored day from `gameDay.js` inside the drop pipeline.
 Every scoring entry point resolves the day to whichever pipeline owns the
 night (flag on → show date; flag off → legacy 2 AM reset):
 
-| Path                                                                    | Day source                                                                                                        |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `scoreDropDispatcher` (fantasy, both season types)                      | `planDrop().competitionDay`                                                                                       |
-| `podiumNightly` (9 PM ET, year-round)                                   | `showCalendarDay()`                                                                                               |
-| Admin `processPodiumStage`                                              | `showCalendarDay()` — Podium is 9 PM year-round, so a manual run always means **tonight**, regardless of the flag |
-| Admin `processLiveSeasonScores` / `processAndArchiveOffSeasonScores`    | `getManualRunCalendarDay()` (flag-aware) — a 10 PM manual run targets **tonight**, not the 2 AM-reset "yesterday" |
-| Legacy 2 AM jobs (fantasy only, flag off)                               | unchanged `gameDay.js` derivation                                                                                 |
+| Path                                                                 | Day source                                                                                                        |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `scoreDropDispatcher` (fantasy, both season types)                   | `planDrop().competitionDay`                                                                                       |
+| `podiumNightly` (9 PM ET, year-round)                                | `showCalendarDay()`                                                                                               |
+| Admin `processPodiumStage`                                           | `showCalendarDay()` — Podium is 9 PM year-round, so a manual run always means **tonight**, regardless of the flag |
+| Admin `processLiveSeasonScores` / `processAndArchiveOffSeasonScores` | `getManualRunCalendarDay()` (flag-aware) — a 10 PM manual run targets **tonight**, not the 2 AM-reset "yesterday" |
+| Legacy 2 AM jobs (fantasy only, flag off)                            | unchanged `gameDay.js` derivation                                                                                 |
 
 **Podium's interactive day rolls at 9 PM year-round**: the nightly stage ends
 each corps' day and advances `state.today` to tomorrow, so `podiumContext` uses

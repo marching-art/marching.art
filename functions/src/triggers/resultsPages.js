@@ -13,12 +13,22 @@ const {
 } = require("../helpers/resultsPages");
 
 /**
+ * The response object as typed by firebase-functions' onRequest handler.
+ * Deriving it from onRequest (rather than `import("express").Response`) pins
+ * the type to the @types/express copy firebase-functions bundles: jwks-rsa
+ * (via firebase-admin) drags a second, incompatible major to the top level,
+ * and the two Response types are not assignable to each other.
+ *
+ * @typedef {Parameters<Parameters<typeof onRequest>[0]>[1]} ExpressResponse
+ */
+
+/**
  * Error responses used to be bare strings. Express serves a string as
  * text/html, so they rendered as an unstyled document with no charset, no
  * viewport, and no links — a dead end for a crawler or a phone. Send real
  * pages instead.
  *
- * @param {import("express").Response} res
+ * @param {ExpressResponse} res
  * @param {number} status
  * @param {{title: string, heading: string, message: string, cacheControl: string}} params
  */
