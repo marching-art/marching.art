@@ -174,14 +174,18 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
           soundSport ? 'bg-interactive text-white' : 'bg-brand text-black'
         }`}
       >
-        <div className="flex items-center gap-2">
-          {soundSport ? <BlueRibbonIcon className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
-          <span className="text-[11px] font-bold uppercase tracking-widest">
+        <div className="flex items-center gap-2 min-w-0">
+          {soundSport ? (
+            <BlueRibbonIcon className="w-4 h-4 flex-shrink-0" />
+          ) : (
+            <Crown className="w-4 h-4 flex-shrink-0" />
+          )}
+          <span className="text-[11px] font-bold uppercase tracking-widest truncate">
             {type} {year} {soundSport ? 'Best in Show' : 'Champion'}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-wider opacity-80 whitespace-nowrap">
             {CLASS_CONFIG[classKey]?.name}
           </span>
           {/* Shares the /share/champion URL so the link unfurls with the
@@ -340,7 +344,10 @@ const FinalistsTable = ({ champions, classKey }) => {
         </span>
       </div>
 
-      <table className="w-full">
+      {/* table-fixed keeps a long corps name from stretching the table past the
+          viewport on mobile — the Corps column absorbs the remaining width and
+          the name truncates instead of pushing the Score column off-screen. */}
+      <table className="w-full table-fixed">
         <thead>
           <tr className="bg-surface-sunken border-b border-line">
             <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted w-10">
@@ -700,7 +707,7 @@ const HallOfChampions = () => {
             MAIN STAGE — Champion plaque + finalists table
             ======================================================== */}
         <div
-          className={`flex-1 flex flex-col min-h-0 ${showSidebarOnly ? 'hidden lg:flex' : 'flex'}`}
+          className={`flex-1 min-w-0 flex flex-col min-h-0 ${showSidebarOnly ? 'hidden lg:flex' : 'flex'}`}
         >
           {!displaySeason ? (
             <div className="flex-1 flex items-center justify-center px-4">
