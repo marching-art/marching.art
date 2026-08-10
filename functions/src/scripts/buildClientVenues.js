@@ -29,6 +29,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { normalizeKey } = require("../helpers/podium/venues");
+const { standardizeLocation } = require("../helpers/locationFormat");
 
 const GAZETTEER_PATH = path.join(__dirname, "../helpers/podium/venueGazetteer.json");
 const DATA_DIR = path.join(__dirname, "../../../src/data");
@@ -54,6 +55,15 @@ function main() {
     // abbreviated form stored on hosted-event rows (mirrors venueFor's
     // canonicalIndex on the server).
     keyToId[normalizeKey(`${v.city}, ${v.region}`)] = v.venueId;
+    // And by the state-code-standardized form of every raw spelling variant, so
+    // the "City, ST" locations now stored on the schedule resolve even when the
+    // gazetteer corrected the city (typo/fuzzy/override). Mirrors venueFor's
+    // standardizedIndex on the server; first-wins keeps the canonical key above
+    // authoritative on the rare collision.
+    for (const raw of (v.rawVariants && v.rawVariants.length ? v.rawVariants : [`${v.city}, ${v.region}`])) {
+      const stdKey = normalizeKey(standardizeLocation(raw));
+      if (stdKey && !(stdKey in keyToId)) keyToId[stdKey] = v.venueId;
+    }
     if (!venuesById.has(v.venueId)) {
       venuesById.set(v.venueId, { venueId: v.venueId, city: v.city, region: v.region });
       const lat = round4(v.lat);

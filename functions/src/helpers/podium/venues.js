@@ -10,6 +10,7 @@
 
 const gazetteer = require("./venueGazetteer.json");
 const stadiums = require("./stadiums.json");
+const { standardizeLocation } = require("../locationFormat");
 
 /**
  * Canonical form of a raw location string — the gazetteer key.
@@ -39,16 +40,43 @@ for (const venue of Object.values(gazetteer.venues)) {
   canonicalIndex[normalizeKey(`${venue.city}, ${venue.region}`)] = venue;
 }
 
+// Tertiary index keyed by the STATE-CODE-STANDARDIZED form of each venue's own
+// raw location variants (helpers/locationFormat.standardizeLocation). Schedules
+// now store locations in "City, ST" form (locations enter through
+// standardizeLocation before storage), but that keeps the venue's ORIGINAL city
+// spelling — which the gazetteer often corrected during geocoding: typos
+// ("Severieville" -> "Sevierville"), slash compounds ("Bloomington/Normal" ->
+// "Bloomington"), fuzzy matches ("Bowling" -> "Bowling Green"), and manual
+// overrides that fix a wrong state. For those the standardized string
+// ("Severieville, TN") matches neither the primary key ("severieville,
+// tennessee") nor the canonical index ("sevierville, tn"), so it would resolve
+// to null and silently drop travel/heat/timezone math. Re-standardizing each
+// stored rawVariant here maps every historical spelling back to its venue.
+// First-wins on the rare cross-venue key collision (none in the current
+// gazetteer) keeps the primary/canonical indexes authoritative.
+const standardizedIndex = {};
+for (const venue of Object.values(gazetteer.venues)) {
+  const variants = venue.rawVariants && venue.rawVariants.length
+    ? venue.rawVariants
+    : [`${venue.city}, ${venue.region}`];
+  for (const raw of variants) {
+    const key = normalizeKey(standardizeLocation(raw));
+    if (key && !standardizedIndex[key]) standardizedIndex[key] = venue;
+  }
+}
+
 /**
- * Resolve a location string to a gazetteer venue, or null. Accepts both the
- * historical full-name spelling ("Allentown, Pennsylvania") and the canonical
- * "City, ST" label ("Allentown, PA").
+ * Resolve a location string to a gazetteer venue, or null. Accepts the
+ * historical full-name spelling ("Allentown, Pennsylvania"), the canonical
+ * "City, ST" label ("Allentown, PA"), and the state-code-standardized form of
+ * any historical spelling even when the gazetteer corrected the city (a typo'd
+ * "Severieville, TN" still resolves to the Sevierville venue).
  * @param {string} locationString
  * @returns {{venueId, city, region, lat, lng, timezone?: (string|null)}|null}
  */
 function venueFor(locationString) {
   const key = normalizeKey(locationString);
-  return gazetteer.venues[key] || canonicalIndex[key] || null;
+  return gazetteer.venues[key] || canonicalIndex[key] || standardizedIndex[key] || null;
 }
 
 /**
