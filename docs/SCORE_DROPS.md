@@ -130,11 +130,23 @@ Rolling the countdown forward on a pending drop is what made the chip promise
 
 `game-settings/features.dropScheduling` (missing = **OFF**):
 
-- **OFF — shadow mode.** Dispatcher persists plans but takes no action;
-  legacy 1:30 AM scrape + 2:00 AM scorers run as always. Verify a few nights
-  of `drop_plans` docs against reality before flipping.
+- **OFF — shadow mode.** Dispatcher persists plans but takes no action for
+  live-season nights; the legacy 1:30 AM scrape + 2:00 AM scorers run as
+  always. Verify a few nights of `drop_plans` docs against reality before
+  flipping.
 - **ON — active.** Dispatcher scrapes/scores at the planned instants;
   legacy jobs stand down (they check the flag). Podium runs at 9 PM ET.
+
+**Off-season is exempt from the flag.** Off-season drops are synthetic — no
+dci.org scrape and no timezone ladder, just a flat 9 PM ET drop — so they carry
+none of the live-season scrape risk the switch guards. The dispatcher therefore
+scores off-season nights at 9 PM ET **regardless of `dropScheduling`**, and
+persists their plan with `mode: "active"`. (Gating them made shadow mode publish
+a 9 PM plan the client counted down to — and showed "Scores processing" past —
+while the legacy 2 AM job did the actual scoring, so the drop was announced at
+9 PM and nothing landed until 2 AM.) The legacy 2 AM off-season job still runs
+as an idempotent fallback: the shared `{seasonUid}_day{N}` lease makes it a
+no-op once the 9 PM run has scored the day.
 
 **Flip the flag during the daytime gap** (after ~5 AM ET, before ~8 PM ET):
 the handoff is then clean — the last legacy run scored yesterday, the first
