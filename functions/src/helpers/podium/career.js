@@ -810,6 +810,66 @@ async function archivePodiumSeason(db, previousSeason) {
   return archived;
 }
 
+/**
+ * Raise every active corps' live `state.division` to the division its career
+ * was seated into for this season, and mirror it to the profile display.
+ *
+ * The division a corps competes in is EARNED at the season boundary and written
+ * to its career (`archivePodiumSeason` re-seat) — that seat is the single source
+ * of truth. Registration copies it onto the live season state, so the two agree
+ * as long as the boundary was seated before the director registered. A corps
+ * that registered in the reset window — before the boundary sweep had run — was
+ * seated from last season's stale career division and, without this, would be
+ * SCORED, recapped, and budget-capped in that lower class all season while its
+ * dashboard (career/profile) already shows the promotion. The split is exactly
+ * what confused directors on the first night of a new season.
+ *
+ * This reconciles the live state UP to the earned seat. It only ever raises a
+ * seat — demotions are a boundary decision, and within a season a corps' seat
+ * only needs correcting upward — so it is safe to run unconditionally and
+ * idempotently every night BEFORE scoring (the processor reads `state.division`
+ * for the night's recap and budget cap). It also makes the boundary's live
+ * re-stamp non-load-bearing: even if that once-only re-stamp missed a corps, the
+ * next nightly run repairs it, closing the "dashboard promoted but scoring
+ * didn't" gap permanently.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid  the currently active season
+ * @returns {Promise<number>} corps raised to their earned seat
+ */
+async function reconcileSeasonDivisions(db, seasonUid) {
+  if (!seasonUid) return 0;
+  let healed = 0;
+  const roster = await store.rosterCollection(db, seasonUid).get();
+  for (const rosterDoc of roster.docs) {
+    const uid = rosterDoc.id;
+    try {
+      const [stateSnapshot, careerSnapshot] = await Promise.all([
+        store.stateRef(db, uid).get(),
+        careerRef(db, uid).get(),
+      ]);
+      // Only the corps actively fielding THIS season — a stale state left from a
+      // prior season the director hasn't re-registered from must not be touched.
+      if (!stateSnapshot.exists || stateSnapshot.data().seasonUid !== seasonUid) continue;
+      if (!careerSnapshot.exists) continue;
+      const earned = divisions.normalizeDivision(careerSnapshot.data().division);
+      const current = divisions.normalizeDivision(stateSnapshot.data().division);
+      if (divisions.divisionRank(earned) <= divisions.divisionRank(current)) continue;
+      await store.stateRef(db, uid).set({ division: earned }, { merge: true });
+      await store
+        .profileRef(db, uid)
+        .set({ corps: { podiumClass: { division: earned } } }, { merge: true });
+      healed++;
+    } catch (error) {
+      logger.error(`[podium] division reconcile failed for ${uid}: ${error.message}`);
+    }
+  }
+  if (healed > 0) {
+    logger.info(`[podium] reconciled ${healed} corps to their earned division for ${seasonUid}.`);
+  }
+  return healed;
+}
+
 module.exports = {
   SEASONS_DOC,
   careerRef,
@@ -826,4 +886,5 @@ module.exports = {
   appendProfileSeasonHistory,
   applyBudgetRefund,
   archivePodiumSeason,
+  reconcileSeasonDivisions,
 };

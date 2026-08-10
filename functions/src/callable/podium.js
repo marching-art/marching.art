@@ -180,6 +180,22 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // dormancy decay for missed seasons (counted via the global season index).
   // freshStart banks the old lineage into retiredCareers and restarts.
   const seasonIndex = await career.ensureSeasonIndex(db, seasonData);
+  // The class a returning corps registers into is its EARNED seat from last
+  // season, written to its career by the boundary re-seat. That re-seat runs at
+  // the reset, but a director registering in the reset window can arrive before
+  // it has — reading a stale career division and being seated (and scored, and
+  // budget-capped) in last season's class while the dashboard later promotes
+  // them. Guarantee the just-ended season is seated before we read the seat.
+  // Idempotent + lease-guarded, and a no-op once seated (the common path), so
+  // only the first registrant in a rare unsettled window pays for the sweep.
+  const priorSeason = await career.latestPreviousSeason(db);
+  if (priorSeason && priorSeason.seasonUid !== seasonUid) {
+    const priorArchive = await db.doc(`podium-recaps/${priorSeason.seasonUid}`).get();
+    if (!priorArchive.exists || !priorArchive.data().divisionsSeatedAt) {
+      const { settlePodiumSeasonBoundary } = require("../helpers/season");
+      await settlePodiumSeasonBoundary(db);
+    }
+  }
   const careerSnapshot = await career.careerRef(db, uid).get();
   let careerData = careerSnapshot.exists ? careerSnapshot.data() : career.initCareer();
   // Lazy self-archival: if this director's previous season hasn't been swept

@@ -113,6 +113,20 @@ async function runPodiumStage(db, { calendarDay: calendarDayOverride = null } = 
     }
   }
 
+  // Reconcile every active corps' live division UP to the seat its career
+  // earned this season, BEFORE scoring, so tonight's recap, standings, and
+  // budget cap all read the class the director actually competes in. This heals
+  // any corps that registered before the boundary re-seat had run (the reset
+  // window) and is a standing backstop against the boundary's once-only live
+  // re-stamp missing a corps — the split that surfaced as "scored A Class, then
+  // promoted on the dashboard." Isolated: a reconcile hiccup never blocks
+  // tonight's scoring.
+  try {
+    await career.reconcileSeasonDivisions(db, seasonData.seasonUid);
+  } catch (error) {
+    logger.error(`[podium-stage] division reconcile failed (scoring unaffected): ${error.message}`);
+  }
+
   const { processPodiumDay } = require("../helpers/podium/processor");
   const result = await processPodiumDay(db, seasonData, { calendarDay, competitionDay });
 
