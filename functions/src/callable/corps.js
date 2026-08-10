@@ -649,7 +649,10 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
         corpsName: sourceCorps.corpsName,
         fromClass,
         toClass,
-        transferredAt: admin.firestore.FieldValue.serverTimestamp(),
+        // A concrete Timestamp, not FieldValue.serverTimestamp(): this record is
+        // stored as an element of the per-season transfer array, and Firestore
+        // rejects the serverTimestamp() sentinel anywhere inside an array.
+        transferredAt: admin.firestore.Timestamp.now(),
       };
       const updatedSeasonTransfers = [...seasonTransfers, newTransferRecord];
       const updatedTransferHistory = {
