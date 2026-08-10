@@ -122,8 +122,7 @@ export const CHALLENGE_POOL = [
     check: (_profile, _gameDay, context) => Boolean(context?.leaguePool?.hasEntered),
     // Only a league member can enter a pool; dropped otherwise so the count
     // and weekly arc stay winnable.
-    available: (profile) =>
-      Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0,
+    available: (profile) => Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0,
   },
 ];
 
