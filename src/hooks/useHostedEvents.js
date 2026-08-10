@@ -15,12 +15,12 @@ import { getProfile } from '../api/profile';
 
 /**
  * @param {string|null|undefined} seasonUid
- * @returns {{ events: Array<object>|null, reload: () => Promise<void> }}
+ * @returns {{ events: Array<Record<string, any>>|null, reload: () => Promise<void> }}
  *   `events` is null until the first load resolves, then an array (empty on
  *   error — the list is decorative, so consumers still function without it).
  */
 export function useHostedEvents(seasonUid) {
-  const [events, setEvents] = useState(/** @type {Array<object>|null} */ (null));
+  const [events, setEvents] = useState(/** @type {Array<Record<string, any>>|null} */ (null));
 
   const load = useCallback(async () => {
     if (!seasonUid) {
@@ -31,12 +31,16 @@ export function useHostedEvents(seasonUid) {
       const snapshot = await getDocs(
         query(collection(db, 'hosted-events', seasonUid, 'events'), orderBy('day'))
       );
-      const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const rows = snapshot.docs.map(
+        (d) => /** @type {Record<string, any>} */ ({ id: d.id, ...d.data() })
+      );
       // `hostName` is stamped on the doc at booking, but events booked before
       // that field existed carry only `hostUid`. Resolve those directors'
       // usernames from their public profile (profile/data is world-readable)
       // so the schedule can still name the host instead of showing "a director".
-      const missing = [...new Set(rows.filter((e) => !e.hostName && e.hostUid).map((e) => e.hostUid))];
+      const missing = [
+        ...new Set(rows.filter((e) => !e.hostName && e.hostUid).map((e) => e.hostUid)),
+      ];
       if (missing.length) {
         const names = new Map();
         await Promise.all(
