@@ -639,12 +639,17 @@ exports.scoreDropDispatcher = onSchedule({
 
 /**
  * Podium Class nightly processing at 9 PM ET, year-round (DST-tracking via
- * the schedule's timeZone). Runs the same runPodiumStage as the legacy 2 AM
- * jobs, but for the SHOW DATE's calendar day (at 9 PM the 2 AM-reset
- * derivation is one day behind). Only active when drop scheduling is on;
- * while the flag is off, Podium continues to run inside the legacy 2 AM
- * processors. The podium day lease ({seasonUid}_podium_day{N}) makes a
- * flag flip mid-night safe — whichever job runs second is a no-op.
+ * the schedule's timeZone), for the SHOW DATE's calendar day (at 9 PM the
+ * 2 AM-reset derivation is one day behind).
+ *
+ * Podium is INDEPENDENT of the fantasy ladder and its dropScheduling kill
+ * switch — it always processes and publishes here at 9 PM, whether or not the
+ * fantasy dispatcher is active. (The switch only ever gated the risky
+ * live-season scrape; Podium has no scrape.) The legacy 2 AM processors no
+ * longer touch Podium at all, so this is its sole processing path; its own
+ * per-(season, day) lease still makes scheduler/manual reruns no-ops.
+ *
+ * Only gated by features.podiumClass, checked inside runPodiumStage below.
  */
 exports.podiumNightly = onSchedule({
   schedule: "0 21 * * *",
@@ -660,10 +665,6 @@ exports.podiumNightly = onSchedule({
   secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
 }, async () => {
   const db = getDb();
-  if (!(await isDropSchedulingEnabled(db))) {
-    logger.info("[podium-nightly] drop scheduling disabled; legacy 2 AM jobs own Podium.");
-    return;
-  }
 
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) return;

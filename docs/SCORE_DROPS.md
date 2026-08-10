@@ -135,7 +135,7 @@ Rolling the countdown forward on a pending drop is what made the chip promise
   always. Verify a few nights of `drop_plans` docs against reality before
   flipping.
 - **ON — active.** Dispatcher scrapes/scores at the planned instants;
-  legacy jobs stand down (they check the flag). Podium runs at 9 PM ET.
+  legacy jobs stand down (they check the flag).
 
 **Off-season is exempt from the flag.** Off-season drops are synthetic — no
 dci.org scrape and no timezone ladder, just a flat 9 PM ET drop — so they carry
@@ -147,6 +147,14 @@ while the legacy 2 AM job did the actual scoring, so the drop was announced at
 9 PM and nothing landed until 2 AM.) The legacy 2 AM off-season job still runs
 as an idempotent fallback: the shared `{seasonUid}_day{N}` lease makes it a
 no-op once the 9 PM run has scored the day.
+
+**Podium is exempt from the flag too — and unconditionally so.** Podium Class
+has no dci.org scrape either, so it processes and publishes at **9 PM ET
+year-round** via `podiumNightly`, regardless of `dropScheduling` (gated only by
+`features.podiumClass`). The legacy 2 AM processors no longer touch Podium at
+all — `podiumNightly` is its sole processing path, and its own per-(season, day)
+lease makes scheduler/manual reruns no-ops. Its interactive day rolls at 9 PM
+year-round to match (see §4).
 
 **Flip the flag during the daytime gap** (after ~5 AM ET, before ~8 PM ET):
 the handoff is then clean — the last legacy run scored yesterday, the first
@@ -166,20 +174,21 @@ the scored day from `gameDay.js` inside the drop pipeline.
 Every scoring entry point resolves the day to whichever pipeline owns the
 night (flag on → show date; flag off → legacy 2 AM reset):
 
-| Path                                                                                        | Day source                                                                                                        |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `scoreDropDispatcher` (fantasy, both season types)                                          | `planDrop().competitionDay`                                                                                       |
-| `podiumNightly` (9 PM ET)                                                                   | `showCalendarDay()`                                                                                               |
-| Admin `processLiveSeasonScores` / `processAndArchiveOffSeasonScores` / `processPodiumStage` | `getManualRunCalendarDay()` (flag-aware) — a 10 PM manual run targets **tonight**, not the 2 AM-reset "yesterday" |
-| Legacy 2 AM jobs (flag off)                                                                 | unchanged `gameDay.js` derivation                                                                                 |
+| Path                                                                    | Day source                                                                                                        |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `scoreDropDispatcher` (fantasy, both season types)                      | `planDrop().competitionDay`                                                                                       |
+| `podiumNightly` (9 PM ET, year-round)                                   | `showCalendarDay()`                                                                                               |
+| Admin `processPodiumStage`                                              | `showCalendarDay()` — Podium is 9 PM year-round, so a manual run always means **tonight**, regardless of the flag |
+| Admin `processLiveSeasonScores` / `processAndArchiveOffSeasonScores`    | `getManualRunCalendarDay()` (flag-aware) — a 10 PM manual run targets **tonight**, not the 2 AM-reset "yesterday" |
+| Legacy 2 AM jobs (fantasy only, flag off)                               | unchanged `gameDay.js` derivation                                                                                 |
 
-**Podium's interactive day rolls at 9 PM too** (flag on): the nightly stage
-ends each corps' day and advances `state.today` to tomorrow, so
-`podiumContext` uses `getActivePodiumCalendarDay` — after 9 PM ET, rehearsal
-verbs act on the NEXT day. Leaving the 2 AM boundary in place would let a
-9:30 PM verb rebuild the already-processed day with a fresh block allotment
-whose spends were then silently discarded (`gameDay.test.js` pins the
-boundary). Flag off, the 2 AM boundary applies everywhere, unchanged.
+**Podium's interactive day rolls at 9 PM year-round**: the nightly stage ends
+each corps' day and advances `state.today` to tomorrow, so `podiumContext` uses
+`getActivePodiumCalendarDay` — after 9 PM ET, rehearsal verbs act on the NEXT
+day. Because Podium always processes at 9 PM (no `dropScheduling` dependency),
+this boundary is unconditional. A 2 AM boundary would let a 9:30 PM verb rebuild
+the already-processed day with a fresh block allotment whose spends were then
+silently discarded (`gameDay.test.js` pins the boundary).
 
 ## 5. Watchdog & diagnostics
 

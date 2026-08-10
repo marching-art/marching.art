@@ -141,12 +141,12 @@ From the architecture survey — this class was designed against the actual code
   breakdowns (`GE1, GE2, VP, VA, CG, B, MA, P`, each 0–20) with `offSeasonDay` 1–49 — exactly the
   training corpus the scoring engine needs. The regression machinery in
   `functions/src/helpers/scoringMath.js` already fits historical curves.
-- **Nightly pipeline:** `scoringRunGuard.js` idempotency + `chunkedWriter.js`. With
-  `features.dropScheduling` ON, Podium runs in its own **9 PM ET year-round job**
-  (`podiumNightly`, scheduled/dropDispatcher.js) while fantasy scoring follows the
-  timezone-aware drop plan (see `SCORE_DROPS.md`); with the flag OFF, Podium remains a
-  stage inside the legacy 02:00 ET `dailyOffSeasonProcessor` / `processDailyLiveScores`
-  run. Either way the per-day podium lease makes the handoff safe.
+- **Nightly pipeline:** `scoringRunGuard.js` idempotency + `chunkedWriter.js`. Podium runs
+  in its own **9 PM ET year-round job** (`podiumNightly`, scheduled/dropDispatcher.js),
+  independent of `features.dropScheduling` (gated only by `features.podiumClass`) and of
+  fantasy scoring, which follows the timezone-aware drop plan when the flag is on (see
+  `SCORE_DROPS.md`). The legacy 02:00 ET processors no longer run Podium; `podiumNightly`
+  is its sole path, and the per-day podium lease makes scheduler/manual reruns safe.
 - **Economy:** CorpsCoin earn/spend (`functions/src/callable/economy.js`), XP levels, shop and
   prestige catalogs — reused as-is for unlocks, staff, and logistics costs.
 - **Unbuilt-but-planned systems:** `project_plan.txt` ("Ultimate Director Sim v5.3") already
@@ -1076,12 +1076,12 @@ New stage `processPodiumDay(seasonUid, day)` after fantasy scoring, inside the e
 5. Existing downstream (rivals job, leaderboards, league matchups) picks Podium up via class
    filters.
 
-> **Timing, as shipped.** With `features.dropScheduling` ON the stage runs in its own **9 PM ET
-> year-round job** (`podiumNightly`, `scheduled/dropDispatcher.js`) rather than trailing fantasy
-> scoring, so Podium's drop no longer moves with the fantasy ladder's westernmost show. The
-> interactive day rolls at 9 PM too — after the stage ends a corps' day, rehearsal verbs act on
-> tomorrow (`getActivePodiumCalendarDay`). Flag off, the legacy 2 AM boundary applies everywhere.
-> See [`SCORE_DROPS.md`](SCORE_DROPS.md) §4.
+> **Timing, as shipped.** The stage runs in its own **9 PM ET year-round job** (`podiumNightly`,
+> `scheduled/dropDispatcher.js`), independent of `features.dropScheduling` and of fantasy scoring,
+> so Podium's drop never moves with the fantasy ladder's westernmost show. The interactive day
+> rolls at 9 PM too — after the stage ends a corps' day, rehearsal verbs act on tomorrow
+> (`getActivePodiumCalendarDay`) — unconditionally, since Podium always processes at 9 PM. Gated
+> only by `features.podiumClass`. See [`SCORE_DROPS.md`](SCORE_DROPS.md) §4.
 
 ### New scripts
 
@@ -1717,9 +1717,9 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    touching the `scoringRunGuard` idempotency lease, which currently guards the whole run.
 4. **Day-boundary semantics for rehearsal.** Fantasy deadlines run on ET wall-clock
    (`seasonClock.js` is the declared single source of truth). Podium's "one day's blocks" roll
-   at the PROCESSING hour — 9 PM ET under the timezone-aware pipeline
-   (`getActivePodiumCalendarDay`, features.dropScheduling on), 02:00 ET legacy — or players
-   near the boundary double-allocate into an already-processed day. Every Podium callable
+   at the PROCESSING hour — **9 PM ET year-round** (`getActivePodiumCalendarDay`), independent
+   of `features.dropScheduling` — or players near the boundary double-allocate into an
+   already-processed day. Every Podium callable
    validates "today" server-side against the same clock module — never client time. See
    `SCORE_DROPS.md` §4.
 5. **Profile-write security.** Podium state lives on the profile doc

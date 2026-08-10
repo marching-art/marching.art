@@ -159,23 +159,20 @@ const PODIUM_PROCESS_HOUR_ET = 21;
 /**
  * The calendar day Podium's interactive verbs should act on.
  *
- * Under the legacy pipeline (dropSchedulingEnabled=false) this is the plain
- * 2 AM-reset active day, unchanged. Under the timezone-aware pipeline,
- * Podium's nightly processing runs at 9 PM ET and ends its own state.today
- * forward (processor.js sets today = calendarDay + 1) — so the active day
- * must roll at 9 PM too: after tonight's run, verbs act on TOMORROW. Leaving
- * the 2 AM boundary in place would make a 9:30 PM verb request the
- * already-processed day, and rollToday would rebuild it with a fresh block
- * allotment whose spends are silently discarded at the next roll.
+ * Podium processes and publishes at 9 PM ET year-round (scheduled/
+ * dropDispatcher.js podiumNightly), independent of the fantasy ladder and its
+ * dropScheduling kill switch. Its nightly stage ends each corps' day and rolls
+ * state.today forward (processor.js sets today = calendarDay + 1), so the
+ * active day must roll at 9 PM too: after tonight's run, verbs act on TOMORROW.
+ * A 2 AM boundary would make a 9:30 PM verb request the already-processed day,
+ * and rollToday would rebuild it with a fresh block allotment whose spends are
+ * silently discarded at the next roll.
  *
  * @param {Date} seasonStartDate - Season start (UTC midnight).
- * @param {boolean} [dropSchedulingEnabled] - features.dropScheduling.
  * @param {Date} [now] - Injectable clock for tests.
  * @returns {number}
  */
-function getActivePodiumCalendarDay(seasonStartDate, dropSchedulingEnabled = false, now = new Date()) {
-  if (!dropSchedulingEnabled) return getActiveCalendarDay(seasonStartDate, now);
-
+function getActivePodiumCalendarDay(seasonStartDate, now = new Date()) {
   const etParts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     year: "numeric",
