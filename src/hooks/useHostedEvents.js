@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../api';
 import { getShowRegistrations } from '../api/functions';
+import { getProfile } from '../api/profile';
 
 /**
  * @param {string|null|undefined} seasonUid
@@ -30,7 +31,31 @@ export function useHostedEvents(seasonUid) {
       const snapshot = await getDocs(
         query(collection(db, 'hosted-events', seasonUid, 'events'), orderBy('day'))
       );
-      setEvents(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // `hostName` is stamped on the doc at booking, but events booked before
+      // that field existed carry only `hostUid`. Resolve those directors'
+      // usernames from their public profile (profile/data is world-readable)
+      // so the schedule can still name the host instead of showing "a director".
+      const missing = [...new Set(rows.filter((e) => !e.hostName && e.hostUid).map((e) => e.hostUid))];
+      if (missing.length) {
+        const names = new Map();
+        await Promise.all(
+          missing.map(async (uid) => {
+            try {
+              const profile = await getProfile(uid);
+              if (profile?.username) names.set(uid, profile.username);
+            } catch {
+              /* decorative — leave the "a director" fallback for this event */
+            }
+          })
+        );
+        for (const event of rows) {
+          if (!event.hostName && names.has(event.hostUid)) {
+            event.hostName = names.get(event.hostUid);
+          }
+        }
+      }
+      setEvents(rows);
     } catch {
       setEvents([]); // decorative — the schedule and hosting form still work
     }
