@@ -5,17 +5,12 @@ const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { isDropSchedulingEnabled } = require("../helpers/features");
 const {
-  runPodiumStage,
   runDiscordStage,
-  runFanFavoriteStage,
-  runPodiumScoreDropStage,
-  runPodiumReportStage,
   runEasternClassicStage,
 } = require("./nightlyStages");
 const {
   discordScoresWebhookUrl,
   discordAnnouncementsWebhookUrl,
-  discordNewsWebhookUrl,
 } = require("../helpers/discord");
 
 /**
@@ -23,7 +18,7 @@ const {
  * (scheduled/dropDispatcher.js) and these legacy 2 AM jobs must stand down.
  * Even without this check the shared {seasonUid}_day{N} scoring lease
  * prevents double-scoring — the gate just saves the wasted run and keeps
- * Podium/Discord from racing their own leases.
+ * the Discord/Eastern stages from racing their own leases.
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} jobName
  * @returns {Promise<boolean>}
@@ -37,102 +32,14 @@ async function dropDispatcherOwnsTonight(db, jobName) {
 }
 
 /**
- * Run the flag-gated Podium stage after fantasy scoring (Phase 1.2). Fully
- * isolated: a Podium failure is logged and swallowed so it can never block
- * or corrupt the fantasy pipeline. No-op while
- * game-settings/features.podiumClass is off.
- * @param {FirebaseFirestore.Firestore} db
- */
-async function runPodiumStageIsolated(db) {
-  let competitionDay = null;
-  try {
-    const result = await runPodiumStage(db);
-    if (result.status !== "disabled") {
-      logger.info(`[podium-stage] result: ${JSON.stringify(result)}`);
-    }
-    if (typeof result.competitionDay === "number") competitionDay = result.competitionDay;
-  } catch (error) {
-    logger.error(`[podium-stage] failed (fantasy scoring unaffected): ${error.message}`);
-  }
-  // The announcement stages read the state the stage above just wrote, so
-  // they run after it — and, being read-only over that state, they run even
-  // when it failed (they simply find nothing new to announce).
-  await runPodiumScoreDropStageIsolated(db, competitionDay);
-  await runFanFavoriteStageIsolated(db, competitionDay);
-  await runPodiumReportStageIsolated(db, competitionDay);
-}
-
-/**
- * Post any due Fan Favorite ballot announcement to the Discord
- * #announcements channel. Isolated exactly like the stages above; no-op while
- * the DISCORD_ANNOUNCEMENTS_WEBHOOK_URL secret is unset/empty, and its
- * per-event leases make reruns post-at-most-once.
- * @param {FirebaseFirestore.Firestore} db
- * @param {number|null} competitionDay - The day the Podium stage processed.
- */
-async function runFanFavoriteStageIsolated(db, competitionDay) {
-  try {
-    const result = await runFanFavoriteStage(db, discordAnnouncementsWebhookUrl.value(), undefined, {
-      competitionDay,
-    });
-    if (result.status === "ran" && Array.isArray(result.announcements) && result.announcements.length > 0) {
-      logger.info(`[fan-favorite] result: ${JSON.stringify(result)}`);
-    }
-  } catch (error) {
-    logger.error(`[fan-favorite] stage failed (scoring unaffected): ${error.message}`);
-  }
-}
-
-/**
- * Post tonight's Podium Class results to the Discord #scores channel — the
- * Podium half of the nightly drop, its own message beside the fantasy one.
- * Isolated like every other stage; no-op while DISCORD_SCORES_WEBHOOK_URL is
- * unset, and its per-day lease makes reruns post-at-most-once.
- * @param {FirebaseFirestore.Firestore} db
- * @param {number|null} competitionDay - The day the Podium stage processed.
- */
-async function runPodiumScoreDropStageIsolated(db, competitionDay) {
-  try {
-    const result = await runPodiumScoreDropStage(db, discordScoresWebhookUrl.value(), undefined, {
-      competitionDay,
-    });
-    if (result.status === "ran" && result.announcement?.status === "posted") {
-      logger.info(`[podium-drop] result: ${JSON.stringify(result)}`);
-    }
-  } catch (error) {
-    logger.error(`[podium-drop] stage failed (scoring unaffected): ${error.message}`);
-  }
-}
-
-/**
- * Post the week's Podium Report column to the Discord #news channel. Isolated
- * like every other stage; no-op while DISCORD_NEWS_WEBHOOK_URL is unset, and
- * its per-week lease makes reruns post-at-most-once.
- * @param {FirebaseFirestore.Firestore} db
- * @param {number|null} competitionDay - The day the Podium stage processed.
- */
-async function runPodiumReportStageIsolated(db, competitionDay) {
-  try {
-    const result = await runPodiumReportStage(db, discordNewsWebhookUrl.value(), undefined, {
-      competitionDay,
-    });
-    if (result.status === "ran" && result.announcement?.status === "posted") {
-      logger.info(`[podium-report] result: ${JSON.stringify(result)}`);
-    }
-  } catch (error) {
-    logger.error(`[podium-report] stage failed (scoring unaffected): ${error.message}`);
-  }
-}
-
-/**
  * Announce the Eastern Classic two-night lineups to the Discord
  * #announcements channel. Isolated like every other stage; no-op while
  * DISCORD_ANNOUNCEMENTS_WEBHOOK_URL is unset, on every night outside the
  * days-38-40 window, and once its lease records the post.
  *
- * Runs after BOTH the fantasy scoring pass (which publishes the preview) and
- * the Podium stage (which publishes its own night snake), so the post carries
- * whichever halves of the split exist by then.
+ * Runs after the fantasy scoring pass (which publishes the preview); the
+ * Podium night snake is already published by the 9 PM podiumNightly job hours
+ * earlier, so the post carries whichever halves of the split exist by then.
  * @param {FirebaseFirestore.Firestore} db
  */
 async function runEasternClassicStageIsolated(db) {
@@ -147,11 +54,11 @@ async function runEasternClassicStageIsolated(db) {
 }
 
 /**
- * Post the nightly score drop to Discord after fantasy scoring. Fully
- * isolated like the Podium stage: a Discord failure is logged and swallowed
- * so it can never block or retry the fantasy pipeline. No-op while the
- * DISCORD_SCORES_WEBHOOK_URL secret is unset/empty; the scoreDrop lease
- * makes scheduler retries of a completed run post-at-most-once.
+ * Post the nightly fantasy score drop to Discord after fantasy scoring. Fully
+ * isolated: a Discord failure is logged and swallowed so it can never block or
+ * retry the fantasy pipeline. No-op while the DISCORD_SCORES_WEBHOOK_URL secret
+ * is unset/empty; the scoreDrop lease makes scheduler retries of a completed
+ * run post-at-most-once.
  * @param {FirebaseFirestore.Firestore} db
  */
 async function runDiscordStageIsolated(db) {
@@ -175,12 +82,13 @@ exports.dailyOffSeasonProcessor = onSchedule({
   // A thrown scoring error is retried by Cloud Scheduler; the scoring run
   // guard makes reruns safe (a completed day is never re-claimed).
   retryCount: 2,
-  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
+  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
   if (await dropDispatcherOwnsTonight(db, "off-season-2am")) return;
   await processAndArchiveOffSeasonScoresLogic();
-  await runPodiumStageIsolated(db);
+  // Podium is NOT run here — it processes and publishes at 9 PM ET year-round
+  // (dropDispatcher.js podiumNightly), independent of this fantasy pipeline.
   await runEasternClassicStageIsolated(db);
   await runDiscordStageIsolated(db);
 });
@@ -188,8 +96,9 @@ exports.dailyOffSeasonProcessor = onSchedule({
 /**
  * The live-season fantasy scoring pass, exactly as it has always run.
  * Extracted so its early returns (spring training, season over) end the
- * FANTASY stage only — the Podium stage runs on those days too
- * (recovery/decay/camp economics happen during spring training).
+ * FANTASY stage only, leaving the Eastern Classic and Discord stages below to
+ * run on their own terms. (Podium — which also runs during spring training for
+ * recovery/decay/camp economics — is now its own 9 PM job, podiumNightly.)
  * @param {FirebaseFirestore.Firestore} db
  */
 async function runLiveFantasyStage(db) {
@@ -242,12 +151,13 @@ exports.processDailyLiveScores = onSchedule({
   timeoutSeconds: 540,
   memory: "512MiB",
   retryCount: 2,
-  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
+  secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
   if (await dropDispatcherOwnsTonight(db, "live-2am")) return;
   await runLiveFantasyStage(db);
-  await runPodiumStageIsolated(db);
+  // Podium is NOT run here — it processes and publishes at 9 PM ET year-round
+  // (dropDispatcher.js podiumNightly), independent of this fantasy pipeline.
   await runEasternClassicStageIsolated(db);
   await runDiscordStageIsolated(db);
 });

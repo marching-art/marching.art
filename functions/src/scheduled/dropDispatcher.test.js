@@ -365,6 +365,66 @@ test("a dark day scoring without a scrape is NOT stamped as regression fallback"
 });
 
 // ---------------------------------------------------------------------------
+// The kill switch is off-season-exempt: off-season drops are synthetic (no
+// dci.org scrape, flat 9 PM ET), so the dispatcher owns them even in shadow
+// mode. Otherwise the client counted down to a 9 PM plan the dispatcher never
+// acted on, while the legacy 2 AM job did the scoring — "scores processing" at
+// 9 PM, nothing until 2 AM.
+// ---------------------------------------------------------------------------
+
+test("off-season scores at 9 PM ET even when dropScheduling is OFF", async () => {
+  resetFeatureCache();
+  const db = makeFakeDb({
+    "game-settings/season": {
+      status: "off-season", seasonUid: "os26",
+      schedule: { startDate: new Date(Date.UTC(2026, 10, 1)) },
+    },
+    "game-settings/features": { dropScheduling: false }, // shadow mode
+  });
+  const called = { score: 0, live: 0, discord: 0 };
+  const result = await runDropDispatcherTick(db, {
+    now: new Date("2026-11-06T02:05:00Z"), // 9:05 PM EST — past the off-season drop
+    settleMs: 0,
+    deps: {
+      scrape: async () => { throw new Error("off-season must never scrape"); },
+      scoreOffSeason: async ({ scoredDay }) => {
+        called.score++;
+        assert.equal(scoredDay, 5); // the planner's show-day, not gameDay's 2 AM reset
+        return { status: "processed", scoredDay };
+      },
+      scoreLive: async () => { called.live++; return { status: "processed" }; },
+      discord: async () => { called.discord++; return { status: "disabled" }; },
+      eastern: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.equal(called.score, 1); // scored at 9 PM despite the flag being off
+  assert.equal(called.live, 0);
+  assert.notEqual(result.status, "shadow");
+  const planDoc = db.store.get("drop_plans/2026-11-05");
+  assert.ok(planDoc.scoredAt instanceof Date);
+  assert.equal(planDoc.mode, "active"); // the dispatcher is genuinely acting on it
+});
+
+test("live-season still shadows when dropScheduling is OFF (only off-season is exempt)", async () => {
+  resetFeatureCache();
+  const db = liveNightDb({ dropScheduling: false });
+  const called = { score: 0, scrape: 0 };
+  const result = await runDropDispatcherTick(db, {
+    now: new Date("2026-07-02T03:05:00Z"), // 11:05 PM — past a live-season drop
+    settleMs: 0,
+    deps: {
+      scrape: async () => { called.scrape++; return { scraped: true, stampedLastScrapedDate: true }; },
+      scoreLive: async () => { called.score++; return { status: "processed" }; },
+      discord: async () => ({ status: "disabled" }),
+    },
+  });
+  assert.equal(result.status, "shadow"); // the legacy 2 AM pipeline still owns live nights
+  assert.equal(called.scrape, 0);
+  assert.equal(called.score, 0);
+  assert.equal(db.store.get("drop_plans/2026-07-01").mode, "shadow");
+});
+
+// ---------------------------------------------------------------------------
 // Waiting for DCI: cheap listing probes vs expensive recap scrapes, and the
 // half-posted night. The bug these cover: a night whose recap DCI posted late
 // spent its 3 attempts within ~30 minutes and then dropped regression scores

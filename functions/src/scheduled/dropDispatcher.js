@@ -47,6 +47,15 @@
  * {seasonUid}_day{N} scoring lease, so even a mid-flip overlap cannot
  * double-score a day.
  *
+ * OFF-SEASON IS EXEMPT from the kill switch. It has no dci.org scrape and no
+ * timezone ladder — the only things the flag guards — so the dispatcher scores
+ * off-season nights at 9 PM ET regardless of the flag. Leaving them gated made
+ * shadow mode publish a 9 PM plan the client counted down to (and showed
+ * "scores processing" past) while the legacy 2 AM job did the actual scoring:
+ * the drop was announced at 9 PM and nothing landed until 2 AM. The legacy 2 AM
+ * off-season job still runs as an idempotent fallback (the shared lease makes it
+ * a no-op once the 9 PM run has scored the day).
+ *
  * DAY SELECTION: always the planner's day (3-hour show-day reset), passed
  * explicitly into the scorers. Never gameDay.js's 2 AM reset — at 11 PM ET
  * that derivation is one day behind (see dropDispatcher.test.js).
@@ -370,12 +379,23 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
   if (!plan) return { status: "no-plan" };
 
   const enabled = await isDropSchedulingEnabled(db);
+  // The kill switch gates the RISKY half of this pipeline — the live-season
+  // dci.org scrape and its timezone ladder. Off-season drops carry none of
+  // that: they are synthetic (needsScrape=false, no network) and land at a
+  // flat 9 PM ET. So the dispatcher owns off-season nights UNCONDITIONALLY,
+  // even in shadow mode. Otherwise shadow mode publishes tonight's 9 PM plan —
+  // which the client counts down to and shows "scores processing" past — while
+  // the legacy 2 AM job is what actually scores, so players see the 9 PM drop
+  // announced and then nothing lands until 2 AM. The shared {seasonUid}_day{N}
+  // scoring lease keeps the still-running legacy 2 AM off-season job a safe
+  // idempotent fallback: it finds the day already scored and skips.
+  const actsTonight = enabled || plan.seasonType === "off-season";
   // One read of tonight's plan doc serves both the persist dedup check and
   // the scrape-attempt bookkeeping below (persistPlan's merge never touches
   // scrapeAttempts, so reading before the write is equivalent).
   const planDocSnap = await db.collection("drop_plans").doc(plan.showDateET).get();
   const planDocData = planDocSnap.exists ? planDocSnap.data() : {};
-  await persistPlan(db, plan, enabled ? "active" : "shadow", planDocData.planSignature);
+  await persistPlan(db, plan, actsTonight ? "active" : "shadow", planDocData.planSignature);
 
   // Surface data problems the planner detected (stale schedule silently
   // degrading to the 2 AM worst case; gazetteer-vs-enrichment disagreement).
@@ -392,7 +412,7 @@ async function runDropDispatcherTick(db, { now = new Date(), settleMs = SCRAPE_S
     );
   }
 
-  if (!enabled) {
+  if (!actsTonight) {
     return { status: "shadow", showDateET: plan.showDateET, dropLabel: plan.dropLabel };
   }
 
@@ -619,12 +639,17 @@ exports.scoreDropDispatcher = onSchedule({
 
 /**
  * Podium Class nightly processing at 9 PM ET, year-round (DST-tracking via
- * the schedule's timeZone). Runs the same runPodiumStage as the legacy 2 AM
- * jobs, but for the SHOW DATE's calendar day (at 9 PM the 2 AM-reset
- * derivation is one day behind). Only active when drop scheduling is on;
- * while the flag is off, Podium continues to run inside the legacy 2 AM
- * processors. The podium day lease ({seasonUid}_podium_day{N}) makes a
- * flag flip mid-night safe — whichever job runs second is a no-op.
+ * the schedule's timeZone), for the SHOW DATE's calendar day (at 9 PM the
+ * 2 AM-reset derivation is one day behind).
+ *
+ * Podium is INDEPENDENT of the fantasy ladder and its dropScheduling kill
+ * switch — it always processes and publishes here at 9 PM, whether or not the
+ * fantasy dispatcher is active. (The switch only ever gated the risky
+ * live-season scrape; Podium has no scrape.) The legacy 2 AM processors no
+ * longer touch Podium at all, so this is its sole processing path; its own
+ * per-(season, day) lease still makes scheduler/manual reruns no-ops.
+ *
+ * Only gated by features.podiumClass, checked inside runPodiumStage below.
  */
 exports.podiumNightly = onSchedule({
   schedule: "0 21 * * *",
@@ -640,10 +665,6 @@ exports.podiumNightly = onSchedule({
   secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl, discordNewsWebhookUrl],
 }, async () => {
   const db = getDb();
-  if (!(await isDropSchedulingEnabled(db))) {
-    logger.info("[podium-nightly] drop scheduling disabled; legacy 2 AM jobs own Podium.");
-    return;
-  }
 
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) return;

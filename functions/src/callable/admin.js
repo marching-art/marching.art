@@ -98,18 +98,19 @@ exports.manualTrigger = onCall({
       await calculateCorpsStatisticsLogic();
       return { success: true, message: "Successfully calculated and saved corps statistics." };
     case "processPodiumStage": {
-      // Alpha/beta convenience: run the flag-gated Podium nightly stage now
+      // Alpha/beta convenience: run the podium-flag-gated nightly stage now
       // instead of waiting for the scheduler. Same lease semantics; a
       // completed day is skipped unless it is reprocessed via the guard.
-      // The day is resolved to match whichever pipeline owns the night
-      // (show date under drop scheduling, 2 AM-reset "yesterday" legacy) —
-      // a 10 PM manual run must process TONIGHT, not yesterday.
+      // Podium processes at 9 PM ET year-round (podiumNightly), so the manual
+      // day is always the SHOW date — a 10 PM manual run means TONIGHT, never
+      // the 2 AM-reset "yesterday", regardless of the dropScheduling flag.
       const db = getDb();
       const { runPodiumStage } = require("../scheduled/nightlyStages");
+      const { showCalendarDay } = require("../helpers/dropPlanner");
       const seasonDoc = await db.doc("game-settings/season").get();
       const stageOptions = {};
       if (seasonDoc.exists && seasonDoc.data()?.schedule?.startDate) {
-        stageOptions.calendarDay = await getManualRunCalendarDay(db, seasonDoc.data());
+        stageOptions.calendarDay = showCalendarDay(seasonDoc.data().schedule.startDate.toDate());
       }
       const stageResult = await runPodiumStage(db, stageOptions);
       return { success: true, message: `Podium stage: ${JSON.stringify(stageResult)}` };
