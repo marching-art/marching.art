@@ -88,7 +88,10 @@ function buildRetiredRecord(corpsClass, corps) {
     bestSeasonScore: Math.max(...(corps.seasonHistory?.map((s) => s.totalSeasonScore) || [0])),
     totalShows: (corps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
     ...pickPersistentIdentity(corps),
-    retiredAt: admin.firestore.FieldValue.serverTimestamp(),
+    // A concrete Timestamp, not FieldValue.serverTimestamp(): this record is
+    // stored as an element of the `retiredCorps` array, and Firestore rejects
+    // the serverTimestamp() sentinel anywhere inside an array.
+    retiredAt: admin.firestore.Timestamp.now(),
   };
 }
 

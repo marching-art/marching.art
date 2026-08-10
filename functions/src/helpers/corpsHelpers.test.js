@@ -146,7 +146,7 @@ describe("buildRetiredRecord", () => {
     assert.equal(rec.bestSeasonScore, 700);
     assert.equal(rec.totalShows, 12);
     assert.deepEqual(rec.uniformDesign, { hat: "aussie" });
-    assert.ok(rec.retiredAt); // serverTimestamp sentinel
+    assert.ok(rec.retiredAt); // concrete Timestamp (array-safe, not a sentinel)
   });
 
   test("handles a corps with no season history", () => {
