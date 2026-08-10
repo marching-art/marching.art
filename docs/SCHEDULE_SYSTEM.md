@@ -10,6 +10,7 @@ Source-of-truth files:
 - Generation: `functions/src/helpers/scheduleGeneration.js`
 - Season rollover / pipeline: `functions/src/helpers/season.js` (`startNewOffSeason`)
 - Storage writer: `functions/src/helpers/seasonSchedule.js` (`writeScheduleToCollection`)
+- Location standardization: `functions/src/helpers/locationFormat.js` (`standardizeLocation`)
 - Running-order model: `functions/src/helpers/scheduleModel.js`
 - Heritage enrichment: `functions/src/helpers/offSeasonHeritage.js`
 
@@ -46,6 +47,16 @@ Historical data is populated by the importers under `functions/pressboxImporter/
    - Day 49 — World Championship Finals + the SoundSport Championship
      Championship auto-enrollment/advancement rules are in [`GAMEPLAY.md`](GAMEPLAY.md).
 3. Fill the remaining days with shows, avoiding duplicate event names/locations.
+
+Location de-dup compares the raw `location` string, so every location is first
+standardized to `City, ST` (two-letter state/province code) via
+`standardizeLocation` (`functions/src/helpers/locationFormat.js`). The historical
+archive spells regions out ("Rockford, Illinois", sometimes period-separated —
+"Allentown. Pennsylvania") while the live scrape uses codes ("Rockford, IL");
+without this, the two spellings read as different venues and the same city lands
+on two days. Standardization is applied wherever a location enters the schedule
+(off-season generation, live generation/refresh) and at every write choke point
+in `seasonSchedule.js`, so `competitions[].location` is always the code form.
 
 The larger season pipeline (`startNewOffSeason` in `season.js`): build a
 25-corps pool → `computeResultDaysForPool` → `generateOffSeasonSchedule` →

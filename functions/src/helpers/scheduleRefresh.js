@@ -6,6 +6,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { enrichEventsWithDetails } = require("./eventDetails");
 const { archiveScheduleEvents } = require("./historicalSchedules");
+const { standardizeLocation } = require("./locationFormat");
 const {
   applyEnrichment,
   SPRING_TRAINING_DAYS,
@@ -90,7 +91,7 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
       if (match) {
         // Enrich the existing show in place — keep id/day/week/type/mandatory.
         applyEnrichment(match, event);
-        if (!match.location && event.location) match.location = event.location;
+        if (!match.location && event.location) match.location = standardizeLocation(event.location);
         if (!match.date && event.date) match.date = event.date;
         // Backfill the regional-major tag onto majors already on the schedule
         // (a season generated before tagging existed picks it up on refresh).
@@ -105,7 +106,7 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
         const competition = {
           id: `${seasonId}_day${dayNumber}_${nextIdx}`,
           name: event.eventName,
-          location: event.location || "",
+          location: standardizeLocation(event.location) || "",
           date: event.date || null,
           day: dayNumber,
           week,
