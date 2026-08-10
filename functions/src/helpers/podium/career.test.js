@@ -3,6 +3,7 @@
 // the never-performed edge case.
 //
 // Uses Node's built-in test runner (node:test). Run with `npm test`.
+process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || "test-ns";
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
@@ -13,6 +14,7 @@ const {
   finalsPercentile,
   buildFinalStandings,
   applyBudgetRefund,
+  reconcileSeasonDivisions,
 } = require("./career");
 const balance = require("./balanceConfig.json");
 const curves = require("./curveData.json");
@@ -304,5 +306,136 @@ describe("the profile résumé row (rehearsal: the rollover got there first)", (
     });
     assert.equal(wrote, false);
     assert.equal(profile.written.length, 0);
+  });
+});
+
+describe("reconcileSeasonDivisions", () => {
+  const NS = process.env.DATA_NAMESPACE;
+  const statePath = (uid) => `artifacts/${NS}/users/${uid}/podium/state`;
+  const careerPath = (uid) => `artifacts/${NS}/users/${uid}/podium/career`;
+  const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
+  const rosterPath = (season, uid) => `podium-season/${season}/corps/${uid}`;
+
+  function deepMerge(prev, next) {
+    const out = { ...prev };
+    for (const [k, v] of Object.entries(next)) {
+      out[k] =
+        v && typeof v === "object" && !Array.isArray(v)
+          ? deepMerge(prev[k] || {}, v)
+          : v;
+    }
+    return out;
+  }
+
+  /** Fake Firestore over a Map<path, data>; records every set() as a write. */
+  function makeDb(map) {
+    const writes = [];
+    return {
+      writes,
+      doc: (path) => ({
+        async get() {
+          return { exists: map.has(path), data: () => map.get(path) };
+        },
+        async set(data) {
+          writes.push({ path, data });
+          map.set(path, deepMerge(map.get(path) || {}, data));
+        },
+      }),
+      collection: (prefix) => ({
+        async get() {
+          const docs = [];
+          for (const key of map.keys()) {
+            if (key.startsWith(prefix + "/")) {
+              const rest = key.slice(prefix.length + 1);
+              if (!rest.includes("/")) docs.push({ id: rest });
+            }
+          }
+          return { docs };
+        },
+      }),
+    };
+  }
+
+  /** Seed one corps: roster membership + live state + career seat. */
+  function seed(map, season, uid, { stateDivision, stateSeason = season, careerDivision }) {
+    map.set(rosterPath(season, uid), { uid });
+    map.set(statePath(uid), { seasonUid: stateSeason, division: stateDivision });
+    if (careerDivision !== undefined) map.set(careerPath(uid), { division: careerDivision });
+  }
+
+  test("raises a stale-seated corps to its earned division, on state and profile", async () => {
+    const map = new Map();
+    seed(map, "overture", "u1", { stateDivision: "aClass", careerDivision: "openClass" });
+    const db = makeDb(map);
+
+    const healed = await reconcileSeasonDivisions(db, "overture");
+
+    assert.equal(healed, 1);
+    assert.equal(map.get(statePath("u1")).division, "openClass");
+    assert.equal(map.get(profilePath("u1")).corps.podiumClass.division, "openClass");
+  });
+
+  test("is idempotent — a second pass writes nothing", async () => {
+    const map = new Map();
+    seed(map, "overture", "u1", { stateDivision: "aClass", careerDivision: "openClass" });
+    const db = makeDb(map);
+
+    await reconcileSeasonDivisions(db, "overture");
+    const writesAfterFirst = db.writes.length;
+    const healed = await reconcileSeasonDivisions(db, "overture");
+
+    assert.equal(healed, 0);
+    assert.equal(db.writes.length, writesAfterFirst); // no further writes
+  });
+
+  test("never lowers a seat below the live state", async () => {
+    const map = new Map();
+    // Career somehow trails the state (World live, Open career) — a demotion is a
+    // boundary decision, never this pass's job.
+    seed(map, "overture", "u1", { stateDivision: "worldClass", careerDivision: "openClass" });
+    const db = makeDb(map);
+
+    const healed = await reconcileSeasonDivisions(db, "overture");
+
+    assert.equal(healed, 0);
+    assert.equal(map.get(statePath("u1")).division, "worldClass");
+  });
+
+  test("leaves an already-correct corps untouched", async () => {
+    const map = new Map();
+    seed(map, "overture", "u1", { stateDivision: "openClass", careerDivision: "openClass" });
+    const db = makeDb(map);
+
+    const healed = await reconcileSeasonDivisions(db, "overture");
+
+    assert.equal(healed, 0);
+    assert.equal(db.writes.length, 0);
+  });
+
+  test("skips a corps whose live state belongs to a different season", async () => {
+    const map = new Map();
+    // Roster lists u1 for overture, but its state is still last season's — the
+    // director hasn't re-registered, so it must not be touched.
+    seed(map, "overture", "u1", {
+      stateDivision: "aClass",
+      stateSeason: "live",
+      careerDivision: "openClass",
+    });
+    const db = makeDb(map);
+
+    const healed = await reconcileSeasonDivisions(db, "overture");
+
+    assert.equal(healed, 0);
+    assert.equal(map.get(statePath("u1")).division, "aClass");
+  });
+
+  test("skips a corps with no career record", async () => {
+    const map = new Map();
+    seed(map, "overture", "u1", { stateDivision: "aClass" }); // careerDivision omitted
+    const db = makeDb(map);
+
+    const healed = await reconcileSeasonDivisions(db, "overture");
+
+    assert.equal(healed, 0);
   });
 });

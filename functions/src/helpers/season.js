@@ -468,16 +468,22 @@ async function rolloverFromOldSeason(db, oldSeason, newSeasonUid) {
     return;
   }
   try {
+    // Settle the Podium season boundary FIRST — advancement (division re-seat)
+    // and each corps' season-start assessment. The new season doc is already
+    // published by the caller (registration is open), so this runs before the
+    // heavier fantasy-archival steps to shrink the window in which a director
+    // could register and be seated from last season's stale career division:
+    // the earned seat must exist before anyone registers into the new season
+    // (design §5.7 + §5.13). Order-independent of the profile reset — the
+    // budget refund is a corpsCoin INCREMENT, and the reset never writes
+    // corps.podiumClass.division. Fully isolated: it never throws, so a Podium
+    // hiccup can't fail the rollover. Registration and the nightly stage each
+    // re-settle idempotently, so a rare miss here still self-corrects.
+    await settlePodiumSeasonBoundary(db);
     await archiveSeasonResultsLogic(db, { seasonUid, seasonName });
     await resetLeaguesForNewSeason(db, seasonUid, newSeasonUid);
     await archiveAndResetProfiles(db, seasonUid, newSeasonUid);
     await clearActiveLineups(db, seasonUid);
-    // Settle the Podium season boundary now — advancement (division re-seat) and
-    // each corps' season-start assessment — so a returning director sees where
-    // their corps stands going into the new season AT REGISTRATION, rather than
-    // only after the first competition night runs (design §5.7 + §5.13). Fully
-    // isolated: it never throws, so a Podium hiccup can't fail the rollover.
-    await settlePodiumSeasonBoundary(db);
     await markSeasonRolloverCompleted(db, seasonUid);
   } catch (error) {
     await markSeasonRolloverFailed(db, seasonUid, error);
