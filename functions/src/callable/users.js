@@ -178,8 +178,13 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
 exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   assertAuth(request);
 
-  const { week, eventName, date } = request.data;
-  if (!week || !eventName || !date) {
+  const { week, eventName } = request.data;
+  // Director-hosted shows carry no calendar date (date === null): they're placed
+  // on a competition day, not a scraped tour date. Only week + eventName are
+  // required; normalize a missing date to null so the index key (`date ?? ""`)
+  // and the legacy per-profile match below both treat "no date" consistently.
+  const date = request.data.date ?? null;
+  if (!week || !eventName) {
     throw new HttpsError("invalid-argument", "Missing required show data.");
   }
 
@@ -231,7 +236,10 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
       const corps = userCorps[corpsClass];
       const showsForWeek = corps.selectedShows ? corps.selectedShows[`week${week}`] : [];
 
-      if (showsForWeek && showsForWeek.some((s) => s.eventName === eventName && s.date === date)) {
+      if (
+        showsForWeek &&
+        showsForWeek.some((s) => s.eventName === eventName && (s.date ?? null) === date)
+      ) {
         registrations.push({
           corpsName: corps.corpsName || "Unnamed Corps",
           corpsClass: corpsClass,

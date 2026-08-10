@@ -29,9 +29,18 @@ export const setUserRole = createCallable<
   { email: string; makeAdmin: boolean },
   { message: string }
 >('setUserRole');
-export const getShowRegistrations = createCallable<{ showId: string }, unknown>(
-  'getShowRegistrations'
-);
+/** One corps registered to attend a show (fantasy corps; one entry per corps). */
+export interface ShowRegistration {
+  corpsName: string;
+  corpsClass: string;
+  username: string | null;
+}
+// Director-hosted shows have no calendar date — pass `date: null` (the server
+// keys the registration index the same way for dateless hosted shows).
+export const getShowRegistrations = createCallable<
+  { week: number; eventName: string; date?: string | null },
+  { registrations: ShowRegistration[] }
+>('getShowRegistrations');
 export const getUserRankings = createCallable<{ uid: string }, unknown>('getUserRankings');
 // Renamed to avoid conflict with profile.ts updateProfile (local Firestore)
 export const updateProfileCF = createCallable<{ displayName?: string; bio?: string }, void>(

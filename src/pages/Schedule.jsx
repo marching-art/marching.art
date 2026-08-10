@@ -19,6 +19,7 @@ import { competitionDayToDate } from '../utils/competitionCalendar';
 import { useSeasonDeadlines } from '../hooks/useSeasonClock';
 import { usePodiumEnabled } from '../hooks/useFeatures';
 import { usePodium } from '../hooks/usePodium';
+import { useHostedEvents } from '../hooks/useHostedEvents';
 import { CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import { WeekPills, ShowsList, ChampionshipWeekDisplay } from './ScheduleParts';
 
@@ -61,6 +62,25 @@ const Schedule = () => {
   // Every show of the season, flattened — the tour map plots a corps' stops
   // across all seven weeks, not just the week being browsed.
   const allShows = useMemo(() => Object.values(showsByWeek).flat(), [showsByWeek]);
+
+  // Director-hosted events for this season (hosted-events/{seasonUid}/events),
+  // shared with the "Host Your Own Show" card below. Keyed by `${day}|${eventName}`
+  // so a schedule show can find its hosting record — capacity, host name, and
+  // (once scored) the attendee roster — to badge and describe hosted shows.
+  const { events: hostedEvents, reload: reloadHosted } = useHostedEvents(seasonUid);
+  const hostedByKey = useMemo(() => {
+    const map = {};
+    for (const event of hostedEvents || []) {
+      if (event && event.eventName != null && event.day != null) {
+        map[`${event.day}|${event.eventName}`] = event;
+      }
+    }
+    return map;
+  }, [hostedEvents]);
+  const selectedHostedEvent =
+    selectedShow && hostedByKey[`${selectedShow.day}|${selectedShow.eventName}`]
+      ? hostedByKey[`${selectedShow.day}|${selectedShow.eventName}`]
+      : null;
 
   // Podium attendance lives outside the fantasy corps.selectedShows a card
   // reads, so surface it separately. Self-picks badge the SPECIFIC show (by
@@ -288,6 +308,7 @@ const Schedule = () => {
             formatDate={formatDate}
             onRegister={handleShowClick}
             podiumAttendance={podiumAttendance}
+            hostedByKey={hostedByKey}
           />
         ) : (
           <ShowsList
@@ -298,11 +319,15 @@ const Schedule = () => {
             onRegister={handleShowClick}
             seasonUid={seasonUid}
             podiumAttendance={podiumAttendance}
+            hostedByKey={hostedByKey}
           />
         )}
 
-        {/* Director-hosted events (all classes) — flag-gated, self-hiding */}
-        {user && <HostEventCard seasonUid={seasonUid} />}
+        {/* Director-hosted events (all classes) — flag-gated, self-hiding.
+            Shares the hosted-events fetch with the schedule's hosted badges. */}
+        {user && (
+          <HostEventCard seasonUid={seasonUid} events={hostedEvents} onReload={reloadHosted} />
+        )}
       </div>
 
       {/* TOUR MAP */}
@@ -326,6 +351,7 @@ const Schedule = () => {
           userProfile={userProfile}
           formattedDate={formatDate(selectedShow.day)}
           eventDate={getActualDate(selectedShow.day)}
+          hostedEvent={selectedHostedEvent}
           onClose={() => setRegistrationModal(false)}
           onSuccess={() => {
             // Fantasy corps update via the profileStore real-time listener, but

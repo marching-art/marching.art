@@ -2,9 +2,112 @@
 // Show registration sub-parts: the per-corps selection rows (fantasy + Podium).
 // Extracted from ShowRegistrationModal.jsx for file-size hygiene.
 
-import { Check } from 'lucide-react';
+import { Check, Landmark, Users } from 'lucide-react';
 import { formatEventName } from '../../utils/season';
 import { CLASS_CONFIG, sameDayShowFor } from './showRegistrationConfig';
+
+// =============================================================================
+// HOSTED SHOW PANEL
+// =============================================================================
+// Director-hosted shows (design §5.10) are rented by a director and open to
+// every class. This panel makes the show read as hosted (not a system/scraped
+// show), names the host, and shows how many of the venue's performance slots
+// are left — one slot per DISTINCT DIRECTOR, the unit the venue capacity and the
+// hosting payout are both measured in (the alt-farm guard). The modal computes
+// the slot math and passes it in; this only renders.
+
+export const HostedShowPanel = ({
+  hostName,
+  capacity,
+  slotsFilled,
+  slotsAvailable,
+  full,
+  attendees,
+  loading,
+}) => (
+  <div className="mx-4 mt-4 p-3 bg-surface-sunken border border-cyan-500/30 space-y-3">
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center gap-2 min-w-0">
+        <Landmark className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-cyan-400">Director-Hosted Show</p>
+          <p className="text-[10px] text-muted truncate">Hosted by {hostName || 'a director'}</p>
+        </div>
+      </div>
+      {capacity != null &&
+        (full ? (
+          <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-red-500/10 text-red-400">
+            Full
+          </span>
+        ) : (
+          <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-green-500/10 text-green-400 tabular-nums">
+            {slotsAvailable} {slotsAvailable === 1 ? 'slot' : 'slots'} open
+          </span>
+        ))}
+    </div>
+
+    {/* Performance-slot meter (distinct directors vs venue capacity) */}
+    {capacity != null && (
+      <div>
+        <div className="flex items-center justify-between text-[10px] text-muted mb-1">
+          <span>Performance slots</span>
+          <span className="font-data tabular-nums text-secondary">
+            {slotsFilled}/{capacity}
+          </span>
+        </div>
+        <div className="h-1.5 bg-line overflow-hidden">
+          <div
+            className={`h-full ${full ? 'bg-red-400' : 'bg-cyan-400'}`}
+            style={{ width: `${Math.min(100, (slotsFilled / capacity) * 100)}%` }}
+          />
+        </div>
+        {full && (
+          <p className="mt-1 text-[10px] text-muted">
+            The venue is full — corps can still register, but the host is only paid for the first{' '}
+            {capacity} directors.
+          </p>
+        )}
+      </div>
+    )}
+
+    {/* Attendee roster */}
+    <div>
+      <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-muted mb-2">
+        <Users className="w-3 h-3" />
+        Attending{attendees ? ` (${attendees.length})` : ''}
+      </div>
+      {loading && attendees === null ? (
+        <div className="text-[10px] text-muted">Loading attendees…</div>
+      ) : attendees && attendees.length > 0 ? (
+        <div className="space-y-1 max-h-40 overflow-y-auto">
+          {attendees.map((a, i) => {
+            const config = CLASS_CONFIG[a.corpsClass] || {};
+            return (
+              <div
+                key={`${a.username || a.corpsName}_${a.corpsClass}_${i}`}
+                className="flex items-center gap-2 text-[11px]"
+              >
+                <span className="text-secondary truncate flex-1">{a.corpsName}</span>
+                {config.name && (
+                  <span
+                    className={`flex-shrink-0 text-[9px] px-1 py-0.5 font-bold uppercase ${config.bgColor} ${config.color}`}
+                  >
+                    {config.shortName || config.name}
+                  </span>
+                )}
+                {a.username && (
+                  <span className="text-muted text-[10px] flex-shrink-0">@{a.username}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-[10px] text-muted">No corps registered yet — be the first.</div>
+      )}
+    </div>
+  </div>
+);
 
 // =============================================================================
 // PODIUM SELECTION ROW

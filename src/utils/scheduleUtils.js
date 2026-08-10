@@ -28,6 +28,9 @@ export function transformCompetitionToShow(competition) {
     // regionals/championships; multiNight marks one event spanning several
     // nights (e.g. the two-night Eastern Classic). Absent on regular shows.
     eventTier: competition.eventTier || null,
+    // Director-hosted shows (eventTier === 'hosted') carry the host's uid so the
+    // schedule can distinguish them from scraped/system shows and label them.
+    hostUid: competition.hostUid || null,
     multiNight: competition.multiNight || null,
     // Detail-page enrichment (present on live-season shows scraped from dci.org).
     // Absent on off-season / unenriched shows — consumers must handle null.

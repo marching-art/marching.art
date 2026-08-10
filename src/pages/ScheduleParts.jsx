@@ -5,7 +5,7 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Check, ChevronRight, Trophy } from 'lucide-react';
+import { Calendar, MapPin, Check, ChevronRight, Trophy, Landmark, Users } from 'lucide-react';
 import { isEventPast } from '../utils/scheduleUtils';
 import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
@@ -169,6 +169,7 @@ const ShowCard = ({
   isCompleted,
   seasonUid,
   podiumAttendance,
+  hostedEvent,
 }) => {
   const isRegistered = useMemo(() => {
     if (podiumAttendsShow(podiumAttendance, show)) return true;
@@ -187,6 +188,19 @@ const ShowCard = ({
   // Championship Week styling.
   const isMajor = show.eventTier === 'regional';
 
+  // Director-hosted shows (design §5.10): any director rents a venue and puts a
+  // show on the schedule. They must read as clearly NOT a system/scraped show —
+  // a cyan "Director-Hosted" treatment, the host's name, and the venue's
+  // capacity (its performance slots), so a browser knows who's behind it and
+  // whether there's room before opening it. `hostedEvent` (the hosting record)
+  // carries capacity/host/attendance; eventTier is the fallback when the record
+  // hasn't loaded. Majors are never hosted, so the major treatment wins.
+  const isHosted = !isMajor && (show.eventTier === 'hosted' || Boolean(hostedEvent));
+  const hostCapacity = hostedEvent?.capacity ?? null;
+  const hostPaidOut = Boolean(hostedEvent?.paidOut);
+  const hostAttendance = hostedEvent?.attendance ?? 0;
+  const hostFull = hostCapacity != null && hostPaidOut && hostAttendance >= hostCapacity;
+
   return (
     <div
       onClick={() => !isPast && onRegister(show)}
@@ -201,18 +215,25 @@ const ShowCard = ({
       aria-label={isPast ? undefined : `Open registration for ${formatEventName(show.eventName)}`}
       className={`
         bg-surface-card border rounded-none overflow-hidden
-        ${isMajor ? 'border-brand/40' : 'border-line'}
-        ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-brand/70' : 'hover:border-line-strong'} cursor-pointer active:bg-surface-raised`}
+        ${isMajor ? 'border-brand/40' : isHosted ? 'border-cyan-500/30' : 'border-line'}
+        ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-brand/70' : isHosted ? 'hover:border-cyan-500/60' : 'hover:border-line-strong'} cursor-pointer active:bg-surface-raised`}
         ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
       `}
     >
       {/* Card Header */}
-      <div className={`px-4 py-3 border-b border-line ${isMajor ? 'bg-brand/10' : ''}`}>
+      <div
+        className={`px-4 py-3 border-b border-line ${isMajor ? 'bg-brand/10' : isHosted ? 'bg-cyan-500/5' : ''}`}
+      >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             {isMajor && (
               <div className="flex items-center gap-1 mb-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-brand">
                 <Trophy className="w-3 h-3" /> marching.art Major
+              </div>
+            )}
+            {isHosted && (
+              <div className="flex items-center gap-1 mb-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+                <Landmark className="w-3 h-3" /> Director-Hosted
               </div>
             )}
             <h3 className="text-sm font-bold text-white truncate leading-tight">
@@ -230,6 +251,28 @@ const ShowCard = ({
                 </span>
               )}
             </div>
+            {isHosted && (
+              <div className="mt-1 flex items-center gap-2 text-[10px] text-cyan-400/90">
+                <span className="flex items-center gap-1 truncate">
+                  <Users className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">
+                    Hosted by {hostedEvent?.hostName || 'a director'}
+                  </span>
+                </span>
+                {hostCapacity != null &&
+                  (hostFull ? (
+                    <span className="flex-shrink-0 px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400">
+                      Full
+                    </span>
+                  ) : (
+                    <span className="flex-shrink-0 text-muted tabular-nums">
+                      {hostPaidOut
+                        ? `${hostAttendance}/${hostCapacity} corps`
+                        : `${hostCapacity} slots`}
+                    </span>
+                  ))}
+              </div>
+            )}
             {show.multiNight?.nights?.length > 1 && (
               <div className="mt-1 text-[10px] text-secondary">
                 Two-night event — one registration covers both nights; you perform on your assigned
@@ -352,6 +395,7 @@ const DayRow = ({
   onRegister,
   seasonUid,
   podiumAttendance,
+  hostedByKey,
 }) => {
   const date = getActualDate(day);
   const isPast = isEventPast(date);
@@ -375,6 +419,7 @@ const DayRow = ({
             isCompleted={isPast && show.scores?.some((s) => s.score != null)}
             seasonUid={seasonUid}
             podiumAttendance={podiumAttendance}
+            hostedEvent={hostedByKey?.[`${show.day}|${show.eventName}`] || null}
           />
         ))}
       </div>
@@ -394,6 +439,7 @@ const ShowsList = ({
   onRegister,
   seasonUid,
   podiumAttendance,
+  hostedByKey,
 }) => {
   // Group shows by day
   const showsByDay = useMemo(() => {
@@ -436,6 +482,7 @@ const ShowsList = ({
           onRegister={onRegister}
           seasonUid={seasonUid}
           podiumAttendance={podiumAttendance}
+          hostedByKey={hostedByKey}
         />
       ))}
     </div>
@@ -593,6 +640,7 @@ const ChampionshipWeekDisplay = ({
   formatDate,
   onRegister,
   podiumAttendance,
+  hostedByKey,
 }) => {
   // Group championship events by day
   const eventsByDay = useMemo(() => {
@@ -648,6 +696,7 @@ const ChampionshipWeekDisplay = ({
                       isCompleted={isPast && show.scores?.some((s) => s.score != null)}
                       seasonUid={seasonUid}
                       podiumAttendance={podiumAttendance}
+                      hostedEvent={hostedByKey?.[`${show.day}|${show.eventName}`] || null}
                     />
                   ))}
                 </div>
