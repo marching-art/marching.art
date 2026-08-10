@@ -67,6 +67,7 @@ export function useHostedShowRegistrations({ enabled, show, hostedEvent }) {
   const week = show?.week;
   const eventName = show?.eventName;
   const date = show?.date ?? null;
+  const day = Number.isInteger(show?.day) ? show.day : null;
   const capacity = hostedEvent?.capacity ?? null;
   const hostName = hostedEvent?.hostName ?? null;
   const [attendees, setAttendees] = useState(null);
@@ -76,7 +77,9 @@ export function useHostedShowRegistrations({ enabled, show, hostedEvent }) {
     if (!enabled) return undefined;
     let cancelled = false;
     setLoading(true);
-    getShowRegistrations({ week, eventName, date: date ?? null })
+    // Pass `day` so the server folds in Podium corps that picked this show
+    // (their day-based picks live outside the fantasy registration index).
+    getShowRegistrations({ week, eventName, date: date ?? null, day })
       .then((res) => {
         if (!cancelled) setAttendees(res?.data?.registrations || []);
       })
@@ -89,10 +92,13 @@ export function useHostedShowRegistrations({ enabled, show, hostedEvent }) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, week, eventName, date]);
+  }, [enabled, week, eventName, date, day]);
 
+  // One slot per DISTINCT DIRECTOR — dedupe by uid (a director fielding both a
+  // fantasy and a Podium corps at the show spends one slot), falling back to
+  // username/corpsName for any legacy entry without a uid.
   const slotsFilled = useMemo(
-    () => new Set((attendees || []).map((a) => a.username || a.corpsName)).size,
+    () => new Set((attendees || []).map((a) => a.uid || a.username || a.corpsName)).size,
     [attendees]
   );
   const slotsAvailable = capacity != null ? Math.max(0, capacity - slotsFilled) : null;
