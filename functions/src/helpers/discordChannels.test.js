@@ -1,6 +1,7 @@
 // The non-score Discord channels: ops alerts (#operations), director-hosted
-// events (#events), season-clock announcements (#announcements), the Podium
-// Report (#news), and published articles (#news).
+// events (#events), season-clock announcements (#announcements), and published
+// articles (#news). The Podium Report reaches #news as a published news
+// article (see the "published articles" suite), not a standalone embed.
 //
 // Uses Node's built-in test runner (node:test). Run with `npm test`.
 const { test, describe } = require("node:test");
@@ -10,44 +11,7 @@ const { joinLines, payloadOf } = require("./discord");
 const { buildOpsAlertPayload, postOpsAlert } = require("./opsAlerts");
 const { buildHostedEventPayload, announceHostedEvent } = require("./hostedEventDiscord");
 const { buildSeasonStartPayload, buildLineupLockPayload } = require("./seasonAnnounce");
-const {
-  buildPodiumReportPayload,
-  movementLabel,
-  announcePodiumReport,
-} = require("./podium/podiumReportDiscord");
 const { buildArticlePayload, announceArticle, FRESH_WINDOW_MS } = require("../triggers/newsDiscord");
-
-/** Fake Firestore: doc reads from a path map, recorded writes, lease txn. */
-function fakeDb(docs) {
-  const writes = {};
-  const makeDocRef = (path) => ({
-    path,
-    get: async () => ({
-      exists: Object.prototype.hasOwnProperty.call(docs, path),
-      data: () => docs[path],
-    }),
-    set: async (data) => {
-      writes[path] = data;
-      docs[path] = data;
-    },
-  });
-  return {
-    writes,
-    doc: makeDocRef,
-    collection: (path) => ({ doc: (id) => makeDocRef(`${path}/${id}`) }),
-    runTransaction: async (fn) =>
-      fn({
-        get: async (ref) => ({
-          exists: Object.prototype.hasOwnProperty.call(docs, ref.path),
-          data: () => docs[ref.path],
-        }),
-        set: async (ref, data) => {
-          writes[ref.path] = data;
-          docs[ref.path] = data;
-        },
-      }),
-  };
-}
 
 const okFetch = (sink) => async (url, options) => {
   sink.push({ url, payload: JSON.parse(options.body) });
@@ -186,71 +150,6 @@ describe("season clock (#announcements)", () => {
     assert.match(champ.title, /Championship-week lineup lock/);
     assert.equal(champ.fields[0].value, "8:00 PM ET");
     assert.match(champ.fields[1].value, /openClass, aClass/);
-  });
-});
-
-describe("the Podium Report (#news)", () => {
-  // A daily standings sheet: full field, in rank order, with day-over-day
-  // movement. delta is prevRank - rank, so positive is a climb.
-  const sheet = {
-    day: 12,
-    fieldSize: 42,
-    entries: [
-      { rank: 1, corpsName: "Blue Devils", total: 91.2, delta: 1, note: "Takes over at #1." },
-      { rank: 2, corpsName: "Colts", total: 90.1, delta: -1 },
-      { rank: 3, corpsName: "Raiders", total: 88.4, delta: 6, note: "Up 6 — the day's biggest move." },
-      { rank: 4, corpsName: "Cavaliers", total: 87.0, delta: -3 },
-    ],
-  };
-
-  test("movement labels read as arrows", () => {
-    assert.equal(movementLabel(3), "▲3");
-    assert.equal(movementLabel(-2), "▼2");
-    assert.equal(movementLabel(0), "—");
-  });
-
-  test("leads with a commentative lede and calls out the day's movers", () => {
-    const embed = buildPodiumReportPayload({ sheet, day: 12, seasonName: "Season 12" }).embeds[0];
-    assert.match(embed.title, /Day 12/);
-    // The lede names the leader, the margin to second, and the day.
-    assert.match(embed.description, /Blue Devils/);
-    assert.match(embed.description, /Colts/);
-    assert.match(embed.fields[0].name, /42 corps ranked/);
-    assert.match(embed.fields[0].value, /🥇 \*\*Blue Devils\*\* — 91\.200 ▲1/);
-    assert.match(embed.fields[1].name, /Movers/);
-    // Biggest climb (Raiders, +6) and steepest slide (Cavaliers, -3).
-    assert.match(embed.fields[1].value, /▲6 \*\*Raiders\*\* — now 3/);
-    assert.match(embed.fields[1].value, /▼3 \*\*Cavaliers\*\* — now 4/);
-  });
-
-  test("posts the day's sheet once, then stays quiet", async () => {
-    const db = fakeDb({ "podium-recaps/s1/standings/12": sheet });
-    const posts = [];
-    const args = {
-      seasonUid: "s1",
-      seasonName: "Season 12",
-      competitionDay: 12,
-      webhookUrl: "https://d.test/news",
-      fetchImpl: okFetch(posts),
-    };
-    assert.equal((await announcePodiumReport(db, args)).status, "posted");
-    assert.equal((await announcePodiumReport(db, args)).status, "skipped");
-    assert.equal(posts.length, 1);
-    assert.equal(db.writes["scoring_runs/s1_discord_podreport_day12"].status, "completed");
-  });
-
-  test("quiet before the first day and when no sheet is published", async () => {
-    const posts = [];
-    const base = { seasonUid: "s1", seasonName: "S", webhookUrl: "u", fetchImpl: okFetch(posts) };
-    assert.equal(
-      (await announcePodiumReport(fakeDb({}), { ...base, competitionDay: 0 })).status,
-      "no-day"
-    );
-    assert.equal(
-      (await announcePodiumReport(fakeDb({}), { ...base, competitionDay: 14 })).status,
-      "not-published"
-    );
-    assert.equal(posts.length, 0);
   });
 });
 

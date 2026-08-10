@@ -258,6 +258,33 @@ describe("feature-length prose", () => {
     assert.equal(leaderStory(analyzeStandings(bare)), null);
   });
 
+  test("opening night still reads as a feature: scene set, no movers or arrivals", () => {
+    const openingSheet = {
+      day: 1,
+      fieldSize: 3,
+      entries: [
+        entry({ rank: 1, uid: "a", corpsName: "Altitude", total: 43.508, ge: 17.2, vis: 13.131, mus: 13.177, delta: null, prevRank: null, division: "worldClass" }),
+        entry({ rank: 2, uid: "b", corpsName: "Black Gold", total: 43.401, ge: 17.0, vis: 13.012, mus: 13.389, delta: null, prevRank: null, division: "worldClass" }),
+        entry({ rank: 3, uid: "c", corpsName: "Fogwalkers", total: 42.411, ge: 16.4, vis: 13.0, mus: 13.011, delta: null, prevRank: null, division: "worldClass" }),
+      ],
+    };
+    const article = composeNarrative(analyzeStandings(openingSheet));
+    // The opening-night framing, not the old one-line "chase starts here".
+    assert.match(article, /Opening night is a blank page/);
+    // The field scene runs even on opening night (it used to be dropped), and a
+    // tight board (spread ≈ 1.097) earns the "packed tight" beat.
+    assert.match(article, /\*\*The field\.\*\*/);
+    assert.match(article, /3 corps answered the bell/);
+    assert.match(article, /packed tight/);
+    // Caption centerpiece still runs off the sheet.
+    assert.match(article, /\*\*The lead\.\*\*/);
+    // But nothing to move or arrive when the whole field is brand new.
+    assert.doesNotMatch(article, /\*\*Movers\.\*\*/);
+    assert.doesNotMatch(article, /\*\*New faces\.\*\*/);
+    assert.match(article, /no ballots, no bias, just the board/);
+    assert.doesNotMatch(article, /[^\n]\n[^\n]/);
+  });
+
   test("the full column carries the feature frames when the numbers are there", () => {
     const article = composeNarrative(analyzeStandings(captionSheet));
     // The scene-setting lede beats.

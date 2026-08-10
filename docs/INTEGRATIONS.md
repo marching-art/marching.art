@@ -359,11 +359,13 @@ Two publishers, one channel:
   6 h) means a records rebuild or migration can never replay years of
   headlines into the channel. Volume is ~5 posts on a generation night; if
   that ever reads as noise, switch to one digest per day off the day-index doc.
-- **The Podium Report** — `functions/src/helpers/podium/podiumReportDiscord.js`,
-  posted by `runPodiumReportStage` after the Podium stage publishes the week's
-  column to `podium-recaps/{seasonUid}/power/{week}`. The column is
-  deterministic and data-composed (never LLM-written), so it is safe to
-  syndicate verbatim. One lease per week (`{seasonUid}_discord_podreport_day{week}`).
+  The **Podium Report** rides this same path: the nightly generation run writes
+  it as a published article (`functions/src/helpers/newsPodiumArticle.js`, the
+  deterministic power-rankings column), so it reaches #news through the
+  published-articles trigger like every other article — no separate standings
+  embed. (An earlier build posted a second standalone embed from
+  `runPodiumReportStage`; it was removed because #news received the same board
+  twice.)
 
 ---
 

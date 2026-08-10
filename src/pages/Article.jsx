@@ -427,7 +427,10 @@ const Article = () => {
 
                 {/* Full Story - only show if different from summary */}
                 <div className="p-5 lg:p-6">
-                  {/* Articles with structured sections get parsed layout */}
+                  {/* Articles with structured sections get parsed layout. The
+                      Podium Report is an editorial magazine column, so it routes
+                      here too — otherwise its **subheads** render as literal
+                      asterisks in the plain-paragraph fallback below. */}
                   {[
                     'fantasy_recap',
                     'fantasy_daily',
@@ -435,6 +438,7 @@ const Article = () => {
                     'dci_daily',
                     'dci_feature',
                     'season_summary',
+                    'podium_report',
                   ].includes(article.type) ||
                   [
                     'fantasy_recap',
@@ -443,6 +447,7 @@ const Article = () => {
                     'dci_daily',
                     'dci_feature',
                     'season_summary',
+                    'podium_report',
                   ].includes(article.articleType) ? (
                     <div className="mb-8">
                       <ArticleNarrativeParser

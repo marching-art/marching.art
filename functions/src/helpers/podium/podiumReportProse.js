@@ -198,9 +198,19 @@ function fieldScene(analysis) {
   if (totals.length < 2) return null;
   const spread = Number((totals[0] - totals[totals.length - 1]).toFixed(3));
   const n = fieldSize || ranked.length;
+  // A second beat keyed only to the spread the numbers give: how tight or how
+  // stretched the board is, and what that says about how quickly it can move.
+  let shape = "";
+  if (spread <= 2) {
+    shape =
+      " It is a field packed tight enough that a single strong caption can reorder the whole thing overnight.";
+  } else if (spread >= 8) {
+    shape =
+      " It is a field with real distance between its floors — the kind of gap that takes weeks, not nights, to close.";
+  }
   return (
     `${n} corps answered the bell tonight, and ${fmtScore(spread)} of scoring is all that ` +
-    `stretches between the top of the board and the bottom of it.`
+    `stretches between the top of the board and the bottom of it.${shape}`
   );
 }
 
@@ -353,20 +363,26 @@ function arrivalsSentence(analysis) {
 function composeNarrative(analysis) {
   const paragraphs = [];
 
-  // Lede — the column's own lede, then the character of the lead and the shape
-  // of the field, so the piece opens on a scene rather than a scoreline.
+  // Lede — the column's own lede, then the character of the night: on opening
+  // night the weight of a first ranking, otherwise how the leader is holding the
+  // top of the board. The scene itself gets its own section below.
   const lede = [leadSentence(analysis)];
   if (analysis.openingDay) {
     lede.push(
-      "Opening night sets the first order of the season — every corps on the board is new to it, " +
-        "and the chase starts here."
+      "Opening night is a blank page. Every corps on the board is new to the Podium Class, and " +
+        "tonight's order is only the first word in an argument the season will spend the next " +
+        "several weeks having with itself."
     );
   } else {
     lede.push(`For now ${analysis.leader.corpsName} is ${leadCharacter(analysis.leadMargin)}.`);
-    const scene = fieldScene(analysis);
-    if (scene) lede.push(scene);
   }
   paragraphs.push(lede.join(" "));
+
+  // The field: how deep the board is and how much scoring separates top from
+  // bottom. Set the scene before telling the story — and, unlike before, do it
+  // on opening night too, when there is no movement yet to write about.
+  const scene = fieldScene(analysis);
+  if (scene) paragraphs.push(`**The field.** ${scene}`);
 
   // The centerpiece: how the night's top number was built, off the caption sheet.
   const lead = leaderStory(analysis);
