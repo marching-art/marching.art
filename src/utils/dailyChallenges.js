@@ -113,7 +113,9 @@ export const CHALLENGE_POOL = [
     id: 'join-league-pool',
     label: "Enter today's league pool",
     link: '/leagues',
-    xp: 10,
+    // Stretch tier (20 XP vs 10 XP core) — mirrors the server; see the note in
+    // functions/src/helpers/dailyChallenges.js.
+    xp: 20,
     // Pool entries live at leagues/{id}/pools/{gameDay}, off the profile, so
     // the per-day fact is surfaced through context.leaguePool (computed by
     // useLeaguePoolFacts and threaded down like the Podium facts).

@@ -51,7 +51,7 @@ your biography passes.
 | Weekly participation | 150                                 | Compete in ≥1 show in a week, once per class/week |
 | League matchup win   | 100                                 | Byes and ties award nothing                       |
 | Daily prediction     | 15 / correct                        | + a perfect-day bonus                             |
-| Daily challenges     | 10 each, 2/day                      | + a 100 XP / 100 CC weekly-loop bonus             |
+| Daily challenges     | 10 core / 20 stretch, 2/day         | + a 100 XP / 100 CC weekly-loop bonus             |
 | Streak milestones    | 50–1,000                            | At 3/7/14/30/60/100 days                          |
 | Season completion    | 200 / 300 / 400 / 500 by final rank | Guaranteed 200 for finishing                      |
 | First Season Journey | 425 one-time                        | The onboarding questline                          |

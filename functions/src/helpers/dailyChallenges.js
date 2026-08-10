@@ -111,8 +111,12 @@ const CHALLENGE_POOL = [
   },
   {
     id: "join-league-pool",
+    // Stretch tier (20 XP vs the 10 XP core): higher friction than a glance or
+    // a tap — it costs a pool ante and is a deliberate social act — so it pays
+    // more. (A small CC reward here is a reasonable further nudge, but that is a
+    // new economy faucet and is intentionally left for an owner decision.)
     label: "Enter today's league pool",
-    xp: 10,
+    xp: 20,
     // League prediction pools are the game's nightly social heartbeat. Entries
     // live at leagues/{id}/pools/{gameDay}.entrants[uid] — a genuinely per-day
     // fact off the profile, surfaced through context.leaguePool (loaded by
