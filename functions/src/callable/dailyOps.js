@@ -13,18 +13,21 @@ const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
-  WEEKLY_LOOP_TARGET_DAYS,
   getGameDay,
   advanceWeeklyLoop,
   getChallengesForGameDay,
   getRequiredChallengeIds,
   rotationNeedsPodiumContext,
+  rotationNeedsLeaguePoolContext,
   pruneOldChallenges,
 } = require("../helpers/dailyChallenges");
 // Podium keeps its show picks and show concept in a server-only subcollection,
 // not on the profile's corps map — so a challenge verifier reading the profile
 // alone can't see them. loadPodiumChallengeFacts bridges that gap.
 const { loadPodiumChallengeFacts } = require("../helpers/podium/store");
+// League prediction-pool entries live at leagues/{id}/pools/{gameDay}, off the
+// profile, so the join-league-pool challenge needs the same bridge.
+const { loadLeaguePoolChallengeFacts } = require("../helpers/leaguePools");
 const {
   PREDICTION_QUESTIONS,
   SCORE_FREE_QUESTION_IDS,
@@ -334,15 +337,17 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
     const rotationIds = getChallengesForGameDay(gameDayPre).map((c) => c.id);
     const needsPrediction = rotationIds.includes("make-prediction");
     const needsPodium = rotationNeedsPodiumContext(gameDayPre);
+    const needsLeaguePool = rotationNeedsLeaguePoolContext(gameDayPre);
 
     let predictionAvailable = true;
     let podiumFacts = null;
-    // A single profile read covers both pre-transaction facts. Skip it
-    // entirely when today's rotation needs neither. (The transaction re-reads
+    let leaguePoolFacts = null;
+    // A single profile read covers every pre-transaction fact. Skip it
+    // entirely when today's rotation needs none. (The transaction re-reads
     // the profile authoritatively; this pre-read exists only for the
-    // cross-document lookups a transaction can't do — recaps and the podium
-    // subcollection.)
-    if (needsPrediction || needsPodium) {
+    // cross-document lookups a transaction can't do — recaps, the podium
+    // subcollection, and the leagues' pool docs.)
+    if (needsPrediction || needsPodium || needsLeaguePool) {
       const preSnap = await profileRef.get();
       const pre = preSnap.exists ? preSnap.data() : {};
       const seasonUid = pre.activeSeasonId;
@@ -377,9 +382,20 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
       if (needsPodium && pre.corps?.podiumClass?.corpsName) {
         podiumFacts = await loadPodiumChallengeFacts(db, uid, seasonUid);
       }
+
+      // Read the director's league pool docs for today only when the rotation
+      // includes join-league-pool and they actually belong to a league.
+      if (needsLeaguePool && Array.isArray(pre.leagueIds) && pre.leagueIds.length > 0) {
+        leaguePoolFacts = await loadLeaguePoolChallengeFacts(
+          db,
+          uid,
+          pre.leagueIds,
+          gameDayPre
+        );
+      }
     }
 
-    const context = { predictionAvailable, podium: podiumFacts };
+    const context = { predictionAvailable, podium: podiumFacts, leaguePool: leaguePoolFacts };
 
     const result = await db.runTransaction(async (transaction) => {
       const profileDoc = await transaction.get(profileRef);
@@ -460,7 +476,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         addCoinHistoryEntryToTransaction(transaction, db, uid, {
           type: "weekly_arc",
           amount: weeklyArcBonus.coin,
-          description: `Weekly arc complete — ${WEEKLY_LOOP_TARGET_DAYS} full daily sets this week`,
+          description: `Weekly arc — ${weeklyArcBonus.tiers.join(" & ")}-day milestone`,
         });
       }
 

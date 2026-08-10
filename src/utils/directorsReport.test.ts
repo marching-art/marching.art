@@ -61,7 +61,10 @@ describe('computeDirectorsReport — the day’s set', () => {
   it('counts only completed challenges that are in today’s rotation', () => {
     const todays = getChallengesForGameDay(GAME_DAY);
     const state = computeDirectorsReport({
+      // A lineup-bearing corps keeps check-lineup available so a completed
+      // in-rotation challenge is actually counted.
       profile: {
+        corps: { worldClass: { corpsName: 'W' } },
         challenges: {
           [GAME_DAY]: [
             { id: todays[0].id, completed: true },
@@ -203,7 +206,9 @@ describe('computeDirectorsReport — a brand-new director', () => {
 });
 
 describe('computeDirectorsReport — a Podium-only director', () => {
-  // No lineup-bearing corps, and their shows/concept live off the profile.
+  // No lineup-bearing corps. On GAME_DAY the rotation is check-lineup +
+  // make-prediction; with no lineup and no results, a Podium-only director with
+  // no league has nothing to do beyond the login — the set must stay winnable.
   const podiumProfile = { corps: { podiumClass: { corpsName: 'Riverside' } } };
 
   it('drops check-lineup from the set — Podium has no lineup', () => {
@@ -221,27 +226,12 @@ describe('computeDirectorsReport — a Podium-only director', () => {
     expect(state.totalCount).toBe(1 + state.challenges.length + state.questions.length);
   });
 
-  it('keeps show/concept challenges, which a Podium director can satisfy', () => {
-    const rotation = getChallengesForGameDay(GAME_DAY).map((c) => c.id);
-    const state = computeDirectorsReport({
-      profile: podiumProfile,
-      recentResults: [],
-      corpsClass: 'podiumClass',
-      podium: { hasShows: true, hasConcept: true },
-      now: NOW,
-    });
-    for (const id of ['register-show', 'set-show-concept']) {
-      if (rotation.includes(id)) expect(state.challenges.some((c) => c.id === id)).toBe(true);
-    }
-  });
-
   it('can reach a complete day with only the challenges it can do', () => {
     // Complete every available challenge; login done; no predictions.
     const available = computeDirectorsReport({
       profile: podiumProfile,
       recentResults: [],
       corpsClass: 'podiumClass',
-      podium: { hasShows: true, hasConcept: true },
       now: NOW,
     }).challenges;
 
@@ -253,10 +243,33 @@ describe('computeDirectorsReport — a Podium-only director', () => {
       },
       recentResults: [],
       corpsClass: 'podiumClass',
-      podium: { hasShows: true, hasConcept: true },
       now: NOW,
     });
     expect(state.allDone).toBe(true);
+  });
+
+  it('offers join-league-pool once the director is in a league and it is in rotation', () => {
+    // Use a day whose rotation actually includes the pool challenge; a league
+    // member with today's pool entered should see it in their set.
+    let poolDay: string | null = null;
+    const anchor = new Date('2026-07-01T12:00:00Z');
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(anchor.getTime() + i * 86400000);
+      if (getChallengesForGameDay(getGameDay(d)).some((c) => c.id === 'join-league-pool')) {
+        poolDay = getGameDay(d);
+        // Reconstruct a NOW well past the 2 AM boundary for that game day.
+        const state = computeDirectorsReport({
+          profile: { ...podiumProfile, leagueIds: ['L1'] },
+          recentResults: [],
+          corpsClass: 'podiumClass',
+          leaguePool: { hasEntered: true },
+          now: new Date(`${poolDay} 18:00:00 GMT`),
+        });
+        expect(state.challenges.some((c) => c.id === 'join-league-pool')).toBe(true);
+        break;
+      }
+    }
+    expect(poolDay).not.toBeNull();
   });
 });
 

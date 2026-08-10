@@ -51,7 +51,7 @@ your biography passes.
 | Weekly participation | 150                                 | Compete in ≥1 show in a week, once per class/week |
 | League matchup win   | 100                                 | Byes and ties award nothing                       |
 | Daily prediction     | 15 / correct                        | + a perfect-day bonus                             |
-| Daily challenges     | 10 each, 3/day                      | + a 100 XP / 100 CC weekly-loop bonus             |
+| Daily challenges     | 10 core / 20 stretch, 2/day         | + a graduated weekly-arc bonus (3/5/7-day tiers)  |
 | Streak milestones    | 50–1,000                            | At 3/7/14/30/60/100 days                          |
 | Season completion    | 200 / 300 / 400 / 500 by final rank | Guaranteed 200 for finishing                      |
 | First Season Journey | 425 one-time                        | The onboarding questline                          |
@@ -117,7 +117,7 @@ instrumented weekly by `scheduled/economyStats.js` (mint vs. sink).
 | Level-up stipend             | 100 CC / level                                 |
 | Streak milestones            | 50–1,000 CC (3→100 days)                       |
 | Prediction accuracy          | 10 CC / correct + 25 CC perfect day            |
-| Daily challenge weekly loop  | 100 CC                                         |
+| Daily challenge weekly arc   | up to 150 CC (3/5/7-day milestones; 100 by 5)  |
 | Season finish bonus          | 1,000 / 750 / 500 / 350 / 250 CC by rank       |
 | Season reward ladder         | up to 1,650 CC across 12 tiers                 |
 | League prize pool (champion) | commissioner-funded                            |
@@ -234,8 +234,16 @@ The returning director's home is the **Director's Report** dashboard
 **Daily systems** (all server-authoritative and idempotent):
 
 - **Daily login** — +25 XP, streak increment, milestone bonuses.
-- **Daily challenges** — 3 rotating micro-tasks, 10 XP each, plus a weekly-loop
-  bonus (`dailyChallenges.js`).
+- **Daily challenges** — 2 rotating micro-tasks (from a pool of three genuinely
+  daily actions: review your lineup, make today's prediction, enter your league
+  prediction pool), 10 XP (20 for the league-pool stretch tier), plus a
+  **graduated weekly arc**: completing the full daily set on 3 / 5 / 7 distinct
+  ET-week days pays 40 / 60 / 50 XP + CC at each milestone (cumulative 100 by
+  five days — unchanged — and 150 for a perfect week). Every challenge verifies
+  a same-day action, so none auto-complete off stale season state. (The old
+  `register-show` / `set-show-concept` challenges were retired from the daily
+  pool for exactly that reason — they're taught and paid once by the First
+  Season Journey instead.)
 - **Daily predictions** — predict tonight's outcomes, resolve tomorrow; 15 XP +
   10 CC per correct pick, +25 CC for a perfect day (`dailyPredictions.js`).
 

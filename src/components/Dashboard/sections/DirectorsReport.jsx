@@ -16,6 +16,8 @@ import { ClipboardList, Check, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../../../store/profileStore';
 import { computeDirectorsReport } from '../../../utils/directorsReport';
+import { getGameDay } from '../../../utils/dailyChallenges';
+import { useNow } from '../../../hooks/useNow';
 import { claimLadderTier } from '../../../api/functions';
 import { showCoinGain } from '../../xpFeedbackTrigger';
 import DailyChallenges from './DailyChallenges';
@@ -23,17 +25,36 @@ import PredictionGamePanel from './PredictionGamePanel';
 import { getClaimableLadderTiers } from './seasonLadderTiers';
 
 const DirectorsReport = memo(
-  ({ recentResults, corpsClass, seasonUid, podium = null, onLineupClick, onConceptClick }) => {
+  ({
+    recentResults,
+    corpsClass,
+    seasonUid,
+    podium = null,
+    leaguePool = null,
+    onLineupClick,
+    onConceptClick,
+  }) => {
     const profile = useProfileStore((state) => state.profile);
     const [claimingTier, setClaimingTier] = useState(null);
+
+    // A minute-resolution clock so the report actually rolls over on the game-day
+    // boundary (2 AM ET). Without a ticking `now`, getGameDay() was only
+    // re-evaluated when the profile changed — an open tab kept showing
+    // yesterday's completed set until some unrelated write forced a re-render,
+    // which is when the challenge auto-claim (and its "+XP" toast) fired at a
+    // random evening hour instead of at the actual rollover.
+    const now = useNow(60000);
+    const gameDay = getGameDay(now);
 
     // The day's set — login + challenge rotation + predictions — computed by
     // the shared resolver so this card and the mobile Next Action hero can
     // never disagree about "Today · X of Y". `podium` carries the show/concept
-    // facts that keep a Podium-only director's set winnable.
+    // facts that keep a Podium-only director's set winnable. Passing `now`
+    // through is what makes the set roll over on the 2 AM ET boundary; the
+    // per-minute recompute is trivial for a single card.
     const { loginDone, streak, predictionAvailable, doneCount, totalCount, allDone } = useMemo(
-      () => computeDirectorsReport({ profile, recentResults, corpsClass, podium }),
-      [profile, recentResults, corpsClass, podium]
+      () => computeDirectorsReport({ profile, recentResults, corpsClass, podium, leaguePool, now }),
+      [profile, recentResults, corpsClass, podium, leaguePool, now]
     );
 
     // --- Pending Season Ladder claims (bonus row, not counted in the set) ---
@@ -124,10 +145,12 @@ const DirectorsReport = memo(
         {/* Daily challenges (embedded — no double card chrome) */}
         <DailyChallenges
           embedded
+          gameDay={gameDay}
           onLineupClick={onLineupClick}
           onConceptClick={onConceptClick}
           predictionAvailable={predictionAvailable}
           podium={podium}
+          leaguePool={leaguePool}
         />
 
         {/* Predictions (embedded); SoundSport gets the placement-only set */}

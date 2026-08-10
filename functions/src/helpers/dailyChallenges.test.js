@@ -8,13 +8,14 @@ const assert = require("node:assert/strict");
 const {
   CHALLENGE_POOL,
   CHALLENGES_PER_DAY,
-  WEEKLY_LOOP_BONUS,
+  WEEKLY_LOOP_MILESTONES,
   getGameDay,
   getWeekKey,
   advanceWeeklyLoop,
   getChallengesForGameDay,
   getRequiredChallengeIds,
   rotationNeedsPodiumContext,
+  rotationNeedsLeaguePoolContext,
   hasLineupBearingCorps,
   pruneOldChallenges,
 } = require("./dailyChallenges");
@@ -49,7 +50,7 @@ describe("getGameDay", () => {
 });
 
 describe("getChallengesForGameDay", () => {
-  test("returns three distinct challenges from the pool", () => {
+  test("returns CHALLENGES_PER_DAY distinct challenges from the pool", () => {
     const picks = getChallengesForGameDay("Sat Jul 04 2026");
     assert.equal(picks.length, CHALLENGES_PER_DAY);
     assert.equal(new Set(picks.map((c) => c.id)).size, CHALLENGES_PER_DAY);
@@ -79,9 +80,8 @@ describe("getChallengesForGameDay", () => {
   test("pinned rotation matches the client mirror (sync check)", () => {
     // Same expectation exists in src/utils/dailyChallenges.test.js
     assert.deepEqual(getChallengesForGameDay("Wed Jan 14 2026").map((c) => c.id), [
+      "join-league-pool",
       "check-lineup",
-      "make-prediction",
-      "register-show",
     ]);
   });
 });
@@ -115,11 +115,6 @@ describe("getRequiredChallengeIds", () => {
     const day = findGameDayWith("check-lineup");
     const ids = getRequiredChallengeIds(day, { corps: { podiumClass: { corpsName: "P" } } });
     assert.ok(!ids.includes("check-lineup"), "check-lineup must not be required for podium-only");
-    // Non-droppable members of the rotation survive.
-    const rotation = getChallengesForGameDay(day).map((c) => c.id);
-    for (const id of rotation) {
-      if (id !== "check-lineup" && id !== "make-prediction") assert.ok(ids.includes(id));
-    }
   });
 
   test("keeps check-lineup for a fantasy director", () => {
@@ -148,56 +143,54 @@ describe("getRequiredChallengeIds", () => {
     assert.ok(ids.includes("make-prediction"));
   });
 
-  test("never drops register-show or set-show-concept (any director can do them)", () => {
-    for (const id of ["register-show", "set-show-concept"]) {
-      const day = findGameDayWith(id);
-      const ids = getRequiredChallengeIds(day, { corps: { podiumClass: { corpsName: "P" } } });
-      assert.ok(ids.includes(id), `${id} must stay required`);
-    }
+  test("drops join-league-pool for a director with no league", () => {
+    const day = findGameDayWith("join-league-pool");
+    const ids = getRequiredChallengeIds(day, { corps: { worldClass: { corpsName: "W" } } });
+    assert.ok(!ids.includes("join-league-pool"), "must not be required without a league");
+  });
+
+  test("keeps join-league-pool for a league member", () => {
+    const day = findGameDayWith("join-league-pool");
+    const ids = getRequiredChallengeIds(day, {
+      corps: { worldClass: { corpsName: "W" } },
+      leagueIds: ["L1"],
+    });
+    assert.ok(ids.includes("join-league-pool"));
   });
 });
 
-describe("challenge verifiers with Podium context", () => {
+describe("join-league-pool verifier", () => {
   const bySlug = (id) => CHALLENGE_POOL.find((c) => c.id === id);
 
-  test("register-show verifies from Podium show picks off the profile", () => {
-    const podiumOnly = { corps: { podiumClass: { corpsName: "P" } } };
-    assert.equal(bySlug("register-show").verify(podiumOnly, "d", { podium: { hasShows: true } }), true);
-    assert.equal(bySlug("register-show").verify(podiumOnly, "d", { podium: { hasShows: false } }), false);
-    // No context at all → not done (a fantasy corps with picks still passes).
-    assert.equal(bySlug("register-show").verify(podiumOnly, "d"), false);
+  test("verifies from today's league-pool entry off the profile", () => {
+    const inLeague = { leagueIds: ["L1"] };
+    assert.equal(bySlug("join-league-pool").verify(inLeague, "d", { leaguePool: { hasEntered: true } }), true);
+    assert.equal(bySlug("join-league-pool").verify(inLeague, "d", { leaguePool: { hasEntered: false } }), false);
+    // No context at all → not done (the profile alone can't show pool entry).
+    assert.equal(bySlug("join-league-pool").verify(inLeague, "d"), false);
   });
 
-  test("set-show-concept verifies from the Podium concept the profile can't show", () => {
-    // The Podium display copy stores showConcept as a STRING, so the fantasy
-    // `.theme` check misses it — the context carries the real answer.
-    const podiumOnly = { corps: { podiumClass: { corpsName: "P", showConcept: "Ritual" } } };
-    assert.equal(bySlug("set-show-concept").verify(podiumOnly, "d", { podium: { hasConcept: true } }), true);
-    assert.equal(bySlug("set-show-concept").verify(podiumOnly, "d", { podium: { hasConcept: false } }), false);
-  });
-
-  test("fantasy verifiers are unchanged by the context arg", () => {
-    const fantasy = {
-      corps: { worldClass: { corpsName: "W", selectedShows: { 1: ["s"] }, showConcept: { theme: "T" } } },
-    };
-    assert.equal(bySlug("register-show").verify(fantasy, "d"), true);
-    assert.equal(bySlug("set-show-concept").verify(fantasy, "d"), true);
+  test("is available only to directors in at least one league", () => {
+    assert.equal(bySlug("join-league-pool").available({ leagueIds: ["L1"] }), true);
+    assert.equal(bySlug("join-league-pool").available({ leagueIds: [] }), false);
+    assert.equal(bySlug("join-league-pool").available({}), false);
   });
 });
 
-describe("rotationNeedsPodiumContext", () => {
-  test("true when the day offers a show/concept challenge", () => {
-    assert.equal(rotationNeedsPodiumContext(findGameDayWith("register-show")), true);
+describe("rotation context gates", () => {
+  test("rotationNeedsLeaguePoolContext is true only when join-league-pool is offered", () => {
+    assert.equal(rotationNeedsLeaguePoolContext(findGameDayWith("join-league-pool")), true);
+    // A day whose rotation is check-lineup + make-prediction needs no pool read.
+    const noPoolDay = findGameDayWith("check-lineup");
+    if (!getChallengesForGameDay(noPoolDay).some((c) => c.id === "join-league-pool")) {
+      assert.equal(rotationNeedsLeaguePoolContext(noPoolDay), false);
+    }
   });
 
-  test("false when it offers neither", () => {
-    // Only check-lineup + make-prediction would need no podium read. Such a
-    // day may not exist in the 3-of-4 rotation, so accept either outcome but
-    // assert the function agrees with the rotation it inspects.
-    const day = "Wed Jan 14 2026"; // check-lineup, make-prediction, register-show
-    const ids = getChallengesForGameDay(day).map((c) => c.id);
-    const expected = ids.includes("register-show") || ids.includes("set-show-concept");
-    assert.equal(rotationNeedsPodiumContext(day), expected);
+  test("rotationNeedsPodiumContext is false — no pooled challenge verifies off Podium now", () => {
+    // register-show / set-show-concept were retired, so nothing in the pool
+    // depends on Podium state. Kept as the callable's single gate regardless.
+    assert.equal(rotationNeedsPodiumContext("Wed Jan 14 2026"), false);
   });
 
   test("every challenge is a verifiable decision", () => {
@@ -210,7 +203,7 @@ describe("rotationNeedsPodiumContext", () => {
     }
   });
 
-  test("verify predicates read the profile state that proves the decision", () => {
+  test("verify predicates read the state that proves a genuine same-day decision", () => {
     const gameDay = "Wed Jan 14 2026";
     const byId = Object.fromEntries(CHALLENGE_POOL.map((c) => [c.id, c]));
 
@@ -229,21 +222,11 @@ describe("rotationNeedsPodiumContext", () => {
       true
     );
 
-    assert.equal(byId["register-show"].verify({}, gameDay), false);
+    assert.equal(byId["join-league-pool"].verify({ leagueIds: ["L1"] }, gameDay), false);
     assert.equal(
-      byId["register-show"].verify(
-        { corps: { soundSport: { selectedShows: { 1: ["show-a"] } } } },
-        gameDay
-      ),
-      true
-    );
-
-    assert.equal(byId["set-show-concept"].verify({}, gameDay), false);
-    assert.equal(
-      byId["set-show-concept"].verify(
-        { corps: { aClass: { showConcept: { theme: "Space" } } } },
-        gameDay
-      ),
+      byId["join-league-pool"].verify({ leagueIds: ["L1"] }, gameDay, {
+        leaguePool: { hasEntered: true },
+      }),
       true
     );
   });
@@ -274,35 +257,91 @@ describe("weekly arc helpers", () => {
     assert.deepEqual(incomplete.weeklyLoop.countedDays, []);
   });
 
-  test("advanceWeeklyLoop pays the bonus once at the 5th day, then never again", () => {
-    const week = ["Mon Jan 12 2026", "Tue Jan 13 2026", "Wed Jan 14 2026", "Thu Jan 15 2026"];
+  test("advanceWeeklyLoop pays each milestone once, on the day it is reached", () => {
+    const week = [
+      "Mon Jan 12 2026",
+      "Tue Jan 13 2026",
+      "Wed Jan 14 2026",
+      "Thu Jan 15 2026",
+      "Fri Jan 16 2026",
+      "Sat Jan 17 2026",
+      "Sun Jan 18 2026",
+    ];
     let loop;
+    const bonuses = [];
     for (const day of week) {
       const step = advanceWeeklyLoop(loop, day, true);
-      assert.equal(step.bonus, null, `no bonus before day 5 (${day})`);
+      bonuses.push(step.bonus);
       loop = step.weeklyLoop;
     }
-
-    const fifth = advanceWeeklyLoop(loop, "Fri Jan 16 2026", true);
-    assert.deepEqual(fifth.bonus, WEEKLY_LOOP_BONUS);
-    assert.equal(fifth.weeklyLoop.rewarded, true);
-
-    // A 6th day counts but never re-pays
-    const sixth = advanceWeeklyLoop(fifth.weeklyLoop, "Sat Jan 17 2026", true);
-    assert.equal(sixth.bonus, null);
-    assert.equal(sixth.weeklyLoop.countedDays.length, 6);
+    // Milestones at 3 / 5 / 7 days; nothing on the days between.
+    assert.equal(bonuses[0], null);
+    assert.equal(bonuses[1], null);
+    assert.deepEqual(bonuses[2], { xp: 40, coin: 40, tiers: [3] });
+    assert.equal(bonuses[3], null);
+    assert.deepEqual(bonuses[4], { xp: 60, coin: 60, tiers: [5] });
+    assert.equal(bonuses[5], null);
+    assert.deepEqual(bonuses[6], { xp: 50, coin: 50, tiers: [7] });
+    assert.deepEqual(loop.rewardedDays, [3, 5, 7]);
   });
 
   test("advanceWeeklyLoop resets for a new week", () => {
     const prior = {
       weekKey: "Mon Jan 12 2026",
-      countedDays: ["Mon Jan 12 2026", "Tue Jan 13 2026"],
-      rewarded: true,
+      countedDays: ["Mon Jan 12 2026", "Tue Jan 13 2026", "Wed Jan 14 2026"],
+      rewardedDays: [3],
     };
     const nextWeek = advanceWeeklyLoop(prior, "Mon Jan 19 2026", true);
     assert.equal(nextWeek.weeklyLoop.weekKey, "Mon Jan 19 2026");
     assert.deepEqual(nextWeek.weeklyLoop.countedDays, ["Mon Jan 19 2026"]);
-    assert.equal(nextWeek.weeklyLoop.rewarded, false);
+    assert.deepEqual(nextWeek.weeklyLoop.rewardedDays, []);
+  });
+
+  test("migrates a legacy `rewarded: true` loop without re-paying 3/5, and still pays 7", () => {
+    // Legacy state: the old single 5-day bonus already paid this week.
+    const legacy = {
+      weekKey: getWeekKey("Fri Jan 16 2026"),
+      countedDays: [
+        "Mon Jan 12 2026",
+        "Tue Jan 13 2026",
+        "Wed Jan 14 2026",
+        "Thu Jan 15 2026",
+        "Fri Jan 16 2026",
+      ],
+      rewarded: true,
+    };
+    const sixth = advanceWeeklyLoop(legacy, "Sat Jan 17 2026", true);
+    assert.equal(sixth.bonus, null, "no re-pay of the 3/5-day tiers the legacy flag covered");
+    assert.deepEqual(sixth.weeklyLoop.rewardedDays, [3, 5]);
+
+    const seventh = advanceWeeklyLoop(sixth.weeklyLoop, "Sun Jan 18 2026", true);
+    assert.deepEqual(seventh.bonus, { xp: 50, coin: 50, tiers: [7] });
+    assert.deepEqual(seventh.weeklyLoop.rewardedDays, [3, 5, 7]);
+  });
+
+  test("a legacy partial week catches up multiple milestones in one summed payout", () => {
+    // 4 counted days, never rewarded (never hit the old 5-day mark). The next
+    // full-set day crosses both the 3- and 5-day milestones at once.
+    const legacyPartial = {
+      weekKey: getWeekKey("Fri Jan 16 2026"),
+      countedDays: ["Mon Jan 12 2026", "Tue Jan 13 2026", "Wed Jan 14 2026", "Thu Jan 15 2026"],
+      rewarded: false,
+    };
+    const fifth = advanceWeeklyLoop(legacyPartial, "Fri Jan 16 2026", true);
+    assert.deepEqual(fifth.bonus, { xp: 100, coin: 100, tiers: [3, 5] });
+    assert.deepEqual(fifth.weeklyLoop.rewardedDays, [3, 5]);
+  });
+
+  test("WEEKLY_LOOP_MILESTONES 5-day cumulative stays 100/100 (economy-neutral)", () => {
+    const throughFive = WEEKLY_LOOP_MILESTONES.filter((m) => m.days <= 5);
+    assert.equal(
+      throughFive.reduce((s, m) => s + m.coin, 0),
+      100
+    );
+    assert.equal(
+      throughFive.reduce((s, m) => s + m.xp, 0),
+      100
+    );
   });
 });
 

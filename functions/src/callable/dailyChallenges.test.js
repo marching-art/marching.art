@@ -10,27 +10,24 @@ const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
 const { completeDailyChallenge } = require("./dailyOps");
-const {
-  getGameDay,
-  getChallengesForGameDay,
-  getRequiredChallengeIds,
-} = require("../helpers/dailyChallenges");
+const { getGameDay, getChallengesForGameDay } = require("../helpers/dailyChallenges");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
-const podiumStatePath = (uid) => `artifacts/${NS}/users/${uid}/podium/state`;
+// The join-league-pool challenge verifies off leagues/{id}/pools/{gameDay}, so
+// a director who has "entered today's pool" needs that doc in the fake db.
+const leaguePoolPath = (leagueId, day) => `artifacts/${NS}/leagues/${leagueId}/pools/${day}`;
 
 // Today's real rotation — the callable uses the real clock, so tests pick
 // challenge ids relative to the actual current game day.
 const gameDay = getGameDay();
 const todaysChallenges = getChallengesForGameDay(gameDay);
 const offeredToday = todaysChallenges[0];
-const notOfferedToday = [
-  "check-lineup",
-  "make-prediction",
-  "register-show",
-  "set-show-concept",
-].find((id) => !todaysChallenges.some((c) => c.id === id));
+// A valid pool member that is NOT in today's rotation (pool of 3, 2 offered),
+// used to exercise the "valid challenge, not offered today" soft no-op.
+const notOfferedToday = ["check-lineup", "make-prediction", "join-league-pool"].find(
+  (id) => !todaysChallenges.some((c) => c.id === id)
+);
 
 function makeFakeDb(docs = new Map(), recaps = []) {
   const writes = [];
@@ -90,23 +87,35 @@ function authedRequest(uid, data = {}) {
   return { data, auth: { uid, token: {} } };
 }
 
-// Satisfies EVERY challenge's verify predicate (lineup, registered show,
-// show concept, and a saved prediction pick), so tests can complete any of
-// today's rotation.
+// Satisfies EVERY current challenge: a fielded lineup (check-lineup), a saved
+// prediction pick (make-prediction), and league membership (join-league-pool's
+// availability). The matching entered-pool doc lives in `u1Docs` so the
+// challenge also verifies. worldClass carries a corpsName so check-lineup is
+// AVAILABLE (hasLineupBearingCorps), not just verifiable.
 const baseProfile = () => ({
   uid: "u1",
   xp: 100,
   xpLevel: 1,
-  unlockedClasses: ["soundSport"],
+  activeSeasonId: "s1",
+  unlockedClasses: ["worldClass"],
+  leagueIds: ["L1"],
   corps: {
-    soundSport: {
-      lineup: { GE1: "Blue Devils|2024" },
-      selectedShows: { 1: ["show-a"] },
-      showConcept: { theme: "Space" },
-    },
+    worldClass: { corpsName: "Blue Coats", lineup: { GE1: "Blue Devils|2024" } },
   },
   predictions: { [gameDay]: { picks: { podium: { pick: "Yes" } } } },
 });
+
+// Today's pool doc for u1's league, marking them entered — so join-league-pool
+// verifies whenever it is part of today's rotation.
+const enteredPoolDoc = () => ({ gameDay, entrants: { u1: true } });
+
+// The docs map for a u1 test: the profile plus the entered-pool doc, with
+// optional profile overrides merged in.
+const u1Docs = (overrides = {}) =>
+  new Map([
+    [profilePath("u1"), { ...baseProfile(), ...overrides }],
+    [leaguePoolPath("L1", gameDay), enteredPoolDoc()],
+  ]);
 
 after(() => setDbForTesting(null));
 
@@ -132,7 +141,7 @@ describe("completeDailyChallenge", () => {
   });
 
   test("soft-fails for a real challenge not in today's rotation", async () => {
-    const docs = new Map([[profilePath("u1"), baseProfile()]]);
+    const docs = u1Docs();
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 
@@ -145,7 +154,7 @@ describe("completeDailyChallenge", () => {
   });
 
   test("awards catalog XP and records the completion", async () => {
-    const docs = new Map([[profilePath("u1"), baseProfile()]]);
+    const docs = u1Docs();
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 
@@ -166,15 +175,9 @@ describe("completeDailyChallenge", () => {
   });
 
   test("does not double-award a completed challenge", async () => {
-    const docs = new Map([
-      [
-        profilePath("u1"),
-        {
-          ...baseProfile(),
-          challenges: { [gameDay]: [{ id: offeredToday.id, completed: true }] },
-        },
-      ],
-    ]);
+    const docs = u1Docs({
+      challenges: { [gameDay]: [{ id: offeredToday.id, completed: true }] },
+    });
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 
@@ -189,15 +192,9 @@ describe("completeDailyChallenge", () => {
 
   test("preserves other completions in today's bucket", async () => {
     const other = todaysChallenges[1];
-    const docs = new Map([
-      [
-        profilePath("u1"),
-        {
-          ...baseProfile(),
-          challenges: { [gameDay]: [{ id: other.id, completed: true, xp: other.xp }] },
-        },
-      ],
-    ]);
+    const docs = u1Docs({
+      challenges: { [gameDay]: [{ id: other.id, completed: true, xp: other.xp }] },
+    });
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 
@@ -237,23 +234,14 @@ describe("completeDailyChallenge", () => {
   });
 
   test("counts a full-set day toward the weekly arc", async () => {
-    // Two of today's three already complete — completing the last one
-    // finishes the set and counts today.
-    const [a, b] = [todaysChallenges[1], todaysChallenges[2]];
-    const docs = new Map([
-      [
-        profilePath("u1"),
-        {
-          ...baseProfile(),
-          challenges: {
-            [gameDay]: [
-              { id: a.id, completed: true },
-              { id: b.id, completed: true },
-            ],
-          },
-        },
-      ],
-    ]);
+    // The full set is CHALLENGES_PER_DAY (2). With the other member already
+    // complete, completing offeredToday finishes the set and counts today.
+    // baseProfile is a full fantasy+league director, so every offered
+    // challenge is available and counts toward the required set.
+    const other = todaysChallenges[1];
+    const docs = u1Docs({
+      challenges: { [gameDay]: [{ id: other.id, completed: true }] },
+    });
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 
@@ -279,14 +267,12 @@ describe("completeDailyChallenge", () => {
       return;
     }
     const last = others[others.length - 1];
-    const newDirector = {
-      ...baseProfile(),
+    const docs = u1Docs({
       predictions: {}, // no picks — and no recaps exist (empty fake recaps)
       challenges: {
         [gameDay]: others.slice(0, -1).map((c) => ({ id: c.id, completed: true })),
       },
-    };
-    const docs = new Map([[profilePath("u1"), newDirector]]);
+    });
     const { db, writes } = makeFakeDb(docs, []); // no recap results at all
     setDbForTesting(db);
 
@@ -299,113 +285,48 @@ describe("completeDailyChallenge", () => {
     assert.deepEqual(loop.countedDays, [gameDay]);
   });
 
-  // A Podium-only director keeps show picks and concept in the podium
-  // subcollection, not on the profile — so before the context fix these two
-  // challenges could never verify, and check-lineup could never complete,
-  // which locked them out of the daily set and the weekly arc entirely.
-  const podiumOnlyProfile = () => ({
-    uid: "p1",
-    xp: 100,
-    xpLevel: 1,
-    activeSeasonId: "s1",
-    unlockedClasses: ["soundSport"],
-    corps: { podiumClass: { corpsName: "Riverside Cadets", class: "podiumClass" } },
-    predictions: {},
-  });
-  const podiumStateDoc = () => ({
-    seasonUid: "s1",
-    showConcept: "A Ritual in Blue",
-    selectedShows: { 3: { eventName: "Allentown", location: "PA" } },
-  });
-
-  test("a Podium-only director can complete a show/concept challenge", async () => {
-    const target = todaysChallenges.find(
-      (c) => c.id === "register-show" || c.id === "set-show-concept"
-    );
-    if (!target) return; // today's rotation offers neither — nothing to prove
-    const docs = new Map([
-      [profilePath("p1"), podiumOnlyProfile()],
-      [podiumStatePath("p1"), podiumStateDoc()],
-    ]);
-    const { db, writes } = makeFakeDb(docs);
+  test("join-league-pool verifies off today's entered pool doc", async () => {
+    // The pool entry lives at leagues/{id}/pools/{gameDay}, not on the profile;
+    // it can only be claimed on a day the rotation actually offers it.
+    const target = todaysChallenges.find((c) => c.id === "join-league-pool");
+    if (!target) return; // today's rotation doesn't offer it — nothing to prove
+    const { db, writes } = makeFakeDb(u1Docs());
     setDbForTesting(db);
 
-    const result = await completeDailyChallenge.run(authedRequest("p1", { challengeId: target.id }));
-    assert.equal(result.success, true, "podium fact must verify off the subcollection");
+    const result = await completeDailyChallenge.run(authedRequest("u1", { challengeId: target.id }));
+    assert.equal(result.success, true, "an entered pool must verify off the league doc");
     assert.equal(result.xpAwarded, target.xp);
-    assert.equal(writes[0].data.challenges[gameDay][0].id, target.id);
+    assert.equal(writes[0].data.challenges[gameDay].some((c) => c.id === target.id), true);
   });
 
-  test("the weekly arc counts a Podium-only director's completed set", async () => {
-    // Their required set excludes check-lineup (no lineup) and make-prediction
-    // (no podium recaps → no questions). Complete everything that remains.
-    const context = { predictionAvailable: false, podium: { hasShows: true, hasConcept: true } };
-    const required = getRequiredChallengeIds(gameDay, podiumOnlyProfile(), context);
-    assert.ok(required.length > 0, "a podium-only director must have a satisfiable set");
-    assert.ok(!required.includes("check-lineup"), "check-lineup must not be required");
-
-    const preDone = required.slice(0, -1);
-    const last = required[required.length - 1];
-    const docs = new Map([
-      [
-        profilePath("p1"),
-        {
-          ...podiumOnlyProfile(),
-          challenges: { [gameDay]: preDone.map((id) => ({ id, completed: true })) },
-        },
-      ],
-      [podiumStatePath("p1"), podiumStateDoc()],
-    ]);
-    const { db, writes } = makeFakeDb(docs);
-    setDbForTesting(db);
-
-    const result = await completeDailyChallenge.run(authedRequest("p1", { challengeId: last }));
-    assert.equal(result.success, true);
-    assert.equal(result.weeklyArcDays, 1, "the podium director's set must count toward the arc");
-    const loop = writes[0].data["engagement.weeklyLoop"];
-    assert.deepEqual(loop.countedDays, [gameDay]);
-  });
-
-  test("a stale prior-season Podium state does not satisfy this season's challenge", async () => {
-    const target = todaysChallenges.find((c) => c.id === "register-show");
+  test("join-league-pool soft-fails when the director has not entered any pool", async () => {
+    const target = todaysChallenges.find((c) => c.id === "join-league-pool");
     if (!target) return;
-    const docs = new Map([
-      [profilePath("p1"), podiumOnlyProfile()], // activeSeasonId: 's1'
-      [podiumStatePath("p1"), { ...podiumStateDoc(), seasonUid: "s0" }], // last season
-    ]);
+    // Profile is in a league, but no entered-pool doc exists for today.
+    const docs = new Map([[profilePath("u1"), baseProfile()]]);
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 
-    const result = await completeDailyChallenge.run(authedRequest("p1", { challengeId: target.id }));
-    assert.equal(result.success, false, "a stale-season podium state must not verify");
+    const result = await completeDailyChallenge.run(authedRequest("u1", { challengeId: target.id }));
+    assert.equal(result.success, false);
+    assert.equal(result.notDoneYet, true);
     assert.equal(writes.length, 0);
   });
 
   test("pays the weekly-arc bonus exactly when the 5th full-set day lands", async () => {
-    const [a, b] = [todaysChallenges[1], todaysChallenges[2]];
+    const other = todaysChallenges[1];
     const priorDays = ["d1", "d2", "d3", "d4"]; // 4 counted days this week
-    const docs = new Map([
-      [
-        profilePath("u1"),
-        {
-          ...baseProfile(),
-          engagement: {
-            weeklyLoop: {
-              // Same week as today by construction
-              weekKey: require("../helpers/dailyChallenges").getWeekKey(gameDay),
-              countedDays: priorDays,
-              rewarded: false,
-            },
-          },
-          challenges: {
-            [gameDay]: [
-              { id: a.id, completed: true },
-              { id: b.id, completed: true },
-            ],
-          },
+    const docs = u1Docs({
+      engagement: {
+        weeklyLoop: {
+          // Same week as today by construction
+          weekKey: require("../helpers/dailyChallenges").getWeekKey(gameDay),
+          countedDays: priorDays,
+          rewarded: false,
         },
-      ],
-    ]);
+      },
+      challenges: { [gameDay]: [{ id: other.id, completed: true }] },
+    });
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 

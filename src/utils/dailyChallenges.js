@@ -77,6 +77,13 @@ const hasLineupBearingCorps = (profile) =>
  * its show picks and (as a string) its concept in a server-only subcollection,
  * surfaced here as `context.podium = { hasShows, hasConcept }`.
  */
+// Every challenge is a GENUINE same-day action — its predicate reads state
+// written the day the director does the thing. `register-show` and
+// `set-show-concept` were retired from the daily pool because they verify
+// persistent season state (a show map / concept set once), so they
+// auto-claimed off stale state every day — free XP with no agency, and a
+// phantom "+10 XP" toast when the game day rolled. Those two are taught and
+// paid once by the First Season Journey questline instead.
 export const CHALLENGE_POOL = [
   {
     id: 'check-lineup',
@@ -84,10 +91,9 @@ export const CHALLENGE_POOL = [
     link: null,
     action: 'lineup',
     xp: 10,
-    check: (profile) =>
-      Object.values(profile?.corps || {}).some(
-        (c) => c && c.lineup && Object.keys(c.lineup).length > 0
-      ),
+    // No `check`: this challenge is claimed on the review ACTION (the row
+    // click, handled in DailyChallenges), not by auto-claiming off a lineup
+    // that merely exists — that is what made it phantom-complete every day.
     // Podium is a director simulation with no caption lineup — its daily verb
     // is allocating rehearsal blocks. Requiring this of a Podium-only director
     // once made their full set impossible.
@@ -104,36 +110,37 @@ export const CHALLENGE_POOL = [
     available: (_profile, context) => context?.predictionAvailable !== false,
   },
   {
-    id: 'register-show',
-    label: 'Register for a show',
-    link: '/schedule',
-    xp: 10,
-    // Podium registers for shows too (setPodiumShows); its picks live in the
-    // podium subcollection, surfaced via context.podium.hasShows.
-    check: (profile, _gameDay, context) =>
-      Object.values(profile?.corps || {}).some(
-        (c) => c && Object.keys(c.selectedShows || {}).length > 0
-      ) || Boolean(context?.podium?.hasShows),
-  },
-  {
-    id: 'set-show-concept',
-    label: 'Set your show concept',
-    link: null,
-    action: 'concept',
-    xp: 10,
-    // Podium names its show at registration; its concept is a string, not a
-    // {theme} object, so the fantasy check misses it — context carries it.
-    check: (profile, _gameDay, context) =>
-      Object.values(profile?.corps || {}).some((c) => c && c.showConcept?.theme) ||
-      Boolean(context?.podium?.hasConcept),
+    id: 'join-league-pool',
+    label: "Enter today's league pool",
+    link: '/leagues',
+    // Stretch tier (20 XP vs 10 XP core) — mirrors the server; see the note in
+    // functions/src/helpers/dailyChallenges.js.
+    xp: 20,
+    // Pool entries live at leagues/{id}/pools/{gameDay}, off the profile, so
+    // the per-day fact is surfaced through context.leaguePool (computed by
+    // useLeaguePoolFacts and threaded down like the Podium facts).
+    check: (_profile, _gameDay, context) => Boolean(context?.leaguePool?.hasEntered),
+    // Only a league member can enter a pool; dropped otherwise so the count
+    // and weekly arc stay winnable.
+    available: (profile) =>
+      Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0,
   },
 ];
 
-export const CHALLENGES_PER_DAY = 3;
+export const CHALLENGES_PER_DAY = 2;
 
-/** Weekly arc target/bonus — mirrors the server (helpers/dailyChallenges.js). */
-export const WEEKLY_LOOP_TARGET_DAYS = 5;
-export const WEEKLY_LOOP_BONUS = { xp: 100, coin: 100 };
+/**
+ * Weekly arc milestone ladder — mirrors the server (helpers/dailyChallenges.js).
+ * Completing the full daily set on N distinct ET-week days pays at each tier:
+ *   3 days → 40/40, 5 days → 60/60 (cumulative 100/100), 7 days → 50/50.
+ */
+export const WEEKLY_LOOP_MILESTONES = [
+  { days: 3, xp: 40, coin: 40 },
+  { days: 5, xp: 60, coin: 60 },
+  { days: 7, xp: 50, coin: 50 },
+];
+export const WEEKLY_LOOP_TARGET_DAYS =
+  WEEKLY_LOOP_MILESTONES[WEEKLY_LOOP_MILESTONES.length - 1].days;
 
 /**
  * ET-week identifier (the Monday of the game day's week), mirroring the

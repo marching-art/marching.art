@@ -36,6 +36,8 @@
  *   few scored results for any prediction question to exist today.
  * @property {{hasShows: boolean, hasConcept: boolean}|null} [podium] - Podium
  *   state for this director, or null when they have no Podium corps.
+ * @property {{hasEntered: boolean}|null} [leaguePool] - Whether the director has
+ *   entered today's league prediction pool, or null when they have no league.
  */
 
 /**
@@ -66,13 +68,31 @@ function hasLineupBearingCorps(profile) {
   return FANTASY_CLASSES.some((cls) => Boolean(corps[cls] && corps[cls].corpsName));
 }
 
-/** @type {Challenge[]} */
+/**
+ * @type {Challenge[]}
+ *
+ * Every challenge here is a GENUINE same-day action — its verifier reads state
+ * that is written the day the director does the thing, so a fresh game day
+ * starts incomplete and the challenge only claims once the work is actually
+ * done today.
+ *
+ * This is why `register-show` and `set-show-concept` were removed from the
+ * daily rotation: both verify persistent, season-scoped state (a show map that
+ * stays non-empty all season, a show concept set once), so on every day after
+ * the first they auto-claimed off stale state — free XP with no agency, and a
+ * phantom "+10 XP" toast whenever the game day rolled over in an open tab.
+ * Registering for a show and naming a concept are taught and rewarded once, in
+ * their proper place, by the First Season Journey questline (journey.js).
+ */
 const CHALLENGE_POOL = [
   {
     id: "check-lineup",
     label: "Review your lineup",
     xp: 10,
-    // Reviewing a lineup requires having one.
+    // Reviewing a lineup requires having one. The CLIENT claims this on the
+    // review action (the row click), NOT by auto-claiming off a lineup merely
+    // existing — otherwise it, too, would phantom-complete every day. The
+    // server verify only guarantees a lineup is present to review.
     verify: (profile) =>
       Object.values(profile.corps || {}).some(
         (c) => c && c.lineup && Object.keys(c.lineup).length > 0
@@ -92,38 +112,65 @@ const CHALLENGE_POOL = [
     available: (_profile, context) => context?.predictionAvailable !== false,
   },
   {
-    id: "register-show",
-    label: "Register for a show",
-    xp: 10,
-    // Podium registers for shows too (setPodiumShows) — its picks just live in
-    // the podium subcollection rather than on the corps map.
-    verify: (profile, _gameDay, context) =>
-      Object.values(profile.corps || {}).some(
-        (c) => c && Object.keys(c.selectedShows || {}).length > 0
-      ) || Boolean(context?.podium?.hasShows),
-  },
-  {
-    id: "set-show-concept",
-    label: "Set your show concept",
-    xp: 10,
-    // Podium names its show at registration; same subcollection caveat.
-    verify: (profile, _gameDay, context) =>
-      Object.values(profile.corps || {}).some((c) => c && c.showConcept?.theme) ||
-      Boolean(context?.podium?.hasConcept),
+    id: "join-league-pool",
+    // Stretch tier (20 XP vs the 10 XP core): higher friction than a glance or
+    // a tap — it costs a pool ante and is a deliberate social act — so it pays
+    // more. (A small CC reward here is a reasonable further nudge, but that is a
+    // new economy faucet and is intentionally left for an owner decision.)
+    label: "Enter today's league pool",
+    xp: 20,
+    // League prediction pools are the game's nightly social heartbeat. Entries
+    // live at leagues/{id}/pools/{gameDay}.entrants[uid] — a genuinely per-day
+    // fact off the profile, surfaced through context.leaguePool (loaded by
+    // loadLeaguePoolChallengeFacts) exactly as the Podium facts were.
+    verify: (_profile, _gameDay, context) => Boolean(context?.leaguePool?.hasEntered),
+    // Only a director in at least one league can enter a pool; drop it for
+    // everyone else so their required set stays winnable (the same reason
+    // check-lineup drops for a Podium-only director).
+    available: (profile) =>
+      Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0,
   },
 ];
 
-const CHALLENGES_PER_DAY = 3;
+const CHALLENGES_PER_DAY = 2;
 
 /**
- * Weekly arc: complete the full daily challenge set on
- * WEEKLY_LOOP_TARGET_DAYS distinct game days within one ET week (Mon-Sun)
- * to earn a bonus. State lives at profile.engagement.weeklyLoop
- * { weekKey, countedDays: [gameDay...], rewarded } — countedDays makes the
- * per-day increment idempotent; rewarded makes the payout idempotent.
+ * Weekly arc: complete the full daily challenge set on distinct game days
+ * within one ET week (Mon-Sun) to earn milestone rewards. State lives at
+ * profile.engagement.weeklyLoop { weekKey, countedDays: [gameDay...],
+ * rewardedDays: [milestone.days...] } — countedDays makes the per-day
+ * increment idempotent; rewardedDays makes each milestone pay exactly once.
+ *
+ * The arc is a graduated ladder rather than a single all-or-nothing payout, so
+ * consistency is rewarded as it builds (and a perfect week pays the most):
+ *   3 days → 40 XP / 40 CC
+ *   5 days → 60 XP / 60 CC   (cumulative 100/100 — the old single-bonus total)
+ *   7 days → 50 XP / 50 CC   (perfect week; cumulative 150/150)
+ * The 5-day total is unchanged, so this adds earlier gratification and a
+ * perfect-week ceiling without re-tuning the existing reward downward.
  */
-const WEEKLY_LOOP_TARGET_DAYS = 5;
-const WEEKLY_LOOP_BONUS = { xp: 100, coin: 100 };
+const WEEKLY_LOOP_MILESTONES = [
+  { days: 3, xp: 40, coin: 40 },
+  { days: 5, xp: 60, coin: 60 },
+  { days: 7, xp: 50, coin: 50 },
+];
+// The top of the ladder — used for progress copy and the legacy migration.
+const WEEKLY_LOOP_TARGET_DAYS = WEEKLY_LOOP_MILESTONES[WEEKLY_LOOP_MILESTONES.length - 1].days;
+
+/**
+ * Milestone days a loop has already been paid for, tolerant of the legacy
+ * `{ rewarded: boolean }` shape: a true legacy flag only ever meant the old
+ * single 5-day bonus had paid, which under the ladder covers every milestone
+ * up to and including 5 (so those never re-pay) while leaving the new 7-day
+ * perfect-week tier still earnable this week.
+ * @param {{rewardedDays?: number[], rewarded?: boolean}|undefined} loop
+ * @returns {number[]}
+ */
+function normalizeRewardedDays(loop) {
+  if (Array.isArray(loop?.rewardedDays)) return loop.rewardedDays;
+  if (loop?.rewarded) return WEEKLY_LOOP_MILESTONES.filter((m) => m.days <= 5).map((m) => m.days);
+  return [];
+}
 
 /**
  * ET-week identifier (the Monday of the week the game day belongs to, in the
@@ -144,32 +191,46 @@ function getWeekKey(gameDay) {
 /**
  * Advance the weekly-arc state for a game day. Pure state machine so the
  * transaction in completeDailyChallenge stays thin and this stays testable:
- * a day is counted once (countedDays dedupes), a stale week resets, and the
- * bonus pays exactly once per week (`rewarded`).
+ * a day is counted once (countedDays dedupes), a stale week resets, and each
+ * milestone pays exactly once (rewardedDays). When a single counted day crosses
+ * more than one milestone at once (only possible for a legacy loop catching up
+ * across the migration), their rewards are summed into one payout.
  *
- * @param {{weekKey?: string, countedDays?: string[], rewarded?: boolean}|undefined} prevLoop
+ * @param {{weekKey?: string, countedDays?: string[], rewardedDays?: number[], rewarded?: boolean}|undefined} prevLoop
  *   - profile.engagement.weeklyLoop
  * @param {string} gameDay - Value from getGameDay()
  * @param {boolean} setComplete - Whether today's full challenge set is now done
- * @returns {{weeklyLoop: Object, bonus: {xp:number, coin:number}|null}}
+ * @returns {{weeklyLoop: Object, bonus: {xp:number, coin:number, tiers:number[]}|null}}
  */
 function advanceWeeklyLoop(prevLoop, gameDay, setComplete) {
   const weekKey = getWeekKey(gameDay);
   const loop =
     prevLoop?.weekKey === weekKey
-      ? { weekKey, countedDays: prevLoop.countedDays || [], rewarded: !!prevLoop.rewarded }
-      : { weekKey, countedDays: [], rewarded: false };
+      ? {
+          weekKey,
+          countedDays: prevLoop.countedDays || [],
+          rewardedDays: normalizeRewardedDays(prevLoop),
+        }
+      : { weekKey, countedDays: [], rewardedDays: [] };
 
   if (!setComplete || loop.countedDays.includes(gameDay)) {
     return { weeklyLoop: loop, bonus: null };
   }
 
   const countedDays = [...loop.countedDays, gameDay];
-  const earnedBonus = countedDays.length >= WEEKLY_LOOP_TARGET_DAYS && !loop.rewarded;
-  return {
-    weeklyLoop: { weekKey, countedDays, rewarded: loop.rewarded || earnedBonus },
-    bonus: earnedBonus ? WEEKLY_LOOP_BONUS : null,
-  };
+  const newlyEarned = WEEKLY_LOOP_MILESTONES.filter(
+    (m) => countedDays.length >= m.days && !loop.rewardedDays.includes(m.days)
+  );
+  const rewardedDays = [...loop.rewardedDays, ...newlyEarned.map((m) => m.days)];
+  const bonus = newlyEarned.length
+    ? {
+        xp: newlyEarned.reduce((sum, m) => sum + m.xp, 0),
+        coin: newlyEarned.reduce((sum, m) => sum + m.coin, 0),
+        tiers: newlyEarned.map((m) => m.days),
+      }
+    : null;
+
+  return { weeklyLoop: { weekKey, countedDays, rewardedDays }, bonus };
 }
 
 /** Day-buckets of completion history kept on the profile document. */
@@ -268,12 +329,27 @@ function getRequiredChallengeIds(gameDay, profile, context = {}) {
 /**
  * Whether today's rotation contains anything whose verification depends on
  * Podium state, so the caller only pays for that read when it can matter.
+ *
+ * The two challenges that ever needed it (register-show / set-show-concept)
+ * were retired from the daily pool, so this is currently always false — kept
+ * as the single gate the callable checks, so re-introducing a Podium-verified
+ * challenge only touches this function and the pool.
  * @param {string} gameDay - Value from getGameDay()
  * @returns {boolean}
  */
 function rotationNeedsPodiumContext(gameDay) {
   const ids = getChallengesForGameDay(gameDay).map((c) => c.id);
   return ids.includes("register-show") || ids.includes("set-show-concept");
+}
+
+/**
+ * Whether today's rotation contains the join-league-pool challenge, so the
+ * callable only reads the director's league pool docs when it can matter.
+ * @param {string} gameDay - Value from getGameDay()
+ * @returns {boolean}
+ */
+function rotationNeedsLeaguePoolContext(gameDay) {
+  return getChallengesForGameDay(gameDay).some((c) => c.id === "join-league-pool");
 }
 
 /**
@@ -299,13 +375,14 @@ module.exports = {
   CHALLENGES_PER_DAY,
   MAX_CHALLENGE_DAYS_KEPT,
   WEEKLY_LOOP_TARGET_DAYS,
-  WEEKLY_LOOP_BONUS,
+  WEEKLY_LOOP_MILESTONES,
   getGameDay,
   getWeekKey,
   advanceWeeklyLoop,
   getChallengesForGameDay,
   getRequiredChallengeIds,
   rotationNeedsPodiumContext,
+  rotationNeedsLeaguePoolContext,
   hasLineupBearingCorps,
   pruneOldChallenges,
 };

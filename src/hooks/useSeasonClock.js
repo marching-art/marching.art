@@ -2,30 +2,21 @@
 // Any component that shows a countdown should use these hooks rather than
 // computing times itself, so every surface agrees on the same instants.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSeasonStore } from '../store/seasonStore';
 import { getDropPlan } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { getScoreDropEstimate, getShowDateKey, getCaptionChangeInfo } from '../utils/seasonClock';
+// useNow lives in its own Firebase-free module; re-exported here so existing
+// `import { useNow } from './useSeasonClock'` call sites keep working.
+import { useNow } from './useNow';
+
+export { useNow };
 
 // The plan doc is written/refreshed by backend gate ticks every 15 minutes,
 // so a 5-minute client cache never lags it meaningfully.
 const DROP_PLAN_STALE_TIME = 5 * 60 * 1000;
-
-/**
- * Current time, re-evaluated on an interval so countdowns tick.
- * @param {number} [intervalMs] - Tick interval (default 30s)
- * @returns {Date}
- */
-export function useNow(intervalMs = 30000) {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), intervalMs);
-    return () => clearInterval(id);
-  }, [intervalMs]);
-  return now;
-}
 
 // How long past the planned drop to keep saying "processing" when the plan doc
 // carries no scrapeRetryUntil to bound the night with. Matches the backend's

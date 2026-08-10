@@ -70,7 +70,7 @@ describe('getGameDay', () => {
 });
 
 describe('getChallengesForGameDay', () => {
-  test('returns three distinct challenges from the pool', () => {
+  test('returns CHALLENGES_PER_DAY distinct challenges from the pool', () => {
     const picks = getChallengesForGameDay('Sat Jul 04 2026');
     expect(picks).toHaveLength(CHALLENGES_PER_DAY);
     expect(new Set(picks.map((c) => c.id)).size).toBe(CHALLENGES_PER_DAY);
@@ -98,24 +98,25 @@ describe('getChallengesForGameDay', () => {
   test('pinned rotation matches the server mirror (sync check)', () => {
     // Same expectation exists in functions/src/helpers/dailyChallenges.test.js
     expect(getChallengesForGameDay('Wed Jan 14 2026').map((c) => c.id)).toEqual([
+      'join-league-pool',
       'check-lineup',
-      'make-prediction',
-      'register-show',
     ]);
   });
 });
 
 describe('CHALLENGE_POOL', () => {
-  test('every challenge is complete, navigable, and checkable', () => {
+  test('every challenge is complete, navigable, and claimable', () => {
     for (const challenge of CHALLENGE_POOL) {
       expect(challenge.id).toBeTruthy();
       expect(challenge.label).toBeTruthy();
       expect(challenge.xp).toBeGreaterThan(0);
       // Every challenge is either a link or an in-dashboard action…
       expect(Boolean(challenge.link) || Boolean(challenge.action)).toBe(true);
-      // …and carries the client-side auto-claim predicate mirroring the
-      // server's verify (decisions, not clicks)
-      expect(typeof challenge.check).toBe('function');
+      // …and either carries a per-day auto-claim predicate (mirroring the
+      // server's verify) or is action-gated — claimed on its row interaction
+      // instead of auto-claiming off persistent state (check-lineup).
+      const actionGated = !challenge.check;
+      expect(typeof challenge.check === 'function' || actionGated).toBe(true);
     }
     expect(new Set(CHALLENGE_POOL.map((c) => c.id)).size).toBe(CHALLENGE_POOL.length);
   });
@@ -152,47 +153,43 @@ describe('getAvailableChallengesForGameDay (Podium-aware required set)', () => {
     expect(ids).not.toContain('make-prediction');
   });
 
-  test('never drops register-show or set-show-concept', () => {
-    for (const id of ['register-show', 'set-show-concept']) {
-      const day = findGameDayWith(id);
-      expect(getAvailableChallengesForGameDay(day, podiumOnly).map((c) => c.id)).toContain(id);
-    }
+  test('drops join-league-pool for a director with no league', () => {
+    const day = findGameDayWith('join-league-pool');
+    const ids = getAvailableChallengesForGameDay(day, fantasy).map((c) => c.id);
+    expect(ids).not.toContain('join-league-pool');
+  });
+
+  test('keeps join-league-pool for a league member', () => {
+    const day = findGameDayWith('join-league-pool');
+    const member = { corps: { worldClass: { corpsName: 'W' } }, leagueIds: ['L1'] };
+    const ids = getAvailableChallengesForGameDay(day, member).map((c) => c.id);
+    expect(ids).toContain('join-league-pool');
   });
 });
 
-describe('challenge checks with Podium context', () => {
-  const podiumOnly = { corps: { podiumClass: { corpsName: 'P' } } };
-
-  test('register-show auto-claim fires off Podium show picks', () => {
-    // Before the fix, a Podium director could never auto-claim this — their
-    // picks live in the subcollection, invisible to the profile.
-    expect(byId('register-show').check(podiumOnly, 'd', { podium: { hasShows: true } })).toBe(true);
-    expect(byId('register-show').check(podiumOnly, 'd', { podium: { hasShows: false } })).toBe(
-      false
-    );
-    expect(byId('register-show').check(podiumOnly, 'd')).toBe(false);
-  });
-
-  test('set-show-concept auto-claim fires off the Podium concept', () => {
-    expect(byId('set-show-concept').check(podiumOnly, 'd', { podium: { hasConcept: true } })).toBe(
+describe('join-league-pool check + availability', () => {
+  test('auto-claim fires off today’s entered-pool fact in context', () => {
+    const member = { leagueIds: ['L1'] };
+    // `check` is optional on the pool type (check-lineup is action-gated), so
+    // reach it through optional chaining.
+    expect(byId('join-league-pool').check?.(member, 'd', { leaguePool: { hasEntered: true } })).toBe(
       true
     );
-    expect(byId('set-show-concept').check(podiumOnly, 'd', { podium: { hasConcept: false } })).toBe(
-      false
-    );
+    expect(
+      byId('join-league-pool').check?.(member, 'd', { leaguePool: { hasEntered: false } })
+    ).toBe(false);
+    // No context → not done (the profile alone can't show pool entry).
+    expect(byId('join-league-pool').check?.(member, 'd')).toBe(false);
   });
 
-  test('fantasy checks are unchanged by the context argument', () => {
-    const fantasy = {
-      corps: { worldClass: { selectedShows: { 1: ['s'] }, showConcept: { theme: 'T' } } },
-    };
-    expect(byId('register-show').check(fantasy, 'd')).toBe(true);
-    expect(byId('set-show-concept').check(fantasy, 'd')).toBe(true);
+  test('available only to directors in at least one league', () => {
+    expect(byId('join-league-pool').available({ leagueIds: ['L1'] })).toBe(true);
+    expect(byId('join-league-pool').available({ leagueIds: [] })).toBe(false);
+    expect(byId('join-league-pool').available({})).toBe(false);
   });
 
   test('available predicates mirror the server exactly', async () => {
     const server = await import('../../functions/src/helpers/dailyChallenges.js');
-    // check-lineup and make-prediction are the two droppable ones on both sides.
     const droppable = CHALLENGE_POOL.filter((c) => c.available)
       .map((c) => c.id)
       .sort();

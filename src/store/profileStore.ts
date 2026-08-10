@@ -315,7 +315,10 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
       toast.success(`${label} complete! +${data.xpAwarded} XP`);
       triggerXPFeedback(data.xpAwarded, 'xp');
       if (data.weeklyArcBonus) {
-        toast.success(`Weekly arc complete — +${data.weeklyArcBonus.coin} CC bonus!`);
+        const tiers = data.weeklyArcBonus.tiers;
+        const label =
+          tiers && tiers.length ? `${tiers.join(' & ')}-day weekly arc` : 'Weekly arc';
+        toast.success(`${label} — +${data.weeklyArcBonus.coin} CC bonus!`);
         triggerXPFeedback(data.weeklyArcBonus.coin, 'coin', 'Weekly arc');
       }
       return true;

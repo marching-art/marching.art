@@ -205,10 +205,41 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
   }
 }
 
+/**
+ * Whether the director has entered TODAY's prediction pool in any of their
+ * leagues — the per-day fact the join-league-pool daily challenge verifies.
+ *
+ * Pool entries live at leagues/{leagueId}/pools/{gameDay}.entrants[uid], not on
+ * the profile, so (like the Podium facts) a challenge verifier reading the
+ * profile alone can't see them. Reads are done as individual gets rather than
+ * getAll so the same code path works under the callable tests' fake Firestore.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} uid
+ * @param {string[]|undefined} leagueIds - profile.leagueIds
+ * @param {string} gameDay - Value from getGameDay()
+ * @returns {Promise<{hasEntered: boolean}>}
+ */
+async function loadLeaguePoolChallengeFacts(db, uid, leagueIds, gameDay) {
+  if (!Array.isArray(leagueIds) || leagueIds.length === 0) {
+    return { hasEntered: false };
+  }
+  const snaps = await Promise.all(
+    leagueIds.map((leagueId) =>
+      db.doc(`${paths.league(leagueId)}/pools/${gameDay}`).get()
+    )
+  );
+  const hasEntered = snaps.some(
+    (snap) => snap.exists && Boolean(snap.data()?.entrants?.[uid])
+  );
+  return { hasEntered };
+}
+
 module.exports = {
   POOL_ANTE,
   POOL_MIN_ANSWERED,
   completedGameDayString,
   entrantHadPerfectDay,
   settleLeaguePoolsForDay,
+  loadLeaguePoolChallengeFacts,
 };
