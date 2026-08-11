@@ -92,6 +92,7 @@ GitHub Actions workflow (or `deploy-functions.sh`).
 | [`docs/BMAC_SUPPORTERS.md`](docs/BMAC_SUPPORTERS.md)               | Buy Me a Coffee supporter tiers, the webhook/reconcile pipeline, and the cosmetic-only recognition rules                             |
 | [`docs/OPERATIONS.md`](docs/OPERATIONS.md)                         | Ops runbook: Firestore backup policy (PITR + scheduled backups), restore procedures, functions/hosting deploy rollback               |
 | [`docs/SITE_DEEP_DIVE_2026-07.md`](docs/SITE_DEEP_DIVE_2026-07.md) | Point-in-time audit (July 2026) across six dimensions, its five recommendations, and their implementation status                     |
+| [`docs/FMA_LESSONS.md`](docs/FMA_LESSONS.md)                       | Lessons from Fantasy Marching Arts' 14-year forum history and how they apply to marching.art                                          |
 
 ## License
 

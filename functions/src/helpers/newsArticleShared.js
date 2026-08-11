@@ -225,6 +225,10 @@ const NEWS_CATEGORIES = {
   ANALYSIS: "analysis",
   PODIUM: "podium", // The daily Podium Report power-rankings column
   DAILY: "daily", // New unified category
+  // Director-authored press releases about their OWN organization — instant,
+  // un-reviewed community content. Distinct from admin-reviewed news
+  // submissions (which cover the shared world: competition, rivalries, circuit).
+  PRESS: "press",
 };
 
 /**
@@ -241,6 +245,8 @@ function getCategoryFromType(articleType) {
   if (articleType === "podium_report") return NEWS_CATEGORIES.PODIUM;
   // Season summary is a season-to-date analytical deep dive (Article 6).
   if (articleType === "season_summary") return NEWS_CATEGORIES.ANALYSIS;
+  // Director press releases (press_<id>) carry their own category.
+  if (articleType.startsWith("press_")) return NEWS_CATEGORIES.PRESS;
   // DCI and Fantasy articles by prefix
   if (articleType.startsWith("dci_")) return NEWS_CATEGORIES.DCI_RECAP;
   if (articleType.startsWith("fantasy_")) return NEWS_CATEGORIES.FANTASY;

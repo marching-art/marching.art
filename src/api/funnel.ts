@@ -66,6 +66,9 @@ export const FUNNEL_EVENTS: Readonly<Record<string, string>> = Object.freeze({
   inviteDirectorToLeague: 'league_invite_sent',
   postLeagueMessage: 'league_message_posted',
 
+  // --- Community: director-authored content ---
+  publishPressRelease: 'press_release_published',
+
   // --- Career lifecycle ---
   retireCorps: 'corps_retired',
   unretireCorps: 'corps_unretired',
