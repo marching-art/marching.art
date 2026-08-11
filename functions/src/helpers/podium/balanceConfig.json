@@ -246,6 +246,13 @@
       "8": 100
     }
   },
+  "veteranStart": {
+    "note": "Returning directors take the field further along in June, keyed to LAST season's ENGAGEMENT (assessment.activity percentile) — never to reputation, results, or division. It lifts only the day-1 starting content/clean; because rehearsal drives both toward the cap over the season, the head-start LARGELY washes out by finals — the residual is a fraction of a point for a mid-field corps and is absorbed entirely by the soft-cap for a top one. That is the safety property: the head-start is far too small at finals to move a promotion cutoff or the reputation ladder, so it can never let a returner leapfrog on seasoning alone — it only makes the early season read like a veteran corps that already knows its fundamentals, and separates a returning grinder from a day-one signup from the first show. A brand-new director (no prior activity percentile) gets nothing. The ramp is linear in activity percentile from pivotPercentile (no credit below it — a merely-casual season earns almost none) to fullPercentile (an Iron Corps season earns the full bonus). Live-tunable via podium-config/balance.",
+    "maxContentBonus": 0.1,
+    "maxCleanBonus": 0.1,
+    "pivotPercentile": 20,
+    "fullPercentile": 90
+  },
   "reputation": {
     "max": 100,
     "tierThresholds": {

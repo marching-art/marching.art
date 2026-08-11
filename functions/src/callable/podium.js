@@ -337,6 +337,14 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     });
 
 
+    // Veteran head-start: a returning director who put in the work last season
+    // takes the field further along, keyed to LAST season's ENGAGEMENT (the
+    // activity percentile from the pending assessment) — never reputation or
+    // results. Read here before the assessment is consumed below. A brand-new
+    // director has no pending assessment and gets nothing. The head-start washes
+    // out by finals, so it shapes only the early season, never a promotion.
+    const priorActivityPercentile =
+      careerData?.pendingAssessment?.activity?.percentile ?? null;
     // Mid-season joiners start from the corpus catch-up baseline: the engine
     // seeds day-1 state; content advances PART of the way toward the median
     // pace for the current day (§9 catch-up: playable, never advantaged). The
@@ -344,7 +352,12 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     // joiner still starts clearly behind a director who has been rehearsing —
     // catch-up closes the hopeless gap, it does not hand over earned progress.
     const engineState = engine.createSeasonState(
-      { challenge, auditions: auditionShares, repTier: startingTier },
+      {
+        challenge,
+        auditions: auditionShares,
+        repTier: startingTier,
+        activityPercentile: priorActivityPercentile,
+      },
       store.curves,
       store.balance
     );

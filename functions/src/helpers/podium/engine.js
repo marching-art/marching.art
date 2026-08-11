@@ -92,11 +92,40 @@ function curveForChallenge(caption, challenge, curves, cfg) {
 }
 
 /**
+ * Head-start fraction (0..1) a returning director earns from LAST season's
+ * engagement. Linear in the activity percentile from `pivotPercentile` (below
+ * which a merely-casual season earns nothing) to `fullPercentile` (an Iron
+ * Corps season earns the full bonus). A brand-new director passes no percentile
+ * and earns 0. Pure; keyed to engagement ONLY — never reputation or results.
+ * @param {number|null|undefined} activityPercentile 0-100 from assessment
+ * @returns {number} 0..1
+ */
+function veteranStartFraction(activityPercentile, cfg) {
+  const vs = cfg.veteranStart;
+  if (!vs || activityPercentile == null || !Number.isFinite(activityPercentile)) return 0;
+  const pivot = vs.pivotPercentile ?? 20;
+  const full = vs.fullPercentile ?? 90;
+  if (activityPercentile <= pivot) return 0;
+  if (activityPercentile >= full || full <= pivot) return activityPercentile >= full ? 1 : 0;
+  return (activityPercentile - pivot) / (full - pivot);
+}
+
+/**
  * Create a fresh season state for a corps.
  * @param {object} params { challenge: {caption: 1-8}, repTier: 1-7,
- *   auditions: {caption: 0-1 share of audition pool} (optional) }
+ *   auditions: {caption: 0-1 share of audition pool} (optional),
+ *   activityPercentile: 0-100 last-season engagement (optional; drives the
+ *     veteran head-start — see veteranStartFraction) }
  */
 function createSeasonState(params, curves, cfg) {
+  // Veteran head-start: a returning grinder starts with more of the book
+  // installed and clean. Washes out by finals (rehearsal caps both), so it
+  // shapes ONLY the early season — never a finals total or promotion.
+  const vs = cfg.veteranStart || {};
+  const vetFrac = veteranStartFraction(params.activityPercentile, cfg);
+  const contentBonus = vetFrac * (vs.maxContentBonus || 0);
+  const cleanBonus = vetFrac * (vs.maxCleanBonus || 0);
+
   const captions = {};
   for (const caption of CAPTIONS) {
     const challenge = params.challenge[caption] || 4;
@@ -107,8 +136,8 @@ function createSeasonState(params, curves, cfg) {
     captions[caption] = {
       challenge,
       curve: curveForChallenge(caption, challenge, curves, cfg),
-      content: 0.28 + auditionShift,
-      clean: 0.2,
+      content: Math.min(1, 0.28 + auditionShift + contentBonus),
+      clean: Math.min(1, 0.2 + cleanBonus),
       lastRehearsedDay: 0,
     };
   }
@@ -544,6 +573,7 @@ module.exports = {
   phaseForDay,
   bandValueAtPercentile,
   curveForChallenge,
+  veteranStartFraction,
   createSeasonState,
   allocateBlock,
   endOfDay,
