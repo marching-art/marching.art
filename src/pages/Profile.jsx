@@ -28,6 +28,7 @@ import { resolveUsername, updateProfile } from '../api/profile';
 import { getLeaguesByCreator } from '../api/leagues';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
+import ProfileNewsroom from '../components/Profile/ProfileNewsroom';
 import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar, setCorpsAvatarFromUrl } from '../api/functions';
@@ -533,6 +534,9 @@ const Profile = () => {
           onInviteToLeague={() => setShowInviteModal(true)}
           canInviteToLeague={canInviteToLeague}
         />
+
+        {/* NEWSROOM — the director's own published press releases & articles */}
+        <ProfileNewsroom uid={profileUserId} isOwnProfile={isOwnProfile} />
 
         {/* PENDING LEAGUE INVITATIONS (own profile only) */}
         {isOwnProfile && user && <PendingLeagueInvitations userId={user.uid} />}

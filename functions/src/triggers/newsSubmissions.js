@@ -258,6 +258,24 @@ exports.publishPressRelease = onCall(
         },
       });
 
+      // Credit the author's contribution count. This feeds the automatic
+      // writer tier (src/utils/writerTier.ts) — a director earns "Contributor"
+      // and up purely from what they publish, no admin grant. Best-effort: a
+      // counter failure never fails an otherwise-successful publish.
+      try {
+        await profileDataRef(db, request.auth.uid).set(
+          {
+            articleStats: {
+              pressReleaseCount: FieldValue.increment(1),
+              lastPressReleaseAt: new Date(),
+            },
+          },
+          { merge: true }
+        );
+      } catch (counterErr) {
+        logger.warn("Failed to increment author press-release count:", counterErr.message);
+      }
+
       // The feed serves from a short-TTL server cache; drop it so the author
       // sees their release immediately rather than up to 5 minutes later.
       await invalidateNewsCache(db);

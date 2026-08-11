@@ -100,24 +100,10 @@ export const CHANGELOG: ChangelogEntry[] = changelogEntriesRaw as ChangelogEntry
 
 export const ROADMAP: RoadmapItem[] = [
   {
-    id: 'profile-newsroom',
-    title: 'A newsroom on your profile',
+    id: 'discord-bridge',
+    title: 'Press releases in Discord',
     description:
-      'Every press release your corps has published, gathered on your director profile as your organization’s ongoing story.',
-    status: 'in_progress',
-  },
-  {
-    id: 'community-feed',
-    title: 'A community feed across leagues',
-    description:
-      'A shared, site-wide place for the whole community to talk — not siloed inside individual league chats.',
-    status: 'planned',
-  },
-  {
-    id: 'staff-writers',
-    title: 'Credited community writers',
-    description:
-      'A masthead of directors who cover the circuit, with a byline and a place on the news team.',
+      'Auto-post new press releases and fresh champions to the Discord, so your corps’ news reaches the community where it already talks.',
     status: 'planned',
   },
   {
