@@ -140,6 +140,229 @@ function pickAuthorCorps(corps) {
 }
 
 // =============================================================================
+// DIRECTOR PRESS RELEASES
+// =============================================================================
+// A press release is instant, un-reviewed community content a director writes
+// about THEIR OWN organization (season reveals, staff moves, results from their
+// corps' POV, rivalry callouts). It is deliberately distinct from an admin-
+// reviewed news submission, which covers the shared world. Because it publishes
+// with no human in the loop, everything here is bounded, plain-text, and
+// attributed to a specific corps the author actually owns — that ownership is
+// the accountability the review step would otherwise provide.
+
+// Length bounds. Kept tighter than news submissions: a press release is a short
+// operational bulletin, not a feature article, and it publishes unreviewed.
+const PRESS_RELEASE_LIMITS = {
+  headlineMin: 6,
+  headlineMax: 160,
+  summaryMax: 300,
+  bodyMin: 40,
+  bodyMax: 8000,
+};
+
+// Preference order when a director owns corps across several classes and did
+// not specify which one a release is from — highest class speaks for the org.
+const PRESS_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport"];
+
+/** Normalize one corps entry from the profile's corps map to a byline object. */
+function corpsToByline(corpsClass, c) {
+  if (!c || typeof c !== "object" || !c.corpsName) return null;
+  return {
+    corpsClass,
+    corpsName: c.corpsName,
+    location: typeof c.location === "string" && c.location.trim() ? c.location.trim() : null,
+    uniformDesign: c.uniformDesign || null,
+  };
+}
+
+/**
+ * Resolve which of the author's registered corps a press release is bylined to.
+ * Honors an explicitly requested class when the author owns a corps in it;
+ * otherwise falls back to their highest-class corps. Returns null when the
+ * author has no registered corps at all (they cannot issue a press release).
+ *
+ * @param {object|null} corps - The profile's `corps` map, keyed by class.
+ * @param {string|null} [requestedClass] - Class the author chose in the composer.
+ * @returns {{corpsClass: string, corpsName: string, location: string|null, uniformDesign: object|null}|null}
+ */
+function resolveOwnedCorps(corps, requestedClass) {
+  if (!corps || typeof corps !== "object") return null;
+
+  if (requestedClass && Object.prototype.hasOwnProperty.call(corps, requestedClass)) {
+    const chosen = corpsToByline(requestedClass, corps[requestedClass]);
+    if (chosen) return chosen;
+  }
+
+  for (const key of PRESS_CLASS_ORDER) {
+    const byline = corpsToByline(key, corps[key]);
+    if (byline) return byline;
+  }
+  // Any other registered corps (defensive: unknown/legacy class keys).
+  for (const [key, c] of Object.entries(corps)) {
+    const byline = corpsToByline(key, c);
+    if (byline) return byline;
+  }
+  return null;
+}
+
+/**
+ * Validate and normalize raw press-release input. Pure — no I/O — so the rules
+ * are unit-testable and identical wherever they run. Returns the trimmed,
+ * length-checked fields on success, or a human-readable error on failure.
+ *
+ * @param {object} input - { headline, summary, body, imageUrl }
+ * @returns {{valid: true, cleaned: object} | {valid: false, error: string}}
+ */
+function validatePressReleaseInput(input) {
+  const { headline, summary, body, imageUrl } = input || {};
+  const L = PRESS_RELEASE_LIMITS;
+
+  const cleanHeadline = typeof headline === "string" ? headline.trim() : "";
+  if (cleanHeadline.length < L.headlineMin) {
+    return { valid: false, error: `Headline must be at least ${L.headlineMin} characters` };
+  }
+  if (cleanHeadline.length > L.headlineMax) {
+    return { valid: false, error: `Headline cannot exceed ${L.headlineMax} characters` };
+  }
+
+  const cleanBody = typeof body === "string" ? body.trim() : "";
+  if (cleanBody.length < L.bodyMin) {
+    return { valid: false, error: `Your announcement must be at least ${L.bodyMin} characters` };
+  }
+  if (cleanBody.length > L.bodyMax) {
+    return { valid: false, error: `Your announcement cannot exceed ${L.bodyMax} characters` };
+  }
+
+  const cleanSummary = typeof summary === "string" ? summary.trim() : "";
+  if (cleanSummary.length > L.summaryMax) {
+    return { valid: false, error: `Summary cannot exceed ${L.summaryMax} characters` };
+  }
+
+  // Optional author-supplied image. Stored and later rendered as an <img> src,
+  // so the scheme is allowlisted exactly as the news-submission path does.
+  let cleanImageUrl = null;
+  if (imageUrl != null && String(imageUrl).trim()) {
+    let parsed;
+    try {
+      parsed = new URL(String(imageUrl).trim());
+    } catch {
+      return { valid: false, error: "Image URL is not valid" };
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return { valid: false, error: "Image URL must use http or https" };
+    }
+    cleanImageUrl = String(imageUrl).trim();
+  }
+
+  return {
+    valid: true,
+    cleaned: {
+      headline: cleanHeadline,
+      // Fall back to a truncated body when the author writes no summary, so the
+      // feed card always has a teaser line.
+      summary: cleanSummary || cleanBody.slice(0, L.summaryMax),
+      body: cleanBody,
+      imageUrl: cleanImageUrl,
+    },
+  };
+}
+
+/**
+ * Build the published-article document for a press release. Pure: given the
+ * validated content, resolved corps byline, author credit, and season/day
+ * context, it returns the exact Firestore document and its path. Shaped to
+ * match generated/community articles so the entire existing read pipeline
+ * (feed, article page, reactions, comments, OG cards, SEO) works unchanged.
+ *
+ * @returns {{article: object, articlePath: string, articleType: string}}
+ */
+function buildPressReleaseArticle({ id, cleaned, corps, author, seasonId, currentDay, now = new Date() }) {
+  const articleType = `press_${id}`;
+  const articlePath = `news_hub/${seasonId}/days/day_${currentDay}/articles/${articleType}`;
+
+  const article = {
+    type: articleType,
+    pressReleaseId: id,
+    reportDay: currentDay,
+    createdAt: now,
+    publishedAt: now,
+    updatedAt: now,
+
+    // Content
+    headline: cleaned.headline,
+    summary: cleaned.summary,
+    narrative: cleaned.body,
+    category: "press",
+
+    // The corps this release speaks for — the heart of the "your own org" model.
+    corpsName: corps.corpsName,
+    corpsClass: corps.corpsClass,
+
+    // Image (author-supplied only; press releases never block on AI generation).
+    imageUrl: cleaned.imageUrl,
+    imageIsPlaceholder: !cleaned.imageUrl,
+
+    // Author credit — byline links back to the director's profile.
+    authorUid: author.uid,
+    authorName: author.authorName,
+    authorUsername: author.authorUsername,
+    authorLocation: corps.location || author.authorLocation || null,
+
+    metadata: {
+      source: "director_press_release",
+      corpsName: corps.corpsName,
+      corpsClass: corps.corpsClass,
+      location: corps.location || null,
+    },
+
+    isPublished: true,
+  };
+
+  return { article, articlePath, articleType };
+}
+
+/**
+ * Publish a press release: resolve the current season/day, build the article
+ * document, and write it into the day's articles subcollection. The article is
+ * live the instant this resolves — there is no review queue.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {object} params - { id, cleaned, corps, author }
+ * @returns {Promise<{articleId: string, articlePath: string, seasonId: string, reportDay: number}>}
+ */
+async function publishPressReleaseArticle(db, { id, cleaned, corps, author }) {
+  const seasonDoc = await db.doc("game-settings/season").get();
+  const seasonData = seasonDoc.exists ? seasonDoc.data() : {};
+  const seasonId = seasonData.seasonUid || "current_season";
+  const currentDay = seasonData.currentDay || 1;
+
+  const { article, articlePath, articleType } = buildPressReleaseArticle({
+    id,
+    cleaned,
+    corps,
+    author,
+    seasonId,
+    currentDay,
+  });
+
+  await db.doc(articlePath).set(article);
+
+  logger.info("Press release published:", {
+    pressReleaseId: id,
+    articlePath,
+    corpsName: corps.corpsName,
+    authorUid: author.uid,
+  });
+
+  return {
+    articleId: `${seasonId}_day_${currentDay}_${articleType}`,
+    articlePath,
+    seasonId,
+    reportDay: currentDay,
+  };
+}
+
+// =============================================================================
 // IMAGE GENERATION — ARTICLE #5 (FANTASY DAILY) PROMPT
 // =============================================================================
 
@@ -461,4 +684,10 @@ module.exports = {
   extractArticleVisualDetails,
   generateFantasyDailyImage,
   publishSubmission,
+  // Press releases
+  PRESS_RELEASE_LIMITS,
+  resolveOwnedCorps,
+  validatePressReleaseInput,
+  buildPressReleaseArticle,
+  publishPressReleaseArticle,
 };

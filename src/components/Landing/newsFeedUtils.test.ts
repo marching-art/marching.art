@@ -102,6 +102,7 @@ describe('getCategoryConfig', () => {
     expect(getCategoryConfig('fantasy').label).toBe('FANTASY');
     expect(getCategoryConfig('podium').label).toBe('PODIUM');
     expect(getCategoryConfig('analysis').label).toBe('ANALYSIS');
+    expect(getCategoryConfig('press').label).toBe('PRESS RELEASE');
   });
 
   it('falls back to a generic NEWS config for unknown categories', () => {
@@ -112,8 +113,15 @@ describe('getCategoryConfig', () => {
 });
 
 describe('CATEGORIES', () => {
-  it('lists the five filter categories with icons', () => {
-    expect(CATEGORIES.map((c) => c.id)).toEqual(['all', 'dci', 'fantasy', 'podium', 'analysis']);
+  it('lists the filter categories with icons', () => {
+    expect(CATEGORIES.map((c) => c.id)).toEqual([
+      'all',
+      'dci',
+      'fantasy',
+      'podium',
+      'analysis',
+      'press',
+    ]);
     for (const c of CATEGORIES) expect(c.icon).toBeTruthy();
   });
 });

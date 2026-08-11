@@ -2,7 +2,7 @@
 // NEWS HUB TYPES
 // =============================================================================
 
-export type NewsCategory = 'dci' | 'fantasy' | 'analysis' | 'podium';
+export type NewsCategory = 'dci' | 'fantasy' | 'analysis' | 'podium' | 'press';
 
 export interface TrendingCorps {
   corps: string;

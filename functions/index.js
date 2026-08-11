@@ -245,6 +245,8 @@ const {
   deleteArticle,
   regenerateArticleImage,
   submitNewsForApproval,
+  publishPressRelease,
+  deleteMyPressRelease,
   listPendingSubmissions,
   approveSubmission,
   rejectSubmission,
@@ -493,6 +495,10 @@ module.exports = {
   listPendingSubmissions,
   approveSubmission,
   rejectSubmission,
+
+  // Director Press Releases (instant, un-reviewed community content)
+  publishPressRelease,
+  deleteMyPressRelease,
 
   // Email Triggers
   onProfileCreated,

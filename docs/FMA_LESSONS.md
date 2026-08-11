@@ -61,6 +61,21 @@ _auto-publishes to their own corps/feed_ (trust + rate-limit + post-hoc
 moderation), and reserve admin approval only for promotion to the _site-wide_
 news hub. Let the volume happen.
 
+> **Shipped (August 2026) — Director Press Releases.** A press release is
+> instant, un-reviewed content a director writes about _their own
+> organization_ (season reveals, staff moves, results and rivalries from their
+> corps' POV), deliberately distinct from an admin-reviewed **news submission**
+> (which covers the shared world). It publishes the moment it's posted, under
+> the corps' byline, into the existing `press` news category — so it reuses the
+> whole feed/article/reactions/comments/SEO pipeline. Accountability replaces
+> the review queue with three constraints: the author must own the corps the
+> release is bylined to, a per-uid write budget throttles abuse, and everything
+> is moderatable after the fact (authors delete their own; admins remove any).
+> Code: `publishPressRelease` / `deleteMyPressRelease`
+> (`functions/src/triggers/newsSubmissions.js`), the pure domain logic and its
+> tests in `functions/src/helpers/newsSubmissionsShared.js`, and the composer
+> at `src/components/modals/PressReleaseModal.tsx`.
+
 ### 2. Stagnation — not a competitor — is what kills these games
 
 FMA's Suggestions and Announcements forums read as a decline story:
@@ -155,8 +170,9 @@ keep our update cadence visible.
 
 ## Suggested priority order for marching.art
 
-1. **Unblock the corps newsroom** (Lesson 1) — highest leverage, reuses
-   existing schema and modal; mostly a moderation-policy and surfacing change.
+1. **Unblock the corps newsroom** (Lesson 1) — **✅ shipped** (Director Press
+   Releases; see the callout under Lesson 1). Natural fast-follow: a per-corps
+   "Newsroom" section on the director profile that lists that corps' releases.
 2. **Player-facing changelog / roadmap** (Lesson 2) — cheap, directly answers
    the complaint that killed FMA's momentum.
 3. **Public cross-league community feed** (Lesson 6 gap) — captures the

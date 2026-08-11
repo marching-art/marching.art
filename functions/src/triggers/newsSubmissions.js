@@ -16,7 +16,11 @@ const {
   computeNextAutoPublishAt,
   resolveAuthorCredit,
   publishSubmission,
+  resolveOwnedCorps,
+  validatePressReleaseInput,
+  publishPressReleaseArticle,
 } = require("../helpers/newsSubmissionsShared");
+const { invalidateNewsCache } = require("./newsFeed");
 
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
@@ -186,6 +190,165 @@ exports.submitNewsForApproval = onCall(
       logger.error("Error submitting news article:", error);
       if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", "Failed to submit article. Please try again.");
+    }
+  }
+);
+
+// =============================================================================
+// DIRECTOR PRESS RELEASES
+// =============================================================================
+
+/**
+ * Publish a press release about the author's OWN corps — instantly, with no
+ * admin review. This is the community-engagement counterpart to
+ * submitNewsForApproval: news submissions cover the shared world and are
+ * reviewed; press releases are a director speaking for their own organization
+ * and go live immediately.
+ *
+ * Accountability without a review queue comes from three constraints:
+ *   1. the author must own a registered corps (the release is bylined to it),
+ *   2. a tight per-uid write budget throttles abuse, and
+ *   3. anyone can be moderated after the fact — the author can delete their own
+ *      release (deleteMyPressRelease) and admins can remove any article.
+ */
+exports.publishPressRelease = onCall(
+  {
+    cors: true,
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    assertAuth(request);
+
+    const db = getDb();
+
+    // Instant, unreviewed publishing — throttle hard. A director posting real
+    // organizational news does so a handful of times a week, not per minute.
+    await assertWriteBudget(db, request.auth.uid, "pressReleases", {
+      max: 4,
+      windowMs: 6 * 60 * 60 * 1000,
+    });
+
+    const { headline, summary, body, imageUrl, corpsClass } = request.data || {};
+
+    const validation = validatePressReleaseInput({ headline, summary, body, imageUrl });
+    if (!validation.valid) {
+      throw new HttpsError("invalid-argument", validation.error);
+    }
+
+    // A press release must speak for a corps the author actually runs.
+    const credit = await resolveAuthorCredit(db, request.auth.uid);
+    const corps = resolveOwnedCorps(credit.corps, corpsClass);
+    if (!corps) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Register a corps before publishing a press release — a release is issued by your organization."
+      );
+    }
+
+    try {
+      const result = await publishPressReleaseArticle(db, {
+        id: db.collection("news_hub").doc().id, // collision-resistant article id
+        cleaned: validation.cleaned,
+        corps,
+        author: {
+          uid: request.auth.uid,
+          authorName: credit.authorName,
+          authorUsername: credit.authorUsername,
+          authorLocation: credit.authorLocation,
+        },
+      });
+
+      // The feed serves from a short-TTL server cache; drop it so the author
+      // sees their release immediately rather than up to 5 minutes later.
+      await invalidateNewsCache(db);
+
+      logger.info("Press release published:", {
+        articleId: result.articleId,
+        authorUid: request.auth.uid,
+        corpsName: corps.corpsName,
+      });
+
+      return {
+        success: true,
+        message: `Published — your ${corps.corpsName} press release is live.`,
+        articleId: result.articleId,
+        articlePath: result.articlePath,
+      };
+    } catch (error) {
+      logger.error("Error publishing press release:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to publish press release. Please try again.");
+    }
+  }
+);
+
+// Composite article id shape the feed uses: {seasonId}_day_{n}_press_{id}.
+// seasonId may itself contain underscores, so the day marker anchors the parse.
+const PRESS_ARTICLE_ID_RE = /^(.+)_(day_\d+)_(press_[A-Za-z0-9_-]+)$/;
+
+/**
+ * Delete a press release the caller authored (admins may delete any). The
+ * article is soft-removed — unpublished and marked, not hard-deleted — so any
+ * shared link degrades gracefully and moderation stays auditable.
+ */
+exports.deleteMyPressRelease = onCall(
+  {
+    cors: true,
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    assertAuth(request);
+
+    const db = getDb();
+
+    await assertWriteBudget(db, request.auth.uid, "pressReleaseDelete", {
+      max: 20,
+      windowMs: 60 * 60 * 1000,
+    });
+
+    const { articleId } = request.data || {};
+    if (!articleId || typeof articleId !== "string") {
+      throw new HttpsError("invalid-argument", "articleId is required");
+    }
+
+    const match = articleId.match(PRESS_ARTICLE_ID_RE);
+    if (!match) {
+      throw new HttpsError("invalid-argument", "Not a press-release article id");
+    }
+    const [, seasonId, dayId, articleType] = match;
+    const articlePath = `news_hub/${seasonId}/days/${dayId}/articles/${articleType}`;
+
+    try {
+      const ref = db.doc(articlePath);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        throw new HttpsError("not-found", "Press release not found");
+      }
+
+      const data = snap.data();
+      const isAdmin = request.auth.token.admin === true;
+      if (data.authorUid !== request.auth.uid && !isAdmin) {
+        throw new HttpsError("permission-denied", "You can only delete your own press releases");
+      }
+
+      await ref.update({
+        isPublished: false,
+        status: "removed",
+        removedBy: request.auth.uid,
+        removedByAdmin: isAdmin && data.authorUid !== request.auth.uid,
+        removedAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await invalidateNewsCache(db);
+
+      logger.info("Press release removed:", { articlePath, removedBy: request.auth.uid });
+
+      return { success: true, message: "Press release removed." };
+    } catch (error) {
+      logger.error("Error removing press release:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to remove press release");
     }
   }
 );
@@ -406,6 +569,8 @@ exports.rejectSubmission = onCall(
 
 module.exports = {
   submitNewsForApproval: exports.submitNewsForApproval,
+  publishPressRelease: exports.publishPressRelease,
+  deleteMyPressRelease: exports.deleteMyPressRelease,
   listPendingSubmissions: exports.listPendingSubmissions,
   approveSubmission: exports.approveSubmission,
   rejectSubmission: exports.rejectSubmission,

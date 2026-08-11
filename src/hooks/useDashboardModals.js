@@ -5,7 +5,7 @@
 // Owns all Dashboard modal state, the modal-queue auto-trigger effects, and
 // the modal action handlers. Extracted verbatim from src/pages/Dashboard.jsx.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { updateProfile } from '../api/profile';
@@ -18,6 +18,8 @@ import {
   transferCorps,
   unretireCorps,
 } from '../api/functions';
+import { publishPressRelease } from '../api/pressReleases';
+import { CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { CLASS_DISPLAY_NAMES } from '../components/Dashboard/sections/constants';
 import { useModalQueue, MODAL_PRIORITY } from './useModalQueue';
 import { useModalRoute } from './useModalRoute';
@@ -96,6 +98,8 @@ export function useDashboardModals(user, dashboardData) {
   const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showNewsSubmission, setShowNewsSubmission] = useState(false);
   const [submittingNews, setSubmittingNews] = useState(false);
+  const [showPressRelease, setShowPressRelease] = useState(false);
+  const [submittingPressRelease, setSubmittingPressRelease] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
 
@@ -377,6 +381,33 @@ export function useDashboardModals(user, dashboardData) {
     }
   }, []);
 
+  // The director's registered corps, highest class first — the roster a press
+  // release can be issued from. Podium is excluded (CORPS_CLASS_ORDER omits it):
+  // a press release speaks for a competing fantasy corps.
+  const ownedCorps = useMemo(() => {
+    const map = profile?.corps;
+    if (!map) return [];
+    return CORPS_CLASS_ORDER.map((corpsClass) => {
+      const corps = resolveCorpsForClass(map, corpsClass);
+      return corps?.corpsName ? { corpsClass, corpsName: corps.corpsName } : null;
+    }).filter(Boolean);
+  }, [profile?.corps]);
+
+  const handlePressRelease = useCallback(async (payload) => {
+    setSubmittingPressRelease(true);
+    try {
+      const result = await publishPressRelease(payload);
+      if (result.data.success) {
+        toast.success(result.data.message || 'Press release published!');
+        setShowPressRelease(false);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to publish press release');
+    } finally {
+      setSubmittingPressRelease(false);
+    }
+  }, []);
+
   const handleUniformDesign = useCallback(
     async (design) => {
       try {
@@ -433,6 +464,10 @@ export function useDashboardModals(user, dashboardData) {
     showNewsSubmission,
     setShowNewsSubmission,
     submittingNews,
+    showPressRelease,
+    setShowPressRelease,
+    submittingPressRelease,
+    ownedCorps,
     showStreakModal,
     setShowStreakModal,
     showWalletModal,
@@ -454,6 +489,7 @@ export function useDashboardModals(user, dashboardData) {
     openCaptionSelection,
     closeCaptionSelection,
     handleNewsSubmission,
+    handlePressRelease,
     handleUniformDesign,
   };
 }
