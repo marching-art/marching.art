@@ -346,6 +346,12 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
         topTenFinishes: 0,
         leagueWins: 0,
       },
+      // Contribution counts drive the public writer tier (src/utils/writerTier.js).
+      // Only the counts are exposed — not emails or other article metadata.
+      articleStats: {
+        approvedCount: profileData.articleStats?.approvedCount || 0,
+        pressReleaseCount: profileData.articleStats?.pressReleaseCount || 0,
+      },
       createdAt: profileData.createdAt,
       corps: profileData.corps || {}
     };

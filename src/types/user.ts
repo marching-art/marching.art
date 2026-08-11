@@ -134,6 +134,16 @@ export interface UserProfile {
     leagueWins?: number;
   };
 
+  // News-hub contribution counters — drive the automatic writer tier
+  // (src/utils/writerTier.ts). approvedCount is bumped on admin approval;
+  // pressReleaseCount when a press release publishes.
+  articleStats?: {
+    approvedCount?: number;
+    pressReleaseCount?: number;
+    lastApprovedAt?: unknown;
+    lastPressReleaseAt?: unknown;
+  };
+
   // Lifetime stats (detailed)
   lifetimeStats?: LifetimeStats;
 

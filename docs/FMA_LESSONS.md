@@ -90,6 +90,27 @@ _player-facing_: ship a persistent in-game changelog / "What's New" and a
 public roadmap. FMA players were begging simply to know the game was alive —
 we can answer that for free.
 
+> **Shipped (August 2026) — the Updates page, auto-generated.** A public,
+> crawlable `/updates` page shows a **changelog** ("Recent updates") and a
+> **roadmap** ("On the horizon"). An unseen-updates badge (a teal dot on the
+> site-links menu + a count) nudges returning directors and clears the moment
+> they open the page; the watermark is per-device localStorage via a shared
+> external store (`src/hooks/useUnseenUpdates.ts`). The page is in the sitemap,
+> so "the game is alive" is legible to search engines and prospective players.
+>
+> **The changelog writes itself.** Entries live in
+> `src/data/changelogEntries.json`, and `.github/workflows/changelog.yml` runs
+> on every merged PR: `scripts/changelog/generateChangelogEntry.mjs` applies a
+> noise filter (drops dependabot / chore / ci / docs-or-test-only PRs), asks
+> Gemini whether the change is player-facing and — if so — to write the
+> player-facing copy, then commits the entry back to `main` with `[skip ci]`.
+> No human in the loop. Without a `GOOGLE_GENERATIVE_AI_API_KEY` Actions secret
+> it falls back to a conservative conventional-commit heuristic. The
+> generator's pure logic is unit-tested (`npm run changelog:selftest`). One
+> setup step: allow the Actions bot to push to `main` (branch protection), and
+> add the Gemini secret for good copy. The roadmap stays hand-authored in
+> `src/data/changelog.ts`.
+
 ### 3. Moderation and anti-cheat scale with success; FMA never staffed for it
 
 Recurring threads: "Moderator Desperately Needed" (multiple), "Remove all of
@@ -114,6 +135,20 @@ community writer / commentator roles_. The `NewsEntry` schema already stores
 author identity, so the data model is ready — this is mostly a
 roles-and-surfacing change. A masthead of human voices is retention FMA got
 for free from volunteers.
+
+> **Shipped (August 2026) — automatic writer credentials + the profile
+> Newsroom.** Credentials are _earned, not granted_: a director's contribution
+> counters (`articleStats.approvedCount`, bumped on admin approval, and
+> `articleStats.pressReleaseCount`, bumped when a press release publishes) feed
+> a derived tier — **Contributor → Correspondent → Staff Writer**
+> (`src/utils/writerTier.ts`, weighting reviewed articles above self-published
+> press releases so the top tier can't be farmed). The tier shows as a badge on
+> any director's profile (`WriterBadge.tsx`; `getPublicProfile` now returns the
+> public counts). Alongside it, the **Newsroom** (`ProfileNewsroom.tsx`) gathers
+> a director's own published press releases and articles on their profile — the
+> lesson-1 fast-follow — via a collection-group query on `articles` by
+> `authorUid` (new composite index in `firestore.indexes.json`). No admin action
+> anywhere in the loop.
 
 ### 5. Directors want to express identity beyond the numbers
 
@@ -171,15 +206,20 @@ keep our update cadence visible.
 ## Suggested priority order for marching.art
 
 1. **Unblock the corps newsroom** (Lesson 1) — **✅ shipped** (Director Press
-   Releases; see the callout under Lesson 1). Natural fast-follow: a per-corps
-   "Newsroom" section on the director profile that lists that corps' releases.
-2. **Player-facing changelog / roadmap** (Lesson 2) — cheap, directly answers
-   the complaint that killed FMA's momentum.
-3. **Public cross-league community feed** (Lesson 6 gap) — captures the
-   site-wide culture layer we currently have nowhere to hold.
-4. **Credited community writers/commentators** (Lesson 4) — schema-ready.
+   Releases + the profile Newsroom fast-follow; callouts under Lessons 1 and 4).
+2. **Player-facing changelog / roadmap** (Lesson 2) — **✅ shipped and
+   automated** (the `/updates` page; the changelog now writes itself on merge —
+   callout under Lesson 2). No manual upkeep.
+3. ~~**Public cross-league community feed**~~ — **decided against.** With an
+   active Discord, a generic in-app chat feed is redundant and risks
+   fragmenting the community. The durable, identity-anchored content that
+   Discord _can't_ hold (press releases, the newsroom) is already shipped; the
+   remaining move is to **bridge to Discord** (auto-post press releases /
+   champions), tracked on the public roadmap.
+4. **Credited community writers/commentators** (Lesson 4) — **✅ shipped**
+   (automatic writer tiers; callout under Lesson 4).
 5. **Creative/cosmetic identity tools** (Lesson 5) — sustained, decade-long
-   demand.
+   demand. The next big-value build.
 6. **Anti-abuse & moderation tooling** (Lesson 3) — invest ahead of scale, in
    step with economy growth.
 

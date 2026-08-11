@@ -14,8 +14,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HelpCircle, ExternalLink } from 'lucide-react';
+import { HelpCircle, ExternalLink, Sparkles } from 'lucide-react';
 import { DISCORD_URL } from '../../utils/siteLinks';
+import { useUnseenUpdates } from '../../hooks/useUnseenUpdates';
 
 const MENU_LINKS = [
   // Routed panel on the dashboard (hooks/useDashboardModals DASHBOARD_PANELS).
@@ -49,6 +50,7 @@ const itemClass =
 
 const SiteLinksMenu = () => {
   const [open, setOpen] = useState(false);
+  const { unseenCount, hasUnseen } = useUnseenUpdates();
   /** @type {React.MutableRefObject<HTMLDivElement | null>} */
   const containerRef = useRef(null);
   /** @type {React.MutableRefObject<HTMLButtonElement | null>} */
@@ -89,13 +91,21 @@ const SiteLinksMenu = () => {
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="true"
         aria-expanded={open}
-        aria-label="Guides and site links"
+        aria-label={hasUnseen ? 'Guides and site links (new updates available)' : 'Guides and site links'}
         title="Guides and site links"
-        className={`ml-1 p-2 rounded-none transition-colors ${
+        className={`relative ml-1 p-2 rounded-none transition-colors ${
           open ? 'text-white bg-white/10' : 'text-muted hover:text-white hover:bg-white/10'
         }`}
       >
         <HelpCircle className="w-5 h-5" />
+        {/* Unseen-updates dot — the "the game is alive" nudge. Cleared when the
+            director opens /updates. */}
+        {hasUnseen && (
+          <span
+            className="absolute top-1 right-1 w-2 h-2 bg-teal-400 rounded-full ring-2 ring-surface-raised"
+            aria-hidden="true"
+          />
+        )}
       </button>
 
       {open && (
@@ -104,6 +114,26 @@ const SiteLinksMenu = () => {
           aria-label="Guides and site links"
           className="absolute right-0 top-full mt-1 w-56 bg-surface-card border border-line rounded-none py-1 z-50"
         >
+          {/* What's New leads the menu and carries the unseen-updates badge. */}
+          <Link
+            to="/updates"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={`${itemClass} flex items-center justify-between gap-2`}
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-teal-400" aria-hidden="true" />
+              What&apos;s New
+            </span>
+            {hasUnseen && (
+              <span className="min-w-[1.25rem] px-1.5 py-0.5 text-[10px] font-bold text-center bg-teal-500/20 text-teal-400 border border-teal-500/40 rounded-none">
+                {unseenCount > 9 ? '9+' : unseenCount}
+              </span>
+            )}
+          </Link>
+
+          <div className="my-1 border-t border-line" />
+
           {MENU_LINKS.map((link) => (
             <Link
               key={link.to}

@@ -69,6 +69,7 @@ import { getEquippedCosmetic } from '../../utils/cosmetics';
 import { getXPProgress } from '../../utils/captionPricing';
 import CaptionMasteryPanel from './CaptionMasteryPanel';
 import SeasonHistorySection from './SeasonHistorySection';
+import WriterBadge from './WriterBadge';
 import { Heading } from '../ui';
 
 // =============================================================================
@@ -291,6 +292,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {profile.displayName || 'Anonymous Director'}
                 </Heading>
                 <StatusIndicator status={status} />
+                <WriterBadge contribution={profile.articleStats} />
 
                 <div className="ml-auto flex items-center gap-1">
                   {onShare && (

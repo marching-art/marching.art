@@ -19,6 +19,7 @@ const STATIC_ROUTES = [
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/how-to-play", changefreq: "monthly", priority: "0.9" },
   { path: "/podium-guide", changefreq: "monthly", priority: "0.8" },
+  { path: "/updates", changefreq: "weekly", priority: "0.7" },
   { path: "/preview", changefreq: "weekly", priority: "0.8" },
   { path: "/podium", changefreq: "monthly", priority: "0.7" },
   { path: "/podium/preview", changefreq: "monthly", priority: "0.6" },
