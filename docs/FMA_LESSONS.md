@@ -90,6 +90,18 @@ _player-facing_: ship a persistent in-game changelog / "What's New" and a
 public roadmap. FMA players were begging simply to know the game was alive —
 we can answer that for free.
 
+> **Shipped (August 2026) — the Updates page.** A public, crawlable `/updates`
+> page shows a **changelog** ("Recent updates") and a **roadmap** ("On the
+> horizon"). The source of truth is a repo-committed data module
+> (`src/data/changelog.ts`) updated in the same PR that ships each change — no
+> backend, no admin queue, so the log can't drift from the build. An
+> unseen-updates badge (a teal dot on the site-links menu + a count) nudges
+> returning directors and clears the moment they open the page; the watermark
+> is per-device localStorage via a shared external store
+> (`src/hooks/useUnseenUpdates.ts`) so every badge in the tab clears at once.
+> The page is in the sitemap, so "the game is alive" is legible to search
+> engines and prospective players too.
+
 ### 3. Moderation and anti-cheat scale with success; FMA never staffed for it
 
 Recurring threads: "Moderator Desperately Needed" (multiple), "Remove all of
@@ -173,8 +185,9 @@ keep our update cadence visible.
 1. **Unblock the corps newsroom** (Lesson 1) — **✅ shipped** (Director Press
    Releases; see the callout under Lesson 1). Natural fast-follow: a per-corps
    "Newsroom" section on the director profile that lists that corps' releases.
-2. **Player-facing changelog / roadmap** (Lesson 2) — cheap, directly answers
-   the complaint that killed FMA's momentum.
+2. **Player-facing changelog / roadmap** (Lesson 2) — **✅ shipped** (the
+   `/updates` page; see the callout under Lesson 2). Keep it current: add a
+   `CHANGELOG` entry in the PR that ships each player-visible change.
 3. **Public cross-league community feed** (Lesson 6 gap) — captures the
    site-wide culture layer we currently have nowhere to hold.
 4. **Credited community writers/commentators** (Lesson 4) — schema-ready.

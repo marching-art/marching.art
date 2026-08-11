@@ -69,6 +69,7 @@ const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'Fo
 const Article = lazyWithRetry(() => import('./pages/Article'), 'Article');
 const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
 const HowToPlayPublic = lazyWithRetry(() => import('./pages/HowToPlayPublic'), 'HowToPlayPublic');
+const Updates = lazyWithRetry(() => import('./pages/Updates'), 'Updates');
 const PodiumGuide = lazyWithRetry(() => import('./pages/PodiumGuide'), 'PodiumGuide');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
@@ -485,6 +486,16 @@ function App() {
                       element={
                         <PublicPage name="How to Play">
                           <HowToPlayPublic />
+                        </PublicPage>
+                      }
+                    />
+                    {/* Player-facing changelog + roadmap — crawlable, no auth
+                        (docs/FMA_LESSONS.md lesson 2: make the update cadence visible) */}
+                    <Route
+                      path="/updates"
+                      element={
+                        <PublicPage name="Updates">
+                          <Updates />
                         </PublicPage>
                       }
                     />

@@ -34,6 +34,9 @@ const SiteFooter = ({ className = '' }) => (
       <Link to="/hall-of-champions" className="hover:text-white transition-colors">
         Hall of Champions
       </Link>
+      <Link to="/updates" className="hover:text-white transition-colors">
+        What&apos;s New
+      </Link>
       <a href="/results" className="hover:text-white transition-colors">
         Results
       </a>
