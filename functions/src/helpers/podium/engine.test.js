@@ -221,3 +221,86 @@ describe("blocksAvailable — the daily cap is a start-of-day property", () => {
     );
   });
 });
+
+describe("veteran head-start (last-season engagement lifts only the early game)", () => {
+  test("fraction is 0 below the pivot, 1 at/above full, linear between", () => {
+    assert.equal(engine.veteranStartFraction(null, cfg), 0, "no percentile -> nothing");
+    assert.equal(engine.veteranStartFraction(cfg.veteranStart.pivotPercentile, cfg), 0, "pivot -> 0");
+    assert.equal(engine.veteranStartFraction(cfg.veteranStart.fullPercentile, cfg), 1, "full -> 1");
+    assert.equal(engine.veteranStartFraction(100, cfg), 1, "above full clamps to 1");
+    const mid = (cfg.veteranStart.pivotPercentile + cfg.veteranStart.fullPercentile) / 2;
+    assert.ok(
+      Math.abs(engine.veteranStartFraction(mid, cfg) - 0.5) < 1e-9,
+      "midpoint percentile -> ~0.5"
+    );
+  });
+
+  test("an engaged returner starts with more content/clean; a newcomer does not", () => {
+    const challenge = {};
+    for (const caption of engine.CAPTIONS) challenge[caption] = 5;
+    const newcomer = engine.createSeasonState({ challenge, repTier: 1 }, curves, cfg);
+    const iron = engine.createSeasonState(
+      { challenge, repTier: 1, activityPercentile: cfg.veteranStart.fullPercentile },
+      curves,
+      cfg
+    );
+    assert.ok(
+      iron.captions.GE1.content > newcomer.captions.GE1.content,
+      "returner starts with more content installed"
+    );
+    assert.ok(
+      iron.captions.GE1.clean > newcomer.captions.GE1.clean,
+      "returner starts cleaner"
+    );
+    assert.ok(
+      iron.captions.GE1.content <= newcomer.captions.GE1.content + cfg.veteranStart.maxContentBonus + 1e-9,
+      "bonus never exceeds the configured max"
+    );
+  });
+
+  test("the head-start nearly washes out by finals — residual is a fraction of a point (no promotion leverage)", () => {
+    const challenge = {};
+    for (const caption of engine.CAPTIONS) challenge[caption] = 5;
+    const run = (activityPercentile) => {
+      const state = engine.createSeasonState(
+        { challenge, repTier: 5, activityPercentile },
+        curves,
+        cfg
+      );
+      for (let d = 1; d <= 49; d++) rehearse(state, d, 12);
+      // Same varianceSeed for both: in the real game the seed is
+      // seasonUid|day|uid, independent of the head-start, so the only thing that
+      // could differ at finals is the installed book — which has saturated.
+      return engine.scoreCorps(state, 49, "finals|show", curves, cfg).total;
+    };
+    const newcomerFinals = run(null);
+    const ironFinals = run(cfg.veteranStart.fullPercentile);
+    // Both rehearsed to saturation, so the installed book has all but converged;
+    // the sub-point residual is dwarfed by the ~20-pt tier spreads promotion
+    // cutoffs live on, so the head-start cannot leapfrog a corps at finals. (For
+    // a top corps the soft-cap absorbs it entirely — this is the mid-field case.)
+    assert.ok(
+      Math.abs(ironFinals - newcomerFinals) < 0.5,
+      `finals must nearly converge (newcomer ${newcomerFinals}, iron ${ironFinals}) so the ` +
+        "head-start cannot move a promotion cutoff"
+    );
+  });
+
+  test("early-season: an engaged returner clearly leads an identical newcomer on show one", () => {
+    const challenge = {};
+    for (const caption of engine.CAPTIONS) challenge[caption] = 5;
+    const newcomer = engine.createSeasonState({ challenge, repTier: 1 }, curves, cfg);
+    const iron = engine.createSeasonState(
+      { challenge, repTier: 1, activityPercentile: cfg.veteranStart.fullPercentile },
+      curves,
+      cfg
+    );
+    for (let d = 1; d <= 4; d++) {
+      rehearse(newcomer, d, 12);
+      rehearse(iron, d, 12);
+    }
+    const n = engine.scoreCorps(newcomer, 4, "early|new", curves, cfg).total;
+    const i = engine.scoreCorps(iron, 4, "early|iron", curves, cfg).total;
+    assert.ok(i > n, `returner (${i}) should lead newcomer (${n}) early`);
+  });
+});
