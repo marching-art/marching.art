@@ -90,17 +90,26 @@ _player-facing_: ship a persistent in-game changelog / "What's New" and a
 public roadmap. FMA players were begging simply to know the game was alive —
 we can answer that for free.
 
-> **Shipped (August 2026) — the Updates page.** A public, crawlable `/updates`
-> page shows a **changelog** ("Recent updates") and a **roadmap** ("On the
-> horizon"). The source of truth is a repo-committed data module
-> (`src/data/changelog.ts`) updated in the same PR that ships each change — no
-> backend, no admin queue, so the log can't drift from the build. An
-> unseen-updates badge (a teal dot on the site-links menu + a count) nudges
-> returning directors and clears the moment they open the page; the watermark
-> is per-device localStorage via a shared external store
-> (`src/hooks/useUnseenUpdates.ts`) so every badge in the tab clears at once.
-> The page is in the sitemap, so "the game is alive" is legible to search
-> engines and prospective players too.
+> **Shipped (August 2026) — the Updates page, auto-generated.** A public,
+> crawlable `/updates` page shows a **changelog** ("Recent updates") and a
+> **roadmap** ("On the horizon"). An unseen-updates badge (a teal dot on the
+> site-links menu + a count) nudges returning directors and clears the moment
+> they open the page; the watermark is per-device localStorage via a shared
+> external store (`src/hooks/useUnseenUpdates.ts`). The page is in the sitemap,
+> so "the game is alive" is legible to search engines and prospective players.
+>
+> **The changelog writes itself.** Entries live in
+> `src/data/changelogEntries.json`, and `.github/workflows/changelog.yml` runs
+> on every merged PR: `scripts/changelog/generateChangelogEntry.mjs` applies a
+> noise filter (drops dependabot / chore / ci / docs-or-test-only PRs), asks
+> Gemini whether the change is player-facing and — if so — to write the
+> player-facing copy, then commits the entry back to `main` with `[skip ci]`.
+> No human in the loop. Without a `GOOGLE_GENERATIVE_AI_API_KEY` Actions secret
+> it falls back to a conservative conventional-commit heuristic. The
+> generator's pure logic is unit-tested (`npm run changelog:selftest`). One
+> setup step: allow the Actions bot to push to `main` (branch protection), and
+> add the Gemini secret for good copy. The roadmap stays hand-authored in
+> `src/data/changelog.ts`.
 
 ### 3. Moderation and anti-cheat scale with success; FMA never staffed for it
 

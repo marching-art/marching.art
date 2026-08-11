@@ -68,6 +68,7 @@
     "census:check": "node scripts/designCensus.mjs --check",
     "audit:check": "node scripts/auditRatchet.mjs",
     "ts-nocheck:check": "node scripts/tsNocheckCensus.mjs --check",
+    "changelog:selftest": "node --test scripts/changelog/*.test.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

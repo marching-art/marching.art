@@ -16,6 +16,15 @@
 // Entries are user-facing: describe the change the way it affects a director,
 // not the commit. Keep summaries to a sentence or two; use `highlights` for the
 // specifics.
+//
+// The CHANGELOG lives in changelogEntries.json (not inline here) so the merge
+// automation can prepend a new entry to a plain data file without rewriting a
+// TypeScript module. On each merged PR, .github/workflows/changelog.yml runs
+// scripts/changelog/generateChangelogEntry.mjs, which decides whether the
+// change is player-facing and, if so, writes an entry to that JSON. The ROADMAP
+// below stays hand-authored.
+
+import changelogEntriesRaw from './changelogEntries.json';
 
 export type UpdateCategory = 'feature' | 'improvement' | 'fix' | 'balance';
 
@@ -73,10 +82,7 @@ export const UPDATE_CATEGORY_META: Record<
   },
 };
 
-export const ROADMAP_STATUS_META: Record<
-  RoadmapStatus,
-  { label: string; textClass: string }
-> = {
+export const ROADMAP_STATUS_META: Record<RoadmapStatus, { label: string; textClass: string }> = {
   in_progress: { label: 'In progress', textClass: 'text-teal-400' },
   planned: { label: 'Planned', textClass: 'text-interactive' },
   exploring: { label: 'Exploring', textClass: 'text-muted' },
@@ -86,85 +92,7 @@ export const ROADMAP_STATUS_META: Record<
 // CHANGELOG — newest first. Add new entries at the TOP.
 // -----------------------------------------------------------------------------
 
-export const CHANGELOG: ChangelogEntry[] = [
-  {
-    id: '2026-08-11-press-releases',
-    date: '2026-08-11',
-    title: 'Post press releases for your corps',
-    category: 'feature',
-    summary:
-      'Your organization now has a voice. Publish press releases about your own corps — instantly, no review — and they land in the news feed under your byline.',
-    highlights: [
-      'Share reveals, staff moves, results, and rivalries from your corps’ point of view.',
-      'Publishes the moment you post it, with a PRESS RELEASE badge in the feed.',
-      'Distinct from Submit an Article, which covers the wider circuit and is reviewed.',
-      'You can remove your own releases at any time.',
-    ],
-  },
-  {
-    id: '2026-08-11-podium-veteran-head-start',
-    date: '2026-08-11',
-    title: 'Podium veterans start closer to form',
-    category: 'balance',
-    summary:
-      'A returning Podium corps now opens the season with a head start scaled to how engaged it was last season, so continuity is rewarded without erasing the climb.',
-  },
-  {
-    id: '2026-08-10-daily-loop',
-    date: '2026-08-10',
-    title: 'A sharper daily loop',
-    category: 'improvement',
-    summary:
-      'The daily challenges were rebuilt around real same-day actions, with clearer XP and a weekly streak that pays out as you go.',
-    highlights: [
-      'Challenges now track genuine actions you take that day.',
-      'Tiered XP: 10 for a core challenge, 20 for the daily stretch.',
-      'The weekly arc is a graduated ladder — rewards at 3, 5, and 7 active days.',
-    ],
-  },
-  {
-    id: '2026-08-10-podium-hosting-schedule',
-    date: '2026-08-10',
-    title: 'Director-hosted shows, clearer schedules',
-    category: 'improvement',
-    summary:
-      'Podium hosting and the schedule got a polish pass: director-hosted shows are called out and detailed, venues resolve to standardized "City, ST" locations, and Podium scores nightly at 9 PM ET year-round.',
-    highlights: [
-      'Hosted shows show the hosting director and full rosters, Podium corps included.',
-      'Schedule locations standardized to two-letter state codes.',
-      'Podium divisions are seated at the reset so promotions reach scoring.',
-    ],
-  },
-  {
-    id: '2026-08-09-podium-season-lifecycle',
-    date: '2026-08-09',
-    title: 'Podium: season assessment & a feature-length Report',
-    category: 'feature',
-    summary:
-      'Podium gained a season-start assessment and corps-lifecycle decisions at registration, and the daily Podium Report was rewritten as a full power-rankings column.',
-  },
-  {
-    id: '2026-08-09-finals-reveal',
-    date: '2026-08-09',
-    title: 'Finals night scores now reveal',
-    category: 'fix',
-    summary:
-      'Day 49 finals scores in the Fantasy classes now reveal correctly, so the season closes on the result it should.',
-  },
-  {
-    id: '2026-07-retention-growth',
-    date: '2026-07-28',
-    title: 'Score-drop alerts & shareable score cards',
-    category: 'feature',
-    summary:
-      'The nightly score drop finally reaches you: a morning push when results land, a Discord embed, and shareable score cards with public, crawlable results pages behind every link.',
-    highlights: [
-      'Morning notification when the night’s scores publish.',
-      'Share a score and it opens a public results page for that day.',
-      'Legacy Endowments added a lasting, commemorative way to spend CorpsCoin.',
-    ],
-  },
-];
+export const CHANGELOG: ChangelogEntry[] = changelogEntriesRaw as ChangelogEntry[];
 
 // -----------------------------------------------------------------------------
 // ROADMAP — what's coming. Honest, not a promise of dates. Ordered by nearness.
