@@ -773,8 +773,8 @@ const CaptionSelectionModal = ({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
-            <div className="min-w-0 flex-1">
+          <div className="px-4 py-3 border-t border-line bg-surface-sunken flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 flex-shrink-0 safe-area-bottom">
+            <div className="min-w-0 w-full sm:flex-1">
               {/* When the confirm is unavailable, show why — inline and on every
                   screen size — instead of relying on a hover tooltip that never
                   fires on touch. Otherwise fall back to the scoring countdown. */}
@@ -800,7 +800,7 @@ const CaptionSelectionModal = ({
                 </p>
               )}
             </div>
-            <div className="flex justify-end gap-2 flex-shrink-0 ml-auto">
+            <div className="flex justify-end gap-2 flex-shrink-0 w-full sm:w-auto sm:ml-auto">
               <button
                 onClick={onClose}
                 disabled={saving}
@@ -823,7 +823,7 @@ const CaptionSelectionModal = ({
                     ? 'Caption changes are currently closed — see the change-window indicator above'
                     : undefined
                 }
-                className="min-h-touch px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover active:bg-interactive-subtle disabled:opacity-50 flex items-center gap-2 press-feedback-strong"
+                className="min-h-touch px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover active:bg-interactive-subtle disabled:opacity-50 flex-1 sm:flex-none flex items-center justify-center gap-2 press-feedback-strong"
               >
                 {saving ? (
                   <>
