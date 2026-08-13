@@ -8,12 +8,17 @@
 
 import { createCallable } from './callable';
 
-/** A corps class the release can be bylined to, matching the server's keys. */
+/**
+ * A corps class the release can be bylined to, matching the server's keys.
+ * Includes `podiumClass`: a Podium director speaks for their own corps too
+ * (PODIUM.md §5.8), and a Podium-only director has no other corps to issue from.
+ */
 export type PressReleaseCorpsClass =
   | 'worldClass'
   | 'openClass'
   | 'aClass'
-  | 'soundSport';
+  | 'soundSport'
+  | 'podiumClass';
 
 export interface PublishPressReleaseData {
   headline: string;

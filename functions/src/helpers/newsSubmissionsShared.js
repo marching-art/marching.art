@@ -162,7 +162,11 @@ const PRESS_RELEASE_LIMITS = {
 
 // Preference order when a director owns corps across several classes and did
 // not specify which one a release is from — highest class speaks for the org.
-const PRESS_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport"];
+// Podium sits last: a director's competing fantasy corps is the default org
+// voice, but a Podium director can byline their own corps (PODIUM.md §5.8) —
+// explicitly here rather than only via the defensive fallback below — and a
+// Podium-only director has nothing else to issue from.
+const PRESS_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport", "podiumClass"];
 
 /** Normalize one corps entry from the profile's corps map to a byline object. */
 function corpsToByline(corpsClass, c) {

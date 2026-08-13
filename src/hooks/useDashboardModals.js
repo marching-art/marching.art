@@ -19,7 +19,7 @@ import {
   unretireCorps,
 } from '../api/functions';
 import { publishPressRelease } from '../api/pressReleases';
-import { CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
+import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { CLASS_DISPLAY_NAMES } from '../components/Dashboard/sections/constants';
 import { useModalQueue, MODAL_PRIORITY } from './useModalQueue';
 import { useModalRoute } from './useModalRoute';
@@ -382,12 +382,15 @@ export function useDashboardModals(user, dashboardData) {
   }, []);
 
   // The director's registered corps, highest class first — the roster a press
-  // release can be issued from. Podium is excluded (CORPS_CLASS_ORDER omits it):
-  // a press release speaks for a competing fantasy corps.
+  // release can be issued from. Iterates PROFILE_CORPS_CLASS_ORDER so Podium is
+  // included (it sits last): a Podium director speaks for their own corps too
+  // (PODIUM.md §5.8), and a Podium-only director would otherwise have nothing to
+  // issue a release from. Podium's profile entry is a display copy carrying its
+  // corpsName, which is all the byline needs.
   const ownedCorps = useMemo(() => {
     const map = profile?.corps;
     if (!map) return [];
-    return CORPS_CLASS_ORDER.map((corpsClass) => {
+    return PROFILE_CORPS_CLASS_ORDER.map((corpsClass) => {
       const corps = resolveCorpsForClass(map, corpsClass);
       return corps?.corpsName ? { corpsClass, corpsName: corps.corpsName } : null;
     }).filter(Boolean);
