@@ -188,21 +188,37 @@ async function loadSeries(useFirestore) {
         const key = `${row.corps}|${year}`;
         if (!series.has(key)) series.set(key, new Map());
         const byCaption = series.get(key);
+        // A full 8-caption panel: every caption scored on this row. Reduced
+        // (5-judge) panels — common on 2008-2019 early-season shows — score
+        // only some captions and leave the rest at 0.
+        let validCaptions = 0;
         for (const caption of CAPTIONS) {
           const value = row.captions[caption];
           // Ignore 0s (and any non-finite value): a 0 means the caption was
-          // NOT scored that day — whole sub-captions went un-broken-out in
-          // several years (VP/CG/B/P carry ~1.5k zeros across 2008-2018) — so
+          // NOT scored that day — whole sub-captions went un-broken-out on
+          // reduced panels (VP/CG/B/P carry ~1.5k zeros across 2008-2019) — so
           // it is missing data, never a real score. Counting it craters the
           // low percentiles (VP/CG/B day-1 p5 collapses from ~7 to 0). Values
           // over the 20-point cap are parse artifacts (an occasional total or
-          // subtotal bleeding into a caption column) and are dropped too.
+          // subtotal bleeding into a caption column) and are dropped too. The
+          // caption scores a reduced panel DID award are real, so they still
+          // feed the caption bands here.
           if (!Number.isFinite(value) || value <= 0 || value > 20) continue;
+          validCaptions++;
           if (!byCaption.has(caption)) byCaption.set(caption, new Map());
           byCaption.get(caption).set(day, value); // later events same day overwrite
         }
-        // Total series under a pseudo-caption key.
-        if (Number.isFinite(row.score) && row.score > 0 && row.score <= 100) {
+        // Total series under a pseudo-caption key — FULL PANELS ONLY. A
+        // reduced-panel total is the raw sum of just the captions it scored (a
+        // ~80 scale), not the weighted 100-point total a full panel produces
+        // (GE + Visual/2 + Music/2). Mixing the two scales drags the total
+        // band's floor down with ~1.6k totals that never lived on it.
+        if (
+          validCaptions === CAPTIONS.length &&
+          Number.isFinite(row.score) &&
+          row.score > 0 &&
+          row.score <= 100
+        ) {
           if (!byCaption.has("TOTAL")) byCaption.set("TOTAL", new Map());
           byCaption.get("TOTAL").set(day, row.score);
         }
