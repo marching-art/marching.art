@@ -3,13 +3,19 @@
 // Extracted from pages/ScoresParts.jsx; behavior unchanged.
 // =============================================================================
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 
 export interface PillTab {
   id: string;
   label: string;
   /** Accent color for the active state; defaults to the interactive accent. */
   accent?: 'green' | 'yellow';
+  /**
+   * When true, render a divider immediately before this tab. Used to separate
+   * groups within the strip — e.g. the two game tabs (Fantasy, Podium) from the
+   * utility tabs (Archive, Hall of Champions, Supporters).
+   */
+  groupStart?: boolean;
 }
 
 export const PillTabControl = ({
@@ -52,24 +58,31 @@ export const PillTabControl = ({
         className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-line"
       >
         {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              haptic?.('medium');
-              onTabChange(tab.id);
-            }}
-            className={`px-3 sm:px-4 py-2.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? tab.accent === 'green'
-                  ? 'text-green-400 border-green-500'
-                  : tab.accent === 'yellow'
-                    ? 'text-interactive border-interactive'
-                    : 'text-white border-interactive'
-                : 'text-muted hover:text-secondary border-transparent'
-            }`}
-          >
-            {tab.label}
-          </button>
+          <Fragment key={tab.id}>
+            {tab.groupStart && (
+              <div
+                className="flex-shrink-0 self-center w-px h-4 bg-line mx-1"
+                aria-hidden="true"
+              />
+            )}
+            <button
+              onClick={() => {
+                haptic?.('medium');
+                onTabChange(tab.id);
+              }}
+              className={`px-3 sm:px-4 py-2.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
+                activeTab === tab.id
+                  ? tab.accent === 'green'
+                    ? 'text-green-400 border-green-500'
+                    : tab.accent === 'yellow'
+                      ? 'text-interactive border-interactive'
+                      : 'text-white border-interactive'
+                  : 'text-muted hover:text-secondary border-transparent'
+              }`}
+            >
+              {tab.label}
+            </button>
+          </Fragment>
         ))}
       </div>
       {canScrollRight && (

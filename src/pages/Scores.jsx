@@ -43,7 +43,10 @@ const PodiumScoresPanel = lazyWithRetry(
 
 const TABS = [
   { id: 'fantasy', label: 'Fantasy' },
-  { id: 'archive', label: 'Archive', accent: 'yellow' },
+  // Archive/Champions/Supporters are utility views, not games — groupStart
+  // draws a divider before Archive separating them from the game tabs
+  // (Fantasy, and Podium when enabled).
+  { id: 'archive', label: 'Archive', accent: 'yellow', groupStart: true },
   { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
   { id: 'supporters', label: 'Supporters', accent: 'yellow' },
 ];
