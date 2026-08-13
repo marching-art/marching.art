@@ -665,18 +665,34 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "Register a Podium corps first.");
     }
     const state = snapshot.data();
+    const currentDay = Math.max(0, competitionDay);
+    // This week's picks whose day has already passed are locked: the show has
+    // been performed and validateShowPicks won't let the client resubmit it.
+    // They must survive an edit to the rest of the week — dropping them would
+    // (a) erase a completed show from the corps' tour history and map, and
+    // (b) free its weekly slot, letting a director exceed the pick cap by
+    // registering, attending, and re-registering as the week progresses.
+    const lockedThisWeek = Object.keys(state.selectedShows || {}).filter(
+      (d) => Math.ceil(Number(d) / 7) === week && Number(d) < currentDay
+    );
     const validated = validateShowPicks(
       week,
       shows,
       uid,
       seasonData.seasonUid,
-      Math.max(0, competitionDay),
-      { division: state.division, easternAssignments, scheduleShowsByDay }
+      currentDay,
+      {
+        division: state.division,
+        easternAssignments,
+        scheduleShowsByDay,
+        lockedPickCount: lockedThisWeek.length,
+      }
     );
-    // Replace only this week's picks (mirrors fantasy selectUserShows).
+    // Replace only this week's still-open picks (mirrors fantasy
+    // selectUserShows); keep every other week and this week's locked picks.
     const keep = Object.fromEntries(
       Object.entries(state.selectedShows || {}).filter(
-        ([d]) => Math.ceil(Number(d) / 7) !== week
+        ([d]) => Math.ceil(Number(d) / 7) !== week || Number(d) < currentDay
       )
     );
     // Over-rehearsal guard: a show day only allows blocksOnShowDay clicks (the

@@ -142,6 +142,19 @@ describe("validateShowPicks", () => {
   test("requires an event name for each pick", () => {
     assert.throws(() => validateShowPicks(1, [{ day: 3 }], uid, seasonUid, 0, opts));
   });
+
+  test("already-locked picks count toward the weekly cap (no register-and-drop loophole)", () => {
+    // Week 1 caps at 4. Two shows (days 1-2) already passed and are locked in;
+    // the director may add at most 2 more open shows this week, not 4.
+    const withLocked = { ...opts, lockedPickCount: 2 };
+    assert.deepEqual(
+      validateShowPicks(1, picks([3, 4]), uid, seasonUid, 3, withLocked),
+      expected([3, 4])
+    );
+    assert.throws(() =>
+      validateShowPicks(1, picks([3, 4, 5]), uid, seasonUid, 3, withLocked)
+    );
+  });
 });
 
 describe("validateCommitment (Corps Budget, decision 24)", () => {

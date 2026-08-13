@@ -118,6 +118,12 @@ function validateAuditions(auditions) {
  * confirm each picked eventName is actually on the schedule that day and
  * resolve its authoritative location (the client's location is never trusted).
  *
+ * `lockedPickCount` is how many of this week's picks are already locked in —
+ * days that have passed and can no longer be edited (the caller preserves
+ * them). They still occupy a weekly slot, so they count against the cap here;
+ * otherwise a director could register, attend, let the show drop, and reclaim
+ * the slot for a fresh show — more shows per week than the cap allows.
+ *
  * @returns {{ [day:number]: { eventName: string, location: string } }} normalized picks
  */
 function validateShowPicks(
@@ -126,7 +132,7 @@ function validateShowPicks(
   uid,
   seasonUid,
   currentCompetitionDay,
-  { division, easternAssignments, scheduleShowsByDay = {} } = {}
+  { division, easternAssignments, scheduleShowsByDay = {}, lockedPickCount = 0 } = {}
 ) {
   if (!Number.isInteger(week) || week < 1 || week > 7) {
     throw new HttpsError("invalid-argument", "Week must be 1-7.");
@@ -167,7 +173,7 @@ function validateShowPicks(
     // One show per night — a later pick for the same day replaces the earlier.
     byDay[day] = { eventName, location: match.location || "" };
   }
-  if (Object.keys(byDay).length > maxPicks) {
+  if (Object.keys(byDay).length + lockedPickCount > maxPicks) {
     throw new HttpsError("invalid-argument", `Week ${week} allows at most ${maxPicks} selected shows.`);
   }
   return byDay;
