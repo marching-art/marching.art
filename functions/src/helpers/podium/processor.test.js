@@ -5,7 +5,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { resolveCorpsShow, planForDay } = require("./processor");
+const { resolveCorpsShow, planForDay, clinicianEngagementFinished } = require("./processor");
 const store = require("./store");
 
 describe("resolveCorpsShow", () => {
@@ -103,6 +103,34 @@ describe("planForDay (assistant-director plan by day type)", () => {
 
   test("no plans at all yields an empty list (the day stays lost)", () => {
     assert.deepEqual(planForDay({}, { isShowDay: false, isSpringTraining: false }), []);
+  });
+});
+
+describe("clinicianEngagementFinished (nightly cleanup boundary)", () => {
+  // A 3-day engagement hired on day 2: expiresDay = 2 + 3 - 1 = 4, i.e. active
+  // through day 4. The boost applies while expiresDay >= competitionDay, so day 4
+  // is its last active day; it must be cleared when day 4 finishes so day 5 opens
+  // clean.
+  const clinician = { block: "brassSectionals", hiredDay: 2, expiresDay: 4 };
+
+  test("stays through its last active day", () => {
+    assert.equal(clinicianEngagementFinished(clinician, 2), false);
+    assert.equal(clinicianEngagementFinished(clinician, 3), false);
+  });
+
+  test("is finished at the end of its last active day", () => {
+    // Regression: the prior `< competitionDay` check returned false here, so a
+    // "through day 4" engagement lingered in state (and on screen) all of day 5.
+    assert.equal(clinicianEngagementFinished(clinician, 4), true);
+  });
+
+  test("stays finished on later days", () => {
+    assert.equal(clinicianEngagementFinished(clinician, 5), true);
+  });
+
+  test("no engagement is never finished", () => {
+    assert.equal(clinicianEngagementFinished(null, 5), false);
+    assert.equal(clinicianEngagementFinished(undefined, 5), false);
   });
 });
 
