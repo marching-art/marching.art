@@ -157,35 +157,39 @@ export const ACHIEVEMENTS = [
     ccReward: RARITY_CC.epic,
     progress: (s) => ({ current: Math.min(s.level, 10), goal: 10 }),
   },
+  // Prestige tiers need completed seasons as well as the level (mirrors the
+  // server catalog + getLevelTitle). Seasons are the binding constraint — a
+  // dedicated player clears the level long before the seasons — so the progress
+  // bar tracks seasons, the work that actually remains.
   {
     id: 'level_15',
     title: 'Icon',
-    description: 'Reach XP Level 15',
+    description: 'Reach Level 15 and complete 4 seasons',
     icon: Crown,
     category: 'progression',
     rarity: 'epic',
     ccReward: RARITY_CC.epic,
-    progress: (s) => ({ current: Math.min(s.level, 15), goal: 15 }),
+    progress: (s) => ({ current: Math.min(s.totalSeasons, 4), goal: 4 }),
   },
   {
     id: 'level_20',
     title: 'Hall of Famer',
-    description: 'Reach XP Level 20',
+    description: 'Reach Level 20 and complete 9 seasons',
     icon: Crown,
     category: 'progression',
     rarity: 'legendary',
     ccReward: RARITY_CC.legendary,
-    progress: (s) => ({ current: Math.min(s.level, 20), goal: 20 }),
+    progress: (s) => ({ current: Math.min(s.totalSeasons, 9), goal: 9 }),
   },
   {
     id: 'level_25',
     title: 'Immortal',
-    description: 'Reach XP Level 25',
+    description: 'Reach Level 25 and complete 16 seasons',
     icon: Crown,
     category: 'progression',
     rarity: 'legendary',
     ccReward: RARITY_CC.legendary,
-    progress: (s) => ({ current: Math.min(s.level, 25), goal: 25 }),
+    progress: (s) => ({ current: Math.min(s.totalSeasons, 16), goal: 16 }),
   },
 
   // --- Class access --------------------------------------------------------

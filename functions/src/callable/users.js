@@ -507,7 +507,9 @@ exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "51
       // Reconcile level + title from XP in case earlier code paths left them stale
       const effectiveXp = updates.xp !== undefined ? updates.xp : (profile.xp || 0);
       const computedLevel = calculateLevel(effectiveXp);
-      const computedTitle = getLevelTitle(computedLevel);
+      const computedTitle = getLevelTitle(computedLevel, {
+        totalSeasons: profile.lifetimeStats?.totalSeasons,
+      });
       const currentLevel = updates.xpLevel !== undefined ? updates.xpLevel : profile.xpLevel;
       const currentTitle = updates.userTitle !== undefined ? updates.userTitle : profile.userTitle;
       if (currentLevel !== computedLevel) updates.xpLevel = computedLevel;

@@ -108,9 +108,9 @@ export const PROGRESSION_AXES = [
   {
     id: 'journey',
     label: 'Your journey — Level & Title',
-    meaning: `Experience over time. Every ${XP_PER_LEVEL.toLocaleString()} XP is a level; levels carry titles (Rookie → Eternal) and unlock classes early.`,
+    meaning: `Experience over time. Every ${XP_PER_LEVEL.toLocaleString()} XP is a level; levels carry titles (Rookie → Eternal) and unlock classes early. The prestige titles from Level 10+ (Legend, Icon, Hall of Famer, Immortal, Eternal) also require completed seasons, so the top titles are a multi-year career climb, not an XP sprint.`,
     raise:
-      'Everything pays XP — logins, shows, challenges, predictions, league wins, seasons. See the sources below.',
+      'Everything pays XP — logins, shows, challenges, predictions, league wins, seasons. See the sources below. The prestige titles also want seasons under your belt.',
   },
   {
     id: 'standing',
