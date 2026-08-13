@@ -47,6 +47,38 @@ test("resolveOwnedCorps falls back when the requested class is not owned", () =>
   assert.equal(byline.corpsName, "Aurora Open");
 });
 
+test("resolveOwnedCorps bylines a Podium-only director's corps", () => {
+  // A Podium director keeps their competitive state server-side; the profile's
+  // corps.podiumClass is a display copy carrying the corpsName the byline needs.
+  const corps = { podiumClass: { corpsName: "Canton Regiment", location: "Canton, OH" } };
+  const byline = resolveOwnedCorps(corps, null);
+  assert.equal(byline.corpsClass, "podiumClass");
+  assert.equal(byline.corpsName, "Canton Regiment");
+  assert.equal(byline.location, "Canton, OH");
+});
+
+test("resolveOwnedCorps honors an explicitly requested Podium corps", () => {
+  const corps = {
+    worldClass: { corpsName: "Aurora" },
+    podiumClass: { corpsName: "Aurora Podium" },
+  };
+  const byline = resolveOwnedCorps(corps, "podiumClass");
+  assert.equal(byline.corpsClass, "podiumClass");
+  assert.equal(byline.corpsName, "Aurora Podium");
+});
+
+test("resolveOwnedCorps defaults to a fantasy corps over Podium when none requested", () => {
+  // Podium sits last in the preference order, so a director's competing fantasy
+  // corps stays the default org voice unless Podium is explicitly chosen.
+  const corps = {
+    podiumClass: { corpsName: "Aurora Podium" },
+    aClass: { corpsName: "Aurora Cadets" },
+  };
+  const byline = resolveOwnedCorps(corps, null);
+  assert.equal(byline.corpsClass, "aClass");
+  assert.equal(byline.corpsName, "Aurora Cadets");
+});
+
 test("resolveOwnedCorps returns null when the author owns no corps", () => {
   assert.equal(resolveOwnedCorps(null, "worldClass"), null);
   assert.equal(resolveOwnedCorps({}, null), null);

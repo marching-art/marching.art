@@ -75,6 +75,32 @@ describe('PressReleaseModal', () => {
     expect(onSubmit.mock.calls[0][0].corpsClass).toBe('aClass');
   });
 
+  it('lets a Podium-only director issue a release from their Podium corps', () => {
+    const onSubmit = vi.fn();
+    render(
+      <PressReleaseModal
+        ownedCorps={[{ corpsClass: 'podiumClass', corpsName: 'Canton Regiment' }]}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+
+    // The Podium corps is the sole issuer — no register-first prompt.
+    expect(screen.queryByText(/Register a corps first/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Canton Regiment')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Headline/), {
+      target: { value: 'Canton Regiment reveals its 2026 program' },
+    });
+    fireEvent.change(screen.getByLabelText(/Announcement/), {
+      target: { value: 'The Regiment is thrilled to announce a bold new show for the coming season.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Publish/i }));
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].corpsClass).toBe('podiumClass');
+  });
+
   it('prompts a director with no corps to register first and disables publishing', () => {
     render(<PressReleaseModal ownedCorps={[]} onClose={vi.fn()} onSubmit={vi.fn()} />);
     expect(screen.getByText(/Register a corps first/i)).toBeInTheDocument();
