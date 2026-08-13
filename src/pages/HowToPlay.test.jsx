@@ -84,8 +84,7 @@ describe('HowToPlay (/guide)', () => {
     renderGuide();
     // The rail button and the section heading share the label; clicking should
     // not throw (scrollTo is a no-op in jsdom but the handler must run cleanly).
-    const rail = screen.getByText('Sections').closest('nav');
-    if (!rail) throw new Error('expected a Sections nav rail');
+    const rail = screen.getByRole('navigation', { name: 'Guide sections' });
     fireEvent.click(within(rail).getByText('Podium Class'));
     expect(screen.getByText('Reputation: the climb to Champion Status')).toBeInTheDocument();
   });

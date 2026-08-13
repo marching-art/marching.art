@@ -51,6 +51,23 @@ const SECTIONS = [
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
 ];
 
+// The sections grouped by which game they belong to. The rail and mobile chips
+// render these headers so the two-game split is visible in the navigation
+// itself, not only in the Overview copy — Podium reads as its own game rather
+// than one section buried near the end. The fantasy-specific sections (captions,
+// scoring, the four classes, progression) sit under "Fantasy"; shared systems
+// (calendar, CorpsCoin, leagues, Caption Wars) sit under a neutral "Systems"
+// heading rather than being mislabeled as belonging to either game.
+const SECTION_GROUPS = [
+  { id: 'start', label: 'Start here', sections: ['overview', 'start'] },
+  { id: 'fantasy', label: 'Fantasy', sections: ['captions', 'scoring', 'classes', 'progression'] },
+  { id: 'systems', label: 'Systems', sections: ['season', 'economy', 'leagues', 'captionWars'] },
+  { id: 'podium', label: 'Podium', sections: ['podium'] },
+  { id: 'reference', label: 'Reference', sections: ['glossary', 'faq'] },
+];
+
+const SECTION_BY_ID = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
+
 const HowToPlay = () => {
   const scrollRef = useRef(null);
   const sectionRefs = useRef({});
@@ -128,22 +145,41 @@ const HowToPlay = () => {
           </div>
         </div>
 
-        {/* Mobile section chips */}
+        {/* Mobile section chips — grouped, with a labelled divider before each
+            group so the two-game split reads on phones too. */}
         {!searching && (
           <div className="lg:hidden overflow-x-auto scrollbar-hide border-t border-white/10">
-            <div className="flex gap-1 px-2 py-1.5">
-              {SECTIONS.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => scrollToSection(s.id)}
-                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-colors ${
-                    activeId === s.id
-                      ? 'text-white bg-interactive'
-                      : 'text-muted hover:text-secondary'
-                  }`}
-                >
-                  {s.label}
-                </button>
+            <div className="flex items-center gap-1 px-2 py-1.5">
+              {SECTION_GROUPS.map((group, gi) => (
+                <React.Fragment key={group.id}>
+                  {gi > 0 && (
+                    <span
+                      className={`flex-shrink-0 pl-2 pr-1 text-[9px] font-bold uppercase tracking-wider ${
+                        group.id === 'podium' ? 'text-brand' : 'text-muted/60'
+                      }`}
+                    >
+                      {group.label}
+                    </span>
+                  )}
+                  {group.sections.map((id) => {
+                    const s = SECTION_BY_ID[id];
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => scrollToSection(id)}
+                        className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-colors ${
+                          activeId === id
+                            ? group.id === 'podium'
+                              ? 'text-white bg-brand'
+                              : 'text-white bg-interactive'
+                            : 'text-muted hover:text-secondary'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </React.Fragment>
               ))}
             </div>
           </div>
@@ -159,33 +195,56 @@ const HowToPlay = () => {
         ) : (
           <div className="max-w-5xl mx-auto px-4 flex gap-6">
             {/* Desktop section rail */}
-            <nav className="hidden lg:block w-52 flex-shrink-0 sticky top-0 self-start pt-6">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted px-3 mb-2">
-                Sections
-              </p>
-              <ul className="space-y-0.5">
-                {SECTIONS.map((s) => {
-                  const Icon = s.icon;
-                  const active = activeId === s.id;
+            <nav
+              aria-label="Guide sections"
+              className="hidden lg:block w-52 flex-shrink-0 sticky top-0 self-start pt-6"
+            >
+              {/* Grouped by game so the two-game split is legible in the nav:
+                  Fantasy, shared Systems, and Podium (gold) as its own group. */}
+              <div className="space-y-3">
+                {SECTION_GROUPS.map((group) => {
+                  const isPodium = group.id === 'podium';
                   return (
-                    <li key={s.id}>
-                      <button
-                        onClick={() => scrollToSection(s.id)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-none transition-colors ${
-                          active
-                            ? 'text-white bg-interactive/15 border-l-2 border-interactive'
-                            : 'text-muted hover:text-secondary hover:bg-white/5 border-l-2 border-transparent'
+                    <div key={group.id}>
+                      <p
+                        className={`text-[10px] font-bold uppercase tracking-wider px-3 mb-1 ${
+                          isPodium ? 'text-brand' : 'text-muted'
                         }`}
                       >
-                        <Icon
-                          className={`w-4 h-4 flex-shrink-0 ${active ? 'text-interactive' : ''}`}
-                        />
-                        {s.label}
-                      </button>
-                    </li>
+                        {group.label}
+                      </p>
+                      <ul className="space-y-0.5">
+                        {group.sections.map((id) => {
+                          const s = SECTION_BY_ID[id];
+                          const Icon = s.icon;
+                          const active = activeId === id;
+                          const activeClass = isPodium
+                            ? 'text-white bg-brand/15 border-l-2 border-brand'
+                            : 'text-white bg-interactive/15 border-l-2 border-interactive';
+                          const iconActiveClass = isPodium ? 'text-brand' : 'text-interactive';
+                          return (
+                            <li key={id}>
+                              <button
+                                onClick={() => scrollToSection(id)}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-none transition-colors ${
+                                  active
+                                    ? activeClass
+                                    : 'text-muted hover:text-secondary hover:bg-white/5 border-l-2 border-transparent'
+                                }`}
+                              >
+                                <Icon
+                                  className={`w-4 h-4 flex-shrink-0 ${active ? iconActiveClass : ''}`}
+                                />
+                                {s.label}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             </nav>
 
             {/* Content */}
