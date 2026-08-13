@@ -9,7 +9,7 @@ export interface PillTab {
   id: string;
   label: string;
   /** Accent color for the active state; defaults to the interactive accent. */
-  accent?: 'green' | 'yellow';
+  accent?: 'green' | 'yellow' | 'brand';
   /**
    * When true, render a divider immediately before this tab. Used to separate
    * groups within the strip — e.g. the two game tabs (Fantasy, Podium) from the
@@ -74,9 +74,11 @@ export const PillTabControl = ({
                 activeTab === tab.id
                   ? tab.accent === 'green'
                     ? 'text-green-400 border-green-500'
-                    : tab.accent === 'yellow'
-                      ? 'text-interactive border-interactive'
-                      : 'text-white border-interactive'
+                    : tab.accent === 'brand'
+                      ? 'text-brand border-brand'
+                      : tab.accent === 'yellow'
+                        ? 'text-interactive border-interactive'
+                        : 'text-white border-interactive'
                   : 'text-muted hover:text-secondary border-transparent'
               }`}
             >

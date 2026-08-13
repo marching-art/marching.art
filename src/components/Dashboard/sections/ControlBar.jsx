@@ -3,7 +3,7 @@
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 
 import React, { memo } from 'react';
-import { Flame, Coins, Clock } from 'lucide-react';
+import { Flame, Coins, Clock, Medal } from 'lucide-react';
 import { CORPS_CLASS_ORDER } from '../../../utils/corps';
 import {
   CLASS_SHORT_LABELS,
@@ -145,7 +145,7 @@ const ControlBar = memo(
                 />
                 <button
                   onClick={() => onSwitch('podiumClass')}
-                  className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
+                  className={`flex-shrink-0 inline-flex items-center gap-1 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                     activeCorpsClass === 'podiumClass'
                       ? 'bg-brand text-white'
                       : corps?.podiumClass
@@ -153,6 +153,11 @@ const ControlBar = memo(
                         : 'text-brand/70 hover:text-brand border border-dashed border-brand/50'
                   }`}
                 >
+                  {/* The Medal icon is Podium's canonical mark (Hall of
+                      Champions, How to Play, the Podium guide) — its presence,
+                      where the fantasy tabs are text-only, signals a different
+                      kind of game at a glance. */}
+                  <Medal className="w-3 h-3" aria-hidden="true" />
                   {CLASS_SHORT_LABELS.podiumClass}
                 </button>
               </>

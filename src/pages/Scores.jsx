@@ -55,7 +55,7 @@ const TABS = [
 // Podium shows ALL 8 captions (its scores are earned, not drafted); the
 // fantasy tabs stay condensed to GE/VIS/MUS — the anti-lineup-harvesting
 // rule (design §5.4).
-const PODIUM_TAB = { id: 'podium', label: 'Podium', accent: 'yellow' };
+const PODIUM_TAB = { id: 'podium', label: 'Podium', accent: 'brand' };
 
 // Sub-tabs nested under the Fantasy tab — the DCI-style fantasy recaps plus the
 // four fantasy class standings. Mirrors the Podium tab's sub-tab pattern so all
