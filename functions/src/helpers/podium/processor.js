@@ -103,6 +103,24 @@ function planForDay(state, { isShowDay, isSpringTraining }) {
 }
 
 /**
+ * True once a clinician engagement is spent as of the completed `competitionDay`.
+ *
+ * A clinician is "active through" its `expiresDay`: the yield boost applies while
+ * `expiresDay >= competitionDay` (podium.allocateRehearsalBlock), so the last
+ * active day is `expiresDay` itself. The nightly processor runs at the end of the
+ * day it is passed, so an engagement is finished the moment `competitionDay`
+ * reaches `expiresDay` — a `<` check (the prior behavior) waited one day too long,
+ * stranding a spent engagement in state (and, since the UI keys on presence, on
+ * screen) for the whole following day.
+ * @param {?{expiresDay: number}} clinician the engagement, or null/undefined
+ * @param {number} competitionDay the completed competition day being processed
+ * @returns {boolean}
+ */
+function clinicianEngagementFinished(clinician, competitionDay) {
+  return Boolean(clinician) && clinician.expiresDay <= competitionDay;
+}
+
+/**
  * @param {FirebaseFirestore.Firestore} db
  * @param {object} seasonData game-settings/season data
  * @param {{calendarDay: number, competitionDay: number}} dayContext completed day
@@ -412,8 +430,14 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         store.debitBudget(state, store.balance.budget.springTrainingDayCost, "camp", competitionDay);
       }
 
-      // Expire finished clinician engagements.
-      if (state.clinician && state.clinician.expiresDay < competitionDay) {
+      // Expire finished clinician engagements. An engagement is "active through
+      // expiresDay" — the yield boost applies while expiresDay >= competitionDay
+      // (podium.allocateRehearsalBlock), so it is spent the moment its last
+      // active day finishes. Clearing it here (end of that day) leaves the next
+      // day clean; keeping it a day longer would strand a spent engagement in
+      // state, and the UI keys purely on presence, so it would read as still
+      // active for a full extra day.
+      if (clinicianEngagementFinished(state.clinician, competitionDay)) {
         delete state.clinician;
       }
 
@@ -890,4 +914,10 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
   }
 }
 
-module.exports = { processPodiumDay, showVenueFor, resolveCorpsShow, planForDay };
+module.exports = {
+  processPodiumDay,
+  showVenueFor,
+  resolveCorpsShow,
+  planForDay,
+  clinicianEngagementFinished,
+};
