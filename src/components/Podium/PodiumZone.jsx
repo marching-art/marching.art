@@ -9,7 +9,7 @@
 // keeping the component usable in isolation (e.g. tests).
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Medal } from 'lucide-react';
 import { usePodium } from '../../hooks/usePodium';
 import PodiumRegistration from './PodiumRegistration';
 import RehearsalPlanner from './RehearsalPlanner';
@@ -20,6 +20,23 @@ import PodiumStaffPanel from './PodiumStaffPanel';
 import JointRehearsalPanel from './JointRehearsalPanel';
 import FanFavoriteCard from './FanFavoriteCard';
 import StaffOutlookBanner from './StaffOutlookBanner';
+
+// A slim, persistent mode banner. Selecting the Podium tab swaps Zone C from
+// the fantasy lineup surfaces to the director sim — this line names the
+// boundary so a director who expected a draftable lineup understands they've
+// crossed into a different game (a separate simulation, not a fifth class).
+function PodiumModeBanner() {
+  return (
+    <div className="flex items-start gap-2 bg-brand/10 border border-brand/30 rounded-none px-3 py-2">
+      <Medal className="w-4 h-4 text-brand flex-shrink-0 mt-0.5" aria-hidden="true" />
+      <p className="text-[11px] text-secondary leading-snug">
+        <span className="font-bold text-brand uppercase tracking-wider">Podium</span> — a director
+        simulation, not a fantasy draft. You run your own corps and earn every point through how you
+        rehearse, travel, and rest.
+      </p>
+    </div>
+  );
+}
 
 /**
  * @param {{ podium?: ReturnType<typeof usePodium> }} props
@@ -51,7 +68,12 @@ export default function PodiumZone({ podium: podiumProp }) {
   }
 
   if (!podium.data?.exists) {
-    return <PodiumRegistration podium={podium} />;
+    return (
+      <div className="space-y-4">
+        <PodiumModeBanner />
+        <PodiumRegistration podium={podium} />
+      </div>
+    );
   }
 
   // Order matters most on mobile, where these eight panels are a long single
@@ -62,6 +84,7 @@ export default function PodiumZone({ podium: podiumProp }) {
   // the community vote follow.
   return (
     <div className="space-y-4">
+      <PodiumModeBanner />
       <StaffOutlookBanner podium={podium} />
       <RehearsalPlanner podium={podium} />
       <PodiumCaptionPanel podium={podium} />
