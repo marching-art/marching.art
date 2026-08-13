@@ -344,7 +344,19 @@ async function addShowToDay(seasonId, dayNumber, show) {
     day: dayNumber,
     week: week,
     type: show.isChampionship ? "championship" : "regular",
-    allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
+    // addShowToDay is the director-hosted-show writer (callable/podiumHost.js),
+    // and a hosted show is open enrollment for EVERY class (design §5.10) —
+    // Podium corps route to hosted venues and count toward attendance just like
+    // the fantasy classes (decision 27). So the persisted eligible-classes list
+    // includes Podium; leaving it out made hosted shows the one corps list that
+    // omitted the Podium field.
+    allowedClasses: show.eligibleClasses || [
+      "World Class",
+      "Open Class",
+      "A Class",
+      "SoundSport",
+      "Podium Class",
+    ],
     mandatory: show.mandatory || false,
   };
   // Provenance. Player-hosted events (callable/podiumHost.js) pass these and

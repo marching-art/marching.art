@@ -306,6 +306,17 @@ describe("addShowToDay provenance", () => {
     const added = competitions.find((c) => c.name === "Rohn Invitational");
     assert.equal(added.eventTier, "hosted");
     assert.equal(added.hostUid, "user-1");
+    // Open enrollment for EVERY class (design §5.10): the Podium field routes to
+    // hosted venues and counts toward attendance, so the persisted eligible-
+    // classes list includes Podium alongside the fantasy classes.
+    assert.ok(added.allowedClasses.includes("Podium Class"));
+    assert.deepEqual(added.allowedClasses, [
+      "World Class",
+      "Open Class",
+      "A Class",
+      "SoundSport",
+      "Podium Class",
+    ]);
     // The drop planner therefore treats it as virtual: no timing influence,
     // and not an owed DCI recap.
     assert.equal(isVirtualShow(added), true);
