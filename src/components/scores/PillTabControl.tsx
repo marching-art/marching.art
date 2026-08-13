@@ -60,10 +60,7 @@ export const PillTabControl = ({
         {tabs.map((tab) => (
           <Fragment key={tab.id}>
             {tab.groupStart && (
-              <div
-                className="flex-shrink-0 self-center w-px h-4 bg-line mx-1"
-                aria-hidden="true"
-              />
+              <div className="flex-shrink-0 self-center w-px h-4 bg-line mx-1" aria-hidden="true" />
             )}
             <button
               onClick={() => {

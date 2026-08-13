@@ -157,8 +157,7 @@ const Scores = () => {
     // materialized standings plus lazy per-day recaps, so the full recap
     // download can be skipped when the standings cover this season.
     skipShows:
-      activeTab !== 'archive' &&
-      !(activeTab === 'fantasy' && fantasyViewTab === 'soundsport'),
+      activeTab !== 'archive' && !(activeTab === 'fantasy' && fantasyViewTab === 'soundsport'),
   });
 
   // The score-drop push and Discord embed both deep-link here, so this is

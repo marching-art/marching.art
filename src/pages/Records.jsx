@@ -152,7 +152,10 @@ const Records = () => {
                   {group.classes.map((cls) => {
                     const classRecords = records?.classes?.[cls.key] || {};
                     return (
-                      <div key={cls.key} className="bg-surface-card border border-line rounded-none">
+                      <div
+                        key={cls.key}
+                        className="bg-surface-card border border-line rounded-none"
+                      >
                         <div className="flex items-center gap-2 px-4 py-3 border-b border-line-muted">
                           <span
                             className={`w-1 h-3.5 flex-shrink-0 ${isPodium ? 'bg-brand' : 'bg-interactive'}`}
