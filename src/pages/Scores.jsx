@@ -43,7 +43,6 @@ const PodiumScoresPanel = lazyWithRetry(
 
 const TABS = [
   { id: 'fantasy', label: 'Fantasy' },
-  { id: 'soundsport', label: 'SoundSport', accent: 'green' },
   { id: 'archive', label: 'Archive', accent: 'yellow' },
   { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
   { id: 'supporters', label: 'Supporters', accent: 'yellow' },
@@ -56,15 +55,19 @@ const TABS = [
 const PODIUM_TAB = { id: 'podium', label: 'Podium', accent: 'yellow' };
 
 // Sub-tabs nested under the Fantasy tab — the DCI-style fantasy recaps plus the
-// three class standings. Mirrors the Podium tab's sub-tab pattern so all of the
-// live-season fantasy views live under one primary tab. 'latest' keeps its id
-// (the "Recaps" view) for continuity with the archive sub-tabs and old deep
-// links; World/Open/A Class moved here from their former top-level tabs.
+// four fantasy class standings. Mirrors the Podium tab's sub-tab pattern so all
+// of the live-season fantasy views live under one primary tab. 'latest' keeps
+// its id (the "Recaps" view) for continuity with the archive sub-tabs and old
+// deep links; World/Open/A Class/SoundSport all live here — SoundSport is a
+// fantasy class, so it belongs beside its siblings, not at the top level where
+// it read as a peer of the separate Podium game (this also makes the live
+// sub-tabs match the Archive sub-tabs, which already nested SoundSport).
 const FANTASY_SUB_TABS = [
   { id: 'latest', label: 'Recaps' },
   { id: 'world', label: 'World' },
   { id: 'open', label: 'Open' },
   { id: 'aclass', label: 'A Class' },
+  { id: 'soundsport', label: 'SoundSport' },
 ];
 const FANTASY_SUB_IDS = FANTASY_SUB_TABS.map((t) => t.id);
 
@@ -146,11 +149,13 @@ const Scores = () => {
     classFilter: 'all',
     // Disable auto-fallback so Latest tab starts fresh on new season
     disableArchiveFallback: activeTab !== 'archive',
-    // Only the SoundSport and Archive tabs render from the season-wide show
-    // list; everything else reads the materialized standings plus lazy
-    // per-day recaps, so the full recap download can be skipped when the
-    // standings cover this season.
-    skipShows: activeTab !== 'soundsport' && activeTab !== 'archive',
+    // Only the SoundSport view (now nested under Fantasy) and the Archive tab
+    // render from the season-wide show list; everything else reads the
+    // materialized standings plus lazy per-day recaps, so the full recap
+    // download can be skipped when the standings cover this season.
+    skipShows:
+      activeTab !== 'archive' &&
+      !(activeTab === 'fantasy' && fantasyViewTab === 'soundsport'),
   });
 
   // The score-drop push and Discord embed both deep-link here, so this is
@@ -487,13 +492,15 @@ const Scores = () => {
                       />
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* SOUNDSPORT TAB */}
-              {activeTab === 'soundsport' && (
-                <div className="p-3 md:p-4">
-                  <SoundSportMedalList shows={unfilteredShows} />
+                  {/* SoundSport View — the unranked fantasy class, medals not
+                      placements. Nested here with its ranked siblings rather
+                      than at the top level. */}
+                  {fantasyViewTab === 'soundsport' && (
+                    <div className="p-3 md:p-4">
+                      <SoundSportMedalList shows={unfilteredShows} />
+                    </div>
+                  )}
                 </div>
               )}
 
