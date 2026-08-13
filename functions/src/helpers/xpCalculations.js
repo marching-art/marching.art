@@ -50,6 +50,11 @@ const XP_CONFIG = {
  * src/components/Profile/directorProfileHelpers.ts.
  * The ladder continues past Level 10 so long-term directors keep a title to
  * chase: 10 Legend → 15 Icon → 20 Hall of Famer → 25 Immortal → 30 Eternal.
+ *
+ * This map is only the level → name lookup (levels 1-9 are pure XP). The
+ * prestige tiers at 10+ carry an ADDITIONAL completed-seasons requirement —
+ * see EXTENDED_TITLE_TIERS — so Hall of Famer and above are lifetime career
+ * titles, not something a fast grinder reaches on XP alone in two seasons.
  */
 /** @type {Record<number, string>} */
 const LEVEL_TITLES = {
@@ -69,22 +74,45 @@ const LEVEL_TITLES = {
   30: 'Eternal',
 };
 
-/** Extended-tier thresholds, highest first, for levels 10+ */
-const EXTENDED_TITLE_TIERS = [30, 25, 20, 15, 10];
+/**
+ * Extended prestige tiers (Level 10+), highest first. Beyond Legend these are
+ * LIFETIME titles: each needs BOTH the XP level AND a number of *completed*
+ * seasons (lifetimeStats.totalSeasons — competed in ≥1 show in a season that
+ * then archived). A game year is seven 49-day seasons
+ * (helpers/scheduleGeneration.js), so the seasons gate is what turns Hall of
+ * Famer and above into a multi-year career achievement instead of something a
+ * dedicated grinder reaches on XP alone inside two seasons. Legend keeps a
+ * zero-season floor — it stays the pure-XP "you've arrived competitively" tier,
+ * aligned with the Level-10 World Class unlock.
+ */
+const EXTENDED_TITLE_TIERS = [
+  { level: 30, seasons: 28, title: 'Eternal' },
+  { level: 25, seasons: 16, title: 'Immortal' },
+  { level: 20, seasons: 9, title: 'Hall of Famer' },
+  { level: 15, seasons: 4, title: 'Icon' },
+  { level: 10, seasons: 0, title: 'Legend' },
+];
 
 /**
- * Get the director title for a given level (1+).
- * Levels 10+ resolve to the highest extended tier reached.
+ * Get the director title for a given level (1+). Levels 1-9 are pure XP. The
+ * prestige tiers at 10+ resolve to the highest tier whose XP-level AND
+ * completed-seasons requirements are both met — so leveling to 20 with only two
+ * seasons under your belt reads as Legend, not Hall of Famer, until the seasons
+ * catch up. `career.totalSeasons` is the profile's lifetimeStats.totalSeasons;
+ * omitting it (legacy single-arg calls) treats seasons as 0, which caps the
+ * result at Legend for the extended range.
  *
  * @param {unknown} level
+ * @param {{ totalSeasons?: unknown }} [career]
  */
-function getLevelTitle(level) {
+function getLevelTitle(level, career = {}) {
   const lvl = Math.max(1, Math.floor(Number(level) || 1));
+  const seasons = Math.max(0, Math.floor(Number(career.totalSeasons) || 0));
   if (lvl >= 10) {
-    // find() can miss if the tier table is ever emptied; fall back rather
-    // than indexing with undefined.
-    const tier = EXTENDED_TITLE_TIERS.find((t) => lvl >= t);
-    return tier === undefined ? 'Rookie' : LEVEL_TITLES[tier];
+    // Legend's zero floors both requirements, so a match always exists once
+    // lvl >= 10; fall back defensively rather than returning undefined.
+    const tier = EXTENDED_TITLE_TIERS.find((t) => lvl >= t.level && seasons >= t.seasons);
+    return tier ? tier.title : 'Rookie';
   }
   return LEVEL_TITLES[lvl] || 'Rookie';
 }
@@ -165,7 +193,10 @@ function calculateXPUpdates(profileData, xpToAdd) {
   const updates = {
     xp: newXP,
     xpLevel: newLevel,
-    userTitle: getLevelTitle(newLevel)
+    // Season-gated for the prestige tiers: season.js passes the freshly
+    // incremented lifetimeStats when it archives a season, so the graduation to
+    // Hall of Famer et al. lands on the same write that credits the season.
+    userTitle: getLevelTitle(newLevel, { totalSeasons: profileData.lifetimeStats?.totalSeasons })
   };
 
   // Check for class unlocks (by XP level OR time since registration).

@@ -312,26 +312,39 @@ const LEVEL_TITLES: Record<number, string> = {
   30: 'Eternal',
 };
 
-const EXTENDED_TITLE_TIERS = [30, 25, 20, 15, 10];
+// Prestige tiers (Level 10+) need BOTH the level AND completed seasons — mirrors
+// EXTENDED_TITLE_TIERS in xpCalculations.js. Legend keeps a zero-season floor;
+// Hall of Famer and above are multi-year career titles, not XP odometers.
+const EXTENDED_TITLE_TIERS: { level: number; seasons: number; title: string }[] = [
+  { level: 30, seasons: 28, title: 'Eternal' },
+  { level: 25, seasons: 16, title: 'Immortal' },
+  { level: 20, seasons: 9, title: 'Hall of Famer' },
+  { level: 15, seasons: 4, title: 'Icon' },
+  { level: 10, seasons: 0, title: 'Legend' },
+];
 
-function titleForLevel(level: number): string {
+function titleForLevel(level: number, totalSeasons = 0): string {
   const lvl = Math.max(1, Math.floor(level || 1));
+  const seasons = Math.max(0, Math.floor(totalSeasons || 0));
   if (lvl >= 10) {
-    const tier = EXTENDED_TITLE_TIERS.find((t) => lvl >= t) ?? 10;
-    return LEVEL_TITLES[tier];
+    const tier = EXTENDED_TITLE_TIERS.find((t) => lvl >= t.level && seasons >= t.seasons);
+    return tier ? tier.title : 'Rookie';
   }
   return LEVEL_TITLES[lvl] || 'Rookie';
 }
 
-// Prefer the stored title, but if it's stale ("Rookie" while level > 1), fall
-// back to the title computed from xpLevel so existing profiles heal on view.
+// The level title, recomputed from the profile's live level + completed seasons.
+// The stored userTitle is the server's persisted copy of this same value, but it
+// can lag the current rule — legacy profiles carry a 'Hall of Famer' minted at
+// Level 20 before seasons gated it, and it only rewrites on the director's next
+// XP event. So compute fresh and let the profile self-heal in BOTH directions
+// (demote a legacy over-title, promote once the server catches up); the stored
+// value is used only when the profile lacks the inputs to compute one.
 export function getDisplayTitle(profile: UserProfile): string {
   const level = profile.xpLevel || 1;
-  const computed = titleForLevel(level);
-  const stored = profile.userTitle;
-  if (!stored) return computed;
-  if (stored === 'Rookie' && level > 1) return computed;
-  return stored;
+  const totalSeasons = profile.lifetimeStats?.totalSeasons || 0;
+  const computed = titleForLevel(level, totalSeasons);
+  return computed || profile.userTitle || 'Rookie';
 }
 
 // Get primary corps avatar URL - respects profileAvatarCorps selection

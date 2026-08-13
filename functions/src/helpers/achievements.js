@@ -38,9 +38,13 @@ const ACHIEVEMENT_CATALOG = [
   { id: 'level_3', title: 'Rank Up', description: 'Reached XP Level 3', icon: 'award', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.level >= 3 },
   { id: 'level_5', title: 'Veteran', description: 'Reached XP Level 5', icon: 'award', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.level >= 5 },
   { id: 'level_10', title: 'Elite Director', description: 'Reached XP Level 10', icon: 'crown', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.level >= 10 },
-  { id: 'level_15', title: 'Icon', description: 'Reached XP Level 15', icon: 'crown', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.level >= 15 },
-  { id: 'level_20', title: 'Hall of Famer', description: 'Reached XP Level 20', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.level >= 20 },
-  { id: 'level_25', title: 'Immortal', description: 'Reached XP Level 25', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.level >= 25 },
+  // Prestige tiers are lifetime titles: gated on completed seasons as well as
+  // XP level, matching getLevelTitle's EXTENDED_TITLE_TIERS so the badge and the
+  // profile title agree. (Already-earned badges are never revoked — the sweep
+  // only adds — so this raises the bar for new earners, not past ones.)
+  { id: 'level_15', title: 'Icon', description: 'Reached XP Level 15 and completed 4 seasons', icon: 'crown', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.level >= 15 && s.totalSeasons >= 4 },
+  { id: 'level_20', title: 'Hall of Famer', description: 'Reached XP Level 20 and completed 9 seasons', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.level >= 20 && s.totalSeasons >= 9 },
+  { id: 'level_25', title: 'Immortal', description: 'Reached XP Level 25 and completed 16 seasons', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.level >= 25 && s.totalSeasons >= 16 },
 
   // --- Class unlocks ---
   { id: 'unlock_aClass', title: 'A Class Access', description: 'Unlocked A Class competition', icon: 'trophy', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.unlockedClasses.includes('aClass') },

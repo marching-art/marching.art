@@ -37,7 +37,27 @@ your biography passes.
   (`functions/src/helpers/xpCalculations.js`).
 - **Titles run past Level 10** so long-term directors always have a title to
   chase: Rookie (1) → … → Legend (10) → Icon (15) → Hall of Famer (20) →
-  Immortal (25) → Eternal (30). Levels 10+ resolve to the highest tier reached.
+  Immortal (25) → Eternal (30). Levels 1-9 are pure XP.
+- **The prestige tiers (Level 10+) are lifetime titles, gated on completed
+  seasons as well as level** — a director must clear _both_ bars, and resolves to
+  the highest tier where both are met. This is deliberate: XP alone let a
+  dedicated grinder reach Hall of Famer inside two seasons, which the "never
+  flattens, decades-long career" premise can't afford. A game year is seven
+  49-day seasons, so the seasons gate makes the top titles a multi-year climb.
+
+  | Title        | XP level | Seasons completed |
+  | ------------ | -------- | ----------------- |
+  | Legend       | 10       | 0 (pure XP)       |
+  | Icon         | 15       | 4                 |
+  | Hall of Famer| 20       | 9                 |
+  | Immortal     | 25       | 16                |
+  | Eternal      | 30       | 28                |
+
+  `lifetimeStats.totalSeasons` is the same "played a season" counter the
+  seasons-completed class unlock reads (competed in ≥1 show in a season that then
+  archived). Already-earned level achievements are never revoked; the gate raises
+  the bar for new earners only (`helpers/xpCalculations.js` `EXTENDED_TITLE_TIERS`,
+  `helpers/achievements.js`).
 - A **level-up stipend of +100 CC** is paid per level gained
   (`engagementRewards.js`, settled daily against `lastRewardedLevel`).
 - The dashboard shows an **XP-to-next-level bar** (`ControlBar.jsx`).
