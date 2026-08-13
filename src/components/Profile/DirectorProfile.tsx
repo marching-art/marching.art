@@ -17,6 +17,7 @@ import {
   Flame,
   Award,
   Music,
+  Medal,
   Clock,
   Target,
   Shield,
@@ -556,8 +557,8 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 ) : null
               }
             >
-              <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {visibleEntries.map(({ classKey, corps }) =>
+              {(() => {
+                const renderEntry = ({ classKey, corps }: (typeof visibleEntries)[number]) =>
                   corps && corps.corpsName ? (
                     <EnsembleCard
                       key={classKey}
@@ -570,9 +571,40 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     />
                   ) : (
                     <UnregisteredEnsembleCard key={classKey} classKey={classKey} />
-                  )
-                )}
-              </div>
+                  );
+
+                // The four fantasy classes are one game; Podium is a separate
+                // director sim. When the portfolio holds both, label each game so
+                // the Podium corps reads as a different game, not a fifth class.
+                const fantasy = visibleEntries.filter((e) => e.classKey !== 'podiumClass');
+                const podium = visibleEntries.filter((e) => e.classKey === 'podiumClass');
+                const grouped = fantasy.length > 0 && podium.length > 0;
+
+                if (!grouped) {
+                  return (
+                    <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {visibleEntries.map(renderEntry)}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="p-2 space-y-2">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted">
+                      Fantasy
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {fantasy.map(renderEntry)}
+                    </div>
+                    <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-brand pt-1">
+                      <Medal className="w-2.5 h-2.5" aria-hidden="true" />
+                      Podium
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {podium.map(renderEntry)}
+                    </div>
+                  </div>
+                );
+              })()}
             </Section>
           </div>
         );

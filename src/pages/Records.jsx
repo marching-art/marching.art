@@ -14,11 +14,28 @@ import { db } from '../api';
 import { Heading } from '../components/ui';
 import { formatSeasonName } from '../utils/season';
 
-const RECORD_CLASSES = [
-  { key: 'worldClass', label: 'World Class' },
-  { key: 'openClass', label: 'Open Class' },
-  { key: 'aClass', label: 'A Class' },
-  { key: 'podiumClass', label: 'Podium Class' },
+// Records are grouped by game. The three fantasy classes are one game and rank
+// against a drafted-lineup scoring model; Podium is a separate director
+// simulation scored against the historical DCI envelope. Presenting them as one
+// flat stack invited comparing a Podium mark to a World Class mark — different
+// games, never cross-ranked — so each game gets its own labelled group.
+const RECORD_GROUPS = [
+  {
+    id: 'fantasy',
+    label: 'Fantasy',
+    note: null,
+    classes: [
+      { key: 'worldClass', label: 'World Class' },
+      { key: 'openClass', label: 'Open Class' },
+      { key: 'aClass', label: 'A Class' },
+    ],
+  },
+  {
+    id: 'podium',
+    label: 'Podium',
+    note: 'A separate game — every point earned by running a corps, scored against real DCI history and ranked on its own.',
+    classes: [{ key: 'podiumClass', label: 'Podium Class' }],
+  },
 ];
 
 const CATEGORIES = [
@@ -107,26 +124,56 @@ const Records = () => {
         {loading ? (
           <div className="py-16 text-center text-sm text-muted">Opening the record books...</div>
         ) : (
-          <div className="space-y-6">
-            {RECORD_CLASSES.map((cls) => {
-              const classRecords = records?.classes?.[cls.key] || {};
+          <div className="space-y-8">
+            {RECORD_GROUPS.map((group) => {
+              const isPodium = group.id === 'podium';
               return (
-                <div key={cls.key} className="bg-surface-card border border-line rounded-none">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-line-muted">
-                    <span className="w-1 h-3.5 bg-brand flex-shrink-0" aria-hidden="true" />
-                    <h2 className="text-[13px] font-bold uppercase tracking-wider text-white">
-                      {cls.label}
-                    </h2>
+                <div key={group.id} className="space-y-3">
+                  {/* Game header — names which game these records belong to, so a
+                      Podium mark is never mistaken for a fantasy-comparable one. */}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      {isPodium && (
+                        <Medal className="w-4 h-4 text-brand flex-shrink-0" aria-hidden="true" />
+                      )}
+                      <h2
+                        className={`text-xs font-bold uppercase tracking-wider ${
+                          isPodium ? 'text-brand' : 'text-muted'
+                        }`}
+                      >
+                        {group.label}
+                      </h2>
+                    </div>
+                    {group.note && (
+                      <p className="text-[10px] text-muted mt-1 leading-snug">{group.note}</p>
+                    )}
                   </div>
-                  <div className="divide-y divide-line">
-                    {CATEGORIES.map((category) => (
-                      <RecordRow
-                        key={category.key}
-                        category={category}
-                        record={classRecords[category.key] || null}
-                      />
-                    ))}
-                  </div>
+
+                  {group.classes.map((cls) => {
+                    const classRecords = records?.classes?.[cls.key] || {};
+                    return (
+                      <div key={cls.key} className="bg-surface-card border border-line rounded-none">
+                        <div className="flex items-center gap-2 px-4 py-3 border-b border-line-muted">
+                          <span
+                            className={`w-1 h-3.5 flex-shrink-0 ${isPodium ? 'bg-brand' : 'bg-interactive'}`}
+                            aria-hidden="true"
+                          />
+                          <h3 className="text-[13px] font-bold uppercase tracking-wider text-white">
+                            {cls.label}
+                          </h3>
+                        </div>
+                        <div className="divide-y divide-line">
+                          {CATEGORIES.map((category) => (
+                            <RecordRow
+                              key={category.key}
+                              category={category}
+                              record={classRecords[category.key] || null}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
