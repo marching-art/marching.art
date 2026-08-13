@@ -157,18 +157,26 @@ async function loadSeries(useFirestore) {
 
   const series = new Map();
   const includedYears = [];
+  const skipped = [];
   const currentYear = new Date().getFullYear();
   for (const { year, data } of yearDocs) {
+    const yearNum = Number(year);
+    // Guard against non-season documents (a stray "test"/config doc, a
+    // malformed id): only real four-digit seasons feed the envelope.
+    if (!Number.isInteger(yearNum) || yearNum < 1900 || yearNum > 2100) {
+      skipped.push(`${year} (not a season year)`);
+      continue;
+    }
     // COMPLETED years only (design §14.2.7): the live scraper writes the
     // current year as the season progresses — including it would shift the
     // envelope mid-season (and during finals week it can look complete).
-    if (useFirestore && Number(year) >= currentYear) {
-      console.warn(`Skipping year ${year}: current/live season (completed years only)`);
+    if (useFirestore && yearNum >= currentYear) {
+      skipped.push(`${year} (current/live season)`);
       continue;
     }
     const maxDay = Math.max(0, ...data.map((e) => e.offSeasonDay || 0));
     if (maxDay < 45) {
-      console.warn(`Skipping year ${year}: max offSeasonDay ${maxDay} < 45 (incomplete season)`);
+      skipped.push(`${year} (incomplete: max offSeasonDay ${maxDay} < 45)`);
       continue;
     }
     includedYears.push(year);
@@ -182,12 +190,19 @@ async function loadSeries(useFirestore) {
         const byCaption = series.get(key);
         for (const caption of CAPTIONS) {
           const value = row.captions[caption];
-          if (typeof value !== "number" || value <= 0 || value > 20) continue;
+          // Ignore 0s (and any non-finite value): a 0 means the caption was
+          // NOT scored that day — whole sub-captions went un-broken-out in
+          // several years (VP/CG/B/P carry ~1.5k zeros across 2008-2018) — so
+          // it is missing data, never a real score. Counting it craters the
+          // low percentiles (VP/CG/B day-1 p5 collapses from ~7 to 0). Values
+          // over the 20-point cap are parse artifacts (an occasional total or
+          // subtotal bleeding into a caption column) and are dropped too.
+          if (!Number.isFinite(value) || value <= 0 || value > 20) continue;
           if (!byCaption.has(caption)) byCaption.set(caption, new Map());
           byCaption.get(caption).set(day, value); // later events same day overwrite
         }
         // Total series under a pseudo-caption key.
-        if (typeof row.score === "number" && row.score > 0 && row.score <= 100) {
+        if (Number.isFinite(row.score) && row.score > 0 && row.score <= 100) {
           if (!byCaption.has("TOTAL")) byCaption.set("TOTAL", new Map());
           byCaption.get("TOTAL").set(day, row.score);
         }
@@ -201,7 +216,26 @@ async function loadSeries(useFirestore) {
       byCaption.set(caption, [...dayMap.entries()].sort((a, b) => a[0] - b[0]));
     }
   }
-  return { series, years: includedYears.sort() };
+
+  // Coverage audit: report exactly which seasons fed the envelope and flag any
+  // gap in the 2000..lastCompleteYear window, so a silently missing year can't
+  // quietly narrow the curves. Cancelled/incomplete seasons (2020-2021, and
+  // occasionally 2023 in a partial archive) are expected gaps, not errors.
+  const sortedIncluded = includedYears.slice().sort();
+  if (skipped.length) console.warn(`Skipped year(s): ${skipped.join(", ")}`);
+  console.log(`Included ${sortedIncluded.length} completed years: ${sortedIncluded.join(", ") || "(none)"}`);
+  if (sortedIncluded.length) {
+    const lastCompleteYear = useFirestore ? currentYear - 1 : Math.max(...sortedIncluded.map(Number));
+    const missing = [];
+    for (let y = 2000; y <= lastCompleteYear; y++) {
+      if (!sortedIncluded.includes(String(y))) missing.push(y);
+    }
+    if (missing.length) {
+      console.warn(`No usable data for 2000-${lastCompleteYear} year(s): ${missing.join(", ")} (cancelled/incomplete seasons are expected)`);
+    }
+  }
+
+  return { series, years: sortedIncluded };
 }
 
 /**
@@ -498,7 +532,7 @@ async function main() {
 // Exported for tests, for applySurvivorshipCorrection.js (re-applies the
 // correction to the committed curveData.json without a full Firestore
 // rebuild), and for the admin rebuildPodiumCurves job (buildCurves).
-module.exports = { correctSurvivorship, fitLine, SURVIVORSHIP, buildCurves };
+module.exports = { correctSurvivorship, fitLine, SURVIVORSHIP, buildCurves, CAPTIONS, SEASON_DAYS };
 
 if (require.main === module) {
   main().catch((err) => {
