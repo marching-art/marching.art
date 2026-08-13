@@ -21,6 +21,7 @@ const {
   getCachedRecentScore,
   projectCaptionScore,
   normalizeCorpsName,
+  isValidCaptionScore,
   CAPTION_MAX,
 } = require("./scoringMath");
 const {
@@ -1114,7 +1115,10 @@ async function calculateCorpsStatisticsLogic() {
       const scoreData = event.scores.find((s) => s.corps === corps.corpsName);
       if (scoreData) {
         for (const caption in captionScores) {
-          if (scoreData.captions[caption] > 0) {
+          // Only real, in-range caption scores: a 0 is "not scored" (reduced
+          // panel), and an out-of-range value is a total bleeding into a
+          // caption field — either would distort the corps' avg/max/min.
+          if (isValidCaptionScore(scoreData.captions[caption])) {
             captionScores[caption].push(scoreData.captions[caption]);
           }
         }

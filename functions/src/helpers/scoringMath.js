@@ -16,6 +16,26 @@ const CAPTION_MAX = 20;
 // guarantees every projection lands strictly below the ceiling.
 const MIN_HEADROOM = 0.05;
 
+/**
+ * True only for a caption value that can be treated as a real result: strictly
+ * positive and no higher than the 20-point ceiling.
+ *
+ * A 0 means the caption was NOT scored that day (missing data — whole
+ * sub-captions went un-broken-out in several years), never a real score. A
+ * value ABOVE the ceiling is a parse artifact: a handful of archived rows
+ * carry a total or subtotal in a caption field (e.g. MA=143.3, GE1=115.3), and
+ * DCI caption scores are always out of 20. Both must be IGNORED, exactly like
+ * the curve miner drops them (buildPodiumCurves.js) and the corpus holdout
+ * test does. Returning an out-of-range value instead lets scoring.js cap it to
+ * a flat, fake-perfect 20.000 and poisons the corps' projection fit.
+ *
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isValidCaptionScore(value) {
+  return typeof value === "number" && value > 0 && value <= CAPTION_MAX;
+}
+
 // ---------------------------------------------------------------------------
 // Projection constants, calibrated against the local DCI corpus
 // (functions/pressboxImporter/output/historical_scores_*.json: 23 seasons,
@@ -173,7 +193,7 @@ function collectCaptionDataPoints(yearData, caption, matches) {
 
     for (const scoreData of (event.scores || [])) {
       const value = scoreData?.captions?.[caption];
-      if (!(value > 0) || !matches(scoreData.corps)) continue;
+      if (!isValidCaptionScore(value) || !matches(scoreData.corps)) continue;
       seenDays.add(event.offSeasonDay);
       dataPoints.push([event.offSeasonDay, value]);
       break;
@@ -231,7 +251,7 @@ function getScoreForDay(day, corps, year, caption, historicalData) {
   for (const event of events) {
     for (const scoreData of (event.scores || [])) {
       const value = scoreData?.captions?.[caption];
-      if (!(value > 0)) continue;
+      if (!isValidCaptionScore(value)) continue;
       if (scoreData.corps === corps) return value;
       if (normalizedMatch === null) {
         if (target === null) target = normalizeCorpsName(corps);
@@ -277,7 +297,7 @@ function getMostRecentScoreBeforeDay(day, corps, year, caption, historicalData) 
 
     for (const scoreData of (event.scores || [])) {
       const value = scoreData?.captions?.[caption];
-      if (!(value > 0)) continue;
+      if (!isValidCaptionScore(value)) continue;
 
       const exact = scoreData.corps === corps;
       if (!exact && normalizeCorpsName(scoreData.corps) !== target) continue;
@@ -365,7 +385,7 @@ function countDataPointsForCorps(corpsName, year, caption, historicalData) {
   for (const event of yearData) {
     if (event.offSeasonDay === null) continue; // Skip pre-season events
     const scoreData = event.scores?.find((s) => s.corps === corpsName);
-    if (scoreData && scoreData.captions?.[caption] > 0) {
+    if (scoreData && isValidCaptionScore(scoreData.captions?.[caption])) {
       uniqueDays.add(event.offSeasonDay);
     }
   }
@@ -555,5 +575,6 @@ module.exports = {
   getCachedRecentScore,
   projectCaptionScore,
   normalizeCorpsName,
+  isValidCaptionScore,
   CAPTION_MAX,
 };
