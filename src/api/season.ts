@@ -458,6 +458,8 @@ export interface SeasonChampionEntry {
   uid?: string;
   username?: string;
   corpsName?: string;
+  /** The corps graphic (avatar/logo), rendered in the Hall of Champions. */
+  avatarUrl?: string | null;
   score?: number;
   rank?: number;
 }

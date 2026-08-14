@@ -710,11 +710,16 @@ async function archivePodiumSeason(db, previousSeason) {
           const entry = divisionStandings[i];
           const medalRank = i + 1;
           let username = "Unknown";
+          let avatarUrl = null;
           try {
             const profileSnapshot = await store.profileRef(db, entry.uid).get();
             const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
             if (profile) {
               username = profile.username || profile.displayName || "Unknown";
+              // Podium corps store their graphic at corps.podiumClass.avatarUrl
+              // (same source the fantasy classes use) so the Hall of Champions
+              // can render the corps logo rather than a bare initial.
+              avatarUrl = (profile.corps && profile.corps.podiumClass && profile.corps.podiumClass.avatarUrl) || null;
             }
             // Finals medal — idempotent per season (re-sweeps skip the append).
             const existing = (profile && profile.trophies && profile.trophies.championships) || [];
@@ -753,6 +758,7 @@ async function archivePodiumSeason(db, previousSeason) {
             uid: entry.uid,
             username,
             corpsName: entry.corpsName,
+            avatarUrl,
             score: entry.lastTotal,
           });
         }
