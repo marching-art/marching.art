@@ -121,6 +121,28 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
     }
   }
 
+  return buildRouteLegs(state, upcoming, { jointByDay, locations });
+}
+
+/**
+ * Assemble the ordered travel legs for a route from already-resolved inputs
+ * (the upcoming show/joint days, the per-day joint map, and the schedule's
+ * day→location lookup). Pure and exported for unit tests; buildRoutePreview
+ * supplies the Firestore-backed inputs.
+ *
+ * A joint rehearsal is a day-trip REHEARSAL, never a tour relocation: the corps
+ * rehearses with whoever's housed nearby and stays at its own tour position
+ * (design §5.12). So a joint leg is priced and shown, but it MUST NOT advance
+ * the routing cursor — otherwise every onward show is re-priced from the
+ * joint's host city, a location the corps doesn't control (it's the partner's
+ * tour position, set by the OTHER director's schedule). That injected a phantom
+ * onward-travel penalty of up to -10 stamina onto the accepting director, who
+ * agreed to the joint on its proposed location and never chose to move there.
+ * The nightly processor already treats a joint this way — it never sets
+ * state.lastVenue on a joint day, so the corps' next show is priced from its
+ * last real venue — and this preview must match that authority.
+ */
+function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
   const legs = [];
   let cursor = currentVenueOf(state);
   for (const day of upcoming) {
@@ -150,7 +172,8 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
         heat: 0,
         isMajor: false,
       });
-      if (venue) cursor = venue;
+      // A joint day-trips out and back — the cursor stays at the corps' real
+      // tour position, so the next show is never priced from the host city.
       continue;
     }
     const isMajor = Boolean(venues.MAJOR_VENUES[day]);
@@ -178,6 +201,9 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
   }
   return legs;
 }
+
+// Exported for unit tests; buildRoutePreview is the production entry point.
+exports.buildRouteLegs = buildRouteLegs;
 
 /**
  * Between-seasons funding preview (design §5.6, the "guns vs. butter" commit
