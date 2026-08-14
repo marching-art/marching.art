@@ -197,8 +197,9 @@ async function seedPodiumWorld(db, { seasonUid, startingCoin }) {
  */
 async function registerCorps(db, director, { freshStart = false } = {}) {
   const podiumCallables = require("../src/callable/podium");
+  const podiumBudgetCallables = require("../src/callable/podiumBudget");
   const register = functionsTest.wrap(podiumCallables.registerPodiumCorps);
-  const setPlan = functionsTest.wrap(podiumCallables.setPodiumPlanTemplate);
+  const setPlan = functionsTest.wrap(podiumBudgetCallables.setPodiumPlanTemplate);
 
   const home = (await db.doc(paths.userProfile(director.uid)).get()).data().podiumHome;
   const result = await register({
