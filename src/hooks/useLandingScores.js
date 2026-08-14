@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/hooks/useLandingScores.js
 // Hook for fetching the "Live Scores" ranking shown on the landing/news pages.
 // - Live season: ranks the real current-year DCI corps as they compete, using the
@@ -20,8 +19,18 @@ import { useRevealedDay } from './useRevealedDay';
 const SCORES_STALE_TIME = 5 * 60 * 1000;
 
 /**
+ * One event row inside a historical_scores/{year} doc.
+ * @typedef {Object} HistoricalEvent
+ * @property {number} offSeasonDay
+ * @property {any} [date]
+ * @property {string} [eventName]
+ * @property {Array<{ corps?: string, captions?: Record<string, number> }>} [scores]
+ */
+
+/**
  * Calculate total score from individual captions
  * GE contributes directly, Visual and Music are divided by 2
+ * @param {Record<string, number>|null|undefined} captions
  */
 const calculateTotalScore = (captions) => {
   if (!captions) return 0;
@@ -58,8 +67,8 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   // off-season ranking list, and in live season it filters the scraped corps
   // to those selectable as caption options.
   const corpsValuesQuery = useQuery({
-    queryKey: queryKeys.corpsValues(dataDocId),
-    queryFn: () => getCorpsValues(dataDocId),
+    queryKey: queryKeys.corpsValues(dataDocId ?? ''),
+    queryFn: () => getCorpsValues(dataDocId ?? ''),
     enabled: !!dataDocId && enabled,
     staleTime: SCORES_STALE_TIME,
   });
@@ -85,9 +94,11 @@ export const useLandingScores = ({ enabled = true } = {}) => {
       staleTime: SCORES_STALE_TIME,
     })),
     combine: (results) => {
+      /** @type {Record<string, HistoricalEvent[]>} */
       const byYear = {};
       results.forEach((result, i) => {
-        if (result.data && result.data.length > 0) byYear[yearsNeeded[i]] = result.data;
+        if (result.data && result.data.length > 0)
+          byYear[yearsNeeded[i]] = /** @type {HistoricalEvent[]} */ (result.data);
       });
       return {
         historicalData: byYear,
@@ -145,6 +156,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     // For each selected corps, gather their scores from historical data
     corpsValues.forEach((corps) => {
       const yearData = historicalData[String(corps.sourceYear)] || [];
+      /** @type {Array<{ day: number, date: any, eventName: any, totalScore: number, captions: any }>} */
       const scores = [];
 
       yearData.forEach((event) => {
@@ -186,6 +198,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     });
 
     // Process each corps to get their latest score and change
+    /** @type {Array<Record<string, any>>} */
     const rankedScores = [];
 
     corpsScoreHistory.forEach((data) => {
