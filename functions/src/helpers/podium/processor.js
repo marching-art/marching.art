@@ -18,8 +18,10 @@
  * Podium idempotency never contends with the fantasy lease.
  */
 
+const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { claimScoringRun, markScoringRunCompleted, markScoringRunFailed } = require("../scoringRunGuard");
+const { resolvePodiumRegionalChampion } = require("./regionalAward");
 const engine = require("./engine");
 const store = require("./store");
 const venues = require("./venues");
@@ -709,6 +711,30 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         const { updateRecordsFromPodiumRecap } = require("../gameRecords");
         await updateRecordsFromPodiumRecap(db, { shows: recapShows }, seasonUid, competitionDay);
       }
+    }
+
+    // --- 3a. Regional major champion (§5.11) --------------------------------
+    // The three branded majors each crown one overall Podium regional champion
+    // (top podiumClass corps across all divisions). Runs after the recap is
+    // durable so the day-42 Eastern combine can read night 1's persisted recap.
+    // Best-effort: a missing profile or read hiccup never fails the night.
+    try {
+      const regional = await resolvePodiumRegionalChampion(
+        db, store, seasonData, competitionDay, MAJOR_EVENT_LABELS[competitionDay], recapShows
+      );
+      if (regional) {
+        const regionalWriter = new ChunkedWriter(db);
+        regionalWriter.update(store.profileRef(db, regional.uid), {
+          "trophies.regionals": admin.firestore.FieldValue.arrayUnion(regional.trophy),
+        });
+        await regionalWriter.commit();
+        logger.info(
+          `[podium] regional champion crowned at ${regional.trophy.eventName}: ` +
+            `${regional.uid} (${regional.trophy.score}).`
+        );
+      }
+    } catch (error) {
+      logger.error(`[podium] regional award skipped: ${error.message}`);
     }
 
     // --- 4. Rankings (latest total, DCI-style current score) ----------------
