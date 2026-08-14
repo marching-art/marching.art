@@ -214,7 +214,7 @@ const ShowCard = ({
       tabIndex={isPast ? undefined : 0}
       aria-label={isPast ? undefined : `Open registration for ${formatEventName(show.eventName)}`}
       className={`
-        bg-surface-card border rounded-none overflow-hidden
+        bg-surface-card border rounded-none overflow-hidden flex flex-col h-full
         ${isMajor ? 'border-brand/40' : isHosted ? 'border-cyan-500/30' : 'border-line'}
         ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-brand/70' : isHosted ? 'hover:border-cyan-500/60' : 'hover:border-line-strong'} cursor-pointer active:bg-surface-raised`}
         ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
@@ -222,7 +222,7 @@ const ShowCard = ({
     >
       {/* Card Header */}
       <div
-        className={`px-4 py-3 border-b border-line ${isMajor ? 'bg-brand/10' : isHosted ? 'bg-cyan-500/5' : ''}`}
+        className={`flex-1 px-4 py-3 border-b border-line ${isMajor ? 'bg-brand/10' : isHosted ? 'bg-cyan-500/5' : ''}`}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
@@ -306,7 +306,7 @@ const ShowCard = ({
 
       {/* Card Footer */}
       <div className="px-4 py-2 bg-surface-sunken">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between min-h-[1.5rem]">
           {/* Registration Badges */}
           <RegistrationBadges
             show={show}
@@ -530,13 +530,13 @@ const ChampionshipEventCard = ({
   return (
     <div
       className={`
-        bg-surface-card border border-line rounded-none overflow-hidden
+        bg-surface-card border border-line rounded-none overflow-hidden flex flex-col h-full
         ${isPast ? 'opacity-60' : ''}
         ${hasEligibleCorps && !isPast ? 'border-l-2 border-l-interactive' : ''}
       `}
     >
       {/* Card Header */}
-      <div className="px-4 py-3 border-b border-line">
+      <div className="flex-1 px-4 py-3 border-b border-line">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -578,7 +578,7 @@ const ChampionshipEventCard = ({
 
       {/* Card Footer */}
       <div className="px-4 py-2 bg-surface-sunken">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between min-h-[1.5rem]">
           {/* Enrolled Corps Badges */}
           {hasEligibleCorps ? (
             <div className="flex items-center gap-1 flex-wrap">
