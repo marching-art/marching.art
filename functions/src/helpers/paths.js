@@ -23,6 +23,11 @@ const paths = {
   userProfile: (uid) => `artifacts/${ns()}/users/${uid}/profile/data`,
   userPrivate: (uid) => `artifacts/${ns()}/users/${uid}/private/data`,
   userCorps: (uid, corpsClass) => `artifacts/${ns()}/users/${uid}/corps/${corpsClass}`,
+  // Per-season detail (full caption lineup + week-by-week show picks) split off
+  // the profile's seasonHistory summary rows so the hot, listener-backed profile
+  // doc stays small. detailId = seasonHistoryRecord.seasonDetailId(seasonId, class).
+  userSeasonDetails: (uid) => `artifacts/${ns()}/users/${uid}/seasonDetail`,
+  userSeasonDetail: (uid, detailId) => `artifacts/${ns()}/users/${uid}/seasonDetail/${detailId}`,
   userCorpsCoinHistory: (uid) => `artifacts/${ns()}/users/${uid}/corpsCoinHistory`,
   userNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications`,
   userLeagueNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications/leagues`,

@@ -20,6 +20,11 @@ describe("paths (users)", () => {
 
   test("user subcollections", () => {
     assert.equal(paths.userCorps("u1", "worldClass"), `artifacts/${NS}/users/u1/corps/worldClass`);
+    assert.equal(paths.userSeasonDetails("u1"), `artifacts/${NS}/users/u1/seasonDetail`);
+    assert.equal(
+      paths.userSeasonDetail("u1", "adagio_2025-26__worldClass"),
+      `artifacts/${NS}/users/u1/seasonDetail/adagio_2025-26__worldClass`
+    );
     assert.equal(paths.userCorpsCoinHistory("u1"), `artifacts/${NS}/users/u1/corpsCoinHistory`);
     assert.equal(paths.userNotifications("u1"), `artifacts/${NS}/users/u1/notifications`);
     assert.equal(

@@ -12,6 +12,8 @@ const { updateSeasonBestRecords } = require("./gameRecords");
 const { resetLeaguesForNewSeason } = require("./leagueSeasonReset");
 const { archiveSeasonResultsLogic } = require("./leagueArchival");
 const { fetchSeasonParticipation, corpsSeason } = require("./seasonParticipation");
+const { paths } = require("./paths");
+const { seasonDetailId, splitSeasonRecord } = require("./seasonHistoryRecord");
 const {
   claimSeasonRollover,
   markSeasonRolloverCompleted,
@@ -175,6 +177,11 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
 
     // Archive current season data and reset corps
     const resetCorps = {};
+    // Heavy per-season detail (full lineup + show picks) is written to the
+    // seasonDetail subcollection instead of onto the profile's seasonHistory
+    // summary rows — collected here and added to the same chunked batch as the
+    // profile update below. See helpers/seasonHistoryRecord.js.
+    const detailWrites = [];
     let seasonShowCount = 0;
     let seasonPointsTotal = 0;
     const seasonAwards = []; // one entry per active corps: recap + payout data
@@ -232,7 +239,13 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
         // theme/music/drill) is part of the historical record — the corps
         // history a director looks back on — even though the live field
         // resets for the new season.
-        seasonHistory.push({
+        //
+        // The bulky lineup / show-pick fields are split off into a seasonDetail
+        // doc (helpers/seasonHistoryRecord.js) so they never ride along on the
+        // hot profile document; the lean summary row is what stays on the
+        // profile and feeds the chart, rating, and career aggregates.
+        const archivedAt = new Date();
+        const { summary, detail } = splitSeasonRecord({
           seasonId: oldSeasonUid,
           seasonName: oldSeasonUid,
           corpsClass,
@@ -246,8 +259,15 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
           showsAttended,
           highestWeeklyScore,
           placement,
-          archivedAt: new Date(),
+          archivedAt,
         });
+        seasonHistory.push(summary);
+        if (detail) {
+          detailWrites.push({
+            ref: db.doc(paths.userSeasonDetail(uid, seasonDetailId(oldSeasonUid, corpsClass))),
+            data: { seasonId: oldSeasonUid, corpsClass, ...detail, archivedAt },
+          });
+        }
 
         seasonShowCount += showsAttended;
         seasonPointsTotal += corps.totalSeasonScore || 0;
@@ -354,6 +374,14 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
 
     batch.update(doc.ref, updateData);
     opCount++;
+
+    // Season detail docs for this profile — one per archived corps that had a
+    // lineup / show picks. Part of the same chunked batch so they commit
+    // atomically with the summary rows that point at them.
+    for (const { ref, data } of detailWrites) {
+      batch.set(ref, data);
+      opCount++;
+    }
 
     for (const award of seasonAwards) {
       if (award.coinBonus > 0) {
