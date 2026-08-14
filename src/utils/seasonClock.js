@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Season Clock
  *
@@ -65,6 +64,7 @@ export const CHAMPIONSHIP_START_DAY = 45;
  *   - Day 47:     all classes.
  *   - Days 48-49: World Class & SoundSport (Finals).
  */
+/** @type {Record<number, string[]>} */
 export const CHAMPIONSHIP_CLASS_DAYS = {
   45: ['openClass', 'aClass'],
   46: ['openClass', 'aClass'],
@@ -91,9 +91,12 @@ function easternParts(date) {
     hour: '2-digit',
     minute: '2-digit',
   });
+  /** @type {Record<string, string>} */
   const out = {};
   for (const { type, value } of fmt.formatToParts(date)) out[type] = value;
-  return out;
+  return /** @type {{year: string, month: string, day: string, hour: string, minute: string}} */ (
+    out
+  );
 }
 
 /**
@@ -156,7 +159,7 @@ export function getNextScoresProcessingTime(now = new Date()) {
  * the estimate is the conservative 2 AM ET upper bound, marked inexact, and
  * hooks/useSeasonClock overlays the plan doc when it exists.
  *
- * @param {Object|null} seasonData - Season doc (needs status); null tolerated.
+ * @param {{status?: string}|null} seasonData - Season doc (needs status); null tolerated.
  * @param {Date} [now]
  * @returns {{at: Date, exact: boolean}}
  */
@@ -206,7 +209,7 @@ export function getShowRegistrationDeadline(eventDate) {
  * Live season: 11 PM ET on the show date (an Eastern-only night; western
  * shows push the actual drop later, so this is the safe bound to promise).
  * @param {Date|null} eventDate - Local-midnight Date for the show's calendar day
- * @param {Object|null} seasonData - Season doc (needs status)
+ * @param {{status?: string}|null} seasonData - Season doc (needs status)
  * @returns {{at: Date, exact: boolean}|null}
  */
 export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
@@ -245,7 +248,7 @@ export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
  * treats a lockout as ending at the 2 AM ET processing run; the backend
  * additionally waits for the day's recap to actually exist.
  *
- * @param {{schedule?: {startDate?: unknown}}|null|undefined} seasonData - Season
+ * @param {{schedule?: {startDate?: any, springTrainingDays?: number}}|null|undefined} seasonData - Season
  *   doc (needs schedule.startDate); null before the season store hydrates.
  * @param {Date} [now]
  * @param {string|null} [corpsClass] - Canonical class id. When provided, the
@@ -272,13 +275,15 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
   const startDate = typeof startTs.toDate === 'function' ? startTs.toDate() : new Date(startTs);
   if (Number.isNaN(startDate.getTime())) return null;
 
-  const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+  const springTrainingDays = seasonData?.schedule?.springTrainingDays || 0;
+  /** @param {number} d */
   const dayStart = (d) => new Date(startDate.getTime() + (springTrainingDays + d - 1) * DAY_MS);
   const day = Math.floor((now.getTime() - startDate.getTime()) / DAY_MS) + 1 - springTrainingDays;
   const week = Math.max(1, Math.ceil(day / 7));
   // Lockouts end at the 2 AM ET reopen boundary after a lock (scores drop
   // earlier under the timezone-aware pipeline, but the backend holds the
   // lock until 2 AM AND the recap exists — captionWindows.js).
+  /** @param {number} d */
   const reopenAfter = (d) => getNextScoresProcessingTime(dayStart(d));
 
   const base = {
