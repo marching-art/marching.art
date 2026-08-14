@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CAPTION BREAKDOWN CARDS - Visual cards for DCI article caption analysis
 // =============================================================================
@@ -40,8 +39,9 @@ const BREAKDOWN_CONFIG = {
 };
 
 // Individual breakdown card
+/** @param {{ type: string, content?: any }} props */
 function BreakdownCard({ type, content }) {
-  const config = BREAKDOWN_CONFIG[type];
+  const config = /** @type {Record<string, any>} */ (BREAKDOWN_CONFIG)[type];
   if (!config || !content) return null;
 
   const Icon = config.icon;
@@ -66,7 +66,7 @@ function BreakdownCard({ type, content }) {
 
 /**
  * CaptionBreakdownCards - Displays DCI caption breakdown as visual cards
- * @param {Object} captionBreakdown - Object with geAnalysis, visualAnalysis, musicAnalysis
+ * @param {{ captionBreakdown?: any }} props - captionBreakdown has geAnalysis, visualAnalysis, musicAnalysis
  */
 export default function CaptionBreakdownCards({ captionBreakdown }) {
   if (!captionBreakdown) return null;

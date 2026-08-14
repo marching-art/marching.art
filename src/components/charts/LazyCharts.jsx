@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/charts/LazyCharts.jsx
 // Lazy-loaded Chart.js components to reduce initial bundle size (~150KB savings)
 // Chart.js is only loaded when a chart is actually rendered
@@ -20,6 +19,7 @@ const ChartSkeleton = ({ height = '100%' }) => (
 );
 
 // Lazy Line chart wrapper
+/** @type {(props: { data?: any, options?: any, [key: string]: any }) => JSX.Element} */
 export const Line = ({ data, options, ...props }) => (
   <Suspense fallback={<ChartSkeleton />}>
     <LazyLineChart data={data} options={options} {...props} />
@@ -27,6 +27,7 @@ export const Line = ({ data, options, ...props }) => (
 );
 
 // Lazy Bar chart wrapper
+/** @type {(props: { data?: any, options?: any, [key: string]: any }) => JSX.Element} */
 export const Bar = ({ data, options, ...props }) => (
   <Suspense fallback={<ChartSkeleton />}>
     <LazyBarChart data={data} options={options} {...props} />
