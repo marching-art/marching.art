@@ -22,13 +22,11 @@
  * present) produces no writes, so the script is safe to run repeatedly and to
  * resume after an interruption.
  *
- * Usage (from functions/):
- *   node src/scripts/migrateSeasonHistoryDetail.js --dry-run   # report only
- *   node src/scripts/migrateSeasonHistoryDetail.js             # apply
- *
- * Or via the Functions shell:
- *   firebase functions:shell
- *   > require('./src/scripts/migrateSeasonHistoryDetail').migrateSeasonHistoryDetail({ dryRun: true })
+ * Run it from the Actions tab (no console needed) — see
+ * .github/workflows/migrate-season-history-detail.yml. It defaults to a dry
+ * run; pass --commit (or check "commit" in the workflow) to apply:
+ *   node src/scripts/migrateSeasonHistoryDetail.js            # dry run (report only)
+ *   node src/scripts/migrateSeasonHistoryDetail.js --commit   # apply writes
  */
 
 // firebase-admin is acquired lazily inside the runner (not at module load) so
@@ -180,9 +178,10 @@ async function migrateSeasonHistoryDetail({ dryRun = false } = {}) {
 
 module.exports = { migrateSeasonHistoryDetail, planProfile };
 
-// Allow running directly: `node migrateSeasonHistoryDetail.js [--dry-run]`
+// Allow running directly: `node migrateSeasonHistoryDetail.js [--commit]`.
+// Defaults to a dry run; only --commit writes to Firestore.
 if (require.main === module) {
-  const dryRun = process.argv.includes("--dry-run");
+  const dryRun = !process.argv.includes("--commit");
   migrateSeasonHistoryDetail({ dryRun })
     .then((result) => {
       console.log("[migrate] Result:", result);
