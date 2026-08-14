@@ -2,7 +2,13 @@
 // SoundSport medal-safety rule (never a numeric placement) and the flagship
 // class selection that replaced the retired Influence/Rating aggregates.
 import { describe, it, expect } from 'vitest';
-import { getStandingDisplay, getSeasonHistory, getCorpsJourneys } from './directorProfileHelpers';
+import {
+  getStandingDisplay,
+  getSeasonHistory,
+  getCorpsJourneys,
+  getCompetitionTrophies,
+  getFanFavoriteTrophies,
+} from './directorProfileHelpers';
 import type { UserProfile } from '../../types';
 
 const profile = (corps: Record<string, unknown>): UserProfile =>
@@ -145,5 +151,54 @@ describe('getCorpsJourneys', () => {
     expect(journeys).toEqual([
       { corpsName: 'Regulars', classes: ['openClass', 'aClass'], climbed: false },
     ]);
+  });
+});
+
+// Fan Favorite — the community-voted Podium crown, written to
+// profile.trophies.fanFavorites. It gets its own unique mark in the trophy
+// case (the pink Heart), distinct from every competitive medal.
+describe('getFanFavoriteTrophies', () => {
+  const withTrophies = (trophies: unknown): UserProfile =>
+    ({ trophies }) as unknown as UserProfile;
+
+  it('renders a crowned corps as a pink Heart with its corps, season, and votes', () => {
+    const [trophy, ...rest] = getFanFavoriteTrophies(
+      withTrophies({
+        fanFavorites: [
+          {
+            type: 'fanFavorite',
+            corpsClass: 'podiumClass',
+            seasonName: 'live_2026_summer',
+            corpsName: 'Aurora Guard',
+            votes: 47,
+          },
+        ],
+      })
+    );
+    expect(rest).toEqual([]);
+    expect(trophy.title).toBe('Fan Favorite');
+    expect(trophy.color).toBe('text-pink-400');
+    expect(trophy.description).toBe('Aurora Guard · LIVE 2026 · 47 votes');
+  });
+
+  it('singularizes a one-vote crown and tolerates missing fields', () => {
+    const [trophy] = getFanFavoriteTrophies(
+      withTrophies({ fanFavorites: [{ type: 'fanFavorite', corpsName: 'Lone Star', votes: 1 }] })
+    );
+    expect(trophy.description).toBe('Lone Star · 1 vote');
+  });
+
+  it('returns nothing when the director has never been crowned', () => {
+    expect(getFanFavoriteTrophies(withTrophies({}))).toEqual([]);
+    expect(getFanFavoriteTrophies({} as UserProfile)).toEqual([]);
+  });
+
+  it('surfaces the Fan Favorite in the competition trophy case', () => {
+    const trophies = getCompetitionTrophies(
+      withTrophies({
+        fanFavorites: [{ type: 'fanFavorite', corpsName: 'Aurora Guard', seasonName: 'live_2026' }],
+      })
+    );
+    expect(trophies.map((t) => t.title)).toContain('Fan Favorite');
   });
 });

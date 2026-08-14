@@ -235,6 +235,10 @@ export interface CompetitionTrophy {
   eventName?: string;
   score?: number;
   rank?: number;
+  // Fan Favorite entries (podium/fanFavorite.crownWinner) carry the crowned
+  // corps' name and its winning finals-vote count instead of a score/rank.
+  corpsName?: string;
+  votes?: number;
 }
 
 /** The profile's trophy case, grouped by competition tier */
@@ -245,6 +249,9 @@ export interface ProfileTrophies {
   finalistMedals?: CompetitionTrophy[];
   // SoundSport awards — International Festival (Day 49) + Regional Best in Show.
   soundSportAwards?: CompetitionTrophy[];
+  // Fan Favorite crowns — the community-voted Podium honor (one per season),
+  // written by functions podium/fanFavorite.crownWinner. Purely cosmetic.
+  fanFavorites?: CompetitionTrophy[];
 }
 
 export interface LifetimeStats {

@@ -5,7 +5,7 @@
 // which keeps Vite's fast refresh working (react-refresh/only-export-components).
 
 import React from 'react';
-import { Trophy, Crown, Medal, Shield, Star, Ribbon, Gem } from 'lucide-react';
+import { Trophy, Crown, Medal, Shield, Star, Ribbon, Gem, Heart } from 'lucide-react';
 import type { UserProfile, CorpsClass, CompetitionTrophy } from '../../types';
 import {
   PROFILE_CORPS_CLASS_ORDER,
@@ -449,10 +449,44 @@ const trophyDescription = (t: CompetitionTrophy): string =>
   'Competition award';
 
 export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
-  const real = [...getRealTrophies(profile), ...getPodiumMedalTrophies(profile)].sort(
-    (a, b) => (a.sortWeight ?? 999) - (b.sortWeight ?? 999)
-  );
+  const real = [
+    ...getRealTrophies(profile),
+    ...getFanFavoriteTrophies(profile),
+    ...getPodiumMedalTrophies(profile),
+  ].sort((a, b) => (a.sortWeight ?? 999) - (b.sortWeight ?? 999));
   return real.length > 0 ? real : getLegacySyntheticTrophies(profile);
+}
+
+// -----------------------------------------------------------------------------
+// Fan Favorite — the community-voted Podium crown (one per season), written to
+// profile.trophies.fanFavorites by functions podium/fanFavorite.crownWinner.
+// It's cosmetic (never scores, never budgets), and it's the one trophy the
+// field can't compete for, so it gets its own mark in the case: the Heart in
+// Fan Favorite pink (matching FanFavoriteCard's ballot), distinct from every
+// competitive medal. Sorted just under the finals/class champions and above the
+// SoundSport ribbons — a season-defining honor, but not a placement.
+// -----------------------------------------------------------------------------
+const voteWord = (n?: number): string => `${n} vote${Number(n) === 1 ? '' : 's'}`;
+
+export function getFanFavoriteTrophies(profile: UserProfile): TrophyData[] {
+  const list = profile.trophies?.fanFavorites;
+  if (!Array.isArray(list)) return [];
+  return list.map((award, i) => ({
+    id: `fan-favorite-${i}`,
+    title: 'Fan Favorite',
+    description:
+      [
+        award.corpsName,
+        award.seasonName ? formatSeasonName(award.seasonName) : null,
+        typeof award.votes === 'number' ? voteWord(award.votes) : null,
+      ]
+        .filter(Boolean)
+        .join(' · ') || 'Fan-voted Podium favorite',
+    icon: Heart,
+    color: 'text-pink-400',
+    season: award.seasonName,
+    sortWeight: 500 + i,
+  }));
 }
 
 const isSoundSportType = (type?: string): boolean => String(type || '').startsWith('soundsport');
