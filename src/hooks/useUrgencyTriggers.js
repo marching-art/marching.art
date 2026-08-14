@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * useUrgencyTriggers Hook - Urgency and Timing Data for Landing Page
  *
@@ -35,6 +34,10 @@ export const URGENCY_LEVELS = {
 // components when comparing against the user's local calendar date —
 // otherwise every show shifts one day earlier in negative-UTC-offset
 // timezones (Schedule.jsx does the same when projecting day numbers).
+/**
+ * @param {any} date
+ * @param {Date} target
+ */
 function matchesCalendarDay(date, target) {
   if (!date) return false;
   const compareDate = date instanceof Date ? date : date.toDate?.() || new Date(date);
@@ -45,10 +48,12 @@ function matchesCalendarDay(date, target) {
   );
 }
 
+/** @param {any} date */
 function isToday(date) {
   return matchesCalendarDay(date, new Date());
 }
 
+/** @param {any} date */
 function isTomorrow(date) {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -57,6 +62,7 @@ function isTomorrow(date) {
 
 /**
  * Calculate days until a date
+ * @param {any} date
  */
 function daysUntil(date) {
   if (!date) return null;
@@ -76,7 +82,7 @@ function getCurrentHour() {
 /**
  * Format a show's real start time in its venue timezone (e.g. "7:30 PM").
  * Falls back to the local zone when the show has no timezone.
- * @param {Object} show
+ * @param {{ timezone?: string }} show
  * @returns {string|null}
  */
 function formatShowStart(show) {
@@ -110,12 +116,44 @@ function formatShowStart(show) {
  * told apart. Read `status` first and keep `seasonType` as a fallback in case a
  * future doc carries it.
  *
- * @param {Object|null} seasonData
+ * @param {{ status?: string, seasonType?: string }|null|undefined} seasonData
  * @returns {boolean}
  */
 function isLiveSeasonDoc(seasonData) {
   return seasonData?.status === 'live-season' || seasonData?.seasonType === 'live';
 }
+
+/**
+ * @typedef {Object} UrgencyTrigger
+ * @property {string} id
+ * @property {string} level
+ * @property {string} type
+ * @property {string} message
+ * @property {string|null} subMessage
+ * @property {string} icon
+ * @property {boolean} pulse
+ */
+
+/**
+ * @typedef {Object} UrgencyResult
+ * @property {UrgencyTrigger|null} primary
+ * @property {UrgencyTrigger[]} all
+ * @property {boolean} isLiveShowDay
+ * @property {boolean} isLiveShowNow
+ * @property {any[]} showsToday
+ * @property {any[]} showsTomorrow
+ * @property {any[]} liveShows
+ * @property {any} nextShowToday
+ * @property {string|null} nextShowStartLabel
+ * @property {string} seasonType
+ * @property {number} currentWeek
+ * @property {number} currentDay
+ * @property {number} weeksRemaining
+ * @property {number|null} daysUntilFinals
+ * @property {boolean} registrationOpen
+ * @property {number|null} daysUntilRegistrationCloses
+ * @property {boolean} isLoading
+ */
 
 export function useUrgencyTriggers() {
   // Season data from global store. currentDay/currentWeek are derived once in
@@ -134,6 +172,7 @@ export function useUrgencyTriggers() {
   // Calculate all urgency triggers
   const triggers = useMemo(() => {
     const isLive = isLiveSeasonDoc(seasonData);
+    /** @type {UrgencyResult} */
     const result = {
       // Primary triggers (shown prominently)
       primary: null,
@@ -205,8 +244,15 @@ export function useUrgencyTriggers() {
         result.isLiveShowNow = result.liveShows.length > 0;
         // Earliest upcoming (not-yet-started) show today, for the countdown copy.
         const upcoming = enrichedToday
-          .filter((s) => showStartsAtDate(s) > now)
-          .sort((a, b) => showStartsAtDate(a) - showStartsAtDate(b));
+          .filter((s) => {
+            const st = showStartsAtDate(s);
+            return st && st > now;
+          })
+          .sort((a, b) => {
+            const sa = showStartsAtDate(a);
+            const sb = showStartsAtDate(b);
+            return (sa ? sa.getTime() : 0) - (sb ? sb.getTime() : 0);
+          });
         result.nextShowToday = upcoming[0] || null;
         result.nextShowStartLabel = result.nextShowToday
           ? formatShowStart(result.nextShowToday)
@@ -220,6 +266,7 @@ export function useUrgencyTriggers() {
     }
 
     // Build urgency triggers based on conditions
+    /** @type {UrgencyTrigger[]} */
     const triggers = [];
 
     // 1. LIVE SHOWS NOW (highest priority) — only when a show is genuinely on the

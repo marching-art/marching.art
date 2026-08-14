@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Podium Class state + actions hook (Phase 2).
  *
@@ -25,9 +24,10 @@ import {
   unretirePodiumCorps,
 } from '../api/podium';
 
+/** @param {boolean} [enabled] */
 export function usePodium(enabled) {
   const [loading, setLoading] = useState(Boolean(enabled));
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(/** @type {string|null} */ (null));
   // Widened deliberately: the getPodiumState response has no declared type
   // yet, and leaving this as `useState(null)` infers `null`, which breaks
   // every consumer that reads `podium.data?.x`.
@@ -52,7 +52,7 @@ export function usePodium(enabled) {
       queueRef.current = [];
       setPending({});
     } catch (err) {
-      setError(err?.message || 'Failed to load Podium state.');
+      setError(err instanceof Error ? err.message : 'Failed to load Podium state.');
     } finally {
       setLoading(false);
     }
@@ -69,9 +69,10 @@ export function usePodium(enabled) {
 
   // Apply one confirmed allocation's payload to the state. Shared by the
   // direct `allocate` and the queue drain.
+  /** @type {(payload: any) => void} */
   const applyAllocation = useCallback((payload) => {
     setLastPanel(payload.panel);
-    setData((previous) =>
+    setData((/** @type {any} */ previous) =>
       previous && previous.state
         ? {
             ...previous,
@@ -91,6 +92,7 @@ export function usePodium(enabled) {
     );
   }, []);
 
+  /** @type {(blockType: string, blockIndex?: number) => Promise<any>} */
   const allocate = useCallback(
     async (blockType, blockIndex) => {
       // The server validates blockIndex against the live blocksUsed. When not
@@ -138,7 +140,7 @@ export function usePodium(enabled) {
           // Resync first (reload clears `error` on entry), then surface the
           // bounce reason so it survives the refetch and stays visible.
           await reload();
-          setError(err?.message || 'Could not allocate that block.');
+          setError(err instanceof Error ? err.message : 'Could not allocate that block.');
           return;
         }
         queueRef.current.shift();
@@ -154,6 +156,7 @@ export function usePodium(enabled) {
     }
   }, [reload]);
 
+  /** @type {(blockType: string) => void} */
   const queueAllocate = useCallback(
     (blockType) => {
       queueRef.current.push(blockType);
@@ -168,6 +171,7 @@ export function usePodium(enabled) {
     await reload();
   }, [reload]);
 
+  /** @type {(payload: any) => Promise<any>} */
   const register = useCallback(
     async (payload) => {
       const result = await registerPodiumCorps(payload);
@@ -185,6 +189,7 @@ export function usePodium(enabled) {
     return result.data;
   }, []);
 
+  /** @type {(week: number, shows: any) => Promise<any>} */
   const selectShows = useCallback(
     async (week, shows) => {
       const result = await setPodiumShows({ week, shows });
@@ -194,6 +199,7 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  /** @type {(tier: string) => Promise<any>} */
   const setFoodPlan = useCallback(
     async (tier) => {
       const result = await setPodiumFoodPlan({ tier });
@@ -205,6 +211,7 @@ export function usePodium(enabled) {
 
   // Book / cancel airfare on an upcoming show leg (design §5.3). Reversible and
   // free until the nightly processor prices it against the realized leg.
+  /** @type {(day: number, fly: boolean) => Promise<any>} */
   const setAirfare = useCallback(
     async (day, fly) => {
       const result = await setPodiumAirfare({ day, fly });
@@ -214,6 +221,7 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  /** @type {(blocks: any, planType?: 'rehearsal'|'show'|'springTraining') => Promise<any>} */
   const savePlanTemplate = useCallback(
     async (blocks, planType = 'rehearsal') => {
       const result = await setPodiumPlanTemplate({ blocks, planType });
@@ -223,6 +231,7 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  /** @type {(amount: number) => Promise<any>} */
   const commitBudget = useCallback(
     async (amount) => {
       const result = await commitPodiumBudget({ amount });
@@ -232,6 +241,7 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  /** @type {(block: any) => Promise<any>} */
   const hireClinician = useCallback(
     async (block) => {
       const result = await hirePodiumClinician({ block });
@@ -258,11 +268,13 @@ export function usePodium(enabled) {
   // Un-retire a banked lineage. Called first without confirm to PREVIEW the
   // resulting status (the "are you sure?" surface), then again with confirm to
   // commit the restore.
+  /** @type {(lineageIndex: number) => Promise<any>} */
   const previewUnretire = useCallback(async (lineageIndex) => {
     const result = await unretirePodiumCorps({ lineageIndex, confirm: false });
     return result.data;
   }, []);
 
+  /** @type {(lineageIndex: number) => Promise<any>} */
   const unretireCorps = useCallback(
     async (lineageIndex) => {
       const result = await unretirePodiumCorps({ lineageIndex, confirm: true });
