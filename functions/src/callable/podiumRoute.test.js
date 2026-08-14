@@ -123,3 +123,45 @@ describe("buildRouteLegs — joint rehearsals never relocate the tour (design §
     assert.equal(showLeg.staminaCost, 0);
   });
 });
+
+describe("buildRouteLegs — airfare on long legs (design §5.3)", () => {
+  const cantonState = (overrides = {}) => ({
+    seasonUid: "season-1",
+    division: "worldClass",
+    location: "Canton, Ohio",
+    lastVenue: venues.venueFor("Canton, Ohio"),
+    ...overrides,
+  });
+
+  test("a long leg exposes an airfare fare (1 CC / 2 mi) and the halved stamina", () => {
+    const legs = buildRouteLegs(cantonState(), [12], {
+      jointByDay: {},
+      locations: { 12: "Dallas, Texas" },
+    });
+    const [leg] = legs;
+    assert.ok(leg.miles > 600, "Canton→Dallas is an over-600-mile leg");
+    assert.equal(leg.airfareEligible, true);
+    assert.equal(leg.airfareCost, Math.ceil(leg.miles / 2));
+    assert.equal(leg.airfareStaminaCost, Math.round(leg.staminaCost * 0.5 * 10) / 10);
+    assert.equal(leg.airfarePurchased, false);
+  });
+
+  test("a short leg is not airfare-eligible", () => {
+    const legs = buildRouteLegs(cantonState(), [12], {
+      jointByDay: {},
+      locations: { 12: "Akron, Ohio" },
+    });
+    const [leg] = legs;
+    assert.equal(leg.tier, "local");
+    assert.equal(leg.airfareEligible, false);
+    assert.equal(leg.airfareStaminaCost, null);
+  });
+
+  test("a booked leg reports airfarePurchased", () => {
+    const legs = buildRouteLegs(cantonState({ airfare: { 12: true } }), [12], {
+      jointByDay: {},
+      locations: { 12: "Dallas, Texas" },
+    });
+    assert.equal(legs[0].airfarePurchased, true);
+  });
+});

@@ -53,6 +53,13 @@ export interface PodiumRouteLeg {
   staminaCost: number;
   heat: number;
   isMajor: boolean;
+  // Airfare (design §5.3): a long leg (over the tier floor) can be flown to
+  // halve its travel-stamina hit for a CorpsCoin fare of 1 CC per 2 leg-miles,
+  // charged in place of the ground fare. Present on show legs only.
+  airfareEligible?: boolean;
+  airfareCost?: number; // CC fare if flown (0 when not eligible)
+  airfareStaminaCost?: number | null; // the halved travel stamina if flown
+  airfarePurchased?: boolean; // director has booked the flight for this leg
   // Set on a joint-rehearsal leg (design §5.12).
   isJoint?: boolean;
   partnerCorpsName?: string | null;
@@ -363,6 +370,15 @@ export const setPodiumFoodPlan = createCallable<
   { tier: string },
   { success: boolean; tier: string }
 >('setPodiumFoodPlan');
+
+// Book or cancel airfare on an upcoming show leg (design §5.3). A free,
+// reversible intent — the flight is priced and charged against the realized
+// leg at the nightly processor, not here. `day` is the competition day of a
+// show the corps attends; `fly` toggles the booking.
+export const setPodiumAirfare = createCallable<
+  { day: number; fly: boolean },
+  { success: boolean; day: number; fly: boolean }
+>('setPodiumAirfare');
 
 export const setPodiumPlanTemplate = createCallable<
   { blocks: string[]; planType?: 'rehearsal' | 'show' | 'springTraining' },

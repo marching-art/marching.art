@@ -533,7 +533,7 @@ const BUDGET_LOG_LIMIT = 40;
 function budgetCategoryOf(reason) {
   const key = String(reason || "");
   if (key.startsWith("staff")) return "staff"; // staff:*, staffRetrain:*
-  if (key === "travel" || key === "jointTravel") return "travel";
+  if (key === "travel" || key === "jointTravel" || key === "airfare") return "travel";
   if (key.startsWith("food")) return "food";
   if (key === "camp") return "camp"; // spring-training housing/food
   if (key === "clinician") return "clinician";
