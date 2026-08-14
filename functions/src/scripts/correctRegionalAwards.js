@@ -224,7 +224,13 @@ function reconcileProfileTrophies(stored, correct) {
   };
 }
 
-/** Accumulate a correct trophy under its uid, de-duping by identity key. */
+/**
+ * Accumulate a correct trophy under its uid, de-duping by identity key.
+ *
+ * @param {Map} correctByUid
+ * @param {string} uid
+ * @param {{regional?: Object, soundSport?: Object}} entry - one of the two award kinds
+ */
 function addCorrect(correctByUid, uid, { regional, soundSport }) {
   let entry = correctByUid.get(uid);
   if (!entry) {

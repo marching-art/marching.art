@@ -4,11 +4,11 @@
 //
 // Covers buildChampionshipConfig (pure progression logic: cutoffs, tie
 // handling at the cutoff, standings fallbacks), processCoinAwardsBatch
-// (per-user aggregation, XP pairing, audit history), awardRegionalTrophies
-// (trophy days, class gating, the Eastern Classic two-night combine),
+// (per-user aggregation, XP pairing, audit history),
 // awardClassChampionshipTrophies (Day 46 medals + ribbons), and
 // awardFinalsAndSaveChampions (Day 49 medals + the permanent
-// season_champions document).
+// season_champions document). awardRegionalTrophies lives in its own file,
+// scoringAwards.regional.test.js.
 //
 // Uses Node's built-in test runner (node:test) with a fake Firestore/batch
 // in the same style as weeklyMatchups.test.js. Run with `npm test`.
@@ -22,7 +22,6 @@ const {
   getTopCorpsFromSeasonStandings,
   buildChampionshipConfig,
   processCoinAwardsBatch,
-  awardRegionalTrophies,
   awardClassChampionshipTrophies,
   awardFinalsAndSaveChampions,
 } = require('./scoringAwards');
@@ -469,166 +468,6 @@ describe('processCoinAwardsBatch — idempotency', () => {
     assert.ok(!('corpsCoin' in update.data), 'no zero coin increment is fabricated');
     assert.ok(update.data['captionStats.B'].isEqual(admin.firestore.FieldValue.increment(1.2)));
     assert.ok(update.data[LEDGER_FIELD].isEqual(admin.firestore.FieldValue.arrayUnion(token)));
-  });
-});
-
-// =============================================================================
-// awardRegionalTrophies
-// =============================================================================
-
-describe('awardRegionalTrophies', () => {
-  test('non-trophy days write nothing', async () => {
-    const { db, batch, writes } = makeFakeDb();
-    const recap = recapWithShows([
-      { eventName: 'Midweek Show', results: [result('u1', 'worldClass', 90)] },
-    ]);
-    await awardRegionalTrophies(batch, recap, 30, seasonData, db);
-    assert.equal(writes.length, 0);
-  });
-
-  test('day 41 (Eastern night 1) defers — no trophies from a half-field', async () => {
-    const { db, batch, writes } = makeFakeDb();
-    const recap = recapWithShows([
-      { eventName: 'Eastern Classic', results: [result('u1', 'worldClass', 90)] },
-    ]);
-    await awardRegionalTrophies(batch, recap, 41, seasonData, db);
-    assert.equal(writes.length, 0);
-  });
-
-  test('day 28: each competitive class crowns its own champion; SoundSport gets Best in Show', async () => {
-    const { db, batch, writes } = makeFakeDb();
-    const recap = recapWithShows([
-      {
-        eventName: 'marching.art Southwestern Championship',
-        results: [
-          // Listed out of score order to prove per-class re-sorting.
-          result('w2', 'worldClass', 85),
-          result('w1', 'worldClass', 92),
-          result('o1', 'openClass', 78),
-          result('s2', 'soundSport', 60),
-          result('s1', 'soundSport', 71),
-          // no aClass corps attended — no aClass trophy minted
-        ],
-      },
-    ]);
-
-    await awardRegionalTrophies(batch, recap, 28, seasonData, db);
-
-    const trophyWrites = writes.filter((w) => w.data['trophies.regionals']);
-    assert.deepEqual(
-      trophyWrites.map((w) => w.path).sort(),
-      [profilePath('o1'), profilePath('w1')],
-      'only the class WINNERS get a regional trophy — w2/s2 get nothing'
-    );
-
-    const w1Write = trophyWrites.find((w) => w.path === profilePath('w1'));
-    assert.ok(
-      w1Write.data['trophies.regionals'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
-          type: 'regional',
-          corpsClass: 'worldClass',
-          seasonName: seasonData.name,
-          eventName: 'marching.art Southwestern Championship',
-          score: 92,
-          rank: 1,
-        })
-      )
-    );
-
-    const soundSportWrites = writes.filter((w) => w.data['trophies.soundSportAwards']);
-    assert.deepEqual(
-      soundSportWrites.map((w) => w.path),
-      [profilePath('s1')]
-    );
-    assert.ok(
-      soundSportWrites[0].data['trophies.soundSportAwards'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
-          type: 'regional_best_in_show',
-          seasonName: seasonData.name,
-          eventName: 'marching.art Southwestern Championship',
-          score: 71,
-        })
-      )
-    );
-  });
-
-  test('day 28: only the branded major is crowned — pool shows sharing the day get nothing', async () => {
-    // Live seasons map every scraped DCI event to its calendar day, so ordinary
-    // pool shows can land on day 28 alongside the Southwestern Championship.
-    // Only the major crowns a regional champion.
-    const { db, batch, writes } = makeFakeDb();
-    const recap = recapWithShows([
-      {
-        eventName: 'The Buccaneer Classic',
-        results: [result('pool1', 'worldClass', 99)],
-      },
-      {
-        eventName: 'marching.art Southwestern Championship',
-        results: [result('major1', 'worldClass', 88)],
-      },
-      {
-        eventName: 'Music on the Mountain',
-        results: [result('pool2', 'openClass', 95)],
-      },
-    ]);
-
-    await awardRegionalTrophies(batch, recap, 28, seasonData, db);
-
-    const trophyWrites = writes.filter((w) => w.data['trophies.regionals']);
-    assert.deepEqual(
-      trophyWrites.map((w) => w.path),
-      [profilePath('major1')],
-      'the pool shows (Buccaneer, Music on the Mountain) mint no regional trophies'
-    );
-  });
-
-  test('day 35: a day with no branded major writes nothing', async () => {
-    const { db, batch, writes } = makeFakeDb();
-    const recap = recapWithShows([
-      { eventName: 'Midwestern Championship', results: [result('u1', 'worldClass', 90)] },
-      { eventName: 'marching.art Pittsburgh', results: [result('u2', 'openClass', 80)] },
-    ]);
-    await awardRegionalTrophies(batch, recap, 35, seasonData, db);
-    assert.equal(writes.length, 0);
-  });
-
-  test('day 42: Eastern Classic champion comes from the COMBINED two-night field', async () => {
-    // Night 1's top corps outscored everyone on night 2 — the trophy must go
-    // to the night-1 corps even though it isn't in the day-42 recap.
-    const docs = new Map([
-      [
-        `fantasy_recaps/${seasonData.seasonUid}/days/41`,
-        {
-          shows: [
-            {
-              eventName: 'Eastern Classic',
-              results: [result('fridayStar', 'worldClass', 95)],
-            },
-          ],
-        },
-      ],
-    ]);
-    const { db, batch, writes } = makeFakeDb(docs);
-    const recap = recapWithShows([
-      // A pool show also scored on day 42 — must not be crowned.
-      {
-        eventName: 'Music on the Mountain',
-        results: [result('poolWinner', 'worldClass', 99)],
-      },
-      {
-        eventName: 'Eastern Classic',
-        results: [result('saturdayBest', 'worldClass', 90)],
-      },
-    ]);
-
-    await awardRegionalTrophies(batch, recap, 42, seasonData, db);
-
-    const trophyWrites = writes.filter((w) => w.data['trophies.regionals']);
-    assert.deepEqual(
-      trophyWrites.map((w) => w.path),
-      [profilePath('fridayStar')],
-      'combined Eastern field crowns the night-1 star; the day-42 pool show gets nothing'
-    );
   });
 });
 
