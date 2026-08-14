@@ -650,6 +650,10 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
       uid: result.uid,
       username: championUsernameMap.get(result.uid) || "Unknown",
       corpsName: result.corpsName,
+      // The corps graphic (avatar) rides along on every scored result, so the
+      // Hall of Champions can render each finalist's logo instead of a bare
+      // initial. Null when the corps never generated one.
+      avatarUrl: result.avatarUrl || null,
       score: result.totalScore
     }));
     seasonChampionsData.classes[corpsClass] = championsWithUsernames;

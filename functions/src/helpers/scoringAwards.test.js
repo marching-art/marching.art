@@ -755,12 +755,12 @@ describe('awardFinalsAndSaveChampions', () => {
     assert.ok(saved.archivedAt instanceof Date);
     // Per-class podiums, with usernames resolved from profiles.
     assert.deepEqual(saved.classes.worldClass, [
-      { rank: 1, uid: 'w1', username: 'DirectorOne', corpsName: 'Champion Corps', score: 97 },
-      { rank: 2, uid: 'w2', username: 'DirectorTwo', corpsName: 'Second Corps', score: 93 },
-      { rank: 3, uid: 'w3', username: 'DirectorThree', corpsName: 'Third Corps', score: 88 },
+      { rank: 1, uid: 'w1', username: 'DirectorOne', corpsName: 'Champion Corps', avatarUrl: null, score: 97 },
+      { rank: 2, uid: 'w2', username: 'DirectorTwo', corpsName: 'Second Corps', avatarUrl: null, score: 93 },
+      { rank: 3, uid: 'w3', username: 'DirectorThree', corpsName: 'Third Corps', avatarUrl: null, score: 88 },
     ]);
     assert.deepEqual(saved.classes.openClass, [
-      { rank: 1, uid: 'o1', username: 'OpenDirector', corpsName: 'Open Star', score: 75 },
+      { rank: 1, uid: 'o1', username: 'OpenDirector', corpsName: 'Open Star', avatarUrl: null, score: 75 },
     ]);
     // The function returns exactly what it saved.
     assert.deepEqual(champions, saved);
@@ -781,6 +781,26 @@ describe('awardFinalsAndSaveChampions', () => {
       (w) => w.path === `season_champions/${seasonData.seasonUid}`
     );
     assert.equal(championsWrite.data.classes.worldClass[0].username, 'Unknown');
+  });
+
+  test("carries each champion's corps graphic (avatarUrl) into the archive", async () => {
+    const docs = new Map([[profilePath('w1'), { username: 'DirectorOne' }]]);
+    const { db, batch, writes } = makeFakeDb(docs);
+    const recap = recapWithShows([
+      {
+        eventName: 'marching.art World Championship Finals',
+        results: [
+          { ...result('w1', 'worldClass', 97, 'Champion Corps'), avatarUrl: 'https://cdn/logo.png' },
+        ],
+      },
+    ]);
+
+    await awardFinalsAndSaveChampions(batch, recap, seasonData, db);
+
+    const championsWrite = writes.find(
+      (w) => w.path === `season_champions/${seasonData.seasonUid}`
+    );
+    assert.equal(championsWrite.data.classes.worldClass[0].avatarUrl, 'https://cdn/logo.png');
   });
 
   test('SoundSport Festival: single Best in Show, no medals or finalist ribbons', async () => {

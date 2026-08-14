@@ -208,7 +208,8 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
 
       {/* Champion identity */}
       <div className="px-4 sm:px-6 py-5 flex items-center gap-4">
-        <TeamAvatar name={corpsName} size="lg" className="!w-14 !h-14 sm:!w-16 sm:!h-16 text-xl" />
+        {/* prettier-ignore */}
+        <TeamAvatar name={corpsName} logoUrl={champion.avatarUrl} size="lg" className="!w-14 !h-14 sm:!w-16 sm:!h-16 text-xl" />
         <div className="min-w-0 flex-1">
           <div className="text-xl sm:text-2xl font-bold text-white truncate">{corpsName}</div>
           {champion.uid ? (
@@ -404,7 +405,7 @@ const FinalistsTable = ({ champions, classKey }) => {
                 </td>
                 <td className="py-2.5 px-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <TeamAvatar name={corpsName} size="xs" />
+                    <TeamAvatar name={corpsName} logoUrl={c.avatarUrl} size="xs" />
                     <div className="min-w-0">
                       <span
                         className={`text-sm font-bold block truncate ${
