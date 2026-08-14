@@ -1,10 +1,104 @@
 [
   {
+    "id": "2026-08-13-podium-fantasy-two-distinct-games",
+    "date": "2026-08-13",
+    "title": "Podium and Fantasy now read as two distinct games",
+    "category": "improvement",
+    "summary": "The dashboard, Game Guide, and Records now clearly separate the Podium director sim from the fantasy draft, so a Podium mark is never mistaken for a fantasy-comparable one. A banner on the Podium zone names the boundary — and you can dismiss it for good once you know the ropes.",
+    "highlights": [
+      "Tabs group the four Fantasy classes apart from Podium, which keeps its gold Medal identity.",
+      "The Game Guide rail is grouped into Start here / Fantasy / Systems / Podium / Reference.",
+      "Records and profile ensembles separate Fantasy and Podium results.",
+      "The Podium mode banner is now permanently dismissible."
+    ]
+  },
+  {
+    "id": "2026-08-13-podium-airfare-long-legs",
+    "date": "2026-08-13",
+    "title": "Book airfare for long Podium tour legs",
+    "category": "feature",
+    "summary": "Podium directors can now pre-book a flight on any upcoming show leg over the long-haul distance, halving that leg's travel-stamina hit for a CorpsCoin fare. Fly the brutal jumps and drive the rest.",
+    "highlights": [
+      "Priced at 1 CorpsCoin per 2 leg-miles, charged from your Corps Budget.",
+      "Booked per day from the Upcoming Route panel, and fully reversible.",
+      "Stacks with the Tour Manager reduction; if the Budget can't cover it, you simply drive."
+    ]
+  },
+  {
+    "id": "2026-08-13-champions-corps-graphics",
+    "date": "2026-08-13",
+    "title": "Champions show their corps graphics",
+    "category": "improvement",
+    "summary": "The Hall of Champions now displays each champion and finalist with their corps graphic instead of a bare initial — and past seasons were backfilled, so older champions get their logos too."
+  },
+  {
     "id": "2026-08-13-joint-rehearsals-no-longer-relocate-the-tour-rou",
     "date": "2026-08-13",
     "title": "Joint rehearsals no longer relocate the tour route",
     "category": "fix",
     "summary": "Joint rehearsals no longer relocate the tour route"
+  },
+  {
+    "id": "2026-08-13-podium-home-city",
+    "date": "2026-08-13",
+    "title": "Podium corps now have a home city",
+    "category": "feature",
+    "summary": "Podium setup now asks for an official home city; every tour starts there and each travel leg is priced from it. Continuing directors can relocate at the start of a season for a per-mile fee — founding or keeping your home is free.",
+    "highlights": [
+      "Your home shows as a standardized \"City, ST\" on the profile and anchors the tour map.",
+      "Relocation costs 1 CorpsCoin per 2 miles from your old home, previewed before you commit.",
+      "Podium corps are now correctly eligible for director-hosted shows everywhere they're listed."
+    ]
+  },
+  {
+    "id": "2026-08-13-scores-accuracy",
+    "date": "2026-08-13",
+    "title": "Sharper, more accurate scores",
+    "category": "fix",
+    "summary": "The fantasy and Podium score engines now ignore malformed historical values — stray totals landing in caption fields, and un-scored zeros — that were skewing projections and dragging Podium's realism curves. The scores you see track real results more faithfully."
+  },
+  {
+    "id": "2026-08-13-podium-show-picks-mid-week",
+    "date": "2026-08-13",
+    "title": "Podium show picks stay put mid-week",
+    "category": "fix",
+    "summary": "Editing a week's Podium show picks no longer silently drops shows you've already performed. That closes a loophole that let a corps attend more shows than the weekly cap allows, and keeps completed shows plotted on your tour map."
+  },
+  {
+    "id": "2026-08-13-prestige-titles-completed-seasons",
+    "date": "2026-08-13",
+    "title": "Prestige titles are a career, not a sprint",
+    "category": "balance",
+    "summary": "The top director titles — Icon, Hall of Famer, Immortal, and Eternal — now require completed seasons as well as XP, so Hall of Fame status is a long-haul achievement instead of something reachable in two seasons.",
+    "highlights": [
+      "Legend stays a pure Level-10 milestone; higher tiers add a seasons-played bar.",
+      "Matching level achievements gain the same gate; badges you've already earned are never revoked."
+    ]
+  },
+  {
+    "id": "2026-08-13-podium-press-releases",
+    "date": "2026-08-13",
+    "title": "Podium-only directors can post press releases",
+    "category": "fix",
+    "summary": "If your only corps is a Podium corps, the press-release composer no longer turns you away with \"Register a corps first.\" Your Podium corps is now a valid byline."
+  },
+  {
+    "id": "2026-08-13-podium-clinician-expiration",
+    "date": "2026-08-13",
+    "title": "Podium clinician boost ends on schedule",
+    "category": "fix",
+    "summary": "A clinician engagement now clears the moment its last active day finishes, instead of lingering an extra day. The \"active through day N\" panel disappears exactly when the boost does."
+  },
+  {
+    "id": "2026-08-11-profile-newsroom-writer-credentials",
+    "date": "2026-08-11",
+    "title": "A Newsroom and writer credentials on your profile",
+    "category": "feature",
+    "summary": "Your director profile gained a Newsroom that gathers the press releases and articles you've published, plus an earned writer tier shown as a badge. Credentials come from real contributions, not a grant.",
+    "highlights": [
+      "The tier climbs Contributor → Correspondent → Staff Writer.",
+      "Admin-approved articles are weighted above self-published releases, so the top tier can't be farmed on volume."
+    ]
   },
   {
     "id": "2026-08-11-press-releases",

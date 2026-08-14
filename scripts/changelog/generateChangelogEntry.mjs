@@ -231,7 +231,18 @@ async function callGemini({ apiKey, model, prompt }) {
       generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
     }),
   });
-  if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+  if (!res.ok) {
+    // Surface the API's error body — a bare status hid an ongoing HTTP 400
+    // (invalid key / bad request) that silently pushed every merge onto the
+    // title-only heuristic fallback, so almost nothing got logged.
+    let detail = '';
+    try {
+      detail = (await res.text()).slice(0, 300).replace(/\s+/g, ' ').trim();
+    } catch {
+      /* best effort */
+    }
+    throw new Error(`Gemini HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+  }
   const data = await res.json();
   return data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') || '';
 }
