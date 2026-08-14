@@ -18,6 +18,7 @@ const { isPodiumEnabled } = require("../helpers/features");
 const { getActivePodiumCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
+const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
@@ -58,36 +59,46 @@ function applyCommitmentDebit(transaction, db, uid, profileSnapshot, amount) {
 /**
  * Registration coin settlement inside a transaction: first sweep the prior
  * season's unspent Corps Budget back to the wallet (refund), then debit the new
- * season's commitment from the combined balance — so a director can re-fund
- * next season straight out of last season's leftover. A single corpsCoin write
- * nets both, with one coin-history row per leg. Reads MUST have happened — pass
- * the profile snapshot in. Returns the amount refunded.
+ * season's commitment AND any home-relocation fee from the combined balance — so
+ * a director can re-fund next season (and move house) straight out of last
+ * season's leftover. A single corpsCoin write nets all three, with one
+ * coin-history row per leg. Reads MUST have happened — pass the profile snapshot
+ * in. Returns the amount refunded.
  */
 function applyRegistrationCoinDelta(
   transaction,
   db,
   uid,
   profileSnapshot,
-  { commitment = 0, refund = 0, refundSeasonUid = null, refundCorpsName = null }
+  {
+    commitment = 0,
+    refund = 0,
+    refundSeasonUid = null,
+    refundCorpsName = null,
+    movingFee = 0,
+    moveDescription = "",
+  }
 ) {
   const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
   const available = corpsCoin + refund;
-  if (available < commitment) {
+  const debit = commitment + movingFee;
+  if (available < debit) {
+    const need = movingFee > 0 ? `${debit} (${commitment} funding + ${movingFee} moving)` : `${commitment}`;
     throw new HttpsError(
       "failed-precondition",
       `Not enough CorpsCoin (have ${corpsCoin}${refund > 0 ? ` plus a ${refund} refund` : ""}, ` +
-        `need ${commitment}).`
+        `need ${need}).`
     );
   }
-  const finalBalance = available - commitment;
-  if (refund > 0 || commitment > 0) {
+  const finalBalance = available - debit;
+  if (refund > 0 || debit > 0) {
     transaction.update(store.profileRef(db, uid), { corpsCoin: finalBalance });
   }
   if (refund > 0) {
     economy.addCoinHistoryEntryToTransaction(transaction, db, uid, {
       type: economy.TRANSACTION_TYPES.PODIUM_BUDGET_REFUND,
       amount: refund,
-      balance: available, // wallet after the refund credit, before the new commitment
+      balance: available, // wallet after the refund credit, before the new debits
       description: `Corps Budget refund — ${refundCorpsName || "Podium corps"} (${refundSeasonUid})`,
       seasonUid: refundSeasonUid,
     });
@@ -96,8 +107,16 @@ function applyRegistrationCoinDelta(
     economy.addCoinHistoryEntryToTransaction(transaction, db, uid, {
       type: economy.TRANSACTION_TYPES.PODIUM_BUDGET_COMMIT,
       amount: -commitment,
-      balance: finalBalance,
+      balance: available - commitment,
       description: "Corps Budget commitment (Podium Class)",
+    });
+  }
+  if (movingFee > 0) {
+    economy.addCoinHistoryEntryToTransaction(transaction, db, uid, {
+      type: economy.TRANSACTION_TYPES.PODIUM_HOME_RELOCATION,
+      amount: -movingFee,
+      balance: finalBalance,
+      description: moveDescription || "Home relocation (Podium Class)",
     });
   }
   return refund;
@@ -167,6 +186,25 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   if (typeof corpsName !== "string" || corpsName.trim().length < NAME_MIN || corpsName.trim().length > NAME_MAX) {
     throw new HttpsError("invalid-argument", `Corps name must be ${NAME_MIN}-${NAME_MAX} characters.`);
   }
+  // Official home location (design §5.3): required and must resolve to a real
+  // city on the tour map, because the corps' whole season routes from here. A
+  // free-text guess that isn't in the gazetteer can't be routed or priced, so
+  // it is rejected rather than silently making every leg free.
+  const homeVenue = typeof location === "string" ? venues.venueFor(location) : null;
+  if (!homeVenue) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Choose an official home city from the tour map — it's where your corps starts every tour."
+    );
+  }
+  const homeLabel = `${homeVenue.city}, ${homeVenue.region}`;
+  const homeRecord = {
+    venueId: homeVenue.venueId,
+    city: homeVenue.city,
+    region: homeVenue.region,
+    lat: homeVenue.lat,
+    lng: homeVenue.lng,
+  };
   if (calendarDay < 1) {
     throw new HttpsError("failed-precondition", "The season has not started yet.");
   }
@@ -204,6 +242,28 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const staleStateSnapshot = await store.stateRef(db, uid).get();
   const hasStalePriorSeason =
     staleStateSnapshot.exists && staleStateSnapshot.data().seasonUid !== seasonUid;
+  // Home relocation fee (design §5.3): a director continuing a corps may move its
+  // official home at the season boundary for 1 CC per 2 miles from the OLD home
+  // to the new one. The old home is read authoritatively from last season's
+  // state (its structured `home`, or the resolved legacy `location` string) —
+  // never trusted from the client. A brand-new corps, a fresh start, or an
+  // unchanged home moves for free; an unmappable old home can't be priced, so
+  // that relocation is free too (the same forgiving rule travel uses).
+  const priorHomeVenue = hasStalePriorSeason
+    ? staleStateSnapshot.data().home || venues.venueFor(staleStateSnapshot.data().location) || null
+    : null;
+  const relocation =
+    hasStalePriorSeason && !freshStart
+      ? venues.relocationFee(priorHomeVenue, homeRecord, store.balance)
+      : { miles: 0, fee: 0 };
+  const movingFee = relocation.fee;
+  const priorHomeLabel = priorHomeVenue
+    ? `${priorHomeVenue.city}, ${priorHomeVenue.region}`
+    : null;
+  const moveDescription =
+    movingFee > 0 && priorHomeLabel
+      ? `Home relocation — ${priorHomeLabel} → ${homeLabel} (${relocation.miles} mi)`
+      : "";
   // Resolved for both the lazy archival and the end-of-season financial report,
   // and captured before applySeasonResult mutates the career. willLazyArchive
   // scopes the budget refund to the season THIS registration is banking, so a
@@ -334,6 +394,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       refund: refundAmount,
       refundSeasonUid: seasonReport ? staleForRefund.seasonUid : null,
       refundCorpsName: seasonReport ? staleForRefund.corpsName : null,
+      movingFee,
+      moveDescription,
     });
 
 
@@ -397,7 +459,11 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       ...stored,
       seasonUid,
       corpsName: trimmedName,
-      location: typeof location === "string" ? location.slice(0, 80) : "",
+      // The official home: the structured venue drives all tour routing, and the
+      // canonical "City, ST" label is the string every legacy reader (and the
+      // profile) shows. Both derive from the one resolved gazetteer venue.
+      home: homeRecord,
+      location: homeLabel,
       showConcept: typeof showConcept === "string" ? showConcept.slice(0, 200) : "",
       challenge,
       auditions: auditionShares || null,
@@ -442,7 +508,9 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
         corps: {
           podiumClass: {
             corpsName: trimmedName,
-            location: typeof location === "string" ? location.slice(0, 80) : "",
+            // The official home replaces the free-text hometown on the profile:
+            // the canonical "City, ST" the corps competes out of (design §5.3).
+            location: homeLabel,
             showConcept: typeof showConcept === "string" ? showConcept.slice(0, 200) : "",
             class: "podiumClass",
             repTier: startingTier,
@@ -461,7 +529,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
 
   logger.info(
     `Podium corps registered: ${trimmedName} (${uid}) season ${seasonUid} — ` +
-      `${divisions.DIVISION_LABELS[division]}` +
+      `${divisions.DIVISION_LABELS[division]}, home ${homeLabel}` +
+      (movingFee > 0 ? ` (moved ${relocation.miles} mi for ${movingFee} CC)` : "") +
       (txnResult.refund > 0 ? ` (refunded ${txnResult.refund} CC from last season)` : "")
   );
   const easternAssignments = await store.loadEasternAssignments(db, seasonUid);
@@ -471,6 +540,13 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
     easternNight: store.easternNightFor(uid, seasonUid, easternAssignments),
+    // The official home the corps now tours out of, and the relocation charge if
+    // the director moved it this season (0 for a first home or an unchanged one).
+    home: homeLabel,
+    homeRelocation:
+      movingFee > 0
+        ? { fee: movingFee, miles: relocation.miles, from: priorHomeLabel, to: homeLabel }
+        : null,
     // The prior season's Corps Budget refund (0 when nothing was left or already
     // swept by the nightly rollover), with the line-item report behind it.
     budgetRefund: txnResult.refund || 0,

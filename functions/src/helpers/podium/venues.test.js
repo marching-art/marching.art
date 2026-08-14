@@ -59,3 +59,34 @@ describe("venueFor — standardized location resolution", () => {
     assert.equal(venues.timezoneFor("Indianapolis, IN"), venues.timezoneFor("Indianapolis, Indiana"));
   });
 });
+
+describe("relocationFee — the home-move sink (design §5.3)", () => {
+  const cfg = { home: { milesPerCoin: 2 } };
+
+  test("same home (or unknown endpoint) is free", () => {
+    const dallas = venues.venueFor("Dallas, Texas");
+    assert.deepEqual(venues.relocationFee(dallas, dallas, cfg), { miles: 0, fee: 0 });
+    assert.deepEqual(venues.relocationFee(null, dallas, cfg), { miles: 0, fee: 0 });
+    assert.deepEqual(venues.relocationFee(dallas, null, cfg), { miles: 0, fee: 0 });
+  });
+
+  test("charges 1 CorpsCoin per 2 miles of great-circle distance", () => {
+    const dallas = venues.venueFor("Dallas, Texas");
+    const atlanta = venues.venueFor("Atlanta, Georgia");
+    const expectMiles = Math.round(venues.haversineMiles(dallas, atlanta));
+    const { miles, fee } = venues.relocationFee(dallas, atlanta, cfg);
+    assert.equal(miles, expectMiles);
+    // Dallas↔Atlanta is ~720 mi straight-line → ~360 CC.
+    assert.equal(fee, Math.ceil(venues.haversineMiles(dallas, atlanta) / 2));
+    assert.ok(fee > 300 && fee < 400, `unexpected fee ${fee}`);
+  });
+
+  test("falls back to a 2-mile rate when balance omits the home section", () => {
+    const dallas = venues.venueFor("Dallas, Texas");
+    const atlanta = venues.venueFor("Atlanta, Georgia");
+    assert.deepEqual(
+      venues.relocationFee(dallas, atlanta, {}),
+      venues.relocationFee(dallas, atlanta, cfg)
+    );
+  });
+});

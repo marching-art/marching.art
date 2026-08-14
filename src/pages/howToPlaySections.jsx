@@ -564,8 +564,9 @@ const PodiumSection = () => (
     </p>
     <div className="grid gap-2 sm:grid-cols-2">
       <PodiumCard icon={Rocket} title="Found your corps">
-        Name it, pick a hometown, and set a show challenge (1–8) for each caption. A brand-new corps
-        starts as a Community Corps.
+        Name it, pick an official home city (your tour starts there and travel is priced from it),
+        and set a show challenge (1–8) for each caption. A brand-new corps starts as a Community
+        Corps.
       </PodiumCard>
       <PodiumCard icon={Zap} title="The daily loop">
         Spend 12 rehearsal blocks a day across seven block types — install your show early, clean it

@@ -135,7 +135,7 @@ export const PODIUM_JOURNEY = [
   {
     id: 'podium_found',
     title: 'Found a Corps',
-    detail: 'Name, challenge, hometown',
+    detail: 'Name, home city, challenge',
     xp: 50,
     coin: 50,
   },

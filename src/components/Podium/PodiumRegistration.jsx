@@ -12,6 +12,8 @@ import {
   TrendingUp,
   Minus,
   Plus,
+  MapPin,
+  Check,
 } from 'lucide-react';
 import {
   PODIUM_CAPTIONS,
@@ -21,14 +23,24 @@ import {
   SPECIALTY_LABELS,
   TIER_LABELS,
 } from './podiumConstants';
+import { HOSTABLE_VENUES, homeRelocationFee } from '../../utils/venues';
 import PodiumSeasonAssessment from './PodiumSeasonAssessment';
+
+// Cap the rendered city dropdown so a bare focus doesn't paint all ~500 cities
+// (mirrors the Host-a-Show picker). A real search narrows well below this.
+const HOME_RESULTS_LIMIT = 40;
 
 const STEPS = ['Corps', 'Show', 'Design', 'March'];
 
 export default function PodiumRegistration({ podium }) {
   const [step, setStep] = useState(0);
   const [corpsName, setCorpsName] = useState('');
-  const [location, setLocation] = useState('');
+  // The official home (design §5.3): a KNOWN tour-map city, not free text — it's
+  // where every tour starts, so it must resolve to a venue. `selectedHome` holds
+  // the confirmed city; `homeQuery` is the search box text.
+  const [selectedHome, setSelectedHome] = useState(null);
+  const [homeQuery, setHomeQuery] = useState('');
+  const [homeListOpen, setHomeListOpen] = useState(false);
   const [showConcept, setShowConcept] = useState('');
   const [challenge, setChallenge] = useState(
     Object.fromEntries(PODIUM_CAPTIONS.map((c) => [c, 5]))
@@ -84,21 +96,33 @@ export default function PodiumRegistration({ podium }) {
   const hasAssessment = Boolean(preview && (preview.assessment || preview.carryover));
 
   // Continue the carried-over corps: prefill its identity (renaming still
-  // allowed) and enter the wizard.
+  // allowed) and enter the wizard. The current official home is preselected, so
+  // leaving it as-is is free — moving it costs the relocation fee (design §5.3).
   const chooseContinue = () => {
     const carry = preview?.carryover;
     if (carry) {
       if (carry.corpsName) setCorpsName(carry.corpsName);
-      if (carry.location) setLocation(carry.location);
+      if (carry.homeVenueId && carry.homeCity) {
+        const [city, region] = carry.homeCity.split(', ');
+        setSelectedHome({ venueId: carry.homeVenueId, city, region, label: carry.homeCity });
+        setHomeQuery(carry.homeCity);
+      } else if (carry.location) {
+        // Legacy corps whose free-text hometown never resolved: leave the box
+        // seeded so the director can pick a real city (no move fee — there's no
+        // mapped origin to move from).
+        setHomeQuery(carry.location);
+      }
       if (carry.showConcept) setShowConcept(carry.showConcept);
     }
     setDecision('continue');
   };
 
-  // Start a brand-new corps: clear the carried identity and found fresh.
+  // Start a brand-new corps: clear the carried identity and found fresh. A fresh
+  // start picks a home for free — there is no prior home to relocate from.
   const chooseStartNew = () => {
     setCorpsName('');
-    setLocation('');
+    setSelectedHome(null);
+    setHomeQuery('');
     setShowConcept('');
     setDecision('startNew');
   };
@@ -107,6 +131,32 @@ export default function PodiumRegistration({ podium }) {
     const preset = AUDITION_PRESETS.find((p) => p.id === auditionPreset);
     return preset && Object.keys(preset.points).length > 0 ? preset.points : null;
   }, [auditionPreset]);
+
+  // Home-city typeahead: the same known-city list the Host-a-Show picker uses.
+  const homeResults = useMemo(() => {
+    const q = homeQuery.trim().toLowerCase();
+    const matches = q
+      ? HOSTABLE_VENUES.filter((v) => v.label.toLowerCase().includes(q))
+      : HOSTABLE_VENUES;
+    return matches.slice(0, HOME_RESULTS_LIMIT);
+  }, [homeQuery]);
+
+  const pickHome = (venue) => {
+    setSelectedHome(venue);
+    setHomeQuery(venue.label);
+    setHomeListOpen(false);
+  };
+
+  // The between-seasons move fee (design §5.3): 1 CC per `milesPerCoin` miles
+  // from the current home to the newly picked one. Only a CONTINUE with a mapped
+  // prior home is chargeable — a fresh start or a first-time corps sets its home
+  // free. Priced client-side for preview; the server re-charges authoritatively.
+  const carriedHomeId = preview?.carryover?.homeVenueId || null;
+  const milesPerCoin = preview?.homeRelocationMilesPerCoin || 2;
+  const move = useMemo(() => {
+    if (decision !== 'continue' || !carriedHomeId || !selectedHome) return { miles: 0, fee: 0 };
+    return homeRelocationFee(carriedHomeId, selectedHome.venueId, milesPerCoin);
+  }, [decision, carriedHomeId, selectedHome, milesPerCoin]);
 
   const hasCarried = Boolean(preview?.hasCarriedStaff);
   const activeStaff = useMemo(() => (preview?.staff || []).filter((s) => !s.retiring), [preview]);
@@ -133,7 +183,16 @@ export default function PodiumRegistration({ podium }) {
   const shortfall = Math.max(0, keptPayroll - budgetCommitment);
   const overBudget = hasCarried && shortfall > 0;
 
-  const canNext = step === 0 ? corpsName.trim().length >= 3 : true;
+  // The move fee is a wallet debit alongside the season commitment, netted
+  // against last season's refund server-side. Block a move the wallet can't
+  // cover so the director isn't stopped by a server rejection at submit.
+  const walletForMove = (preview?.corpsCoin || 0) + (lastSeasonReport?.refunded || 0);
+  const moveUnaffordable = move.fee > 0 && move.fee + budgetCommitment > walletForMove;
+  const cannotSubmit = overBudget || moveUnaffordable;
+
+  // Step 0 gates on both a valid name AND a resolved home city — the home is
+  // required now, not optional free text.
+  const canNext = step === 0 ? corpsName.trim().length >= 3 && Boolean(selectedHome) : true;
 
   const toggleKeep = (specialty) => {
     setKeptStaff((prev) => {
@@ -159,7 +218,9 @@ export default function PodiumRegistration({ podium }) {
           : undefined;
       const result = await podium.register({
         corpsName: corpsName.trim(),
-        location: location.trim(),
+        // The official home — send the resolved city label; the server validates
+        // it against the gazetteer and charges any relocation fee.
+        location: selectedHome ? selectedHome.label : '',
         showConcept: showConcept.trim(),
         challenge,
         auditions,
@@ -185,11 +246,25 @@ export default function PodiumRegistration({ podium }) {
         <div className="text-lg font-bold text-white">{done.corpsName} is on tour.</div>
         <div className="text-xs text-muted">
           Competing in{' '}
-          <span className="text-secondary font-bold">{done.divisionLabel || 'A Class'}</span>. Your
-          provisional Eastern Classic night:{' '}
+          <span className="text-secondary font-bold">{done.divisionLabel || 'A Class'}</span>
+          {done.home && (
+            <>
+              {' '}
+              out of <span className="text-white font-bold">{done.home}</span>
+            </>
+          )}
+          . Your provisional Eastern Classic night:{' '}
           <span className="text-white font-bold">Day {done.easternNight}</span> (night lineups
           publish Day 39). First rehearsal block is waiting below.
         </div>
+        {done.homeRelocation && (
+          <div className="text-[11px] text-secondary">
+            Moved home {done.homeRelocation.miles} mi
+            {done.homeRelocation.from ? ` from ${done.homeRelocation.from}` : ''} —{' '}
+            <span className="font-bold tabular-nums">−{fmt(done.homeRelocation.fee)} CC</span>{' '}
+            moving fee.
+          </div>
+        )}
         {done.budgetRefund > 0 && (
           <div className="text-[11px] text-green-400">
             Last season&apos;s unspent Corps Budget —{' '}
@@ -294,13 +369,95 @@ export default function PodiumRegistration({ podium }) {
             placeholder="Corps name"
             className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
           />
-          <input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            maxLength={80}
-            placeholder="Hometown (e.g., Canton, Ohio) — your tour starts here"
-            className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
-          />
+
+          {/* Official home city (design §5.3): a KNOWN tour-map city, not free
+              text — every tour starts here, and every travel leg is priced from
+              it. Same typeahead the Host-a-Show picker uses. */}
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
+              Official home
+            </label>
+            <div className="relative">
+              <div className="relative">
+                <MapPin className="w-3.5 h-3.5 text-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  value={homeQuery}
+                  onChange={(e) => {
+                    setHomeQuery(e.target.value);
+                    setSelectedHome(null);
+                    setHomeListOpen(true);
+                  }}
+                  onFocus={() => setHomeListOpen(true)}
+                  // Delay so a click on a result registers before the list closes.
+                  onBlur={() => setTimeout(() => setHomeListOpen(false), 150)}
+                  placeholder="Search your home city (e.g., Canton, OH)"
+                  autoComplete="off"
+                  aria-label="Official home city"
+                  className="w-full bg-surface-sunken border border-line rounded-none pl-8 pr-8 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
+                />
+                {selectedHome && (
+                  <Check className="w-3.5 h-3.5 text-green-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                )}
+              </div>
+              {homeListOpen && (
+                <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-surface-sunken border border-line rounded-none">
+                  {homeResults.length === 0 ? (
+                    <div className="px-2 py-1.5 text-[10px] text-muted">
+                      No matching city — try a nearby one.
+                    </div>
+                  ) : (
+                    homeResults.map((v) => (
+                      <button
+                        key={v.venueId}
+                        type="button"
+                        // onMouseDown fires before the input's onBlur, so the
+                        // pick lands even though blur closes the list.
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          pickHome(v);
+                        }}
+                        className="w-full flex items-center px-2 py-1.5 text-[11px] text-left text-secondary hover:bg-surface-card"
+                      >
+                        <span className="truncate">{v.label}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-muted mt-1">
+              Your tour starts here and every travel leg is priced from it — pick a home in the
+              region you want to compete in.
+              {carriedHomeId && decision === 'continue' && (
+                <>
+                  {' '}
+                  You can move it for{' '}
+                  <span className="text-secondary">1 CC per {milesPerCoin} mi</span> of distance;
+                  keeping it is free.
+                </>
+              )}
+            </p>
+            {/* Live move-fee preview when a continuing director picks a new home. */}
+            {move.fee > 0 && (
+              <div
+                className={`mt-2 flex items-start gap-2 text-[11px] ${moveUnaffordable ? 'text-red-400' : 'text-secondary'}`}
+              >
+                <TrendingUp className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Relocating {move.miles} mi to{' '}
+                  <span className="font-bold">{selectedHome?.label}</span> costs a{' '}
+                  <span className="font-bold tabular-nums">{fmt(move.fee)} CC</span> moving fee.
+                  {moveUnaffordable && (
+                    <>
+                      {' '}
+                      That&apos;s more than your wallet plus refund covers — pick a closer city or
+                      commit less funding.
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -434,7 +591,8 @@ export default function PodiumRegistration({ podium }) {
           <div className="text-xs text-muted space-y-1">
             <div>
               <span className="text-white font-bold">{corpsName.trim()}</span>
-              {location.trim() && <> · {location.trim()}</>}
+              {selectedHome && <> · {selectedHome.label}</>}
+              {move.fee > 0 && <span className="text-secondary"> · move −{fmt(move.fee)} CC</span>}
             </div>
             {showConcept.trim() && <div className="italic">&ldquo;{showConcept.trim()}&rdquo;</div>}
             <div>Challenge: {PODIUM_CAPTIONS.map((c) => `${c} ${challenge[c]}`).join(' · ')}</div>
@@ -659,8 +817,14 @@ export default function PodiumRegistration({ podium }) {
         ) : (
           <button
             onClick={submit}
-            disabled={submitting || overBudget}
-            title={overBudget ? 'Your staff payroll exceeds your commitment.' : undefined}
+            disabled={submitting || cannotSubmit}
+            title={
+              overBudget
+                ? 'Your staff payroll exceeds your commitment.'
+                : moveUnaffordable
+                  ? "Your wallet can't cover the home-relocation fee."
+                  : undefined
+            }
             className="flex items-center gap-2 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-interactive text-white hover:bg-interactive-hover disabled:opacity-60 press-feedback"
           >
             {submitting && <Loader2 className="w-3 h-3 animate-spin" />}{' '}

@@ -125,6 +125,11 @@ const TRANSACTION_TYPES = {
   // operating ledger, and the end-of-season sweep of the unspent balance back.
   PODIUM_BUDGET_COMMIT: "podium_budget_commit",
   PODIUM_BUDGET_REFUND: "podium_budget_refund",
+  // Podium Class home relocation: the between-seasons moving fee charged when a
+  // director changes their corps' official home (1 CC per 2 miles moved). A
+  // wallet debit, never a Corps Budget line — the home is corps identity, not
+  // an operating cost (helpers/podium/venues.relocationFee, design §5.3).
+  PODIUM_HOME_RELOCATION: "podium_home_relocation",
 };
 
 /**

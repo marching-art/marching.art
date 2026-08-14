@@ -63,8 +63,8 @@ function CurrentLocationRow({ location, hasRoute }) {
       "Not on the tour map — travel out of here isn't priced until your first show."
     : location.atHome
       ? hasRoute
-        ? 'Hometown — the tour rolls out from here.'
-        : 'Hometown — the tour starts once you add a show.'
+        ? 'Official home — the tour rolls out from here.'
+        : 'Official home — the tour starts once you add a show.'
       : `Last show venue${location.sinceDay ? ` · since day ${location.sinceDay}` : ''}${
           hasRoute ? ' — the next leg is routed from here.' : '.'
         }`;

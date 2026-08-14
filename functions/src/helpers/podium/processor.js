@@ -349,7 +349,8 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         // coin-subsidized; stamina always applies. Coin costs are logged now
         // and charged when the Corps Budget ledger lands (Phase 4).
         const showVenue = showVenueFor(competitionDay, chosenShow, dayShows);
-        const fromVenue = state.lastVenue || venues.venueFor(state.location) || null;
+        const fromVenue =
+          state.lastVenue || state.home || venues.venueFor(state.location) || null;
         const leg = venues.travelLeg(fromVenue, showVenue, store.balance);
         const isMajor = Boolean(venues.MAJOR_VENUES[competitionDay]);
         const heat = venues.heatStamina(showVenue, store.balance);

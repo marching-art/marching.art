@@ -196,6 +196,13 @@ export interface PodiumAssessment {
 export interface PodiumCarryover {
   corpsName: string | null;
   location: string | null;
+  // The corps' current official home, resolved to a tour-map venue (design
+  // §5.3). Present when the carried home is on the map; the client preselects it
+  // and measures the distance to any new pick for the relocation fee.
+  homeVenueId?: string;
+  homeCity?: string; // "City, ST"
+  homeLat?: number;
+  homeLng?: number;
   showConcept: string | null;
   reputation: number;
   tier: string;
@@ -219,6 +226,15 @@ export interface PodiumStatus {
   divisionLabel: string;
 }
 
+// The between-seasons home move (design §5.3), echoed back when a director
+// relocated their corps this registration (null for a first home or no move).
+export interface PodiumHomeRelocation {
+  fee: number; // CorpsCoin charged (1 CC per 2 miles)
+  miles: number; // great-circle miles moved
+  from: string | null; // old home "City, ST"
+  to: string; // new home "City, ST"
+}
+
 export const registerPodiumCorps = createCallable<
   PodiumRegistration,
   {
@@ -227,6 +243,10 @@ export const registerPodiumCorps = createCallable<
     division: string;
     divisionLabel: string;
     easternNight: number;
+    // The official home the corps now tours out of, and the move charge if the
+    // director relocated it this season.
+    home: string;
+    homeRelocation: PodiumHomeRelocation | null;
     // Prior season's Corps Budget refund swept back to the wallet at founding
     // (0 when nothing was left or the nightly rollover already settled it).
     budgetRefund: number;
@@ -273,6 +293,9 @@ export const getPodiumRegistrationPreview = createCallable<
     // first-time corps with no prior season to learn from).
     lastSeasonReport: PodiumSeasonReport | null;
     estimatedSeasonBudget: number | null;
+    // CorpsCoin-per-mile rate for a home move, so the client prices a relocation
+    // exactly as the server will charge it (design §5.3).
+    homeRelocationMilesPerCoin: number;
     staff: PodiumStaffProjection[];
     // The season-start assessment for the carried-over corps (null first-timer).
     assessment: PodiumAssessment | null;

@@ -30,7 +30,11 @@ const MAJOR_ROUTE_LABELS = {
  *   show behind it and its hometown isn't in the gazetteer.
  */
 function currentVenueOf(state) {
-  return state.lastVenue || venues.venueFor(state.location) || null;
+  // The origin is the last show's venue once the tour is underway, else the
+  // corps' official home — the structured `home` venue (design §5.3), falling
+  // back to resolving the legacy free-text `location` for corps founded before
+  // homes were stored structurally.
+  return state.lastVenue || state.home || venues.venueFor(state.location) || null;
 }
 
 /**
@@ -287,12 +291,33 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
         ],
       }
       : null,
+    // Between-seasons home relocation (design §5.3): the CorpsCoin-per-mile rate
+    // so the client can price a move as the director picks a new home, matching
+    // the authoritative charge in registerPodiumCorps.
+    homeRelocationMilesPerCoin: (store.balance.home && store.balance.home.milesPerCoin) || 2,
     // The carried-over corps identity, so the screen greets "continue <Name>"
     // instead of a blank founding form.
     carryover: hasCarried
       ? {
         corpsName: staleSnapshot.data().corpsName || null,
         location: staleSnapshot.data().location || null,
+        // The current official home, resolved to a tour-map venue so the client
+        // can preselect it AND measure the distance to any new pick (the move
+        // fee). Legacy corps with only a free-text `location` resolve here too.
+        ...(() => {
+          const home =
+            staleSnapshot.data().home ||
+            venues.venueFor(staleSnapshot.data().location) ||
+            null;
+          return home
+            ? {
+              homeVenueId: home.venueId,
+              homeCity: `${home.city}, ${home.region}`,
+              homeLat: home.lat,
+              homeLng: home.lng,
+            }
+            : {};
+        })(),
         showConcept: staleSnapshot.data().showConcept || null,
         reputation: careerData ? careerData.reputation || 0 : 0,
         tier: engineTierLabel(careerData),

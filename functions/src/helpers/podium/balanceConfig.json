@@ -200,6 +200,9 @@
       "maxExtraStamina": 8
     }
   },
+  "home": {
+    "milesPerCoin": 2
+  },
   "scoring": {
     "cleanFloor": 0.72,
     "cleanWeight": 0.28,
