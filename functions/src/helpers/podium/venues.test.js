@@ -90,3 +90,43 @@ describe("relocationFee — the home-move sink (design §5.3)", () => {
     );
   });
 });
+
+describe("airfareFor — the fly-a-long-leg sink (design §5.3)", () => {
+  const cfg = {
+    travel: {
+      airfare: { milesPerCoin: 2, staminaMultiplier: 0.5, eligibleTiers: ["longHaul", "crossCountry"] },
+    },
+  };
+
+  test("prices an eligible leg at 1 CC per 2 leg-miles and halves stamina", () => {
+    const air = venues.airfareFor({ tier: "crossCountry", miles: 1300, staminaCost: 15 }, cfg);
+    assert.equal(air.eligible, true);
+    assert.equal(air.coinCost, 650); // ceil(1300 / 2)
+    assert.equal(air.staminaMultiplier, 0.5);
+  });
+
+  test("rounds the fare up to a whole CorpsCoin", () => {
+    const air = venues.airfareFor({ tier: "longHaul", miles: 701, staminaCost: 10 }, cfg);
+    assert.equal(air.coinCost, 351); // ceil(701 / 2)
+  });
+
+  test("a below-threshold tier is not flyable", () => {
+    for (const tier of ["local", "dayTrip", "overnightHaul"]) {
+      const air = venues.airfareFor({ tier, miles: 300, staminaCost: 6 }, cfg);
+      assert.equal(air.eligible, false, `${tier} should not be flyable`);
+      assert.equal(air.coinCost, 0);
+      assert.equal(air.staminaMultiplier, 1);
+    }
+  });
+
+  test("a null leg or a zero-mile leg is not flyable", () => {
+    assert.equal(venues.airfareFor(null, cfg).eligible, false);
+    assert.equal(venues.airfareFor({ tier: "longHaul", miles: 0 }, cfg).eligible, false);
+  });
+
+  test("is inert when the balance config predates the airfare section", () => {
+    const air = venues.airfareFor({ tier: "crossCountry", miles: 1300 }, { travel: {} });
+    assert.equal(air.eligible, false);
+    assert.equal(air.coinCost, 0);
+  });
+});

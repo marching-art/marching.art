@@ -193,6 +193,11 @@
         "staminaCost": 15
       }
     ],
+    "airfare": {
+      "milesPerCoin": 2,
+      "staminaMultiplier": 0.5,
+      "eligibleTiers": ["longHaul", "crossCountry"]
+    },
     "unaffordableStaminaSurcharge": 6,
     "heatIndex": {
       "baseLatitude": 44,

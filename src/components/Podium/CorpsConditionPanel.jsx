@@ -20,6 +20,7 @@ import {
   CalendarDays,
   ChevronRight,
   MapPin,
+  Plane,
 } from 'lucide-react';
 import { formatEventName } from '../../utils/season';
 import { BLOCKS } from './podiumConstants';
@@ -91,6 +92,53 @@ function CurrentLocationRow({ location, hasRoute }) {
 // Route itinerary shares one column template between its header and rows so
 // the day / show / travel / heat / stamina columns line up across the width.
 const ROUTE_COLS = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto_auto] gap-x-3 items-center';
+
+// Airfare affordance under a long leg (design §5.3): fly to halve the travel-
+// stamina hit for a CorpsCoin fare charged from the Corps Budget. Booking is
+// free and reversible here — the fare only lands at the nightly processor,
+// priced against the leg the corps actually flies. Shown only on eligible
+// (over-the-floor) legs; disabled to book when the Budget can't cover the fare.
+function AirfareRow({ leg, budgetBalance, busy, disabled, onToggle }) {
+  const affordable = budgetBalance >= (leg.airfareCost || 0);
+  const flownStamina = leg.airfareStaminaCost != null ? leg.airfareStaminaCost : leg.staminaCost;
+  const saved = Math.round((leg.staminaCost - flownStamina) * 10) / 10;
+  return (
+    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-1.5 text-[9px] text-muted min-w-0">
+        <Plane className="w-3 h-3 shrink-0 text-interactive" />
+        {leg.airfarePurchased ? (
+          <span className="truncate">
+            Flying — <span className="text-interactive font-bold">{leg.airfareCost} CC</span> from
+            Budget, travel stamina halved to −{flownStamina}.
+          </span>
+        ) : (
+          <span className="truncate">
+            Fly this leg — <span className="text-white font-bold">{leg.airfareCost} CC</span> to
+            save {saved} stamina
+            {!affordable ? <span className="text-red-400/80"> · Budget too low</span> : null}.
+          </span>
+        )}
+      </div>
+      <button
+        disabled={disabled || (!leg.airfarePurchased && !affordable)}
+        onClick={() => onToggle(!leg.airfarePurchased)}
+        className={`shrink-0 text-[9px] font-bold uppercase px-2 py-0.5 rounded-none press-feedback disabled:opacity-40 ${
+          leg.airfarePurchased
+            ? 'border border-line text-muted hover:text-white'
+            : 'bg-interactive text-white hover:bg-interactive-hover'
+        }`}
+      >
+        {busy ? (
+          <Loader2 className="w-3 h-3 animate-spin" />
+        ) : leg.airfarePurchased ? (
+          'Cancel'
+        ) : (
+          'Fly'
+        )}
+      </button>
+    </div>
+  );
+}
 
 export default function CorpsConditionPanel({ podium }) {
   const state = podium.data?.state;
@@ -521,36 +569,60 @@ export default function CorpsConditionPanel({ podium }) {
               // Name the stop: majors show their branded event label, self-picks
               // show the show the director registered for, all with the venue city.
               const name = formatEventName(leg.label || leg.eventName);
+              const flying = leg.airfarePurchased && leg.airfareStaminaCost != null;
               return (
-                <div
-                  key={leg.day}
-                  className={`${ROUTE_COLS} px-3 py-1 border-t border-line-subtle text-[10px] tabular-nums`}
-                >
-                  <span className="text-muted">D{leg.day}</span>
-                  <span
-                    className={`truncate ${leg.isMajor ? 'text-brand font-bold' : 'text-secondary'}`}
-                    title={name ? `${name} — ${leg.city}` : leg.city}
+                <React.Fragment key={leg.day}>
+                  <div
+                    className={`${ROUTE_COLS} px-3 py-1 border-t border-line-subtle text-[10px] tabular-nums`}
                   >
-                    {name ? `${name} · ${leg.city}` : leg.city}
-                  </span>
-                  <span className="text-right text-muted">
-                    {leg.miles != null && leg.miles > 0
-                      ? `${TIER_LABELS[leg.tier] || leg.tier} · ${leg.miles} mi`
-                      : ''}
-                  </span>
-                  <span className="text-right text-orange-400">
-                    {leg.heat > 0 ? (
-                      <span className="inline-flex items-center gap-0.5">
-                        <Sun className="w-3 h-3" /> {leg.heat}
-                      </span>
-                    ) : (
-                      ''
-                    )}
-                  </span>
-                  <span className="text-right text-red-400/80">
-                    {leg.staminaCost > 0 ? `−${leg.staminaCost}` : ''}
-                  </span>
-                </div>
+                    <span className="text-muted">D{leg.day}</span>
+                    <span
+                      className={`truncate ${leg.isMajor ? 'text-brand font-bold' : 'text-secondary'}`}
+                      title={name ? `${name} — ${leg.city}` : leg.city}
+                    >
+                      {name ? `${name} · ${leg.city}` : leg.city}
+                    </span>
+                    <span className="text-right text-muted">
+                      {leg.miles != null && leg.miles > 0
+                        ? `${TIER_LABELS[leg.tier] || leg.tier} · ${leg.miles} mi`
+                        : ''}
+                    </span>
+                    <span className="text-right text-orange-400">
+                      {leg.heat > 0 ? (
+                        <span className="inline-flex items-center gap-0.5">
+                          <Sun className="w-3 h-3" /> {leg.heat}
+                        </span>
+                      ) : (
+                        ''
+                      )}
+                    </span>
+                    <span className="text-right text-red-400/80">
+                      {flying ? (
+                        <span
+                          className="inline-flex items-center gap-0.5 text-interactive"
+                          title={`Flying — travel stamina cut from −${leg.staminaCost} to −${leg.airfareStaminaCost}`}
+                        >
+                          <Plane className="w-3 h-3" /> −{leg.airfareStaminaCost}
+                        </span>
+                      ) : leg.staminaCost > 0 ? (
+                        `−${leg.staminaCost}`
+                      ) : (
+                        ''
+                      )}
+                    </span>
+                  </div>
+                  {leg.airfareEligible && (
+                    <AirfareRow
+                      leg={leg}
+                      budgetBalance={budget.balance || 0}
+                      busy={busy === `airfare-${leg.day}`}
+                      disabled={busy !== null}
+                      onToggle={(fly) =>
+                        act(`airfare-${leg.day}`, () => podium.setAirfare(leg.day, fly))
+                      }
+                    />
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
@@ -559,6 +631,8 @@ export default function CorpsConditionPanel({ podium }) {
         <p className="mt-1.5 text-[9px] text-muted leading-relaxed">
           <span className="text-brand font-bold">Gold</span> stops — majors &amp; championship week
           — are attended automatically. Every other stop is a show you added on the Schedule page.
+          Long legs offer <span className="text-interactive font-bold">airfare</span> (1 CC per 2
+          miles from the Corps Budget) to halve their travel-stamina hit.
         </p>
       </div>
 

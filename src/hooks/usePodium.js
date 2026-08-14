@@ -16,6 +16,7 @@ import {
   registerPodiumCorps,
   setPodiumShows,
   setPodiumFoodPlan,
+  setPodiumAirfare,
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
@@ -202,6 +203,17 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  // Book / cancel airfare on an upcoming show leg (design §5.3). Reversible and
+  // free until the nightly processor prices it against the realized leg.
+  const setAirfare = useCallback(
+    async (day, fly) => {
+      const result = await setPodiumAirfare({ day, fly });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
   const savePlanTemplate = useCallback(
     async (blocks, planType = 'rehearsal') => {
       const result = await setPodiumPlanTemplate({ blocks, planType });
@@ -274,6 +286,7 @@ export function usePodium(enabled) {
     loadRegistrationPreview,
     selectShows,
     setFoodPlan,
+    setAirfare,
     savePlanTemplate,
     commitBudget,
     hireClinician,

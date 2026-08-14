@@ -398,6 +398,29 @@ stamina + Corps Budget cost from the distance to the previous location — the e
 week" mechanic silently becomes a routing puzzle. A Texas swing after a Florida weekend is a real
 decision with a real cost, exactly like the actual tour.
 
+**Airfare (fly the long legs).** For any leg over the Long-Haul floor (~600 road miles — the
+`travel.airfare.eligibleTiers` list in `podium-config/balance`, currently Long Haul + Cross-Country)
+a director can pre-book **airfare** in the route portal to **halve that leg's travel-stamina hit**
+for a CorpsCoin fare of **1 CC per 2 leg-miles** (`travel.airfare.milesPerCoin`). The fare is charged
+from the **Corps Budget in place of** the ground bus fare — you fly instead of driving — so it slots
+into the same operating economy as the rest of travel (identity moves like the home relocation stay
+wallet-priced; operating costs stay Budget-priced). It is a deliberately steep sink: a cross-country
+flight runs into the hundreds of CC to save a handful of stamina, so it's the Finals-week "arrive
+fresh" panic button, not a routine buy. Design choices that keep it honest:
+
+- **Booked as a reversible intent, priced at the realized leg.** The route portal is a preview, so
+  `setPodiumAirfare` only records a per-day flag (`state.airfare[day]`); the nightly processor prices
+  and charges it against the leg the corps _actually_ flies. Reroute the week and drop under the
+  floor → no flight, no charge. Toggling on/off before the show costs nothing.
+- **Free floor, not a surcharge.** If the Corps Budget can't cover the fare the corps simply drives
+  (full stamina, nothing charged) — an optional upgrade degrades gracefully, unlike the ground leg's
+  unaffordable-stamina surcharge.
+- **Stacks with the Tour Manager** (§5.6): the ops-staff reduction still applies on top of the
+  halving, so a well-run, well-funded corps arrives freshest. **Available on majors too** — their
+  ground travel is subsidized, but paying to fly one is a pure CC-for-stamina trade on the tour's
+  biggest legs (Dallas / Allentown / Indy). Config-driven and tunable without a deploy; grouped under
+  the "travel" line item in the end-of-season financial report.
+
 _How distances are known when schedules are regenerated every season:_ the schedule is random per
 season, but the **venue universe is not** — every generated schedule samples historical events, and
 every event (historical or live-scraped) carries a `location` string. Across the full historical

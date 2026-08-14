@@ -171,6 +171,31 @@ function relocationFee(fromVenue, toVenue, cfg) {
 }
 
 /**
+ * Airfare option for a travel leg (design §5.3). Over the tier threshold a
+ * director may pre-book a flight in the route portal to cut the leg's travel-
+ * stamina hit for a CorpsCoin fee of 1 CC per `milesPerCoin` miles. The fee is
+ * priced on the leg's DISPLAYED road miles so the portal's "1 CC / 2 mi" reads
+ * true, and eligibility is a config-driven tier list (the ~600-mile floor is
+ * tunable, never a magic number). Defensive against an override doc that
+ * predates the airfare config: no config → nothing is flyable.
+ * @param {{tier: string, miles: number}|null} leg a travelLeg result
+ * @param {object} cfg balanceConfig
+ * @returns {{eligible: boolean, coinCost: number, staminaMultiplier: number}}
+ */
+function airfareFor(leg, cfg) {
+  const air = cfg.travel && cfg.travel.airfare;
+  if (!leg || !air || !Array.isArray(air.eligibleTiers) || !air.eligibleTiers.includes(leg.tier)) {
+    return { eligible: false, coinCost: 0, staminaMultiplier: 1 };
+  }
+  if (!(leg.miles > 0)) return { eligible: false, coinCost: 0, staminaMultiplier: 1 };
+  return {
+    eligible: true,
+    coinCost: Math.ceil(leg.miles / (air.milesPerCoin || 2)),
+    staminaMultiplier: air.staminaMultiplier != null ? air.staminaMultiplier : 0.5,
+  };
+}
+
+/**
  * Deterministic heat-index stamina surcharge for performing at a venue:
  * hotter (more southern) sites drain more (design §5.3 climate). No RNG.
  * @param {object|null} venue
@@ -206,6 +231,7 @@ module.exports = {
   travelTierFor,
   travelLeg,
   relocationFee,
+  airfareFor,
   heatStamina,
   MAJOR_VENUES,
 };

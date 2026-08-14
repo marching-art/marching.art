@@ -4,7 +4,8 @@
  * derivation + balance overrides) with the rest of the Podium API.
  */
 
-const { onCall } = require("firebase-functions/v2/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { assertWriteBudget } = require("../helpers/callableGuards");
 const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
 const jointHelper = require("../helpers/podium/joint");
@@ -184,6 +185,12 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
     const pickLocation = pick?.location || locations[day];
     const venue = venues.MAJOR_VENUES[day] || (pickLocation ? venues.venueFor(pickLocation) : null);
     const leg = venues.travelLeg(cursor, venue, store.balance);
+    // Airfare (design §5.3): long legs can fly to halve their stamina hit for a
+    // CorpsCoin fare. The portal shows the fare, the flown stamina, and whether
+    // the director has already booked it — an open-information routing choice.
+    const airfare = venues.airfareFor(leg, store.balance);
+    const airfarePurchased = Boolean(airfare.eligible && state.airfare && state.airfare[day]);
+    const rawStamina = leg ? leg.staminaCost : 0;
     legs.push({
       day,
       eventName: pick?.eventName || null,
@@ -193,9 +200,16 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
       tier: leg ? leg.tier : null,
       miles: leg ? leg.miles : null,
       coinCost: leg && !isMajor ? leg.coinCost : 0,
-      staminaCost: leg ? leg.staminaCost : 0,
+      staminaCost: rawStamina,
       heat: venues.heatStamina(venue, store.balance),
       isMajor,
+      // Airfare affordance for this leg (absent/eligible:false on short legs).
+      airfareEligible: airfare.eligible,
+      airfareCost: airfare.coinCost,
+      airfareStaminaCost: airfare.eligible
+        ? Math.round(rawStamina * airfare.staminaMultiplier * 10) / 10
+        : null,
+      airfarePurchased,
     });
     if (venue) cursor = venue;
   }
@@ -446,4 +460,59 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
       : null,
     state,
   };
+});
+
+/**
+ * Book or cancel airfare on an upcoming show leg (design §5.3). Toggling `fly`
+ * records an intent flag keyed by competition day; the nightly processor prices
+ * and charges it against the REALIZED leg (only if it's still over the tier
+ * floor and the Corps Budget can pay), so this is a free, reversible choice
+ * right up to the show — no charge lands here, and a leg that reroutes short
+ * simply never flies. The day must be one the corps actually attends (a self-
+ * pick or an auto-attended major/championship day) and still ahead of today.
+ */
+exports.setPodiumAirfare = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  const day = Number(request.data && request.data.day);
+  const fly = Boolean(request.data && request.data.fly);
+  if (!Number.isInteger(day) || day < 1 || day > 49) {
+    throw new HttpsError("invalid-argument", "Airfare day must be a competition day (1-49).");
+  }
+  if (day <= Math.max(0, competitionDay)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "That show has already passed — airfare is set ahead of the show."
+    );
+  }
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
+  const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
+  const sRef = store.stateRef(db, uid);
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(sRef);
+    if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    const state = snapshot.data();
+    // Only show days the corps rides on tour are flyable — auto-attended majors
+    // and championship week plus the director's own picks. Joint rehearsals are
+    // day-trips, never flights, so they're excluded by construction.
+    const division = divisions.normalizeDivision(state.division);
+    const showDays = new Set([
+      ...store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
+      ...store.selectedDaysOf(state),
+    ]);
+    if (!showDays.has(day)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "You're not attending a show that day — add it before booking airfare."
+      );
+    }
+    const airfare = { ...(state.airfare || {}) };
+    if (fly) airfare[day] = true;
+    else delete airfare[day];
+    // Whole-field replace (not a merge): set-with-merge deep-merges nested maps,
+    // which would strand a cancelled day's flag instead of clearing it.
+    transaction.update(sRef, { airfare, updatedAt: new Date().toISOString() });
+  });
+  return { success: true, day, fly };
 });

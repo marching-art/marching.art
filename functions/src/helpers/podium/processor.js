@@ -357,14 +357,31 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         // A Tour Manager smooths the miles (design §5.6 ops staff).
         const tourReduction = staffMarket.tourStaminaReduction(state, store.balance);
         let travelStamina = leg ? Math.round(leg.staminaCost * (1 - tourReduction) * 10) / 10 : 0;
-        // Budget charge (majors are subsidized). Free floor: an unaffordable
-        // leg becomes a stamina surcharge — the bus still rolls (decision 24).
+        // Airfare (design §5.3): a director may pre-book a flight on a long leg
+        // in the route portal to halve its travel-stamina hit for a CorpsCoin
+        // fee (1 CC per 2 leg-miles). The fee is charged from the Corps Budget
+        // in PLACE of the ground bus fare — you fly instead of driving — and the
+        // realized leg is re-checked here, so a reroute that drops the leg below
+        // the tier floor simply doesn't fly and isn't charged. If the budget
+        // can't cover the fare the corps drives anyway (full stamina, no charge):
+        // an optional upgrade has a free floor, never the ground surcharge.
+        const airfare = venues.airfareFor(leg, store.balance);
+        const wantsToFly = Boolean(
+          airfare.eligible && state.airfare && state.airfare[competitionDay]
+        );
         let paidTravel = true;
-        if (leg && !isMajor && leg.coinCost > 0) {
+        let flew = false;
+        let coinCharged = 0;
+        if (wantsToFly && store.debitBudget(state, airfare.coinCost, "airfare", competitionDay)) {
+          flew = true;
+          coinCharged = airfare.coinCost;
+          travelStamina = Math.round(travelStamina * airfare.staminaMultiplier * 10) / 10;
+        } else if (leg && !isMajor && leg.coinCost > 0) {
+          // Ground charge (majors are subsidized). Free floor: an unaffordable
+          // leg becomes a stamina surcharge — the bus still rolls (decision 24).
           paidTravel = store.debitBudget(state, leg.coinCost, "travel", competitionDay);
-          if (!paidTravel) {
-            travelStamina += store.balance.travel.unaffordableStaminaSurcharge;
-          }
+          if (paidTravel) coinCharged = leg.coinCost;
+          else travelStamina += store.balance.travel.unaffordableStaminaSurcharge;
         }
         state.condition.stamina = Math.max(
           0,
@@ -381,7 +398,8 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
               to: showVenue ? showVenue.venueId : null,
               tier: leg.tier,
               miles: leg.miles,
-              coinCost: isMajor || !paidTravel ? 0 : leg.coinCost,
+              coinCost: coinCharged,
+              flew: flew || undefined,
               unaffordable: !paidTravel || undefined,
               staminaCost: travelStamina,
               heat,
