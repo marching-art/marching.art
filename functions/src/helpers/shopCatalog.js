@@ -48,6 +48,12 @@ const SHOP_CATALOG = [
   { id: 'theme_crimson', type: 'cardTheme', name: 'Crimson Corps', price: 1500 },
   { id: 'theme_gold_standard', type: 'cardTheme', name: 'Gold Standard', price: 3500 },
   { id: 'theme_aurora', type: 'cardTheme', name: 'Aurora', price: 5000 },
+  { id: 'theme_harbor_mist', type: 'cardTheme', name: 'Harbor Mist', price: 1500 },
+  { id: 'theme_evergreen', type: 'cardTheme', name: 'Evergreen', price: 1500 },
+  { id: 'theme_graphite', type: 'cardTheme', name: 'Slate Graphite', price: 1500 },
+  { id: 'theme_amethyst', type: 'cardTheme', name: 'Amethyst', price: 3500 },
+  { id: 'theme_rose_quartz', type: 'cardTheme', name: 'Rose Quartz', price: 3500 },
+  { id: 'theme_glacier', type: 'cardTheme', name: 'Glacier', price: 5000 },
 
   // --- Seasonal rotation (WS6.2) ---
   // `seasonal` names the game-settings/season.status during which the item
