@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * useGuestPreview Hook - Guest Preview Mode State Management
  *
@@ -58,6 +57,8 @@ export function clearGuestPreviewData() {
 
 /**
  * Safely get data from localStorage with JSON parsing
+ * @param {string} key
+ * @param {any} defaultValue
  */
 function getStoredData(key, defaultValue) {
   try {
@@ -70,6 +71,8 @@ function getStoredData(key, defaultValue) {
 
 /**
  * Safely set data in localStorage with JSON stringification
+ * @param {string} key
+ * @param {any} value
  */
 function setStoredData(key, value) {
   try {
@@ -89,16 +92,18 @@ export function useGuestPreview() {
   const [hasStartedPreview, setHasStartedPreview] = useState(false);
 
   // Guest's modified lineup (persisted to localStorage)
-  const [guestLineup, setGuestLineup] = useState(null);
+  const [guestLineup, setGuestLineup] = useState(/** @type {Record<string, string>|null} */ (null));
 
   // Track guest interactions for showing registration prompts
-  const [interactions, setInteractions] = useState({
-    lineupClicks: 0,
-    leagueClicks: 0,
-    showClicks: 0,
-    totalClicks: 0,
-    lastInteraction: null,
-  });
+  const [interactions, setInteractions] = useState(
+    /** @type {{ lineupClicks: number, leagueClicks: number, showClicks: number, totalClicks: number, lastInteraction: number|null }} */ ({
+      lineupClicks: 0,
+      leagueClicks: 0,
+      showClicks: 0,
+      totalClicks: 0,
+      lastInteraction: null,
+    })
+  );
 
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
@@ -133,6 +138,7 @@ export function useGuestPreview() {
   /**
    * Track an interaction (for showing registration prompts at the right time)
    */
+  /** @type {(type: string) => void} */
   const trackInteraction = useCallback((type) => {
     setInteractions((prev) => {
       const updated = {
@@ -168,6 +174,7 @@ export function useGuestPreview() {
    * the user will complete in onboarding, and it imports there on signup.
    * Values use the onboarding slot format: "corpsName|sourceYear|points".
    */
+  /** @type {(caption: string, value: string) => void} */
   const updateGuestLineup = useCallback((caption, value) => {
     setGuestLineup((prev) => {
       const updated = {

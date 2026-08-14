@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // =============================================================================
 // CORPSCOIN ECONOMY PRIMITIVES
 //
@@ -29,7 +28,7 @@ const { SHOW_PARTICIPATION_REWARDS, CLASS_UNLOCK_COSTS } = require("./classRegis
  * Get the corpsCoinHistory subcollection reference for a user
  * @param {Object} db - Firestore instance
  * @param {string} uid - User ID
- * @returns {CollectionReference}
+ * @returns {FirebaseFirestore.CollectionReference}
  */
 function getHistoryCollection(db, uid) {
   return db.collection(paths.userCorpsCoinHistory(uid));
@@ -39,7 +38,7 @@ function getHistoryCollection(db, uid) {
  * Add a CorpsCoin history entry within a Firestore batch.
  * Used when coin updates are batched with other writes (e.g., scoring).
  *
- * @param {WriteBatch} batch - Firestore batch
+ * @param {{ set: (ref: any, data: any) => any }} batch - Firestore WriteBatch or ChunkedWriter
  * @param {Object} db - Firestore instance
  * @param {string} uid - User ID
  * @param {Object} entry - History entry data
@@ -55,7 +54,7 @@ function addCoinHistoryEntryToBatch(batch, db, uid, entry) {
 /**
  * Add a CorpsCoin history entry within a Firestore transaction.
  *
- * @param {Transaction} transaction - Firestore transaction
+ * @param {FirebaseFirestore.Transaction} transaction - Firestore transaction
  * @param {Object} db - Firestore instance
  * @param {string} uid - User ID
  * @param {Object} entry - History entry data

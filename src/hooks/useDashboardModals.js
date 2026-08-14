@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // DASHBOARD MODALS HOOK
 // =============================================================================
@@ -40,6 +39,10 @@ import { useModalRoute } from './useModalRoute';
  */
 export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart'];
 
+/**
+ * @param {{ uid: string }} user
+ * @param {any} dashboardData - Aggregated dashboard state (from useDashboardData).
+ */
 export function useDashboardModals(user, dashboardData) {
   const location = useLocation();
   const {
@@ -69,6 +72,7 @@ export function useDashboardModals(user, dashboardData) {
   const { open: openPanel, close: closePanel } = modalRoute;
 
   const showRegistration = modalRoute.isOpen('register');
+  /** @type {(next: boolean) => void} */
   const setShowRegistration = useCallback(
     (next) => (next ? openPanel('register') : closePanel()),
     [openPanel, closePanel]
@@ -76,11 +80,13 @@ export function useDashboardModals(user, dashboardData) {
   const showCaptionSelection = modalRoute.isOpen('lineup');
   const selectedCaption = showCaptionSelection ? modalRoute.detail : null;
   const showConceptModal = modalRoute.isOpen('concept');
+  /** @type {(next: boolean) => void} */
   const setShowConceptModal = useCallback(
     (next) => (next ? openPanel('concept') : closePanel()),
     [openPanel, closePanel]
   );
   const showQuickStartGuide = modalRoute.isOpen('quickstart');
+  /** @type {(next: boolean) => void} */
   const setShowQuickStartGuide = useCallback(
     (next) => (next ? openPanel('quickstart') : closePanel()),
     [openPanel, closePanel]
@@ -94,7 +100,7 @@ export function useDashboardModals(user, dashboardData) {
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [transferring, setTransferring] = useState(false);
-  const [classToPurchase, setClassToPurchase] = useState(null);
+  const [classToPurchase, setClassToPurchase] = useState(/** @type {string|null} */ (null));
   const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showNewsSubmission, setShowNewsSubmission] = useState(false);
   const [submittingNews, setSubmittingNews] = useState(false);
@@ -263,16 +269,17 @@ export function useDashboardModals(user, dashboardData) {
     try {
       const result = await retireCorps({ corpsClass: activeCorpsClass });
       if (result.data.success) {
-        toast.success(result.data.message);
+        toast.success(result.data.message || 'Corps retired');
         setShowRetireConfirm(false);
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to retire corps');
+      toast.error(error instanceof Error ? error.message : 'Failed to retire corps');
     } finally {
       setRetiring(false);
     }
   }, [activeCorpsClass]);
 
+  /** @type {(targetClass: string) => Promise<void>} */
   const handleMoveCorps = useCallback(
     async (targetClass) => {
       try {
@@ -281,7 +288,8 @@ export function useDashboardModals(user, dashboardData) {
         toast.success(result.data.message || 'Corps transferred!');
         setShowMoveCorps(false);
       } catch (error) {
-        const msg = error?.message || error?.details?.message || 'Failed to transfer corps';
+        const e = /** @type {any} */ (error);
+        const msg = e?.message || e?.details?.message || 'Failed to transfer corps';
         toast.error(msg);
       } finally {
         setTransferring(false);
@@ -290,6 +298,7 @@ export function useDashboardModals(user, dashboardData) {
     [activeCorpsClass]
   );
 
+  /** @type {(formData: any) => Promise<void>} */
   const handleCorpsRegistration = useCallback(
     async (formData) => {
       try {
@@ -297,10 +306,12 @@ export function useDashboardModals(user, dashboardData) {
           toast.error('Season data not loaded');
           return;
         }
+        // Note: registerCorps only reads { corpsName, location, description, class }
+        // server-side (functions/src/callable/registerCorps.js) — it never reads a
+        // showConcept, so the field is not sent here.
         const result = await registerCorps({
           corpsName: formData.name,
           location: formData.location,
-          showConcept: formData.showConcept || '',
           class: formData.class,
         });
         if (result.data.success) {
@@ -310,16 +321,18 @@ export function useDashboardModals(user, dashboardData) {
           refreshProfile?.();
         }
       } catch (error) {
-        toast.error(error.message || 'Failed to register corps');
+        toast.error(error instanceof Error ? error.message : 'Failed to register corps');
       }
     },
     [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile, setShowRegistration]
   );
 
+  /** @type {(classKey: string) => void} */
   const handleClassUnlock = useCallback((classKey) => {
     setClassToPurchase(classKey);
   }, []);
 
+  /** @type {(corpsClass: string, retiredIndex: number) => Promise<void>} */
   const handleUnretireCorps = useCallback(
     async (corpsClass, retiredIndex) => {
       setUnretiring(true);
@@ -336,7 +349,7 @@ export function useDashboardModals(user, dashboardData) {
           refreshProfile?.();
         }
       } catch (error) {
-        toast.error(error.message || 'Failed to unretire corps');
+        toast.error(error instanceof Error ? error.message : 'Failed to unretire corps');
       } finally {
         setUnretiring(false);
       }
@@ -354,7 +367,7 @@ export function useDashboardModals(user, dashboardData) {
         refreshProfile?.();
       }
     } catch (error) {
-      throw new Error(error.message || 'Failed to unlock class');
+      throw new Error(error instanceof Error ? error.message : 'Failed to unlock class');
     }
   }, [classToPurchase, refreshProfile]);
 
@@ -366,6 +379,7 @@ export function useDashboardModals(user, dashboardData) {
   );
   const closeCaptionSelection = useCallback(() => closePanel(), [closePanel]);
 
+  /** @type {(formData: any) => Promise<void>} */
   const handleNewsSubmission = useCallback(async (formData) => {
     setSubmittingNews(true);
     try {
@@ -375,7 +389,7 @@ export function useDashboardModals(user, dashboardData) {
         setShowNewsSubmission(false);
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to submit article');
+      toast.error(error instanceof Error ? error.message : 'Failed to submit article');
     } finally {
       setSubmittingNews(false);
     }
@@ -396,6 +410,7 @@ export function useDashboardModals(user, dashboardData) {
     }).filter(Boolean);
   }, [profile?.corps]);
 
+  /** @type {(payload: any) => Promise<void>} */
   const handlePressRelease = useCallback(async (payload) => {
     setSubmittingPressRelease(true);
     try {
@@ -405,12 +420,13 @@ export function useDashboardModals(user, dashboardData) {
         setShowPressRelease(false);
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to publish press release');
+      toast.error(error instanceof Error ? error.message : 'Failed to publish press release');
     } finally {
       setSubmittingPressRelease(false);
     }
   }, []);
 
+  /** @type {(design: any) => Promise<void>} */
   const handleUniformDesign = useCallback(
     async (design) => {
       try {

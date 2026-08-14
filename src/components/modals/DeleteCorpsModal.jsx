@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // DELETE CORPS MODAL - DATA-TERMINAL STYLE
 // =============================================================================
@@ -9,6 +8,7 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
+/** @type {Record<string, string>} */
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
   aClass: 'A Class',
@@ -16,6 +16,7 @@ const CLASS_NAMES = {
   worldClass: 'World Class',
 };
 
+/** @type {(props: { onClose: () => void, onConfirm: () => void, corpsName?: string, corpsClass: string }) => JSX.Element} */
 const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
   // Close on Escape key
   useEscapeKey(onClose);

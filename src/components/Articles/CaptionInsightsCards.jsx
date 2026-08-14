@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CAPTION INSIGHTS CARDS - Visual cards for GE, Visual, and Music insights
 // =============================================================================
@@ -40,8 +39,9 @@ const INSIGHT_CONFIG = {
 };
 
 // Individual insight card
+/** @param {{ type: string, content?: any }} props */
 function InsightCard({ type, content }) {
-  const config = INSIGHT_CONFIG[type];
+  const config = /** @type {Record<string, any>} */ (INSIGHT_CONFIG)[type];
   if (!config || !content) return null;
 
   const Icon = config.icon;
@@ -66,7 +66,7 @@ function InsightCard({ type, content }) {
 
 /**
  * CaptionInsightsCards - Displays caption insights as visual cards
- * @param {Object} captionInsights - Object with geInsight, visualInsight, musicInsight
+ * @param {{ captionInsights?: any }} props - captionInsights has geInsight, visualInsight, musicInsight
  */
 export default function CaptionInsightsCards({ captionInsights }) {
   if (!captionInsights) return null;

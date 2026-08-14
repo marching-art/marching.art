@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/utils/lazyWithRetry.js
 import { lazy } from 'react';
 
@@ -15,12 +14,15 @@ const RETRY_FLAG_PREFIX = 'chunk-reload:';
  *   - "error loading dynamically imported module"
  *   - "Expected a JavaScript-or-Wasm module script but the server responded
  *      with a MIME type of 'text/html'"
+ *
+ * @param {unknown} error
  */
 function isChunkLoadError(error) {
   if (!error) return false;
-  const message = String(error.message || error);
+  const err = /** @type {{ name?: string, message?: string }} */ (error);
+  const message = String(err.message || error);
   return (
-    error.name === 'ChunkLoadError' ||
+    err.name === 'ChunkLoadError' ||
     /Failed to fetch dynamically imported module/i.test(message) ||
     /error loading dynamically imported module/i.test(message) ||
     /Importing a module script failed/i.test(message) ||
@@ -29,6 +31,7 @@ function isChunkLoadError(error) {
   );
 }
 
+/** @param {string} key */
 function readFlag(key) {
   try {
     return window.sessionStorage?.getItem(key);
@@ -37,6 +40,10 @@ function readFlag(key) {
   }
 }
 
+/**
+ * @param {string} key
+ * @param {string|null} value
+ */
 function writeFlag(key, value) {
   try {
     if (value === null) window.sessionStorage?.removeItem(key);

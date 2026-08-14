@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Shared plumbing for the nightly article generators: article type ids,
 // fantasy event-name branding, the cross-article coverage ledger, generated
 // image upload/placeholder handling, and the data-error fallback article.
@@ -195,7 +194,7 @@ async function processGeneratedImage(imageData, category) {
   }
 
   return {
-    url: getContextualPlaceholder({ newsCategory: category }),
+    url: getContextualPlaceholder({ newsCategory: category, headline: "" }),
     isPlaceholder: true,
   };
 }

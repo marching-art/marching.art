@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Surfaces the daily-login payoff. claimDailyLogin has always returned the
 // day's rewards (xp, streak, milestone, level-ups) — but App.jsx discarded
 // the response, so the game's most reliable daily reward beat happened in
@@ -12,15 +11,32 @@
 import { showXPGain, showCoinGain } from '../components/xpFeedbackTrigger';
 import { triggerLevelUp } from '../components/levelUpTrigger';
 
+/**
+ * @param {string} message
+ * @param {string} [type]
+ */
 const celebrate = (message, type = 'default') => {
   window.dispatchEvent(new CustomEvent('celebration', { detail: { message, type } }));
 };
 
 /**
+ * @typedef {Object} DailyLoginResult
+ * @property {boolean} [success]
+ * @property {boolean} [alreadyClaimed]
+ * @property {number} [xpAwarded]
+ * @property {number} [coinAwarded]
+ * @property {number} [loginStreak]
+ * @property {{ title: string, freeFreeze?: boolean }} [milestoneReached]
+ * @property {number} [levelsGained]
+ * @property {number} [newLevel]
+ * @property {string} [classUnlocked]
+ */
+
+/**
  * Surface the rewards from a claimDailyLogin response.
  * Safe no-op for already-claimed days and missing/failed responses.
  *
- * @param {Object|undefined} result - claimDailyLogin response data.
+ * @param {DailyLoginResult|undefined} result - claimDailyLogin response data.
  */
 export function surfaceDailyLoginPayoff(result) {
   if (!result?.success || result.alreadyClaimed) return;
@@ -28,11 +44,12 @@ export function surfaceDailyLoginPayoff(result) {
 
   // Floating pills: the daily XP and any coin (milestone CC, level-up
   // stipend, achievement CC) that landed with the claim.
-  if (result.xpAwarded > 0) {
-    const streakNote = result.loginStreak > 1 ? `${result.loginStreak} day streak` : 'Daily login';
+  if (result.xpAwarded && result.xpAwarded > 0) {
+    const streakNote =
+      (result.loginStreak ?? 0) > 1 ? `${result.loginStreak} day streak` : 'Daily login';
     showXPGain(result.xpAwarded, streakNote);
   }
-  if (result.coinAwarded > 0) {
+  if (result.coinAwarded && result.coinAwarded > 0) {
     showCoinGain(result.coinAwarded);
   }
 
@@ -44,7 +61,7 @@ export function surfaceDailyLoginPayoff(result) {
 
   // Level-up: fire the mounted-but-never-triggered full-screen moment.
   // classUnlocked rides along so a level that unlocks a class says so.
-  if (result.levelsGained > 0 && result.newLevel) {
+  if ((result.levelsGained ?? 0) > 0 && result.newLevel) {
     triggerLevelUp(result.newLevel, result.classUnlocked || undefined);
   }
 }

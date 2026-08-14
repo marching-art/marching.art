@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Corps Identity Shop — client catalog mirror + display helpers.
 // Ids and prices must stay in sync with functions/src/helpers/shopCatalog.js
 // (the server validates every purchase/equip against its own copy; this
@@ -262,16 +261,30 @@ export const SHOP_SECTIONS = [
   { type: 'cardTheme', label: 'Corps Card Themes' },
 ];
 
+/**
+ * @typedef {Object} CosmeticProfile
+ * @property {{ equipped?: Record<string, string|null>, owned?: string[] }} [cosmetics]
+ */
+
+/** @param {string} itemId */
 export function getShopItem(itemId) {
   return SHOP_ITEMS.find((item) => item.id === itemId) || null;
 }
 
-/** Resolve a profile's equipped cosmetic for a slot to its catalog entry */
+/**
+ * Resolve a profile's equipped cosmetic for a slot to its catalog entry
+ * @param {CosmeticProfile|null|undefined} profile
+ * @param {string} slot
+ */
 export function getEquippedCosmetic(profile, slot) {
   const itemId = profile?.cosmetics?.equipped?.[slot];
   return itemId ? getShopItem(itemId) : null;
 }
 
+/**
+ * @param {CosmeticProfile|null|undefined} profile
+ * @param {string} itemId
+ */
 export function isOwned(profile, itemId) {
   return (profile?.cosmetics?.owned || []).includes(itemId);
 }
@@ -283,12 +296,18 @@ export function isOwned(profile, itemId) {
  * season status (null) counts as available so the shop doesn't flash the
  * "returns next season" state before the season store hydrates — the server
  * enforces the real gate on purchase either way.
+ *
+ * @param {{ seasonal?: string|null }|null|undefined} item
+ * @param {string|null|undefined} seasonStatus
  */
 export function isSeasonallyAvailable(item, seasonStatus) {
   return !item?.seasonal || seasonStatus == null || item.seasonal === seasonStatus;
 }
 
-/** Short badge label for a seasonal item ("Live season only" / etc.) */
+/**
+ * Short badge label for a seasonal item ("Live season only" / etc.)
+ * @param {{ seasonal?: string|null }|null|undefined} item
+ */
 export function seasonalLabel(item) {
   if (!item?.seasonal) return null;
   return item.seasonal === 'live-season' ? 'Live season only' : 'Off-season only';

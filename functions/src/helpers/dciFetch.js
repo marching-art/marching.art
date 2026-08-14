@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * DCI fetch layer — a single choke point for every HTTP request to dci.org.
  *
@@ -164,11 +163,11 @@ function readApiKey() {
  * @param {number} [options.maxRetries=4] - Total attempt cap, first attempt
  *   included. Callers on a tight timeout budget (the scrape canary) pass a
  *   lower cap so the worst case fits their deadline.
- * @param {typeof axios.get} [options.transport] - Injectable GET for tests;
+ * @param {typeof axios.default.get} [options.transport] - Injectable GET for tests;
  *   defaults to axios.get.
  * @returns {Promise<string>} The response body (HTML or XML).
  */
-async function dciFetch(url, { maxRetries = 4, transport = axios.get } = {}) {
+async function dciFetch(url, { maxRetries = 4, transport = axios.default.get } = {}) {
   if (!url) throw new Error("dciFetch requires a URL.");
 
   const key = readApiKey();
@@ -200,8 +199,10 @@ async function dciFetch(url, { maxRetries = 4, transport = axios.get } = {}) {
       // results". Treat it as a retryable failure so we retry (and ultimately
       // surface a clear error) instead of silently succeeding on junk.
       if (useProxy && looksLikeChallenge(response.data)) {
-        const challengeError = new Error(
-          "Scraping proxy returned a Cloudflare challenge page instead of the target content."
+        const challengeError = /** @type {Error & { isChallenge?: boolean }} */ (
+          new Error(
+            "Scraping proxy returned a Cloudflare challenge page instead of the target content."
+          )
         );
         challengeError.isChallenge = true;
         throw challengeError;

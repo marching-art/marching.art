@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium budget & settings callables (food plan, plan templates, mid-season
  * budget top-up, clinician hire), split from callable/podium.js for file-size

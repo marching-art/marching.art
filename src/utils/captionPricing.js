@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/utils/captionPricing.js
 // Dynamic caption pricing and validation utilities
 
@@ -69,7 +68,7 @@ export const CAPTION_CATEGORIES = {
 /**
  * Calculate total point value of a lineup
  * @param {Object} lineup - Object mapping caption to corps ID
- * @param {Array} availableCorps - Array of corps with value property
+ * @param {Array<{ id: string, value: number }>} availableCorps - Array of corps with value property
  * @returns {number} Total point value
  */
 export const calculateLineupValue = (lineup, availableCorps) => {
@@ -90,7 +89,7 @@ export const calculateLineupValue = (lineup, availableCorps) => {
  * Check if a lineup is valid for a given class
  * @param {Object} lineup - Caption to corps ID mapping
  * @param {string} corpsClass - Competition class
- * @param {Array} availableCorps - Available corps with values
+ * @param {Array<{ id: string, value: number }>} availableCorps - Available corps with values
  * @returns {Object} { valid: boolean, reason: string, totalValue: number }
  */
 export const validateLineup = (lineup, corpsClass, availableCorps) => {
@@ -155,7 +154,7 @@ export const validateLineup = (lineup, corpsClass, availableCorps) => {
 
 /**
  * Generate a unique hash for a lineup to prevent duplicates
- * @param {Object} lineup - Caption to corps ID mapping
+ * @param {Record<string, string>} lineup - Caption to corps ID mapping
  * @returns {string} Hash string
  */
 export const generateLineupHash = (lineup) => {
@@ -283,7 +282,7 @@ export const getMaxShowsForWeek = (week, totalWeeks = 7) => {
 
 /**
  * Format corps name with year for display
- * @param {Object} corps - Corps object with name and year
+ * @param {{ year?: (string|number), name?: string }} corps - Corps object with name and year
  * @returns {string} Formatted name
  */
 export const formatCorpsName = (corps) => {
@@ -297,6 +296,7 @@ export const formatCorpsName = (corps) => {
  * @returns {Object} Display information
  */
 export const getClassInfo = (corpsClass) => {
+  /** @type {Record<string, any>} */
   const info = {
     soundSport: {
       name: 'SoundSport',
@@ -358,7 +358,7 @@ const CLASS_PROGRESSION = ['soundSport', 'aClass', 'openClass', 'worldClass'];
 /**
  * Get progress toward next class unlock
  * @param {number} currentXP - User's current total XP
- * @param {Array} unlockedClasses - Array of unlocked class IDs
+ * @param {string[]} unlockedClasses - Array of unlocked class IDs
  * @param {number} corpsCoin - User's CorpsCoin balance
  * @returns {Object|null} Progress info or null if all classes unlocked
  */
@@ -374,6 +374,7 @@ export const getNextClassProgress = (
     return null; // All classes unlocked
   }
 
+  /** @type {Record<string, { xp: number, cc: number, name: string, color: string }>} */
   const thresholds = {
     aClass: { xp: 3000, cc: 1000, name: 'A Class', color: 'blue' },
     openClass: { xp: 5000, cc: 2500, name: 'Open Class', color: 'purple' },

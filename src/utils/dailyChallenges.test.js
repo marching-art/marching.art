@@ -183,9 +183,9 @@ describe('join-league-pool check + availability', () => {
   });
 
   test('available only to directors in at least one league', () => {
-    expect(byId('join-league-pool').available({ leagueIds: ['L1'] })).toBe(true);
-    expect(byId('join-league-pool').available({ leagueIds: [] })).toBe(false);
-    expect(byId('join-league-pool').available({})).toBe(false);
+    expect(byId('join-league-pool').available?.({ leagueIds: ['L1'] })).toBe(true);
+    expect(byId('join-league-pool').available?.({ leagueIds: [] })).toBe(false);
+    expect(byId('join-league-pool').available?.({})).toBe(false);
   });
 
   test('available predicates mirror the server exactly', async () => {

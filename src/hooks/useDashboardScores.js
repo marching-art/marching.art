@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Dashboard data hooks: per-caption lineup scores from historical_scores,
 // recent results from fantasy_recaps, and the SoundSport Best in Show tally.
 //
@@ -24,6 +23,14 @@ import { formatRecapDate } from './useScoresData';
 
 const SCORES_STALE_TIME = 5 * 60 * 1000;
 
+/** @typedef {{ uid?: string }} DirectorUser */
+/** @typedef {{ seasonUid?: string, schedule?: any }} SeasonDoc */
+
+/**
+ * @param {Record<string, string>} lineup - Caption id -> "corpsName|sourceYear".
+ * @param {number} currentDay
+ * @param {string} activeCorpsClass
+ */
 export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   const hasLineup = !!lineup && Object.keys(lineup).length > 0;
 
@@ -34,6 +41,7 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
 
   // Unique source years referenced by the lineup ("corpsName|sourceYear")
   const yearsNeeded = useMemo(() => {
+    /** @type {Set<string>} */
     const years = new Set();
     Object.values(lineup || {}).forEach((value) => {
       if (value) {
@@ -52,6 +60,7 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
       staleTime: SCORES_STALE_TIME,
     })),
     combine: (results) => {
+      /** @type {Record<string, any>} */
       const byYear = {};
       results.forEach((result, i) => {
         if (result.data) byYear[yearsNeeded[i]] = result.data;
@@ -69,6 +78,7 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
     if (!shouldFetch || lineupScoresLoading) return {};
 
     const isSoundSport = activeCorpsClass === 'soundSport';
+    /** @type {Record<string, any>} */
     const scoreData = {};
 
     CAPTIONS.forEach((caption) => {
@@ -103,6 +113,12 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   return { lineupScoreData, lineupScoresLoading };
 }
 
+/**
+ * @param {DirectorUser} user
+ * @param {SeasonDoc} seasonData
+ * @param {string} activeCorpsClass
+ * @param {number} currentDay
+ */
 export function useRecentResults(user, seasonData, activeCorpsClass, currentDay) {
   const seasonUid = seasonData?.seasonUid;
   const enabled = !!user?.uid && !!seasonUid && !!activeCorpsClass && !!currentDay;
@@ -111,8 +127,8 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
   // Same cache entry as the Scores page's full-archive fetch (which the
   // Dashboard already mounts via useScoresData, so this costs no extra reads)
   const { data: recaps } = useQuery({
-    queryKey: queryKeys.fantasyRecaps(seasonUid),
-    queryFn: () => getSeasonRecaps(seasonUid),
+    queryKey: queryKeys.fantasyRecaps(seasonUid ?? ''),
+    queryFn: () => getSeasonRecaps(seasonUid ?? ''),
     enabled,
     staleTime: SCORES_STALE_TIME,
   });
@@ -164,6 +180,11 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
  * placement and full caption breakdowns). This mirrors useRecentResults but
  * reads that collection so the Dashboard's Recent Results box populates for
  * Podium. Returns the same { eventName, score, placement, date } shape.
+ *
+ * @param {DirectorUser} user
+ * @param {SeasonDoc} seasonData
+ * @param {number} currentDay
+ * @param {boolean} [enabled]
  */
 export function usePodiumRecentResults(user, seasonData, currentDay, enabled = true) {
   const seasonUid = seasonData?.seasonUid;
@@ -174,8 +195,8 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
   // RECENT_RECAP_DAYS day-docs are plenty — no need to download the whole
   // season's Podium archive here (PodiumRecapSheet owns the full-season view).
   const { data: recaps } = useQuery({
-    queryKey: queryKeys.podiumRecapsRecent(seasonUid, RECENT_RECAP_DAYS),
-    queryFn: () => getRecentPodiumRecaps(seasonUid, RECENT_RECAP_DAYS),
+    queryKey: queryKeys.podiumRecapsRecent(seasonUid ?? '', RECENT_RECAP_DAYS),
+    queryFn: () => getRecentPodiumRecaps(seasonUid ?? '', RECENT_RECAP_DAYS),
     enabled: active,
     staleTime: SCORES_STALE_TIME,
   });
@@ -194,7 +215,7 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
 
     for (const recap of sortedRecaps) {
       for (const show of recap.shows || []) {
-        const mine = (show.results || []).find((r) => r.uid === user.uid);
+        const mine = /** @type {any} */ ((show.results || []).find((r) => r.uid === user.uid));
         if (mine && results.length < 5) {
           results.push({
             eventName: show.eventName || 'Show',
@@ -204,7 +225,7 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
             // offSeasonDay, so pass a shim to derive the correct calendar date
             // from the season schedule (falls back to a stored date otherwise).
             date: formatRecapDate(
-              { offSeasonDay: recap.competitionDay, date: recap.date },
+              { offSeasonDay: recap.competitionDay, date: /** @type {any} */ (recap).date },
               seasonData?.schedule
             ),
           });
@@ -216,6 +237,11 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
   }, [active, recaps, user?.uid, effectiveDay, seasonData?.schedule]);
 }
 
+/**
+ * @param {{ corpsName?: string, name?: string }|null|undefined} activeCorps
+ * @param {string} activeCorpsClass
+ * @param {Array<{ scores?: Array<{ score?: number, corpsName?: string, corps?: string }> }>} allShows
+ */
 export function useBestInShowCount(activeCorps, activeCorpsClass, allShows) {
   // Calculate Best in Show count for SoundSport (count of shows where user had the highest score)
   const bestInShowCount = useMemo(() => {

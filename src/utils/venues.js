@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Client-side venue helpers for the Host-a-Show picker (Schedule page).
  *
@@ -11,7 +10,10 @@
  */
 
 import venueData from '../data/hostableVenues.json';
-import venueCoords from '../data/venueCoords.json';
+import venueCoordsRaw from '../data/venueCoords.json';
+
+/** @type {Record<string, number[]>} */
+const venueCoords = venueCoordsRaw;
 
 /** Distinct hostable cities, each with a "City, ST" display label. */
 export const HOSTABLE_VENUES = venueData.venues.map((v) => ({
@@ -48,6 +50,7 @@ export function homeRelocationFee(fromVenueId, toVenueId, milesPerCoin = 2) {
   const b = venueLatLng(toVenueId);
   if (!a || !b) return { miles: 0, fee: 0 };
   const R = 3958.8; // Earth radius, miles
+  /** @param {number} deg */
   const rad = (deg) => (deg * Math.PI) / 180;
   const dLat = rad(b.lat - a.lat);
   const dLng = rad(b.lng - a.lng);
@@ -57,13 +60,14 @@ export function homeRelocationFee(fromVenueId, toVenueId, milesPerCoin = 2) {
   return { miles: Math.round(miles), fee: Math.ceil(miles / (milesPerCoin || 2)) };
 }
 
+/** @type {Record<string, string>} */
 const KEY_TO_ID = venueData.keyToId;
 
 /**
  * Canonical form of a raw location string — the gazetteer key. Kept byte-for-byte
  * in sync with normalizeKey in functions/src/helpers/podium/venues.js so client
  * and server resolve the same string to the same venue.
- * @param {string} raw
+ * @param {string|null|undefined} raw
  * @returns {string}
  */
 export function normalizeVenueKey(raw) {
@@ -80,7 +84,7 @@ export function normalizeVenueKey(raw) {
 
 /**
  * Resolve a location string to a venueId, or null when it isn't a known city.
- * @param {string} locationString e.g. "Allentown, Pennsylvania"
+ * @param {string|null|undefined} locationString e.g. "Allentown, Pennsylvania"
  * @returns {string|null}
  */
 export function resolveVenueId(locationString) {

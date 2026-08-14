@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Firestore write layer for Buy Me a Coffee supporters. Shared by the webhook
 // (real-time) and the nightly reconcile job so both apply state identically.
 //
@@ -61,9 +60,13 @@ function buildProfileSupporter({
  * tier/active state (honoring one-time expiry), and mirror flair onto the
  * linked profile.
  *
- * patch fields: recurringActive?, recurringTier?, extendOneTimeDays?,
- * oneTimeExpiresMs? (null to revoke).
- *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} emailHash
+ * @param {Object} opts
+ * @param {Object} [opts.meta] event/payer metadata mirrored onto the doc
+ * @param {{ recurringActive?: boolean, recurringTier?: (string|null), extendOneTimeDays?: number, oneTimeExpiresMs?: (number|null) }} [opts.patch]
+ *   patch fields: recurringActive?, recurringTier?, extendOneTimeDays?,
+ *   oneTimeExpiresMs? (null to revoke).
  * @param {boolean} [opts.createIfAbsent=true] skip when the doc is absent
  *   (revoke/refresh paths pass false so they don't create empty docs).
  */
@@ -73,6 +76,7 @@ async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAb
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists && !createIfAbsent) return;
+    /** @type {Record<string, any>} */
     const ex = snap.exists ? snap.data() : {};
     const nowTs = admin.firestore.FieldValue.serverTimestamp();
 

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -8,7 +7,33 @@ const HARDCODED_VIDEOS = {
   '2023_mandarins': ['JRkn1MC2FMs'],
 };
 
-// Check if corps/year has hardcoded videos
+/**
+ * @typedef {Object} VideoModalState
+ * @property {boolean} show
+ * @property {boolean} loading
+ * @property {string|null} videoId
+ * @property {string} title
+ * @property {string} searchQuery
+ * @property {string|null} error
+ * @property {string} [year]
+ * @property {string} [corpsName]
+ * @property {number} [fallbackIndex]
+ */
+
+/**
+ * @typedef {Object} YoutubeSearchResult
+ * @property {boolean} [success]
+ * @property {boolean} [found]
+ * @property {string} [videoId]
+ * @property {string} [title]
+ * @property {string} [message]
+ */
+
+/**
+ * Check if corps/year has hardcoded videos
+ * @param {string} year
+ * @param {string} corpsName
+ */
 const getHardcodedVideos = (year, corpsName) => {
   const lowerName = corpsName.toLowerCase();
   if (year === '2018' && lowerName.includes('santa clara')) {
@@ -21,16 +46,24 @@ const getHardcodedVideos = (year, corpsName) => {
 };
 
 export const useYoutubeSearch = () => {
-  const [videoModal, setVideoModal] = useState({
-    show: false,
-    loading: false,
-    videoId: null,
-    title: '',
-    searchQuery: '',
-    error: null,
-  });
+  const [videoModal, setVideoModal] = useState(
+    /** @type {VideoModalState} */ ({
+      show: false,
+      loading: false,
+      videoId: null,
+      title: '',
+      searchQuery: '',
+      error: null,
+    })
+  );
 
-  // Search YouTube and show video in modal
+  /**
+   * Search YouTube and show video in modal
+   * @param {string} year
+   * @param {string} corpsName
+   * @param {boolean} [skipCache]
+   * @param {number} [fallbackIndex]
+   */
   const handleYoutubeSearch = async (year, corpsName, skipCache = false, fallbackIndex = 0) => {
     // Build search query with special cases
     let searchQuery = `${year} ${corpsName}`;
@@ -81,19 +114,20 @@ export const useYoutubeSearch = () => {
       const functions = getFunctions();
       const searchYoutube = httpsCallable(functions, 'searchYoutubeVideo');
       const result = await searchYoutube({ query: searchQuery, skipCache });
+      const data = /** @type {YoutubeSearchResult} */ (result.data);
 
-      if (result.data.success && result.data.found) {
+      if (data.success && data.found) {
         setVideoModal((prev) => ({
           ...prev,
           loading: false,
-          videoId: result.data.videoId,
-          title: result.data.title || searchQuery,
+          videoId: data.videoId ?? null,
+          title: data.title || searchQuery,
         }));
       } else {
         setVideoModal((prev) => ({
           ...prev,
           loading: false,
-          error: result.data.message || 'No videos found',
+          error: data.message || 'No videos found',
         }));
       }
     } catch (err) {
@@ -119,19 +153,20 @@ export const useYoutubeSearch = () => {
       const functions = getFunctions();
       const resetYoutube = httpsCallable(functions, 'resetYoutubeVideo');
       const result = await resetYoutube({ query: searchQuery, videoId });
+      const data = /** @type {YoutubeSearchResult} */ (result.data);
 
-      if (result.data.success && result.data.found) {
+      if (data.success && data.found) {
         setVideoModal((prev) => ({
           ...prev,
           loading: false,
-          videoId: result.data.videoId,
-          title: result.data.title || searchQuery,
+          videoId: data.videoId ?? null,
+          title: data.title || searchQuery,
         }));
       } else {
         setVideoModal((prev) => ({
           ...prev,
           loading: false,
-          error: result.data.message || 'No replacement video found',
+          error: data.message || 'No replacement video found',
         }));
       }
     } catch (err) {
