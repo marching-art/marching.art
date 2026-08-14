@@ -177,9 +177,9 @@ export const SHOP_ITEMS = [
     swatchClass: 'bg-gradient-to-br from-teal-500 via-indigo-600 to-purple-600',
   },
   {
-    id: 'theme_fogwalker',
+    id: 'theme_harbor_mist',
     type: 'cardTheme',
-    name: 'Fogwalker Teal',
+    name: 'Harbor Mist',
     price: 1500,
     description: 'Misty teal drifting across your season scorecard',
     cardClass: 'border-teal-600 bg-gradient-to-br from-[#0a2422] to-[#1a1a1a]',
