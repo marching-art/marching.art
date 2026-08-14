@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Shared pick-highlight logic for running orders, used identically by the live
 // and off-season views. A director's caption pick ("CorpsName|Year") highlights
 // a corps in a show's running order when the brand is present, in two tiers:
@@ -11,6 +10,7 @@
 // When resultDays is unavailable (e.g. live season, where the pool has none yet)
 // the tier degrades to full — i.e. today's simple "your pick is performing" star.
 
+/** @type {Record<string, string>} */
 export const CAPTION_LABELS = {
   GE1: 'General Effect 1',
   GE2: 'General Effect 2',
@@ -22,13 +22,17 @@ export const CAPTION_LABELS = {
   P: 'Percussion',
 };
 
+/** @param {unknown} name */
 export const normalizeCorpsName = (name) =>
   String(name || '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
 
-/** Split a lineup value "CorpsName|Year" into its parts. */
+/**
+ * Split a lineup value "CorpsName|Year" into its parts.
+ * @param {unknown} value
+ */
 export function parsePick(value) {
   const [corpsName = '', sourceYear = null] = String(value || '').split('|');
   return { corpsName, sourceYear };
@@ -38,9 +42,9 @@ export function parsePick(value) {
  * Build the highlight map for one show's running order.
  *
  * @param {Object} params
- * @param {Object} params.show - The show ({ day, ... }); day is the offSeasonDay.
+ * @param {{ day?: number, offSeasonDay?: number }} params.show - The show; day is the offSeasonDay.
  * @param {Object} params.lineup - Caption -> "CorpsName|Year".
- * @param {Array}  params.poolCorps - dci-data corpsValues ({corpsName, sourceYear, resultDays}).
+ * @param {Array<{ corpsName?: string, sourceYear?: string|number, resultDays?: number[] }>} params.poolCorps - dci-data corpsValues.
  * @returns {Map<string, {corps:string, sourceYear:(string|null), tier:('full'|'dim'), captions:string[]}>}
  *   keyed by normalized corps name.
  */
@@ -77,10 +81,13 @@ export function buildShowHighlights({ show, lineup, poolCorps }) {
   return map;
 }
 
-/** Human tooltip for a highlighted row, e.g. "Your GE1 & Brass — Blue Devils (2009)". */
+/**
+ * Human tooltip for a highlighted row, e.g. "Your GE1 & Brass — Blue Devils (2009)".
+ * @param {{ corps?: string, sourceYear?: string|null, tier?: string, captions?: string[] }} entry
+ */
 export function highlightLabel(entry) {
   if (!entry) return '';
   const yr = entry.sourceYear ? ` (${entry.sourceYear})` : '';
-  const base = `Your ${entry.captions.join(' & ')} — ${entry.corps}${yr}`;
+  const base = `Your ${(entry.captions || []).join(' & ')} — ${entry.corps}${yr}`;
   return entry.tier === 'dim' ? `${base} · interpolated form today` : base;
 }
