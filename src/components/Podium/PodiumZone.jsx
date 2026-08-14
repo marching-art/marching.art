@@ -8,8 +8,8 @@
 // fetched exactly once. Falls back to loading its own when no prop is given,
 // keeping the component usable in isolation (e.g. tests).
 
-import React from 'react';
-import { Loader2, Medal } from 'lucide-react';
+import React, { useState } from 'react';
+import { Loader2, Medal, X } from 'lucide-react';
 import { usePodium } from '../../hooks/usePodium';
 import PodiumRegistration from './PodiumRegistration';
 import RehearsalPlanner from './RehearsalPlanner';
@@ -21,19 +21,55 @@ import JointRehearsalPanel from './JointRehearsalPanel';
 import FanFavoriteCard from './FanFavoriteCard';
 import StaffOutlookBanner from './StaffOutlookBanner';
 
-// A slim, persistent mode banner. Selecting the Podium tab swaps Zone C from
-// the fantasy lineup surfaces to the director sim — this line names the
-// boundary so a director who expected a draftable lineup understands they've
-// crossed into a different game (a separate simulation, not a fifth class).
+// Once a director has read the mode banner they don't need it every visit, so
+// dismissing it writes a flag we honour on future loads. localStorage (not
+// per-account state) keeps it a lightweight, device-local preference.
+const BANNER_DISMISSED_KEY = 'marching_art_podium_mode_banner_dismissed';
+
+function readBannerDismissed() {
+  try {
+    return localStorage.getItem(BANNER_DISMISSED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+// A slim mode banner. Selecting the Podium tab swaps Zone C from the fantasy
+// lineup surfaces to the director sim — this line names the boundary so a
+// director who expected a draftable lineup understands they've crossed into a
+// different game (a separate simulation, not a fifth class). Directors who
+// have internalised the distinction can dismiss it permanently via the X.
 function PodiumModeBanner() {
+  const [dismissed, setDismissed] = useState(readBannerDismissed);
+
+  if (dismissed) return null;
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(BANNER_DISMISSED_KEY, 'true');
+    } catch {
+      // localStorage unavailable — still hide it for this session.
+    }
+    setDismissed(true);
+  };
+
   return (
     <div className="flex items-start gap-2 bg-brand/10 border border-brand/30 rounded-none px-3 py-2">
       <Medal className="w-4 h-4 text-brand flex-shrink-0 mt-0.5" aria-hidden="true" />
-      <p className="text-[11px] text-secondary leading-snug">
+      <p className="text-[11px] text-secondary leading-snug flex-1">
         <span className="font-bold text-brand uppercase tracking-wider">Podium</span> — a director
         simulation, not a fantasy draft. You run your own corps and earn every point through how you
         rehearse, travel, and rest.
       </p>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Dismiss Podium intro"
+        title="Dismiss permanently"
+        className="flex-shrink-0 -mr-1 -mt-0.5 p-0.5 text-muted hover:text-brand transition-colors"
+      >
+        <X className="w-3.5 h-3.5" aria-hidden="true" />
+      </button>
     </div>
   );
 }
