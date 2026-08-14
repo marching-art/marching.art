@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Duplicate-corps-name detection and admin sweep. Extracted from callable/corps.js.
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");

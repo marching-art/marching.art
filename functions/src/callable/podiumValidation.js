@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium callable input validators, split from callable/podium.js for
  * file-size hygiene. Pure request-shape/argument validation only — no
@@ -124,6 +123,16 @@ function validateAuditions(auditions) {
  * otherwise a director could register, attend, let the show drop, and reclaim
  * the slot for a fresh show — more shows per week than the cap allows.
  *
+ * @param {number} week
+ * @param {Array<any>} shows
+ * @param {string} uid
+ * @param {string} seasonUid
+ * @param {number} currentCompetitionDay
+ * @param {Object} [options]
+ * @param {string} [options.division]
+ * @param {*} [options.easternAssignments]
+ * @param {Record<number, Array<{ eventName: string, location?: string }>>} [options.scheduleShowsByDay]
+ * @param {number} [options.lockedPickCount]
  * @returns {{ [day:number]: { eventName: string, location: string } }} normalized picks
  */
 function validateShowPicks(
@@ -142,6 +151,7 @@ function validateShowPicks(
   }
   const maxPicks = store.maxPicksForWeek(week);
   const autoDays = store.autoDaysFor(uid, seasonUid, { division, easternAssignments });
+  /** @type {{ [day:number]: { eventName: string, location: string } }} */
   const byDay = {};
   for (const pick of shows) {
     const day = pick && pick.day;

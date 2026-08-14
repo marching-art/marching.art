@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Buy Me a Coffee supporter helpers — PURE module (no firebase imports) so the
 // node:test suite can exercise it directly and CI fails if the client tier
 // mirror (src/utils/supporterTiers.ts) drifts.
@@ -218,7 +217,7 @@ const ONE_TIME_REFUND_EVENTS = new Set(["donation.refunded"]);
  * Normalize a one-time donation event. One-time donors earn a small permanent
  * "friend" recognition (no tier ladder, never revoked by the recurring
  * reconcile), so we only need identity + whether this granted or refunded it.
- * @returns {null | { type, active, email, emailHash, payerName, eventId, currency }}
+ * @returns {null | { type, active, email, emailHash, payerName, amount, eventId, currency }}
  */
 function parseOneTimeEvent(body) {
   if (!body || typeof body !== "object") return null;

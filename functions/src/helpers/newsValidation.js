@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // =============================================================================
 // NEWS VALIDATION & JSON PARSING
 // =============================================================================
@@ -266,7 +265,9 @@ function parseAiJson(text) {
       }
 
       // Re-throw the original error with more context
-      const error = new Error(`JSON parse failed: ${firstError.message}`);
+      const error = /** @type {Error & { originalText?: string }} */ (
+        new Error(`JSON parse failed: ${firstError.message}`)
+      );
       error.originalText = cleaned.substring(0, 500);
       throw error;
     }
