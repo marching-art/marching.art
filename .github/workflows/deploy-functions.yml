@@ -74,6 +74,16 @@ on:
         required: false
         default: ''
         type: string
+      run_champion_avatar_backfill:
+        description: 'One-off: backfill corps graphics (avatarUrl) onto pre-existing Hall of Champions docs (idempotent; only fills entries missing the field). Leave unchecked after running once.'
+        required: false
+        default: false
+        type: boolean
+      champion_avatar_backfill_dry_run:
+        description: 'Champion avatar backfill: preview only (uncheck to actually write to Firestore)'
+        required: false
+        default: true
+        type: boolean
       set_scraper_api_key:
         description: 'One-off: push the SCRAPER_API_KEY repo secret into Google Secret Manager (check when first adding or rotating the scraping-provider key, e.g. ScrapingAnt, then leave unchecked). Requires deploy_target=all so the functions redeploy and pick up the new value.'
         required: false
@@ -443,6 +453,40 @@ jobs:
           trap 'rm -f /tmp/sa-key.json' EXIT
 
           node functions/src/scripts/cleanupLeakedProfileEmails.js
+
+  # One-off backfill: add corps graphics (avatarUrl) to archived Hall of
+  # Champions docs written before the field was part of the archival. Runs
+  # whenever "run_champion_avatar_backfill" is checked, independent of the
+  # deploy target. The dry-run checkbox (default ON) previews the writes
+  # without touching Firestore. The script is idempotent (only entries with no
+  # avatarUrl field are filled), so re-running is safe. Uses the Admin SDK, so
+  # it bypasses security rules and does not depend on the deploy above.
+  backfill-champion-avatars:
+    if: ${{ inputs.run_champion_avatar_backfill }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Backfill corps graphics onto Hall of Champions docs
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          node functions/src/scripts/backfillChampionAvatars.js ${{ inputs.champion_avatar_backfill_dry_run && '--dry-run' || '--commit' }}
 
   # One-off data import: backfill historical_scores/{year} and
   # final_rankings/{year} for 2000-2012 from the parsed From The Pressbox
