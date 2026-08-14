@@ -28,7 +28,7 @@ const REGIONAL_MAJOR_DAYS = [28, 35, 41, 42];
  * The result is applied with arrayUnion by the caller, so a deterministic
  * re-run of the same day is idempotent (identical trophy objects dedupe).
  *
- * @param {Firestore} db
+ * @param {FirebaseFirestore.Firestore} db
  * @param {Object} store - podium store module (for recapDayRef)
  * @param {Object} seasonData - carries seasonUid and name
  * @param {number} competitionDay
