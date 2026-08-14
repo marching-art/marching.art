@@ -59,11 +59,13 @@ const {
   allocateRehearsalBlock,
   setPodiumRestDay,
   setPodiumShows,
+} = require("./src/callable/podium");
+const {
   setPodiumFoodPlan,
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
-} = require("./src/callable/podium");
+} = require("./src/callable/podiumBudget");
 const { hostEvent, getHostingHistory } = require("./src/callable/podiumHost");
 const {
   getPodiumState,
