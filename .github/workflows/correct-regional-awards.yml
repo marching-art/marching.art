@@ -1,0 +1,81 @@
+name: Correct regional awards
+
+# One-off (re-runnable) data migration that fixes regional trophies awarded to
+# the wrong shows.
+#
+# WHY: only the three branded regional majors crown regional champions — the
+# Southwestern Championship (day 28), the Southeastern Championship (day 35),
+# and the two-night Eastern Classic (days 41/42). The old awardRegionalTrophies
+# crowned EVERY show scored on those days, so in live seasons ordinary pool
+# shows (Midwestern Championship, marching.art Pittsburgh, the Buccaneer
+# Classic, Music on the Mountain, …) that shared a major's day minted regional
+# trophies they never should have, while the actual Eastern Classic wasn't
+# reliably crowned. The scorer is now fixed; this reconciles the profiles
+# already written under the old logic — removing the wrong trophies and adding
+# the missing correct ones (fantasy classes and Podium), recomputed from each
+# season's own recaps. See functions/src/scripts/correctRegionalAwards.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Correct regional awards" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists every profile it
+#      would change with per-profile removed/added counts and a final total.
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes. The script is idempotent (entries compared by identity),
+#      so a second commit run that finds nothing new is a safe no-op.
+#
+# Only trophies.regionals and trophies.soundSportAwards (regional Best in Show)
+# are touched; every other trophy is left alone. This job writes to Firestore
+# only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two correction runs write the same profiles at once.
+  group: correct-regional-awards
+  cancel-in-progress: false
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run correction (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.userProfile / paths.users resolve
+          # here); matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            node src/scripts/correctRegionalAwards.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/correctRegionalAwards.js --dry-run
+          fi

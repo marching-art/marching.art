@@ -499,7 +499,7 @@ describe('awardRegionalTrophies', () => {
     const { db, batch, writes } = makeFakeDb();
     const recap = recapWithShows([
       {
-        eventName: 'Southern Regional',
+        eventName: 'marching.art Southwestern Championship',
         results: [
           // Listed out of score order to prove per-class re-sorting.
           result('w2', 'worldClass', 85),
@@ -528,7 +528,7 @@ describe('awardRegionalTrophies', () => {
           type: 'regional',
           corpsClass: 'worldClass',
           seasonName: seasonData.name,
-          eventName: 'Southern Regional',
+          eventName: 'marching.art Southwestern Championship',
           score: 92,
           rank: 1,
         })
@@ -545,11 +545,51 @@ describe('awardRegionalTrophies', () => {
         admin.firestore.FieldValue.arrayUnion({
           type: 'regional_best_in_show',
           seasonName: seasonData.name,
-          eventName: 'Southern Regional',
+          eventName: 'marching.art Southwestern Championship',
           score: 71,
         })
       )
     );
+  });
+
+  test('day 28: only the branded major is crowned — pool shows sharing the day get nothing', async () => {
+    // Live seasons map every scraped DCI event to its calendar day, so ordinary
+    // pool shows can land on day 28 alongside the Southwestern Championship.
+    // Only the major crowns a regional champion.
+    const { db, batch, writes } = makeFakeDb();
+    const recap = recapWithShows([
+      {
+        eventName: 'The Buccaneer Classic',
+        results: [result('pool1', 'worldClass', 99)],
+      },
+      {
+        eventName: 'marching.art Southwestern Championship',
+        results: [result('major1', 'worldClass', 88)],
+      },
+      {
+        eventName: 'Music on the Mountain',
+        results: [result('pool2', 'openClass', 95)],
+      },
+    ]);
+
+    await awardRegionalTrophies(batch, recap, 28, seasonData, db);
+
+    const trophyWrites = writes.filter((w) => w.data['trophies.regionals']);
+    assert.deepEqual(
+      trophyWrites.map((w) => w.path),
+      [profilePath('major1')],
+      'the pool shows (Buccaneer, Music on the Mountain) mint no regional trophies'
+    );
+  });
+
+  test('day 35: a day with no branded major writes nothing', async () => {
+    const { db, batch, writes } = makeFakeDb();
+    const recap = recapWithShows([
+      { eventName: 'Midwestern Championship', results: [result('u1', 'worldClass', 90)] },
+      { eventName: 'marching.art Pittsburgh', results: [result('u2', 'openClass', 80)] },
+    ]);
+    await awardRegionalTrophies(batch, recap, 35, seasonData, db);
+    assert.equal(writes.length, 0);
   });
 
   test('day 42: Eastern Classic champion comes from the COMBINED two-night field', async () => {
@@ -570,6 +610,11 @@ describe('awardRegionalTrophies', () => {
     ]);
     const { db, batch, writes } = makeFakeDb(docs);
     const recap = recapWithShows([
+      // A pool show also scored on day 42 — must not be crowned.
+      {
+        eventName: 'Music on the Mountain',
+        results: [result('poolWinner', 'worldClass', 99)],
+      },
       {
         eventName: 'Eastern Classic',
         results: [result('saturdayBest', 'worldClass', 90)],
@@ -581,7 +626,8 @@ describe('awardRegionalTrophies', () => {
     const trophyWrites = writes.filter((w) => w.data['trophies.regionals']);
     assert.deepEqual(
       trophyWrites.map((w) => w.path),
-      [profilePath('fridayStar')]
+      [profilePath('fridayStar')],
+      'combined Eastern field crowns the night-1 star; the day-42 pool show gets nothing'
     );
   });
 });

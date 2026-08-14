@@ -17,6 +17,7 @@ const {
   hasAwardToken,
   awardTokenWrite,
 } = require("./awardLedger");
+const { regionalTierForEventName } = require("./seasonSchedule");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -408,6 +409,19 @@ async function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, d
         ? { ...show, results: [...(night1.results || []), ...(show.results || [])] }
         : show;
     });
+  }
+
+  // Only the three branded regional majors crown champions (§5.11):
+  // Southwestern (day 28), Southeastern (day 35), Eastern Classic (days 41/42).
+  // Off-season schedules place exactly one show on those days, but live seasons
+  // map every scraped DCI event to its calendar day, so ordinary pool shows can
+  // share a major's day. Filtering by the branded-name matcher — the same one
+  // live ingest stamps eventTier: "regional" with — keeps trophies to the
+  // majors regardless of what else landed that night.
+  shows = shows.filter(show => regionalTierForEventName(show.eventName));
+  if (shows.length === 0) {
+    logger.info(`Day ${scoredDay}: no branded regional major in recap — no regional trophies.`);
+    return;
   }
 
   logger.info(`Day ${scoredDay} is a regional trophy day. Awarding trophies...`);
