@@ -19,7 +19,7 @@ const SECTIONS = [
   {
     n: 2,
     title: 'Founding your corps',
-    body: `Pick a name, a hometown, and a show challenge for each of the 8 captions (1 = safe and clean early, 8 = a monster book that only pays off if you clean it). Optionally tilt your audition pool music-forward or visual-forward, or keep it balanced. You start at the reputation tier your corps history has earned — a brand-new corps starts as a Community Corps.`,
+    body: `Pick a name, an official home city, and a show challenge for each of the 8 captions (1 = safe and clean early, 8 = a monster book that only pays off if you clean it). Your home is where every tour starts and where each travel leg is priced from, so found in the region you want to compete in — you can relocate it at the start of any season for a moving fee of 1 CorpsCoin per 2 miles, and there's no charge to head home from Indianapolis when the season ends. Optionally tilt your audition pool music-forward or visual-forward, or keep it balanced. You start at the reputation tier your corps history has earned — a brand-new corps starts as a Community Corps.`,
   },
   {
     n: 3,

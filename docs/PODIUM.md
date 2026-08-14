@@ -416,11 +416,29 @@ blocks on it. Distance itself is haversine × 1.2 road factor, then **bucketed i
 (Local &lt;75 mi / Day Trip / Overnight Haul / Long Haul / Cross-Country &gt;1,200 mi) — buckets, not raw
 mileage, are the gameplay interface: legible to players, tunable in `podium-config/balance`, and
 free of false precision. A corps' route is the chain of legs between its consecutive attended
-shows, and the season's first leg starts from the corps' **hometown** — the `location` field
-directors already set at registration finally matters mechanically (it's also where spring
-training is housed). Costs are shown in the weekly show picker _before_ selections are confirmed,
-so routing is played as an open-information puzzle, and hosted events (§5.10) slot in automatically
-because hosts choose their venue city from the same gazetteer.
+shows, and the season's first leg starts from the corps' **official home** — the `home` a director
+sets at registration, and where spring training is housed. Costs are shown in the weekly show
+picker _before_ selections are confirmed, so routing is played as an open-information puzzle, and
+hosted events (§5.10) slot in automatically because hosts choose their venue city from the same
+gazetteer.
+
+**The official home (required, gazetteer-resolved, relocatable).** Setup no longer takes a
+free-text hometown that may or may not be on the map: registration **requires** a home picked from
+the venue gazetteer, stored structurally on the corps (`state.home` = `{venueId, city, region,
+lat, lng}`), and its canonical "City, ST" label **replaces the location shown on the profile**. The
+home is corps identity that ties directly into the schedule and the tour map — every tour begins
+there and every leg is priced from it, so a director is rewarded for founding in the region they
+want to compete in and for planning a schedule that keeps the early legs short. A director may
+**move their home at the start of any season** (the continue-corps step of registration) for a
+**relocation fee of 1 CorpsCoin per 2 miles** of great-circle distance from the old home to the new
+one (`venues.relocationFee`, rate in `podium-config/balance.home.milesPerCoin`). The fee is a wallet
+debit — home is identity, not an operating cost, so it never touches the Corps Budget — netted
+against last season's refund at registration and previewed live as the director picks. Founding a
+brand-new corps or a fresh start sets the home for free; keeping the same home is free. **There is
+no cost to travel from Indianapolis back home at season's end:** the return trip from Championship
+Week is never charged (travel is only priced on show days, and next season's tour re-opens from the
+home, not from Indy), so the relocation fee is purely the price of _moving_ the home base, never of
+going home.
 
 **Climate (deterministic):** venue latitude + calendar date produce a published **heat index** per
 show that scales that day's stamina drain — a July swing through Texas genuinely costs more than a

@@ -274,7 +274,7 @@ export const StepPodiumHandoff = ({ displayName }) => (
 
     <div className="p-4 rounded-none bg-charcoal-800/50 border border-line space-y-3">
       {[
-        'Name your corps and hometown',
+        'Name your corps and choose its home city',
         'Set this season’s show concept',
         'Tune challenge levels and auditions',
         'March — you’re auto-entered at the majors',

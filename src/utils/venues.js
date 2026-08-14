@@ -11,12 +11,51 @@
  */
 
 import venueData from '../data/hostableVenues.json';
+import venueCoords from '../data/venueCoords.json';
 
 /** Distinct hostable cities, each with a "City, ST" display label. */
 export const HOSTABLE_VENUES = venueData.venues.map((v) => ({
   ...v,
   label: `${v.city}, ${v.region}`,
 }));
+
+/**
+ * A venue's [lat, lng], or null when the gazetteer never geocoded it. The same
+ * coordinate table the Tour Map plots from, reused so the home-relocation fee
+ * can be previewed client-side without a round trip.
+ * @param {string|null} venueId
+ * @returns {{lat: number, lng: number}|null}
+ */
+export function venueLatLng(venueId) {
+  const pair = venueId ? venueCoords[venueId] : null;
+  return pair ? { lat: pair[0], lng: pair[1] } : null;
+}
+
+/**
+ * Client-side preview of the Podium home-relocation fee (design §5.3): great-
+ * circle miles between two home cities and the CorpsCoin cost at the given rate
+ * (1 CC per `milesPerCoin` miles). Mirrors venues.relocationFee on the server,
+ * which stays authoritative — this is only for showing the price as a director
+ * picks. Same city, or a city with no coordinates, is free.
+ * @param {string|null} fromVenueId current home
+ * @param {string|null} toVenueId proposed new home
+ * @param {number} milesPerCoin server-published rate (defaults to 2)
+ * @returns {{miles: number, fee: number}}
+ */
+export function homeRelocationFee(fromVenueId, toVenueId, milesPerCoin = 2) {
+  if (!fromVenueId || !toVenueId || fromVenueId === toVenueId) return { miles: 0, fee: 0 };
+  const a = venueLatLng(fromVenueId);
+  const b = venueLatLng(toVenueId);
+  if (!a || !b) return { miles: 0, fee: 0 };
+  const R = 3958.8; // Earth radius, miles
+  const rad = (deg) => (deg * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  const miles = 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  return { miles: Math.round(miles), fee: Math.ceil(miles / (milesPerCoin || 2)) };
+}
 
 const KEY_TO_ID = venueData.keyToId;
 

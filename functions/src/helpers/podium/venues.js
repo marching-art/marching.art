@@ -151,6 +151,26 @@ function travelLeg(fromVenue, toVenue, cfg) {
 }
 
 /**
+ * Cost of relocating a corps' official home between seasons (design §5.3): a
+ * flat CorpsCoin fee per mile of great-circle distance from the old home to the
+ * new one — the "encourage corps to start in their home region" sink. Uses raw
+ * distance (no road factor): a home move is a permanent relocation, priced on
+ * the map, not a bus route. Same venue (or an unknown endpoint) is free.
+ * @param {object|null} fromVenue the current home venue ({lat, lng, venueId})
+ * @param {object|null} toVenue the proposed new home venue
+ * @param {object} cfg balanceConfig
+ * @returns {{miles: number, fee: number}} miles moved and the CorpsCoin fee
+ */
+function relocationFee(fromVenue, toVenue, cfg) {
+  if (!fromVenue || !toVenue || fromVenue.venueId === toVenue.venueId) {
+    return { miles: 0, fee: 0 };
+  }
+  const miles = haversineMiles(fromVenue, toVenue);
+  const milesPerCoin = (cfg.home && cfg.home.milesPerCoin) || 2;
+  return { miles: Math.round(miles), fee: Math.ceil(miles / milesPerCoin) };
+}
+
+/**
  * Deterministic heat-index stamina surcharge for performing at a venue:
  * hotter (more southern) sites drain more (design §5.3 climate). No RNG.
  * @param {object|null} venue
@@ -185,6 +205,7 @@ module.exports = {
   haversineMiles,
   travelTierFor,
   travelLeg,
+  relocationFee,
   heatStamina,
   MAJOR_VENUES,
 };
