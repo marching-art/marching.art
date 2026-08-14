@@ -533,6 +533,14 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
 /**
  * Award Day 49 Finals trophies and save season champions.
  *
+ * The permanent season_champions record credits each class to the event that
+ * actually decides its title: World Class (and the SoundSport Best in Show)
+ * are settled here on Day 49, but Open Class and A Class crown their champions
+ * at the Day 46 Open and A Class Finals. Open/A corps that advance into the
+ * Day 49 World Championship bracket are ranked there against World Class for
+ * overall placement — that placement must NOT overwrite their class titles —
+ * so the Open/A podiums are pulled from the Day 46 recap.
+ *
  * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
  * @param {Object} seasonData - Season configuration data
@@ -609,6 +617,34 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
       }
       allResultsByClass[corpsClass].push(result);
     });
+  }
+
+  // Open Class and A Class are crowned at the Day 46 Open and A Class Finals,
+  // not by their placement in today's World Championship Finals. Replace the
+  // Open/A results gathered above (an Open/A corps' finish against World Class)
+  // with the Day 46 Open and A Class Finals field so the Hall of Champions
+  // credits the correct titlists. Falls back to the Day 49 field when the Day
+  // 46 recap is missing or has no Open/A results.
+  const CLASS_FINALS_CLASSES = ["openClass", "aClass"];
+  const day46Snapshot = await db
+    .doc(`fantasy_recaps/${seasonData.seasonUid}/days/46`)
+    .get();
+  if (day46Snapshot.exists) {
+    const day46ResultsByClass = {};
+    for (const show of (day46Snapshot.data().shows || [])) {
+      for (const result of (show.results || [])) {
+        if (!CLASS_FINALS_CLASSES.includes(result.corpsClass)) continue;
+        if (!day46ResultsByClass[result.corpsClass]) {
+          day46ResultsByClass[result.corpsClass] = [];
+        }
+        day46ResultsByClass[result.corpsClass].push(result);
+      }
+    }
+    for (const corpsClass of CLASS_FINALS_CLASSES) {
+      if (day46ResultsByClass[corpsClass]?.length) {
+        allResultsByClass[corpsClass] = day46ResultsByClass[corpsClass];
+      }
+    }
   }
 
   // --- SAVE SEASON CHAMPIONS BY CLASS ---

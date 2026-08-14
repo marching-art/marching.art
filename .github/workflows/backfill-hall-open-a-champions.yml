@@ -1,0 +1,78 @@
+name: Backfill Hall of Champions Open/A podiums
+
+# One-off (re-runnable) data migration that corrects archived Open Class / A
+# Class champions in the Hall of Champions.
+#
+# WHY: seasons archived before the Day-46 sourcing fix have their
+# season_champions/{seasonUid}.classes.openClass / .aClass built from the Day 49
+# World Championship bracket (where Open/A corps are ranked against World Class
+# for overall placement) instead of from the Day 46 Open and A Class Finals,
+# where those class titles are actually decided. This reruns the corrected
+# logic against every archived season, reading each season's own Day 46 recap.
+# See functions/src/scripts/backfillHallOpenAChampions.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Backfill Hall of Champions Open/A podiums" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists every season it
+#      would change and flags any ORPHANED BANNER (a banner bought on an entry
+#      the old bug crowned in error — refund that director's CorpsCoin by hand).
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes. The script is idempotent, so a second commit run that
+#      finds nothing new is a safe no-op.
+#
+# Only classes.openClass / classes.aClass are rewritten; World Class,
+# SoundSport, and Podium Class entries are never touched. This job writes to
+# Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two backfill runs write the same docs at once.
+  group: backfill-hall-open-a-champions
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run backfill (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.userProfile resolves usernames);
+          # matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            node src/scripts/backfillHallOpenAChampions.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/backfillHallOpenAChampions.js --dry-run
+          fi

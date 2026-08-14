@@ -766,6 +766,81 @@ describe('awardFinalsAndSaveChampions', () => {
     assert.deepEqual(champions, saved);
   });
 
+  test('crowns Open/A Class from the Day 46 Finals, not the Day 49 World bracket', async () => {
+    const docs = new Map([
+      [profilePath('w1'), { username: 'WorldDirector' }],
+      [profilePath('o1'), { username: 'OpenChamp' }],
+      [profilePath('o2'), { username: 'OpenRunnerUp' }],
+      [profilePath('a1'), { username: 'AChamp' }],
+      // The Day 46 Open and A Class Finals — where the class titles are decided.
+      [
+        'fantasy_recaps/season-1/days/46',
+        {
+          shows: [
+            {
+              eventName: 'Open and A Class Finals',
+              results: [
+                result('o1', 'openClass', 82, 'Open Champ Corps'),
+                result('o2', 'openClass', 78, 'Open Runner Corps'),
+                result('a1', 'aClass', 70, 'A Champ Corps'),
+              ],
+            },
+          ],
+        },
+      ],
+    ]);
+    const { db, batch } = makeFakeDb(docs);
+    // Day 49 World Finals: o2 advanced into the World bracket and out-placed o1
+    // there. That overall placement must NOT crown o2 the Open Class champion.
+    const recap = recapWithShows([
+      {
+        eventName: 'marching.art World Championship Finals',
+        results: [
+          result('w1', 'worldClass', 97, 'World Champ Corps'),
+          result('o2', 'openClass', 90, 'Open Runner Corps'),
+        ],
+      },
+    ]);
+
+    const champions = await awardFinalsAndSaveChampions(batch, recap, seasonData, db);
+
+    // World Class still comes from today's World Championship Finals.
+    assert.deepEqual(champions.classes.worldClass, [
+      { rank: 1, uid: 'w1', username: 'WorldDirector', corpsName: 'World Champ Corps', avatarUrl: null, score: 97 },
+    ]);
+    // Open Class is crowned by the Day 46 Finals (o1 over o2), ignoring o2's
+    // higher Day 49 World-bracket score.
+    assert.deepEqual(champions.classes.openClass, [
+      { rank: 1, uid: 'o1', username: 'OpenChamp', corpsName: 'Open Champ Corps', avatarUrl: null, score: 82 },
+      { rank: 2, uid: 'o2', username: 'OpenRunnerUp', corpsName: 'Open Runner Corps', avatarUrl: null, score: 78 },
+    ]);
+    assert.deepEqual(champions.classes.aClass, [
+      { rank: 1, uid: 'a1', username: 'AChamp', corpsName: 'A Champ Corps', avatarUrl: null, score: 70 },
+    ]);
+  });
+
+  test('falls back to the Day 49 field for Open/A when the Day 46 recap is missing', async () => {
+    // No Day 46 recap doc in the fake DB: the Open Class podium is sourced from
+    // the Day 49 World Finals as before (preserves legacy/edge-case behavior).
+    const docs = new Map([[profilePath('o1'), { username: 'OpenDirector' }]]);
+    const { db, batch, writes } = makeFakeDb(docs);
+    const recap = recapWithShows([
+      {
+        eventName: 'marching.art World Championship Finals',
+        results: [result('o1', 'openClass', 75, 'Open Star')],
+      },
+    ]);
+
+    await awardFinalsAndSaveChampions(batch, recap, seasonData, db);
+
+    const championsWrite = writes.find(
+      (w) => w.path === `season_champions/${seasonData.seasonUid}`
+    );
+    assert.deepEqual(championsWrite.data.classes.openClass, [
+      { rank: 1, uid: 'o1', username: 'OpenDirector', corpsName: 'Open Star', avatarUrl: null, score: 75 },
+    ]);
+  });
+
   test("falls back to 'Unknown' when a champion's profile is missing", async () => {
     const { db, batch, writes } = makeFakeDb(); // no profiles at all
     const recap = recapWithShows([
