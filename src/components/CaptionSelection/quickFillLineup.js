@@ -1,13 +1,35 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Quick Fill lineup generation for the Caption Selection modal.
 // Extracted from CaptionSelectionModal.jsx to keep that file within the
 // max-lines lint budget. Pure logic — no React/DOM dependencies.
 
-// Generate a lineup key matching the server format for duplicate checking.
+/**
+ * @typedef {Object} Corps
+ * @property {string} corpsName
+ * @property {string|number} sourceYear
+ * @property {number} points
+ */
+
+/**
+ * @typedef {Object} Caption
+ * @property {string} id
+ */
+
+/**
+ * Generate a lineup key matching the server format for duplicate checking.
+ * @param {string} corpsClass
+ * @param {Record<string, string>} lineup
+ */
 export const generateLineupKey = (corpsClass, lineup) =>
   `${corpsClass}_${Object.values(lineup).filter(Boolean).sort().join('_')}`;
 
-// Check if picking a corps leaves enough budget for the remaining slots.
+/**
+ * Check if picking a corps leaves enough budget for the remaining slots.
+ * @param {Corps[]} availableCorps
+ * @param {Corps} corps
+ * @param {number} slotsAfterThis
+ * @param {number} budgetAfterPick
+ * @param {Set<string>} usedCorpsSet
+ */
 const isViablePick = (availableCorps, corps, slotsAfterThis, budgetAfterPick, usedCorpsSet) => {
   if (slotsAfterThis === 0) return true;
 
@@ -27,6 +49,13 @@ const isViablePick = (availableCorps, corps, slotsAfterThis, budgetAfterPick, us
 // Generate a random lineup that fills all empty slots while targeting
 // 95-100% of the point limit. Guarantees all captions are filled by
 // reserving budget for remaining slots.
+/**
+ * @param {Corps[]} availableCorps
+ * @param {Record<string, string>} selections
+ * @param {Caption[]} emptyCaptions
+ * @param {number} pointLimit
+ * @returns {Record<string, string>}
+ */
 const generateRandomLineup = (availableCorps, selections, emptyCaptions, pointLimit) => {
   const newSelections = { ...selections };
 
@@ -95,6 +124,15 @@ const generateRandomLineup = (availableCorps, selections, emptyCaptions, pointLi
 // limit. Ensures the generated lineup doesn't match any existing lineups by
 // retrying up to 50 times. Returns { newSelections, filledCount } on success
 // or { error } when no unique lineup could be produced.
+/**
+ * @param {Object} params
+ * @param {Corps[]} params.availableCorps
+ * @param {Record<string, string>} params.selections
+ * @param {Caption[]} params.captions
+ * @param {number} params.pointLimit
+ * @param {Set<string>} params.activeLineupKeys
+ * @param {string} params.corpsClass
+ */
 export const generateQuickFillLineup = ({
   availableCorps,
   selections,

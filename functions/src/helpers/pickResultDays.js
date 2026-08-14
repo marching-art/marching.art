@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 const { logger } = require("firebase-functions/v2");
 const { normalizeCorps } = require("./historicalSchedules");
 
@@ -37,7 +36,7 @@ function collectResultDays(yearData, corpsName) {
  * i.e. a CORPS_NAME_MAP gap — so those are logged for the coverage audit.
  *
  * @param {FirebaseFirestore.Firestore} db
- * @param {Array<{corpsName:string, sourceYear:(string|number)}>} pool
+ * @param {Array<{corpsName:string, sourceYear:(string|number), resultDays?:number[]}>} pool
  * @returns {Promise<{withResults:number, withoutResults:string[]}>}
  */
 async function computeResultDaysForPool(db, pool) {

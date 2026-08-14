@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Daily challenge helpers, shared by the profile store.
 // Extracted from the retired userStore so the challenge feature has one home.
 
@@ -22,6 +21,7 @@ export const getGameDay = (date = new Date()) => {
     hour12: false,
   }).formatToParts(date);
 
+  /** @type {Record<string, string>} */
   const v = {};
   for (const part of parts) v[part.type] = part.value;
 
@@ -59,7 +59,28 @@ export const getGameDay = (date = new Date()) => {
 // has no lineup — is correctly recognized as unable to satisfy check-lineup.
 import { CORPS_CLASS_ORDER } from './corps';
 
-/** True when the director has at least one lineup-drafting corps. */
+/**
+ * @typedef {Object} ChallengeContext
+ * @property {boolean} [predictionAvailable]
+ * @property {any} [leaguePool] - Per-day league-pool facts (LeaguePoolChallengeFacts).
+ * @property {any} [podium] - Per-day Podium facts (PodiumChallengeFacts).
+ */
+
+/**
+ * @typedef {Object} Challenge
+ * @property {string} id
+ * @property {string} label
+ * @property {string|null} [link]
+ * @property {string} [action]
+ * @property {number} xp
+ * @property {(profile: any, gameDay: string, context?: ChallengeContext) => boolean} [check]
+ * @property {(profile: any, context?: ChallengeContext) => boolean} [available]
+ */
+
+/**
+ * True when the director has at least one lineup-drafting corps.
+ * @param {{ corps?: Record<string, { corpsName?: string }> }|null|undefined} profile
+ */
 const hasLineupBearingCorps = (profile) =>
   CORPS_CLASS_ORDER.some((cls) => Boolean(profile?.corps?.[cls]?.corpsName));
 
@@ -84,6 +105,7 @@ const hasLineupBearingCorps = (profile) =>
 // auto-claimed off stale state every day — free XP with no agency, and a
 // phantom "+10 XP" toast when the game day rolled. Those two are taught and
 // paid once by the First Season Journey questline instead.
+/** @type {Challenge[]} */
 export const CHALLENGE_POOL = [
   {
     id: 'check-lineup',
@@ -172,7 +194,7 @@ const hashString = (str) => {
  * day string so this always matches the server's rotation without a round
  * trip.
  * @param {string} gameDay - Value from getGameDay()
- * @returns {Array<{id: string, label: string, link: string|null, action?: string, xp: number}>}
+ * @returns {Challenge[]}
  */
 export const getChallengesForGameDay = (gameDay) => {
   const seed = hashString(gameDay);
@@ -193,8 +215,8 @@ export const getChallengesForGameDay = (gameDay) => {
  *
  * @param {string} gameDay - Value from getGameDay()
  * @param {any} profile - The user's profile document data
- * @param {{predictionAvailable?: boolean, podium?: {hasShows: boolean, hasConcept: boolean}|null}} [context]
- * @returns {Array<{id: string, label: string, xp: number}>}
+ * @param {ChallengeContext} [context]
+ * @returns {Challenge[]}
  */
 export const getAvailableChallengesForGameDay = (gameDay, profile, context = {}) =>
   getChallengesForGameDay(gameDay).filter(

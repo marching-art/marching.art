@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Runtime feature flags — client hook (Phase 1.5, PODIUM.md).
  *
@@ -12,8 +11,11 @@ import { useSyncExternalStore } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../api';
 
+/** @type {Record<string, unknown>} */
 let features = {};
+/** @type {null | (() => void)} */
 let unsubscribe = null;
+/** @type {Set<() => void>} */
 const listeners = new Set();
 
 function ensureListener() {
@@ -32,6 +34,7 @@ function ensureListener() {
   );
 }
 
+/** @param {() => void} notify */
 function subscribe(notify) {
   ensureListener();
   listeners.add(notify);
