@@ -169,6 +169,17 @@ export interface UserProfile {
   // Season tracking
   activeSeasonId?: string; // Current season the user is participating in
   initialSetupComplete?: string; // Season ID when initial setup wizard was completed
+  isFirstVisit?: boolean; // Cleared after the first-visit onboarding tour is seen
+  // One-shot season recap summary written server-side at season rollover
+  // (functions/src/helpers/season.js); the client shows it once then clears it to null.
+  pendingSeasonRecap?: {
+    seasonId?: string;
+    seasonName?: string;
+    results?: unknown;
+    totalCoin?: number;
+    totalXP?: number;
+    awardedAt?: unknown;
+  } | null;
 
   // Profile avatar selection - which corps uniform to display
   profileAvatarCorps?: CorpsClass;
