@@ -148,6 +148,13 @@ const CLASS_STYLES = {
   openClass: { chip: 'bg-emerald-500/20 border-emerald-500/30', text: 'text-emerald-400' },
   aClass: { chip: 'bg-orange-500/20 border-orange-500/30', text: 'text-orange-400' },
 };
+
+// Podium Class is a distinct game (its own scoring pass), so its ticker
+// segments carry the brand accent rather than borrowing a fantasy class color.
+const PODIUM_STYLE = {
+  chip: 'bg-brand/20 border-brand/30',
+  text: 'text-brand',
+};
 const DEFAULT_CLASS_STYLE = {
   chip: 'bg-purple-500/20 border-purple-500/30',
   text: 'text-purple-400',
@@ -161,7 +168,7 @@ const MEDAL_COLORS = {
 };
 
 const TickerBar = () => {
-  const { tickerData, loading, hasData } = useTickerData();
+  const { tickerData, podiumData, loading, hasData } = useTickerData();
   const { prefersReducedMotion } = useReducedMotion();
 
   // Measure the width of one content copy so the marquee scrolls at a
@@ -192,6 +199,15 @@ const TickerBar = () => {
       const classData = tickerData.byClass?.[classKey];
       if (classData?.scores?.length > 0) {
         sections.push({ type: 'scores', classKey, label: classData.label });
+      }
+    }
+
+    // Add Podium Class scores per division (World / Open / A) when Podium is
+    // live and scored. Sourced from the separate podium-recaps pipeline.
+    for (const divisionKey of podiumData?.availableDivisions || []) {
+      const divisionData = podiumData?.byDivision?.[divisionKey];
+      if (divisionData?.scores?.length > 0) {
+        sections.push({ type: 'podium_scores', divisionKey, label: divisionData.label });
       }
     }
 
@@ -228,7 +244,7 @@ const TickerBar = () => {
     }
 
     return sections;
-  }, [tickerData]);
+  }, [tickerData, podiumData]);
 
   // Scale the marquee duration to the content width for a constant scroll
   // speed (~60px/s), regardless of how many items the season produced.
@@ -283,7 +299,7 @@ const TickerBar = () => {
   const renderSegment = (section) => {
     if (!section) return null;
 
-    const { type, classKey, label } = section;
+    const { type, classKey, divisionKey, label } = section;
     const classData = classKey ? tickerData.byClass?.[classKey] : null;
     const colors = (classKey && CLASS_STYLES[classKey]) || DEFAULT_CLASS_STYLE;
 
@@ -318,6 +334,38 @@ const TickerBar = () => {
             ))}
           </>
         );
+
+      case 'podium_scores': {
+        // Podium Class scores for one division (World / Open / A). Same layout
+        // as the fantasy scores segment, brand-accented so it reads as its own
+        // game rather than a fantasy class.
+        const divisionData = divisionKey ? podiumData?.byDivision?.[divisionKey] : null;
+        return (
+          <>
+            <div
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 border ${PODIUM_STYLE.chip} rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+            >
+              <Trophy className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${PODIUM_STYLE.text}`} />
+              <span className={`${PODIUM_STYLE.text} whitespace-nowrap`}>{label}</span>
+            </div>
+            <div className="w-px h-4 bg-line" />
+            {divisionData?.scores?.slice(0, 8).map((item, idx) => (
+              <div
+                key={`podium-${item.fullName}-${item.score}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span className="text-muted font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
+                <span className="text-white tabular-nums font-mono text-xs">{item.score}</span>
+                {idx < Math.min(divisionData.scores.length, 8) - 1 && (
+                  <div className="w-px h-3 bg-line ml-1" />
+                )}
+              </div>
+            ))}
+          </>
+        );
+      }
 
       case 'soundsport':
         // SoundSport medals
