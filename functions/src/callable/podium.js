@@ -99,6 +99,27 @@ function applyRegistrationCoinDelta(
 const NAME_MIN = 3;
 const NAME_MAX = 40;
 
+/**
+ * Whether an existing corpsnames reservation blocks a Podium registration.
+ *
+ * One corps name per season across the WHOLE game (fantasy + Podium share the
+ * corpsnames namespace). A fantasy corps' reservation blocks a Podium corps of
+ * that name even when BOTH corps belong to the same director — reusing your own
+ * fantasy name in Podium is exactly the cross-mode duplicate the nightly sweep
+ * had to keep cleaning up, so it is rejected at creation time here, mirroring
+ * how registerCorps rejects any existing reservation.
+ *
+ * The one reservation a registration may reuse is its OWN prior Podium
+ * reservation from this same season — a harmless re-reserve (the existing-state
+ * guard in registerPodiumCorps already blocks true re-registration).
+ */
+function podiumNameReservationBlocks(reservation, uid) {
+  if (!reservation) return false;
+  const isOwnPodiumReservation =
+    reservation.uid === uid && reservation.corpsClass === "podiumClass";
+  return !isOwnPodiumReservation;
+}
+
 /** Shared preamble: flag gate, auth, season, day context. */
 async function podiumContext(request) {
   const uid = assertAuth(request);
@@ -336,7 +357,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     if (existingState.exists && existingState.data().seasonUid === seasonUid) {
       throw new HttpsError("already-exists", "You already field a Podium corps this season.");
     }
-    if (existingName.exists && existingName.data().uid !== uid) {
+    if (existingName.exists && podiumNameReservationBlocks(existingName.data(), uid)) {
       throw new HttpsError("already-exists", "That corps name is taken this season.");
     }
 
@@ -777,3 +798,6 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
 
 // Shared preamble for the split callable modules (podiumJoint.js, podiumBudget.js).
 module.exports.podiumContext = podiumContext;
+// Pure predicate exported for unit tests (the transactional flow is covered by
+// the emulator suite; this guards the fantasy/Podium name-uniqueness rule).
+module.exports.podiumNameReservationBlocks = podiumNameReservationBlocks;

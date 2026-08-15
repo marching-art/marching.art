@@ -16,6 +16,7 @@ const {
   maxBlocksForPlanType,
 } = require("./podiumValidation");
 const store = require("../helpers/podium/store");
+const { podiumNameReservationBlocks } = require("./podium");
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 const fullChallenge = (level) => Object.fromEntries(CAPTIONS.map((c) => [c, level]));
@@ -217,5 +218,45 @@ describe("validateStaffPriority", () => {
   test("rejects a non-array", () => {
     assert.throws(() => validateStaffPriority("B"));
     assert.throws(() => validateStaffPriority({ B: 1 }));
+  });
+});
+
+describe("podiumNameReservationBlocks (fantasy/Podium name uniqueness)", () => {
+  const uid = "director1";
+
+  test("no existing reservation never blocks", () => {
+    assert.equal(podiumNameReservationBlocks(null, uid), false);
+    assert.equal(podiumNameReservationBlocks(undefined, uid), false);
+  });
+
+  test("this director's own fantasy corps name blocks the Podium name", () => {
+    // The cross-mode leak the nightly sweep used to clean up: you can't reuse
+    // your own fantasy corps name for a Podium corps.
+    assert.equal(
+      podiumNameReservationBlocks({ uid, corpsClass: "worldClass" }, uid),
+      true
+    );
+    assert.equal(
+      podiumNameReservationBlocks({ uid, corpsClass: "soundSport" }, uid),
+      true
+    );
+  });
+
+  test("another director's reservation (any class) blocks", () => {
+    assert.equal(
+      podiumNameReservationBlocks({ uid: "other", corpsClass: "worldClass" }, uid),
+      true
+    );
+    assert.equal(
+      podiumNameReservationBlocks({ uid: "other", corpsClass: "podiumClass" }, uid),
+      true
+    );
+  });
+
+  test("this director's own prior Podium reservation may be reused", () => {
+    assert.equal(
+      podiumNameReservationBlocks({ uid, corpsClass: "podiumClass" }, uid),
+      false
+    );
   });
 });
