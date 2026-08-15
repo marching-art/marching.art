@@ -4,10 +4,16 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getRecentSeasonRecaps, RECENT_RECAP_DAYS } from '../api/season';
+import {
+  getRecentSeasonRecaps,
+  getRecentPodiumRecaps,
+  RECENT_RECAP_DAYS,
+  type PodiumDayRecap,
+} from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
 import { useRevealedDay } from './useRevealedDay';
+import { usePodiumEnabled } from './useFeatures';
 import { toRecapDate } from '../utils/recap';
 import { calculateCaptionAggregates, calculateTrend } from './useScoresData';
 import type { CaptionAggregates, DayRecap, RecapResult } from '../types/recap';
@@ -127,6 +133,60 @@ const TICKER_CLASS_KEYS = Object.keys(CLASS_CONFIG) as TickerClassKey[];
 const isTickerClass = (corpsClass: string): corpsClass is TickerClassKey =>
   Object.prototype.hasOwnProperty.call(CLASS_CONFIG, corpsClass);
 
+// -----------------------------------------------------------------------------
+// PODIUM CLASS TICKER
+// -----------------------------------------------------------------------------
+// Podium scores live in their own `podium-recaps` collection (never mixed into
+// the fantasy ranking pass) and are split by division — World / Open / A — the
+// same way the fantasy classes are, but stored under `result.division`. The
+// ticker shows each division's most-recent field so the Podium tour has the
+// same peripheral-glance presence the fantasy classes already have.
+
+type PodiumDivisionKey = 'worldClass' | 'openClass' | 'aClass';
+
+const PODIUM_DIVISION_CONFIG: Record<PodiumDivisionKey, { label: string; order: number }> = {
+  worldClass: { label: 'Podium · World', order: 1 },
+  openClass: { label: 'Podium · Open', order: 2 },
+  aClass: { label: 'Podium · A Class', order: 3 },
+};
+
+const PODIUM_DIVISION_KEYS = Object.keys(PODIUM_DIVISION_CONFIG) as PodiumDivisionKey[];
+
+// Podium recaps store the canonical division keys, but tolerate the legacy
+// short spellings ('world'/'open') the same way the rest of the class layer
+// does. Anything else (or missing) falls back to the A Class field, mirroring
+// PodiumRecapSheet's `row.division || 'aClass'`.
+const normalizePodiumDivision = (division: string | undefined | null): PodiumDivisionKey => {
+  switch (division) {
+    case 'worldClass':
+    case 'world':
+      return 'worldClass';
+    case 'openClass':
+    case 'open':
+      return 'openClass';
+    default:
+      return 'aClass';
+  }
+};
+
+interface PodiumDivisionData {
+  scores: TickerScoreItem[];
+  label: string;
+}
+
+export interface PodiumTickerData {
+  byDivision: Record<string, PodiumDivisionData>;
+  availableDivisions: PodiumDivisionKey[];
+}
+
+/** One podium corps' most-recent field entry while aggregating recaps. */
+interface PodiumRecentEntry {
+  corpsName: string;
+  division: PodiumDivisionKey;
+  totalScore: number;
+  eventName: string;
+}
+
 // Medal types for SoundSport
 const getMedalFromPlacement = (placement: number): string | null => {
   if (placement === 1) return 'Gold';
@@ -213,6 +273,20 @@ export const useTickerData = ({ enabled = true }: { enabled?: boolean } = {}) =>
   });
   const allRecaps = useMemo<DayRecap[]>(() => allRecapsData || [], [allRecapsData]);
   const error = queryError?.message || null;
+
+  // Podium Class runs its own nightly pipeline into the separate podium-recaps
+  // collection, gated behind the game-settings/features.podiumClass kill switch.
+  // Only fetch it when the flag is on so a season without Podium never pays for
+  // the query. Shares the bounded recent-days window (and the Dashboard's cache
+  // entry) the same way the fantasy ticker query does.
+  const podiumEnabled = usePodiumEnabled();
+  const { data: podiumRecapsData } = useQuery({
+    queryKey: queryKeys.podiumRecapsRecent(seasonUid ?? '', RECENT_RECAP_DAYS),
+    queryFn: () => getRecentPodiumRecaps(seasonUid ?? '', RECENT_RECAP_DAYS),
+    enabled: !!seasonUid && enabled && podiumEnabled,
+    staleTime: 5 * 60 * 1000,
+  });
+  const podiumRecaps = useMemo<PodiumDayRecap[]>(() => podiumRecapsData || [], [podiumRecapsData]);
 
   // The day to show is the most recent day with revealed scores (tonight's
   // day the moment it is scored, else through the 2 AM ET rollover).
@@ -648,15 +722,95 @@ export const useTickerData = ({ enabled = true }: { enabled?: boolean } = {}) =>
     return { byClass };
   }, [displayDay, allRecaps]);
 
+  // The most recent Podium competition day whose scores have revealed. Podium
+  // days ride the same reveal boundary as the fantasy classes (its 9 PM ET
+  // processor writes before the shared 2 AM ET rollover), so the same guard
+  // applies — null until Day 1 reveals.
+  const podiumDisplayDay = useMemo<number | null>(() => {
+    if (podiumRecaps.length === 0) return null;
+    if (!revealedDay || revealedDay < 1) return null;
+
+    const availableDays = podiumRecaps
+      .map((r) => r.competitionDay)
+      .filter((day) => day <= revealedDay)
+      .sort((a, b) => b - a);
+
+    return availableDays[0] ?? null;
+  }, [podiumRecaps, revealedDay]);
+
+  // Each division's most-recent field (top score per corps, split World/Open/A),
+  // mirroring the fantasy "scores" section but sourced from podium-recaps.
+  const podiumData = useMemo<PodiumTickerData>(() => {
+    const empty: PodiumTickerData = { byDivision: {}, availableDivisions: [] };
+    if (!podiumDisplayDay || podiumRecaps.length === 0) return empty;
+
+    const relevant = podiumRecaps
+      .filter((r) => (r.competitionDay ?? 0) <= podiumDisplayDay)
+      .sort((a, b) => (b.competitionDay ?? 0) - (a.competitionDay ?? 0));
+
+    // Keep only the most recent score for each podium corps (recaps are already
+    // sorted newest-first, so the first sighting of a corps is its latest show).
+    const mostRecentByCorps = new Map<string, PodiumRecentEntry>();
+    for (const recap of relevant) {
+      recap.shows?.forEach((show) => {
+        show.results?.forEach((result) => {
+          if (!result.corpsName || mostRecentByCorps.has(result.corpsName)) return;
+          mostRecentByCorps.set(result.corpsName, {
+            corpsName: result.corpsName,
+            division: normalizePodiumDivision((result as { division?: string }).division),
+            totalScore: result.totalScore || 0,
+            eventName: show.eventName,
+          });
+        });
+      });
+    }
+
+    const resultsByDivision: Record<PodiumDivisionKey, PodiumRecentEntry[]> = {
+      worldClass: [],
+      openClass: [],
+      aClass: [],
+    };
+    for (const entry of mostRecentByCorps.values()) {
+      resultsByDivision[entry.division].push(entry);
+    }
+
+    const byDivision: Record<string, PodiumDivisionData> = {};
+    const availableDivisions: PodiumDivisionKey[] = [];
+
+    for (const divisionKey of PODIUM_DIVISION_KEYS) {
+      const rows = resultsByDivision[divisionKey].sort((a, b) => b.totalScore - a.totalScore);
+      const scores: TickerScoreItem[] = rows.slice(0, 10).map((row) => ({
+        name: getCorpsAbbreviation(row.corpsName),
+        fullName: row.corpsName,
+        score: (row.totalScore || 0).toFixed(3),
+        eventName: row.eventName,
+      }));
+
+      byDivision[divisionKey] = { scores, label: PODIUM_DIVISION_CONFIG[divisionKey].label };
+      if (scores.length > 0) availableDivisions.push(divisionKey);
+    }
+
+    availableDivisions.sort(
+      (a, b) => PODIUM_DIVISION_CONFIG[a].order - PODIUM_DIVISION_CONFIG[b].order
+    );
+
+    return { byDivision, availableDivisions };
+  }, [podiumDisplayDay, podiumRecaps]);
+
   // Check if we have any data to display
   const hasData = useMemo(() => {
-    return tickerData.availableClasses.length > 0 || tickerData.soundSportMedals.length > 0;
-  }, [tickerData]);
+    return (
+      tickerData.availableClasses.length > 0 ||
+      tickerData.soundSportMedals.length > 0 ||
+      podiumData.availableDivisions.length > 0
+    );
+  }, [tickerData, podiumData]);
 
   return {
     loading,
     error,
     tickerData,
+    podiumData,
     captionStats,
     displayDay,
     currentDay,
