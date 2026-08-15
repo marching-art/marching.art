@@ -243,6 +243,36 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.equal(ghostHistory.length, 1);
     assert.equal(ghostHistory[0].placement, null);
     assert.equal(update.corps.aClass.lineup, null);
+
+    // The heavy lineup / show-pick fields are split OFF the summary rows onto
+    // seasonDetail docs, so the hot profile document never carries them.
+    const wcSummary = update.corps.worldClass.seasonHistory[0];
+    assert.equal(wcSummary.lineup, undefined, "lineup must not be on the summary row");
+    assert.equal(wcSummary.selectedShows, undefined);
+    assert.equal(wcSummary.weeklyScores, undefined);
+    assert.equal(wcSummary.weeks, 1, "summary keeps a weeks count for the timeline");
+    // ...but the summary keeps what the chart / rating / aggregates read.
+    assert.equal(wcSummary.placement, 1);
+    assert.equal(wcSummary.totalSeasonScore, 90);
+
+    const wcDetail = writes.find(
+      (w) =>
+        w.type === "set" &&
+        w.path === `artifacts/${NS}/users/alice/seasonDetail/old-season__worldClass`
+    );
+    assert.ok(wcDetail, "a seasonDetail doc is written for the competing corps");
+    assert.deepEqual(wcDetail.data.lineup, { GE1: "Blue Devils|2024" });
+    assert.deepEqual(wcDetail.data.selectedShows, { 1: ["show-a"] });
+    assert.equal(wcDetail.data.corpsClass, "worldClass");
+
+    // The lineup-only corps still gets a detail doc (its lineup is history too).
+    const aDetail = writes.find(
+      (w) =>
+        w.type === "set" &&
+        w.path === `artifacts/${NS}/users/alice/seasonDetail/old-season__aClass`
+    );
+    assert.ok(aDetail, "a seasonDetail doc is written for the lineup-only corps");
+    assert.deepEqual(aDetail.data.lineup, { GE1: "Phantom Regiment|2024" });
   });
 
   test("a profile with only a lineup-only corps earns nothing and totalSeasons stays flat", async () => {

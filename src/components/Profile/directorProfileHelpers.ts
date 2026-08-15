@@ -41,6 +41,9 @@ export interface SeasonHistoryEntry {
     | null;
   showsAttended?: number;
   circuitPoints?: number;
+  /** Number of scored weeks, kept on the summary row so the timeline can label
+   * a season without loading its (offloaded) weekly-score detail. */
+  weeks?: number;
 }
 
 export interface TrophyData {

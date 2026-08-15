@@ -254,6 +254,17 @@ match /artifacts/{appId}/users/{userId} {
         !touchesProtectedCorpsFields() && profileTextFieldsValid());
   }
   
+  // Per-season detail (the full caption lineup + week-by-week show picks for one
+  // archived season), split off the profile's seasonHistory summary rows so the
+  // hot, listener-backed profile/data doc stays small and never approaches the
+  // 1 MiB cap. World-readable like profile/data (a director's history is public);
+  // written only by season archival and the backfill script (Cloud Functions use
+  // the Admin SDK, which bypasses these rules — the client is server-only here).
+  match /seasonDetail/{detailId} {
+    allow read: if true;
+    allow write: if isAdmin();
+  }
+
   // Profile comments are public to read. Creation is backend-only: no client
   // code writes this subcollection (management goes through the deleteComment
   // callable), and the previous `allow create: if isAuthenticated()` let any

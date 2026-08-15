@@ -18,7 +18,9 @@ import {
   BarChart3,
   History,
 } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { db, paths } from '../api/client';
 import BrandLogo from '../components/BrandLogo';
 import { Heading } from '../components/ui';
 import { useProfileStore } from '../store/profileStore';
@@ -40,6 +42,9 @@ const CorpsHistory = () => {
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState(null);
   const [activeView, setActiveView] = useState('chart'); // 'chart' or 'timeline'
+  // detailId -> heavy per-season detail (lineup + weekly scores), or null once a
+  // fetch resolves to "no detail doc". Loaded lazily below.
+  const [seasonDetails, setSeasonDetails] = useState({});
 
   // Auto-select first corps with history once profile data is available
   useEffect(() => {
@@ -87,6 +92,36 @@ const CorpsHistory = () => {
     );
   }, [activeCorps]);
   const hasHistory = seasonHistory.length > 0;
+
+  // Lazy-load the heavy per-season detail (full caption lineup + weekly scores)
+  // only when a director opens a season. It lives in a `seasonDetail`
+  // subcollection off the profile (paths.userSeasonDetail) rather than on the
+  // profile's seasonHistory rows, so decades of never-opened history don't ride
+  // along on the always-live profile listener. Legacy rows archived before the
+  // split still carry the detail inline and skip the fetch.
+  useEffect(() => {
+    if (selectedSeason === null || !user?.uid) return undefined;
+    const season = seasonHistory[selectedSeason];
+    if (!season?.seasonId || !season?.corpsClass) return undefined;
+    if (season.lineup || Object.keys(season.weeklyScores || {}).length > 0) return undefined;
+    const detailId = `${season.seasonId}__${season.corpsClass}`;
+    if (seasonDetails[detailId] !== undefined) return undefined; // already resolved
+
+    let cancelled = false;
+    (async () => {
+      let detail = null;
+      try {
+        const snap = await getDoc(doc(db, paths.userSeasonDetail(user.uid, detailId)));
+        detail = snap.exists() ? snap.data() : null;
+      } catch {
+        detail = null;
+      }
+      if (!cancelled) setSeasonDetails((prev) => ({ ...prev, [detailId]: detail }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSeason, seasonHistory, seasonDetails, user]);
 
   // Chronological path through the classes (oldest season first). History
   // travels with a corps when it moves classes, and each archived season
@@ -483,8 +518,9 @@ const CorpsHistory = () => {
                   >
                     {seasonHistory.map((season, index) => {
                       const isSelected = selectedSeason === index;
-                      const weeklyScores = season.weeklyScores || {};
-                      const weeks = Object.keys(weeklyScores).length;
+                      // `weeks` is stored on the summary row (post-split);
+                      // fall back to counting a legacy inline weeklyScores map.
+                      const weeks = season.weeks ?? Object.keys(season.weeklyScores || {}).length;
 
                       return (
                         <button
@@ -559,7 +595,15 @@ const CorpsHistory = () => {
           {selectedSeason !== null && seasonHistory[selectedSeason] ? (
             (() => {
               const season = seasonHistory[selectedSeason];
-              const weeklyScores = season.weeklyScores || {};
+              // Merge in the lazily-loaded detail doc. Legacy rows carry the
+              // heavy fields inline; migrated rows get them from seasonDetail.
+              const detailId = `${season.seasonId}__${season.corpsClass}`;
+              const detail = seasonDetails[detailId] || {};
+              const weeklyScores =
+                Object.keys(season.weeklyScores || {}).length > 0
+                  ? season.weeklyScores
+                  : detail.weeklyScores || {};
+              const lineup = season.lineup || detail.lineup || null;
               const weeks = Object.keys(weeklyScores).sort();
 
               return (
@@ -649,14 +693,14 @@ const CorpsHistory = () => {
                     )}
 
                     {/* Lineup */}
-                    {season.lineup && Object.keys(season.lineup).length > 0 && (
+                    {lineup && Object.keys(lineup).length > 0 && (
                       <div>
                         <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
                           <Target className="w-4 h-4 text-blue-400" />
                           Season Lineup
                         </h4>
                         <div className="space-y-2">
-                          {Object.entries(season.lineup).map(([caption, value]) => {
+                          {Object.entries(lineup).map(([caption, value]) => {
                             const [corpsName] = (value || '').split('|');
                             return (
                               <div key={caption} className="bg-surface-raised rounded-none p-2">

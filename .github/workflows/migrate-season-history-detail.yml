@@ -1,0 +1,82 @@
+name: Migrate season history detail
+
+# One-off (re-runnable) data migration that splits existing
+# corps.{class}.seasonHistory rows into lean summary rows (kept on the profile)
+# plus heavy seasonDetail docs (the full caption lineup + week-by-week show
+# picks), matching how helpers/season.js now archives new seasons.
+#
+# WHY: those heavy fields are read in exactly one place — a single season's
+# detail panel (src/pages/CorpsHistory.jsx) — yet lived on the profile/data doc,
+# which sits behind a live client listener, so decades of never-opened history
+# rode along on every profile write and pushed the doc toward Firestore's 1 MiB
+# cap. This copies the heavy fields into seasonDetail docs and rewrites the
+# history arrays with the slimmed summaries. See
+# functions/src/scripts/migrateSeasonHistoryDetail.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Migrate season history detail" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log reports how many profiles
+#      and detail docs WOULD change, without writing anything.
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes.
+#
+# Non-destructive (no season is dropped; only heavy fields move, after being
+# copied to the detail doc) and idempotent (a profile already slimmed produces
+# no writes), so a second commit run that finds nothing new is a safe no-op.
+# This job writes to Firestore only — it makes no repo commits.
+#
+# PREREQUISITE: deploy the updated firestore.rules first (the seasonDetail
+# subcollection must be writable/readable) — the "Deploy hosting"/functions
+# workflows or `firebase deploy --only firestore:rules`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two migration runs write the same docs at once.
+  group: migrate-season-history-detail
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run migration (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace; matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            node src/scripts/migrateSeasonHistoryDetail.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/migrateSeasonHistoryDetail.js
+          fi

@@ -276,6 +276,12 @@ export const paths = {
   userPrivate: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/private/data`,
   userCorps: (uid: string, corpsClass: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/corps/${corpsClass}`,
+  // Per-season detail (full lineup + show picks) split off the profile's
+  // seasonHistory summary rows; fetched lazily when a season's detail panel
+  // opens. detailId is `${seasonId}__${corpsClass}` (see
+  // functions/src/helpers/seasonHistoryRecord.js seasonDetailId).
+  userSeasonDetail: (uid: string, detailId: string) =>
+    `artifacts/${DATA_NAMESPACE}/users/${uid}/seasonDetail/${detailId}`,
 
   // Season paths
   season: () => `game-settings/season`,
