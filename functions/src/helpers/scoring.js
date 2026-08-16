@@ -34,6 +34,7 @@ const {
 } = require("./scoringAwards");
 const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./weeklyMatchups");
 const { ChunkedWriter } = require("./chunkedWriter");
+const { collectOuting, writeCaptionLedgerDocs } = require("./captionLedger");
 const { getCompletedCalendarDay } = require("./gameDay");
 const { updateRecordsFromRecap } = require("./gameRecords");
 const { writeSeasonStandings } = require("./standingsMaterializer");
@@ -203,6 +204,13 @@ function scoreShowsForDay({
   // uid across every corps and show scored today. Committed as
   // captionStats.{caption} increments in commitDailyScoring.
   const captionPoints = new Map(); // uid -> { GE1: points, ... }
+  // Per-director private caption ledger (community request): the full 8-caption
+  // breakdown of each of THIS director's own outings today. The public recap
+  // deliberately stores only GE/VIS/MUS for fantasy classes (the anti-harvest
+  // rule — per-caption values would let players reverse-engineer each other's
+  // lineups), so the analysis-grade caption detail is written to a private,
+  // owner-only per-user store instead. Keyed uid -> [outing, ...].
+  const captionBreakdown = new Map();
   const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0, captionsAtCap: 0 };
 
   // --- ONE-TIME PROFILE PRE-SCAN (OPTIMIZATION #7) ---
@@ -255,6 +263,9 @@ function scoreShowsForDay({
     stats.corpsScored++;
     let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
     const userCaptionPoints = captionPoints.get(uid) || {};
+    // The 8 per-caption values behind this outing's totals — kept for the
+    // private caption ledger (never written to the public recap).
+    const outingCaptions = {};
 
     for (const caption in corps.lineup) {
       const [corpsName, sourceYear] = corps.lineup[caption].split("|");
@@ -273,6 +284,7 @@ function scoreShowsForDay({
       const captionScore = Math.min(CAPTION_MAX, baseCaptionScore);
       if (baseCaptionScore > CAPTION_MAX) stats.captionsAtCap++;
 
+      outingCaptions[caption] = captionScore;
       if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
       else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
       else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
@@ -327,6 +339,15 @@ function scoreShowsForDay({
       avatarUrl: corps.avatarUrl || null,
       totalScore: totalShowScore,
       geScore, visualScore, musicScore,
+    });
+
+    // Private caption ledger: record this outing's full 8-caption breakdown for
+    // the director's own dashboard analysis (helpers/captionLedger; SoundSport
+    // is excluded there).
+    collectOuting(captionBreakdown, {
+      uid, corpsClass, corps, show,
+      captions: outingCaptions,
+      geScore, visualScore, musicScore, totalScore: totalShowScore,
     });
   };
 
@@ -426,7 +447,7 @@ function scoreShowsForDay({
     dailyRecap.shows.push(showResult);
   }
 
-  return { dailyScores, coinAwards, captionPoints, stats };
+  return { dailyScores, coinAwards, captionPoints, captionBreakdown, stats };
 }
 
 // Competitive classes ranked nightly. SoundSport is deliberately excluded:
@@ -515,6 +536,7 @@ function diffSeasonRankings(rankings, profilesSnapshot) {
  * @param {Object} params.dailyRecap
  * @param {Array} params.coinAwards
  * @param {Map<string, Object>} [params.captionPoints] - uid -> per-caption points
+ * @param {Map<string, Array>} [params.captionBreakdown] - uid -> private per-outing caption ledger
  * @param {ProfilesSnapshot} [params.profilesSnapshot] - for nightly class standings
  * @param {boolean} [params.force] - Admin reprocess escape hatch (awardLedger)
  * @returns {Promise<{ opCount: number, batchCount: number }>}
@@ -528,6 +550,7 @@ async function commitDailyScoring({
   dailyRecap,
   coinAwards,
   captionPoints,
+  captionBreakdown,
   profilesSnapshot,
   force = false,
 }) {
@@ -587,6 +610,12 @@ async function commitDailyScoring({
     });
   }
   batch.set(dayRecapRef, dailyRecap);
+
+  // Private per-director caption ledger — the full 8-caption breakdown of each
+  // director's own outings, owner-read only (see helpers/captionLedger). Kept
+  // OUT of the public recap above so per-caption fantasy values stay
+  // unharvestable, but available to the director for their own analysis.
+  writeCaptionLedgerDocs(batch, db, { captionBreakdown, seasonData, scoredDay });
 
   // --- TROPHY AWARDING LOGIC ---
   // OPTIMIZATION #5: Uses shared trophy awarding helpers
@@ -734,7 +763,7 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
     }
   }
 
-  const { dailyScores, coinAwards, captionPoints, stats } = scoreShowsForDay({
+  const { dailyScores, coinAwards, captionPoints, captionBreakdown, stats } = scoreShowsForDay({
     dayEventData, profilesSnapshot, week, scoredDay,
     championshipConfig, dailyRecap, getBaseCaptionScore, easternNightSet,
   });
@@ -776,7 +805,7 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
 
   const { opCount, batchCount } = await commitDailyScoring({
     db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
-    profilesSnapshot, force,
+    captionBreakdown, profilesSnapshot, force,
   });
   logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
