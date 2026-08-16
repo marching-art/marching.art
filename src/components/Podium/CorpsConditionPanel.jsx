@@ -140,6 +140,34 @@ function AirfareRow({ leg, budgetBalance, busy, disabled, onToggle }) {
   );
 }
 
+// A previously-booked fly intent whose leg has since rerouted under the airfare
+// floor (design §5.3). The flag lingers harmlessly — the nightly processor
+// prices airfare on the REALIZED leg and simply won't fly a short one, so no
+// CorpsCoin is ever charged — but the route portal must SAY that rather than
+// silently dropping the "Flying" badge, which reads like a vanished purchase.
+// Offers a one-click clear to tidy the stale flag (re-book later if it reroutes
+// long again — toggling airfare is always free and reversible).
+function StrandedAirfareNote({ busy, disabled, onClear }) {
+  return (
+    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-1.5 text-[9px] text-muted min-w-0">
+        <Plane className="w-3 h-3 shrink-0 text-muted" />
+        <span className="truncate">
+          Booked to fly, but this leg is now too short — the flight won&apos;t apply and{' '}
+          <span className="text-white font-bold">no CC will be charged</span>.
+        </span>
+      </div>
+      <button
+        disabled={disabled}
+        onClick={onClear}
+        className="shrink-0 text-[9px] font-bold uppercase px-2 py-0.5 rounded-none border border-line text-muted hover:text-white press-feedback disabled:opacity-40"
+      >
+        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Clear'}
+      </button>
+    </div>
+  );
+}
+
 export default function CorpsConditionPanel({ podium }) {
   const state = podium.data?.state;
   const routePreview = podium.data?.routePreview || [];
@@ -611,7 +639,7 @@ export default function CorpsConditionPanel({ podium }) {
                       )}
                     </span>
                   </div>
-                  {leg.airfareEligible && (
+                  {leg.airfareEligible ? (
                     <AirfareRow
                       leg={leg}
                       budgetBalance={budget.balance || 0}
@@ -621,7 +649,15 @@ export default function CorpsConditionPanel({ podium }) {
                         act(`airfare-${leg.day}`, () => podium.setAirfare(leg.day, fly))
                       }
                     />
-                  )}
+                  ) : leg.airfareStranded ? (
+                    <StrandedAirfareNote
+                      busy={busy === `airfare-${leg.day}`}
+                      disabled={busy !== null}
+                      onClear={() =>
+                        act(`airfare-${leg.day}`, () => podium.setAirfare(leg.day, false))
+                      }
+                    />
+                  ) : null}
                 </React.Fragment>
               );
             })}

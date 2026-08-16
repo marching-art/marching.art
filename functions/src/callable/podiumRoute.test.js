@@ -163,5 +163,19 @@ describe("buildRouteLegs — airfare on long legs (design §5.3)", () => {
       locations: { 12: "Dallas, Texas" },
     });
     assert.equal(legs[0].airfarePurchased, true);
+    assert.equal(legs[0].airfareStranded, false);
+  });
+
+  test("a fly intent left on a leg that rerouted short is flagged stranded, not charged", () => {
+    // Booked to fly, but the leg is now a short local hop under the airfare
+    // floor: the flag lingers harmlessly (the processor never charges a short
+    // leg), so the portal marks it stranded instead of silently dropping it.
+    const legs = buildRouteLegs(cantonState({ airfare: { 12: true } }), [12], {
+      jointByDay: {},
+      locations: { 12: "Akron, Ohio" },
+    });
+    assert.equal(legs[0].airfareEligible, false);
+    assert.equal(legs[0].airfarePurchased, false);
+    assert.equal(legs[0].airfareStranded, true);
   });
 });
