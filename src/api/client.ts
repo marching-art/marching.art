@@ -282,6 +282,13 @@ export const paths = {
   // functions/src/helpers/seasonHistoryRecord.js seasonDetailId).
   userSeasonDetail: (uid: string, detailId: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/seasonDetail/${detailId}`,
+  // Private fantasy caption ledger — the director's own per-caption outing
+  // breakdown, one day-doc per scored day, owner-read only. Written by the
+  // nightly scorer (functions/src/helpers/scoring.js). The public recap keeps
+  // fantasy classes at GE/VIS/MUS to prevent lineup harvesting, so per-caption
+  // analysis reads this private store instead.
+  userCaptionLedgerDays: (uid: string, seasonUid: string) =>
+    `artifacts/${DATA_NAMESPACE}/users/${uid}/captionLedger/${seasonUid}/days`,
 
   // Season paths
   season: () => `game-settings/season`,

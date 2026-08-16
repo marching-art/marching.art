@@ -35,6 +35,16 @@ const paths = {
   userComment: (uid, commentId) => `artifacts/${ns()}/users/${uid}/comments/${commentId}`,
   userPodiumState: (uid) => `artifacts/${ns()}/users/${uid}/podium/state`,
   userPodiumCareer: (uid) => `artifacts/${ns()}/users/${uid}/podium/career`,
+  // Private per-director fantasy caption ledger — the full 8-caption breakdown
+  // of a director's own outings, one day-doc per scored day, owner-read only
+  // (the public recap keeps fantasy classes at GE/VIS/MUS to prevent lineup
+  // harvesting). Mirrors the fantasy_recaps season/day shape.
+  userCaptionLedger: (uid, seasonUid) =>
+    `artifacts/${ns()}/users/${uid}/captionLedger/${seasonUid}`,
+  userCaptionLedgerDays: (uid, seasonUid) =>
+    `artifacts/${ns()}/users/${uid}/captionLedger/${seasonUid}/days`,
+  userCaptionLedgerDay: (uid, seasonUid, day) =>
+    `artifacts/${ns()}/users/${uid}/captionLedger/${seasonUid}/days/${day}`,
 
   // --- Leaderboard ---
   lifetimeLeaderboard: (view) => `artifacts/${ns()}/leaderboard/lifetime_${view}`,

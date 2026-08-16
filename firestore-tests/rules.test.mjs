@@ -841,6 +841,46 @@ await check(
 );
 
 // =============================================================================
+// CAPTION LEDGER — the private per-caption fantasy recap the nightly scorer
+// writes for each director's own outings. The public fantasy recap keeps
+// classes at GE/VIS/MUS so lineups can't be harvested; the analysis-grade
+// per-caption detail lives here, owner-read and backend-write only.
+// =============================================================================
+const captionLedgerPath = `artifacts/${APP}/users/${ALICE}/captionLedger/season-1/days/12`;
+async function freshCaptionLedgerSeed() {
+  await testEnv.clearFirestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), captionLedgerPath), {
+      day: 12,
+      outings: [{ corpsClass: 'worldClass', captions: { GE1: 18.5 }, totalScore: 90 }],
+    });
+  });
+}
+
+await freshCaptionLedgerSeed();
+await check(
+  'owner can read their own caption ledger',
+  assertSucceeds(getDoc(doc(authed(), captionLedgerPath)))
+);
+
+await freshCaptionLedgerSeed();
+await check(
+  "another user cannot read someone else's caption ledger (per-caption is private)",
+  assertFails(getDoc(doc(mallory(), captionLedgerPath)))
+);
+
+await freshCaptionLedgerSeed();
+await check(
+  'owner cannot forge caption-ledger entries client-side (backend only)',
+  assertFails(
+    setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/captionLedger/season-1/days/13`), {
+      day: 13,
+      outings: [{ corpsClass: 'worldClass', captions: { GE1: 20 }, totalScore: 100 }],
+    })
+  )
+);
+
+// =============================================================================
 // PRIVATE DOC — home of the FCM token (a stable device identifier that must
 // never sit on the world-readable profile doc). Owner-only read/write.
 // =============================================================================

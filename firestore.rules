@@ -329,6 +329,16 @@ match /artifacts/{appId}/users/{userId} {
     allow write: if isAdmin();
   }
 
+  // Private fantasy caption ledger — the full 8-caption breakdown of the
+  // director's OWN outings, written server-side at scoring time and read only
+  // by the owner. The public fantasy recap deliberately stores only GE/VIS/MUS
+  // (per-caption values would let players harvest each other's lineups), so the
+  // analysis-grade detail lives here, owner-scoped, instead. Server-only writes.
+  match /captionLedger/{document=**} {
+    allow read: if isAdmin() || isOwner(userId);
+    allow write: if isAdmin();
+  }
+
   // Catch-all for user subcollections WITHOUT a specific rule above.
   // INVERTED TO DEFAULT-PRIVATE (was a default-public denylist): the old
   // shape made any NEW subcollection world-readable-to-authenticated and

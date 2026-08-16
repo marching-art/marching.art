@@ -373,6 +373,78 @@ describe("scoreShowsForDay", () => {
     assert.equal(result.captionPoints.has("u2"), false);
   });
 
+  test("captionBreakdown records the private per-caption ledger for a scored corps", () => {
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", {
+          corps: {
+            worldClass: {
+              corpsName: "Aurora",
+              location: "TX",
+              lineup: fullLineup(),
+              selectedShows: { week1: [{ eventName: "Season Opener" }] },
+            },
+          },
+        }),
+      ],
+    };
+    const dailyRecap = { shows: [] };
+    // Base 25 => capped at 20 per caption. GE 40, visual 30, music 30, total 100.
+    const result = scoreShowsForDay({
+      dayEventData: { shows: [{ eventName: "Season Opener", location: "TX" }] },
+      profilesSnapshot,
+      week: 1,
+      scoredDay: 12,
+      championshipConfig: null,
+      dailyRecap,
+      getBaseCaptionScore: () => 25,
+    });
+
+    const outings = result.captionBreakdown.get("u1");
+    assert.equal(outings.length, 1);
+    const outing = outings[0];
+    assert.equal(outing.corpsClass, "worldClass");
+    assert.equal(outing.eventName, "Season Opener");
+    // Every caption is present and capped, so the breakdown's own subtotals
+    // reconcile with the aggregates the public recap stores.
+    for (const caption of CAPTIONS) assert.equal(outing.captions[caption], 20);
+    assert.equal(outing.geScore, 40);
+    assert.equal(outing.visualScore, 30);
+    assert.equal(outing.musicScore, 30);
+    assert.equal(outing.totalScore, 100);
+  });
+
+  test("captionBreakdown excludes SoundSport (ratings-only, never per-caption)", () => {
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", {
+          corps: {
+            soundSport: {
+              corpsName: "Fun Corps",
+              lineup: fullLineup(),
+              selectedShows: { week1: [{ eventName: "Season Opener" }] },
+            },
+          },
+        }),
+      ],
+    };
+    const dailyRecap = { shows: [] };
+    const result = scoreShowsForDay({
+      dayEventData: { shows: [{ eventName: "Season Opener" }] },
+      profilesSnapshot,
+      week: 1,
+      scoredDay: 12,
+      championshipConfig: null,
+      dailyRecap,
+      getBaseCaptionScore: () => 10,
+    });
+
+    // SoundSport is scored (it appears in the recap) but its numeric captions
+    // are never surfaced anywhere, so it must not enter the private ledger.
+    assert.equal(dailyRecap.shows[0].results.length, 1);
+    assert.equal(result.captionBreakdown.has("u1"), false);
+  });
+
   test("computeSeasonRankings ranks by effective score and skips SoundSport", () => {
     const profilesSnapshot = {
       docs: [

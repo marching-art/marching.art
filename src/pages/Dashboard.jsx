@@ -41,6 +41,12 @@ const PodiumSeasonLedger = lazyWithRetry(
   () => import('../components/Podium/PodiumSeasonLedger'),
   'PodiumSeasonLedger'
 );
+// Fantasy season recap ledger — the private, per-caption counterpart opened from
+// the SEASON SCORE tile for the ranked fantasy classes (community request).
+const FantasySeasonLedger = lazyWithRetry(
+  () => import('../components/scores/FantasySeasonLedger'),
+  'FantasySeasonLedger'
+);
 
 import {
   // OPTIMIZATION #4: Import extracted section components
@@ -176,9 +182,13 @@ const Dashboard = () => {
   const podium = usePodium(isPodiumSelected);
   const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
 
-  // Podium season recap ledger — opened by clicking SEASON SCORE on the
-  // scorecard (community request). Local UI state; the ledger reads its own data.
-  const [showPodiumLedger, setShowPodiumLedger] = useState(false);
+  // Season recap ledger — opened by clicking SEASON SCORE on the scorecard
+  // (community request). Podium gets the public-recap ledger; the ranked fantasy
+  // classes get the private per-caption ledger. SoundSport (ratings-only) has no
+  // caption ledger. Local UI state; the ledger reads its own data.
+  const [showSeasonLedger, setShowSeasonLedger] = useState(false);
+  const hasSeasonLedger =
+    isPodiumSelected || ['worldClass', 'openClass', 'aClass'].includes(activeCorpsClass);
 
   // Whether the director has entered today's league prediction pool — the
   // per-day fact the join-league-pool daily challenge verifies, read off the
@@ -525,7 +535,7 @@ const Dashboard = () => {
                     themeClass={equippedCardTheme?.cardClass}
                     bestRecent={bestRecent}
                     onSeasonScoreClick={
-                      isPodiumSelected ? () => setShowPodiumLedger(true) : undefined
+                      hasSeasonLedger ? () => setShowSeasonLedger(true) : undefined
                     }
                     onShowConcept={() => setShowConceptModal(true)}
                     showConcept={activeCorps.showConcept}
@@ -682,23 +692,36 @@ const Dashboard = () => {
           <NoCorpsCard onRegister={() => setShowRegistration(true)} />
         )}
       </PullToRefresh>
-      {/* Season recap ledger — opened from the SEASON SCORE tile (Podium). A
-          director's own scores show to show, as a running recap. */}
-      {showPodiumLedger && (
+      {/* Season recap ledger — opened from the SEASON SCORE tile. A director's
+          own scores show to show, as a running recap. Podium reads the public
+          podium recaps; the fantasy classes read the private per-caption store. */}
+      {showSeasonLedger && (
         <Modal
           isOpen
-          onClose={() => setShowPodiumLedger(false)}
+          onClose={() => setShowSeasonLedger(false)}
           title="Season Recap Ledger"
           size="full"
         >
           <Suspense fallback={<ModalLoadingFallback />}>
-            <PodiumSeasonLedger
-              compact
-              seasonUid={podium.data?.state?.seasonUid}
-              seasonName={podium.data?.state?.seasonName}
-              uid={user?.uid}
-              userCorpsName={activeCorps?.corpsName || activeCorps?.name}
-            />
+            {isPodiumSelected ? (
+              <PodiumSeasonLedger
+                compact
+                seasonUid={podium.data?.state?.seasonUid}
+                seasonName={podium.data?.state?.seasonName}
+                uid={user?.uid}
+                userCorpsName={activeCorps?.corpsName || activeCorps?.name}
+              />
+            ) : (
+              <FantasySeasonLedger
+                compact
+                seasonUid={seasonData?.seasonUid}
+                seasonName={seasonData?.name}
+                uid={user?.uid}
+                corpsClass={activeCorpsClass}
+                userCorpsName={activeCorps?.corpsName || activeCorps?.name}
+                publicShows={allShows}
+              />
+            )}
           </Suspense>
         </Modal>
       )}
