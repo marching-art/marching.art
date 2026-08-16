@@ -5,7 +5,7 @@
 // Hero: Active Lineup Roster Table. Sidebar: Season Scorecard + Recent Results.
 // Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow
 
-import React, { useMemo, Suspense } from 'react';
+import React, { useMemo, useState, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Megaphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +35,12 @@ const PodiumJourneyPanel = lazyWithRetry(
   () => import('../components/Podium/PodiumJourneyPanel'),
   'PodiumJourneyPanel'
 );
+// Podium season recap ledger — opened from the SEASON SCORE tile on the
+// scorecard (community request). Lazy: only loads when a director opens it.
+const PodiumSeasonLedger = lazyWithRetry(
+  () => import('../components/Podium/PodiumSeasonLedger'),
+  'PodiumSeasonLedger'
+);
 
 import {
   // OPTIMIZATION #4: Import extracted section components
@@ -52,7 +58,7 @@ import {
   ZoneTabs,
 } from '../components/Dashboard';
 
-import { ModalLoadingFallback } from '../components/ui';
+import { ModalLoadingFallback, Modal } from '../components/ui';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useDashboardZones } from '../hooks/useDashboardZones';
 import { useDashboardRefresh } from '../hooks/useDashboardRefresh';
@@ -169,6 +175,10 @@ const Dashboard = () => {
   // directors never fetch it.
   const podium = usePodium(isPodiumSelected);
   const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
+
+  // Podium season recap ledger — opened by clicking SEASON SCORE on the
+  // scorecard (community request). Local UI state; the ledger reads its own data.
+  const [showPodiumLedger, setShowPodiumLedger] = useState(false);
 
   // Whether the director has entered today's league prediction pool — the
   // per-day fact the join-league-pool daily challenge verifies, read off the
@@ -514,6 +524,9 @@ const Dashboard = () => {
                   <SeasonScorecard
                     themeClass={equippedCardTheme?.cardClass}
                     bestRecent={bestRecent}
+                    onSeasonScoreClick={
+                      isPodiumSelected ? () => setShowPodiumLedger(true) : undefined
+                    }
                     onShowConcept={() => setShowConceptModal(true)}
                     showConcept={activeCorps.showConcept}
                     score={userCorpsScore}
@@ -657,7 +670,8 @@ const Dashboard = () => {
                   <span className="flex-1">
                     <span className="block text-sm font-bold text-white">Submit an Article</span>
                     <span className="block text-xs text-muted mt-0.5">
-                      Cover the circuit — competition, rivalries, analysis. Reviewed before publishing.
+                      Cover the circuit — competition, rivalries, analysis. Reviewed before
+                      publishing.
                     </span>
                   </span>
                 </button>
@@ -668,6 +682,26 @@ const Dashboard = () => {
           <NoCorpsCard onRegister={() => setShowRegistration(true)} />
         )}
       </PullToRefresh>
+      {/* Season recap ledger — opened from the SEASON SCORE tile (Podium). A
+          director's own scores show to show, as a running recap. */}
+      {showPodiumLedger && (
+        <Modal
+          isOpen
+          onClose={() => setShowPodiumLedger(false)}
+          title="Season Recap Ledger"
+          size="full"
+        >
+          <Suspense fallback={<ModalLoadingFallback />}>
+            <PodiumSeasonLedger
+              compact
+              seasonUid={podium.data?.state?.seasonUid}
+              seasonName={podium.data?.state?.seasonName}
+              uid={user?.uid}
+              userCorpsName={activeCorps?.corpsName || activeCorps?.name}
+            />
+          </Suspense>
+        </Modal>
+      )}
       <DashboardModalHost
         modals={modals}
         data={dashboardData}
