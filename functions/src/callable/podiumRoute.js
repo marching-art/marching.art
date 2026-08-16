@@ -189,7 +189,8 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
     // CorpsCoin fare. The portal shows the fare, the flown stamina, and whether
     // the director has already booked it — an open-information routing choice.
     const airfare = venues.airfareFor(leg, store.balance);
-    const airfarePurchased = Boolean(airfare.eligible && state.airfare && state.airfare[day]);
+    const airfareFlagged = Boolean(state.airfare && state.airfare[day]);
+    const airfarePurchased = Boolean(airfare.eligible && airfareFlagged);
     const rawStamina = leg ? leg.staminaCost : 0;
     legs.push({
       day,
@@ -210,6 +211,12 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
         ? Math.round(rawStamina * airfare.staminaMultiplier * 10) / 10
         : null,
       airfarePurchased,
+      // A stored fly intent whose leg has since rerouted under the airfare floor
+      // (design §5.3): the flag lingers but the leg can no longer fly, so the
+      // nightly processor will never charge it. Surfaced so the portal can say
+      // so rather than silently dropping the booking — which reads like a lost
+      // purchase and leaves the director wondering where their CorpsCoin went.
+      airfareStranded: airfareFlagged && !airfare.eligible,
     });
     if (venue) cursor = venue;
   }
