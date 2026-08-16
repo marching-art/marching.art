@@ -11,10 +11,12 @@
 import React, { useState } from 'react';
 import { Loader2, Medal, X } from 'lucide-react';
 import { usePodium } from '../../hooks/usePodium';
+import { useProfileStore } from '../../store/profileStore';
 import PodiumRegistration from './PodiumRegistration';
 import RehearsalPlanner from './RehearsalPlanner';
 import PodiumCaptionPanel from './PodiumCaptionPanel';
 import PodiumTrajectoryCard from './PodiumTrajectoryCard';
+import PodiumSeasonLedger from './PodiumSeasonLedger';
 import CorpsConditionPanel from './CorpsConditionPanel';
 import PodiumStaffPanel from './PodiumStaffPanel';
 import JointRehearsalPanel from './JointRehearsalPanel';
@@ -83,6 +85,7 @@ export default function PodiumZone({ podium: podiumProp }) {
   // so passing an instance avoids the duplicate getPodiumState call.
   const ownPodium = usePodium(!podiumProp);
   const podium = podiumProp || ownPodium;
+  const uid = useProfileStore((state) => state.profile?.uid || state._currentUid);
 
   if (podium.loading && !podium.data) {
     return (
@@ -126,6 +129,12 @@ export default function PodiumZone({ podium: podiumProp }) {
       <PodiumCaptionPanel podium={podium} />
       <FanFavoriteCard />
       <PodiumTrajectoryCard podium={podium} />
+      <PodiumSeasonLedger
+        seasonUid={podium.data?.state?.seasonUid}
+        seasonName={podium.data?.state?.seasonName}
+        uid={uid}
+        userCorpsName={podium.data?.state?.corpsName}
+      />
       <CorpsConditionPanel podium={podium} />
       <PodiumStaffPanel podium={podium} />
       <JointRehearsalPanel />

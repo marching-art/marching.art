@@ -14,6 +14,7 @@ import {
   ArrowRightLeft,
   Archive,
   Lock,
+  ChevronRight,
 } from 'lucide-react';
 import { CLASS_LABELS, getSoundSportRating } from './constants';
 import { getConceptTitle, describeConceptStyle } from '../../../utils/showConcept';
@@ -77,6 +78,10 @@ const SeasonScorecard = memo(
     // Best recent result { score, eventName } — the one fact worth keeping
     // from the retired rotating QuickStats widget, folded in here.
     bestRecent = null,
+    // When set, the Season Score tile becomes a button that opens the season
+    // recap ledger — the community's "click SEASON SCORE to see your running
+    // recap" ask (Podium only; wired by the Dashboard).
+    onSeasonScoreClick = null,
   }) => {
     const isSoundSport = corpsClass === 'soundSport';
     const rating = isSoundSport && score ? getSoundSportRating(score) : null;
@@ -261,12 +266,11 @@ const SeasonScorecard = memo(
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
-            {/* Total Score / Medal Rating */}
-            <div className="bg-surface-raised p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted mb-1">
-                {isSoundSport ? 'Medal Rating' : 'Season Score'}
-              </p>
-              {loading ? (
+            {/* Total Score / Medal Rating — a button when onSeasonScoreClick is
+                wired (Podium), opening the season recap ledger. Persistent
+                transparent border so the hover ring never shifts the grid. */}
+            {(() => {
+              const scoreBody = loading ? (
                 <div className="h-8 w-20 bg-line animate-pulse" />
               ) : isSoundSport && rating ? (
                 // SoundSport: Display medal badge
@@ -282,8 +286,38 @@ const SeasonScorecard = memo(
                 <p className="text-2xl font-bold text-white font-data tabular-nums">
                   {score?.toFixed(2) || '0.00'}
                 </p>
-              )}
-            </div>
+              );
+
+              const label = (
+                <p className="text-[10px] uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
+                  {isSoundSport ? 'Medal Rating' : 'Season Score'}
+                  {onSeasonScoreClick && (
+                    <ChevronRight className="w-3 h-3 text-muted group-hover:text-interactive transition-colors" />
+                  )}
+                </p>
+              );
+
+              if (onSeasonScoreClick) {
+                return (
+                  <button
+                    type="button"
+                    onClick={onSeasonScoreClick}
+                    title="View your season recap ledger"
+                    className="bg-surface-raised p-3 text-left w-full border border-transparent hover:border-interactive/40 hover:bg-white/5 transition-colors group press-feedback"
+                  >
+                    {label}
+                    {scoreBody}
+                  </button>
+                );
+              }
+
+              return (
+                <div className="bg-surface-raised p-3">
+                  {label}
+                  {scoreBody}
+                </div>
+              );
+            })()}
 
             {/* Rank / Best in Show */}
             <div className="bg-surface-raised p-3">
