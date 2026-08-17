@@ -83,9 +83,13 @@ const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Desktop Nav Links - centered feel */}
+        {/* Desktop Nav Links. Order leads with the daily loop — Dashboard,
+            Lineup, Schedule, Scores — then News, Leagues, Profile. This matches
+            the mobile bottom nav (loop on the bar; News/Leagues/Profile in the
+            More sheet), so the two platforms agree on priority. News used to
+            lead here, which put the marketing/news home ahead of the daily hub
+            for a returning director. */}
         <div className="hidden lg:flex items-center gap-1">
-          <NavItem to="/" icon={Newspaper} label="News" end />
           <NavItem
             to="/dashboard"
             icon={LayoutDashboard}
@@ -104,6 +108,7 @@ const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
           />
           <NavItem to="/schedule" icon={Calendar} label="Schedule" />
           <NavItem to="/scores" icon={Trophy} label="Scores" />
+          <NavItem to="/" icon={Newspaper} label="News" end />
           <NavItem to="/leagues" icon={Users} label="Leagues" />
           <NavItem to="/profile" icon={User} label="Profile" />
           {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}

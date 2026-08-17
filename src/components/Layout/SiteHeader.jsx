@@ -75,14 +75,16 @@ const SiteHeader = () => {
           )}
 
           {user ? (
+            // Same order as GameShell's nav: daily loop first (Dashboard,
+            // Lineup, Schedule, Scores), then News, Leagues, Profile.
             <nav className="hidden lg:flex items-center gap-1" aria-label="Primary">
-              <DesktopNavItem to="/" icon={Newspaper} label="News" end />
               <DesktopNavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
               {/* Lineup — the game itself, opened directly (matches GameShell's
                   nav and the mobile bottom-nav tab). */}
               <DesktopNavItem to="/dashboard?panel=lineup" icon={Music} label="Lineup" />
               <DesktopNavItem to="/schedule" icon={Calendar} label="Schedule" />
               <DesktopNavItem to="/scores" icon={Trophy} label="Scores" />
+              <DesktopNavItem to="/" icon={Newspaper} label="News" end />
               <DesktopNavItem to="/leagues" icon={Users} label="Leagues" />
               <DesktopNavItem to="/profile" icon={User} label="Profile" />
             </nav>
