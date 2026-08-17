@@ -91,7 +91,9 @@ const SiteLinksMenu = () => {
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="true"
         aria-expanded={open}
-        aria-label={hasUnseen ? 'Guides and site links (new updates available)' : 'Guides and site links'}
+        aria-label={
+          hasUnseen ? 'Guides and site links (new updates available)' : 'Guides and site links'
+        }
         title="Guides and site links"
         className={`relative ml-1 p-2 rounded-none transition-colors ${
           open ? 'text-white bg-white/10' : 'text-muted hover:text-white hover:bg-white/10'

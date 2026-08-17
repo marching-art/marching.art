@@ -51,13 +51,9 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef);
 
-  const errors: PressReleaseFormErrors = useMemo(
-    () => validatePressReleaseForm(form),
-    [form]
-  );
+  const errors: PressReleaseFormErrors = useMemo(() => validatePressReleaseForm(form), [form]);
   const hasCorps = ownedCorps.length > 0;
-  const selectedCorps =
-    ownedCorps.find((c) => c.corpsClass === form.corpsClass) ?? ownedCorps[0];
+  const selectedCorps = ownedCorps.find((c) => c.corpsClass === form.corpsClass) ?? ownedCorps[0];
 
   const update = <K extends keyof PressReleaseFormState>(
     field: K,
@@ -75,8 +71,7 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
 
   // Only surface a field's error once the user has attempted to publish, so the
   // form doesn't scream red on an empty first render.
-  const errorFor = (field: keyof PressReleaseFormErrors) =>
-    touched ? errors[field] : undefined;
+  const errorFor = (field: keyof PressReleaseFormErrors) => (touched ? errors[field] : undefined);
 
   return (
     <Portal>
@@ -120,9 +115,9 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
                 <Zap className="w-3.5 h-3.5 text-teal-400 mt-0.5 shrink-0" />
                 <p className="text-xs text-secondary">
                   Press releases publish <span className="text-teal-400 font-bold">instantly</span>{' '}
-                  under your corps&apos; byline — no review. Share your organization&apos;s own news:
-                  season reveals, staff moves, results, and rivalries from your corps&apos; point of
-                  view. For circuit-wide coverage, use Submit News instead.
+                  under your corps&apos; byline — no review. Share your organization&apos;s own
+                  news: season reveals, staff moves, results, and rivalries from your corps&apos;
+                  point of view. For circuit-wide coverage, use Submit News instead.
                 </p>
               </div>
 
