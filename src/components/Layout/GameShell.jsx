@@ -6,7 +6,7 @@
 // Laws enforced: No glow, no shadow, tight spacing
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom';
 import { adminHelpers } from '../../api';
 import { ShellContext } from './shellContext';
 import { useAuth } from '../../context/AuthContext';
@@ -45,6 +45,13 @@ import {
 const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Dashboard and Lineup share the /dashboard pathname (Lineup is the routed
+  // editor panel), so the two must not both light up. Mirrors BottomNav.
+  const onDashboard = location.pathname === '/dashboard';
+  const lineupOpen = onDashboard && searchParams.get('panel') === 'lineup';
 
   // Check if user is admin
   useEffect(() => {
@@ -78,8 +85,23 @@ const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
 
         {/* Desktop Nav Links - centered feel */}
         <div className="hidden lg:flex items-center gap-1">
-          <NavItem to="/" icon={Newspaper} label="News" />
-          <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem to="/" icon={Newspaper} label="News" end />
+          <NavItem
+            to="/dashboard"
+            icon={LayoutDashboard}
+            label="Dashboard"
+            active={onDashboard && !lineupOpen}
+          />
+          {/* Lineup — the game itself, opened directly, matching the mobile
+              bottom-nav tab. The editor is a routed panel on the dashboard, so
+              the link lands straight on it instead of leaving the director to
+              hunt for "Manage Lineup". */}
+          <NavItem
+            to="/dashboard?panel=lineup"
+            icon={Music}
+            label="Lineup"
+            active={lineupOpen}
+          />
           <NavItem to="/schedule" icon={Calendar} label="Schedule" />
           <NavItem to="/scores" icon={Trophy} label="Scores" />
           <NavItem to="/leagues" icon={Users} label="Leagues" />
@@ -139,30 +161,50 @@ const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
   );
 };
 
-// Nav Item Component - with touch target sizing
-const NavItem = ({ to, icon: Icon, label }) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) =>
-      `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
-        isActive ? 'text-white' : 'text-muted hover:text-white'
-      }`
-    }
-  >
-    {({ isActive }) => (
-      <>
-        <Icon
-          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-interactive' : ''}`}
-        />
-        <span>{label}</span>
-        {/* Active indicator - bottom bar */}
-        {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-interactive rounded-none" />
-        )}
-      </>
+// Nav Item Component - with touch target sizing.
+// When `active` is supplied the caller owns the active state — needed for
+// Dashboard vs Lineup, which share the /dashboard pathname and so can't be
+// distinguished by NavLink's path matching. Otherwise NavLink matches the path.
+const NAV_ITEM_BASE =
+  'relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback';
+
+const NavItemContent = ({ Icon, label, isActive }) => (
+  <>
+    <Icon
+      className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-interactive' : ''}`}
+    />
+    <span>{label}</span>
+    {/* Active indicator - bottom bar */}
+    {isActive && (
+      <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-interactive rounded-none" />
     )}
-  </NavLink>
+  </>
 );
+
+const NavItem = ({ to, icon: Icon, label, active, end = false }) => {
+  if (active !== undefined) {
+    return (
+      <Link
+        to={to}
+        aria-current={active ? 'page' : undefined}
+        className={`${NAV_ITEM_BASE} ${active ? 'text-white' : 'text-muted hover:text-white'}`}
+      >
+        <NavItemContent Icon={Icon} label={label} isActive={active} />
+      </Link>
+    );
+  }
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        `${NAV_ITEM_BASE} ${isActive ? 'text-white' : 'text-muted hover:text-white'}`
+      }
+    >
+      {({ isActive }) => <NavItemContent Icon={Icon} label={label} isActive={isActive} />}
+    </NavLink>
+  );
+};
 
 // =============================================================================
 // TICKER BAR - Fixed h-8 (Sub Nav) - Sports Stats Style
