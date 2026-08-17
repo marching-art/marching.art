@@ -53,7 +53,7 @@ jobs:
 
       # The PR's changed files sharpen the noise filter (docs/test-only PRs).
       - name: Collect changed files
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const files = await github.paginate(github.rest.pulls.listFiles, {
