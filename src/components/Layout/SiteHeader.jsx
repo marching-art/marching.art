@@ -23,12 +23,13 @@ import {
   Trophy,
   User,
   Users,
-  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useProfileStore } from '../../store/profileStore';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import DesktopNavItem from './DesktopNavItem';
+import ExploreMenu from './ExploreMenu';
+import SiteLinksMenu from './SiteLinksMenu';
 
 const SiteHeader = () => {
   // These render on public routes too, where there is no AuthProvider —
@@ -112,7 +113,11 @@ const SiteHeader = () => {
           )}
 
           {/* Signed-in users skip the informational link row above, so surface
-              Discord + the guide as icons — matching GameShell's header order. */}
+              Discord + the same Explore and help (❓) menus GameShell's header
+              carries. Before this, the app header's rich ❓ dropdown collapsed
+              to a single "Game Guide" icon the moment a director stepped onto a
+              public page — the two shells disagreed. They now render the same
+              shared menus, so the chrome is identical across the boundary. */}
           {user && (
             <>
               <a
@@ -125,14 +130,8 @@ const SiteHeader = () => {
               >
                 <MessageCircle className="w-5 h-5" />
               </a>
-              <Link
-                to="/guide"
-                className="p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
-                title="Game Guide"
-                aria-label="Game Guide"
-              >
-                <HelpCircle className="w-5 h-5" />
-              </Link>
+              <ExploreMenu />
+              <SiteLinksMenu />
             </>
           )}
         </div>

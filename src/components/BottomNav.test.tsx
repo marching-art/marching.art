@@ -134,6 +134,29 @@ describe('BottomNav', () => {
     );
   });
 
+  it('surfaces the Explore game features in the More sheet', () => {
+    // Shop, Achievements, Records and the archive galleries used to be buried in
+    // the desktop ❓ drawer with no mobile home at all. The sheet is now their
+    // phone entry point, matching the desktop ExploreMenu.
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    const sheet = screen.getByRole('navigation', { name: 'More destinations' });
+    expect(within(sheet).getByRole('link', { name: 'Shop' })).toHaveAttribute('href', '/shop');
+    expect(within(sheet).getByRole('link', { name: 'Achievements' })).toHaveAttribute(
+      'href',
+      '/achievements'
+    );
+    expect(within(sheet).getByRole('link', { name: 'Records' })).toHaveAttribute('href', '/records');
+    expect(within(sheet).getByRole('link', { name: 'Retired Corps' })).toHaveAttribute(
+      'href',
+      '/retired-corps'
+    );
+    expect(within(sheet).getByRole('link', { name: 'Corps History' })).toHaveAttribute(
+      'href',
+      '/corps-history'
+    );
+  });
+
   it('leaves Admin out of the sheet for ordinary directors', () => {
     renderNav();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));

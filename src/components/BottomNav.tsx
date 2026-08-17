@@ -46,6 +46,7 @@ import { triggerHaptic } from '../hooks/useHaptic';
 import { prefetchRoute } from '../lib/prefetch';
 import { useNavBadges } from '../hooks/useNavBadges';
 import { BottomSheet } from './ui/BottomSheet';
+import { GAME_LINKS, ARCHIVE_LINKS, type AppLink } from '../utils/exploreLinks';
 
 // =============================================================================
 // TYPES
@@ -103,6 +104,29 @@ const ADMIN_ITEM: NavItem = { to: '/admin', prefetch: '/admin', label: 'Admin', 
 
 /** Paths the More tab stands in for, so it highlights when you are on one. */
 const MORE_PATHS = ['/', '/leagues', '/profile', '/admin'];
+
+/**
+ * One row in the More sheet — shared by the primary destinations and the
+ * Explore group so they render identically. `prefetch` is the path whose chunk
+ * to warm on intent (the route's own path for Explore links; a tab may prefetch
+ * a different target).
+ */
+const renderSheetRow = (item: AppLink, prefetch: string) => {
+  const Icon = item.icon;
+  return (
+    <Link
+      key={item.to}
+      to={item.to}
+      onClick={() => triggerHaptic('light')}
+      onMouseEnter={() => prefetchRoute(prefetch)}
+      onFocus={() => prefetchRoute(prefetch)}
+      className="flex items-center gap-3 px-4 min-h-touch py-3 border-b border-line-subtle text-white hover:bg-surface-raised active:bg-surface-raised transition-colors duration-150"
+    >
+      <Icon className="w-5 h-5 text-interactive" aria-hidden="true" />
+      <span className="text-sm font-medium">{item.label}</span>
+    </Link>
+  );
+};
 
 // =============================================================================
 // COMPONENT
@@ -221,25 +245,20 @@ const BottomNav: React.FC = () => {
         isOpen={moreOpen}
         onClose={() => setMoreOpen(false)}
         title="More"
-        snapPoints={[50]}
+        snapPoints={[60]}
       >
         <nav aria-label="More destinations" className="pb-4">
-          {moreItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => triggerHaptic('light')}
-                onMouseEnter={() => prefetchRoute(item.prefetch)}
-                onFocus={() => prefetchRoute(item.prefetch)}
-                className="flex items-center gap-3 px-4 min-h-touch py-3 border-b border-line-subtle text-white hover:bg-surface-raised active:bg-surface-raised transition-colors duration-150"
-              >
-                <Icon className="w-5 h-5 text-interactive" aria-hidden="true" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
+          {moreItems.map((item) => renderSheetRow(item, item.prefetch))}
+
+          {/* Explore — the game features and archive galleries that used to be
+              buried in the ❓ drawer and had no mobile home at all. On desktop
+              these are the ExploreMenu; here they're a labelled group so the
+              phone reaches the same places. Shared source of truth with the
+              desktop menu (utils/exploreLinks). */}
+          <div className="px-4 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted">
+            Explore
+          </div>
+          {[...GAME_LINKS, ...ARCHIVE_LINKS].map((item) => renderSheetRow(item, item.to))}
         </nav>
       </BottomSheet>
     </>

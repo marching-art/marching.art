@@ -12,6 +12,7 @@ import { ShellContext } from './shellContext';
 import { useAuth } from '../../context/AuthContext';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import SiteLinksMenu from './SiteLinksMenu';
+import ExploreMenu from './ExploreMenu';
 import NotificationBell from '../Notifications/NotificationBell';
 import BottomNav from '../BottomNav';
 import { useTickerData } from '../../hooks/useTickerData';
@@ -100,6 +101,12 @@ const TopNav = () => {
             page, desktop and mobile — so it is mounted exactly once and the
             session holds a single notifications listener. */}
         <NotificationBell uid={user?.uid} />
+
+        {/* Explore — the game destinations that aren't part of the daily loop
+            (Shop, Achievements, Records, the archive galleries). Kept out of the
+            help menu so the ❓ is only guides + legal. Shared with the public
+            SiteHeader so both shells offer the same set. */}
+        <ExploreMenu />
 
         {/* Guides + site links. GameShell has no footer (fixed layout), so this
             is the app's only route to the public pages and the legal links. */}
