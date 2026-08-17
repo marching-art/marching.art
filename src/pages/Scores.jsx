@@ -6,7 +6,7 @@
 // Laws: App Shell, Pill Tab Segmented Control, High-Density Tables, no glow
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Navigate } from 'react-router-dom';
 import { Activity, Archive, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
@@ -24,10 +24,11 @@ import {
 } from './ScoresParts';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-// Lazy-load Hall of Champions — only loaded if the user opens that tab.
-// lazyWithRetry recovers from stale-chunk 404s after a deploy (see utils/lazyWithRetry).
-const HallOfChampions = lazyWithRetry(() => import('./HallOfChampions'), 'HallOfChampionsTab');
-// Supporters wall — nested here beside Hall of Champions (only loaded on open).
+// Hall of Champions is no longer a Scores tab — it has its own canonical route
+// (/hall-of-champions, App.jsx), the one home for its content. Old
+// ?tab=champions deep links redirect there (see below).
+//
+// Supporters wall — the one remaining utility view, loaded only on open.
 const SupportersWall = lazyWithRetry(() => import('./SupportersWall'), 'SupportersWallTab');
 // Podium Class tab (flag-gated) — a sub-tabbed panel: the DCI-style recap box
 // scores and The Podium Report (daily power rankings), split into two
@@ -43,11 +44,12 @@ const PodiumScoresPanel = lazyWithRetry(
 
 const TABS = [
   { id: 'fantasy', label: 'Fantasy' },
-  // Archive/Champions/Supporters are utility views, not games — groupStart
-  // draws a divider before Archive separating them from the game tabs
-  // (Fantasy, and Podium when enabled).
+  // Archive/Supporters are utility views, not games — groupStart draws a divider
+  // before Archive separating them from the game tabs (Fantasy, and Podium when
+  // enabled). Hall of Champions used to sit here too; it now lives only at its
+  // canonical /hall-of-champions route (reachable from the Explore menu, the
+  // profile Champions link, and the footer), removing the duplicate mount.
   { id: 'archive', label: 'Archive', accent: 'yellow', groupStart: true },
-  { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
   { id: 'supporters', label: 'Supporters', accent: 'yellow' },
 ];
 
@@ -350,6 +352,15 @@ const Scores = () => {
   // =============================================================================
   // RENDER
   // =============================================================================
+
+  // Hall of Champions moved out of the Scores tab set to its own canonical
+  // route. Redirect the old ?tab=champions deep links (share cards, saved
+  // links, the former profile quick-link) so they land on the real page instead
+  // of silently falling through to the Fantasy tab. Placed after every hook so
+  // hook order is unchanged.
+  if (targetTab === 'champions') {
+    return <Navigate to="/hall-of-champions" replace />;
+  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
@@ -719,21 +730,6 @@ const Scores = () => {
                       </p>
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* HALL OF CHAMPIONS TAB */}
-              {activeTab === 'champions' && (
-                <div className="min-h-[calc(100vh-180px)] flex flex-col">
-                  <Suspense
-                    fallback={
-                      <div className="p-8 text-center text-muted text-sm">
-                        Loading Hall of Champions...
-                      </div>
-                    }
-                  >
-                    <HallOfChampions />
-                  </Suspense>
                 </div>
               )}
 

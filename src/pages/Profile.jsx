@@ -554,7 +554,7 @@ const Profile = () => {
             className={`grid gap-2 ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-4'}`}
           >
             <Link
-              to="/scores?tab=champions"
+              to="/hall-of-champions"
               className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
               <Crown className="w-5 h-5 text-brand mb-1" />
