@@ -18,6 +18,7 @@ import BottomNav from '../BottomNav';
 import { useTickerData } from '../../hooks/useTickerData';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useTickerCollapsed } from '../../hooks/useTickerCollapsed';
 import {
   LayoutDashboard,
   Calendar,
@@ -33,13 +34,15 @@ import {
   Shield,
   Newspaper,
   MessageCircle,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 
 // =============================================================================
 // TOP NAV - Clean, minimal header focused on navigation
 // =============================================================================
 
-const TopNav = () => {
+const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -83,6 +86,26 @@ const TopNav = () => {
           <NavItem to="/profile" icon={User} label="Profile" />
           {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
         </div>
+
+        {/* Score-ticker toggle. The ticker only exists on sm+ (it's unmounted
+            below sm), so the control is sm+ too — a director who wants the 32px
+            and the quiet back can collapse it, and the choice persists
+            (useTickerCollapsed). The flex-1 spacer above right-aligns everything
+            from here on. */}
+        <button
+          type="button"
+          onClick={onToggleTicker}
+          aria-pressed={!tickerCollapsed}
+          aria-label={tickerCollapsed ? 'Show scores ticker' : 'Hide scores ticker'}
+          title={tickerCollapsed ? 'Show scores ticker' : 'Hide scores ticker'}
+          className="hidden sm:inline-flex ml-2 p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors items-center"
+        >
+          {tickerCollapsed ? (
+            <ChevronDown className="w-5 h-5" />
+          ) : (
+            <ChevronUp className="w-5 h-5" />
+          )}
+        </button>
 
         {/* Discord — kept in the persistent header so the community link is
             reachable from every page (it used to live only on the home header). */}
@@ -654,6 +677,12 @@ const TickerBar = () => {
 
 const GameShell = ({ children }) => {
   const isMobile = useIsMobile();
+  const [tickerCollapsed, toggleTicker] = useTickerCollapsed();
+
+  // The ticker shows only when it's a desktop viewport AND the director hasn't
+  // collapsed it. Both the render and the main-content offset key off this, so
+  // the two can't disagree about whether the 32px strip is present.
+  const showTicker = !isMobile && !tickerCollapsed;
 
   // Enable fixed one-screen layout for GameShell pages
   useEffect(() => {
@@ -667,10 +696,10 @@ const GameShell = ({ children }) => {
   // public routes are counted too — they were invisible when this lived here.
 
   const shellContextValue = {
-    // 56px top nav, plus the 32px (h-8) ticker on sm+. Below sm the ticker is
-    // hidden, so the header is the nav alone.
+    // 56px top nav, plus the 32px (h-8) ticker on sm+ when it isn't collapsed.
+    // Below sm — or when the director collapsed it — the header is the nav alone.
     // Currently unconsumed — if you use it, prefer the responsive values.
-    headerHeight: 88,
+    headerHeight: tickerCollapsed ? 56 : 88,
     headerHeightMobile: 56,
   };
 
@@ -678,7 +707,7 @@ const GameShell = ({ children }) => {
     <ShellContext.Provider value={shellContextValue}>
       <div className="min-h-screen w-full bg-background text-white font-sans">
         {/* Fixed Top Navigation */}
-        <TopNav />
+        <TopNav tickerCollapsed={tickerCollapsed} onToggleTicker={toggleTicker} />
 
         {/* Fixed Ticker Bar — sm and up only.
             A stock ticker is a peripheral-vision affordance: it needs
@@ -694,16 +723,21 @@ const GameShell = ({ children }) => {
             its recap query, its resize listener, and its marquee. The one
             page that shares that query (the dashboard) issues it itself, so
             nothing else pays for this. useIsMobile is pinned to the same
-            `sm` breakpoint the layout below uses, so the two cannot drift. */}
-        {!isMobile && <TickerBar />}
+            `sm` breakpoint the layout below uses, so the two cannot drift.
+
+            Directors who prefer the vertical room can collapse it from the
+            header toggle; the choice persists (useTickerCollapsed). */}
+        {showTicker && <TickerBar />}
 
         {/* Main Content Area - Fixed position fills space between headers and footer */}
-        {/* Below sm: top-nav (56px) only — the ticker is hidden there. */}
-        {/* sm and up: top-nav (56px) + ticker (32px) = 88px */}
+        {/* Below sm — or when the ticker is collapsed: top-nav (56px) only. */}
+        {/* sm and up with the ticker shown: top-nav (56px) + ticker (32px) = 88px */}
         <main
           id="main-content"
           role="main"
-          className="fixed top-14 sm:top-[88px] left-0 right-0 bg-background overflow-hidden main-content-bottom"
+          className={`fixed ${
+            showTicker ? 'top-14 sm:top-[88px]' : 'top-14'
+          } left-0 right-0 bg-background overflow-hidden main-content-bottom`}
         >
           {/* Full-width wrapper so each page's own scroll container spans the
               viewport — this keeps scrollbars flush against the right edge of
