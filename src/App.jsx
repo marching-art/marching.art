@@ -175,9 +175,10 @@ const RedirectIfAuthed = ({ children }) => {
 // A logged-out visitor arriving from search got the full app chrome and bounced
 // to / on every click. Pick the shell that matches the visitor instead.
 //
-// SEO lives here rather than in the page component because HallOfChampions is
-// also mounted as a tab inside /scores; calling useSEO there would rewrite the
-// canonical URL to /hall-of-champions while the user is on the Scores page.
+// This is the one canonical home for the Hall of Champions (the /scores tab that
+// used to duplicate it was removed; old ?tab=champions links redirect here). SEO
+// lives in this route wrapper rather than the shared page component so the two
+// shells it can render in agree on one canonical URL.
 const HallOfChampionsEntry = () => {
   const { user } = useAuth();
 

@@ -4,7 +4,7 @@
 // Owns all Dashboard modal state, the modal-queue auto-trigger effects, and
 // the modal action handlers. Extracted verbatim from src/pages/Dashboard.jsx.
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { updateProfile } from '../api/profile';
@@ -13,12 +13,9 @@ import {
   registerCorps,
   retireCorps,
   unlockClassWithCorpsCoin,
-  submitNewsForApproval,
   transferCorps,
   unretireCorps,
 } from '../api/functions';
-import { publishPressRelease } from '../api/pressReleases';
-import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { CLASS_DISPLAY_NAMES } from '../components/Dashboard/sections/constants';
 import { useModalQueue, MODAL_PRIORITY } from './useModalQueue';
 import { useModalRoute } from './useModalRoute';
@@ -102,10 +99,6 @@ export function useDashboardModals(user, dashboardData) {
   const [transferring, setTransferring] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(/** @type {string|null} */ (null));
   const [showUniformDesign, setShowUniformDesign] = useState(false);
-  const [showNewsSubmission, setShowNewsSubmission] = useState(false);
-  const [submittingNews, setSubmittingNews] = useState(false);
-  const [showPressRelease, setShowPressRelease] = useState(false);
-  const [submittingPressRelease, setSubmittingPressRelease] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
 
@@ -167,7 +160,6 @@ export function useDashboardModals(user, dashboardData) {
       showDeleteConfirm ||
       showMoveCorps ||
       showRetireConfirm ||
-      showNewsSubmission ||
       showStreakModal ||
       showWalletModal;
     if (userModalOpen) {
@@ -183,7 +175,6 @@ export function useDashboardModals(user, dashboardData) {
     showDeleteConfirm,
     showMoveCorps,
     showRetireConfirm,
-    showNewsSubmission,
     showStreakModal,
     showWalletModal,
     modalQueue,
@@ -379,52 +370,10 @@ export function useDashboardModals(user, dashboardData) {
   );
   const closeCaptionSelection = useCallback(() => closePanel(), [closePanel]);
 
-  /** @type {(formData: any) => Promise<void>} */
-  const handleNewsSubmission = useCallback(async (formData) => {
-    setSubmittingNews(true);
-    try {
-      const result = await submitNewsForApproval(formData);
-      if (result.data.success) {
-        toast.success('Article submitted for review!');
-        setShowNewsSubmission(false);
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to submit article');
-    } finally {
-      setSubmittingNews(false);
-    }
-  }, []);
-
-  // The director's registered corps, highest class first — the roster a press
-  // release can be issued from. Iterates PROFILE_CORPS_CLASS_ORDER so Podium is
-  // included (it sits last): a Podium director speaks for their own corps too
-  // (PODIUM.md §5.8), and a Podium-only director would otherwise have nothing to
-  // issue a release from. Podium's profile entry is a display copy carrying its
-  // corpsName, which is all the byline needs.
-  const ownedCorps = useMemo(() => {
-    const map = profile?.corps;
-    if (!map) return [];
-    return PROFILE_CORPS_CLASS_ORDER.map((corpsClass) => {
-      const corps = resolveCorpsForClass(map, corpsClass);
-      return corps?.corpsName ? { corpsClass, corpsName: corps.corpsName } : null;
-    }).filter(Boolean);
-  }, [profile?.corps]);
-
-  /** @type {(payload: any) => Promise<void>} */
-  const handlePressRelease = useCallback(async (payload) => {
-    setSubmittingPressRelease(true);
-    try {
-      const result = await publishPressRelease(payload);
-      if (result.data.success) {
-        toast.success(result.data.message || 'Press release published!');
-        setShowPressRelease(false);
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to publish press release');
-    } finally {
-      setSubmittingPressRelease(false);
-    }
-  }, []);
+  // News authoring (press releases + article submissions) moved off the
+  // Dashboard to the director's profile (components/Profile/NewsroomActions),
+  // which owns that state and its handlers now — publishing news is not a
+  // daily-loop action.
 
   /** @type {(design: any) => Promise<void>} */
   const handleUniformDesign = useCallback(
@@ -480,13 +429,6 @@ export function useDashboardModals(user, dashboardData) {
     setClassToPurchase,
     showUniformDesign,
     setShowUniformDesign,
-    showNewsSubmission,
-    setShowNewsSubmission,
-    submittingNews,
-    showPressRelease,
-    setShowPressRelease,
-    submittingPressRelease,
-    ownedCorps,
     showStreakModal,
     setShowStreakModal,
     showWalletModal,
@@ -507,8 +449,6 @@ export function useDashboardModals(user, dashboardData) {
     handleConfirmClassPurchase,
     openCaptionSelection,
     closeCaptionSelection,
-    handleNewsSubmission,
-    handlePressRelease,
     handleUniformDesign,
   };
 }

@@ -7,7 +7,6 @@
 
 import React, { useMemo, useState, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Megaphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
@@ -144,8 +143,6 @@ const Dashboard = () => {
     setShowMoveCorps,
     setShowRetireConfirm,
     setShowUniformDesign,
-    setShowNewsSubmission,
-    setShowPressRelease,
     setShowStreakModal,
     setShowWalletModal,
     handleSeasonSetupFinish,
@@ -654,39 +651,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Footer — community content is not a daily action, so it sits
-                below the zones instead of occupying sidebar real estate. Two
-                distinct paths: a press release is YOUR organization's own news
-                (instant), a submitted article covers the shared world (reviewed). */}
-            <div className="mt-4 bg-surface-card border border-line overflow-hidden">
-              <div className="p-4 grid gap-3 sm:grid-cols-2">
-                <button
-                  onClick={() => setShowPressRelease(true)}
-                  className="group text-left p-3 bg-surface-raised hover:bg-line border border-line hover:border-teal-500/50 transition-colors flex items-start gap-3"
-                >
-                  <Megaphone className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" />
-                  <span className="flex-1">
-                    <span className="block text-sm font-bold text-white">Post a Press Release</span>
-                    <span className="block text-xs text-muted mt-0.5">
-                      Your corps&apos; own news — reveals, staff, results. Publishes instantly.
-                    </span>
-                  </span>
-                </button>
-                <button
-                  onClick={() => setShowNewsSubmission(true)}
-                  className="group text-left p-3 bg-surface-raised hover:bg-line border border-line hover:border-line-strong transition-colors flex items-start gap-3"
-                >
-                  <FileText className="w-4 h-4 text-interactive mt-0.5 shrink-0" />
-                  <span className="flex-1">
-                    <span className="block text-sm font-bold text-white">Submit an Article</span>
-                    <span className="block text-xs text-muted mt-0.5">
-                      Cover the circuit — competition, rivalries, analysis. Reviewed before
-                      publishing.
-                    </span>
-                  </span>
-                </button>
-              </div>
-            </div>
           </div>
         ) : (
           <NoCorpsCard onRegister={() => setShowRegistration(true)} />

@@ -6,17 +6,19 @@
 // Laws enforced: No glow, no shadow, tight spacing
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom';
 import { adminHelpers } from '../../api';
 import { ShellContext } from './shellContext';
 import { useAuth } from '../../context/AuthContext';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import SiteLinksMenu from './SiteLinksMenu';
+import ExploreMenu from './ExploreMenu';
 import NotificationBell from '../Notifications/NotificationBell';
 import BottomNav from '../BottomNav';
 import { useTickerData } from '../../hooks/useTickerData';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useTickerCollapsed } from '../../hooks/useTickerCollapsed';
 import {
   LayoutDashboard,
   Calendar,
@@ -32,15 +34,24 @@ import {
   Shield,
   Newspaper,
   MessageCircle,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 
 // =============================================================================
 // TOP NAV - Clean, minimal header focused on navigation
 // =============================================================================
 
-const TopNav = () => {
+const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Dashboard and Lineup share the /dashboard pathname (Lineup is the routed
+  // editor panel), so the two must not both light up. Mirrors BottomNav.
+  const onDashboard = location.pathname === '/dashboard';
+  const lineupOpen = onDashboard && searchParams.get('panel') === 'lineup';
 
   // Check if user is admin
   useEffect(() => {
@@ -72,16 +83,56 @@ const TopNav = () => {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Desktop Nav Links - centered feel */}
+        {/* Desktop Nav Links. Order leads with the daily loop — Dashboard,
+            Lineup, Schedule, Scores — then News, Leagues, Profile. This matches
+            the mobile bottom nav (loop on the bar; News/Leagues/Profile in the
+            More sheet), so the two platforms agree on priority. News used to
+            lead here, which put the marketing/news home ahead of the daily hub
+            for a returning director. */}
         <div className="hidden lg:flex items-center gap-1">
-          <NavItem to="/" icon={Newspaper} label="News" />
-          <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem
+            to="/dashboard"
+            icon={LayoutDashboard}
+            label="Dashboard"
+            active={onDashboard && !lineupOpen}
+          />
+          {/* Lineup — the game itself, opened directly, matching the mobile
+              bottom-nav tab. The editor is a routed panel on the dashboard, so
+              the link lands straight on it instead of leaving the director to
+              hunt for "Manage Lineup". */}
+          <NavItem
+            to="/dashboard?panel=lineup"
+            icon={Music}
+            label="Lineup"
+            active={lineupOpen}
+          />
           <NavItem to="/schedule" icon={Calendar} label="Schedule" />
           <NavItem to="/scores" icon={Trophy} label="Scores" />
+          <NavItem to="/" icon={Newspaper} label="News" end />
           <NavItem to="/leagues" icon={Users} label="Leagues" />
           <NavItem to="/profile" icon={User} label="Profile" />
           {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
         </div>
+
+        {/* Score-ticker toggle. The ticker only exists on sm+ (it's unmounted
+            below sm), so the control is sm+ too — a director who wants the 32px
+            and the quiet back can collapse it, and the choice persists
+            (useTickerCollapsed). The flex-1 spacer above right-aligns everything
+            from here on. */}
+        <button
+          type="button"
+          onClick={onToggleTicker}
+          aria-pressed={!tickerCollapsed}
+          aria-label={tickerCollapsed ? 'Show scores ticker' : 'Hide scores ticker'}
+          title={tickerCollapsed ? 'Show scores ticker' : 'Hide scores ticker'}
+          className="hidden sm:inline-flex ml-2 p-2 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors items-center"
+        >
+          {tickerCollapsed ? (
+            <ChevronDown className="w-5 h-5" />
+          ) : (
+            <ChevronUp className="w-5 h-5" />
+          )}
+        </button>
 
         {/* Discord — kept in the persistent header so the community link is
             reachable from every page (it used to live only on the home header). */}
@@ -101,6 +152,12 @@ const TopNav = () => {
             session holds a single notifications listener. */}
         <NotificationBell uid={user?.uid} />
 
+        {/* Explore — the game destinations that aren't part of the daily loop
+            (Shop, Achievements, Records, the archive galleries). Kept out of the
+            help menu so the ❓ is only guides + legal. Shared with the public
+            SiteHeader so both shells offer the same set. */}
+        <ExploreMenu />
+
         {/* Guides + site links. GameShell has no footer (fixed layout), so this
             is the app's only route to the public pages and the legal links. */}
         <SiteLinksMenu />
@@ -109,30 +166,50 @@ const TopNav = () => {
   );
 };
 
-// Nav Item Component - with touch target sizing
-const NavItem = ({ to, icon: Icon, label }) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) =>
-      `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
-        isActive ? 'text-white' : 'text-muted hover:text-white'
-      }`
-    }
-  >
-    {({ isActive }) => (
-      <>
-        <Icon
-          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-interactive' : ''}`}
-        />
-        <span>{label}</span>
-        {/* Active indicator - bottom bar */}
-        {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-interactive rounded-none" />
-        )}
-      </>
+// Nav Item Component - with touch target sizing.
+// When `active` is supplied the caller owns the active state — needed for
+// Dashboard vs Lineup, which share the /dashboard pathname and so can't be
+// distinguished by NavLink's path matching. Otherwise NavLink matches the path.
+const NAV_ITEM_BASE =
+  'relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback';
+
+const NavItemContent = ({ Icon, label, isActive }) => (
+  <>
+    <Icon
+      className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-interactive' : ''}`}
+    />
+    <span>{label}</span>
+    {/* Active indicator - bottom bar */}
+    {isActive && (
+      <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-interactive rounded-none" />
     )}
-  </NavLink>
+  </>
 );
+
+const NavItem = ({ to, icon: Icon, label, active, end = false }) => {
+  if (active !== undefined) {
+    return (
+      <Link
+        to={to}
+        aria-current={active ? 'page' : undefined}
+        className={`${NAV_ITEM_BASE} ${active ? 'text-white' : 'text-muted hover:text-white'}`}
+      >
+        <NavItemContent Icon={Icon} label={label} isActive={active} />
+      </Link>
+    );
+  }
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        `${NAV_ITEM_BASE} ${isActive ? 'text-white' : 'text-muted hover:text-white'}`
+      }
+    >
+      {({ isActive }) => <NavItemContent Icon={Icon} label={label} isActive={isActive} />}
+    </NavLink>
+  );
+};
 
 // =============================================================================
 // TICKER BAR - Fixed h-8 (Sub Nav) - Sports Stats Style
@@ -647,6 +724,12 @@ const TickerBar = () => {
 
 const GameShell = ({ children }) => {
   const isMobile = useIsMobile();
+  const [tickerCollapsed, toggleTicker] = useTickerCollapsed();
+
+  // The ticker shows only when it's a desktop viewport AND the director hasn't
+  // collapsed it. Both the render and the main-content offset key off this, so
+  // the two can't disagree about whether the 32px strip is present.
+  const showTicker = !isMobile && !tickerCollapsed;
 
   // Enable fixed one-screen layout for GameShell pages
   useEffect(() => {
@@ -660,10 +743,10 @@ const GameShell = ({ children }) => {
   // public routes are counted too — they were invisible when this lived here.
 
   const shellContextValue = {
-    // 56px top nav, plus the 32px (h-8) ticker on sm+. Below sm the ticker is
-    // hidden, so the header is the nav alone.
+    // 56px top nav, plus the 32px (h-8) ticker on sm+ when it isn't collapsed.
+    // Below sm — or when the director collapsed it — the header is the nav alone.
     // Currently unconsumed — if you use it, prefer the responsive values.
-    headerHeight: 88,
+    headerHeight: tickerCollapsed ? 56 : 88,
     headerHeightMobile: 56,
   };
 
@@ -671,7 +754,7 @@ const GameShell = ({ children }) => {
     <ShellContext.Provider value={shellContextValue}>
       <div className="min-h-screen w-full bg-background text-white font-sans">
         {/* Fixed Top Navigation */}
-        <TopNav />
+        <TopNav tickerCollapsed={tickerCollapsed} onToggleTicker={toggleTicker} />
 
         {/* Fixed Ticker Bar — sm and up only.
             A stock ticker is a peripheral-vision affordance: it needs
@@ -687,16 +770,21 @@ const GameShell = ({ children }) => {
             its recap query, its resize listener, and its marquee. The one
             page that shares that query (the dashboard) issues it itself, so
             nothing else pays for this. useIsMobile is pinned to the same
-            `sm` breakpoint the layout below uses, so the two cannot drift. */}
-        {!isMobile && <TickerBar />}
+            `sm` breakpoint the layout below uses, so the two cannot drift.
+
+            Directors who prefer the vertical room can collapse it from the
+            header toggle; the choice persists (useTickerCollapsed). */}
+        {showTicker && <TickerBar />}
 
         {/* Main Content Area - Fixed position fills space between headers and footer */}
-        {/* Below sm: top-nav (56px) only — the ticker is hidden there. */}
-        {/* sm and up: top-nav (56px) + ticker (32px) = 88px */}
+        {/* Below sm — or when the ticker is collapsed: top-nav (56px) only. */}
+        {/* sm and up with the ticker shown: top-nav (56px) + ticker (32px) = 88px */}
         <main
           id="main-content"
           role="main"
-          className="fixed top-14 sm:top-[88px] left-0 right-0 bg-background overflow-hidden main-content-bottom"
+          className={`fixed ${
+            showTicker ? 'top-14 sm:top-[88px]' : 'top-14'
+          } left-0 right-0 bg-background overflow-hidden main-content-bottom`}
         >
           {/* Full-width wrapper so each page's own scroll container spans the
               viewport — this keeps scrollbars flush against the right edge of

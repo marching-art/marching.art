@@ -29,6 +29,7 @@ import { getLeaguesByCreator } from '../api/leagues';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import ProfileNewsroom from '../components/Profile/ProfileNewsroom';
+import NewsroomActions from '../components/Profile/NewsroomActions';
 import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar, setCorpsAvatarFromUrl } from '../api/functions';
@@ -538,6 +539,12 @@ const Profile = () => {
         {/* NEWSROOM — the director's own published press releases & articles */}
         <ProfileNewsroom uid={profileUserId} isOwnProfile={isOwnProfile} />
 
+        {/* Compose new news — press release (instant) or submitted article
+            (reviewed). Own profile only. Moved here from the Dashboard footer:
+            publishing news is not a daily-loop action, and it belongs beside the
+            Newsroom that shows what you've already published. */}
+        {isOwnProfile && <NewsroomActions profile={profile} />}
+
         {/* PENDING LEAGUE INVITATIONS (own profile only) */}
         {isOwnProfile && user && <PendingLeagueInvitations userId={user.uid} />}
 
@@ -547,7 +554,7 @@ const Profile = () => {
             className={`grid gap-2 ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-4'}`}
           >
             <Link
-              to="/scores?tab=champions"
+              to="/hall-of-champions"
               className="bg-surface-card border border-line p-4 text-center hover:bg-surface-raised active:bg-line transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
               <Crown className="w-5 h-5 text-brand mb-1" />

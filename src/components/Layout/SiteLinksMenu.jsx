@@ -1,5 +1,5 @@
 // =============================================================================
-// SITE LINKS MENU - the signed-in app's route to the public pages
+// SITE LINKS MENU (❓) - the signed-in help menu: guides, what's-new, legal
 // =============================================================================
 // PublicShell pages get SiteFooter. GameShell can't: its layout is a fixed
 // one-screen grid (main is position:fixed between the header and the bottom
@@ -11,6 +11,12 @@
 // /hall-of-champions, or the public results pages. The help icon in the top nav
 // linked only to /guide. This turns that single icon into the same link set the
 // footer carries.
+//
+// This menu is now rendered in BOTH shells — GameShell's TopNav and the public
+// SiteHeader's signed-in branch — so the ❓ is identical no matter which side of
+// the app/public boundary a director is on (it used to shrink to a lone /guide
+// icon on public pages). Game destinations (Shop, Achievements, Records, the
+// archive galleries) moved out to ExploreMenu, leaving this as pure help.
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -18,6 +24,10 @@ import { HelpCircle, ExternalLink, Sparkles } from 'lucide-react';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import { useUnseenUpdates } from '../../hooks/useUnseenUpdates';
 
+// This menu is help: guides, what's-new, the public results surface, and legal.
+// Game destinations (Shop, Achievements, Records, and the archive galleries)
+// used to live here too, which made the ❓ a junk drawer — they now have their
+// own home in ExploreMenu, shared across both shells.
 const MENU_LINKS = [
   // Routed panel on the dashboard (hooks/useDashboardModals DASHBOARD_PANELS).
   // The Quick Start guide existed but had no caller anywhere in the app, so
@@ -27,17 +37,6 @@ const MENU_LINKS = [
   { to: '/how-to-play', label: 'How to Play' },
   { to: '/podium-guide', label: 'Podium Guide' },
   { to: '/hall-of-champions', label: 'Hall of Champions' },
-];
-
-// App pages with no other persistent inbound link (Shop was reachable only
-// from the CorpsCoin modal; Records only from Hall of Champions; the retired
-// corps gallery and corps history had no inbound links at all).
-const EXPLORE_LINKS = [
-  { to: '/shop', label: 'Shop' },
-  { to: '/achievements', label: 'Achievements' },
-  { to: '/records', label: 'Records' },
-  { to: '/retired-corps', label: 'Retired Corps' },
-  { to: '/corps-history', label: 'Corps History' },
 ];
 
 const LEGAL_LINKS = [
@@ -137,20 +136,6 @@ const SiteLinksMenu = () => {
           <div className="my-1 border-t border-line" />
 
           {MENU_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className={itemClass}
-            >
-              {link.label}
-            </Link>
-          ))}
-
-          <div className="my-1 border-t border-line" />
-
-          {EXPLORE_LINKS.map((link) => (
             <Link
               key={link.to}
               to={link.to}

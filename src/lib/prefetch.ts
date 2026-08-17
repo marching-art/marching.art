@@ -18,6 +18,9 @@ const routeImports: Record<string, () => Promise<unknown>> = {
   '/admin': () => import('../pages/Admin'),
   '/retired-corps': () => import('../pages/RetiredCorpsGallery'),
   '/corps-history': () => import('../pages/CorpsHistory'),
+  '/shop': () => import('../pages/Shop'),
+  '/achievements': () => import('../pages/Achievements'),
+  '/records': () => import('../pages/Records'),
 };
 
 /**
