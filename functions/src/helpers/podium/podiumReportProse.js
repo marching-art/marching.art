@@ -1,28 +1,32 @@
 /**
- * The Podium Report — deterministic commentary composer (design §7.3).
+ * The Podium Report — deterministic feature composer (design §7.3).
  *
  * The Podium Report used to publish once a week off the `power` column. It now
  * runs EVERY processing night off the daily standings sheet
  * (`podium-recaps/{seasonUid}/standings/{day}`, built by buildDailyStandings),
- * and reads like a feature in a news magazine — a Sports-Illustrated-meets-
- * Vanity-Fair column that sets a scene and tells the night's story — rather than
- * the bare ranking dump or quick-glance summary it began as.
+ * and reads like the day's must-read column — a Sports-Illustrated-meets-Vanity-
+ * Fair feature that leads on the night's real drama (a coup at the top, a photo
+ * finish, a surge through the field), sets a scene, and tells the story caption
+ * by caption — rather than the bare ranking dump it began as.
  *
  * The voice is editorial and warm, but every clause is still composed straight
  * from the standings numbers — no LLM, no randomness. Corps names, ranks, scores,
  * caption books and margins can never be hallucinated because nothing here
- * invents them: the same standings doc always yields the same column. That is the
- * whole reason this article is data-composed rather than model-written (decision
- * 31), and the magazine voice must not cost us that guarantee — so the caption
- * analysis names only the GE/Visual/Music numbers actually on the sheet, and goes
- * silent when the breakdown is missing.
+ * invents them: the same standings doc (plus the prior nights' sheets) always
+ * yields the same column. That is the whole reason this article is data-composed
+ * rather than model-written (decision 31), and the feature voice must not cost us
+ * that guarantee — so every beat names only numbers that are actually on a sheet,
+ * and goes silent when the data behind it is missing.
  *
- * `analyzeStandings` turns a standings doc into the handful of facts a night's
- * story is built from (leader, margin, mover, faller, arrivals, division
- * leaders). `composeNarrative` renders those facts — plus the leader's caption
- * book and the field's shape — as a full feature for the news article, while
- * `leadSentence` renders the lede alone for the Discord post, so both surfaces
- * read in one voice.
+ * `analyzeStandings(doc, previousSheets)` turns tonight's standings — read
+ * against the nights before it — into the facts a story is built from: who leads
+ * and by how much, whether the lead changed hands and from whom, how long the
+ * leader has held, whether the gap is opening or closing, the caption kings
+ * across the whole field, the tightest race on the board, the movers, the
+ * division crowns and the new arrivals. `composeHeadline` writes the day's hook
+ * from the dominant storyline; `composeDek` writes the standfirst; and
+ * `composeNarrative` renders the full feature. `leadSentence` renders the lede
+ * alone for the Discord post, so every surface reads in one voice.
  */
 
 const DIVISION_LABELS = { aClass: "A Class", openClass: "Open Class", worldClass: "World Class" };
@@ -31,6 +35,7 @@ const DIVISION_ORDER = ["worldClass", "openClass", "aClass"];
 // The three books every Podium score is built from, in the standings entry's
 // own field names. The article never cites a caption the sheet does not carry.
 const CAPTION_LABELS = { ge: "General Effect", vis: "Visual", mus: "Music" };
+const CAPTION_SHORT = { ge: "GE", vis: "Visual", mus: "Music" };
 const CAPTION_KEYS = ["ge", "vis", "mus"];
 
 /** "1st", "2nd", "3rd", "11th"… for prose that names a placement. */
@@ -102,13 +107,73 @@ function leadCharacter(margin) {
   return "clinging to the top by their fingernails";
 }
 
+/** The uid sitting at rank 1 on a standings doc, or null. */
+function rankOneUid(doc) {
+  const entries = ((doc && doc.entries) || []).filter((e) => e && e.corpsName);
+  if (entries.length === 0) return null;
+  const ranked = [...entries].sort((a, b) => (a.rank || 0) - (b.rank || 0));
+  return ranked[0].uid || null;
+}
+
+/** The top-two scoring margin on a standings doc, or null when it can't be read. */
+function topMargin(doc) {
+  const entries = ((doc && doc.entries) || []).filter((e) => e && e.corpsName);
+  const ranked = [...entries].sort((a, b) => (a.rank || 0) - (b.rank || 0));
+  if (ranked.length < 2) return null;
+  const a = ranked[0].total;
+  const b = ranked[1].total;
+  if (typeof a !== "number" || typeof b !== "number") return null;
+  return Number((a - b).toFixed(3));
+}
+
 /**
- * Reduce a daily standings doc to the facts a night's write-up needs (pure).
- * Returns null when the doc has no usable entries.
- *
- * @param {{day?: number, fieldSize?: number, entries?: Array}} doc
+ * The corps that owns each caption across the whole field tonight — the biggest
+ * GE, Visual and Music numbers on the board, each with the corps that posted it.
+ * Returns null unless all three books are present on at least one entry, so the
+ * caption-kings beat runs only when the sheet carries the breakdown. Pure.
  */
-function analyzeStandings(doc) {
+function captionKings(ranked) {
+  const kings = {};
+  for (const key of CAPTION_KEYS) {
+    let king = null;
+    for (const entry of ranked) {
+      if (typeof entry[key] !== "number") continue;
+      if (!king || entry[key] > king[key]) king = entry;
+    }
+    if (!king) return null;
+    kings[key] = king;
+  }
+  return kings;
+}
+
+/**
+ * The tightest adjacent gap anywhere in the ranked field — the night's closest
+ * race — as { top, bottom, gap }, or null when fewer than two scored corps. Pure.
+ */
+function tightestPair(ranked) {
+  let tightest = null;
+  for (let i = 0; i < ranked.length - 1; i++) {
+    const top = ranked[i];
+    const bottom = ranked[i + 1];
+    if (typeof top.total !== "number" || typeof bottom.total !== "number") continue;
+    const gap = Number((top.total - bottom.total).toFixed(3));
+    if (!tightest || gap < tightest.gap) tightest = { top, bottom, gap };
+  }
+  return tightest;
+}
+
+/**
+ * Reduce a daily standings doc — read against the nights before it — to the
+ * facts a night's write-up needs (pure). Returns null when the doc has no usable
+ * entries.
+ *
+ * @param {{day?: number, fieldSize?: number, entries?: Array}} doc tonight's sheet
+ * @param {Array<object>} previousSheets prior standings docs, most-recent first
+ *   (yesterday, the day before, …). Used only to read how long the leader has
+ *   held the top and whether the lead is opening or closing — every fact still
+ *   comes from a real sheet, so the story stays data-true and deterministic.
+ */
+function analyzeStandings(doc, previousSheets = []) {
   const entries = ((doc && doc.entries) || []).filter((e) => e && e.corpsName);
   if (entries.length === 0) return null;
 
@@ -122,15 +187,39 @@ function analyzeStandings(doc) {
       ? Number((leader.total - runnerUp.total).toFixed(3))
       : null;
 
-  // The night's biggest climb and biggest slide, measured against the previous
-  // day's sheet (delta is prevRank - rank, so positive is a climb).
-  let climber = null;
-  let faller = null;
-  for (const entry of ranked) {
-    if (typeof entry.delta !== "number") continue;
-    if (entry.delta > 0 && (!climber || entry.delta > climber.delta)) climber = entry;
-    if (entry.delta < 0 && (!faller || entry.delta < faller.delta)) faller = entry;
+  // A coup at the top: the leader wasn't #1 last night. The corps it displaced
+  // is the one that carried prevRank 1 into tonight — named so the story can tell
+  // who was dethroned, not just who won.
+  const leadChange = typeof leader.prevRank === "number" && leader.prevRank !== 1;
+  const formerLeader = leadChange
+    ? ranked.find((e) => e.prevRank === 1 && e.uid !== leader.uid) || null
+    : null;
+
+  // How many nights running the current leader has owned the top, counting
+  // tonight — walked back through the prior sheets until the #1 uid changes.
+  let leaderStreak = 1;
+  for (const sheet of previousSheets) {
+    if (rankOneUid(sheet) === leader.uid) leaderStreak += 1;
+    else break;
   }
+
+  // Is the lead opening or closing? Only meaningful when the same corps led last
+  // night too; otherwise a margin comparison would be apples to oranges.
+  const prevSheet = previousSheets[0] || null;
+  const prevLeaderSame = prevSheet ? rankOneUid(prevSheet) === leader.uid : false;
+  const prevLeadMargin = prevLeaderSame ? topMargin(prevSheet) : null;
+
+  // The night's climbs and slides, measured against the previous sheet (delta is
+  // prevRank - rank, so positive is a climb). Kept as ordered lists so the movers
+  // beat can name more than one, and as single climber/faller for compatibility.
+  const risers = ranked
+    .filter((e) => typeof e.delta === "number" && e.delta > 0)
+    .sort((a, b) => b.delta - a.delta);
+  const fallers = ranked
+    .filter((e) => typeof e.delta === "number" && e.delta < 0)
+    .sort((a, b) => a.delta - b.delta);
+  const climber = risers[0] || null;
+  const faller = fallers[0] || null;
 
   // "New to the rankings" corps — but on opening day everyone is new, which is
   // not a story, so suppress arrivals when the whole field is fresh.
@@ -158,8 +247,16 @@ function analyzeStandings(doc) {
     leader,
     runnerUp,
     leadMargin,
+    leadChange,
+    formerLeader,
+    leaderStreak,
+    prevLeadMargin,
     climber,
     faller,
+    risers,
+    fallers,
+    captionKings: captionKings(ranked),
+    tightestPair: tightestPair(ranked),
     arrivals: openingDay ? [] : fresh,
     openingDay,
     divisionLeaders,
@@ -167,17 +264,49 @@ function analyzeStandings(doc) {
 }
 
 /**
+ * How the leader is holding the top, in one clause — a coronation, a streak, a
+ * hold, or (on opening night) simply setting the pace. Data-true: every branch
+ * is keyed to a fact on the sheets.
+ */
+function summitClause(analysis) {
+  const { leadChange, formerLeader, runnerUp, leaderStreak, openingDay } = analysis;
+  if (openingDay) return "sets the opening pace in the Podium Class";
+  if (leadChange) {
+    // When the corps it displaced is the one now chasing in second, one name
+    // does the work of both — no need to say it twice.
+    if (formerLeader && runnerUp && formerLeader.uid === runnerUp.uid) {
+      return `climbs past ${formerLeader.corpsName} to seize the top of the Podium Class`;
+    }
+    if (formerLeader) {
+      return `wrestles the top of the Podium Class away from ${formerLeader.corpsName}`;
+    }
+    return "seizes the top of the Podium Class";
+  }
+  if (leaderStreak >= 3) return `makes it ${leaderStreak} nights running atop the Podium Class`;
+  return "stays on top of the Podium Class";
+}
+
+/**
  * The lead sentence — the column's own lede, in the commentator's voice. Used
  * verbatim as the Discord description and as the article's opening line.
  */
 function leadSentence(analysis) {
-  const { leader, runnerUp, leadMargin, day } = analysis;
-  const held = /holds|steady/i.test(leader.note || "");
+  const { leader, runnerUp, leadMargin, leadChange, formerLeader, day } = analysis;
   const dayTag = day != null ? `Day ${day}` : "Tonight";
-  const summit = held ? "stays on top of the Podium Class" : "seizes the top of the Podium Class";
   const scoreClause = typeof leader.total === "number" ? ` at ${fmtScore(leader.total)}` : "";
+  const summit = summitClause(analysis);
+
+  // When the lede already named the dethroned corps and it is also the runner-up,
+  // close on the margin alone rather than repeating the name a third time.
+  const dethronedIsRunnerUp =
+    leadChange && formerLeader && runnerUp && formerLeader.uid === runnerUp.uid;
 
   if (runnerUp && leadMargin != null) {
+    if (dethronedIsRunnerUp) {
+      return `${dayTag} on the floor: ${leader.corpsName} ${summit}${scoreClause} — now ${fmtScore(
+        leadMargin
+      )} clear.`;
+    }
     const margin = marginPhrase(leadMargin);
     return (
       `${dayTag} on the floor: ${leader.corpsName} ${summit}${scoreClause}, ` +
@@ -185,6 +314,99 @@ function leadSentence(analysis) {
     );
   }
   return `${dayTag} on the floor: ${leader.corpsName} ${summit}${scoreClause}.`;
+}
+
+/**
+ * The day's hook, written from the dominant storyline the numbers give. A coup
+ * at the top beats a photo finish beats a runaway beats a surge beats a logjam
+ * beats the quiet hold — and every branch names only what the sheet carries, so
+ * the headline can never oversell a night that didn't happen.
+ */
+function composeHeadline(analysis) {
+  const { leader, leadChange, formerLeader, leadMargin, leaderStreak, climber, openingDay } =
+    analysis;
+  const dayTag = analysis.day != null ? `Day ${analysis.day}` : null;
+
+  if (openingDay) {
+    return `The Podium Class Takes Shape: ${leader.corpsName} Sets the Opening Pace`;
+  }
+
+  // A coup at the top is always the story.
+  if (leadChange) {
+    return formerLeader
+      ? `${leader.corpsName} Topples ${formerLeader.corpsName} for the Podium Class Lead`
+      : `${leader.corpsName} Seizes the Podium Class Lead`;
+  }
+
+  // A held lead by a whisker — the drama is in how little there is to spare.
+  if (leadMargin != null && leadMargin < 0.15) {
+    return `Nothing to Spare: ${leader.corpsName} Holds by ${fmtScore(leadMargin)}`;
+  }
+
+  // A comfortable, sustained reign.
+  if (leaderStreak >= 4 && (leadMargin == null || leadMargin >= 0.5)) {
+    return `${leader.corpsName} Makes It ${leaderStreak} Straight Atop the Podium Class`;
+  }
+
+  // A genuine surge through the field.
+  if (climber && climber !== leader && climber.delta >= 3) {
+    return `${climber.corpsName} Surges ${climber.delta} Into ${ordinal(climber.rank)}`;
+  }
+
+  // A runaway at the top.
+  if (leadMargin != null && leadMargin >= 2) {
+    return `${leader.corpsName} Pulls Away at the Top of the Podium Class`;
+  }
+
+  // The quiet hold — still named for the corps, still tied to the day.
+  return dayTag
+    ? `${leader.corpsName} Holds the Podium Class Lead on ${dayTag}`
+    : `${leader.corpsName} Leads the Podium Class`;
+}
+
+/**
+ * The standfirst — one or two sentences of exactly what happened, for the feed
+ * card and the article dek. Data-true and compact: the leader and score, the
+ * margin and runner-up, the biggest riser when there is one, and the shape of
+ * the field.
+ */
+function composeDek(analysis) {
+  const { leader, runnerUp, leadMargin, climber, fieldSize, day, ranked, openingDay } = analysis;
+  const parts = [];
+
+  const dayTag = day != null ? `Day ${day}` : "Tonight";
+  let lead = `${dayTag}: ${leader.corpsName} `;
+  lead += openingDay ? "sets the pace" : leadChangeVerb(analysis);
+  if (typeof leader.total === "number") lead += ` at ${fmtScore(leader.total)}`;
+  if (runnerUp && leadMargin != null) {
+    lead += `, ${fmtScore(leadMargin)} up on ${runnerUp.corpsName}`;
+  }
+  parts.push(`${lead}.`);
+
+  if (climber && climber !== leader && !openingDay) {
+    parts.push(
+      `${climber.corpsName} is the day's biggest riser, up ${climber.delta} to ${ordinal(
+        climber.rank
+      )}.`
+    );
+  }
+
+  const totals = ranked.map((e) => e.total).filter((t) => typeof t === "number");
+  if (totals.length >= 2) {
+    const spread = fmtScore(Number((totals[0] - totals[totals.length - 1]).toFixed(3)));
+    parts.push(`${fieldSize} corps, ${spread} points top to bottom.`);
+  } else {
+    parts.push(`${fieldSize} corps ranked.`);
+  }
+
+  return parts.join(" ");
+}
+
+/** The dek's verb for how the leader arrived at the top (data-true). */
+function leadChangeVerb(analysis) {
+  if (analysis.leadChange) return "takes the lead";
+  if (analysis.leaderStreak >= 3) return "leads again";
+  return "leads";
 }
 
 /**
@@ -215,14 +437,15 @@ function fieldScene(analysis) {
 }
 
 /**
- * The feature's centerpiece: how the night's top number was actually built,
- * read off the caption sheet, and where the corps in second is landing its
- * counterpunches. This is the paragraph that turns a ranking into a story — but
- * it invents nothing, naming only the caption scores the standings carry, so it
- * goes quiet the moment the breakdown is missing (returns null).
+ * The feature's centerpiece: how the night's top number was actually built, read
+ * off the caption sheet; where the corps in second is landing its counterpunches;
+ * and — when the prior nights are on hand — whether the lead is opening or
+ * closing. This is the paragraph that turns a ranking into a story, but it
+ * invents nothing, naming only the caption scores and margins the sheets carry,
+ * so it goes quiet the moment the breakdown is missing (returns null).
  */
 function leaderStory(analysis) {
-  const { leader, runnerUp, leadMargin } = analysis;
+  const { leader, runnerUp, leadMargin, leadChange, prevLeadMargin } = analysis;
   const book = captionBook(leader);
   if (book.length === 0) return null;
 
@@ -263,37 +486,82 @@ function leaderStory(analysis) {
       );
     }
   }
+
+  // The night-over-night beat: only when the same corps led last night, so a
+  // margin comparison is honest — and only when the movement is real.
+  if (!leadChange && prevLeadMargin != null && leadMargin != null) {
+    const swing = Number((leadMargin - prevLeadMargin).toFixed(3));
+    if (swing <= -0.1) {
+      sentences.push(
+        `And the margin is moving: what was ${fmtScore(prevLeadMargin)} a night ago is down to ` +
+          `${fmtScore(leadMargin)}, and the race is tightening under the leader's feet.`
+      );
+    } else if (swing >= 0.1) {
+      sentences.push(
+        `The lead is growing, too — ${fmtScore(prevLeadMargin)} a night ago, ${fmtScore(leadMargin)} ` +
+          `now, the daylight widening rather than closing.`
+      );
+    }
+  }
+
   return sentences.join(" ");
 }
 
 /**
- * The movers beat: the night's biggest climb and, when there is one, its
- * steepest slide — then, if the climber's score is on the sheet, the number the
- * jump was built on. Two sentences at most, and only ever the movement and
- * totals the standings record.
+ * The caption-kings beat: who owns General Effect, Visual and Music across the
+ * whole field tonight, with the numbers — and whether the three books belong to
+ * one corps or three. Genuine analysis, but only ever the caption scores the
+ * sheet records; returns null when the breakdown is missing.
+ */
+function captionKingsSentence(analysis) {
+  const kings = analysis.captionKings;
+  if (!kings) return null;
+
+  const clauses = [
+    `${kings.ge.corpsName} owns General Effect at ${fmtScore(kings.ge.ge)}`,
+    `${kings.vis.corpsName} the Visual sheet at ${fmtScore(kings.vis.vis)}`,
+    `${kings.mus.corpsName} the Music book at ${fmtScore(kings.mus.mus)}`,
+  ];
+  const base = `Read it caption by caption and ${humanList(clauses)}.`;
+
+  const uids = new Set([kings.ge.uid, kings.vis.uid, kings.mus.uid]);
+  if (uids.size === 1) {
+    return `${base} One corps has the whole floor — a clean sweep of all three books.`;
+  }
+  if (uids.size === 3) {
+    return `${base} Three books, three different owners — nobody has the whole floor tonight.`;
+  }
+  return base;
+}
+
+/**
+ * The movers beat: the night's biggest climbs and steepest slides — up to two of
+ * each — then, if the top climber's score is on the sheet, the number the jump
+ * was built on. Only ever the movement and totals the standings record.
  */
 function moversSentence(analysis) {
-  const { climber, faller } = analysis;
-  if (!climber && !faller) return null;
+  const { risers, fallers, climber } = analysis;
+  if (risers.length === 0 && fallers.length === 0) return null;
+
+  const climbClause = (e) => `${e.corpsName} (up ${e.delta} to ${ordinal(e.rank)})`;
+  const slideClause = (e) => `${e.corpsName} (down ${Math.abs(e.delta)} to ${ordinal(e.rank)})`;
+
   const parts = [];
-  if (climber) {
-    parts.push(
-      `${climber.corpsName} is the night's biggest riser, up ${climber.delta} to ${ordinal(
-        climber.rank
-      )}`
-    );
+  if (risers.length > 0) {
+    const named = risers.slice(0, 2).map(climbClause);
+    const verb = named.length === 1 ? "is climbing" : "are climbing";
+    parts.push(`${humanList(named)} ${verb}`);
   }
-  if (faller) {
-    const lead = climber ? "while" : "The steepest drop belongs to";
-    parts.push(
-      climber
-        ? `${lead} ${faller.corpsName} slides ${Math.abs(faller.delta)} to ${ordinal(faller.rank)}`
-        : `${faller.corpsName}, down ${Math.abs(faller.delta)} to ${ordinal(faller.rank)}`
-    );
+  if (fallers.length > 0) {
+    const named = fallers.slice(0, 2).map(slideClause);
+    const lead = risers.length > 0 ? "while" : "The board is sliding under";
+    const verb = named.length === 1 ? "is giving ground" : "are giving ground";
+    parts.push(risers.length > 0 ? `${lead} ${humanList(named)} ${verb}` : `${lead} ${humanList(named)}`);
   }
+
   const base = `${parts.join(", ")}.`;
   if (climber && typeof climber.total === "number") {
-    return `${base} The climb rides on a ${fmtScore(climber.total)} on the night.`;
+    return `${base} The night's biggest climb rides on a ${fmtScore(climber.total)}.`;
   }
   return base;
 }
@@ -320,6 +588,24 @@ function chaseSentence(analysis) {
   return `${humanList(named)} ${verb}${spreadClause}.`;
 }
 
+/**
+ * The closest-call beat: the tightest adjacent margin on the board when it sits
+ * BELOW the top two (the lede already owns the title race) and is genuinely
+ * slim. A single-caption swing separates them — real drama the ranking alone
+ * hides. Returns null when the top two are the tightest pair or nothing is close.
+ */
+function closestCallSentence(analysis) {
+  const pair = analysis.tightestPair;
+  if (!pair) return null;
+  if (pair.top.rank <= 1) return null; // the title race is the lede's story
+  if (pair.gap > 0.3) return null; // only when it is actually a photo finish
+  return (
+    `The tightest margin on the board isn't at the top at all: ${pair.top.corpsName} ` +
+    `(${ordinal(pair.top.rank)}) and ${pair.bottom.corpsName} (${ordinal(pair.bottom.rank)}) are ` +
+    `separated by just ${fmtScore(pair.gap)} — one caption swings it.`
+  );
+}
+
 /** The division-leaders sentence, only when the field spans more than one. */
 function divisionSentence(analysis) {
   const leaders = analysis.divisionLeaders;
@@ -341,19 +627,42 @@ function arrivalsSentence(analysis) {
 }
 
 /**
+ * The floor beat: who anchors the field tonight, for full-board coverage — only
+ * on a field deep enough (eight or more) for the bottom to be its own story.
+ * Names the last-place corps, its score, and any movement the sheet records.
+ */
+function floorSentence(analysis) {
+  const { ranked } = analysis;
+  if (ranked.length < 8) return null;
+  const anchor = ranked[ranked.length - 1];
+  if (typeof anchor.total !== "number") return null;
+  let movement = "";
+  if (typeof anchor.delta === "number" && anchor.delta > 0) {
+    movement = `, up ${anchor.delta} even from the back`;
+  } else if (typeof anchor.delta === "number" && anchor.delta < 0) {
+    movement = `, down ${Math.abs(anchor.delta)} into the cellar`;
+  }
+  return (
+    `Down at the floor, ${anchor.corpsName} anchors the field in ${ordinal(anchor.rank)} at ` +
+    `${fmtScore(anchor.total)}${movement} — ground to make up, and a whole season to make it.`
+  );
+}
+
+/**
  * The full article narrative — a feature-length column, not a quick-glance
  * summary. The register sits somewhere between a Sports Illustrated game story
- * and a Vanity Fair profile: scene first, then the analysis, then the field it
- * all plays out against, in flowing prose with understated **subheads** (the
- * news feed's editorial renderer turns a leading "**Head.**" into a small accent
- * subhead). The frames — the lede and the shape of the night, how the lead was
- * built off the caption sheet, the chase pack, the movers, the division crowns,
- * and any new arrivals — each take a different angle on the same board, and the
- * column signs off on its standing kicker.
+ * and a Vanity Fair profile: the night's drama up front, then the scene, then the
+ * analysis book by book, then the races deeper in the field, in flowing prose
+ * with understated **subheads** (the news feed's editorial renderer turns a
+ * leading "**Head.**" into a small accent subhead). Each frame — the lede and
+ * the shape of the night, how the lead was built off the caption sheet, who owns
+ * each caption across the field, the chase pack, the tightest race, the movers,
+ * the division crowns, the new arrivals and the floor — takes a different angle
+ * on the same board, and the column signs off on its standing kicker.
  *
  * The voice is warmer than the numbers, but it is still only ever the numbers:
- * every clause is composed straight from the standings doc (decision 31), so the
- * magazine tone can never cost us a hallucinated corps, rank, score or margin.
+ * every clause is composed straight from the standings sheets (decision 31), so
+ * the feature tone can never cost us a hallucinated corps, rank, score or margin.
  * The full numbered board lives in the Scores tab, so the article reads and the
  * sheet ranks.
  *
@@ -373,14 +682,19 @@ function composeNarrative(analysis) {
         "tonight's order is only the first word in an argument the season will spend the next " +
         "several weeks having with itself."
     );
+  } else if (analysis.leadChange && analysis.formerLeader) {
+    lede.push(
+      `The order at the top has a new name on it, and ${analysis.formerLeader.corpsName} — ` +
+        `${ordinal(analysis.formerLeader.rank)} tonight — is left to answer it.`
+    );
   } else {
     lede.push(`For now ${analysis.leader.corpsName} is ${leadCharacter(analysis.leadMargin)}.`);
   }
   paragraphs.push(lede.join(" "));
 
   // The field: how deep the board is and how much scoring separates top from
-  // bottom. Set the scene before telling the story — and, unlike before, do it
-  // on opening night too, when there is no movement yet to write about.
+  // bottom. Set the scene before telling the story — on opening night too, when
+  // there is no movement yet to write about.
   const scene = fieldScene(analysis);
   if (scene) paragraphs.push(`**The field.** ${scene}`);
 
@@ -388,12 +702,21 @@ function composeNarrative(analysis) {
   const lead = leaderStory(analysis);
   if (lead) paragraphs.push(`**The lead.** ${lead}`);
 
+  // Who owns each caption across the whole field.
+  const kings = captionKingsSentence(analysis);
+  if (kings) paragraphs.push(`**The caption kings.** ${kings}`);
+
   const chase = chaseSentence(analysis);
   if (chase) {
     paragraphs.push(
       `**The chase.** Behind the top two, the pack is doing its own math. ${chase}`
     );
   }
+
+  // The tightest race deeper in the field (fires opening night too — a photo
+  // finish below the top is a story even before anyone has moved).
+  const closest = closestCallSentence(analysis);
+  if (closest) paragraphs.push(`**The closest call.** ${closest}`);
 
   const movers = analysis.openingDay ? null : moversSentence(analysis);
   if (movers) paragraphs.push(`**Movers.** ${movers}`);
@@ -403,6 +726,9 @@ function composeNarrative(analysis) {
 
   const arrivals = arrivalsSentence(analysis);
   if (arrivals) paragraphs.push(`**New faces.** ${arrivals}`);
+
+  const floor = floorSentence(analysis);
+  if (floor) paragraphs.push(`**The floor.** ${floor}`);
 
   paragraphs.push(
     "None of it is a matter of opinion. The Podium Report re-seats the director-run field every " +
@@ -416,19 +742,31 @@ function composeNarrative(analysis) {
 module.exports = {
   DIVISION_LABELS,
   DIVISION_ORDER,
+  CAPTION_LABELS,
+  CAPTION_SHORT,
   ordinal,
   fmtScore,
   humanList,
   marginPhrase,
   captionBook,
   leadCharacter,
+  rankOneUid,
+  topMargin,
+  captionKings,
+  tightestPair,
   analyzeStandings,
+  summitClause,
   leadSentence,
+  composeHeadline,
+  composeDek,
   fieldScene,
   leaderStory,
+  captionKingsSentence,
   moversSentence,
   chaseSentence,
+  closestCallSentence,
   divisionSentence,
   arrivalsSentence,
+  floorSentence,
   composeNarrative,
 };
