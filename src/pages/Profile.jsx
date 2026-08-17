@@ -29,6 +29,7 @@ import { getLeaguesByCreator } from '../api/leagues';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import ProfileNewsroom from '../components/Profile/ProfileNewsroom';
+import NewsroomActions from '../components/Profile/NewsroomActions';
 import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar, setCorpsAvatarFromUrl } from '../api/functions';
@@ -537,6 +538,12 @@ const Profile = () => {
 
         {/* NEWSROOM — the director's own published press releases & articles */}
         <ProfileNewsroom uid={profileUserId} isOwnProfile={isOwnProfile} />
+
+        {/* Compose new news — press release (instant) or submitted article
+            (reviewed). Own profile only. Moved here from the Dashboard footer:
+            publishing news is not a daily-loop action, and it belongs beside the
+            Newsroom that shows what you've already published. */}
+        {isOwnProfile && <NewsroomActions profile={profile} />}
 
         {/* PENDING LEAGUE INVITATIONS (own profile only) */}
         {isOwnProfile && user && <PendingLeagueInvitations userId={user.uid} />}

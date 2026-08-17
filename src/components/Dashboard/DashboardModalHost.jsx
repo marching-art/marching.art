@@ -44,14 +44,6 @@ const UniformDesignModal = lazyWithRetry(
   () => import('../modals/UniformDesignModal'),
   'UniformDesignModal'
 );
-const NewsSubmissionModal = lazyWithRetry(
-  () => import('../modals/NewsSubmissionModal'),
-  'NewsSubmissionModal'
-);
-const PressReleaseModal = lazyWithRetry(
-  () => import('../modals/PressReleaseModal'),
-  'PressReleaseModal'
-);
 const ClassPurchaseModal = lazyWithRetry(
   () => import('../modals/ClassPurchaseModal'),
   'ClassPurchaseModal'
@@ -102,13 +94,6 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
     setClassToPurchase,
     showUniformDesign,
     setShowUniformDesign,
-    showNewsSubmission,
-    setShowNewsSubmission,
-    submittingNews,
-    showPressRelease,
-    setShowPressRelease,
-    submittingPressRelease,
-    ownedCorps,
     showStreakModal,
     setShowStreakModal,
     showWalletModal,
@@ -126,8 +111,6 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
     handleConfirmClassPurchase,
     openCaptionSelection,
     closeCaptionSelection,
-    handleNewsSubmission,
-    handlePressRelease,
     handleUniformDesign,
   } = modals;
 
@@ -256,27 +239,6 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
             onSubmit={handleUniformDesign}
             currentDesign={activeCorps.uniformDesign}
             corpsName={activeCorps.corpsName || activeCorps.name}
-          />
-        </Suspense>
-      )}
-
-      {showNewsSubmission && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <NewsSubmissionModal
-            onClose={() => setShowNewsSubmission(false)}
-            onSubmit={handleNewsSubmission}
-            isSubmitting={submittingNews}
-          />
-        </Suspense>
-      )}
-
-      {showPressRelease && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <PressReleaseModal
-            ownedCorps={ownedCorps || []}
-            onClose={() => setShowPressRelease(false)}
-            onSubmit={handlePressRelease}
-            isSubmitting={submittingPressRelease}
           />
         </Suspense>
       )}
