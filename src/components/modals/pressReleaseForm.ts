@@ -6,10 +6,7 @@
 // (functions/src/helpers/newsSubmissionsShared.js) exactly. The client checks
 // first for instant feedback; the server re-validates as the source of truth.
 
-import type {
-  PublishPressReleaseData,
-  PressReleaseCorpsClass,
-} from '../../api/pressReleases';
+import type { PublishPressReleaseData, PressReleaseCorpsClass } from '../../api/pressReleases';
 
 export const PRESS_RELEASE_LIMITS = {
   headlineMin: 6,
@@ -32,9 +29,7 @@ export type PressReleaseFormErrors = Partial<
 >;
 
 /** Empty initial form state, optionally pre-selecting a corps class. */
-export function emptyPressReleaseForm(
-  corpsClass?: PressReleaseCorpsClass
-): PressReleaseFormState {
+export function emptyPressReleaseForm(corpsClass?: PressReleaseCorpsClass): PressReleaseFormState {
   return { headline: '', summary: '', body: '', imageUrl: '', corpsClass };
 }
 
@@ -53,9 +48,7 @@ function isValidHttpUrl(value: string): boolean {
  * form is publishable), matching the server's bounds so a client-side pass
  * never gets rejected by the backend for length.
  */
-export function validatePressReleaseForm(
-  form: PressReleaseFormState
-): PressReleaseFormErrors {
+export function validatePressReleaseForm(form: PressReleaseFormState): PressReleaseFormErrors {
   const errors: PressReleaseFormErrors = {};
   const L = PRESS_RELEASE_LIMITS;
 
@@ -91,9 +84,7 @@ export function isPressReleaseFormValid(form: PressReleaseFormState): boolean {
 }
 
 /** Shape the callable payload from validated form state, omitting blanks. */
-export function buildPressReleasePayload(
-  form: PressReleaseFormState
-): PublishPressReleaseData {
+export function buildPressReleasePayload(form: PressReleaseFormState): PublishPressReleaseData {
   const summary = form.summary.trim();
   const imageUrl = form.imageUrl.trim();
   return {

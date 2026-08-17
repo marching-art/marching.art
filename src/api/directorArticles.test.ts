@@ -3,9 +3,9 @@ import { articleIdFromPath, mapArticleDoc } from './directorArticlesMap';
 
 describe('articleIdFromPath', () => {
   it('builds the composite feed id from a full article path', () => {
-    expect(
-      articleIdFromPath('news_hub/scherzo_2025-26/days/day_12/articles/press_abc123')
-    ).toBe('scherzo_2025-26_day_12_press_abc123');
+    expect(articleIdFromPath('news_hub/scherzo_2025-26/days/day_12/articles/press_abc123')).toBe(
+      'scherzo_2025-26_day_12_press_abc123'
+    );
   });
 
   it('returns null for a too-short path', () => {

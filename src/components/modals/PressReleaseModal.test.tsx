@@ -6,9 +6,7 @@ const aurora = { corpsClass: 'worldClass' as const, corpsName: 'Aurora' };
 
 describe('PressReleaseModal', () => {
   it('renders the instant-publish framing and composer fields', () => {
-    render(
-      <PressReleaseModal ownedCorps={[aurora]} onClose={vi.fn()} onSubmit={vi.fn()} />
-    );
+    render(<PressReleaseModal ownedCorps={[aurora]} onClose={vi.fn()} onSubmit={vi.fn()} />);
     expect(screen.getByText('Post a Press Release')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Publish/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Headline/)).toBeInTheDocument();
@@ -19,9 +17,7 @@ describe('PressReleaseModal', () => {
 
   it('publishes a valid release with the trimmed payload', () => {
     const onSubmit = vi.fn();
-    render(
-      <PressReleaseModal ownedCorps={[aurora]} onClose={vi.fn()} onSubmit={onSubmit} />
-    );
+    render(<PressReleaseModal ownedCorps={[aurora]} onClose={vi.fn()} onSubmit={onSubmit} />);
 
     fireEvent.change(screen.getByLabelText(/Headline/), {
       target: { value: 'Aurora unveils its 2026 production' },
@@ -42,9 +38,7 @@ describe('PressReleaseModal', () => {
 
   it('blocks publishing an invalid release and surfaces the error', () => {
     const onSubmit = vi.fn();
-    render(
-      <PressReleaseModal ownedCorps={[aurora]} onClose={vi.fn()} onSubmit={onSubmit} />
-    );
+    render(<PressReleaseModal ownedCorps={[aurora]} onClose={vi.fn()} onSubmit={onSubmit} />);
 
     fireEvent.change(screen.getByLabelText(/Headline/), { target: { value: 'Hi' } });
     fireEvent.click(screen.getByRole('button', { name: /Publish/i }));
@@ -93,7 +87,9 @@ describe('PressReleaseModal', () => {
       target: { value: 'Canton Regiment reveals its 2026 program' },
     });
     fireEvent.change(screen.getByLabelText(/Announcement/), {
-      target: { value: 'The Regiment is thrilled to announce a bold new show for the coming season.' },
+      target: {
+        value: 'The Regiment is thrilled to announce a bold new show for the coming season.',
+      },
     });
     fireEvent.click(screen.getByRole('button', { name: /Publish/i }));
 

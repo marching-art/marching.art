@@ -45,19 +45,20 @@ your biography passes.
   flattens, decades-long career" premise can't afford. A game year is seven
   49-day seasons, so the seasons gate makes the top titles a multi-year climb.
 
-  | Title        | XP level | Seasons completed |
-  | ------------ | -------- | ----------------- |
-  | Legend       | 10       | 0 (pure XP)       |
-  | Icon         | 15       | 4                 |
-  | Hall of Famer| 20       | 9                 |
-  | Immortal     | 25       | 16                |
-  | Eternal      | 30       | 28                |
+  | Title         | XP level | Seasons completed |
+  | ------------- | -------- | ----------------- |
+  | Legend        | 10       | 0 (pure XP)       |
+  | Icon          | 15       | 4                 |
+  | Hall of Famer | 20       | 9                 |
+  | Immortal      | 25       | 16                |
+  | Eternal       | 30       | 28                |
 
   `lifetimeStats.totalSeasons` is the same "played a season" counter the
   seasons-completed class unlock reads (competed in ≥1 show in a season that then
   archived). Already-earned level achievements are never revoked; the gate raises
   the bar for new earners only (`helpers/xpCalculations.js` `EXTENDED_TITLE_TIERS`,
   `helpers/achievements.js`).
+
 - A **level-up stipend of +100 CC** is paid per level gained
   (`engagementRewards.js`, settled daily against `lastRewardedLevel`).
 - The dashboard shows an **XP-to-next-level bar** (`ControlBar.jsx`).

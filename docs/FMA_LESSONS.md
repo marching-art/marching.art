@@ -25,15 +25,15 @@ _where the engagement actually lives_ and _what erodes it over time_.
 Ranking FMA's forums by activity is a free readout of what players care about
 most. The order is the lesson:
 
-| Forum                          | Volume                    | What it proves                                                       |
-| ------------------------------ | ------------------------- | ------------------------------------------------------------------- |
-| **Press Releases**             | **1,422 topics** (most)   | Directors _narrating their corps' story_ is the #1 activity         |
-| **General Discussion**         | 14,334 posts              | Site-wide social identity, returning-player culture, milestones      |
-| **Drum Corps Circuit**         | 6,796 posts               | Talking about the _real_ activity keeps players engaged year-round   |
-| **League Discussion**          | 4,969 posts               | Leagues are the social spine                                          |
-| **Circuit News / Staff Writers** | 3,157 posts             | Human editorial voice and named commentators drove huge engagement   |
-| **Suggestions**                | 2,124 posts               | A steady drumbeat of "please update the game"                        |
-| **Bug Reports**                | 1,149 posts               | Concrete QA targets (see §7)                                         |
+| Forum                            | Volume                  | What it proves                                                     |
+| -------------------------------- | ----------------------- | ------------------------------------------------------------------ |
+| **Press Releases**               | **1,422 topics** (most) | Directors _narrating their corps' story_ is the #1 activity        |
+| **General Discussion**           | 14,334 posts            | Site-wide social identity, returning-player culture, milestones    |
+| **Drum Corps Circuit**           | 6,796 posts             | Talking about the _real_ activity keeps players engaged year-round |
+| **League Discussion**            | 4,969 posts             | Leagues are the social spine                                       |
+| **Circuit News / Staff Writers** | 3,157 posts             | Human editorial voice and named commentators drove huge engagement |
+| **Suggestions**                  | 2,124 posts             | A steady drumbeat of "please update the game"                      |
+| **Bug Reports**                  | 1,149 posts             | Concrete QA targets (see §7)                                       |
 
 Press Releases and Leagues — identity and social connection — dwarf everything
 else. That ordering should shape where we invest.

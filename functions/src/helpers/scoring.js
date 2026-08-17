@@ -186,7 +186,8 @@ async function fetchAllActiveProfiles(db, seasonUid) {
  *   from easternSplit.resolveEasternNightSet). When absent, falls back to the
  *   legacy in-loop alphabetical split.
  * @returns {{ dailyScores: Map<string, number>, coinAwards: Array,
- *   captionPoints: Map<string, Object>, stats: Object }}
+ *   captionPoints: Map<string, Object>,
+ *   captionBreakdown: Map<string, Array>, stats: Object }}
  */
 function scoreShowsForDay({
   dayEventData,

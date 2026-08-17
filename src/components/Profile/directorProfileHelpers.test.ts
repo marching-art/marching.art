@@ -158,8 +158,7 @@ describe('getCorpsJourneys', () => {
 // profile.trophies.fanFavorites. It gets its own unique mark in the trophy
 // case (the pink Heart), distinct from every competitive medal.
 describe('getFanFavoriteTrophies', () => {
-  const withTrophies = (trophies: unknown): UserProfile =>
-    ({ trophies }) as unknown as UserProfile;
+  const withTrophies = (trophies: unknown): UserProfile => ({ trophies }) as unknown as UserProfile;
 
   it('renders a crowned corps as a pink Heart with its corps, season, and votes', () => {
     const [trophy, ...rest] = getFanFavoriteTrophies(
