@@ -39,7 +39,7 @@ const SiteHeader = () => {
   const profile = useProfileStore((state) => state.profile);
 
   return (
-    <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line">
+    <header className="fixed top-0 inset-x-0 z-50 h-14 bg-surface-card border-b border-line">
       <div className="h-full flex items-center gap-2 px-4 lg:px-6">
         <Link to="/" className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 flex-shrink-0 rounded-none overflow-hidden">

@@ -12,9 +12,14 @@
 // across the signed-in/signed-out boundary, plus the SiteFooter that GameShell's
 // fixed layout has no room for.
 //
-// Layout note: this uses normal document scroll (min-h-screen + flex-col),
-// unlike GameShell's fixed one-screen grid. Long-form content, in-page anchors,
-// and crawlers all want a scrolling document.
+// Layout note: this mirrors GameShell's fixed one-screen shell — a pinned
+// header, a fixed bottom bar, and a single scroll region in between. Before
+// this, the header lived in normal document flow (so it scrolled away on
+// mobile) and the document scrolled behind the fixed bottom bar (so page
+// content peeked through the bar's safe-area strip). Confining the scroll to
+// `main` keeps the chrome put and stops anything from rendering under the bar,
+// matching the app shell across the public/app boundary. In-page anchors and
+// long-form content scroll inside `main`; crawlers see the same DOM.
 
 import React from 'react';
 import SiteHeader from './SiteHeader';
@@ -43,19 +48,27 @@ const PublicShell = ({ children, header, showFooter = true, showBottomBar = true
   useBodyScroll();
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-background text-white font-sans">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background text-white font-sans">
+      {/* Fixed header (h-14), pinned like GameShell's TopNav. */}
       {header === undefined ? <SiteHeader /> : header}
 
-      {/* id="main-content" is the target for SkipToContent and RouteChangeFocus.
-          Only GameShell used to carry it, so on public pages the skip link fell
-          back to a querySelector and focus reset was best-effort. */}
-      <main id="main-content" role="main" className="flex-1">
+      {/* The one scroll region, fixed between the header and the bottom bar.
+          id="main-content" is the target for SkipToContent and RouteChangeFocus.
+          `main-content-bottom` reserves the mobile bottom bar (66px + safe area)
+          and collapses to bottom:0 on lg where there is no bar; when the shell
+          hides the bar entirely, run to the bottom edge. */}
+      <main
+        id="main-content"
+        role="main"
+        className={`fixed top-14 left-0 right-0 overflow-y-auto overflow-x-hidden bg-background ${
+          showBottomBar ? 'main-content-bottom' : 'bottom-0'
+        }`}
+      >
         {children}
+        {/* Footer now scrolls at the end of the region rather than sitting in
+            document flow behind the fixed bar. */}
+        {showFooter && <SiteFooter />}
       </main>
-
-      {/* Bottom padding clears the fixed bottom bar (66px + safe area), which
-          would otherwise sit on top of the last footer row on mobile. */}
-      {showFooter && <SiteFooter className={showBottomBar ? 'pb-20 lg:pb-0' : ''} />}
 
       {showBottomBar && (user ? <BottomNav /> : <GuestActionBar />)}
     </div>

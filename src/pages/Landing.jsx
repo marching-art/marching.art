@@ -203,11 +203,21 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background">
+      {/* Fixed header + one fixed scroll region + fixed bottom bar, matching
+          GameShell (and PublicShell). Keeps the header pinned on mobile and
+          stops page content from scrolling behind the bottom bar's safe-area
+          strip. */}
       <SiteHeader />
 
-      {/* SCROLLABLE CONTENT */}
-      <main id="main-content" role="main" className="flex-1 pb-4">
+      {/* SCROLLABLE CONTENT — the single scroll region between the fixed header
+          and the fixed bottom bar. `main-content-bottom` reserves the mobile
+          bar (66px + safe area) and collapses to bottom:0 on lg. */}
+      <main
+        id="main-content"
+        role="main"
+        className="fixed top-14 left-0 right-0 main-content-bottom overflow-y-auto overflow-x-hidden pb-4"
+      >
         <div className="p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
             {/* ============================================================= */}
