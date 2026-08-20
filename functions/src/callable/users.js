@@ -280,6 +280,13 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   // Bounded read: the array-contains query returns only corps with SOME pick on
   // that day, not the whole Podium roster; a stale prior-season state is skipped
   // by the seasonUid check.
+  //
+  // REQUIRES a COLLECTION_GROUP-scoped single-field index on
+  // `podium.selectedShowDays` (arrayConfig CONTAINS) — see firestore.indexes.json.
+  // Firestore's automatic single-field indexes are collection-scoped only, so a
+  // collection-group query on a single field needs the explicit override; without
+  // it this query throws and the catch below silently drops the Podium field from
+  // the roster (the Firestore emulator does not enforce indexes, so tests pass).
   if (day != null) {
     try {
       const podiumSnap = await db
