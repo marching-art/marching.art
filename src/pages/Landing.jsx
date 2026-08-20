@@ -483,11 +483,12 @@ const Landing = () => {
             </div>
           </div>
         </div>
-      </main>
 
-      {/* Shared utility links. The home page used to be the only route that
-          surfaced Privacy/Terms at all, and only in its signed-out header. */}
-      <SiteFooter className="pb-20 lg:pb-0" />
+        {/* Shared utility links. Lives inside the fixed scroll region so it
+            trails the content at the end of the scroll; as a sibling of the
+            out-of-flow <main> it would collapse to the top under the header. */}
+        <SiteFooter />
+      </main>
 
       {/* FULL STANDINGS MODAL */}
       <StandingsModal
