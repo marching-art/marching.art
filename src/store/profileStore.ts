@@ -182,6 +182,12 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
 
     const unsubscribe = onSnapshot(
       profileRef,
+      // includeMetadataChanges so we receive the fromCache:true -> false
+      // transition even when the doc's *data* is unchanged. That transition is
+      // the only signal that a "no such profile" result came from the server
+      // rather than the local cache, and the not-exists branch below depends on
+      // it (see the comment there).
+      { includeMetadataChanges: true },
       (docSnapshot) => {
         if (docSnapshot.exists()) {
           const data = docSnapshot.data() as ProfileDoc;
@@ -218,18 +224,40 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
             }
           }
         } else {
-          // No profile yet. Do NOT auto-create one here — profile creation is
-          // owned by the onboarding flow via the `createUserProfile` callable,
-          // which atomically reserves the username. Auto-creating a minimal,
-          // username-less doc here used to race that flow and leave users with
-          // broken profiles. The routing guard sends profile-less users to
-          // onboarding.
-          set({
-            profile: null,
-            corps: null,
-            loading: false,
-            error: null,
-          });
+          // The profile doc does not exist in this snapshot. Two very different
+          // situations produce that, and telling them apart is critical:
+          //
+          //   1. A genuinely new user with no profile yet. This is server
+          //      truth: the routing guard should send them to onboarding.
+          //   2. An established user whose profile simply is not in THIS
+          //      device's local cache (fresh install, cleared storage, private
+          //      mode, a new phone). On mobile the Firestore transport
+          //      frequently stalls, so onSnapshot serves an initial
+          //      cache-sourced snapshot in which the uncached doc reports
+          //      exists() === false with metadata.fromCache === true. This is
+          //      NOT a real "no profile" — the server just has not answered
+          //      yet.
+          //
+          // Concluding "no profile" from case 2 is what bounced established
+          // mobile users into onboarding. So only treat a not-exists snapshot
+          // as authoritative when it came from the server (fromCache === false).
+          // While it is still cache-sourced, keep loading (the ProtectedRoute
+          // guard holds on the loading screen) and wait for the server snapshot
+          // — which arrives thanks to includeMetadataChanges above.
+          //
+          // Do NOT auto-create a profile here either way — profile creation is
+          // owned by onboarding's `createUserProfile` callable, which atomically
+          // reserves the username; a minimal doc written here would race it.
+          if (docSnapshot.metadata.fromCache) {
+            set({ loading: true, error: null });
+          } else {
+            set({
+              profile: null,
+              corps: null,
+              loading: false,
+              error: null,
+            });
+          }
         }
       },
       (err) => {
