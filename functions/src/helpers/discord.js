@@ -19,6 +19,9 @@
  *                                                    lineups
  *   news          DISCORD_NEWS_WEBHOOK_URL           published articles,
  *                                                    the Podium Report
+ *   pressReleases DISCORD_PRESS_RELEASES_WEBHOOK_URL director-authored
+ *                                                    press releases only
+ *                                                    (category "press")
  *   events        DISCORD_EVENTS_WEBHOOK_URL         DIRECTOR-HOSTED shows
  *                                                    only (never the
  *                                                    generated schedule)
@@ -45,6 +48,7 @@ const {
 const discordScoresWebhookUrl = defineSecret("DISCORD_SCORES_WEBHOOK_URL");
 const discordAnnouncementsWebhookUrl = defineSecret("DISCORD_ANNOUNCEMENTS_WEBHOOK_URL");
 const discordNewsWebhookUrl = defineSecret("DISCORD_NEWS_WEBHOOK_URL");
+const discordPressReleasesWebhookUrl = defineSecret("DISCORD_PRESS_RELEASES_WEBHOOK_URL");
 const discordEventsWebhookUrl = defineSecret("DISCORD_EVENTS_WEBHOOK_URL");
 const discordOpsWebhookUrl = defineSecret("DISCORD_OPS_WEBHOOK_URL");
 
@@ -180,6 +184,7 @@ module.exports = {
   discordScoresWebhookUrl,
   discordAnnouncementsWebhookUrl,
   discordNewsWebhookUrl,
+  discordPressReleasesWebhookUrl,
   discordEventsWebhookUrl,
   discordOpsWebhookUrl,
   WEBHOOK_USERNAME,

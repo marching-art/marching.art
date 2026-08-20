@@ -90,7 +90,7 @@ on:
         default: false
         type: boolean
       set_discord_webhook_urls:
-        description: 'One-off: push every DISCORD_*_WEBHOOK_URL repo secret (scores, announcements, news, events, ops) into Google Secret Manager. Check this on the FIRST deploy after a new channel lands — the functions declare the secrets and will not deploy until they exist — and to rotate any webhook; then leave unchecked. Secrets that are not set as repo secrets are skipped with a warning. Requires deploy_target=all so the functions redeploy and pick up the new values.'
+        description: 'One-off: push every DISCORD_*_WEBHOOK_URL repo secret (scores, announcements, news, press-releases, events, ops) into Google Secret Manager. Check this on the FIRST deploy after a new channel lands — the functions declare the secrets and will not deploy until they exist — and to rotate any webhook; then leave unchecked. Secrets that are not set as repo secrets are skipped with a warning. Requires deploy_target=all so the functions redeploy and pick up the new values.'
         required: false
         default: false
         type: boolean
@@ -239,6 +239,8 @@ jobs:
           DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
           # #news — published articles, the weekly Podium Report
           DISCORD_NEWS_WEBHOOK_URL: ${{ secrets.DISCORD_NEWS_WEBHOOK_URL }}
+          # #press-releases — director-authored press releases only
+          DISCORD_PRESS_RELEASES_WEBHOOK_URL: ${{ secrets.DISCORD_PRESS_RELEASES_WEBHOOK_URL }}
           # #events — director-hosted shows only
           DISCORD_EVENTS_WEBHOOK_URL: ${{ secrets.DISCORD_EVENTS_WEBHOOK_URL }}
           # #operations — admin-only watchdog/canary alerts
@@ -253,6 +255,7 @@ jobs:
             DISCORD_SCORES_WEBHOOK_URL \
             DISCORD_ANNOUNCEMENTS_WEBHOOK_URL \
             DISCORD_NEWS_WEBHOOK_URL \
+            DISCORD_PRESS_RELEASES_WEBHOOK_URL \
             DISCORD_EVENTS_WEBHOOK_URL \
             DISCORD_OPS_WEBHOOK_URL
           do
