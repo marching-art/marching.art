@@ -40,9 +40,9 @@ const SiteHeader = () => {
 
   return (
     <header className="flex-shrink-0 h-14 bg-surface-card border-b border-line">
-      <div className="h-full flex items-center px-4 lg:px-6">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-none overflow-hidden">
+      <div className="h-full flex items-center gap-2 px-4 lg:px-6">
+        <Link to="/" className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 flex-shrink-0 rounded-none overflow-hidden">
             <img
               src="/logo192.svg"
               alt="marching.art"
@@ -51,10 +51,21 @@ const SiteHeader = () => {
               decoding="async"
             />
           </div>
-          <span className="text-base font-bold text-white tracking-wider">marching.art</span>
+          {/* On a signed-in phone the coin/level status chip and the three menu
+              icons already fill the row, so the wordmark is hidden below sm to
+              keep them from overflowing off-screen; the logo mark still marks
+              home. It returns from sm up (tablets/desktop) where there's room,
+              and signed-out phones keep it since they carry no status chip. */}
+          <span
+            className={`text-base font-bold text-white tracking-wider truncate ${
+              user ? 'hidden sm:inline' : ''
+            }`}
+          >
+            marching.art
+          </span>
         </Link>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex flex-shrink-0 items-center gap-1">
           {/* Signed-in mobile status chip — navigation itself lives in the
               persistent BottomNav that PublicShell renders below. */}
           {user && profile && (
