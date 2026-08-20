@@ -15,8 +15,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   MessageCircle,
-  Coins,
-  Zap,
   Newspaper,
   LayoutDashboard,
   Music,
@@ -26,17 +24,16 @@ import {
   Users,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useProfileStore } from '../../store/profileStore';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import DesktopNavItem from './DesktopNavItem';
 import ExploreMenu from './ExploreMenu';
 import SiteLinksMenu from './SiteLinksMenu';
+import NotificationBell from '../Notifications/NotificationBell';
 
 const SiteHeader = () => {
   // These render on public routes too, where there is no AuthProvider —
   // `useAuth()` is null there and `user` is simply undefined.
   const user = useAuth()?.user;
-  const profile = useProfileStore((state) => state.profile);
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 h-14 bg-surface-card border-b border-line">
@@ -51,40 +48,14 @@ const SiteHeader = () => {
               decoding="async"
             />
           </div>
-          {/* On a signed-in phone the coin/level status chip and the three menu
-              icons already fill the row, so the wordmark is hidden below sm to
-              keep them from overflowing off-screen; the logo mark still marks
-              home. It returns from sm up (tablets/desktop) where there's room,
-              and signed-out phones keep it since they carry no status chip. */}
-          <span
-            className={`text-base font-bold text-white tracking-wider truncate ${
-              user ? 'hidden sm:inline' : ''
-            }`}
-          >
+          {/* Always shown, matching GameShell's TopNav; min-w-0 + truncate on
+              the link keep it from forcing the row wider than the viewport. */}
+          <span className="text-base font-bold text-white tracking-wider truncate">
             marching.art
           </span>
         </Link>
 
         <div className="ml-auto flex flex-shrink-0 items-center gap-1">
-          {/* Signed-in mobile status chip — navigation itself lives in the
-              persistent BottomNav that PublicShell renders below. */}
-          {user && profile && (
-            <Link
-              to="/dashboard"
-              aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
-              className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-line active:scale-95 transition-all duration-150 press-feedback"
-            >
-              <span className="flex items-center gap-1 text-sm font-bold text-brand font-data tabular-nums">
-                <Coins className="w-3.5 h-3.5" />
-                {(profile.corpsCoin || 0).toLocaleString()}
-              </span>
-              <span className="flex items-center gap-1 text-sm font-bold text-purple-400 font-data tabular-nums pl-2 border-l border-line">
-                <Zap className="w-3.5 h-3.5" />
-                {Number(profile.xpLevel) || 1}
-              </span>
-            </Link>
-          )}
-
           {user ? (
             // Same order as GameShell's nav: daily loop first (Dashboard,
             // Lineup, Schedule, Scores), then News, Leagues, Profile.
@@ -130,11 +101,14 @@ const SiteHeader = () => {
           )}
 
           {/* Signed-in users skip the informational link row above, so surface
-              Discord + the same Explore and help (❓) menus GameShell's header
-              carries. Before this, the app header's rich ❓ dropdown collapsed
-              to a single "Game Guide" icon the moment a director stepped onto a
-              public page — the two shells disagreed. They now render the same
-              shared menus, so the chrome is identical across the boundary. */}
+              the same cluster GameShell's header carries — Discord, the inbox
+              bell, Explore, and the help (❓) menu, in that order — so the chrome
+              is identical across the app/public boundary. The coin/XP status
+              chip that used to sit here was dropped: GameShell shows no such
+              chip, and a signed-in director reaches the same balances on the
+              Dashboard. GameShell and PublicShell are never in the tree at once,
+              so this is the session's only NotificationBell while it's on a
+              public page — the single-listener invariant still holds. */}
           {user && (
             <>
               <a
@@ -147,6 +121,7 @@ const SiteHeader = () => {
               >
                 <MessageCircle className="w-5 h-5" />
               </a>
+              <NotificationBell uid={user?.uid} />
               <ExploreMenu />
               <SiteLinksMenu />
             </>
