@@ -1,5 +1,5 @@
 /**
- * Published articles → #news.
+ * Published articles → #news, director press releases → #press-releases.
  *
  * Articles reach Firestore from several paths — the nightly generation run,
  * the season-summary job, the admin approve flow, and the trusted-author
@@ -7,6 +7,12 @@
  * `news_hub/{seasonId}/days/{dayId}/articles/{articleType}`. A create trigger
  * on that path is therefore the single hook that covers every publish route,
  * present and future, instead of five call sites that drift apart.
+ *
+ * One category routes elsewhere: a director-authored press release
+ * (category "press") is an org's own voice, not the newsroom's, so it goes to
+ * its own #press-releases channel rather than mixing into the #news feed. The
+ * routing is a single lookup on the article's category, so a new dedicated
+ * channel is one map entry away.
  *
  * Volume: the nightly run publishes up to ~5 articles, so #news sees a small
  * burst each evening. That is what a dedicated news channel is for; if it
@@ -22,6 +28,7 @@ const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions/v2");
 const {
   discordNewsWebhookUrl,
+  discordPressReleasesWebhookUrl,
   COLORS,
   SITE_URL,
   clampName,
@@ -38,7 +45,12 @@ const CATEGORY_LABELS = {
   fantasy: "Fantasy",
   editorial: "Editorial",
   community: "Community",
+  press: "Press Release",
 };
+
+// Article categories that belong in a channel other than #news. A press
+// release is an org's own announcement, so it posts to #press-releases.
+const PRESS_RELEASE_CATEGORY = "press";
 
 /** Timestamps arrive as Firestore Timestamps in prod, Dates in tests. */
 function toDate(value) {
@@ -70,8 +82,9 @@ function buildArticlePayload({ article, seasonId, dayId, articleType }) {
   if (!article || !article.headline) return null;
 
   const category = CATEGORY_LABELS[article.category] || article.category || "News";
+  const emoji = article.category === PRESS_RELEASE_CATEGORY ? "📣" : "📰";
   const embed = {
-    title: `📰 ${clampName(article.headline, 200)}`,
+    title: `${emoji} ${clampName(article.headline, 200)}`,
     url: articleUrl({ seasonId, dayId, articleType }),
     description: article.summary ? clampName(article.summary, 400) : undefined,
     color: COLORS.news,
@@ -137,7 +150,7 @@ async function announceArticle({
 exports.announceArticleToDiscord = onDocumentCreated(
   {
     document: "news_hub/{seasonId}/days/{dayId}/articles/{articleType}",
-    secrets: [discordNewsWebhookUrl],
+    secrets: [discordNewsWebhookUrl, discordPressReleasesWebhookUrl],
     // Pure fan-out; nothing here needs the scoring-sized budget. Retries are
     // off by default for Firestore triggers, which is what we want: the
     // article is already live, and a re-fired trigger would double-post.
@@ -147,17 +160,25 @@ exports.announceArticleToDiscord = onDocumentCreated(
   async (event) => {
     const snapshot = event.data;
     if (!snapshot) return;
+    const article = snapshot.data();
+    // A press release goes to its own channel; everything else is newsroom
+    // copy. Each channel's webhook is independently unset-able to silence it.
+    const webhookUrl =
+      article && article.category === PRESS_RELEASE_CATEGORY
+        ? discordPressReleasesWebhookUrl.value()
+        : discordNewsWebhookUrl.value();
     await announceArticle({
-      article: snapshot.data(),
+      article,
       seasonId: event.params.seasonId,
       dayId: event.params.dayId,
       articleType: event.params.articleType,
-      webhookUrl: discordNewsWebhookUrl.value(),
+      webhookUrl,
     });
   }
 );
 
 module.exports.FRESH_WINDOW_MS = FRESH_WINDOW_MS;
+module.exports.PRESS_RELEASE_CATEGORY = PRESS_RELEASE_CATEGORY;
 module.exports.articleUrl = articleUrl;
 module.exports.buildArticlePayload = buildArticlePayload;
 module.exports.announceArticle = announceArticle;

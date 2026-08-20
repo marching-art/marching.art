@@ -176,6 +176,19 @@ describe("published articles (#news)", () => {
     assert.match(embed.footer.text, /Fantasy · Day 12/);
   });
 
+  test("a press release carries its own emoji and category label", () => {
+    // Press releases route to #press-releases (the trigger picks the webhook
+    // by category), and read as an org announcement rather than newsroom copy.
+    const embed = buildArticlePayload({
+      article: { ...article, category: "press", headline: "Aurora unveils 2026 program" },
+      seasonId: "season_2026",
+      dayId: "day_5",
+      articleType: "press_abc123",
+    }).embeds[0];
+    assert.match(embed.title, /^📣 Aurora unveils 2026 program/);
+    assert.match(embed.footer.text, /Press Release · Day 12/);
+  });
+
   test("skips a non-https image and a headline-less doc", () => {
     const noImage = buildArticlePayload({
       article: { ...article, imageUrl: "javascript:alert(1)" },
