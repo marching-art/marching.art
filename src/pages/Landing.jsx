@@ -202,6 +202,28 @@ const Landing = () => {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // HOME LAYOUT ORDER
+  // The home grid is two columns on desktop (news left, rail right) but a single
+  // stacked column on mobile. We want mobile to lead with the visitor's most
+  // valuable content instead of burying the news feed under the entire rail:
+  //   - signed in:       Next Show → News → live data → identity
+  //   - returning guest: Play Now  → News → live data
+  //   - first visit:     Hero+News → Play Now → live data
+  // The rail collapses to `display: contents` on mobile (see the wrapper below),
+  // so its widgets become direct grid items and a single per-element `order`
+  // value can interleave them with the news column (a separate grid child). The
+  // same values drive the desktop rail's flex column — there only their relative
+  // order matters, since the news column is placed on the left independently via
+  // `lg:order-last` on the rail wrapper. Off-season, NextPerformancePanel renders
+  // null and simply drops out of the flow.
+  const firstVisitGuest = !user && !isFirstVisitLoading && isFirstVisit;
+  const order = user
+    ? { nextShow: 1, news: 2, live: 3, trending: 4, community: 5, account: 6 }
+    : firstVisitGuest
+      ? { news: 1, account: 2, live: 3, trending: 4, community: 5, urgency: 6 }
+      : { account: 1, news: 2, live: 3, trending: 4, community: 5, urgency: 6 };
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background">
       {/* Fixed header + one fixed scroll region + fixed bottom bar, matching
@@ -221,249 +243,266 @@ const Landing = () => {
         <div className="p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
             {/* ============================================================= */}
-            {/* SIDEBAR */}
-            {/* On desktop: 4 cols on right, sticky */}
-            {/* On mobile: Full width. Shows AFTER hero for first-time visitors, */}
-            {/* BEFORE news for returning/authenticated users */}
+            {/* RAIL — Next Show + auth + live-data widgets */}
+            {/* Desktop: 4 cols on the right, sticky flex column. */}
+            {/* Mobile: `contents` on both wrappers so each widget becomes a */}
+            {/* direct grid item, letting per-widget `order` (computed above) */}
+            {/* interleave them with the news column instead of stacking the */}
+            {/* whole rail above or below it. */}
             {/* ============================================================= */}
-            <div
-              className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-2' : 'order-1'} lg:order-2 lg:col-span-4`}
-            >
-              <div className="lg:sticky lg:top-4 space-y-4 lg:space-y-5">
+            <div className="contents lg:block lg:col-span-4 lg:order-last">
+              <div className="contents lg:flex lg:flex-col lg:gap-5 lg:sticky lg:top-4">
                 {/* ------------------------------------------------------- */}
-                {/* YOUR NEXT SHOW - the director's primary action, promoted */}
-                {/* to the top of home. Renders nothing off-season or when no */}
-                {/* show is upcoming, so it never shows an empty shell. */}
+                {/* YOUR NEXT SHOW - the director's primary action. First on */}
+                {/* mobile and top of the desktop rail. Renders nothing */}
+                {/* off-season, so it drops out of the flow cleanly. */}
                 {/* ------------------------------------------------------- */}
                 {user && (
-                  <NextPerformancePanel
-                    competitions={competitions}
-                    selectedShows={activeCorps?.selectedShows || {}}
-                    lineup={activeCorps?.lineup || {}}
-                  />
+                  <div style={{ order: order.nextShow }}>
+                    <NextPerformancePanel
+                      competitions={competitions}
+                      selectedShows={activeCorps?.selectedShows || {}}
+                      lineup={activeCorps?.lineup || {}}
+                    />
+                  </div>
                 )}
 
                 {/* ------------------------------------------------------- */}
-                {/* AUTH WIDGET - Login or User Dashboard */}
+                {/* AUTH WIDGET - Login (guest) or identity strip (signed in). */}
+                {/* Guests keep it near the top for conversion; signed-in users */}
+                {/* get it demoted below news + live data, since the mobile card */}
+                {/* only repeats the coins/level already in the header. */}
                 {/* ------------------------------------------------------- */}
-                {user ? (
-                  /* AUTHENTICATED USER WIDGET */
-                  <div className="bg-surface-card border border-line rounded-none">
-                    {/* User Header */}
-                    <div className="bg-surface-raised px-4 py-3 border-b border-line">
-                      <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-interactive" />
-                        My Fantasy
-                      </h3>
-                    </div>
-
-                    {/* User Info */}
-                    <div className="p-4 border-b border-line">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-interactive flex items-center justify-center text-white font-bold text-sm">
-                          {profile?.displayName?.[0]?.toUpperCase() ||
-                            user.email?.[0]?.toUpperCase() ||
-                            'D'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-white truncate">
-                            {profile?.displayName || 'Director'}
-                          </div>
-                          <div className="text-xs text-muted truncate">{user.email}</div>
-                        </div>
+                <div style={{ order: order.account }}>
+                  {user ? (
+                    /* AUTHENTICATED USER WIDGET */
+                    <div className="bg-surface-card border border-line rounded-none">
+                      {/* User Header */}
+                      <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                        <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                          <User className="w-3.5 h-3.5 text-interactive" />
+                          My Fantasy
+                        </h3>
                       </div>
 
-                      {/* Quick Stats - desktop only. On mobile these live in the
+                      {/* User Info */}
+                      <div className="p-4 border-b border-line">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-interactive flex items-center justify-center text-white font-bold text-sm">
+                            {profile?.displayName?.[0]?.toUpperCase() ||
+                              user.email?.[0]?.toUpperCase() ||
+                              'D'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-white truncate">
+                              {profile?.displayName || 'Director'}
+                            </div>
+                            <div className="text-xs text-muted truncate">{user.email}</div>
+                          </div>
+                        </div>
+
+                        {/* Quick Stats - desktop only. On mobile these live in the
                           header status chip (coins + level), so the full grid here
                           would just repeat them; the card stays a slim identity
                           strip on phones. */}
-                      {profile && (
-                        <div className="hidden lg:grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-line/50">
-                          <div className="flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5 text-purple-500" />
-                            <span className="text-xs text-muted">Level</span>
-                            <span className="text-sm font-bold text-white">
-                              {profile.xpLevel || 1}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Trophy className="w-3.5 h-3.5 text-interactive" />
-                            <span className="text-xs text-muted">XP</span>
-                            <span className="text-sm font-bold text-white font-data tabular-nums">
-                              {profile.xp?.toLocaleString() || 0}
-                            </span>
-                          </div>
-                          {profile.engagement?.loginStreak > 0 && (
+                        {profile && (
+                          <div className="hidden lg:grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-line/50">
                             <div className="flex items-center gap-1.5">
-                              <Flame className="w-3.5 h-3.5 text-orange-500" />
-                              <span className="text-xs text-muted">Streak</span>
-                              <span className="text-sm font-bold text-orange-500 font-data tabular-nums">
-                                {profile.engagement.loginStreak}
+                              <Zap className="w-3.5 h-3.5 text-purple-500" />
+                              <span className="text-xs text-muted">Level</span>
+                              <span className="text-sm font-bold text-white">
+                                {profile.xpLevel || 1}
                               </span>
                             </div>
-                          )}
-                          <div className="flex items-center gap-1.5">
-                            <Coins className="w-3.5 h-3.5 text-brand" />
-                            <span className="text-xs text-muted">Coins</span>
-                            <span className="text-sm font-bold text-brand font-data tabular-nums">
-                              {(profile.corpsCoin || 0).toLocaleString()}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <Trophy className="w-3.5 h-3.5 text-interactive" />
+                              <span className="text-xs text-muted">XP</span>
+                              <span className="text-sm font-bold text-white font-data tabular-nums">
+                                {profile.xp?.toLocaleString() || 0}
+                              </span>
+                            </div>
+                            {profile.engagement?.loginStreak > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <Flame className="w-3.5 h-3.5 text-orange-500" />
+                                <span className="text-xs text-muted">Streak</span>
+                                <span className="text-sm font-bold text-orange-500 font-data tabular-nums">
+                                  {profile.engagement.loginStreak}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <Coins className="w-3.5 h-3.5 text-brand" />
+                              <span className="text-xs text-muted">Coins</span>
+                              <span className="text-sm font-bold text-brand font-data tabular-nums">
+                                {(profile.corpsCoin || 0).toLocaleString()}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
 
-                    {/* Quick Links removed — the app's primary destinations now
+                      {/* Quick Links removed — the app's primary destinations now
                         live in the desktop header nav (added above), matching
                         every other page. Only Sign Out remains, since the header
                         nav intentionally doesn't carry it. */}
 
-                    {/* Sign Out - hidden on mobile (accessible from Dashboard), show on desktop */}
-                    <div className="hidden lg:block px-2 py-2 border-t border-line bg-surface-sunken">
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-muted hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-none"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* LOGIN/REGISTER WIDGET */
-                  <div className="bg-surface-card border border-line rounded-none">
-                    {/* Card Header */}
-                    <div className="bg-surface-raised px-4 py-3 border-b border-line">
-                      <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
-                        <Trophy className="w-3.5 h-3.5 text-secondary" />
-                        Play Now
-                      </h3>
-                    </div>
-
-                    {/* Card Body - Compact Form */}
-                    <form onSubmit={handleSubmit} className="p-4 space-y-3">
-                      {/* Error Message */}
-                      {error && (
-                        <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-none flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-red-300">{error}</p>
-                        </div>
-                      )}
-
-                      {/* Email Input - 44px+ height for touch targets */}
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <input
-                          type="email"
-                          placeholder="Email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          disabled={loading}
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
-                        />
-                      </div>
-
-                      {/* Password Input - 44px+ height for touch targets */}
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <input
-                          type="password"
-                          placeholder="Password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                          disabled={loading}
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
-                        />
-                      </div>
-
-                      {/* Actions Row - 44px+ height for touch targets */}
-                      <div className="flex gap-2">
+                      {/* Sign Out - hidden on mobile (accessible from Dashboard), show on desktop */}
+                      <div className="hidden lg:block px-2 py-2 border-t border-line bg-surface-sunken">
                         <button
-                          type="submit"
-                          disabled={loading}
-                          className="flex-1 min-h-[44px] h-11 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-interactive-hover active:bg-interactive-subtle active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+                          onClick={handleSignOut}
+                          className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-muted hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-none"
                         >
-                          {loading ? '...' : 'Sign In'}
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
                         </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* LOGIN/REGISTER WIDGET */
+                    <div className="bg-surface-card border border-line rounded-none">
+                      {/* Card Header */}
+                      <div className="bg-surface-raised px-4 py-3 border-b border-line">
+                        <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                          <Trophy className="w-3.5 h-3.5 text-secondary" />
+                          Play Now
+                        </h3>
+                      </div>
+
+                      {/* Card Body - Compact Form */}
+                      <form onSubmit={handleSubmit} className="p-4 space-y-3">
+                        {/* Error Message */}
+                        {error && (
+                          <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-none flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-red-300">{error}</p>
+                          </div>
+                        )}
+
+                        {/* Email Input - 44px+ height for touch targets */}
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                          <input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            disabled={loading}
+                            className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
+                          />
+                        </div>
+
+                        {/* Password Input - 44px+ height for touch targets */}
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                          <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            disabled={loading}
+                            className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-surface-sunken border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 transition-colors"
+                          />
+                        </div>
+
+                        {/* Actions Row - 44px+ height for touch targets */}
+                        <div className="flex gap-2">
+                          <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 min-h-[44px] h-11 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-interactive-hover active:bg-interactive-subtle active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+                          >
+                            {loading ? '...' : 'Sign In'}
+                          </button>
+                          <Link
+                            to="/register"
+                            className="flex-1 min-h-[44px] h-11 border border-line text-muted font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-line-strong hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-none"
+                          >
+                            Register
+                          </Link>
+                        </div>
+
+                        {/* Free to play badge - prominent placement */}
+                        <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-none">
+                          <Zap className="w-4 h-4 text-green-500" />
+                          <span className="text-sm font-semibold text-green-400">
+                            100% Free to Play
+                          </span>
+                        </div>
+
+                        {/* Try Demo Link */}
                         <Link
-                          to="/register"
-                          className="flex-1 min-h-[44px] h-11 border border-line text-muted font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-line-strong hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-none"
+                          to="/preview"
+                          className="flex items-center justify-center gap-2 py-2.5 border border-interactive/30 rounded-none text-interactive hover:bg-interactive/10 hover:border-interactive/50 transition-colors"
                         >
-                          Register
+                          <Play className="w-4 h-4" />
+                          <span className="text-sm font-medium">Try Demo First</span>
                         </Link>
-                      </div>
 
-                      {/* Free to play badge - prominent placement */}
-                      <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-none">
-                        <Zap className="w-4 h-4 text-green-500" />
-                        <span className="text-sm font-semibold text-green-400">
-                          100% Free to Play
-                        </span>
-                      </div>
+                        {/* Footer Links */}
+                        <div className="flex items-center justify-center text-xs text-muted pt-1">
+                          <Link
+                            to="/forgot-password"
+                            className="hover:text-interactive transition-colors"
+                          >
+                            Forgot password?
+                          </Link>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                </div>
 
-                      {/* Try Demo Link */}
-                      <Link
-                        to="/preview"
-                        className="flex items-center justify-center gap-2 py-2.5 border border-interactive/30 rounded-none text-interactive hover:bg-interactive/10 hover:border-interactive/50 transition-colors"
-                      >
-                        <Play className="w-4 h-4" />
-                        <span className="text-sm font-medium">Try Demo First</span>
-                      </Link>
-
-                      {/* Footer Links */}
-                      <div className="flex items-center justify-center text-xs text-muted pt-1">
-                        <Link
-                          to="/forgot-password"
-                          className="hover:text-interactive transition-colors"
-                        >
-                          Forgot password?
-                        </Link>
-                      </div>
-                    </form>
+                {/* URGENCY BANNER - guest-only, time-sensitive CTA */}
+                {!user && (
+                  <div style={{ order: order.urgency }}>
+                    <UrgencyBanner showCTA={true} maxTriggers={2} />
                   </div>
                 )}
 
-                {/* URGENCY BANNER - Show time-sensitive info */}
-                {!user && <UrgencyBanner showCTA={true} maxTriggers={2} />}
-
                 {/* COMMUNITY PULSE - Live activity feed for social proof */}
-                <CommunityPulse />
+                <div style={{ order: order.community }}>
+                  <CommunityPulse />
+                </div>
 
                 {/* FANTASY TRENDING MODULE */}
-                <FantasyTrendingBox
-                  trendingPlayers={trendingPlayers}
-                  loading={tickerLoading}
-                  dayLabel={tickerData?.dayLabel}
-                />
+                <div style={{ order: order.trending }}>
+                  <FantasyTrendingBox
+                    trendingPlayers={trendingPlayers}
+                    loading={tickerLoading}
+                    dayLabel={tickerData?.dayLabel}
+                  />
+                </div>
 
-                {/* LIVE SCORE TICKER */}
-                <LiveScoresBox
-                  liveScores={liveScores}
-                  displayDay={displayDay}
-                  loading={scoresLoading}
-                  hasData={hasScoresData}
-                  onYoutubeClick={handleYoutubeSearch}
-                  onShowStandings={() => setShowStandingsModal(true)}
-                />
+                {/* LIVE SCORE TICKER — lifted above community + identity so the */}
+                {/* rail (and the mobile stack) leads with fresh scores. */}
+                <div style={{ order: order.live }}>
+                  <LiveScoresBox
+                    liveScores={liveScores}
+                    displayDay={displayDay}
+                    loading={scoresLoading}
+                    hasData={hasScoresData}
+                    onYoutubeClick={handleYoutubeSearch}
+                    onShowStandings={() => setShowStandingsModal(true)}
+                  />
+                </div>
               </div>
             </div>
 
             {/* ============================================================= */}
             {/* MAIN COLUMN - Hero (first-time visitors) + News Feed */}
-            {/* On desktop: 8 cols on left */}
-            {/* On mobile: First for first-time visitors, after sidebar otherwise */}
+            {/* Desktop: 8 cols on the left (`order.news` sits ahead of the */}
+            {/* rail's `lg:order-last`). Mobile: `order.news` slots the feed */}
+            {/* right after the visitor's primary action (see order map above). */}
             {/* ============================================================= */}
-            <div
-              className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-1' : 'order-2'} lg:order-1 lg:col-span-8 space-y-4 lg:space-y-5`}
-            >
+            <div style={{ order: order.news }} className="lg:col-span-8 space-y-4 lg:space-y-5">
               {/* =============================================================
                 FIRST-TIME VISITOR SECTION - Hero + How It Works
                 Shows value proposition and educational content inline with
                 the articles column for new unauthenticated users.
                 ============================================================= */}
-              {!user && !isFirstVisitLoading && isFirstVisit && (
+              {firstVisitGuest && (
                 <>
                   <HeroBanner onDismiss={markAsReturning} />
                   <SocialProofBar />
