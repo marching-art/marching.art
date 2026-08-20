@@ -55,7 +55,7 @@ const SiteHeader = () => {
           </span>
         </Link>
 
-        <div className="ml-auto flex flex-shrink-0 items-center gap-1">
+        <div className="ml-auto flex flex-shrink-0 items-center">
           {user ? (
             // Same order as GameShell's nav: daily loop first (Dashboard,
             // Lineup, Schedule, Scores), then News, Leagues, Profile.
@@ -111,11 +111,14 @@ const SiteHeader = () => {
               public page — the single-listener invariant still holds. */}
           {user && (
             <>
+              {/* Per-item margins (ml-2 here, ml-1 baked into the Explore and
+                  help menus, none on the bell) rather than a container gap, so
+                  the cluster's spacing is pixel-identical to GameShell's TopNav. */}
               <a
                 href={DISCORD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
+                className="ml-2 p-2 text-muted hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                 title="Join our Discord"
                 aria-label="Join our Discord"
               >
