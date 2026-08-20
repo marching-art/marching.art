@@ -43,7 +43,7 @@ const PublicShell = ({ children, header, showFooter = true, showBottomBar = true
   useBodyScroll();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-white font-sans">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-background text-white font-sans">
       {header === undefined ? <SiteHeader /> : header}
 
       {/* id="main-content" is the target for SkipToContent and RouteChangeFocus.
