@@ -8,6 +8,9 @@ const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,
   NEWS_INTEGRITY_RULES,
+  MAGAZINE_STYLE,
+  DCI_GROUNDING,
+  FANTASY_SETTING_GUIDANCE,
   formatFantasyEventName,
   formatNegativeSpace,
   processGeneratedImage,
@@ -177,7 +180,7 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
 
   const modeConfig = {
     full: {
-      words: '600-800',
+      words: '1,500-2,200',
       voice: variety.voice,
       storyEngine: variety.storyEngine,
       coverage: `Tiered coverage: ${tierDescription}.`,
@@ -185,28 +188,28 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
       bodyNote: '',
     },
     small: {
-      words: '450-600',
-      voice: `Intimate small-field night — ${totalCompetitors} competitive ensembles. Every ensemble gets real air time; no filler, no pad-to-length paragraphs.`,
+      words: '1,000-1,500',
+      voice: `Intimate small-field night — ${totalCompetitors} competitive ensembles. Every ensemble is a character here; give each one real attention, but never pad — if a paragraph has no real material behind it, cut it.`,
       storyEngine: `Frame the night as a head-to-head (or three-way) among the ${totalCompetitors} competitors. The margins between them ARE the story.`,
       coverage: `Cover all ${totalCompetitors} competitive ensembles in detail.`,
       headlineGuidance: `Include the top ensemble's name and score. A margin-forward headline (e.g., "X Edges Y by 0.156") is welcome when the gap is tight. No exclamation points.`,
       bodyNote: `- Do not pad. If a paragraph has no real material, cut it.`,
     },
     solo: {
-      words: '300-400',
-      voice: `Local beat reporter covering a quieter night. One ensemble in competition, performing solo. Honest, grounded, undramatic. Do NOT invent rivalries or opponents — there aren't any tonight.`,
+      words: '700-1,100',
+      voice: `A quieter night: one ensemble in competition, performing solo. Honest and grounded — do NOT invent rivalries or opponents, because there aren't any tonight. The drama, such as it is, comes from this one program measured against its own season.`,
       storyEngine: `Tonight is a solo showcase, not a competition. The story is this one ensemble's performance in context — their score and where it sits in the arc of the season. SoundSport participants (if present) are the evening's surrounding ecosystem, not opponents.`,
       coverage: `Cover the one competitive ensemble as the sole feature. Reference SoundSport participants only for evening texture — never imply they competed against the featured ensemble.`,
       headlineGuidance: `Name the ensemble and their score plainly. Do NOT invent competitive framing. Factual phrasing like "Mendota DBC Posts 68.198 in Solo Competition" is correct; "Dominates Field" or "Claims Victory" is not.`,
-      bodyNote: `- This is a small night. Short and honest beats padded and dramatic. If the data does not support another paragraph, stop writing. 300-400 words is the target, not a floor.`,
+      bodyNote: `- This is a solo night with thin material. Do not pad to a count: write the fullest honest story the single result and the season arc support, and stop when you have said it.`,
     },
     soundsport: {
-      words: '250-350',
-      voice: `Feature writer covering a SoundSport-only showcase. Celebrate the participants and ratings; the focus is ensemble quality and growth, not standings.`,
+      words: '600-900',
+      voice: `A SoundSport-only showcase. Celebrate the participants and their ratings; the focus is ensemble quality and growth, not standings.`,
       storyEngine: `SoundSport is the whole story tonight. Lead with the Best in Show ensemble (if any), then group the remaining participants by rating level. Do NOT reveal SoundSport scores — SoundSport is a ratings-only format.`,
       coverage: `Feature the SoundSport participants by rating. Make the ratings-only nature of SoundSport clear so readers understand scores are intentionally not published.`,
       headlineGuidance: `Lead with a SoundSport ensemble name and rating, or frame as a showcase evening. No invented scores. No exclamation points.`,
-      bodyNote: `- No competitive scores are reported tonight — this is a SoundSport-only evening. Do not invent or imply a competitive outcome.`,
+      bodyNote: `- No competitive scores are reported tonight — this is a SoundSport-only evening. Do not invent or imply a competitive outcome, and do not pad: match the length to the real material.`,
     },
   };
   const mode = modeConfig[fieldMode];
@@ -284,7 +287,7 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     ? programConcepts.map(p => `- ${promptSafe(p.corpsName)}: performing ${promptSafe(p.concept, { maxLength: 300 })}`).join('\n')
     : '';
 
-  const prompt = `You are a marching.art fantasy sports journalist writing a professional, data-grounded recap of tonight's results. These are FANTASY ensembles run by real users. You may write with an engaging sportswriter's voice and characterize the performances and the shape of the standings — but you have no interview access and no information beyond the scores and standings in the DATA block. Every factual detail — ensemble names, director names, scores, margins, competition names, locations, counts — must match the DATA block exactly. Do not state anything a reporter could not know from a scoresheet.
+  const prompt = `You are a marching.art staff writer filing a long-form magazine feature on tonight's competition. These are FANTASY ensembles run by real users — a fictional field you are free to render as a scene and to treat as characters, drawn from what the results actually show. Every hard fact — ensemble names, director names, scores, margins, competition names, locations, counts — must match the DATA block exactly, and the real people behind the ensembles are off-limits (you have interviewed no one). Dramatize the night; never invent the numbers, and never put words or feelings in a real director's mouth.
 
 ACCURACY RULES (read first)
 - The field is ${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'} tonight${soundSportResults.length > 0 ? ` plus ${soundSportResults.length} SoundSport participant${soundSportResults.length === 1 ? '' : 's'}` : ''}. Never claim any other count — do not say "25 corps" or any number other than ${totalCompetitors}.
@@ -292,20 +295,25 @@ ACCURACY RULES (read first)
 ${fieldMode === 'soundsport' ? `- No competitive ensembles tonight; SoundSport is non-competitive, so do NOT describe anyone as "winning" against anyone else. Performances are appraised by rating level, not rank.` : multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : fieldMode === 'solo' ? `- Only one competitive ensemble performed tonight: ${promptSafe(topPerformers[0].corpsName)} at ${promptSafe(competitiveByShow[0]?.name || fantasyShowName)}${competitiveByShow[0]?.location ? ` (${promptSafe(competitiveByShow[0].location)})` : ''}. There are no opponents to frame against — do not invent rivals, runners-up, or head-to-head narratives.` : `- All ensembles tonight competed at the same fantasy show: ${promptSafe(competitiveByShow[0]?.name || fantasyShowName)}${competitiveByShow[0]?.location ? ` (${promptSafe(competitiveByShow[0].location)})` : ''}.`}
 - The ranked lines give the exact gap to the ensemble directly above ("[0.041 behind the ensemble above]") — quote those verbatim and never re-derive them, and don't state a margin between two non-adjacent ensembles that the data doesn't provide.
 - HOME CITY IS NOT THE VENUE. Each ranked line may list the corps' home city as "(based in X)" — that is where the program is based, NOT where it performed. The performance venue is the SHOW location in the section header. Never write that an ensemble performed, competed, or delivered its show "in" its home city unless that city is the show venue. Refer to a home city only as the corps' base (e.g., "the Denver-based ensemble"), never as the location of tonight's performance.
-- Beyond your own analytical characterization of the results, invent nothing else: no rivalries, backstories, injuries, or biographical details. Do not reveal specific roster/lineup picks. Program/show themes may be referenced ONLY for ensembles listed in the PROGRAM CONCEPTS block, exactly as described there — never invent a theme for anyone else.
+- Character and rivalry must come from the results, not from invention. Framing an ensemble as a contender chasing its first win, or two ensembles as rivals because the standings put them a fraction apart, is fair — it is true. Inventing a biography, an injury, a founding story, a backstage moment, or a rivalry the scores don't support is not. Do not reveal specific roster/lineup picks. Program/show themes may be referenced ONLY for ensembles listed in the PROGRAM CONCEPTS block, exactly as described there — never invent a theme for anyone else.
 - Director names in the DATA block are whatever each user set as their displayName — some are real names ("Sarah Jones"), some are usernames ("elithecreature", "mike_42", "BluecoatsFan"). When you refer to a director, prefer an ensemble-based reference ("Mendota DBC's director", "the director behind Stellar Vista"). Use the bare displayName only when it reads like a real name (a capitalized word with a space). For handle-style names, wrap them in the role ("director elithecreature") so the reader sees a screen name rather than a first name — never use a handle as a bare first name.
 - ${UNTRUSTED_FIELD_RULE}
 
 ${NEWS_INTEGRITY_RULES}
 
+${MAGAZINE_STYLE}
+
+${FANTASY_SETTING_GUIDANCE}
+
 Date: ${showContext.date} | Day ${reportDay}
 Field mode: ${fieldMode} (${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'}${soundSportResults.length > 0 ? `, ${soundSportResults.length} SoundSport` : ''})
 
-Voice: ${mode.voice}
+Voice angle for tonight: ${mode.voice}
 Story engine: ${mode.storyEngine}
-Sourcing: Data-only recap — you have the scores and standings and nothing else. No quotes, no interviews, no reactions, no backstory. Personality comes from how you read the numbers, not from words you put in anyone's mouth.
+Sourcing: You have the scores, the standings, the real show date, and the venue/city — no more. Situate the scene in those real details and let the numbers carry the competition; never quote, paraphrase, or ascribe a feeling to a real director, and never invent a score.
 
 ===== DATA =====
+SETTING: ${showContext.date}${showContext?.weather ? ` — real conditions at the venue: ${promptSafe(showContext.weather, { maxLength: 240 })}` : ''}
 TOTAL COMPETITIVE ENSEMBLES: ${totalCompetitors}
 ${directorClassBlock ? `\nDIRECTOR REFERENCE GUIDE (check this before naming any director — "HANDLE" names should NEVER be used as a bare first name; refer via the ensemble instead):\n${directorClassBlock}\n` : ''}${totalCompetitors === 0 ? 'No competitive ensembles tonight — this is a SoundSport-only evening.' : multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
 ${captionLeadersBlock ? `\nCAPTION LEADERS AMONG TONIGHT'S ENSEMBLES (who won each scoring caption — the winner didn't necessarily sweep):\n${captionLeadersBlock}\n` : ''}${programConceptsBlock ? `\nPROGRAM CONCEPTS (real, director-designed show concepts — the only theme information that exists; ensembles not listed have no known concept):\n${programConceptsBlock}\n` : ''}
@@ -330,15 +338,15 @@ BANNED PHRASES: dominant, commanding, stunning, heating up, sent shockwaves, pro
 ARTICLE REQUIREMENTS
 - Headline: ${mode.headlineGuidance}
 - Summary: 2-3 sentences — top result, score, and one storyline hook${multiShow ? '. Make the multi-show night clear' : ''}.
-- Narrative: ${mode.words} words. ${mode.coverage} Carry personality through sharp, specific observation of the scores, the margins, and the competitive picture — the tight gaps, who closed on whom, where a score lands in the field. Do NOT manufacture quotes, reactions, or feelings to add color; characterize the ensembles and the night, never speak for a director.
-${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !== 'soundsport' ? `- Work in the caption story: the GE, Visual, and Music leaders are in the data. Note when the night's winner also swept the captions, or when a different ensemble took a caption — that's often the most interesting subplot.\n` : ''}${(fieldMode === 'full' || fieldMode === 'small') ? `- Structure the piece with 3-4 short bolded lead-ins in Markdown (e.g., **Top of the night.**, **The chase.**, **Caption watch.**) at natural transitions — 2-4 words each; they render as section subheads. Don't over-segment a short night.\n` : ''}${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. When you cite a placement or score, make the show clear so readers know which ensembles actually faced each other.\n` : ''}${soundSportResults.length > 0 && fieldMode !== 'soundsport' ? `- Include a SoundSport highlight — celebrate the ratings without ever revealing SoundSport scores.\n` : ''}- End with a specific observation or stat from the data, not a rhetorical question or generic send-off.`;
+- Narrative: a long-form magazine feature of ${mode.words} words, in flowing prose — no bullet points or numbered lists. ${mode.coverage} Open on a scene or a specific result, build toward the night's outcome as a climax, and carry the story through sharp, specific reading of the scores, the margins, and the competitive picture — the tight gaps, who closed on whom, where a score lands in the field. Situate it at the real venue on its real date. Do NOT manufacture quotes, reactions, or feelings for a director; the ensembles are your characters, the humans behind them are not.
+${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !== 'soundsport' ? `- Work in the caption story: the GE, Visual, and Music leaders are in the data. Note when the night's winner also swept the captions, or when a different ensemble took a caption — that's often the most interesting subplot.\n` : ''}${(fieldMode === 'full' || fieldMode === 'small') ? `- You may use a few spare bolded section breaks in Markdown where the story genuinely turns, but keep this a flowing feature, not a segmented recap — never label sections like a box score.\n` : ''}${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. When you cite a placement or score, make the show clear so readers know which ensembles actually faced each other.\n` : ''}${soundSportResults.length > 0 && fieldMode !== 'soundsport' ? `- Include a SoundSport highlight — celebrate the ratings without ever revealing SoundSport scores.\n` : ''}- End with a specific observation or stat from the data, not a rhetorical question or generic send-off.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
       headline: { type: Type.STRING, description: "Top ensemble name and score from the data. No exclamation points, no 'dominates', no invented numbers." },
       summary: { type: Type.STRING, description: "2-3 sentences grounded in tonight's real results: top ensemble, score, margin, one storyline hook. If multiple shows occurred, make that clear." },
-      narrative: { type: Type.STRING, description: "600-800 word fantasy article. Uses the exact ensemble names, director names, scores, margins, and show/location values from the DATA block — no invented facts. Coverage depth matches the field size (detail for the top tier, grouped coverage for the rest). No fabricated quotes, interviews, reactions, rivalries, or backstory — personality comes from analysis of the real scores and standings. A corps' home city is where it is based, not where it performed. Margins are quoted verbatim from the data. Never uses 'dominant', 'commanding', 'stunning', 'heating up'." },
+      narrative: { type: Type.STRING, description: "Long-form magazine feature (length per the field mode) in flowing prose — no bullet points or numbered lists. Uses the exact ensemble names, director names, scores, margins, and show/location values from the DATA block — no invented facts. The fictional ensembles may be framed as characters and the night as a scene at the real venue and date, but no fabricated quotes, feelings, or actions for a real director, and no invented biography, rivalry, or number. Coverage depth matches the field size. A corps' home city is where it is based, not where it performed. Margins are quoted verbatim from the data. Never uses 'dominant', 'commanding', 'stunning', 'heating up'." },
       topPerformers: {
         type: Type.ARRAY,
         items: {
@@ -588,6 +596,12 @@ ${gainBlock ? `- 10-DAY GAIN is a pre-computed points-per-day figure (already pr
 
 ${NEWS_INTEGRITY_RULES}
 
+${MAGAZINE_STYLE}
+
+${DCI_GROUNDING}
+
+This is still the picks column — the only one in the batch that tells directors what to do. Write it as a long-form market-analysis feature: the recommendations live inside flowing prose and argument, not a bulleted list, and each pick names a specific corps+caption and the score/trend/value that justifies it. The structured recommendation cards you also fill carry the at-a-glance version; the narrative is where you make the case.
+
 ${variety.framing}
 Depth: ${variety.depthArea}
 Pick style: ${variety.pickStyle}
@@ -615,12 +629,8 @@ BANNED PHRASES: dominant, heating up, intensifies, key area of focus, captivatin
 ARTICLE REQUIREMENTS
 - Headline: A pick-oriented thesis. Name a specific corps+caption and what to DO with it (e.g., a buy, hold, sell, or fade framing). Use ↑↓→ if it fits. No hype words, no invented numbers.
 - Summary: 2-3 sentences that lead with tonight's single highest-conviction pick and one line of reasoning. Every other piece in tonight's batch is descriptive — this one is directive.
-- Narrative: 600-800 words, weighted heavily toward the picks. Structure:
-  1. Lead with the top BUY (specific corps+caption, the thesis, the score/trend that supports it, who it displaces in a typical lineup).
-  2. Cover the remaining BUYs, then HOLDs, then SELLs — each named at the corps+caption level with brief reasoning.
-  3. Include one or two lines on caption WEIGHT or SCARCITY where it matters (e.g., a 0.30 swing in a ~20%-weight caption like GE1 is worth roughly 2x the same swing in a ~10% caption like Percussion).
-  4. Close with a SLEEPER — one under-the-radar corps+caption most fantasy directors will miss, with the reason it's mispriced.
-  Cite specific scores and margins drawn only from the data. Do NOT re-narrate what the DCI Recap already covered — no paragraph-length caption-by-caption play-by-play. Every paragraph should end with a picks-actionable takeaway or be cut.
+- Narrative: a long-form market feature of roughly 1,100-1,600 words, weighted heavily toward the picks and written as flowing prose (no numbered lists in the body). Open on your highest-conviction move of the night — the top BUY, the specific corps+caption, the thesis, the score/trend/value behind it, and who it displaces in a typical lineup — then build outward through the rest of the BUYs, the HOLDs, and the SELLs, each named at the corps+caption level and argued, not just listed. Work in the logic of caption WEIGHT and SCARCITY where it matters (a 0.30 swing in a ~20%-weight caption like GE1 is worth roughly twice the same swing in a ~10% caption like Percussion), and land the piece on a SLEEPER — one under-the-radar corps+caption most directors will miss, and the reason it's mispriced.
+  Cite specific scores and margins drawn only from the data. Do NOT re-narrate what the DCI Recap already covered — no paragraph-length caption-by-caption play-by-play. Keep every stretch actionable: a passage that isn't moving a director toward a decision should be sharpened or cut.
   Pick style (confident / analytical / contrarian) follows the framing above.
 ${(hasCostData || gainBlock) ? `- GROUND THE PICKS IN VALUE AND FORM VELOCITY. A pick is not just "who scored highest" — it is "who is the best buy":${hasCostData ? `\n  • VALUE (score ÷ cost): a BUY should offer strong caption output for its price. Favor underpriced corps from the VALUE BOARD; when a top scorer's cost makes it a mediocre value, say so and point to the cheaper corps that nearly matches it. Flag SELLS for premium-priced corps whose output no longer justifies the point cost. Always name the cost and the value ratio for a pick, exactly as printed.` : ''}${gainBlock ? `\n  • 10-DAY GAIN (points/day): buy the climb — corps with a positive daily gain are appreciating and worth grabbing before the field notices. Fade the slide — a negative gain is a reason to SELL or downgrade to HOLD even when tonight's number still looks fine. Quote the +/−x.xx/day figure.` : ''}\n  • The strongest BUY combines good value with a positive 10-day gain; the clearest SELL pairs a poor value (or falling form) with a premium cost. Make each recommendation's reason state which of these it turns on.\n` : ''}- Also fill two structured fields: fantasyImpact (one or two sentences distilling tonight's single most actionable move — it appears on its own in the home-feed widget, so it must stand alone) and trendingCorps (up to 3 corps from the TRENDING data, each with a direction and a short data-grounded reason; omit any that aren't really moving).`;
 
@@ -648,7 +658,7 @@ ${(hasCostData || gainBlock) ? `- GROUND THE PICKS IN VALUE AND FORM VELOCITY. A
     properties: {
       headline: { type: Type.STRING, description: "Caption-focused headline with a real corps, specific caption (GE1/B/CG etc), real score from the data, and ↑↓→ trend. No hype words, no invented numbers." },
       summary: { type: Type.STRING, description: "2-3 sentences highlighting tonight's actual caption movements and one clear recommendation drawn from the data." },
-      narrative: { type: Type.STRING, description: "700-900 word caption-by-caption analysis. Every corps, caption score, and trend arrow must come from the data block. Section emphasis follows where the real story is. Fun but data-driven." },
+      narrative: { type: Type.STRING, description: "Long-form market feature (~1,100-1,600 words) in flowing prose — no numbered lists in the body — that argues the night's buy/hold/sell picks by specific corps+caption. Every corps, caption score, trend arrow, cost, and value must come from the data block; no invented numbers and no invented atmosphere. Emphasis follows where the real value is. Fun but data-driven." },
       captionInsights: {
         type: Type.OBJECT,
         properties: {

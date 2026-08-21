@@ -52,6 +52,15 @@ async function generateStructuredContent(prompt, schema) {
     config: {
       responseMimeType: "application/json",
       responseSchema: schema,
+      // The articles are now long-form magazine features (~1,500-2,200 words),
+      // and the JSON also carries structured arrays (standings, recommendations,
+      // insights). With Flash's thinking tokens counted against the output
+      // budget, the model's default cap can truncate a long article mid-JSON —
+      // which then fails to parse and drops the piece to a fallback stub. A
+      // generous explicit ceiling leaves comfortable headroom for the narrative,
+      // the structured fields, and thinking, while still bounding a runaway
+      // generation well under the model's 65K limit.
+      maxOutputTokens: 16384,
     },
   });
 

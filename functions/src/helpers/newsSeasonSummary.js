@@ -21,6 +21,8 @@ const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,
   NEWS_INTEGRITY_RULES,
+  MAGAZINE_STYLE,
+  FANTASY_SETTING_GUIDANCE,
   processGeneratedImage,
 } = require("./newsArticleShared");
 const {
@@ -450,6 +452,10 @@ ACCURACY RULES
 
 ${NEWS_INTEGRITY_RULES}
 
+${MAGAZINE_STYLE}
+
+${FANTASY_SETTING_GUIDANCE}
+
 Through Day ${throughDay} | ${daysScored} scored days${isLiveSeason ? " | LIVE season" : ""}
 
 ===== DATA =====
@@ -474,7 +480,7 @@ BANNED PHRASES: dominant, commanding, stunning, heating up, sent shockwaves, the
 ARTICLE REQUIREMENTS
 - Headline: A specific storyline — the class race, a rivalry, or the corps quietly racking up wins. Name a real ensemble. No hype words, no invented numbers.
 - Summary: 2-3 sentences that open on the single sharpest storyline of the season so far — a real lede, not a throat-clearing "through Day N, the landscape is taking shape."
-- Narrative: 550-800 words (shorter and sharper beats longer and padded — do not pad to hit a count). Open with a true lede on the most newsworthy thread, then use 4-6 short bolded Markdown lead-ins (2-4 words each, e.g. **World Class.**, **The chase.**, **Rising fast.**, **SoundSport.**) at natural transitions. Cover, in whatever order reads best:
+- Narrative: a long-form state-of-the-season feature of roughly 1,400-2,000 words (but never padded — if a thread has no real material behind it, cut it rather than stretch). Open with a true lede on the most newsworthy thread and build a piece with a through-line, not a tour of the tables. A few spare bolded Markdown section breaks where the story genuinely turns are welcome, but keep it a flowing feature, not a labeled set of class summaries. Cover, in whatever order reads best:
   1. The competitive-class picture — who leads, who is closing, and what the GE/Visual/Music PROFILES reveal about how each contender is built. Interpret; do not recite the table.
   2. The most compelling rivalries — who has traded places and how close it is (weave in a real margin figure, not a stock phrase).
   3. The show-win story: which corps have piled up the most first-place finishes in their class and what that says about their consistency (a season achievement count — never a show-by-show log; reserve "Best in Show" for SoundSport).
@@ -488,7 +494,7 @@ ARTICLE REQUIREMENTS
     properties: {
       headline: { type: Type.STRING, description: "State-of-the-season headline naming a real ensemble. No hype words, no invented numbers, no individual captions." },
       summary: { type: Type.STRING, description: "2-3 sentence setup of the season-to-date picture and the top storyline." },
-      narrative: { type: Type.STRING, description: "550-800 word season summary that INTERPRETS the data rather than reciting the standings tables. Opens on a real lede, uses 4-6 short bolded Markdown lead-ins, and reads like a marching-arts columnist. Discusses ONLY combined GE / combined Visual / combined Music and totals — never individual captions and never any director's lineup picks. Every name, score, margin, count, rating, and award comes from the DATA block, with each corps name printed verbatim as a proper noun (including generic-looking names like 'Unspecified'). SoundSport is ratings-only. Reserves 'Best in Show' for SoundSport; competitive wins are 'show wins'." },
+      narrative: { type: Type.STRING, description: "Long-form state-of-the-season feature (~1,400-2,000 words) of flowing prose — no bullet points or numbered lists — that INTERPRETS the data rather than reciting the standings tables. Opens on a real lede, carries a through-line, and reads like a long-form magazine writer. May frame the season as a story and situate it on its real dates, but invents no facts and puts no words in a real director's mouth. Discusses ONLY combined GE / combined Visual / combined Music and totals — never individual captions and never any director's lineup picks. Every name, score, margin, count, rating, and award comes from the DATA block, with each corps name printed verbatim as a proper noun (including generic-looking names like 'Unspecified'). SoundSport is ratings-only. Reserves 'Best in Show' for SoundSport; competitive wins are 'show wins'." },
     },
     required: ["headline", "summary", "narrative"],
   };

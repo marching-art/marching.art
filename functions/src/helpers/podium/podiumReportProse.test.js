@@ -476,14 +476,16 @@ describe("feature-length prose", () => {
     };
     const article = composeNarrative(analyzeStandings(openingSheet));
     assert.match(article, /Opening night is a blank page/);
-    assert.match(article, /\*\*The field\.\*\*/);
+    // The scene and the caption story are woven in as flowing prose...
     assert.match(article, /3 corps answered the bell/);
     assert.match(article, /packed tight/);
-    assert.match(article, /\*\*The lead\.\*\*/);
-    assert.match(article, /\*\*The caption kings\.\*\*/);
+    assert.match(article, /Pull the .* apart/); // the leader's caption story
+    assert.match(article, /Read it caption by caption/); // caption kings
+    // ...with no Axios-style subhead chips anywhere in the piece.
+    assert.doesNotMatch(article, /\*\*/);
     // Nothing to move or arrive when the whole field is brand new.
-    assert.doesNotMatch(article, /\*\*Movers\.\*\*/);
-    assert.doesNotMatch(article, /\*\*New faces\.\*\*/);
+    assert.doesNotMatch(article, /is climbing|are climbing|giving ground/);
+    assert.doesNotMatch(article, /New to the conversation/);
     assert.match(article, /no ballots, no bias, just the board/);
     assert.doesNotMatch(article, /[^\n]\n[^\n]/);
   });
@@ -497,12 +499,17 @@ describe("feature-length prose", () => {
     assert.ok(one.includes("\n\n"));
     assert.doesNotMatch(one, /[^\n]\n[^\n]/);
 
-    // Understated subheads, not a "1. … 2. …" ranking dump.
-    assert.match(one, /\*\*The lead\.\*\*/);
-    assert.match(one, /\*\*The caption kings\.\*\*/);
-    assert.match(one, /\*\*The chase\.\*\*/);
-    assert.match(one, /\*\*Movers\.\*\*/);
+    // Flowing feature prose — the beats are woven in, NOT stacked as labeled
+    // chips, and never a "1. … 2. …" ranking dump.
+    assert.doesNotMatch(one, /\*\*/); // no bolded subhead chips
+    assert.match(one, /Pull the .* apart/); // the leader's caption story
+    assert.match(one, /Read it caption by caption/); // caption kings
+    assert.match(one, /pack is doing its own math/); // the chase
+    assert.match(one, /is climbing|are climbing/); // the movers
     assert.doesNotMatch(one, /^\d+\.\s/m);
+
+    // A handful of substantial paragraphs, not a fragment per beat.
+    assert.ok(one.split("\n\n").length <= 6);
 
     // Still data-true: the leader, score and caption story lead the piece.
     assert.match(one, /Altitude/);

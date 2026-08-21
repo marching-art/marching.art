@@ -93,6 +93,52 @@ const NEWS_INTEGRITY_RULES = `INTEGRITY RULES (non-negotiable — apply to the e
 - Numbers verbatim. Cite scores exactly as written, and use the margins and gaps already computed in the DATA block as-is — do not recompute, re-derive, or re-round them, and never state a margin the data doesn't provide. Approximate prose ("about three-tenths back") is fine only when it matches a value that's actually in the data.`;
 
 // =============================================================================
+// LONG-FORM MAGAZINE VOICE
+// -----------------------------------------------------------------------------
+// The house voice for every LLM-written article. The site's articles are written
+// as long-form narrative features (The Atlantic / ESPN The Magazine / Texas
+// Monthly / Grantland), not wire recaps or box scores. This block sets the
+// register, the craft rules, and an expanded ban on generic-AI phrasing. It is
+// deliberately paired in every prompt with NEWS_INTEGRITY_RULES: the drama is
+// built ENTIRELY from the real data — nothing is fictional. "Dramatize the
+// scores" never means "invent a scene."
+// =============================================================================
+const MAGAZINE_STYLE = `VOICE — LONG-FORM MAGAZINE FEATURE
+Write this as narrative nonfiction — a long-form magazine feature in the tradition of The Atlantic, Texas Monthly, ESPN The Magazine, and Grantland — not a wire recap, a box score, or an Axios-style brief. You are a seasoned writer who has covered this competition for years. The prose is confident, unhurried, and observational. No hype, no marketing language, no inspirational filler.
+
+Build the piece as a STORY:
+- Open on a specific, concrete detail drawn from the real results — a margin, a number that argues with itself, a corps arriving from nowhere — never a throat-clearing "through Day N…" or "the stage is set" summary.
+- Give it a dramatic arc: establish the stakes, build tension through the middle, move toward the results as a climax, and land the close on a resonant, concrete beat (a real number, a real question the next show answers).
+- Treat the competitors as characters, drawing their motivation, history, and stakes from what the data shows — a corps chasing its first lead, a favorite losing ground it can't afford to lose, a program whose whole week has bent toward tonight. A competitive persona built from real results is character. Never put invented words, private feelings, or actions in a real person's mouth (the corps, directors, and performers are real people you have not interviewed) — a competitor's stakes reach the page through what the scores show.
+- Make the judging a source of tension. The scoring captions are contested ground and the margins are the drama: show where the night was won or lost on the sheets, not just who placed where.
+- Control the pace — slow down for the decisive moments, move quickly through connective material — and vary sentence length and rhythm so short lines land after long ones.
+- Write in flowing paragraphs. NO bullet points, NO numbered lists inside the prose, NO summary boxes, no clipped teaser sign-offs. (Structured data fields you also fill are separate from the narrative and do not count against this.)
+
+KILL GENERIC-AI PHRASING. On top of the BANNED PHRASES listed below, never use: unveils, showcases, showcasing, delves, delve into, explores, exploring, in the realm of, realm, landscape, dynamic, intricate, nuanced, journey, underscores, at the heart of, tapestry, testament, weaves, weaving, boasts, elevates, dazzling, mesmerizing, a symphony of, ever-evolving, notably, moreover, furthermore. Replace every abstraction with a concrete specific and a strong verb. If a sentence could sit unchanged in a generic AI article, sharpen it or cut it.`;
+
+// Strict grounding for the real-DCI pieces (daily / feature / recap). These cover
+// real drum corps and real historical scores, so they carry the tightest rule the
+// site enforces: dramatize the scores, invent NOTHING. The magazine voice sets the
+// register; this keeps the register honest.
+const DCI_GROUNDING = `GROUNDING (real corps, real scores — dramatize the numbers, invent nothing)
+This piece is about real drum corps and their real scores, and it must be 100% factual. Build all of the drama out of the competitive facts in the DATA block — the margins, the caption battles, the day-over-day swings, the season arcs, the shape of the standings. Do NOT invent weather, crowd noise, stadium detail, backstage moments, dialogue, private feelings, or any venue color the data doesn't name. Your "scenes" are the results themselves, rendered precisely. If a detail is not in the DATA block, it does not go in the article.`;
+
+// Fantasy-world scene grounding. Added only to the articles about the game's own
+// ensembles (fantasy results, season summary, podium) — NOT the real-DCI pieces,
+// which carry the stricter DCI_GROUNDING above. These pieces may frame the night
+// as a scene, and the strongest atmosphere is REAL atmosphere: the venue/city and
+// date come from the DATA block, the season/time-of-year follows from that real
+// date (an off-season winter show genuinely reads differently from a July night),
+// and a SETTING/ENVIRONMENT line — when present — carries real weather to draw on.
+// The hard facts (scores, margins, counts, roster picks) and real people (the
+// directors) stay governed by NEWS_INTEGRITY_RULES; this only opens the scene.
+const FANTASY_SETTING_GUIDANCE = `SETTING (build the scene on real facts first)
+This is the game's own competition, so you may frame the night as a scene rather than a bare recap. Reach for the real details first — they are the good stuff:
+- Place the night at the actual venue/city named in the data and situate it on its real calendar date. Let the time of year do real work: a show on a cold off-season date carries a different weight than a midsummer evening, and drawing that contrast is fair because it is true.
+- When a SETTING/ENVIRONMENT line supplies real weather or conditions, build the atmosphere from it. When it doesn't, you may still set a spare, plausible scene, but never present an invented specific — an exact temperature, a named landmark, a crowd count — as though it were reported.
+- The ensembles are your characters, drawn from their real results; their directors are real people. Never quote a director, paraphrase them, or assign them a feeling or an action. A director's stakes reach the page only through what their ensemble did on the field.`;
+
+// =============================================================================
 // COVERAGE LEDGER
 // -----------------------------------------------------------------------------
 // Tracks what subjects, numbers, and hooks have already been used across tonight's
@@ -258,6 +304,9 @@ module.exports = {
   Type,
   ARTICLE_TYPES,
   NEWS_INTEGRITY_RULES,
+  MAGAZINE_STYLE,
+  DCI_GROUNDING,
+  FANTASY_SETTING_GUIDANCE,
   formatFantasyEventName,
   cleanLocation,
   createCoverageLedger,

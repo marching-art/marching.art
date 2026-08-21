@@ -23,6 +23,18 @@ const HARD_BANNED_PATTERNS = [
   /\btune in tomorrow\b/i,
   /\bemerging as a true contender\b/i,
   /\bproves their mettle\b/i,
+  // Generic-AI tells banned across the long-form rewrite. Kept to the
+  // unambiguous offenders that essentially never appear in honest score writing,
+  // so a hit reliably means AI filler rather than a legitimate use.
+  /\bunveil(s|ed|ing)?\b/i,
+  /\bshowcas(e|es|ed|ing)\b/i,
+  /\bdelve(s|d)?\b/i,
+  /\bin the realm of\b/i,
+  /\bunderscore(s|d)?\b/i,
+  /\bat the heart of\b/i,
+  /\btapestry\b/i,
+  /\bever-evolving\b/i,
+  /\bmesmerizing\b/i,
 ];
 
 // Tolerance for number matching. 0.005 means "77.850" in the DATA block

@@ -10,6 +10,25 @@ import { isEventPast } from '../utils/scheduleUtils';
 import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 
+// An emoji for a WMO weather code (the backend stores show-time conditions on
+// each competition as { summary, tempF, code }). Falls back to a thermometer so
+// a code we don't map still renders a chip rather than nothing.
+const weatherEmoji = (code) => {
+  const c = Number(code);
+  if (c === 0) return '☀️';
+  if (c === 1) return '🌤️';
+  if (c === 2) return '⛅';
+  if (c === 3) return '☁️';
+  if (c === 45 || c === 48) return '🌫️';
+  if (c >= 51 && c <= 57) return '🌦️';
+  if (c >= 61 && c <= 67) return '🌧️';
+  if (c >= 71 && c <= 77) return '❄️';
+  if (c >= 80 && c <= 82) return '🌦️';
+  if (c === 85 || c === 86) return '🌨️';
+  if (c >= 95 && c <= 99) return '⛈️';
+  return '🌡️';
+};
+
 // =============================================================================
 // WEEK PILLS COMPONENT
 // =============================================================================
@@ -248,6 +267,15 @@ const ShowCard = ({
                 <span className="flex items-center gap-1 truncate">
                   <MapPin className="w-3 h-3 text-purple-400" />
                   <span className="truncate">{show.location}</span>
+                </span>
+              )}
+              {show.weather?.summary && (
+                <span
+                  className="flex items-center gap-1 flex-shrink-0 tabular-nums"
+                  title={`8 PM · ${show.weather.summary}`}
+                >
+                  <span aria-hidden="true">{weatherEmoji(show.weather.code)}</span>
+                  {typeof show.weather.tempF === 'number' && <span>{show.weather.tempF}°</span>}
                 </span>
               )}
             </div>

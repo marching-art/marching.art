@@ -6,6 +6,8 @@ const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,
   NEWS_INTEGRITY_RULES,
+  MAGAZINE_STYLE,
+  DCI_GROUNDING,
   formatNegativeSpace,
   createFallbackArticle,
 } = require("./newsArticleShared");
@@ -166,20 +168,15 @@ ${isLiveSeason
 
 ${NEWS_INTEGRITY_RULES}
 
-VOICE & STYLE
-Study how DCI.org actually writes:
-- "Boom." (punchy one-word opener)
-- "INDIANAPOLIS — A mere 0.175-point gap separates first and second."
-- "After trailing by 0.175 points Thursday, Bluecoats gained a lead of 0.188 points Friday."
-- "Less than half a point separated The Cavaliers, Blue Stars, and Troopers — three corps who have been neck-and-neck throughout the season."
+${MAGAZINE_STYLE}
 
-Lead with specific facts, stay concise, let the numbers carry the weight. No hype words. No exclamation points. The drama is in the data.
+${DCI_GROUNDING}
 
-Write it like a reporter with a real story, not a results database narrating itself. The most common failure mode is recitation — marching corps-by-corps and reading out each one's total, then GE, then Visual, then Music, in the same flat cadence. Do NOT do that. Instead:
-- Find tonight's through-line first (the tightest race, a lead that flipped, a caption that decided the night, a corps surging from nowhere) and build the piece around it.
-- Cite the numbers that MEAN something — a decisive caption gap, a margin that shrank, a season high — and let the rest of the field be summarized rather than enumerated. A corps can be covered in a sharp clause; not every corps needs its full caption line.
-- Vary sentence rhythm and connect results to each other ("what cost Carolina Crown the lead was Visual, not GE") rather than listing them side by side.
-- Prefer the active, specific verb ("edged", "shaved the gap to", "held off") over flat linking verbs ("posted", "achieved", "resulted in a score of").
+CRAFT NOTES FOR TONIGHT
+This is a long-form feature, not a results database narrating itself. The most common failure mode is recitation — marching corps-by-corps and reading out each one's total, then GE, then Visual, then Music, in the same flat cadence. Do NOT do that. Instead:
+- Find tonight's through-line first (the tightest race, a lead that flipped, a caption that decided the night, a corps surging from nowhere) and build the whole piece around it.
+- Cite the numbers that MEAN something — a decisive caption gap, a margin that shrank, a season high — and connect them to each other ("what cost Carolina Crown the lead was Visual, not GE") rather than listing them side by side. Every scoring corps appears, but emphasis follows significance; a corps can be handled in a sharp clause while the night's real story gets the room.
+- Prefer the active, specific verb ("edged", "shaved the gap to", "held off") over flat linking verbs ("posted", "achieved", "resulted in a score of"). No exclamation points.
 
 Score language should be precise: "edging past by 0.087" / "three-tenths back" / "a scant 0.2-point gap" / "swept every caption except Color Guard"
 Caption terminology: GE (GE1 Music Effect + GE2 Visual Effect), Visual (VP, VA, CG), Music (B, MA, P)
@@ -217,11 +214,11 @@ Structure: ${variety.structure}
 HOW TO WRITE THIS ARTICLE
 - Headline: Specific and factual. No exclamation points. Reference an actual margin, score, or storyline from the data.
 - Summary: 2-3 factual sentences — key result, the margin, and one specific storyline${multiShow ? '. If the night had multiple shows, make that clear in the summary' : ''}.
-- Narrative: 600-900 words. Every scoring corps should appear by name at least once, but let significance drive the emphasis — don't pad coverage to hit a checklist, and don't march through rank order unless that's genuinely the best frame.
+- Narrative: a long-form feature of roughly 1,500-2,200 words. Every scoring corps should appear by name at least once, but let significance drive the emphasis — don't pad coverage to hit a checklist, and don't march through rank order unless that's genuinely the best frame. Give the piece room to breathe and build; on a genuinely thin night with little in the data, write the fullest honest story the results support rather than padding to the count.
 ${multiShow ? `- Cover all ${scoresByShow.length} shows by name. For each score or placement you cite, make the show clear (via dateline, a phrase like "at [Show]", or section framing). Readers should never be confused about which corps competed where.` : `- This is a single-show night — ground the article in ${promptSafe(scoresByShow[0]?.name)}${scoresByShow[0]?.location ? ` (${promptSafe(scoresByShow[0].location)})` : ''} and treat the standings as one field.`}
 - Weave day-over-day changes and caption details where they're relevant; don't break them out as obligatory sections.
 - Use the FIELD SHAPE data — whether the field tightened or spread, how much position churn there was, the biggest gap-closer — as a structural through-line, not just a list of who placed where. This is what separates your piece from a bare results table: the story of how the whole standings moved tonight.
-- Structure the piece with 3-4 short bolded lead-ins in Markdown (e.g., **The result.**, **The margins.**, **Movers.**, **What's next.**) at natural transitions. Keep each to 2-4 words — they render as section subheads and make the piece scannable. Don't over-segment.
+- You may use a few spare section breaks — a short bolded phrase in Markdown (e.g., **The margins.**) where the story genuinely turns — but this is a flowing feature, not a segmented box score: use them sparingly, if at all, and never as a substitute for real transitions. Do not label sections like a recap.
 - Close with a specific, grounded observation — a number, a trend, a question the next show will answer. No "tune in tomorrow" sign-offs.
 - Also fill the structured fields: trendingCorps (only corps with a real up/down move from tonight's movers/momentum data, each with a short data-grounded reason — omit corps that didn't move) and insights (2-4 scannable takeaways, each tied to a specific number from the data).
 
@@ -234,7 +231,7 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
     properties: {
       headline: { type: Type.STRING, description: "Factual headline grounded in tonight's actual results. No exclamation points, no 'dominates' or 'stunning', no invented facts." },
       summary: { type: Type.STRING, description: "2-3 factual sentences. When multiple shows occurred, make that clear. Only use corps, scores, and venues from the DATA block." },
-      narrative: { type: Type.STRING, description: "600-900 word article. Every scoring corps appears by name at least once; emphasis follows significance, not checklist. When there are multiple shows, make the venue split clear for every score cited. Never invent corps, venues, or statistics. Never use 'dominant', 'commanding', 'heating up', 'besting'." },
+      narrative: { type: Type.STRING, description: "Long-form magazine feature (~1,500-2,200 words) of flowing prose — no bullet points or numbered lists. Every scoring corps appears by name at least once; emphasis follows significance, not a checklist. The drama is built entirely from the real scores, margins, and season arcs — invent no weather, crowd, venue color, dialogue, or feelings. When there are multiple shows, make the venue split clear for every score cited. Never invent corps, venues, or statistics. Never use 'dominant', 'commanding', 'heating up', 'besting'." },
       standings: {
         type: Type.ARRAY,
         items: {
@@ -430,7 +427,11 @@ ${isLiveSeason
 
 ${NEWS_INTEGRITY_RULES}
 
-VOICE: Sports analyst who respects the reader's intelligence. Specific scores, real comparisons, honest assessments. No filler about tradition or history — only this season's data matters.
+${MAGAZINE_STYLE}
+
+${DCI_GROUNDING}
+
+FOR THIS PROFILE: the "history" you weave is the corps' real season arc — where they opened, the shows that turned the trajectory, where they stand now — all of it from the DATA block. Do not reach for invented legacy, tradition, or biography; the season the numbers describe is a rich enough story. Respect the reader's intelligence: specific scores, real comparisons, honest assessments.
 
 BANNED PHRASES: dominant, commanding, stunning, thrilling, incredible, captivating, testament, mettle, identity forged in, legacy of excellence, storied history, tradition of, proving doubters wrong, making a statement, force to be reckoned with, passion and dedication, pushing the boundaries, compelling visual storytelling, emotionally resonant
 
@@ -474,11 +475,11 @@ Closing angle: ${variety.closingAngle}
 ARTICLE REQUIREMENTS
 - Headline: Include a real number (score, margin, trend). No exclamation points. No generic praise.
 - Summary: 2-3 sentences — rank, score, and a specific caption insight. Reference the actual show name when natural.
-- Narrative: 700-900 words. A season profile built on scores.
+- Narrative: a long-form feature of roughly 1,500-2,200 words — a season profile built on scores, given room to develop as a story with a beginning, a turn, and an outlook.
   Include: specific scores from their recent shows (use the exact show names from the data), analysis of at least 3 individual captions with numbers, a comparison to the corps around them tonight, and a reasoned outlook that follows the closing angle above.
   Sequence and emphasis are your call — if GE is the story, lead with GE; if trajectory is the story, lead with the arc. Don't walk through a checklist.
   If the FIELD-RELATIVE SEASON CONTEXT is present, use it — where this corps ranks against the whole field (percentile, "elite/strong/developing" in each caption family) is exactly the context that separates a real season audit from a recap of one night. Anchor at least one point in it.
-  Structure the piece with 3-5 short bolded lead-ins in Markdown (e.g., **Where they stand.**, **The caption story.**, **Season arc.**, **The outlook.**) at natural transitions — 2-4 words each; they render as section subheads. Don't over-segment.
+  You may use a few spare bolded section breaks in Markdown where the story genuinely turns, but keep this a flowing feature — never a labeled checklist of subheads.
   Do NOT end with fantasy buy/hold/sell or lineup picks — that belongs to the Fantasy Market Report. Do NOT predict exact future scores — only analyze visible trends.
 - Also fill the insights field: 2-3 scannable takeaways about this corps, each tied to a specific score, caption, or trend from the data.`;
 
@@ -487,7 +488,7 @@ ARTICLE REQUIREMENTS
     properties: {
       headline: { type: Type.STRING, description: "Corps name with a real number/trend from tonight. No 'dominates', no exclamation points, no invented facts." },
       summary: { type: Type.STRING, description: "2-3 sentences: corps name, current score, rank, and one specific caption insight grounded in the data." },
-      narrative: { type: Type.STRING, description: "700-900 word analytical profile. Uses the exact show names and scores from the data block — no invented venues, dates, or statistics. Covers current position, show-by-show journey with specific scores, caption strengths, caption weaknesses, and trajectory, ending per the closing angle above. No fantasy buy/hold/sell picks — that belongs to the Fantasy Market Report. Structure follows what the data emphasizes, not a fixed checklist. Never uses 'dominant', 'commanding', 'stunning'." },
+      narrative: { type: Type.STRING, description: "Long-form magazine profile (~1,500-2,200 words) of flowing prose — no bullet points or numbered lists. Uses the exact show names and scores from the data block — no invented venues, dates, statistics, tradition, or biography. Covers current position, the season arc show-by-show with specific scores, caption strengths and weaknesses, and trajectory, ending per the closing angle above. No fantasy buy/hold/sell picks — that belongs to the Fantasy Market Report. Structure follows what the data emphasizes, not a fixed checklist. Never uses 'dominant', 'commanding', 'stunning'." },
       insights: {
         type: Type.ARRAY,
         description: "2-3 scannable key takeaways about this corps for a reader skimming the profile. Each must be grounded in the DATA block — a real score, caption, or trend. No invented history or biography.",
@@ -641,6 +642,10 @@ ${isLiveSeason
 
 ${NEWS_INTEGRITY_RULES}
 
+${MAGAZINE_STYLE}
+
+${DCI_GROUNDING}
+
 VOICE & CRAFT: Write like a working journalist, not a stat sheet. The best drum corps writing finds the one tension that defines the night and pulls the reader through it — a race that has no business being this close, a caption a corps has quietly rebuilt over the week, a number that argues with the eye test. Open with a real lede that frames that tension; do not throat-clear with "here are tonight's caption rankings." Spend adjectives sparingly and let the numbers carry the drama — your job is to explain what they MEAN, not to re-list them. Prize the specific over the generic (name the sub-caption, the exact gap, the corps that moved), vary your sentence rhythm so short lines can land after longer ones, and keep one through-line running from the lede to the close. Authoritative but readable: a knowledgeable fan should finish both understanding the caption landscape better than before AND having enjoyed the read. Analyze; never merely recite.
 
 BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivating, testament, battle for supremacy, stakes are high, every point matters, absolutely crucial, setting the stage, poised to, poised for success, will have a significant advantage, buy, sell, hold, trade, pick up, drop, fade, target, stash, fantasy directors should, for fantasy purposes, in your lineup
@@ -700,11 +705,11 @@ Closing angle: ${variety.closingAngle}
 ARTICLE REQUIREMENTS
 - Headline: Technical, number-focused. Reference a specific caption gap or trend. No hype words, no "buy/sell" framing.
 - Summary: 2-3 factual sentences with key caption insights from tonight's data.
-- Narrative: 900-1200 words of caption analysis covering GE, Visual, and Music. Describe what the judges rewarded, where the races are tight, how the sub-caption picture differs from the composite picture, and how the week's trajectory reshapes each corps' caption profile. Close per the closing angle above.
+- Narrative: a long-form caption feature of roughly 1,400-2,000 words covering GE, Visual, and Music. Describe what the judges rewarded, where the races are tight, how the sub-caption picture differs from the composite picture, and how the week's trajectory reshapes each corps' caption profile. Run one through-line from the lede to the close, and close per the closing angle above.
   Reference a meaningful cross-section of the field in each caption family — aim for ${Math.min(5, dayScores.length)} or more corps per family, but never pad by inventing. Cite specific point gaps from the data.
   Weight the sections by where the real story is tonight. If the Visual race is tight and GE is decided, Visual gets more ink.
   Do NOT end with buy/hold/sell, fantasy picks, or "who to target" — the Fantasy Market Report handles that. Your ending belongs to the closing angle above.
-- Structure the piece with short bolded lead-ins in Markdown (e.g., **General Effect.**, **Visual.**, **Music.**, **The takeaway.**) so each caption family is a scannable section — 2-4 words each; they render as subheads.
+- A caption deep-dive naturally moves through the three families, so short bolded lead-ins in Markdown (e.g., **General Effect.**, **Visual.**, **Music.**) at those turns are welcome — but keep the prose flowing between and within them; this is a feature, not a set of captioned boxes.
 - Fill the captionBreakdown field (geAnalysis / visualAnalysis / musicAnalysis — the "Caption Analysis Summary" cards). This is a SUMMARY, not a second copy of the narrative. For each family, distill the ONE thing a reader should walk away with — the defining number, the race that actually matters, or the shift worth watching next — in 1-2 tight sentences that lead with the verdict. Use different wording and a different angle than the narrative's corresponding section; never reuse its sentences or restate its full argument. If the narrative already made the obvious point at length, compress it to its essence or surface the sharper secondary insight the long form had no room to dwell on. Descriptive only — no picks.
 - Also fill the insights field: 2-4 scannable caption takeaways, each tied to a specific gap, leader, or trend from the data. These are cross-cutting one-liners (a single stat or race per item) and should not duplicate the captionBreakdown summaries. Descriptive only — no picks.`;
 
@@ -713,7 +718,7 @@ ARTICLE REQUIREMENTS
     properties: {
       headline: { type: Type.STRING, description: "Technical headline grounded in a real caption gap or trend from tonight. No 'heats up', 'battle intensifies', 'buy/sell' framing, or invented facts." },
       summary: { type: Type.STRING, description: "2-3 sentences with specific caption gaps and a key insight from the data. Descriptive, not prescriptive — no fantasy picks." },
-      narrative: { type: Type.STRING, description: "900-1200 word caption analysis covering GE, Visual, and Music: what the judges rewarded, where the tightest races are, and how the week's trajectory reshapes each corps' caption profile. Every corps, score, and trend must come from the data block. No fantasy buy/hold/sell picks — that is the Fantasy Market Report's job. Never uses 'dominant', 'heating up', 'captivating'." },
+      narrative: { type: Type.STRING, description: "Long-form caption feature (~1,400-2,000 words) of flowing prose — no bullet points or numbered lists. Covers GE, Visual, and Music: what the judges rewarded, where the tightest races are, and how the week's trajectory reshapes each corps' caption profile, built entirely from the real numbers with no invented atmosphere. Every corps, score, and trend must come from the data block. No fantasy buy/hold/sell picks — that is the Fantasy Market Report's job. Never uses 'dominant', 'heating up', 'captivating'." },
       captionBreakdown: {
         type: Type.OBJECT,
         description: "The 'Caption Analysis Summary' cards — a distilled verdict per family, NOT a rehash of the narrative. Each field is 1-2 tight sentences leading with the single defining takeaway, in different words from the narrative.",
