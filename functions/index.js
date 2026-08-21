@@ -208,6 +208,10 @@ const {
   updateRivalsNow,
 } = require("./src/scheduled/rivalsComputation");
 const {
+  scheduledScheduleWeather,
+  refreshScheduleWeatherNow,
+} = require("./src/scheduled/scheduleWeather");
+const {
   weeklyDigestEmailJob,
   winBackEmailJob,
   streakBrokenEmailJob,
@@ -426,6 +430,10 @@ module.exports = {
   // Rivals
   scheduledRivalsUpdate,
   updateRivalsNow,
+
+  // Schedule weather (scheduled + admin refresh)
+  scheduledScheduleWeather,
+  refreshScheduleWeatherNow,
 
   // League Automation (scheduled)
   generateWeeklyMatchups,

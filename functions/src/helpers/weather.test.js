@@ -10,7 +10,9 @@ const {
   toIsoDate,
   skyFromCode,
   describeDailyWeather,
+  describeHourlyWeather,
   getShowWeather,
+  getShowtimeWeather,
 } = require("./weather");
 
 // A minimal Firestore stand-in: doc(path) → { get, set } over a Map.
@@ -50,6 +52,19 @@ function fakeFetch(routes) {
 }
 
 const GEO_HIT = { results: [{ latitude: 42.5, longitude: -90.66, name: "Dubuque" }] };
+// An hourly day with a distinct 8 p.m. (hour 20) reading. The `time` array is
+// dated 2020-02-20, but fetchShowtimeConditions falls back to the raw hour index
+// when the timestamp doesn't match, so this fixture works for any test date.
+const HOURLY_HIT = {
+  hourly: {
+    time: Array.from({ length: 24 }, (_, h) => `2020-02-20T${String(h).padStart(2, "0")}:00`),
+    temperature_2m: Array.from({ length: 24 }, (_, h) => (h === 20 ? 61.4 : 30)),
+    weather_code: Array.from({ length: 24 }, (_, h) => (h === 20 ? 0 : 3)),
+    wind_speed_10m: Array.from({ length: 24 }, () => 12.2),
+    precipitation: Array.from({ length: 24 }, () => 0),
+    snowfall: Array.from({ length: 24 }, () => 0),
+  },
+};
 const DAILY_HIT = {
   daily: {
     weather_code: [71],
@@ -211,5 +226,93 @@ describe("getShowWeather", () => {
       fetchImpl,
     });
     assert.equal(summary, null);
+  });
+});
+
+describe("describeHourlyWeather", () => {
+  test("builds a compact showtime object at the given hour", () => {
+    const w = describeHourlyWeather(HOURLY_HIT.hourly, 20);
+    assert.deepEqual(w, { summary: "clear skies, 61°F", tempF: 61, code: 0 });
+  });
+  test("includes wind and precip when notable", () => {
+    const w = describeHourlyWeather(
+      {
+        temperature_2m: [null, 40],
+        weather_code: [null, 63],
+        wind_speed_10m: [null, 22],
+        precipitation: [null, 0.25],
+        snowfall: [null, 0],
+      },
+      1
+    );
+    assert.equal(w.summary, "rain, 40°F, winds 22 mph, 0.25 in rain");
+    assert.equal(w.tempF, 40);
+    assert.equal(w.code, 63);
+  });
+  test("null when the hour's temperature is missing", () => {
+    assert.equal(describeHourlyWeather({ temperature_2m: [null] }, 0), null);
+    assert.equal(describeHourlyWeather(null, 0), null);
+  });
+});
+
+describe("getShowtimeWeather", () => {
+  test("resolves a past show to a final, permanently-cached object", async () => {
+    const db = fakeDb();
+    const fetchImpl = fakeFetch([
+      ["geocoding-api", GEO_HIT],
+      ["/archive", HOURLY_HIT],
+    ]);
+    const opts = { db, location: "Dubuque, Iowa", date: new Date("2020-02-20"), fetchImpl };
+    const w = await getShowtimeWeather(opts);
+    assert.deepEqual(w, { summary: "clear skies, 61°F", tempF: 61, code: 0 });
+
+    const cached = db.store.get("weather_show/dubuque-iowa__2020-02-20__20");
+    assert.equal(cached.final, true);
+
+    // A second call is served from the cache with no new HTTP.
+    const before = fetchImpl.calls.length;
+    const again = await getShowtimeWeather(opts);
+    assert.deepEqual(again, w);
+    assert.equal(fetchImpl.calls.length, before);
+  });
+
+  test("a fresh forecast cache entry is reused without any HTTP", async () => {
+    const db = fakeDb();
+    const soon = new Date(Date.now() + 3 * 86400000);
+    const iso = toIsoDate(soon);
+    db.store.set(`weather_show/dubuque-iowa__${iso}__20`, {
+      final: false,
+      cachedAt: new Date(), // fresh
+      weather: { summary: "overcast, 55°F", tempF: 55, code: 3 },
+    });
+    const fetchImpl = fakeFetch([]); // any HTTP call would return null → fail loudly
+    const w = await getShowtimeWeather({ db, location: "Dubuque, Iowa", date: soon, fetchImpl });
+    assert.equal(w.summary, "overcast, 55°F");
+    assert.equal(fetchImpl.calls.length, 0);
+  });
+
+  test("a stale forecast cache entry is re-fetched", async () => {
+    const db = fakeDb();
+    const soon = new Date(Date.now() + 3 * 86400000);
+    const iso = toIsoDate(soon);
+    db.store.set(`weather_show/dubuque-iowa__${iso}__20`, {
+      final: false,
+      cachedAt: new Date(Date.now() - 2 * 86400000), // stale
+      weather: { summary: "stale, 99°F", tempF: 99, code: 0 },
+    });
+    const fetchImpl = fakeFetch([
+      ["geocoding-api", GEO_HIT],
+      ["/forecast", HOURLY_HIT],
+    ]);
+    const w = await getShowtimeWeather({ db, location: "Dubuque, Iowa", date: soon, fetchImpl });
+    assert.equal(w.summary, "clear skies, 61°F"); // refreshed, not the stale value
+    assert.ok(fetchImpl.calls.length > 0);
+  });
+
+  test("null on missing location/date with no HTTP", async () => {
+    const fetchImpl = fakeFetch([]);
+    assert.equal(await getShowtimeWeather({ location: null, date: new Date(), fetchImpl }), null);
+    assert.equal(await getShowtimeWeather({ location: "Dubuque", date: null, fetchImpl }), null);
+    assert.equal(fetchImpl.calls.length, 0);
   });
 });

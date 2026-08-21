@@ -39,6 +39,22 @@ const ARCHIVE_HOST = OPEN_METEO_API_KEY
 const ARCHIVE_LAG_DAYS = 6;
 const HTTP_TIMEOUT_MS = 6000;
 
+// Drum corps shows are evening events, so the schedule card's weather is read at
+// a constant local show hour rather than a daily high/low — 8 p.m. local. (The
+// hourly series comes back in the venue's own timezone via timezone=auto, so the
+// index is simply the local hour.)
+const SHOWTIME_HOUR = 20;
+
+// A cached showtime lookup for a date still in the forecast window can change, so
+// non-final entries are re-fetched once they are older than this. The producer
+// runs daily, so a ~20h staleness means each daily pass refreshes the upcoming
+// slate exactly once. Past dates are marked `final` and never re-fetched.
+const SHOWTIME_REFRESH_MS = 20 * 60 * 60 * 1000;
+
+// Open-Meteo's forecast reaches ~16 days out; a show further out than this has no
+// data yet, so the producer skips it (and tries again once it enters the window).
+const FORECAST_HORIZON_DAYS = 15;
+
 /** A Firestore-safe slug for a cache key: lowercase alphanumerics and dashes. */
 function slug(value) {
   return String(value || "")
@@ -200,6 +216,74 @@ async function fetchDailyConditions({ fetchImpl, latitude, longitude, isoDate })
 }
 
 /**
+ * Turn one hour of an Open-Meteo `hourly` record into a compact conditions
+ * object for the schedule card, e.g.
+ *   { summary: "clear skies, 61°F, winds 12 mph", tempF: 61, code: 0 }.
+ * Returns null when the temperature at that hour is missing. Pure.
+ */
+function describeHourlyWeather(hourly, index) {
+  if (!hourly || index == null || index < 0) return null;
+  const at = (key) => {
+    const arr = hourly[key];
+    return Array.isArray(arr) && typeof arr[index] === "number" ? arr[index] : null;
+  };
+  const temp = at("temperature_2m");
+  if (temp == null) return null;
+
+  const rawCode = Array.isArray(hourly.weather_code) ? hourly.weather_code[index] : null;
+  const code = typeof rawCode === "number" ? rawCode : null;
+  const parts = [skyFromCode(code), `${Math.round(temp)}°F`];
+
+  const wind = at("wind_speed_10m");
+  if (wind != null && wind >= 15) parts.push(`winds ${Math.round(wind)} mph`);
+
+  const snow = at("snowfall");
+  const precip = at("precipitation");
+  if (snow != null && snow >= 0.1) parts.push(`${snow.toFixed(1)} in snow`);
+  else if (precip != null && precip >= 0.1) parts.push(`${precip.toFixed(2)} in rain`);
+
+  return { summary: parts.join(", "), tempF: Math.round(temp), code };
+}
+
+/**
+ * The conditions at a set of coordinates at a specific local hour on a date,
+ * from the endpoint appropriate to the date's age. Returns a describeHourlyWeather
+ * object or null.
+ */
+async function fetchShowtimeConditions({ fetchImpl, latitude, longitude, isoDate, hour }) {
+  const ageDays = Math.floor((Date.now() - new Date(`${isoDate}T12:00:00`).getTime()) / 86400000);
+  const useArchive = ageDays > ARCHIVE_LAG_DAYS;
+  const host = useArchive ? ARCHIVE_HOST : FORECAST_HOST;
+
+  const data = await getJson(fetchImpl, `${host}/v1/${useArchive ? "archive" : "forecast"}`, {
+    latitude,
+    longitude,
+    start_date: isoDate,
+    end_date: isoDate,
+    hourly: "temperature_2m,weather_code,wind_speed_10m,precipitation,snowfall",
+    temperature_unit: "fahrenheit",
+    wind_speed_unit: "mph",
+    precipitation_unit: "inch",
+    timezone: "auto",
+    ...(OPEN_METEO_API_KEY ? { apikey: OPEN_METEO_API_KEY } : {}),
+  });
+
+  const hourly = data && data.hourly ? data.hourly : null;
+  if (!hourly) return null;
+
+  // With timezone=auto and a single-day range the hourly series is that local
+  // day, so the local hour is the index — but match on the timestamp when the
+  // series carries one, in case the window isn't exactly 24 aligned entries.
+  let index = hour;
+  if (Array.isArray(hourly.time)) {
+    const target = `${isoDate}T${String(hour).padStart(2, "0")}:00`;
+    const found = hourly.time.findIndex((t) => String(t).startsWith(target));
+    if (found >= 0) index = found;
+  }
+  return describeHourlyWeather(hourly, index);
+}
+
+/**
  * The real weather at a show's venue on its date, as a short factual string for
  * the fantasy SETTING line — or null when it can't be determined (no location,
  * no date, no network, no data). Best-effort by design: the caller treats null
@@ -263,13 +347,101 @@ async function getShowWeather({ db, location, date, fetchImpl = axios.get }) {
   return summary;
 }
 
+// Timestamp helper: a Firestore Timestamp (has toDate) or a JS Date/ISO → ms, or
+// null. Lets the showtime cache read entries written by either Firestore or the
+// in-memory test fake.
+function toMillis(value) {
+  if (!value) return null;
+  const d = typeof value.toDate === "function" ? value.toDate() : value;
+  const t = d instanceof Date ? d.getTime() : new Date(d).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+/**
+ * The real conditions at a show's venue at showtime (a constant local hour), as a
+ * compact object { summary, tempF, code } for the schedule card — or null when it
+ * can't be determined. Best-effort, like getShowWeather.
+ *
+ * Cached in Firestore under weather_show/{citySlug}__{isoDate}__{hour} with a
+ * `final` flag. A past date is final and served from cache forever (historical
+ * weather doesn't change); an upcoming date is a forecast, so its cache entry is
+ * re-fetched once it goes stale (SHOWTIME_REFRESH_MS) — the daily producer thus
+ * refreshes the upcoming slate exactly once per run. Only positive results are
+ * cached, so a transient failure retries next run instead of sticking.
+ *
+ * @param {object}   opts
+ * @param {object}   opts.db         Firestore (for caching). Optional.
+ * @param {string}   opts.location   Venue city, e.g. "Dubuque, Iowa".
+ * @param {Date|*}   opts.date       The show's real calendar date.
+ * @param {number}   [opts.hour]     Local show hour (default 8 p.m.).
+ * @param {Function} [opts.fetchImpl] HTTP GET; defaults to axios.get.
+ */
+async function getShowtimeWeather({ db, location, date, hour = SHOWTIME_HOUR, fetchImpl = axios.get }) {
+  const isoDate = toIsoDate(date);
+  const citySlug = slug(location);
+  if (!isoDate || !citySlug) return null;
+
+  const ageDays = Math.floor((Date.now() - new Date(`${isoDate}T12:00:00`).getTime()) / 86400000);
+  const isFinal = ageDays > ARCHIVE_LAG_DAYS;
+  const cacheRef = db ? db.doc(`weather_show/${citySlug}__${isoDate}__${hour}`) : null;
+
+  if (cacheRef) {
+    try {
+      const snap = await cacheRef.get();
+      if (snap.exists) {
+        const cached = snap.data();
+        const weather = cached && cached.weather;
+        if (weather && typeof weather.summary === "string") {
+          const fresh = toMillis(cached.cachedAt) != null &&
+            Date.now() - toMillis(cached.cachedAt) < SHOWTIME_REFRESH_MS;
+          // A final (past) entry never changes; a still-fresh forecast is reused.
+          if (cached.final || fresh) return weather;
+        }
+      }
+    } catch (err) {
+      logger.warn(`[weather] showtime cache read failed: ${err.message}`);
+    }
+  }
+
+  let weather = null;
+  try {
+    const geo = await geocodeLocation({ db, fetchImpl, location });
+    if (geo) {
+      weather = await fetchShowtimeConditions({
+        fetchImpl,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        isoDate,
+        hour,
+      });
+    }
+  } catch (err) {
+    logger.warn(`[weather] showtime lookup failed for ${location} ${isoDate}: ${err.message}`);
+    weather = null;
+  }
+
+  if (cacheRef && weather) {
+    try {
+      await cacheRef.set({ location, isoDate, hour, weather, final: isFinal, cachedAt: new Date() });
+    } catch (err) {
+      logger.warn(`[weather] showtime cache write failed: ${err.message}`);
+    }
+  }
+  return weather;
+}
+
 module.exports = {
   getShowWeather,
+  getShowtimeWeather,
+  SHOWTIME_HOUR,
+  FORECAST_HORIZON_DAYS,
   // Exported for unit tests:
   slug,
   toIsoDate,
   skyFromCode,
   describeDailyWeather,
+  describeHourlyWeather,
   geocodeLocation,
   fetchDailyConditions,
+  fetchShowtimeConditions,
 };
