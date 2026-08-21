@@ -15,6 +15,7 @@ import {
   parseModelDecision,
   heuristicEntry,
   buildPrompt,
+  isAuthError,
   VALID_CATEGORIES,
   MAX_ENTRIES,
 } from './generateChangelogEntry.mjs';
@@ -232,4 +233,26 @@ test('buildPrompt includes the title, body, and a skip instruction', () => {
   assert.match(prompt, /Details here/);
   assert.match(prompt, /"skip": true/);
   assert.match(prompt, /src\/a\.ts/);
+});
+
+// ---------------------------------------------------------------------------
+// isAuthError — the "loud annotation" trigger for a bad repository secret
+// ---------------------------------------------------------------------------
+
+test('isAuthError flags the real Gemini invalid-key response', () => {
+  const real =
+    'Gemini HTTP 400: { "error": { "code": 400, "message": "API key not valid. ' +
+    'Please pass a valid API key.", "status": "INVALID_ARGUMENT", "reason": "API_KEY_INVALID"';
+  assert.equal(isAuthError(real), true);
+});
+
+test('isAuthError flags 401/403/permission-denied', () => {
+  assert.equal(isAuthError('Gemini HTTP 401: unauthorized'), true);
+  assert.equal(isAuthError('Gemini HTTP 403: PERMISSION_DENIED'), true);
+});
+
+test('isAuthError ignores transient/non-auth failures', () => {
+  assert.equal(isAuthError('Gemini HTTP 503: service unavailable'), false);
+  assert.equal(isAuthError('fetch failed: ECONNRESET'), false);
+  assert.equal(isAuthError(''), false);
 });
