@@ -270,6 +270,13 @@ async function appendProfileSeasonHistory(db, uid, seasonUid, state) {
     totalSeasonScore: state.lastTotal,
     showConcept: state.showConcept || null,
     medals: state.medals || {},
+    // Shows the corps signed up to compete on this season — the same
+    // "showsAttended" notion the fantasy résumé carries, so the achievement
+    // sweep can count Podium shows toward the shared shows_* milestones
+    // (helpers/achievements.podiumShowsAttended). Self-picked days only; the
+    // auto-enrolled majors are deliberately excluded, matching how the fantasy
+    // count records the director's own registrations.
+    showsAttended: (state.selectedShowDays || []).length,
   };
   const index = existing.findIndex((row) => row && row.seasonId === seasonUid);
   const seasonHistory =
