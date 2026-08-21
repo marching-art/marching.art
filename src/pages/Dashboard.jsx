@@ -318,6 +318,23 @@ const Dashboard = () => {
     [lineupCount, thisWeekShows.length, myLeagues?.length]
   );
 
+  // Podium's quick-start completion signals, read from the same podium state
+  // the Next Action resolver uses (hooks/usePodiumNextAction): rehearsed today
+  // (or resting), registered/auto-enrolled for a show, and an assistant plan
+  // saved. The ids match PODIUM_QUICK_START_STEPS in QuickStartGuide.
+  const podiumQuickStartSteps = useMemo(() => {
+    const state = podium.data?.state || {};
+    const rehearsed = Boolean(state.today?.restDay) || (podium.data?.blocksUsedToday ?? 0) > 0;
+    const hasShows =
+      (state.selectedShowDays?.length ?? 0) > 0 || (podium.data?.autoDays?.length ?? 0) > 0;
+    const hasPlan = (state.planTemplate?.length ?? 0) > 0;
+    return [
+      ...(rehearsed ? ['rehearse'] : []),
+      ...(hasShows ? ['shows'] : []),
+      ...(hasPlan ? ['plan'] : []),
+    ];
+  }, [podium.data]);
+
   // Pull-to-refresh re-fetches the nightly-drop caches (the live listeners
   // behind profile and season need no help).
   const handleRefresh = useDashboardRefresh(seasonData?.seasonUid);
@@ -699,8 +716,10 @@ const Dashboard = () => {
       <DashboardModalHost
         modals={modals}
         data={dashboardData}
-        quickStartSteps={quickStartSteps}
+        quickStartSteps={isPodiumSelected ? podiumQuickStartSteps : quickStartSteps}
+        quickStartVariant={isPodiumSelected ? 'podium' : 'fantasy'}
         onRequestZone={setActiveZone}
+        onRevealPanel={revealPanel}
       />
     </div>
   );

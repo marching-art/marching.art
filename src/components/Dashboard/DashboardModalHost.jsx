@@ -63,7 +63,14 @@ const ShowConceptModal = lazyWithRetry(
   'ShowConceptModal'
 );
 
-const DashboardModalHost = ({ modals, data, quickStartSteps, onRequestZone }) => {
+const DashboardModalHost = ({
+  modals,
+  data,
+  quickStartSteps,
+  quickStartVariant = 'fantasy',
+  onRequestZone,
+  onRevealPanel,
+}) => {
   const weeksRemaining = useSeasonStore((s) => s.weeksRemaining);
   const isRegistrationLocked = useSeasonStore((s) => s.isRegistrationLocked);
 
@@ -296,8 +303,17 @@ const DashboardModalHost = ({ modals, data, quickStartSteps, onRequestZone }) =>
       <QuickStartGuide
         isOpen={showQuickStartGuide}
         onClose={() => setShowQuickStartGuide(false)}
+        variant={quickStartVariant}
         onAction={(action) => {
-          if (action === 'lineup') openCaptionSelection();
+          if (action === 'lineup') {
+            openCaptionSelection();
+            return;
+          }
+          // Podium steps point at panels behind the guide (podium-planner,
+          // podium-plan-editor): close the guide, then reveal the panel — which
+          // switches to its zone on mobile before scrolling.
+          setShowQuickStartGuide(false);
+          onRevealPanel?.(action);
         }}
         completedSteps={quickStartSteps}
       />
