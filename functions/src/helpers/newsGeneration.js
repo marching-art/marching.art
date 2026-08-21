@@ -15,6 +15,7 @@
 // Consolidated to single @google/genai SDK (removes duplicate @google/generative-ai)
 // Type replaces SchemaType for JSON schema definitions
 const { Type, MAGAZINE_STYLE } = require("./newsArticleShared");
+const { getShowWeather } = require("./weather");
 const { logger } = require("firebase-functions/v2");
 const { getContextualPlaceholder } = require("./mediaService");
 const {
@@ -170,6 +171,29 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
       fantasyData?.current &&
       (fantasyData.current.shows || []).some(s => (s.results || []).length > 0)
     );
+
+    // Real weather for the fantasy-results article's SETTING line: look up what
+    // it actually did at the night's venue on the show's real date, so the
+    // fantasy scene is grounded in real atmosphere instead of an invented sky.
+    // Only the fantasy article reads showContext.weather (the DCI pieces stay
+    // strictly factual and never print it), so skip the lookup entirely unless a
+    // fantasy piece will run and we have a venue and a date to key on. Best-
+    // effort and cached — any failure just leaves the SETTING line weatherless.
+    if (hasFantasyResults && showContext.location && showContext.rawDate) {
+      try {
+        const weather = await getShowWeather({
+          db,
+          location: showContext.location,
+          date: showContext.rawDate,
+        });
+        if (weather) {
+          showContext.weather = weather;
+          logger.info(`Weather for Day ${reportDay} at ${showContext.location}: ${weather}`);
+        }
+      } catch (weatherError) {
+        logger.warn(`Weather lookup failed for Day ${reportDay}: ${weatherError.message}`);
+      }
+    }
 
     // When no relevant DCI corps performed (an empty field, or a field made up
     // solely of placeholder-99 "did not perform" rows that were filtered out),
