@@ -299,7 +299,7 @@ async function fetchShowtimeConditions({ fetchImpl, latitude, longitude, isoDate
  * @param {Date|*}   opts.date       The show's real calendar date.
  * @param {Function} [opts.fetchImpl] HTTP GET (url, {params, timeout}) → {data}. Defaults to axios.get.
  */
-async function getShowWeather({ db, location, date, fetchImpl = axios.get }) {
+async function getShowWeather({ db, location, date, fetchImpl = axios.default.get }) {
   const isoDate = toIsoDate(date);
   const citySlug = slug(location);
   if (!isoDate || !citySlug) return null;
@@ -376,7 +376,7 @@ function toMillis(value) {
  * @param {number}   [opts.hour]     Local show hour (default 8 p.m.).
  * @param {Function} [opts.fetchImpl] HTTP GET; defaults to axios.get.
  */
-async function getShowtimeWeather({ db, location, date, hour = SHOWTIME_HOUR, fetchImpl = axios.get }) {
+async function getShowtimeWeather({ db, location, date, hour = SHOWTIME_HOUR, fetchImpl = axios.default.get }) {
   const isoDate = toIsoDate(date);
   const citySlug = slug(location);
   if (!isoDate || !citySlug) return null;
