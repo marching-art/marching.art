@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   PRESS_RELEASE_LIMITS,
+  PRESS_RELEASE_APPROVAL_THRESHOLD,
+  canPublishPressRelease,
   emptyPressReleaseForm,
   validatePressReleaseForm,
   isPressReleaseFormValid,
@@ -74,6 +76,25 @@ describe('validatePressReleaseForm', () => {
     expect(validatePressReleaseForm(validForm({ imageUrl: 'not a url' })).imageUrl).toMatch(
       /valid/
     );
+  });
+});
+
+describe('canPublishPressRelease', () => {
+  it('locks authors below the approval threshold', () => {
+    expect(canPublishPressRelease(0)).toBe(false);
+    expect(canPublishPressRelease(PRESS_RELEASE_APPROVAL_THRESHOLD - 1)).toBe(false);
+    expect(canPublishPressRelease(undefined)).toBe(false);
+    expect(canPublishPressRelease(null)).toBe(false);
+  });
+
+  it('unlocks authors at or above the threshold', () => {
+    expect(canPublishPressRelease(PRESS_RELEASE_APPROVAL_THRESHOLD)).toBe(true);
+    expect(canPublishPressRelease(PRESS_RELEASE_APPROVAL_THRESHOLD + 5)).toBe(true);
+  });
+
+  it('is defensive against negative/fractional counts', () => {
+    expect(canPublishPressRelease(-10)).toBe(false);
+    expect(canPublishPressRelease(2.9)).toBe(false);
   });
 });
 

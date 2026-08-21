@@ -68,8 +68,11 @@ news hub. Let the volume happen.
 > (which covers the shared world). It publishes the moment it's posted, under
 > the corps' byline, into the existing `press` news category — so it reuses the
 > whole feed/article/reactions/comments/SEO pipeline. Accountability replaces
-> the review queue with three constraints: the author must own the corps the
-> release is bylined to, a per-uid write budget throttles abuse, and everything
+> the review queue with four constraints: the author must own the corps the
+> release is bylined to, they must be a **trusted author** first (the same
+> `AUTO_PUBLISH_THRESHOLD` of admin-approved articles that unlocks news
+> auto-publish — so instant publishing is earned through the reviewed path
+> before it's granted), a per-uid write budget throttles abuse, and everything
 > is moderatable after the fact (authors delete their own; admins remove any).
 > Code: `publishPressRelease` / `deleteMyPressRelease`
 > (`functions/src/triggers/newsSubmissions.js`), the pure domain logic and its

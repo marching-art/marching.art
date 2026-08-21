@@ -250,6 +250,19 @@ exports.publishPressRelease = onCall(
       );
     }
 
+    // Same approval limit the news pipeline puts on unreviewed publishing: a
+    // press release goes live with no human in the loop, exactly like a trusted
+    // author's auto-published submission, so it's held to the same bar — at
+    // least AUTO_PUBLISH_THRESHOLD admin-approved articles. Authors who haven't
+    // earned that trust yet use the reviewed path (submitNewsForApproval); each
+    // approval there counts toward the threshold that unlocks press releases.
+    if ((credit.approvedCount || 0) < AUTO_PUBLISH_THRESHOLD) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Press releases publish instantly without review, so they're open to trusted authors only. Get ${AUTO_PUBLISH_THRESHOLD} of your submitted articles approved by an admin first — then you can post press releases for your corps.`
+      );
+    }
+
     try {
       const result = await publishPressReleaseArticle(db, {
         id: db.collection("news_hub").doc().id, // collision-resistant article id
@@ -354,14 +367,36 @@ exports.deleteMyPressRelease = onCall(
         throw new HttpsError("permission-denied", "You can only delete your own press releases");
       }
 
+      const removedByAdmin = isAdmin && data.authorUid !== request.auth.uid;
+
       await ref.update({
         isPublished: false,
         status: "removed",
         removedBy: request.auth.uid,
-        removedByAdmin: isAdmin && data.authorUid !== request.auth.uid,
+        removedByAdmin,
         removedAt: new Date(),
         updatedAt: new Date(),
       });
+
+      // When an admin takes down someone else's release (the "declined" outcome
+      // for an instantly-published release), bell the author. A self-delete
+      // needs no notification. Best-effort.
+      if (removedByAdmin) {
+        try {
+          const { createUserNotification } = require("../helpers/userNotifications");
+          await createUserNotification(db, data.authorUid, {
+            type: "press_release_removed",
+            title: "Your press release was removed",
+            message:
+              `An admin removed your press release${data.headline ? `: “${data.headline}”` : ""}. ` +
+              `Reach out if you think this was a mistake.`,
+            link: "/profile",
+            dedupeKey: `press_release_removed_${articleType}`,
+          });
+        } catch (notifyErr) {
+          logger.warn("Failed to notify author of press-release removal:", notifyErr.message);
+        }
+      }
 
       await invalidateNewsCache(db);
 
@@ -486,7 +521,7 @@ exports.approveSubmission = onCall(
         }
       }
 
-      const { articlePath, imageUrl: finalImageUrl, imageGenerationFailed } = await publishSubmission(db, {
+      const { articlePath, articleId, imageUrl: finalImageUrl, imageGenerationFailed } = await publishSubmission(db, {
         submissionRef,
         submission,
         submissionId,
@@ -496,10 +531,14 @@ exports.approveSubmission = onCall(
       });
 
       // Credit the author with an admin approval. Once they cross the threshold,
-      // their future submissions auto-publish. Wrapped so a counter failure
-      // never fails an otherwise-successful publish.
+      // their future submissions auto-publish AND press releases unlock. Wrapped
+      // so a counter failure never fails an otherwise-successful publish. Read
+      // the resulting count back so we can fire the trusted-author milestone
+      // exactly on the crossing approval.
+      let newApprovedCount = null;
       try {
-        await profileDataRef(db, submission.authorUid).set(
+        const statsRef = profileDataRef(db, submission.authorUid);
+        await statsRef.set(
           {
             articleStats: {
               approvedCount: FieldValue.increment(1),
@@ -508,8 +547,39 @@ exports.approveSubmission = onCall(
           },
           { merge: true }
         );
+        const statsSnap = await statsRef.get();
+        newApprovedCount = statsSnap.data()?.articleStats?.approvedCount ?? null;
       } catch (counterErr) {
         logger.warn("Failed to increment author approved count:", counterErr.message);
+      }
+
+      // Bell the author: their submission was approved and is live, and — on the
+      // approval that reaches AUTO_PUBLISH_THRESHOLD — that they've become a
+      // trusted author (auto-publish + press releases now unlocked). Best-effort.
+      try {
+        const { createUserNotification } = require("../helpers/userNotifications");
+        await createUserNotification(db, submission.authorUid, {
+          type: "article_approved",
+          title: "Your article was approved",
+          message: `“${submission.headline}” has been approved and published to the news hub.`,
+          link: articleId ? `/article/${articleId}` : "/profile",
+          dedupeKey: `article_approved_${submissionId}`,
+          metadata: { submissionId },
+        });
+
+        if (newApprovedCount === AUTO_PUBLISH_THRESHOLD) {
+          await createUserNotification(db, submission.authorUid, {
+            type: "trusted_author_unlocked",
+            title: "You're now a trusted author",
+            message:
+              `With ${AUTO_PUBLISH_THRESHOLD} approved articles, your future submissions ` +
+              `publish automatically — and you can now post instant press releases for your corps.`,
+            link: "/profile",
+            dedupeKey: `trusted_author_unlocked_${submission.authorUid}`,
+          });
+        }
+      } catch (notifyErr) {
+        logger.warn("Failed to notify author of approval:", notifyErr.message);
       }
 
       logger.info("Article approved and published:", {
@@ -568,13 +638,30 @@ exports.rejectSubmission = onCall(
         throw new HttpsError("failed-precondition", "This submission has already been processed");
       }
 
+      const rejectionReason = reason || "Does not meet our content guidelines";
+
       await submissionRef.update({
         status: "rejected",
         autoPublish: false,
-        rejectionReason: reason || "Does not meet our content guidelines",
+        rejectionReason,
         rejectedBy: request.auth.uid,
         updatedAt: new Date(),
       });
+
+      // Bell the author so a declined submission never just disappears. Best-effort.
+      try {
+        const { createUserNotification } = require("../helpers/userNotifications");
+        await createUserNotification(db, submission.authorUid, {
+          type: "article_rejected",
+          title: "Your article wasn't approved",
+          message: `“${submission.headline}” wasn't approved: ${rejectionReason}`,
+          link: "/profile",
+          dedupeKey: `article_rejected_${submissionId}`,
+          metadata: { submissionId },
+        });
+      } catch (notifyErr) {
+        logger.warn("Failed to notify author of rejection:", notifyErr.message);
+      }
 
       logger.info("Article rejected:", { submissionId, reason });
 

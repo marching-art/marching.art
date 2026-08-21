@@ -102,4 +102,34 @@ describe('PressReleaseModal', () => {
     expect(screen.getByText(/Register a corps first/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Publish/i })).toBeDisabled();
   });
+
+  it('locks the composer for an author below the approval threshold', () => {
+    const onSubmit = vi.fn();
+    render(
+      <PressReleaseModal
+        ownedCorps={[aurora]}
+        approvedCount={1}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+    // The trusted-author gate replaces the composer and disables publishing.
+    expect(screen.getByText(/Press releases are for trusted authors/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Headline/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Publish/i })).toBeDisabled();
+  });
+
+  it('unlocks the composer once the author has enough approvals', () => {
+    render(
+      <PressReleaseModal
+        ownedCorps={[aurora]}
+        approvedCount={3}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    );
+    expect(screen.queryByText(/Press releases are for trusted authors/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Headline/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Publish/i })).not.toBeDisabled();
+  });
 });

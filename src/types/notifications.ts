@@ -25,6 +25,9 @@ import type { LeagueNotificationType } from './league';
  *     lineup_lock
  *   - functions/src/scheduled/emailNotifications.js → streak_broken
  *   - functions/src/helpers/easternSplit.js → eastern_night_change
+ *   - functions/src/triggers/newsSubmissions.js → article_approved,
+ *     article_rejected, trusted_author_unlocked, press_release_removed
+ *   - functions/src/scheduled/newsAutoPublish.js → article_approved
  * Keep this in sync when a new server writer lands; unknown types still render
  * (see notificationDisplay.ts) but lose their specific icon.
  */
@@ -33,7 +36,11 @@ export type ServerNotificationType =
   | 'score_drop' // Last night's scores are in
   | 'lineup_lock' // Lineup lock deadline approaching
   | 'eastern_night_change' // Eastern Classic re-seeded this corps onto the other night
-  | 'streak_broken'; // Login streak ended
+  | 'streak_broken' // Login streak ended
+  | 'article_approved' // A submitted news article was approved / auto-published
+  | 'article_rejected' // A submitted news article was declined
+  | 'trusted_author_unlocked' // Reached the approval threshold: auto-publish + press releases
+  | 'press_release_removed'; // An admin took down the author's press release
 
 /** Every notification `type` the inbox knows how to style. */
 export type AppNotificationType = LeagueNotificationType | ServerNotificationType;

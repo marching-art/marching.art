@@ -12,6 +12,8 @@
 
 import {
   ArrowLeftRight,
+  BadgeCheck,
+  Ban,
   Bell,
   CalendarClock,
   Check,
@@ -19,6 +21,7 @@ import {
   Flame,
   Mail,
   MessageSquare,
+  Newspaper,
   Swords,
   TrendingUp,
   Trophy,
@@ -61,6 +64,13 @@ const DISPLAY_BY_TYPE: Record<AppNotificationType, NotificationDisplay> = {
   // gold/amber utilities (docs/DESIGN_SYSTEM.md rule 4).
   eastern_night_change: { Icon: CalendarClock, color: 'text-warning', bg: 'bg-warning/20' },
   streak_broken: { Icon: Flame, color: 'text-red-400', bg: 'bg-red-500/20' },
+
+  // Newsroom types.
+  article_approved: { Icon: Newspaper, color: 'text-green-400', bg: 'bg-green-500/20' },
+  trusted_author_unlocked: { Icon: BadgeCheck, color: 'text-teal-400', bg: 'bg-teal-500/20' },
+  // Declines/takedowns are status warnings, not rewards.
+  article_rejected: { Icon: Ban, color: 'text-warning', bg: 'bg-warning/20' },
+  press_release_removed: { Icon: Ban, color: 'text-warning', bg: 'bg-warning/20' },
 };
 
 /**

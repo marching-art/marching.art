@@ -55,7 +55,7 @@ exports.autoPublishScheduledSubmissions = onSchedule(
       }
 
       try {
-        await publishSubmission(db, {
+        const { articleId } = await publishSubmission(db, {
           submissionRef: doc.ref,
           submission,
           submissionId: doc.id,
@@ -65,6 +65,26 @@ exports.autoPublishScheduledSubmissions = onSchedule(
           autoPublished: true,
         });
         published++;
+
+        // Bell the author that their scheduled submission is now live — the
+        // approval-outcome notification for the auto-publish path. Best-effort:
+        // a notification hiccup must not fail or stall the batch.
+        try {
+          const { createUserNotification } = require("../helpers/userNotifications");
+          await createUserNotification(db, submission.authorUid, {
+            type: "article_approved",
+            title: "Your article is live",
+            message: `“${submission.headline}” has published to the news hub.`,
+            link: articleId ? `/article/${articleId}` : "/profile",
+            dedupeKey: `article_approved_${doc.id}`,
+            metadata: { submissionId: doc.id },
+          });
+        } catch (notifyErr) {
+          logger.warn("[auto-publish] Failed to notify author of publish:", {
+            submissionId: doc.id,
+            error: notifyErr.message,
+          });
+        }
       } catch (error) {
         failed++;
         logger.error("[auto-publish] Failed to publish submission:", {
