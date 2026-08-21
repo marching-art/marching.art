@@ -14,7 +14,11 @@ import { createCallable } from './callable';
  * (PODIUM.md §5.8), and a Podium-only director has no other corps to issue from.
  */
 export type PressReleaseCorpsClass =
-  'worldClass' | 'openClass' | 'aClass' | 'soundSport' | 'podiumClass';
+  | 'worldClass'
+  | 'openClass'
+  | 'aClass'
+  | 'soundSport'
+  | 'podiumClass';
 
 export interface PublishPressReleaseData {
   headline: string;

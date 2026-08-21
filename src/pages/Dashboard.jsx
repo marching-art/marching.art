@@ -674,7 +674,6 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-
           </div>
         ) : (
           <NoCorpsCard onRegister={() => setShowRegistration(true)} />

@@ -4,16 +4,7 @@
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import {
-  X,
-  ChevronRight,
-  Check,
-  HelpCircle,
-  BookOpen,
-  Zap,
-  Star,
-  ArrowRight,
-} from 'lucide-react';
+import { X, ChevronRight, Check, HelpCircle, BookOpen, Zap, Star, ArrowRight } from 'lucide-react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Heading } from '../ui';
 import { QUICK_START_STEPS, PODIUM_QUICK_START_STEPS } from './quickStartSteps';
@@ -42,7 +33,13 @@ const colorClasses = {
 // `variant` selects the walkthrough: 'fantasy' (drafted lineup + shows + scores)
 // or 'podium' (the director-sim daily loop). Follows the active surface, the
 // same way the Next Action hero and Director's Report already do.
-const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [], variant = 'fantasy' }) => {
+const QuickStartGuide = ({
+  isOpen,
+  onClose,
+  onAction,
+  completedSteps = [],
+  variant = 'fantasy',
+}) => {
   const [expandedStep, setExpandedStep] = useState(null);
   useEscapeKey(onClose, isOpen);
 

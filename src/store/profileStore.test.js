@@ -214,9 +214,7 @@ describe('profileStore.initProfileListener — cache vs. server not-exists', () 
     onNext(makeSnap(true, true, { uid: 'user-1', corps: { soundSport: { name: 'Cadets' } } }));
 
     const state = useProfileStore.getState();
-    expect(state.profile).toEqual(
-      expect.objectContaining({ uid: 'user-1' })
-    );
+    expect(state.profile).toEqual(expect.objectContaining({ uid: 'user-1' }));
     expect(state.loading).toBe(false);
   });
 
