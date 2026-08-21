@@ -8,69 +8,15 @@ import {
   X,
   ChevronRight,
   Check,
-  Trophy,
-  Calendar,
-  Music,
   HelpCircle,
   BookOpen,
   Zap,
   Star,
   ArrowRight,
 } from 'lucide-react';
-import { WEEKLY_TRADE_LIMIT, CHAMPIONSHIP_TRADE_LIMIT } from '../../utils/seasonClock';
-import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Heading } from '../ui';
-
-// Rule numbers come from the same constants the game enforces
-// (WEEKLY_TRADE_LIMIT, getMaxShowsForWeek) so this guide can't drift out of
-// sync with actual gameplay again.
-const REGULAR_WEEK_SHOWS = getMaxShowsForWeek(1);
-const FINAL_WEEK_SHOWS = getMaxShowsForWeek(7);
-
-const QUICK_START_STEPS = [
-  {
-    id: 'lineup',
-    title: 'Build Your Lineup',
-    description:
-      'Pick historical corps performances for each of the 8 scoring captions. Stay within your draft budget!',
-    icon: Music,
-    color: 'blue',
-    action: { label: 'Edit Lineup', target: 'lineup' },
-    tips: [
-      'Each caption needs one corps selection',
-      'Stronger corps cost more of your budget',
-      `Changes are unlimited through Day 14, then limited to ${WEEKLY_TRADE_LIMIT} per week (${CHAMPIONSHIP_TRADE_LIMIT} per day during Championship Week)`,
-    ],
-  },
-  {
-    id: 'schedule',
-    title: 'Register for Shows',
-    description: `Sign up for shows each week to earn scores. You can register for up to ${REGULAR_WEEK_SHOWS} shows per week (${FINAL_WEEK_SHOWS} in Championship Week — championship events are auto-enrolled).`,
-    icon: Calendar,
-    color: 'purple',
-    action: { label: 'View Schedule', target: '/schedule' },
-    tips: [
-      'Weekend shows often have more participants',
-      'Register early to secure your spots',
-      'Scores are based on real DCI results',
-    ],
-  },
-  {
-    id: 'scores',
-    title: 'Check Your Scores',
-    description:
-      'After shows complete, check how your lineup performed. See detailed breakdowns by caption.',
-    icon: Trophy,
-    color: 'green',
-    action: { label: 'View Scores', target: '/scores' },
-    tips: [
-      'Scores are calculated from real DCI data',
-      'Track your season total over time',
-      'Compare your scores with others',
-    ],
-  },
-];
+import { QUICK_START_STEPS, PODIUM_QUICK_START_STEPS } from './quickStartSteps';
 
 const colorClasses = {
   purple: {
@@ -93,13 +39,17 @@ const colorClasses = {
   },
 };
 
-const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => {
+// `variant` selects the walkthrough: 'fantasy' (drafted lineup + shows + scores)
+// or 'podium' (the director-sim daily loop). Follows the active surface, the
+// same way the Next Action hero and Director's Report already do.
+const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [], variant = 'fantasy' }) => {
   const [expandedStep, setExpandedStep] = useState(null);
   useEscapeKey(onClose, isOpen);
 
   if (!isOpen) return null;
 
-  const progress = (completedSteps.length / QUICK_START_STEPS.length) * 100;
+  const steps = variant === 'podium' ? PODIUM_QUICK_START_STEPS : QUICK_START_STEPS;
+  const progress = (completedSteps.length / steps.length) * 100;
 
   return (
     <AnimatePresence>
@@ -150,14 +100,14 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                 />
               </div>
               <span className="text-sm font-bold text-muted">
-                {completedSteps.length}/{QUICK_START_STEPS.length}
+                {completedSteps.length}/{steps.length}
               </span>
             </div>
           </div>
 
           {/* Steps */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {QUICK_START_STEPS.map((step, idx) => {
+            {steps.map((step, idx) => {
               const Icon = step.icon;
               const colors = colorClasses[step.color];
               const isCompleted = completedSteps.includes(step.id);
@@ -230,20 +180,14 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                             </ul>
                           </div>
 
-                          {/* Only `onAction` — no `onClose` alongside it. Both
-                              this guide and the lineup editor are routed
-                              panels now, so opening the editor already closes
-                              this; calling close as well would pop the entry
-                              the editor just pushed and land back here. */}
-                          {step.action.target === 'lineup' ? (
-                            <button
-                              onClick={() => onAction?.(step.action.target)}
-                              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-none text-white font-semibold ${colors.button} transition-colors`}
-                            >
-                              {step.action.label}
-                              <ArrowRight className="w-4 h-4" />
-                            </button>
-                          ) : (
+                          {/* Route targets (start with '/') are Links; in-page
+                              targets (lineup, podium-planner, podium-plan-editor)
+                              go through onAction, which the parent maps to
+                              opening the editor or revealing the panel behind
+                              this guide. No `onClose` alongside onAction: the
+                              parent closes the guide itself before revealing, so
+                              closing here too would pop the wrong history entry. */}
+                          {step.action.target.startsWith('/') ? (
                             <Link
                               to={step.action.target}
                               onClick={onClose}
@@ -252,6 +196,14 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                               {step.action.label}
                               <ArrowRight className="w-4 h-4" />
                             </Link>
+                          ) : (
+                            <button
+                              onClick={() => onAction?.(step.action.target)}
+                              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-none text-white font-semibold ${colors.button} transition-colors`}
+                            >
+                              {step.action.label}
+                              <ArrowRight className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
                       </m.div>

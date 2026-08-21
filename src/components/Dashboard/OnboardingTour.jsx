@@ -26,9 +26,10 @@ import {
   Target,
   Layers,
   Compass,
+  Heart,
 } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { DESKTOP_TOUR_STEPS, MOBILE_TOUR_STEPS } from './tourSteps';
+import { getTourSteps } from './tourSteps';
 
 const ICONS = {
   sparkles: Sparkles,
@@ -39,11 +40,14 @@ const ICONS = {
   trophy: Trophy,
   calendar: Calendar,
   users: Users,
+  heart: Heart,
 };
 
-const OnboardingTour = ({ isOpen, onClose, onComplete, onRequestZone }) => {
+// `variant` picks the step list: 'fantasy' (the drafted-lineup dashboard, split
+// by device) or 'podium' (the director-sim daily loop, one list either way).
+const OnboardingTour = ({ isOpen, onClose, onComplete, onRequestZone, variant = 'fantasy' }) => {
   const isMobile = useIsMobile();
-  const steps = isMobile ? MOBILE_TOUR_STEPS : DESKTOP_TOUR_STEPS;
+  const steps = getTourSteps(variant, isMobile);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [tooltipPosition, setTooltipPosition] = useState({ top: '50%', left: '50%' });

@@ -78,12 +78,62 @@ const ACHIEVEMENT_CATALOG = [
   { id: 'top_10_aClass', title: 'Top 10 Finish!', description: 'Reached top 10 in A Class', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => (s.classRanks.aClass || Infinity) <= 10 },
   { id: 'top_10_openClass', title: 'Top 10 Finish!', description: 'Reached top 10 in Open Class', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => (s.classRanks.openClass || Infinity) <= 10 },
   { id: 'top_10_worldClass', title: 'Top 10 Finish!', description: 'Reached top 10 in World Class', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => (s.classRanks.worldClass || Infinity) <= 10 },
+
+  // --- Podium Class (director sim) ---
+  // Podium is a separate game with no drafted lineup, so the fantasy-shaped
+  // milestones above (first_lineup, top_10_*) can't fire for a Podium-only
+  // director. These read the Podium display copy the nightly processor and the
+  // season boundary write onto the profile (corps.podiumClass.seasonHistory and
+  // .division), so the daily sweep can award them with no extra reads. The
+  // shared career lines (streaks, XP levels, seasons_*, shows_*, championships,
+  // regionals, leagues) already reach Podium directors: XP and trophies are
+  // written in the fantasy shape, and buildAchievementState folds Podium seasons
+  // and shows into totalSeasons/totalShows below.
+  { id: 'podium_debut', title: 'Podium Debut', description: 'Completed your first Podium season', icon: 'medal', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.podiumSeasons >= 1 },
+  { id: 'podium_open', title: 'Open Class Director', description: 'Climbed to Open Class in Podium', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.podiumDivision === 'openClass' || s.podiumDivision === 'worldClass' },
+  { id: 'podium_world', title: 'World Class Director', description: 'Climbed to World Class in Podium', icon: 'crown', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.podiumDivision === 'worldClass' },
 ];
+
+/**
+ * Distinct Podium seasons this director actually competed in, from the public
+ * résumé the boundary sweep writes (corps.podiumClass.seasonHistory). A row is
+ * only written once a corps has performed (finalScore set), and it is upserted
+ * per seasonId, so counting distinct scored rows is idempotent and mirrors the
+ * fantasy "competed in ≥1 show" bar for a completed season.
+ */
+function podiumSeasonsPlayed(profileData) {
+  const rows = profileData.corps?.podiumClass?.seasonHistory || [];
+  const seasonIds = new Set();
+  for (const row of rows) {
+    if (row && row.seasonId && row.finalScore != null) seasonIds.add(row.seasonId);
+  }
+  return seasonIds.size;
+}
+
+/** Podium shows attended across archived seasons (résumé rows carry the count). */
+function podiumShowsAttended(profileData) {
+  const rows = profileData.corps?.podiumClass?.seasonHistory || [];
+  return rows.reduce((sum, row) => sum + (row && row.showsAttended ? row.showsAttended : 0), 0);
+}
+
+/**
+ * The director's true distinct seasons played, as a monotonic lower bound:
+ * the larger of the stored fantasy counter and the Podium seasons played.
+ * Podium and fantasy seasons OVERLAP (one calendar season, two games), so they
+ * can't be summed — max() is the safe union floor. It never exceeds the real
+ * total and never lowers the stored value, so persisting it (dailyOps) can lift
+ * a Podium-only director's prestige-title / season-achievement gates without
+ * ever over-crediting a both-games director or handing out a free class unlock.
+ */
+function reconciledTotalSeasons(profileData) {
+  return Math.max(profileData.lifetimeStats?.totalSeasons || 0, podiumSeasonsPlayed(profileData));
+}
 
 /**
  * Build the state snapshot the catalog predicates evaluate against.
  * `overrides` lets claimDailyLogin pass post-update values (new streak/level/
- * unlockedClasses) that aren't in profileData yet during its transaction.
+ * unlockedClasses/totalSeasons) that aren't in profileData yet during its
+ * transaction.
  */
 function buildAchievementState(profileData, overrides = {}) {
   const corps = profileData.corps || {};
@@ -101,20 +151,31 @@ function buildAchievementState(profileData, overrides = {}) {
     (sum, c) => sum + Object.keys(c?.selectedShows || {}).length,
     0
   );
+  // Podium is a different game, so its seasons and shows must fold into the
+  // shared career milestones. Seasons overlap the fantasy count (one calendar
+  // season), so union via max; shows are disjoint events (a Podium corps
+  // competes on its own nights), so they add.
+  const podiumSeasons = podiumSeasonsPlayed(profileData);
+  const podiumShows = podiumShowsAttended(profileData);
+  const storedSeasons = overrides.totalSeasons ?? profileData.lifetimeStats?.totalSeasons ?? 0;
+
   return {
     streak: overrides.streak ?? profileData.engagement?.loginStreak ?? 0,
     level: overrides.level ?? profileData.xpLevel ?? 1,
     unlockedClasses: overrides.unlockedClasses ?? profileData.unlockedClasses ?? ['soundSport'],
     hasFullLineup,
-    totalShows: profileData.lifetimeStats?.totalShows || 0,
+    totalShows: (profileData.lifetimeStats?.totalShows || 0) + podiumShows,
     currentSeasonShows,
-    totalSeasons: profileData.lifetimeStats?.totalSeasons || 0,
+    totalSeasons: Math.max(storedSeasons, podiumSeasons),
     leagueWins: profileData.stats?.leagueWins || 0,
     inLeague: (profileData.leagueIds || []).length > 0,
     classRanks,
     regionalTrophies: (trophies.regionals || []).length,
     classChampionships: (trophies.classChampionships || []).length,
     championships: (trophies.championships || []).length,
+    // Podium display copy the boundary sweep writes onto the profile.
+    podiumSeasons,
+    podiumDivision: corps.podiumClass?.division || null,
   };
 }
 
@@ -172,4 +233,7 @@ module.exports = {
   buildAchievementState,
   sweepProfileAchievements,
   sweepCosmeticGrants,
+  podiumSeasonsPlayed,
+  podiumShowsAttended,
+  reconciledTotalSeasons,
 };

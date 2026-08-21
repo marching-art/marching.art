@@ -23,7 +23,7 @@
 import type { DashboardZoneId } from '../../utils/dashboardZones';
 
 export type TourIcon =
-  'sparkles' | 'target' | 'music' | 'layers' | 'compass' | 'trophy' | 'calendar' | 'users';
+  'sparkles' | 'target' | 'music' | 'layers' | 'compass' | 'trophy' | 'calendar' | 'users' | 'heart';
 
 export interface TourStep {
   id: string;
@@ -133,3 +133,87 @@ export const MOBILE_TOUR_STEPS: TourStep[] = [
     position: 'top',
   },
 ];
+
+// =============================================================================
+// PODIUM TOUR — the director-sim daily loop
+// =============================================================================
+// Podium is a different game from the fantasy classes: no drafted lineup, so
+// none of the fantasy steps above apply (they point at a caption table that
+// isn't there). This tour runs once, right after a director founds their corps
+// and the daily-loop panels first render, and teaches the four surfaces the
+// game actually loops on: the rehearsal blocks you spend each day, the caption
+// book they build and clean, the corps condition that gates every yield, and
+// the season-long climb those results add up to.
+//
+// One list serves both devices: PodiumZone renders the same single column of
+// panels on desktop (the left 2/3) and mobile (the My Corps zone), so unlike
+// the fantasy tour there is no separate reading order to teach. On mobile those
+// panels live in the `corps` zone, so the panel steps name it — the dashboard
+// switches there before the step runs (same mechanism as the fantasy mobile
+// tour). Desktop ignores the zone hint.
+export const PODIUM_TOUR_STEPS: TourStep[] = [
+  {
+    id: 'welcome',
+    title: 'Your corps is founded',
+    description:
+      "Podium is a director sim, not a draft — you earn every point by how you run the corps. Four quick stops and you'll know the daily loop. Skip any time.",
+    icon: 'sparkles',
+    target: null,
+    position: 'center',
+  },
+  {
+    id: 'podium-rehearsal',
+    title: 'Rehearsal is the game',
+    description:
+      'Every day you get a set of rehearsal blocks. Spend them here — each block installs new show early in the season and cleans it late. This is the one thing to do each day.',
+    icon: 'target',
+    target: '[data-tour="podium-rehearsal"]',
+    position: 'bottom',
+    zone: 'corps',
+  },
+  {
+    id: 'podium-captions',
+    title: 'Your eight captions',
+    description:
+      'Each caption grows from the blocks you spend on it — how much show is installed and how clean it is. Ignore one and it starts to decay. This is where your score comes from.',
+    icon: 'music',
+    target: '[data-tour="podium-captions"]',
+    position: 'bottom',
+    zone: 'corps',
+  },
+  {
+    id: 'podium-condition',
+    title: 'Mind your condition',
+    description:
+      'Rehearsal costs stamina; grinding at full tilt drains morale. Rest days, nights, and your food plan recover it. Low condition cuts every yield — a tired corps rehearses worse.',
+    icon: 'heart',
+    target: '[data-tour="podium-condition"]',
+    position: 'top',
+    zone: 'corps',
+  },
+  {
+    id: 'podium-trajectory',
+    title: 'The climb',
+    description:
+      'Your results, season over season, build reputation and move you between divisions. Champion Status takes years — this panel tracks where you stand on the way up.',
+    icon: 'trophy',
+    target: '[data-tour="podium-trajectory"]',
+    position: 'top',
+    zone: 'corps',
+  },
+];
+
+/**
+ * The step list for a given tour variant and device.
+ *
+ * Fantasy splits by device (the desktop grid and the mobile tab bar are
+ * genuinely different layouts to teach). Podium does not — its zone is one
+ * column either way — so both devices get the same list.
+ */
+export function getTourSteps(
+  variant: 'fantasy' | 'podium',
+  isMobile: boolean
+): TourStep[] {
+  if (variant === 'podium') return PODIUM_TOUR_STEPS;
+  return isMobile ? MOBILE_TOUR_STEPS : DESKTOP_TOUR_STEPS;
+}

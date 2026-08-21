@@ -309,6 +309,48 @@ describe("the profile résumé row (rehearsal: the rollover got there first)", (
   });
 });
 
+describe("writePendingPodiumRecap", () => {
+  const { writePendingPodiumRecap } = require("./career");
+
+  function fakeProfile() {
+    const written = [];
+    return { written, ref: { set: async (data) => written.push(data) } };
+  }
+  const fakeDb = (profile) => ({ doc: () => profile.ref });
+
+  test("stages the one-shot recap for a corps that competed", async () => {
+    const profile = fakeProfile();
+    await writePendingPodiumRecap(fakeDb(profile), "u1", "s1", {
+      budgetRefund: 42,
+      state: {
+        corpsName: "Vanguard Ascent",
+        lastTotal: 76.7,
+        seasonRank: 3,
+        seasonRankOf: 40,
+        medals: { gold: 2 },
+        division: "openClass",
+      },
+    });
+    assert.equal(profile.written.length, 1);
+    const recap = profile.written[0].pendingPodiumRecap;
+    assert.equal(recap.seasonId, "s1");
+    assert.equal(recap.finalScore, 76.7);
+    assert.equal(recap.placement, 3);
+    assert.equal(recap.placementOf, 40);
+    assert.equal(recap.budgetRefund, 42);
+    assert.equal(recap.division, "openClass");
+  });
+
+  test("writes nothing for a corps that never performed", async () => {
+    const profile = fakeProfile();
+    await writePendingPodiumRecap(fakeDb(profile), "u1", "s1", {
+      budgetRefund: 0,
+      state: { corpsName: "Ghost", lastTotal: null },
+    });
+    assert.equal(profile.written.length, 0);
+  });
+});
+
 describe("reconcileSeasonDivisions", () => {
   const NS = process.env.DATA_NAMESPACE;
   const statePath = (uid) => `artifacts/${NS}/users/${uid}/podium/state`;

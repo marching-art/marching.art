@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { DESKTOP_TOUR_STEPS, MOBILE_TOUR_STEPS } from './tourSteps';
+import { DESKTOP_TOUR_STEPS, MOBILE_TOUR_STEPS, PODIUM_TOUR_STEPS, getTourSteps } from './tourSteps';
 import { DASHBOARD_ZONES } from '../../utils/dashboardZones';
 
-const ALL = [['desktop', DESKTOP_TOUR_STEPS] as const, ['mobile', MOBILE_TOUR_STEPS] as const];
+const ALL = [
+  ['desktop', DESKTOP_TOUR_STEPS] as const,
+  ['mobile', MOBILE_TOUR_STEPS] as const,
+  ['podium', PODIUM_TOUR_STEPS] as const,
+];
 
 describe.each(ALL)('%s tour steps', (_name, steps) => {
   it('opens on a welcome card with no target', () => {
@@ -67,5 +71,50 @@ describe('desktop tour', () => {
 
   it('needs no zone reveals, because desktop hides nothing', () => {
     expect(DESKTOP_TOUR_STEPS.every((s) => s.zone === undefined)).toBe(true);
+  });
+});
+
+describe('podium tour', () => {
+  it('teaches the director-sim daily loop, not a drafted lineup', () => {
+    // The fantasy steps point at a caption table Podium doesn't have; the
+    // Podium tour walks the four panels the sim actually loops on.
+    expect(PODIUM_TOUR_STEPS.map((s) => s.id)).toEqual([
+      'welcome',
+      'podium-rehearsal',
+      'podium-captions',
+      'podium-condition',
+      'podium-trajectory',
+    ]);
+  });
+
+  it('reveals the My Corps zone before pointing at any panel', () => {
+    // On mobile PodiumZone renders inside the corps zone; a panel step that
+    // did not name it would highlight a hidden element.
+    for (const step of PODIUM_TOUR_STEPS) {
+      if (step.target) expect(step.zone, step.id).toBe('corps');
+    }
+  });
+
+  it('anchors each panel step to a data-tour target that PodiumZone renders', () => {
+    // These selectors must match the wrappers in components/Podium/PodiumZone.
+    const targets = PODIUM_TOUR_STEPS.filter((s) => s.target).map((s) => s.target);
+    expect(targets).toEqual([
+      '[data-tour="podium-rehearsal"]',
+      '[data-tour="podium-captions"]',
+      '[data-tour="podium-condition"]',
+      '[data-tour="podium-trajectory"]',
+    ]);
+  });
+});
+
+describe('getTourSteps', () => {
+  it('splits fantasy by device', () => {
+    expect(getTourSteps('fantasy', false)).toBe(DESKTOP_TOUR_STEPS);
+    expect(getTourSteps('fantasy', true)).toBe(MOBILE_TOUR_STEPS);
+  });
+
+  it('serves one Podium list to both devices', () => {
+    expect(getTourSteps('podium', false)).toBe(PODIUM_TOUR_STEPS);
+    expect(getTourSteps('podium', true)).toBe(PODIUM_TOUR_STEPS);
   });
 });

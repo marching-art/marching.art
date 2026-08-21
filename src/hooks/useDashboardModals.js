@@ -39,8 +39,13 @@ export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart'];
 /**
  * @param {{ uid: string }} user
  * @param {any} dashboardData - Aggregated dashboard state (from useDashboardData).
+ * @param {{ isPodiumSelected?: boolean, podiumExists?: boolean }} [podiumContext]
+ *   Podium surface signals, owned by pages/Dashboard (podium state is hoisted
+ *   there, not in dashboardData). Drives the first-run Podium tour, which can
+ *   only fire once the founded daily-loop panels it points at are on screen.
  */
-export function useDashboardModals(user, dashboardData) {
+export function useDashboardModals(user, dashboardData, podiumContext = {}) {
+  const { isPodiumSelected = false, podiumExists = false } = podiumContext;
   const location = useLocation();
   const {
     profile,
@@ -55,6 +60,7 @@ export function useDashboardModals(user, dashboardData) {
     newAchievement,
     clearNewAchievement,
     refreshProfile,
+    setSelectedCorpsClass,
   } = dashboardData;
 
   // Modal states
@@ -126,6 +132,16 @@ export function useDashboardModals(user, dashboardData) {
     }
   }, [profile?.pendingSeasonRecap, enqueueModal]);
 
+  // Podium's end-of-season ceremony, the parallel to the fantasy recap above.
+  // The flag rides the always-loaded profile (Podium state only loads on its own
+  // tab), so this fires proactively on any tab. Same priority as the fantasy
+  // recap; the queue serializes them for a director who plays both games.
+  useEffect(() => {
+    if (profile?.pendingPodiumRecap) {
+      enqueueModal('podiumSeasonRecap', MODAL_PRIORITY.SEASON_RECAP);
+    }
+  }, [profile?.pendingPodiumRecap, enqueueModal]);
+
   useEffect(() => {
     if (profile?.isFirstVisit && activeCorps) {
       const timer = setTimeout(() => {
@@ -134,6 +150,22 @@ export function useDashboardModals(user, dashboardData) {
       return () => clearTimeout(timer);
     }
   }, [profile?.isFirstVisit, activeCorps, enqueueModal]);
+
+  // Podium's first-run tour. It targets the daily-loop panels (rehearsal,
+  // captions, condition, trajectory), which only render once a corps is
+  // founded — so unlike the fantasy tour it waits on `podiumExists`, not just
+  // the flag. `podiumFirstVisit` is set at onboarding for a director who chose
+  // Podium (pages/Onboarding handlePodiumSubmit) and cleared when the tour is
+  // seen; it is a sibling of the fantasy `isFirstVisit` so a director who plays
+  // both games gets each tour exactly once.
+  useEffect(() => {
+    if (profile?.podiumFirstVisit && isPodiumSelected && podiumExists) {
+      const timer = setTimeout(() => {
+        enqueueModal('podiumOnboarding', MODAL_PRIORITY.ONBOARDING);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [profile?.podiumFirstVisit, isPodiumSelected, podiumExists, enqueueModal]);
 
   useEffect(() => {
     if (newlyUnlockedClass) {
@@ -192,6 +224,19 @@ export function useDashboardModals(user, dashboardData) {
     }
   }, [modalQueue, profile?.isFirstVisit, user]);
 
+  // Podium tour dismissal — clears its own flag so it shows exactly once,
+  // independent of the fantasy tour above.
+  const handlePodiumTourComplete = useCallback(async () => {
+    modalQueue.dequeue();
+    if (profile?.podiumFirstVisit && user) {
+      try {
+        await updateProfile(user.uid, { podiumFirstVisit: false });
+      } catch (error) {
+        console.error('Error updating Podium first visit flag:', error);
+      }
+    }
+  }, [modalQueue, profile?.podiumFirstVisit, user]);
+
   const handleSetupNewClass = useCallback(() => {
     modalQueue.dequeue();
     setShowRegistration(true);
@@ -220,6 +265,33 @@ export function useDashboardModals(user, dashboardData) {
       }
     }
   }, [modalQueue, user?.uid]);
+
+  // Dismissing the Podium recap clears its one-shot flag (client-writable, like
+  // pendingSeasonRecap — the payout/refund itself was applied server-side).
+  const handlePodiumSeasonRecapClose = useCallback(async () => {
+    modalQueue.dequeue();
+    if (user?.uid) {
+      try {
+        await updateProfile(user.uid, { pendingPodiumRecap: null });
+      } catch (error) {
+        console.error('Error clearing Podium season recap:', error);
+      }
+    }
+  }, [modalQueue, user?.uid]);
+
+  // "Set Up Next Season" — clear the flag and switch to the Podium tab, where
+  // the full between-seasons assessment and re-registration render (§5.13).
+  const handlePodiumSeasonRecapSetup = useCallback(() => {
+    handlePodiumSeasonRecapClose();
+    setSelectedCorpsClass?.('podiumClass');
+    if (user?.uid) {
+      try {
+        localStorage.setItem(`selectedCorps_${user.uid}`, 'podiumClass');
+      } catch {
+        // localStorage unavailable — the live switch above still lands the tab.
+      }
+    }
+  }, [handlePodiumSeasonRecapClose, setSelectedCorpsClass, user?.uid]);
 
   const handleSeasonSetupClose = useCallback(() => {
     modalQueue.dequeue();
@@ -435,10 +507,13 @@ export function useDashboardModals(user, dashboardData) {
     setShowWalletModal,
     // Handlers
     handleTourComplete,
+    handlePodiumTourComplete,
     handleSetupNewClass,
     handleDeclineSetup,
     handleAchievementClose,
     handleSeasonRecapClose,
+    handlePodiumSeasonRecapClose,
+    handlePodiumSeasonRecapSetup,
     handleSeasonSetupFinish,
     handleDeleteCorps,
     handleRetireCorps,

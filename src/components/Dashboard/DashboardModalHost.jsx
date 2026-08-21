@@ -58,12 +58,23 @@ const SeasonRecapModal = lazyWithRetry(
   () => import('../modals/SeasonRecapModal'),
   'SeasonRecapModal'
 );
+const PodiumSeasonRecapModal = lazyWithRetry(
+  () => import('../modals/PodiumSeasonRecapModal'),
+  'PodiumSeasonRecapModal'
+);
 const ShowConceptModal = lazyWithRetry(
   () => import('../modals/ShowConceptModal'),
   'ShowConceptModal'
 );
 
-const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
+const DashboardModalHost = ({
+  modals,
+  data,
+  quickStartSteps,
+  quickStartVariant = 'fantasy',
+  onRequestZone,
+  onRevealPanel,
+}) => {
   const weeksRemaining = useSeasonStore((s) => s.weeksRemaining);
   const isRegistrationLocked = useSeasonStore((s) => s.isRegistrationLocked);
 
@@ -99,10 +110,13 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
     showWalletModal,
     setShowWalletModal,
     handleTourComplete,
+    handlePodiumTourComplete,
     handleSetupNewClass,
     handleDeclineSetup,
     handleAchievementClose,
     handleSeasonRecapClose,
+    handlePodiumSeasonRecapClose,
+    handlePodiumSeasonRecapSetup,
     handleDeleteCorps,
     handleRetireCorps,
     handleMoveCorps,
@@ -258,6 +272,18 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
         </Suspense>
       )}
 
+      {/* Podium's end-of-season ceremony (one-shot, written by the Podium
+          season boundary). Routes into the between-seasons assessment. */}
+      {modalQueue.isActive('podiumSeasonRecap') && profile?.pendingPodiumRecap && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <PodiumSeasonRecapModal
+            recap={profile.pendingPodiumRecap}
+            onClose={handlePodiumSeasonRecapClose}
+            onSetUpNextSeason={handlePodiumSeasonRecapSetup}
+          />
+        </Suspense>
+      )}
+
       {showStreakModal && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <StreakModal
@@ -273,17 +299,39 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
         </Suspense>
       )}
 
+      {/* Fantasy (drafted-lineup) tour. onRequestZone lets its mobile steps
+          switch the dashboard to the zone a target lives in before pointing. */}
       <OnboardingTour
         isOpen={modalQueue.isActive('onboarding')}
         onClose={() => modalQueue.dequeue()}
         onComplete={handleTourComplete}
+        onRequestZone={onRequestZone}
+      />
+
+      {/* Podium (director-sim) tour — same component, its own step list and
+          first-visit flag, so a director who plays both games gets each once. */}
+      <OnboardingTour
+        variant="podium"
+        isOpen={modalQueue.isActive('podiumOnboarding')}
+        onClose={() => modalQueue.dequeue()}
+        onComplete={handlePodiumTourComplete}
+        onRequestZone={onRequestZone}
       />
 
       <QuickStartGuide
         isOpen={showQuickStartGuide}
         onClose={() => setShowQuickStartGuide(false)}
+        variant={quickStartVariant}
         onAction={(action) => {
-          if (action === 'lineup') openCaptionSelection();
+          if (action === 'lineup') {
+            openCaptionSelection();
+            return;
+          }
+          // Podium steps point at panels behind the guide (podium-planner,
+          // podium-plan-editor): close the guide, then reveal the panel — which
+          // switches to its zone on mobile before scrolling.
+          setShowQuickStartGuide(false);
+          onRevealPanel?.(action);
         }}
         completedSteps={quickStartSteps}
       />

@@ -131,9 +131,29 @@ const Dashboard = () => {
   const revealedDay = useRevealedDay(currentDay);
   const scoresAvailable = revealedDay !== null;
 
+  // Podium Class (flag-gated): when its tab is selected, Zone C swaps to the
+  // director-sim surface and the no-corps state runs Podium registration.
+  // Hoisted above the modal hook because that hook needs the Podium surface
+  // signals to fire the first-run Podium tour.
+  const podiumEnabled = usePodiumEnabled();
+  const isPodiumSelected = podiumEnabled && dashboardData.activeCorpsClass === 'podiumClass';
+
+  // Podium state is hoisted here (not owned by PodiumZone) so it loads once and
+  // the shared Director's Report can read its show/concept facts — the two
+  // things a Podium director's daily challenges need that the profile can't
+  // carry. Enabled only when Podium is the active surface, so fantasy-only
+  // directors never fetch it.
+  const podium = usePodium(isPodiumSelected);
+  const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
+
   // Modal state, modal-queue effects, and modal action handlers
-  // (extracted to src/hooks/useDashboardModals.js)
-  const modals = useDashboardModals(user, dashboardData);
+  // (extracted to src/hooks/useDashboardModals.js). The Podium context drives
+  // the founded-corps first-run tour, which can't fire until its target panels
+  // exist (podium.data.exists).
+  const modals = useDashboardModals(user, dashboardData, {
+    isPodiumSelected,
+    podiumExists: Boolean(podium.data?.exists),
+  });
   const {
     modalQueue,
     setShowRegistration,
@@ -165,19 +185,6 @@ const Dashboard = () => {
     unlockedClasses, // Includes admin override - admins have all classes
     availableCorps, // Season pool (corpsValues) — supplies resultDays for pick highlights
   } = dashboardData;
-
-  // Podium Class (flag-gated): when its tab is selected, Zone C swaps to the
-  // director-sim surface and the no-corps state runs Podium registration.
-  const podiumEnabled = usePodiumEnabled();
-  const isPodiumSelected = podiumEnabled && activeCorpsClass === 'podiumClass';
-
-  // Podium state is hoisted here (not owned by PodiumZone) so it loads once and
-  // the shared Director's Report can read its show/concept facts — the two
-  // things a Podium director's daily challenges need that the profile can't
-  // carry. Enabled only when Podium is the active surface, so fantasy-only
-  // directors never fetch it.
-  const podium = usePodium(isPodiumSelected);
-  const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
 
   // Season recap ledger — opened by clicking SEASON SCORE on the scorecard
   // (community request). Podium gets the public-recap ledger; the ranked fantasy
@@ -310,6 +317,23 @@ const Dashboard = () => {
     ],
     [lineupCount, thisWeekShows.length, myLeagues?.length]
   );
+
+  // Podium's quick-start completion signals, read from the same podium state
+  // the Next Action resolver uses (hooks/usePodiumNextAction): rehearsed today
+  // (or resting), registered/auto-enrolled for a show, and an assistant plan
+  // saved. The ids match PODIUM_QUICK_START_STEPS in QuickStartGuide.
+  const podiumQuickStartSteps = useMemo(() => {
+    const state = podium.data?.state || {};
+    const rehearsed = Boolean(state.today?.restDay) || (podium.data?.blocksUsedToday ?? 0) > 0;
+    const hasShows =
+      (state.selectedShowDays?.length ?? 0) > 0 || (podium.data?.autoDays?.length ?? 0) > 0;
+    const hasPlan = (state.planTemplate?.length ?? 0) > 0;
+    return [
+      ...(rehearsed ? ['rehearse'] : []),
+      ...(hasShows ? ['shows'] : []),
+      ...(hasPlan ? ['plan'] : []),
+    ];
+  }, [podium.data]);
 
   // Pull-to-refresh re-fetches the nightly-drop caches (the live listeners
   // behind profile and season need no help).
@@ -692,8 +716,10 @@ const Dashboard = () => {
       <DashboardModalHost
         modals={modals}
         data={dashboardData}
-        quickStartSteps={quickStartSteps}
+        quickStartSteps={isPodiumSelected ? podiumQuickStartSteps : quickStartSteps}
+        quickStartVariant={isPodiumSelected ? 'podium' : 'fantasy'}
         onRequestZone={setActiveZone}
+        onRevealPanel={revealPanel}
       />
     </div>
   );

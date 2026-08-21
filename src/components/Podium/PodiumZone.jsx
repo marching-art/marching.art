@@ -125,17 +125,27 @@ export default function PodiumZone({ podium: podiumProp }) {
     <div className="space-y-4">
       <PodiumModeBanner />
       <StaffOutlookBanner podium={podium} />
-      <RehearsalPlanner podium={podium} />
-      <PodiumCaptionPanel podium={podium} />
+      {/* data-tour anchors: the first-run Podium tour (components/Dashboard/
+          tourSteps PODIUM_TOUR_STEPS) highlights these four panels in turn. */}
+      <div data-tour="podium-rehearsal">
+        <RehearsalPlanner podium={podium} />
+      </div>
+      <div data-tour="podium-captions">
+        <PodiumCaptionPanel podium={podium} />
+      </div>
       <FanFavoriteCard />
-      <PodiumTrajectoryCard podium={podium} />
+      <div data-tour="podium-trajectory">
+        <PodiumTrajectoryCard podium={podium} />
+      </div>
       <PodiumSeasonLedger
         seasonUid={podium.data?.state?.seasonUid}
         seasonName={podium.data?.state?.seasonName}
         uid={uid}
         userCorpsName={podium.data?.state?.corpsName}
       />
-      <CorpsConditionPanel podium={podium} />
+      <div data-tour="podium-condition">
+        <CorpsConditionPanel podium={podium} />
+      </div>
       <PodiumStaffPanel podium={podium} />
       <JointRehearsalPanel />
     </div>

@@ -431,15 +431,19 @@ const Onboarding = () => {
       });
 
       // Onboarding-specific fields. Deliberately no `corps.soundSport` (the
-      // director chose Podium) and no `isFirstVisit` — the dashboard's
-      // first-visit tour is written for the fantasy lineup surface and would
-      // point at the wrong panels for a Podium director. The Podium corps and
-      // its own onboarding live under the user's /podium subcollection.
+      // director chose Podium) and no `isFirstVisit` — the fantasy first-visit
+      // tour points at the drafted-lineup surface, which a Podium director
+      // doesn't have. Podium gets its OWN first-run tour instead, keyed on
+      // `podiumFirstVisit`; the dashboard fires it once the corps is founded
+      // and the daily-loop panels it points at are on screen (the tour targets
+      // the rehearsal/caption/condition/trajectory panels, which don't exist
+      // until founding, so the flag alone can't fire it prematurely).
       await mergeProfile(user.uid, {
         location: '',
         bio: '',
         favoriteCorps: '',
         staff: [],
+        podiumFirstVisit: true,
         onboardingCompletedAt: new Date().toISOString(),
       });
 

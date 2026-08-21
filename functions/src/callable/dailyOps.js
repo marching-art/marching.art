@@ -8,6 +8,7 @@ const {
   calculateXPUpdates,
   XP_SOURCES,
   seasonBaselineStamp,
+  getLevelTitle,
 } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
@@ -34,7 +35,11 @@ const {
   fetchRecentResultsForClass,
   deriveQuestionThreshold,
 } = require("../helpers/dailyPredictions");
-const { sweepProfileAchievements, sweepCosmeticGrants } = require("../helpers/achievements");
+const {
+  sweepProfileAchievements,
+  sweepCosmeticGrants,
+  reconciledTotalSeasons,
+} = require("../helpers/achievements");
 // Reward tables live in helpers/engagementRewards.js (the single source of
 // truth, also read by the economy earning guide).
 const {
@@ -173,6 +178,24 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       coinAwarded += stipendCoin;
       updates.lastRewardedLevel = Math.max(previousRewardedLevel, xpResult.newLevel);
 
+      // Fold Podium participation into lifetimeStats.totalSeasons before the
+      // sweep. Podium settles its season boundary on its own path (never through
+      // the fantasy archival that owns this counter), so a Podium-only director
+      // stayed stuck at zero seasons — blocking the seasons_* achievements AND
+      // the prestige titles (Hall of Famer / Immortal) that gate on it.
+      // reconciledTotalSeasons is a monotonic union floor (max of the stored
+      // count and Podium seasons played): it only ever raises, never lowers, and
+      // cannot over-credit a both-games director, so persisting it here is safe
+      // for the class-unlock gate that also reads totalSeasons. Idempotent — a
+      // later login recomputes the same max.
+      const reconciledSeasons = reconciledTotalSeasons(profileData);
+      if (reconciledSeasons > (profileData.lifetimeStats?.totalSeasons || 0)) {
+        updates['lifetimeStats.totalSeasons'] = reconciledSeasons;
+        // The prestige title gates on totalSeasons, so refresh it against the
+        // raised value (calculateXPUpdates computed it from the stale one).
+        updates.userTitle = getLevelTitle(xpResult.newLevel, { totalSeasons: reconciledSeasons });
+      }
+
       // Daily achievement sweep — the single server-side award point for the
       // whole catalog (streak tiers, levels, class unlocks, career milestones).
       // Replaces the legacy client-side achievement writers; also backfills
@@ -182,6 +205,7 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         streak: newStreak,
         level: xpResult.newLevel,
         unlockedClasses: xpResult.updates.unlockedClasses || profileData.unlockedClasses,
+        totalSeasons: reconciledSeasons,
       });
       const achievementCoin = newAchievements.reduce((sum, a) => sum + (a.ccReward || 0), 0);
       coinAwarded += achievementCoin;

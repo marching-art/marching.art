@@ -9,7 +9,7 @@ let mobile = false;
 vi.mock('../../hooks/useIsMobile', () => ({ useIsMobile: () => mobile }));
 
 import OnboardingTour from './OnboardingTour';
-import { MOBILE_TOUR_STEPS, DESKTOP_TOUR_STEPS } from './tourSteps';
+import { MOBILE_TOUR_STEPS, DESKTOP_TOUR_STEPS, PODIUM_TOUR_STEPS } from './tourSteps';
 
 const onClose = vi.fn();
 const onComplete = vi.fn();
@@ -153,5 +153,23 @@ describe('OnboardingTour', () => {
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
     await flushFrame();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('walks the Podium list when asked, on either device', () => {
+    // Podium's daily-loop tour is device-agnostic — one list for desktop and
+    // mobile alike, because PodiumZone is the same single column either way.
+    renderTour({ variant: 'podium' });
+    expect(screen.getByText(PODIUM_TOUR_STEPS[0].title)).toBeInTheDocument();
+    expect(screen.getByText(`Step 1 of ${PODIUM_TOUR_STEPS.length}`)).toBeInTheDocument();
+  });
+
+  it('reveals the Podium panel zone before pointing at it', async () => {
+    // The Podium panels live in the corps zone; on a phone the tour must switch
+    // there or it highlights a hidden element.
+    mobile = true;
+    renderTour({ variant: 'podium' });
+    fireEvent.click(screen.getByRole('button', { name: /Next/ })); // -> podium-rehearsal
+    await flushFrame();
+    expect(onRequestZone).toHaveBeenCalledWith('corps');
   });
 });
