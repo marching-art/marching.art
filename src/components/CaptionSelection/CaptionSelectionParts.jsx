@@ -168,7 +168,7 @@ const CorpsSelectionList = ({
         })}
       </div>
       <p className="px-4 py-3 text-[10px] text-muted text-center border-t border-line-subtle">
-        Showing this season's draftable corps (cost 50 or less). Cost counts against your budget —
+        Showing this season's draftable corps (cost 25 or less). Cost counts against your budget —
         scores come from real performances.
       </p>
     </div>
