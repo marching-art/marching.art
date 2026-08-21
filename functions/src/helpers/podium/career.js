@@ -291,6 +291,47 @@ async function appendProfileSeasonHistory(db, uid, seasonUid, state) {
 }
 
 /**
+ * Stage the one-shot end-of-season recap on the PROFILE (`pendingPodiumRecap`),
+ * the Podium parallel to the fantasy classes' `pendingSeasonRecap`. Podium
+ * state only loads on its own tab, so the always-loaded profile is the only
+ * carrier a proactive, cross-tab ceremony can read: the dashboard shows this
+ * once on the director's next visit — how the corps finished and any Corps
+ * Budget refunded — then routes into the full between-seasons assessment
+ * (design §5.13), which the client clears the flag on the way to.
+ *
+ * Written ONLY from the once-only `didArchive` branch (guarded by the career's
+ * lastSeasonUid), so a re-sweep never resurrects a recap the director already
+ * dismissed — and only for a corps that actually performed (lastTotal set),
+ * matching the fantasy recap's participation bar. Deliberately light: the class
+ * / status movement lives in the assessment the CTA opens, not duplicated here.
+ * Isolated — a recap failure never fails archival.
+ */
+async function writePendingPodiumRecap(db, uid, seasonUid, result) {
+  const state = result.state;
+  if (!state || state.lastTotal == null) return;
+  try {
+    await store.profileRef(db, uid).set(
+      {
+        pendingPodiumRecap: {
+          seasonId: seasonUid,
+          corpsName: state.corpsName || null,
+          placement: state.seasonRank ?? null,
+          placementOf: state.seasonRankOf ?? null,
+          finalScore: state.lastTotal,
+          medals: state.medals || {},
+          division: divisions.normalizeDivision(state.division),
+          budgetRefund: result.budgetRefund || 0,
+          awardedAt: new Date().toISOString(),
+        },
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    logger.error(`[podium] pending recap write failed for ${uid}: ${error.message}`);
+  }
+}
+
+/**
  * Rank a season's swept entries into final standings (pure). Latest-total
  * ordering, matching the nightly rankings the players watched all season.
  * Unscored corps (registered, never performed) are excluded. Deterministic
@@ -415,12 +456,15 @@ async function archivePodiumSeason(db, previousSeason) {
           // marker moves in lock-step with lastSeasonUid, so a re-sweep (or a
           // director who re-registered first and already refunded) never
           // double-pays — the archival branch itself is once-only.
+          let budgetRefund = 0;
           if (txnCareer.lastRefundedSeasonUid !== previousSeason.seasonUid) {
             const report = store.buildSeasonFinancialReport(txnState, {
               seasonUid: previousSeason.seasonUid,
               seasonIndex: previousSeason.index,
             });
-            applyBudgetRefund(transaction, db, uid, profileSnapshot, report, previousSeason.seasonUid);
+            budgetRefund = applyBudgetRefund(
+              transaction, db, uid, profileSnapshot, report, previousSeason.seasonUid
+            );
             updated.lastRefundedSeasonUid = previousSeason.seasonUid;
             updated.lastSeasonReport = report;
           }
@@ -429,6 +473,9 @@ async function archivePodiumSeason(db, previousSeason) {
             state: txnState,
             career: txnCareer,
             didArchive: true,
+            // Refund credited this season — carried out to the once-only
+            // post-commit recap write (the payday figure the director sees).
+            budgetRefund,
             // Assessment inputs (§5.7/§5.13): the reputation move this season
             // produced, and the tier-relative performance it was earned on.
             reputationBefore: txnCareer.reputation || 0,
@@ -452,6 +499,7 @@ async function archivePodiumSeason(db, previousSeason) {
       }).then(async (result) => {
         if (result.didArchive) {
           await appendProfileSeasonHistory(db, uid, previousSeason.seasonUid, result.state);
+          await writePendingPodiumRecap(db, uid, previousSeason.seasonUid, result);
           archived++;
         }
         return result;
@@ -897,6 +945,7 @@ module.exports = {
   restoreLineage,
   buildFinalStandings,
   appendProfileSeasonHistory,
+  writePendingPodiumRecap,
   applyBudgetRefund,
   archivePodiumSeason,
   reconcileSeasonDivisions,

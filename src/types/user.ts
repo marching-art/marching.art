@@ -186,6 +186,20 @@ export interface UserProfile {
     awardedAt?: unknown;
   } | null;
 
+  // One-shot Podium end-of-season recap, written at the Podium season boundary
+  // (functions/src/helpers/podium/career.js); shown once then cleared to null.
+  pendingPodiumRecap?: {
+    seasonId?: string;
+    corpsName?: string | null;
+    placement?: number | null;
+    placementOf?: number | null;
+    finalScore?: number;
+    medals?: Record<string, number>;
+    division?: string;
+    budgetRefund?: number;
+    awardedAt?: unknown;
+  } | null;
+
   // Profile avatar selection - which corps uniform to display
   profileAvatarCorps?: CorpsClass;
 

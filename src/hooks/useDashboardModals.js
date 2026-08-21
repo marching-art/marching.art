@@ -60,6 +60,7 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     newAchievement,
     clearNewAchievement,
     refreshProfile,
+    setSelectedCorpsClass,
   } = dashboardData;
 
   // Modal states
@@ -130,6 +131,16 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
       enqueueModal('seasonRecap', MODAL_PRIORITY.SEASON_RECAP);
     }
   }, [profile?.pendingSeasonRecap, enqueueModal]);
+
+  // Podium's end-of-season ceremony, the parallel to the fantasy recap above.
+  // The flag rides the always-loaded profile (Podium state only loads on its own
+  // tab), so this fires proactively on any tab. Same priority as the fantasy
+  // recap; the queue serializes them for a director who plays both games.
+  useEffect(() => {
+    if (profile?.pendingPodiumRecap) {
+      enqueueModal('podiumSeasonRecap', MODAL_PRIORITY.SEASON_RECAP);
+    }
+  }, [profile?.pendingPodiumRecap, enqueueModal]);
 
   useEffect(() => {
     if (profile?.isFirstVisit && activeCorps) {
@@ -254,6 +265,33 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
       }
     }
   }, [modalQueue, user?.uid]);
+
+  // Dismissing the Podium recap clears its one-shot flag (client-writable, like
+  // pendingSeasonRecap — the payout/refund itself was applied server-side).
+  const handlePodiumSeasonRecapClose = useCallback(async () => {
+    modalQueue.dequeue();
+    if (user?.uid) {
+      try {
+        await updateProfile(user.uid, { pendingPodiumRecap: null });
+      } catch (error) {
+        console.error('Error clearing Podium season recap:', error);
+      }
+    }
+  }, [modalQueue, user?.uid]);
+
+  // "Set Up Next Season" — clear the flag and switch to the Podium tab, where
+  // the full between-seasons assessment and re-registration render (§5.13).
+  const handlePodiumSeasonRecapSetup = useCallback(() => {
+    handlePodiumSeasonRecapClose();
+    setSelectedCorpsClass?.('podiumClass');
+    if (user?.uid) {
+      try {
+        localStorage.setItem(`selectedCorps_${user.uid}`, 'podiumClass');
+      } catch {
+        // localStorage unavailable — the live switch above still lands the tab.
+      }
+    }
+  }, [handlePodiumSeasonRecapClose, setSelectedCorpsClass, user?.uid]);
 
   const handleSeasonSetupClose = useCallback(() => {
     modalQueue.dequeue();
@@ -474,6 +512,8 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     handleDeclineSetup,
     handleAchievementClose,
     handleSeasonRecapClose,
+    handlePodiumSeasonRecapClose,
+    handlePodiumSeasonRecapSetup,
     handleSeasonSetupFinish,
     handleDeleteCorps,
     handleRetireCorps,

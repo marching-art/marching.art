@@ -58,6 +58,10 @@ const SeasonRecapModal = lazyWithRetry(
   () => import('../modals/SeasonRecapModal'),
   'SeasonRecapModal'
 );
+const PodiumSeasonRecapModal = lazyWithRetry(
+  () => import('../modals/PodiumSeasonRecapModal'),
+  'PodiumSeasonRecapModal'
+);
 const ShowConceptModal = lazyWithRetry(
   () => import('../modals/ShowConceptModal'),
   'ShowConceptModal'
@@ -111,6 +115,8 @@ const DashboardModalHost = ({
     handleDeclineSetup,
     handleAchievementClose,
     handleSeasonRecapClose,
+    handlePodiumSeasonRecapClose,
+    handlePodiumSeasonRecapSetup,
     handleDeleteCorps,
     handleRetireCorps,
     handleMoveCorps,
@@ -263,6 +269,18 @@ const DashboardModalHost = ({
       {modalQueue.isActive('seasonRecap') && profile?.pendingSeasonRecap && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <SeasonRecapModal recap={profile.pendingSeasonRecap} onClose={handleSeasonRecapClose} />
+        </Suspense>
+      )}
+
+      {/* Podium's end-of-season ceremony (one-shot, written by the Podium
+          season boundary). Routes into the between-seasons assessment. */}
+      {modalQueue.isActive('podiumSeasonRecap') && profile?.pendingPodiumRecap && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <PodiumSeasonRecapModal
+            recap={profile.pendingPodiumRecap}
+            onClose={handlePodiumSeasonRecapClose}
+            onSetUpNextSeason={handlePodiumSeasonRecapSetup}
+          />
         </Suspense>
       )}
 
