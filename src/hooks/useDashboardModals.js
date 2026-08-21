@@ -39,8 +39,13 @@ export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart'];
 /**
  * @param {{ uid: string }} user
  * @param {any} dashboardData - Aggregated dashboard state (from useDashboardData).
+ * @param {{ isPodiumSelected?: boolean, podiumExists?: boolean }} [podiumContext]
+ *   Podium surface signals, owned by pages/Dashboard (podium state is hoisted
+ *   there, not in dashboardData). Drives the first-run Podium tour, which can
+ *   only fire once the founded daily-loop panels it points at are on screen.
  */
-export function useDashboardModals(user, dashboardData) {
+export function useDashboardModals(user, dashboardData, podiumContext = {}) {
+  const { isPodiumSelected = false, podiumExists = false } = podiumContext;
   const location = useLocation();
   const {
     profile,
@@ -135,6 +140,22 @@ export function useDashboardModals(user, dashboardData) {
     }
   }, [profile?.isFirstVisit, activeCorps, enqueueModal]);
 
+  // Podium's first-run tour. It targets the daily-loop panels (rehearsal,
+  // captions, condition, trajectory), which only render once a corps is
+  // founded — so unlike the fantasy tour it waits on `podiumExists`, not just
+  // the flag. `podiumFirstVisit` is set at onboarding for a director who chose
+  // Podium (pages/Onboarding handlePodiumSubmit) and cleared when the tour is
+  // seen; it is a sibling of the fantasy `isFirstVisit` so a director who plays
+  // both games gets each tour exactly once.
+  useEffect(() => {
+    if (profile?.podiumFirstVisit && isPodiumSelected && podiumExists) {
+      const timer = setTimeout(() => {
+        enqueueModal('podiumOnboarding', MODAL_PRIORITY.ONBOARDING);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [profile?.podiumFirstVisit, isPodiumSelected, podiumExists, enqueueModal]);
+
   useEffect(() => {
     if (newlyUnlockedClass) {
       enqueueModal('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, {
@@ -191,6 +212,19 @@ export function useDashboardModals(user, dashboardData) {
       }
     }
   }, [modalQueue, profile?.isFirstVisit, user]);
+
+  // Podium tour dismissal — clears its own flag so it shows exactly once,
+  // independent of the fantasy tour above.
+  const handlePodiumTourComplete = useCallback(async () => {
+    modalQueue.dequeue();
+    if (profile?.podiumFirstVisit && user) {
+      try {
+        await updateProfile(user.uid, { podiumFirstVisit: false });
+      } catch (error) {
+        console.error('Error updating Podium first visit flag:', error);
+      }
+    }
+  }, [modalQueue, profile?.podiumFirstVisit, user]);
 
   const handleSetupNewClass = useCallback(() => {
     modalQueue.dequeue();
@@ -435,6 +469,7 @@ export function useDashboardModals(user, dashboardData) {
     setShowWalletModal,
     // Handlers
     handleTourComplete,
+    handlePodiumTourComplete,
     handleSetupNewClass,
     handleDeclineSetup,
     handleAchievementClose,

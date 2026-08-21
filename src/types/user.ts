@@ -170,6 +170,11 @@ export interface UserProfile {
   activeSeasonId?: string; // Current season the user is participating in
   initialSetupComplete?: string; // Season ID when initial setup wizard was completed
   isFirstVisit?: boolean; // Cleared after the first-visit onboarding tour is seen
+  // Podium's own first-run tour flag. Set at onboarding for a director who
+  // chose Podium; cleared once the founded-corps daily-loop tour is seen. A
+  // sibling of isFirstVisit so a director who plays both games gets each tour
+  // exactly once.
+  podiumFirstVisit?: boolean;
   // One-shot season recap summary written server-side at season rollover
   // (functions/src/helpers/season.js); the client shows it once then clears it to null.
   pendingSeasonRecap?: {

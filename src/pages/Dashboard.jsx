@@ -131,9 +131,29 @@ const Dashboard = () => {
   const revealedDay = useRevealedDay(currentDay);
   const scoresAvailable = revealedDay !== null;
 
+  // Podium Class (flag-gated): when its tab is selected, Zone C swaps to the
+  // director-sim surface and the no-corps state runs Podium registration.
+  // Hoisted above the modal hook because that hook needs the Podium surface
+  // signals to fire the first-run Podium tour.
+  const podiumEnabled = usePodiumEnabled();
+  const isPodiumSelected = podiumEnabled && dashboardData.activeCorpsClass === 'podiumClass';
+
+  // Podium state is hoisted here (not owned by PodiumZone) so it loads once and
+  // the shared Director's Report can read its show/concept facts — the two
+  // things a Podium director's daily challenges need that the profile can't
+  // carry. Enabled only when Podium is the active surface, so fantasy-only
+  // directors never fetch it.
+  const podium = usePodium(isPodiumSelected);
+  const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
+
   // Modal state, modal-queue effects, and modal action handlers
-  // (extracted to src/hooks/useDashboardModals.js)
-  const modals = useDashboardModals(user, dashboardData);
+  // (extracted to src/hooks/useDashboardModals.js). The Podium context drives
+  // the founded-corps first-run tour, which can't fire until its target panels
+  // exist (podium.data.exists).
+  const modals = useDashboardModals(user, dashboardData, {
+    isPodiumSelected,
+    podiumExists: Boolean(podium.data?.exists),
+  });
   const {
     modalQueue,
     setShowRegistration,
@@ -165,19 +185,6 @@ const Dashboard = () => {
     unlockedClasses, // Includes admin override - admins have all classes
     availableCorps, // Season pool (corpsValues) — supplies resultDays for pick highlights
   } = dashboardData;
-
-  // Podium Class (flag-gated): when its tab is selected, Zone C swaps to the
-  // director-sim surface and the no-corps state runs Podium registration.
-  const podiumEnabled = usePodiumEnabled();
-  const isPodiumSelected = podiumEnabled && activeCorpsClass === 'podiumClass';
-
-  // Podium state is hoisted here (not owned by PodiumZone) so it loads once and
-  // the shared Director's Report can read its show/concept facts — the two
-  // things a Podium director's daily challenges need that the profile can't
-  // carry. Enabled only when Podium is the active surface, so fantasy-only
-  // directors never fetch it.
-  const podium = usePodium(isPodiumSelected);
-  const podiumFacts = useMemo(() => derivePodiumChallengeFacts(podium.data), [podium.data]);
 
   // Season recap ledger — opened by clicking SEASON SCORE on the scorecard
   // (community request). Podium gets the public-recap ledger; the ranked fantasy

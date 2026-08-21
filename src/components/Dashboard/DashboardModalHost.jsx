@@ -63,7 +63,7 @@ const ShowConceptModal = lazyWithRetry(
   'ShowConceptModal'
 );
 
-const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
+const DashboardModalHost = ({ modals, data, quickStartSteps, onRequestZone }) => {
   const weeksRemaining = useSeasonStore((s) => s.weeksRemaining);
   const isRegistrationLocked = useSeasonStore((s) => s.isRegistrationLocked);
 
@@ -99,6 +99,7 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
     showWalletModal,
     setShowWalletModal,
     handleTourComplete,
+    handlePodiumTourComplete,
     handleSetupNewClass,
     handleDeclineSetup,
     handleAchievementClose,
@@ -273,10 +274,23 @@ const DashboardModalHost = ({ modals, data, quickStartSteps }) => {
         </Suspense>
       )}
 
+      {/* Fantasy (drafted-lineup) tour. onRequestZone lets its mobile steps
+          switch the dashboard to the zone a target lives in before pointing. */}
       <OnboardingTour
         isOpen={modalQueue.isActive('onboarding')}
         onClose={() => modalQueue.dequeue()}
         onComplete={handleTourComplete}
+        onRequestZone={onRequestZone}
+      />
+
+      {/* Podium (director-sim) tour — same component, its own step list and
+          first-visit flag, so a director who plays both games gets each once. */}
+      <OnboardingTour
+        variant="podium"
+        isOpen={modalQueue.isActive('podiumOnboarding')}
+        onClose={() => modalQueue.dequeue()}
+        onComplete={handlePodiumTourComplete}
+        onRequestZone={onRequestZone}
       />
 
       <QuickStartGuide
