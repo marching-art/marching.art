@@ -100,13 +100,6 @@ export const CHANGELOG: ChangelogEntry[] = changelogEntriesRaw as ChangelogEntry
 
 export const ROADMAP: RoadmapItem[] = [
   {
-    id: 'discord-bridge',
-    title: 'Press releases in Discord',
-    description:
-      'Auto-post new press releases and fresh champions to the Discord, so your corps’ news reaches the community where it already talks.',
-    status: 'planned',
-  },
-  {
     id: 'corps-identity',
     title: 'Deeper corps identity & cosmetics',
     description:
