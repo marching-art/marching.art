@@ -77,7 +77,11 @@ const PodiumSeasonRecapModal = ({ recap, onClose, onSetUpNextSeason }) => {
                 <p className="text-[10px] text-muted">{divisionLabel}</p>
               </div>
             </div>
-            <button onClick={onClose} aria-label="Dismiss" className="p-1 text-muted hover:text-white">
+            <button
+              onClick={onClose}
+              aria-label="Dismiss"
+              className="p-1 text-muted hover:text-white"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>

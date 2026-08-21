@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { DESKTOP_TOUR_STEPS, MOBILE_TOUR_STEPS, PODIUM_TOUR_STEPS, getTourSteps } from './tourSteps';
+import {
+  DESKTOP_TOUR_STEPS,
+  MOBILE_TOUR_STEPS,
+  PODIUM_TOUR_STEPS,
+  getTourSteps,
+} from './tourSteps';
 import { DASHBOARD_ZONES } from '../../utils/dashboardZones';
 
 const ALL = [

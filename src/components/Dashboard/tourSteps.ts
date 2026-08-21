@@ -23,7 +23,15 @@
 import type { DashboardZoneId } from '../../utils/dashboardZones';
 
 export type TourIcon =
-  'sparkles' | 'target' | 'music' | 'layers' | 'compass' | 'trophy' | 'calendar' | 'users' | 'heart';
+  | 'sparkles'
+  | 'target'
+  | 'music'
+  | 'layers'
+  | 'compass'
+  | 'trophy'
+  | 'calendar'
+  | 'users'
+  | 'heart';
 
 export interface TourStep {
   id: string;
@@ -210,10 +218,7 @@ export const PODIUM_TOUR_STEPS: TourStep[] = [
  * genuinely different layouts to teach). Podium does not — its zone is one
  * column either way — so both devices get the same list.
  */
-export function getTourSteps(
-  variant: 'fantasy' | 'podium',
-  isMobile: boolean
-): TourStep[] {
+export function getTourSteps(variant: 'fantasy' | 'podium', isMobile: boolean): TourStep[] {
   if (variant === 'podium') return PODIUM_TOUR_STEPS;
   return isMobile ? MOBILE_TOUR_STEPS : DESKTOP_TOUR_STEPS;
 }

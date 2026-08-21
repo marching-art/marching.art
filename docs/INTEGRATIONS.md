@@ -16,14 +16,14 @@ only that channel's posts. Shared plumbing lives in
 the secret definitions, the poster, the lease-guarded `postOnce`, and the
 embed helpers.
 
-| Channel            | Secret                              | Posts                                                                                                                                               |
-| ------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| scores             | `DISCORD_SCORES_WEBHOOK_URL`        | nightly score drop (with SoundSport blue ribbons), the Podium Class drop, all-time records, championship-week cuts, season champions                |
-| **#announcements** | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL` | Fan Favorite ballots + results, season start, lineup lock, championship-week caption windows, registration deadlines, Eastern Classic night lineups |
-| **#news**          | `DISCORD_NEWS_WEBHOOK_URL`          | published articles (except press releases), the weekly Podium Report                                                                                |
-| **#press-releases**| `DISCORD_PRESS_RELEASES_WEBHOOK_URL`| director-authored press releases (article category `press`) — **never** newsroom copy                                                              |
-| **#events**        | `DISCORD_EVENTS_WEBHOOK_URL`        | director-hosted shows — **never** the generated season schedule                                                                                     |
-| **#operations**    | `DISCORD_OPS_WEBHOOK_URL`           | admin-only: scoring-watchdog and scrape-canary alerts                                                                                               |
+| Channel             | Secret                               | Posts                                                                                                                                               |
+| ------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| scores              | `DISCORD_SCORES_WEBHOOK_URL`         | nightly score drop (with SoundSport blue ribbons), the Podium Class drop, all-time records, championship-week cuts, season champions                |
+| **#announcements**  | `DISCORD_ANNOUNCEMENTS_WEBHOOK_URL`  | Fan Favorite ballots + results, season start, lineup lock, championship-week caption windows, registration deadlines, Eastern Classic night lineups |
+| **#news**           | `DISCORD_NEWS_WEBHOOK_URL`           | published articles (except press releases), the weekly Podium Report                                                                                |
+| **#press-releases** | `DISCORD_PRESS_RELEASES_WEBHOOK_URL` | director-authored press releases (article category `press`) — **never** newsroom copy                                                               |
+| **#events**         | `DISCORD_EVENTS_WEBHOOK_URL`         | director-hosted shows — **never** the generated season schedule                                                                                     |
+| **#operations**     | `DISCORD_OPS_WEBHOOK_URL`            | admin-only: scoring-watchdog and scrape-canary alerts                                                                                               |
 
 Two rules hold across every channel:
 

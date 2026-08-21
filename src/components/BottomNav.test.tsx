@@ -146,7 +146,10 @@ describe('BottomNav', () => {
       'href',
       '/achievements'
     );
-    expect(within(sheet).getByRole('link', { name: 'Records' })).toHaveAttribute('href', '/records');
+    expect(within(sheet).getByRole('link', { name: 'Records' })).toHaveAttribute(
+      'href',
+      '/records'
+    );
     expect(within(sheet).getByRole('link', { name: 'Retired Corps' })).toHaveAttribute(
       'href',
       '/retired-corps'

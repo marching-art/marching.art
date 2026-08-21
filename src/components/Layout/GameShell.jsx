@@ -100,12 +100,7 @@ const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
               bottom-nav tab. The editor is a routed panel on the dashboard, so
               the link lands straight on it instead of leaving the director to
               hunt for "Manage Lineup". */}
-          <NavItem
-            to="/dashboard?panel=lineup"
-            icon={Music}
-            label="Lineup"
-            active={lineupOpen}
-          />
+          <NavItem to="/dashboard?panel=lineup" icon={Music} label="Lineup" active={lineupOpen} />
           <NavItem to="/schedule" icon={Calendar} label="Schedule" />
           <NavItem to="/scores" icon={Trophy} label="Scores" />
           <NavItem to="/" icon={Newspaper} label="News" end />
