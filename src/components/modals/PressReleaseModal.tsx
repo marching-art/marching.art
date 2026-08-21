@@ -15,6 +15,8 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { PressReleaseCorpsClass } from '../../api/pressReleases';
 import {
   PRESS_RELEASE_LIMITS,
+  PRESS_RELEASE_APPROVAL_THRESHOLD,
+  canPublishPressRelease,
   emptyPressReleaseForm,
   validatePressReleaseForm,
   buildPressReleasePayload,
@@ -31,6 +33,13 @@ export interface OwnedCorpsOption {
 export interface PressReleaseModalProps {
   /** The director's registered corps, highest class first. */
   ownedCorps: OwnedCorpsOption[];
+  /**
+   * The author's count of admin-approved articles. Press releases publish
+   * unreviewed, so — like a trusted author's auto-published submission — they're
+   * gated behind the same approval threshold. Omit to leave the modal ungated
+   * (the server re-checks regardless).
+   */
+  approvedCount?: number;
   isSubmitting?: boolean;
   onClose: () => void;
   onSubmit: (payload: ReturnType<typeof buildPressReleasePayload>) => void;
@@ -38,6 +47,7 @@ export interface PressReleaseModalProps {
 
 const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
   ownedCorps,
+  approvedCount,
   isSubmitting = false,
   onClose,
   onSubmit,
@@ -55,6 +65,15 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
   const hasCorps = ownedCorps.length > 0;
   const selectedCorps = ownedCorps.find((c) => c.corpsClass === form.corpsClass) ?? ownedCorps[0];
 
+  // Approval gate: when a count is supplied and it's under the threshold, the
+  // author hasn't earned unreviewed publishing yet. Undefined leaves it open.
+  const meetsApprovalGate = approvedCount === undefined || canPublishPressRelease(approvedCount);
+  const approvalsRemaining = Math.max(
+    0,
+    PRESS_RELEASE_APPROVAL_THRESHOLD - Math.max(0, Math.floor(approvedCount ?? 0))
+  );
+  const canPublish = hasCorps && meetsApprovalGate;
+
   const update = <K extends keyof PressReleaseFormState>(
     field: K,
     value: PressReleaseFormState[K]
@@ -65,7 +84,7 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (!hasCorps || Object.keys(errors).length > 0) return;
+    if (!canPublish || Object.keys(errors).length > 0) return;
     onSubmit(buildPressReleasePayload(form));
   };
 
@@ -125,6 +144,28 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
                 <div className="bg-background border border-line rounded-none px-3 py-6 text-center">
                   <p className="text-sm text-secondary">
                     Register a corps first — a press release is issued by your organization.
+                  </p>
+                </div>
+              ) : !meetsApprovalGate ? (
+                <div className="bg-background border border-line rounded-none px-3 py-6 text-center space-y-2">
+                  <p className="text-sm font-bold text-white">
+                    Press releases are for trusted authors
+                  </p>
+                  <p className="text-sm text-secondary">
+                    Because a release publishes instantly with no review, you unlock it after{' '}
+                    <span className="text-teal-400 font-bold">
+                      {PRESS_RELEASE_APPROVAL_THRESHOLD}
+                    </span>{' '}
+                    of your submitted articles have been approved by an admin.
+                    {approvalsRemaining > 0 && (
+                      <>
+                        {' '}
+                        You&apos;re{' '}
+                        <span className="text-teal-400 font-bold">{approvalsRemaining}</span> away —
+                        use <span className="text-white font-bold">Submit an Article</span> to cover
+                        the circuit and earn approvals.
+                      </>
+                    )}
                   </p>
                 </div>
               ) : (
@@ -294,7 +335,7 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !hasCorps}
+                disabled={isSubmitting || !canPublish}
                 className="h-9 px-4 bg-teal-500 text-white text-sm font-bold uppercase tracking-wider hover:bg-teal-400 disabled:opacity-50 flex items-center gap-2"
               >
                 {isSubmitting ? (

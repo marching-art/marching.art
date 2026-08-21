@@ -629,7 +629,7 @@ ${lines.join("\n")}`;
  * @param {string} params.approvedBy - UID (or system marker) crediting the publish.
  * @param {"generate"|"submitted"|"none"} [params.imageOption]
  * @param {boolean} [params.autoPublished] - True when published by the scheduled job.
- * @returns {Promise<{articlePath: string, imageUrl: string|null}>}
+ * @returns {Promise<{articlePath: string, articleId: string, imageUrl: string|null, imageGenerationFailed: boolean}>}
  */
 async function publishSubmission(db, {
   submissionRef,
@@ -733,7 +733,11 @@ async function publishSubmission(db, {
     logger.warn("Submission published without its requested AI image:", { submissionId, articlePath });
   }
 
-  return { articlePath, imageUrl: finalImageUrl, imageGenerationFailed };
+  // Composite feed id (see triggers/newsFeed.js: `${seasonId}_${dayId}_${type}`),
+  // so callers can deep-link a notification straight to /article/{id}.
+  const articleId = `${seasonId}_day_${currentDay}_${articleType}`;
+
+  return { articlePath, articleId, imageUrl: finalImageUrl, imageGenerationFailed };
 }
 
 module.exports = {

@@ -22,6 +22,10 @@ import { submitNewsForApproval, type SubmitNewsData } from '../../api/articleAdm
 import { publishPressRelease, type PublishPressReleaseData } from '../../api/pressReleases';
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../../utils/corps';
 import type { OwnedCorpsOption } from '../modals/PressReleaseModal';
+import {
+  PRESS_RELEASE_APPROVAL_THRESHOLD,
+  canPublishPressRelease,
+} from '../modals/pressReleaseForm';
 
 // lazyWithRetry (not raw React.lazy) so a stale hashed chunk after a deploy
 // self-recovers with one reload instead of crashing the page error boundary —
@@ -36,7 +40,13 @@ const PressReleaseModal = lazyWithRetry(
 );
 
 interface NewsroomActionsProps {
-  profile: { corps?: Record<string, { corpsName?: string }> | null } | null | undefined;
+  profile:
+    | {
+        corps?: Record<string, { corpsName?: string }> | null;
+        articleStats?: { approvedCount?: number } | null;
+      }
+    | null
+    | undefined;
 }
 
 const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
@@ -60,6 +70,13 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
         : [];
     });
   }, [profile?.corps]);
+
+  // Press releases publish unreviewed, so they carry the same approval limit the
+  // news pipeline puts on auto-publishing: the author needs
+  // PRESS_RELEASE_APPROVAL_THRESHOLD admin-approved articles first. Surface that
+  // on the entry point so it's clear before the composer opens.
+  const approvedCount = profile?.articleStats?.approvedCount ?? 0;
+  const pressReleasesUnlocked = canPublishPressRelease(approvedCount);
 
   const handlePressRelease = async (payload: PublishPressReleaseData) => {
     setSubmittingPressRelease(true);
@@ -105,7 +122,9 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
             <span className="flex-1">
               <span className="block text-sm font-bold text-white">Post a Press Release</span>
               <span className="block text-xs text-muted mt-0.5">
-                Your corps&apos; own news — reveals, staff, results. Publishes instantly.
+                {pressReleasesUnlocked
+                  ? "Your corps' own news — reveals, staff, results. Publishes instantly."
+                  : `Trusted authors only — unlocks after ${PRESS_RELEASE_APPROVAL_THRESHOLD} of your articles are approved.`}
               </span>
             </span>
           </button>
@@ -128,6 +147,7 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
         <Suspense fallback={<ModalLoadingFallback />}>
           <PressReleaseModal
             ownedCorps={ownedCorps}
+            approvedCount={approvedCount}
             onClose={() => setShowPressRelease(false)}
             onSubmit={handlePressRelease}
             isSubmitting={submittingPressRelease}
