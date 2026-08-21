@@ -214,7 +214,12 @@ exports.submitNewsForApproval = onCall(
 exports.publishPressRelease = onCall(
   {
     cors: true,
-    timeoutSeconds: 30,
+    // Re-hosting an author-supplied header image (publishPressReleaseArticle ->
+    // rehostUserImageUrl -> uploadFromUrl) needs the Cloudinary creds and a beat
+    // longer than a pure-text publish; without the secrets the upload falls
+    // through to a placeholder and the linked photo is lost.
+    timeoutSeconds: 60,
+    secrets: [...cloudinarySecrets],
   },
   async (request) => {
     assertAuth(request);

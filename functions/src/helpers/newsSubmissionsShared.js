@@ -340,9 +340,19 @@ async function publishPressReleaseArticle(db, { id, cleaned, corps, author }) {
   const seasonId = seasonData.seasonUid || "current_season";
   const currentDay = seasonData.currentDay || 1;
 
+  // Re-host any author-supplied image on a CSP-allowed host. A raw linked URL is
+  // blocked by the app's img-src policy and would never display in the article.
+  const rehostedImageUrl = cleaned.imageUrl
+    ? await rehostUserImageUrl(cleaned.imageUrl, {
+        publicId: `press_${id}`,
+        category: "press",
+        headline: cleaned.headline,
+      })
+    : null;
+
   const { article, articlePath, articleType } = buildPressReleaseArticle({
     id,
-    cleaned,
+    cleaned: { ...cleaned, imageUrl: rehostedImageUrl },
     corps,
     author,
     seasonId,
@@ -429,6 +439,48 @@ ${promptSafeBlock(body, { maxLength: 1800 })}`;
 /** Trim + normalize an extracted field to a non-empty string or null. */
 function cleanField(v) {
   return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+/**
+ * Re-host a user-supplied image URL on Cloudinary so it renders under the app's
+ * Content-Security-Policy. The CSP `img-src` allowlist only permits a handful of
+ * hosts (Cloudinary, Firebase Storage, Unsplash, googleusercontent) — an
+ * arbitrary linked URL an author pastes in ("use my own image") is blocked by the
+ * browser and the photo never appears in the article. This mirrors the custom-
+ * avatar path (triggers/avatarGeneration.js): author-supplied image URLs are
+ * always re-hosted server-side, never hot-linked.
+ *
+ * Non-fatal: returns the re-hosted (CSP-safe) URL on success, or null when the
+ * upload fails, so the caller publishes with no image rather than a linked one
+ * the browser will refuse to load. Cloudinary fetches the source URL itself.
+ *
+ * @param {string} imageUrl - The author-supplied source URL.
+ * @param {object} [opts] - { publicId, category, headline }
+ * @returns {Promise<string|null>}
+ */
+async function rehostUserImageUrl(imageUrl, opts = {}) {
+  if (!imageUrl || typeof imageUrl !== "string" || !imageUrl.trim()) return null;
+  const { uploadFromUrl } = require("./mediaService");
+  try {
+    const result = await uploadFromUrl(imageUrl.trim(), {
+      folder: "marching-art/user-articles",
+      publicId: opts.publicId,
+      category: opts.category,
+      headline: opts.headline,
+    });
+    if (result && result.success && !result.isPlaceholder && result.url) {
+      return result.url;
+    }
+    logger.warn("User-supplied article image could not be re-hosted; publishing without it:", {
+      publicId: opts.publicId || null,
+      isPlaceholder: result?.isPlaceholder || false,
+      error: result?.error || null,
+    });
+    return null;
+  } catch (err) {
+    logger.error("Failed to re-host user-supplied article image:", err.message);
+    return null;
+  }
 }
 
 /**
@@ -604,7 +656,13 @@ async function publishSubmission(db, {
   // Determine the header image.
   let finalImageUrl = null;
   if (imageOption === "submitted" && submission.imageUrl) {
-    finalImageUrl = submission.imageUrl;
+    // Re-host the author-supplied URL on a CSP-allowed host — a raw linked URL
+    // is blocked by the app's img-src policy and would never display.
+    finalImageUrl = await rehostUserImageUrl(submission.imageUrl, {
+      publicId: `article_${submissionId}`,
+      category: submission.category,
+      headline: submission.headline,
+    });
   } else if (imageOption === "generate") {
     finalImageUrl = await generateFantasyDailyImage(
       { ...submission, _submissionId: submissionId, authorLocation },
@@ -687,6 +745,7 @@ module.exports = {
   pickAuthorCorps,
   extractArticleVisualDetails,
   generateFantasyDailyImage,
+  rehostUserImageUrl,
   publishSubmission,
   // Press releases
   PRESS_RELEASE_LIMITS,

@@ -12,6 +12,7 @@ const {
   resolveOwnedCorps,
   validatePressReleaseInput,
   buildPressReleaseArticle,
+  rehostUserImageUrl,
   PRESS_RELEASE_LIMITS,
 } = require("./newsSubmissionsShared");
 
@@ -234,4 +235,28 @@ test("buildPressReleaseArticle marks a supplied image as non-placeholder", () =>
   assert.equal(article.imageIsPlaceholder, false);
   // With no corps location, the author's own location fills the byline.
   assert.equal(article.authorLocation, "Ohio");
+});
+
+// ---------------------------------------------------------------------------
+// rehostUserImageUrl — author-supplied image URLs must land on a CSP-allowed
+// host, never be stored raw (a raw linked URL is blocked by img-src and the
+// photo never displays). These cases are deterministic with no Cloudinary
+// credentials configured, so they need no network.
+// ---------------------------------------------------------------------------
+
+test("rehostUserImageUrl returns null for empty/blank input", async () => {
+  assert.equal(await rehostUserImageUrl(""), null);
+  assert.equal(await rehostUserImageUrl("   "), null);
+  assert.equal(await rehostUserImageUrl(null), null);
+  assert.equal(await rehostUserImageUrl(undefined), null);
+});
+
+test("rehostUserImageUrl returns null (never the raw URL) when re-hosting cannot produce a CSP-safe URL", async () => {
+  // With no Cloudinary creds, uploadFromUrl cannot re-host a remote URL and
+  // yields a placeholder; rehostUserImageUrl reports that as null so the caller
+  // publishes without an image rather than storing the CSP-blocked linked URL.
+  const raw = "https://i.imgur.com/definitely-not-rehosted.jpg";
+  const result = await rehostUserImageUrl(raw, { publicId: "press_test" });
+  assert.notEqual(result, raw);
+  assert.equal(result, null);
 });
