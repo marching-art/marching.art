@@ -651,14 +651,19 @@ function floorSentence(analysis) {
 /**
  * The full article narrative — a feature-length column, not a quick-glance
  * summary. The register sits somewhere between a Sports Illustrated game story
- * and a Vanity Fair profile: the night's drama up front, then the scene, then the
- * analysis book by book, then the races deeper in the field, in flowing prose
- * with understated **subheads** (the news feed's editorial renderer turns a
- * leading "**Head.**" into a small accent subhead). Each frame — the lede and
- * the shape of the night, how the lead was built off the caption sheet, who owns
- * each caption across the field, the chase pack, the tightest race, the movers,
- * the division crowns, the new arrivals and the floor — takes a different angle
- * on the same board, and the column signs off on its standing kicker.
+ * and a Vanity Fair profile: the night's drama up front, then the scene and how
+ * the lead was built off the caption sheet, then the caption ownership and the
+ * chase, then the movement and the wider board — every angle woven into flowing
+ * paragraphs rather than a stack of captioned one-liners. The piece deliberately
+ * carries NO bolded subhead labels: it reads as a magazine column, in the same
+ * voice as the site's other long-form articles, not as a scannable bulletin.
+ *
+ * The same frames are all still here — the lede and the shape of the night, how
+ * the lead was built, who owns each caption across the field, the chase pack, the
+ * tightest race, the movers, the division crowns, the new arrivals and the floor
+ * — but they are grouped into a handful of substantial paragraphs with real
+ * transitions between beats. A beat that has no data behind it drops out silently,
+ * and the paragraph it would have joined simply carries the beats that remain.
  *
  * The voice is warmer than the numbers, but it is still only ever the numbers:
  * every clause is composed straight from the standings sheets (decision 31), so
@@ -672,64 +677,52 @@ function floorSentence(analysis) {
 function composeNarrative(analysis) {
   const paragraphs = [];
 
-  // Lede — the column's own lede, then the character of the night: on opening
-  // night the weight of a first ranking, otherwise how the leader is holding the
-  // top of the board. The scene itself gets its own section below.
-  const lede = [leadSentence(analysis)];
+  // Push a paragraph built from the non-empty beats in `beats`, joined into one
+  // flowing block. Nothing is pushed when every beat is missing, so the column
+  // never opens a section it has no data to fill.
+  const pushParagraph = (...beats) => {
+    const kept = beats.filter(Boolean);
+    if (kept.length) paragraphs.push(kept.join(" "));
+  };
+
+  // 1) Lede — the column's own opening line, then the character of the night: on
+  // opening night the weight of a first ranking, otherwise how the leader is
+  // holding the top of the board.
+  let nightCharacter;
   if (analysis.openingDay) {
-    lede.push(
+    nightCharacter =
       "Opening night is a blank page. Every corps on the board is new to the Podium Class, and " +
-        "tonight's order is only the first word in an argument the season will spend the next " +
-        "several weeks having with itself."
-    );
+      "tonight's order is only the first word in an argument the season will spend the next " +
+      "several weeks having with itself.";
   } else if (analysis.leadChange && analysis.formerLeader) {
-    lede.push(
+    nightCharacter =
       `The order at the top has a new name on it, and ${analysis.formerLeader.corpsName} — ` +
-        `${ordinal(analysis.formerLeader.rank)} tonight — is left to answer it.`
-    );
+      `${ordinal(analysis.formerLeader.rank)} tonight — is left to answer it.`;
   } else {
-    lede.push(`For now ${analysis.leader.corpsName} is ${leadCharacter(analysis.leadMargin)}.`);
+    nightCharacter = `For now ${analysis.leader.corpsName} is ${leadCharacter(analysis.leadMargin)}.`;
   }
-  paragraphs.push(lede.join(" "));
+  pushParagraph(leadSentence(analysis), nightCharacter);
 
-  // The field: how deep the board is and how much scoring separates top from
-  // bottom. Set the scene before telling the story — on opening night too, when
-  // there is no movement yet to write about.
-  const scene = fieldScene(analysis);
-  if (scene) paragraphs.push(`**The field.** ${scene}`);
+  // 2) The board and how the night's top number was built: set the scene, then
+  // open the caption sheet on the leader and its nearest challenger.
+  pushParagraph(fieldScene(analysis), leaderStory(analysis));
 
-  // The centerpiece: how the night's top number was built, off the caption sheet.
-  const lead = leaderStory(analysis);
-  if (lead) paragraphs.push(`**The lead.** ${lead}`);
-
-  // Who owns each caption across the whole field.
-  const kings = captionKingsSentence(analysis);
-  if (kings) paragraphs.push(`**The caption kings.** ${kings}`);
-
+  // 3) Who owns each caption across the field, and the pack giving chase behind
+  // the top two.
   const chase = chaseSentence(analysis);
-  if (chase) {
-    paragraphs.push(
-      `**The chase.** Behind the top two, the pack is doing its own math. ${chase}`
-    );
-  }
+  const chaseBeat = chase ? `Behind the top two, the pack is doing its own math. ${chase}` : null;
+  pushParagraph(captionKingsSentence(analysis), chaseBeat);
 
-  // The tightest race deeper in the field (fires opening night too — a photo
-  // finish below the top is a story even before anyone has moved).
-  const closest = closestCallSentence(analysis);
-  if (closest) paragraphs.push(`**The closest call.** ${closest}`);
-
+  // 4) The movement deeper in the field: the night's climbs and slides, then the
+  // tightest race on the board (both go quiet on opening night, when nothing has
+  // moved and the title race owns the lede).
   const movers = analysis.openingDay ? null : moversSentence(analysis);
-  if (movers) paragraphs.push(`**Movers.** ${movers}`);
+  pushParagraph(movers, closestCallSentence(analysis));
 
-  const divisions = divisionSentence(analysis);
-  if (divisions) paragraphs.push(`**By division.** ${divisions}`);
+  // 5) The wider board: the division crowns, the new faces and the floor.
+  pushParagraph(divisionSentence(analysis), arrivalsSentence(analysis), floorSentence(analysis));
 
-  const arrivals = arrivalsSentence(analysis);
-  if (arrivals) paragraphs.push(`**New faces.** ${arrivals}`);
-
-  const floor = floorSentence(analysis);
-  if (floor) paragraphs.push(`**The floor.** ${floor}`);
-
+  // Standing kicker.
   paragraphs.push(
     "None of it is a matter of opinion. The Podium Report re-seats the director-run field every " +
       "night on the numbers that just posted — no ballots, no bias, just the board — and it will " +
