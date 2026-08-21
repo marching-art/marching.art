@@ -274,6 +274,29 @@ function setOutput(name, value) {
   console.log(`${name}=${value}`);
 }
 
+/**
+ * Emit a GitHub Actions annotation (`::warning::` / `::error::`). Unlike a plain
+ * console.log buried in the step, an annotation surfaces on the run summary and
+ * the PR's checks — so a broken key can't silently degrade the changelog to the
+ * title-only heuristic for weeks without anyone noticing. Still never fails the
+ * merge (the caller keeps exit 0); this only makes the failure visible.
+ */
+function annotate(level, message) {
+  const clean = String(message)
+    .replace(/[\r\n]+/g, ' ')
+    .trim();
+  console.log(`::${level}::${clean}`);
+}
+
+/** True for Gemini errors that mean the configured key is missing/invalid/denied
+ *  (as opposed to a transient network/5xx hiccup), so they warrant a loud
+ *  annotation pointing at the repository secret rather than a quiet retry. */
+export function isAuthError(message = '') {
+  return /HTTP (400|401|403)\b|API_KEY_INVALID|API key not valid|PERMISSION_DENIED|permission denied/i.test(
+    String(message)
+  );
+}
+
 async function main() {
   const dataPath = join(
     dirname(fileURLToPath(import.meta.url)),
@@ -331,6 +354,27 @@ async function main() {
       }
       entry = sanitizeEntry(decision, { date, existingIds });
     } catch (err) {
+      // An auth error means the GOOGLE_GENERATIVE_AI_API_KEY *GitHub Actions*
+      // secret is set but bad — note that this is a separate secret from the
+      // Firebase Secret Manager key the news/article functions use, so the two
+      // can (and did) drift: articles kept working while this key was invalid.
+      // Make it a visible annotation, not just a log line, so it can't rot
+      // unnoticed and quietly starve /updates of AI-written entries.
+      if (isAuthError(err.message)) {
+        annotate(
+          'error',
+          `Changelog Gemini key rejected (${err.message}). The GitHub Actions repository secret ` +
+            `GOOGLE_GENERATIVE_AI_API_KEY is set but INVALID — update it with a working Gemini API ` +
+            `key (Settings → Secrets and variables → Actions). This is a different store from the ` +
+            `Firebase Secret Manager key the article functions use. Until fixed, /updates only gets ` +
+            `title-only entries from conventional-commit PR titles.`
+        );
+      } else {
+        annotate(
+          'warning',
+          `Changelog model call failed (${err.message}); falling back to heuristic.`
+        );
+      }
       console.warn(`Model call failed (${err.message}); falling back to heuristic.`);
     }
   } else {

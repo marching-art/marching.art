@@ -1,5 +1,142 @@
 [
   {
+    "id": "2026-08-21-podium-full-director-parity",
+    "date": "2026-08-21",
+    "title": "Podium directors get achievements, titles, and a season recap",
+    "category": "feature",
+    "summary": "Podium-only directors are now full citizens: they earn achievements and prestige titles from their Podium seasons and shows, get a Podium-specific Quick Start walkthrough, and are met with a season-end recap on their next visit instead of having to go hunting for it.",
+    "highlights": [
+      "Podium seasons and shows now count toward the seasons/shows achievements and the titles that gate on them.",
+      "New Podium Debut and Open/World Class Director achievements.",
+      "Quick Start now teaches the Podium loop — rehearse, register, plan — not the fantasy draft steps.",
+      "A season-end Podium recap greets you on your next login and routes into the full between-seasons assessment."
+    ]
+  },
+  {
+    "id": "2026-08-20-press-releases-in-discord",
+    "date": "2026-08-20",
+    "title": "Your press releases now post to Discord",
+    "category": "feature",
+    "summary": "Publish a press release for your corps and it now lands in a dedicated Discord channel with a 📣 Press Release marker, so your organization's voice reaches the community where it already talks. Newsroom articles keep flowing to the news channel as before.",
+    "highlights": [
+      "Press releases route to their own channel, separate from newsroom coverage.",
+      "Each carries a distinct 📣 \"Press Release\" label in the embed."
+    ]
+  },
+  {
+    "id": "2026-08-20-unified-header-mobile-polish",
+    "date": "2026-08-20",
+    "title": "A consistent header and a calmer mobile layout",
+    "category": "improvement",
+    "summary": "The signed-in header now matches across the app and public pages — the same Discord, inbox, Explore, and help cluster everywhere — and several mobile crowding and overflow issues were cleaned up so the top of the screen stays tidy on a phone.",
+    "highlights": [
+      "Your notification inbox is now reachable from public pages too.",
+      "Fixed the mobile header overflow that crowded the signed-in view.",
+      "The news category filter no longer overflows on mobile.",
+      "The home page now leads with its highest-value content."
+    ]
+  },
+  {
+    "id": "2026-08-20-no-onboarding-bounce",
+    "date": "2026-08-20",
+    "title": "No more getting bounced to onboarding on mobile",
+    "category": "fix",
+    "summary": "Established directors on a fresh phone, cleared storage, or private mode are no longer wrongly redirected into the welcome/onboarding flow. The app now waits for the server to confirm before deciding you're a new user — a problem that mostly hit mobile."
+  },
+  {
+    "id": "2026-08-17-navigation-refresh",
+    "date": "2026-08-17",
+    "title": "A clearer way around the game",
+    "category": "improvement",
+    "summary": "A navigation pass tidied the chrome: game destinations moved out of the ❓ help menu into a dedicated Explore menu, the desktop nav now leads with your daily hub instead of News, Hall of Champions has one canonical home, and the score ticker can be collapsed when you want the quiet.",
+    "highlights": [
+      "Shop, Achievements, Records, and the archives now live under a shared Explore menu.",
+      "The ❓ menu is back to pure help — guides, what's new, results, legal.",
+      "Desktop and mobile now agree on nav priority, leading with the daily loop.",
+      "Collapse the desktop score ticker from the header; the choice sticks."
+    ]
+  },
+  {
+    "id": "2026-08-17-podium-report-feature",
+    "date": "2026-08-17",
+    "title": "The Podium Report reads like a real column now",
+    "category": "improvement",
+    "summary": "The nightly Podium Report was rewritten from a terse, same-every-night recap into a drama-forward feature that tells the day's actual story — a coup at the top, a long reign, the caption kings, the closest race — all still built straight from the standings, no invented numbers.",
+    "highlights": [
+      "Headlines now come from the night's real storyline instead of a fixed \"Day N\" masthead.",
+      "New sections: the caption kings, the closest call, expanded movers, and the floor.",
+      "Every beat stays silent when the numbers for it aren't there."
+    ]
+  },
+  {
+    "id": "2026-08-16-season-recap-ledger",
+    "date": "2026-08-16",
+    "title": "Your season, told as a recap ledger",
+    "category": "feature",
+    "summary": "A new season ledger lays out your corps' whole season show-by-show — every scored outing with its full caption breakdown, subtotals, total, and placement, plus season best, average, and medal tally. Added for Podium first, then extended to the fantasy classes.",
+    "highlights": [
+      "Reach it from the Podium Dashboard or by clicking SEASON SCORE on your scorecard.",
+      "Each caption's season best is highlighted in gold as a personal box-topper.",
+      "Shares as Discord-ready text like the other score sheets."
+    ]
+  },
+  {
+    "id": "2026-08-16-airfare-bookings-surfaced",
+    "date": "2026-08-16",
+    "title": "Podium airfare bookings no longer vanish quietly",
+    "category": "fix",
+    "summary": "A booked flight that ended up stranded — its show moved or dropped — is now surfaced to you instead of being silently discarded, so you can see and recover the CorpsCoin you committed."
+  },
+  {
+    "id": "2026-08-15-podium-scores-in-ticker",
+    "date": "2026-08-15",
+    "title": "Podium Class scores in the live ticker",
+    "category": "improvement",
+    "summary": "The scrolling score ticker now carries Podium Class alongside the fantasy classes and SoundSport, grouped by division, so the Podium tour gets the same at-a-glance presence as everything else."
+  },
+  {
+    "id": "2026-08-15-corps-name-uniqueness",
+    "date": "2026-08-15",
+    "title": "Corps names are unique across Fantasy and Podium",
+    "category": "fix",
+    "summary": "A corps name is now reserved across both games at creation, so a fantasy corps' name can't be reused for a Podium corps — even your own. That closes a duplicate a nightly cleanup used to have to keep sweeping up."
+  },
+  {
+    "id": "2026-08-14-regional-awards-corrected",
+    "date": "2026-08-14",
+    "title": "Regional titles go to the right shows",
+    "category": "fix",
+    "summary": "Only the three branded majors — Southwestern, Southeastern, and the two-night Eastern Classic — now crown regional champions. Pool shows that happened to fall on a major's day were wrongly minting trophies; those were stripped and the right champions backfilled, for Fantasy and Podium.",
+    "highlights": [
+      "Podium now crowns one overall regional champion per major.",
+      "Existing recaps were corrected retroactively, so past regionals read right."
+    ]
+  },
+  {
+    "id": "2026-08-14-hall-open-a-class-titles",
+    "date": "2026-08-14",
+    "title": "Open and A Class champions come from their own Finals",
+    "category": "fix",
+    "summary": "The Hall of Champions now crowns Open Class and A Class champions from the Day 46 Open/A Class Finals — their own title night — instead of their placement in the Day 49 World Championship bracket. World Class still settles on Day 49."
+  },
+  {
+    "id": "2026-08-14-fan-favorite-crown",
+    "date": "2026-08-14",
+    "title": "The Fan Favorite crown lands in your trophy case",
+    "category": "feature",
+    "summary": "The Podium Fan Favorite winner now gets a distinct pink Heart in the profile trophy case — separate from every competitive medal — carrying the crowned corps, season, and winning vote count. A season-defining honor, never a placement."
+  },
+  {
+    "id": "2026-08-14-new-corps-card-themes",
+    "date": "2026-08-14",
+    "title": "Six new corps card themes in the shop",
+    "category": "feature",
+    "summary": "More ways to spend CorpsCoin on your corps' look: six new card themes across the price tiers, including the two most-requested — Fogwalker Teal and Evergreen.",
+    "highlights": [
+      "New: Fogwalker Teal, Evergreen, Slate Graphite, Amethyst, Rose Quartz, and Glacier."
+    ]
+  },
+  {
     "id": "2026-08-13-podium-fantasy-two-distinct-games",
     "date": "2026-08-13",
     "title": "Podium and Fantasy now read as two distinct games",
