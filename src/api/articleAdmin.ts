@@ -158,6 +158,9 @@ export interface SubmitNewsData {
   summary: string;
   fullStory: string;
   category: NewsCategory;
+  /** Author's image preference. 'submitted' carries a URL that is re-hosted on
+      publish; 'generate' makes an AI image; 'none' publishes without one. */
+  imageOption?: 'generate' | 'submitted' | 'none';
   imageUrl?: string | null;
 }
 
