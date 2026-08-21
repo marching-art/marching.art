@@ -14,7 +14,7 @@
 
 // Consolidated to single @google/genai SDK (removes duplicate @google/generative-ai)
 // Type replaces SchemaType for JSON schema definitions
-const { Type } = require("./newsArticleShared");
+const { Type, MAGAZINE_STYLE } = require("./newsArticleShared");
 const { logger } = require("firebase-functions/v2");
 const { getContextualPlaceholder } = require("./mediaService");
 const {
@@ -428,10 +428,9 @@ Write a Day ${offSeasonDay} fantasy sports recap article for these top-performin
 TOP FANTASY ENSEMBLES (user-created teams):
 ${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" from ${r.location || 'Unknown'} (Director: ${r.displayName || 'Unknown'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
 
-Write like professional fantasy sports coverage. Focus on:
-- Which fantasy ensembles scored the most points
-- Celebrate the top directors' success
-- General strategy tips (without revealing specific lineup picks)
+${MAGAZINE_STYLE}
+
+Write a long-form magazine feature of roughly 1,200-1,800 words on this night. The fictional ensembles are your characters, drawn from their real point totals; celebrate the top directors' success through what their ensembles did on the field, never by inventing quotes, feelings, or lineup picks. Work in general strategy where it fits, but keep it a story, not a tip sheet. The scores above are the only hard facts — cite them exactly and invent no others.
 
 IMPORTANT: Do NOT mention RPGs, video games, or fictional fantasy worlds. This is SPORTS fantasy like fantasy football.
 All "corps" names above are user-created fantasy team names, not real DCI corps.`;
@@ -440,9 +439,9 @@ All "corps" names above are user-created fantasy team names, not real DCI corps.
     const schema = {
       type: Type.OBJECT,
       properties: {
-        headline: { type: Type.STRING, description: "Exciting sports headline" },
-        summary: { type: Type.STRING, description: "2-3 sentence summary" },
-        narrative: { type: Type.STRING, description: "Full article text" },
+        headline: { type: Type.STRING, description: "Specific, grounded headline naming a real ensemble and its point total. No hype words, no exclamation points." },
+        summary: { type: Type.STRING, description: "2-3 sentence summary opening on the night's sharpest storyline." },
+        narrative: { type: Type.STRING, description: "Long-form magazine feature (~1,200-1,800 words) in flowing prose — no bullet points or numbered lists. The fictional ensembles are characters drawn from their real totals; no fabricated director quotes, feelings, or lineup picks, and no invented numbers." },
         fantasyImpact: { type: Type.STRING, description: "Brief tip for fantasy players" },
         trendingCorps: {
           type: Type.ARRAY,

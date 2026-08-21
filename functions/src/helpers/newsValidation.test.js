@@ -80,6 +80,24 @@ describe("detectBannedPhrases", () => {
   test("returns [] for clean copy", () => {
     assert.deepEqual(detectBannedPhrases({ summary: "Blue Devils scored 97.2." }), []);
   });
+  test("flags the expanded generic-AI tells", () => {
+    for (const phrase of [
+      "The corps unveils a new closer.",
+      "A performance that showcases their brass.",
+      "We delve into the caption sheets.",
+      "In the realm of general effect, they lead.",
+      "The margin underscores the gap.",
+      "At the heart of the night was Music.",
+      "A tapestry of color guard work.",
+      "Their ever-evolving book.",
+      "A mesmerizing ballad.",
+    ]) {
+      assert.ok(
+        detectBannedPhrases({ narrative: phrase }).length > 0,
+        `expected a banned-phrase hit for: ${phrase}`
+      );
+    }
+  });
 });
 
 describe("extractDataBlockNumbers", () => {
