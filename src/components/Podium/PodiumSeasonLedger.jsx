@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumSeasonLedger — a director's running stat ledger for their OWN Podium
 // corps, show to show (community request). Where PodiumRecapSheet is the whole
 // field's box score for one night, this is one corps' season told as a recap:
@@ -22,8 +21,17 @@ import SeasonLedgerView from '../scores/SeasonLedgerView';
 import { fmtScore, summarizeLedger } from '../scores/seasonLedgerUtils';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
+/**
+ * A ledger entry plus the Podium-only division the outing was placed within.
+ * @typedef {import('../scores/seasonLedgerUtils').LedgerEntry & { division: string }} PodiumLedgerEntry
+ */
+
 // New recaps carry `shows: [...]`; legacy per-day recaps carried a flat
 // `results`. Normalize both to the shows shape (mirrors PodiumRecapSheet).
+/**
+ * @param {any} recap
+ * @returns {any[]}
+ */
 function showsOf(recap) {
   if (Array.isArray(recap?.shows)) return recap.shows;
   if (Array.isArray(recap?.results)) {
@@ -37,8 +45,13 @@ function showsOf(recap) {
  * one scored show: its caption line, subtotals, total, and the corps' placement
  * WITHIN ITS OWN DIVISION that night (the number that matters to it — a
  * division crowns its own winner, §5.7), not its rank in the mixed field.
+ * @param {Array<{ day: number, recap: any }>} days
+ * @param {string|null|undefined} uid
+ * @param {string|null|undefined} userCorpsName
+ * @returns {PodiumLedgerEntry[]}
  */
 function buildLedger(days, uid, userCorpsName) {
+  /** @param {any} r */
   const isMine = (r) =>
     (uid && r.uid === uid) ||
     (userCorpsName && r.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
@@ -46,7 +59,7 @@ function buildLedger(days, uid, userCorpsName) {
   const entries = [];
   for (const { day, recap } of days) {
     for (const show of showsOf(recap)) {
-      const results = show.results || [];
+      const results = /** @type {any[]} */ (show.results || []);
       const mine = results.find(isMine);
       if (!mine) continue;
       const division = mine.division || 'aClass';
@@ -74,7 +87,13 @@ function buildLedger(days, uid, userCorpsName) {
   return entries;
 }
 
-/** Monospace ledger for the Share button — pastes cleanly into Discord. */
+/**
+ * Monospace ledger for the Share button — pastes cleanly into Discord.
+ * @param {PodiumLedgerEntry[]} ledger
+ * @param {import('../scores/seasonLedgerUtils').LedgerSummary} summary
+ * @param {string|null|undefined} corpsName
+ * @param {string|null|undefined} seasonName
+ */
 function formatLedgerAsText(ledger, summary, corpsName, seasonName) {
   const lines = [
     `${corpsName || 'My Corps'} — Season Recap Ledger${seasonName ? ` · ${seasonName}` : ''}`,
@@ -116,7 +135,7 @@ export default function PodiumSeasonLedger({
   compact = false,
 }) {
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState([]);
+  const [days, setDays] = useState(/** @type {Array<{ day: number, recap: any }>} */ ([]));
 
   useEffect(() => {
     let cancelled = false;

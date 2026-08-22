@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // FantasySeasonLedger — the fantasy-class counterpart to PodiumSeasonLedger: a
 // director's own corps told as a running recap, show to show, with the FULL
 // 8-caption breakdown. This is the community insight that motivated it — the
@@ -27,8 +26,11 @@ import { fmtScore, summarizeLedger } from './seasonLedgerUtils';
  * every corps' total for a show, so the director's place and field size are
  * derived from those — never stored privately (a stored rank would drift when
  * the field re-ranks). Scores arrive newest-first and pre-sorted by score.
+ * @param {any[]|null|undefined} publicShows
+ * @returns {Map<string, any[]>}
  */
 function buildPlaceIndex(publicShows) {
+  /** @type {Map<string, any[]>} */
   const index = new Map();
   for (const show of publicShows || []) {
     const ranked = [...(show.scores || [])].sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -40,8 +42,15 @@ function buildPlaceIndex(publicShows) {
 /**
  * Turn the private caption-ledger day docs into the normalized ledger for one
  * corps class, oldest first. Placement is joined in from the public recaps.
+ * @param {Array<{ day: number, outings?: any[] }>} days
+ * @param {string|undefined} corpsClass
+ * @param {string|null|undefined} uid
+ * @param {string|null|undefined} userCorpsName
+ * @param {Map<string, any[]>} placeIndex
+ * @returns {import('./seasonLedgerUtils').LedgerEntry[]}
  */
 function buildLedger(days, corpsClass, uid, userCorpsName, placeIndex) {
+  /** @param {any} row */
   const matchesMe = (row) =>
     (uid && row.uid === uid) ||
     (userCorpsName && (row.corpsName || row.corps)?.toLowerCase() === userCorpsName.toLowerCase());
@@ -77,10 +86,17 @@ function buildLedger(days, corpsClass, uid, userCorpsName, placeIndex) {
   return entries;
 }
 
-/** Monospace ledger for the Share button — pastes cleanly into Discord. */
+/**
+ * Monospace ledger for the Share button — pastes cleanly into Discord.
+ * @param {import('./seasonLedgerUtils').LedgerEntry[]} ledger
+ * @param {import('./seasonLedgerUtils').LedgerSummary} summary
+ * @param {string|null|undefined} corpsName
+ * @param {string|undefined} corpsClass
+ * @param {string|null|undefined} seasonName
+ */
 function formatLedgerAsText(ledger, summary, corpsName, corpsClass, seasonName) {
   const lines = [
-    `${corpsName || 'My Corps'} — ${CLASS_LABELS[corpsClass] || corpsClass} Recap Ledger${
+    `${corpsName || 'My Corps'} — ${CLASS_LABELS[corpsClass || ''] || corpsClass} Recap Ledger${
       seasonName ? ` · ${seasonName}` : ''
     }`,
     `${summary.outings} outing${summary.outings === 1 ? '' : 's'} · best ${fmtScore(
@@ -125,7 +141,7 @@ export default function FantasySeasonLedger({
   compact = false,
 }) {
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState([]);
+  const [days, setDays] = useState(/** @type {Array<{ day: number, outings?: any[] }>} */ ([]));
 
   useEffect(() => {
     let cancelled = false;

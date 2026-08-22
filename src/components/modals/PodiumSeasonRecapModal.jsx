@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PODIUM SEASON RECAP MODAL — the director-sim end-of-season ceremony
 // =============================================================================
@@ -17,6 +16,7 @@ import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { CLASS_DISPLAY_NAMES } from '../Dashboard/sections/constants';
 
+/** @param {number|null|undefined} placement */
 const placementLabel = (placement) => {
   if (!placement) return '—';
   if (placement === 1) return '🥇 1st';
@@ -25,9 +25,17 @@ const placementLabel = (placement) => {
   return `${placement}th`;
 };
 
+/** @param {Record<string, number>|null|undefined} medals */
 const medalCount = (medals) =>
   Object.values(medals || {}).reduce((sum, n) => sum + (Number(n) || 0), 0);
 
+/**
+ * @param {{
+ *   recap?: any,
+ *   onClose: () => void,
+ *   onSetUpNextSeason: () => void,
+ * }} props
+ */
 const PodiumSeasonRecapModal = ({ recap, onClose, onSetUpNextSeason }) => {
   useEscapeKey(onClose);
   const dialogRef = useRef(null);
