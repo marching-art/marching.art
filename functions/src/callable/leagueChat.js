@@ -12,10 +12,11 @@
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { logger } = require("firebase-functions/v2");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
 const admin = require("firebase-admin");
-const { createLeagueActivity } = require("../helpers/leagueHelpers");
+const { createLeagueActivity, resolveDisplayName } = require("../helpers/leagueHelpers");
 const { consumeRateBudget } = require("../helpers/rateLimit");
 const {
   assertAuth,
@@ -85,6 +86,37 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
     message: trimmedMessage,
     createdAt: admin.firestore.FieldValue.serverTimestamp()
   });
+
+  // Notify the other members. Deduped per league (dedupeKey `chat_<leagueId>`)
+  // so a busy chat collapses to ONE "new messages" bell per league rather than
+  // one per message — the latest message overwrites the same doc and re-marks
+  // it unread. Best-effort: a notification failure never fails the post.
+  try {
+    const senderName = await resolveDisplayName(db, uid);
+    const preview = trimmedMessage.length > 140
+      ? `${trimmedMessage.slice(0, 139)}…`
+      : trimmedMessage;
+    const recipients = (leagueData.members || []).filter((memberUid) => memberUid !== uid);
+    if (recipients.length > 0) {
+      const { createUserNotifications } = require("../helpers/userNotifications");
+      await createUserNotifications(
+        db,
+        recipients.map((memberUid) => ({
+          uid: memberUid,
+          type: "new_message",
+          title: `New message in ${leagueData.name || "your league"}`,
+          message: `${senderName}: ${preview}`,
+          link: `/leagues/${leagueId}`,
+          leagueId,
+          leagueName: leagueData.name || "your league",
+          metadata: { senderUid: uid, senderName },
+          dedupeKey: `chat_${leagueId}`,
+        }))
+      );
+    }
+  } catch (error) {
+    logger.error(`League chat notification fan-out failed for ${leagueId}:`, error);
+  }
 
   return { success: true, message: "Message posted!", messageId: messageRef.id };
 });

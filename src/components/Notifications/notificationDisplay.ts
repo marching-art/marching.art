@@ -12,16 +12,22 @@
 
 import {
   ArrowLeftRight,
+  Award,
   BadgeCheck,
   Ban,
   Bell,
   CalendarClock,
   Check,
   Clock,
+  Coins,
+  Crown,
   Flame,
+  Heart,
   Mail,
   MessageSquare,
   Newspaper,
+  ShieldCheck,
+  Sparkles,
   Swords,
   TrendingUp,
   Trophy,
@@ -71,6 +77,20 @@ const DISPLAY_BY_TYPE: Record<AppNotificationType, NotificationDisplay> = {
   // Declines/takedowns are status warnings, not rewards.
   article_rejected: { Icon: Ban, color: 'text-warning', bg: 'bg-warning/20' },
   press_release_removed: { Icon: Ban, color: 'text-warning', bg: 'bg-warning/20' },
+
+  // Reward moments — gold is the payoff color (docs/DESIGN_SYSTEM.md: brand/gold
+  // = "you won", currency, achievement unlocks, level-ups). Used only here, so
+  // it still reads as a reward against the azure/neutral of the rest of the inbox.
+  new_champion: { Icon: Crown, color: 'text-brand', bg: 'bg-brand/20' },
+  prize_payout: { Icon: Coins, color: 'text-brand', bg: 'bg-brand/20' },
+  achievement_unlocked: { Icon: Award, color: 'text-brand', bg: 'bg-brand/20' },
+  level_up: { Icon: Sparkles, color: 'text-brand', bg: 'bg-brand/20' },
+
+  // Social / status types.
+  new_comment: { Icon: MessageSquare, color: 'text-green-400', bg: 'bg-green-500/20' },
+  // Leadership change — interactive (azure), not a reward.
+  commissioner_changed: { Icon: ShieldCheck, color: 'text-interactive', bg: 'bg-interactive/20' },
+  supporter_update: { Icon: Heart, color: 'text-red-400', bg: 'bg-red-500/20' },
 };
 
 /**

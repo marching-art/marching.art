@@ -8,9 +8,11 @@ const {
   smartPairMembers,
   buildPairingHistory,
   createLeagueActivity,
+  notifyCommissionersOfJoin,
   invitationId,
 } = require("../helpers/leagueHelpers");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
+const { sendMatchupNotifications } = require("../helpers/matchupNotifications");
 const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { escrowedTotal, deleteLeagueSubcollections } = require("../helpers/leagueLifecycle");
@@ -339,13 +341,18 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
     : 'New Member';
 
+  const joinedLeagueData = (await leagueRef.get()).data() || {};
   await createLeagueActivity(db, leagueId, {
     type: 'member_joined',
     title: 'New Member Joined',
     message: `${userDisplayName} has joined the league!`,
     userId: uid,
-    metadata: { memberCount: (await leagueRef.get()).data().members?.length || 1 }
+    metadata: { memberCount: joinedLeagueData.members?.length || 1 }
   });
+
+  // Direct bell to the commissioners (the activity feed alone never pinged
+  // them for a self-serve join — only accepted invitations did).
+  await notifyCommissionersOfJoin(db, joinedLeagueData, leagueId, uid, userDisplayName);
 
   return { success: true, message: "Successfully joined league!" };
 });
@@ -445,13 +452,17 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
     ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
     : 'New Member';
 
+  const joinedLeagueData = (await leagueRef.get()).data() || {};
   await createLeagueActivity(db, leagueId, {
     type: 'member_joined',
     title: 'New Member Joined',
     message: `${userDisplayName} has joined the league!`,
     userId: uid,
-    metadata: { memberCount: (await leagueRef.get()).data().members?.length || 1 }
+    metadata: { memberCount: joinedLeagueData.members?.length || 1 }
   });
+
+  // Direct bell to the commissioners (see joinLeague).
+  await notifyCommissionersOfJoin(db, joinedLeagueData, leagueId, uid, userDisplayName);
 
   return { success: true, message: "Successfully joined league!", leagueId };
 });
@@ -832,7 +843,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   // observe completed:false and fold the same pairs into standings twice,
   // permanently corrupting W/L records and streaks (which feed matchup
   // pairing and season-finish payouts).
-  const { updatedMatchupData, allUpdatedPairs } = await db.runTransaction(async (t) => {
+  const { updatedMatchupData, allUpdatedPairs, standingsDiff } = await db.runTransaction(async (t) => {
     const matchupDoc = await t.get(matchupRef);
     if (!matchupDoc.exists) {
       throw new HttpsError("not-found", "No matchups found for this week.");
@@ -919,9 +930,9 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
       ...updated,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
-    applyStandingsInTransaction(t, standingsDoc, resolvedPairs);
+    const standingsDiff = applyStandingsInTransaction(t, standingsDoc, resolvedPairs);
 
-    return { updatedMatchupData: updated, allUpdatedPairs: resolvedPairs };
+    return { updatedMatchupData: updated, allUpdatedPairs: resolvedPairs, standingsDiff };
   });
 
   // Create activity events for matchup results
@@ -944,6 +955,18 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
       }
     });
   }
+
+  // Per-director bell: win/loss/tie + any standings drop, same as the nightly
+  // resolution. Best-effort and post-commit.
+  await sendMatchupNotifications(db, {
+    leagueId,
+    leagueName: leagueDoc.data().name || "your league",
+    week: Number(week),
+    seasonUid: seasonDocForWeek.data().seasonUid,
+    pairs: allUpdatedPairs,
+    previousStandings: standingsDiff ? standingsDiff.previousStandings : [],
+    newStandings: standingsDiff ? standingsDiff.standings : [],
+  });
 
   return {
     success: true,
