@@ -5,9 +5,12 @@
 // show cards can render it straight from the data the client already loads — no
 // per-card, per-user weather calls, and therefore no risk to Open-Meteo's daily
 // limits. This scheduled job is the ONLY thing that calls the weather API for the
-// schedule: it runs once a day, and every lookup is Firestore-cached, so a full
-// season of shows costs at most a few dozen calls a day (historical dates are
-// cached permanently; only the upcoming ~two weeks refresh).
+// schedule: it runs twice a day (early morning and early evening Eastern), and
+// every lookup is Firestore-cached, so a full season of shows costs at most a few
+// dozen calls a day (historical dates are cached permanently; only the upcoming
+// ~two weeks refresh). The evening pass exists so a card seen on competition day
+// reflects a forecast captured a couple hours before the ~8 p.m. shows, not just
+// that morning's outlook.
 //
 // Show time is a constant 8 p.m. local (SHOWTIME_HOUR) — drum corps shows are
 // evening events, and that beats a daily high/low for "what it felt like at the
@@ -143,9 +146,9 @@ exports.sameWeather = sameWeather;
 
 exports.scheduledScheduleWeather = onSchedule(
   {
-    // Once a day, after the overnight score/news pipeline has settled. Historical
-    // lookups are cached forever and only the upcoming slate refreshes, so this
-    // stays comfortably inside Open-Meteo's free daily limit.
+    // First pass, once a day after the overnight score/news pipeline has settled.
+    // Historical lookups are cached forever and only the upcoming slate refreshes,
+    // so this stays comfortably inside Open-Meteo's free daily limit.
     schedule: "0 5 * * *",
     timeZone: "America/New_York",
     timeoutSeconds: 300,
@@ -155,6 +158,27 @@ exports.scheduledScheduleWeather = onSchedule(
     logger.info("Starting scheduled schedule-weather enrichment");
     const result = await enrichScheduleWeatherLogic(getDb());
     logger.info("Completed schedule-weather enrichment", result);
+  }
+);
+
+exports.scheduledScheduleWeatherEvening = onSchedule(
+  {
+    // Second pass at 6 p.m. Eastern. Drum corps shows are ~8 p.m. local events, so
+    // a day-of refresh a couple hours ahead of the eastern shows captures a much
+    // fresher forecast than the 5 a.m. run — the card the audience sees at showtime
+    // reflects the evening's actual conditions, not that morning's outlook. Same
+    // limit-safe logic: past dates are final and cached forever, and only the
+    // in-horizon slate re-fetches (SHOWTIME_REFRESH_MS is under the ~11h gap
+    // between the two passes, so this pass genuinely re-fetches it).
+    schedule: "0 18 * * *",
+    timeZone: "America/New_York",
+    timeoutSeconds: 300,
+    memory: "256MiB",
+  },
+  async () => {
+    logger.info("Starting evening schedule-weather refresh");
+    const result = await enrichScheduleWeatherLogic(getDb());
+    logger.info("Completed evening schedule-weather refresh", result);
   }
 );
 
