@@ -311,7 +311,12 @@ const Article = () => {
     article.fullStory || (article.narrative && article.narrative.trim()) || article.summary;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
+    {/* pt-14 reserves the fixed SiteHeader's height (h-14). Unlike Scores /
+        Dashboard, this page is a standalone route (not wrapped in a shell whose
+        main already sits at top-14), so it must offset the header itself —
+        otherwise the scroll region starts at top:0 and the fixed header overlaps
+        the article's first 56px on load. */}
+    <div className="h-full flex flex-col overflow-hidden bg-background pt-14">
       <SiteHeader />
 
       {/* SCROLLABLE CONTENT - pb reserves space for the fixed bottom bar up to
