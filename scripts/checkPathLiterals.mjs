@@ -28,8 +28,10 @@
 //     (functions/src/triggers/{avatarGeneration,emailTriggers,pushTriggers}.js).
 //   - src/api/community.ts reads the frozen legacy 'fantasy_drum_corps_v1'
 //     namespace for landing-page stats — see the NOTE at the top of that file.
-//   - functions/src/scripts/cleanupLeakedProfileEmails.js is a standalone ops
-//     script that resolves its namespace from process.env, not function params.
+//   - functions/src/scripts/{cleanupLeakedProfileEmails,migrateSeasonHistoryDetail}.js
+//     are standalone ops scripts that resolve their namespace from process.env
+//     (with a "marching-art" default), not function params — the paths helper's
+//     dataNamespaceParam.value() returns "" when DATA_NAMESPACE is unset.
 //
 // Usage:
 //   node scripts/checkPathLiterals.mjs           # CI gate: fail if any count rose
