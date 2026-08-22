@@ -671,6 +671,26 @@ const Dashboard = () => {
                       corpsClass={activeCorpsClass}
                     />
                   </div>
+
+                  {/* Season recap ledger — the director's own corps told as a
+                      running recap, show to show, with the full caption
+                      breakdown. This is the always-visible dashboard panel the
+                      Podium dashboard has (PodiumZone's PodiumSeasonLedger); the
+                      ranked fantasy classes read the private per-caption store
+                      (SoundSport, ratings-only, has none). Still also reachable
+                      from the SEASON SCORE tile. */}
+                  {hasSeasonLedger && !isPodiumSelected && (
+                    <Suspense fallback={null}>
+                      <FantasySeasonLedger
+                        seasonUid={seasonData?.seasonUid}
+                        seasonName={seasonData?.name}
+                        uid={user?.uid}
+                        corpsClass={activeCorpsClass}
+                        userCorpsName={activeCorps?.corpsName || activeCorps?.name}
+                        publicShows={allShows}
+                      />
+                    </Suspense>
+                  )}
                 </div>
               </div>
             </div>
