@@ -43,6 +43,7 @@ const FRESH_WINDOW_MS = 6 * 60 * 60 * 1000;
 const CATEGORY_LABELS = {
   dci: "DCI",
   fantasy: "Fantasy",
+  podium: "Podium",
   editorial: "Editorial",
   community: "Community",
   press: "Press Release",
