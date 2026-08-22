@@ -12,6 +12,22 @@ import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../api';
 import { getShowRegistrations } from '../api/functions';
 import { getProfile } from '../api/profile';
+import { getCorpsClassOrderIndex } from '../utils/corps';
+
+/**
+ * Order a hosted show's roster by class (World → Open → A → SoundSport → Podium),
+ * with corps sorted alphabetically inside each class so the list reads as a tidy,
+ * grouped roster instead of registration order. Non-mutating.
+ * @param {Array<Record<string, any>>} rows
+ * @returns {Array<Record<string, any>>}
+ */
+function sortAttendeesByClass(rows) {
+  return [...rows].sort((a, b) => {
+    const classDelta = getCorpsClassOrderIndex(a.corpsClass) - getCorpsClassOrderIndex(b.corpsClass);
+    if (classDelta !== 0) return classDelta;
+    return (a.corpsName || '').localeCompare(b.corpsName || '');
+  });
+}
 
 /**
  * @param {string|null|undefined} seasonUid
@@ -108,8 +124,33 @@ export function useHostedShowRegistrations({ enabled, show, hostedEvent }) {
     // Pass `day` so the server folds in Podium corps that picked this show
     // (their day-based picks live outside the fantasy registration index).
     getShowRegistrations({ week, eventName, date: date ?? null, day })
-      .then((res) => {
-        if (!cancelled) setAttendees(res?.data?.registrations || []);
+      .then(async (res) => {
+        const rows = res?.data?.registrations || [];
+        // Podium corps come through with a uid but no username (their picks live
+        // on the podium/state doc, which carries no @handle) — resolve those from
+        // the director's public profile so every attendee shows who's fielding it,
+        // exactly as the hosted-event host name is resolved above.
+        const missing = [
+          ...new Set(rows.filter((r) => !r.username && r.uid).map((r) => r.uid)),
+        ];
+        if (missing.length) {
+          const names = new Map();
+          await Promise.all(
+            missing.map(async (uid) => {
+              if (!uid) return;
+              try {
+                const profile = await getProfile(uid);
+                if (profile?.username) names.set(uid, profile.username);
+              } catch {
+                /* decorative — leave this attendee without an @handle */
+              }
+            })
+          );
+          for (const row of rows) {
+            if (!row.username && names.has(row.uid)) row.username = names.get(row.uid);
+          }
+        }
+        if (!cancelled) setAttendees(sortAttendeesByClass(rows));
       })
       .catch(() => {
         if (!cancelled) setAttendees([]); // roster is informational — never blocks registering
