@@ -93,7 +93,7 @@ describe('DirectorsReport', () => {
   });
 
   it('surfaces a pending Season Ladder claim with its CC amount', () => {
-    mockProfile.xp = 400; // season XP 400 → tiers 1-2 claimable
+    mockProfile.xp = 900; // season XP 900 → tiers 1-2 claimable
     renderReport();
     expect(screen.getByText(/Season Ladder Tier 1 ready/)).toBeInTheDocument();
     expect(screen.getByText(/\+1 more/)).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe('DirectorsReport', () => {
   });
 
   it('hides the claim row when every reached tier is claimed', () => {
-    mockProfile.xp = 400;
+    mockProfile.xp = 900;
     mockProfile.seasonLadder = { seasonUid: 's1', claimed: [1, 2] };
     renderReport();
     expect(screen.queryByText(/ready/)).not.toBeInTheDocument();

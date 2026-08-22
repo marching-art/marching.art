@@ -16,7 +16,7 @@ vi.mock('react-hot-toast', () => ({
 import SeasonLadderPanel from './SeasonLadderPanel';
 
 const makeProfile = (overrides = {}) => ({
-  xp: 1000,
+  xp: 3000,
   xpAtSeasonStart: 0,
   seasonLadder: null,
   ...overrides,
@@ -46,7 +46,7 @@ describe('SeasonLadderPanel', () => {
   });
 
   it('offers claims for every tier the season XP has reached', () => {
-    // 1,000 season XP reaches tiers 1-5
+    // 3,000 season XP reaches tiers 1-5
     render(<SeasonLadderPanel profile={makeProfile()} seasonUid="s1" />);
     expect(screen.getByText(/Tier 1 ready/)).toBeInTheDocument();
     expect(screen.getByText(/Tier 5 ready/)).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('SeasonLadderPanel', () => {
     claimLadderTier.mockResolvedValue({
       data: { success: true, alreadyClaimed: false, coinAwarded: 50 },
     });
-    render(<SeasonLadderPanel profile={makeProfile({ xp: 150 })} seasonUid="s1" />);
+    render(<SeasonLadderPanel profile={makeProfile({ xp: 450 })} seasonUid="s1" />);
     fireEvent.click(screen.getByText(/Tier 1 ready/));
     await waitFor(() => expect(claimLadderTier).toHaveBeenCalledWith({ tier: 1 }));
   });
@@ -90,7 +90,7 @@ describe('SeasonLadderPanel', () => {
     render(
       <SeasonLadderPanel
         profile={makeProfile({
-          xp: 4000,
+          xp: 11000,
           seasonLadder: {
             seasonUid: 's1',
             claimed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],

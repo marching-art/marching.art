@@ -13,27 +13,30 @@
  * tiers carry currency). Claims reset naturally each season because the
  * seasonUid changes.
  *
- * Reward budget: 1,650 CC across all 12 tiers (~1.5 weeks of active-player
- * income spread over 7 weeks) plus the ladder-exclusive Laureate title at the
- * cap. An active player (~450-600 XP/week) maxes the ladder in weeks 6-7;
- * casual players land mid-ladder. Keep the client mirror in
- * src/components/Dashboard/sections/SeasonLadderPanel.jsx in sync.
+ * Reward budget: 1,650 CC across all 12 tiers plus the ladder-exclusive
+ * Laureate title at the cap. XP thresholds are paced against the real
+ * active-player earn rate (~1,500-1,800 XP/week once login, challenges,
+ * predictions and nightly scores are all in play — the ladder's first draft
+ * assumed ~450-600/week and an active player maxed it in week 2), so the cap
+ * (10,800 XP) now lands in weeks 6-7 and casual players finish mid-ladder.
+ * Keep the client mirror in src/utils/seasonLadder.ts (and the panel that
+ * reads it) in sync.
  */
 
 const LADDER_TIERS = [
-  { tier: 1, xp: 150, coin: 50 },
-  { tier: 2, xp: 300, coin: 50 },
-  { tier: 3, xp: 500, coin: 75 },
-  { tier: 4, xp: 750, coin: 75 },
-  { tier: 5, xp: 1000, coin: 100 },
-  { tier: 6, xp: 1300, coin: 100 },
-  { tier: 7, xp: 1600, coin: 125 },
-  { tier: 8, xp: 2000, coin: 150 },
-  { tier: 9, xp: 2400, coin: 175 },
-  { tier: 10, xp: 2800, coin: 200 },
-  { tier: 11, xp: 3200, coin: 250 },
+  { tier: 1, xp: 450, coin: 50 },
+  { tier: 2, xp: 900, coin: 50 },
+  { tier: 3, xp: 1500, coin: 75 },
+  { tier: 4, xp: 2250, coin: 75 },
+  { tier: 5, xp: 3000, coin: 100 },
+  { tier: 6, xp: 3900, coin: 100 },
+  { tier: 7, xp: 4800, coin: 125 },
+  { tier: 8, xp: 6000, coin: 150 },
+  { tier: 9, xp: 7200, coin: 175 },
+  { tier: 10, xp: 8400, coin: 200 },
+  { tier: 11, xp: 9600, coin: 250 },
   // The cap: coin + the ladder-exclusive Laureate title (grant-only shop item)
-  { tier: 12, xp: 3600, coin: 300, grantItem: 'title_laureate' },
+  { tier: 12, xp: 10800, coin: 300, grantItem: 'title_laureate' },
 ];
 
 function getLadderTier(tier) {
