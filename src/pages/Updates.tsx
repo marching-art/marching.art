@@ -8,7 +8,7 @@
 // repo-committed log in src/data/changelog.ts; opening this page clears the
 // unseen-updates badge.
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Sparkles, Wrench, Scale, Bug, Hammer, CalendarClock, Compass } from 'lucide-react';
 import { Heading } from '../components/ui';
 import { useSEO } from '../hooks/useSEO';
@@ -23,6 +23,15 @@ import {
   type UpdateCategory,
   type RoadmapStatus,
 } from '../data/changelog';
+
+// How many changelog cards to render before the reader has to scroll for more.
+// The list grows without bound (a new entry per merged, player-facing PR), but a
+// director almost never needs the whole history — so we render an initial batch
+// and reveal the rest lazily as they scroll toward the bottom. The initial batch
+// stays comfortably large so recent updates (and the SEO-relevant content) are in
+// the DOM on first paint.
+const INITIAL_VISIBLE = 8;
+const LOAD_BATCH = 8;
 
 const CATEGORY_ICON: Record<UpdateCategory, typeof Sparkles> = {
   feature: Sparkles,
@@ -117,6 +126,36 @@ const Updates: React.FC = () => {
     markAllSeen();
   }, [markAllSeen]);
 
+  // Lazy-load the changelog: render an initial batch, reveal more as the reader
+  // approaches the end of the list.
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const hasMore = visibleCount < CHANGELOG.length;
+  const visibleEntries = CHANGELOG.slice(0, visibleCount);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((count) => Math.min(count + LOAD_BATCH, CHANGELOG.length));
+  }, []);
+
+  // Auto-reveal the next batch when the sentinel scrolls into view. Guarded so it
+  // degrades to the "Show more" button where IntersectionObserver is unavailable
+  // (older browsers, the SSR/first-paint path, jsdom in tests).
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasMore) return;
+    if (typeof IntersectionObserver === 'undefined') return;
+    const target = sentinelRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) loadMore();
+      },
+      { rootMargin: '200px', threshold: 0 }
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore, visibleCount]);
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <header className="mb-8">
@@ -134,10 +173,25 @@ const Updates: React.FC = () => {
           Recent updates
         </Heading>
         <div className="space-y-3">
-          {CHANGELOG.map((entry) => (
+          {visibleEntries.map((entry) => (
             <ChangelogCard key={entry.id} entry={entry} />
           ))}
         </div>
+        {hasMore && (
+          <>
+            {/* Scroll sentinel: crossing into view reveals the next batch. */}
+            <div ref={sentinelRef} aria-hidden="true" className="h-px" />
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={loadMore}
+                className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-interactive border border-interactive/40 bg-interactive/10 rounded-none hover:bg-interactive/20 transition-colors"
+              >
+                Show more updates
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       <section aria-labelledby="updates-roadmap">
