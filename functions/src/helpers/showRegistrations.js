@@ -90,9 +90,45 @@ function buildEventDocs(pairs) {
   return docs;
 }
 
+/**
+ * Fold Podium corps into a show's registration list (pure).
+ *
+ * Podium picks live on each corps' podium/state doc as
+ * `selectedShows[day] = { eventName, location }` — outside the fantasy
+ * registration index. Given the season's roster states, keep the corps whose
+ * pick for `day` names this show and shape each into a registration entry
+ * (corpsClass "podiumClass"; a Podium corps carries no @username in the roster,
+ * so username is null and the caller dedupes it into a slot by uid). A stale
+ * prior-season state is skipped by the seasonUid check. `selectedShows` keys
+ * are strings once round-tripped through Firestore, so both the numeric and
+ * string forms of `day` are tried.
+ *
+ * @param {Array<{uid: string, state: Object}>} entries roster uid + state data
+ * @param {{day: number, eventName: string, activeSeasonId: string}} params
+ * @returns {Array<{uid: string|null, corpsName: string, corpsClass: string,
+ *   username: null}>}
+ */
+function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId }) {
+  const out = [];
+  for (const { uid, state } of entries || []) {
+    if (!state || state.seasonUid !== activeSeasonId) continue;
+    const picks = state.selectedShows || {};
+    const pick = picks[day] || picks[String(day)] || null;
+    if (!pick || pick.eventName !== eventName) continue;
+    out.push({
+      uid: uid || null,
+      corpsName: state.corpsName || "Podium Corps",
+      corpsClass: "podiumClass",
+      username: null,
+    });
+  }
+  return out;
+}
+
 module.exports = {
   showRegistrationEventKey,
   registrationEntryKey,
   collectRegistrationsFromProfile,
   buildEventDocs,
+  collectPodiumRegistrations,
 };
