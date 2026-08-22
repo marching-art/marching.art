@@ -47,9 +47,11 @@ const SHOWTIME_HOUR = 20;
 
 // A cached showtime lookup for a date still in the forecast window can change, so
 // non-final entries are re-fetched once they are older than this. The producer
-// runs daily, so a ~20h staleness means each daily pass refreshes the upcoming
-// slate exactly once. Past dates are marked `final` and never re-fetched.
-const SHOWTIME_REFRESH_MS = 20 * 60 * 60 * 1000;
+// runs twice a day (5 a.m. and 6 p.m. Eastern); the shorter gap between those
+// passes is ~11h, so a 10h staleness guarantees each pass actually re-fetches the
+// upcoming slate rather than reusing a still-"fresh" forecast the earlier pass
+// cached hours before. Past dates are marked `final` and never re-fetched.
+const SHOWTIME_REFRESH_MS = 10 * 60 * 60 * 1000;
 
 // Open-Meteo's forecast reaches ~16 days out; a show further out than this has no
 // data yet, so the producer skips it (and tries again once it enters the window).

@@ -209,6 +209,7 @@ const {
 } = require("./src/scheduled/rivalsComputation");
 const {
   scheduledScheduleWeather,
+  scheduledScheduleWeatherEvening,
   refreshScheduleWeatherNow,
 } = require("./src/scheduled/scheduleWeather");
 const {
@@ -433,6 +434,7 @@ module.exports = {
 
   // Schedule weather (scheduled + admin refresh)
   scheduledScheduleWeather,
+  scheduledScheduleWeatherEvening,
   refreshScheduleWeatherNow,
 
   // League Automation (scheduled)
