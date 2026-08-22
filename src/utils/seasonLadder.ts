@@ -16,18 +16,18 @@ export interface LadderTier {
 }
 
 export const TIERS: LadderTier[] = [
-  { tier: 1, xp: 150, coin: 50 },
-  { tier: 2, xp: 300, coin: 50 },
-  { tier: 3, xp: 500, coin: 75 },
-  { tier: 4, xp: 750, coin: 75 },
-  { tier: 5, xp: 1000, coin: 100 },
-  { tier: 6, xp: 1300, coin: 100 },
-  { tier: 7, xp: 1600, coin: 125 },
-  { tier: 8, xp: 2000, coin: 150 },
-  { tier: 9, xp: 2400, coin: 175 },
-  { tier: 10, xp: 2800, coin: 200 },
-  { tier: 11, xp: 3200, coin: 250 },
-  { tier: 12, xp: 3600, coin: 300, exclusive: 'Laureate title' },
+  { tier: 1, xp: 450, coin: 50 },
+  { tier: 2, xp: 900, coin: 50 },
+  { tier: 3, xp: 1500, coin: 75 },
+  { tier: 4, xp: 2250, coin: 75 },
+  { tier: 5, xp: 3000, coin: 100 },
+  { tier: 6, xp: 3900, coin: 100 },
+  { tier: 7, xp: 4800, coin: 125 },
+  { tier: 8, xp: 6000, coin: 150 },
+  { tier: 9, xp: 7200, coin: 175 },
+  { tier: 10, xp: 8400, coin: 200 },
+  { tier: 11, xp: 9600, coin: 250 },
+  { tier: 12, xp: 10800, coin: 300, exclusive: 'Laureate title' },
 ];
 
 /** The profile fields the ladder is derived from. */

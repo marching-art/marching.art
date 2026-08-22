@@ -21,16 +21,16 @@ describe('getSeasonXP', () => {
 describe('getClaimableLadderTiers', () => {
   it('returns every earned, unclaimed tier lowest first', () => {
     const tiers = getClaimableLadderTiers(
-      { xp: 600, xpAtSeasonStart: 0, seasonLadder: { seasonUid: 's1', claimed: [1] } },
+      { xp: 1500, xpAtSeasonStart: 0, seasonLadder: { seasonUid: 's1', claimed: [1] } },
       's1'
     );
-    // 150/300/500 are earned at 600 XP; tier 1 is already claimed.
+    // 450/900/1500 are earned at 1500 XP; tier 1 is already claimed.
     expect(tiers.map((t) => t.tier)).toEqual([2, 3]);
   });
 
   it('ignores a claimed list left over from a previous season', () => {
     const tiers = getClaimableLadderTiers(
-      { xp: 200, xpAtSeasonStart: 0, seasonLadder: { seasonUid: 'last-season', claimed: [1, 2] } },
+      { xp: 450, xpAtSeasonStart: 0, seasonLadder: { seasonUid: 'last-season', claimed: [1, 2] } },
       's2'
     );
     expect(tiers.map((t) => t.tier)).toEqual([1]);
