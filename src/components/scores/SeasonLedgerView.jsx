@@ -1,4 +1,3 @@
-// @ts-nocheck -- presentational component; the data helpers are typed in seasonLedgerUtils.ts
 // SeasonLedgerView — the shared presentation for the Season Recap Ledger: a
 // director's own corps told as a running recap, one line per scored outing with
 // the full 8-caption breakdown, GE/VIS/MUS subtotals, total, placement, and the
@@ -18,6 +17,7 @@ const MEDAL_COLORS = { gold: 'text-brand', silver: 'text-secondary', bronze: 'te
 
 // Signed total movement between consecutive outings — the "how am I trending"
 // glyph. Positive is a green climb, negative a red slip, first outing a dash.
+/** @param {{ delta?: number|null }} props */
 function TotalTrend({ delta }) {
   if (delta === null || delta === undefined) {
     return (
@@ -45,6 +45,7 @@ function TotalTrend({ delta }) {
   );
 }
 
+/** @param {{ label: React.ReactNode, value: React.ReactNode, sub?: React.ReactNode }} props */
 function StatTile({ label, value, sub }) {
   return (
     <div className="bg-surface-raised p-2.5 min-w-0">
