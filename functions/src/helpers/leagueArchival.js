@@ -10,6 +10,29 @@ const { RARITY_CC } = require("./achievements");
 const { isActiveThisSeason } = require("./leagueActivity");
 const { selectLeagueChampion, DEFAULT_FINALS_SIZE } = require("./leagueChampion");
 const { fetchWeeklyScoreIndex } = require("./leagueScoring");
+const { buildNotificationDoc } = require("./userNotifications");
+
+/**
+ * Add one in-app notification to an existing batch, stamped to match the inbox
+ * contract the bell reads (createdAt / read / id / userId — see
+ * helpers/userNotifications.js). Champion + payout notices ride the archival
+ * batch so they land atomically with the payout, so they can't go through
+ * createUserNotification's own set(); this keeps the SAME doc shape.
+ *
+ * A malformed entry (missing type/title/message) is skipped rather than
+ * written, exactly as the standalone helper does.
+ */
+function addNotificationToBatch(batch, db, uid, notification) {
+  const doc = buildNotificationDoc(notification);
+  if (!uid || !doc) return;
+  const ref = db.collection(paths.userNotifications(uid)).doc();
+  batch.set(ref, {
+    ...doc,
+    id: ref.id,
+    userId: uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
 
 /**
  * Championship week. A season is 49 competition days in 7 weeks, and day 49 is
@@ -284,19 +307,39 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
           `Paid ${payout} CC (${prizePool} prize pool + ${poolCarry} pool carry) to ` +
             `${leagueWinner.username} for winning '${league.name}'.`
         );
+
+        // Tell the winner their winnings landed. Gold reward moment (bell type
+        // prize_payout) — distinct from the champion notice below, which every
+        // member (winner included) also gets.
+        addNotificationToBatch(batch, db, leagueWinner.userId, {
+          type: "prize_payout",
+          title: "Prize Pool Paid Out",
+          message: `You won ${payout.toLocaleString()} CorpsCoin as the ${seasonName} ` +
+            `champion of ${league.name}!`,
+          link: `/leagues/${leagueId}`,
+          metadata: { amount: payout, prizePool, poolCarry, seasonId, leagueId },
+        });
       }
 
-      // --- NEW NOTIFICATION LOGIC ---
+      // --- CHAMPION NOTIFICATION ---
+      // Every member is told who won. Routed through the same doc shape the
+      // bell reads (createdAt/read/title) — the previous inline write used
+      // timestamp/isRead and was invisible to the inbox listener entirely.
       const notificationMessage = `🏆 ${leagueWinner.username} has won the ${seasonName} ` +
         `championship in your league, ${league.name}!`;
       members.forEach((memberUid) => {
-        const notificationRef = db.collection(paths.userNotifications(memberUid)).doc();
-        batch.set(notificationRef, {
+        addNotificationToBatch(batch, db, memberUid, {
           type: "new_champion",
+          title: "League Champion Crowned",
           message: notificationMessage,
-          link: `/leagues/${leagueId}`, // This will be used for client-side routing
-          timestamp: admin.firestore.FieldValue.serverTimestamp(),
-          isRead: false,
+          link: `/leagues/${leagueId}`, // client-side routing target
+          leagueId,
+          leagueName: league.name,
+          metadata: {
+            seasonId,
+            winnerId: leagueWinner.userId,
+            winnerUsername: leagueWinner.username,
+          },
         });
       });
       logger.info(`Created notifications for all ${members.length} members of league '${league.name}'.`);

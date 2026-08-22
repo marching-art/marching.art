@@ -28,6 +28,11 @@ import type { LeagueNotificationType } from './league';
  *   - functions/src/triggers/newsSubmissions.js → article_approved,
  *     article_rejected, trusted_author_unlocked, press_release_removed
  *   - functions/src/scheduled/newsAutoPublish.js → article_approved
+ *   - functions/src/callable/leagueAdmin.js → commissioner_changed
+ *   - functions/src/helpers/leagueArchival.js → new_champion, prize_payout
+ *   - functions/src/callable/comments.js → new_comment
+ *   - functions/src/callable/dailyOps.js → achievement_unlocked, level_up
+ *   - functions/src/scheduled/supporterReconcile.js → supporter_update
  * Keep this in sync when a new server writer lands; unknown types still render
  * (see notificationDisplay.ts) but lose their specific icon.
  */
@@ -40,7 +45,14 @@ export type ServerNotificationType =
   | 'article_approved' // A submitted news article was approved / auto-published
   | 'article_rejected' // A submitted news article was declined
   | 'trusted_author_unlocked' // Reached the approval threshold: auto-publish + press releases
-  | 'press_release_removed'; // An admin took down the author's press release
+  | 'press_release_removed' // An admin took down the author's press release
+  | 'commissioner_changed' // Made (co-)commissioner of a league
+  | 'new_champion' // A league champion was crowned (season end)
+  | 'prize_payout' // CorpsCoin winnings landed (champion / prediction pool)
+  | 'new_comment' // Someone commented on the director's profile
+  | 'achievement_unlocked' // An achievement was earned
+  | 'level_up' // The director reached a new XP level
+  | 'supporter_update'; // Supporter status changed (activated / lapsed)
 
 /** Every notification `type` the inbox knows how to style. */
 export type AppNotificationType = LeagueNotificationType | ServerNotificationType;

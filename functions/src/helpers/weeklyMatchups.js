@@ -14,6 +14,7 @@ const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { updateStandings } = require("./leagueStandings");
 const { createLeagueActivity } = require("./leagueHelpers");
+const { sendMatchupNotifications } = require("./matchupNotifications");
 const { MATCHUP_CLASSES } = require("./classRegistry");
 const { processAllInPages } = require("./firestorePaging");
 const { generateLeagueRecapsForWeek } = require("./leagueRecaps");
@@ -337,7 +338,11 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
   // ahead of the docs they summarize.
   for (const { leagueDoc, standingsPairs } of standingsByLeague) {
     try {
-      await updateStandings(db, leagueDoc.ref, standingsPairs);
+      const { previousStandings, standings } = await updateStandings(
+        db,
+        leagueDoc.ref,
+        standingsPairs
+      );
       const decided = standingsPairs.filter((p) => p.player2 !== null).length;
       if (decided > 0) {
         await createLeagueActivity(db, leagueDoc.id, {
@@ -347,6 +352,17 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           metadata: { week, matchupsCompleted: decided },
         });
       }
+      // Per-director bell: win/loss/tie + any standings drop. Best-effort and
+      // post-commit — see helpers/matchupNotifications.js.
+      await sendMatchupNotifications(db, {
+        leagueId: leagueDoc.id,
+        leagueName: leagueDoc.data().name || "your league",
+        week,
+        seasonUid: seasonData.seasonUid,
+        pairs: standingsPairs,
+        previousStandings,
+        newStandings: standings,
+      });
     } catch (error) {
       // Standings/feed are derived views — never let them fail the
       // guarded scoring run that pays rewards.

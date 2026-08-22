@@ -11,6 +11,7 @@ const {
   foldPairsIntoStandings,
   rebuildStandingsFromMatchups,
   applyStandingsInTransaction,
+  computeRankDrops,
 } = require("./leagueStandings");
 
 const freshRecords = () => ({
@@ -468,5 +469,46 @@ describe("applyStandingsInTransaction", () => {
     assert.equal(t.writes[0].data.records.alice.wins, 1);
     assert.equal(t.writes[0].data.records.bob.losses, 1);
     assert.equal(t.writes[0].data.standings.length, 2);
+  });
+
+  test("returns the previous and new standings for rank diffing", () => {
+    const t = fakeTransaction();
+    const prev = [{ uid: "bob" }, { uid: "alice" }];
+    const diff = applyStandingsInTransaction(
+      t,
+      { exists: true, ref: { path: "x" }, data: () => ({ records: freshRecords(), standings: prev }) },
+      decidedPair
+    );
+    assert.deepEqual(diff.previousStandings, prev);
+    assert.ok(Array.isArray(diff.standings));
+  });
+});
+
+describe("computeRankDrops", () => {
+  const rows = (...uids) => uids.map((uid) => ({ uid }));
+
+  test("reports only directors who fell AND played this week", () => {
+    // bob 1→3 (dropped), carol 2→1 (climbed), dave 3→2 (climbed), eve absent.
+    const prev = rows("bob", "carol", "dave");
+    const next = rows("carol", "dave", "bob");
+    const drops = computeRankDrops(prev, next, ["bob", "carol", "dave"]);
+    assert.deepEqual(drops, [{ uid: "bob", previousRank: 1, newRank: 3 }]);
+  });
+
+  test("ignores a dropped director who did not play this week", () => {
+    const prev = rows("bob", "carol");
+    const next = rows("carol", "bob");
+    // Only carol is in the affected set, and carol climbed — so nothing.
+    assert.deepEqual(computeRankDrops(prev, next, ["carol"]), []);
+  });
+
+  test("a director new to the table has no drop to report", () => {
+    const drops = computeRankDrops(rows("alice"), rows("alice", "bob"), ["bob"]);
+    assert.deepEqual(drops, []);
+  });
+
+  test("tolerates empty/missing standings", () => {
+    assert.deepEqual(computeRankDrops([], [], ["a"]), []);
+    assert.deepEqual(computeRankDrops(undefined, undefined, []), []);
   });
 });

@@ -16,6 +16,7 @@
 // server-only `supporter` object onto that profile so flair renders.
 
 const admin = require("firebase-admin");
+const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -73,6 +74,12 @@ function buildProfileSupporter({
 async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAbsent = true }) {
   const ref = db.doc(paths.supporter(emailHash));
   const nowMs = Date.now();
+  // Captured out of the transaction so the caller-facing notification (below)
+  // can fire on an active↔inactive TRANSITION only — a nightly reconcile
+  // re-writes every active doc, so notifying on write would spam supporters
+  // every night.
+  /** @type {{uid: string, isActive: boolean, tier: (string|null)}|null} */
+  let transition = null;
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists && !createIfAbsent) return;
@@ -153,8 +160,35 @@ async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAb
         },
         { merge: true }
       );
+
+      // Record the active↔inactive transition for a post-commit notification.
+      const wasActive = ex.active === true;
+      const isActive = active;
+      if (wasActive !== isActive) {
+        transition = { uid: ex.uid, isActive, tier };
+      }
     }
   });
+
+  // Best-effort bell notification on transition — outside the transaction, and
+  // never allowed to fail the supporter write. Only linked accounts (uid set)
+  // and only when active state actually flipped.
+  if (transition) {
+    try {
+      const { createUserNotification } = require("./userNotifications");
+      await createUserNotification(db, transition.uid, {
+        type: "supporter_update",
+        title: transition.isActive ? "Supporter Perks Active" : "Supporter Status Ended",
+        message: transition.isActive
+          ? "Thank you for supporting marching.art! Your supporter flair and perks are now active."
+          : "Your supporter perks have ended. Renew any time to bring your flair back — thanks for the support!",
+        link: "/profile",
+        metadata: { active: transition.isActive, tier: transition.tier ?? null },
+      });
+    } catch (err) {
+      logger.error("supporter_update notification failed", { err: err.message });
+    }
+  }
 }
 
 /** Upsert an active recurring supporter (membership / monthly support). */

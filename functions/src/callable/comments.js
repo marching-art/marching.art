@@ -2,7 +2,6 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
 // NOTE: firebase-admin/firestore has no `serverTimestamp` named export (that
 // is the CLIENT SDK's API) — destructuring it yielded undefined and made
 // reportComment throw on every call. Use FieldValue.serverTimestamp().
@@ -45,23 +44,26 @@ exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
       (commenterProfile.data().username || commenterProfile.data().displayName)) ||
     "A director";
 
-  const notificationRef = db.collection(paths.userNotifications(recipientUid)).doc();
+  // Route through the shared writer so the doc matches the inbox contract the
+  // bell reads (createdAt/read/title). The previous inline write used
+  // timestamp/isRead and no title, so it was ordered out of the inbox query
+  // and never surfaced in the bell at all.
+  const { createUserNotification } = require("../helpers/userNotifications");
+  const notificationId = await createUserNotification(db, recipientUid, {
+    type: "new_comment",
+    title: "New Profile Comment",
+    message: `${commenterName} left a comment on your profile.`,
+    link: `/profile/${commenterUid}`, // Link back to the commenter's profile
+    metadata: { senderUid: commenterUid },
+  });
 
-  try {
-    await notificationRef.set({
-      type: "new_comment",
-      message: `${commenterName} left a comment on your profile.`,
-      link: `/profile/${commenterUid}`, // Link back to the commenter's profile
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      isRead: false,
-      senderUid: commenterUid,
-    });
-    logger.info(`Notification sent from ${commenterUid} to ${recipientUid}`);
-    return { success: true, message: "Notification sent." };
-  } catch (error) {
-    logger.error("Error sending comment notification:", error);
+  if (!notificationId) {
+    // createUserNotification never throws — a null means the write was skipped
+    // or failed. Surface it so the client can retry, matching the old behavior.
     throw new HttpsError("internal", "An error occurred while sending the notification.");
   }
+  logger.info(`Notification sent from ${commenterUid} to ${recipientUid}`);
+  return { success: true, message: "Notification sent." };
 });
 
 exports.deleteComment = onCall({ cors: true }, async (request) => {

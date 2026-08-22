@@ -282,6 +282,12 @@ function applyStandingsInTransaction(t, standingsDoc, pairs) {
     );
   }
 
+  // The table as it stood BEFORE this fold, so a caller can diff rank movement
+  // (standings_change notifications). Absent on a first-ever write.
+  const previousStandings = standingsDoc.exists
+    ? standingsDoc.data().standings || []
+    : [];
+
   const { records, standings } = foldPairsIntoStandings(existing, pairs);
 
   t.set(
@@ -293,19 +299,56 @@ function applyStandingsInTransaction(t, standingsDoc, pairs) {
     },
     { merge: true }
   );
+
+  return { previousStandings, standings };
 }
 
 /**
  * Standalone transactional fold — reads standings/current and applies the
  * pairs atomically. Used by the nightly weekly resolution, whose matchup
  * docs are committed separately under the scoringRunGuard lease.
+ *
+ * @returns {Promise<{previousStandings: Array, standings: Array}>} the table
+ *   before and after this fold, for rank-movement diffing.
  */
 async function updateStandings(db, leagueRef, pairs) {
   const standingsRef = leagueRef.collection('standings').doc('current');
-  await db.runTransaction(async (t) => {
+  return db.runTransaction(async (t) => {
     const standingsDoc = await t.get(standingsRef);
-    applyStandingsInTransaction(t, standingsDoc, pairs);
+    return applyStandingsInTransaction(t, standingsDoc, pairs);
   });
+}
+
+/**
+ * Directors who FELL in the overall table between two standings arrays,
+ * restricted to `affectedUids` (the ones who actually played this week — a
+ * bystander whose rank only moved because others changed shouldn't be pinged).
+ *
+ * Rank is 1-based array position (the arrays are pre-sorted by
+ * compareStandingRows). A director absent from the previous table (new this
+ * week) has no drop to report. Pure — no reads/writes — so it is safe to run
+ * outside the scoring transaction.
+ *
+ * @param {Array<{uid: string}>} previousStandings
+ * @param {Array<{uid: string}>} newStandings
+ * @param {Iterable<string>} affectedUids
+ * @returns {Array<{uid: string, previousRank: number, newRank: number}>}
+ */
+function computeRankDrops(previousStandings, newStandings, affectedUids) {
+  const prevRank = new Map();
+  (previousStandings || []).forEach((row, i) => prevRank.set(row.uid, i + 1));
+  const newRank = new Map();
+  (newStandings || []).forEach((row, i) => newRank.set(row.uid, i + 1));
+
+  const drops = [];
+  for (const uid of new Set(affectedUids)) {
+    const before = prevRank.get(uid);
+    const after = newRank.get(uid);
+    if (before != null && after != null && after > before) {
+      drops.push({ uid, previousRank: before, newRank: after });
+    }
+  }
+  return drops;
 }
 
 /**
@@ -391,6 +434,7 @@ module.exports = {
   rebuildStandingsFromMatchups,
   applyStandingsInTransaction,
   updateStandings,
+  computeRankDrops,
   compareStandingRows,
   winPercentage,
   captionMargin,

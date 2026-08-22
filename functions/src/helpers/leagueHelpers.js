@@ -184,6 +184,72 @@ function recordPairingsInHistory(history, weekData, corpsClasses) {
   return history;
 }
 
+/**
+ * Resolve a director's display name (displayName → username → fallback) from
+ * their profile. Best-effort: a missing/unreadable profile returns the
+ * fallback rather than throwing, so notification/activity text degrades
+ * gracefully. Reads only the two name fields to keep the doc read cheap.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} uid
+ * @param {string} [fallback="A director"]
+ * @returns {Promise<string>}
+ */
+async function resolveDisplayName(db, uid, fallback = "A director") {
+  try {
+    if (!uid) return fallback;
+    const snap = await db
+      .doc(paths.userProfile(uid))
+      .get();
+    if (!snap.exists) return fallback;
+    const data = snap.data();
+    return data.displayName || data.username || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Notify a league's commissioners (owner + co-commissioners) that a new
+ * member joined. The join already lands in the shared activity feed; this is
+ * the direct bell for the people who run the league, so a self-serve join
+ * (browse / invite code) pings them the same way an accepted invitation pings
+ * the inviter. Best-effort — never throws, and skips the joiner themselves.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} leagueData - league doc data (creatorId, commissioners, name)
+ * @param {string} leagueId
+ * @param {string} joinerUid
+ * @param {string} joinerName
+ */
+async function notifyCommissionersOfJoin(db, leagueData, leagueId, joinerUid, joinerName) {
+  try {
+    const { listCommissioners } = require("./leaguePermissions");
+    const { createUserNotifications } = require("./userNotifications");
+    const leagueName = leagueData?.name || "your league";
+    const recipients = listCommissioners(leagueData).filter((uid) => uid && uid !== joinerUid);
+    if (recipients.length === 0) return;
+    await createUserNotifications(
+      db,
+      recipients.map((uid) => ({
+        uid,
+        type: "member_joined",
+        title: "New Member Joined",
+        message: `${joinerName} joined ${leagueName}.`,
+        link: `/leagues/${leagueId}`,
+        leagueId,
+        leagueName,
+        metadata: { memberUid: joinerUid, memberName: joinerName },
+        // One ping per (league, joiner) so a retried join can't double-notify.
+        dedupeKey: `member_joined_${leagueId}_${joinerUid}`,
+      }))
+    );
+  } catch (error) {
+    const { logger } = require("firebase-functions/v2");
+    logger.error(`member_joined commissioner notify failed for ${leagueId}:`, error);
+  }
+}
+
 // Helper function to create league activity events
 async function createLeagueActivity(db, leagueId, activityData) {
   const activityRef = db.collection(paths.leagueActivity(leagueId)).doc();
@@ -206,5 +272,7 @@ module.exports = {
   buildPairingHistory,
   recordPairingsInHistory,
   createLeagueActivity,
+  resolveDisplayName,
+  notifyCommissionersOfJoin,
   invitationId,
 };

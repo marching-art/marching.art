@@ -637,9 +637,17 @@ describe("archiveSeasonResultsLogic", () => {
     const achievementHistory = historyWrites.find((w) => w.data.type === "achievement");
     assert.equal(achievementHistory.data.amount, RARITY_CC.legendary);
 
-    // Both members are notified
+    // Both members get the champion notice; the winner also gets prize_payout.
+    // All stamped to the inbox contract (createdAt/read/title) — the old inline
+    // write used timestamp/isRead and never surfaced in the bell.
     const notifications = writes.filter((w) => w.path.includes("/notifications/"));
-    assert.equal(notifications.length, 2);
+    assert.deepEqual(
+      notifications.map((w) => w.data.type).sort(),
+      ["new_champion", "new_champion", "prize_payout"]
+    );
+    assert.ok(notifications.every((n) => n.data.read === false && n.data.createdAt && n.data.title && n.data.userId));
+    const payout = notifications.find((w) => w.data.type === "prize_payout");
+    assert.ok(payout.path.includes("/users/alice/"), "prize_payout goes to the winner");
   });
 
   test("skips a league whose champion for this season is already recorded", async () => {

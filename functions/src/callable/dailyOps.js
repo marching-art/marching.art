@@ -11,6 +11,7 @@ const {
   getLevelTitle,
 } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
+const { createUserNotification } = require("../helpers/userNotifications");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
@@ -285,6 +286,58 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         loginStreak: result.loginStreak,
         alreadyClaimed: true,
       };
+    }
+
+    // Bell notifications for reward moments settled by this claim. Best-effort
+    // and post-commit — createUserNotification never throws, and a
+    // notification must never fail the claim that earned it.
+    //
+    // The sweep also BACKFILLS old directors on their first login after it
+    // shipped, which can return many at once; that is not "you just earned
+    // these", so a large batch collapses to one summary rather than spamming
+    // the bell with historical unlocks. A normal earn is one or two.
+    try {
+      const earned = result.newAchievements || [];
+      if (earned.length > 3) {
+        await createUserNotification(db, uid, {
+          type: "achievement_unlocked",
+          title: "Achievements Unlocked",
+          message: `You've unlocked ${earned.length} achievements! Check your profile to see them.`,
+          link: "/profile?tab=achievements",
+          metadata: { count: earned.length },
+          dedupeKey: `achievements_backfill_${uid}`,
+        });
+      } else {
+        for (const achievement of earned) {
+          await createUserNotification(db, uid, {
+            type: "achievement_unlocked",
+            title: "Achievement Unlocked",
+            message: `${achievement.title} — ${achievement.description}`,
+            link: "/profile?tab=achievements",
+            metadata: {
+              achievementId: achievement.id,
+              rarity: achievement.rarity,
+              ccReward: achievement.ccReward,
+            },
+            dedupeKey: `achievement_${uid}_${achievement.id}`,
+          });
+        }
+      }
+
+      if ((result.levelsGained || 0) > 0) {
+        await createUserNotification(db, uid, {
+          type: "level_up",
+          title: "Level Up!",
+          message: `You reached Level ${result.newLevel}.`,
+          link: "/profile",
+          metadata: { level: result.newLevel, levelsGained: result.levelsGained },
+          // One entry per level reached, so a multi-level jump (or a re-run)
+          // converges instead of duplicating.
+          dedupeKey: `level_up_${uid}_${result.newLevel}`,
+        });
+      }
+    } catch (error) {
+      logger.error(`Reward-moment notifications failed for ${uid}:`, error);
     }
 
     // Build response message
