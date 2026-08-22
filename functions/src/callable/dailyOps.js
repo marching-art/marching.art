@@ -69,44 +69,53 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
 
       const profileData = profileDoc.data();
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      // The game "day" rolls at 2 AM Eastern together with the nightly score
+      // drop (getGameDay), and every other daily surface keys off that same
+      // boundary — the Director's Report, the challenge buckets, the weekly
+      // arc. The login claim MUST use it too. Keying "already claimed today?"
+      // off the server's own calendar day (UTC in production) put the rollover
+      // at UTC midnight — 8 PM Eastern — so an Eastern player's login didn't
+      // register as done in the report until 8 PM. getGameDay keeps the login
+      // aligned with the rest of the day's set.
+      const todayGameDay = getGameDay(now);
 
       // Check if already claimed today
       const engagement = profileData.engagement || {};
       const lastLogin = engagement.lastLogin
         ? (engagement.lastLogin.toDate ? engagement.lastLogin.toDate() : new Date(engagement.lastLogin))
         : null;
+      const lastLoginGameDay = lastLogin ? getGameDay(lastLogin) : null;
 
-      if (lastLogin) {
-        const lastLoginDay = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
-        if (lastLoginDay.getTime() === today.getTime()) {
-          // Already logged in today. Still stamp the season-ladder baseline
-          // if it's missing — otherwise a player who claimed before this
-          // code deployed would show zero season XP until tomorrow.
-          const baseline = seasonBaselineStamp(profileData);
-          if (baseline.xpAtSeasonStart !== undefined) {
-            transaction.update(profileRef, baseline);
-          }
-          return {
-            alreadyClaimed: true,
-            loginStreak: engagement.loginStreak || 1,
-            xpAwarded: 0,
-            coinAwarded: 0,
-          };
+      if (lastLoginGameDay === todayGameDay) {
+        // Already logged in today. Still stamp the season-ladder baseline
+        // if it's missing — otherwise a player who claimed before this
+        // code deployed would show zero season XP until tomorrow.
+        const baseline = seasonBaselineStamp(profileData);
+        if (baseline.xpAtSeasonStart !== undefined) {
+          transaction.update(profileRef, baseline);
         }
+        return {
+          alreadyClaimed: true,
+          loginStreak: engagement.loginStreak || 1,
+          xpAwarded: 0,
+          coinAwarded: 0,
+        };
       }
 
-      // Calculate streak
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      // Calculate streak. todayGameDay is a Date.toDateString() string (the ET
+      // game day anchored to a local-midnight Date); parse it back and step one
+      // day to name yesterday's game day. The server clock is UTC, which has no
+      // DST, so this day arithmetic is exact.
+      const yesterdayGameDay = new Date(
+        new Date(todayGameDay).getTime() - 24 * 60 * 60 * 1000
+      ).toDateString();
 
       let newStreak = 1;
       let streakBroken = false;
       const previousStreak = engagement.loginStreak || 0;
 
-      if (lastLogin) {
-        const lastLoginDay = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
-        if (lastLoginDay.getTime() === yesterday.getTime()) {
+      if (lastLoginGameDay) {
+        if (lastLoginGameDay === yesterdayGameDay) {
           // Consecutive day - increment streak
           newStreak = previousStreak + 1;
         } else {
