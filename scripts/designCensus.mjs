@@ -94,7 +94,10 @@ const INVARIANTS = [
     key: 'legacy-gray',
     label: 'Non-token neutrals  gray-### / slate-### color utilities',
     re: /\b(?:bg|text|border|ring|from|via|to|divide|placeholder)-(?:gray|slate)-\d{2,3}\b/g,
-    allow: [],
+    // Categorical DATA: cosmetic card-theme swatches where slate is one named
+    // finish among teal/emerald/purple/rose themes, not UI chrome — the same
+    // per-item color data already exempted for hex/gold in this file.
+    allow: ['src/utils/cosmetics.js'],
   },
   {
     key: 'font-display',
