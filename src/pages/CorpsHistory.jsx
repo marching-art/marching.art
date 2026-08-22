@@ -17,6 +17,7 @@ import {
   RefreshCw,
   BarChart3,
   History,
+  X,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +30,132 @@ import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
 import { getSoundSportRating } from '../utils/scoresUtils';
 import { toCanonicalClassKey } from '../utils/classUnlocks';
+
+// Season detail (score, weekly breakdown, lineup) for one archived season.
+// Rendered in the desktop side panel and, on mobile, inside a full-screen sheet
+// (hence the optional `onClose`). `detail` is the lazily-loaded detail doc;
+// legacy rows carry the heavy fields inline on `season` itself.
+const SeasonDetail = ({ season, detail, isSoundSportView, onClose }) => {
+  const weeklyScores =
+    Object.keys(season.weeklyScores || {}).length > 0
+      ? season.weeklyScores
+      : detail.weeklyScores || {};
+  const lineup = season.lineup || detail.lineup || null;
+  const weeks = Object.keys(weeklyScores).sort();
+
+  return (
+    <>
+      {/* Panel Header */}
+      <div className="flex-shrink-0 p-4 border-b border-line flex items-center gap-3">
+        <div className="w-10 h-10 rounded-none bg-surface-raised flex items-center justify-center flex-shrink-0">
+          <Trophy className="w-5 h-5 text-secondary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold text-white truncate">{season.seasonName}</h3>
+          <p className="text-xs text-muted/60">
+            {season.archivedAt
+              ? new Date(season.archivedAt.seconds * 1000).toLocaleDateString()
+              : 'Unknown date'}
+          </p>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            aria-label="Close season details"
+            className="w-9 h-9 rounded-none bg-surface-raised flex items-center justify-center text-muted hover:text-white flex-shrink-0"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Panel Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 space-y-4">
+        {/* Final Score / Rating */}
+        <div className="bg-surface-raised border border-line rounded-none p-4 text-center">
+          <p className="text-xs text-muted uppercase tracking-wide mb-1">
+            {isSoundSportView ? 'Rating' : 'Final Score'}
+          </p>
+          <p className="text-3xl font-bold text-white font-mono">
+            {isSoundSportView
+              ? season.totalSeasonScore > 0
+                ? getSoundSportRating(season.totalSeasonScore)
+                : '—'
+              : (season.totalSeasonScore || 0).toFixed(3)}
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
+            <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Best Week</p>
+            <p className="text-xl font-mono font-bold text-white">
+              {isSoundSportView
+                ? season.highestWeeklyScore > 0
+                  ? getSoundSportRating(season.highestWeeklyScore)
+                  : '—'
+                : (season.highestWeeklyScore || 0).toFixed(3)}
+            </p>
+          </div>
+          <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
+            <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">Shows</p>
+            <p className="text-xl font-mono font-bold text-white">{season.showsAttended || 0}</p>
+          </div>
+        </div>
+
+        {/* Weekly Performance */}
+        {weeks.length > 0 && (
+          <div>
+            <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-purple-400" />
+              Weekly Breakdown
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {weeks.map((week) => (
+                <div
+                  key={week}
+                  className="bg-surface-raised rounded-none p-2 flex items-center justify-between"
+                >
+                  <span className="text-xs text-muted/60">{week}</span>
+                  <span className="text-xs font-mono font-bold text-white">
+                    {isSoundSportView
+                      ? weeklyScores[week] > 0
+                        ? getSoundSportRating(weeklyScores[week])
+                        : '—'
+                      : (weeklyScores[week] || 0).toFixed(3)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Lineup */}
+        {lineup && Object.keys(lineup).length > 0 && (
+          <div>
+            <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
+              <Target className="w-4 h-4 text-blue-400" />
+              Season Lineup
+            </h4>
+            <div className="space-y-2">
+              {Object.entries(lineup).map(([caption, value]) => {
+                const [corpsName] = (value || '').split('|');
+                return (
+                  <div key={caption} className="bg-surface-raised rounded-none p-2">
+                    <div className="text-[10px] text-muted/60 uppercase">{caption}</div>
+                    <div className="text-sm font-semibold text-white truncate">
+                      {corpsName || 'Not Set'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
 
 const CorpsHistory = () => {
   const { user } = useAuth();
@@ -87,9 +214,25 @@ const CorpsHistory = () => {
   // (Gold/Silver/Bronze/Participation) and best-in-show recognition instead.
   const isSoundSportView = toCanonicalClassKey(selectedCorpsClass || '') === 'soundSport';
   const seasonHistory = useMemo(() => {
-    return (activeCorps?.seasonHistory || []).sort(
-      (a, b) => (b.archivedAt?.seconds || 0) - (a.archivedAt?.seconds || 0)
-    );
+    // Newest-first, tie-broken by score so a completed run outranks a stale
+    // zero-score copy archived in the same instant.
+    const rows = [...(activeCorps?.seasonHistory || [])].sort((a, b) => {
+      const byDate = (b.archivedAt?.seconds || 0) - (a.archivedAt?.seconds || 0);
+      if (byDate !== 0) return byDate;
+      return (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0);
+    });
+    // Collapse duplicate rows sharing a season+class key (the detailId). A
+    // corps fields at most one entry per class per season, but a season can be
+    // re-archived — e.g. across a rollover — leaving stale, often zero-score
+    // copies behind (the repeated "adagio_2025-26" points). Keep only the
+    // newest so the chart, timeline, and career stats each count it once.
+    const seen = new Set();
+    return rows.filter((row) => {
+      const key = `${row.seasonId}__${row.corpsClass}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [activeCorps]);
   const hasHistory = seasonHistory.length > 0;
 
@@ -593,131 +736,15 @@ const CorpsHistory = () => {
         {/* RIGHT: Season Detail Panel (visible on lg+) */}
         <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col min-h-0 bg-surface-sunken">
           {selectedSeason !== null && seasonHistory[selectedSeason] ? (
-            (() => {
-              const season = seasonHistory[selectedSeason];
-              // Merge in the lazily-loaded detail doc. Legacy rows carry the
-              // heavy fields inline; migrated rows get them from seasonDetail.
-              const detailId = `${season.seasonId}__${season.corpsClass}`;
-              const detail = seasonDetails[detailId] || {};
-              const weeklyScores =
-                Object.keys(season.weeklyScores || {}).length > 0
-                  ? season.weeklyScores
-                  : detail.weeklyScores || {};
-              const lineup = season.lineup || detail.lineup || null;
-              const weeks = Object.keys(weeklyScores).sort();
-
-              return (
-                <>
-                  {/* Panel Header */}
-                  <div className="flex-shrink-0 p-4 border-b border-line">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-none bg-surface-raised flex items-center justify-center">
-                        <Trophy className="w-5 h-5 text-secondary" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-white truncate">{season.seasonName}</h3>
-                        <p className="text-xs text-muted/60">
-                          {season.archivedAt
-                            ? new Date(season.archivedAt.seconds * 1000).toLocaleDateString()
-                            : 'Unknown date'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Panel Content */}
-                  <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 space-y-4">
-                    {/* Final Score / Rating */}
-                    <div className="bg-surface-raised border border-line rounded-none p-4 text-center">
-                      <p className="text-xs text-muted uppercase tracking-wide mb-1">
-                        {isSoundSportView ? 'Rating' : 'Final Score'}
-                      </p>
-                      <p className="text-3xl font-bold text-white font-mono">
-                        {isSoundSportView
-                          ? season.totalSeasonScore > 0
-                            ? getSoundSportRating(season.totalSeasonScore)
-                            : '—'
-                          : (season.totalSeasonScore || 0).toFixed(3)}
-                      </p>
-                    </div>
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
-                        <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
-                          Best Week
-                        </p>
-                        <p className="text-xl font-mono font-bold text-white">
-                          {isSoundSportView
-                            ? season.highestWeeklyScore > 0
-                              ? getSoundSportRating(season.highestWeeklyScore)
-                              : '—'
-                            : (season.highestWeeklyScore || 0).toFixed(3)}
-                        </p>
-                      </div>
-                      <div className="bg-surface-sunken border border-line rounded-none p-3 text-center">
-                        <p className="text-[10px] text-muted/60 uppercase tracking-wide mb-1">
-                          Shows
-                        </p>
-                        <p className="text-xl font-mono font-bold text-white">
-                          {season.showsAttended || 0}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Weekly Performance */}
-                    {weeks.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
-                          <BarChart3 className="w-4 h-4 text-purple-400" />
-                          Weekly Breakdown
-                        </h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          {weeks.map((week) => (
-                            <div
-                              key={week}
-                              className="bg-surface-raised rounded-none p-2 flex items-center justify-between"
-                            >
-                              <span className="text-xs text-muted/60">{week}</span>
-                              <span className="text-xs font-mono font-bold text-white">
-                                {isSoundSportView
-                                  ? weeklyScores[week] > 0
-                                    ? getSoundSportRating(weeklyScores[week])
-                                    : '—'
-                                  : (weeklyScores[week] || 0).toFixed(3)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Lineup */}
-                    {lineup && Object.keys(lineup).length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
-                          <Target className="w-4 h-4 text-blue-400" />
-                          Season Lineup
-                        </h4>
-                        <div className="space-y-2">
-                          {Object.entries(lineup).map(([caption, value]) => {
-                            const [corpsName] = (value || '').split('|');
-                            return (
-                              <div key={caption} className="bg-surface-raised rounded-none p-2">
-                                <div className="text-[10px] text-muted/60 uppercase">{caption}</div>
-                                <div className="text-sm font-semibold text-white truncate">
-                                  {corpsName || 'Not Set'}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              );
-            })()
+            <SeasonDetail
+              season={seasonHistory[selectedSeason]}
+              detail={
+                seasonDetails[
+                  `${seasonHistory[selectedSeason].seasonId}__${seasonHistory[selectedSeason].corpsClass}`
+                ] || {}
+              }
+              isSoundSportView={isSoundSportView}
+            />
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center px-6">
@@ -730,6 +757,34 @@ const CorpsHistory = () => {
           )}
         </div>
       </div>
+
+      {/* Season Detail — mobile full-screen sheet (the side panel is lg-only,
+          so on phones tapping a timeline row opens this instead). */}
+      <AnimatePresence>
+        {selectedSeason !== null && seasonHistory[selectedSeason] && (
+          <m.div
+            key="mobile-detail"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden fixed inset-0 z-50 flex flex-col bg-surface-sunken"
+            role="dialog"
+            aria-modal="true"
+          >
+            <SeasonDetail
+              season={seasonHistory[selectedSeason]}
+              detail={
+                seasonDetails[
+                  `${seasonHistory[selectedSeason].seasonId}__${seasonHistory[selectedSeason].corpsClass}`
+                ] || {}
+              }
+              isSoundSportView={isSoundSportView}
+              onClose={() => setSelectedSeason(null)}
+            />
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
