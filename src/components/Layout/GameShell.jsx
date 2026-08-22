@@ -513,9 +513,9 @@ const TickerBar = () => {
         // GE Caption Leaders (combined across all classes)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-amber-400" />
-              <span className="text-amber-400 whitespace-nowrap">GE Leaders</span>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-brand/20 border border-brand/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-brand" />
+              <span className="text-brand whitespace-nowrap">GE Leaders</span>
             </div>
             <div className="w-px h-4 bg-line" />
             {tickerData.combinedCaptionLeaders?.ge?.map((item, idx) => (
@@ -527,7 +527,7 @@ const TickerBar = () => {
                 <span className="text-muted font-medium text-xs whitespace-nowrap">
                   {item.fullName}
                 </span>
-                <span className="text-amber-300 tabular-nums font-mono text-xs">{item.score}</span>
+                <span className="text-brand tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.ge.length - 1 && (
                   <div className="w-px h-3 bg-line ml-1" />
                 )}
