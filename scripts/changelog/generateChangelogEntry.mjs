@@ -341,7 +341,7 @@ async function main() {
 
   let entry = null;
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
-  const model = process.env.CHANGELOG_MODEL || 'gemini-2.0-flash';
+  const model = process.env.CHANGELOG_MODEL || 'gemini-2.5-flash';
 
   if (apiKey) {
     try {
