@@ -14,6 +14,7 @@ const {
   promptSafeBlock,
   UNTRUSTED_FIELD_RULE,
 } = require("./promptSafety");
+const { getActiveCompetitionDay } = require("./gameDay");
 
 // A user graduates to auto-publish once an admin has approved this many of
 // their articles. After that, their new submissions publish automatically at
@@ -338,7 +339,10 @@ async function publishPressReleaseArticle(db, { id, cleaned, corps, author }) {
   const seasonDoc = await db.doc("game-settings/season").get();
   const seasonData = seasonDoc.exists ? seasonDoc.data() : {};
   const seasonId = seasonData.seasonUid || "current_season";
-  const currentDay = seasonData.currentDay || 1;
+  // The season doc has no persisted currentDay — derive the live competition
+  // day from schedule.startDate. Reading the absent field stamped every press
+  // release as "Day 1".
+  const currentDay = getActiveCompetitionDay(seasonData) || 1;
 
   // Re-host any author-supplied image on a CSP-allowed host. A raw linked URL is
   // blocked by the app's img-src policy and would never display in the article.
@@ -643,7 +647,10 @@ async function publishSubmission(db, {
   const seasonDoc = await db.doc("game-settings/season").get();
   const seasonData = seasonDoc.exists ? seasonDoc.data() : {};
   const seasonId = seasonData.seasonUid || "current_season";
-  const currentDay = seasonData.currentDay || 1;
+  // Derive the live competition day from the season schedule — the doc carries
+  // no persisted currentDay, so the old `seasonData.currentDay || 1` always
+  // resolved to Day 1 for every approved/auto-published community article.
+  const currentDay = getActiveCompetitionDay(seasonData) || 1;
 
   // Resolve (or refresh) author credit so the article always carries the
   // username/location even for older submissions created before we stored them.

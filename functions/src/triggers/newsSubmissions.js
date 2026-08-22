@@ -92,7 +92,11 @@ exports.submitNewsForApproval = onCall(
       throw new HttpsError("invalid-argument", "Full story cannot exceed 20000 characters");
     }
 
-    const validCategories = ["dci", "fantasy", "analysis"];
+    // A submitted news article is flaired for one of the game's two competition
+    // worlds — Podium or Fantasy. (dci/analysis are legacy generated-article
+    // categories and stay accepted so older in-flight submissions never reject,
+    // but the composer only offers the two current flairs.)
+    const validCategories = ["podium", "fantasy", "dci", "analysis"];
     if (!category || !validCategories.includes(category)) {
       throw new HttpsError("invalid-argument", "Invalid category");
     }

@@ -152,6 +152,37 @@ function toCompetitionDay(calendarDay, seasonData) {
   return calendarDay - springTrainingDays;
 }
 
+/**
+ * The competition day (1–49) a user-published article belongs to when it goes
+ * live right now. Derived from the season doc's schedule.startDate — the SAME
+ * source the client season clock uses — because the season doc carries no
+ * persisted `currentDay` field. Reading a non-existent `currentDay` was the bug
+ * that stamped every instant-published article (press releases, community
+ * submissions) as "Day 1" regardless of how far into the season it actually was.
+ *
+ * Uses the game day currently IN PROGRESS (getActiveCalendarDay), so an article
+ * written during day 14 lands in the day_14 bucket alongside that night's
+ * generated coverage, and clamps into the valid 1–49 range: a piece published
+ * during spring training belongs to day 1, one after finals to day 49, so the
+ * news_hub day path is always valid.
+ *
+ * @param {{status?: string, schedule?: {startDate?: unknown,
+ *   springTrainingDays?: number}}|null|undefined} seasonData - game-settings/season doc data.
+ * @param {Date} [now] - Injectable clock for tests; defaults to now.
+ * @returns {number|null} Competition day (1–49), or null if the season doc has
+ *   no usable start date (caller falls back to 1).
+ */
+function getActiveCompetitionDay(seasonData, now = new Date()) {
+  const rawStart = seasonData?.schedule?.startDate;
+  const startDate =
+    rawStart && typeof (/** @type {{toDate?: unknown}} */ (rawStart).toDate) === "function"
+      ? /** @type {{toDate: () => Date}} */ (rawStart).toDate()
+      : rawStart;
+  if (!(startDate instanceof Date) || isNaN(startDate.getTime())) return null;
+  const competitionDay = toCompetitionDay(getActiveCalendarDay(startDate, now), seasonData);
+  return Math.min(49, Math.max(1, competitionDay));
+}
+
 // Podium processes at 9 PM ET under the timezone-aware pipeline
 // (scheduled/dropDispatcher.js podiumNightly).
 const PODIUM_PROCESS_HOUR_ET = 21;
@@ -208,6 +239,7 @@ module.exports = {
   getActiveCalendarDay,
   getActivePodiumCalendarDay,
   toCompetitionDay,
+  getActiveCompetitionDay,
   getCurrentSeasonWeek,
   PODIUM_PROCESS_HOUR_ET,
 };

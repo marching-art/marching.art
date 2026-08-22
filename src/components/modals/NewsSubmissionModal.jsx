@@ -10,9 +10,10 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
+// A submitted news article is flaired for one of the game's two competition
+// worlds. The chosen id becomes the article's category (its feed/Discord flair).
 const CATEGORIES = [
-  { id: 'dci', name: 'DCI News', description: 'Corps announcements, show updates' },
-  { id: 'analysis', name: 'Analysis', description: 'Strategy tips, roster advice' },
+  { id: 'podium', name: 'Podium', description: 'Podium Class coverage' },
   { id: 'fantasy', name: 'Fantasy', description: 'Fantasy game updates, predictions' },
 ];
 
@@ -33,7 +34,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
     headline: '',
     summary: '',
     fullStory: '',
-    category: 'dci',
+    category: 'fantasy',
     imageOption: 'generate',
     imageUrl: '',
   });
@@ -156,7 +157,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                 <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
                   Category
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {CATEGORIES.map((cat) => (
                     <button
                       key={cat.id}

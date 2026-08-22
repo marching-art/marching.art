@@ -241,3 +241,58 @@ describe("getActivePodiumCalendarDay", () => {
     );
   });
 });
+
+describe("getActiveCompetitionDay", () => {
+  const { getActiveCompetitionDay } = require("./gameDay");
+  const season = (startIso, extra = {}) => ({
+    schedule: { startDate: new Date(startIso), ...extra },
+    ...(extra.status ? { status: extra.status } : {}),
+  });
+
+  test("off-season: the live in-progress day drives the article's day", () => {
+    // Season starts July 1 (off-season, no spring training). During Jul 14 the
+    // completed day is 13 and the active (in-progress) day is 14 — the day a
+    // press release published now belongs to. This is the exact "Day 1" bug:
+    // the season doc has no currentDay field, so it must come from the schedule.
+    assert.equal(
+      getActiveCompetitionDay(season("2026-07-01T00:00:00Z"), new Date("2026-07-14T18:00:00Z")),
+      14
+    );
+    assert.equal(
+      getActiveCompetitionDay(season("2026-07-01T00:00:00Z"), new Date("2026-07-01T18:00:00Z")),
+      1
+    );
+  });
+
+  test("live season: spring-training days are removed so competition day 1 is day 1", () => {
+    // 21 spring-training days; 24 days into the season is competition day 3.
+    const live = {
+      status: "live-season",
+      schedule: { startDate: new Date("2026-06-01T00:00:00Z"), springTrainingDays: 21 },
+    };
+    assert.equal(getActiveCompetitionDay(live, new Date("2026-06-24T18:00:00Z")), 3);
+  });
+
+  test("clamps into the valid 1–49 range", () => {
+    // Before competition (spring training) → day 1; after finals → day 49.
+    const live = {
+      status: "live-season",
+      schedule: { startDate: new Date("2026-06-01T00:00:00Z"), springTrainingDays: 21 },
+    };
+    assert.equal(getActiveCompetitionDay(live, new Date("2026-06-05T18:00:00Z")), 1);
+    assert.equal(
+      getActiveCompetitionDay(season("2026-07-01T00:00:00Z"), new Date("2026-12-01T18:00:00Z")),
+      49
+    );
+  });
+
+  test("accepts Firestore Timestamp-like start dates and returns null without one", () => {
+    const ts = { toDate: () => new Date("2026-07-01T00:00:00Z") };
+    assert.equal(
+      getActiveCompetitionDay({ schedule: { startDate: ts } }, new Date("2026-07-10T18:00:00Z")),
+      10
+    );
+    assert.equal(getActiveCompetitionDay({}), null);
+    assert.equal(getActiveCompetitionDay(null), null);
+  });
+});
