@@ -12,6 +12,7 @@ const {
   registrationEntryKey,
   collectRegistrationsFromProfile,
   buildEventDocs,
+  collectPodiumRegistrations,
 } = require("./showRegistrations");
 
 describe("showRegistrationEventKey", () => {
@@ -107,5 +108,89 @@ describe("buildEventDocs", () => {
     assert.equal(doc.eventName, "DCI Anytown");
     assert.equal(Object.keys(doc.registrations).length, 2);
     assert.equal(doc.registrations["alice-uid_soundSport"].corpsName, "Alice SS");
+  });
+});
+
+describe("collectPodiumRegistrations", () => {
+  const SEASON = "live_2026-26";
+  const params = { day: 15, eventName: "marching.art Mile High", activeSeasonId: SEASON };
+
+  test("keeps the corps whose pick for the day names this show", () => {
+    const entries = [
+      {
+        uid: "druski",
+        state: {
+          seasonUid: SEASON,
+          corpsName: "Altitude Podium",
+          selectedShows: { 15: { eventName: "marching.art Mile High", location: "Fort Collins, CO" } },
+        },
+      },
+    ];
+    const out = collectPodiumRegistrations(entries, params);
+    assert.deepEqual(out, [
+      { uid: "druski", corpsName: "Altitude Podium", corpsClass: "podiumClass", username: null },
+    ]);
+  });
+
+  test("matches when Firestore has stringified the day map keys", () => {
+    const entries = [
+      {
+        uid: "druski",
+        state: {
+          seasonUid: SEASON,
+          corpsName: "Altitude Podium",
+          selectedShows: { "15": { eventName: "marching.art Mile High" } },
+        },
+      },
+    ];
+    assert.equal(collectPodiumRegistrations(entries, params).length, 1);
+  });
+
+  test("skips a pick for the same day at a different show", () => {
+    const entries = [
+      {
+        uid: "someone",
+        state: {
+          seasonUid: SEASON,
+          corpsName: "Elsewhere Podium",
+          selectedShows: { 15: { eventName: "Some Other Show" } },
+        },
+      },
+    ];
+    assert.deepEqual(collectPodiumRegistrations(entries, params), []);
+  });
+
+  test("skips a corps with no pick on that day", () => {
+    const entries = [
+      {
+        uid: "someone",
+        state: { seasonUid: SEASON, corpsName: "No Pick", selectedShows: { 14: { eventName: "marching.art Mile High" } } },
+      },
+    ];
+    assert.deepEqual(collectPodiumRegistrations(entries, params), []);
+  });
+
+  test("skips a stale prior-season state even if its pick matches", () => {
+    const entries = [
+      {
+        uid: "druski",
+        state: {
+          seasonUid: "finale_2025-25",
+          corpsName: "Last Year",
+          selectedShows: { 15: { eventName: "marching.art Mile High" } },
+        },
+      },
+    ];
+    assert.deepEqual(collectPodiumRegistrations(entries, params), []);
+  });
+
+  test("falls back to a placeholder name and tolerates missing states", () => {
+    const entries = [
+      { uid: "nameless", state: { seasonUid: SEASON, selectedShows: { 15: { eventName: "marching.art Mile High" } } } },
+      { uid: "gone", state: null },
+    ];
+    const out = collectPodiumRegistrations(entries, params);
+    assert.equal(out.length, 1);
+    assert.equal(out[0].corpsName, "Podium Corps");
   });
 });

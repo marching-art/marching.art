@@ -10,7 +10,9 @@ const { processAllInPages } = require("../helpers/firestorePaging");
 const {
   showRegistrationEventKey,
   registrationEntryKey,
+  collectPodiumRegistrations,
 } = require("../helpers/showRegistrations");
+const podiumStore = require("../helpers/podium/store");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
@@ -277,34 +279,38 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   // the fantasy registration index. When the caller passes the show's day (the
   // hosted-show roster does), fold in every Podium corps whose pick for that day
   // names this show, so the roster and slot count include the Podium field.
-  // Bounded read: the array-contains query returns only corps with SOME pick on
-  // that day, not the whole Podium roster; a stale prior-season state is skipped
-  // by the seasonUid check.
   //
-  // REQUIRES a COLLECTION_GROUP-scoped single-field index on
-  // `podium.selectedShowDays` (arrayConfig CONTAINS) — see firestore.indexes.json.
-  // Firestore's automatic single-field indexes are collection-scoped only, so a
-  // collection-group query on a single field needs the explicit override; without
-  // it this query throws and the catch below silently drops the Podium field from
-  // the roster (the Firestore emulator does not enforce indexes, so tests pass).
+  // The efficient lookup would be a collection-group array-contains query on
+  // `podium.selectedShowDays`, but that needs a COLLECTION_GROUP index and the
+  // deploy pipeline intentionally never ships firestore.indexes.json (a `--force`
+  // deploy would delete console-managed indexes — see .github/workflows/
+  // deploy-functions.yml). Undeployed, that query throws FAILED_PRECONDITION and
+  // the catch below silently drops every Podium corps from hosted rosters — the
+  // bug this replaces. Instead enumerate the season's Podium roster
+  // (podium-season/{seasonUid}/corps — a plain collection read, no index) and
+  // batch-read the corps' states, exactly as the nightly processor does (the
+  // roster exists for this reason; helpers/podium/store.rosterCollection). A
+  // field mask keeps each state read to the three fields the match needs, and
+  // the roster is the bounded opt-in Podium field, not the whole player base.
   if (day != null) {
     try {
-      const podiumSnap = await db
-        .collectionGroup("podium")
-        .where("selectedShowDays", "array-contains", day)
-        .get();
-      for (const doc of podiumSnap.docs) {
-        const state = doc.data();
-        if (state.seasonUid !== activeSeasonId) continue;
-        const pick = state.selectedShows ? state.selectedShows[day] : null;
-        if (!pick || pick.eventName !== eventName) continue;
-        registrations.push({
-          uid: doc.ref.parent.parent?.id || null,
-          corpsName: state.corpsName || "Podium Corps",
-          corpsClass: "podiumClass",
-          username: null,
+      const rosterSnap = await podiumStore.rosterCollection(db, activeSeasonId).get();
+      const rosterUids = rosterSnap.docs.map((doc) => doc.id);
+      const GETALL_CHUNK = 300;
+      const entries = [];
+      for (let i = 0; i < rosterUids.length; i += GETALL_CHUNK) {
+        const chunkUids = rosterUids.slice(i, i + GETALL_CHUNK);
+        const snaps = await db.getAll(
+          ...chunkUids.map((uid) => podiumStore.stateRef(db, uid)),
+          { fieldMask: ["seasonUid", "corpsName", "selectedShows"] }
+        );
+        snaps.forEach((snap, j) => {
+          if (snap.exists) entries.push({ uid: chunkUids[j], state: snap.data() });
         });
       }
+      registrations.push(
+        ...collectPodiumRegistrations(entries, { day, eventName, activeSeasonId })
+      );
     } catch (podiumError) {
       logger.warn("Could not fold Podium corps into show registrations:", podiumError.message);
     }
