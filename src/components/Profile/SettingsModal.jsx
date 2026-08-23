@@ -550,9 +550,30 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                       <div>
                         <p className="text-sm font-bold text-red-400">Delete Your Account?</p>
                         <p className="text-xs text-muted mt-1">
-                          This action is permanent and cannot be undone. All your data, corps, and
-                          season history will be permanently deleted.
+                          This is permanent and cannot be undone. Here&apos;s exactly what happens:
                         </p>
+                        <ul className="text-xs text-muted mt-2 space-y-1 list-disc pl-4">
+                          <li>
+                            Your profile, corps, lineups, and season history are permanently
+                            deleted. A new account will <span className="font-bold">not</span> be
+                            able to reclaim them.
+                          </li>
+                          <li>
+                            Your username and every corps name you hold return to the open market
+                            for other directors to claim.
+                          </li>
+                          <li>
+                            You&apos;re removed from any upcoming shows you&apos;re registered for.
+                          </li>
+                          <li>
+                            Your past results stay in the record books, but they&apos;ll no longer
+                            show your name or link to your profile.
+                          </li>
+                          <li>
+                            Your comments stay on articles but are anonymized; your reactions are
+                            removed.
+                          </li>
+                        </ul>
                       </div>
                     </div>
                     <div>
