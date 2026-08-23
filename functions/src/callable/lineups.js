@@ -10,6 +10,7 @@ const {
   showRegistrationEventKey,
   registrationEntryKey,
 } = require("../helpers/showRegistrations");
+const { homeGeoFor } = require("../helpers/corpsGeo");
 const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
 const {
   getMaxShowsForWeek,
@@ -374,11 +375,14 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     if (seasonData.seasonUid) {
       try {
         const entryKey = registrationEntryKey(uid, corpsClass);
+        const corpsForClass = profile.corps?.[corpsClass] || {};
         const entry = {
           uid,
           corpsClass,
-          corpsName: profile.corps?.[corpsClass]?.corpsName || "Unnamed Corps",
+          corpsName: corpsForClass.corpsName || "Unnamed Corps",
           username: profile.username || null,
+          // Home coords for the encore (see showRegistrations.js / corpsGeo.js).
+          homeGeo: corpsForClass.homeGeo || homeGeoFor(corpsForClass.location) || null,
         };
         const eventRef = (key) =>
           db.doc(paths.showRegistrationEvent(seasonData.seasonUid, key));

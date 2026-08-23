@@ -183,6 +183,71 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     assert.equal(a.fantasySchedule.fieldSize, 3);
   });
 
+  test("assigns the encore to the closest-home registered corps", async () => {
+    const seed = seedWith();
+    // Give the field homes: Bethlehem is next to the Allentown, PA venue.
+    seed[paths.showRegistrationEvent("s1", regKeyA)].registrations = {
+      u1_worldClass: {
+        uid: "u1",
+        corpsClass: "worldClass",
+        corpsName: "Cadets",
+        homeGeo: { lat: 40.63, lng: -75.37, venueId: "bethlehem-pa" }, // ~near Allentown
+      },
+      u2_worldClass: {
+        uid: "u2",
+        corpsClass: "worldClass",
+        corpsName: "Bluecoats",
+        homeGeo: { lat: 41.08, lng: -81.52, venueId: "akron-oh" }, // far (OH)
+      },
+    };
+    const db = fakeDb(seed);
+    await enrichScheduleRunningOrdersLogic(db, { now: NOW });
+    const a = db.store.get("schedules/s1").competitions.find((c) => c.id === "a");
+    assert.ok(a.encore, "Show A has an encore");
+    assert.equal(a.encore.corps, "Cadets");
+    assert.equal(a.encore.reason, "proximity");
+  });
+
+  test("host corps gets the encore at its own hosted show", async () => {
+    const seed = seedWith([
+      {
+        id: "hosted",
+        name: "Bob's Classic",
+        day: 17,
+        week: 3,
+        location: "Allentown, PA",
+        date: "2026-06-17",
+        eventTier: "hosted",
+        hostUid: "u2",
+      },
+    ]);
+    const hostedKey = showRegistrationEventKey(3, "Bob's Classic", "2026-06-17");
+    seed[paths.showRegistrationEvent("s1", hostedKey)] = {
+      week: 3,
+      eventName: "Bob's Classic",
+      date: "2026-06-17",
+      registrations: {
+        u1_worldClass: {
+          uid: "u1",
+          corpsClass: "worldClass",
+          corpsName: "Cadets",
+          homeGeo: { lat: 40.6, lng: -75.4, venueId: "bethlehem-pa" }, // closer
+        },
+        u2_worldClass: {
+          uid: "u2",
+          corpsClass: "worldClass",
+          corpsName: "Bluecoats",
+          homeGeo: { lat: 41.08, lng: -81.52, venueId: "akron-oh" }, // farther, but host
+        },
+      },
+    };
+    const db = fakeDb(seed);
+    await enrichScheduleRunningOrdersLogic(db, { now: NOW });
+    const hosted = db.store.get("schedules/s1").competitions.find((c) => c.id === "hosted");
+    assert.equal(hosted.encore.corps, "Bluecoats"); // host wins over proximity
+    assert.equal(hosted.encore.reason, "host");
+  });
+
   test("no podium schedule when the feature is off", async () => {
     const db = fakeDb(seedWith());
     await enrichScheduleRunningOrdersLogic(db, {

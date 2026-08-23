@@ -5,6 +5,7 @@ const { getDb } = require("../config");
 const admin = require("firebase-admin");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
+const { homeGeoFor } = require("../helpers/corpsGeo");
 const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
 
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
@@ -96,6 +97,9 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     const newCorpsData = {
       corpsName,
       location,
+      // Cache the corps' home coordinates (encore proximity, see corpsGeo.js).
+      // null when the free-text location doesn't resolve to a known venue.
+      homeGeo: homeGeoFor(location),
       description: description || '',
       class: corpsClass,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),

@@ -71,7 +71,40 @@ describe("collectRegistrationsFromProfile", () => {
       corpsClass: "worldClass",
       corpsName: "Alice Corps",
       username: "alice",
+      homeGeo: null, // no location on this corps → unresolved
     });
+  });
+
+  test("stamps homeGeo from a corps' location for the encore", () => {
+    const withLocation = {
+      username: "bob",
+      corps: {
+        worldClass: {
+          corpsName: "Bob Corps",
+          location: "Allentown, PA",
+          selectedShows: { week1: [{ eventName: "Opener", date: "2026-06-20", day: 1 }] },
+        },
+      },
+    };
+    const [pair] = collectRegistrationsFromProfile("bob-uid", withLocation);
+    assert.ok(pair.entry.homeGeo, "location should resolve to coordinates");
+    assert.ok(Number.isFinite(pair.entry.homeGeo.lat));
+  });
+
+  test("prefers a homeGeo already cached on the corps", () => {
+    const cached = {
+      username: "cara",
+      corps: {
+        worldClass: {
+          corpsName: "Cara Corps",
+          location: "Allentown, PA",
+          homeGeo: { lat: 1, lng: 2, venueId: "cached-venue" },
+          selectedShows: { week1: [{ eventName: "Opener", date: "2026-06-20", day: 1 }] },
+        },
+      },
+    };
+    const [pair] = collectRegistrationsFromProfile("cara-uid", cached);
+    assert.equal(pair.entry.homeGeo.venueId, "cached-venue");
   });
 
   test("skips malformed shows and handles empty profiles", () => {

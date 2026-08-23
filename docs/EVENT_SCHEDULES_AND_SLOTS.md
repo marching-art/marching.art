@@ -6,20 +6,20 @@ built from the directors who actually registered, so a director can watch
 **their own corps take the field in real time**. Covers the slotting rule, the
 per-event fantasy/podium split, and the encore.
 
-> **Status: in progress.** Phases 1–3 are built; Phases 4–6 remain (see §10). It
-> deliberately reuses the running-order engine, the attendance index, and the
-> live UI that already exist — see [`SCHEDULE_SYSTEM.md`](SCHEDULE_SYSTEM.md),
+> **Status: built.** All six phases are implemented (see §10); the FCM push at
+> slot time and encore decline/bank remain as follow-ups (§11). It deliberately
+> reuses the running-order engine, the attendance index, and the live UI that
+> already exist — see [`SCHEDULE_SYSTEM.md`](SCHEDULE_SYSTEM.md),
 > [`SCORE_DROPS.md`](SCORE_DROPS.md), and [`PODIUM.md`](PODIUM.md).
 >
-> Built so far:
-> - **Phase 1** — fit-to-window mode in `helpers/scheduleModel.js`
->   (`deriveRunningOrder`, opt-in via `fitToWindow`).
-> - **Phase 2** — `helpers/showRunningOrder.js` (pure builder) +
->   `scheduled/scheduleRunningOrder.js` (twice-daily materializer writing
->   `competition.fantasySchedule`); client reads it via `transformCompetitionToShow`.
-> - **Phase 3** — the live personal layer: `RunningOrder` marks the director's own
->   corps (by uid), and `NextPerformancePanel` shows a "your corps takes the field"
->   banner driven by `pickMyNextPerformance` (both season types).
+> Source of truth:
+> - **Engine** — `helpers/scheduleModel.js` (`deriveRunningOrder` + `fitToWindow`).
+> - **Builder** — `helpers/showRunningOrder.js` (pure real-field order).
+> - **Materializer** — `scheduled/scheduleRunningOrder.js` (twice-daily; writes
+>   `competition.fantasySchedule`, `competition.podiumSchedule`, `competition.encore`).
+> - **Geo/encore** — `helpers/corpsGeo.js`, `helpers/encore.js`.
+> - **Client** — `RunningOrder.jsx`, `DualRunningOrder.jsx`, `NextPerformancePanel.jsx`,
+>   consuming via `transformCompetitionToShow` + the personal helpers in `scheduleUtils.js`.
 
 Related source-of-truth files this design builds on:
 
@@ -270,12 +270,17 @@ read per night, matching the cost profile of the existing nightly jobs.
 3. ✅ **Live personal layer.** "Your corps takes the field" banner + On-Field for
    the director's own corps (matched by uid), both season types. (FCM push at
    slot time is still open — see §11.)
-4. **Podium schedule.** Second running order from `collectPodiumRegistrations`;
-   Fantasy/Podium toggle on the event card.
-5. **Proximity plumbing.** Geocode + cache `homeGeo` at registration/rename;
-   backfill existing corps once.
-6. **Encore.** Nearest-eligible assignment + host default + absolute season cap +
-   the host-after-encore edge case; encore banner. Decline/bank last.
+4. ✅ **Podium schedule.** Second running order from `collectPodiumRegistrations`
+   (carrying `lastTotal` as the metric); `DualRunningOrder` Fantasy/Podium toggle.
+5. ✅ **Proximity plumbing.** `homeGeoFor` (gazetteer lookup) caches `homeGeo` on
+   the corps at register/create, and `collectRegistrationsFromProfile` derives it
+   into the registration index — so the index **self-heals** for existing corps on
+   the next nightly rebuild, and no separate backfill migration is needed.
+6. ✅ **Encore.** `helpers/encore.js` — nearest-eligible assignment, host default,
+   absolute 1/corps/season cap consumed chronologically (a date-ordered pass in
+   the materializer), and the host-after-encore edge case. Encore footer in the
+   running order + a "You're the encore" banner on the dashboard. Decline/bank is
+   a follow-up (§11).
 
 ---
 

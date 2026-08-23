@@ -125,6 +125,18 @@ describe('transformCompetitionToShow — fantasy schedule preference', () => {
     const show = transformCompetitionToShow({ ...heritage, podiumSchedule });
     expect(show.podiumSchedule).toBe(podiumSchedule);
   });
+
+  it('exposes the encore corps', () => {
+    const encore = {
+      uid: 'u2',
+      corpsClass: 'worldClass',
+      corps: 'Local Corps',
+      reason: 'proximity',
+    };
+    const show = transformCompetitionToShow({ ...heritage, encore });
+    expect(show.encore).toBe(encore);
+    expect(transformCompetitionToShow(heritage).encore).toBe(null);
+  });
 });
 
 describe('personal performance status (the "my corps right now" element)', () => {

@@ -29,6 +29,8 @@ const { buildShowRunningOrder } = require("../helpers/showRunningOrder");
 const { showRegistrationEventKey, collectPodiumRegistrations } = require("../helpers/showRegistrations");
 const { zonedWallTimeToUtc } = require("../helpers/eventDetails");
 const { isPodiumEnabled } = require("../helpers/features");
+const { homeGeoFor } = require("../helpers/corpsGeo");
+const { assignEncore, encoreKey } = require("../helpers/encore");
 const podiumStore = require("../helpers/podium/store");
 
 // Batch size for the getAll fan-out over Podium state docs (matches users.js).
@@ -216,11 +218,21 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
   let updated = 0;
   let built = 0;
   const out = [];
+  // Encore is assigned in a second, date-ordered pass so the 1-per-season cap is
+  // consumed chronologically. Frozen (pre-window) shows seed the used set; window
+  // shows are (re)assigned. { entry, registrations, venueGeo, hostUid }.
+  const encoreCandidates = [];
+  const usedKeys = new Set();
   for (const comp of competitions) {
     const entry = { ...comp };
     const date = competitionDate(comp, seasonStartDate);
     const daysFromNow = date ? Math.floor((date.getTime() - now) / DAY_MS) : null;
     const inWindow = daysFromNow !== null && daysFromNow >= -1 && daysFromNow <= HORIZON_DAYS;
+
+    // A frozen past show's encore already consumed that corps' season slot.
+    if (daysFromNow !== null && daysFromNow < -1 && comp.encore && comp.encore.uid) {
+      usedKeys.add(encoreKey(comp.encore));
+    }
 
     if (date && inWindow && !isChampionship(comp)) {
       const week = comp.week || Math.ceil((comp.day || 1) / 7);
@@ -233,6 +245,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
               uid: r.uid || null,
               corpsClass: r.corpsClass,
               corpsName: r.corpsName || "Unnamed Corps",
+              homeGeo: r.homeGeo || null,
             }))
           : [];
         built += 1;
@@ -272,11 +285,38 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
             entry.podiumSchedule = { ...podium, updatedAt: new Date().toISOString() };
           }
         }
+
+        // Stash for the chronological encore pass (fantasy field only).
+        encoreCandidates.push({
+          entry,
+          date,
+          registrations,
+          venueGeo: homeGeoFor(comp.location),
+          hostUid: comp.hostUid || null,
+        });
       } catch (err) {
         logger.warn(`[running-order] build failed for ${comp.name}: ${err.message}`);
       }
     }
     out.push(entry);
+  }
+
+  // Encore pass: assign in date order so the season cap is consumed
+  // chronologically. Each assignment marks that corps used for later shows.
+  encoreCandidates.sort((a, b) => a.date.getTime() - b.date.getTime());
+  for (const cand of encoreCandidates) {
+    const encore = assignEncore({
+      registrations: cand.registrations,
+      venueGeo: cand.venueGeo,
+      usedKeys,
+      hostUid: cand.hostUid,
+    });
+    if (encore) usedKeys.add(encoreKey(encore));
+    const sig = (e) => (e && e.uid ? `${e.uid}|${e.reason}` : "");
+    if (sig(cand.entry.encore) !== sig(encore)) {
+      updated += 1;
+      cand.entry.encore = encore; // may be null → clears a stale encore
+    }
   }
 
   if (updated > 0) {

@@ -55,6 +55,8 @@ export function transformCompetitionToShow(competition) {
     podiumSchedule: ps,
     overflow: fs?.overflow ?? null,
     fieldSize: fs?.fieldSize ?? null,
+    // The cosmetic encore corps for this show ({ uid, corpsClass, corps, reason }).
+    encore: competition.encore || null,
     // Legacy show sponsorship ("Presented by <corps>") — the purchase was
     // retired in favor of hosted events; old schedule docs still render it.
     sponsor: competition.sponsor || null,

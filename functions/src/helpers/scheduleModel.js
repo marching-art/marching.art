@@ -143,7 +143,7 @@ function layoutLineup(performers, start, interval, intermissionAfter, C) {
  * @param {Array} performers ordered worst-to-best
  * @param {Object} fw fit-to-window options
  * @param {Object} C constants
- * @returns {{start, interval, kept, overflow}}
+ * @returns {{start:number, interval:number, kept:Array, overflow:Array, intermissionAfter:number}}
  */
 function fitToWindowLayout(performers, fw, C) {
   const window = fw.windowMinutes ?? C.defaultWindowMinutes;

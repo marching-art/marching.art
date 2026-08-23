@@ -20,6 +20,8 @@
  * clients cannot read or write it directly.
  */
 
+const { homeGeoFor } = require("./corpsGeo");
+
 /**
  * Deterministic document key for an event. base64url keeps arbitrary event
  * names (slashes, unicode) safe as a single Firestore doc id.
@@ -63,6 +65,10 @@ function collectRegistrationsFromProfile(uid, profile) {
             corpsClass,
             corpsName: corpsData.corpsName || "Unnamed Corps",
             username: profile.username || null,
+            // Home coordinates for the encore (nearest-to-venue). Prefer a value
+            // cached on the corps; otherwise derive from its free-text location so
+            // the index self-heals for corps registered before the cache existed.
+            homeGeo: corpsData.homeGeo || homeGeoFor(corpsData.location) || null,
           },
         });
       }

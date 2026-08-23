@@ -12,6 +12,7 @@ const {
   registrationEntryKey,
   collectPodiumRegistrations,
 } = require("../helpers/showRegistrations");
+const { homeGeoFor } = require("../helpers/corpsGeo");
 const podiumStore = require("../helpers/podium/store");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
@@ -262,6 +263,7 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
               corpsClass,
               corpsName: corps.corpsName || "Unnamed Corps",
               username: profile.username || null,
+              homeGeo: corps.homeGeo || homeGeoFor(corps.location) || null,
             };
           }
         }

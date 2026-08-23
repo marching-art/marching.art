@@ -1,7 +1,7 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarClock, Radio, MapPin, ChevronRight } from 'lucide-react';
+import { CalendarClock, Radio, MapPin, ChevronRight, Star } from 'lucide-react';
 import {
   isShowLive,
   showStartsAtDate,
@@ -145,6 +145,16 @@ const NextPerformancePanel = ({
     [joinedShows, myUid, now]
   );
 
+  // A little jolt of pride: is the director's corps the encore at one of their
+  // shows? Cosmetic, but the whole point — surface it prominently.
+  const myEncore = useMemo(() => {
+    if (!myUid) return null;
+    for (const show of joinedShows) {
+      if (show.encore && show.encore.uid === myUid) return { show, encore: show.encore };
+    }
+    return null;
+  }, [joinedShows, myUid]);
+
   // "Your picks are live": scan TODAY's shows for performers in the director's roster.
   const spotlight = useMemo(() => {
     if (picksByCorps.size === 0) return [];
@@ -170,7 +180,7 @@ const NextPerformancePanel = ({
   }, [competitions, picksByCorps, now]);
 
   // Inert when there's nothing enriched to show.
-  if (!nextCompetition && spotlight.length === 0 && !myNext) return null;
+  if (!nextCompetition && spotlight.length === 0 && !myNext && !myEncore) return null;
 
   const nextLive = nextCompetition && isShowLive(nextCompetition, now);
 
@@ -227,6 +237,23 @@ const NextPerformancePanel = ({
             {myPerformLabel && !myOnField && (
               <span className="text-secondary"> · {myPerformLabel}</span>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* You're the encore — cosmetic pride moment */}
+      {myEncore && (
+        <div className="px-4 py-3 border-b border-line bg-brand/10">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Star className="w-3.5 h-3.5 text-brand fill-brand" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-brand">
+              You're the encore
+            </span>
+          </div>
+          <div className="text-sm text-white">
+            <span className="font-bold">{myEncore.encore.corps}</span> performs the encore at{' '}
+            {formatEventName(myEncore.show.eventName)}
+            {myEncore.encore.reason === 'host' ? ' — your home field.' : ' — hometown crowd.'}
           </div>
         </div>
       )}

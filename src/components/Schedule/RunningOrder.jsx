@@ -45,6 +45,10 @@ const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false
   // corps that competed and scored but didn't fit the timed order on a huge night.
   const overflow = Array.isArray(show?.overflow) ? show.overflow : [];
 
+  // The cosmetic encore corps (performs after scores read). Mine if uid matches.
+  const encore = show?.encore && show.encore.corps ? show.encore : null;
+  const encoreMine = !!(encore && myUid && encore.uid === myUid);
+
   const { current, next } = getRunningOrderStatus(show, now);
   const currentOrder = current?.order ?? null;
   const nextOrder = next?.order ?? null;
@@ -152,6 +156,36 @@ const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false
               );
             })}
           </div>
+        </div>
+      )}
+
+      {encore && (
+        <div
+          className={`px-4 py-2.5 border-t border-line flex items-center justify-between gap-2 ${
+            encoreMine ? 'bg-brand/15' : 'bg-surface-raised/40'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Star
+              className={`w-3.5 h-3.5 flex-shrink-0 ${encoreMine ? 'text-brand fill-brand' : 'text-brand'}`}
+            />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-brand">
+              Encore
+            </span>
+            <span
+              className={`text-sm truncate ${encoreMine ? 'text-brand font-semibold' : 'text-white'}`}
+            >
+              {encore.corps}
+            </span>
+            {encoreMine && (
+              <span className="text-[9px] font-bold uppercase tracking-wider text-brand/80 flex-shrink-0">
+                You
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted flex-shrink-0">
+            {encore.reason === 'host' ? 'Home field' : 'Hometown crowd'}
+          </span>
         </div>
       )}
     </div>
