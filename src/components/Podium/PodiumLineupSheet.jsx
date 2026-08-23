@@ -16,10 +16,14 @@
 // blocks are spent (or it's a rest day) the fantasy lineups lead and Rehearse
 // drops to a secondary row. With no fantasy corps at all there is nothing to
 // switch to, so it's just the planner.
+//
+// Rendered through the shared Modal, so it's a bottom sheet on mobile (where
+// the Lineup nav tab lives) and a centered dialog on desktop (reached via the
+// ?panel=lineup deep link).
 
 import React from 'react';
 import { Medal, Music, ArrowRight, AlertCircle } from 'lucide-react';
-import { BottomSheet } from '../ui/BottomSheet';
+import { Modal } from '../ui';
 import { triggerHaptic } from '../../hooks/useHaptic';
 
 // The Podium daily-verb CTA. `prominent` renders it as the lead action (brand
@@ -145,8 +149,12 @@ export default function PodiumLineupSheet({
   );
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Lineup" snapPoints={[70]}>
-      <div className="px-4 py-4 space-y-4 overflow-y-auto">
+    // The shared Modal is a bottom sheet on mobile and a centered dialog on sm+
+    // (Modal.tsx), which is the right shape here: the Lineup tab that opens this
+    // is a mobile nav control, but the ?panel=lineup route reaches it on desktop
+    // too, where a centered dialog belongs.
+    <Modal isOpen={isOpen} onClose={onClose} title="Lineup" size="md">
+      <div className="px-4 py-4 space-y-4">
         <p className="text-xs text-secondary leading-snug">
           You&apos;re in <span className="font-bold text-brand">Podium</span> — a director
           simulation with no drafted lineup.
@@ -164,6 +172,6 @@ export default function PodiumLineupSheet({
           </>
         )}
       </div>
-    </BottomSheet>
+    </Modal>
   );
 }
