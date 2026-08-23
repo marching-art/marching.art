@@ -6,6 +6,23 @@ const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { detachMemberFromLeague } = require("../helpers/leagueLifecycle");
+const { collectRegistrationsFromProfile } = require("../helpers/showRegistrations");
+const { eraseDirectorFromResults } = require("../helpers/accountErasure");
+
+/**
+ * Apply a list of write operations across as many Firestore batches as needed,
+ * staying under the 500-op batch limit. Each op is a function that receives the
+ * current batch and enqueues one write. Used by account deletion to anonymize a
+ * potentially large fan-out (a prolific commenter's threads) without a single
+ * oversized batch.
+ */
+async function commitInChunks(db, ops, chunkSize = 400) {
+  for (let i = 0; i < ops.length; i += chunkSize) {
+    const batch = db.batch();
+    for (const applyOp of ops.slice(i, i + chunkSize)) applyOp(batch);
+    await batch.commit();
+  }
+}
 
 /**
  * Update user profile information
@@ -372,7 +389,10 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
  * This permanently deletes the user's account from Firebase Auth
  * and removes all their data from Firestore
  */
-exports.deleteAccount = onCall({ cors: true }, async (request) => {
+// Longer timeout than the default: deletion now sweeps the full recap history
+// (fantasy + podium) to anonymize this director's past results, which is bounded
+// by the game's history rather than a constant.
+exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300 }, async (request) => {
   const userId = assertAuth(request);
 
   // Abuse throttle (shared profile bucket) — far above any human rate.
@@ -399,11 +419,15 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
 
     const userDocRef = db.doc(paths.user(userId));
 
-    // OPTIMIZATION: Fetch subcollections in parallel instead of sequentially
-    const [corpsSnapshot, notificationsSnapshot, supporterSnap] = await Promise.all([
+    // OPTIMIZATION: Fetch subcollections in parallel instead of sequentially.
+    // corpsNamesSnap holds every corps-name reservation this account owns, in
+    // any season (corpsnames/{seasonUid}_{name}), so the names can be released
+    // back to the open market below.
+    const [corpsSnapshot, notificationsSnapshot, supporterSnap, corpsNamesSnap] = await Promise.all([
       userDocRef.collection('corps').get(),
       userDocRef.collection('notifications').get(),
       supporterRef ? supporterRef.get() : Promise.resolve(null),
+      db.collection('corpsnames').where('uid', '==', userId).get(),
     ]);
 
     // OPTIMIZATION: Single batch for all deletions instead of 3 separate commits
@@ -430,6 +454,16 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
 
     // Delete notifications subcollection documents
     notificationsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    // Release every corps-name reservation back to the open market. The name is
+    // globally unique per season (registerCorps / processCorpsDecisions block a
+    // name any reservation already holds, including a retired account's), so a
+    // deleted director's names would otherwise stay locked forever. Historical
+    // recaps keep showing the corps name as text — releasing the reservation
+    // only frees the name for a future director to claim.
+    corpsNamesSnap.docs.forEach(doc => {
       batch.delete(doc.ref);
     });
 
@@ -460,6 +494,93 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
 
     // Single atomic commit for all Firestore deletions
     await batch.commit();
+
+    // Drop the user out of the materialized "who's attending" show index so the
+    // deleted account stops appearing on upcoming show pages (and in the running
+    // order) before the nightly rebuild would otherwise self-heal it. The index
+    // is keyed by the active season's uid; the user's registrations are derived
+    // from the profile we already read (its selectedShows are the source of
+    // truth), and each of their `${uid}_${corpsClass}` entries is removed from
+    // the event docs it appears in. Best-effort — the profile (source of truth)
+    // is already gone, and the nightly rebuild reconciles anything missed here.
+    if (profileDoc.exists) {
+      try {
+        const seasonDoc = await db.doc("game-settings/season").get();
+        const seasonUid = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
+        if (seasonUid) {
+          // eventKey -> set of this user's registration entry keys on that event.
+          const entryKeysByEvent = new Map();
+          for (const { key, entryKey } of collectRegistrationsFromProfile(userId, profileDoc.data())) {
+            if (!entryKeysByEvent.has(key)) entryKeysByEvent.set(key, new Set());
+            entryKeysByEvent.get(key).add(entryKey);
+          }
+          if (entryKeysByEvent.size > 0) {
+            const regBatch = db.batch();
+            for (const [eventKey, entryKeys] of entryKeysByEvent) {
+              const registrations = {};
+              for (const entryKey of entryKeys) {
+                registrations[entryKey] = FieldValue.delete();
+              }
+              regBatch.set(
+                db.doc(paths.showRegistrationEvent(seasonUid, eventKey)),
+                { registrations },
+                { merge: true }
+              );
+            }
+            await regBatch.commit();
+          }
+        }
+      } catch (indexError) {
+        logger.warn(`Show-registration cleanup failed for ${userId} (self-heals nightly):`, indexError);
+      }
+    }
+
+    // Anonymize the account's public footprint that OUTLIVES the profile:
+    // article comments, article likes, and historical results. Each step is
+    // best-effort — the account is already deleted from the app's point of view,
+    // and none of these should block or fail the deletion. They are also
+    // idempotent, so a partial run is safe to leave as-is.
+
+    // Comments stay on the article (removing them would gut threads other
+    // readers replied to) but lose their author: null the identity, keep the
+    // text. Likes are anonymous already — only the per-user reaction doc ties a
+    // like to a person, and the aggregate count lives elsewhere — so deleting
+    // those docs keeps every article's like COUNT while dropping the attribution.
+    try {
+      const [commentsSnap, reactionsSnap] = await Promise.all([
+        db.collection("article_comments").where("userId", "==", userId).get(),
+        db.collection("article_user_reactions").where("userId", "==", userId).get(),
+      ]);
+      const ANON_NAME = "Former Director";
+      const ops = [];
+      commentsSnap.docs.forEach((doc) => {
+        ops.push((batch) => batch.update(doc.ref, {
+          userId: null,
+          userName: ANON_NAME,
+          userTitle: null,
+          anonymized: true,
+        }));
+      });
+      reactionsSnap.docs.forEach((doc) => {
+        ops.push((batch) => batch.delete(doc.ref));
+      });
+      await commitInChunks(db, ops);
+    } catch (commentError) {
+      logger.warn(`Comment/like anonymization failed for ${userId}:`, commentError);
+    }
+
+    // Historical results (recaps, Podium standings, Hall of Champions) keep the
+    // corps and its scores but must stop naming or linking to the deleted
+    // director — see helpers/accountErasure.js.
+    try {
+      const stats = await eraseDirectorFromResults(db, userId);
+      logger.info(
+        `Anonymized results for ${userId}: ${stats.recapDays} recap days, ` +
+          `${stats.standings} standings, ${stats.champions} champion docs.`
+      );
+    } catch (resultsError) {
+      logger.warn(`Results anonymization failed for ${userId}:`, resultsError);
+    }
 
     // Delete the user from Firebase Auth
     await admin.auth().deleteUser(userId);
