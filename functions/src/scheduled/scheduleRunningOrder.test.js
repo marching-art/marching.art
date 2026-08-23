@@ -91,12 +91,14 @@ describe("isChampionship / competitionDate", () => {
 });
 
 describe("enrichScheduleRunningOrdersLogic", () => {
-  test("materializes only the in-window regular show, slotted worst-to-best", async () => {
+  test("materializes every upcoming show with a field, slotted worst-to-best", async () => {
     const db = fakeDb(seedWith());
     const res = await enrichScheduleRunningOrdersLogic(db, { now: NOW });
 
-    assert.equal(res.built, 1, "only Show A is in-window and non-championship");
-    assert.equal(res.updated, 1);
+    // Show A and the far show are both upcoming (whole-season window); only Show A
+    // has a field, so only it is written. Past + championship are skipped.
+    assert.equal(res.built, 2, "Show A + far are processed; past & champ skipped");
+    assert.equal(res.updated, 1, "only Show A has a field to write");
     assert.equal(db.writes.length, 1);
 
     const comps = db.store.get("schedules/s1").competitions;
@@ -108,7 +110,7 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     assert.ok(byId.a.fantasySchedule.scoresAt, "has a scores-read instant");
     assert.equal(byId.a.fantasySchedule.lineup[2].uid, "u2");
 
-    // Skipped comps carry no fantasySchedule.
+    // No field / skipped comps carry no fantasySchedule (empty writes are guarded).
     assert.equal(byId.past.fantasySchedule, undefined);
     assert.equal(byId.far.fantasySchedule, undefined);
     assert.equal(byId.champ.fantasySchedule, undefined);
@@ -123,12 +125,30 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     assert.equal(db.writes.length, writesAfterFirst, "no second write");
   });
 
-  test("a show with no registrations records an empty field, not a throw", async () => {
+  test("a show with no registrations and no prior schedule writes nothing (no churn)", async () => {
     const seed = seedWith();
     delete seed[paths.showRegistrationEvent("s1", regKeyA)];
     const db = fakeDb(seed);
     const res = await enrichScheduleRunningOrdersLogic(db, { now: NOW });
-    assert.equal(res.built, 1);
+    assert.equal(res.built, 2); // Show A + far both processed, both empty
+    assert.equal(res.updated, 0); // nothing written — the roster covers "who's in"
+    const a = db.store.get("schedules/s1").competitions.find((c) => c.id === "a");
+    assert.equal(a.fantasySchedule, undefined);
+  });
+
+  test("clears a fantasySchedule when its field empties out", async () => {
+    const seed = seedWith();
+    // Show A already has a materialized schedule, but its registrations are gone.
+    delete seed[paths.showRegistrationEvent("s1", regKeyA)];
+    seed["schedules/s1"].competitions.find((c) => c.id === "a").fantasySchedule = {
+      fieldSize: 3,
+      lineup: [{ order: 1, uid: "u1", corps: "Cadets" }],
+      overflow: [],
+      intervalMin: 17,
+      scoresAt: "2026-06-18T21:00:00Z",
+    };
+    const db = fakeDb(seed);
+    await enrichScheduleRunningOrdersLogic(db, { now: NOW });
     const a = db.store.get("schedules/s1").competitions.find((c) => c.id === "a");
     assert.equal(a.fantasySchedule.fieldSize, 0);
     assert.deepEqual(a.fantasySchedule.lineup, []);
