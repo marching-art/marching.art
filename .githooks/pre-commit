@@ -1,0 +1,21 @@
+#!/bin/sh
+# Auto-format staged files with Prettier before every commit, so the CI
+# `format:check` gate (see .github/workflows/ci.yml) can never fail on a
+# push. Activated by `git config core.hooksPath .githooks`, which the
+# package.json "prepare" script runs automatically on `npm install`.
+#
+# Only staged, Prettier-supported files are touched. `--ignore-unknown`
+# skips file types Prettier can't parse, and `.prettierignore` is respected
+# (functions/, functions-scraper/, generated mirrors, etc. are left alone).
+
+# Collect staged, non-deleted files (Added/Copied/Modified/Renamed).
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$files" ] && exit 0
+
+# Format them in place, ignoring unsupported/ignored files.
+printf '%s\n' "$files" | xargs npx --no-install prettier --write --ignore-unknown
+
+# Re-stage anything Prettier rewrote so the commit includes the fixes.
+printf '%s\n' "$files" | xargs git add
+
+exit 0
