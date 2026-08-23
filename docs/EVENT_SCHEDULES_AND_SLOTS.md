@@ -293,7 +293,7 @@ Built after the six phases:
   (`buildTakeTheFieldPushes`, pure) + `takeTheFieldPushJob` (every 15 min through
   the evening window, ET) + `sendTakeTheFieldPush` (PUSH*TYPES.PERFORMANCE). A
   per-day `push_ledger/{seasonUid}\_takefield*{ET-date}`dedups so each slot fires
-once. Defaults on; directors can opt out via the`performance` push preference.
+  once. Defaults on; directors can opt out via the`performance` push preference.
 - ✅ **Encore decline / bank.** `setEncoreDecline` callable stores a per-event
   opt-out on the corps (`declinedEncores`) and patches the index; `assignEncore`
   skips a declined corps WITHOUT consuming its season cap, so it banks for a
