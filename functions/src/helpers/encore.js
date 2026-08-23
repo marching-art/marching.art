@@ -29,7 +29,8 @@ function encoreKey(reg) {
  *
  * @param {Object} params
  * @param {Array<{uid:string|null, corpsClass:string, corpsName:string,
- *   homeGeo?:{lat:number,lng:number}|null}>} params.registrations - the field.
+ *   homeGeo?:{lat:number,lng:number}|null, encoreDeclined?:boolean}>} params.registrations
+ *   - the field. `encoreDeclined` corps have banked their encore for a later show.
  * @param {{lat:number,lng:number}|null} params.venueGeo - the show's coordinates.
  * @param {Set<string>} params.usedKeys - corps (encoreKey) already used this season.
  * @param {string|null} [params.hostUid] - the show's host, if director-hosted.
@@ -37,7 +38,11 @@ function encoreKey(reg) {
  *   reason:('host'|'proximity'), miles:(number|null)}|null}
  */
 function assignEncore({ registrations = [], venueGeo, usedKeys = new Set(), hostUid = null }) {
-  const eligible = registrations.filter((r) => r.uid && !usedKeys.has(encoreKey(r)));
+  // A corps that declined here (banking for later) is skipped, and — crucially —
+  // is NOT added to usedKeys by the caller, so it stays eligible elsewhere.
+  const eligible = registrations.filter(
+    (r) => r.uid && !r.encoreDeclined && !usedKeys.has(encoreKey(r))
+  );
   if (eligible.length === 0) return null;
 
   // Host default — their own show, if they haven't already spent their encore.

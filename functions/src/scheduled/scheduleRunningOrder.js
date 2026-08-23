@@ -246,6 +246,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
               corpsClass: r.corpsClass,
               corpsName: r.corpsName || "Unnamed Corps",
               homeGeo: r.homeGeo || null,
+              encoreDeclined: r.encoreDeclined === true,
             }))
           : [];
         built += 1;

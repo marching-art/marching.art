@@ -85,6 +85,10 @@ export const saveShowConcept = createCallable<
   },
   { success: boolean; message: string }
 >('saveShowConcept');
+export const setEncoreDecline = createCallable<
+  { week: number; eventName: string; date?: string | null; corpsClass: string; declined: boolean },
+  { success: boolean; declined: boolean }
+>('setEncoreDecline');
 export const getHotCorps = createCallable<void, { hotCorps: Record<string, unknown> }>(
   'getHotCorps'
 );

@@ -44,6 +44,7 @@ const {
   saveLineup,
   selectUserShows,
   saveShowConcept,
+  setEncoreDecline,
   getLineupAnalytics,
   getHotCorps,
 } = require("./src/callable/lineups");
@@ -227,6 +228,7 @@ const {
   weeklyMatchupPushJob,
   scoreDropPushJob,
   lineupLockReminderPushJob,
+  takeTheFieldPushJob,
 } = require("./src/scheduled/pushNotifications");
 const {
   autoPublishScheduledSubmissions,
@@ -307,6 +309,7 @@ module.exports = {
   saveLineup,
   selectUserShows,
   saveShowConcept,
+  setEncoreDecline,
   getLineupAnalytics,
   getHotCorps,
   createLeague,
@@ -536,6 +539,7 @@ module.exports = {
   weeklyMatchupPushJob,
   scoreDropPushJob,
   lineupLockReminderPushJob,
+  takeTheFieldPushJob,
 
   // Push Triggers
   onLeagueMemberJoined,

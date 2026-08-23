@@ -937,6 +937,58 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "Could not validate lineup.");
   }
 });
+/**
+ * Bank (decline) or re-accept the cosmetic encore for one of the director's
+ * corps at a specific show. Declining marks the corps as opted out for THAT
+ * show, so the nightly encore pass skips it there (banking the once-per-season
+ * encore for a later show — e.g. a planned hosted show). Writes the profile
+ * (source of truth) and patches the registration index so the next materializer
+ * run reflects it without waiting for the nightly rebuild.
+ *
+ * data: { week, eventName, date?, corpsClass, declined:boolean }
+ */
+exports.setEncoreDecline = onCall({ cors: true }, async (request) => {
+  const uid = assertAuth(request);
+  const { week, eventName, corpsClass } = request.data || {};
+  const date = request.data?.date ?? null;
+  const declined = request.data?.declined === true;
+  if (!Number.isInteger(week) || !eventName || !corpsClass) {
+    throw new HttpsError("invalid-argument", "week, eventName and corpsClass are required.");
+  }
+  const db = getDb();
+  await assertWriteBudget(db, uid, "lineups", { max: 120, windowMs: 10 * 60 * 1000 });
+
+  const profileRef = db.doc(paths.userProfile(uid));
+  const profileSnap = await profileRef.get();
+  const corps = profileSnap.exists ? profileSnap.data().corps || {} : {};
+  if (!corps[corpsClass]) {
+    throw new HttpsError("failed-precondition", `No ${corpsClass} corps to set an encore for.`);
+  }
+
+  const eventKey = showRegistrationEventKey(week, eventName, date);
+  const field = `corps.${corpsClass}.declinedEncores.${eventKey}`;
+  await profileRef.update({
+    [field]: declined ? true : admin.firestore.FieldValue.delete(),
+  });
+
+  // Best-effort index patch so the encore reassigns promptly; the nightly
+  // rebuild re-derives it from the profile regardless.
+  try {
+    const seasonSnap = await db.doc("game-settings/season").get();
+    const seasonUid = seasonSnap.exists ? seasonSnap.data().seasonUid : null;
+    if (seasonUid) {
+      const entryKey = registrationEntryKey(uid, corpsClass);
+      await db
+        .doc(paths.showRegistrationEvent(seasonUid, eventKey))
+        .set({ registrations: { [entryKey]: { encoreDeclined: declined } } }, { merge: true });
+    }
+  } catch (error) {
+    logger.warn(`setEncoreDecline index patch failed: ${error.message}`);
+  }
+
+  return { success: true, declined };
+});
+
 // Pure validators re-exported for unit tests (they live in
 // helpers/showSelection.js; never registered as functions — index.js
 // destructures specific callables only).

@@ -63,6 +63,29 @@ describe("assignEncore", () => {
     assert.equal(e.reason, "proximity");
   });
 
+  test("a corps that declined (banked) here is skipped, next-closest gets it", () => {
+    const near = { lat: 40.1, lng: -75.1 };
+    const registrations = [
+      { ...reg("u1", "Banker", near), encoreDeclined: true }, // closest, but banked
+      reg("u2", "Taker", mid),
+    ];
+    const e = assignEncore({ registrations, venueGeo: VENUE, usedKeys: new Set() });
+    assert.equal(e.corps, "Taker");
+  });
+
+  test("declining even applies to the host default", () => {
+    const e = assignEncore({
+      registrations: [
+        { ...reg("host", "Host Corps", far), encoreDeclined: true },
+        reg("u2", "Near", near),
+      ],
+      venueGeo: VENUE,
+      usedKeys: new Set(),
+      hostUid: "host",
+    });
+    assert.equal(e.corps, "Near"); // host banked theirs → proximity fallback
+  });
+
   test("corps with no resolvable home are skipped for proximity", () => {
     const e = assignEncore({
       registrations: [reg("u1", "NoHome", null), reg("u2", "Near", near)],

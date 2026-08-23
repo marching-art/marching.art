@@ -52,10 +52,12 @@ function collectRegistrationsFromProfile(uid, profile) {
     for (const weekKey of Object.keys(selectedShows)) {
       const week = parseInt(String(weekKey).replace(/^week/, ""), 10);
       if (!Number.isFinite(week)) continue;
+      const declined = corpsData.declinedEncores || {};
       for (const show of selectedShows[weekKey] || []) {
         if (!show || typeof show.eventName !== "string" || !show.eventName) continue;
+        const key = showRegistrationEventKey(week, show.eventName, show.date);
         out.push({
-          key: showRegistrationEventKey(week, show.eventName, show.date),
+          key,
           week,
           eventName: show.eventName,
           date: show.date ?? null,
@@ -69,6 +71,8 @@ function collectRegistrationsFromProfile(uid, profile) {
             // cached on the corps; otherwise derive from its free-text location so
             // the index self-heals for corps registered before the cache existed.
             homeGeo: corpsData.homeGeo || homeGeoFor(corpsData.location) || null,
+            // Director banked their encore for a later show (per-event opt-out).
+            encoreDeclined: declined[key] === true,
           },
         });
       }

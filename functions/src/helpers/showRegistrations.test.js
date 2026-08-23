@@ -72,6 +72,7 @@ describe("collectRegistrationsFromProfile", () => {
       corpsName: "Alice Corps",
       username: "alice",
       homeGeo: null, // no location on this corps → unresolved
+      encoreDeclined: false,
     });
   });
 

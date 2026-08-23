@@ -284,7 +284,21 @@ read per night, matching the cost profile of the existing nightly jobs.
 
 ---
 
-## 11. Open questions / future
+## 11. Follow-ups (built) & open questions
+
+Built after the six phases:
+
+- ✅ **FCM "takes the field" push.** `helpers/performancePush.js`
+  (`buildTakeTheFieldPushes`, pure) + `takeTheFieldPushJob` (every 15 min through
+  the evening window, ET) + `sendTakeTheFieldPush` (PUSH_TYPES.PERFORMANCE). A
+  per-day `push_ledger/{seasonUid}_takefield_{ET-date}` dedups so each slot fires
+  once. Defaults on; directors can opt out via the `performance` push preference.
+- ✅ **Encore decline / bank.** `setEncoreDecline` callable stores a per-event
+  opt-out on the corps (`declinedEncores`) and patches the index; `assignEncore`
+  skips a declined corps WITHOUT consuming its season cap, so it banks for a
+  later show. Surfaced in the registration modal ("Bank for later" / "Take it here").
+
+Open / calibration:
 
 - **Window `W` and `minInterval` values** — calibrate against expected turnout so
   a normal night keeps ~17-min spacing and only true crowds compress.
@@ -292,4 +306,5 @@ read per night, matching the cost profile of the existing nightly jobs.
   likely never hit in practice, but pick a number.
 - **Metric smoothing** — most-recent vs. a 2–3 night mean; the mean is steadier
   early-season, the latest score is more "live."
-- **Decline/bank UX** — how a director is offered the choice without nagging.
+- **Push preference UI** — the `performance` toggle works today (defaults on); a
+  settings switch could make it discoverable.
