@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Render tests for the seasonal reward ladder panel: season-XP math from the
 // xpAtSeasonStart baseline, claimable-tier detection, stale-season claim
 // reset, and the claim call to the server.
@@ -7,7 +6,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const claimLadderTier = vi.fn();
 vi.mock('../../../api/functions', () => ({
-  claimLadderTier: (...args) => claimLadderTier(...args),
+  claimLadderTier: (/** @type {any[]} */ ...args) => claimLadderTier(...args),
 }));
 vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
