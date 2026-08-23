@@ -24,8 +24,8 @@ const { paths } = require("./paths");
  * @param {Object} outing
  * @param {string} outing.uid
  * @param {string} outing.corpsClass
- * @param {Object} outing.corps - the corps map entry (for name + location)
- * @param {Object} outing.show - the show being scored (for eventName)
+ * @param {Object} outing.corps - the corps map entry (for name)
+ * @param {Object} outing.show - the show being scored (for eventName + location)
  * @param {Object} outing.captions - the 8 per-caption values behind the totals
  * @param {number} outing.geScore
  * @param {number} outing.visualScore
@@ -40,7 +40,9 @@ function collectOuting(captionBreakdown, outing) {
     corpsClass,
     corpsName: corps.corpsName,
     eventName: show.eventName,
-    location: corps.location || null,
+    // The SHOW's location (where it was held), matching the public recap and
+    // the Podium ledger — not the corps' home location.
+    location: show.location || null,
     captions,
     geScore: outing.geScore,
     visualScore: outing.visualScore,
