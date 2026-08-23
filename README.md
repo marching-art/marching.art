@@ -56,10 +56,16 @@ staff, and its own A / Open / World classes), launched mid-2026. See
 Prerequisites: **Node 22+**, npm, and a Firebase project.
 
 ```bash
-npm install
+npm install                        # also wires up the Prettier pre-commit hook
 cp .env.local.example .env.local   # fill in your Firebase + API credentials
 npm run dev                        # start the Vite dev server
 ```
+
+`npm install` runs the `prepare` script, which points `core.hooksPath` at
+[`.githooks/`](.githooks). The committed `pre-commit` hook auto-formats staged
+files with Prettier before each commit, so the CI `format:check` gate can't
+fail on a push. (Claude Code web sessions get the same guarantee via the
+PostToolUse hook in [`.claude/settings.json`](.claude/settings.json).)
 
 Common scripts:
 
