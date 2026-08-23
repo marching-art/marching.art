@@ -25,10 +25,8 @@ import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import GuestActionBar from '../components/Landing/GuestActionBar';
 import BottomNav from '../components/BottomNav';
-import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import SiteHeader from '../components/Layout/SiteHeader';
 import SiteFooter from '../components/Layout/SiteFooter';
-import { useScheduleStore } from '../store/scheduleStore';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
 import SocialProofBar from '../components/Landing/SocialProofBar';
@@ -69,26 +67,6 @@ const Landing = () => {
   // Data comes straight from the global stores (already listening app-wide) —
   // NOT useDashboardData, which carries heavy side effects (season-setup wizard,
   // milestone writes, achievement modals) that must never fire from the home page.
-  const corps = useProfileStore((state) => state.corps);
-  const competitions = useScheduleStore((state) => state.competitions);
-
-  // Resolve the corps the director last viewed, mirroring the Dashboard's
-  // per-user localStorage key so home and dashboard agree on which corps is
-  // "active"; fall back to the first available class.
-  const activeCorps = useMemo(() => {
-    if (!corps) return null;
-    const classes = Object.keys(corps);
-    if (classes.length === 0) return null;
-    let selected = classes[0];
-    try {
-      const saved = user && localStorage.getItem(`selectedCorps_${user.uid}`);
-      if (saved && classes.includes(saved)) selected = saved;
-    } catch {
-      // localStorage unavailable (private browsing) — first class is fine.
-    }
-    return corps[selected];
-  }, [corps, user]);
-
   // First-visit detection for progressive disclosure
   // New visitors see educational content; returning visitors get data-focused view
   const { isFirstVisit, isLoading: isFirstVisitLoading, markAsReturning } = useFirstVisit();
@@ -207,7 +185,7 @@ const Landing = () => {
   // The home grid is two columns on desktop (news left, rail right) but a single
   // stacked column on mobile. We want mobile to lead with the visitor's most
   // valuable content instead of burying the news feed under the entire rail:
-  //   - signed in:       Next Show → News → live data → identity
+  //   - signed in:       News → live data → identity
   //   - returning guest: Play Now  → News → live data
   //   - first visit:     Hero+News → Play Now → live data
   // The rail collapses to `display: contents` on mobile (see the wrapper below),
@@ -215,11 +193,10 @@ const Landing = () => {
   // value can interleave them with the news column (a separate grid child). The
   // same values drive the desktop rail's flex column — there only their relative
   // order matters, since the news column is placed on the left independently via
-  // `lg:order-last` on the rail wrapper. NextPerformancePanel self-guards to null
-  // when there's nothing timed to show and simply drops out of the flow.
+  // `lg:order-last` on the rail wrapper.
   const firstVisitGuest = !user && !isFirstVisitLoading && isFirstVisit;
   const order = user
-    ? { nextShow: 1, news: 2, live: 3, trending: 4, community: 5, account: 6 }
+    ? { news: 2, live: 3, trending: 4, community: 5, account: 6 }
     : firstVisitGuest
       ? { news: 1, account: 2, live: 3, trending: 4, community: 5, urgency: 6 }
       : { account: 1, news: 2, live: 3, trending: 4, community: 5, urgency: 6 };
@@ -252,23 +229,6 @@ const Landing = () => {
             {/* ============================================================= */}
             <div className="contents lg:block lg:col-span-4 lg:order-last">
               <div className="contents lg:flex lg:flex-col lg:gap-5 lg:sticky lg:top-4">
-                {/* ------------------------------------------------------- */}
-                {/* YOUR NEXT SHOW - the director's primary action, incl. the */}
-                {/* "your corps is on the field now" element. First on mobile */}
-                {/* and top of the desktop rail. Self-guards to null when there */}
-                {/* is nothing timed to show, dropping out of the flow cleanly. */}
-                {/* ------------------------------------------------------- */}
-                {user && (
-                  <div style={{ order: order.nextShow }}>
-                    <NextPerformancePanel
-                      competitions={competitions}
-                      selectedShows={activeCorps?.selectedShows || {}}
-                      lineup={activeCorps?.lineup || {}}
-                      myUid={user?.uid}
-                    />
-                  </div>
-                )}
-
                 {/* ------------------------------------------------------- */}
                 {/* AUTH WIDGET - Login (guest) or identity strip (signed in). */}
                 {/* Guests keep it near the top for conversion; signed-in users */}
