@@ -213,6 +213,11 @@ const {
   refreshScheduleWeatherNow,
 } = require("./src/scheduled/scheduleWeather");
 const {
+  scheduledScheduleRunningOrder,
+  scheduledScheduleRunningOrderEvening,
+  refreshScheduleRunningOrderNow,
+} = require("./src/scheduled/scheduleRunningOrder");
+const {
   weeklyDigestEmailJob,
   winBackEmailJob,
   streakBrokenEmailJob,
@@ -436,6 +441,11 @@ module.exports = {
   scheduledScheduleWeather,
   scheduledScheduleWeatherEvening,
   refreshScheduleWeatherNow,
+
+  // Schedule running order — real-field live slots (scheduled + admin refresh)
+  scheduledScheduleRunningOrder,
+  scheduledScheduleRunningOrderEvening,
+  refreshScheduleRunningOrderNow,
 
   // League Automation (scheduled)
   generateWeeklyMatchups,

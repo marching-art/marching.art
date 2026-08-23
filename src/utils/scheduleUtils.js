@@ -11,9 +11,18 @@ import { getShowRegistrationDeadline } from './seasonClock';
 /**
  * Transform a competition object from Firestore to a show object for UI
  * @param {Object} competition - Raw competition from Firestore
- * @returns {Object} Transformed show object
+ * @returns the transformed show object (shape inferred for consumers)
  */
 export function transformCompetitionToShow(competition) {
+  // The real-field fantasy running order (scheduled/scheduleRunningOrder.js), when
+  // materialized, is the primary schedule a director sees — their own corps in a
+  // timed order that ends at the night's score drop. It takes precedence over the
+  // legacy heritage/scraped enrichment (which is the historical cast); those
+  // remain the fallback for shows not yet materialized (early season, or the
+  // pool-driven championship days). The podium running order rides alongside for
+  // the Fantasy/Podium toggle.
+  const fs = competition.fantasySchedule || null;
+  const ps = competition.podiumSchedule || null;
   return {
     eventName: competition.name,
     location: competition.location || '',
@@ -32,14 +41,20 @@ export function transformCompetitionToShow(competition) {
     // schedule can distinguish them from scraped/system shows and label them.
     hostUid: competition.hostUid || null,
     multiNight: competition.multiNight || null,
-    // Detail-page enrichment (present on live-season shows scraped from dci.org).
-    // Absent on off-season / unenriched shows — consumers must handle null.
-    startsAt: competition.startsAt || null,
-    scoresAt: competition.scoresAt || null,
-    gatesAt: competition.gatesAt || null,
-    timezone: competition.timezone || null,
+    // Detail-page enrichment. Prefer the materialized fantasy schedule; fall back
+    // to the legacy heritage/scraped fields when it isn't present yet.
+    startsAt: fs?.startsAt ?? competition.startsAt ?? null,
+    scoresAt: fs?.scoresAt ?? competition.scoresAt ?? null,
+    gatesAt: fs?.gatesAt ?? competition.gatesAt ?? null,
+    timezone: fs?.timezone ?? competition.timezone ?? null,
     venue: competition.venue || null,
-    lineup: competition.lineup || null,
+    lineup: fs?.lineup ?? competition.lineup ?? null,
+    // Real-field extras (present only once materialized): the "also competing"
+    // overflow list, the field size, and both schedules for the toggle.
+    fantasySchedule: fs,
+    podiumSchedule: ps,
+    overflow: fs?.overflow ?? null,
+    fieldSize: fs?.fieldSize ?? null,
     // Legacy show sponsorship ("Presented by <corps>") — the purchase was
     // retired in favor of hosted events; old schedule docs still render it.
     sponsor: competition.sponsor || null,

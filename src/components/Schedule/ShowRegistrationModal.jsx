@@ -421,10 +421,23 @@ const ShowRegistrationModal = ({
   // Shared body content (plain JSX value — see headerContent note).
   const bodyContent = (
     <>
-      {/* Real running order (scraped from dci.org) — shown when available */}
+      {/* Running order — the real registered field, slotted worst-to-best and
+          ending at the night's score drop (or the scraped/heritage order as a
+          fallback). Shown when there's a field; an honest placeholder otherwise. */}
       {show.lineup?.length > 0 && (
         <div className="px-4 pt-4">
           <RunningOrder show={show} />
+        </div>
+      )}
+      {show.fantasySchedule && !(show.lineup?.length > 0) && (
+        <div className="px-4 pt-4">
+          <div className="bg-surface-card border border-line px-4 py-6 text-center">
+            <p className="text-sm text-muted">No corps have taken the field yet.</p>
+            <p className="text-xs text-secondary mt-1">
+              Register below to be the first to perform — the running order fills in as directors
+              sign up.
+            </p>
+          </div>
         </div>
       )}
 

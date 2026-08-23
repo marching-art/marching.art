@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { showCalendarDay, formatDayKey } from './scheduleUtils';
+import { showCalendarDay, formatDayKey, transformCompetitionToShow } from './scheduleUtils';
 
 // Regression: "Drums Across Nebraska" starts Wed 2026-07-01 8:46 PM CDT, which
 // is Thu 2026-07-02 01:46 UTC. Reading startsAt with UTC getters labeled the
@@ -57,5 +57,65 @@ describe('formatDayKey', () => {
     const d = new Date('2026-07-02T01:46:00.000Z');
     expect(formatDayKey(d, 'UTC')).toBe('2026-07-02');
     expect(formatDayKey(d, 'America/Chicago')).toBe('2026-07-01');
+  });
+});
+
+describe('transformCompetitionToShow — fantasy schedule preference', () => {
+  const heritage = {
+    name: 'Show A',
+    location: 'Allentown, PA',
+    day: 18,
+    lineup: [{ order: 1, corps: 'Historical Corps', performsAt: '2026-06-18T23:00:00Z' }],
+    startsAt: '2026-06-18T22:00:00Z',
+    scoresAt: '2026-06-18T23:30:00Z',
+    timezone: 'America/New_York',
+  };
+
+  it('prefers the materialized real-field order over the heritage/scraped fields', () => {
+    const fantasySchedule = {
+      startsAt: '2026-06-18T20:00:00Z',
+      scoresAt: '2026-06-19T01:00:00Z',
+      gatesAt: '2026-06-18T18:40:00Z',
+      timezone: 'America/New_York',
+      fieldSize: 2,
+      overflow: [{ uid: 'u9', corpsClass: 'aClass', corps: 'Overflow Corps' }],
+      lineup: [
+        {
+          order: 1,
+          uid: 'u2',
+          corpsClass: 'worldClass',
+          corps: 'My Corps',
+          performsAt: '2026-06-19T00:20:00Z',
+        },
+        {
+          order: 2,
+          uid: 'u1',
+          corpsClass: 'worldClass',
+          corps: 'Top Corps',
+          performsAt: '2026-06-19T00:37:00Z',
+        },
+      ],
+    };
+    const show = transformCompetitionToShow({ ...heritage, fantasySchedule });
+    expect(show.lineup).toBe(fantasySchedule.lineup);
+    expect(show.scoresAt).toBe('2026-06-19T01:00:00Z');
+    expect(show.startsAt).toBe('2026-06-18T20:00:00Z');
+    expect(show.fieldSize).toBe(2);
+    expect(show.overflow).toHaveLength(1);
+    expect(show.fantasySchedule).toBe(fantasySchedule);
+  });
+
+  it('falls back to heritage/scraped enrichment when no fantasy schedule yet', () => {
+    const show = transformCompetitionToShow(heritage);
+    expect(show.lineup).toBe(heritage.lineup);
+    expect(show.scoresAt).toBe('2026-06-18T23:30:00Z');
+    expect(show.fantasySchedule).toBe(null);
+    expect(show.overflow).toBe(null);
+  });
+
+  it('exposes the podium schedule for the Fantasy/Podium toggle', () => {
+    const podiumSchedule = { lineup: [{ order: 1, corps: 'Podium Corps' }], fieldSize: 1 };
+    const show = transformCompetitionToShow({ ...heritage, podiumSchedule });
+    expect(show.podiumSchedule).toBe(podiumSchedule);
   });
 });

@@ -38,6 +38,10 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
   const lineup = Array.isArray(show?.lineup) ? show.lineup : [];
   if (lineup.length === 0) return null;
 
+  // "Also competing" — the overflow safety valve (docs/EVENT_SCHEDULES_AND_SLOTS.md):
+  // corps that competed and scored but didn't fit the timed order on a huge night.
+  const overflow = Array.isArray(show?.overflow) ? show.overflow : [];
+
   const { current, next } = getRunningOrderStatus(show, now);
   const currentOrder = current?.order ?? null;
   const nextOrder = next?.order ?? null;
@@ -49,7 +53,9 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
           <Clock className="w-3.5 h-3.5 text-interactive" />
           Running Order
         </h3>
-        <span className="text-[10px] font-data text-muted">{lineup.length} corps</span>
+        <span className="text-[10px] font-data text-muted">
+          {lineup.length + overflow.length} corps
+        </span>
       </div>
 
       <div className="divide-y divide-line/50">
@@ -105,6 +111,29 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
           );
         })}
       </div>
+
+      {overflow.length > 0 && (
+        <div className="px-4 py-2.5 border-t border-line bg-surface-raised/40">
+          <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
+            Also Competing · {overflow.length}
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+            {overflow.map((o, i) => {
+              const key = normalize(o.corps);
+              const hi = highlights?.get(key);
+              const mine = hi || highlightCorps?.has(key);
+              return (
+                <span
+                  key={`${o.uid || 'anon'}-${i}`}
+                  className={`text-xs truncate ${mine ? 'text-interactive font-semibold' : 'text-secondary'}`}
+                >
+                  {o.corps}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
