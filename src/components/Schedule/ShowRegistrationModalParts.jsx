@@ -71,41 +71,55 @@ export const HostedShowPanel = ({
     )}
 
     {/* Attendee roster */}
-    <div>
-      <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-muted mb-2">
-        <Users className="w-3 h-3" />
-        Attending{attendees ? ` (${attendees.length})` : ''}
-      </div>
-      {loading && attendees === null ? (
-        <div className="text-[10px] text-muted">Loading attendees…</div>
-      ) : attendees && attendees.length > 0 ? (
-        <div className="space-y-1 max-h-40 overflow-y-auto">
-          {attendees.map((a, i) => {
-            const config = CLASS_CONFIG[a.corpsClass] || {};
-            return (
-              <div
-                key={`${a.username || a.corpsName}_${a.corpsClass}_${i}`}
-                className="flex items-center gap-2 text-[11px]"
-              >
-                <span className="text-secondary truncate flex-1">{a.corpsName}</span>
-                {config.name && (
-                  <span
-                    className={`flex-shrink-0 text-[9px] px-1 py-0.5 font-bold uppercase ${config.bgColor} ${config.color}`}
-                  >
-                    {config.shortName || config.name}
-                  </span>
-                )}
-                {a.username && (
-                  <span className="text-muted text-[10px] flex-shrink-0">@{a.username}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-[10px] text-muted">No corps registered yet — be the first.</div>
-      )}
+    <AttendeeRoster attendees={attendees} loading={loading} />
+  </div>
+);
+
+/**
+ * The "who's registered for this show" roster — every corps attending, grouped
+ * by class with the director's @handle. Reusable across ALL shows (not just
+ * hosted): the live lineup a director sees before registering. Renders its own
+ * header and empty state; drop it into any panel.
+ *
+ * @param {Object} props
+ * @param {Array<Object>|null} props.attendees - registered corps rows (null = not loaded yet).
+ * @param {boolean} props.loading
+ */
+export const AttendeeRoster = ({ attendees, loading }) => (
+  <div>
+    <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-muted mb-2">
+      <Users className="w-3 h-3" />
+      Attending{attendees ? ` (${attendees.length})` : ''}
     </div>
+    {loading && attendees === null ? (
+      <div className="text-[10px] text-muted">Loading attendees…</div>
+    ) : attendees && attendees.length > 0 ? (
+      <div className="space-y-1 max-h-40 overflow-y-auto">
+        {attendees.map((a, i) => {
+          const config = CLASS_CONFIG[a.corpsClass] || {};
+          return (
+            <div
+              key={`${a.username || a.corpsName}_${a.corpsClass}_${i}`}
+              className="flex items-center gap-2 text-[11px]"
+            >
+              <span className="text-secondary truncate flex-1">{a.corpsName}</span>
+              {config.name && (
+                <span
+                  className={`flex-shrink-0 text-[9px] px-1 py-0.5 font-bold uppercase ${config.bgColor} ${config.color}`}
+                >
+                  {config.shortName || config.name}
+                </span>
+              )}
+              {a.username && (
+                <span className="text-muted text-[10px] flex-shrink-0">@{a.username}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    ) : (
+      <div className="text-[10px] text-muted">No corps registered yet — be the first.</div>
+    )}
   </div>
 );
 

@@ -8,10 +8,11 @@
 // slotted worst-to-best by recent performance (fantasy_standings), and paced by
 // the fit-to-window engine so everyone gets a timed slot before the drop.
 //
-// Cost profile mirrors scheduleWeather.js: a bounded window of upcoming shows,
-// one registration-index doc read per show, a handful of standings docs, and a
-// single merge write only when something changed. Runs a few times a day; the
-// evening pass refreshes today's field a couple hours before the ~9 p.m. drop.
+// Cost profile mirrors scheduleWeather.js: every upcoming show in the season is
+// processed (one registration-index doc read each), a handful of standings docs,
+// and a single merge write only when something changed — an empty far-out show
+// writes nothing. Runs a few times a day; the evening pass refreshes today's
+// field a couple hours before the ~9 p.m. drop.
 //
 // Championship days (45-49) are intentionally skipped — they keep the pool-driven
 // heritage synthesis (offSeasonHeritage.buildChampionshipLineup). Everything is
@@ -37,10 +38,6 @@ const podiumStore = require("../helpers/podium/store");
 const GETALL_CHUNK = 300;
 
 const DAY_MS = 86400000;
-// How far ahead to materialize. Covers the current week plus a couple of days so
-// "this week" is always populated and next week starts filling in. A show
-// further out has a field too unsettled to be worth the read.
-const HORIZON_DAYS = 9;
 
 /** A Firestore Timestamp, Date, ISO string, or epoch ms → Date, or null. */
 function coerceDate(value) {
@@ -227,14 +224,17 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
     const entry = { ...comp };
     const date = competitionDate(comp, seasonStartDate);
     const daysFromNow = date ? Math.floor((date.getTime() - now) / DAY_MS) : null;
-    const inWindow = daysFromNow !== null && daysFromNow >= -1 && daysFromNow <= HORIZON_DAYS;
+    // Materialize the whole REMAINING season, not a near window — a show's
+    // running order should appear as soon as any corps registers for it, however
+    // far out. Past shows (before yesterday) freeze.
+    const isUpcoming = daysFromNow !== null && daysFromNow >= -1;
 
     // A frozen past show's encore already consumed that corps' season slot.
     if (daysFromNow !== null && daysFromNow < -1 && comp.encore && comp.encore.uid) {
       usedKeys.add(encoreKey(comp.encore));
     }
 
-    if (date && inWindow && !isChampionship(comp)) {
+    if (date && isUpcoming && !isChampionship(comp)) {
       const week = comp.week || Math.ceil((comp.day || 1) / 7);
       const eventKey = showRegistrationEventKey(week, comp.name, comp.date ?? null);
       try {
@@ -259,7 +259,12 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
             location: comp.location || "",
           })
         );
-        if (scheduleSignature(comp.fantasySchedule) !== scheduleSignature(fantasy)) {
+        // Write when there's a field, or to CLEAR a schedule whose field emptied.
+        // An always-empty far-out show writes nothing (no churn).
+        if (
+          (fantasy.fieldSize > 0 || comp.fantasySchedule) &&
+          scheduleSignature(comp.fantasySchedule) !== scheduleSignature(fantasy)
+        ) {
           updated += 1;
           entry.fantasySchedule = { ...fantasy, updatedAt: new Date().toISOString() };
         }
@@ -281,20 +286,26 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
               location: comp.location || "",
             })
           );
-          if (scheduleSignature(comp.podiumSchedule) !== scheduleSignature(podium)) {
+          if (
+            (podium.fieldSize > 0 || comp.podiumSchedule) &&
+            scheduleSignature(comp.podiumSchedule) !== scheduleSignature(podium)
+          ) {
             updated += 1;
             entry.podiumSchedule = { ...podium, updatedAt: new Date().toISOString() };
           }
         }
 
-        // Stash for the chronological encore pass (fantasy field only).
-        encoreCandidates.push({
-          entry,
-          date,
-          registrations,
-          venueGeo: homeGeoFor(comp.location),
-          hostUid: comp.hostUid || null,
-        });
+        // Stash for the chronological encore pass (fantasy field only). Only
+        // shows with a field can have an encore; skip empty ones.
+        if (registrations.length > 0) {
+          encoreCandidates.push({
+            entry,
+            date,
+            registrations,
+            venueGeo: homeGeoFor(comp.location),
+            hostUid: comp.hostUid || null,
+          });
+        }
       } catch (err) {
         logger.warn(`[running-order] build failed for ${comp.name}: ${err.message}`);
       }
