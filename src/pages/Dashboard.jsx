@@ -341,6 +341,16 @@ const Dashboard = () => {
     ];
   }, [podium.data]);
 
+  // Today's rehearsal is unfinished when blocks remain and it isn't a rest day
+  // — the same signal utils/podiumNextAction ranks the daily verb on. Drives
+  // the Podium Lineup sheet's ordering (rehearse leads until this is false).
+  const podiumRehearsalIncomplete = useMemo(() => {
+    if (!isPodiumSelected) return false;
+    const restDay = Boolean(podium.data?.state?.today?.restDay);
+    const blocksRemaining = podium.data?.blocksRemainingToday ?? 0;
+    return !restDay && blocksRemaining > 0;
+  }, [isPodiumSelected, podium.data]);
+
   // Pull-to-refresh re-fetches the nightly-drop caches (the live listeners
   // behind profile and season need no help).
   const handleRefresh = useDashboardRefresh(seasonData?.seasonUid);
@@ -749,6 +759,7 @@ const Dashboard = () => {
         data={dashboardData}
         quickStartSteps={isPodiumSelected ? podiumQuickStartSteps : quickStartSteps}
         quickStartVariant={isPodiumSelected ? 'podium' : 'fantasy'}
+        rehearsalIncomplete={podiumRehearsalIncomplete}
         onRequestZone={setActiveZone}
         onRevealPanel={revealPanel}
       />
