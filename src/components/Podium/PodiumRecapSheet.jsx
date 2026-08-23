@@ -32,13 +32,13 @@ const MAJOR_MASTHEADS = {
   35: { name: 'marching.art Southeastern Championship', site: 'Atlanta, GA' },
   41: { name: 'marching.art Eastern Classic — Night 1', site: 'Allentown, PA' },
   42: { name: 'marching.art Eastern Classic — Night 2', site: 'Allentown, PA' },
-  47: { name: 'marching.art World Championship Prelims', site: 'Podium Class' },
-  48: { name: 'marching.art World Championship Semifinals', site: 'Podium Class' },
-  49: { name: 'marching.art World Championship Finals', site: 'Podium Class' },
+  47: { name: 'marching.art World Championship Prelims', site: 'Podium Division' },
+  48: { name: 'marching.art World Championship Semifinals', site: 'Podium Division' },
+  49: { name: 'marching.art World Championship Finals', site: 'Podium Division' },
 };
 
 function fallbackMasthead(day) {
-  return MAJOR_MASTHEADS[day] || { name: 'Podium Class Tour Stop', site: `Day ${day}` };
+  return MAJOR_MASTHEADS[day] || { name: 'Podium Division Tour Stop', site: `Day ${day}` };
 }
 
 /**
@@ -114,7 +114,7 @@ function formatShowAsText(show, day, seasonName, cut, sections) {
     }
   }
   lines.push('');
-  lines.push(`marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Class`);
+  lines.push(`marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Division`);
   return '```\n' + lines.join('\n') + '\n```';
 }
 
@@ -332,8 +332,8 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
             </>
           ) : (
             <>
-              Split by division · box-toppers in <span className="text-brand font-bold">gold</span>{' '}
-              · full captions — Podium Class only
+              Split by class · box-toppers in <span className="text-brand font-bold">gold</span>{' '}
+              · full captions — Podium Division only
             </>
           )}
         </span>
@@ -399,7 +399,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
   if (days.length === 0) {
     return (
       <div className="p-8 text-center text-xs text-muted">
-        No Podium Class results yet this season — the first recap sheet posts after the next scored
+        No Podium Division results yet this season — the first recap sheet posts after the next scored
         show.
       </div>
     );

@@ -75,8 +75,7 @@ const STEPS = [
     details: [
       'Join public or private leagues with friends',
       <>
-        Earn <JargonTooltip termKey="xp">XP</JargonTooltip> and level up to unlock higher class
-        divisions
+        Earn <JargonTooltip termKey="xp">XP</JargonTooltip> and level up to unlock higher classes
       </>,
       'Win bragging rights and climb the global rankings',
     ],

@@ -50,7 +50,7 @@ const CLASS_CONFIG = {
   // career archival (Phase 6.5). The division tab is data-driven: it only
   // appears once at least one archived season has a Podium podium, so the
   // Hall needs no feature flag and history survives any flag state.
-  podiumClass: { name: 'Podium Class', short: 'Podium', icon: Medal },
+  podiumClass: { name: 'Podium Division', short: 'Podium', icon: Medal },
 };
 
 // SoundSport recognizes a "Best in Show" ensemble rather than a champion, so

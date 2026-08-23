@@ -104,13 +104,13 @@ const OverviewSection = () => (
       ))}
     </div>
 
-    {/* Two ways to play */}
-    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Two ways to play</p>
+    {/* Two divisions to play */}
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Two divisions to play</p>
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="bg-interactive/10 border border-interactive/30 rounded-none p-4">
         <div className="flex items-center gap-2 mb-1.5">
           <Target className="w-4 h-4 text-interactive" />
-          <span className="text-sm font-bold text-white">Draft — the fantasy classes</span>
+          <span className="text-sm font-bold text-white">Draft — the Fantasy Division</span>
         </div>
         <p className="text-xs text-muted leading-relaxed">
           Build a lineup of historical caption performances and let real (or historical) scores do
@@ -120,11 +120,11 @@ const OverviewSection = () => (
       <div className="bg-brand/10 border border-brand/30 rounded-none p-4">
         <div className="flex items-center gap-2 mb-1.5">
           <Medal className="w-4 h-4 text-brand" />
-          <span className="text-sm font-bold text-white">Found — Podium Class</span>
+          <span className="text-sm font-bold text-white">Found — Podium Division</span>
         </div>
         <p className="text-xs text-muted leading-relaxed">
           Run your own corps and earn every point: rehearse, route a tour, and climb from Community
-          Corps to Champion. Always open, always free — jump to the Podium Class section below.
+          Corps to Champion. Always open, always free — jump to the Podium Division section below.
         </p>
       </div>
     </div>
@@ -556,9 +556,9 @@ const PodiumCard = ({ icon: Icon, title, children }) => (
 
 const PodiumSection = () => (
   <>
-    <SectionHead icon={Medal} kicker="The other way to play" title="Podium Class" />
+    <SectionHead icon={Medal} kicker="The other way to play" title="Podium Division" />
     <p className="text-sm text-secondary leading-relaxed mb-4">
-      Podium Class flips the game. Instead of drafting caption performances, you{' '}
+      The Podium Division flips the game. Instead of drafting caption performances, you{' '}
       <strong className="text-white">found your own drum corps</strong> and earn every point — one
       corps per director, always open, always free. No purchase ever adds a point to a score.
     </p>
@@ -581,11 +581,11 @@ const PodiumSection = () => (
         Allentown (Days 41–42) — before Championship Week in Indianapolis.
       </PodiumCard>
       <PodiumCard icon={Trophy} title="Scoring">
-        Your 8 captions score against the real historical DCI envelope. Podium is the only class
-        that shows all 8 captions in the recap. The all-time ceiling is 99.70 — a
+        Your 8 captions score against the real historical DCI envelope. The Podium Division is the
+        only place that shows all 8 captions in the recap. The all-time ceiling is 99.70 — a
         once-in-a-generation feat.
       </PodiumCard>
-      <PodiumCard icon={TrendingUp} title="Divisions">
+      <PodiumCard icon={TrendingUp} title="Classes">
         Every corps starts in A Class and rises to Open then World by season-end cutoffs — the same
         climb corps made in the old days.
       </PodiumCard>

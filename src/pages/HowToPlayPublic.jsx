@@ -158,9 +158,10 @@ const HowToPlayPublic = () => {
 
         {/* Classes */}
         <section className="mb-10">
-          <SectionHeading icon={TrendingUp}>Four Competitive Classes</SectionHeading>
+          <SectionHeading icon={TrendingUp}>The Fantasy Division: Four Classes</SectionHeading>
           <p className="text-sm text-secondary mb-4">
-            Classes set your drafting budget. Everyone starts in SoundSport; unlock the rest —
+            In the Fantasy Division, classes set your drafting budget. Everyone starts in SoundSport
+            (Fantasy Division only); unlock the rest —
             permanently — three ways, any one is enough: complete seasons (1 / 2 / 3), reach the
             required director level (3 / 5 / 10), or spend CorpsCoin earned in-game.
           </p>
@@ -269,9 +270,9 @@ const HowToPlayPublic = () => {
 
         {/* Podium Class */}
         <section className="mb-10">
-          <SectionHeading icon={Trophy}>Prefer to Run a Corps? Try Podium Class</SectionHeading>
+          <SectionHeading icon={Trophy}>Prefer to Run a Corps? Try the Podium Division</SectionHeading>
           <p className="text-sm text-secondary mb-4">
-            Podium Class flips the game. Instead of drafting caption performances, you found your
+            The Podium Division flips the game. Instead of drafting caption performances, you found your
             own drum corps and earn every point — running rehearsals day by day, routing a summer
             tour, managing money and morale, and climbing from Community Corps all the way to
             Champion Status. It is always open and always free to play.

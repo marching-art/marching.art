@@ -117,7 +117,7 @@ const HeroBanner = ({ onDismiss }) => {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1 text-sm font-bold text-white">
-                    Podium Class
+                    Podium Division
                     <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:translate-x-0.5 transition-transform" />
                   </div>
                   <p className="text-xs text-muted mt-0.5">
@@ -134,7 +134,7 @@ const HeroBanner = ({ onDismiss }) => {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1 text-sm font-bold text-white">
-                    SoundSport
+                    Fantasy Division
                     <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:translate-x-0.5 transition-transform" />
                   </div>
                   <p className="text-xs text-muted mt-0.5">

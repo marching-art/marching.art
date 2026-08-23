@@ -693,7 +693,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
       </div>
 
       <SheetFooter
-        note="GE/VIS/MUS shown · full captions are Podium Class only"
+        note="GE/VIS/MUS shown · full captions are Podium Division only"
         action={<ShareButton getText={shareText} />}
       />
     </div>

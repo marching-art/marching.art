@@ -22,7 +22,7 @@ import { formatSeasonName } from '../utils/season';
 const RECORD_GROUPS = [
   {
     id: 'fantasy',
-    label: 'Fantasy',
+    label: 'Fantasy Division',
     note: null,
     classes: [
       { key: 'worldClass', label: 'World Class' },
@@ -32,9 +32,9 @@ const RECORD_GROUPS = [
   },
   {
     id: 'podium',
-    label: 'Podium',
-    note: 'A separate game — every point earned by running a corps, scored against real DCI history and ranked on its own.',
-    classes: [{ key: 'podiumClass', label: 'Podium Class' }],
+    label: 'Podium Division',
+    note: 'A separate division — every point earned by running a corps, scored against real DCI history and ranked on its own.',
+    classes: [{ key: 'podiumClass', label: 'Podium' }],
   },
 ];
 

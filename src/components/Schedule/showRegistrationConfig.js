@@ -28,7 +28,7 @@ export const CLASS_CONFIG = {
     bgColor: 'bg-green-500/10',
   },
   podiumClass: {
-    name: 'Podium Class',
+    name: 'Podium Division',
     shortName: 'Podium',
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-400/10',

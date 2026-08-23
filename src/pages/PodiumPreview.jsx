@@ -151,9 +151,9 @@ const CaptionRow = ({ id, caps }) => {
 const PodiumPreview = () => {
   useBodyScroll();
   useSEO({
-    title: 'Podium Class Demo | marching.art — Run a Drum Corps',
+    title: 'Podium Division Demo | marching.art — Run a Drum Corps',
     description:
-      'Try the Podium Class daily loop free, no signup: allocate rehearsals, manage your corps, and watch your box score climb against real DCI history.',
+      'Try the Podium Division daily loop free, no signup: allocate rehearsals, manage your corps, and watch your box score climb against real DCI history.',
     path: '/podium/preview',
     noindex: true,
   });
@@ -556,7 +556,7 @@ const PodiumPreview = () => {
             </Heading>
             <p className="text-sm text-muted mt-1.5">
               You&rsquo;re getting the loop. Found a free corps and this becomes a real season:
-              nightly box scores, a full tour, staff, divisions, and the climb to Champion Status.
+              nightly box scores, a full tour, staff, classes, and the climb to Champion Status.
             </p>
             <Link
               to="/register"

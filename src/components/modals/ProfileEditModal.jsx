@@ -22,7 +22,7 @@ const CLASS_LABELS = {
   openClass: 'Open Class',
   aClass: 'A Class',
   soundSport: 'SoundSport',
-  podiumClass: 'Podium Class',
+  podiumClass: 'Podium Division',
 };
 
 const CLASS_ORDER = PROFILE_CORPS_CLASS_ORDER;

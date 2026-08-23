@@ -36,7 +36,7 @@ const CLASS_LABELS = {
   aClass: 'A Class',
   openClass: 'Open Class',
   worldClass: 'World Class',
-  podiumClass: 'Podium',
+  podiumClass: 'Podium Division',
 };
 
 /** @param {number} [n] */

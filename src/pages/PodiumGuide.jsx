@@ -13,8 +13,8 @@ import { useAuth } from '../context/AuthContext';
 const SECTIONS = [
   {
     n: 1,
-    title: 'What is Podium Class?',
-    body: `Podium Class is the director's chair. Instead of drafting historical caption scores like the fantasy classes, you FOUND a drum corps and earn every point: you run rehearsals day by day, route a tour, manage food, travel, morale, and money, and your show grows the way real shows grow. One corps per director. It is always open and always free to play — like SoundSport, there is no unlock.`,
+    title: 'What is the Podium Division?',
+    body: `The Podium Division is the director's chair. Instead of drafting historical caption scores like the Fantasy Division, you FOUND a drum corps and earn every point: you run rehearsals day by day, route a tour, manage food, travel, morale, and money, and your show grows the way real shows grow. One corps per director. It is always open and always free to play — like SoundSport, there is no unlock.`,
   },
   {
     n: 2,
@@ -39,12 +39,12 @@ const SECTIONS = [
   {
     n: 6,
     title: 'The tour: shows, travel, majors',
-    body: `Pick up to 4 shows a week from the same schedule every class uses (weeks with a major allow 3, and finals week allows 2 on its open days). Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in Dallas (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week in Indianapolis — Podium runs the exact same finals-week bracket as the fantasy classes, in parallel, scored the Podium way on its own results board: Open & A Class Prelims (Day 45), Open & A Class Finals (Day 46 — top 8 Open, top 4 A advance), then everyone marches World Championship Prelims (Day 47), the top 25 to Semifinals (Day 48), and the top 12 to Finals (Day 49).`,
+    body: `Pick up to 4 shows a week from the same schedule every class uses (weeks with a major allow 3, and finals week allows 2 on its open days). Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in Dallas (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week in Indianapolis — the Podium Division runs the exact same finals-week bracket as the Fantasy Division, in parallel, scored the Podium way on its own results board: Open & A Class Prelims (Day 45), Open & A Class Finals (Day 46 — top 8 Open, top 4 A advance), then everyone marches World Championship Prelims (Day 47), the top 25 to Semifinals (Day 48), and the top 12 to Finals (Day 49).`,
   },
   {
     n: 7,
     title: 'Scoring',
-    body: `Your 8 captions score against the real historical envelope of DCI results for that day of the season — how much show you have installed, how clean it is, and your corps condition decide where in the band you land. Recaps drop nightly around 2 AM ET as a full-caption box score (Podium is the only class that shows all 8 captions). No corps ever scores 100; the all-time ceiling is 99.70 and it is meant to be a once-in-a-generation feat.`,
+    body: `Your 8 captions score against the real historical envelope of DCI results for that day of the season — how much show you have installed, how clean it is, and your corps condition decide where in the band you land. Recaps drop nightly around 2 AM ET as a full-caption box score (the Podium Division is the only place that shows all 8 captions). No corps ever scores 100; the all-time ceiling is 99.70 and it is meant to be a once-in-a-generation feat.`,
   },
   {
     n: 8,
@@ -53,8 +53,8 @@ const SECTIONS = [
   },
   {
     n: 9,
-    title: 'Divisions: A Class, Open Class, World Class',
-    body: `Every corps starts in A Class. At each season's end the whole veteran field is assessed against published cutoffs (balanced thirds of the finals scores): finish above the next division's cutoff and you rise — one division per season, A to Open to World, the same climb corps made in the old days. Falling below your division's line gives you one grace season; two straight seasons below it and you drop one division. Sit out a season and your seat is held; take a longer break and you return in the division your reputation still supports — a champion who steps away for a season or two comes back near the top, and only a long absence, with reputation decayed all the way down, re-enters A Class. Each division crowns its own champions and medals at Finals.`,
+    title: 'Classes: A Class, Open Class, World Class',
+    body: `Every corps starts in A Class. At each season's end the whole veteran field is assessed against published cutoffs (balanced thirds of the finals scores): finish above the next class's cutoff and you rise — one class per season, A to Open to World, the same climb corps made in the old days. Falling below your class's line gives you one grace season; two straight seasons below it and you drop one class. Sit out a season and your seat is held; take a longer break and you return in the class your reputation still supports — a champion who steps away for a season or two comes back near the top, and only a long absence, with reputation decayed all the way down, re-enters A Class. Each class crowns its own champions and medals at Finals.`,
   },
   {
     n: 10,
@@ -84,7 +84,7 @@ const SECTIONS = [
   {
     n: 15,
     title: 'The record',
-    body: `Every season is archived forever: your profile carries the full season history, medals, and trophies; champions enter the Hall of Champions; and the weekly Podium Report power rankings chart the whole class. Fans vote a Fan Favorite each season — prelims ballots at every major, finals during Championship Week, banner at season end (cosmetic, always). Your trajectory chart draws real historical ghosts — Crown '12, Bluecoats '10, Jersey Surf, Pioneer — so you always know whose season you're living. The recap sheet is built to be screenshotted — argue about it somewhere public.`,
+    body: `Every season is archived forever: your profile carries the full season history, medals, and trophies; champions enter the Hall of Champions; and the weekly Podium Report power rankings chart the whole division. Fans vote a Fan Favorite each season — prelims ballots at every major, finals during Championship Week, banner at season end (cosmetic, always). Your trajectory chart draws real historical ghosts — Crown '12, Bluecoats '10, Jersey Surf, Pioneer — so you always know whose season you're living. The recap sheet is built to be screenshotted — argue about it somewhere public.`,
   },
 ];
 
@@ -98,9 +98,9 @@ export default function PodiumGuide() {
   // self-canonicalizing to the homepage, which tells Google it is a duplicate
   // of / and drops it from the index.
   useSEO({
-    title: 'The Podium Class Guide — Run a Drum Corps | marching.art',
+    title: 'The Podium Division Guide — Run a Drum Corps | marching.art',
     description:
-      'How Podium Class works: found a corps, run daily rehearsal blocks, route a tour, manage condition and money, and earn every point. Free to play, always open.',
+      'How the Podium Division works: found a corps, run daily rehearsal blocks, route a tour, manage condition and money, and earn every point. Free to play, always open.',
     path: '/podium-guide',
   });
 
@@ -110,7 +110,7 @@ export default function PodiumGuide() {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
           <Medal className="w-6 h-6 text-brand" />
-          <Heading level="display">The Podium Class Guide</Heading>
+          <Heading level="display">The Podium Division Guide</Heading>
         </div>
         <p className="text-sm text-muted">
           Run a drum corps. Earn every point. Twelve short sections — everything you need.
@@ -135,8 +135,8 @@ export default function PodiumGuide() {
       <div className="mt-10 pt-6 border-t border-line flex items-center justify-between gap-4">
         <span className="text-[11px] text-muted">
           {user
-            ? 'Podium Class is always open — found your corps from the Dashboard.'
-            : 'Podium Class is always open and always free — one account plays every class.'}
+            ? 'The Podium Division is always open — found your corps from the Dashboard.'
+            : 'The Podium Division is always open and always free — one account plays both divisions.'}
         </span>
         <Link
           to={user ? '/dashboard' : '/register'}

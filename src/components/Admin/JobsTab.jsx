@@ -275,7 +275,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       id: 'processPodiumStage',
       name: 'Run Podium Stage',
       description:
-        'Run the nightly Podium Class stage now (flag-gated; lease-guarded, so a completed day is skipped)',
+        'Run the nightly Podium Division stage now (flag-gated; lease-guarded, so a completed day is skipped)',
       icon: RefreshCw,
     },
     {

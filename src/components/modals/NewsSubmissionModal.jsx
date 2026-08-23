@@ -13,7 +13,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 // A submitted news article is flaired for one of the game's two competition
 // worlds. The chosen id becomes the article's category (its feed/Discord flair).
 const CATEGORIES = [
-  { id: 'podium', name: 'Podium', description: 'Podium Class coverage' },
+  { id: 'podium', name: 'Podium', description: 'Podium Division coverage' },
   { id: 'fantasy', name: 'Fantasy', description: 'Fantasy game updates, predictions' },
 ];
 

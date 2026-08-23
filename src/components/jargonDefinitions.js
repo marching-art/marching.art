@@ -29,30 +29,40 @@ export const JARGON_DEFINITIONS = {
     definition:
       'Drum Corps International — the governing body and competition circuit for elite drum and bugle corps in North America.',
   },
+  fantasyDivision: {
+    term: 'Fantasy Division',
+    definition:
+      'The core fantasy game, where you draft an 8-caption lineup under a point cap. It has four classes — SoundSport, A, Open, and World — and SoundSport is Fantasy Division only.',
+  },
+  podiumDivision: {
+    term: 'Podium Division',
+    definition:
+      'The director-simulation game, where you run a corps season and climb the A → Open → World classes on results. Its own scoring pass, separate from the Fantasy Division.',
+  },
   worldClass: {
     term: 'World Class',
     definition:
-      'The top competitive division in DCI. Corps like Blue Devils, Carolina Crown, and Bluecoats compete here.',
+      'The top competitive class, in both the Fantasy Division and DCI. Corps like Blue Devils, Carolina Crown, and Bluecoats compete here.',
   },
   openClass: {
     term: 'Open Class',
     definition:
-      'The second-tier competitive division in DCI. Smaller corps building toward World Class compete here.',
+      'The second-tier competitive class, in both the Fantasy Division and DCI. Smaller corps building toward World Class compete here.',
   },
   aClass: {
     term: 'A Class',
     definition:
-      'A mid-tier fantasy division between SoundSport and Open Class, with a larger budget than SoundSport. Unlocked as you level up.',
+      'A mid-tier class between SoundSport and Open Class, with a larger budget than SoundSport. Unlocked as you level up.',
   },
   soundsport: {
     term: 'SoundSport',
     definition:
-      'The entry-level division in fantasy drum corps. New directors start here with a 90-point budget before leveling up.',
+      'The entry-level class in the Fantasy Division. New directors start here with a 90-point budget before leveling up. SoundSport is Fantasy Division only.',
   },
   xp: {
     term: 'XP',
     definition:
-      'Experience points earned by playing. Gain XP to level up and unlock higher class divisions with bigger budgets.',
+      'Experience points earned by playing. Gain XP to level up and unlock higher classes with bigger budgets.',
   },
   corpscoin: {
     term: 'CorpsCoin',

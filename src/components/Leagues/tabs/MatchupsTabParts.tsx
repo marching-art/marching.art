@@ -95,7 +95,7 @@ const CORPS_CLASS_CONFIG: Record<
   // Podium corps join league matchups once the class registry enables the
   // class (Phase 7.4) — the matchup doc arrays are registry-driven server-side.
   podiumClass: {
-    name: 'Podium Class',
+    name: 'Podium Division',
     icon: Medal,
     color: 'text-brand',
     bgColor: 'bg-brand/10',

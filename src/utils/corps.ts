@@ -133,7 +133,9 @@ export const CORPS_CLASS_LABELS: Record<string, string> = {
   openClass: 'Open Class',
   aClass: 'A Class',
   soundSport: 'SoundSport',
-  podiumClass: 'Podium Class',
+  // Podium is a separate DIVISION, not a class — see the Fantasy/Podium
+  // division split. The data key stays `podiumClass` for compatibility.
+  podiumClass: 'Podium Division',
 };
 
 /** Compact variants for tabs and tight chips. */
@@ -151,7 +153,7 @@ const CLASS_NAMES: Record<string, string> = {
   aClass: 'A Class',
   open: 'Open Class',
   world: 'World Class',
-  podiumClass: 'Podium Class',
+  podiumClass: 'Podium Division',
   // Legacy keys for backward compatibility
   openClass: 'Open Class',
   worldClass: 'World Class',

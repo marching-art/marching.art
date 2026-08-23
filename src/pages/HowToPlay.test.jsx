@@ -1,6 +1,6 @@
 // Smoke test for the consolidated Game Guide (/guide). Verifies the document
 // mounts, renders every section, surfaces the consolidated SoundSport ratings
-// and Podium Class content, and that search filters the flat index.
+// and Podium Division content, and that search filters the flat index.
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
@@ -19,7 +19,7 @@ describe('HowToPlay (/guide)', () => {
     renderGuide();
     // Section navigator (desktop rail + mobile chips both render the labels).
     expect(screen.getAllByText('Overview').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Podium Class').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Podium Division').length).toBeGreaterThan(0);
     // Section bodies. (Labels like "How Scoring Works" also appear in the nav,
     // so assert at least one match rather than a unique one.)
     expect(screen.getByText('What is marching.art?')).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('HowToPlay (/guide)', () => {
     expect(screen.getByText('65+')).toBeInTheDocument();
   });
 
-  it('presents Podium Class inline with a link to the full guide', () => {
+  it('presents Podium Division inline with a link to the full guide', () => {
     renderGuide();
     expect(screen.getByText('Community Corps')).toBeInTheDocument();
     expect(screen.getByText('Champion Status')).toBeInTheDocument();
@@ -85,7 +85,9 @@ describe('HowToPlay (/guide)', () => {
     // The rail button and the section heading share the label; clicking should
     // not throw (scrollTo is a no-op in jsdom but the handler must run cleanly).
     const rail = screen.getByRole('navigation', { name: 'Guide sections' });
-    fireEvent.click(within(rail).getByText('Podium Class'));
+    // The Podium group header (<p>) and its section button share the label, so
+    // target the button specifically.
+    fireEvent.click(within(rail).getByRole('button', { name: 'Podium Division' }));
     expect(screen.getByText('Reputation: the climb to Champion Status')).toBeInTheDocument();
   });
 });

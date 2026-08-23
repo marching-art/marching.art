@@ -15,19 +15,29 @@ The game runs two alternating season types back-to-back all year:
 Both run on an identical **49-day / 7-week** competition calendar. See
 [`docs/GAMEPLAY.md`](docs/GAMEPLAY.md) for the full ruleset.
 
-## The five classes
+## Two divisions
 
-| Class           | Format         | Point cap | Notes                                                                                             |
-| --------------- | -------------- | --------- | ------------------------------------------------------------------------------------------------- |
-| **SoundSport**  | Fantasy lineup | 90        | Open to everyone; unranked (participation-focused)                                                |
-| **A Class**     | Fantasy lineup | 60        | Unlock by completing 1 season / Level 3 / 1,000 CC                                                |
-| **Open Class**  | Fantasy lineup | 120       | Unlock by completing 2 seasons / Level 5 / 2,500 CC                                               |
-| **World Class** | Fantasy lineup | 150       | Unlock by completing 3 seasons / Level 10 / 5,000 CC                                              |
-| **Podium**      | Director sim   | —         | A separate simulation game (rehearsals, divisions, staff). See [`docs/PODIUM.md`](docs/PODIUM.md) |
+The game has two **divisions**. The **Fantasy Division** has four **classes**
+(SoundSport / A / Open / World); the **Podium Division** is a separate
+director-simulation game. **SoundSport is Fantasy Division only.**
 
-The four fantasy classes share one lineup-and-scoring engine (draft 8 captions,
-score nightly). **Podium** is a distinct director-simulation mode with its own
-rules, launched mid-2026.
+### Fantasy Division classes
+
+| Class           | Format         | Point cap | Notes                                                |
+| --------------- | -------------- | --------- | ---------------------------------------------------- |
+| **SoundSport**  | Fantasy lineup | 90        | Open to everyone; unranked (participation-focused)   |
+| **A Class**     | Fantasy lineup | 60        | Unlock by completing 1 season / Level 3 / 1,000 CC   |
+| **Open Class**  | Fantasy lineup | 120       | Unlock by completing 2 seasons / Level 5 / 2,500 CC  |
+| **World Class** | Fantasy lineup | 150       | Unlock by completing 3 seasons / Level 10 / 5,000 CC |
+
+The four Fantasy Division classes share one lineup-and-scoring engine (draft 8
+captions, score nightly).
+
+### Podium Division
+
+**Podium** is a distinct director-simulation game with its own rules (rehearsals,
+staff, and its own A / Open / World classes), launched mid-2026. See
+[`docs/PODIUM.md`](docs/PODIUM.md).
 
 ## Tech stack
 
@@ -83,7 +93,7 @@ GitHub Actions workflow (or `deploy-functions.sh`).
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md)                               | System design: stack, project structure, Firestore data model, Cloud Functions & scheduled jobs, CI gates, code conventions          |
 | [`docs/GAMEPLAY.md`](docs/GAMEPLAY.md)                             | The rules of play: seasons, classes, caption selection & scoring, change windows, show registration, championships                   |
-| [`docs/PODIUM.md`](docs/PODIUM.md)                                 | The Podium director-simulation class — full design                                                                                   |
+| [`docs/PODIUM.md`](docs/PODIUM.md)                                 | The Podium Division director-simulation game — full design                                                                           |
 | [`docs/SCHEDULE_SYSTEM.md`](docs/SCHEDULE_SYSTEM.md)               | Season & schedule engine: generation, the heritage running-order model, calibration, operator runbook                                |
 | [`docs/SCORE_DROPS.md`](docs/SCORE_DROPS.md)                       | When each night's scores publish: the timezone-aware drop ladder, the once-per-night scrape, kill switch, day-selection rules        |
 | [`docs/GAMIFICATION.md`](docs/GAMIFICATION.md)                     | Progression, economy & engagement: XP/levels, CorpsCoin, the Shop, achievements, streaks, the daily loop, leagues, records, live-ops |

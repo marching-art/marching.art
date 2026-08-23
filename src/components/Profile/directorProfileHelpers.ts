@@ -81,7 +81,7 @@ export const CLASS_DISPLAY = {
   aClass: { name: 'A Class', short: 'A', color: 'text-green-400', bg: 'bg-green-500/10' },
   soundSport: { name: 'SoundSport', short: 'SS', color: 'text-orange-400', bg: 'bg-orange-500/10' },
   podiumClass: {
-    name: 'Podium Class',
+    name: 'Podium Division',
     short: 'POD',
     color: 'text-yellow-400',
     bg: 'bg-yellow-500/10',
@@ -641,7 +641,7 @@ export function getPodiumMedalTrophies(profile: UserProfile): TrophyData[] {
     .map(({ key, label, rank }) => ({
       id: `podium-medals-${key}`,
       title: `Podium ${label} ×${lifetime[key]}`,
-      description: 'Podium Class show medals (lifetime)',
+      description: 'Podium Division show medals (lifetime)',
       icon: Medal,
       color: METAL_COLOR[rank] || 'text-secondary',
       // Between the regional champions (2000+) and the finalists (3000+).
