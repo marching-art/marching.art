@@ -159,7 +159,7 @@ export const StepChooseGame = ({ gameMode, setGameMode }) => (
         <Sparkles className="w-8 h-8 text-interactive" />
       </div>
       <Heading level="display" as="h2" className="mb-2">
-        Choose your game
+        Choose your division
       </Heading>
       <p className="text-muted text-sm">
         Two very different ways to play — start with either one. You can play the other anytime from

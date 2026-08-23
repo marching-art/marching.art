@@ -90,9 +90,9 @@
   {
     "id": "2026-08-15-podium-scores-in-ticker",
     "date": "2026-08-15",
-    "title": "Podium Class scores in the live ticker",
+    "title": "Podium Division scores in the live ticker",
     "category": "improvement",
-    "summary": "The scrolling score ticker now carries Podium Class alongside the fantasy classes and SoundSport, grouped by division, so the Podium tour gets the same at-a-glance presence as everything else."
+    "summary": "The scrolling score ticker now carries the Podium Division alongside the Fantasy Division classes, grouped by class, so the Podium tour gets the same at-a-glance presence as everything else."
   },
   {
     "id": "2026-08-15-corps-name-uniqueness",
@@ -278,7 +278,7 @@
     "highlights": [
       "Hosted shows show the hosting director and full rosters, Podium corps included.",
       "Schedule locations standardized to two-letter state codes.",
-      "Podium divisions are seated at the reset so promotions reach scoring."
+      "Podium classes are seated at the reset so promotions reach scoring."
     ]
   },
   {

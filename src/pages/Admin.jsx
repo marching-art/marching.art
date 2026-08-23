@@ -95,15 +95,15 @@ const PodiumLaunchCard = () => {
     if (
       !window.confirm(
         next
-          ? 'Enable Podium Class for ALL users?\n\nThe Podium tab, hosting card, and Scores tab appear immediately; the nightly stage begins processing.'
-          : 'Disable Podium Class?\n\nThe UI hides and the nightly stage stops. All state is preserved — flipping back on resumes where it left off.'
+          ? 'Enable the Podium Division for ALL users?\n\nThe Podium tab, hosting card, and Scores tab appear immediately; the nightly stage begins processing.'
+          : 'Disable the Podium Division?\n\nThe UI hides and the nightly stage stops. All state is preserved — flipping back on resumes where it left off.'
       )
     )
       return;
     setSaving(true);
     try {
       await setDoc(doc(db, 'game-settings', 'features'), { podiumClass: next }, { merge: true });
-      toast.success(next ? 'Podium Class is LIVE.' : 'Podium Class disabled.');
+      toast.success(next ? 'The Podium Division is LIVE.' : 'The Podium Division is disabled.');
     } catch (error) {
       toast.error(error.message || 'Failed to update the feature flag');
     } finally {
@@ -113,7 +113,7 @@ const PodiumLaunchCard = () => {
 
   return (
     <div className="bg-surface-card border border-line overflow-hidden">
-      <SectionHeader title="Podium Class Launch" icon={Play} />
+      <SectionHeader title="Podium Division Launch" icon={Play} />
       <div className="px-4 py-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">

@@ -203,7 +203,7 @@ export const PODIUM_TOUR_STEPS: TourStep[] = [
     id: 'podium-trajectory',
     title: 'The climb',
     description:
-      'Your results, season over season, build reputation and move you between divisions. Champion Status takes years — this panel tracks where you stand on the way up.',
+      'Your results, season over season, build reputation and move you between classes. Champion Status takes years — this panel tracks where you stand on the way up.',
     icon: 'trophy',
     target: '[data-tour="podium-trajectory"]',
     position: 'top',

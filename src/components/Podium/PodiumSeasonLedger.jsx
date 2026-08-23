@@ -114,7 +114,7 @@ function formatLedgerAsText(ledger, summary, corpsName, seasonName) {
     );
   }
   lines.push('');
-  lines.push(`marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Class`);
+  lines.push(`marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Division`);
   return '```\n' + lines.join('\n') + '\n```';
 }
 

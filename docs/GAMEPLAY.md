@@ -1,9 +1,19 @@
 # Gameplay — The Rules of Play
 
 How the core fantasy game works: seasons, classes, drafting a lineup, scoring,
-change windows, show registration, and championships. This is the four fantasy
-classes (SoundSport / A / Open / World). The **Podium** class is a separate
-simulation game documented in [`PODIUM.md`](PODIUM.md).
+change windows, show registration, and championships.
+
+**Terminology.** The game has two **divisions**:
+
+- The **Fantasy Division** — the drafted-lineup game documented here. It has four
+  **classes**: SoundSport / A / Open / World. **SoundSport is Fantasy Division
+  only.**
+- The **Podium Division** — a separate director-simulation game, documented in
+  [`PODIUM.md`](PODIUM.md). It has three classes: A / Open / World (no
+  SoundSport).
+
+Throughout the game, **division** means Fantasy vs. Podium, and **class** means
+a tier within a division (World / Open / A / SoundSport).
 
 Authoritative constants live in code and should be treated as the source of
 truth if this doc ever drifts:
@@ -31,8 +41,9 @@ The schedule engine that builds each 49-day calendar is documented separately in
 
 ## Classes
 
-There are four fantasy classes plus Podium. Each fantasy class has a **point
-cap** — the maximum total cost of your 8 drafted captions.
+The **Fantasy Division** has four classes (the **Podium Division** is documented
+separately in [`PODIUM.md`](PODIUM.md)). Each Fantasy Division class has a
+**point cap** — the maximum total cost of your 8 drafted captions.
 
 | Class           | Point cap | Fantasy-ranked | Unlock (any one path)                                      |
 | --------------- | --------- | -------------- | ---------------------------------------------------------- |

@@ -46,7 +46,7 @@ const SECTIONS = [
   { id: 'economy', label: 'CorpsCoin', icon: Coins },
   { id: 'leagues', label: 'Leagues', icon: Users },
   { id: 'captionWars', label: 'Caption Wars', icon: Swords },
-  { id: 'podium', label: 'Podium Class', icon: Medal },
+  { id: 'podium', label: 'Podium Division', icon: Medal },
   { id: 'glossary', label: 'Glossary', icon: Book },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
 ];
@@ -60,9 +60,13 @@ const SECTIONS = [
 // heading rather than being mislabeled as belonging to either game.
 const SECTION_GROUPS = [
   { id: 'start', label: 'Start here', sections: ['overview', 'start'] },
-  { id: 'fantasy', label: 'Fantasy', sections: ['captions', 'scoring', 'classes', 'progression'] },
+  {
+    id: 'fantasy',
+    label: 'Fantasy Division',
+    sections: ['captions', 'scoring', 'classes', 'progression'],
+  },
   { id: 'systems', label: 'Systems', sections: ['season', 'economy', 'leagues', 'captionWars'] },
-  { id: 'podium', label: 'Podium', sections: ['podium'] },
+  { id: 'podium', label: 'Podium Division', sections: ['podium'] },
   { id: 'reference', label: 'Reference', sections: ['glossary', 'faq'] },
 ];
 

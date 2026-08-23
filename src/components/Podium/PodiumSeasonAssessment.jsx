@@ -211,10 +211,10 @@ export default function PodiumSeasonAssessment({
             change={a.class.change}
             footnote={
               a.class.change === 'promoted'
-                ? 'You earned your way up a division.'
+                ? 'You earned your way up a class.'
                 : a.class.change === 'relegated'
-                  ? 'Relegated one division — climb back next season.'
-                  : 'Holding your division.'
+                  ? 'Relegated one class — climb back next season.'
+                  : 'Holding your class.'
             }
           />
           <AxisCard

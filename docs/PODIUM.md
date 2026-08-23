@@ -1,6 +1,16 @@
-# Podium Class — Design Document
+# Podium Division — Design Document
 
-**A director-simulation game class for marching.art, spiritual successor to Fantasy Marching Arts**
+**A director-simulation game for marching.art, spiritual successor to Fantasy Marching Arts**
+
+> **Terminology (canonical).** marching.art has two **divisions**: the **Fantasy
+> Division** (drafted lineups; classes SoundSport / A / Open / World) and the
+> **Podium Division** (this document; classes A / Open / World). **Division**
+> means Fantasy vs. Podium; **class** means a tier within a division. This design
+> doc predates that clarification and still calls the Podium A / Open / World
+> tiers "divisions" in many places, and refers to Podium itself as a "class"
+> (its data key remains `podiumClass`). Read those historical "divisions" as
+> **classes** and "Podium Class" as the **Podium Division** — all user-facing
+> copy now uses the canonical terms above.
 
 Status: v3.0 · July 2026 — LIVE (launched mid-live-season 2026); v3.0 logs the launch-week
 decision sheet: three divisions (26), the hosting ladder (27), staff careers (28), historical

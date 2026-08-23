@@ -96,7 +96,7 @@ const ControlBar = memo(
           <div className="flex items-center justify-center md:justify-start gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {podiumEnabled && (
               <span className="hidden md:inline flex-shrink-0 text-[9px] font-bold uppercase tracking-wider text-muted/70 pr-1">
-                Fantasy
+                Fantasy Division
               </span>
             )}
             {CORPS_CLASS_ORDER.map((classId) => {

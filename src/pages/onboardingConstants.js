@@ -66,7 +66,7 @@ export const GAME_MODE_SOUNDSPORT = 'soundSport';
 export const GAME_MODES = [
   {
     id: GAME_MODE_PODIUM,
-    label: 'Podium Class',
+    label: 'Podium Division',
     tagline: 'Run your own corps',
     icon: Medal,
     // Gold — the same accent the /podium recruiting page uses for this class.
@@ -83,12 +83,12 @@ export const GAME_MODES = [
   },
   {
     id: GAME_MODE_SOUNDSPORT,
-    label: 'SoundSport',
+    label: 'Fantasy Division',
     tagline: 'Draft a fantasy lineup',
     icon: Target,
     accent: 'interactive',
     description:
-      'Fantasy drum corps. Draft historical performances for eight captions and earn points from real show scores.',
+      'Fantasy drum corps. Draft historical performances for eight captions and earn points from real show scores. You start in the SoundSport class.',
     bullets: [
       'Pick 8 captions from DCI history',
       'Compete in leagues with friends',
@@ -148,8 +148,8 @@ export const STEPS = [
 export const GAME_FEATURES = [
   {
     icon: Layers,
-    title: 'Two games, one account',
-    description: 'Run a corps in Podium Class or draft a fantasy lineup in SoundSport',
+    title: 'Two divisions, one account',
+    description: 'Run a corps in the Podium Division or draft a fantasy lineup in the Fantasy Division',
   },
   {
     icon: Users,

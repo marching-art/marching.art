@@ -112,7 +112,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
 
   const activeCap = sortBy === 'total' ? null : sortBy;
   const suffix = sortBy === 'total' ? 'Standings' : `${sortBy} Leaders`;
-  const title = `Podium Class · ${suffix}`;
+  const title = `Podium Division · ${suffix}`;
   const subtitle = `${periodLabel} · ${column.fieldSize} corps`;
 
   // One share block per division, mirroring the on-screen split.
@@ -121,7 +121,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
       .map((section) =>
         formatStandingsAsText(
           {
-            title: `${section.label || 'Podium Class'} · ${suffix}`,
+            title: `${section.label || 'Podium Division'} · ${suffix}`,
             subtitle,
             seasonName,
           },
@@ -222,7 +222,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
       ))}
 
       <SheetFooter
-        note="Split by division · box-toppers in gold · daily column in the news"
+        note="Split by class · box-toppers in gold · daily column in the news"
         action={<ShareButton getText={shareText} />}
       />
     </div>
