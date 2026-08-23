@@ -27,6 +27,7 @@ import DualRunningOrder from './DualRunningOrder';
 import CorpsSelectionItem, {
   PodiumSelectionRow,
   HostedShowPanel,
+  AttendeeRoster,
 } from './ShowRegistrationModalParts';
 import {
   CLASS_CONFIG,
@@ -93,7 +94,14 @@ const ShowRegistrationModal = ({
   // the fallback when the record hasn't loaded. The hook returns exactly what
   // HostedShowPanel renders, so it spreads straight in below.
   const isHosted = Boolean(hostedEvent) || show.eventTier === 'hosted';
-  const hostedShow = useHostedShowRegistrations({ enabled: isHosted, show, hostedEvent });
+  // Fetch the attendee roster for EVERY show (not just hosted) — championship
+  // events use auto-enrollment display instead. Regular shows get `capacity: null`
+  // (no venue meter); the roster itself renders the same everywhere.
+  const hostedShow = useHostedShowRegistrations({
+    enabled: show.isChampionship !== true,
+    show,
+    hostedEvent,
+  });
 
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
   const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
@@ -485,23 +493,16 @@ const ShowRegistrationModal = ({
         </div>
       )}
 
-      {show.fantasySchedule &&
-        !(show.lineup?.length > 0) &&
-        !(show.podiumSchedule?.lineup?.length > 0) && (
-          <div className="px-4 pt-4">
-            <div className="bg-surface-card border border-line px-4 py-6 text-center">
-              <p className="text-sm text-muted">No corps have taken the field yet.</p>
-              <p className="text-xs text-secondary mt-1">
-                Register below to be the first to perform — the running order fills in as directors
-                sign up.
-              </p>
-            </div>
-          </div>
-        )}
-
-      {/* Director-hosted show (§5.10): who's coming + how many venue slots are
-          left. Shown before the corps picker so the room is visible up front. */}
+      {/* Who's attending — the live roster for EVERY show. Hosted shows get the
+          richer panel (venue slots + host); every other non-championship show
+          gets the same roster in a neutral panel, so the lineup is visible on all
+          shows, not just hosted ones. */}
       {isHosted && <HostedShowPanel {...hostedShow} />}
+      {!isHosted && !isChampionship && (
+        <div className="mx-4 mt-4 p-3 bg-surface-sunken border border-line">
+          <AttendeeRoster attendees={hostedShow.attendees} loading={hostedShow.loading} />
+        </div>
+      )}
 
       {/* marching.art Major banner (§5.11): exclusive day, full-field
           convergence — the season's shared reference points */}
