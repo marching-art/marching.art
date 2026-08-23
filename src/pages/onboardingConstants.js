@@ -149,7 +149,8 @@ export const GAME_FEATURES = [
   {
     icon: Layers,
     title: 'Two divisions, one account',
-    description: 'Run a corps in the Podium Division or draft a fantasy lineup in the Fantasy Division',
+    description:
+      'Run a corps in the Podium Division or draft a fantasy lineup in the Fantasy Division',
   },
   {
     icon: Users,
