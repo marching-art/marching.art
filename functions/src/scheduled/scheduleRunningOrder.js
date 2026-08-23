@@ -26,8 +26,13 @@ const { assertAdmin } = require("../helpers/callableGuards");
 const { RANKED_CLASSES } = require("../helpers/classRegistry");
 const { MODEL_VERSION } = require("../helpers/scheduleModel");
 const { buildShowRunningOrder } = require("../helpers/showRunningOrder");
-const { showRegistrationEventKey } = require("../helpers/showRegistrations");
+const { showRegistrationEventKey, collectPodiumRegistrations } = require("../helpers/showRegistrations");
 const { zonedWallTimeToUtc } = require("../helpers/eventDetails");
+const { isPodiumEnabled } = require("../helpers/features");
+const podiumStore = require("../helpers/podium/store");
+
+// Batch size for the getAll fan-out over Podium state docs (matches users.js).
+const GETALL_CHUNK = 300;
 
 const DAY_MS = 86400000;
 // How far ahead to materialize. Covers the current week plus a couple of days so
@@ -91,6 +96,46 @@ function scheduleSignature(sched) {
   return `${sched.fieldSize}|${sched.intervalMin}|${sched.scoresAt}|${sched.overflow.length}|${ids}`;
 }
 
+/** Shape a builder result into the stored schedule object (sans updatedAt). */
+function toScheduleDoc(order) {
+  return {
+    modelVersion: MODEL_VERSION,
+    timezone: order.timezone,
+    gatesAt: order.gatesAt,
+    startsAt: order.startsAt,
+    scoresAt: order.scoresAt,
+    intervalMin: order.intervalMin,
+    fieldSize: order.fieldSize,
+    lineup: order.lineup,
+    overflow: order.overflow,
+  };
+}
+
+/**
+ * Read the season's Podium roster + the state fields needed to build a running
+ * order (field, recent form, picks). A plain roster read + a batched getAll —
+ * no collection-group index — exactly like getShowRegistrations. Returns
+ * [{uid, state}] ready for collectPodiumRegistrations.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid
+ * @returns {Promise<Array<{uid:string, state:Object}>>}
+ */
+async function loadPodiumEntries(db, seasonUid) {
+  const rosterSnap = await podiumStore.rosterCollection(db, seasonUid).get();
+  const uids = rosterSnap.docs.map((doc) => doc.id);
+  const entries = [];
+  for (let i = 0; i < uids.length; i += GETALL_CHUNK) {
+    const chunk = uids.slice(i, i + GETALL_CHUNK);
+    const snaps = await db.getAll(...chunk.map((uid) => podiumStore.stateRef(db, uid)), {
+      fieldMask: ["seasonUid", "corpsName", "selectedShows", "lastTotal"],
+    });
+    snaps.forEach((snap, j) => {
+      if (snap.exists) entries.push({ uid: chunk[j], state: snap.data() });
+    });
+  }
+  return entries;
+}
+
 /**
  * Load every ranked class's standings into a `${uid}_${class}` → entry map for
  * the recent-performance metric. SoundSport isn't ranked, so its corps fall to
@@ -152,6 +197,22 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
   const metric = await loadStandingsMetric(db, seasonId);
   const metricFor = (uid, cls) => (uid ? metric.get(`${uid}_${cls}`) || null : null);
 
+  // The Podium field shares the venue/date but is its own running order (its own
+  // field, its own recent-form metric, and a flat 9 PM ET drop year-round). Read
+  // its roster once, gated on the Podium feature.
+  let podiumEntries = [];
+  const podiumOn =
+    deps.podiumEnabled !== undefined
+      ? deps.podiumEnabled
+      : await isPodiumEnabled(db).catch(() => false);
+  if (podiumOn) {
+    try {
+      podiumEntries = await (deps.loadPodiumEntries || loadPodiumEntries)(db, seasonId);
+    } catch (err) {
+      logger.warn(`[running-order] podium roster read failed: ${err.message}`);
+    }
+  }
+
   let updated = 0;
   let built = 0;
   const out = [];
@@ -165,6 +226,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
       const week = comp.week || Math.ceil((comp.day || 1) / 7);
       const eventKey = showRegistrationEventKey(week, comp.name, comp.date ?? null);
       try {
+        // --- Fantasy running order (from the registration index) ---
         const regSnap = await db.doc(paths.showRegistrationEvent(seasonId, eventKey)).get();
         const registrations = regSnap.exists
           ? Object.values(regSnap.data().registrations || {}).map((r) => ({
@@ -174,27 +236,41 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
             }))
           : [];
         built += 1;
-        const order = build({
-          registrations,
-          metricFor,
-          scoresDropAt: resolveScoresDropAt(comp, date, isLive),
-          timezone: comp.timezone || null,
-          location: comp.location || "",
-        });
-        const next = {
-          modelVersion: MODEL_VERSION,
-          timezone: order.timezone,
-          gatesAt: order.gatesAt,
-          startsAt: order.startsAt,
-          scoresAt: order.scoresAt,
-          intervalMin: order.intervalMin,
-          fieldSize: order.fieldSize,
-          lineup: order.lineup,
-          overflow: order.overflow,
-        };
-        if (scheduleSignature(comp.fantasySchedule) !== scheduleSignature(next)) {
+        const fantasy = toScheduleDoc(
+          build({
+            registrations,
+            metricFor,
+            scoresDropAt: resolveScoresDropAt(comp, date, isLive),
+            timezone: comp.timezone || null,
+            location: comp.location || "",
+          })
+        );
+        if (scheduleSignature(comp.fantasySchedule) !== scheduleSignature(fantasy)) {
           updated += 1;
-          entry.fantasySchedule = { ...next, updatedAt: new Date().toISOString() };
+          entry.fantasySchedule = { ...fantasy, updatedAt: new Date().toISOString() };
+        }
+
+        // --- Podium running order (from the podium roster; 9 PM ET year-round) ---
+        if (podiumOn && Number.isFinite(comp.day)) {
+          const pField = collectPodiumRegistrations(podiumEntries, {
+            day: comp.day,
+            eventName: comp.name,
+            activeSeasonId: seasonId,
+          });
+          const pLast = new Map(pField.map((p) => [p.uid, p.lastTotal]));
+          const podium = toScheduleDoc(
+            build({
+              registrations: pField,
+              metricFor: (uid) => (pLast.has(uid) ? { totalScore: pLast.get(uid) } : null),
+              scoresDropAt: resolveScoresDropAt(comp, date, false), // podium: always 9 PM ET
+              timezone: comp.timezone || null,
+              location: comp.location || "",
+            })
+          );
+          if (scheduleSignature(comp.podiumSchedule) !== scheduleSignature(podium)) {
+            updated += 1;
+            entry.podiumSchedule = { ...podium, updatedAt: new Date().toISOString() };
+          }
         }
       } catch (err) {
         logger.warn(`[running-order] build failed for ${comp.name}: ${err.message}`);

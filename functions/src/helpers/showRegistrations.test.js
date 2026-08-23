@@ -122,14 +122,35 @@ describe("collectPodiumRegistrations", () => {
         state: {
           seasonUid: SEASON,
           corpsName: "Altitude Podium",
+          lastTotal: 87.5,
           selectedShows: { 15: { eventName: "marching.art Mile High", location: "Fort Collins, CO" } },
         },
       },
     ];
     const out = collectPodiumRegistrations(entries, params);
     assert.deepEqual(out, [
-      { uid: "druski", corpsName: "Altitude Podium", corpsClass: "podiumClass", username: null },
+      {
+        uid: "druski",
+        corpsName: "Altitude Podium",
+        corpsClass: "podiumClass",
+        username: null,
+        lastTotal: 87.5,
+      },
     ]);
+  });
+
+  test("lastTotal defaults to null before the corps has been scored", () => {
+    const entries = [
+      {
+        uid: "rookie",
+        state: {
+          seasonUid: SEASON,
+          corpsName: "Fresh Podium",
+          selectedShows: { 15: { eventName: "marching.art Mile High" } },
+        },
+      },
+    ];
+    assert.equal(collectPodiumRegistrations(entries, params)[0].lastTotal, null);
   });
 
   test("matches when Firestore has stringified the day map keys", () => {

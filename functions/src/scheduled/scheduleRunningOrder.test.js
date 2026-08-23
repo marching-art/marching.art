@@ -139,4 +139,58 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     const res = await enrichScheduleRunningOrdersLogic(db, { now: NOW });
     assert.deepEqual(res, { updated: 0, built: 0, total: 0, seasonId: null });
   });
+
+  test("builds the podium running order alongside the fantasy one", async () => {
+    const db = fakeDb(seedWith());
+    // Two podium corps picked Show A on its day (18); ordered by recent form.
+    const podiumEntries = [
+      {
+        uid: "p1",
+        state: {
+          seasonUid: "s1",
+          corpsName: "Vanguard Podium",
+          lastTotal: 70,
+          selectedShows: { 18: { eventName: "Show A" } },
+        },
+      },
+      {
+        uid: "p2",
+        state: {
+          seasonUid: "s1",
+          corpsName: "Bluecoats Podium",
+          lastTotal: 95,
+          selectedShows: { 18: { eventName: "Show A" } },
+        },
+      },
+    ];
+    const res = await enrichScheduleRunningOrdersLogic(db, {
+      now: NOW,
+      podiumEnabled: true,
+      loadPodiumEntries: async () => podiumEntries,
+    });
+    assert.ok(res.updated >= 1);
+
+    const a = db.store.get("schedules/s1").competitions.find((c) => c.id === "a");
+    assert.ok(a.podiumSchedule, "Show A has a podium schedule");
+    assert.equal(a.podiumSchedule.fieldSize, 2);
+    // Worst (70) first, best (95) headlines.
+    assert.deepEqual(a.podiumSchedule.lineup.map((e) => e.corps), [
+      "Vanguard Podium",
+      "Bluecoats Podium",
+    ]);
+    assert.equal(a.podiumSchedule.lineup[0].corpsClass, "podiumClass");
+    // Fantasy schedule is still built independently.
+    assert.equal(a.fantasySchedule.fieldSize, 3);
+  });
+
+  test("no podium schedule when the feature is off", async () => {
+    const db = fakeDb(seedWith());
+    await enrichScheduleRunningOrdersLogic(db, {
+      now: NOW,
+      podiumEnabled: false,
+      loadPodiumEntries: async () => [{ uid: 'p1', state: {} }],
+    });
+    const a = db.store.get("schedules/s1").competitions.find((c) => c.id === "a");
+    assert.equal(a.podiumSchedule, undefined);
+  });
 });

@@ -103,10 +103,14 @@ function buildEventDocs(pairs) {
  * are strings once round-tripped through Firestore, so both the numeric and
  * string forms of `day` are tried.
  *
+ * `lastTotal` (the corps' most recent Podium score, from the state doc) rides
+ * along so the running-order builder can slot the podium field by recent form
+ * without a second read; it's null until the corps has been scored.
+ *
  * @param {Array<{uid: string, state: Object}>} entries roster uid + state data
  * @param {{day: number, eventName: string, activeSeasonId: string}} params
  * @returns {Array<{uid: string|null, corpsName: string, corpsClass: string,
- *   username: null}>}
+ *   username: null, lastTotal: number|null}>}
  */
 function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId }) {
   const out = [];
@@ -120,6 +124,7 @@ function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId })
       corpsName: state.corpsName || "Podium Corps",
       corpsClass: "podiumClass",
       username: null,
+      lastTotal: Number.isFinite(state.lastTotal) ? state.lastTotal : null,
     });
   }
   return out;

@@ -23,7 +23,7 @@ import { formatEventName } from '../../utils/season';
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
 import { useAuth } from '../../context/AuthContext';
-import RunningOrder from './RunningOrder';
+import DualRunningOrder from './DualRunningOrder';
 import CorpsSelectionItem, {
   PodiumSelectionRow,
   HostedShowPanel,
@@ -423,25 +423,28 @@ const ShowRegistrationModal = ({
   // Shared body content (plain JSX value — see headerContent note).
   const bodyContent = (
     <>
-      {/* Running order — the real registered field, slotted worst-to-best and
-          ending at the night's score drop (or the scraped/heritage order as a
-          fallback). Shown when there's a field; an honest placeholder otherwise. */}
-      {show.lineup?.length > 0 && (
+      {/* Running order(s) — the real registered field(s), slotted worst-to-best
+          and ending at the night's score drop, with a Fantasy/Podium toggle when
+          both fields exist (or the scraped/heritage order as a fallback). Shown
+          when there's a field; an honest placeholder otherwise. */}
+      {(show.lineup?.length > 0 || show.podiumSchedule?.lineup?.length > 0) && (
         <div className="px-4 pt-4">
-          <RunningOrder show={show} myUid={user?.uid} />
+          <DualRunningOrder show={show} myUid={user?.uid} />
         </div>
       )}
-      {show.fantasySchedule && !(show.lineup?.length > 0) && (
-        <div className="px-4 pt-4">
-          <div className="bg-surface-card border border-line px-4 py-6 text-center">
-            <p className="text-sm text-muted">No corps have taken the field yet.</p>
-            <p className="text-xs text-secondary mt-1">
-              Register below to be the first to perform — the running order fills in as directors
-              sign up.
-            </p>
+      {show.fantasySchedule &&
+        !(show.lineup?.length > 0) &&
+        !(show.podiumSchedule?.lineup?.length > 0) && (
+          <div className="px-4 pt-4">
+            <div className="bg-surface-card border border-line px-4 py-6 text-center">
+              <p className="text-sm text-muted">No corps have taken the field yet.</p>
+              <p className="text-xs text-secondary mt-1">
+                Register below to be the first to perform — the running order fills in as directors
+                sign up.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Director-hosted show (§5.10): who's coming + how many venue slots are
           left. Shown before the corps picker so the room is visible up front. */}
