@@ -157,9 +157,25 @@ export function parseModelDecision(text) {
   }
 }
 
+/** Join the PR's commit messages into a bounded block for the prompt. Commit
+ *  messages carry the real, human-written description of the change — often the
+ *  ONLY informative text, because auto-merged PRs land with a branch-slug title
+ *  (e.g. "Claude/podium lineup behavior epmjzn") and an empty body. Feeding the
+ *  model just the title+body meant it saw nothing player-facing and answered
+ *  SKIP on real features; the commits are what let it judge and describe. */
+export function formatCommits(commits = [], { maxCommits = 20, maxChars = 4000 } = {}) {
+  const block = commits
+    .map((c) => String(c ?? '').trim())
+    .filter(Boolean)
+    .slice(0, maxCommits)
+    .join('\n---\n');
+  return block.length > maxChars ? block.slice(0, maxChars) : block;
+}
+
 /** The prompt that turns a merged PR into a player-facing entry (or a SKIP). */
-export function buildPrompt({ title, body = '', files = [] }) {
+export function buildPrompt({ title, body = '', files = [], commits = [] }) {
   const fileList = files.slice(0, 40).join('\n');
+  const commitBlock = formatCommits(commits);
   return `You write the player-facing changelog for marching.art, a year-round fantasy drum corps game. A pull request just merged. Decide whether it changes something a PLAYER (a "director") would notice or care about, and if so, describe it the way you'd tell a player — never in developer terms.
 
 Answer with a single JSON object and nothing else.
@@ -178,12 +194,16 @@ Otherwise answer:
 Guidance:
 - "feature" = something new players can do. "improvement" = an existing thing got better. "fix" = a bug players hit is resolved. "balance" = scoring/economy/difficulty tuning.
 - Be concrete and warm, not marketing-flowery. No hype words ("game-changing", "revolutionary").
+- The PR TITLE is often just an auto-generated branch name (e.g. "Claude/podium lineup behavior") and the description is often empty. When they are uninformative, judge and describe the change from the COMMIT MESSAGES and CHANGED FILES instead — do not skip just because the title is opaque.
 - When in doubt about player relevance, prefer {"skip": true}.
 
 PR TITLE: ${title}
 
 PR DESCRIPTION:
 ${(body || '').slice(0, 2000)}
+
+COMMIT MESSAGES:
+${commitBlock}
 
 CHANGED FILES:
 ${fileList}`;
@@ -196,12 +216,19 @@ ${fileList}`;
 const CONVENTIONAL_RE = /^(feat|fix|perf|balance)(\([^)]*\))?!?:\s*(.+)$/i;
 
 /**
- * A conservative entry derived from the PR title alone, for when the model is
- * unavailable. Only fires on a conventional-commit-style title so we don't
- * fabricate copy from an ambiguous message; returns null otherwise.
+ * A conservative entry for when the model is unavailable. Derived from a
+ * conventional-commit-style message so we don't fabricate copy from an ambiguous
+ * one. Tries the PR title first, then the PR's commit subjects — auto-merged PRs
+ * carry a branch-slug title that never matches, but a `feat:`/`fix:` commit
+ * inside them still can. Returns null when nothing conventional is found.
  */
-export function heuristicEntry({ title = '', date, existingIds = [] }) {
-  const m = title.trim().match(CONVENTIONAL_RE);
+export function heuristicEntry({ title = '', commits = [], date, existingIds = [] }) {
+  const subjects = [title, ...commits.map((c) => String(c ?? '').split('\n')[0])];
+  let m = null;
+  for (const subject of subjects) {
+    m = String(subject).trim().match(CONVENTIONAL_RE);
+    if (m) break;
+  }
   if (!m) return null;
   const type = m[1].toLowerCase();
   const rest = m[3].trim();
@@ -312,6 +339,7 @@ async function main() {
   const authorLogin = process.env.PR_AUTHOR || '';
   let labels = [];
   let files = [];
+  let commits = [];
   try {
     labels = process.env.PR_LABELS ? JSON.parse(process.env.PR_LABELS) : [];
   } catch {
@@ -321,6 +349,11 @@ async function main() {
     files = process.env.PR_FILES ? JSON.parse(process.env.PR_FILES) : [];
   } catch {
     files = [];
+  }
+  try {
+    commits = process.env.PR_COMMITS ? JSON.parse(process.env.PR_COMMITS) : [];
+  } catch {
+    commits = [];
   }
 
   if (!title) {
@@ -345,7 +378,11 @@ async function main() {
 
   if (apiKey) {
     try {
-      const text = await callGemini({ apiKey, model, prompt: buildPrompt({ title, body, files }) });
+      const text = await callGemini({
+        apiKey,
+        model,
+        prompt: buildPrompt({ title, body, files, commits }),
+      });
       const decision = parseModelDecision(text);
       if (decision.skip) {
         setOutput('changelog_created', 'false');
@@ -381,7 +418,7 @@ async function main() {
     console.log('No model key configured; using conservative heuristic.');
   }
 
-  if (!entry) entry = heuristicEntry({ title, date, existingIds });
+  if (!entry) entry = heuristicEntry({ title, commits, date, existingIds });
 
   if (!entry) {
     setOutput('changelog_created', 'false');

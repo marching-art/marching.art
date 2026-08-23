@@ -51,8 +51,11 @@ jobs:
       - name: Self-test the generator
         run: npm run changelog:selftest
 
-      # The PR's changed files sharpen the noise filter (docs/test-only PRs).
-      - name: Collect changed files
+      # The PR's changed files sharpen the noise filter (docs/test-only PRs), and
+      # its commit messages carry the real description of the change — auto-merged
+      # PRs land with a branch-slug title and empty body, so the commits are often
+      # the only text that tells the generator what actually shipped.
+      - name: Collect changed files and commits
         uses: actions/github-script@v9
         with:
           script: |
@@ -62,8 +65,16 @@ jobs:
               pull_number: context.payload.pull_request.number,
               per_page: 100,
             });
-            const names = files.map((f) => f.filename);
-            core.exportVariable('PR_FILES', JSON.stringify(names));
+            core.exportVariable('PR_FILES', JSON.stringify(files.map((f) => f.filename)));
+
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const messages = commits.map((c) => c.commit.message).filter(Boolean);
+            core.exportVariable('PR_COMMITS', JSON.stringify(messages));
 
       - name: Generate entry
         id: gen

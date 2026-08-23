@@ -15,6 +15,7 @@ import {
   parseModelDecision,
   heuristicEntry,
   buildPrompt,
+  formatCommits,
   isAuthError,
   VALID_CATEGORIES,
   MAX_ENTRIES,
@@ -217,6 +218,29 @@ test('heuristicEntry returns null for a non-conventional title', () => {
   assert.equal(heuristicEntry({ title: 'Podium veterans start closer', date: 'd' }), null);
 });
 
+test('heuristicEntry falls back to a conventional commit when the title is a branch slug', () => {
+  // The real failure mode: PR title is the auto-generated branch name, but a
+  // commit inside the PR is conventional and usable.
+  const e = heuristicEntry({
+    title: 'Claude/league chat feature xyz123',
+    commits: ['docs: tidy README', 'feat: add league chat\n\nLong body here.'],
+    date: '2026-08-12',
+  });
+  assert.equal(e.category, 'feature');
+  assert.equal(e.title, 'Add league chat');
+});
+
+test('heuristicEntry returns null when neither title nor commits are conventional', () => {
+  assert.equal(
+    heuristicEntry({
+      title: 'Claude/podium lineup behavior epmjzn',
+      commits: ['Center the Podium lineup chooser on desktop'],
+      date: 'd',
+    }),
+    null
+  );
+});
+
 test('heuristicEntry skips a conventional title too terse to summarize', () => {
   // The summary is derived from the title; an ultra-short one is dropped rather
   // than published as junk.
@@ -227,12 +251,37 @@ test('heuristicEntry skips a conventional title too terse to summarize', () => {
 // buildPrompt
 // ---------------------------------------------------------------------------
 
-test('buildPrompt includes the title, body, and a skip instruction', () => {
-  const prompt = buildPrompt({ title: 'Add thing', body: 'Details here', files: ['src/a.ts'] });
+test('buildPrompt includes the title, body, commits, and a skip instruction', () => {
+  const prompt = buildPrompt({
+    title: 'Add thing',
+    body: 'Details here',
+    files: ['src/a.ts'],
+    commits: ['Center the Podium lineup chooser on desktop'],
+  });
   assert.match(prompt, /Add thing/);
   assert.match(prompt, /Details here/);
   assert.match(prompt, /"skip": true/);
   assert.match(prompt, /src\/a\.ts/);
+  assert.match(prompt, /COMMIT MESSAGES:/);
+  assert.match(prompt, /Center the Podium lineup chooser on desktop/);
+});
+
+// ---------------------------------------------------------------------------
+// formatCommits
+// ---------------------------------------------------------------------------
+
+test('formatCommits joins, trims, and drops empties', () => {
+  assert.equal(formatCommits(['  one  ', '', 'two', null]), 'one\n---\ntwo');
+  assert.equal(formatCommits([]), '');
+});
+
+test('formatCommits bounds the count and total length', () => {
+  const many = Array.from({ length: 30 }, (_, i) => `commit ${i}`);
+  const out = formatCommits(many, { maxCommits: 5 });
+  assert.equal(out.split('\n---\n').length, 5);
+
+  const long = ['x'.repeat(9000)];
+  assert.ok(formatCommits(long, { maxChars: 100 }).length <= 100);
 });
 
 // ---------------------------------------------------------------------------
