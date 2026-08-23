@@ -105,7 +105,9 @@ const OverviewSection = () => (
     </div>
 
     {/* Two divisions to play */}
-    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Two divisions to play</p>
+    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
+      Two divisions to play
+    </p>
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="bg-interactive/10 border border-interactive/30 rounded-none p-4">
         <div className="flex items-center gap-2 mb-1.5">

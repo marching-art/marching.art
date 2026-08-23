@@ -332,8 +332,8 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
             </>
           ) : (
             <>
-              Split by class · box-toppers in <span className="text-brand font-bold">gold</span>{' '}
-              · full captions — Podium Division only
+              Split by class · box-toppers in <span className="text-brand font-bold">gold</span> ·
+              full captions — Podium Division only
             </>
           )}
         </span>
@@ -399,8 +399,8 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
   if (days.length === 0) {
     return (
       <div className="p-8 text-center text-xs text-muted">
-        No Podium Division results yet this season — the first recap sheet posts after the next scored
-        show.
+        No Podium Division results yet this season — the first recap sheet posts after the next
+        scored show.
       </div>
     );
   }

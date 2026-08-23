@@ -48,8 +48,7 @@ export default function StaffOutlookBanner({ podium }) {
           <p className="text-[11px] text-secondary leading-relaxed">
             As your staff gain tenure their salaries rise. Next season your roster will cost{' '}
             <span className="font-bold text-white tabular-nums">{outlook.payroll} CC</span>, but{' '}
-            {outlook.commitmentCap === 0 ? 'your class' : 'your class cap'} lets you commit at
-            most{' '}
+            {outlook.commitmentCap === 0 ? 'your class' : 'your class cap'} lets you commit at most{' '}
             <span className="font-bold text-white tabular-nums">{outlook.commitmentCap} CC</span> —
             a <span className="font-bold text-warning tabular-nums">{outlook.shortfall} CC</span>{' '}
             shortfall. When you re-register you&apos;ll have to release or retrain someone; saving
