@@ -194,6 +194,12 @@ const Dashboard = () => {
   const hasSeasonLedger =
     isPodiumSelected || ['worldClass', 'openClass', 'aClass'].includes(activeCorpsClass);
 
+  // The Next Performance panel surfaces real show timing + running order, which
+  // only exist while the live-season refresh is scraping dci.org. Off-season
+  // (historical replay) schedules carry no such enrichment, so gate the panel to
+  // live seasons rather than letting it render empty (or on stale enriched data).
+  const isLiveSeason = seasonData?.status === 'live-season';
+
   // Whether the director has entered today's league prediction pool — the
   // per-day fact the join-league-pool daily challenge verifies, read off the
   // leagues' pool docs (not the profile) the same way podiumFacts are.
@@ -551,13 +557,18 @@ const Dashboard = () => {
                       </Suspense>
                     )}
 
-                    {/* Next Performance - real show timing + running order + your-picks-live spotlight */}
-                    <NextPerformancePanel
-                      competitions={competitions}
-                      selectedShows={activeCorps?.selectedShows || {}}
-                      lineup={lineup}
-                      poolCorps={availableCorps}
-                    />
+                    {/* Next Performance - real show timing + running order +
+                        your-picks-live spotlight. Live-season only: its data
+                        (scraped start times + running order) exists only while
+                        the live season is refreshing from dci.org. */}
+                    {isLiveSeason && (
+                      <NextPerformancePanel
+                        competitions={competitions}
+                        selectedShows={activeCorps?.selectedShows || {}}
+                        lineup={lineup}
+                        poolCorps={availableCorps}
+                      />
+                    )}
                   </>
                 )}
               </div>
