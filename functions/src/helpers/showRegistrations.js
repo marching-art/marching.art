@@ -20,6 +20,8 @@
  * clients cannot read or write it directly.
  */
 
+const { homeGeoFor } = require("./corpsGeo");
+
 /**
  * Deterministic document key for an event. base64url keeps arbitrary event
  * names (slashes, unicode) safe as a single Firestore doc id.
@@ -50,10 +52,12 @@ function collectRegistrationsFromProfile(uid, profile) {
     for (const weekKey of Object.keys(selectedShows)) {
       const week = parseInt(String(weekKey).replace(/^week/, ""), 10);
       if (!Number.isFinite(week)) continue;
+      const declined = corpsData.declinedEncores || {};
       for (const show of selectedShows[weekKey] || []) {
         if (!show || typeof show.eventName !== "string" || !show.eventName) continue;
+        const key = showRegistrationEventKey(week, show.eventName, show.date);
         out.push({
-          key: showRegistrationEventKey(week, show.eventName, show.date),
+          key,
           week,
           eventName: show.eventName,
           date: show.date ?? null,
@@ -63,6 +67,12 @@ function collectRegistrationsFromProfile(uid, profile) {
             corpsClass,
             corpsName: corpsData.corpsName || "Unnamed Corps",
             username: profile.username || null,
+            // Home coordinates for the encore (nearest-to-venue). Prefer a value
+            // cached on the corps; otherwise derive from its free-text location so
+            // the index self-heals for corps registered before the cache existed.
+            homeGeo: corpsData.homeGeo || homeGeoFor(corpsData.location) || null,
+            // Director banked their encore for a later show (per-event opt-out).
+            encoreDeclined: declined[key] === true,
           },
         });
       }
@@ -103,10 +113,14 @@ function buildEventDocs(pairs) {
  * are strings once round-tripped through Firestore, so both the numeric and
  * string forms of `day` are tried.
  *
+ * `lastTotal` (the corps' most recent Podium score, from the state doc) rides
+ * along so the running-order builder can slot the podium field by recent form
+ * without a second read; it's null until the corps has been scored.
+ *
  * @param {Array<{uid: string, state: Object}>} entries roster uid + state data
  * @param {{day: number, eventName: string, activeSeasonId: string}} params
  * @returns {Array<{uid: string|null, corpsName: string, corpsClass: string,
- *   username: null}>}
+ *   username: null, lastTotal: number|null}>}
  */
 function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId }) {
   const out = [];
@@ -120,6 +134,7 @@ function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId })
       corpsName: state.corpsName || "Podium Corps",
       corpsClass: "podiumClass",
       username: null,
+      lastTotal: Number.isFinite(state.lastTotal) ? state.lastTotal : null,
     });
   }
   return out;

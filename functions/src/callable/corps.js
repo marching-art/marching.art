@@ -7,6 +7,7 @@ const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
+const { homeGeoFor } = require("../helpers/corpsGeo");
 const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
 const {
   VALID_CLASSES,
@@ -299,6 +300,8 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
             updatedCorps[corpsClass] = {
               corpsName: decision.corpsName,
               location: decision.location,
+              // Cache home coords for encore proximity (helpers/corpsGeo.js).
+              homeGeo: homeGeoFor(decision.location),
               showConcept: decision.showConcept || "",
               seasonUid: currentSeasonUid,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),

@@ -16,6 +16,7 @@ const PUSH_TYPES = {
   TRADE_PROPOSAL: "trade_proposal",
   SHOW_REMINDER: "show_reminder",
   LINEUP_REMINDER: "lineup_reminder",
+  PERFORMANCE: "performance", // "your corps takes the field" (real-time running order)
 };
 
 // Preference field mapping
@@ -27,6 +28,7 @@ const PUSH_PREFERENCE_MAP = {
   [PUSH_TYPES.TRADE_PROPOSAL]: "tradeProposal",
   [PUSH_TYPES.SHOW_REMINDER]: "showReminder",
   [PUSH_TYPES.LINEUP_REMINDER]: "lineupReminder",
+  [PUSH_TYPES.PERFORMANCE]: "performance",
 };
 
 /**
@@ -216,6 +218,29 @@ async function sendLeagueActivityPush(userId, leagueName, activityType, message)
 }
 
 /**
+ * Send a "your corps takes the field" notification — the real-time running-order
+ * moment (docs/EVENT_SCHEDULES_AND_SLOTS.md).
+ * @param {string} userId
+ * @param {string} corpsName
+ * @param {string} showName
+ * @param {number} minutesUntil - whole minutes until the slot (0 ⇒ "now")
+ */
+async function sendTakeTheFieldPush(userId, corpsName, showName, minutesUntil) {
+  const when =
+    minutesUntil <= 1 ? "is taking the field now" : `takes the field in ${minutesUntil} min`;
+  return sendPushNotification(
+    userId,
+    {
+      title: "🎺 Your corps is up!",
+      body: `${corpsName} ${when} at ${showName}.`,
+      url: "/dashboard",
+    },
+    PUSH_TYPES.PERFORMANCE,
+    { corpsName, showName, minutesUntil: String(minutesUntil) }
+  );
+}
+
+/**
  * Send show reminder notification
  */
 async function sendShowReminderPush(userId, showName, hoursUntil) {
@@ -248,4 +273,5 @@ module.exports = {
   sendMatchupStartPush,
   sendLeagueActivityPush,
   sendShowReminderPush,
+  sendTakeTheFieldPush,
 };

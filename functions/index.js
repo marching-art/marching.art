@@ -44,6 +44,7 @@ const {
   saveLineup,
   selectUserShows,
   saveShowConcept,
+  setEncoreDecline,
   getLineupAnalytics,
   getHotCorps,
 } = require("./src/callable/lineups");
@@ -213,6 +214,11 @@ const {
   refreshScheduleWeatherNow,
 } = require("./src/scheduled/scheduleWeather");
 const {
+  scheduledScheduleRunningOrder,
+  scheduledScheduleRunningOrderEvening,
+  refreshScheduleRunningOrderNow,
+} = require("./src/scheduled/scheduleRunningOrder");
+const {
   weeklyDigestEmailJob,
   winBackEmailJob,
   streakBrokenEmailJob,
@@ -222,6 +228,7 @@ const {
   weeklyMatchupPushJob,
   scoreDropPushJob,
   lineupLockReminderPushJob,
+  takeTheFieldPushJob,
 } = require("./src/scheduled/pushNotifications");
 const {
   autoPublishScheduledSubmissions,
@@ -302,6 +309,7 @@ module.exports = {
   saveLineup,
   selectUserShows,
   saveShowConcept,
+  setEncoreDecline,
   getLineupAnalytics,
   getHotCorps,
   createLeague,
@@ -437,6 +445,11 @@ module.exports = {
   scheduledScheduleWeatherEvening,
   refreshScheduleWeatherNow,
 
+  // Schedule running order — real-field live slots (scheduled + admin refresh)
+  scheduledScheduleRunningOrder,
+  scheduledScheduleRunningOrderEvening,
+  refreshScheduleRunningOrderNow,
+
   // League Automation (scheduled)
   generateWeeklyMatchups,
   generateWeeklyRecaps,
@@ -526,6 +539,7 @@ module.exports = {
   weeklyMatchupPushJob,
   scoreDropPushJob,
   lineupLockReminderPushJob,
+  takeTheFieldPushJob,
 
   // Push Triggers
   onLeagueMemberJoined,

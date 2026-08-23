@@ -71,7 +71,41 @@ describe("collectRegistrationsFromProfile", () => {
       corpsClass: "worldClass",
       corpsName: "Alice Corps",
       username: "alice",
+      homeGeo: null, // no location on this corps → unresolved
+      encoreDeclined: false,
     });
+  });
+
+  test("stamps homeGeo from a corps' location for the encore", () => {
+    const withLocation = {
+      username: "bob",
+      corps: {
+        worldClass: {
+          corpsName: "Bob Corps",
+          location: "Allentown, PA",
+          selectedShows: { week1: [{ eventName: "Opener", date: "2026-06-20", day: 1 }] },
+        },
+      },
+    };
+    const [pair] = collectRegistrationsFromProfile("bob-uid", withLocation);
+    assert.ok(pair.entry.homeGeo, "location should resolve to coordinates");
+    assert.ok(Number.isFinite(pair.entry.homeGeo.lat));
+  });
+
+  test("prefers a homeGeo already cached on the corps", () => {
+    const cached = {
+      username: "cara",
+      corps: {
+        worldClass: {
+          corpsName: "Cara Corps",
+          location: "Allentown, PA",
+          homeGeo: { lat: 1, lng: 2, venueId: "cached-venue" },
+          selectedShows: { week1: [{ eventName: "Opener", date: "2026-06-20", day: 1 }] },
+        },
+      },
+    };
+    const [pair] = collectRegistrationsFromProfile("cara-uid", cached);
+    assert.equal(pair.entry.homeGeo.venueId, "cached-venue");
   });
 
   test("skips malformed shows and handles empty profiles", () => {
@@ -122,14 +156,35 @@ describe("collectPodiumRegistrations", () => {
         state: {
           seasonUid: SEASON,
           corpsName: "Altitude Podium",
+          lastTotal: 87.5,
           selectedShows: { 15: { eventName: "marching.art Mile High", location: "Fort Collins, CO" } },
         },
       },
     ];
     const out = collectPodiumRegistrations(entries, params);
     assert.deepEqual(out, [
-      { uid: "druski", corpsName: "Altitude Podium", corpsClass: "podiumClass", username: null },
+      {
+        uid: "druski",
+        corpsName: "Altitude Podium",
+        corpsClass: "podiumClass",
+        username: null,
+        lastTotal: 87.5,
+      },
     ]);
+  });
+
+  test("lastTotal defaults to null before the corps has been scored", () => {
+    const entries = [
+      {
+        uid: "rookie",
+        state: {
+          seasonUid: SEASON,
+          corpsName: "Fresh Podium",
+          selectedShows: { 15: { eventName: "marching.art Mile High" } },
+        },
+      },
+    ];
+    assert.equal(collectPodiumRegistrations(entries, params)[0].lastTotal, null);
   });
 
   test("matches when Firestore has stringified the day map keys", () => {

@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, X, AlertTriangle, Trophy, Clock, Ticket } from 'lucide-react';
-import { selectUserShows } from '../../api/functions';
+import { selectUserShows, setEncoreDecline } from '../../api/functions';
 import { getPodiumState, setPodiumShows } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import toast from 'react-hot-toast';
@@ -22,7 +22,8 @@ import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/s
 import { formatEventName } from '../../utils/season';
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
-import RunningOrder from './RunningOrder';
+import { useAuth } from '../../context/AuthContext';
+import DualRunningOrder from './DualRunningOrder';
 import CorpsSelectionItem, {
   PodiumSelectionRow,
   HostedShowPanel,
@@ -52,7 +53,38 @@ const ShowRegistrationModal = ({
 }) => {
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
   const { trigger: haptic } = useHaptic();
+
+  // Encore banking (docs/EVENT_SCHEDULES_AND_SLOTS.md §5): if the director's own
+  // corps is the (projected) encore here, they can bank their once-per-season
+  // encore for a later show. Optimistic local state; the nightly encore pass
+  // reassigns to the next-closest corps once banked.
+  const myEncore = show.encore && user?.uid && show.encore.uid === user.uid ? show.encore : null;
+  const [encoreBanked, setEncoreBanked] = useState(false);
+  const [bankingEncore, setBankingEncore] = useState(false);
+  const bankEncore = async (declined) => {
+    if (!myEncore) return;
+    setBankingEncore(true);
+    try {
+      await setEncoreDecline({
+        week: show.week,
+        eventName: show.eventName,
+        date: show.date ?? null,
+        corpsClass: myEncore.corpsClass,
+        declined,
+      });
+      setEncoreBanked(declined);
+      haptic?.('success');
+      toast.success(
+        declined ? 'Encore banked for a later show.' : 'Encore restored — this show is yours.'
+      );
+    } catch (err) {
+      toast.error(err?.message || 'Could not update the encore.');
+    } finally {
+      setBankingEncore(false);
+    }
+  };
 
   // Director-hosted show (design §5.10): rented by a director, open enrollment
   // for every class. The panel surfaces who's coming and how many of the venue's
@@ -421,12 +453,51 @@ const ShowRegistrationModal = ({
   // Shared body content (plain JSX value — see headerContent note).
   const bodyContent = (
     <>
-      {/* Real running order (scraped from dci.org) — shown when available */}
-      {show.lineup?.length > 0 && (
+      {/* Running order(s) — the real registered field(s), slotted worst-to-best
+          and ending at the night's score drop, with a Fantasy/Podium toggle when
+          both fields exist (or the scraped/heritage order as a fallback). Shown
+          when there's a field; an honest placeholder otherwise. */}
+      {(show.lineup?.length > 0 || show.podiumSchedule?.lineup?.length > 0) && (
         <div className="px-4 pt-4">
-          <RunningOrder show={show} />
+          <DualRunningOrder show={show} myUid={user?.uid} />
         </div>
       )}
+      {/* Encore banking — only when the director's own corps is the encore here. */}
+      {myEncore && (
+        <div className="mx-4 mt-3 p-3 bg-brand/10 border border-brand/30 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-sm text-white font-semibold truncate">
+              {encoreBanked ? 'Encore banked' : `${myEncore.corps} is your encore`}
+            </div>
+            <div className="text-xs text-muted">
+              {encoreBanked
+                ? "You'll get your one encore at a later show."
+                : 'One encore per season — bank it for a show that matters more.'}
+            </div>
+          </div>
+          <button
+            onClick={() => bankEncore(!encoreBanked)}
+            disabled={bankingEncore}
+            className="flex-shrink-0 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border border-brand/40 text-brand hover:bg-brand/10 disabled:opacity-50"
+          >
+            {encoreBanked ? 'Take it here' : 'Bank for later'}
+          </button>
+        </div>
+      )}
+
+      {show.fantasySchedule &&
+        !(show.lineup?.length > 0) &&
+        !(show.podiumSchedule?.lineup?.length > 0) && (
+          <div className="px-4 pt-4">
+            <div className="bg-surface-card border border-line px-4 py-6 text-center">
+              <p className="text-sm text-muted">No corps have taken the field yet.</p>
+              <p className="text-xs text-secondary mt-1">
+                Register below to be the first to perform — the running order fills in as directors
+                sign up.
+              </p>
+            </div>
+          </div>
+        )}
 
       {/* Director-hosted show (§5.10): who's coming + how many venue slots are
           left. Shown before the corps picker so the room is visible up front. */}

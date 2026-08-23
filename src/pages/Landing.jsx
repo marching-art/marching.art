@@ -215,8 +215,8 @@ const Landing = () => {
   // value can interleave them with the news column (a separate grid child). The
   // same values drive the desktop rail's flex column — there only their relative
   // order matters, since the news column is placed on the left independently via
-  // `lg:order-last` on the rail wrapper. Off-season, NextPerformancePanel renders
-  // null and simply drops out of the flow.
+  // `lg:order-last` on the rail wrapper. NextPerformancePanel self-guards to null
+  // when there's nothing timed to show and simply drops out of the flow.
   const firstVisitGuest = !user && !isFirstVisitLoading && isFirstVisit;
   const order = user
     ? { nextShow: 1, news: 2, live: 3, trending: 4, community: 5, account: 6 }
@@ -253,9 +253,10 @@ const Landing = () => {
             <div className="contents lg:block lg:col-span-4 lg:order-last">
               <div className="contents lg:flex lg:flex-col lg:gap-5 lg:sticky lg:top-4">
                 {/* ------------------------------------------------------- */}
-                {/* YOUR NEXT SHOW - the director's primary action. First on */}
-                {/* mobile and top of the desktop rail. Renders nothing */}
-                {/* off-season, so it drops out of the flow cleanly. */}
+                {/* YOUR NEXT SHOW - the director's primary action, incl. the */}
+                {/* "your corps is on the field now" element. First on mobile */}
+                {/* and top of the desktop rail. Self-guards to null when there */}
+                {/* is nothing timed to show, dropping out of the flow cleanly. */}
                 {/* ------------------------------------------------------- */}
                 {user && (
                   <div style={{ order: order.nextShow }}>
@@ -263,6 +264,7 @@ const Landing = () => {
                       competitions={competitions}
                       selectedShows={activeCorps?.selectedShows || {}}
                       lineup={activeCorps?.lineup || {}}
+                      myUid={user?.uid}
                     />
                   </div>
                 )}

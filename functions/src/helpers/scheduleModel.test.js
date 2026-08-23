@@ -133,6 +133,102 @@ describe("deriveRunningOrder — mechanics", () => {
   });
 });
 
+describe("deriveRunningOrder — fit-to-window mode", () => {
+  const field = (n) =>
+    Array.from({ length: n }, (_, i) => ({ corps: `Corps ${String.fromCharCode(65 + (i % 26))}${i}`, score: 60 + i }));
+  const NINE_PM = 21 * 60; // 9:00 PM local, the off-season drop
+
+  test("anchors the last performer so scores read at the drop time", () => {
+    const r = deriveRunningOrder(field(10), { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    assert.equal(r.mode, "fit-to-window");
+    assert.equal(r.scoresLocalMinutes, NINE_PM);
+    const lastT = r.lineup[r.lineup.length - 1].performsAtLocalMinutes;
+    assert.equal(lastT, NINE_PM - CONSTANTS.scoresOffsetMin);
+  });
+
+  test("still orders worst-to-best, best performs last (headliner)", () => {
+    const r = deriveRunningOrder(
+      [
+        { corps: "Best", score: 95 },
+        { corps: "Worst", score: 50 },
+        { corps: "Mid", score: 70 },
+      ],
+      { fitToWindow: { scoresLocalMinutes: NINE_PM } }
+    );
+    assert.deepEqual(r.lineup.map((e) => e.corps), ["Worst", "Mid", "Best"]);
+  });
+
+  test("small field keeps luxurious spacing at the ceiling interval", () => {
+    const r = deriveRunningOrder(field(8), { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    assert.equal(r.intervalMin, CONSTANTS.intervalMin);
+  });
+
+  test("interval compresses as the field grows, but never below the floor", () => {
+    const small = deriveRunningOrder(field(8), { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    const big = deriveRunningOrder(field(60), { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    assert.ok(big.intervalMin < small.intervalMin, "big field should compress spacing");
+    assert.ok(big.intervalMin >= CONSTANTS.minIntervalMin, "never below the floor interval");
+  });
+
+  test("whole field fits inside the window when it can", () => {
+    const window = 300;
+    const r = deriveRunningOrder(field(40), { fitToWindow: { scoresLocalMinutes: NINE_PM, windowMinutes: window } });
+    assert.equal(r.overflow.length, 0, "40 corps should fit, no overflow");
+    const span = r.lineup[r.lineup.length - 1].performsAtLocalMinutes - r.lineup[0].performsAtLocalMinutes;
+    assert.ok(span <= window + 1, `span ${span} should be within window ${window}`);
+  });
+
+  test("overflow safety valve: a pathological field keeps the BEST, overflows the worst", () => {
+    // Tight window + big field forces the floor interval and an overflow.
+    const r = deriveRunningOrder(field(200), {
+      fitToWindow: { scoresLocalMinutes: NINE_PM, windowMinutes: 120, minIntervalMin: 5 },
+    });
+    assert.ok(r.overflow.length > 0, "expected overflow");
+    assert.equal(r.intervalMin, 5, "compressed to the floor");
+    // Everyone is accounted for exactly once.
+    assert.equal(r.lineup.length + r.overflow.length, 200);
+    // The overflow is the LOWEST scorers; the kept field is the highest.
+    const overflowMax = Math.max(...r.overflow.map((o) => o.score));
+    const keptScores = r.lineup.map((e) => Number(String(e.corps).replace(/\D/g, "")) + 60);
+    assert.ok(overflowMax <= Math.min(...keptScores), "overflow must be the worst performers");
+  });
+
+  test("intermission still lands once, mid-field", () => {
+    const r = deriveRunningOrder(field(12), { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    const gaps = [];
+    for (let i = 1; i < r.lineup.length; i++) {
+      gaps.push(r.lineup[i].performsAtLocalMinutes - r.lineup[i - 1].performsAtLocalMinutes);
+    }
+    const longGaps = gaps.filter((g) => g === r.intervalMin + CONSTANTS.intermissionMin);
+    assert.equal(longGaps.length, 1, "exactly one intermission gap");
+  });
+
+  test("empty field in fit mode: no lineup, scores anchor preserved, no throw", () => {
+    const r = deriveRunningOrder([], { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    assert.deepEqual(r.lineup, []);
+    assert.deepEqual(r.overflow, []);
+    assert.equal(r.scoresLocalMinutes, NINE_PM);
+  });
+
+  test("single-corps field is anchored at the drop with no intermission", () => {
+    const r = deriveRunningOrder([{ corps: "Solo", score: 80 }], { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    assert.equal(r.lineup.length, 1);
+    assert.equal(r.lineup[0].performsAtLocalMinutes, NINE_PM - CONSTANTS.scoresOffsetMin);
+  });
+
+  test("gates precede the first performer in fit mode too", () => {
+    const r = deriveRunningOrder(field(10), { fitToWindow: { scoresLocalMinutes: NINE_PM } });
+    assert.equal(r.gatesLocalMinutes, r.startLocalMinutes - CONSTANTS.gatesOffsetMin);
+  });
+
+  test("default mode is unchanged and reports an empty overflow", () => {
+    const r = deriveRunningOrder(field(10));
+    assert.equal(r.mode, "default");
+    assert.equal(r.startLocalMinutes, CONSTANTS.defaultStartLocalMinutes);
+    assert.deepEqual(r.overflow, []);
+  });
+});
+
 describe("formatLocalClock", () => {
   test("formats within a day", () => {
     assert.equal(formatLocalClock(19 * 60 + 10), "7:10 PM");

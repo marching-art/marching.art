@@ -11,8 +11,10 @@ const {
   sendShowReminderPush,
   sendMatchupStartPush,
   sendPushNotification,
+  sendTakeTheFieldPush,
   PUSH_TYPES,
 } = require("../helpers/pushService");
+const { buildTakeTheFieldPushes } = require("../helpers/performancePush");
 const { getCurrentSeasonWeek, getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
@@ -651,3 +653,69 @@ async function announceChampionshipWeekWindows(db, season) {
     logger.error(`[championship-week] Discord announcement failed: ${error.message}`);
   }
 }
+
+/** ET calendar day key (YYYY-MM-DD) for a per-day push dedup ledger. */
+function etDayKey(date = new Date()) {
+  const p = {};
+  for (const part of new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date)) {
+    p[part.type] = part.value;
+  }
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+/**
+ * "Your corps takes the field" push. Runs every 15 minutes through the evening
+ * show window; for each of today's materialized fantasy running orders it pushes
+ * the director whose own corps is about to perform (docs/EVENT_SCHEDULES_AND_SLOTS.md).
+ * A per-day ledger dedupes so each slot fires exactly once.
+ */
+exports.takeTheFieldPushJob = onSchedule(
+  {
+    // Every 15 min, mid-afternoon through the late-night western drops (ET).
+    schedule: "*/15 15-23,0-1 * * *",
+    timeZone: "America/New_York",
+    timeoutSeconds: 120,
+    memory: "256MiB",
+  },
+  async () => {
+    const db = admin.firestore();
+    const seasonSnap = await db.doc("game-settings/season").get();
+    const season = seasonSnap.exists ? seasonSnap.data() : null;
+    const seasonId = season && season.seasonUid;
+    if (!seasonId) return;
+
+    const schedSnap = await db.doc(`schedules/${seasonId}`).get();
+    const competitions = (schedSnap.exists && schedSnap.data().competitions) || [];
+    if (competitions.length === 0) return;
+
+    const ledgerRef = db.doc(`push_ledger/${seasonId}_takefield_${etDayKey()}`);
+    const ledgerSnap = await ledgerRef.get();
+    const alreadySent = new Set(Object.keys((ledgerSnap.exists && ledgerSnap.data().sentKeys) || {}));
+
+    const pushes = buildTakeTheFieldPushes({ competitions, nowMs: Date.now(), alreadySent });
+    if (pushes.length === 0) return; // nothing imminent — no ledger write
+
+    const PARALLEL_LIMIT = 25;
+    let totalSent = 0;
+    for (let i = 0; i < pushes.length; i += PARALLEL_LIMIT) {
+      const chunk = pushes.slice(i, i + PARALLEL_LIMIT);
+      const results = await Promise.allSettled(
+        chunk.map((p) => sendTakeTheFieldPush(p.uid, p.corps, p.showName, p.minutesUntil))
+      );
+      totalSent += results.filter((r) => r.status === "fulfilled" && r.value === true).length;
+    }
+
+    // Mark every slot we handled this tick (whether or not the send succeeded —
+    // a missing token or opt-out shouldn't make us retry it next tick).
+    const sentKeys = {};
+    for (const p of pushes) sentKeys[p.key] = true;
+    await ledgerRef.set({ seasonUid: seasonId, sentKeys }, { merge: true });
+
+    logger.info(`[take-the-field] ${pushes.length} imminent slots, ${totalSent} pushes sent.`);
+  }
+);
