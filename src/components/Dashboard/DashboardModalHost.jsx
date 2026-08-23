@@ -30,8 +30,10 @@ import { ModalLoadingFallback } from '../ui';
 import { lazyWithRetry } from '../../utils/lazyWithRetry';
 import { getSeasonsUntilUnlock } from '../../utils/classUnlocks';
 import { classHasLineup } from '../../utils/classRegistry';
+import { getFantasyLineupClasses } from '../../utils/podiumLineupSwitch';
 import { corpsHasPendingWork } from '../../utils/corps';
 import { useSeasonStore } from '../../store/seasonStore';
+import PodiumLineupSheet from '../Podium/PodiumLineupSheet';
 
 // Same lazyWithRetry treatment these carried in Dashboard.jsx: a stale hashed
 // chunk after a deploy self-recovers with one reload instead of crashing into
@@ -72,6 +74,7 @@ const DashboardModalHost = ({
   data,
   quickStartSteps,
   quickStartVariant = 'fantasy',
+  rehearsalIncomplete = false,
   onRequestZone,
   onRevealPanel,
 }) => {
@@ -117,6 +120,7 @@ const DashboardModalHost = ({
     handleSeasonRecapClose,
     handlePodiumSeasonRecapClose,
     handlePodiumSeasonRecapSetup,
+    handleSwitchToFantasyLineup,
     handleDeleteCorps,
     handleRetireCorps,
     handleMoveCorps,
@@ -198,6 +202,25 @@ const DashboardModalHost = ({
             initialCaption={selectedCaption}
           />
         </Suspense>
+      )}
+
+      {/* The other side of that gate: the Lineup tab / ?panel=lineup route while
+          a rehearsal class (Podium) is selected. There's no lineup to draft, so
+          instead of the dead click this used to be, offer the rehearsal planner
+          — and, for a director who also runs fantasy corps, a jump into one of
+          those lineups. Leads with Rehearse while today's blocks are unspent. */}
+      {showCaptionSelection && activeCorpsClass && !classHasLineup(activeCorpsClass) && (
+        <PodiumLineupSheet
+          isOpen
+          onClose={closeCaptionSelection}
+          rehearsalIncomplete={rehearsalIncomplete}
+          fantasyClasses={getFantasyLineupClasses(corps)}
+          onRehearse={() => {
+            closeCaptionSelection();
+            onRevealPanel?.('podium-planner');
+          }}
+          onSwitchToClass={handleSwitchToFantasyLineup}
+        />
       )}
 
       {showConceptModal && activeCorps && (

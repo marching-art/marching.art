@@ -293,6 +293,27 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     }
   }, [handlePodiumSeasonRecapClose, setSelectedCorpsClass, user?.uid]);
 
+  // Podium has no drafted lineup, so the Lineup tab / ?panel=lineup route opens
+  // the PodiumLineupSheet chooser instead of the caption editor. When a director
+  // picks a fantasy class there, switch the active class and persist it: the
+  // ?panel=lineup route is already open, so flipping the class re-runs the
+  // editor gate in DashboardModalHost — which now passes — and the caption
+  // editor mounts for the chosen class. Mirrors handlePodiumSeasonRecapSetup.
+  /** @type {(classId: string) => void} */
+  const handleSwitchToFantasyLineup = useCallback(
+    (classId) => {
+      setSelectedCorpsClass?.(classId);
+      if (user?.uid) {
+        try {
+          localStorage.setItem(`selectedCorps_${user.uid}`, classId);
+        } catch {
+          // localStorage unavailable — the live switch above still lands the tab.
+        }
+      }
+    },
+    [setSelectedCorpsClass, user?.uid]
+  );
+
   const handleSeasonSetupClose = useCallback(() => {
     modalQueue.dequeue();
     setShowSeasonSetupWizard(false);
@@ -514,6 +535,7 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     handleSeasonRecapClose,
     handlePodiumSeasonRecapClose,
     handlePodiumSeasonRecapSetup,
+    handleSwitchToFantasyLineup,
     handleSeasonSetupFinish,
     handleDeleteCorps,
     handleRetireCorps,
