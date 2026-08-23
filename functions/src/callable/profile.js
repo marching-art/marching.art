@@ -6,6 +6,7 @@ const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { detachMemberFromLeague } = require("../helpers/leagueLifecycle");
+const { collectRegistrationsFromProfile } = require("../helpers/showRegistrations");
 
 /**
  * Update user profile information
@@ -460,6 +461,46 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
 
     // Single atomic commit for all Firestore deletions
     await batch.commit();
+
+    // Drop the user out of the materialized "who's attending" show index so the
+    // deleted account stops appearing on upcoming show pages (and in the running
+    // order) before the nightly rebuild would otherwise self-heal it. The index
+    // is keyed by the active season's uid; the user's registrations are derived
+    // from the profile we already read (its selectedShows are the source of
+    // truth), and each of their `${uid}_${corpsClass}` entries is removed from
+    // the event docs it appears in. Best-effort — the profile (source of truth)
+    // is already gone, and the nightly rebuild reconciles anything missed here.
+    if (profileDoc.exists) {
+      try {
+        const seasonDoc = await db.doc("game-settings/season").get();
+        const seasonUid = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
+        if (seasonUid) {
+          // eventKey -> set of this user's registration entry keys on that event.
+          const entryKeysByEvent = new Map();
+          for (const { key, entryKey } of collectRegistrationsFromProfile(userId, profileDoc.data())) {
+            if (!entryKeysByEvent.has(key)) entryKeysByEvent.set(key, new Set());
+            entryKeysByEvent.get(key).add(entryKey);
+          }
+          if (entryKeysByEvent.size > 0) {
+            const regBatch = db.batch();
+            for (const [eventKey, entryKeys] of entryKeysByEvent) {
+              const registrations = {};
+              for (const entryKey of entryKeys) {
+                registrations[entryKey] = FieldValue.delete();
+              }
+              regBatch.set(
+                db.doc(paths.showRegistrationEvent(seasonUid, eventKey)),
+                { registrations },
+                { merge: true }
+              );
+            }
+            await regBatch.commit();
+          }
+        }
+      } catch (indexError) {
+        logger.warn(`Show-registration cleanup failed for ${userId} (self-heals nightly):`, indexError);
+      }
+    }
 
     // Delete the user from Firebase Auth
     await admin.auth().deleteUser(userId);
