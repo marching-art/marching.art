@@ -13,6 +13,7 @@ per-event fantasy/podium split, and the encore.
 > [`SCORE_DROPS.md`](SCORE_DROPS.md), and [`PODIUM.md`](PODIUM.md).
 >
 > Source of truth:
+>
 > - **Engine** — `helpers/scheduleModel.js` (`deriveRunningOrder` + `fitToWindow`).
 > - **Builder** — `helpers/showRunningOrder.js` (pure real-field order).
 > - **Materializer** — `scheduled/scheduleRunningOrder.js` (twice-daily; writes
@@ -51,9 +52,9 @@ now.** Everything below serves that.
 ### The one reframe
 
 Do **not** cap who may compete. **Scoring is unbounded** — every registered corps
-is scored every night, exactly as today. The running order is a *presentation
-layer* over that single nightly score. So the only thing we ever bound is how the
-field is *displayed as a timed order*, never who is allowed in. This dissolves the
+is scored every night, exactly as today. The running order is a _presentation
+layer_ over that single nightly score. So the only thing we ever bound is how the
+field is _displayed as a timed order_, never who is allowed in. This dissolves the
 "how many corps fit in a show" worry: the answer is "all of them compete; the
 schedule just paces them across the evening."
 
@@ -64,10 +65,10 @@ schedule just paces them across the evening."
 An event is one venue on one day. It hosts **two independent running-order
 schedules**:
 
-| Schedule    | Field (who's in it)                                  | Slotting metric            | Scores read                    |
-| ----------- | ---------------------------------------------------- | -------------------------- | ------------------------------ |
+| Schedule    | Field (who's in it)                                  | Slotting metric            | Scores read                                                |
+| ----------- | ---------------------------------------------------- | -------------------------- | ---------------------------------------------------------- |
 | **Fantasy** | Fantasy registrants (the `show_registrations` index) | Recent fantasy performance | Fantasy ladder (off-season 9 PM ET; live per `drop_plans`) |
-| **Podium**  | Podium registrants (`collectPodiumRegistrations`)    | Recent Podium performance  | Podium's flat 9 PM ET year-round |
+| **Podium**  | Podium registrants (`collectPodiumRegistrations`)    | Recent Podium performance  | Podium's flat 9 PM ET year-round                           |
 
 They differ **only** in field, metric, and drop time. Everything else (the
 engine, the UI, the encore) is shared. In the UI this is one event card with a
@@ -107,7 +108,7 @@ whole point.
 Every registered corps gets a real, timed slot, and the whole field still
 finishes by the single nightly drop:
 
-1. **Anchor the end.** The *last* performer's "scores read" lands on the show's
+1. **Anchor the end.** The _last_ performer's "scores read" lands on the show's
    drop time (9 PM ET off-season; the ladder instant live).
 2. **Fit the field to a bounded evening window.** With `N` corps and a window `W`
    (first performer → last performer), the interval is
@@ -149,7 +150,7 @@ guard, not the normal path.
 ## 5. Encore (cosmetic)
 
 After "scores read," one corps gets a ceremonial **encore** slot. It is **purely
-cosmetic** — the joy is a director seeing *their* corps named as the encore. It
+cosmetic** — the joy is a director seeing _their_ corps named as the encore. It
 never scores, never affects standings, and carries no reward.
 
 ### Rules
@@ -157,16 +158,16 @@ never scores, never affects standings, and carries no reward.
 - **Default assignment:** the encore goes to the registered corps whose home is
   **closest to the venue** and that **hasn't encored yet this season**.
 - **Cap: one encore per corps per season, absolute.** Consumed by whichever
-  encore comes first *chronologically*.
+  encore comes first _chronologically_.
 - **Host default:** at a director's own hosted show, their corps is the default
   encore (home-field). Because you host once per season, that's naturally their
-  one — *unless* they already spent it earlier (see the edge case).
+  one — _unless_ they already spent it earlier (see the edge case).
 - **Unresolvable home:** a corps whose location doesn't geocode is simply skipped
   for proximity. The host default still works regardless of geocoding.
 
 ### The host-after-encore edge case
 
-A corps can encore at an early-season proximity show and *then* decide to host.
+A corps can encore at an early-season proximity show and _then_ decide to host.
 Since the cap is absolute and already spent, **that corps is ineligible for the
 encore at its own hosted show**, and the encore falls to the next-closest
 eligible corps there. The rule stays one unified season cap — hosting doesn't add
@@ -202,10 +203,10 @@ Most of this exists — `RunningOrder.jsx` already ticks every 60s, marks
 **On Field** / **Up Next** (`getRunningOrderStatus`), and highlights a director's
 own row. On top of the stored lineup, add:
 
-- A dashboard chip: *"🎺 Blue Devils takes the field in 4 min — Allentown, World Class."*
+- A dashboard chip: _"🎺 Blue Devils takes the field in 4 min — Allentown, World Class."_
 - An optional FCM push at slot time (the push path exists — see
   `scheduled/pushNotifications.js`).
-- The encore banner: *"Your corps performs the encore tonight."*
+- The encore banner: _"Your corps performs the encore tonight."_
 
 All of it is pure client-side time math over the materialized lineup — **zero**
 backend cost during the show.
@@ -290,9 +291,9 @@ Built after the six phases:
 
 - ✅ **FCM "takes the field" push.** `helpers/performancePush.js`
   (`buildTakeTheFieldPushes`, pure) + `takeTheFieldPushJob` (every 15 min through
-  the evening window, ET) + `sendTakeTheFieldPush` (PUSH_TYPES.PERFORMANCE). A
-  per-day `push_ledger/{seasonUid}_takefield_{ET-date}` dedups so each slot fires
-  once. Defaults on; directors can opt out via the `performance` push preference.
+  the evening window, ET) + `sendTakeTheFieldPush` (PUSH*TYPES.PERFORMANCE). A
+  per-day `push_ledger/{seasonUid}\_takefield*{ET-date}`dedups so each slot fires
+once. Defaults on; directors can opt out via the`performance` push preference.
 - ✅ **Encore decline / bank.** `setEncoreDecline` callable stores a per-event
   opt-out on the corps (`declinedEncores`) and patches the index; `assignEncore`
   skips a declined corps WITHOUT consuming its season cap, so it banks for a
