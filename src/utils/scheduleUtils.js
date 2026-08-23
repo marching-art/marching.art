@@ -140,6 +140,98 @@ export function getRunningOrderStatus(show, now = new Date()) {
 }
 
 /**
+ * @typedef {Object} LineupEntry
+ * @property {number} order
+ * @property {string|null} [uid]
+ * @property {string} [corpsClass]
+ * @property {string} corps
+ * @property {string} [performsAt]
+ * @property {string} [performanceTime]
+ */
+
+/**
+ * @typedef {Object} PerformerSlot
+ * @property {LineupEntry} entry
+ * @property {Object} show
+ * @property {('onNow'|'upcoming'|'done'|'unknown')} state
+ * @property {number|null} minutesUntil
+ */
+
+/**
+ * Status of ONE performer's slot relative to now: is this corps on the field
+ * right now, how many whole minutes until it takes the field, and has it already
+ * performed. A corps holds the field from its `performsAt` until the next
+ * performer's time (the last uses the show end). Pure — inject `now` for tests.
+ *
+ * @param {Object} show - enriched show with a `lineup` (and startsAt/scoresAt).
+ * @param {Object} entry - a lineup entry (must carry `performsAt`).
+ * @param {Date} [now]
+ * @returns {{state:('onNow'|'upcoming'|'done'|'unknown'), minutesUntil:(number|null)}}
+ */
+export function getPerformanceStatus(show, entry, now = new Date()) {
+  if (!entry || !entry.performsAt) return { state: 'unknown', minutesUntil: null };
+  const timed = (Array.isArray(show?.lineup) ? show.lineup : [])
+    .filter((p) => p.performsAt)
+    .map((p) => ({ ...p, _at: new Date(p.performsAt).getTime() }))
+    .sort((a, b) => a._at - b._at);
+  const at = new Date(entry.performsAt).getTime();
+  if (Number.isNaN(at)) return { state: 'unknown', minutesUntil: null };
+
+  const idx = timed.findIndex((p) => p._at === at && p.order === entry.order);
+  const endMs = showEndsAtDate(show)?.getTime() ?? Infinity;
+  const stopMs = idx >= 0 && idx + 1 < timed.length ? timed[idx + 1]._at : endMs;
+  const nowMs = now.getTime();
+
+  if (nowMs >= at && nowMs < stopMs) return { state: 'onNow', minutesUntil: 0 };
+  if (nowMs < at) return { state: 'upcoming', minutesUntil: Math.ceil((at - nowMs) / 60000) };
+  return { state: 'done', minutesUntil: null };
+}
+
+/**
+ * Find the viewing director's OWN corps slots in a show's real-field running
+ * order (matched by uid), each with its live status. Powers the "your corps
+ * takes the field" element.
+ *
+ * @param {Object} show - enriched show (lineup entries carry `uid`).
+ * @param {string} myUid
+ * @param {Date} [now]
+ * @returns {Array<PerformerSlot>}
+ */
+export function getMyPerformanceSlots(show, myUid, now = new Date()) {
+  if (!myUid || !Array.isArray(show?.lineup)) return [];
+  return show.lineup
+    .filter((e) => e.uid && e.uid === myUid)
+    .map((entry) => ({ entry, show, ...getPerformanceStatus(show, entry, now) }));
+}
+
+/**
+ * Rank of a performance state for "which of my slots matters most right now":
+ * on the field beats upcoming beats done/unknown. Ties on state break by soonest.
+ */
+const MY_SLOT_STATE_RANK = { onNow: 0, upcoming: 1, done: 2, unknown: 3 };
+
+/**
+ * Across many shows, pick the director's single most relevant own-corps slot:
+ * one on the field now, else the soonest upcoming. Returns null if none.
+ * @param {Array<Object>} shows - enriched shows.
+ * @param {string} myUid
+ * @param {Date} [now]
+ * @returns {PerformerSlot|null}
+ */
+export function pickMyNextPerformance(shows, myUid, now = new Date()) {
+  const slots = [];
+  for (const show of shows || []) slots.push(...getMyPerformanceSlots(show, myUid, now));
+  const live = slots.filter((s) => s.state === 'onNow' || s.state === 'upcoming');
+  if (live.length === 0) return null;
+  live.sort((a, b) => {
+    const r = MY_SLOT_STATE_RANK[a.state] - MY_SLOT_STATE_RANK[b.state];
+    if (r !== 0) return r;
+    return (a.minutesUntil ?? Infinity) - (b.minutesUntil ?? Infinity);
+  });
+  return live[0];
+}
+
+/**
  * Filter and transform competitions for a specific week
  * @param {Array} competitions - Raw competitions array from Firestore
  * @param {number} weekNumber - Week to filter (1-7)

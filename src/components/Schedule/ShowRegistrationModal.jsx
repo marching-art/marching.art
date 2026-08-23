@@ -22,6 +22,7 @@ import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/s
 import { formatEventName } from '../../utils/season';
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
+import { useAuth } from '../../context/AuthContext';
 import RunningOrder from './RunningOrder';
 import CorpsSelectionItem, {
   PodiumSelectionRow,
@@ -52,6 +53,7 @@ const ShowRegistrationModal = ({
 }) => {
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
   const { trigger: haptic } = useHaptic();
 
   // Director-hosted show (design §5.10): rented by a director, open enrollment
@@ -426,7 +428,7 @@ const ShowRegistrationModal = ({
           fallback). Shown when there's a field; an honest placeholder otherwise. */}
       {show.lineup?.length > 0 && (
         <div className="px-4 pt-4">
-          <RunningOrder show={show} />
+          <RunningOrder show={show} myUid={user?.uid} />
         </div>
       )}
       {show.fantasySchedule && !(show.lineup?.length > 0) && (

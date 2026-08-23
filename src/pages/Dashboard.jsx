@@ -557,18 +557,19 @@ const Dashboard = () => {
                       </Suspense>
                     )}
 
-                    {/* Next Performance - real show timing + running order +
-                        your-picks-live spotlight. Live-season only: its data
-                        (scraped start times + running order) exists only while
-                        the live season is refreshing from dci.org. */}
-                    {isLiveSeason && (
-                      <NextPerformancePanel
-                        competitions={competitions}
-                        selectedShows={activeCorps?.selectedShows || {}}
-                        lineup={lineup}
-                        poolCorps={availableCorps}
-                      />
-                    )}
+                    {/* Next Performance — real show timing + running order + the
+                        "your corps takes the field right now" element + your-picks
+                        spotlight. Renders in BOTH season types now: the real-field
+                        running order (scheduleRunningOrder.js) enriches off-season
+                        shows too, and the panel self-guards to null when there's
+                        nothing timed to show. */}
+                    <NextPerformancePanel
+                      competitions={competitions}
+                      selectedShows={activeCorps?.selectedShows || {}}
+                      lineup={lineup}
+                      poolCorps={availableCorps}
+                      myUid={user?.uid}
+                    />
                   </>
                 )}
               </div>

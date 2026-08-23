@@ -8,7 +8,9 @@ import {
   transformCompetitionToShow,
   formatDayKey,
   showCalendarDay,
+  pickMyNextPerformance,
 } from '../../utils/scheduleUtils';
+import { CORPS_CLASS_LABELS } from '../../utils/corps';
 import { formatEventName } from '../../utils/season';
 import RunningOrder from '../Schedule/RunningOrder';
 import {
@@ -77,6 +79,7 @@ const NextPerformancePanel = ({
   selectedShows = {},
   lineup = {},
   poolCorps = [],
+  myUid = null,
 }) => {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -107,28 +110,40 @@ const NextPerformancePanel = ({
     return map;
   }, [lineup]);
 
-  // Director's selected shows, joined to enriched competitions, that are upcoming
-  // or live — pick the soonest as "your next competition".
-  const nextCompetition = useMemo(() => {
+  // The director's selected shows, joined to enriched competitions.
+  const joinedShows = useMemo(() => {
     const joined = [];
     for (const weekShows of Object.values(selectedShows || {})) {
       if (!Array.isArray(weekShows)) continue;
       for (const sel of weekShows) {
         const comp = compByKey.get(`${sel.day}::${normalize(sel.eventName || sel.name)}`);
         const show = comp ? transformCompetitionToShow(comp) : null;
-        if (!show || !show.startsAt) continue;
-        joined.push(show);
+        if (show) joined.push(show);
       }
     }
-    // Prefer a show live right now, else the soonest still upcoming.
-    const live = joined.find((s) => isShowLive(s, now));
+    return joined;
+  }, [selectedShows, compByKey]);
+
+  // "Your next competition": prefer a show live right now, else the soonest still
+  // upcoming (needs enriched start times).
+  const nextCompetition = useMemo(() => {
+    const timed = joinedShows.filter((s) => s.startsAt);
+    const live = timed.find((s) => isShowLive(s, now));
     if (live) return live;
     return (
-      joined
+      timed
         .filter((s) => showStartsAtDate(s) > now)
         .sort((a, b) => showStartsAtDate(a) - showStartsAtDate(b))[0] || null
     );
-  }, [selectedShows, compByKey, now]);
+  }, [joinedShows, now]);
+
+  // The star of the show: the director's OWN corps' most relevant slot right now
+  // — on the field this minute, or the soonest one taking the field — matched by
+  // uid across every show they're registered for.
+  const myNext = useMemo(
+    () => (myUid ? pickMyNextPerformance(joinedShows, myUid, now) : null),
+    [joinedShows, myUid, now]
+  );
 
   // "Your picks are live": scan TODAY's shows for performers in the director's roster.
   const spotlight = useMemo(() => {
@@ -155,9 +170,13 @@ const NextPerformancePanel = ({
   }, [competitions, picksByCorps, now]);
 
   // Inert when there's nothing enriched to show.
-  if (!nextCompetition && spotlight.length === 0) return null;
+  if (!nextCompetition && spotlight.length === 0 && !myNext) return null;
 
   const nextLive = nextCompetition && isShowLive(nextCompetition, now);
+
+  const myOnField = myNext?.state === 'onNow';
+  const myClassLabel = myNext ? CORPS_CLASS_LABELS[myNext.entry.corpsClass] || '' : '';
+  const myPerformLabel = myNext ? formatPerformTime(myNext.entry, myNext.show.timezone) : '';
 
   return (
     <div className="bg-surface-card border border-line rounded-none">
@@ -166,13 +185,51 @@ const NextPerformancePanel = ({
           <CalendarClock className="w-3.5 h-3.5 text-secondary" />
           Next Performance
         </h3>
-        {nextLive && (
+        {(nextLive || myOnField) && (
           <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-green-500">
             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
             Live
           </span>
         )}
       </div>
+
+      {/* YOUR corps, right now — the headline moment. On the field this minute,
+          or the soonest slot taking the field, matched to the director by uid. */}
+      {myNext && (
+        <div
+          className={`px-4 py-3 border-b border-line ${myOnField ? 'bg-brand/15' : 'bg-brand/5'}`}
+        >
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Radio className={`w-3.5 h-3.5 ${myOnField ? 'text-green-500' : 'text-brand'}`} />
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider ${myOnField ? 'text-green-500' : 'text-brand'}`}
+            >
+              {myOnField ? 'Your corps is on the field' : 'Your corps takes the field'}
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="truncate">
+              <span className="text-base text-white font-bold">{myNext.entry.corps}</span>
+              {myClassLabel && <span className="text-xs text-muted"> · {myClassLabel}</span>}
+            </span>
+            <span className="text-sm font-data font-bold tabular-nums flex-shrink-0 text-brand">
+              {myOnField
+                ? 'NOW'
+                : myNext.minutesUntil === 0
+                  ? 'any moment'
+                  : myNext.minutesUntil != null && myNext.minutesUntil <= 90
+                    ? `in ${myNext.minutesUntil} min`
+                    : myPerformLabel}
+            </span>
+          </div>
+          <div className="mt-0.5 text-xs text-muted truncate">
+            {formatEventName(myNext.show.eventName)}
+            {myPerformLabel && !myOnField && (
+              <span className="text-secondary"> · {myPerformLabel}</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Your picks are performing live today */}
       {spotlight.length > 0 && (
@@ -232,6 +289,7 @@ const NextPerformancePanel = ({
           <RunningOrder
             show={nextCompetition}
             compact
+            myUid={myUid}
             highlights={buildShowHighlights({ show: nextCompetition, lineup, poolCorps })}
           />
         </div>

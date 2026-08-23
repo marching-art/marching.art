@@ -23,11 +23,14 @@ import { getRunningOrderStatus } from '../../utils/scheduleUtils';
  * @param {Object} props.show - Enriched show ({ lineup, timezone, startsAt, scoresAt }).
  * @param {Map<string,{tier:string,corps:string,captions:string[],sourceYear:any}>} [props.highlights]
  * @param {Set<string>} [props.highlightCorps] - Legacy: normalized names, full tier.
+ * @param {string} [props.myUid] - The viewing director's uid. Their own corps
+ *   (matched by uid on the real-field lineup) is marked "You" and gold-accented —
+ *   the "that's MY corps on the field" moment.
  * @param {boolean} [props.compact] - Tighter layout for dashboard panels.
  */
 import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pickHighlights';
 
-const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => {
+const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false }) => {
   // Tick every 60s so the performing-now marker stays current without a reload.
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -62,6 +65,9 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
         {lineup.map((entry) => {
           const isNow = entry.order === currentOrder;
           const isNext = entry.order === nextOrder;
+          // The director's OWN corps, matched precisely by uid (not brand name) —
+          // this is the "that's MY corps on the field right now" moment.
+          const isMine = !!(myUid && entry.uid && entry.uid === myUid);
           const key = normalize(entry.corps);
           const hi = highlights?.get(key);
           const tier = hi?.tier || (highlightCorps?.has(key) ? 'full' : null);
@@ -71,15 +77,17 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
           return (
             <div
               key={`${entry.order}-${entry.corps}`}
-              title={hi ? highlightLabel(hi) : undefined}
+              title={isMine ? 'Your corps' : hi ? highlightLabel(hi) : undefined}
               className={`flex items-center justify-between px-4 ${compact ? 'py-1.5' : 'py-2'} ${
-                isNow
-                  ? 'bg-interactive/10'
-                  : isFull
-                    ? 'bg-interactive/[0.06]'
-                    : isDim
-                      ? 'bg-interactive/[0.02]'
-                      : ''
+                isMine
+                  ? `bg-brand/10 border-l-2 border-brand ${isNow ? 'bg-brand/20' : ''}`
+                  : isNow
+                    ? 'bg-interactive/10'
+                    : isFull
+                      ? 'bg-interactive/[0.06]'
+                      : isDim
+                        ? 'bg-interactive/[0.02]'
+                        : ''
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -87,11 +95,23 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
                   {entry.performanceTime}
                 </span>
                 <span className="text-sm text-white truncate flex items-center gap-1.5">
-                  {isFull && (
+                  {isMine && <Star className="w-3 h-3 text-brand fill-brand flex-shrink-0" />}
+                  {!isMine && isFull && (
                     <Star className="w-3 h-3 text-interactive fill-interactive flex-shrink-0" />
                   )}
-                  {isDim && <Star className="w-3 h-3 text-interactive/50 flex-shrink-0" />}
-                  <span className={`truncate ${isDim ? 'text-secondary' : ''}`}>{entry.corps}</span>
+                  {!isMine && isDim && (
+                    <Star className="w-3 h-3 text-interactive/50 flex-shrink-0" />
+                  )}
+                  <span
+                    className={`truncate ${isMine ? 'text-brand font-semibold' : isDim ? 'text-secondary' : ''}`}
+                  >
+                    {entry.corps}
+                  </span>
+                  {isMine && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-brand/80 flex-shrink-0">
+                      You
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="flex-shrink-0 pl-2">

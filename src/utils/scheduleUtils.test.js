@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { showCalendarDay, formatDayKey, transformCompetitionToShow } from './scheduleUtils';
+import {
+  showCalendarDay,
+  formatDayKey,
+  transformCompetitionToShow,
+  getPerformanceStatus,
+  getMyPerformanceSlots,
+  pickMyNextPerformance,
+} from './scheduleUtils';
 
 // Regression: "Drums Across Nebraska" starts Wed 2026-07-01 8:46 PM CDT, which
 // is Thu 2026-07-02 01:46 UTC. Reading startsAt with UTC getters labeled the
@@ -117,5 +124,65 @@ describe('transformCompetitionToShow — fantasy schedule preference', () => {
     const podiumSchedule = { lineup: [{ order: 1, corps: 'Podium Corps' }], fieldSize: 1 };
     const show = transformCompetitionToShow({ ...heritage, podiumSchedule });
     expect(show.podiumSchedule).toBe(podiumSchedule);
+  });
+});
+
+describe('personal performance status (the "my corps right now" element)', () => {
+  // A 3-corps show; scores read at 9:00 PM, corps 17 min apart before that.
+  const show = {
+    scoresAt: '2026-06-18T21:00:00Z',
+    startsAt: '2026-06-18T20:00:00Z',
+    timezone: 'UTC',
+    lineup: [
+      { order: 1, uid: 'u2', corps: 'First', performsAt: '2026-06-18T20:00:00Z' },
+      { order: 2, uid: 'me', corps: 'My Corps', performsAt: '2026-06-18T20:20:00Z' },
+      { order: 3, uid: 'u1', corps: 'Headliner', performsAt: '2026-06-18T20:40:00Z' },
+    ],
+  };
+
+  it('reports minutes until my corps takes the field', () => {
+    const now = new Date('2026-06-18T20:16:00Z'); // 4 min before my 20:20 slot
+    const s = getPerformanceStatus(show, show.lineup[1], now);
+    expect(s.state).toBe('upcoming');
+    expect(s.minutesUntil).toBe(4);
+  });
+
+  it('reports on-field while my corps holds the field', () => {
+    const now = new Date('2026-06-18T20:25:00Z'); // between my 20:20 and next 20:40
+    const s = getPerformanceStatus(show, show.lineup[1], now);
+    expect(s.state).toBe('onNow');
+    expect(s.minutesUntil).toBe(0);
+  });
+
+  it('reports done after my corps and the next have gone on', () => {
+    const now = new Date('2026-06-18T20:45:00Z');
+    const s = getPerformanceStatus(show, show.lineup[1], now);
+    expect(s.state).toBe('done');
+  });
+
+  it('finds only my own corps slots (by uid)', () => {
+    const now = new Date('2026-06-18T20:00:00Z');
+    const slots = getMyPerformanceSlots(show, 'me', now);
+    expect(slots).toHaveLength(1);
+    expect(slots[0].entry.corps).toBe('My Corps');
+  });
+
+  it('picks the on-field slot over an upcoming one across shows', () => {
+    const now = new Date('2026-06-18T20:25:00Z');
+    const otherShow = {
+      scoresAt: '2026-06-18T22:00:00Z',
+      startsAt: '2026-06-18T21:30:00Z',
+      timezone: 'UTC',
+      lineup: [
+        { order: 1, uid: 'me', corps: 'My Other Corps', performsAt: '2026-06-18T21:40:00Z' },
+      ],
+    };
+    const best = pickMyNextPerformance([show, otherShow], 'me', now);
+    expect(best?.state).toBe('onNow');
+    expect(best?.entry.corps).toBe('My Corps');
+  });
+
+  it('returns null when the director has no corps in any field', () => {
+    expect(pickMyNextPerformance([show], 'nobody', new Date('2026-06-18T20:00:00Z'))).toBe(null);
   });
 });

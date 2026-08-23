@@ -6,10 +6,20 @@ built from the directors who actually registered, so a director can watch
 **their own corps take the field in real time**. Covers the slotting rule, the
 per-event fantasy/podium split, and the encore.
 
-> **Status: design.** This is the agreed target design, not yet built. It
+> **Status: in progress.** Phases 1–3 are built; Phases 4–6 remain (see §10). It
 > deliberately reuses the running-order engine, the attendance index, and the
 > live UI that already exist — see [`SCHEDULE_SYSTEM.md`](SCHEDULE_SYSTEM.md),
 > [`SCORE_DROPS.md`](SCORE_DROPS.md), and [`PODIUM.md`](PODIUM.md).
+>
+> Built so far:
+> - **Phase 1** — fit-to-window mode in `helpers/scheduleModel.js`
+>   (`deriveRunningOrder`, opt-in via `fitToWindow`).
+> - **Phase 2** — `helpers/showRunningOrder.js` (pure builder) +
+>   `scheduled/scheduleRunningOrder.js` (twice-daily materializer writing
+>   `competition.fantasySchedule`); client reads it via `transformCompetitionToShow`.
+> - **Phase 3** — the live personal layer: `RunningOrder` marks the director's own
+>   corps (by uid), and `NextPerformancePanel` shows a "your corps takes the field"
+>   banner driven by `pickMyNextPerformance` (both season types).
 
 Related source-of-truth files this design builds on:
 
@@ -251,14 +261,15 @@ read per night, matching the cost profile of the existing nightly jobs.
 
 ## 10. Phased build order
 
-1. **Fit-to-window in the engine.** Extend `deriveRunningOrder` to derive the
+1. ✅ **Fit-to-window in the engine.** Extended `deriveRunningOrder` to derive the
    interval/start from field size + window; unit tests for small/large fields and
    the `minInterval` clamp. (Pure, no data changes.)
-2. **Real fantasy field → running order.** Materialize the fantasy schedule from
-   `show_registrations` in the enrichment hook; point `RunningOrder.jsx` at it;
-   render thin/empty shows honestly.
-3. **Live personal layer.** Dashboard "takes the field" chip + On-Field for the
-   director's own corps; optional FCM push.
+2. ✅ **Real fantasy field → running order.** Materializes the fantasy schedule
+   from `show_registrations` in a twice-daily job; `RunningOrder.jsx` reads it via
+   `transformCompetitionToShow`; thin/empty shows render honestly.
+3. ✅ **Live personal layer.** "Your corps takes the field" banner + On-Field for
+   the director's own corps (matched by uid), both season types. (FCM push at
+   slot time is still open — see §11.)
 4. **Podium schedule.** Second running order from `collectPodiumRegistrations`;
    Fantasy/Podium toggle on the event card.
 5. **Proximity plumbing.** Geocode + cache `homeGeo` at registration/rename;
