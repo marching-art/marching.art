@@ -23,7 +23,8 @@ import { getCorpsClassOrderIndex } from '../utils/corps';
  */
 function sortAttendeesByClass(rows) {
   return [...rows].sort((a, b) => {
-    const classDelta = getCorpsClassOrderIndex(a.corpsClass) - getCorpsClassOrderIndex(b.corpsClass);
+    const classDelta =
+      getCorpsClassOrderIndex(a.corpsClass) - getCorpsClassOrderIndex(b.corpsClass);
     if (classDelta !== 0) return classDelta;
     return (a.corpsName || '').localeCompare(b.corpsName || '');
   });
@@ -130,9 +131,7 @@ export function useHostedShowRegistrations({ enabled, show, hostedEvent }) {
         // on the podium/state doc, which carries no @handle) — resolve those from
         // the director's public profile so every attendee shows who's fielding it,
         // exactly as the hosted-event host name is resolved above.
-        const missing = [
-          ...new Set(rows.filter((r) => !r.username && r.uid).map((r) => r.uid)),
-        ];
+        const missing = [...new Set(rows.filter((r) => !r.username && r.uid).map((r) => r.uid))];
         if (missing.length) {
           const names = new Map();
           await Promise.all(

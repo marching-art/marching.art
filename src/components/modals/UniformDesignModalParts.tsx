@@ -85,7 +85,10 @@ export const AvatarStyleSection: React.FC<AvatarStyleSectionProps> = ({
                     setFormData({
                       ...formData,
                       avatarSection: e.target.value as
-                        'drumMajor' | 'hornline' | 'drumline' | 'colorGuard',
+                        | 'drumMajor'
+                        | 'hornline'
+                        | 'drumline'
+                        | 'colorGuard',
                     })
                   }
                   className="w-4 h-4 accent-interactive"
