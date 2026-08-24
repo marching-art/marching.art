@@ -373,5 +373,160 @@
       "Share a score and it opens a public results page for that day.",
       "Legacy Endowments added a lasting, commemorative way to spend CorpsCoin."
     ]
+  },
+  {
+    "id": "2026-07-28-show-history-earnings",
+    "date": "2026-07-28",
+    "title": "Your show history shows what you earned",
+    "category": "improvement",
+    "summary": "Your director profile's show history now lists the CorpsCoin you took home from each show, so your competitive record and your budget tell one story."
+  },
+  {
+    "id": "2026-07-27-leagues-clubhouse",
+    "date": "2026-07-27",
+    "title": "Leagues get a clubhouse",
+    "category": "feature",
+    "summary": "Your league now has a clubhouse — a shared home with clearer standings, easier invitations, and better visibility into what your league-mates are up to."
+  },
+  {
+    "id": "2026-07-25-polls-in-discord",
+    "date": "2026-07-25",
+    "title": "Community polls now post to Discord",
+    "category": "feature",
+    "summary": "Site polls now cross-post to Discord so the whole community can weigh in where it already gathers, with the results flowing back to the site."
+  },
+  {
+    "id": "2026-07-23-password-recovery",
+    "date": "2026-07-23",
+    "title": "Reset a forgotten password",
+    "category": "fix",
+    "summary": "Locked out? You can now recover your account with a password reset instead of being stuck at the sign-in screen."
+  },
+  {
+    "id": "2026-07-21-corps-creation-guardrails",
+    "date": "2026-07-21",
+    "title": "Cleaner corps creation",
+    "category": "improvement",
+    "summary": "Creating a corps now catches duplicate and invalid names up front, so you don't lose your setup to an error after the fact."
+  },
+  {
+    "id": "2026-07-19-corps-trajectory-history",
+    "date": "2026-07-19",
+    "title": "See your corps' trajectory over time",
+    "category": "feature",
+    "summary": "A new progression history charts your corps season over season, so you can watch your program's arc — not just tonight's score."
+  },
+  {
+    "id": "2026-07-13-supporter-tiers",
+    "date": "2026-07-13",
+    "title": "Buy Me a Coffee supporter tiers",
+    "category": "feature",
+    "summary": "marching.art is donation-only — nothing about the game is gated behind money. If you'd like to chip in, new Buy Me a Coffee supporter tiers add a thank-you in the form of profile flair and a spot on the Supporters wall.",
+    "highlights": [
+      "Supporting is entirely optional; no gameplay is locked behind it.",
+      "Always-on supporter flair shows on your profile.",
+      "A Supporters wall recognizes everyone who chips in."
+    ]
+  },
+  {
+    "id": "2026-07-10-podium-class-launch",
+    "date": "2026-07-10",
+    "title": "Introducing Podium: direct your own corps",
+    "category": "feature",
+    "summary": "Podium is a whole new way to play — a director's sim where you run a single corps of your own: register it, plan its rehearsals, tour a real calendar of shows, and get scored every night. It runs alongside the fantasy game and is always open to join.",
+    "highlights": [
+      "A guided registration wizard and rehearsal planner get you on the field.",
+      "Your corps competes on the nightly Podium stage against other directors.",
+      "Tour a season calendar anchored to the real majors, regionals, and championship weeks.",
+      "A two-level Fan Favorite community ballot crowns a season favorite."
+    ]
+  },
+  {
+    "id": "2026-07-10-trophy-case-redesign",
+    "date": "2026-07-10",
+    "title": "A redesigned trophy case",
+    "category": "improvement",
+    "summary": "The profile trophy case was rebuilt as clean, class-distinct icon chips — the shape tells the class, the color tells the award — so a whole career of results reads at a glance."
+  },
+  {
+    "id": "2026-07-09-league-prediction-pools",
+    "date": "2026-07-09",
+    "title": "League prediction pools",
+    "category": "feature",
+    "summary": "Put your read on the season to work: league prediction pools let you and your league-mates wager CorpsCoin on outcomes — the flagship social way to spend what you earn."
+  },
+  {
+    "id": "2026-07-09-soundsport-predictions",
+    "date": "2026-07-09",
+    "title": "SoundSport joins daily predictions",
+    "category": "improvement",
+    "summary": "The daily prediction game now includes SoundSport with placement-style questions, so there's more of the circuit to call each day."
+  },
+  {
+    "id": "2026-07-06-daily-predictions",
+    "date": "2026-07-06",
+    "title": "Daily predictions, saved and rewarded",
+    "category": "feature",
+    "summary": "Your daily predictions now save reliably and pay out accuracy bonuses, so calling the night right earns you CorpsCoin."
+  },
+  {
+    "id": "2026-07-06-first-season-journey",
+    "date": "2026-07-06",
+    "title": "A First Season Journey for new directors",
+    "category": "feature",
+    "summary": "New directors get a First Season Journey questline and a rookie league placement — a guided path through your opening season instead of a blank slate."
+  },
+  {
+    "id": "2026-07-03-deadlines-cadence-clarity",
+    "date": "2026-07-03",
+    "title": "Clearer deadlines and scoring cadence",
+    "category": "improvement",
+    "summary": "The game now surfaces when things are due and when scores drop across the app, alongside a mobile and accessibility polish pass so it all reads well on a phone.",
+    "highlights": [
+      "Deadlines and scoring times are called out where you need them.",
+      "Lineup and score tables no longer clip off-screen on mobile.",
+      "An accessibility and reduced-motion pass across the site."
+    ]
+  },
+  {
+    "id": "2026-07-02-world-open-show-pay",
+    "date": "2026-07-02",
+    "title": "World and Open corps earn show CorpsCoin",
+    "category": "balance",
+    "summary": "World and Open class corps are now paid their show-participation CorpsCoin like everyone else, closing a gap where competing didn't pay out."
+  },
+  {
+    "id": "2026-06-30-live-2026-season",
+    "date": "2026-06-30",
+    "title": "The live season is here",
+    "category": "feature",
+    "summary": "marching.art now runs alongside the real season: schedules mirror the actual tour, and each night's results and coverage are built from that night's real scores as they land.",
+    "highlights": [
+      "Live Scores show current-year rankings as the season unfolds.",
+      "The schedule tracks the real tour, spring training included.",
+      "Nightly articles are written from that night's real results.",
+      "Last season's articles stay readable after the season resets."
+    ]
+  },
+  {
+    "id": "2026-06-30-sharper-corps-images",
+    "date": "2026-06-30",
+    "title": "Sharper nightly corps images",
+    "category": "improvement",
+    "summary": "The images generated for your corps each night got a quality upgrade, so your corps looks its best in the news feed and on your profile."
+  },
+  {
+    "id": "2026-06-30-customizations-persist",
+    "date": "2026-06-30",
+    "title": "Your customizations stick across seasons",
+    "category": "fix",
+    "summary": "World and Open profile ensembles and the customizations you set now carry across a season reset instead of reverting."
+  },
+  {
+    "id": "2026-06-05-draft-pool-focus",
+    "date": "2026-06-05",
+    "title": "The draft pool focuses on attainable corps",
+    "category": "balance",
+    "summary": "Very high point-value corps are no longer offered in the lineup draft, keeping the draftable pool centered on realistic picks."
   }
 ]
