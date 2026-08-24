@@ -1,5 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; the frontend mirror test pulls
-// this file into a project without firebase-admin types (FirebaseFirestore).
 /**
  * Daily Predictions Helper
  *
