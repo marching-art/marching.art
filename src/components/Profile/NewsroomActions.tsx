@@ -2,8 +2,9 @@
 // NEWSROOM ACTIONS — compose your corps' news, from your profile
 // =============================================================================
 // The two authoring entry points — "Post a Press Release" (your organization's
-// own news, published instantly) and "Submit an Article" (circuit coverage,
-// reviewed before publishing) — used to sit in a footer on the Dashboard, the
+// own news; reviewed at first, instant once you're a trusted press author) and
+// "Submit an Article" (circuit coverage, always reviewed before publishing) —
+// used to sit in a footer on the Dashboard, the
 // daily-loop surface. Publishing news is not a daily action, and the Dashboard
 // footer itself admitted as much. They moved here, to the director's profile,
 // directly beneath the Newsroom that lists what they've already published — so
@@ -23,8 +24,8 @@ import { publishPressRelease, type PublishPressReleaseData } from '../../api/pre
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../../utils/corps';
 import type { OwnedCorpsOption } from '../modals/PressReleaseModal';
 import {
-  PRESS_RELEASE_APPROVAL_THRESHOLD,
-  canPublishPressRelease,
+  PRESS_RELEASE_AUTO_APPROVE_THRESHOLD,
+  pressReleaseAutoPublishes,
 } from '../modals/pressReleaseForm';
 
 // lazyWithRetry (not raw React.lazy) so a stale hashed chunk after a deploy
@@ -43,7 +44,7 @@ interface NewsroomActionsProps {
   profile:
     | {
         corps?: Record<string, { corpsName?: string }> | null;
-        articleStats?: { approvedCount?: number } | null;
+        articleStats?: { approvedCount?: number; approvedPressReleaseCount?: number } | null;
       }
     | null
     | undefined;
@@ -71,12 +72,12 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
     });
   }, [profile?.corps]);
 
-  // Press releases publish unreviewed, so they carry the same approval limit the
-  // news pipeline puts on auto-publishing: the author needs
-  // PRESS_RELEASE_APPROVAL_THRESHOLD admin-approved articles first. Surface that
-  // on the entry point so it's clear before the composer opens.
-  const approvedCount = profile?.articleStats?.approvedCount ?? 0;
-  const pressReleasesUnlocked = canPublishPressRelease(approvedCount);
+  // Press releases run on their own trust track: a director's first releases are
+  // reviewed, and after PRESS_RELEASE_AUTO_APPROVE_THRESHOLD are approved they
+  // publish instantly. Surface which state the author is in before the composer
+  // opens. Counts approved PRESS RELEASES only — never news articles.
+  const approvedPressReleaseCount = profile?.articleStats?.approvedPressReleaseCount ?? 0;
+  const pressReleasesInstant = pressReleaseAutoPublishes(approvedPressReleaseCount);
 
   const handlePressRelease = async (payload: PublishPressReleaseData) => {
     setSubmittingPressRelease(true);
@@ -122,9 +123,9 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
             <span className="flex-1">
               <span className="block text-sm font-bold text-white">Post a Press Release</span>
               <span className="block text-xs text-muted mt-0.5">
-                {pressReleasesUnlocked
+                {pressReleasesInstant
                   ? "Your corps' own news — reveals, staff, results. Publishes instantly."
-                  : `Trusted authors only — unlocks after ${PRESS_RELEASE_APPROVAL_THRESHOLD} of your articles are approved.`}
+                  : `Your corps' own news — reviewed until ${PRESS_RELEASE_AUTO_APPROVE_THRESHOLD} of your releases are approved, then instant.`}
               </span>
             </span>
           </button>
@@ -147,7 +148,7 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
         <Suspense fallback={<ModalLoadingFallback />}>
           <PressReleaseModal
             ownedCorps={ownedCorps}
-            approvedCount={approvedCount}
+            approvedPressReleaseCount={approvedPressReleaseCount}
             onClose={() => setShowPressRelease(false)}
             onSubmit={handlePressRelease}
             isSubmitting={submittingPressRelease}

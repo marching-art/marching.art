@@ -16,18 +16,26 @@ export const PRESS_RELEASE_LIMITS = {
   bodyMax: 8000,
 } as const;
 
-// A press release publishes instantly with no review, so it carries the same
-// approval limit the news pipeline puts on unreviewed publishing: only authors
-// who've earned trust — at least this many admin-approved articles — may post
-// one. Mirrors the server's AUTO_PUBLISH_THRESHOLD
-// (functions/src/helpers/newsSubmissionsShared.js); the backend re-checks it as
-// the source of truth. Gate the UI on this so an author below the bar sees why,
-// rather than writing a whole release only to be rejected on publish.
-export const PRESS_RELEASE_APPROVAL_THRESHOLD = 3;
+// Press releases run on their own trust track, separate from news articles.
+// Anyone with a corps can compose one: a director's first releases are reviewed
+// by an admin before going live, and once this many of THEIR PRESS RELEASES have
+// been approved, new ones publish instantly. Mirrors the server's
+// PRESS_RELEASE_AUTO_APPROVE_THRESHOLD
+// (functions/src/helpers/newsSubmissionsShared.js), which re-checks it as the
+// source of truth. Surfaced in the composer so the author knows up front whether
+// this release publishes instantly or goes to review.
+export const PRESS_RELEASE_AUTO_APPROVE_THRESHOLD = 3;
 
-/** True once the author has earned enough admin approvals to post a release. */
-export function canPublishPressRelease(approvedCount: number | null | undefined): boolean {
-  return Math.max(0, Math.floor(approvedCount ?? 0)) >= PRESS_RELEASE_APPROVAL_THRESHOLD;
+/**
+ * True once the author has enough approved press releases that new ones publish
+ * instantly. Below the bar, a release is submitted for admin review instead.
+ */
+export function pressReleaseAutoPublishes(
+  approvedPressReleaseCount: number | null | undefined
+): boolean {
+  return (
+    Math.max(0, Math.floor(approvedPressReleaseCount ?? 0)) >= PRESS_RELEASE_AUTO_APPROVE_THRESHOLD
+  );
 }
 
 export interface PressReleaseFormState {

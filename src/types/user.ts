@@ -135,11 +135,14 @@ export interface UserProfile {
   };
 
   // News-hub contribution counters — drive the automatic writer tier
-  // (src/utils/writerTier.ts). approvedCount is bumped on admin approval;
-  // pressReleaseCount when a press release publishes.
+  // (src/utils/writerTier.ts). approvedCount is bumped on admin approval of a
+  // news article; pressReleaseCount when a press release publishes.
+  // approvedPressReleaseCount tracks admin-approved PRESS RELEASES on their own
+  // trust track (the gate for instant press-release publishing).
   articleStats?: {
     approvedCount?: number;
     pressReleaseCount?: number;
+    approvedPressReleaseCount?: number;
     lastApprovedAt?: unknown;
     lastPressReleaseAt?: unknown;
   };

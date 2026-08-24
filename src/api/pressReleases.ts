@@ -1,10 +1,11 @@
 // =============================================================================
 // PRESS RELEASES API
 // =============================================================================
-// Director-authored press releases about their OWN organization. Unlike news
-// submissions (which cover the shared world and are admin-reviewed), a press
-// release publishes instantly — the backend enforces corps ownership, a write
-// budget, and after-the-fact moderation instead of a review queue.
+// Director-authored press releases about their OWN organization, on a trust
+// track separate from news submissions. A director's first releases are
+// admin-reviewed; once enough have been approved, new releases publish
+// instantly. The backend enforces corps ownership, a write budget, and — for
+// trusted authors — after-the-fact moderation instead of a review queue.
 
 import { createCallable } from './callable';
 
@@ -28,9 +29,11 @@ export interface PublishPressReleaseData {
 export interface PublishPressReleaseResult {
   success: boolean;
   message: string;
-  /** Composite feed id: `{seasonId}_day_{n}_press_{id}`. */
+  /** Composite feed id: `{seasonId}_day_{n}_press_{id}`. Absent on the review path. */
   articleId?: string;
   articlePath?: string;
+  /** Set instead of articleId when the release was queued for admin review. */
+  submissionId?: string;
 }
 
 export interface DeletePressReleaseData {

@@ -21,6 +21,16 @@ const { getActiveCompetitionDay } = require("./gameDay");
 // 2 PM Eastern rather than waiting in the admin queue.
 const AUTO_PUBLISH_THRESHOLD = 3;
 
+// Press releases run on their OWN, separate trust track from news articles.
+// A director's first press releases are reviewed by an admin before they go
+// live; once this many of THEIR PRESS RELEASES have been approved, new releases
+// publish instantly with no review. Kept deliberately independent of the news
+// article count (AUTO_PUBLISH_THRESHOLD / approvedCount): press and news are
+// distinct things, so trust earned in one does not carry to the other. This is
+// what stops directors from routing their corps' own bulletins through the news
+// queue just to unlock instant press releases.
+const PRESS_RELEASE_AUTO_APPROVE_THRESHOLD = 3;
+
 // The daily hour (Eastern) at which qualified auto-publish submissions go live.
 const AUTO_PUBLISH_HOUR_ET = 14;
 
@@ -122,6 +132,9 @@ async function resolveAuthorCredit(db, uid) {
       : null,
     corps: userData.corps || null,
     approvedCount: userData.articleStats?.approvedCount || 0,
+    // Approved PRESS RELEASES only — the gate for instant press-release
+    // publishing, tracked separately from approvedCount (news articles).
+    approvedPressReleaseCount: userData.articleStats?.approvedPressReleaseCount || 0,
   };
 }
 
@@ -749,6 +762,7 @@ async function publishSubmission(db, {
 
 module.exports = {
   AUTO_PUBLISH_THRESHOLD,
+  PRESS_RELEASE_AUTO_APPROVE_THRESHOLD,
   AUTO_PUBLISH_HOUR_ET,
   computeNextAutoPublishAt,
   easternParts,

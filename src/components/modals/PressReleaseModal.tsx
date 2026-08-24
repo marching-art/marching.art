@@ -15,8 +15,8 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { PressReleaseCorpsClass } from '../../api/pressReleases';
 import {
   PRESS_RELEASE_LIMITS,
-  PRESS_RELEASE_APPROVAL_THRESHOLD,
-  canPublishPressRelease,
+  PRESS_RELEASE_AUTO_APPROVE_THRESHOLD,
+  pressReleaseAutoPublishes,
   emptyPressReleaseForm,
   validatePressReleaseForm,
   buildPressReleasePayload,
@@ -34,12 +34,12 @@ export interface PressReleaseModalProps {
   /** The director's registered corps, highest class first. */
   ownedCorps: OwnedCorpsOption[];
   /**
-   * The author's count of admin-approved articles. Press releases publish
-   * unreviewed, so — like a trusted author's auto-published submission — they're
-   * gated behind the same approval threshold. Omit to leave the modal ungated
-   * (the server re-checks regardless).
+   * The author's count of admin-approved PRESS RELEASES (its own trust track,
+   * distinct from news articles). Below the threshold a release is submitted for
+   * admin review; at or above it, releases publish instantly. Omit to assume the
+   * instant path (the server re-checks regardless).
    */
-  approvedCount?: number;
+  approvedPressReleaseCount?: number;
   isSubmitting?: boolean;
   onClose: () => void;
   onSubmit: (payload: ReturnType<typeof buildPressReleasePayload>) => void;
@@ -47,7 +47,7 @@ export interface PressReleaseModalProps {
 
 const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
   ownedCorps,
-  approvedCount,
+  approvedPressReleaseCount,
   isSubmitting = false,
   onClose,
   onSubmit,
@@ -65,14 +65,17 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
   const hasCorps = ownedCorps.length > 0;
   const selectedCorps = ownedCorps.find((c) => c.corpsClass === form.corpsClass) ?? ownedCorps[0];
 
-  // Approval gate: when a count is supplied and it's under the threshold, the
-  // author hasn't earned unreviewed publishing yet. Undefined leaves it open.
-  const meetsApprovalGate = approvedCount === undefined || canPublishPressRelease(approvedCount);
+  // Instant vs. review: at/above the threshold of approved press releases the
+  // author has earned unreviewed publishing; below it, this release is submitted
+  // for admin review. Undefined assumes the instant path (server re-checks).
+  const publishesInstantly =
+    approvedPressReleaseCount === undefined || pressReleaseAutoPublishes(approvedPressReleaseCount);
   const approvalsRemaining = Math.max(
     0,
-    PRESS_RELEASE_APPROVAL_THRESHOLD - Math.max(0, Math.floor(approvedCount ?? 0))
+    PRESS_RELEASE_AUTO_APPROVE_THRESHOLD - Math.max(0, Math.floor(approvedPressReleaseCount ?? 0))
   );
-  const canPublish = hasCorps && meetsApprovalGate;
+  // Anyone with a corps can compose — the only hard gate is owning one.
+  const canPublish = hasCorps;
 
   const update = <K extends keyof PressReleaseFormState>(
     field: K,
@@ -129,43 +132,49 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
             <div className="p-4 space-y-4 overflow-y-auto flex-1">
-              {/* Instant-publish banner — the core distinction from news submissions */}
-              <div className="bg-teal-500/10 border border-teal-500/30 rounded-none px-3 py-2 flex items-start gap-2">
-                <Zap className="w-3.5 h-3.5 text-teal-400 mt-0.5 shrink-0" />
-                <p className="text-xs text-secondary">
-                  Press releases publish <span className="text-teal-400 font-bold">instantly</span>{' '}
-                  under your corps&apos; byline — no review. Share your organization&apos;s own
-                  news: season reveals, staff moves, results, and rivalries from your corps&apos;
-                  point of view. For circuit-wide coverage, use Submit News instead.
-                </p>
-              </div>
+              {/* State banner — instant for trusted authors, review for the rest */}
+              {publishesInstantly ? (
+                <div className="bg-teal-500/10 border border-teal-500/30 rounded-none px-3 py-2 flex items-start gap-2">
+                  <Zap className="w-3.5 h-3.5 text-teal-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-secondary">
+                    Press releases publish{' '}
+                    <span className="text-teal-400 font-bold">instantly</span> under your
+                    corps&apos; byline — no review. Share your organization&apos;s own news: season
+                    reveals, staff moves, results, and rivalries from your corps&apos; point of
+                    view. For circuit-wide coverage, use Submit News instead.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-interactive/10 border border-interactive/30 rounded-none px-3 py-2 flex items-start gap-2">
+                  <Zap className="w-3.5 h-3.5 text-interactive mt-0.5 shrink-0" />
+                  <p className="text-xs text-secondary">
+                    Your first press releases are{' '}
+                    <span className="text-interactive font-bold">reviewed by an admin</span> before
+                    they publish. Once{' '}
+                    <span className="text-interactive font-bold">
+                      {PRESS_RELEASE_AUTO_APPROVE_THRESHOLD}
+                    </span>{' '}
+                    of your releases are approved
+                    {approvalsRemaining > 0 &&
+                      approvalsRemaining < PRESS_RELEASE_AUTO_APPROVE_THRESHOLD && (
+                        <>
+                          {' '}
+                          (<span className="text-interactive font-bold">
+                            {approvalsRemaining}
+                          </span>{' '}
+                          to go)
+                        </>
+                      )}
+                    , your press releases publish instantly. Write it the way your organization
+                    would — for circuit-wide coverage, use Submit News instead.
+                  </p>
+                </div>
+              )}
 
               {!hasCorps ? (
                 <div className="bg-background border border-line rounded-none px-3 py-6 text-center">
                   <p className="text-sm text-secondary">
                     Register a corps first — a press release is issued by your organization.
-                  </p>
-                </div>
-              ) : !meetsApprovalGate ? (
-                <div className="bg-background border border-line rounded-none px-3 py-6 text-center space-y-2">
-                  <p className="text-sm font-bold text-white">
-                    Press releases are for trusted authors
-                  </p>
-                  <p className="text-sm text-secondary">
-                    Because a release publishes instantly with no review, you unlock it after{' '}
-                    <span className="text-teal-400 font-bold">
-                      {PRESS_RELEASE_APPROVAL_THRESHOLD}
-                    </span>{' '}
-                    of your submitted articles have been approved by an admin.
-                    {approvalsRemaining > 0 && (
-                      <>
-                        {' '}
-                        You&apos;re{' '}
-                        <span className="text-teal-400 font-bold">{approvalsRemaining}</span> away —
-                        use <span className="text-white font-bold">Submit an Article</span> to cover
-                        the circuit and earn approvals.
-                      </>
-                    )}
                   </p>
                 </div>
               ) : (
@@ -339,11 +348,15 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
                 className="h-9 px-4 bg-teal-500 text-white text-sm font-bold uppercase tracking-wider hover:bg-teal-400 disabled:opacity-50 flex items-center gap-2"
               >
                 {isSubmitting ? (
-                  'Publishing...'
+                  publishesInstantly ? (
+                    'Publishing...'
+                  ) : (
+                    'Submitting...'
+                  )
                 ) : (
                   <>
                     <Send className="w-3.5 h-3.5" />
-                    Publish
+                    {publishesInstantly ? 'Publish' : 'Submit for Review'}
                   </>
                 )}
               </button>

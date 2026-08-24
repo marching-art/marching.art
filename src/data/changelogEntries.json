@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-08-24-press-release-moderation",
+    "date": "2026-08-24",
+    "title": "Press releases have their own path to instant publishing",
+    "category": "improvement",
+    "summary": "Posting your corps' own news no longer waits on getting news articles approved. Your first few press releases are reviewed by an admin, and once three of them are approved, your releases publish instantly — a trust track separate from news submissions.",
+    "highlights": [
+      "Anyone with a registered corps can write a press release right away — early ones go to review first.",
+      "After three approved press releases, new ones publish instantly with no review.",
+      "Press-release trust is earned from press releases, not from submitted news articles."
+    ]
+  },
+  {
     "id": "2026-08-24-schedule-card-weather",
     "date": "2026-08-24",
     "title": "Weather is back on the schedule cards",

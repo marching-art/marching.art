@@ -34,12 +34,16 @@ const CATEGORY_COLORS = {
   dci: 'bg-blue-500/20 text-blue-400',
   fantasy: 'bg-purple-500/20 text-purple-400',
   analysis: 'bg-cyan-500/20 text-cyan-400',
+  podium: 'bg-amber-500/20 text-amber-400',
+  press: 'bg-teal-500/20 text-teal-400',
 };
 
 const CATEGORY_LABELS = {
   dci: 'DCI News',
   fantasy: 'Fantasy',
   analysis: 'Analysis',
+  podium: 'Podium',
+  press: 'Press Release',
 };
 
 const SubmissionsManagement = () => {
@@ -310,6 +314,10 @@ const SubmissionRow = ({
 const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, formatDate }) => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
+  // Press releases publish under the author's corps byline and never generate an
+  // AI image — they carry only the author's supplied photo (or none). The AI
+  // image controls don't apply, so they're hidden for a press-release review.
+  const isPressRelease = submission.kind === 'press_release';
   // Default to the author's stated image preference (respecting a "no image" or
   // submitted-URL choice); the admin can still override before publishing.
   const [imageOption, setImageOption] = useState(
@@ -429,57 +437,67 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
             <div className="px-4 py-3 border-t border-line bg-surface-sunken">
               {!showRejectForm ? (
                 <div className="space-y-3">
-                  {/* Image options */}
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">
-                      Article Image
-                    </label>
+                  {/* Image options — hidden for press releases, which publish
+                      under the author's corps byline with only their supplied
+                      photo (or none) and never an AI image. */}
+                  {isPressRelease ? (
+                    <div className="text-xs text-muted">
+                      {submission.imageUrl
+                        ? 'Publishes with the author’s supplied image (re-hosted).'
+                        : 'Publishes with no image — press releases never generate one.'}
+                    </div>
+                  ) : (
                     <div className="space-y-2">
-                      {/* Option: Use submitted image (only if available) */}
-                      {submission.imageUrl && (
+                      <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">
+                        Article Image
+                      </label>
+                      <div className="space-y-2">
+                        {/* Option: Use submitted image (only if available) */}
+                        {submission.imageUrl && (
+                          <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
+                            <input
+                              type="radio"
+                              name="imageOption"
+                              value="submitted"
+                              checked={imageOption === 'submitted'}
+                              onChange={(e) => setImageOption(e.target.value)}
+                              className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
+                            />
+                            <Image className="w-4 h-4 text-blue-400" />
+                            <span>Use submitted image</span>
+                          </label>
+                        )}
+
+                        {/* Option: Generate AI image */}
                         <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
                           <input
                             type="radio"
                             name="imageOption"
-                            value="submitted"
-                            checked={imageOption === 'submitted'}
+                            value="generate"
+                            checked={imageOption === 'generate'}
                             onChange={(e) => setImageOption(e.target.value)}
                             className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                           />
-                          <Image className="w-4 h-4 text-blue-400" />
-                          <span>Use submitted image</span>
+                          <Sparkles className="w-4 h-4 text-secondary" />
+                          <span>Generate AI image (Fantasy Daily style)</span>
                         </label>
-                      )}
 
-                      {/* Option: Generate AI image */}
-                      <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
-                        <input
-                          type="radio"
-                          name="imageOption"
-                          value="generate"
-                          checked={imageOption === 'generate'}
-                          onChange={(e) => setImageOption(e.target.value)}
-                          className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
-                        />
-                        <Sparkles className="w-4 h-4 text-secondary" />
-                        <span>Generate AI image (Fantasy Daily style)</span>
-                      </label>
-
-                      {/* Option: No image */}
-                      <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
-                        <input
-                          type="radio"
-                          name="imageOption"
-                          value="none"
-                          checked={imageOption === 'none'}
-                          onChange={(e) => setImageOption(e.target.value)}
-                          className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
-                        />
-                        <X className="w-4 h-4 text-muted" />
-                        <span>No image</span>
-                      </label>
+                        {/* Option: No image */}
+                        <label className="flex items-center gap-3 text-sm text-secondary cursor-pointer p-2 rounded-none hover:bg-surface-raised transition-colors">
+                          <input
+                            type="radio"
+                            name="imageOption"
+                            value="none"
+                            checked={imageOption === 'none'}
+                            onChange={(e) => setImageOption(e.target.value)}
+                            className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
+                          />
+                          <X className="w-4 h-4 text-muted" />
+                          <span>No image</span>
+                        </label>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Action buttons */}
                   <div className="flex justify-end gap-2">
