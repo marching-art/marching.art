@@ -137,6 +137,13 @@ describe('transformCompetitionToShow — fantasy schedule preference', () => {
     expect(show.encore).toBe(encore);
     expect(transformCompetitionToShow(heritage).encore).toBe(null);
   });
+
+  it('carries the backend-produced show-time weather through to the card', () => {
+    const weather = { summary: 'clear skies, 61°F', tempF: 61, code: 0, hour: 20 };
+    const show = transformCompetitionToShow({ ...heritage, weather });
+    expect(show.weather).toBe(weather);
+    expect(transformCompetitionToShow(heritage).weather).toBe(null);
+  });
 });
 
 describe('personal performance status (the "my corps right now" element)', () => {
