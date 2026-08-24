@@ -42,3 +42,16 @@ Never add a new `@ts-nocheck` header to compensate — the ratchet only falls.
 > Note: this container may ship a newer TypeScript than the lockfile pins.
 > If `npm run typecheck` reports `TS5101`/`TS6xxx` noise, align it first:
 > `npm install --no-save typescript@$(node -p "require('./package-lock.json').packages['node_modules/typescript'].version")`
+
+## Update the player-facing changelog when you ship something directors notice
+
+There's no automation — write the entry by hand, in the same change. When a
+change is something a **director** would notice (a new capability, an existing
+thing improved, a bug fixed, or a balance tweak), prepend an entry to the top of
+`src/data/changelogEntries.json` (newest first). Describe the **player-facing
+effect**, never internal mechanics, thresholds, or algorithms. The entry shape,
+the `category` values, and the id/date rules are documented at the top of
+[`src/data/changelog.ts`](src/data/changelog.ts); the roadmap is hand-authored
+in the same file. This is what keeps the `/updates` "What's New" page honest and
+current — the visible cadence that answers "is this game still being worked on?"
+(`docs/FMA_LESSONS.md`, lesson 2).

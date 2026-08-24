@@ -101,18 +101,16 @@ we can answer that for free.
 > external store (`src/hooks/useUnseenUpdates.ts`). The page is in the sitemap,
 > so "the game is alive" is legible to search engines and prospective players.
 >
-> **The changelog writes itself.** Entries live in
-> `src/data/changelogEntries.json`, and `.github/workflows/changelog.yml` runs
-> on every merged PR: `scripts/changelog/generateChangelogEntry.mjs` applies a
-> noise filter (drops dependabot / chore / ci / docs-or-test-only PRs), asks
-> Gemini whether the change is player-facing and — if so — to write the
-> player-facing copy, then commits the entry back to `main` with `[skip ci]`.
-> No human in the loop. Without a `GOOGLE_GENERATIVE_AI_API_KEY` Actions secret
-> it falls back to a conservative conventional-commit heuristic. The
-> generator's pure logic is unit-tested (`npm run changelog:selftest`). One
-> setup step: allow the Actions bot to push to `main` (branch protection), and
-> add the Gemini secret for good copy. The roadmap stays hand-authored in
-> `src/data/changelog.ts`.
+> **The changelog is written with the change.** Entries live in
+> `src/data/changelogEntries.json` and are added by hand in the same PR that
+> ships a player-facing change — newest first, at the top of the array. This
+> replaced an earlier Gemini-based Actions workflow that tried to auto-generate
+> entries from each merged PR: in practice it judged almost every PR
+> "not player-facing" (auto-merged PRs land with an opaque branch-slug title and
+> empty body, so the model saw nothing to describe) and the log went stale. A
+> human — or Claude, per the `CLAUDE.md` "Player-facing changelog" instruction —
+> writing the entry alongside the code is both more reliable and better copy.
+> The roadmap is likewise hand-authored in `src/data/changelog.ts`.
 
 ### 3. Moderation and anti-cheat scale with success; FMA never staffed for it
 

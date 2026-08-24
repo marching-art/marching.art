@@ -1,13 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import {
-  CHANGELOG,
   ROADMAP,
   UPDATE_CATEGORY_META,
   ROADMAP_STATUS_META,
   latestUpdateId,
   countUnseenUpdates,
+  loadChangelog,
   type ChangelogEntry,
 } from './changelog';
+// The integrity checks read the data file directly; production loads it lazily
+// via loadChangelog(), but the data contract is the same JSON either way.
+import rawEntries from './changelogEntries.json';
+
+const CHANGELOG = rawEntries as ChangelogEntry[];
 
 const entry = (id: string): ChangelogEntry => ({
   id,
@@ -46,15 +51,26 @@ describe('changelog data integrity', () => {
   });
 });
 
+describe('loadChangelog', () => {
+  it('resolves to the newest-first changelog entries', async () => {
+    const entries = await loadChangelog();
+    expect(entries[0].id).toBe(CHANGELOG[0].id);
+    expect(entries.length).toBe(CHANGELOG.length);
+  });
+
+  it('returns the same cached array on repeat calls', async () => {
+    const a = await loadChangelog();
+    const b = await loadChangelog();
+    expect(a).toBe(b);
+  });
+});
+
 describe('latestUpdateId', () => {
   it('returns the first entry id', () => {
     expect(latestUpdateId([entry('a'), entry('b')])).toBe('a');
   });
   it('returns null for an empty log', () => {
     expect(latestUpdateId([])).toBeNull();
-  });
-  it('defaults to the real changelog', () => {
-    expect(latestUpdateId()).toBe(CHANGELOG[0].id);
   });
 });
 
@@ -75,7 +91,7 @@ describe('countUnseenUpdates', () => {
     expect(countUnseenUpdates('gone', entries)).toBe(3);
   });
 
-  it('is zero once the latest real entry is marked seen', () => {
-    expect(countUnseenUpdates(CHANGELOG[0].id)).toBe(0);
+  it('is zero once the latest entry is marked seen', () => {
+    expect(countUnseenUpdates(entries[0].id, entries)).toBe(0);
   });
 });

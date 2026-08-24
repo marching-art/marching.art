@@ -69,7 +69,6 @@
     "audit:check": "node scripts/auditRatchet.mjs",
     "ts-nocheck:check": "node scripts/tsNocheckCensus.mjs --check",
     "ts-nocheck:next": "node scripts/tsNocheckNext.mjs",
-    "changelog:selftest": "node --test scripts/changelog/*.test.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "git config core.hooksPath .githooks || true"
