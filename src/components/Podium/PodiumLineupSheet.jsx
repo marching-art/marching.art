@@ -144,9 +144,7 @@ export default function PodiumLineupSheet({
     </div>
   );
 
-  const rehearseSection = (
-    <RehearseAction prominent={rehearseLeads} onClick={handleRehearse} />
-  );
+  const rehearseSection = <RehearseAction prominent={rehearseLeads} onClick={handleRehearse} />;
 
   return (
     // The shared Modal is a bottom sheet on mobile and a centered dialog on sm+

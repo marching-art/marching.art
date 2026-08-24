@@ -89,6 +89,10 @@
       0.35
     ],
     "assistantYield": 0.85,
+    "contentSplitRamp": {
+      "startContentShare": 0.8,
+      "endContentShare": 0.2
+    },
     "contentCleanSplitByPhase": {
       "early": [
         0.8,
@@ -216,6 +220,10 @@
     "totalCap": 99.7,
     "_model": "Trajectory-anchored (Option B, 2026-07). Each corps rides its OWN challenge-selected potential curve. Rehearsal (realized) places the corps between a reputation-INDEPENDENT floor (perfFloorFraction of potential — any corps can field a mediocre show) and a reputation-GATED ceiling (ceilFrac, rising from repCeilingFloor at tier 1 to 1.0 at the top tier — only a dynasty can touch the very top, so a perfectly-rehearsed FIRST season tops out in the mid/upper 70s). An INDEPENDENT per-corps form random-walk adds individual fluctuation. The historical bands are a realism guardrail (per-day band.max soft-cap) and calibration reference ONLY — never a shared per-day floor, so corps at different shows never move in lockstep and no historical field-dip is baked into the season.",
     "perfFloorFraction": 0.48,
+    "earlyBoost": {
+      "maxPct": 32,
+      "untilDay": 21
+    },
     "maxRepTier": 7,
     "repCeilingFracByTier": {
       "1": 0.78,

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * HeroBanner Component - First-Time Visitor Welcome
  *
@@ -19,6 +18,9 @@ import { useUrgencyTriggers } from '../../hooks/useUrgencyTriggers';
 // HERO BANNER COMPONENT
 // =============================================================================
 
+/**
+ * @param {{ onDismiss?: () => void }} props
+ */
 const HeroBanner = ({ onDismiss }) => {
   const { primary } = useUrgencyTriggers();
 

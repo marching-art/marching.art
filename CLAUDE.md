@@ -1,59 +1,57 @@
-# CLAUDE.md
+# Working in this repo
 
-Guidance for Claude (and any contributor) working in this repository.
+Guidance Claude Code loads automatically each session. Keep it short; link out
+for detail.
 
-## Player-facing changelog — update it when you ship something directors notice
+## Formatting is automatic — don't fight it
 
-marching.art's structural advantage over the game it descends from is a visible
-cadence: a public, crawlable **What's New** page (`/updates`) that answers "is
-this game still being worked on?" for returning and prospective directors. See
-`docs/FMA_LESSONS.md`, lesson 2. That page is only as alive as the changelog
-behind it, so keeping the changelog current is part of shipping — not an
-afterthought and not something a bot does for us.
+Prettier runs on staged files via the `.githooks/pre-commit` hook (wired up by
+the `prepare` script on `npm install`) and on each file after it's edited in a
+web session (the PostToolUse hook in `.claude/settings.json`). You should never
+need to run `npm run format` by hand, and the CI `format:check` gate should
+never fail on a push. If it ever does, run `npm run format` and check that the
+hook is active: `git config core.hooksPath` must print `.githooks`.
 
-**When you make a change a director would notice, add a changelog entry in the
-same change.** Write it by hand; there is no automation.
+## Chip away at `@ts-nocheck` — one per task
 
-- **Where:** `src/data/changelogEntries.json`. Add the new entry as the **first
-  element of the array** (the list is newest-first).
-- **When to add one:** a new thing a player can do, an existing thing that got
-  better, a bug players hit that's now fixed, or a scoring/economy/difficulty
-  tuning change. When in doubt about whether a director would notice, lean
-  toward adding it — but skip pure internals (refactors, tests, CI, deps, docs,
-  tooling, typing) that change nothing a player sees.
-- **How to write it:** describe the change the way it affects a **director**,
-  not the commit. Warm and concrete, no dev jargon, no hype words
-  ("game-changing", "revolutionary"). Keep the summary to a sentence or two and
-  put specifics in `highlights`.
+**Every time you do substantive work in this repo (any issue, feature, or
+fix), also remove at least one `// @ts-nocheck` header** and leave the file
+passing `checkJs`. The count is ratcheted downward by CI
+(`npm run ts-nocheck:check`, baseline in `scripts/ts-nocheck.baseline.json`);
+this habit is how the ~155 grandfathered files get typed over time instead of
+never. See [ARCHITECTURE.md](ARCHITECTURE.md#ci-gates) for the ratchet.
 
-Entry shape (fields and the exact `category`/type contract are defined and
-documented in `src/data/changelog.ts`):
+Low-friction loop:
 
-```json
-{
-  "id": "2026-08-24-short-slug",
-  "date": "2026-08-24",
-  "title": "A short player-facing headline",
-  "category": "feature | improvement | fix | balance",
-  "summary": "One or two sentences on what changed and why it matters to a director.",
-  "highlights": ["Optional bullet specifics", "Up to a few, each short"]
-}
+```bash
+npm run ts-nocheck:next        # ranks the cheapest headers to remove next;
+                               # "FREE WINS" already pass checkJs — just delete
+                               # the header. Others show their error count.
+# 1. Pick a file, delete its `// @ts-nocheck ...` header line.
+# 2. Fix the checkJs errors it surfaces (usually a few implicit `any`s —
+#    add a JSDoc `@param {...}` / `@type {...}`, not a broad cast).
+npm run typecheck              # app + functions must be clean (needs
+                               # `cd functions && npm ci` for the functions pass)
+npm test -- <the file>         # if it's covered by a test, run it
+node scripts/tsNocheckCensus.mjs --update   # lock the new lower ceiling
 ```
 
-- `id` is stable and unique — it's also the watermark the unseen-updates badge
-  compares against. Use `<date>-<slug>` and never reuse or renumber an id.
-- `date` is the ISO day (yyyy-mm-dd) the change goes live, in the game's
-  US/Eastern clock.
-- `category`: `feature` (new capability), `improvement` (existing thing better),
-  `fix` (a bug players hit is resolved), or `balance` (scoring/economy/difficulty
-  tuning).
+Commit the header removal together with (or right after) your main change.
+Never add a new `@ts-nocheck` header to compensate — the ratchet only falls.
 
-The **roadmap** ("On the horizon") is also hand-authored — in the `ROADMAP`
-array in `src/data/changelog.ts`. Move items up as they ship.
+> Note: this container may ship a newer TypeScript than the lockfile pins.
+> If `npm run typecheck` reports `TS5101`/`TS6xxx` noise, align it first:
+> `npm install --no-save typescript@$(node -p "require('./package-lock.json').packages['node_modules/typescript'].version")`
 
-## Conventions
+## Update the player-facing changelog when you ship something directors notice
 
-- Prettier is the formatter (`npm run format`; `npm run format:check` in CI).
-  Run it on files you touch.
-- Longer-lived context and the "why" behind several systems lives in `docs/`,
-  notably `docs/FMA_LESSONS.md`.
+There's no automation — write the entry by hand, in the same change. When a
+change is something a **director** would notice (a new capability, an existing
+thing improved, a bug fixed, or a balance tweak), prepend an entry to the top of
+`src/data/changelogEntries.json` (newest first). Describe the **player-facing
+effect**, never internal mechanics, thresholds, or algorithms. The entry shape,
+the `category` values, and the id/date rules are documented at the top of
+[`src/data/changelog.ts`](src/data/changelog.ts); the roadmap is hand-authored
+in the same file. This is what keeps the `/updates` "What's New" page honest and
+current — the visible cadence that answers "is this game still being worked on?"
+(`docs/FMA_LESSONS.md`, lesson 2).

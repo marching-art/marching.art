@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/NotFound.jsx
 // 404 page styled to match the data-terminal dark design system:
 // charcoal surfaces, azure primary actions, no gradients / glow / shadow.
@@ -114,7 +113,11 @@ const NotFound = () => {
           className="flex flex-col sm:flex-row gap-3 justify-center"
         >
           <button
-            onClick={() => startTransition(() => navigate(-1))}
+            onClick={() =>
+              startTransition(() => {
+                navigate(-1);
+              })
+            }
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-white/20 rounded-none text-white font-semibold hover:bg-white/5 hover:border-white/40 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

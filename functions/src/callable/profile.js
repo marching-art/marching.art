@@ -576,7 +576,8 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300 }, async (reque
       const stats = await eraseDirectorFromResults(db, userId);
       logger.info(
         `Anonymized results for ${userId}: ${stats.recapDays} recap days, ` +
-          `${stats.standings} standings, ${stats.champions} champion docs.`
+          `${stats.standings} standings, ${stats.fantasyStandings} fantasy standings, ` +
+          `${stats.champions} champion docs.`
       );
     } catch (resultsError) {
       logger.warn(`Results anonymization failed for ${userId}:`, resultsError);

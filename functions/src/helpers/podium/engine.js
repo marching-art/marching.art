@@ -44,6 +44,27 @@ function phaseForDay(day, cfg) {
 }
 
 /**
+ * Content/clean split (fractions of a block's yield) for a competition day.
+ * A smooth linear ramp from `startContentShare` at day 1 to `endContentShare`
+ * at day 49: the season slides continuously from installing the book to
+ * cleaning it, with no phase cliffs. Diminishing returns still do most of the
+ * steering (see allocateBlock), so this is a gentle bias, not a hard switch.
+ * Falls back to the legacy 3-phase step table when no ramp is configured.
+ * @param {number} day competition day (>=1)
+ * @returns {[number, number]} [contentShare, cleanShare]
+ */
+function contentSplitForDay(day, cfg) {
+  const ramp = cfg.rehearsal.contentSplitRamp;
+  if (ramp) {
+    const t = Math.max(0, Math.min(1, (day - 1) / 48));
+    const c = ramp.startContentShare + (ramp.endContentShare - ramp.startContentShare) * t;
+    return [c, 1 - c];
+  }
+  const phase = phaseForDay(day, cfg);
+  return cfg.rehearsal.contentCleanSplitByPhase[phase];
+}
+
+/**
  * Read a band value at an arbitrary percentile by interpolating the stored
  * p5/p25/p50/p75/p95/max points.
  * @param {object} band one day's band entry
@@ -180,8 +201,7 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
     cfg.rehearsal.repeatBlockMultipliers[
       Math.min(repeats, cfg.rehearsal.repeatBlockMultipliers.length - 1)
     ];
-  const phase = phaseForDay(Math.max(1, day), cfg);
-  const [contentShare, cleanShare] = cfg.rehearsal.contentCleanSplitByPhase[phase];
+  const [contentShare, cleanShare] = contentSplitForDay(Math.max(1, day), cfg);
   // Spring training installs: force content-heavy split regardless of date.
   const [cShare, clShare] = day < 1 ? [0.85, 0.15] : [contentShare, cleanShare];
 
@@ -428,7 +448,16 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
     // This corps' OWN potential trajectory: its challenge-selected archetype
     // shape (fit from real corps-seasons), normalized to reach its ceiling at
     // finals. Smooth by construction — no shared per-day national floor.
-    const potential = (L * (1 / (1 + Math.exp(-k * (day - d0))))) / norm;
+    let potential = (L * (1 / (1 + Math.exp(-k * (day - d0))))) / norm;
+    // Early-season lift: raises opening-show scores so the newcomer arc matches
+    // DCI's shallower June-to-August climb (openers near two-thirds of finals,
+    // not under half). Decays linearly to 1.0 by `untilDay`, so mid-season,
+    // finals, and the reputation ladder (which reads off finals) are untouched.
+    const eb = sc.earlyBoost;
+    if (eb && eb.maxPct > 0 && day < eb.untilDay) {
+      const ramp = Math.max(0, (eb.untilDay - day) / (eb.untilDay - 1));
+      potential *= 1 + (eb.maxPct / 100) * ramp;
+    }
     // Rehearsal attainment: how much of the book is installed AND clean.
     const attainment = cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean);
     const realized = Math.min(1, attainment / sc.attainmentFullRealization);

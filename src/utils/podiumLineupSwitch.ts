@@ -54,8 +54,7 @@ export function getFantasyLineupClasses(
   for (const classId of CORPS_CLASS_ORDER) {
     if (!classHasLineup(classId)) continue;
     const entry = corps?.[classId] as
-      | { corpsName?: string; name?: string; lineup?: Record<string, unknown> }
-      | undefined;
+      { corpsName?: string; name?: string; lineup?: Record<string, unknown> } | undefined;
     if (!entry || typeof entry !== 'object') continue;
     const label = CORPS_CLASS_LABELS[classId] || classId;
     list.push({
