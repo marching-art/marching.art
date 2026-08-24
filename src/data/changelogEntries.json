@@ -528,5 +528,90 @@
     "title": "The draft pool focuses on attainable corps",
     "category": "balance",
     "summary": "Very high point-value corps are no longer offered in the lineup draft, keeping the draftable pool centered on realistic picks."
+  },
+  {
+    "id": "2026-04-17-corps-lifecycle-midseason",
+    "date": "2026-04-17",
+    "title": "Retire, transfer, or revive a corps mid-season",
+    "category": "feature",
+    "summary": "You can now retire a corps, transfer it, or bring a retired one back during the season — as long as it hasn't competed yet — instead of waiting for the offseason to reshape your roster."
+  },
+  {
+    "id": "2026-03-02-dashboard-panels",
+    "date": "2026-03-02",
+    "title": "New dashboard panels: predictions, lineup analyzer, achievements",
+    "category": "feature",
+    "summary": "The dashboard gained three at-a-glance panels: a Daily Predictions mini-game, a Lineup Analyzer to weigh your caption picks, and an Achievement Tracker for your progress.",
+    "highlights": [
+      "Daily Predictions: call the day's outcomes right from your dashboard.",
+      "Lineup Analyzer: see how your caption choices stack up.",
+      "Achievement Tracker: watch your milestones fill in."
+    ]
+  },
+  {
+    "id": "2026-02-26-cinematic-corps-images",
+    "date": "2026-02-26",
+    "title": "More cinematic corps imagery",
+    "category": "improvement",
+    "summary": "The images that illustrate your corps and the news feed were reworked from wide stadium shots into intimate, close-up photojournalism, so the coverage reads like real field photography."
+  },
+  {
+    "id": "2026-02-21-corps-class-transfer",
+    "date": "2026-02-21",
+    "title": "Move a corps between classes",
+    "category": "feature",
+    "summary": "You can now transfer a corps to a different class, so your program isn't locked to the class it was founded in."
+  },
+  {
+    "id": "2026-02-20-time-based-class-unlocking",
+    "date": "2026-02-20",
+    "title": "Classes unlock over time, not just by XP",
+    "category": "improvement",
+    "summary": "Higher classes now open up on a time basis alongside XP and CorpsCoin, so steady play earns you access even when you're not grinding progression."
+  },
+  {
+    "id": "2026-01-24-guest-preview",
+    "date": "2026-01-24",
+    "title": "Try marching.art before you sign up",
+    "category": "feature",
+    "summary": "New visitors can now explore the game in a Guest Preview without an account, with a How It Works walkthrough and plain-language tooltips for the drum-corps jargon — so you can see what it's about before committing.",
+    "highlights": [
+      "Preview the dashboard and the game as a guest, no sign-up required.",
+      "A How It Works section explains the game at a glance.",
+      "Tooltips decode caption and scoring jargon in place."
+    ]
+  },
+  {
+    "id": "2026-01-21-game-guide",
+    "date": "2026-01-21",
+    "title": "An integrated Game Guide",
+    "category": "feature",
+    "summary": "A full Game Guide is now built into the site, reachable from the help icon anywhere, so the rules, scoring, and systems are always a click away."
+  },
+  {
+    "id": "2026-01-18-avatars-uniforms",
+    "date": "2026-01-18",
+    "title": "Avatars and uniform design",
+    "category": "feature",
+    "summary": "Make your corps and director your own: choose a profile avatar, give your corps its own avatar, and design uniforms you can copy across your ensembles. Profiles were rebuilt as a Director Career Portfolio.",
+    "highlights": [
+      "Pick and regenerate a profile avatar.",
+      "Corps avatars now show on the Scores page.",
+      "Design a uniform and copy it across your ensembles."
+    ]
+  },
+  {
+    "id": "2026-01-13-league-matchups",
+    "date": "2026-01-13",
+    "title": "League matchups and weekly recaps",
+    "category": "feature",
+    "summary": "Leagues became a weekly competition: automated head-to-head matchups and a weekly recap, with the leagues page redesigned around a dashboard-first, tabbed layout."
+  },
+  {
+    "id": "2026-01-08-youtube-videos",
+    "date": "2026-01-08",
+    "title": "Watch real corps performances",
+    "category": "feature",
+    "summary": "You can now search for and watch real drum corps performance videos right inside the game — from the live scores, the standings, and articles — so a score line is one click from the show itself."
   }
 ]
