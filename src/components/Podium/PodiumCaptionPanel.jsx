@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumCaptionPanel — Zone C analyzer analogue for Podium Class (Phase 2).
 // Per-caption content/clean progress with challenge level and neglect
 // warnings. The full trajectory-vs-percentile-band chart lands with the
@@ -8,6 +7,9 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { PODIUM_CAPTIONS, CAPTION_LABELS, REP_TIER_NAMES } from './podiumConstants';
 
+/**
+ * @param {{ content: number, clean: number }} props content/clean fractions (0..1)
+ */
 function ProgressPair({ content, clean }) {
   return (
     <div className="flex-1 space-y-1">
@@ -30,6 +32,9 @@ function ProgressPair({ content, clean }) {
   );
 }
 
+/**
+ * @param {{ podium: { data: { competitionDay: number, state?: Record<string, any> } } }} props
+ */
 export default function PodiumCaptionPanel({ podium }) {
   const state = podium.data?.state;
   if (!state?.captions) return null;
@@ -44,7 +49,7 @@ export default function PodiumCaptionPanel({ podium }) {
           Caption Progress
         </h3>
         <span className="text-[10px] font-bold uppercase text-brand">
-          {REP_TIER_NAMES[repTier]}
+          {REP_TIER_NAMES[/** @type {keyof typeof REP_TIER_NAMES} */ (repTier)]}
         </span>
       </div>
 
