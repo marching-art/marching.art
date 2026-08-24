@@ -19,6 +19,15 @@
  * `Director: {username}` and links whenever `uid` is set), so there we null both
  * `uid` and `username` instead.
  *
+ * The Scores page's Fantasy standings don't read the recap days directly — they
+ * read the nightly-materialized `fantasy_standings/{season}/classes/{class}`
+ * docs (helpers/standingsMaterializer.js), which DENORMALIZE the same
+ * `displayName`/`uid` off the recap rows. The current season self-heals on the
+ * next nightly materialization (it rebuilds from the now-anonymized recaps), but
+ * archived seasons never re-materialize, so those docs would keep the deleted
+ * name forever. This sweep anonymizes them in place too — the exact analog of
+ * the Podium standings docs above.
+ *
  * The transforms below are pure so they can be unit-tested; scanAndErase does
  * the Firestore I/O. Everything is best-effort at the call site: the account is
  * gone regardless, and re-running is idempotent (a second pass finds nothing to
@@ -71,6 +80,20 @@ function anonymizeRecapDay(data, uid) {
 function anonymizeStandingsDoc(data, uid) {
   if (!data) return false;
   return anonymizeResultEntries(data.standings, uid);
+}
+
+/**
+ * Anonymize a materialized Fantasy standings class document ({ entries: [...] }),
+ * the `fantasy_standings/{season}/classes/{class}` shape written by
+ * helpers/standingsMaterializer.js. Each entry denormalizes the recap row's
+ * `displayName`/`uid`; the bounded score history nested on the entry carries no
+ * identity, so nulling the entry's `displayName` is all the frontend credit gate
+ * needs. Mutates `data` in place.
+ * @returns {boolean} whether anything changed.
+ */
+function anonymizeFantasyStandingsDoc(data, uid) {
+  if (!data) return false;
+  return anonymizeResultEntries(data.entries, uid);
 }
 
 /**
@@ -133,10 +156,10 @@ async function eraseInDocs(getDocRefs, transform, uid) {
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} uid
- * @returns {Promise<{recapDays:number, standings:number, champions:number}>}
+ * @returns {Promise<{recapDays:number, standings:number, champions:number, fantasyStandings:number}>}
  */
 async function eraseDirectorFromResults(db, uid) {
-  const stats = { recapDays: 0, standings: 0, champions: 0 };
+  const stats = { recapDays: 0, standings: 0, champions: 0, fantasyStandings: 0 };
 
   for (const recapCollection of ["fantasy_recaps", "podium-recaps"]) {
     let seasonRefs = [];
@@ -163,6 +186,24 @@ async function eraseDirectorFromResults(db, uid) {
     }
   }
 
+  // Materialized Fantasy standings: one summary doc per season plus a
+  // `classes/{class}` subcollection carrying the denormalized director credit
+  // the Scores page renders. The summary doc holds no per-director identity, so
+  // only the class docs need sweeping.
+  let fantasyStandingsSeasons = [];
+  try {
+    fantasyStandingsSeasons = await db.collection("fantasy_standings").listDocuments();
+  } catch (error) {
+    logger.warn(`Erasure could not list fantasy_standings for ${uid}: ${error.message}`);
+  }
+  for (const seasonRef of fantasyStandingsSeasons) {
+    stats.fantasyStandings += await eraseInDocs(
+      () => seasonRef.collection("classes").listDocuments(),
+      anonymizeFantasyStandingsDoc,
+      uid
+    );
+  }
+
   stats.champions += await eraseInDocs(
     () => db.collection("season_champions").listDocuments(),
     anonymizeChampionsDoc,
@@ -176,6 +217,7 @@ module.exports = {
   anonymizeResultEntries,
   anonymizeRecapDay,
   anonymizeStandingsDoc,
+  anonymizeFantasyStandingsDoc,
   anonymizeChampionsDoc,
   eraseDirectorFromResults,
 };

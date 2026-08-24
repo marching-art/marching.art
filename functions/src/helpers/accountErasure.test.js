@@ -11,6 +11,7 @@ const {
   anonymizeResultEntries,
   anonymizeRecapDay,
   anonymizeStandingsDoc,
+  anonymizeFantasyStandingsDoc,
   anonymizeChampionsDoc,
 } = require("./accountErasure");
 
@@ -70,6 +71,33 @@ describe("anonymizeStandingsDoc", () => {
     assert.equal(data.standings[0].displayName, null);
     assert.equal(data.standings[0].uid, "u1");
     assert.equal(data.standings[1].displayName, "stays");
+  });
+});
+
+describe("anonymizeFantasyStandingsDoc", () => {
+  test("nulls displayName on matching entries only, keeps uid/corps/scores", () => {
+    const data = {
+      classKey: "worldClass",
+      entries: [
+        { uid: "u1", displayName: "gone", corpsName: "Blue Notes", score: 90, scores: [{ score: 90 }] },
+        { uid: "u2", displayName: "stays", corpsName: "Rivals", score: 88 },
+      ],
+    };
+    assert.equal(anonymizeFantasyStandingsDoc(data, "u1"), true);
+    const [a, b] = data.entries;
+    assert.equal(a.displayName, null);
+    assert.equal(a.uid, "u1");
+    assert.equal(a.corpsName, "Blue Notes");
+    assert.equal(a.score, 90);
+    // Nested history is untouched (it carries no identity).
+    assert.deepEqual(a.scores, [{ score: 90 }]);
+    assert.equal(b.displayName, "stays");
+  });
+
+  test("idempotent / tolerant of missing entries", () => {
+    assert.equal(anonymizeFantasyStandingsDoc({ entries: [{ uid: "u1", displayName: null }] }, "u1"), false);
+    assert.equal(anonymizeFantasyStandingsDoc({}, "u1"), false);
+    assert.equal(anonymizeFantasyStandingsDoc(null, "u1"), false);
   });
 });
 

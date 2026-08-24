@@ -270,6 +270,11 @@ describe("deleteAccount identity erasure", () => {
         { uid: "u1", displayName: "gone", lastTotal: 90 },
         { uid: "u2", displayName: "stays", lastTotal: 88 },
       ] }],
+      // Materialized Fantasy standings the Scores page actually reads.
+      ["fantasy_standings/season-9/classes/worldClass", { classKey: "worldClass", entries: [
+        { uid: "u1", displayName: "gone", corpsName: "Blue Notes", score: 80 },
+        { uid: "u2", displayName: "stays", corpsName: "Rivals", score: 79 },
+      ] }],
       ["season_champions/season-8", { classes: { worldClass: [
         { uid: "u1", username: "gone", corpsName: "Blue Notes", score: 98 },
       ] } }],
@@ -312,6 +317,13 @@ describe("deleteAccount identity erasure", () => {
     const standings = docs.get("podium-recaps/season-9/standings/12").standings;
     assert.equal(standings[0].displayName, null);
     assert.equal(standings[1].displayName, "stays");
+
+    // Materialized Fantasy standings anonymized: name stripped, row + uid kept.
+    const fantasyEntries = docs.get("fantasy_standings/season-9/classes/worldClass").entries;
+    assert.equal(fantasyEntries[0].displayName, null);
+    assert.equal(fantasyEntries[0].uid, "u1");
+    assert.equal(fantasyEntries[0].corpsName, "Blue Notes");
+    assert.equal(fantasyEntries[1].displayName, "stays");
 
     // Champions: uid + username nulled so no link and no name.
     const champ = docs.get("season_champions/season-8").classes.worldClass[0];
