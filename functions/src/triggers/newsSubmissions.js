@@ -13,6 +13,7 @@ const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/calla
 const { cloudinarySecrets } = require("../helpers/mediaService");
 const {
   AUTO_PUBLISH_THRESHOLD,
+  PRESS_RELEASE_AUTO_APPROVE_THRESHOLD,
   computeNextAutoPublishAt,
   resolveAuthorCredit,
   publishSubmission,
@@ -203,16 +204,23 @@ exports.submitNewsForApproval = onCall(
 // =============================================================================
 
 /**
- * Publish a press release about the author's OWN corps — instantly, with no
- * admin review. This is the community-engagement counterpart to
- * submitNewsForApproval: news submissions cover the shared world and are
- * reviewed; press releases are a director speaking for their own organization
- * and go live immediately.
+ * Publish a press release about the author's OWN corps. Press releases run on
+ * their own trust track, separate from news articles: a director's first
+ * releases are reviewed by an admin before going live, and once
+ * PRESS_RELEASE_AUTO_APPROVE_THRESHOLD of their releases have been approved,
+ * new ones publish instantly with no review. This is the community-engagement
+ * counterpart to submitNewsForApproval — but a director speaking for their own
+ * organization, never circuit-wide coverage.
  *
- * Accountability without a review queue comes from three constraints:
+ * The gate is the author's approved-PRESS-RELEASE count only; approved news
+ * articles do not count toward it (and vice versa), so directors no longer route
+ * their corps' bulletins through the news queue just to earn instant releases.
+ *
+ * Accountability comes from four constraints:
  *   1. the author must own a registered corps (the release is bylined to it),
- *   2. a tight per-uid write budget throttles abuse, and
- *   3. anyone can be moderated after the fact — the author can delete their own
+ *   2. an untrusted author's release is held for admin review,
+ *   3. a tight per-uid write budget throttles abuse, and
+ *   4. anyone can be moderated after the fact — the author can delete their own
  *      release (deleteMyPressRelease) and admins can remove any article.
  */
 exports.publishPressRelease = onCall(
@@ -254,17 +262,84 @@ exports.publishPressRelease = onCall(
       );
     }
 
-    // Same approval limit the news pipeline puts on unreviewed publishing: a
-    // press release goes live with no human in the loop, exactly like a trusted
-    // author's auto-published submission, so it's held to the same bar — at
-    // least AUTO_PUBLISH_THRESHOLD admin-approved articles. Authors who haven't
-    // earned that trust yet use the reviewed path (submitNewsForApproval); each
-    // approval there counts toward the threshold that unlocks press releases.
-    if ((credit.approvedCount || 0) < AUTO_PUBLISH_THRESHOLD) {
-      throw new HttpsError(
-        "failed-precondition",
-        `Press releases publish instantly without review, so they're open to trusted authors only. Get ${AUTO_PUBLISH_THRESHOLD} of your submitted articles approved by an admin first — then you can post press releases for your corps.`
-      );
+    // The gate is the author's approved-PRESS-RELEASE count, tracked separately
+    // from approved news articles. Below the bar → hold for admin review; at or
+    // above it → the author has earned instant, unreviewed publishing.
+    const isTrustedPressAuthor =
+      (credit.approvedPressReleaseCount || 0) >= PRESS_RELEASE_AUTO_APPROVE_THRESHOLD;
+
+    if (!isTrustedPressAuthor) {
+      // Untrusted author: queue the release for admin review rather than
+      // publishing it. It rides the same news_submissions queue and admin tools
+      // as news articles, marked kind:"press_release" / category:"press" so it
+      // publishes back through the press-release path on approval and counts
+      // toward the press-release trust track — never the news one.
+      try {
+        const submission = {
+          kind: "press_release",
+          headline: validation.cleaned.headline,
+          summary: validation.cleaned.summary,
+          // Stored as fullStory so the shared admin review UI renders the body.
+          fullStory: validation.cleaned.body,
+          category: "press",
+          imageUrl: validation.cleaned.imageUrl,
+          // "submitted" when the author linked an image, else "none" — a press
+          // release never generates an AI image.
+          imageOption: validation.cleaned.imageUrl ? "submitted" : "none",
+          // The corps the release is bylined to, plus the class the author chose,
+          // so approval can re-resolve (or fall back to) the byline.
+          corpsClass: corps.corpsClass,
+          pressCorps: corps,
+          status: "pending",
+          authorUid: request.auth.uid,
+          authorName: credit.authorName,
+          authorUsername: credit.authorUsername,
+          authorLocation: credit.authorLocation,
+          authorEmail: request.auth.token.email || null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        const docRef = await db.collection("news_submissions").add(submission);
+
+        logger.info("Press release queued for review:", {
+          submissionId: docRef.id,
+          authorUid: request.auth.uid,
+          corpsName: corps.corpsName,
+        });
+
+        // Notify admins. Best-effort — an email failure never fails the submit.
+        try {
+          const { fanOutToAdmins, sendAdminArticleSubmissionEmail } =
+            require("../helpers/emailService");
+          await fanOutToAdmins(sendAdminArticleSubmissionEmail, {
+            submissionId: docRef.id,
+            headline: submission.headline,
+            summary: submission.summary,
+            authorName: submission.authorName,
+            category: submission.category,
+          });
+        } catch (notifyErr) {
+          logger.warn("Failed to notify admins of new press release:", notifyErr.message);
+        }
+
+        const remaining = Math.max(
+          0,
+          PRESS_RELEASE_AUTO_APPROVE_THRESHOLD - (credit.approvedPressReleaseCount || 0)
+        );
+        return {
+          success: true,
+          message:
+            `Your ${corps.corpsName} press release was submitted for review. ` +
+            `After ${remaining} more of your releases ${remaining === 1 ? "is" : "are"} approved, ` +
+            `your press releases will publish instantly.`,
+          submissionId: docRef.id,
+        };
+      } catch (error) {
+        logger.error("Error submitting press release for review:", error);
+        if (error instanceof HttpsError) throw error;
+        throw new HttpsError("internal", "Failed to submit press release. Please try again.");
+      }
     }
 
     try {
@@ -463,6 +538,121 @@ exports.listPendingSubmissions = onCall(
 );
 
 /**
+ * Approve a queued press release: publish it under the author's corps byline
+ * (press releases carry only an author-supplied photo — never an AI image),
+ * mark the submission approved, and advance the author's approved-PRESS-RELEASE
+ * count. Once that count reaches PRESS_RELEASE_AUTO_APPROVE_THRESHOLD the
+ * author's future releases publish instantly. Shares the admin approve callable
+ * with news articles but stays on the press trust track throughout.
+ *
+ * @returns {Promise<{success: boolean, message: string, articlePath: string, articleId: string}>}
+ */
+async function approvePressReleaseSubmission(db, { submissionRef, submission, submissionId, approvedBy }) {
+  // Re-resolve the byline from the author's current profile so a rename since
+  // submission is honored; fall back to the byline captured at submit time.
+  const credit = await resolveAuthorCredit(db, submission.authorUid);
+  const corps = resolveOwnedCorps(credit.corps, submission.corpsClass) || submission.pressCorps;
+  if (!corps || !corps.corpsName) {
+    throw new HttpsError(
+      "failed-precondition",
+      "This author no longer has a registered corps to byline the release to."
+    );
+  }
+
+  const result = await publishPressReleaseArticle(db, {
+    id: db.collection("news_hub").doc().id,
+    cleaned: {
+      headline: submission.headline,
+      summary: submission.summary,
+      body: submission.fullStory,
+      imageUrl: submission.imageUrl || null,
+    },
+    corps,
+    author: {
+      uid: submission.authorUid,
+      authorName: credit.authorName || submission.authorName,
+      authorUsername: credit.authorUsername || submission.authorUsername,
+      authorLocation: credit.authorLocation || submission.authorLocation,
+    },
+  });
+
+  const now = new Date();
+  await submissionRef.update({
+    status: "approved",
+    publishedAt: now,
+    updatedAt: now,
+    approvedBy,
+    publishedPath: result.articlePath,
+  });
+
+  // Advance BOTH counters: approvedPressReleaseCount is the instant-publish gate;
+  // pressReleaseCount feeds the writer tier (every published release counts).
+  // Read the approved count back so the trusted milestone fires exactly on the
+  // crossing approval. Best-effort — a counter failure never fails the publish.
+  let newApprovedCount = null;
+  try {
+    const statsRef = profileDataRef(db, submission.authorUid);
+    await statsRef.set(
+      {
+        articleStats: {
+          approvedPressReleaseCount: FieldValue.increment(1),
+          pressReleaseCount: FieldValue.increment(1),
+          lastPressReleaseAt: now,
+        },
+      },
+      { merge: true }
+    );
+    const statsSnap = await statsRef.get();
+    newApprovedCount = statsSnap.data()?.articleStats?.approvedPressReleaseCount ?? null;
+  } catch (counterErr) {
+    logger.warn("Failed to increment author approved-press-release count:", counterErr.message);
+  }
+
+  // Bell the author: their release is live, and — on the approval that reaches
+  // the threshold — that their future releases now publish instantly.
+  try {
+    const { createUserNotification } = require("../helpers/userNotifications");
+    await createUserNotification(db, submission.authorUid, {
+      type: "press_release_approved",
+      title: "Your press release was approved",
+      message: `“${submission.headline}” has been approved and published to the news hub.`,
+      link: result.articleId ? `/article/${result.articleId}` : "/profile",
+      dedupeKey: `press_release_approved_${submissionId}`,
+      metadata: { submissionId },
+    });
+
+    if (newApprovedCount === PRESS_RELEASE_AUTO_APPROVE_THRESHOLD) {
+      await createUserNotification(db, submission.authorUid, {
+        type: "press_releases_unlocked",
+        title: "Your press releases now publish instantly",
+        message:
+          `With ${PRESS_RELEASE_AUTO_APPROVE_THRESHOLD} approved press releases, ` +
+          `your future releases publish instantly — no review.`,
+        link: "/profile",
+        dedupeKey: `press_releases_unlocked_${submission.authorUid}`,
+      });
+    }
+  } catch (notifyErr) {
+    logger.warn("Failed to notify author of press-release approval:", notifyErr.message);
+  }
+
+  await invalidateNewsCache(db);
+
+  logger.info("Press release approved and published:", {
+    submissionId,
+    articlePath: result.articlePath,
+    corpsName: corps.corpsName,
+  });
+
+  return {
+    success: true,
+    message: "Press release approved and published successfully",
+    articlePath: result.articlePath,
+    articleId: result.articleId,
+  };
+}
+
+/**
  * Approve an article submission and publish it.
  *
  * Publishing generates a Fantasy Daily-style header image (article #5 prompt)
@@ -509,6 +699,18 @@ exports.approveSubmission = onCall(
 
       if (submission.status === "approved") {
         throw new HttpsError("failed-precondition", "This submission has already been approved");
+      }
+
+      // A queued press release publishes back through the press-release path
+      // (its own byline, no AI image generation) and counts toward the press
+      // trust track — not the news one.
+      if (submission.kind === "press_release") {
+        return await approvePressReleaseSubmission(db, {
+          submissionRef,
+          submission,
+          submissionId,
+          approvedBy: request.auth.uid,
+        });
       }
 
       // Determine image handling. An explicit admin choice (imageOption) wins;
@@ -653,11 +855,13 @@ exports.rejectSubmission = onCall(
       });
 
       // Bell the author so a declined submission never just disappears. Best-effort.
+      const isPressRelease = submission.kind === "press_release";
+      const rejectedNoun = isPressRelease ? "press release" : "article";
       try {
         const { createUserNotification } = require("../helpers/userNotifications");
         await createUserNotification(db, submission.authorUid, {
           type: "article_rejected",
-          title: "Your article wasn't approved",
+          title: `Your ${rejectedNoun} wasn't approved`,
           message: `“${submission.headline}” wasn't approved: ${rejectionReason}`,
           link: "/profile",
           dedupeKey: `article_rejected_${submissionId}`,

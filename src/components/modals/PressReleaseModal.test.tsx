@@ -103,33 +103,63 @@ describe('PressReleaseModal', () => {
     expect(screen.getByRole('button', { name: /Publish/i })).toBeDisabled();
   });
 
-  it('locks the composer for an author below the approval threshold', () => {
+  it('offers a review path (not a lock) for an author below the approval threshold', () => {
     const onSubmit = vi.fn();
     render(
       <PressReleaseModal
         ownedCorps={[aurora]}
-        approvedCount={1}
+        approvedPressReleaseCount={1}
         onClose={vi.fn()}
         onSubmit={onSubmit}
       />
     );
-    // The trusted-author gate replaces the composer and disables publishing.
-    expect(screen.getByText(/Press releases are for trusted authors/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Headline/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Publish/i })).toBeDisabled();
+    // The composer stays open — the release is just submitted for review.
+    expect(screen.getByText(/reviewed by an admin/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Headline/)).toBeInTheDocument();
+    const submit = screen.getByRole('button', { name: /Submit for Review/i });
+    expect(submit).not.toBeDisabled();
+    // The instant "Publish" button is not shown on the review path.
+    expect(screen.queryByRole('button', { name: /^Publish$/i })).not.toBeInTheDocument();
   });
 
-  it('unlocks the composer once the author has enough approvals', () => {
+  it('submits a below-threshold release for review with the trimmed payload', () => {
+    const onSubmit = vi.fn();
     render(
       <PressReleaseModal
         ownedCorps={[aurora]}
-        approvedCount={3}
+        approvedPressReleaseCount={0}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/Headline/), {
+      target: { value: 'Aurora unveils its 2026 production' },
+    });
+    fireEvent.change(screen.getByLabelText(/Announcement/), {
+      target: {
+        value:
+          'Aurora is proud to reveal a bold new program for the 2026 season, inspired by the night sky.',
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Submit for Review/i }));
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].headline).toBe('Aurora unveils its 2026 production');
+  });
+
+  it('publishes instantly once the author has enough approved releases', () => {
+    render(
+      <PressReleaseModal
+        ownedCorps={[aurora]}
+        approvedPressReleaseCount={3}
         onClose={vi.fn()}
         onSubmit={vi.fn()}
       />
     );
-    expect(screen.queryByText(/Press releases are for trusted authors/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/reviewed by an admin/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/no review/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Headline/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Publish/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Publish$/i })).not.toBeDisabled();
   });
 });
