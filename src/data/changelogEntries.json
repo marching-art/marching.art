@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-08-24-schedule-card-weather",
+    "date": "2026-08-24",
+    "title": "Weather is back on the schedule cards",
+    "category": "fix",
+    "summary": "Show cards again display the show-time conditions at each venue — a sky icon and the temperature — so you can see the forecast for a night before you register."
+  },
+  {
     "id": "2026-08-23-live-running-order",
     "date": "2026-08-23",
     "title": "See the full running order — and who's on the field right now",

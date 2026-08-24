@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * UrgencyBanner Component - Contextual Time-Sensitive Messaging
  *
@@ -26,6 +25,7 @@ import { useUrgencyTriggers, URGENCY_LEVELS } from '../../hooks/useUrgencyTrigge
 // ICON MAPPING
 // =============================================================================
 
+/** @type {Record<string, import('react').ComponentType<{ className?: string }>>} */
 const ICONS = {
   activity: Activity,
   calendar: Calendar,

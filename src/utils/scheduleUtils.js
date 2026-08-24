@@ -60,6 +60,10 @@ export function transformCompetitionToShow(competition) {
     // Legacy show sponsorship ("Presented by <corps>") — the purchase was
     // retired in favor of hosted events; old schedule docs still render it.
     sponsor: competition.sponsor || null,
+    // Backend-produced show-time weather ({ summary, tempF, code, hour }),
+    // denormalized onto each competition by scheduleWeather. The card renders
+    // it straight from here, so it must survive the transform.
+    weather: competition.weather || null,
   };
 }
 
