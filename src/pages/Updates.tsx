@@ -13,8 +13,8 @@ import { Sparkles, Wrench, Scale, Bug, Hammer, CalendarClock, Compass } from 'lu
 import { Heading } from '../components/ui';
 import { useSEO } from '../hooks/useSEO';
 import { useUnseenUpdates } from '../hooks/useUnseenUpdates';
+import { useChangelog } from '../hooks/useChangelog';
 import {
-  CHANGELOG,
   ROADMAP,
   UPDATE_CATEGORY_META,
   ROADMAP_STATUS_META,
@@ -126,15 +126,21 @@ const Updates: React.FC = () => {
     markAllSeen();
   }, [markAllSeen]);
 
+  // The changelog content is loaded lazily (its own chunk), so it's null on the
+  // first paint and arrives shortly after.
+  const changelog = useChangelog();
+  const isLoading = changelog === null;
+  const entries = changelog ?? [];
+
   // Lazy-load the changelog: render an initial batch, reveal more as the reader
   // approaches the end of the list.
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
-  const hasMore = visibleCount < CHANGELOG.length;
-  const visibleEntries = CHANGELOG.slice(0, visibleCount);
+  const hasMore = visibleCount < entries.length;
+  const visibleEntries = entries.slice(0, visibleCount);
 
   const loadMore = useCallback(() => {
-    setVisibleCount((count) => Math.min(count + LOAD_BATCH, CHANGELOG.length));
-  }, []);
+    setVisibleCount((count) => Math.min(count + LOAD_BATCH, entries.length));
+  }, [entries.length]);
 
   // Auto-reveal the next batch when the sentinel scrolls into view. Guarded so it
   // degrades to the "Show more" button where IntersectionObserver is unavailable
@@ -172,11 +178,20 @@ const Updates: React.FC = () => {
         <Heading level="title" as="h2" id="updates-recent" className="mb-4">
           Recent updates
         </Heading>
-        <div className="space-y-3">
-          {visibleEntries.map((entry) => (
-            <ChangelogCard key={entry.id} entry={entry} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div
+            className="bg-surface-card border border-line rounded-none p-4 text-sm text-muted"
+            role="status"
+          >
+            Loading updates…
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {visibleEntries.map((entry) => (
+              <ChangelogCard key={entry.id} entry={entry} />
+            ))}
+          </div>
+        )}
         {hasMore && (
           <>
             {/* Scroll sentinel: crossing into view reveals the next batch. */}

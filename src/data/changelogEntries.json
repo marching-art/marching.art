@@ -1,5 +1,72 @@
 [
   {
+    "id": "2026-08-23-live-running-order",
+    "date": "2026-08-23",
+    "title": "See the full running order — and who's on the field right now",
+    "category": "feature",
+    "summary": "Show schedules now lay out the complete running order for every event, built from the real registered field, and a live layer highlights the corps performing right now. Attendee rosters, a Fantasy/Podium view, and finals encores come along too.",
+    "highlights": [
+      "Every show lists its running order, not just a start time.",
+      "A live indicator marks the corps currently taking the field.",
+      "Attendee rosters now appear on all shows, not only director-hosted ones.",
+      "Switch between the Fantasy and Podium fields; finals can close with an encore."
+    ]
+  },
+  {
+    "id": "2026-08-23-podium-lineup-chooser",
+    "date": "2026-08-23",
+    "title": "The Podium “Lineup” button now opens a real chooser",
+    "category": "fix",
+    "summary": "Clicking “Lineup” on a Podium corps used to do nothing. It now opens a chooser to rehearse or switch your lineup, and it sits centered properly on desktop."
+  },
+  {
+    "id": "2026-08-23-account-deletion-cleanup",
+    "date": "2026-08-23",
+    "title": "Deleting your account now cleans up fully",
+    "category": "improvement",
+    "summary": "When you delete your account, your director is anonymized, the corps names you had reserved are freed for others to use, and you are removed from any upcoming show registrations — no lingering traces left behind."
+  },
+  {
+    "id": "2026-08-23-fantasy-recap-location",
+    "date": "2026-08-23",
+    "title": "Fantasy recap ledger shows the show's location",
+    "category": "fix",
+    "summary": "The fantasy season recap ledger now lists where each show actually took place, instead of mistakenly showing your corps' home city."
+  },
+  {
+    "id": "2026-08-22-showtime-weather",
+    "date": "2026-08-22",
+    "title": "Real show-time weather on schedules and in articles",
+    "category": "feature",
+    "summary": "Schedule cards now carry the actual forecast for each show's day and time, refreshed the evening before so it's accurate, and generated recaps set the scene with the real conditions on the field.",
+    "highlights": [
+      "Each schedule card shows the day-of forecast for that show.",
+      "A late-day refresh keeps conditions current before showtime.",
+      "Recap articles open with the real weather at the venue."
+    ]
+  },
+  {
+    "id": "2026-08-22-season-xp-pacing",
+    "date": "2026-08-22",
+    "title": "Season XP now paces across the whole season",
+    "category": "balance",
+    "summary": "The season progression ladder was retuned so leveling stretches across the full season instead of topping out in the early weeks, keeping later-season play rewarding."
+  },
+  {
+    "id": "2026-08-22-corps-history-mobile",
+    "date": "2026-08-22",
+    "title": "Corps History reads well on mobile",
+    "category": "fix",
+    "summary": "The Corps History view is now mobile-friendly, and a bug that could list duplicate seasons in a corps' history was fixed."
+  },
+  {
+    "id": "2026-08-22-daily-login-timezone",
+    "date": "2026-08-22",
+    "title": "Daily login credited on time everywhere",
+    "category": "fix",
+    "summary": "Players outside UTC no longer have their daily login counted late, so streaks and daily rewards register on the right day no matter your time zone."
+  },
+  {
     "id": "2026-08-21-podium-full-director-parity",
     "date": "2026-08-21",
     "title": "Podium directors get achievements, titles, and a season recap",

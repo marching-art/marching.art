@@ -14,7 +14,8 @@
 // tab without prop-drilling or a context provider.
 
 import { useCallback, useSyncExternalStore } from 'react';
-import { countUnseenUpdates, latestUpdateId } from '../data/changelog';
+import { countUnseenUpdates, latestUpdateId, loadChangelog } from '../data/changelog';
+import { useChangelog, getLoadedChangelog } from './useChangelog';
 
 const STORAGE_KEY = 'ma:lastSeenUpdateId';
 
@@ -69,10 +70,24 @@ function getServerSnapshot(): string | null {
 }
 
 /** Persist that the director has seen every update up to the latest, and notify
- *  every live badge in the tab. Exported for direct use where a hook can't run. */
+ *  every live badge in the tab. Exported for direct use where a hook can't run.
+ *  The changelog loads lazily, so if it isn't in memory yet we wait for it before
+ *  writing the watermark — otherwise we'd have no "latest id" to record. */
 export function markUpdatesSeen(): void {
-  writeWatermark(latestUpdateId());
-  emitChange();
+  const loaded = getLoadedChangelog();
+  if (loaded) {
+    writeWatermark(latestUpdateId(loaded));
+    emitChange();
+    return;
+  }
+  loadChangelog()
+    .then((entries) => {
+      writeWatermark(latestUpdateId(entries));
+      emitChange();
+    })
+    .catch(() => {
+      /* Best effort: if the log can't load, the badge simply won't clear. */
+    });
 }
 
 export interface UnseenUpdates {
@@ -85,7 +100,10 @@ export interface UnseenUpdates {
 
 export function useUnseenUpdates(): UnseenUpdates {
   const lastSeenId = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const unseenCount = countUnseenUpdates(lastSeenId);
+  const entries = useChangelog();
+  // Until the changelog chunk resolves we have nothing to count against, so the
+  // badge stays hidden (count 0) rather than guessing.
+  const unseenCount = entries ? countUnseenUpdates(lastSeenId, entries) : 0;
 
   const markAllSeen = useCallback(() => {
     markUpdatesSeen();

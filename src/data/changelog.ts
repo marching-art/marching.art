@@ -17,14 +17,19 @@
 // not the commit. Keep summaries to a sentence or two; use `highlights` for the
 // specifics.
 //
-// The CHANGELOG lives in changelogEntries.json (not inline here) so the merge
-// automation can prepend a new entry to a plain data file without rewriting a
-// TypeScript module. On each merged PR, .github/workflows/changelog.yml runs
-// scripts/changelog/generateChangelogEntry.mjs, which decides whether the
-// change is player-facing and, if so, writes an entry to that JSON. The ROADMAP
-// below stays hand-authored.
-
-import changelogEntriesRaw from './changelogEntries.json';
+// The CHANGELOG lives in changelogEntries.json (not inline here) so a new entry
+// is a one-line-per-field edit to a plain data file, not a rewrite of a
+// TypeScript module. Entries are written by hand in the same PR that ships the
+// change — newest first, at the top of the array — whenever the change is
+// something a director would notice. See CLAUDE.md ("Player-facing changelog")
+// for when and how to add one. The ROADMAP below is likewise hand-authored.
+//
+// The entries are loaded via a dynamic import (loadChangelog) rather than a
+// static one on purpose: the full log would otherwise be bundled into the main
+// app chunk, because the unseen-updates badge (in the header on every page)
+// depends on this module. Dynamic-importing keeps the changelog content out of
+// the initial bundle — it's fetched lazily, off the critical path, and only the
+// /updates page ever renders it. The ROADMAP is small and stays inline.
 
 export type UpdateCategory = 'feature' | 'improvement' | 'fix' | 'balance';
 
@@ -89,10 +94,23 @@ export const ROADMAP_STATUS_META: Record<RoadmapStatus, { label: string; textCla
 };
 
 // -----------------------------------------------------------------------------
-// CHANGELOG — newest first. Add new entries at the TOP.
+// CHANGELOG — newest first. Add new entries at the TOP of changelogEntries.json.
 // -----------------------------------------------------------------------------
 
-export const CHANGELOG: ChangelogEntry[] = changelogEntriesRaw as ChangelogEntry[];
+/** Cached across calls so the changelog chunk is fetched and parsed at most once
+ *  per session, no matter how many consumers ask for it. */
+let changelogPromise: Promise<ChangelogEntry[]> | null = null;
+
+/** Lazily load the changelog entries. The dynamic import puts them in their own
+ *  chunk, keeping the (potentially long) log out of the main bundle. */
+export function loadChangelog(): Promise<ChangelogEntry[]> {
+  if (!changelogPromise) {
+    changelogPromise = import('./changelogEntries.json').then(
+      (module) => module.default as ChangelogEntry[]
+    );
+  }
+  return changelogPromise;
+}
 
 // -----------------------------------------------------------------------------
 // ROADMAP — what's coming. Honest, not a promise of dates. Ordered by nearness.
@@ -113,7 +131,7 @@ export const ROADMAP: RoadmapItem[] = [
 // -----------------------------------------------------------------------------
 
 /** The id of the most recent update, or null when the log is empty. */
-export function latestUpdateId(entries: ChangelogEntry[] = CHANGELOG): string | null {
+export function latestUpdateId(entries: ChangelogEntry[]): string | null {
   return entries.length > 0 ? entries[0].id : null;
 }
 
@@ -124,10 +142,7 @@ export function latestUpdateId(entries: ChangelogEntry[] = CHANGELOG): string | 
  * scrolled off, or ids changed — is treated as "never seen" rather than
  * silently showing zero.
  */
-export function countUnseenUpdates(
-  lastSeenId: string | null,
-  entries: ChangelogEntry[] = CHANGELOG
-): number {
+export function countUnseenUpdates(lastSeenId: string | null, entries: ChangelogEntry[]): number {
   if (!lastSeenId) return entries.length;
   const index = entries.findIndex((e) => e.id === lastSeenId);
   return index === -1 ? entries.length : index;
