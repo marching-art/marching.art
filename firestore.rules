@@ -127,7 +127,12 @@ function corpsClassUntouched(corpsClass) {
                // image to a CSP-allowlisted host and enforce size/crop, and
                // setCorpsAvatarFromUrl also checks the custom-avatar ban — a
                // direct client write would bypass all of that.
-               'avatarUrl', 'avatarSource']);
+               'avatarUrl', 'avatarSource',
+               // The equipped Uniform Studio snapshot is written only by the
+               // equipUniformDesign callable, which validates the design's
+               // shape/size server-side; a direct client write could plant an
+               // oversized or malformed payload on the world-readable profile.
+               'uniform']);
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
@@ -165,7 +170,12 @@ function touchesProtectedCorpsFields() {
      // avatarUrl is set only by the avatar callables (see the competitive-class
      // guard above); soundSport gets the same server-only treatment.
      request.resource.data.get(['corps', 'soundSport', 'avatarUrl'], null)
-       != resource.data.get(['corps', 'soundSport', 'avatarUrl'], null));
+       != resource.data.get(['corps', 'soundSport', 'avatarUrl'], null) ||
+     // The equipped Uniform Studio snapshot is written only by the
+     // equipUniformDesign callable (see the competitive-class guard above);
+     // soundSport gets the same server-only treatment.
+     request.resource.data.get(['corps', 'soundSport', 'uniform'], null)
+       != resource.data.get(['corps', 'soundSport', 'uniform'], null));
 }
 
 // SIZE/TYPE CAPS on owner-writable free-text profile fields. profile/data is

@@ -29,6 +29,10 @@ const paths = {
   userSeasonDetails: (uid) => `artifacts/${ns()}/users/${uid}/seasonDetail`,
   userSeasonDetail: (uid, detailId) => `artifacts/${ns()}/users/${uid}/seasonDetail/${detailId}`,
   userCorpsCoinHistory: (uid) => `artifacts/${ns()}/users/${uid}/corpsCoinHistory`,
+  // Uniform Studio wardrobe: saved v2 designs, owner-read via the rules
+  // catch-all, written only by the wardrobe callables.
+  userWardrobe: (uid) => `artifacts/${ns()}/users/${uid}/wardrobe`,
+  userWardrobeDesign: (uid, designId) => `artifacts/${ns()}/users/${uid}/wardrobe/${designId}`,
   userNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications`,
   userLeagueNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications/leagues`,
   userEmailLog: (uid) => `artifacts/${ns()}/users/${uid}/email_log`,
