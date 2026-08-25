@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-08-25-system-show-running-order",
+    "date": "2026-08-25",
+    "title": "System shows get their running order too",
+    "category": "fix",
+    "summary": "Every show now lays out its timed running order once corps register — not just director-hosted ones. Some system-scheduled shows were only showing the attendee list because the schedule treated them as taking place on their original historical date; they now carry their in-game date, so the full performance schedule appears like it does everywhere else."
+  },
+  {
     "id": "2026-08-24-press-release-moderation",
     "date": "2026-08-24",
     "title": "Press releases have their own path to instant publishing",

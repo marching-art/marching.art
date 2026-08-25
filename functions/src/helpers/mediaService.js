@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * MediaService - Cloudinary Image Upload & Optimization
  *
@@ -82,9 +81,9 @@ function initializeCloudinary() {
 /**
  * Upload image to Firebase Storage (fallback when Cloudinary is not configured)
  * @param {string} base64Data - Base64 encoded image data (with or without data URL prefix)
- * @param {Object} options - Upload options
- * @param {string} options.folder - Storage folder path
- * @param {string} options.publicId - Custom file name (optional)
+ * @param {Object} [options] - Upload options
+ * @param {string} [options.folder] - Storage folder path
+ * @param {string} [options.publicId] - Custom file name (optional)
  * @returns {Promise<Object>} Upload result with public URL
  */
 async function uploadToFirebaseStorage(base64Data, options = {}) {
