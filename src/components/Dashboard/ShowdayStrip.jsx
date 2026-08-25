@@ -336,12 +336,15 @@ const ShowdayStrip = ({
         </div>
       )}
 
-      {/* You're the encore — cosmetic pride moment (fantasy field). */}
+      {/* You're the encore — cosmetic pride moment. Each division's shows carry
+          their own side's encore (the podium projection maps podiumEncore in). */}
       {myEncore && isShowday && (
         <div className="px-4 py-2 border-t border-line bg-brand/10 flex items-center gap-1.5 text-xs">
           <Star className="w-3.5 h-3.5 text-brand fill-brand flex-shrink-0" />
           <span className="text-white truncate">
-            <span className="font-bold text-brand">You're the encore</span>
+            <span className="font-bold text-brand">
+              {division === 'podium' ? "You're the Podium encore" : "You're the encore"}
+            </span>
             <span className="text-secondary">
               {' '}
               {myEncore.encore.reason === 'host' ? '— your home field.' : '— hometown crowd.'}

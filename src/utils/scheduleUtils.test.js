@@ -138,6 +138,18 @@ describe('transformCompetitionToShow — fantasy schedule preference', () => {
     expect(transformCompetitionToShow(heritage).encore).toBe(null);
   });
 
+  it('exposes the podium encore corps independently of the fantasy one', () => {
+    const podiumEncore = {
+      uid: 'p1',
+      corpsClass: 'podiumClass',
+      corps: 'Podium Corps',
+      reason: 'proximity',
+    };
+    const show = transformCompetitionToShow({ ...heritage, podiumEncore });
+    expect(show.podiumEncore).toBe(podiumEncore);
+    expect(transformCompetitionToShow(heritage).podiumEncore).toBe(null);
+  });
+
   it('carries the backend-produced show-time weather through to the card', () => {
     const weather = { summary: 'clear skies, 61°F', tempF: 61, code: 0, hour: 20 };
     const show = transformCompetitionToShow({ ...heritage, weather });

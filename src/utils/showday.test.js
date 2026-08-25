@@ -217,6 +217,20 @@ describe('projectPodiumShow / joinPodiumShows', () => {
     expect(show.encore).toBeNull();
   });
 
+  it("projects the podium field's own encore, never the fantasy one", () => {
+    const show = projectPodiumShow({
+      ...podiumComp,
+      encore: { uid: 'fantasy-director', corps: 'Fantasy Corps', reason: 'proximity' },
+      podiumEncore: { uid: 'me', corps: 'Founders Corps', reason: 'host' },
+    });
+    expect(show.encore?.uid).toBe('me');
+    expect(findMyEncore([show], 'me')?.encore.corps).toBe('Founders Corps');
+    // Without a podium encore the fantasy encore must NOT leak through.
+    expect(
+      projectPodiumShow({ ...podiumComp, encore: { uid: 'x', corps: 'X' } }).encore
+    ).toBeNull();
+  });
+
   it('never presents the fantasy field as a podium running order', () => {
     const show = projectPodiumShow({ ...podiumComp, podiumSchedule: null });
     expect(show.lineup).toBeNull();

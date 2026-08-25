@@ -47,6 +47,8 @@ import { CAPTION_LABELS, normalizeCorpsName } from './pickHighlights';
  * @property {string|Date} [date]
  * @property {string|null} [timezone]
  * @property {LineupEntry[]|null} [lineup]
+ * @property {{uid?: string, corps?: string, reason?: string}|null} [encore]
+ * @property {{uid?: string, corps?: string, reason?: string}|null} [podiumEncore]
  * @property {FieldSchedule|null} [fantasySchedule]
  * @property {FieldSchedule|null} [podiumSchedule]
  */
@@ -68,6 +70,7 @@ import { CAPTION_LABELS, normalizeCorpsName } from './pickHighlights';
  * @property {LineupEntry[]|null} [lineup]
  * @property {Array<{uid?: string|null, corps?: string}>|null} [overflow]
  * @property {{uid?: string, corps?: string, reason?: string}|null} [encore]
+ * @property {{uid?: string, corps?: string, reason?: string}|null} [podiumEncore]
  * @property {{summary?: string, tempF?: number}|null} [weather]
  * @property {FieldSchedule|null} [fantasySchedule]
  * @property {FieldSchedule|null} [podiumSchedule]
@@ -142,8 +145,9 @@ export function projectPodiumShow(comp) {
     scoresAt: ps?.scoresAt ?? base.scoresAt,
     gatesAt: ps?.gatesAt ?? base.gatesAt,
     timezone: ps?.timezone ?? base.timezone,
-    // Encore is a fantasy-field concept.
-    encore: null,
+    // The podium field decides its own encore (competition.podiumEncore),
+    // projected into the common slot so encore readers see the right side's.
+    encore: base.podiumEncore ?? null,
   };
 }
 
@@ -317,8 +321,9 @@ export function buildPicksSpotlight(competitions, lineup, now = new Date()) {
 }
 
 /**
- * Is the director's corps this show's encore? Cosmetic pride moment; fantasy
- * field only.
+ * Is the director's corps this show's encore? Cosmetic pride moment. Reads
+ * the joined shows' projected encore slot, so each division sees its own
+ * side's encore (projectPodiumShow maps podiumEncore into it).
  * @param {ShowLike[]} shows - Joined shows.
  * @param {string|null|undefined} myUid
  * @returns {{show: ShowLike, encore: {uid?: string, corps?: string, reason?: string}}|null}

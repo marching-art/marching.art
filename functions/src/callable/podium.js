@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium Class callables (Phase 2, PODIUM.md).
  *
