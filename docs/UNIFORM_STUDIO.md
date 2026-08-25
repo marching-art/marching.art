@@ -245,6 +245,14 @@ are for.
   metal) that every piece defaults its channels to — set it once and the whole
   figure re-colors; override any channel locally. "Apply palette to all" is the
   Destiny whole-set button.
+- **Everything cross-compatible.** Any piece combines with any piece across
+  both lines — Streamline's streamer trousers under a Classic Cadet braided
+  jacket under a White Regiment pith helmet is a legal outfit, and applying
+  the corps colorway re-skins all of it in one tap. Item-family silos (the
+  Halo Infinite "armor core" mistake, reversed after two years of backlash)
+  are banned by design; presets are saved configurations, never locked sets.
+  The prototype renders exactly this mashup pair (raw source colors vs. one
+  applied colorway).
 - **Hue is always free** (full picker + the ~110-name curated library with
   real silk-color names). **Finishes are collectible**: matte (free), satin,
   metallic, sequin, lamé, iridescent, mylar (plume). Finish ≠ hue, so identity

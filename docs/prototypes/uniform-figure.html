@@ -33,6 +33,7 @@
 <body>
   <div class="row" id="row-classic"></div>
   <div class="row" id="row-modern"></div>
+  <div class="row" id="row-mix"></div>
   <div id="anat"></div>
   <script>
     "use strict";
@@ -1105,6 +1106,36 @@
         legR: { color: "#122236" },
         shoe: "#101013",
       },
+      mashupClash: {
+        label: "Mashup — source colors", era: "mix",
+        skin: "#c9a074",
+        jacket: "#6d1a26", collar: "#6d1a26", collarTrim: "#d9a41c",
+        chest: "braid", braid: "#efe9dc", metal: "#d9a41c",
+        epaulet: "#d9a41c",
+        gauntlet: "#f2ede2", glove: "#f5f2ea",
+        belt: "#d9a41c", buckle: "#cfd4da",
+        legL: { color: "#101014" },
+        legR: { color: "#101014" },
+        streamers: ["#2b3fbf", "#5fd0e8"],
+        shoe: "#101014",
+        hatType: "pith", hat: { body: "#f7f5f0", band: "#17171a" },
+        plume: { type: "fountain", color: "#1b1b1e" },
+      },
+      mashupUnified: {
+        label: "Same pieces, one colorway", era: "mix",
+        skin: "#8a5a3b",
+        jacket: "#1d2f66", collar: "#1d2f66", collarTrim: "#cfd4da",
+        chest: "braid", braid: "#dfe6f2", metal: "#cfd4da",
+        epaulet: "#cfd4da",
+        gauntlet: "#dfe6f2", glove: "#eef2f8",
+        belt: "#cfd4da", buckle: "#8fa3c7",
+        legL: { color: "#0e1630" },
+        legR: { color: "#0e1630" },
+        streamers: ["#2b3fbf", "#9fd8e8"],
+        shoe: "#0e1630",
+        hatType: "pith", hat: { body: "#1d2f66", band: "#cfd4da" },
+        plume: { type: "fountain", color: "#dfe6f2" },
+      },
       patentRiot: {
         label: "Patent Riot",
         era: "modern",
@@ -1130,6 +1161,7 @@
     const rows = {
       classic: document.getElementById("row-classic"),
       modern: document.getElementById("row-modern"),
+      mix: document.getElementById("row-mix"),
     };
     for (const key of Object.keys(COLORWAYS)) {
       const cw = COLORWAYS[key];
