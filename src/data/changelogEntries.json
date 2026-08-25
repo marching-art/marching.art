@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-25-showday-strip",
+    "date": "2026-08-25",
+    "title": "Your show day now leads the dashboard",
+    "category": "improvement",
+    "summary": "The dashboard opens with your own show day — which event your corps is at, where, when the show starts, and when you take the field, with a live ticker while the show runs. Works for both the Fantasy and Podium divisions; the full running order lives one tap away on the Schedule page.",
+    "highlights": [
+      "Show days lead with your event, its location, showtime, and your corps' own field time — including an on-field-now countdown while the show is live.",
+      "Off days show your next scheduled show instead, and if nothing's booked, a shortcut to pick shows on the schedule.",
+      "Podium directors get the same strip, built from the Podium field's own running order and show times.",
+      "The full running-order list no longer takes up the bottom of the dashboard — tap through to the Schedule page to see the whole field."
+    ]
+  },
+  {
     "id": "2026-08-25-system-show-running-order",
     "date": "2026-08-25",
     "title": "System shows get their running order too",
