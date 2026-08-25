@@ -205,11 +205,17 @@ advanced pattern tier.
 \* gradient/pattern treatments ship in the "sublimation tier" (§8.2).
 
 **Asset budget:** every option is 1–4 SVG path groups keyed to one shared
-figure geometry — roughly **180–230 hand-authored path groups at launch**.
+figure geometry — roughly **250–350 hand-authored path groups at launch**.
 That is the number that actually constrains scope (the critique's gap #3), and
-it is achievable because the renderer is a flat, stylized poster figure in the
-app's existing aesthetic (see §10.4), not illustration-grade art. Each _new_
-option after launch is a marginal 1–4 paths — content drops stay cheap forever.
+it is achievable because the renderer is an **albedo + overlay** architecture:
+garment parts carry only flat colorway-driven fills, while shading, highlights,
+and fabric depth come from a shared set of colorway-independent overlay shapes
+(black/white paths at low opacity), and finish effects (sequin fields, satin
+sheen, metallic glints) are procedural. A working prototype of this exact
+renderer — five fully-dressed colorways plus an annotated anatomy figure —
+was built for the proposal's artifact page and validates the budget. Each
+_new_ option after launch is a marginal 1–4 paths — content drops stay cheap
+forever.
 
 ### 4.2 The honest math
 
@@ -492,12 +498,20 @@ rebuilt in the Studio — refine it" banner plus a changelog entry announce it.
 
 ### 10.4 Art pipeline (critique gap #3)
 
-One shared figure geometry (front-facing at-attention pose, flat poster
-styling consistent with the app's austere aesthetic). Parts are authored as
-path groups against that geometry — in a vector tool or directly as path data
-(the flat style makes this tractable; TourPoster proves the codebase norm) —
-with a Studio-internal dev harness page to preview all parts. Launch budget
-~180–230 path groups (§4.1); every later drop is marginal. No new pose work
+One shared figure geometry (front-facing at-attention pose), rendered
+illustration-grade rather than flat: layered albedo garment parts whose fills
+come from colorway channels, a shared colorway-independent shading/highlight
+overlay set (sculpted head, garment side-shade, inseam shadows, crease
+highlights), and procedural finish effects (deterministic sequin fields, satin
+sheen bands, metallic button/buckle glints). Symmetric limbs are authored once
+and mirrored. Parts are authored as path data against the shared geometry —
+in a vector tool or directly (TourPoster proves the codebase norm) — with a
+Studio-internal dev harness page to preview all parts; the proposal artifact's
+hero figures are a working prototype of this exact pipeline (source preserved
+at [`docs/prototypes/uniform-figure.html`](prototypes/uniform-figure.html) —
+open it in a browser to see the five colorways and the annotated anatomy
+figure). Launch budget
+~250–350 path groups (§4.1); every later drop is marginal. No new pose work
 until the guard silhouette (phase 4).
 
 ### 10.5 AI imagery (critique gap #2)

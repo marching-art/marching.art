@@ -1,0 +1,746 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>figure dev</title>
+<style>
+  body {
+    background: #0a0a0a;
+    margin: 0;
+    padding: 40px;
+    font-family: monospace;
+    color: #888;
+  }
+  .row {
+    display: flex;
+    gap: 48px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .cell {
+    text-align: center;
+  }
+  .cell .l {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 12px;
+    color: #777;
+  }
+  svg {
+    display: block;
+  }
+</style>
+<body>
+  <div class="row" id="row"></div>
+  <script>
+    "use strict";
+    /* ============ shared figure geometry, layered parts, colorway channels ============ */
+
+    const NS = (s) => s; // path string passthrough for readability
+
+    // ---------- low-level helpers ----------
+    function P(d, fill, extra = "") {
+      return `<path d="${d}" fill="${fill}" ${extra}/>`;
+    }
+    function shade(d, o) {
+      return `<path d="${d}" fill="#000" opacity="${o}"/>`;
+    }
+    function light(d, o) {
+      return `<path d="${d}" fill="#fff" opacity="${o}"/>`;
+    }
+    function stroke(d, col, w, extra = "") {
+      return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
+    }
+    function mirror(inner) {
+      return `<g transform="translate(240,0) scale(-1,1)">${inner}</g>`;
+    }
+    function sequins(cx, cy, w, h, seed, n, col = "#fff") {
+      // deterministic sparkle field inside an axis-aligned box
+      let s = seed,
+        out = "";
+      const rnd = () => {
+        s = (s * 9301 + 49297) % 233280;
+        return s / 233280;
+      };
+      for (let i = 0; i < n; i++) {
+        const x = cx - w / 2 + rnd() * w,
+          y = cy - h / 2 + rnd() * h;
+        const r = 0.5 + rnd() * 0.9,
+          o = 0.25 + rnd() * 0.55;
+        out += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}" opacity="${o.toFixed(2)}"/>`;
+      }
+      return out;
+    }
+    function darken(hex, f) {
+      // f in 0..1
+      const n = parseInt(hex.slice(1), 16);
+      const r = Math.round(((n >> 16) & 255) * (1 - f)),
+        g = Math.round(((n >> 8) & 255) * (1 - f)),
+        b = Math.round((n & 255) * (1 - f));
+      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+    }
+    function lighten(hex, f) {
+      const n = parseInt(hex.slice(1), 16);
+      const r = Math.round(((n >> 16) & 255) + (255 - ((n >> 16) & 255)) * f),
+        g = Math.round(((n >> 8) & 255) + (255 - ((n >> 8) & 255)) * f),
+        b = Math.round((n & 255) + (255 - (n & 255)) * f);
+      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+    }
+
+    // ---------- body parts (left-side definitions; right via mirror) ----------
+
+    function ground() {
+      return `<ellipse cx="120" cy="466" rx="54" ry="8" fill="#000" opacity="0.4"/>`;
+    }
+
+    function headNeck(cw) {
+      const s = cw.skin;
+      let g = "";
+      // neck
+      g += P("M110,74 L110,96 Q120,103 130,96 L130,74 Z", s);
+      g += shade("M110,76 Q120,86 130,76 L130,74 L110,74 Z", 0.22); // chin shadow on neck
+      // head — oval, tapered jaw
+      g += P(
+        "M103,46 Q103,26 120,26 Q137,26 137,46 Q137,62 130,72 Q125,78 120,78 Q115,78 110,72 Q103,62 103,46 Z",
+        s,
+      );
+      // ears
+      g += P("M101,50 Q97,52 99,58 Q101,62 104,60 Z", s);
+      g += P("M139,50 Q143,52 141,58 Q139,62 136,60 Z", s);
+      // sculpt: right-side shade, left cheek light
+      g += shade(
+        "M128,29 Q136,38 135,52 Q134,64 128,71 Q132,58 131,44 Q130,34 128,29 Z",
+        0.12,
+      );
+      g += light("M107,40 Q106,52 111,62 Q107,50 109,40 Z", 0.1);
+      return g;
+    }
+
+    function hair(cw) {
+      const c = cw.hair || "#2b2119";
+      return (
+        P(
+          "M103,44 Q102,26 120,25 Q138,26 137,44 Q136,38 132,34 Q126,30 120,30 Q114,30 108,34 Q104,38 103,44 Z",
+          c,
+        ) + shade("M124,27 Q134,30 136,42 Q133,33 124,29 Z", 0.25)
+      );
+    }
+
+    function legs(cw) {
+      const p = cw.pants,
+        st = cw.stripe;
+      let g = "";
+      // left leg (outer edge x~86-97, inner to crotch at 120,272)
+      const leg =
+        "M90,254 L85,308 Q83,360 91,438 L114,438 Q112,384 113,336 Q113,306 116,284 Q119,276 120,272 L120,254 Z";
+      g += P(leg, p);
+      g += mirror(P(leg, p));
+      // crotch shadow wedge
+      g += shade(
+        "M115,270 Q120,264 125,270 Q122,284 120,296 Q118,284 115,270 Z",
+        0.12,
+      );
+      // under-jacket shadow band across hips
+      g += shade("M88,254 L152,254 L151,268 Q120,274 89,268 Z", 0.2);
+      // inseam shadows
+      g += shade("M113,300 Q112,370 113,436 L108,436 Q108,370 110,300 Z", 0.12);
+      g += mirror(
+        shade("M113,300 Q112,370 113,436 L108,436 Q108,370 110,300 Z", 0.12),
+      );
+      // front crease highlight
+      g += light("M100,290 Q98,360 100,432 L103,432 Q101,360 103,290 Z", 0.07);
+      g += mirror(
+        light("M100,290 Q98,360 100,432 L103,432 Q101,360 103,290 Z", 0.07),
+      );
+      // outer-seam stripe
+      if (st) {
+        const sp =
+          "M90,258 L86,308 Q84,360 92,436 L98,436 Q90,360 92,308 L96,258 Z";
+        g += P(sp, st);
+        g += mirror(P(sp, st));
+      }
+      return g;
+    }
+
+    function swashLeg(cw) {
+      // modern swash continues down the left leg
+      if (cw.chest !== "swash") return "";
+      const c = cw.swash;
+      let g = P("M89,256 Q86,320 93,436 L104,436 Q95,330 100,256 Z", c);
+      g += sequins(96, 340, 12, 170, 7, 26);
+      return g;
+    }
+
+    function shoes(cw) {
+      const c = cw.shoe;
+      let g = "";
+      const shoe = "M89,436 Q85,452 91,457 L114,457 Q117,450 114,436 Z";
+      g += P(shoe, c);
+      g += mirror(P(shoe, c));
+      g += shade(
+        "M89,452 Q100,457 114,455 L114,457 L91,457 Q87,455 89,452 Z",
+        0.4,
+      );
+      g += mirror(
+        shade(
+          "M89,452 Q100,457 114,455 L114,457 L91,457 Q87,455 89,452 Z",
+          0.4,
+        ),
+      );
+      g += light("M92,438 L112,438 L112,441 L92,441 Z", 0.1);
+      if (cw.spats) {
+        const sp = "M91,436 Q88,448 93,452 L112,452 Q114,446 112,436 Z";
+        g += P(sp, "#f2efe6");
+        g += mirror(P(sp, "#f2efe6"));
+        g += `<circle cx="96" cy="443" r="1.2" fill="#999"/><circle cx="96" cy="448" r="1.2" fill="#999"/>`;
+        g += mirror(
+          `<circle cx="96" cy="443" r="1.2" fill="#999"/><circle cx="96" cy="448" r="1.2" fill="#999"/>`,
+        );
+      }
+      return g;
+    }
+
+    function torso(cw) {
+      const j = cw.jacket;
+      let g = "";
+      g += P(
+        "M78,104 Q120,93 162,104 L158,150 Q153,200 153,248 L155,260 Q120,269 85,260 L87,248 Q87,200 82,150 Z",
+        j,
+      );
+      // global light: left highlight, right shade
+      g += shade(
+        "M140,99 Q149,180 148,260 L155,260 L153,248 Q153,175 158,116 L162,104 Q152,100 140,99 Z",
+        0.16,
+      );
+      g += light("M87,107 Q85,170 90,250 L95,252 Q90,176 95,111 Z", 0.09);
+      // under-collar shadow
+      g += shade("M104,96 Q120,106 136,96 Q120,112 104,96 Z", 0.18);
+      return g;
+    }
+
+    function satinSheen() {
+      return (
+        light("M92,124 Q124,110 152,138 Q124,128 94,142 Z", 0.1) +
+        light("M90,176 Q122,162 150,190 Q122,180 92,196 Z", 0.06) +
+        light("M96,116 Q95,180 98,244 L102,244 Q99,180 101,118 Z", 0.05)
+      );
+    }
+
+    function collar(cw) {
+      if (!cw.collar) return "";
+      return (
+        P(
+          "M106,92 L106,105 Q120,111 134,105 L134,92 Q120,99 106,92 Z",
+          cw.collar,
+        ) +
+        shade(
+          "M106,92 L106,96 Q120,103 134,96 L134,92 Q120,99 106,92 Z",
+          0.25,
+        ) +
+        (cw.collarTrim
+          ? stroke("M106,105 Q120,111 134,105", cw.collarTrim, 1.6)
+          : "")
+      );
+    }
+
+    function crewNeck(cw) {
+      return stroke("M107,97 Q120,108 133,97", darken(cw.jacket, 0.25), 3);
+    }
+
+    function arms(cw) {
+      const sl = cw.sleeve || cw.jacket;
+      let g = "";
+      const arm =
+        "M78,103 Q66,111 62,134 Q57,165 59,197 Q60,223 63,242 L82,244 Q79,214 79,186 Q79,148 88,118 Q85,107 78,103 Z";
+      const one =
+        P(arm, sl) +
+        shade("M79,150 Q78,200 81,242 L82,244 L76,243 Q74,200 75,152 Z", 0.13) + // inner shadow
+        light("M66,116 Q60,140 59,170 L62,170 Q63,140 69,118 Z", 0.08); // top-outer light
+      g += one + mirror(one);
+      return g;
+    }
+
+    function epaulets(cw) {
+      if (!cw.epaulet) return "";
+      const c = cw.epaulet,
+        m = cw.metal;
+      const ep =
+        P("M68,101 Q80,93 93,99 L91,111 Q79,105 71,111 Z", c) +
+        stroke(
+          "M70,110 L69,120 M75,111 L74,121 M80,112 L79,122 M85,112 L84,121",
+          c,
+          2,
+        ) +
+        `<circle cx="82" cy="101" r="2.6" fill="${m}"/><circle cx="81.2" cy="100.2" r="0.9" fill="#fff" opacity=".8"/>`;
+      return ep + mirror(ep);
+    }
+
+    function gauntlets(cw) {
+      if (!cw.gauntlet) return "";
+      const c = cw.gauntlet;
+      const ga =
+        P("M61,212 L81,214 L84,248 Q70,255 56,247 Z", c) +
+        stroke("M61,214 L81,216", darken(c, 0.35), 2.2) +
+        shade("M76,215 L84,248 L78,251 L72,216 Z", 0.15) +
+        (cw.gauntletSequin ? sequins(70, 232, 22, 30, 3, 16) : "");
+      return ga + mirror(ga);
+    }
+
+    function hands(cw) {
+      const c = cw.glove || cw.skin;
+      const hand =
+        P(
+          "M63,246 Q60,260 66,267 Q74,271 79,264 Q83,256 82,246 Q72,251 63,246 Z",
+          c,
+        ) + shade("M76,248 Q79,258 75,265 Q80,259 80,248 Z", 0.15);
+      return hand + mirror(hand);
+    }
+
+    function belt(cw) {
+      if (!cw.belt) return "";
+      let g = P("M87,244 L153,244 L155,260 Q120,269 85,260 Z", cw.belt);
+      g += shade("M87,244 L153,244 L153.5,249 L86.7,249 Z", 0.18);
+      if (cw.buckle) {
+        g +=
+          `<rect x="112" y="247" width="16" height="13" fill="${cw.buckle}"/>` +
+          `<rect x="115" y="250" width="10" height="7" fill="${darken(cw.buckle, 0.5)}"/>` +
+          `<rect x="112" y="247" width="16" height="2.5" fill="#fff" opacity=".35"/>`;
+      }
+      return g;
+    }
+
+    // ---------- chest treatments ----------
+    function chest(cw) {
+      const m = cw.metal;
+      switch (cw.chest) {
+        case "braid": {
+          // Cadets-style horizontal braid rows + center buttons
+          let g = "";
+          for (let i = 0; i < 5; i++) {
+            const y = 126 + i * 17,
+              half = 21 + i * 1.2;
+            g += stroke(
+              `M${120 - half},${y} Q120,${y + 4} ${120 + half},${y}`,
+              cw.braid,
+              2.4,
+            );
+            g +=
+              `<circle cx="${120 - half}" cy="${y}" r="2.4" fill="${cw.braid}"/>` +
+              `<circle cx="${120 + half}" cy="${y}" r="2.4" fill="${cw.braid}"/>` +
+              `<circle cx="120" cy="${y + 3.4}" r="2.7" fill="${m}"/>` +
+              `<circle cx="119.2" cy="${y + 2.6}" r="0.9" fill="#fff" opacity=".85"/>`;
+          }
+          return g;
+        }
+        case "sash": {
+          // diagonal sash L-shoulder -> R-hip
+          let g = P("M82,110 L102,102 L154,230 L136,242 Z", cw.sash);
+          g += light("M88,110 L96,107 L146,232 L140,236 Z", 0.16);
+          g += shade("M146,222 L154,230 L136,242 L131,232 Z", 0.18);
+          // fringe at hip end
+          g += stroke(
+            "M138,242 L136,254 M143,239 L142,252 M148,236 L148,249 M152,232 L154,245",
+            cw.sash,
+            2,
+          );
+          if (cw.sashSequin) g += sequins(118, 172, 26, 120, 11, 30);
+          return g;
+        }
+        case "baldric": {
+          // R-shoulder -> L-hip, wide, sequined
+          let g = P("M134,101 L158,109 L102,252 L82,242 Z", cw.baldric);
+          g += light("M138,103 L146,106 L92,246 L86,243 Z", 0.1);
+          if (cw.baldricSequin) g += sequins(120, 175, 30, 130, 5, 42);
+          g += `<circle cx="144" cy="106" r="3.4" fill="${m}"/><circle cx="143" cy="105" r="1.1" fill="#fff" opacity=".8"/>`;
+          return g;
+        }
+        case "plastron": {
+          // contrast chest panel with button edges
+          let g = P(
+            "M100,103 Q120,96 140,103 L147,180 Q120,190 93,180 Z",
+            cw.panel,
+          );
+          g += stroke("M100,103 L93,180 M140,103 L147,180", cw.panelTrim, 2);
+          for (let i = 0; i < 4; i++) {
+            const y = 114 + i * 19;
+            g += `<circle cx="${101 - i * 1.4}" cy="${y}" r="2.4" fill="${m}"/><circle cx="${139 + i * 1.4}" cy="${y}" r="2.4" fill="${m}"/>`;
+          }
+          return g;
+        }
+        case "buttons": {
+          // plain double-breasted columns
+          let g = "";
+          for (let i = 0; i < 5; i++) {
+            const y = 122 + i * 24;
+            g +=
+              `<circle cx="108" cy="${y}" r="3" fill="${m}"/><circle cx="107" cy="${y - 1}" r="1" fill="#fff" opacity=".8"/>` +
+              `<circle cx="132" cy="${y}" r="3" fill="${m}"/><circle cx="131" cy="${y - 1}" r="1" fill="#fff" opacity=".8"/>`;
+          }
+          return g;
+        }
+        case "swash": {
+          // asymmetric modern sweep, R-shoulder across to L-hip
+          let g = P(
+            "M148,98 Q118,148 98,198 Q90,226 90,256 L110,256 Q106,220 120,180 Q136,140 160,108 L158,100 Z",
+            cw.swash,
+          );
+          g += light(
+            "M150,102 Q126,140 112,180 L108,180 Q124,138 147,100 Z",
+            0.18,
+          );
+          g += sequins(120, 180, 40, 140, 9, 40);
+          return g;
+        }
+        default:
+          return "";
+      }
+    }
+
+    function neckerchief(cw) {
+      if (!cw.scarf) return "";
+      return (
+        P("M104,96 Q120,104 136,96 L124,122 Q120,126 116,122 Z", cw.scarf) +
+        shade("M116,120 Q120,125 124,120 L121,113 L119,113 Z", 0.25) +
+        `<rect x="116.5" y="108" width="7" height="6" rx="1" fill="${darken(cw.scarf, 0.3)}"/>`
+      );
+    }
+
+    // ---------- headwear ----------
+    function shako(cw) {
+      const h = cw.hat;
+      if (!h) return "";
+      const body = h.body,
+        band = h.band,
+        m = cw.metal;
+      let g = "";
+      // body flares upward
+      g += P("M99,58 L95,8 Q120,2 145,8 L141,58 Q120,65 99,58 Z", body);
+      g += shade(
+        "M132,6 Q140,7 145,8 L141,58 Q133,61 128,62 Q132,36 132,6 Z",
+        0.16,
+      );
+      g += light("M99,10 Q102,10 106,9 Q104,34 104,58 Q100,57 99,56 Z", 0.09);
+      // top cap
+      g += P("M95,8 Q120,2 145,8 Q120,13 95,8 Z", lighten(body, 0.12));
+      // bands
+      if (band) {
+        g += P("M95.6,8 Q120,3 144.4,8 L143.9,16 Q120,11 96.1,16 Z", band);
+        g += P("M99.4,52 Q120,59 140.6,52 L141,58 Q120,65 99,58 Z", band);
+      }
+      // hat plate: starburst + ring
+      g += `<g>`;
+      for (let a = 0; a < 8; a++) {
+        const th = (a * Math.PI) / 4,
+          x1 = 120 + Math.cos(th) * 6,
+          y1 = 34 + Math.sin(th) * 6,
+          x2 = 120 + Math.cos(th) * 11,
+          y2 = 34 + Math.sin(th) * 11;
+        g += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${m}" stroke-width="2.2"/>`;
+      }
+      g += `<circle cx="120" cy="34" r="6.5" fill="${m}"/><circle cx="120" cy="34" r="3.4" fill="${darken(m, 0.55)}"/><circle cx="118" cy="32" r="1.2" fill="#fff" opacity=".9"/></g>`;
+      // visor
+      g += P("M98,56 Q120,80 142,56 L142,61 Q120,86 98,61 Z", "#0d0d0f");
+      g += light("M100,58 Q120,78 140,58 Q120,74 100,58 Z", 0.12);
+      return g;
+    }
+
+    function pith(cw) {
+      const h = cw.hat;
+      if (!h) return "";
+      let g = "";
+      g += P("M97,52 Q96,16 120,14 Q144,16 143,52 Z", h.body);
+      g += shade("M130,17 Q141,24 142,50 L134,52 Q135,30 130,17 Z", 0.12);
+      g += light("M102,24 Q99,36 99,50 L104,51 Q104,32 107,22 Z", 0.1);
+      g += `<ellipse cx="120" cy="53" rx="31" ry="7.5" fill="${lighten(h.body, 0.06)}"/>`;
+      g += shade("M89,53 A31,7.5 0 0 0 151,53 A31,7.5 0 0 1 89,53 Z", 0.18);
+      if (h.band)
+        g += P("M98,44 Q120,52 142,44 L142,51 Q120,58 98,51 Z", h.band);
+      g += `<circle cx="120" cy="34" r="3.4" fill="${cw.metal}"/>`;
+      return g;
+    }
+
+    function campaign(cw) {
+      const h = cw.hat;
+      if (!h) return "";
+      let g = "";
+      g += `<ellipse cx="120" cy="39" rx="36" ry="8.5" fill="${h.body}"/>`;
+      g += shade("M120,39 m-36,0 a36,8.5 0 0 0 72,0 a36,8.5 0 0 1 -72,0 Z", 0.2);
+      g += P("M101,38 Q101,10 120,8 Q139,10 139,38 Z", lighten(h.body, 0.05));
+      g += stroke(
+        "M112,12 Q112,26 113,36 M128,12 Q128,26 127,36",
+        darken(h.body, 0.25),
+        2,
+      ); // montana dents
+      g += shade("M130,12 Q138,20 138,37 L132,38 Q133,22 130,12 Z", 0.12);
+      if (h.band)
+        g += P("M101,32 Q120,40 139,32 L139,38 Q120,46 101,38 Z", h.band);
+      return g;
+    }
+
+    function plume(cw) {
+      const p = cw.plume;
+      if (!p) return "";
+      if (p.type === "upright") {
+        let g = P(
+          "M113,12 Q107,-34 118,-64 Q121,-70 124,-64 Q133,-32 127,12 Q120,16 113,12 Z",
+          p.color,
+        );
+        // feather strokes
+        g += stroke(
+          "M117,8 Q114,-30 119,-58",
+          lighten(p.color, 0.35),
+          1.1,
+          `opacity=".7"`,
+        );
+        g += stroke(
+          "M122,8 Q121,-34 121,-60",
+          lighten(p.color, 0.35),
+          1.1,
+          `opacity=".55"`,
+        );
+        g += stroke(
+          "M125,6 Q127,-26 123,-56",
+          darken(p.color, 0.25),
+          1.1,
+          `opacity=".5"`,
+        );
+        g += shade("M124,-60 Q130,-30 126,10 L121,12 Q128,-28 122,-62 Z", 0.12);
+        if (p.mylar) g += sequins(120, -26, 12, 72, 13, 18);
+        return g;
+      }
+      if (p.type === "fountain") {
+        let g = "";
+        const arcs = [
+          "M120,4 C114,-26 102,-26 94,-4",
+          "M120,3 C116,-32 106,-34 100,-14",
+          "M120,1 C118,-38 111,-40 108,-22",
+          "M120,0 C120,-42 119,-42 117,-28",
+          "M120,0 C121,-42 122,-42 124,-28",
+          "M120,1 C123,-38 129,-40 133,-22",
+          "M120,3 C125,-32 134,-34 141,-14",
+          "M120,4 C127,-26 138,-26 147,-4",
+        ];
+        arcs.push("M120,2 C117,-30 113,-32 112,-20", "M120,2 C123,-30 127,-32 128,-20");
+        for (const a of arcs) {
+          g += stroke(a, p.color, 3.8);
+          g += stroke(a, lighten(p.color, 0.28), 1.2, `opacity=".45"`);
+        }
+        g += `<circle cx="120" cy="6" r="4.5" fill="${cw.metal}"/>`;
+        return g;
+      }
+      if (p.type === "side") {
+        // ostrich side feather for campaign/aussie
+        let g = stroke("M138,40 Q152,18 146,0", p.color, 4);
+        g += stroke(
+          "M138,40 Q152,18 146,0",
+          lighten(p.color, 0.3),
+          1.4,
+          `opacity=".6"`,
+        );
+        return g;
+      }
+      return "";
+    }
+
+    // ---------- assembly ----------
+    function figureLayers(cw) {
+      let L = "";
+      L += ground();
+      L += legs(cw);
+      L += swashLeg(cw);
+      L += shoes(cw);
+      L += torso(cw);
+      if (cw.satin) L += satinSheen();
+      L += chest(cw);
+      L += belt(cw);
+      L += arms(cw);
+      L += epaulets(cw);
+      L += gauntlets(cw);
+      L += hands(cw);
+      L += headNeck(cw);
+      if (cw.hairShow) L += hair(cw);
+      L += neckerchief(cw);
+      L += collar(cw);
+      if (cw.crew) L += crewNeck(cw);
+      if (cw.plume && cw.plume.behind !== false) L += plume(cw);
+      if (cw.hatType === "shako") L += shako(cw);
+      if (cw.hatType === "pith") L += pith(cw);
+      if (cw.hatType === "campaign") L += campaign(cw);
+      return L;
+    }
+    function renderFigure(cw, opts = {}) {
+      const w = opts.w || 190;
+      return `<svg viewBox="0 -84 240 560" width="${w}" role="img" aria-label="${opts.label || "corps figure"}" xmlns="http://www.w3.org/2000/svg">${figureLayers(cw)}</svg>`;
+    }
+
+    // ---------- anatomy callout diagram ----------
+    function renderCallout(cw) {
+      const L = [
+        ["FRENCH UPRIGHT PLUME", 24, 56, 116, -38],
+        ["HAT PLATE", 24, 130, 112, 34],
+        ["STANDING COLLAR", 24, 200, 107, 99],
+        ["BRAID ROWS", 24, 244, 99, 146],
+        ["CUMMERBUND", 24, 352, 96, 252],
+        ["LEG STRIPE", 24, 430, 90, 330],
+        ["SPATS", 24, 544, 94, 444],
+      ];
+      const R = [
+        ["SHAKO", 536, 126, 142, 32],
+        ["EPAULET + FRINGE", 536, 202, 161, 106],
+        ["TAILORED JACKET", 536, 268, 156, 172],
+        ["GAUNTLET", 536, 330, 179, 232],
+        ["GLOVE", 536, 362, 174, 260],
+        ["BIBBERS", 536, 446, 146, 350],
+      ];
+      const OX = 160, OY = 96; // figure offset inside the diagram
+      let g = `<g transform="translate(${OX},${OY})">${figureLayers(cw)}</g>`;
+      const line = (x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#3d3d3d" stroke-width="1"/>`;
+      const dot = (x,y)=>`<circle cx="${x}" cy="${y}" r="2.6" fill="none" stroke="#60a5fa" stroke-width="1.4"/>`;
+      let ann = "";
+      for (const [t, tx, ty, px, py] of L) {
+        const ax = px + OX, ay = py + OY;
+        ann += line(tx + 2, ty + 5, 150, ty + 5) + line(150, ty + 5, ax - 6, ay) + dot(ax, ay)
+          + `<text x="${tx}" y="${ty}" fill="#9a9a94" font-size="10.5" letter-spacing="1.6" font-family="JetBrains Mono, monospace">${t}</text>`;
+      }
+      for (const [t, tx, ty, px, py] of R) {
+        const ax = px + OX, ay = py + OY;
+        ann += line(tx - 2, ty + 5, 428, ty + 5) + line(428, ty + 5, ax + 6, ay) + dot(ax, ay)
+          + `<text x="${tx}" y="${ty}" fill="#9a9a94" font-size="10.5" letter-spacing="1.6" font-family="JetBrains Mono, monospace" text-anchor="end">${t}</text>`;
+      }
+      return `<svg viewBox="0 0 560 580" width="560" role="img" aria-label="Uniform component anatomy on the Classic Cadet colorway" xmlns="http://www.w3.org/2000/svg">${g}${ann}</svg>`;
+    }
+
+    // ---------- colorways ----------
+    const COLORWAYS = {
+      classicCadet: {
+        label: "Classic Cadet",
+        skin: "#c9a074",
+        hairShow: false,
+        jacket: "#6d1a26",
+        collar: "#6d1a26",
+        collarTrim: "#d9a41c",
+        chest: "braid",
+        braid: "#efe9dc",
+        metal: "#d9a41c",
+        epaulet: "#d9a41c",
+        sleeve: "#6d1a26",
+        gauntlet: "#f2ede2",
+        glove: "#f5f2ea",
+        belt: "#d9a41c",
+        buckle: "#cfd4da",
+        pants: "#ece2cc",
+        stripe: "#6d1a26",
+        shoe: "#141414",
+        spats: true,
+        hatType: "shako",
+        hat: { body: "#17171a", band: "#6d1a26" },
+        plume: { type: "upright", color: "#f4f1ea" },
+      },
+      whiteRegiment: {
+        label: "White Regiment",
+        skin: "#8a5a3b",
+        hairShow: false,
+        jacket: "#f4f2ec",
+        collar: "#f4f2ec",
+        collarTrim: "#17171a",
+        chest: "baldric",
+        baldric: "#17171a",
+        baldricSequin: true,
+        metal: "#cfd4da",
+        epaulet: null,
+        gauntlet: "#17171a",
+        gauntletSequin: true,
+        glove: "#141416",
+        belt: "#f4f2ec",
+        buckle: "#cfd4da",
+        pants: "#f4f2ec",
+        stripe: null,
+        shoe: "#f7f5f0",
+        spats: false,
+        hatType: "pith",
+        hat: { body: "#f7f5f0", band: "#17171a" },
+        plume: { type: "fountain", color: "#1b1b1e" },
+      },
+      greenSatin: {
+        label: "Green Satin",
+        skin: "#e0b48e",
+        hairShow: false,
+        jacket: "#2e8148",
+        satin: true,
+        collar: "#161618",
+        collarTrim: null,
+        chest: "none",
+        metal: "#d7dde2",
+        epaulet: null,
+        gauntlet: null,
+        glove: "#f5f2ea",
+        belt: "#161618",
+        buckle: "#d7dde2",
+        pants: "#17181a",
+        stripe: null,
+        shoe: "#141414",
+        spats: false,
+        hatType: "shako",
+        hat: { body: "#161618", band: "#e8e6e0" },
+        plume: { type: "upright", color: "#eef0ee" },
+      },
+      cavalry: {
+        label: "Cavalry",
+        skin: "#b98a5e",
+        hairShow: false,
+        jacket: "#c9b287",
+        collar: "#c9b287",
+        collarTrim: "#22355c",
+        scarf: "#e3b23c",
+        chest: "buttons",
+        metal: "#b9893a",
+        epaulet: "#22355c",
+        gauntlet: "#5a3f26",
+        glove: "#d9c6a4",
+        belt: "#4a3421",
+        buckle: "#b9893a",
+        pants: "#22355c",
+        stripe: "#e3b23c",
+        shoe: "#33261a",
+        spats: false,
+        hatType: "campaign",
+        hat: { body: "#8d7247", band: "#4a3421", strap: "#4a3421" },
+        plume: null,
+      },
+      modernSwash: {
+        label: "Modern Swash",
+        skin: "#96674a",
+        hairShow: true,
+        hair: "#241b13",
+        jacket: "#f0f2f5",
+        collar: null,
+        crew: true,
+        chest: "swash",
+        swash: "#2f6fd0",
+        metal: "#cfd4da",
+        epaulet: null,
+        gauntlet: null,
+        glove: null,
+        belt: null,
+        pants: "#101c33",
+        stripe: null,
+        shoe: "#f0f2f5",
+        spats: false,
+        hatType: null,
+        hat: null,
+        plume: null,
+      },
+    };
+
+    document.body.insertAdjacentHTML("beforeend", '<div style="margin-top:60px">' + renderCallout(COLORWAYS.classicCadet) + "</div>");
+    const row = document.getElementById("row");
+    for (const key of Object.keys(COLORWAYS)) {
+      const cw = COLORWAYS[key];
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.innerHTML =
+        renderFigure(cw, { w: 190, label: cw.label }) +
+        `<div class="l">${cw.label}</div>`;
+      row.appendChild(cell);
+    }
+  </script>
+</body>
