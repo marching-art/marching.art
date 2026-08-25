@@ -18,6 +18,12 @@ export interface NamedColor {
   hex: string;
 }
 
+/** Hardware metals rendered for the colorway's metal channel. */
+export const METAL_HEX: Record<'gold' | 'silver', string> = {
+  gold: '#d9a41c',
+  silver: '#cfd4da',
+};
+
 export const NAMED_COLORS: NamedColor[] = [
   { name: 'Maroon', hex: '#6d1a26' },
   { name: 'Crimson', hex: '#b3121c' },

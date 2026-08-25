@@ -13,7 +13,7 @@ import type {
   UniformColorway,
   UniformDesignV2,
 } from '../types/uniform';
-import { COLOR_NAME_TO_HEX, UNIFORM_PRESETS } from '../data/uniformCatalog';
+import { COLOR_NAME_TO_HEX, METAL_HEX, UNIFORM_PRESETS } from '../data/uniformCatalog';
 import { FIGURE_INK } from '../data/uniformRenderTheme';
 
 // =============================================================================
@@ -85,11 +85,6 @@ export function normalizeFigure(raw: FigureConfig): NormalizedFigure {
 // =============================================================================
 // COLORWAY APPLY
 // =============================================================================
-
-const METAL_HEX: Record<UniformColorway['metal'], string> = {
-  gold: '#d9a41c',
-  silver: '#cfd4da',
-};
 
 /**
  * Re-skin a figure from the corps colorway in one deterministic pass:

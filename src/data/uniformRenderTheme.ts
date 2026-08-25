@@ -14,6 +14,8 @@ export const FIGURE_INK = {
   white: '#ffffff',
   /** Patent visor + dark hardware strokes. */
   visor: '#0d0d0f',
+  /** Default hair color when a bare-headed figure doesn't pick one. */
+  defaultHair: '#2b2119',
   /** Fallback fill when a design carries an invalid color value. */
   fallback: '#888888',
   /** Spats + their button dots. */

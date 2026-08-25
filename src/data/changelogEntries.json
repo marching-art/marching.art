@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-08-25-uniform-studio",
+    "date": "2026-08-25",
+    "title": "The Uniform Studio: design your corps' identity, live",
+    "category": "feature",
+    "summary": "Uniform design is no longer a text form — the new Uniform Studio draws your corps as you build it. Pick real drum-corps pieces from shakos and plumes to streamers and sublimated prints, recolor any part, save a wardrobe of looks, and equip the one that is your corps. Your profile now shows every ensemble in its equipped uniform.",
+    "highlights": [
+      "A live figure updates instantly with every choice — no waiting on AI generation.",
+      "Real vocabulary from both eras: cadet jackets, braid rows, baldrics, gauntlets and spats beside bodysuit prints, glow piping, tattered hems, and per-side asymmetric looks.",
+      "Eleven starting presets across a Heritage line and a Show line — load one, then swap or recolor anything; every piece combines with every piece.",
+      "Save up to 24 designs in your wardrobe and equip any of them per corps; equipped uniforms appear on your profile's new Corps Identity section.",
+      "The press-box toggle previews your design at field distance — does it read from the stands?",
+      "Saving a design no longer regenerates your avatar or changes your profile picture; the AI avatar is now its own optional button."
+    ]
+  },
+  {
     "id": "2026-08-24-press-release-moderation",
     "date": "2026-08-24",
     "title": "Press releases have their own path to instant publishing",

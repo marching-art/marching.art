@@ -31,6 +31,7 @@ import {
 } from '../api/uniformStudio';
 import { generateCorpsAvatar } from '../api/articleAdmin';
 import { useSEO } from '../hooks/useSEO';
+import Heading from '../components/ui/Heading';
 
 interface CorpsOption {
   classKey: string;
@@ -209,7 +210,9 @@ export default function Studio() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <Shirt className="w-8 h-8 mx-auto text-muted mb-3" />
-        <h1 className="text-lg font-bold text-white mb-2">Uniform Studio</h1>
+        <Heading level="title" as="h1" className="mb-2">
+          Uniform Studio
+        </Heading>
         <p className="text-sm text-muted">
           Register a corps from the dashboard first — then come back to design its identity.
         </p>

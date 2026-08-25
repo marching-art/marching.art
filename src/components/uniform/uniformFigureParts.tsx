@@ -248,7 +248,7 @@ export function headNeck(cw: NormalizedFigure): Node[] {
 }
 
 export function hair(cw: NormalizedFigure): Node[] {
-  const c = safeHex(cw.hair || '#2b2119');
+  const c = safeHex(cw.hair || FIGURE_INK.defaultHair);
   return [
     p(
       'hr',
