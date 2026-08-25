@@ -252,7 +252,9 @@ export const rejectSubmission = createCallable<RejectSubmissionData, RejectSubmi
 // =============================================================================
 
 export interface GenerateAvatarData {
-  corpsClass: 'soundSport' | 'aClass' | 'open' | 'world';
+  // Canonical class keys ('worldClass'/'openClass') are what the callable
+  // validates against; legacy short keys are tolerated server-side.
+  corpsClass: string;
 }
 
 export interface GenerateAvatarResult {

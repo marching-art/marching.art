@@ -274,3 +274,44 @@ export function designWithinLimits(design: UniformDesignV2): boolean {
     return false;
   }
 }
+
+// =============================================================================
+// DERIVED FIGURE FLAGS
+// =============================================================================
+
+function usesRef(figure: FigureConfig, ref: string): boolean {
+  const n = normalizeFigure(figure);
+  const fills = [
+    figure.torsoFill,
+    typeof figure.mockNeck === 'string' ? figure.mockNeck : null,
+    n.armL.fill,
+    n.armR.fill,
+    n.legL.fill,
+    n.legR.fill,
+  ];
+  return fills.some((f) => f === ref);
+}
+
+/**
+ * Recompute def-defining figure flags (which procedural print is defined,
+ * plaid/foil defs, the glow filter, hair visibility) from actual channel
+ * usage, so a stored design never carries stale defs.
+ */
+export function withDerivedFlags(figure: FigureConfig): FigureConfig {
+  const n = normalizeFigure(figure);
+  const print = usesRef(figure, 'url:sun')
+    ? ('sunburst' as const)
+    : usesRef(figure, 'url:opart')
+      ? ('opart' as const)
+      : usesRef(figure, 'url:pinstripe')
+        ? ('pinstripe' as const)
+        : null;
+  return {
+    ...figure,
+    print,
+    plaid: usesRef(figure, 'url:plaid'),
+    foilLeg: usesRef(figure, 'url:foil'),
+    glow: Boolean(figure.glowArt || n.armL.glowLine || n.armR.glowLine),
+    hairShow: !figure.hatType,
+  };
+}

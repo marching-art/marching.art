@@ -71,6 +71,11 @@ export interface CorpsData {
   // Uniform Design (director-customizable, preserved across seasons)
   uniformDesign?: CorpsUniformDesign;
 
+  // Uniform Studio v2: the equipped structured design snapshot, written only
+  // by the equipUniformDesign callable (server-only per firestore.rules).
+  // Renderable by UniformFigure on any surface without an extra read.
+  uniform?: import('./uniform').EquippedUniform;
+
   // Corps Avatar (AI-generated based on uniform design, preserved across seasons)
   avatarUrl?: string;
   avatarGeneratedAt?: string; // ISO timestamp of when avatar was generated
