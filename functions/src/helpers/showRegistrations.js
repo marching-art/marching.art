@@ -117,10 +117,16 @@ function buildEventDocs(pairs) {
  * along so the running-order builder can slot the podium field by recent form
  * without a second read; it's null until the corps has been scored.
  *
+ * `homeGeo` (the corps' official home coordinates, from its structured `state.home`
+ * gazetteer record) rides along too, so the Podium side can assign its own
+ * closest-to-venue encore without a second read — the same proximity plumbing the
+ * fantasy field uses. Null when the state predates the structured home.
+ *
  * @param {Array<{uid: string, state: Object}>} entries roster uid + state data
  * @param {{day: number, eventName: string, activeSeasonId: string}} params
  * @returns {Array<{uid: string|null, corpsName: string, corpsClass: string,
- *   username: null, lastTotal: number|null}>}
+ *   username: null, lastTotal: number|null,
+ *   homeGeo: {lat:number, lng:number, venueId?:string}|null}>}
  */
 function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId }) {
   const out = [];
@@ -129,12 +135,18 @@ function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId })
     const picks = state.selectedShows || {};
     const pick = picks[day] || picks[String(day)] || null;
     if (!pick || pick.eventName !== eventName) continue;
+    const home = state.home || null;
+    const homeGeo =
+      home && Number.isFinite(home.lat) && Number.isFinite(home.lng)
+        ? { lat: home.lat, lng: home.lng, venueId: home.venueId || null }
+        : null;
     out.push({
       uid: uid || null,
       corpsName: state.corpsName || "Podium Corps",
       corpsClass: "podiumClass",
       username: null,
       lastTotal: Number.isFinite(state.lastTotal) ? state.lastTotal : null,
+      homeGeo,
     });
   }
   return out;

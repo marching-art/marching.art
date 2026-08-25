@@ -56,7 +56,10 @@ export function transformCompetitionToShow(competition) {
     overflow: fs?.overflow ?? null,
     fieldSize: fs?.fieldSize ?? null,
     // The cosmetic encore corps for this show ({ uid, corpsClass, corps, reason }).
+    // Each side carries its own: `encore` is the fantasy field's, `podiumEncore`
+    // the podium field's (DualRunningOrder swaps it in on the Podium tab).
     encore: competition.encore || null,
+    podiumEncore: competition.podiumEncore || null,
     // Legacy show sponsorship ("Presented by <corps>") — the purchase was
     // retired in favor of hosted events; old schedule docs still render it.
     sponsor: competition.sponsor || null,

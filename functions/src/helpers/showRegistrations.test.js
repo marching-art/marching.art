@@ -169,8 +169,26 @@ describe("collectPodiumRegistrations", () => {
         corpsClass: "podiumClass",
         username: null,
         lastTotal: 87.5,
+        homeGeo: null, // no structured home on this corps → unresolved
       },
     ]);
+  });
+
+  test("carries homeGeo from the corps' structured home for the encore", () => {
+    const entries = [
+      {
+        uid: "druski",
+        state: {
+          seasonUid: SEASON,
+          corpsName: "Altitude Podium",
+          lastTotal: 87.5,
+          home: { venueId: "denver-co", city: "Denver", region: "CO", lat: 39.74, lng: -104.99 },
+          selectedShows: { 15: { eventName: "marching.art Mile High" } },
+        },
+      },
+    ];
+    const [pod] = collectPodiumRegistrations(entries, params);
+    assert.deepEqual(pod.homeGeo, { lat: 39.74, lng: -104.99, venueId: "denver-co" });
   });
 
   test("lastTotal defaults to null before the corps has been scored", () => {

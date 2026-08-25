@@ -41,7 +41,7 @@ const DualRunningOrder = ({ show, myUid, highlights, compact = false }) => {
           scoresAt: podium.scoresAt,
           gatesAt: podium.gatesAt,
           timezone: podium.timezone,
-          encore: null, // encore is a fantasy-field concept
+          encore: show.podiumEncore || null, // the podium field's own encore
         }
       : show;
 

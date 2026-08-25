@@ -150,7 +150,10 @@ const NextPerformancePanel = ({
   const myEncore = useMemo(() => {
     if (!myUid) return null;
     for (const show of joinedShows) {
-      if (show.encore && show.encore.uid === myUid) return { show, encore: show.encore };
+      if (show.encore && show.encore.uid === myUid)
+        return { show, encore: show.encore, side: 'fantasy' };
+      if (show.podiumEncore && show.podiumEncore.uid === myUid)
+        return { show, encore: show.podiumEncore, side: 'podium' };
     }
     return null;
   }, [joinedShows, myUid]);
@@ -251,7 +254,8 @@ const NextPerformancePanel = ({
             </span>
           </div>
           <div className="text-sm text-white">
-            <span className="font-bold">{myEncore.encore.corps}</span> performs the encore at{' '}
+            <span className="font-bold">{myEncore.encore.corps}</span> performs the{' '}
+            {myEncore.side === 'podium' ? 'Podium encore' : 'encore'} at{' '}
             {formatEventName(myEncore.show.eventName)}
             {myEncore.encore.reason === 'host' ? ' — your home field.' : ' — hometown crowd.'}
           </div>
