@@ -1,4 +1,3 @@
-// @ts-nocheck -- presentational wrapper; see RunningOrder for the typed contract
 import React, { useState } from 'react';
 import { Users } from 'lucide-react';
 import RunningOrder from './RunningOrder';
@@ -13,10 +12,12 @@ import RunningOrder from './RunningOrder';
  * highlighted (by uid) in either view.
  *
  * @param {Object} props
- * @param {Object} props.show - transformed show ({ lineup, overflow, ...,
- *   podiumSchedule }). `lineup`/`overflow`/times reflect the fantasy schedule.
+ * @param {import('../../utils/showday').ShowLike} props.show - transformed show
+ *   ({ lineup, overflow, ..., podiumSchedule }). `lineup`/`overflow`/times
+ *   reflect the fantasy schedule.
  * @param {string} [props.myUid]
- * @param {Map} [props.highlights] - caption-pick highlights (fantasy view only).
+ * @param {Map<string, {tier: string, corps: string, captions: string[], sourceYear: any}>} [props.highlights]
+ *   Caption-pick highlights from buildShowHighlights (fantasy view only).
  * @param {boolean} [props.compact]
  */
 const DualRunningOrder = ({ show, myUid, highlights, compact = false }) => {
@@ -35,12 +36,12 @@ const DualRunningOrder = ({ show, myUid, highlights, compact = false }) => {
     active === 'podium'
       ? {
           ...show,
-          lineup: podium.lineup,
-          overflow: podium.overflow,
-          startsAt: podium.startsAt,
-          scoresAt: podium.scoresAt,
-          gatesAt: podium.gatesAt,
-          timezone: podium.timezone,
+          lineup: podium?.lineup ?? null,
+          overflow: podium?.overflow ?? null,
+          startsAt: podium?.startsAt ?? null,
+          scoresAt: podium?.scoresAt ?? null,
+          gatesAt: podium?.gatesAt ?? null,
+          timezone: podium?.timezone ?? null,
           encore: null, // encore is a fantasy-field concept
         }
       : show;
@@ -56,8 +57,8 @@ const DualRunningOrder = ({ show, myUid, highlights, compact = false }) => {
           aria-label="Running order"
         >
           {[
-            { id: 'fantasy', label: 'Fantasy', count: show.lineup.length },
-            { id: 'podium', label: 'Podium', count: podium.lineup.length },
+            { id: 'fantasy', label: 'Fantasy', count: show.lineup?.length ?? 0 },
+            { id: 'podium', label: 'Podium', count: podium?.lineup?.length ?? 0 },
           ].map((t) => (
             <button
               key={t.id}

@@ -69,6 +69,8 @@ import { CAPTION_LABELS, normalizeCorpsName } from './pickHighlights';
  * @property {Array<{uid?: string|null, corps?: string}>|null} [overflow]
  * @property {{uid?: string, corps?: string, reason?: string}|null} [encore]
  * @property {{summary?: string, tempF?: number}|null} [weather]
+ * @property {FieldSchedule|null} [fantasySchedule]
+ * @property {FieldSchedule|null} [podiumSchedule]
  */
 
 /**
