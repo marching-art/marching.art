@@ -231,9 +231,17 @@ async function enrichOffSeasonSchedule(db, schedule, { startDate, pool, dataDocI
         if (ok) counts.regular += 1;
         else counts.unmatched += 1;
       }
-      // Align the show's date with its rebased running order (display-only;
-      // scoring matches shows by name, not date).
-      if (ok) show.date = offSeasonDate.toISOString();
+      // Rebase the show's date onto the off-season calendar so it reads as a
+      // CURRENT in-game date, not the (years-past) DCI date it was replayed from.
+      // Unconditional for regular shows — even an unmatched one must carry the
+      // in-game date: otherwise the running-order producer's isUpcoming gate
+      // (scheduled/scheduleRunningOrder.js) sees a long-past date and never
+      // builds the registered field's timed running order, so system shows show
+      // only their attendee roster while director-hosted shows (dateless, so
+      // dated from season-start + day) get the full timed schedule. Championship
+      // shows keep their null date (auto-enrolled; the producer skips them).
+      // Display-only — scoring matches shows by name, not date.
+      if (ok || !show.isChampionship) show.date = offSeasonDate.toISOString();
     }
   }
 

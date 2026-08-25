@@ -121,7 +121,7 @@ describe("buildChampionshipLineup", () => {
 });
 
 describe("enrichOffSeasonSchedule — orchestration dry run", () => {
-  test("enriches matched regular shows and leaves unmatched ones bare", async () => {
+  test("enriches matched shows and rebases every regular show onto the in-game date", async () => {
     const docs = {
       "historical_schedules/2015": {
         data: [{
@@ -152,8 +152,12 @@ describe("enrichOffSeasonSchedule — orchestration dry run", () => {
     assert.equal(matched.date, "2026-06-26T00:00:00.000Z"); // day 12 = start + 11
 
     const bare = schedule[1].shows[0];
-    assert.equal(bare.lineup, undefined); // no heritage -> left as-is
-    assert.equal(bare.date, "2015-07-05T00:00:00Z");
+    assert.equal(bare.lineup, undefined); // no heritage match -> no heritage running order
+    // ...but its date is STILL rebased onto the in-game calendar (day 13 = start
+    // + 12 days). Otherwise the running-order producer sees a years-past DCI date
+    // and skips the show, so the registered field never gets a timed order — the
+    // "system shows show only attendees" bug this fixes.
+    assert.equal(bare.date, "2026-06-27T00:00:00.000Z");
   });
 });
 
