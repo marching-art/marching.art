@@ -203,6 +203,92 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     assert.equal(a.fantasySchedule.fieldSize, 3);
   });
 
+  test("assigns the podium encore to the closest-home podium corps", async () => {
+    const db = fakeDb(seedWith());
+    // Show A is in Allentown, PA. Give two podium corps homes: one next door
+    // (Bethlehem, PA) and one far (Akron, OH). Nearest wins the podium encore.
+    const podiumEntries = [
+      {
+        uid: "p1",
+        state: {
+          seasonUid: "s1",
+          corpsName: "Near Podium",
+          lastTotal: 80,
+          home: { venueId: "bethlehem-pa", lat: 40.63, lng: -75.37 },
+          selectedShows: { 18: { eventName: "Show A" } },
+        },
+      },
+      {
+        uid: "p2",
+        state: {
+          seasonUid: "s1",
+          corpsName: "Far Podium",
+          lastTotal: 90,
+          home: { venueId: "akron-oh", lat: 41.08, lng: -81.52 },
+          selectedShows: { 18: { eventName: "Show A" } },
+        },
+      },
+    ];
+    await enrichScheduleRunningOrdersLogic(db, {
+      now: NOW,
+      podiumEnabled: true,
+      loadPodiumEntries: async () => podiumEntries,
+    });
+    const a = db.store.get("schedules/s1").competitions.find((c) => c.id === "a");
+    assert.ok(a.podiumEncore, "Show A has a podium encore");
+    assert.equal(a.podiumEncore.corps, "Near Podium");
+    assert.equal(a.podiumEncore.reason, "proximity");
+    assert.equal(a.podiumEncore.corpsClass, "podiumClass");
+    // Independent of the fantasy encore (the fantasy field carries no homes here).
+    assert.ok(!a.encore);
+  });
+
+  test("podium encore honors the host default at a hosted show", async () => {
+    const seed = seedWith([
+      {
+        id: "phost",
+        name: "Podium Host Show",
+        day: 20,
+        week: 3,
+        location: "Allentown, PA",
+        date: "2026-06-20",
+        eventTier: "hosted",
+        hostUid: "p2", // the farther-home corps hosts
+      },
+    ]);
+    const db = fakeDb(seed);
+    const podiumEntries = [
+      {
+        uid: "p1",
+        state: {
+          seasonUid: "s1",
+          corpsName: "Near Podium",
+          lastTotal: 80,
+          home: { venueId: "bethlehem-pa", lat: 40.63, lng: -75.37 },
+          selectedShows: { 20: { eventName: "Podium Host Show" } },
+        },
+      },
+      {
+        uid: "p2",
+        state: {
+          seasonUid: "s1",
+          corpsName: "Host Podium",
+          lastTotal: 90,
+          home: { venueId: "akron-oh", lat: 41.08, lng: -81.52 },
+          selectedShows: { 20: { eventName: "Podium Host Show" } },
+        },
+      },
+    ];
+    await enrichScheduleRunningOrdersLogic(db, {
+      now: NOW,
+      podiumEnabled: true,
+      loadPodiumEntries: async () => podiumEntries,
+    });
+    const hosted = db.store.get("schedules/s1").competitions.find((c) => c.id === "phost");
+    assert.equal(hosted.podiumEncore.corps, "Host Podium"); // host wins over proximity
+    assert.equal(hosted.podiumEncore.reason, "host");
+  });
+
   test("assigns the encore to the closest-home registered corps", async () => {
     const seed = seedWith();
     // Give the field homes: Bethlehem is next to the Allentown, PA venue.

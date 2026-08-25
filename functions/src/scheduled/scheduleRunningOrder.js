@@ -126,7 +126,7 @@ async function loadPodiumEntries(db, seasonUid) {
   for (let i = 0; i < uids.length; i += GETALL_CHUNK) {
     const chunk = uids.slice(i, i + GETALL_CHUNK);
     const snaps = await db.getAll(...chunk.map((uid) => podiumStore.stateRef(db, uid)), {
-      fieldMask: ["seasonUid", "corpsName", "selectedShows", "lastTotal"],
+      fieldMask: ["seasonUid", "corpsName", "selectedShows", "lastTotal", "home"],
     });
     snaps.forEach((snap, j) => {
       if (snap.exists) entries.push({ uid: chunk[j], state: snap.data() });
@@ -218,8 +218,13 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
   // Encore is assigned in a second, date-ordered pass so the 1-per-season cap is
   // consumed chronologically. Frozen (pre-window) shows seed the used set; window
   // shows are (re)assigned. { entry, registrations, venueGeo, hostUid }.
+  // The Podium side runs its own independent track — its own field, its own
+  // season cap — so a director can be the encore on both games; the corpsClass
+  // in encoreKey ("podiumClass" vs the fantasy classes) keeps the two apart.
   const encoreCandidates = [];
   const usedKeys = new Set();
+  const podiumEncoreCandidates = [];
+  const podiumUsedKeys = new Set();
   for (const comp of competitions) {
     const entry = { ...comp };
     const date = competitionDate(comp, seasonStartDate);
@@ -230,8 +235,11 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
     const isUpcoming = daysFromNow !== null && daysFromNow >= -1;
 
     // A frozen past show's encore already consumed that corps' season slot.
-    if (daysFromNow !== null && daysFromNow < -1 && comp.encore && comp.encore.uid) {
-      usedKeys.add(encoreKey(comp.encore));
+    if (daysFromNow !== null && daysFromNow < -1) {
+      if (comp.encore && comp.encore.uid) usedKeys.add(encoreKey(comp.encore));
+      if (comp.podiumEncore && comp.podiumEncore.uid) {
+        podiumUsedKeys.add(encoreKey(comp.podiumEncore));
+      }
     }
 
     if (date && isUpcoming && !isChampionship(comp)) {
@@ -250,6 +258,8 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
             }))
           : [];
         built += 1;
+        // One venue geocode, shared by both sides' proximity encore.
+        const venueGeo = homeGeoFor(comp.location);
         const fantasy = toScheduleDoc(
           build({
             registrations,
@@ -293,6 +303,17 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
             updated += 1;
             entry.podiumSchedule = { ...podium, updatedAt: new Date().toISOString() };
           }
+
+          // Stash the podium field for its own chronological encore pass.
+          if (pField.length > 0) {
+            podiumEncoreCandidates.push({
+              entry,
+              date,
+              registrations: pField,
+              venueGeo,
+              hostUid: comp.hostUid || null,
+            });
+          }
         }
 
         // Stash for the chronological encore pass (fantasy field only). Only
@@ -302,7 +323,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
             entry,
             date,
             registrations,
-            venueGeo: homeGeoFor(comp.location),
+            venueGeo,
             hostUid: comp.hostUid || null,
           });
         }
@@ -315,21 +336,27 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
 
   // Encore pass: assign in date order so the season cap is consumed
   // chronologically. Each assignment marks that corps used for later shows.
-  encoreCandidates.sort((a, b) => a.date.getTime() - b.date.getTime());
-  for (const cand of encoreCandidates) {
-    const encore = assignEncore({
-      registrations: cand.registrations,
-      venueGeo: cand.venueGeo,
-      usedKeys,
-      hostUid: cand.hostUid,
-    });
-    if (encore) usedKeys.add(encoreKey(encore));
-    const sig = (e) => (e && e.uid ? `${e.uid}|${e.reason}` : "");
-    if (sig(cand.entry.encore) !== sig(encore)) {
-      updated += 1;
-      cand.entry.encore = encore; // may be null → clears a stale encore
+  // Fantasy and Podium run as independent tracks (separate fields, separate
+  // used-key sets), writing to `entry.encore` and `entry.podiumEncore`.
+  const sig = (e) => (e && e.uid ? `${e.uid}|${e.reason}` : "");
+  const runEncorePass = (candidates, keys, field) => {
+    candidates.sort((a, b) => a.date.getTime() - b.date.getTime());
+    for (const cand of candidates) {
+      const encore = assignEncore({
+        registrations: cand.registrations,
+        venueGeo: cand.venueGeo,
+        usedKeys: keys,
+        hostUid: cand.hostUid,
+      });
+      if (encore) keys.add(encoreKey(encore));
+      if (sig(cand.entry[field]) !== sig(encore)) {
+        updated += 1;
+        cand.entry[field] = encore; // may be null → clears a stale encore
+      }
     }
-  }
+  };
+  runEncorePass(encoreCandidates, usedKeys, "encore");
+  runEncorePass(podiumEncoreCandidates, podiumUsedKeys, "podiumEncore");
 
   if (updated > 0) {
     await schedRef.set({ competitions: out }, { merge: true });
