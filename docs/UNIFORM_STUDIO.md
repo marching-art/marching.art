@@ -194,15 +194,20 @@ advanced pattern tier.
 | Plume              | 6 types × 3 heights + none                                                                                  | feather, tip-dye, mylar toggle           |
 | Jacket             | 7 silhouettes: cadet, tunic, long coat, satin blouse, vest, athletic top, bodysuit                          | base, panel, trim                        |
 | Chest treatment    | 8: plain, single row, double-breasted, plastron, asymmetric split, diagonal panel, swash stripe, gradient\* | panel, buttons/detail                    |
-| Chest hardware     | 8: none, sash, baldric, cross strap, double cross belts, Sam Browne, cummerbund, drop sash                  | strap, buckle/tassel                     |
+| Chest hardware     | 10: none, sash, baldric, cross strap, double cross belts, Sam Browne, cummerbund, drop sash, suspenders, sequin tie drop | strap, buckle/tassel |
 | Shoulders          | 4: none, epaulets, fringed epaulets, shoulder knots + citation cord toggle                                  | cord/board                               |
 | Sleeves            | 5: plain, chevrons (1–3), service stripes, soutache, contrast cuff                                          | stripe/trim                              |
 | Hands              | gauntlets (none/flared/percussion) × gloves (none/white/black)                                              | gauntlet, glove                          |
 | Legs               | bibbers stripe: none/thin/wide/double; leggings                                                             | base, stripe                             |
-| Feet               | 3 shoes × spats toggle                                                                                      | shoe                                     |
+| Feet               | 3 shoes + athletic sneakers × spats toggle                                                                  | shoe                                     |
 | Back               | 5: none, hip cape, shoulder cape, full cape, side cape                                                      | outer, lining                            |
+| Neckline           | standing collar, mock neck, cowl scarf, crew, sculptural lapel                                              | collar, trim                             |
+| Print layer\*      | 6+ procedural prints: radial burst, op-art lattice, plaid, pinstripe, scribble, gradient — × scale/rotation | 2–4 recolorable stops                    |
+| Flow layer\*       | streamers, hip fringe, tattered hems, drape panels                                                          | strip, lining                            |
+| Layout\*           | symmetric or per-side: independent left/right arms and legs                                                 | —                                        |
 
-\* gradient/pattern treatments ship in the "sublimation tier" (§8.2).
+\* gradient/pattern treatments, the print/flow layers, and per-side layout ship
+in the "sublimation tier" (§8.2).
 
 **Asset budget:** every option is 1–4 SVG path groups keyed to one shared
 figure geometry — roughly **250–350 hand-authored path groups at launch**.
@@ -248,6 +253,48 @@ are for.
   a contrast/legibility check; color-picker is keyboard operable (the axe CI
   gate applies, `e2e/a11y.spec.ts`).
 
+### 4.4 The modern axis (2013–2026 costume vocabulary)
+
+The current DCI era — sequined bodices with flow panels, radial-burst
+sublimation prints, op-art jumpsuits, suspenders-and-plaid americana, patent
+vinyl, glowing neon line-art (all present in the 2026-season reference set
+this section was designed against) — decomposes into five systems that ride
+the **same slot model**. The modern era needs no second editor:
+
+1. **Per-side layout.** Arms and legs become independently configurable: one
+   bare arm beside one detached ombre sleeve, split-leg colorways (metallic
+   foil left, matte right), rolled half-sleeves, asymmetric hems.
+2. **The print layer.** Procedural, not hand-drawn: radial bursts, op-art
+   lattices, plaids, pinstripes, scribbles, gradients — each a parameterized
+   SVG pattern/gradient with recolorable stops, rendered in shared user-space
+   coordinates so a print flows continuously across top and trousers (the
+   jumpsuit reads as one printed piece). New prints are code, not art — the
+   marginal cost of a print is near zero and every print is infinitely
+   recolorable.
+3. **The flow layer.** Movement pieces: waist streamers, hip fringe, tattered
+   hems, drape panels — the parts that read as motion from the stands.
+4. **Modern necklines & hardware.** Cowl scarves, mock necks, sculptural
+   lapels, suspenders, sequin tie drops, zippers; athletic sneakers join the
+   footwear slot.
+5. **Finish extensions.** Patent-vinyl gloss, metallic foil, velvet sheen, and
+   glow piping (luminous line-art via an SVG blur filter) join
+   sequin/satin/metallic as collectible finishes.
+
+A sixth category — **printed motif panels** (framed-artwork chests à la the
+2023 Cut-Outs, graphic-tee prints, ornate lace fronts) — rides the emblem
+library: curated art prints placed as chest panels, no user uploads.
+
+Integration model: the classic uniform is the corps' **permanent identity**;
+a modern costume naturally lives in the per-season **show look** attached to
+the show concept (§6) — exactly how real corps quote a stable identity inside
+an annual costume. Both lines coexist in one editor; the sublimation-tier
+unlock (§8.2) gates prints, per-side layout, and flow pieces the way real
+sublimation printing gated the costume revolution. The prototype
+(`docs/prototypes/uniform-figure.html`) renders six Show Line colorways —
+Radial Burst, Op-Art, Streamline, Gold Rush, Neon Circuit, Patent Riot —
+alongside the five Heritage Line presets to prove all five systems on the
+shared figure.
+
 ## 5. The Studio experience
 
 ### 5.1 Entry and navigation
@@ -277,10 +324,11 @@ are for.
   loved in every reference game).
 - **Press-box toggle**: renders the figure at ~40 px against a field backdrop
   strip — "does it read from the stands?" (§3.2).
-- **Presets**: 10–14 era/archetype starting points from the research (Classic
-  Cadet maroon/gold, All-White Regiment, Green Satin, Cavalry, Scout, Police
-  Blue, Costume-Revolution bodysuit, Sublimation Swash…) — _archetypes, not
-  replicas of real corps_ (see §9.3).
+- **Presets**: 16–20 era/archetype starting points across both lines —
+  Heritage (Classic Cadet maroon/gold, All-White Regiment, Green Satin,
+  Cavalry, Scout, Police Blue…) and Show (Radial Burst, Op-Art jumpsuit,
+  Streamline, Gold Rush americana, Neon Circuit, Patent Riot…) — _archetypes,
+  not replicas of real corps_ (see §9.3).
 - **Design Notes**: one-line rotating principles from real designers, shown
   contextually (pick a long coat → "short jackets read taller from the box —
   Cesario dresses the leg line").
@@ -378,7 +426,7 @@ ethics finding (§3.4) and the CC iron rule (docs/GAMIFICATION.md:121-129).
 
 | Axis                         | Examples                                                                                     | Acquisition                                                    |
 | ---------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Finishes                     | metallic, sequin, lamé, iridescent, mylar plume                                              | CC shop + achievements + ladder tiers                          |
+| Finishes                     | metallic, sequin, lamé, iridescent, mylar plume, patent vinyl, foil, velvet, glow piping     | CC shop + achievements + ladder tiers                          |
 | Premium silhouettes          | long coat, bodysuit, busby, cape variants                                                    | CC shop, level milestones                                      |
 | Emblem packs                 | heraldic set, celestial set, creature set                                                    | CC shop, achievements                                          |
 | Pattern tier ("sublimation") | gradients, geometric prints, asymmetric swash                                                | class-progression or CC unlock                                 |
