@@ -70,6 +70,32 @@ const PREDICTION_QUESTIONS = [
 const PREDICTION_QUESTION_IDS = PREDICTION_QUESTIONS.map((q) => q.id);
 
 /**
+ * The recap-day shapes read below. Both pipelines share the per-show layout;
+ * fantasy days are keyed by offSeasonDay, podium days by competitionDay.
+ *
+ * @typedef {Object} RecapResult
+ * @property {string} [uid]
+ * @property {string} [corpsClass]
+ * @property {number} [totalScore]
+ * @property {number} [placement]
+ * @property {number} [place]
+ *
+ * @typedef {Object} RecapShow
+ * @property {string} [eventName]
+ * @property {string} [name]
+ * @property {RecapResult[]} [results]
+ *
+ * @typedef {Object} RecapDay
+ * @property {number} [offSeasonDay]
+ * @property {number} [competitionDay]
+ * @property {RecapShow[]} [shows]
+ */
+
+/**
+ * @typedef {{eventName: string, score: (number|null), placement: (number|null)}} NormalizedResult
+ */
+
+/**
  * Questions that never reveal a numeric score (placement-based only) — the
  * subset available to SoundSport, whose scores are deliberately hidden
  * behind medal ratings.
@@ -84,9 +110,9 @@ const SCORE_FREE_QUESTION_IDS = PREDICTION_QUESTIONS
  * single-document `recaps` array. Bounded so resolution never scans an
  * unbounded collection.
  *
- * @param {FirebaseFirestore.Firestore} db
+ * @param {import("firebase-admin/firestore").Firestore} db
  * @param {string} seasonUid
- * @returns {Promise<Array<Object>>}
+ * @returns {Promise<RecapDay[]>}
  */
 async function fetchRecentRecaps(db, seasonUid) {
   const daysSnap = await db
@@ -97,7 +123,7 @@ async function fetchRecentRecaps(db, seasonUid) {
   if (!daysSnap.empty) return daysSnap.docs.map((doc) => doc.data());
 
   const legacyDoc = await db.doc(`fantasy_recaps/${seasonUid}`).get();
-  if (legacyDoc.exists) return legacyDoc.data().recaps || [];
+  if (legacyDoc.exists) return legacyDoc.data()?.recaps || [];
   return [];
 }
 
@@ -106,16 +132,17 @@ async function fetchRecentRecaps(db, seasonUid) {
  * a set of recap days, newest first. Mirrors the client's useRecentResults
  * ordering (recentResults[0] = latest).
  *
- * @param {Array<Object>} recapDocs
+ * @param {RecapDay[]} recapDocs
  * @param {string} uid
  * @param {string} corpsClass
  * @param {number} [limit]
- * @returns {Array<{eventName: string, score: (number|null), placement: (number|null)}>}
+ * @returns {NormalizedResult[]}
  */
 function findRecentResultsForCorps(recapDocs, uid, corpsClass, limit = 5) {
   const sorted = [...recapDocs].sort(
     (a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0)
   );
+  /** @type {NormalizedResult[]} */
   const results = [];
   for (const recap of sorted) {
     for (const show of recap.shows || []) {
@@ -137,6 +164,10 @@ function findRecentResultsForCorps(recapDocs, uid, corpsClass, limit = 5) {
 
 /**
  * A director's most recent result for a corps class — recentResults[0].
+ * @param {RecapDay[]} recapDocs
+ * @param {string} uid
+ * @param {string} corpsClass
+ * @returns {NormalizedResult|null}
  */
 function findLatestResultForCorps(recapDocs, uid, corpsClass) {
   return findRecentResultsForCorps(recapDocs, uid, corpsClass, 1)[0] || null;
@@ -148,9 +179,9 @@ function findLatestResultForCorps(recapDocs, uid, corpsClass) {
  * (keyed by competitionDay), NOT in fantasy_recaps — so the fantasy readers
  * above find nothing for podiumClass. Mirrors src/api/season.getPodiumSeasonRecaps.
  *
- * @param {FirebaseFirestore.Firestore} db
+ * @param {import("firebase-admin/firestore").Firestore} db
  * @param {string} seasonUid
- * @returns {Promise<Array<Object>>}
+ * @returns {Promise<RecapDay[]>}
  */
 async function fetchPodiumRecaps(db, seasonUid) {
   const daysSnap = await db.collection(`podium-recaps/${seasonUid}/days`).get();
@@ -164,15 +195,16 @@ async function fetchPodiumRecaps(db, seasonUid) {
  * normalizes into the same {eventName, score, placement} shape the fantasy
  * reader returns. Mirrors src/hooks/useDashboardScores.usePodiumRecentResults.
  *
- * @param {Array<Object>} recapDocs
+ * @param {RecapDay[]} recapDocs
  * @param {string} uid
  * @param {number} [limit]
- * @returns {Array<{eventName: string, score: (number|null), placement: (number|null)}>}
+ * @returns {NormalizedResult[]}
  */
 function findRecentPodiumResults(recapDocs, uid, limit = 5) {
   const sorted = [...recapDocs].sort(
     (a, b) => (b.competitionDay || 0) - (a.competitionDay || 0)
   );
+  /** @type {NormalizedResult[]} */
   const results = [];
   for (const recap of sorted) {
     for (const show of recap.shows || []) {
@@ -197,12 +229,12 @@ function findRecentPodiumResults(recapDocs, uid, limit = 5) {
  * derivation) and resolve read the SAME source per class — otherwise
  * podiumClass picks derive a null threshold and are silently rejected.
  *
- * @param {FirebaseFirestore.Firestore} db
+ * @param {import("firebase-admin/firestore").Firestore} db
  * @param {string} seasonUid
  * @param {string} uid
  * @param {string} corpsClass
  * @param {number} [limit]
- * @returns {Promise<Array<{eventName: string, score: (number|null), placement: (number|null)}>>}
+ * @returns {Promise<NormalizedResult[]>}
  */
 async function fetchRecentResultsForClass(db, seasonUid, uid, corpsClass, limit = 5) {
   if (!seasonUid) return [];
@@ -225,10 +257,14 @@ async function fetchRecentResultsForClass(db, seasonUid, uid, corpsClass, limit 
  * with a client-chosen threshold of -1 makes "Over" a guaranteed win, which
  * the league pools would turn into draining leaguemates' escrowed antes.
  * submitPrediction stores THIS value and rejects material client drift.
+ *
+ * @param {string} questionId
+ * @param {NormalizedResult[]|null|undefined} recentResults
+ * @returns {number|null}
  */
 function deriveQuestionThreshold(questionId, recentResults) {
   if (!recentResults || recentResults.length < 2) return null;
-  const scores = recentResults.map((r) => r.score).filter(Boolean);
+  const scores = recentResults.map((r) => r.score).filter((s) => typeof s === "number");
   switch (questionId) {
     case "over-under": {
       if (scores.length < 2) return null;
@@ -258,8 +294,9 @@ function deriveQuestionThreshold(questionId, recentResults) {
  * result (the latest event still matches the snapshot taken when the picks
  * were made) or none of the picks have the data they need to score.
  *
- * @param {Object} bucket - Stored prediction bucket { picks, snapshotEvent }
- * @param {{eventName: string, score: (number|null), placement: (number|null)}|null} latestResult
+ * @param {{picks?: Record<string, {pick?: string, threshold?: number}|undefined>|null, snapshotEvent?: string|null}} bucket
+ *   Stored prediction bucket { picks, snapshotEvent }
+ * @param {NormalizedResult|null} latestResult
  * @returns {null | {
  *   results: Object, correctCount: number, totalCount: number,
  *   xpAwarded: number, coinAwarded: number, resolvedEvent: string
@@ -273,6 +310,7 @@ function resolveBucket(bucket, latestResult) {
   }
 
   const picks = bucket.picks || {};
+  /** @type {Record<string, {answer: string, isCorrect: boolean}>} */
   const results = {};
   let correctCount = 0;
   let totalCount = 0;

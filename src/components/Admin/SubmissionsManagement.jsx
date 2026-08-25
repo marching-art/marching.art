@@ -34,7 +34,9 @@ const CATEGORY_COLORS = {
   dci: 'bg-blue-500/20 text-blue-400',
   fantasy: 'bg-purple-500/20 text-purple-400',
   analysis: 'bg-cyan-500/20 text-cyan-400',
-  podium: 'bg-amber-500/20 text-amber-400',
+  // Podium flair uses the brand token, matching the news feed's podium badge
+  // (newsFeedUtils) — raw amber here tripped the off-role-gold design ratchet.
+  podium: 'bg-brand/20 text-brand',
   press: 'bg-teal-500/20 text-teal-400',
 };
 

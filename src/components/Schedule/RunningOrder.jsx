@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Star } from 'lucide-react';
 import { getRunningOrderStatus } from '../../utils/scheduleUtils';
+import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pickHighlights';
 
 /**
  * RunningOrder
@@ -28,8 +29,6 @@ import { getRunningOrderStatus } from '../../utils/scheduleUtils';
  *   the "that's MY corps on the field" moment.
  * @param {boolean} [props.compact] - Tighter layout for dashboard panels.
  */
-import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pickHighlights';
-
 const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false }) => {
   // Tick every 60s so the performing-now marker stays current without a reload.
   const [now, setNow] = useState(() => new Date());
