@@ -401,7 +401,14 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "A challengeId is required.");
   }
   if (!CHALLENGE_POOL.some((c) => c.id === challengeId)) {
-    throw new HttpsError("invalid-argument", "Unknown challenge.");
+    // An id the current catalog doesn't contain — almost always a RETIRED
+    // challenge still being auto-claimed by a stale/cached client bundle (the
+    // pool trims over time; e.g. the old "visit page X" rows). This is benign
+    // and fire-and-forget, exactly like the not-in-rotation case below, so it
+    // must be a soft no-op — NOT a thrown invalid-argument. Throwing turned
+    // every such stale auto-claim into an HTTP 400 warning (and a funnel error
+    // event), which is what flooded the completeDailyChallenge logs.
+    return { success: false, unknownChallenge: true, xpAwarded: 0 };
   }
 
   const db = getDb();

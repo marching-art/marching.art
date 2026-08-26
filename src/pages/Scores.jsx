@@ -8,7 +8,6 @@
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams, Navigate } from 'react-router-dom';
 import { Activity, Archive, Share2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScoresData } from '../hooks/useScoresData';
@@ -87,9 +86,7 @@ const FANTASY_SUB_IDS = FANTASY_SUB_TABS.map((t) => t.id);
 // =============================================================================
 
 const Scores = () => {
-  const { user } = useAuth();
   const profile = useProfileStore((state) => state.profile);
-  const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
   const { trigger: haptic } = useHaptic();
@@ -206,13 +203,6 @@ const Scores = () => {
     const activeCorps = Object.values(profile.corps).find((c) => c?.lineup);
     return activeCorps?.corpsName || null;
   }, [profile?.corps]);
-
-  useEffect(() => {
-    // Soft no-op server-side when 'visit-scores' isn't in today's rotation
-    if (user && profile && completeDailyChallenge) {
-      completeDailyChallenge('visit-scores');
-    }
-  }, [user, profile, completeDailyChallenge]);
 
   useEffect(() => {
     if (targetShowName) {
