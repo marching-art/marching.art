@@ -18,6 +18,8 @@ vi.mock('../api/uniformStudio', () => ({
   saveUniformDesign: vi.fn(),
   equipUniformDesign: vi.fn(),
   deleteUniformDesign: vi.fn(),
+  mintUniformCode: vi.fn(),
+  fetchUniformCode: vi.fn(),
 }));
 vi.mock('../api/articleAdmin', () => ({
   generateCorpsAvatar: vi.fn(),

@@ -96,3 +96,18 @@ export const FIGURE_HAIR_COLORS: string[] = [
   '#8a6a3a',
   '#b7b4ad',
 ];
+
+/** Share-card ("field entrance") scene palette — see UniformShareCard.tsx. */
+export const SHARE_CARD_THEME = {
+  bg: '#0a0c12',
+  sky: '#0d1020',
+  stands: '#141824',
+  standsRail: '#1e2432',
+  field: '#0f1a14',
+  fieldLine: '#f4f2ec',
+  panelRule: '#2a3040',
+  text: '#f4f2ec',
+  muted: '#8b93a4',
+  brand: '#d9a41c',
+  lightBulb: '#f7edc8',
+} as const;

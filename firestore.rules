@@ -383,6 +383,16 @@ match /{path=**}/profile/{docId} {
   allow read: if isAuthenticated();
 }
 
+// --- UNIFORM CODES ---
+// World-readable design snapshots minted by the mintUniformCode callable
+// (docs/UNIFORM_STUDIO.md §7.1). Safe to serve publicly: a snapshot is pure
+// structured data from the curated catalog (validated at mint), so no free
+// text renders on anyone else's screen. Writes are server-only.
+match /artifacts/{appId}/uniform_codes/{code} {
+  allow read: if true;
+  allow write: if false; // Backend only (mintUniformCode)
+}
+
 // --- BUY ME A COFFEE SUPPORTERS ---
 // Fully locked: these docs hold PII (payer email + name) and are written only
 // by the BMAC webhook / reconcile job / supporter callables via the Admin SDK.

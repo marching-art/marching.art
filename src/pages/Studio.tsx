@@ -11,21 +11,26 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Check, Eye, Loader2, Save, Shirt, Sparkles, Trash2 } from 'lucide-react';
+import { Check, Copy, Eye, Loader2, Save, Share2, Shirt, Sparkles, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { CLASS_DISPLAY } from '../components/modals/uniformDesignOptions';
 import UniformFigure from '../components/uniform/UniformFigure';
 import StudioEditor from '../components/uniform/StudioEditor';
+import UniformShareCard from '../components/uniform/UniformShareCard';
 import { designFromPreset, UNIFORM_PRESETS } from '../data/uniformCatalog';
-import { migrateV1Design, WARDROBE_LIMITS } from '../utils/uniform';
+import { migrateV1Design, WARDROBE_LIMITS, withDerivedFlags } from '../utils/uniform';
+import { designNoteFor } from '../data/designNotes';
+import { sharePoster } from '../utils/posterExport';
 import type { EquippedUniform, UniformDesignV2 } from '../types/uniform';
 import type { CorpsData } from '../types';
 import {
   deleteUniformDesign,
   equipUniformDesign,
+  fetchUniformCode,
   listWardrobe,
+  mintUniformCode,
   saveUniformDesign,
   type WardrobeDesign,
 } from '../api/uniformStudio';
@@ -176,13 +181,124 @@ export default function Studio() {
   };
 
   const loadFromWardrobe = (w: WardrobeDesign) => {
-    const { id, createdAt: _c, updatedAt: _u, ...rest } = w;
+    // strip doc metadata (incl. the server-owned shareCode) so the draft is a
+    // pure design the save callable's whitelist accepts
+    const { id, createdAt: _c, updatedAt: _u, shareCode: _sc, ...rest } = w;
     const design: UniformDesignV2 = { ...rest, schema: 2 };
     setDraft(design);
     setLoadedId(id);
     setMigrated(false);
     savedJson.current = JSON.stringify(design);
   };
+
+  /** Save first when needed, so codes and cards always reflect a saved look. */
+  const ensureSavedId = async (): Promise<string | null> => {
+    if (!draft) return null;
+    if (loadedId && !dirty) return loadedId;
+    const saved = await saveUniformDesign({
+      designId: loadedId || undefined,
+      design: { ...draft, name: draft.name?.trim() || 'Untitled design' },
+    });
+    setLoadedId(saved.data.designId);
+    savedJson.current = JSON.stringify(draft);
+    void refreshWardrobe();
+    return saved.data.designId;
+  };
+
+  const doGetCode = async () => {
+    if (!draft) return;
+    setBusy('code');
+    try {
+      const id = await ensureSavedId();
+      if (!id) return;
+      const minted = await mintUniformCode({ designId: id });
+      const code = minted.data.code;
+      try {
+        await navigator.clipboard.writeText(code);
+        toast.success(`Code ${code} copied — anyone can enter it in their Studio`);
+      } catch {
+        toast.success(`Your uniform code: ${code}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not mint a code');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const [importCode, setImportCode] = useState('');
+  const doImportCode = async () => {
+    const raw = importCode.trim();
+    if (!raw) return;
+    setBusy('import');
+    try {
+      const shared = await fetchUniformCode(raw);
+      if (!shared) {
+        toast.error('No design found for that code — check it and try again.');
+        return;
+      }
+      const design: UniformDesignV2 = {
+        ...shared.design,
+        schema: 2,
+        figure: withDerivedFlags(shared.design.figure),
+      };
+      setDraft(design);
+      setLoadedId(null); // an import is a fresh draft — saving adds it to YOUR wardrobe
+      setMigrated(false);
+      savedJson.current = '';
+      setImportCode('');
+      toast.success(`Design by ${shared.creatorName} loaded — save it to keep it`);
+    } catch {
+      toast.error('Could not look up that code. Please try again.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const [shareCard, setShareCard] = useState<{ design: UniformDesignV2; code: string } | null>(
+    null
+  );
+  const shareCardRef = useRef<SVGSVGElement | null>(null);
+  const doShareCard = async () => {
+    if (!draft) return;
+    setBusy('card');
+    try {
+      const id = await ensureSavedId();
+      if (!id) return;
+      const minted = await mintUniformCode({ designId: id });
+      setShareCard({ design: draft, code: minted.data.code });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not build the share card');
+      setBusy(null);
+    }
+  };
+  useEffect(() => {
+    if (!shareCard) return;
+    // let the offscreen card commit before serializing it
+    const frame = requestAnimationFrame(() => {
+      const corps = activeOption?.corps.corpsName || 'corps';
+      const slug = corps
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      sharePoster(shareCardRef.current, {
+        filename: `${slug || 'corps'}-uniform-card.png`,
+        title: `${corps} — marching.art`,
+        text: `${corps}'s new look, designed in the marching.art Uniform Studio. Import it with code ${shareCard.code}.`,
+      })
+        .then((outcome) => {
+          if (outcome === 'downloaded') toast.success('Share card saved as a PNG');
+          if (outcome === 'shared') toast.success('Share card sent');
+        })
+        .catch(() => toast.error('Could not export the share card'))
+        .finally(() => {
+          setShareCard(null);
+          setBusy(null);
+        });
+    });
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareCard]);
 
   const doDelete = async (w: WardrobeDesign) => {
     setBusy(`del:${w.id}`);
@@ -359,6 +475,34 @@ export default function Studio() {
                     <Sparkles className="w-3.5 h-3.5" />
                     AI avatar
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => void doGetCode()}
+                    disabled={busy !== null}
+                    title="Mint a shareable code — anyone can enter it to import this design"
+                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    {busy === 'code' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                    Get code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void doShareCard()}
+                    disabled={busy !== null}
+                    title="Export a field-entrance share card with your uniform code on it"
+                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    {busy === 'card' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Share2 className="w-3.5 h-3.5" />
+                    )}
+                    Share card
+                  </button>
                 </div>
                 <p className="text-[10px] text-muted mt-2">
                   Saving stores the design in your wardrobe. Equipping puts it on{' '}
@@ -415,13 +559,58 @@ export default function Studio() {
                     ))}
                   </div>
                 )}
+                {/* Import a shared design by its code (§7.1) */}
+                <div className="flex gap-2 mt-3 pt-3 border-t border-line">
+                  <input
+                    type="text"
+                    value={importCode}
+                    onChange={(e) => setImportCode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void doImportCode();
+                    }}
+                    placeholder="Have a code? MA-XXXX-XX"
+                    aria-label="Import a uniform code"
+                    className="flex-1 h-9 px-2 bg-background border border-line rounded-none text-xs text-white font-mono uppercase placeholder:normal-case placeholder:font-sans focus:outline-none focus:border-interactive"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void doImportCode()}
+                    disabled={busy !== null || !importCode.trim()}
+                    className="h-9 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40"
+                  >
+                    {busy === 'import' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      'Import'
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Controls column */}
             <div className="bg-surface-card border border-line p-4">
+              {/* Design Note: a contextual principle from the craft (§ In-studio guidance) */}
+              <p className="text-[11px] italic text-muted border-l-2 border-interactive/40 pl-2 mb-4">
+                {designNoteFor(draft.figure)}
+              </p>
               <StudioEditor design={draft} onChange={setDraft} />
             </div>
+          </div>
+        )}
+
+        {/* Offscreen share card, mounted only while exporting */}
+        {shareCard && activeOption && (
+          <div className="fixed -left-[2000px] top-0 w-[1200px]" aria-hidden="true">
+            <UniformShareCard
+              ref={shareCardRef}
+              design={shareCard.design}
+              corpsName={activeOption.corps.corpsName}
+              classLabel={
+                CLASS_DISPLAY[activeClass as keyof typeof CLASS_DISPLAY]?.name || activeClass || ''
+              }
+              code={shareCard.code}
+            />
           </div>
         )}
       </div>

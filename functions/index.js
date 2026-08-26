@@ -127,6 +127,7 @@ const {
   saveUniformDesign,
   equipUniformDesign,
   deleteUniformDesign,
+  mintUniformCode,
 } = require("./src/callable/uniformStudio");
 const { purchaseRetirementPlaque, purchaseHallBanner } = require("./src/callable/prestige");
 const { makeLegacyEndowment } = require("./src/callable/legacy");
@@ -557,6 +558,7 @@ module.exports = {
   saveUniformDesign,
   equipUniformDesign,
   deleteUniformDesign,
+  mintUniformCode,
 
   // Avatar Generation
   generateCorpsAvatar,

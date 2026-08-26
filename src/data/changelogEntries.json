@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-26-uniform-codes-share-cards",
+    "date": "2026-08-26",
+    "title": "Uniform codes and share cards: your look, everywhere",
+    "category": "feature",
+    "summary": "Your designs can now leave the Studio. Mint a short uniform code (like MA-7K3F-Q2) for any saved look and anyone can type it into their own Studio to import the design — with credit to you. Or export a share card: your corps taking the field in formation under stadium lights, with your name, colorway, and the code stamped on it, ready for Discord.",
+    "highlights": [
+      "Get code copies a short shareable code for the current design; a friend pastes it in the new Import box to load your look as a draft they can save and remix.",
+      "Imported designs always show who designed them.",
+      "Share card exports a field-entrance PNG — a mixed-tone ensemble wearing your uniform, plus your code so the card is its own invitation.",
+      "Design Notes now appear in the editor: one-line principles from the craft, matched to what you're building."
+    ]
+  },
+  {
     "id": "2026-08-26-hat-ornaments",
     "date": "2026-08-26",
     "title": "Hat ornaments: pick the shape, pick the color — plus the aussie",

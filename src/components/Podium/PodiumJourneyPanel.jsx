@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumJourneyPanel — the Podium Rookie Journey (Phase 7.2). A one-time
 // quest line through the daily loop: found, rehearse, delegate, route,
 // perform, shake hands, survive. The server verifies each step against real
@@ -14,12 +13,13 @@ import { PODIUM_JOURNEY } from './podiumConstants';
 
 export default function PodiumJourneyPanel() {
   const profile = useProfileStore((state) => state.profile);
-  const [busy, setBusy] = useState(null);
+  const [busy, setBusy] = useState(/** @type {string|null} */ (null));
 
-  const journey = profile?.journey || {};
+  const journey = /** @type {Record<string, unknown>} */ (profile?.journey || {});
   const remaining = PODIUM_JOURNEY.filter((step) => !journey[step.id]);
   if (!profile || remaining.length === 0) return null;
 
+  /** @param {(typeof PODIUM_JOURNEY)[number]} step */
   const claim = async (step) => {
     setBusy(step.id);
     try {
@@ -32,7 +32,7 @@ export default function PodiumJourneyPanel() {
         );
       }
     } catch (err) {
-      toast.error(err?.message || 'Not there yet.');
+      toast.error((err instanceof Error && err.message) || 'Not there yet.');
     } finally {
       setBusy(null);
     }
