@@ -226,7 +226,7 @@ export function armFadeStops(figure: FigureConfig, side: 'armL' | 'armR'): [stri
   if (gid !== ARM_FADE_IDS.armL && gid !== ARM_FADE_IDS.armR) return null;
   const stops = figure.grads?.[gid];
   if (!Array.isArray(stops) || stops.length < 2) return null;
-  return [safeHex(stops[0][1]), safeHex(stops[stops.length - 1][1])];
+  return [safeHex(stops[0].c), safeHex(stops[stops.length - 1].c)];
 }
 
 /**
@@ -258,8 +258,8 @@ export function withArmFade(
     const gid = ARM_FADE_IDS[s];
     if (stops) {
       grads[gid] = [
-        ['0', safeHex(stops[0])],
-        ['1', safeHex(stops[1])],
+        { o: '0', c: safeHex(stops[0]) },
+        { o: '1', c: safeHex(stops[1]) },
       ];
       next[s] = { ...n[s], fill: `url:${gid}`, color: null };
     } else {

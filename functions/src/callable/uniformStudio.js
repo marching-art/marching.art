@@ -42,6 +42,27 @@ function resolveStoredClassKey(corpsMap, corpsClass) {
 }
 
 /**
+ * Write a sanitized design doc, converting any unexpected Firestore write
+ * failure into a clean HttpsError. Without this a rejected write (e.g. a
+ * payload shape Firestore can't store) escapes as a non-HttpsError and the
+ * client sees a bare "INTERNAL (500)"; here it is logged and reported as a
+ * retryable error instead. HttpsErrors (none are thrown below today) pass
+ * through unchanged.
+ * @param {FirebaseFirestore.DocumentReference} ref
+ * @param {string} uid
+ * @param {Record<string, unknown>} data
+ */
+async function persistDesign(ref, uid, data) {
+  try {
+    await ref.set(data);
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    logger.error(`Failed to persist wardrobe design for ${uid}`, err);
+    throw new HttpsError("internal", "Could not save your design. Please try again.");
+  }
+}
+
+/**
  * Save a design to the caller's wardrobe. Creates when designId is omitted
  * (enforcing the wardrobe cap); overwrites the caller's own design otherwise.
  */
@@ -71,7 +92,7 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
       throw new HttpsError("not-found", "That design no longer exists.");
     }
     const prior = doc.data();
-    await ref.set({
+    await persistDesign(ref, uid, {
       ...clean,
       createdAt: prior.createdAt || now,
       // keep the minted share code stable across edits (mintUniformCode owns it)
@@ -89,7 +110,7 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
     );
   }
   const ref = col.doc();
-  await ref.set({ ...clean, createdAt: now, updatedAt: now });
+  await persistDesign(ref, uid, { ...clean, createdAt: now, updatedAt: now });
   logger.info(`Wardrobe design created for ${uid}`, { designId: ref.id });
   return { designId: ref.id, message: "Design saved to your wardrobe." };
 });
