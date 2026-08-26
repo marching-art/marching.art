@@ -97,7 +97,35 @@ export default function ChestSection({
           </>
         )}
         {figure.chest === 'swash' && (
-          <ChannelRow label="Swash" value={figure.swash} onChange={(v) => onPatch({ swash: v })} />
+          <>
+            <ChannelRow
+              label="Swash"
+              value={figure.swash}
+              onChange={(v) => onPatch({ swash: v })}
+            />
+            <ChannelRow
+              label="Leg band"
+              value={figure.swashLegColor}
+              onChange={(v) => onPatch({ swashLegColor: v })}
+              clearable
+            />
+            {/* the two halves are independent: torso only, leg only, or both */}
+            <Toggle
+              label="Torso part"
+              checked={figure.swashTop !== false}
+              onChange={(v) => onPatch({ swashTop: v, swashBottom: v ? figure.swashBottom : true })}
+            />
+            <Toggle
+              label="Leg part"
+              checked={figure.swashBottom !== false}
+              onChange={(v) => onPatch({ swashBottom: v, swashTop: v ? figure.swashTop : true })}
+            />
+            <Toggle
+              label="Sequin swash"
+              checked={figure.swashSequin !== false}
+              onChange={(v) => onPatch({ swashSequin: v })}
+            />
+          </>
         )}
         {hasButtons && (
           <ChannelRow

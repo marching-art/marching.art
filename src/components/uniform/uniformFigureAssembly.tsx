@@ -286,6 +286,30 @@ function aussie(cw: NormalizedFigure): Node[] {
   return out;
 }
 
+/**
+ * Contour shako: the tall modern taper with a swept, angled top and no visor
+ * (an archetype of the 2010s contemporary silhouette, not any corps' replica).
+ * The ornament defaults to bare — the clean face IS the look — and the plume
+ * stays optional through the standard plume system.
+ */
+function contour(cw: NormalizedFigure): Node[] {
+  const h = cw.hat;
+  if (!h) return [];
+  const body = safeHex(h.body);
+  const out: Node[] = [
+    p('co', 'M101,60 L103,8 L135,16 L139,60 Q120,68 101,60 Z', body),
+    // swept top face
+    p('co-t', 'M103,8 L135,16 L133,20 L105,12 Z', lightenHex(body, 0.14)),
+    shade('co-s', 'M128,14 L135,16 L139,60 Q131,63 127,64 Q130,38 128,14 Z', 0.14),
+    light('co-l', 'M104,12 L109,13 Q106,36 106,60 Q103,59 102,58 Z', 0.09),
+  ];
+  if (h.band) {
+    out.push(p('co-b', 'M101.4,52 Q120,60 138.6,52 L139,58 Q120,66 101,58 Z', safeHex(h.band)));
+  }
+  out.push(...hatOrnamentNodes(h.ornament || 'none', safeHex(h.emblem || cw.metal), 'co'));
+  return out;
+}
+
 function campaign(cw: NormalizedFigure): Node[] {
   const h = cw.hat;
   if (!h) return [];
@@ -306,14 +330,29 @@ function plume(cw: NormalizedFigure): Node[] {
   const pl = cw.plume;
   if (!pl) return [];
   const c = safeHex(pl.color);
+  // Two-tone plumes: the accent dyes the upper reach (upright) or alternating
+  // sprays (fountain) — the dyed-tip look of real feather plumes.
+  const tip = pl.accent ? safeHex(pl.accent) : null;
   if (pl.type === 'upright') {
     const out: Node[] = [
       p('pu', 'M113,12 Q107,-34 118,-64 Q121,-70 124,-64 Q133,-32 127,12 Q120,16 113,12 Z', c),
       strokeP('pu-1', 'M117,8 Q114,-30 119,-58', lightenHex(c, 0.35), 1.1, { opacity: '.7' }),
       strokeP('pu-2', 'M122,8 Q121,-34 121,-60', lightenHex(c, 0.35), 1.1, { opacity: '.55' }),
       strokeP('pu-3', 'M125,6 Q127,-26 123,-56', darkenHex(c, 0.25), 1.1, { opacity: '.5' }),
-      shade('pu-s', 'M124,-60 Q130,-30 126,10 L121,12 Q128,-28 122,-62 Z', 0.12),
     ];
+    if (tip) {
+      out.push(
+        p(
+          'pu-a',
+          'M114.5,-26 Q110,-48 118,-64 Q121,-70 124,-64 Q130,-44 125.5,-24 Q120,-20 114.5,-26 Z',
+          tip
+        ),
+        strokeP('pu-a1', 'M118,-28 Q117,-46 120,-60', lightenHex(tip, 0.3), 1.1, {
+          opacity: '.6',
+        })
+      );
+    }
+    out.push(shade('pu-s', 'M124,-60 Q130,-30 126,10 L121,12 Q128,-28 122,-62 Z', 0.12));
     if (pl.mylar) out.push(...sequinField('pu-m', 120, -26, 12, 72, 13, 18));
     return out;
   }
@@ -332,8 +371,9 @@ function plume(cw: NormalizedFigure): Node[] {
   ];
   const out: Node[] = [];
   arcs.forEach((a, i) => {
-    out.push(strokeP(`pf${i}`, a, c, 3.8));
-    out.push(strokeP(`pf${i}-l`, a, lightenHex(c, 0.28), 1.2, { opacity: '.45' }));
+    const arcColor = tip && i % 2 === 1 ? tip : c;
+    out.push(strokeP(`pf${i}`, a, arcColor, 3.8));
+    out.push(strokeP(`pf${i}-l`, a, lightenHex(arcColor, 0.28), 1.2, { opacity: '.45' }));
   });
   out.push(<circle key="pf-m" cx="120" cy="6" r="4.5" fill={safeHex(cw.metal)} />);
   return out;
@@ -379,5 +419,6 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   if (cw.hatType === 'pith') layers.push(<g key="hat">{pith(cw)}</g>);
   if (cw.hatType === 'campaign') layers.push(<g key="hat">{campaign(cw)}</g>);
   if (cw.hatType === 'aussie') layers.push(<g key="hat">{aussie(cw)}</g>);
+  if (cw.hatType === 'contour') layers.push(<g key="hat">{contour(cw)}</g>);
   return layers;
 }
