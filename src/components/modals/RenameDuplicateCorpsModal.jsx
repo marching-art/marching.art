@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useState, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
@@ -7,6 +6,16 @@ import { renameCorps } from '../../api/functions';
 import { getCorpsClassName } from '../../utils/corps';
 import toast from 'react-hot-toast';
 
+/**
+ * @param {{
+ *   duplicates: Array<{
+ *     corpsClass: string,
+ *     corpsName: string,
+ *     conflictsWith?: {winnerCorpsName: string, winnerCorpsClass: string},
+ *   }>,
+ *   onResolved: () => Promise<void>|void,
+ * }} props
+ */
 const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
   // Resolve one duplicate at a time so we can re-validate uniqueness on each
   // submit; the server is the source of truth for whether the name is free.
@@ -21,6 +30,7 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
   const current = duplicates[index];
   if (!current) return null;
 
+  /** @param {React.FormEvent} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = newName.trim();
@@ -46,7 +56,10 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
         setNewName('');
       }
     } catch (err) {
-      toast.error(err?.message || 'Failed to rename corps. Please try a different name.');
+      toast.error(
+        (err instanceof Error && err.message) ||
+          'Failed to rename corps. Please try a different name.'
+      );
     } finally {
       setSubmitting(false);
     }

@@ -77,6 +77,21 @@ describe("validateDesign", () => {
     assert.match(validateDesign(d).join(";"), /torsoFill/);
   });
 
+  test("accepts hat emblem color, ornaments, and the aussie hat", () => {
+    const d = validDesign();
+    d.figure.hatType = "aussie";
+    d.figure.hat = { body: "#17171a", band: "#8a1a1a", emblem: "#e01010", ornament: "star" };
+    assert.deepEqual(validateDesign(d), []);
+
+    const d2 = validDesign();
+    d2.figure.hat = { body: "#17171a", emblem: "javascript:x" };
+    assert.match(validateDesign(d2).join(";"), /figure\.hat/);
+
+    const d3 = validDesign();
+    d3.figure.hat = { body: "#17171a", ornament: "fleur" };
+    assert.match(validateDesign(d3).join(";"), /figure\.hat/);
+  });
+
   test("accepts the chest direction flag, two-tone baldric, and chest fade", () => {
     const d = validDesign();
     d.figure.chest = "baldric";
