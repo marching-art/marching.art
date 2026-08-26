@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-08-26-green-satin-aussie",
+    "date": "2026-08-26",
+    "title": "Green Satin preset trades its shako for a white aussie",
+    "category": "improvement",
+    "summary": "The Green Satin classic preset now marches in a white aussie slouch hat instead of the black shako — a cleaner, brighter crown over the satin jacket. Load the preset to see the new look, or swap any hat as always."
+  },
+  {
     "id": "2026-08-26-uniform-save-fade-fix",
     "date": "2026-08-26",
     "title": "Saving a uniform with a sleeve fade works again",
