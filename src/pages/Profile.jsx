@@ -6,7 +6,7 @@
 // Laws: No glow, no shadow, grid layout, expandable sections
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   User,
   Crown,
@@ -75,6 +75,7 @@ import SettingsModal from '../components/Profile/SettingsModal';
 
 const Profile = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -526,7 +527,7 @@ const Profile = () => {
           profile={profile}
           isOwnProfile={isOwnProfile}
           onEditProfile={handleStartEdit}
-          onDesignUniform={() => setShowUniformDesign(true)}
+          onDesignUniform={() => navigate('/studio')}
           onSelectAvatarCorps={handleSelectAvatarCorps}
           onRegenerateAvatar={handleRegenerateAvatar}
           onSetCustomAvatar={handleSetCustomAvatar}

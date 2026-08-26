@@ -123,6 +123,11 @@ const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
 const { purchaseShopItem, equipShopItem } = require("./src/callable/shop");
+const {
+  saveUniformDesign,
+  equipUniformDesign,
+  deleteUniformDesign,
+} = require("./src/callable/uniformStudio");
 const { purchaseRetirementPlaque, purchaseHallBanner } = require("./src/callable/prestige");
 const { makeLegacyEndowment } = require("./src/callable/legacy");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
@@ -547,6 +552,11 @@ module.exports = {
 
   // Published articles -> Discord #news
   announceArticleToDiscord,
+
+  // Uniform Studio wardrobe
+  saveUniformDesign,
+  equipUniformDesign,
+  deleteUniformDesign,
 
   // Avatar Generation
   generateCorpsAvatar,

@@ -55,6 +55,10 @@ function pickDuplicateWinner(group) {
 // corps across seasons and through retire/unretire — it is NEVER season data.
 const PERSISTENT_IDENTITY_FIELDS = [
   "uniformDesign",
+  // Uniform Studio v2 equipped snapshot (corps.{class}.uniform) — the corps'
+  // identity uniform survives rollover and retire/unretire like its prose
+  // predecessor.
+  "uniform",
   "avatarUrl",
   "avatarGeneratedAt",
   "ensembleInfo",

@@ -485,6 +485,30 @@ await check(
   )
 );
 
+// The equipped Uniform Studio snapshot (corps.{class}.uniform) is written only
+// by the equipUniformDesign callable, which validates the design's shape and
+// size server-side — a direct client write could plant an oversized or
+// malformed payload on the world-readable profile doc.
+await freshSeed();
+await check(
+  'owner cannot plant a corps uniform snapshot directly (callable-only)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.worldClass.uniform': { designId: 'forged', figure: { skin: '#c9a074' } },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot plant a soundSport uniform snapshot directly (callable-only)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.soundSport.uniform': { designId: 'forged', figure: { skin: '#c9a074' } },
+    })
+  )
+);
+
 // seasonHistory feeds the public resume AND the lifetime Director Rating
 // leaderboard (placements-only) — a client-forged placement would mint
 // leaderboard rank. medals feed the trophy case. Both are archival-written.
@@ -824,6 +848,38 @@ await check(
   'owner cannot write an unlisted subcollection (backend only)',
   assertFails(
     setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/email_log/entry-2`), { forged: true })
+  )
+);
+
+// Uniform Studio wardrobe (users/{uid}/wardrobe): exactly the catch-all
+// contract, pinned here on purpose — owner-read, callable-only writes. If a
+// future rules edit widens the catch-all or gives wardrobe its own block,
+// these keep the write path server-mediated (the callables validate design
+// shape/size and enforce the wardrobe cap).
+const wardrobePath = `artifacts/${APP}/users/${ALICE}/wardrobe/design-1`;
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), profilePath), seedProfile);
+  await setDoc(doc(ctx.firestore(), wardrobePath), { schema: 2, name: 'Saved Look' });
+});
+
+await check(
+  'owner can read their own wardrobe designs',
+  assertSucceeds(getDoc(doc(authed(), wardrobePath)))
+);
+
+await check(
+  "another user cannot read someone else's wardrobe",
+  assertFails(getDoc(doc(mallory(), wardrobePath)))
+);
+
+await check(
+  'owner cannot write a wardrobe design directly (callable-only)',
+  assertFails(
+    setDoc(doc(authed(), `artifacts/${APP}/users/${ALICE}/wardrobe/design-2`), {
+      schema: 2,
+      name: 'Forged',
+    })
   )
 );
 

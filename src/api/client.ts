@@ -289,6 +289,11 @@ export const paths = {
   // analysis reads this private store instead.
   userCaptionLedgerDays: (uid: string, seasonUid: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/captionLedger/${seasonUid}/days`,
+  // Uniform Studio wardrobe: saved v2 designs, owner-read, written only by
+  // the wardrobe callables (functions/src/callable/uniformStudio.js).
+  userWardrobe: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/wardrobe`,
+  userWardrobeDesign: (uid: string, designId: string) =>
+    `artifacts/${DATA_NAMESPACE}/users/${uid}/wardrobe/${designId}`,
 
   // Season paths
   season: () => `game-settings/season`,

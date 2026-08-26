@@ -162,7 +162,6 @@ const Dashboard = () => {
     setShowConceptModal,
     setShowMoveCorps,
     setShowRetireConfirm,
-    setShowUniformDesign,
     setShowStreakModal,
     setShowWalletModal,
     handleSeasonSetupFinish,
@@ -618,7 +617,7 @@ const Dashboard = () => {
                     corpsClass={activeCorpsClass}
                     loading={scoresLoading}
                     avatarUrl={activeCorps.avatarUrl}
-                    onDesignUniform={() => setShowUniformDesign(true)}
+                    onDesignUniform={() => navigate(`/studio?corps=${activeCorpsClass}`)}
                     bestInShowCount={bestInShowCount}
                     canManage={canEditCorpsThisSeason(activeCorps)}
                     canMove={

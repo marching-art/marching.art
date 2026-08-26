@@ -54,6 +54,7 @@ import {
   SupporterFlair,
 } from './DirectorProfileParts';
 import type { AvatarAction } from './DirectorProfileParts';
+import CorpsIdentitySection from './CorpsIdentitySection';
 import { getSupporterTier } from '../../utils/supporterTiers';
 import {
   getDirectorStatus,
@@ -609,6 +610,11 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
           </div>
         );
       })()}
+
+      {/* ================================================================== */}
+      {/* CORPS IDENTITY — equipped uniforms per corps (Uniform Studio) */}
+      {/* ================================================================== */}
+      <CorpsIdentitySection corps={profile.corps} isOwnProfile={isOwnProfile} />
 
       {/* ================================================================== */}
       {/* CONTENT GRID - Compact 3-column */}
