@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-08-26-studio-asymmetric-limb-crash-fix",
+    "date": "2026-08-26",
+    "title": "The Studio no longer crashes on split-side arms or legs",
+    "category": "fix",
+    "summary": "Turning off \"Link sides\" and customizing just one arm or one leg could throw a \"Studio Error\" that took over the page and forced you to close the tab — and a design saved in that state crashed every time you reopened it. Asymmetric limbs now render cleanly, and any design already saved that way loads and edits normally again."
+  },
+  {
     "id": "2026-08-26-uniform-save-fade-fix",
     "date": "2026-08-26",
     "title": "Saving a uniform with a sleeve fade works again",

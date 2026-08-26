@@ -86,9 +86,16 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
   const setArm = (side: 'armL' | 'armR', patch: Partial<ArmConfig>) => {
     const current = armForEdit(figure, side);
     const next: ArmConfig = { ...current, ...patch };
+    // Always write BOTH sides. When unlinked, the untouched side is written as
+    // its current (normalized) config rather than left out — omitting it once
+    // cleared the symmetric shorthands and left that side `undefined`, which
+    // crashed the renderer (see normalizeFigure).
     const both = armsLinked
       ? { armL: next, armR: { ...armForEdit(figure, 'armR'), ...patch } }
-      : { [side]: next };
+      : {
+          armL: side === 'armL' ? next : armForEdit(figure, 'armL'),
+          armR: side === 'armR' ? next : armForEdit(figure, 'armR'),
+        };
     setFigure({
       ...both,
       // clear the symmetric shorthands so per-side configs are authoritative
@@ -102,9 +109,14 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
   const setLeg = (side: 'legL' | 'legR', patch: Partial<LegConfig>) => {
     const current = legForEdit(figure, side);
     const next: LegConfig = { ...current, ...patch };
+    // Same as setArm: write both sides so per-side editing never leaves the
+    // untouched leg `undefined` after the symmetric shorthands are cleared.
     const both = legsLinked
       ? { legL: next, legR: { ...legForEdit(figure, 'legR'), ...patch } }
-      : { [side]: next };
+      : {
+          legL: side === 'legL' ? next : legForEdit(figure, 'legL'),
+          legR: side === 'legR' ? next : legForEdit(figure, 'legR'),
+        };
     setFigure({ ...both, pants: undefined, stripe: undefined });
   };
 
