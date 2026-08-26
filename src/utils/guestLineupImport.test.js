@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for the guest-draft import that fulfills the registration gate's
 // "your preview progress will be saved" promise.
 import { describe, test, expect } from 'vitest';
