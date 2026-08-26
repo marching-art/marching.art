@@ -24,6 +24,8 @@ interface CorpsIdentitySectionProps {
 }
 
 interface IdentityCard {
+  /** Unique card key — `${classKey}` or `${classKey}-alt`. */
+  cardKey: string;
   classKey: string;
   corpsName: string;
   figure: EquippedUniform['figure'];
@@ -47,10 +49,11 @@ export default function CorpsIdentitySection({ corps, isOwnProfile }: CorpsIdent
     const out: IdentityCard[] = [];
     for (const classKey of PROFILE_CORPS_CLASS_ORDER) {
       const entry = resolveCorpsForClass(corps, classKey) as
-        (CorpsData & { uniform?: EquippedUniform }) | undefined;
+        (CorpsData & { uniform?: EquippedUniform; uniformAlt?: EquippedUniform }) | undefined;
       if (!entry?.corpsName) continue;
       if (entry.uniform) {
         out.push({
+          cardKey: classKey,
           classKey,
           corpsName: entry.corpsName,
           figure: entry.uniform.figure,
@@ -61,12 +64,26 @@ export default function CorpsIdentitySection({ corps, isOwnProfile }: CorpsIdent
       } else if (entry.uniformDesign?.primaryColor) {
         const draft = migrateV1Design(entry.uniformDesign, entry.corpsName);
         out.push({
+          cardKey: classKey,
           classKey,
           corpsName: entry.corpsName,
           figure: draft.figure,
           colorway: draft.colorway,
           lookName: 'Draft from written design',
           isDraft: true,
+        });
+      }
+      // The optional second look (finals week / exhibition) rides beside the
+      // identity uniform as its own card.
+      if (entry.uniformAlt) {
+        out.push({
+          cardKey: `${classKey}-alt`,
+          classKey,
+          corpsName: entry.corpsName,
+          figure: entry.uniformAlt.figure,
+          colorway: entry.uniformAlt.colorway,
+          lookName: `Alt · ${entry.uniformAlt.name}`,
+          isDraft: false,
         });
       }
     }
@@ -128,14 +145,14 @@ export default function CorpsIdentitySection({ corps, isOwnProfile }: CorpsIdent
               );
               return isOwnProfile ? (
                 <Link
-                  key={card.classKey}
+                  key={card.cardKey}
                   to={`/studio?corps=${card.classKey}`}
                   className="block bg-background border border-line hover:border-interactive p-2"
                 >
                   {body}
                 </Link>
               ) : (
-                <div key={card.classKey} className="bg-background border border-line p-2">
+                <div key={card.cardKey} className="bg-background border border-line p-2">
                   {body}
                 </div>
               );

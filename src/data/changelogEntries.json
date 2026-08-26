@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-08-26-scores-colorway-alt-look",
+    "date": "2026-08-26",
+    "title": "Your colors on the scoreboard — and an alternate look",
+    "category": "feature",
+    "summary": "Two finishing touches for uniform identity. Score sheets and season standings now show each corps' equipped colorway as a slim three-color bar beside its name — equip a design and your colors march onto the scoreboard from your next scored show. And every corps gains an optional alternate look: a second equipped uniform for finals week or exhibitions, shown alongside your identity uniform on your profile.",
+    "highlights": [
+      "The colorway bar appears automatically wherever scores and standings render once a design is equipped.",
+      "Equip as alt in the Studio sets the second look; Clear alt removes it. Your primary stays the corps' identity everywhere else.",
+      "Both looks survive season rollover and retiring/unretiring a corps."
+    ]
+  },
+  {
+    "id": "2026-08-26-aussie-brim-angle",
+    "date": "2026-08-26",
+    "title": "The aussie brim sits truer",
+    "category": "fix",
+    "summary": "The aussie slouch hat's brim rode at too steep an angle — the open side drooped. It now sits flatter with the same sweep up into the pinned side, feather and mirror included."
+  },
+  {
     "id": "2026-08-26-badges-blades",
     "date": "2026-08-26",
     "title": "Chest badges and the '93 triangle blade",

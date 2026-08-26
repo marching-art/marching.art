@@ -40,7 +40,9 @@ const RECAPS = [
       {
         eventName: "Night Two",
         results: [
-          result("u1", "worldClass", "Crimson Cadence", 90),
+          result("u1", "worldClass", "Crimson Cadence", 90, {
+            colors: ["#6d1a26", "#d9a41c", "#ece2cc"],
+          }),
           result("u2", "worldClass", "Golden Empire", 85),
         ],
       },
@@ -59,6 +61,12 @@ describe("buildSeasonStandings", () => {
     assert.equal(world[0].totalScore, 90);
     assert.equal(world[1].corpsName, "Golden Empire");
     assert.equal(world[1].rank, 2);
+  });
+
+  test("colorway strip rides from the latest result; absent stays null", () => {
+    const world = classes.worldClass;
+    assert.deepEqual(world[0].colors, ["#6d1a26", "#d9a41c", "#ece2cc"]);
+    assert.equal(world[1].colors, null);
   });
 
   test("history is most-recent-first and drives the rank delta contract", () => {

@@ -73,6 +73,8 @@ export type LeaderboardEntry = {
   uid: string;
   displayName?: string;
   avatarUrl: string | null;
+  /** Equipped-uniform colorway strip: [primary, secondary, accent] hexes. */
+  colors?: string[] | null;
   scores: AggregatedScoreEntry[];
   totalScore: number;
   showCount: number;
@@ -398,6 +400,7 @@ const standingsToLeaderboard = (
         uid: entry.uid,
         displayName: entry.displayName,
         avatarUrl: entry.avatarUrl,
+        colors: entry.colors ?? null,
         corpsClass: entry.corpsClass as CorpsClass,
         captions: {} as CaptionScores,
         eventName: '',
@@ -650,6 +653,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
       uid: string;
       displayName?: string;
       avatarUrl: string | null;
+      colors: string[] | null;
       scores: AggregatedScoreEntry[];
       totalScore: number;
       showCount: number;
@@ -668,6 +672,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
             uid: score.uid,
             displayName: score.displayName,
             avatarUrl: score.avatarUrl || null,
+            colors: score.colors || null,
             scores: [],
             totalScore: 0,
             showCount: 0,

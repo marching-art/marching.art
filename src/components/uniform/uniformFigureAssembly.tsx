@@ -283,9 +283,12 @@ function aussie(cw: NormalizedFigure): Node[] {
   if (h.band)
     out.push(p('au-b', 'M102.9,35 L137.1,35 L138,43.4 Q120,49,102.2,43.4 Z', safeHex(h.band)));
   out.push(
-    // the brim: one bold diagonal blade, low over the open side, rising to the pin
-    p('au-br', 'M66,38 Q102,31,137,16 L141,23 Q106,39,70,46 Z', darkenHex(body, 0.05)),
-    shade('au-brs', 'M70,42 Q104,37,139,21 L141,23 Q106,39,70,46 Z', 0.22),
+    // the brim: one bold diagonal blade, low over the open side, rising to the
+    // pin — rotated a touch flatter so the open side doesn't droop
+    <g key="au-brg" transform="rotate(8 103.5 31)">
+      {p('au-br', 'M66,38 Q102,31,137,16 L141,23 Q106,39,70,46 Z', darkenHex(body, 0.05))}
+      {shade('au-brs', 'M70,42 Q104,37,139,21 L141,23 Q106,39,70,46 Z', 0.22)}
+    </g>,
     // the fold: the brim's continuation, pinned up beside the crown
     p('au-up', 'M131,0 Q153,5,150,32 Q142,36,136,25 Q138,9,131,0 Z', lightenHex(body, 0.12)),
     strokeP('au-ue', 'M131,0 Q153,5,150,32', darkenHex(body, 0.32), 1.8),

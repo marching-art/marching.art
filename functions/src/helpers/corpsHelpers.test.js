@@ -110,6 +110,8 @@ describe("pickPersistentIdentity", () => {
     const corps = {
       corpsName: "X", // season data — must NOT copy
       uniformDesign: { hat: "shako" },
+      uniform: { designId: "d1" },
+      uniformAlt: { designId: "d2" },
       avatarUrl: "http://a",
       showConcept: "Space",
       biography: undefined, // undefined — must omit
@@ -117,6 +119,8 @@ describe("pickPersistentIdentity", () => {
     const out = pickPersistentIdentity(corps);
     assert.deepEqual(out, {
       uniformDesign: { hat: "shako" },
+      uniform: { designId: "d1" },
+      uniformAlt: { designId: "d2" },
       avatarUrl: "http://a",
       showConcept: "Space",
     });

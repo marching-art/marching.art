@@ -86,7 +86,29 @@ export const BoxScoreHead = ({
   </div>
 );
 
-// Place · avatar · corps name · director credit (linked).
+// Equipped-uniform colorway as a slim vertical tricolor bar beside the corps
+// name — the score sheets are where a design is seen most, so an equipped
+// Studio look shows its colors on every row. Renders nothing until the row
+// carries a validated [primary, secondary, accent] strip.
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+export const ColorwayStrip = ({ colors }: { colors?: string[] | null }) => {
+  if (!Array.isArray(colors) || colors.length !== 3 || !colors.every((c) => HEX_RE.test(c))) {
+    return null;
+  }
+  return (
+    <span
+      className="flex flex-col w-1 h-[18px] flex-shrink-0"
+      title="Corps colors"
+      aria-hidden="true"
+    >
+      {colors.map((c, i) => (
+        <span key={i} className="flex-1" style={{ backgroundColor: c }} />
+      ))}
+    </span>
+  );
+};
+
+// Place · avatar · colorway strip · corps name · director credit (linked).
 export const CorpsIdentity = ({
   place,
   name,
@@ -95,6 +117,7 @@ export const CorpsIdentity = ({
   uid,
   tag,
   avatarUrl,
+  colors,
 }: {
   place?: ReactNode;
   name?: string | null;
@@ -103,10 +126,12 @@ export const CorpsIdentity = ({
   uid?: string | null;
   tag?: ReactNode;
   avatarUrl?: string | null;
+  colors?: string[] | null;
 }) => (
   <div className="flex-1 min-w-0 flex items-center gap-2">
     <span className="text-[11px] text-muted tabular-nums flex-shrink-0">{place}.</span>
     <TeamAvatar name={name} logoUrl={avatarUrl} size="xs" />
+    <ColorwayStrip colors={colors} />
     <div className="min-w-0">
       <div className="flex items-baseline gap-1.5 min-w-0">
         <span

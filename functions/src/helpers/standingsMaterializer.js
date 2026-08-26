@@ -93,6 +93,7 @@ function buildSeasonStandings(recapDays) {
             uid: result.uid,
             displayName: result.displayName || "",
             avatarUrl: result.avatarUrl || null,
+            colors: result.colors || null,
             history: [],
             showCount: 0,
           };
@@ -136,6 +137,7 @@ function buildSeasonStandings(recapDays) {
         uid: entry.uid,
         displayName: entry.displayName,
         avatarUrl: entry.avatarUrl,
+        colors: entry.colors,
         score: latest ? latest.score : 0,
         totalScore: latest ? latest.score : 0,
         showCount: entry.showCount,

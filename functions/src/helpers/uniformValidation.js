@@ -67,6 +67,20 @@ function isHex(v) {
 }
 
 /**
+ * Compact [primary, secondary, accent] hex triple for score-sheet colorway
+ * strips, from an equipped design's colorway. Null unless all three are valid
+ * hex — recap/standings rows are world-readable, so nothing unvalidated rides
+ * along.
+ * @param {any} colorway
+ * @returns {string[] | null}
+ */
+function colorwayStrip(colorway) {
+  if (!colorway || typeof colorway !== "object") return null;
+  const trio = [colorway.primary, colorway.secondary, colorway.accent];
+  return trio.every(isHex) ? trio.map((h) => h.toLowerCase()) : null;
+}
+
+/**
  * A fill is a hex color or a reference to a procedural def: a builtin print
  * ref or a url:<gradId> naming a gradient declared in figure.grads.
  * @param {unknown} v
@@ -661,4 +675,5 @@ module.exports = {
   sanitizeDesign,
   deriveV1Compat,
   proseColorName,
+  colorwayStrip,
 };

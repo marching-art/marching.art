@@ -210,6 +210,8 @@ export interface SeasonStandingsEntry {
   uid: string;
   displayName?: string;
   avatarUrl: string | null;
+  /** Equipped-uniform colorway strip: [primary, secondary, accent] hexes. */
+  colors?: string[] | null;
   score: number;
   totalScore: number;
   showCount: number;

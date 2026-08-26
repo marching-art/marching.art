@@ -228,6 +228,7 @@ const RecapDataGrid = memo(
                       displayName={score.displayName}
                       uid={score.uid}
                       avatarUrl={score.avatarUrl}
+                      colors={score.colors}
                       tag={advances ? <AdvancesTag toDay={advancement.advancesToDay} /> : null}
                     />
                     <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
@@ -363,6 +364,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
                       displayName={row.displayName}
                       uid={row.uid}
                       avatarUrl={row.avatarUrl}
+                      colors={row.colors}
                     />
                     <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                       <CaptionValue value={captions?.ge} isTop={captions?.ge === sectionTops.ge} />
@@ -663,6 +665,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                 displayName={entry.displayName}
                 uid={entry.uid}
                 avatarUrl={entry.avatarUrl}
+                colors={entry.colors}
               />
               <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                 <CaptionValue

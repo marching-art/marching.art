@@ -128,11 +128,12 @@ function corpsClassUntouched(corpsClass) {
                // setCorpsAvatarFromUrl also checks the custom-avatar ban — a
                // direct client write would bypass all of that.
                'avatarUrl', 'avatarSource',
-               // The equipped Uniform Studio snapshot is written only by the
-               // equipUniformDesign callable, which validates the design's
-               // shape/size server-side; a direct client write could plant an
-               // oversized or malformed payload on the world-readable profile.
-               'uniform']);
+               // The equipped Uniform Studio snapshots (primary + alternate
+               // look) are written only by the equipUniformDesign callable,
+               // which validates the design's shape/size server-side; a direct
+               // client write could plant an oversized or malformed payload on
+               // the world-readable profile.
+               'uniform', 'uniformAlt']);
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
@@ -171,11 +172,14 @@ function touchesProtectedCorpsFields() {
      // guard above); soundSport gets the same server-only treatment.
      request.resource.data.get(['corps', 'soundSport', 'avatarUrl'], null)
        != resource.data.get(['corps', 'soundSport', 'avatarUrl'], null) ||
-     // The equipped Uniform Studio snapshot is written only by the
-     // equipUniformDesign callable (see the competitive-class guard above);
-     // soundSport gets the same server-only treatment.
+     // The equipped Uniform Studio snapshots (primary + alternate) are
+     // written only by the equipUniformDesign callable (see the
+     // competitive-class guard above); soundSport gets the same server-only
+     // treatment.
      request.resource.data.get(['corps', 'soundSport', 'uniform'], null)
-       != resource.data.get(['corps', 'soundSport', 'uniform'], null));
+       != resource.data.get(['corps', 'soundSport', 'uniform'], null) ||
+     request.resource.data.get(['corps', 'soundSport', 'uniformAlt'], null)
+       != resource.data.get(['corps', 'soundSport', 'uniformAlt'], null));
 }
 
 // SIZE/TYPE CAPS on owner-writable free-text profile fields. profile/data is

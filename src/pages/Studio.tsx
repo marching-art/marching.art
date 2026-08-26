@@ -140,9 +140,9 @@ export default function Studio() {
     }
   };
 
-  const doEquip = async () => {
+  const doEquip = async (slot: 'primary' | 'alternate' = 'primary') => {
     if (!draft || !activeClass) return;
-    setBusy('equip');
+    setBusy(slot === 'alternate' ? 'equipAlt' : 'equip');
     try {
       // equip always works from a saved design; save first when needed
       let id = loadedId;
@@ -156,11 +156,27 @@ export default function Studio() {
         savedJson.current = JSON.stringify(draft);
         void refreshWardrobe();
       }
-      await equipUniformDesign({ designId: id!, corpsClass: activeClass });
+      await equipUniformDesign({ designId: id!, corpsClass: activeClass, slot });
       // the profile store's realtime listener picks up the new snapshot
-      toast.success(`Equipped on ${activeOption?.corps.corpsName || 'your corps'}`);
+      const corpsName = activeOption?.corps.corpsName || 'your corps';
+      toast.success(
+        slot === 'alternate' ? `Alternate look set for ${corpsName}` : `Equipped on ${corpsName}`
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to equip design');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const doClearAlt = async () => {
+    if (!activeClass) return;
+    setBusy('clearAlt');
+    try {
+      await equipUniformDesign({ designId: null, corpsClass: activeClass, slot: 'alternate' });
+      toast.success('Alternate look cleared');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to clear the alternate look');
     } finally {
       setBusy(null);
     }
@@ -503,11 +519,39 @@ export default function Studio() {
                     )}
                     Share card
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => void doEquip('alternate')}
+                    disabled={busy !== null}
+                    title="Set this design as the corps' optional second look (finals week / exhibition)"
+                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    {busy === 'equipAlt' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
+                    Equip as alt
+                  </button>
+                  {activeOption?.corps.uniformAlt && (
+                    <button
+                      type="button"
+                      onClick={() => void doClearAlt()}
+                      disabled={busy !== null}
+                      title={`Remove the alternate look (currently ${activeOption.corps.uniformAlt.name})`}
+                      className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
+                    >
+                      {busy === 'clearAlt' ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : null}
+                      Clear alt
+                    </button>
+                  )}
                 </div>
                 <p className="text-[10px] text-muted mt-2">
                   Saving stores the design in your wardrobe. Equipping puts it on{' '}
-                  {activeOption?.corps.corpsName} everywhere. The AI avatar is optional and never
-                  automatic.
+                  {activeOption?.corps.corpsName} everywhere; the alternate is an optional second
+                  look shown on your profile. The AI avatar is optional and never automatic.
                 </p>
               </div>
 

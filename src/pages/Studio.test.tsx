@@ -66,6 +66,8 @@ describe('Studio page', () => {
     expect(await screen.findByText(/Rebuilt in the Studio/i)).toBeInTheDocument();
     expect(screen.getAllByRole('img').length).toBeGreaterThan(0);
     expect(screen.getByText(/Corps colorway/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Equip/i })).toBeInTheDocument();
+    // primary equip plus the alternate-look slot (docs/UNIFORM_STUDIO.md §6)
+    expect(screen.getByRole('button', { name: /^Equip$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Equip as alt/i })).toBeInTheDocument();
   });
 });

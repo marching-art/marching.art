@@ -11,6 +11,7 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
@@ -116,25 +117,29 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Equip a saved design on one of the caller's corps: writes the renderable
- * snapshot to corps.{class}.uniform and refreshes the v1 prose fields the AI
- * pipeline reads. Does NOT touch avatarUrl or profileAvatarCorps.
+ * Equip a saved design on one of the caller's corps. The default (primary)
+ * slot writes the renderable snapshot to corps.{class}.uniform and refreshes
+ * the v1 prose fields the AI pipeline reads. slot:"alternate" fills the
+ * optional second look at corps.{class}.uniformAlt (finals week / exhibition
+ * — the home/away pattern, docs/UNIFORM_STUDIO.md §6) and leaves the primary
+ * identity — including the prose fields — untouched; passing designId:null
+ * with slot:"alternate" clears it. Does NOT touch avatarUrl or
+ * profileAvatarCorps.
  */
 const equipUniformDesign = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
-  const { designId, corpsClass } = request.data || {};
-  if (!designId || !DESIGN_ID_RE.test(String(designId))) {
+  const { designId, corpsClass, slot } = request.data || {};
+  if (slot != null && slot !== "primary" && slot !== "alternate") {
+    throw new HttpsError("invalid-argument", "Invalid uniform slot.");
+  }
+  const alternate = slot === "alternate";
+  const clearingAlt = alternate && designId == null;
+  if (!clearingAlt && (!designId || !DESIGN_ID_RE.test(String(designId)))) {
     throw new HttpsError("invalid-argument", "Invalid design id.");
   }
 
   const db = getDb();
   await assertWriteBudget(db, uid, "uniformStudio");
-
-  const designDoc = await db.doc(paths.userWardrobeDesign(uid, String(designId))).get();
-  if (!designDoc.exists) {
-    throw new HttpsError("not-found", "That design is not in your wardrobe.");
-  }
-  const design = designDoc.data();
 
   const profileRef = db.doc(paths.userProfile(uid));
   const profileDoc = await profileRef.get();
@@ -147,6 +152,17 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
     throw new HttpsError("failed-precondition", "You have no registered corps in that class.");
   }
 
+  if (clearingAlt) {
+    await profileRef.update({ [`corps.${storedKey}.uniformAlt`]: FieldValue.delete() });
+    return { message: "Alternate look cleared." };
+  }
+
+  const designDoc = await db.doc(paths.userWardrobeDesign(uid, String(designId))).get();
+  if (!designDoc.exists) {
+    throw new HttpsError("not-found", "That design is not in your wardrobe.");
+  }
+  const design = designDoc.data();
+
   const snapshot = {
     designId: designDoc.id,
     name: design.name,
@@ -154,8 +170,13 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
     figure: design.figure,
     equippedAt: new Date().toISOString(),
   };
-  const v1Compat = deriveV1Compat(design, corpsMap[storedKey].uniformDesign);
 
+  if (alternate) {
+    await profileRef.update({ [`corps.${storedKey}.uniformAlt`]: snapshot });
+    return { message: "Alternate look equipped." };
+  }
+
+  const v1Compat = deriveV1Compat(design, corpsMap[storedKey].uniformDesign);
   await profileRef.update({
     [`corps.${storedKey}.uniform`]: snapshot,
     [`corps.${storedKey}.uniformDesign`]: v1Compat,

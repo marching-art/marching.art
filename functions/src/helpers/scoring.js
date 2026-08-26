@@ -35,6 +35,7 @@ const {
 const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./weeklyMatchups");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { collectOuting, writeCaptionLedgerDocs } = require("./captionLedger");
+const { colorwayStrip } = require("./uniformValidation");
 const { getCompletedCalendarDay } = require("./gameDay");
 const { updateRecordsFromRecap } = require("./gameRecords");
 const { writeSeasonStandings } = require("./standingsMaterializer");
@@ -338,6 +339,9 @@ function scoreShowsForDay({
       corpsClass: corpsClass,
       corpsName: corps.corpsName,
       avatarUrl: corps.avatarUrl || null,
+      // Equipped Uniform Studio colorway as a [primary, secondary, accent]
+      // strip for the score sheets; null (no strip) until a design is equipped.
+      colors: colorwayStrip(corps.uniform?.colorway),
       totalScore: totalShowScore,
       geScore, visualScore, musicScore,
     });
