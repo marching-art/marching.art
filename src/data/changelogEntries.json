@@ -7,6 +7,13 @@
     "summary": "Turning off \"Link sides\" and customizing just one arm or one leg could throw a \"Studio Error\" that took over the page and forced you to close the tab — and a design saved in that state crashed every time you reopened it. Asymmetric limbs now render cleanly, and any design already saved that way loads and edits normally again."
   },
   {
+    "id": "2026-08-26-green-satin-aussie",
+    "date": "2026-08-26",
+    "title": "Green Satin preset trades its shako for a white aussie",
+    "category": "improvement",
+    "summary": "The Green Satin classic preset now marches in a white aussie slouch hat instead of the black shako — a cleaner, brighter crown over the satin jacket. Load the preset to see the new look, or swap any hat as always."
+  },
+  {
     "id": "2026-08-26-uniform-save-fade-fix",
     "date": "2026-08-26",
     "title": "Saving a uniform with a sleeve fade works again",

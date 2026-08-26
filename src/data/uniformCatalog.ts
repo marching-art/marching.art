@@ -286,9 +286,8 @@ const greenSatin: FigureConfig = {
   buckle: '#d7dde2',
   pants: '#17181a',
   shoe: '#141414',
-  hatType: 'shako',
-  hat: { body: '#161618', band: '#e8e6e0' },
-  plume: { type: 'upright', color: '#eef0ee' },
+  hatType: 'aussie',
+  hat: { body: '#f2f0ea', band: '#161618' },
 };
 
 const cavalry: FigureConfig = {

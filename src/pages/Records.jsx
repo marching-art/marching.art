@@ -53,7 +53,7 @@ const CATEGORIES = [
 /**
  * @param {{
  *   category: { icon: React.ComponentType<{ className?: string }>, color: string, label: string },
- *   record: any,
+ *   record: import('firebase/firestore').DocumentData | null,
  * }} props
  */
 const RecordRow = ({ category, record }) => {
