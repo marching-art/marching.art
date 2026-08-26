@@ -14,6 +14,8 @@ import { showCoinGain } from '../../xpFeedbackTrigger';
 // (react-refresh) — the Director's Report imports it from there too.
 import { TIERS } from './seasonLadderTiers';
 
+/** @typedef {import('../../../utils/seasonLadder').LadderTier} LadderTier */
+
 const SeasonLadderPanel = memo(
   /** @param {{profile: any, seasonUid?: string|null}} props */
   ({ profile, seasonUid }) => {
@@ -41,7 +43,7 @@ const SeasonLadderPanel = memo(
 
     if (!profile) return null;
 
-    /** @param {{ tier: number, xp: number, coin: number }} tier */
+    /** @param {LadderTier} tier */
     const handleClaim = async (tier) => {
       setClaiming(tier.tier);
       try {
@@ -53,7 +55,7 @@ const SeasonLadderPanel = memo(
             showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Could not claim tier');
+        toast.error((error instanceof Error && error.message) || 'Could not claim tier');
       } finally {
         setClaiming(null);
       }
