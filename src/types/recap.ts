@@ -32,6 +32,8 @@ export type RecapDate = Timestamp | Date | string;
 export interface RecapResult extends ShowResult {
   displayName?: string;
   avatarUrl?: string | null;
+  /** Equipped-uniform colorway strip: [primary, secondary, accent] hexes. */
+  colors?: string[] | null;
   /** SoundSport medal ('Gold' | 'Silver' | 'Bronze') when awarded. */
   medal?: string;
   /** Legacy alias for totalScore on older docs — read via getScoreValue(). */
@@ -100,6 +102,8 @@ export interface NormalizedScore {
   uid: string;
   displayName?: string;
   avatarUrl: string | null;
+  /** Equipped-uniform colorway strip: [primary, secondary, accent] hexes. */
+  colors: string[] | null;
   score: number;
   totalScore: number;
   geScore: number;

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Supporter section of the settings modal.
 //
 // Non-supporters see the "buy me a coffee" pitch (the tier ladder + the BMAC
@@ -19,6 +18,17 @@ import { BMAC_URL, SUPPORTER_TIERS, getSupporterTier } from '../../utils/support
 
 const boxClass = 'bg-surface-sunken border border-line p-3 rounded-none';
 
+/**
+ * @param {{
+ *   supporter?: {
+ *     tier?: string,
+ *     anonymous?: boolean,
+ *     message?: string,
+ *     until?: { toDate?: () => Date },
+ *   } | null,
+ *   onRefresh?: () => void,
+ * }} props
+ */
 function SupporterPanel({ supporter, onRefresh }) {
   const tier = supporter?.tier ? getSupporterTier(supporter.tier) : null;
   const isFriend = supporter?.tier === 'friend';
@@ -47,7 +57,7 @@ function SupporterPanel({ supporter, onRefresh }) {
       setShowLink(false);
       onRefresh?.();
     } catch (err) {
-      toast.error(err?.message || "Couldn't link that email.");
+      toast.error(err instanceof Error ? err.message : "Couldn't link that email.");
     } finally {
       setLinking(false);
     }
@@ -61,7 +71,7 @@ function SupporterPanel({ supporter, onRefresh }) {
       toast.success(next ? 'Hidden from the wall.' : "You're on the wall!");
       onRefresh?.();
     } catch (err) {
-      toast.error(err?.message || "Couldn't update visibility.");
+      toast.error(err instanceof Error ? err.message : "Couldn't update visibility.");
     } finally {
       setAnonSaving(false);
     }
@@ -74,7 +84,7 @@ function SupporterPanel({ supporter, onRefresh }) {
       toast.success('Wall message saved.');
       onRefresh?.();
     } catch (err) {
-      toast.error(err?.message || "Couldn't save your message.");
+      toast.error(err instanceof Error ? err.message : "Couldn't save your message.");
     } finally {
       setMsgSaving(false);
     }
@@ -145,7 +155,7 @@ function SupporterPanel({ supporter, onRefresh }) {
           </p>
 
           {/* Corps Angel wall message */}
-          {supporter.tier === 'corps_angel' && (
+          {supporter?.tier === 'corps_angel' && (
             <div className="mt-3 pt-3 border-t border-line">
               <label className="text-[10px] font-bold text-muted uppercase tracking-wider mb-1 block">
                 Wall message (Corps Angel)

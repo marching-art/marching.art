@@ -13,6 +13,7 @@ const {
   MAX_WARDROBE_DESIGNS,
   DESIGN_ID_RE,
   UNIFORM_CODE_RE,
+  colorwayStrip,
 } = require("./uniformValidation");
 
 /**
@@ -206,6 +207,18 @@ describe("validateDesign", () => {
     const d6 = validDesign();
     d6.figure.hat = { body: "#17171a", ornament: "rect" };
     assert.deepEqual(validateDesign(d6), []);
+  });
+
+  test("colorwayStrip emits a validated hex triple or null", () => {
+    assert.deepEqual(colorwayStrip({ primary: "#6D1A26", secondary: "#d9a41c", accent: "#ece2cc" }), [
+      "#6d1a26",
+      "#d9a41c",
+      "#ece2cc",
+    ]);
+    assert.equal(colorwayStrip(null), null);
+    assert.equal(colorwayStrip("maroon"), null);
+    assert.equal(colorwayStrip({ primary: "#6d1a26", secondary: "gold", accent: "#ece2cc" }), null);
+    assert.equal(colorwayStrip({ primary: "#6d1a26", secondary: "#d9a41c" }), null);
   });
 
   test("accepts printColors overrides for every procedural surface", () => {

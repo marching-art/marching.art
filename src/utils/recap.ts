@@ -77,6 +77,7 @@ export function normalizeShowResult(result: RecapResult): NormalizedScore {
     uid: result.uid,
     displayName: result.displayName,
     avatarUrl: result.avatarUrl || null,
+    colors: result.colors || null,
     score: result.totalScore || 0,
     totalScore: result.totalScore || 0,
     geScore: result.geScore || 0,

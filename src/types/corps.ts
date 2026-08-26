@@ -76,6 +76,11 @@ export interface CorpsData {
   // Renderable by UniformFigure on any surface without an extra read.
   uniform?: import('./uniform').EquippedUniform;
 
+  // Optional alternate look (finals week / exhibition — the home/away slot).
+  // Same shape and server-only write path as `uniform`; display-only, the
+  // primary stays the corps' identity everywhere else.
+  uniformAlt?: import('./uniform').EquippedUniform;
+
   // Corps Avatar (AI-generated based on uniform design, preserved across seasons)
   avatarUrl?: string;
   avatarGeneratedAt?: string; // ISO timestamp of when avatar was generated
