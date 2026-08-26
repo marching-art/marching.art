@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // RECORDS - All-time Records Book
 // =============================================================================
@@ -51,6 +50,12 @@ const CATEGORIES = [
   { key: 'bestSeason', label: 'Best Season Total', icon: Crown, color: 'text-orange-400' },
 ];
 
+/**
+ * @param {{
+ *   category: { icon: React.ComponentType<{ className?: string }>, color: string, label: string },
+ *   record: import('firebase/firestore').DocumentData | null,
+ * }} props
+ */
 const RecordRow = ({ category, record }) => {
   const Icon = category.icon;
   return (
@@ -83,7 +88,9 @@ const RecordRow = ({ category, record }) => {
 };
 
 const Records = () => {
-  const [records, setRecords] = useState(null);
+  const [records, setRecords] = useState(
+    /** @type {import('firebase/firestore').DocumentData | null} */ (null)
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

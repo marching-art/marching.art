@@ -15,6 +15,24 @@ const {
   UNIFORM_CODE_RE,
 } = require("./uniformValidation");
 
+/**
+ * True if `value` contains an array nested directly inside another array — the
+ * exact shape Firestore refuses to store ("Cannot convert an array value in an
+ * array value"). Walks plain objects and arrays.
+ * @param {unknown} value
+ * @param {boolean} [insideArray] - true when `value` is itself an array element
+ */
+function hasNestedArray(value, insideArray = false) {
+  if (Array.isArray(value)) {
+    if (insideArray) return true;
+    return value.some((el) => hasNestedArray(el, true));
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).some((v) => hasNestedArray(v, false));
+  }
+  return false;
+}
+
 /** A minimal valid design (Classic Cadet reduced). */
 function validDesign() {
   return {
@@ -46,13 +64,30 @@ describe("validateDesign", () => {
 
   test("accepts per-side configs, grads, and print references", () => {
     const d = validDesign();
-    d.figure.grads = { ombre: [["0", "#16161a"], ["1", "#e8c25a"]] };
+    d.figure.grads = { ombre: [{ o: "0", c: "#16161a" }, { o: "1", c: "#e8c25a" }] };
     d.figure.armL = { type: "bare" };
     d.figure.armR = { type: "sleeve", fill: "url:ombre", detached: true };
     d.figure.legL = { fill: "url:foil", foil: true };
     d.figure.legR = { color: "#17161c", tattered: true };
     d.figure.foilLeg = true;
     assert.deepEqual(validateDesign(d), []);
+  });
+
+  test("accepts legacy [offset, hex] tuple stops for co-deploy tolerance", () => {
+    const d = validDesign();
+    d.figure.grads = { ombre: [["0", "#16161a"], ["1", "#e8c25a"]] };
+    d.figure.armR = { type: "sleeve", fill: "url:ombre" };
+    assert.deepEqual(validateDesign(d), []);
+  });
+
+  test("rejects malformed gradient stops", () => {
+    const d = validDesign();
+    d.figure.grads = { ombre: [{ o: "0", c: "not-a-hex" }, { o: "1", c: "#e8c25a" }] };
+    assert.match(validateDesign(d).join(";"), /grads\.ombre/);
+
+    const d2 = validDesign();
+    d2.figure.grads = { ombre: [{ c: "#16161a" }, { o: "1", c: "#e8c25a" }] };
+    assert.match(validateDesign(d2).join(";"), /grads\.ombre/);
   });
 
   test("rejects non-hex colors and script-ish values", () => {
@@ -188,10 +223,12 @@ describe("validateDesign", () => {
     assert.match(validateDesign(d2).join(";"), /additionalNotes/);
 
     const d3 = validDesign();
-    d3.figure.grads = { big: [["0", "#111111"], ["1", "#222222"]] };
     // inflate via many gradient entries beyond the cap
     d3.figure.grads = Object.fromEntries(
-      Array.from({ length: 5 }, (_, i) => [`g${i}`, [["0", "#111111"], ["1", "#222222"]]])
+      Array.from({ length: 5 }, (_, i) => [
+        `g${i}`,
+        [{ o: "0", c: "#111111" }, { o: "1", c: "#222222" }],
+      ])
     );
     assert.match(validateDesign(d3).join(";"), /at most 4/);
   });
@@ -216,6 +253,37 @@ describe("sanitizeDesign", () => {
     assert.equal(clean.figure.jacket, "#6d1a26");
     clean.figure.hat.body = "#000000";
     assert.equal(d.figure.hat.body, "#17171a"); // deep copy, no aliasing
+  });
+
+  test("stores gradient stops as objects, never Firestore-illegal nested arrays", () => {
+    // Regression: Firestore rejects an array nested directly inside another
+    // array, so a design with tuple stops threw a bare 500 on save. Stops must
+    // come out of sanitize as { o, c } objects — and NOTHING in the sanitized
+    // design may be an array whose elements are themselves arrays.
+    const d = validDesign();
+    d.figure.grads = {
+      ombre: [
+        { o: "0", c: "#16161a" },
+        { o: "1", c: "#e8c25a" },
+      ],
+    };
+    const clean = sanitizeDesign(d);
+    assert.deepEqual(clean.figure.grads.ombre, [
+      { o: "0", c: "#16161a" },
+      { o: "1", c: "#e8c25a" },
+    ]);
+    assert.ok(!hasNestedArray(clean), "sanitized design must not nest an array inside an array");
+  });
+
+  test("normalizes legacy tuple stops to objects on sanitize", () => {
+    const d = validDesign();
+    d.figure.grads = { ombre: [["0", "#16161a"], ["1", "#e8c25a"]] };
+    const clean = sanitizeDesign(d);
+    assert.deepEqual(clean.figure.grads.ombre, [
+      { o: "0", c: "#16161a" },
+      { o: "1", c: "#e8c25a" },
+    ]);
+    assert.ok(!hasNestedArray(clean));
   });
 
   test("keeps printColors through sanitize", () => {

@@ -90,6 +90,27 @@
     "summary": "Two fixes to the dashboard's Show Day strip. Its \"Full schedule & running order\" link now opens the running order for the show you're looking at, instead of dropping you on the top of your schedule. And the \"You're the encore\" banner now only appears when you're actually the encore at that show — it no longer showed up on any show day just because you were the encore somewhere else on your tour."
   },
   {
+    "id": "2026-08-26-studio-asymmetric-limb-crash-fix",
+    "date": "2026-08-26",
+    "title": "The Studio no longer crashes on split-side arms or legs",
+    "category": "fix",
+    "summary": "Turning off \"Link sides\" and customizing just one arm or one leg could throw a \"Studio Error\" that took over the page and forced you to close the tab — and a design saved in that state crashed every time you reopened it. Asymmetric limbs now render cleanly, and any design already saved that way loads and edits normally again."
+  },
+  {
+    "id": "2026-08-26-green-satin-aussie",
+    "date": "2026-08-26",
+    "title": "Green Satin preset trades its shako for a white aussie",
+    "category": "improvement",
+    "summary": "The Green Satin classic preset now marches in a white aussie slouch hat instead of the black shako — a cleaner, brighter crown over the satin jacket. Load the preset to see the new look, or swap any hat as always."
+  },
+  {
+    "id": "2026-08-26-uniform-save-fade-fix",
+    "date": "2026-08-26",
+    "title": "Saving a uniform with a sleeve fade works again",
+    "category": "fix",
+    "summary": "Designs that used a sleeve fade or any gradient failed to save in the Studio with an \"INTERNAL (500)\" error. Those looks now save, equip, and share like any other — no need to strip the fade first."
+  },
+  {
     "id": "2026-08-25-uniform-studio",
     "date": "2026-08-25",
     "title": "The Uniform Studio: design your corps' identity, live",

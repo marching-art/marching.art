@@ -190,8 +190,8 @@ export function buildDefs(cw: NormalizedFigure, uid: string): React.ReactElement
             x2="0"
             y2="250"
           >
-            {stops.map(([off, col]) => (
-              <stop key={off} offset={off} stopColor={safeHex(col)} />
+            {(Array.isArray(stops) ? stops : []).map((stop, i) => (
+              <stop key={i} offset={stop?.o} stopColor={safeHex(stop?.c)} />
             ))}
           </linearGradient>
         ))}

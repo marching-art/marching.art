@@ -82,6 +82,27 @@ function isBoundedString(v, max) {
 }
 
 /**
+ * Read a gradient stop's offset+color from either the stored object shape
+ * ({ o, c }) or a legacy [offset, hex] tuple. Stops are ALWAYS persisted as
+ * objects — Firestore rejects an array nested directly inside another array,
+ * so a tuple stop cannot be written (it surfaces to the client as a bare 500).
+ * Accepting both here keeps saves working during a client/function co-deploy,
+ * when an older cached client may still send tuples. Returns null for anything
+ * that is neither shape.
+ * @param {unknown} stop
+ * @returns {{ o: unknown, c: unknown } | null}
+ */
+function readGradStop(stop) {
+  if (Array.isArray(stop)) {
+    return stop.length === 2 ? { o: stop[0], c: stop[1] } : null;
+  }
+  if (stop && typeof stop === "object") {
+    return { o: /** @type {any} */ (stop).o, c: /** @type {any} */ (stop).c };
+  }
+  return null;
+}
+
+/**
  * Validate one arm config.
  * @param {any} a @param {Set<string>} gradRefs @param {string[]} errors @param {string} label
  */
@@ -234,13 +255,13 @@ function validateFigure(figure) {
           continue;
         }
         for (const stop of stops) {
+          const s = readGradStop(stop);
           if (
-            !Array.isArray(stop) ||
-            stop.length !== 2 ||
-            typeof stop[0] !== "string" ||
-            stop[0].length > 6 ||
-            Number.isNaN(Number(stop[0])) ||
-            !isHex(stop[1])
+            !s ||
+            typeof s.o !== "string" ||
+            s.o.length > 6 ||
+            Number.isNaN(Number(s.o)) ||
+            !isHex(s.c)
           ) {
             errors.push(`figure.grads.${id} has an invalid stop`);
             break;
@@ -405,6 +426,28 @@ function validateDesign(design) {
 }
 
 /**
+ * Normalize a validated grads map to the stored object-stop shape ({ o, c }),
+ * converting any legacy [offset, hex] tuples. Stops MUST be stored as objects:
+ * Firestore forbids an array nested directly inside another array, so a tuple
+ * stop cannot be persisted. Call only after validateFigure passed (every stop
+ * is a readable pair here). null passes through (clears the field).
+ * @param {any} grads
+ * @returns {Record<string, Array<{o: unknown, c: unknown}>> | null}
+ */
+function normalizeGrads(grads) {
+  if (grads == null) return null;
+  /** @type {Record<string, Array<{o: unknown, c: unknown}>>} */
+  const out = {};
+  for (const [id, stops] of Object.entries(grads)) {
+    out[id] = /** @type {any[]} */ (stops).map((stop) => {
+      const s = readGradStop(stop);
+      return { o: s.o, c: s.c };
+    });
+  }
+  return out;
+}
+
+/**
  * Deep-copy exactly the validated fields (unknown keys stripped). Call only
  * after validateDesign() returned no errors.
  * @param {any} design
@@ -413,9 +456,13 @@ function sanitizeDesign(design) {
   /** @type {Record<string, unknown>} */
   const figure = {};
   for (const key of Object.keys(FIGURE_FIELDS)) {
-    if (design.figure[key] !== undefined) {
-      figure[key] = JSON.parse(JSON.stringify(design.figure[key]));
-    }
+    if (design.figure[key] === undefined) continue;
+    // grads stops must be stored as objects, never [offset, hex] tuples —
+    // Firestore rejects an array nested directly in another array.
+    figure[key] =
+      key === "grads"
+        ? normalizeGrads(design.figure.grads)
+        : JSON.parse(JSON.stringify(design.figure[key]));
   }
   /** @type {Record<string, unknown>} */
   const out = {

@@ -32,6 +32,20 @@ export interface UniformColorway {
  */
 export type FillSpec = string;
 
+/**
+ * One stop of a named linear gradient: an `offset` in [0,1] as a string and
+ * its color. Stored as an object rather than an `[offset, hex]` tuple because
+ * Firestore rejects an array nested directly inside another array, so tuple
+ * stops cannot be persisted (a saved design with tuple stops fails with a bare
+ * 500). Keep this the single source of truth for the stop shape.
+ */
+export interface GradStop {
+  /** Offset in [0,1] as a string, e.g. '0', '0.55', '1'. */
+  o: string;
+  /** The stop color. */
+  c: HexColor;
+}
+
 export type ProceduralPrint = 'sunburst' | 'opart' | 'pinstripe';
 
 /** Every procedural surface whose colors a director can override. */
@@ -132,8 +146,8 @@ export interface FigureConfig {
   printColors?: PrintColors | null;
   /** Define the plaid pattern (referenced as "url:plaid"). */
   plaid?: boolean;
-  /** Named linear gradients, each a list of [offset, hex] stops. */
-  grads?: Record<string, Array<[string, HexColor]>> | null;
+  /** Named linear gradients, each a list of stops (see {@link GradStop}). */
+  grads?: Record<string, GradStop[]> | null;
   /** Define the gold-foil leg gradient (referenced as "url:foil"). */
   foilLeg?: boolean;
   /** Define the glow filter (used by glowArt / arm glowLine). */

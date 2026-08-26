@@ -73,6 +73,18 @@ describe('normalizeFigure', () => {
     expect(n.legL.foil).toBe(true);
     expect(n.legR.color).toBe('#17161c');
   });
+
+  it('backfills a missing side from the present one (asymmetric figure)', () => {
+    // A figure with only one explicit side — the shape per-side editing an
+    // unlinked limb used to produce — must not leave the other side undefined.
+    const arms = normalizeFigure({ skin: '#c9a074', armL: { type: 'bare' } });
+    expect(arms.armR).toBeDefined();
+    expect(arms.armR.type).toBe('bare');
+
+    const legs = normalizeFigure({ skin: '#c9a074', legR: { color: '#17161c', flare: true } });
+    expect(legs.legL).toBeDefined();
+    expect(legs.legL.color).toBe('#17161c');
+  });
 });
 
 describe('uniform code normalization', () => {
@@ -100,8 +112,8 @@ describe('sleeve fades', () => {
       true // linked → both sides
     );
     expect(faded.grads?.fadeL).toEqual([
-      ['0', '#1d2f66'],
-      ['1', '#e3b23c'],
+      { o: '0', c: '#1d2f66' },
+      { o: '1', c: '#e3b23c' },
     ]);
     expect(faded.grads?.fadeR).toEqual(faded.grads?.fadeL);
     expect(faded.armL?.fill).toBe('url:fadeL');
@@ -115,9 +127,9 @@ describe('sleeve fades', () => {
       skin: '#c9a074',
       grads: {
         ombre: [
-          ['0', '#111111'],
-          ['1', '#222222'],
-        ] as Array<[string, string]>,
+          { o: '0', c: '#111111' },
+          { o: '1', c: '#222222' },
+        ],
       },
     };
     const on = withArmFade(base, 'armL', ['#334455', '#667788'], false);
@@ -132,7 +144,7 @@ describe('sleeve fades', () => {
 
   it('sanitizes junk fade colors', () => {
     const faded = withArmFade({ skin: '#c9a074' }, 'armR', ['garbage', '#eeeeee'], false);
-    expect(faded.grads?.fadeR?.[0][1]).toBe('#888888');
+    expect(faded.grads?.fadeR?.[0].c).toBe('#888888');
   });
 });
 

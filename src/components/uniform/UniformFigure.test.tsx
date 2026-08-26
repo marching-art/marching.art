@@ -264,8 +264,8 @@ describe('UniformFigure', () => {
           jacket: '#1d2f66',
           grads: {
             fadeL: [
-              ['0', '#1d2f66'],
-              ['1', '#e3b23c'],
+              { o: '0', c: '#1d2f66' },
+              { o: '1', c: '#e3b23c' },
             ],
           },
           armL: { type: 'sleeve', fill: 'url:fadeL' },
