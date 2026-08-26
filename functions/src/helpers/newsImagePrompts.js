@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Image prompt builders for news generation: corps/performer avatars,
 // user-article images, scene archetypes, and the per-article-type prompt
 // builders. Extracted verbatim from newsGeneration.js. Pure string builders;
@@ -214,10 +213,10 @@ DO NOT INCLUDE:
  * @param {string} category - Article category (dci, fantasy, analysis)
  * @param {string} headline - Article headline
  * @param {string} summary - Article summary
- * @param {object} options - Optional parameters
- * @param {string} options.corpsName - Name of featured corps
- * @param {object} options.uniformDetails - Corps uniform details from getUniformDetails
- * @param {string} options.showTitle - Show title for thematic context
+ * @param {object} [options] - Optional parameters
+ * @param {string} [options.corpsName] - Name of featured corps
+ * @param {object} [options.uniformDetails] - Corps uniform details from getUniformDetails
+ * @param {string} [options.showTitle] - Show title for thematic context
  */
 function buildArticleImagePrompt(category, headline, summary, options = {}) {
   const { corpsName, uniformDetails, showTitle } = options;

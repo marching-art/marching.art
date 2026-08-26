@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-08-26-uniform-save-fade-fix",
+    "date": "2026-08-26",
+    "title": "Saving a uniform with a sleeve fade works again",
+    "category": "fix",
+    "summary": "Designs that used a sleeve fade or any gradient failed to save in the Studio with an \"INTERNAL (500)\" error. Those looks now save, equip, and share like any other — no need to strip the fade first."
+  },
+  {
     "id": "2026-08-26-uniform-codes-share-cards",
     "date": "2026-08-26",
     "title": "Uniform codes and share cards: your look, everywhere",

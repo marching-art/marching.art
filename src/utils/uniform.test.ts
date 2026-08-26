@@ -100,8 +100,8 @@ describe('sleeve fades', () => {
       true // linked → both sides
     );
     expect(faded.grads?.fadeL).toEqual([
-      ['0', '#1d2f66'],
-      ['1', '#e3b23c'],
+      { o: '0', c: '#1d2f66' },
+      { o: '1', c: '#e3b23c' },
     ]);
     expect(faded.grads?.fadeR).toEqual(faded.grads?.fadeL);
     expect(faded.armL?.fill).toBe('url:fadeL');
@@ -115,9 +115,9 @@ describe('sleeve fades', () => {
       skin: '#c9a074',
       grads: {
         ombre: [
-          ['0', '#111111'],
-          ['1', '#222222'],
-        ] as Array<[string, string]>,
+          { o: '0', c: '#111111' },
+          { o: '1', c: '#222222' },
+        ],
       },
     };
     const on = withArmFade(base, 'armL', ['#334455', '#667788'], false);
@@ -132,7 +132,7 @@ describe('sleeve fades', () => {
 
   it('sanitizes junk fade colors', () => {
     const faded = withArmFade({ skin: '#c9a074' }, 'armR', ['garbage', '#eeeeee'], false);
-    expect(faded.grads?.fadeR?.[0][1]).toBe('#888888');
+    expect(faded.grads?.fadeR?.[0].c).toBe('#888888');
   });
 });
 

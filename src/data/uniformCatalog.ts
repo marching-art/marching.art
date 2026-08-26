@@ -335,9 +335,9 @@ const radialBurst: FigureConfig = {
   fringe: '#e8c25a',
   grads: {
     ombre: [
-      ['0', '#16161a'],
-      ['0.55', '#7a1f3d'],
-      ['1', '#e8c25a'],
+      { o: '0', c: '#16161a' },
+      { o: '0.55', c: '#7a1f3d' },
+      { o: '1', c: '#e8c25a' },
     ],
   },
   armL: { type: 'bare' },
@@ -376,8 +376,8 @@ const streamline: FigureConfig = {
   metal: '#cfd4da',
   grads: {
     mint: [
-      ['0', '#cdeee0'],
-      ['1', '#3f9a8c'],
+      { o: '0', c: '#cdeee0' },
+      { o: '1', c: '#3f9a8c' },
     ],
   },
   waistBand: '#0e0e12',
