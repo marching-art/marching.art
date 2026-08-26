@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // SeasonLadderPanel - free seasonal reward ladder
 // Progress = XP earned this season (profile.xp - profile.xpAtSeasonStart,
 // baseline stamped at rollover / first daily claim). Tier claims are
@@ -15,10 +14,12 @@ import { showCoinGain } from '../../xpFeedbackTrigger';
 // (react-refresh) — the Director's Report imports it from there too.
 import { TIERS } from './seasonLadderTiers';
 
+/** @typedef {import('../../../utils/seasonLadder').LadderTier} LadderTier */
+
 const SeasonLadderPanel = memo(
   /** @param {{profile: any, seasonUid?: string|null}} props */
   ({ profile, seasonUid }) => {
-    const [claiming, setClaiming] = useState(null);
+    const [claiming, setClaiming] = useState(/** @type {number|null} */ (null));
 
     // The baseline is stamped server-side by the first daily XP event (login,
     // challenge, prediction) or at season rollover. Until then season XP can't
@@ -42,6 +43,7 @@ const SeasonLadderPanel = memo(
 
     if (!profile) return null;
 
+    /** @param {LadderTier} tier */
     const handleClaim = async (tier) => {
       setClaiming(tier.tier);
       try {
@@ -53,7 +55,7 @@ const SeasonLadderPanel = memo(
             showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
         }
       } catch (error) {
-        toast.error(error.message || 'Could not claim tier');
+        toast.error((error instanceof Error && error.message) || 'Could not claim tier');
       } finally {
         setClaiming(null);
       }
