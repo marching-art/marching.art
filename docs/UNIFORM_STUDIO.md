@@ -187,24 +187,24 @@ advanced pattern tier.
 
 ### 4.1 Slot taxonomy (launch catalog)
 
-| Slot               | Launch options (asset count)                                                                                | Color channels                           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Headwear           | 8 styles: shako ×2 crowns, aussie, pith, campaign, busby, hood, none                                        | shell, band/wrap, hardware (gold/silver) |
-| Hat plate / emblem | 12 emblems (curated library) + none                                                                         | metal (gold/silver)                      |
-| Plume              | 6 types × 3 heights + none                                                                                  | feather, tip-dye, mylar toggle           |
-| Jacket             | 7 silhouettes: cadet, tunic, long coat, satin blouse, vest, athletic top, bodysuit                          | base, panel, trim                        |
-| Chest treatment    | 8: plain, single row, double-breasted, plastron, asymmetric split, diagonal panel, swash stripe, gradient\* | panel, buttons/detail                    |
-| Chest hardware     | 10: none, sash, baldric, cross strap, double cross belts, Sam Browne, cummerbund, drop sash, suspenders, sequin tie drop | strap, buckle/tassel |
-| Shoulders          | 4: none, epaulets, fringed epaulets, shoulder knots + citation cord toggle                                  | cord/board                               |
-| Sleeves            | 5: plain, chevrons (1–3), service stripes, soutache, contrast cuff                                          | stripe/trim                              |
-| Hands              | gauntlets (none/flared/percussion) × gloves (none/white/black)                                              | gauntlet, glove                          |
-| Legs               | bibbers stripe: none/thin/wide/double; leggings                                                             | base, stripe                             |
-| Feet               | 3 shoes + athletic sneakers × spats toggle                                                                  | shoe                                     |
-| Back               | 5: none, hip cape, shoulder cape, full cape, side cape                                                      | outer, lining                            |
-| Neckline           | standing collar, mock neck, cowl scarf, crew, sculptural lapel                                              | collar, trim                             |
-| Print layer\*      | 6+ procedural prints: radial burst, op-art lattice, plaid, pinstripe, scribble, gradient — × scale/rotation | 2–4 recolorable stops                    |
-| Flow layer\*       | streamers, hip fringe, tattered hems, drape panels                                                          | strip, lining                            |
-| Layout\*           | symmetric or per-side: independent left/right arms and legs                                                 | —                                        |
+| Slot               | Launch options (asset count)                                                                                             | Color channels                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| Headwear           | 8 styles: shako ×2 crowns, aussie, pith, campaign, busby, hood, none                                                     | shell, band/wrap, hardware (gold/silver) |
+| Hat plate / emblem | 12 emblems (curated library) + none                                                                                      | metal (gold/silver)                      |
+| Plume              | 6 types × 3 heights + none                                                                                               | feather, tip-dye, mylar toggle           |
+| Jacket             | 7 silhouettes: cadet, tunic, long coat, satin blouse, vest, athletic top, bodysuit                                       | base, panel, trim                        |
+| Chest treatment    | 8: plain, single row, double-breasted, plastron, asymmetric split, diagonal panel, swash stripe, gradient\*              | panel, buttons/detail                    |
+| Chest hardware     | 10: none, sash, baldric, cross strap, double cross belts, Sam Browne, cummerbund, drop sash, suspenders, sequin tie drop | strap, buckle/tassel                     |
+| Shoulders          | 4: none, epaulets, fringed epaulets, shoulder knots + citation cord toggle                                               | cord/board                               |
+| Sleeves            | 5: plain, chevrons (1–3), service stripes, soutache, contrast cuff                                                       | stripe/trim                              |
+| Hands              | gauntlets (none/flared/percussion) × gloves (none/white/black)                                                           | gauntlet, glove                          |
+| Legs               | bibbers stripe: none/thin/wide/double; leggings                                                                          | base, stripe                             |
+| Feet               | 3 shoes + athletic sneakers × spats toggle                                                                               | shoe                                     |
+| Back               | 5: none, hip cape, shoulder cape, full cape, side cape                                                                   | outer, lining                            |
+| Neckline           | standing collar, mock neck, cowl scarf, crew, sculptural lapel                                                           | collar, trim                             |
+| Print layer\*      | 6+ procedural prints: radial burst, op-art lattice, plaid, pinstripe, scribble, gradient — × scale/rotation              | 2–4 recolorable stops                    |
+| Flow layer\*       | streamers, hip fringe, tattered hems, drape panels                                                                       | strip, lining                            |
+| Layout\*           | symmetric or per-side: independent left/right arms and legs                                                              | —                                        |
 
 \* gradient/pattern treatments, the print/flow layers, and per-side layout ship
 in the "sublimation tier" (§8.2).
