@@ -63,24 +63,32 @@ export function normalizeFigure(raw: FigureConfig): NormalizedFigure {
   const c: FigureConfig = { torsoStyle: 'jacket', ...raw };
   let armL = c.armL;
   let armR = c.armR;
-  if (!armL) {
-    const base: ArmConfig = {
-      type: 'sleeve',
-      color: c.sleeve || c.jacket || null,
-      gauntlet: c.gauntlet ? { color: c.gauntlet, sequin: c.gauntletSequin } : null,
-      glove: c.glove || null,
-    };
-    armL = base;
+  // Backfill whenever EITHER side is missing, not only when both are. A design
+  // can carry just the legacy symmetric shorthands (neither side authored) or —
+  // after per-side editing — only one explicit side. In the one-sided case the
+  // present side is mirrored onto the missing one; with neither side authored a
+  // sleeve is built from the shorthands. Guarding on `!armL` alone left a
+  // one-sided figure's other side `undefined`, and the renderer's
+  // `armSide(undefined)` then threw "Cannot read properties of undefined".
+  if (!armL || !armR) {
+    const base: ArmConfig = armL ||
+      armR || {
+        type: 'sleeve',
+        color: c.sleeve || c.jacket || null,
+        gauntlet: c.gauntlet ? { color: c.gauntlet, sequin: c.gauntletSequin } : null,
+        glove: c.glove || null,
+      };
+    armL = armL || base;
     armR = armR || base;
   }
   let legL = c.legL;
   let legR = c.legR;
-  if (!legL) {
-    const base: LegConfig = { color: c.pants || null, stripe: c.stripe || null };
-    legL = base;
+  if (!legL || !legR) {
+    const base: LegConfig = legL || legR || { color: c.pants || null, stripe: c.stripe || null };
+    legL = legL || base;
     legR = legR || base;
   }
-  return { ...c, armL, armR: armR as ArmConfig, legL, legR: legR as LegConfig };
+  return { ...c, armL, armR, legL, legR };
 }
 
 // =============================================================================

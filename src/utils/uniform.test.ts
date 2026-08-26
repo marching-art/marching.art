@@ -73,6 +73,18 @@ describe('normalizeFigure', () => {
     expect(n.legL.foil).toBe(true);
     expect(n.legR.color).toBe('#17161c');
   });
+
+  it('backfills a missing side from the present one (asymmetric figure)', () => {
+    // A figure with only one explicit side — the shape per-side editing an
+    // unlinked limb used to produce — must not leave the other side undefined.
+    const arms = normalizeFigure({ skin: '#c9a074', armL: { type: 'bare' } });
+    expect(arms.armR).toBeDefined();
+    expect(arms.armR.type).toBe('bare');
+
+    const legs = normalizeFigure({ skin: '#c9a074', legR: { color: '#17161c', flare: true } });
+    expect(legs.legL).toBeDefined();
+    expect(legs.legL.color).toBe('#17161c');
+  });
 });
 
 describe('uniform code normalization', () => {
