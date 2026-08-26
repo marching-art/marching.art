@@ -222,7 +222,9 @@ describe('v1 → v2 migration', () => {
     expect(out.schema).toBe(2);
     expect(out.colorway.primary).toBe('#b3121c');
     expect(out.colorway.metal).toBe('silver');
-    expect(out.figure.hatType).toBe('campaign');
+    // v1 'aussie' now migrates to the real aussie slouch (was campaign
+    // before the hat existed)
+    expect(out.figure.hatType).toBe('aussie');
     expect(out.figure.jacket).toBe('#b3121c');
     expect(out.aiHints?.mascotOrEmblem).toBe('phoenix');
     expect(out.name).toContain('Ashline Cadets');

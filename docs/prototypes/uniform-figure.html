@@ -617,12 +617,54 @@
     }
 
     // ---------- headwear ----------
+    function hatOrnament(orn, m) {
+      const o = orn || 'sunburst';
+      if (o === 'none') return '';
+      if (o === 'sunburst') {
+        let g = '<g>';
+        for (let a = 0; a < 8; a++) {
+          const th = (a * Math.PI) / 4,
+            x1 = 120 + Math.cos(th) * 6,
+            y1 = 34 + Math.sin(th) * 6,
+            x2 = 120 + Math.cos(th) * 11,
+            y2 = 34 + Math.sin(th) * 11;
+          g += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${m}" stroke-width="2.2"/>`;
+        }
+        g += `<circle cx="120" cy="34" r="6.5" fill="${m}"/><circle cx="120" cy="34" r="3.4" fill="${darken(m, 0.55)}"/><circle cx="118" cy="32" r="1.2" fill="#fff" opacity=".9"/></g>`;
+        return g;
+      }
+      if (o === 'star') {
+        const pts = [];
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? 9 : 3.8,
+            th = -Math.PI / 2 + (i * Math.PI) / 5;
+          pts.push(`${(120 + Math.cos(th) * r).toFixed(1)},${(34 + Math.sin(th) * r).toFixed(1)}`);
+        }
+        return `<polygon points="${pts.join(' ')}" fill="${m}"/><circle cx="120" cy="34.8" r="2" fill="${darken(m, 0.5)}"/><circle cx="118.6" cy="33.2" r="1" fill="#fff" opacity=".9"/>`;
+      }
+      if (o === 'shield')
+        return (
+          P('M112,26 L128,26 L128,36 Q128,43 120,46 Q112,43 112,36 Z', m) +
+          P('M112,30.5 L128,30.5 L128,34 L112,34 Z', darken(m, 0.5)) +
+          `<circle cx="117" cy="28.4" r="1" fill="#fff" opacity=".9"/>`
+        );
+      if (o === 'chevron')
+        return (
+          stroke('M112,32 L120,26 L128,32', m, 2.6) +
+          stroke('M112,39 L120,33 L128,39', m, 2.6) +
+          stroke('M112,46 L120,40 L128,46', darken(m, 0.35), 2.2)
+        );
+      if (o === 'disc')
+        return `<circle cx="120" cy="34" r="6.5" fill="${m}"/><circle cx="120" cy="34" r="3.4" fill="${darken(m, 0.55)}"/><circle cx="118" cy="32" r="1.2" fill="#fff" opacity=".9"/>`;
+      return `<polygon points="120,25.5 127.5,34 120,42.5 112.5,34" fill="${m}"/><polygon points="120,29.5 123.7,34 120,38.5 116.3,34" fill="${darken(m, 0.5)}"/><circle cx="118.2" cy="30.8" r="1" fill="#fff" opacity=".9"/>`;
+    }
+
     function shako(cw) {
       const h = cw.hat;
       if (!h) return '';
       const body = h.body,
         band = h.band,
-        m = cw.metal;
+        m = h.emblem || cw.metal;
       let g = '';
       g += P('M99,58 L95,8 Q120,2 145,8 L141,58 Q120,65 99,58 Z', body);
       g += shade('M132,6 Q140,7 145,8 L141,58 Q133,61 128,62 Q132,36 132,6 Z', 0.16);
@@ -632,16 +674,7 @@
         g += P('M95.6,8 Q120,3 144.4,8 L143.9,16 Q120,11 96.1,16 Z', band);
         g += P('M99.4,52 Q120,59 140.6,52 L141,58 Q120,65 99,58 Z', band);
       }
-      g += `<g>`;
-      for (let a = 0; a < 8; a++) {
-        const th = (a * Math.PI) / 4,
-          x1 = 120 + Math.cos(th) * 6,
-          y1 = 34 + Math.sin(th) * 6,
-          x2 = 120 + Math.cos(th) * 11,
-          y2 = 34 + Math.sin(th) * 11;
-        g += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${m}" stroke-width="2.2"/>`;
-      }
-      g += `<circle cx="120" cy="34" r="6.5" fill="${m}"/><circle cx="120" cy="34" r="3.4" fill="${darken(m, 0.55)}"/><circle cx="118" cy="32" r="1.2" fill="#fff" opacity=".9"/></g>`;
+      g += hatOrnament(h.ornament, m);
       g += P('M98,56 Q120,80 142,56 L142,61 Q120,86 98,61 Z', '#0d0d0f');
       g += light('M100,58 Q120,78 140,58 Q120,74 100,58 Z', 0.12);
       return g;
@@ -657,7 +690,25 @@
       g += `<ellipse cx="120" cy="53" rx="31" ry="7.5" fill="${lighten(h.body, 0.06)}"/>`;
       g += shade('M89,53 A31,7.5 0 0 0 151,53 A31,7.5 0 0 1 89,53 Z', 0.18);
       if (h.band) g += P('M98,44 Q120,52 142,44 L142,51 Q120,58 98,51 Z', h.band);
-      g += `<circle cx="120" cy="34" r="3.4" fill="${cw.metal}"/>`;
+      if (h.ornament) g += hatOrnament(h.ornament, h.emblem || cw.metal);
+      else g += `<circle cx="120" cy="34" r="3.4" fill="${h.emblem || cw.metal}"/>`;
+      return g;
+    }
+
+    function aussie(cw) {
+      const h = cw.hat;
+      if (!h) return '';
+      const body = h.body;
+      let g = '';
+      g += P('M84,38 Q120,50 140,41 L140,46 Q120,56 84,44 Z', darken(body, 0.08));
+      g += P('M102,40 Q100,12 120,10 Q140,12 139,40 Z', body);
+      g += stroke('M114,13 Q114,26 115,38 M126,13 Q126,26 125,38', darken(body, 0.25), 2);
+      g += shade('M130,14 Q138,22 138,39 L132,40 Q133,24 130,14 Z', 0.12);
+      g += P('M136,14 Q150,20 149,42 Q143,45 138,41 Q141,26 136,14 Z', lighten(body, 0.07));
+      g += shade('M144,20 Q148,28 147,41 L149,42 Q150,20 136,14 Z', 0.15);
+      if (h.band) g += P('M102,33 Q120,41 139,33 L139,39 Q120,47 102,39 Z', h.band);
+      const orn = hatOrnament(h.ornament, h.emblem || cw.metal);
+      if (orn) g += `<g transform="translate(65,7.1) scale(0.65)">${orn}</g>`;
       return g;
     }
 
@@ -769,6 +820,7 @@
       if (cw.hatType === 'shako') L += shako(cw);
       if (cw.hatType === 'pith') L += pith(cw);
       if (cw.hatType === 'campaign') L += campaign(cw);
+      if (cw.hatType === 'aussie') L += aussie(cw);
       return L;
     }
     function renderFigure(cw, opts = {}) {

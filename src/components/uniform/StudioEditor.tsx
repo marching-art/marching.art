@@ -18,6 +18,7 @@ import type {
   UniformDesignV2,
 } from '../../types/uniform';
 import {
+  HAT_ORNAMENT_OPTIONS,
   HAT_TYPE_OPTIONS,
   NAMED_COLORS,
   NECK_OPTIONS,
@@ -267,6 +268,24 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
               value={figure.hat.band}
               onChange={(v) => setFigure({ hat: { ...figure.hat!, band: v } })}
               clearable
+            />
+            {figure.hatType !== 'campaign' && figure.hat.ornament !== 'none' && (
+              <ChannelRow
+                label="Ornament color"
+                value={figure.hat.emblem}
+                onChange={(v) => setFigure({ hat: { ...figure.hat!, emblem: v } })}
+                clearable
+              />
+            )}
+          </div>
+        )}
+        {figure.hatType && figure.hatType !== 'campaign' && figure.hat && (
+          <div className="mt-2">
+            <span className={LABEL}>Ornament</span>
+            <Pills
+              options={HAT_ORNAMENT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              value={figure.hat.ornament || (figure.hatType === 'pith' ? 'disc' : 'sunburst')}
+              onSelect={(v) => setFigure({ hat: { ...figure.hat!, ornament: v } })}
             />
           </div>
         )}

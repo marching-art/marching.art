@@ -29,7 +29,16 @@ const CHESTS = new Set([
   "swash",
   "vinylPanel",
 ]);
-const HATS = new Set(["shako", "pith", "campaign"]);
+const HATS = new Set(["shako", "pith", "campaign", "aussie"]);
+const HAT_ORNAMENTS = new Set([
+  "sunburst",
+  "star",
+  "shield",
+  "chevron",
+  "disc",
+  "diamond",
+  "none",
+]);
 const PLUMES = new Set(["upright", "fountain"]);
 const ARM_TYPES = new Set(["sleeve", "bare", "half", "none"]);
 const PRINTS = new Set(["sunburst", "opart", "pinstripe"]);
@@ -291,7 +300,9 @@ function validateFigure(figure) {
           typeof value !== "object" ||
           !isHex(value.body) ||
           (value.band != null && !isHex(value.band)) ||
-          Object.keys(value).some((k) => k !== "body" && k !== "band")
+          (value.emblem != null && !isHex(value.emblem)) ||
+          (value.ornament != null && !HAT_ORNAMENTS.has(value.ornament)) ||
+          Object.keys(value).some((k) => !["body", "band", "emblem", "ornament"].includes(k))
         ) {
           errors.push("figure.hat is invalid");
         }
@@ -488,7 +499,7 @@ function proseColorName(hex) {
   return best;
 }
 
-const HAT_TO_V1 = { shako: "shako", campaign: "aussie", pith: "modern" };
+const HAT_TO_V1 = { shako: "shako", campaign: "aussie", aussie: "aussie", pith: "modern" };
 
 /**
  * Derive the v1 prose fields from a v2 design so the existing AI avatar and

@@ -141,6 +141,18 @@ export const HAT_TYPE_OPTIONS = [
   { value: 'shako', label: 'Shako' },
   { value: 'pith', label: 'Pith helmet' },
   { value: 'campaign', label: 'Campaign hat' },
+  { value: 'aussie', label: 'Aussie slouch' },
+] as const;
+
+/** Ornament shapes for the shako/pith front plate and the aussie side badge. */
+export const HAT_ORNAMENT_OPTIONS = [
+  { value: 'sunburst', label: 'Sunburst plate' },
+  { value: 'star', label: 'Star' },
+  { value: 'shield', label: 'Crest shield' },
+  { value: 'chevron', label: 'Chevrons' },
+  { value: 'disc', label: 'Disc' },
+  { value: 'diamond', label: 'Diamond' },
+  { value: 'none', label: 'Bare' },
 ] as const;
 
 export const PLUME_TYPE_OPTIONS = [

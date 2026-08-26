@@ -124,11 +124,96 @@ export function arms(cw: NormalizedFigure, uid: string): Node[] {
 // headwear
 // ---------------------------------------------------------------------------
 
+/**
+ * The selectable hat ornament, centered on the shako/pith front (120,34).
+ * `m` is the resolved emblem color (hat.emblem, else hardware metal).
+ * 'sunburst' emits the exact legacy plate nodes so stored designs are stable.
+ */
+function hatOrnamentNodes(orn: string | undefined, m: string, kp: string): Node[] {
+  const o = orn || 'sunburst';
+  if (o === 'none') return [];
+  if (o === 'sunburst') {
+    const rays: Node[] = [];
+    for (let a = 0; a < 8; a++) {
+      const th = (a * Math.PI) / 4;
+      rays.push(
+        <line
+          key={`pl-ray${a}`}
+          x1={+(120 + Math.cos(th) * 6).toFixed(1)}
+          y1={+(34 + Math.sin(th) * 6).toFixed(1)}
+          x2={+(120 + Math.cos(th) * 11).toFixed(1)}
+          y2={+(34 + Math.sin(th) * 11).toFixed(1)}
+          stroke={m}
+          strokeWidth="2.2"
+        />
+      );
+    }
+    return [
+      <g key={`${kp}-plate`}>{rays}</g>,
+      <circle key={`${kp}-p1`} cx="120" cy="34" r="6.5" fill={m} />,
+      <circle key={`${kp}-p2`} cx="120" cy="34" r="3.4" fill={darkenHex(m, 0.55)} />,
+      <circle key={`${kp}-p3`} cx="118" cy="32" r="1.2" fill={FIGURE_INK.white} opacity=".9" />,
+    ];
+  }
+  if (o === 'star') {
+    const pts: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? 9 : 3.8;
+      const th = -Math.PI / 2 + (i * Math.PI) / 5;
+      pts.push(`${(120 + Math.cos(th) * r).toFixed(1)},${(34 + Math.sin(th) * r).toFixed(1)}`);
+    }
+    return [
+      <polygon key={`${kp}-star`} points={pts.join(' ')} fill={m} />,
+      <circle key={`${kp}-starc`} cx="120" cy="34.8" r="2" fill={darkenHex(m, 0.5)} />,
+      <circle
+        key={`${kp}-starg`}
+        cx="118.6"
+        cy="33.2"
+        r="1"
+        fill={FIGURE_INK.white}
+        opacity=".9"
+      />,
+    ];
+  }
+  if (o === 'shield') {
+    return [
+      p(`${kp}-sh`, 'M112,26 L128,26 L128,36 Q128,43 120,46 Q112,43 112,36 Z', m),
+      p(`${kp}-shv`, 'M112,30.5 L128,30.5 L128,34 L112,34 Z', darkenHex(m, 0.5)),
+      <circle key={`${kp}-shg`} cx="117" cy="28.4" r="1" fill={FIGURE_INK.white} opacity=".9" />,
+    ];
+  }
+  if (o === 'chevron') {
+    return [
+      strokeP(`${kp}-c1`, 'M112,32 L120,26 L128,32', m, 2.6),
+      strokeP(`${kp}-c2`, 'M112,39 L120,33 L128,39', m, 2.6),
+      strokeP(`${kp}-c3`, 'M112,46 L120,40 L128,46', darkenHex(m, 0.35), 2.2),
+    ];
+  }
+  if (o === 'disc') {
+    return [
+      <circle key={`${kp}-d1`} cx="120" cy="34" r="6.5" fill={m} />,
+      <circle key={`${kp}-d2`} cx="120" cy="34" r="3.4" fill={darkenHex(m, 0.55)} />,
+      <circle key={`${kp}-d3`} cx="118" cy="32" r="1.2" fill={FIGURE_INK.white} opacity=".9" />,
+    ];
+  }
+  // diamond
+  return [
+    <polygon key={`${kp}-di`} points="120,25.5 127.5,34 120,42.5 112.5,34" fill={m} />,
+    <polygon
+      key={`${kp}-di2`}
+      points="120,29.5 123.7,34 120,38.5 116.3,34"
+      fill={darkenHex(m, 0.5)}
+    />,
+    <circle key={`${kp}-dig`} cx="118.2" cy="30.8" r="1" fill={FIGURE_INK.white} opacity=".9" />,
+  ];
+}
+
 function shako(cw: NormalizedFigure): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
-  const m = safeHex(cw.metal);
+  // The front plate ("cog") takes its own color when set; hardware metal otherwise.
+  const m = h.emblem ? safeHex(h.emblem) : safeHex(cw.metal);
   const out: Node[] = [
     p('sk', 'M99,58 L95,8 Q120,2 145,8 L141,58 Q120,65 99,58 Z', body),
     shade('sk-s', 'M132,6 Q140,7 145,8 L141,58 Q133,61 128,62 Q132,36 132,6 Z', 0.16),
@@ -142,26 +227,8 @@ function shako(cw: NormalizedFigure): Node[] {
       p('sk-b2', 'M99.4,52 Q120,59 140.6,52 L141,58 Q120,65 99,58 Z', band)
     );
   }
-  const rays: Node[] = [];
-  for (let a = 0; a < 8; a++) {
-    const th = (a * Math.PI) / 4;
-    rays.push(
-      <line
-        key={`pl-ray${a}`}
-        x1={+(120 + Math.cos(th) * 6).toFixed(1)}
-        y1={+(34 + Math.sin(th) * 6).toFixed(1)}
-        x2={+(120 + Math.cos(th) * 11).toFixed(1)}
-        y2={+(34 + Math.sin(th) * 11).toFixed(1)}
-        stroke={m}
-        strokeWidth="2.2"
-      />
-    );
-  }
   out.push(
-    <g key="sk-plate">{rays}</g>,
-    <circle key="sk-p1" cx="120" cy="34" r="6.5" fill={m} />,
-    <circle key="sk-p2" cx="120" cy="34" r="3.4" fill={darkenHex(m, 0.55)} />,
-    <circle key="sk-p3" cx="118" cy="32" r="1.2" fill={FIGURE_INK.white} opacity=".9" />,
+    ...hatOrnamentNodes(h.ornament, m, 'sk'),
     p('sk-v', 'M98,56 Q120,80 142,56 L142,61 Q120,86 98,61 Z', FIGURE_INK.visor),
     light('sk-vl', 'M100,58 Q120,78 140,58 Q120,74 100,58 Z', 0.12)
   );
@@ -180,7 +247,42 @@ function pith(cw: NormalizedFigure): Node[] {
     shade('pi-bs', 'M89,53 A31,7.5 0 0 0 151,53 A31,7.5 0 0 1 89,53 Z', 0.18),
   ];
   if (h.band) out.push(p('pi-b', 'M98,44 Q120,52 142,44 L142,51 Q120,58 98,51 Z', safeHex(h.band)));
-  out.push(<circle key="pi-m" cx="120" cy="34" r="3.4" fill={safeHex(cw.metal)} />);
+  if (h.ornament) {
+    out.push(...hatOrnamentNodes(h.ornament, safeHex(h.emblem || cw.metal), 'pi'));
+  } else {
+    // legacy pith stud (designs saved before ornaments were selectable)
+    out.push(<circle key="pi-m" cx="120" cy="34" r="3.4" fill={safeHex(h.emblem || cw.metal)} />);
+  }
+  return out;
+}
+
+/** Aussie slouch hat: wide brim with the off side pinned up against the crown. */
+function aussie(cw: NormalizedFigure): Node[] {
+  const h = cw.hat;
+  if (!h) return [];
+  const body = safeHex(h.body);
+  const out: Node[] = [
+    // brim, drooping slightly on the wearer's right (viewer left)
+    p('au-br', 'M84,38 Q120,50 140,41 L140,46 Q120,56 84,44 Z', darkenHex(body, 0.08)),
+    // crown dome with a campaign-style center dent
+    p('au-cr', 'M102,40 Q100,12 120,10 Q140,12 139,40 Z', body),
+    strokeP('au-d', 'M114,13 Q114,26 115,38 M126,13 Q126,26 125,38', darkenHex(body, 0.25), 2),
+    shade('au-s', 'M130,14 Q138,22 138,39 L132,40 Q133,24 130,14 Z', 0.12),
+    // upturned brim panel pinned to the crown's off side
+    p('au-up', 'M136,14 Q150,20 149,42 Q143,45 138,41 Q141,26 136,14 Z', lightenHex(body, 0.07)),
+    shade('au-us', 'M144,20 Q148,28 147,41 L149,42 Q150,20 136,14 Z', 0.15),
+  ];
+  if (h.band)
+    out.push(p('au-b', 'M102,33 Q120,41 139,33 L139,39 Q120,47 102,39 Z', safeHex(h.band)));
+  // badge rides the pinned-up side, scaled down (translate maps ornament center 120,34 → 143,29)
+  const orn = hatOrnamentNodes(h.ornament, safeHex(h.emblem || cw.metal), 'au');
+  if (orn.length > 0) {
+    out.push(
+      <g key="au-badge" transform="translate(65,7.1) scale(0.65)">
+        {orn}
+      </g>
+    );
+  }
   return out;
 }
 
@@ -276,5 +378,6 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   if (cw.hatType === 'shako') layers.push(<g key="hat">{shako(cw)}</g>);
   if (cw.hatType === 'pith') layers.push(<g key="hat">{pith(cw)}</g>);
   if (cw.hatType === 'campaign') layers.push(<g key="hat">{campaign(cw)}</g>);
+  if (cw.hatType === 'aussie') layers.push(<g key="hat">{aussie(cw)}</g>);
   return layers;
 }

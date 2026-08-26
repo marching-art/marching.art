@@ -324,6 +324,7 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
           ...figure.hat,
           body: darkenHex(primary, 0.55),
           band: figure.hat.band ? secondary : figure.hat.band,
+          emblem: figure.hat.emblem ? metal : figure.hat.emblem,
         }
       : figure.hat,
     plume: figure.plume ? { ...figure.plume, color: accent } : figure.plume,
@@ -367,7 +368,7 @@ export function proseColorToHex(prose: string | undefined | null): string | null
 
 const V1_HELMET_TO_HAT: Record<string, FigureConfig['hatType']> = {
   shako: 'shako',
-  aussie: 'campaign',
+  aussie: 'aussie',
   modern: 'pith',
   themed: 'shako',
   none: null,

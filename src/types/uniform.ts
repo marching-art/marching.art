@@ -54,13 +54,20 @@ export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit';
 export type ChestTreatment =
   'none' | 'braid' | 'sash' | 'baldric' | 'plastron' | 'buttons' | 'swash' | 'vinylPanel';
 
-export type HatType = 'shako' | 'pith' | 'campaign' | null;
+export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | null;
 
 export type PlumeType = 'upright' | 'fountain';
+
+/** Selectable front ornament for shako/pith (and the aussie's side badge). */
+export type HatOrnament = 'sunburst' | 'star' | 'shield' | 'chevron' | 'disc' | 'diamond' | 'none';
 
 export interface HatConfig {
   body: HexColor;
   band?: HexColor | null;
+  /** Front plate / cog color (shako sunburst, pith stud); null → metal. */
+  emblem?: HexColor | null;
+  /** Ornament shape; undefined keeps each hat's legacy default. */
+  ornament?: HatOrnament;
 }
 
 export interface PlumeConfig {

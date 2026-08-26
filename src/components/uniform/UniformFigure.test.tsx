@@ -79,6 +79,55 @@ describe('UniformFigure', () => {
     expect(colors).toContain('#f0c0c8');
   });
 
+  it('colors the shako plate from hat.emblem instead of the hardware metal', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#8a1a1a',
+      metal: '#d9a41c',
+      hatType: 'shako' as const,
+      hat: { body: '#17171a', band: '#8a1a1a', emblem: '#e01010' },
+    };
+    const { container } = render(<UniformFigure label="red cog" figure={base} />);
+    // plate disc and rays wear the emblem color; no metal-gold plate remains
+    expect(container.querySelectorAll('circle[fill="#e01010"]').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('line[stroke="#e01010"]').length).toBe(8);
+    expect(container.querySelectorAll('circle[fill="#d9a41c"]')).toHaveLength(0);
+  });
+
+  it('swaps hat ornaments: star renders, bare renders nothing, aussie mounts one', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#8a1a1a',
+      metal: '#d9a41c',
+      hatType: 'shako' as const,
+      hat: { body: '#17171a', band: '#8a1a1a', emblem: '#e01010', ornament: 'star' as const },
+    };
+    const star = render(<UniformFigure label="star shako" figure={base} />);
+    expect(star.container.querySelectorAll('polygon[fill="#e01010"]').length).toBe(1);
+
+    const bare = render(
+      <UniformFigure
+        label="bare shako"
+        figure={{ ...base, hat: { ...base.hat, ornament: 'none' as const } }}
+      />
+    );
+    expect(bare.container.querySelectorAll('polygon').length).toBe(0);
+    expect(bare.container.querySelectorAll('circle[fill="#e01010"]')).toHaveLength(0);
+
+    const slouch = render(
+      <UniformFigure
+        label="aussie"
+        figure={{
+          ...base,
+          hatType: 'aussie' as const,
+          hat: { ...base.hat, ornament: 'disc' as const },
+        }}
+      />
+    );
+    // the aussie's badge rides the pinned-up brim inside a scaled group
+    expect(slouch.container.querySelector('g[transform*="scale(0.65)"] circle')).not.toBeNull();
+  });
+
   it('reverses diagonal chest pieces and renders the two-tone baldric stripe', () => {
     const base = {
       skin: '#c9a074',
