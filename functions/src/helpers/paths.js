@@ -33,6 +33,9 @@ const paths = {
   // catch-all, written only by the wardrobe callables.
   userWardrobe: (uid) => `artifacts/${ns()}/users/${uid}/wardrobe`,
   userWardrobeDesign: (uid, designId) => `artifacts/${ns()}/users/${uid}/wardrobe/${designId}`,
+  // Uniform codes: world-readable design snapshots minted by mintUniformCode
+  // (pure structured data — safe to serve to anyone; writes are server-only).
+  uniformCode: (code) => `artifacts/${ns()}/uniform_codes/${code}`,
   userNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications`,
   userLeagueNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications/leagues`,
   userEmailLog: (uid) => `artifacts/${ns()}/users/${uid}/email_log`,

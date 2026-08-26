@@ -195,6 +195,23 @@ export function resolvePrintPalettes(
 }
 
 // =============================================================================
+// UNIFORM CODES (client-side normalization; minting lives server-side)
+// =============================================================================
+
+const UNIFORM_CODE_RE = /^MA-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{2}$/;
+
+/** Uppercase, trim, and restore dashes so pasted codes in any casing work. */
+export function normalizeUniformCode(raw: string): string | null {
+  const cleaned = raw.trim().toUpperCase().replace(/\s+/g, '');
+  const undashed = cleaned.replace(/-/g, '');
+  const candidate =
+    undashed.length === 8 && undashed.startsWith('MA')
+      ? `MA-${undashed.slice(2, 6)}-${undashed.slice(6)}`
+      : cleaned;
+  return UNIFORM_CODE_RE.test(candidate) ? candidate : null;
+}
+
+// =============================================================================
 // SLEEVE FADES (director-authored two-stop gradients)
 // =============================================================================
 

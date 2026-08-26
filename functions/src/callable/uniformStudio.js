@@ -18,6 +18,8 @@ const { toCanonicalClass } = require("../helpers/economy");
 const {
   DESIGN_ID_RE,
   MAX_WARDROBE_DESIGNS,
+  UNIFORM_CODE_RE,
+  generateUniformCode,
   validateDesign,
   sanitizeDesign,
   deriveV1Compat,
@@ -68,7 +70,14 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
     if (!doc.exists) {
       throw new HttpsError("not-found", "That design no longer exists.");
     }
-    await ref.set({ ...clean, createdAt: doc.data().createdAt || now, updatedAt: now });
+    const prior = doc.data();
+    await ref.set({
+      ...clean,
+      createdAt: prior.createdAt || now,
+      // keep the minted share code stable across edits (mintUniformCode owns it)
+      ...(prior.shareCode ? { shareCode: prior.shareCode } : {}),
+      updatedAt: now,
+    });
     return { designId: ref.id, message: "Design saved." };
   }
 
@@ -154,4 +163,72 @@ const deleteUniformDesign = onCall({ cors: true }, async (request) => {
   return { message: "Design deleted." };
 });
 
-module.exports = { saveUniformDesign, equipUniformDesign, deleteUniformDesign };
+/**
+ * Mint (or refresh) the share code for one of the caller's saved designs
+ * (docs/UNIFORM_STUDIO.md §7.1). The code doc is a world-readable snapshot of
+ * pure structured data — anyone entering the code imports the design as a new
+ * draft with attribution. Re-minting the same design reuses its code and
+ * refreshes the snapshot to the design's current state.
+ */
+const mintUniformCode = onCall({ cors: true }, async (request) => {
+  const uid = assertAuth(request);
+  const { designId } = request.data || {};
+  if (!designId || !DESIGN_ID_RE.test(String(designId))) {
+    throw new HttpsError("invalid-argument", "Invalid design id.");
+  }
+
+  const db = getDb();
+  await assertWriteBudget(db, uid, "uniformStudio");
+
+  const designRef = db.doc(paths.userWardrobeDesign(uid, String(designId)));
+  const designDoc = await designRef.get();
+  if (!designDoc.exists) {
+    throw new HttpsError("not-found", "That design is not in your wardrobe.");
+  }
+  const design = designDoc.data();
+
+  const profileDoc = await db.doc(paths.userProfile(uid)).get();
+  const creatorName = (profileDoc.exists && profileDoc.data().username) || "a director";
+
+  // Reuse the design's existing code so shared links stay stable; otherwise
+  // roll until an unclaimed code is found (30^6 space — collisions are rare).
+  let code = typeof design.shareCode === "string" && UNIFORM_CODE_RE.test(design.shareCode)
+    ? design.shareCode
+    : null;
+  if (!code) {
+    for (let attempt = 0; attempt < 5 && !code; attempt++) {
+      const candidate = generateUniformCode();
+      const existing = await db.doc(paths.uniformCode(candidate)).get();
+      if (!existing.exists) code = candidate;
+    }
+    if (!code) {
+      throw new HttpsError("internal", "Could not allocate a code — please try again.");
+    }
+  }
+
+  const now = new Date().toISOString();
+  await db.doc(paths.uniformCode(code)).set({
+    design: {
+      schema: 2,
+      name: design.name,
+      colorway: design.colorway,
+      figure: design.figure,
+    },
+    creatorUid: uid,
+    creatorName,
+    designName: design.name,
+    createdAt: now,
+  });
+  if (design.shareCode !== code) {
+    await designRef.set({ shareCode: code, updatedAt: now }, { merge: true });
+  }
+  logger.info(`Uniform code ${code} minted for ${uid}`, { designId: String(designId) });
+  return { code };
+});
+
+module.exports = {
+  saveUniformDesign,
+  equipUniformDesign,
+  deleteUniformDesign,
+  mintUniformCode,
+};

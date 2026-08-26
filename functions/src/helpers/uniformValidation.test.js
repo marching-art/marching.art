@@ -9,8 +9,10 @@ const {
   sanitizeDesign,
   deriveV1Compat,
   proseColorName,
+  generateUniformCode,
   MAX_WARDROBE_DESIGNS,
   DESIGN_ID_RE,
+  UNIFORM_CODE_RE,
 } = require("./uniformValidation");
 
 /** A minimal valid design (Classic Cadet reduced). */
@@ -237,6 +239,23 @@ describe("deriveV1Compat", () => {
 });
 
 describe("constants", () => {
+  test("uniform codes: format, charset, and determinism under an injected rng", () => {
+    // deterministic rng → deterministic code
+    let i = 0;
+    const seq = [0, 0.1, 0.5, 0.9, 0.3, 0.7];
+    const code = generateUniformCode(() => seq[i++ % seq.length]);
+    assert.match(code, UNIFORM_CODE_RE);
+    assert.equal(code, generateUniformCode(((i = 0), () => seq[i++ % seq.length])));
+    // random codes always match the shape and never use ambiguous glyphs
+    for (let n = 0; n < 200; n++) {
+      const c = generateUniformCode();
+      assert.match(c, UNIFORM_CODE_RE);
+      assert.doesNotMatch(c.slice(3), /[01OIL]/);
+    }
+    assert.ok(!UNIFORM_CODE_RE.test("MA-0OIL-1I")); // ambiguous glyphs rejected
+    assert.ok(!UNIFORM_CODE_RE.test("ma-abcd-ef")); // lowercase rejected
+  });
+
   test("wardrobe cap and id shape are what the client expects", () => {
     assert.equal(MAX_WARDROBE_DESIGNS, 24);
     assert.ok(DESIGN_ID_RE.test("abc123-XYZ_9"));

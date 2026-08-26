@@ -294,6 +294,8 @@ export const paths = {
   userWardrobe: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/wardrobe`,
   userWardrobeDesign: (uid: string, designId: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/wardrobe/${designId}`,
+  // Uniform codes: world-readable snapshots minted by mintUniformCode.
+  uniformCode: (code: string) => `artifacts/${DATA_NAMESPACE}/uniform_codes/${code}`,
 
   // Season paths
   season: () => `game-settings/season`,

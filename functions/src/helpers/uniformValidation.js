@@ -554,9 +554,30 @@ function deriveV1Compat(design, existingV1) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Uniform codes (§7.1): MA-XXXX-XX from an unambiguous charset (no 0/O/1/I/L)
+// ---------------------------------------------------------------------------
+
+const CODE_CHARSET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+const UNIFORM_CODE_RE = /^MA-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{2}$/;
+
+/**
+ * Mint a share code. ~30^6 ≈ 729M combinations — collisions are handled by
+ * the caller re-rolling against the codes collection.
+ * @param {() => number} [rand] - Uniform [0,1) source, injectable for tests.
+ * @returns {string}
+ */
+function generateUniformCode(rand = Math.random) {
+  const pick = () => CODE_CHARSET[Math.floor(rand() * CODE_CHARSET.length)];
+  const four = pick() + pick() + pick() + pick();
+  return `MA-${four}-${pick()}${pick()}`;
+}
+
 module.exports = {
   DESIGN_ID_RE,
   MAX_WARDROBE_DESIGNS,
+  UNIFORM_CODE_RE,
+  generateUniformCode,
   validateDesign,
   sanitizeDesign,
   deriveV1Compat,

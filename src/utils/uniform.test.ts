@@ -8,6 +8,7 @@ import {
   lightenHex,
   migrateV1Design,
   normalizeFigure,
+  normalizeUniformCode,
   printColorDefaults,
   printColorValues,
   proseColorToHex,
@@ -71,6 +72,22 @@ describe('normalizeFigure', () => {
     expect(n.armR.fill).toBe('url:ombre');
     expect(n.legL.foil).toBe(true);
     expect(n.legR.color).toBe('#17161c');
+  });
+});
+
+describe('uniform code normalization', () => {
+  it('accepts any casing, spacing, and missing dashes', () => {
+    expect(normalizeUniformCode('MA-7K3F-Q2')).toBe('MA-7K3F-Q2');
+    expect(normalizeUniformCode('  ma-7k3f-q2 ')).toBe('MA-7K3F-Q2');
+    expect(normalizeUniformCode('MA7K3FQ2')).toBe('MA-7K3F-Q2');
+    expect(normalizeUniformCode('ma 7k3f q2')).toBe('MA-7K3F-Q2');
+  });
+
+  it('rejects malformed or ambiguous codes', () => {
+    expect(normalizeUniformCode('MA-0OIL-1I')).toBeNull(); // ambiguous glyphs
+    expect(normalizeUniformCode('XX-7K3F-Q2')).toBeNull();
+    expect(normalizeUniformCode('MA-7K3F')).toBeNull();
+    expect(normalizeUniformCode('')).toBeNull();
   });
 });
 

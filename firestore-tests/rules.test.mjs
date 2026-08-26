@@ -896,6 +896,30 @@ await check(
   assertFails(getDocs(collection(mallory(), `artifacts/${APP}/users/${ALICE}/notifications`)))
 );
 
+// Uniform codes (artifacts/{app}/uniform_codes): world-readable snapshots of
+// pure structured design data, minted only by the mintUniformCode callable.
+const uniformCodePath = `artifacts/${APP}/uniform_codes/MA-TEST-AB`;
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), uniformCodePath), {
+    design: { schema: 2, name: 'Shared Look' },
+    creatorName: 'alice',
+  });
+});
+
+await check(
+  'anyone (even signed out) can read a uniform code',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), uniformCodePath)))
+);
+
+await check(
+  'signed-in users cannot mint or overwrite a uniform code directly',
+  assertFails(
+    setDoc(doc(mallory(), `artifacts/${APP}/uniform_codes/MA-EVIL-XX`), {
+      design: { schema: 2, name: 'Forged' },
+    })
+  )
+);
+
 // =============================================================================
 // CAPTION LEDGER — the private per-caption fantasy recap the nightly scorer
 // writes for each director's own outings. The public fantasy recap keeps
