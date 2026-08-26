@@ -189,6 +189,11 @@ export function LegControls({
           checked={Boolean(leg.tattered)}
           onChange={(v) => onPatch({ tattered: v, flare: v ? false : leg.flare })}
         />
+        <Toggle
+          label="Sequins"
+          checked={Boolean(leg.sequin)}
+          onChange={(v) => onPatch({ sequin: v })}
+        />
       </div>
     </div>
   );

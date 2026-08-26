@@ -320,6 +320,7 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
       : figure.chestFade,
     panel: figure.panel ? secondary : figure.panel,
     swash: figure.swash ? secondary : figure.swash,
+    swashLegColor: figure.swashLegColor ? accent : figure.swashLegColor,
     epaulet: figure.epaulet ? secondary : figure.epaulet,
     suspenders: figure.suspenders ? darkenHex(secondary, 0.3) : figure.suspenders,
     belt: figure.belt ? secondary : figure.belt,
@@ -344,7 +345,13 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
           emblem: figure.hat.emblem ? metal : figure.hat.emblem,
         }
       : figure.hat,
-    plume: figure.plume ? { ...figure.plume, color: accent } : figure.plume,
+    plume: figure.plume
+      ? {
+          ...figure.plume,
+          color: accent,
+          accent: figure.plume.accent ? secondary : figure.plume.accent,
+        }
+      : figure.plume,
     armL: recolorArm(n.armL),
     armR: recolorArm(n.armR),
     legL: recolorLeg(n.legL),

@@ -314,11 +314,12 @@ export function legs(cw: NormalizedFigure, uid: string): Node[] {
 }
 
 export function swashLeg(cw: NormalizedFigure): Node[] {
-  if (cw.chest !== 'swash') return [];
-  const c = safeHex(cw.swash);
+  if (cw.chest !== 'swash' || cw.swashBottom === false) return [];
+  // The leg band takes its own color when set; otherwise it matches the swash.
+  const c = safeHex(cw.swashLegColor || cw.swash);
   return [
     p('swl', 'M89,256 Q86,320 93,436 L104,436 Q95,330 100,256 Z', c),
-    ...sequinField('swl-s', 96, 340, 12, 170, 7, 26),
+    ...(cw.swashSequin === false ? [] : sequinField('swl-s', 96, 340, 12, 170, 7, 26)),
   ];
 }
 
@@ -731,6 +732,7 @@ export function chest(cw: NormalizedFigure, uid: string): Node[] {
       return out;
     }
     case 'swash': {
+      if (cw.swashTop === false) return []; // director kept only the leg part
       const c = bandFill(cw.swash);
       return flip('sw-r', [
         p(
@@ -739,7 +741,8 @@ export function chest(cw: NormalizedFigure, uid: string): Node[] {
           c
         ),
         light('sw-l', 'M150,102 Q126,140 112,180 L108,180 Q124,138 147,100 Z', 0.18),
-        ...sequinField('sw-q', 120, 180, 40, 140, 9, 40),
+        // sequins default on (the launch look) but are the director's call
+        ...(cw.swashSequin === false ? [] : sequinField('sw-q', 120, 180, 40, 140, 9, 40)),
       ]);
     }
     case 'vinylPanel': {

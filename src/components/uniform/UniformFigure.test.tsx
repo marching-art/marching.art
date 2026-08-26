@@ -128,6 +128,62 @@ describe('UniformFigure', () => {
     expect(slouch.container.querySelector('g[transform*="scale(0.65)"] circle')).not.toBeNull();
   });
 
+  it('renders the contour shako: swept top, no visor, bare face by default', () => {
+    const { container } = render(
+      <UniformFigure
+        label="contour"
+        figure={{
+          skin: '#c9a074',
+          jacket: '#101014',
+          metal: '#d9a41c',
+          hatType: 'contour' as const,
+          hat: { body: '#f4f2ec', band: '#101014' },
+        }}
+      />
+    );
+    expect(container.querySelectorAll('path[fill="#f4f2ec"]').length).toBeGreaterThan(0);
+    // no shako visor, and the face stays bare (no default sunburst plate)
+    expect(container.querySelectorAll('path[fill="#0d0d0f"]')).toHaveLength(0);
+    expect(container.querySelectorAll('circle[fill="#d9a41c"]')).toHaveLength(0);
+  });
+
+  it('splits the modern swash into independent torso and leg parts', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#101014',
+      chest: 'swash' as const,
+      swash: '#f4f2ec',
+      legL: { color: '#101014' },
+      legR: { color: '#101014' },
+    };
+    const both = render(<UniformFigure label="both" figure={base} />);
+    const bothCount = both.container.querySelectorAll('path[fill="#f4f2ec"]').length;
+
+    const topOnly = render(<UniformFigure label="top" figure={{ ...base, swashBottom: false }} />);
+    const legOnly = render(<UniformFigure label="leg" figure={{ ...base, swashTop: false }} />);
+    expect(topOnly.container.querySelectorAll('path[fill="#f4f2ec"]').length).toBeLessThan(
+      bothCount
+    );
+    expect(legOnly.container.querySelectorAll('path[fill="#f4f2ec"]').length).toBeLessThan(
+      bothCount
+    );
+    expect(legOnly.container.querySelectorAll('path[fill="#f4f2ec"]').length).toBeGreaterThan(0);
+
+    // the leg band takes its own color when set
+    const recolored = render(
+      <UniformFigure label="recolored" figure={{ ...base, swashLegColor: '#e01010' }} />
+    );
+    expect(recolored.container.querySelectorAll('path[fill="#e01010"]').length).toBe(1);
+
+    // sequins are the director's call
+    const noSequins = render(
+      <UniformFigure label="matte" figure={{ ...base, swashSequin: false }} />
+    );
+    expect(noSequins.container.querySelectorAll('circle').length).toBeLessThan(
+      both.container.querySelectorAll('circle').length
+    );
+  });
+
   it('reverses diagonal chest pieces and renders the two-tone baldric stripe', () => {
     const base = {
       skin: '#c9a074',

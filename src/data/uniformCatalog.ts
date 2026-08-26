@@ -142,6 +142,7 @@ export const HAT_TYPE_OPTIONS = [
   { value: 'pith', label: 'Pith helmet' },
   { value: 'campaign', label: 'Campaign hat' },
   { value: 'aussie', label: 'Aussie slouch' },
+  { value: 'contour', label: 'Contour shako' },
 ] as const;
 
 /** Ornament shapes for the shako/pith front plate and the aussie side badge. */
@@ -324,6 +325,25 @@ const modernSwash: FigureConfig = {
   shoe: '#f0f2f5',
 };
 
+const millennium: FigureConfig = {
+  skin: '#e0b48e',
+  hairShow: false,
+  jacket: '#101c33',
+  crew: true,
+  chest: 'swash',
+  swash: '#d7dde2',
+  swashSequin: false,
+  swashLegColor: '#22355c',
+  metal: '#cfd4da',
+  glove: '#f7f5f0',
+  pants: '#d7dde2',
+  stripe: '#101c33',
+  shoe: '#f7f5f0',
+  hatType: 'contour',
+  hat: { body: '#101c33', band: '#d7dde2', ornament: 'diamond', emblem: '#cfd4da' },
+  plume: { type: 'upright', color: '#f7f5f0', accent: '#2f6fd0' },
+};
+
 const radialBurst: FigureConfig = {
   skin: '#a8764f',
   hairShow: true,
@@ -479,6 +499,13 @@ export const UNIFORM_PRESETS: UniformPreset[] = [
     era: 'classic',
     colorway: { primary: '#f0f2f5', secondary: '#2f6fd0', accent: '#101c33', metal: 'silver' },
     figure: modernSwash,
+  },
+  {
+    id: 'millennium',
+    label: 'Millennium',
+    era: 'modern',
+    colorway: { primary: '#101c33', secondary: '#d7dde2', accent: '#2f6fd0', metal: 'silver' },
+    figure: millennium,
   },
   {
     id: 'radial-burst',
