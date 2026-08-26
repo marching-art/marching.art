@@ -9,19 +9,22 @@
 import { CAPTIONS, SOUNDSPORT_POINT_LIMIT } from '../pages/onboardingConstants';
 
 /**
- * @param {Array<{corpsName: string, sourceYear: number|string, points: number}>} availableCorps
- * @param {Record<string, unknown>|null|undefined} guestLineup - Stored guest
+ * Both params are runtime-guarded (the stored draft is untrusted), so the
+ * types admit anything the guards handle.
+ * @param {Array<{corpsName: string, sourceYear: number|string, points: number}>|undefined} availableCorps
+ * @param {unknown} guestLineup - Stored guest
  *   picks keyed by caption id, values "corpsName|sourceYear|points"
  * @returns {{lineup: Record<string, string>, count: number}}
  */
 export function importGuestLineup(availableCorps, guestLineup) {
   if (!guestLineup || typeof guestLineup !== 'object') return { lineup: {}, count: 0 };
+  const picks = /** @type {Record<string, unknown>} */ (guestLineup);
 
   /** @type {Record<string, string>} */
   const imported = {};
   let total = 0;
   for (const caption of CAPTIONS) {
-    const value = guestLineup[caption.id];
+    const value = picks[caption.id];
     if (!value || typeof value !== 'string') continue;
     const [name, year] = value.split('|');
     const match = (availableCorps || []).find(

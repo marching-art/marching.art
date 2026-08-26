@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-08-26-studio-mobile-scroll",
+    "date": "2026-08-26",
+    "title": "Uniform Studio scrolls properly on phones",
+    "category": "fix",
+    "summary": "On mobile, the Uniform Studio was stuck on its first screen — you could see your figure but couldn't scroll down to the presets, colors, and piece controls. The page now scrolls end to end, and the preview figure is sized for phone screens so your design tools are right below it."
+  },
+  {
     "id": "2026-08-26-showday-strip-fixes",
     "date": "2026-08-26",
     "title": "Show Day strip: right show, right encore",

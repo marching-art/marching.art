@@ -221,202 +221,210 @@ export default function Studio() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-24">
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-3 py-4 border-b border-line">
-        <h1 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-          <Shirt className="w-4 h-4 text-interactive" />
-          Uniform Studio
-        </h1>
-        <div className="flex gap-1 ml-auto overflow-x-auto">
-          {corpsOptions.map((o) => (
-            <button
-              key={o.classKey}
-              type="button"
-              onClick={() => setSearchParams({ corps: o.classKey }, { replace: true })}
-              className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border rounded-none whitespace-nowrap min-h-touch sm:min-h-0 ${
-                o.classKey === activeClass
-                  ? 'bg-interactive border-interactive text-white'
-                  : 'bg-background border-line text-muted hover:border-interactive hover:text-white'
-              }`}
-            >
-              {o.corps.corpsName}
-              <span
-                className={`ml-1.5 ${CLASS_DISPLAY[o.classKey as keyof typeof CLASS_DISPLAY]?.color || ''}`}
+    // GameShell's <main> is fixed with overflow-hidden, so each page must own
+    // its scroll container (Shop.jsx idiom) — without this wrapper the Studio
+    // is clipped to the first viewport and can't scroll at all on mobile.
+    <div className="h-full overflow-y-auto scroll-momentum">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-24">
+        {/* Header */}
+        <div className="flex flex-wrap items-center gap-3 py-4 border-b border-line">
+          <h1 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+            <Shirt className="w-4 h-4 text-interactive" />
+            Uniform Studio
+          </h1>
+          <div className="flex gap-1 ml-auto overflow-x-auto">
+            {corpsOptions.map((o) => (
+              <button
+                key={o.classKey}
+                type="button"
+                onClick={() => setSearchParams({ corps: o.classKey }, { replace: true })}
+                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border rounded-none whitespace-nowrap min-h-touch sm:min-h-0 ${
+                  o.classKey === activeClass
+                    ? 'bg-interactive border-interactive text-white'
+                    : 'bg-background border-line text-muted hover:border-interactive hover:text-white'
+                }`}
               >
-                {CLASS_DISPLAY[o.classKey as keyof typeof CLASS_DISPLAY]?.name}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {migrated && (
-        <div className="bg-interactive/10 border border-interactive/30 p-3 mt-3 text-xs text-muted">
-          <span className="text-interactive font-bold uppercase mr-2">Rebuilt in the Studio</span>
-          Your written uniform description was translated into a starting design — refine it, then
-          save and equip. Your current avatar is untouched.
-        </div>
-      )}
-
-      {draft && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_1fr] gap-6 mt-4">
-          {/* Canvas column */}
-          <div className="lg:sticky lg:top-4 self-start">
-            <div className="bg-surface-card border border-line p-4">
-              <div className="flex items-center justify-between mb-2">
-                <input
-                  type="text"
-                  value={draft.name}
-                  maxLength={WARDROBE_LIMITS.maxNameLength}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                  aria-label="Design name"
-                  className="flex-1 h-9 px-2 bg-background border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
-                />
-                <button
-                  type="button"
-                  onClick={() => setPressBox((v) => !v)}
-                  title="Press-box view — does it read from the stands?"
-                  className={`ml-2 h-9 px-2.5 border rounded-none ${
-                    pressBox
-                      ? 'bg-interactive border-interactive text-white'
-                      : 'border-line text-muted hover:text-white hover:border-interactive'
-                  }`}
+                {o.corps.corpsName}
+                <span
+                  className={`ml-1.5 ${CLASS_DISPLAY[o.classKey as keyof typeof CLASS_DISPLAY]?.color || ''}`}
                 >
-                  <Eye className="w-4 h-4" />
-                </button>
-              </div>
+                  {CLASS_DISPLAY[o.classKey as keyof typeof CLASS_DISPLAY]?.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-              {pressBox ? (
-                <div className="h-64 sm:h-80 flex items-end justify-center gap-4 bg-surface-sunken border border-line p-4">
-                  {[0, 1, 2].map((i) => (
-                    <UniformFigure
-                      key={i}
-                      figure={draft.figure}
-                      label="Press-box preview figure"
-                      width={34}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="max-w-[280px] mx-auto">
-                  <UniformFigure
-                    figure={draft.figure}
-                    label={`${draft.name || 'Uniform'} preview`}
+        {migrated && (
+          <div className="bg-interactive/10 border border-interactive/30 p-3 mt-3 text-xs text-muted">
+            <span className="text-interactive font-bold uppercase mr-2">Rebuilt in the Studio</span>
+            Your written uniform description was translated into a starting design — refine it, then
+            save and equip. Your current avatar is untouched.
+          </div>
+        )}
+
+        {draft && (
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_1fr] gap-6 mt-4">
+            {/* Canvas column */}
+            <div className="lg:sticky lg:top-4 self-start">
+              <div className="bg-surface-card border border-line p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <input
+                    type="text"
+                    value={draft.name}
+                    maxLength={WARDROBE_LIMITS.maxNameLength}
+                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                    aria-label="Design name"
+                    className="flex-1 h-9 px-2 bg-background border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setPressBox((v) => !v)}
+                    title="Press-box view — does it read from the stands?"
+                    className={`ml-2 h-9 px-2.5 border rounded-none ${
+                      pressBox
+                        ? 'bg-interactive border-interactive text-white'
+                        : 'border-line text-muted hover:text-white hover:border-interactive'
+                    }`}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
 
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                <button
-                  type="button"
-                  onClick={() => void doSave(false)}
-                  disabled={busy !== null || !dirty}
-                  className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                >
-                  {busy === 'save' ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Save className="w-3.5 h-3.5" />
-                  )}
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void doEquip()}
-                  disabled={busy !== null}
-                  className="h-10 px-3 bg-interactive text-white text-[11px] font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-40 flex items-center justify-center gap-1.5"
-                >
-                  {busy === 'equip' ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Check className="w-3.5 h-3.5" />
-                  )}
-                  Equip
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void doSave(true)}
-                  disabled={busy !== null}
-                  className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40"
-                >
-                  Save as new
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void doGenerateAvatar()}
-                  disabled={busy !== null}
-                  title="Optional: regenerate the AI avatar from this corps' saved design"
-                  className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  AI avatar
-                </button>
-              </div>
-              <p className="text-[10px] text-muted mt-2">
-                Saving stores the design in your wardrobe. Equipping puts it on{' '}
-                {activeOption?.corps.corpsName} everywhere. The AI avatar is optional and never
-                automatic.
-              </p>
-            </div>
+                {pressBox ? (
+                  <div className="h-64 sm:h-80 flex items-end justify-center gap-4 bg-surface-sunken border border-line p-4">
+                    {[0, 1, 2].map((i) => (
+                      <UniformFigure
+                        key={i}
+                        figure={draft.figure}
+                        label="Press-box preview figure"
+                        width={34}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  // Sized down on phones so the canvas card (figure + actions)
+                  // stays near one screenful and the controls are a short scroll
+                  // away; full size from sm up.
+                  <div className="max-w-[210px] sm:max-w-[280px] mx-auto">
+                    <UniformFigure
+                      figure={draft.figure}
+                      label={`${draft.name || 'Uniform'} preview`}
+                    />
+                  </div>
+                )}
 
-            {/* Wardrobe strip */}
-            <div className="bg-surface-card border border-line p-4 mt-4">
-              <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider border-b border-line pb-1 mb-3">
-                Wardrobe ({wardrobe.length}/{WARDROBE_LIMITS.maxDesigns})
-              </h3>
-              {wardrobe.length === 0 ? (
-                <p className="text-xs text-muted">
-                  No saved designs yet — save your first look to start a wardrobe.
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => void doSave(false)}
+                    disabled={busy !== null || !dirty}
+                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    {busy === 'save' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Save className="w-3.5 h-3.5" />
+                    )}
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void doEquip()}
+                    disabled={busy !== null}
+                    className="h-10 px-3 bg-interactive text-white text-[11px] font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    {busy === 'equip' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
+                    Equip
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void doSave(true)}
+                    disabled={busy !== null}
+                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40"
+                  >
+                    Save as new
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void doGenerateAvatar()}
+                    disabled={busy !== null}
+                    title="Optional: regenerate the AI avatar from this corps' saved design"
+                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    AI avatar
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted mt-2">
+                  Saving stores the design in your wardrobe. Equipping puts it on{' '}
+                  {activeOption?.corps.corpsName} everywhere. The AI avatar is optional and never
+                  automatic.
                 </p>
-              ) : (
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {wardrobe.map((w) => (
-                    <div
-                      key={w.id}
-                      className={`flex-shrink-0 w-20 border p-1 ${
-                        w.id === loadedId ? 'border-interactive' : 'border-line'
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => loadFromWardrobe(w)}
-                        className="block w-full hover:opacity-80"
-                        title={`Load "${w.name}"`}
+              </div>
+
+              {/* Wardrobe strip */}
+              <div className="bg-surface-card border border-line p-4 mt-4">
+                <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider border-b border-line pb-1 mb-3">
+                  Wardrobe ({wardrobe.length}/{WARDROBE_LIMITS.maxDesigns})
+                </h3>
+                {wardrobe.length === 0 ? (
+                  <p className="text-xs text-muted">
+                    No saved designs yet — save your first look to start a wardrobe.
+                  </p>
+                ) : (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {wardrobe.map((w) => (
+                      <div
+                        key={w.id}
+                        className={`flex-shrink-0 w-20 border p-1 ${
+                          w.id === loadedId ? 'border-interactive' : 'border-line'
+                        }`}
                       >
-                        <UniformFigure figure={w.figure} label={`${w.name} saved design`} />
-                      </button>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="flex-1 text-[8px] uppercase tracking-wider text-muted truncate">
-                          {w.name}
-                        </span>
                         <button
                           type="button"
-                          onClick={() => void doDelete(w)}
-                          disabled={busy !== null}
-                          aria-label={`Delete ${w.name}`}
-                          className="text-muted hover:text-red-400"
+                          onClick={() => loadFromWardrobe(w)}
+                          className="block w-full hover:opacity-80"
+                          title={`Load "${w.name}"`}
                         >
-                          {busy === `del:${w.id}` ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3 h-3" />
-                          )}
+                          <UniformFigure figure={w.figure} label={`${w.name} saved design`} />
                         </button>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="flex-1 text-[8px] uppercase tracking-wider text-muted truncate">
+                            {w.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void doDelete(w)}
+                            disabled={busy !== null}
+                            aria-label={`Delete ${w.name}`}
+                            className="text-muted hover:text-red-400"
+                          >
+                            {busy === `del:${w.id}` ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3 h-3" />
+                            )}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Controls column */}
+            <div className="bg-surface-card border border-line p-4">
+              <StudioEditor design={draft} onChange={setDraft} />
             </div>
           </div>
-
-          {/* Controls column */}
-          <div className="bg-surface-card border border-line p-4">
-            <StudioEditor design={draft} onChange={setDraft} />
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
