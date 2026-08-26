@@ -351,9 +351,11 @@ async function loadEasternAssignments(db, seasonUid) {
  * { [day]: [{eventName, location}] } from the season's schedule doc — the
  * per-day list of scheduled shows. Used to validate/resolve which show a
  * Podium corps registers for and scores at (reads competition `name`).
+ * @returns {Promise<Record<number, Array<{eventName: string, location: string}>>>}
  */
 async function loadScheduleShowsByDay(db, seasonData) {
   const scheduleId = seasonData.dataDocId || seasonData.name;
+  /** @type {Record<number, Array<{eventName: string, location: string}>>} */
   const byDay = {};
   if (!scheduleId) return byDay;
   const doc = await db.doc(`schedules/${scheduleId}`).get();

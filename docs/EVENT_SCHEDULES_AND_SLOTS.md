@@ -17,7 +17,8 @@ per-event fantasy/podium split, and the encore.
 > - **Engine** — `helpers/scheduleModel.js` (`deriveRunningOrder` + `fitToWindow`).
 > - **Builder** — `helpers/showRunningOrder.js` (pure real-field order).
 > - **Materializer** — `scheduled/scheduleRunningOrder.js` (twice-daily; writes
->   `competition.fantasySchedule`, `competition.podiumSchedule`, `competition.encore`).
+>   `competition.fantasySchedule`, `competition.podiumSchedule`, and each side's
+>   encore — `competition.encore`, `competition.podiumEncore`).
 > - **Geo/encore** — `helpers/corpsGeo.js`, `helpers/encore.js`.
 > - **Client** — `RunningOrder.jsx`, `DualRunningOrder.jsx`, `NextPerformancePanel.jsx`,
 >   consuming via `transformCompetitionToShow` + the personal helpers in `scheduleUtils.js`.
@@ -45,8 +46,10 @@ now.** Everything below serves that.
    historical stand-in. When a director looks at a show, they see their corps in
    the order, at a real time, with a live "On Field" marker.
 3. Each event carries **two running orders** — a fantasy schedule and a podium
-   schedule — sharing one venue, date, and encore.
-4. A closest-to-home corps gets a cosmetic **encore** after scores read.
+   schedule — sharing one venue and date, each with its **own** closest-to-home
+   encore.
+4. A closest-to-home corps gets a cosmetic **encore** after scores read, decided
+   independently per side (fantasy field, podium field).
 5. It all scales with a growing or fluctuating user base and stays cheap.
 
 ### The one reframe
@@ -71,8 +74,11 @@ schedules**:
 | **Podium**  | Podium registrants (`collectPodiumRegistrations`)    | Recent Podium performance  | Podium's flat 9 PM ET year-round                           |
 
 They differ **only** in field, metric, and drop time. Everything else (the
-engine, the UI, the encore) is shared. In the UI this is one event card with a
-**Fantasy / Podium** toggle, each side rendering its own `RunningOrder` against
+engine, the UI, the encore machinery) is shared — but the encore _result_ is
+per-side: each schedule runs the same nearest-eligible assignment over its own
+field and its own season cap (`comp.encore` for fantasy, `comp.podiumEncore` for
+podium). In the UI this is one event card with a **Fantasy / Podium** toggle,
+each side rendering its own `RunningOrder` (and its own encore footer) against
 its own clock. `showRegistrations.js` already folds Podium picks into the
 attendance index, so both fields come from machinery that exists.
 
@@ -226,8 +232,12 @@ schedule: {
   timezone,
   lineup: [ { order, uid, corpsClass, corpsName, performanceTime, performsAt } ],
   overflow: [ { uid, corpsClass, corpsName } ],  // safety-valve only; usually []
-  encore: { uid, corpsClass, corpsName } | null,
 }
+
+// Each side's encore rides at the top level of the competition (not inside the
+// schedule object), assigned over that side's own field + season cap:
+encore:       { uid, corpsClass, corps, reason, miles } | null,  // fantasy field
+podiumEncore: { uid, corpsClass, corps, reason, miles } | null,  // podium field
 ```
 
 Per corps:
@@ -281,7 +291,11 @@ read per night, matching the cost profile of the existing nightly jobs.
    absolute 1/corps/season cap consumed chronologically (a date-ordered pass in
    the materializer), and the host-after-encore edge case. Encore footer in the
    running order + a "You're the encore" banner on the dashboard. Decline/bank is
-   a follow-up (§11).
+   a follow-up (§11). Runs as **two independent tracks** — the fantasy field writes
+   `comp.encore`, the podium field writes `comp.podiumEncore`, each with its own
+   season cap (the corpsClass in the cap key keeps `podiumClass` apart from the
+   fantasy classes). Podium homes come from each corps' structured `home` venue,
+   carried through `collectPodiumRegistrations`.
 
 ---
 
@@ -300,6 +314,11 @@ Built after the six phases:
   later show. Surfaced in the registration modal ("Bank for later" / "Take it here").
 
 Open / calibration:
+
+- **Podium decline/bank.** The fantasy decline/bank opt-out (`setEncoreDecline` →
+  `encoreDeclined` on the index) isn't wired for the podium field yet, so a podium
+  encore is always auto-assigned. Parity follow-up if directors want to bank a
+  podium encore for a hosted show.
 
 - **Window `W` and `minInterval` values** — calibrate against expected turnout so
   a normal night keeps ~17-min spacing and only true crowds compress.

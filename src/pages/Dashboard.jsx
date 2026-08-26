@@ -67,7 +67,7 @@ import { ModalLoadingFallback, Modal } from '../components/ui';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useDashboardZones } from '../hooks/useDashboardZones';
 import { useDashboardRefresh } from '../hooks/useDashboardRefresh';
-import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
+import ShowdayStrip from '../components/Dashboard/ShowdayStrip';
 import { useScheduleStore } from '../store/scheduleStore';
 
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -182,7 +182,6 @@ const Dashboard = () => {
     refreshProfile,
     handleCorpsSwitch,
     unlockedClasses, // Includes admin override - admins have all classes
-    availableCorps, // Season pool (corpsValues) — supplies resultDays for pick highlights
   } = dashboardData;
 
   // Season recap ledger — opened by clicking SEASON SCORE on the scorecard
@@ -192,12 +191,6 @@ const Dashboard = () => {
   const [showSeasonLedger, setShowSeasonLedger] = useState(false);
   const hasSeasonLedger =
     isPodiumSelected || ['worldClass', 'openClass', 'aClass'].includes(activeCorpsClass);
-
-  // The Next Performance panel surfaces real show timing + running order, which
-  // only exist while the live-season refresh is scraping dci.org. Off-season
-  // (historical replay) schedules carry no such enrichment, so gate the panel to
-  // live seasons rather than letting it render empty (or on stale enriched data).
-  const isLiveSeason = seasonData?.status === 'live-season';
 
   // Whether the director has entered today's league prediction pool — the
   // per-day fact the join-league-pool daily challenge verifies, read off the
@@ -471,6 +464,36 @@ const Dashboard = () => {
           </div>
         ) : activeCorps ? (
           <div className="p-3 md:p-4">
+            {/* Showday strip — the who/what/where/when of the director's own
+                show day (their event, its venue, showtime, and their own field
+                time, live ticker included), elevated to the very top for BOTH
+                divisions. Replaces the old Next Performance panel that buried
+                this (plus a full running-order dump) at the bottom of the page;
+                the complete running order lives on the Schedule page, one tap
+                away. Self-guards to a slim "pick your shows" nudge when nothing
+                is scheduled. */}
+            <div className="mb-4" data-tour="showday">
+              <ShowdayStrip
+                division={isPodiumSelected ? 'podium' : 'fantasy'}
+                competitions={competitions}
+                selectedShows={activeCorps?.selectedShows || {}}
+                podiumPicks={
+                  isPodiumSelected
+                    ? {
+                        selectedShows: podium.data?.state?.selectedShows || null,
+                        autoDays: podium.data?.autoDays || null,
+                      }
+                    : null
+                }
+                lineup={lineup}
+                myUid={user?.uid}
+                currentDay={currentDay}
+                corpsClass={activeCorpsClass}
+                corpsName={activeCorps.corpsName || activeCorps.name}
+                seasonSchedule={seasonData?.schedule || null}
+              />
+            </div>
+
             {/* Mobile only: the one thing to do next, stated before the stack
                 begins. Desktop's grid answers this spatially, so the panel
                 hides itself at lg. Sits outside the grid so it can lead the
@@ -565,20 +588,6 @@ const Dashboard = () => {
                         />
                       </Suspense>
                     )}
-
-                    {/* Next Performance — real show timing + running order + the
-                        "your corps takes the field right now" element + your-picks
-                        spotlight. Renders in BOTH season types now: the real-field
-                        running order (scheduleRunningOrder.js) enriches off-season
-                        shows too, and the panel self-guards to null when there's
-                        nothing timed to show. */}
-                    <NextPerformancePanel
-                      competitions={competitions}
-                      selectedShows={activeCorps?.selectedShows || {}}
-                      lineup={lineup}
-                      poolCorps={availableCorps}
-                      myUid={user?.uid}
-                    />
                   </>
                 )}
               </div>
