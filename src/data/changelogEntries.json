@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-26-design-exchange",
+    "date": "2026-08-26",
+    "title": "The Design Exchange: a public gallery for your uniforms",
+    "category": "feature",
+    "summary": "Your designs can now hang in public. Publish any saved look to the new Design Exchange and every director can browse it, like it, and save a copy into their own wardrobe — with your name attached, and a little CorpsCoin in your pocket each time someone new saves it. Share links got smarter too: paste a uniform link in Discord and it unfurls into a card showing the design's colors and import code.",
+    "highlights": [
+      "Publish from the Studio; browse the gallery at Exchange, sorted by newest or most saved.",
+      "Save a copy imports the design into your wardrobe with credit to the designer — remix away.",
+      "Designers earn CorpsCoin for each unique save (capped per day, so it stays a thank-you, not a farm).",
+      "Get code now copies a share link that unfurls into a design card and lands friends in their own Studio with your design loaded.",
+      "Public director pages now show each corps' equipped uniform colors next to its name."
+    ]
+  },
+  {
     "id": "2026-08-26-scores-colorway-alt-look",
     "date": "2026-08-26",
     "title": "Your colors on the scoreboard — and an alternate look",

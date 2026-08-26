@@ -129,6 +129,14 @@ const {
   deleteUniformDesign,
   mintUniformCode,
 } = require("./src/callable/uniformStudio");
+const {
+  publishUniformDesign,
+  unpublishUniformDesign,
+  likeExchangeDesign,
+  saveExchangeDesign,
+  reportExchangeDesign,
+  adminRemoveExchangeDesign,
+} = require("./src/callable/designExchange");
 const { purchaseRetirementPlaque, purchaseHallBanner } = require("./src/callable/prestige");
 const { makeLegacyEndowment } = require("./src/callable/legacy");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
@@ -559,6 +567,14 @@ module.exports = {
   equipUniformDesign,
   deleteUniformDesign,
   mintUniformCode,
+
+  // Design Exchange (uniform gallery)
+  publishUniformDesign,
+  unpublishUniformDesign,
+  likeExchangeDesign,
+  saveExchangeDesign,
+  reportExchangeDesign,
+  adminRemoveExchangeDesign,
 
   // Avatar Generation
   generateCorpsAvatar,

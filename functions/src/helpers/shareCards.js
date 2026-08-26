@@ -10,6 +10,7 @@
 // embedding is needed.
 
 const { CLASS_LABELS, aggregateNightlyStandings } = require("./scoreDrop");
+const { UNIFORM_CODE_RE } = require("./uniformValidation");
 
 const SITE_URL = "https://marching.art";
 
@@ -235,6 +236,153 @@ function buildDirectorCardSvg({ profile, username }) {
 }
 
 // -----------------------------------------------------------------------------
+// UNIFORM CARD
+// -----------------------------------------------------------------------------
+
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+/** First valid hex among the candidates, else the last argument (a literal). */
+const firstHex = (...candidates) => {
+  for (const c of candidates.slice(0, -1)) {
+    if (typeof c === "string" && HEX_RE.test(c)) return c;
+  }
+  return candidates[candidates.length - 1];
+};
+
+const METAL_HEX = { gold: "#d9a41c", silver: "#c0c4cc" };
+
+/**
+ * A simplified flat-lay of the design — hat, jacket with its diagonal
+ * treatment, belt, trousers — drawn from the figure's actual color channels
+ * (each validated, falling back to the colorway). Deliberately NOT the full
+ * client renderer: a recognizable glyph in the design's palette, not a
+ * replica, so the card stays a ~40-node SVG the server can draw from any
+ * stored snapshot without a port of UniformFigure.
+ *
+ * @param {Object} design  A uniform_codes design snapshot (colorway + figure).
+ * @param {number} ox  Glyph-center x.
+ * @param {number} oy  Glyph-top y.
+ * @returns {string} SVG fragment.
+ */
+function uniformGlyph(design, ox, oy) {
+  const cw = design.colorway || {};
+  const fig = design.figure || {};
+  const metal = METAL_HEX[cw.metal] || METAL_HEX.gold;
+  const primary = firstHex(cw.primary, "#6d1a26");
+  const jacket = firstHex(fig.jacket, cw.primary, "#6d1a26");
+  const secondary = firstHex(cw.secondary, "#d9a41c");
+  const pants = firstHex(fig.pants, fig.legL && fig.legL.color, "#ece2cc");
+  const belt = firstHex(fig.belt, cw.secondary, "#17171a");
+  const collar = firstHex(fig.collar, cw.primary, primary);
+  const hat = fig.hat || {};
+  const hatBody = firstHex(hat.body, "#17171a");
+  const hatBand = firstHex(hat.band, hatBody, hatBody);
+  const plume = fig.plume ? firstHex(fig.plume.color, cw.accent, "#f4f2ec") : null;
+  const chest = fig.chest;
+  const bandColor =
+    chest === "sash"
+      ? firstHex(fig.sash, secondary, secondary)
+      : chest === "baldric"
+        ? firstHex(fig.baldric, secondary, secondary)
+        : chest === "swash"
+          ? firstHex(fig.swash, secondary, secondary)
+          : null;
+  const buttons = firstHex(fig.buttonColor, metal, metal);
+
+  const parts = [];
+  // hat block + band (+ plume stroke), only when the design wears one
+  if (fig.hatType) {
+    if (plume) {
+      parts.push(
+        `<path d="M${ox + 18},${oy + 8} Q${ox + 26},${oy - 52} ${ox + 10},${oy - 66}" stroke="${plume}" stroke-width="13" fill="none" stroke-linecap="round"/>`
+      );
+    }
+    parts.push(
+      `<rect x="${ox - 46}" y="${oy}" width="92" height="66" fill="${hatBody}"/>`,
+      `<rect x="${ox - 46}" y="${oy + 50}" width="92" height="16" fill="${hatBand}"/>`
+    );
+  }
+  const jTop = oy + 86;
+  // jacket body, collar, diagonal treatment, buttons, belt
+  parts.push(
+    `<path d="M${ox - 92},${jTop + 14} Q${ox},${jTop - 10} ${ox + 92},${jTop + 14} L${ox + 102},${jTop + 216} Q${ox},${jTop + 240} ${ox - 102},${jTop + 216} Z" fill="${jacket}"/>`,
+    `<path d="M${ox - 34},${jTop + 2} Q${ox},${jTop - 8} ${ox + 34},${jTop + 2} L${ox + 30},${jTop + 18} Q${ox},${jTop + 8} ${ox - 30},${jTop + 18} Z" fill="${collar}" stroke="${COLORS.line}" stroke-width="1"/>`
+  );
+  if (bandColor) {
+    // sash runs high-left -> low-right; baldric/swash the other shoulder;
+    // chestReverse flips whichever it is
+    let leftToRight = chest === "sash";
+    if (fig.chestReverse) leftToRight = !leftToRight;
+    const [x1, x2] = leftToRight ? [ox - 88, ox + 96] : [ox + 88, ox - 96];
+    parts.push(
+      `<path d="M${x1 - 14},${jTop + 24} L${x1 + 18},${jTop + 12} L${x2 + 14},${jTop + 196} L${x2 - 18},${jTop + 208} Z" fill="${bandColor}"/>`
+    );
+  } else {
+    for (let i = 0; i < 4; i++) {
+      const y = jTop + 60 + i * 42;
+      parts.push(
+        `<circle cx="${ox - 26}" cy="${y}" r="7" fill="${buttons}"/>`,
+        `<circle cx="${ox + 26}" cy="${y}" r="7" fill="${buttons}"/>`
+      );
+    }
+  }
+  parts.push(
+    `<rect x="${ox - 102}" y="${jTop + 212}" width="204" height="26" fill="${belt}"/>`,
+    `<rect x="${ox - 13}" y="${jTop + 215}" width="26" height="20" fill="${metal}"/>`,
+    // trousers
+    `<rect x="${ox - 86}" y="${jTop + 246}" width="72" height="150" fill="${pants}"/>`,
+    `<rect x="${ox + 14}" y="${jTop + 246}" width="72" height="150" fill="${pants}"/>`
+  );
+  const stripe = firstHex(fig.stripe, fig.legL && fig.legL.stripe, null);
+  if (stripe) {
+    parts.push(
+      `<rect x="${ox - 54}" y="${jTop + 246}" width="8" height="150" fill="${stripe}"/>`,
+      `<rect x="${ox + 46}" y="${jTop + 246}" width="8" height="150" fill="${stripe}"/>`
+    );
+  }
+  return parts.join("\n  ");
+}
+
+/**
+ * Uniform-code card for /share/uniform/{code}: the design's flat-lay glyph
+ * beside its name, designer, colorway swatches, and the import code.
+ *
+ * @param {Object} params
+ * @param {Object} params.codeDoc  uniform_codes/{code} doc data.
+ * @param {string} params.code     The share code itself.
+ * @returns {string | null}
+ */
+function buildUniformCardSvg({ codeDoc, code }) {
+  if (!codeDoc || !codeDoc.design) return null;
+  const design = codeDoc.design;
+  const cw = design.colorway || {};
+  const swatches = [
+    firstHex(cw.primary, "#6d1a26"),
+    firstHex(cw.secondary, "#d9a41c"),
+    firstHex(cw.accent, "#ece2cc"),
+  ]
+    .map(
+      (hex, i) =>
+        `<rect x="${80 + i * 96}" y="300" width="84" height="84" fill="${hex}" stroke="${COLORS.line}" stroke-width="1"/>`
+    )
+    .join("\n  ");
+
+  return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="${COLORS.background}"/>
+  <rect x="0" y="0" width="1200" height="6" fill="${COLORS.accent}"/>
+  <text x="80" y="86" font-family="${FONT_STACK}" font-size="30" font-weight="bold" fill="${COLORS.accent}">marching.art</text>
+  <text x="80" y="118" font-family="${FONT_STACK}" font-size="18" letter-spacing="3" fill="${COLORS.muted}">FANTASY DRUM CORPS · UNIFORM STUDIO</text>
+  <text x="80" y="180" font-family="${FONT_STACK}" font-size="46" font-weight="bold" fill="${COLORS.text}">${escapeXml(clamp(codeDoc.designName || design.name || "Uniform design", 30))}</text>
+  <text x="80" y="222" font-family="${FONT_STACK}" font-size="26" fill="${COLORS.muted}">designed by ${escapeXml(clamp(codeDoc.creatorName || "a director", 30))}</text>
+  ${swatches}
+  <text x="80" y="452" font-family="${FONT_STACK}" font-size="18" letter-spacing="3" fill="${COLORS.muted}">IMPORT CODE</text>
+  <rect x="80" y="470" width="360" height="72" fill="${COLORS.surface}" stroke="${COLORS.line}" stroke-width="1"/>
+  <text x="110" y="518" font-family="${FONT_STACK}" font-size="40" font-weight="bold" letter-spacing="4" fill="${COLORS.accent}">${escapeXml(code)}</text>
+  ${uniformGlyph(design, 900, 90)}
+  <text x="80" y="608" font-family="${FONT_STACK}" font-size="20" fill="${COLORS.muted}">Enter the code in your Uniform Studio to import this design</text>
+</svg>`;
+}
+
+// -----------------------------------------------------------------------------
 // SHARE PAGE HTML
 // -----------------------------------------------------------------------------
 
@@ -308,6 +456,7 @@ const USERNAME_SEGMENT = /^[A-Za-z0-9_]{3,15}$/;
  * @returns {{type: 'scores', seasonUid: string, day: number, classKey: string}
  *   | {type: 'champion', seasonId: string, classKey: string}
  *   | {type: 'director', username: string}
+ *   | {type: 'uniform', code: string}
  *   | null}
  */
 function parseOgPath(path) {
@@ -340,6 +489,12 @@ function parseOgPath(path) {
     return { type: "director", username };
   }
 
+  if (kind === "uniform" && parts.length === 4) {
+    const code = parts[3].replace(/\.png$/, "").toUpperCase();
+    if (!UNIFORM_CODE_RE.test(code)) return null;
+    return { type: "uniform", code };
+  }
+
   return null;
 }
 
@@ -353,6 +508,7 @@ function parseOgPath(path) {
  * @returns {{type: 'article', articleId: string}
  *   | {type: 'scores', seasonUid: string, day: number, classKey: string}
  *   | {type: 'champion', seasonId: string, classKey: string}
+ *   | {type: 'uniform', code: string}
  *   | null}
  */
 function parseSharePath(path) {
@@ -380,6 +536,12 @@ function parseSharePath(path) {
     return { type: "champion", seasonId, classKey };
   }
 
+  if (kind === "uniform" && parts.length === 3) {
+    const code = parts[2].toUpperCase();
+    if (!UNIFORM_CODE_RE.test(code)) return null;
+    return { type: "uniform", code };
+  }
+
   return null;
 }
 
@@ -389,6 +551,7 @@ module.exports = {
   buildScoresCardSvg,
   buildChampionCardSvg,
   buildDirectorCardSvg,
+  buildUniformCardSvg,
   buildShareHtml,
   parseOgPath,
   parseSharePath,

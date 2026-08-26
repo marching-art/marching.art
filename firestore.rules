@@ -397,6 +397,30 @@ match /artifacts/{appId}/uniform_codes/{code} {
   allow write: if false; // Backend only (mintUniformCode)
 }
 
+// --- DESIGN EXCHANGE ---
+// The opt-in uniform gallery (docs/UNIFORM_STUDIO.md §7.3). Entries are the
+// same pure-structured-data snapshots as uniform codes (validated at publish),
+// so the browse surface is world-readable; every write goes through the
+// designExchange callables. A viewer reads only their OWN like/save marker
+// (the "did I already like this" dot); reports and the creator-payout ledger
+// are backend-only.
+match /artifacts/{appId}/design_exchange/{entryId} {
+  allow read: if true;
+  allow write: if false; // Backend only (designExchange callables)
+
+  match /likes/{uid} {
+    allow read: if isAuthenticated() && request.auth.uid == uid;
+    allow write: if false;
+  }
+  match /saves/{uid} {
+    allow read: if isAuthenticated() && request.auth.uid == uid;
+    allow write: if false;
+  }
+  match /reports/{uid} {
+    allow read, write: if false; // Backend only
+  }
+}
+
 // --- BUY ME A COFFEE SUPPORTERS ---
 // Fully locked: these docs hold PII (payer email + name) and are written only
 // by the BMAC webhook / reconcile job / supporter callables via the Admin SDK.

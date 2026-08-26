@@ -30,6 +30,7 @@ const {
   buildScoresCardSvg,
   buildChampionCardSvg,
   buildDirectorCardSvg,
+  buildUniformCardSvg,
   buildShareHtml,
   parseOgPath,
   parseSharePath,
@@ -38,6 +39,7 @@ const {
 const { isProfilePrivate, pickPublicProfile } = require("../helpers/publicProfilePages");
 const { resolveDirectorProfile } = require("./publicProfilePages");
 const { CLASS_LABELS, aggregateNightlyStandings } = require("../helpers/scoreDrop");
+const { paths } = require("../helpers/paths");
 
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
@@ -58,6 +60,12 @@ async function fetchDayRecap(db, seasonUid, day) {
 /** Read a season_champions doc; null when missing. */
 async function fetchChampions(db, seasonId) {
   const snap = await db.doc(`season_champions/${seasonId}`).get();
+  return snap.exists ? snap.data() : null;
+}
+
+/** Read a uniform_codes doc; null when missing. */
+async function fetchUniformCode(db, code) {
+  const snap = await db.doc(paths.uniformCode(code)).get();
   return snap.exists ? snap.data() : null;
 }
 
@@ -125,6 +133,11 @@ exports.getOgCardHttp = onRequest(
             profile: pickPublicProfile(resolved.data),
             username: resolved.data.username,
           });
+        }
+      } else if (route.type === "uniform") {
+        const codeDoc = await fetchUniformCode(db, route.code);
+        if (codeDoc) {
+          svg = buildUniformCardSvg({ codeDoc, code: route.code });
         }
       }
 
@@ -227,6 +240,20 @@ exports.getShareHttp = onRequest(
               `Every champion lives forever in the marching.art Hall of Champions.`,
             imageUrl: `${SITE_URL}/api/og/champion/${route.seasonId}/${route.classKey}.png`,
             redirectPath: "/hall-of-champions",
+          };
+        }
+      } else if (route.type === "uniform") {
+        const codeDoc = await fetchUniformCode(db, route.code);
+        if (codeDoc && codeDoc.design) {
+          const designName = codeDoc.designName || codeDoc.design.name || "Uniform design";
+          page = {
+            title: `"${clamp(designName, 40)}" by ${clamp(codeDoc.creatorName || "a director", 30)} | marching.art`,
+            description:
+              `A fantasy drum corps uniform designed in the marching.art Uniform Studio. ` +
+              `Enter code ${route.code} in your own Studio to import and remix it.`,
+            imageUrl: `${SITE_URL}/api/og/uniform/${route.code}.png`,
+            redirectPath: `/studio?code=${route.code}`,
+            imageAlt: `${designName} uniform design`,
           };
         }
       }

@@ -98,8 +98,31 @@ describe("listPublicCorps", () => {
       aClass: {},
     });
     assert.deepEqual(entries, [
-      { classKey: "worldClass", classLabel: "World Class", corpsName: "Blue Devils" },
+      { classKey: "worldClass", classLabel: "World Class", corpsName: "Blue Devils", uniform: null },
     ]);
+  });
+
+  test("surfaces only the validated equipped-uniform view", () => {
+    const entries = listPublicCorps({
+      worldClass: {
+        corpsName: "Blue Devils",
+        uniform: {
+          name: "2026 Finals Look",
+          colorway: { primary: "#101c33", secondary: "#d7dde2", accent: "#2f6fd0", metal: "silver" },
+          figure: { skin: "#c9a074" }, // never surfaced
+        },
+      },
+      openClass: {
+        corpsName: "Open Star",
+        // hostile / malformed colorway drops the whole uniform view
+        uniform: { name: "x", colorway: { primary: "red;} body{", secondary: "#111111", accent: "#222222" } },
+      },
+    });
+    assert.deepEqual(entries[0].uniform, {
+      name: "2026 Finals Look",
+      colors: ["#101c33", "#d7dde2", "#2f6fd0"],
+    });
+    assert.equal(entries[1].uniform, null);
   });
 
   test("tolerates a missing corps map", () => {
@@ -127,6 +150,27 @@ describe("buildDirectorPageHtml", () => {
     assert.equal(html.includes("<img onerror"), false, "raw img tag must never survive");
     assert.ok(html.includes("&lt;script&gt;"), "hostile text should appear escaped");
     assert.ok(html.includes("bio &amp; &lt;b&gt;bold&lt;/b&gt;"));
+  });
+
+  test("renders equipped-uniform swatches from the validated triple only", () => {
+    const html = buildDirectorPageHtml({
+      username: "Rohn",
+      profile: {
+        displayName: "Chris",
+        corps: {
+          worldClass: {
+            corpsName: "Blue Devils",
+            uniform: {
+              name: '<b>"Look"</b>',
+              colorway: { primary: "#101C33", secondary: "#d7dde2", accent: "#2f6fd0" },
+            },
+          },
+        },
+      },
+    });
+    assert.ok(html.includes("background:#101c33"), "validated hex reaches the swatch style");
+    assert.ok(html.includes("&lt;b&gt;&quot;Look&quot;&lt;/b&gt;"), "look name is escaped");
+    assert.equal(html.includes('<b>"Look"</b>'), false);
   });
 
   test("carries the canonical URL and OG tags for the shared link", () => {
