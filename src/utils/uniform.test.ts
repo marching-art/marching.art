@@ -255,12 +255,13 @@ describe('v1 → v2 migration', () => {
 });
 
 describe('presets and limits', () => {
-  it('ships eleven presets across both eras', () => {
-    expect(UNIFORM_PRESETS).toHaveLength(11);
+  it('ships twelve presets across both eras', () => {
+    // 11 at launch + Millennium (the 2000s bridge, added on player feedback)
+    expect(UNIFORM_PRESETS).toHaveLength(12);
     expect(UNIFORM_PRESETS.filter((p) => p.era === 'classic')).toHaveLength(5);
-    expect(UNIFORM_PRESETS.filter((p) => p.era === 'modern')).toHaveLength(6);
+    expect(UNIFORM_PRESETS.filter((p) => p.era === 'modern')).toHaveLength(7);
     const ids = new Set(UNIFORM_PRESETS.map((p) => p.id));
-    expect(ids.size).toBe(11);
+    expect(ids.size).toBe(12);
   });
 
   it('every preset yields a design within the payload limits', () => {

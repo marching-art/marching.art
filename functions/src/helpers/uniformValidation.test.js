@@ -79,6 +79,29 @@ describe("validateDesign", () => {
     assert.match(validateDesign(d).join(";"), /torsoFill/);
   });
 
+  test("accepts the contour hat and the swash part/sequin/leg-color fields", () => {
+    const d = validDesign();
+    d.figure.hatType = "contour";
+    d.figure.hat = { body: "#f4f2ec", band: "#101014", ornament: "none" };
+    d.figure.chest = "swash";
+    d.figure.swash = "#f4f2ec";
+    d.figure.swashSequin = false;
+    d.figure.swashTop = true;
+    d.figure.swashBottom = false;
+    d.figure.swashLegColor = "#e01010";
+    assert.deepEqual(validateDesign(d), []);
+
+    const d2 = validDesign();
+    d2.figure.swashLegColor = "not-a-color";
+    assert.match(validateDesign(d2).join(";"), /swashLegColor/);
+
+    const d3 = validDesign();
+    d3.figure.plume = { type: "upright", color: "#f7f5f0", accent: "#2f6fd0" };
+    assert.deepEqual(validateDesign(d3), []);
+    d3.figure.plume.accent = "blue";
+    assert.match(validateDesign(d3).join(";"), /figure\.plume/);
+  });
+
   test("accepts hat emblem color, ornaments, and the aussie hat", () => {
     const d = validDesign();
     d.figure.hatType = "aussie";

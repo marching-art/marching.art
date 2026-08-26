@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CORPS REGISTRATION MODAL - DATA-TERMINAL STYLE
 // =============================================================================
@@ -16,6 +15,14 @@ const CLASSES = [
   { id: 'soundSport', name: 'SoundSport', budget: '90 pts', reqLevel: 0 },
 ];
 
+/**
+ * @param {{
+ *   onClose: () => void,
+ *   onSubmit: (data: {name: string, location: string, description: string, class: string}) => void,
+ *   unlockedClasses?: string[],
+ *   defaultClass?: string,
+ * }} props
+ */
 const CorpsRegistrationModal = ({
   onClose,
   onSubmit,
@@ -41,6 +48,7 @@ const CorpsRegistrationModal = ({
     unlocked: cls.id === 'soundSport' || unlockedClasses.includes(cls.id),
   }));
 
+  /** @param {React.FormEvent} e */
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);

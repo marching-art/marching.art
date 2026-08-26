@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-08-26-contour-era",
+    "date": "2026-08-26",
+    "title": "The 2000s check in: contour shako, two-tone plumes",
+    "category": "improvement",
+    "summary": "Two player requests bridging the era gap between the classics and today's looks. The new contour shako is the tall, sleek, swept-top hat of the 2000s and early 2010s — clean face by default, any ornament and plume optional. Plumes everywhere can now take a second tip color for the classic dyed-feather look. The new Millennium preset puts it all together: navy and silver with a blue-tipped plume."
+  },
+  {
+    "id": "2026-08-26-swash-controls",
+    "date": "2026-08-26",
+    "title": "The modern swash, your way — and sequins are always optional",
+    "category": "improvement",
+    "summary": "Straight from the Discord: the modern swash now splits into independent torso and leg parts — keep either or both — and its leg band takes its own color. Sequins got a checkbox everywhere they appear: swash, legs, sashes, baldrics, and gauntlets can all go matte. Epaulets were always there but hard to find; the section is now labeled Neck, shoulders & extras."
+  },
+  {
     "id": "2026-08-26-uniform-codes-share-cards",
     "date": "2026-08-26",
     "title": "Uniform codes and share cards: your look, everywhere",

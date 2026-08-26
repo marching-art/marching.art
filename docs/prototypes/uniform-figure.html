@@ -576,12 +576,13 @@
           return g;
         }
         case 'swash': {
+          if (cw.swashTop === false) return '';
           let g = P(
             'M148,98 Q118,148 98,198 Q90,226 90,256 L110,256 Q106,220 120,180 Q136,140 162,110 L158,100 Z',
             bandFill(cw.swash)
           );
           g += light('M150,102 Q126,140 112,180 L108,180 Q124,138 147,100 Z', 0.18);
-          g += sequins(120, 180, 40, 140, 9, 40);
+          if (cw.swashSequin !== false) g += sequins(120, 180, 40, 140, 9, 40);
           return cw.chestReverse ? mirror(g) : g;
         }
         case 'vinylPanel': {
@@ -600,10 +601,10 @@
     }
 
     function swashLeg(cw) {
-      if (cw.chest !== 'swash') return '';
-      const c = cw.swash;
+      if (cw.chest !== 'swash' || cw.swashBottom === false) return '';
+      const c = cw.swashLegColor || cw.swash;
       let g = P('M89,256 Q86,320 93,436 L104,436 Q95,330 100,256 Z', c);
-      g += sequins(96, 340, 12, 170, 7, 26);
+      if (cw.swashSequin !== false) g += sequins(96, 340, 12, 170, 7, 26);
       return g;
     }
 
@@ -712,6 +713,20 @@
       return g;
     }
 
+    function contour(cw) {
+      const h = cw.hat;
+      if (!h) return '';
+      const body = h.body;
+      let g = '';
+      g += P('M101,60 L103,8 L135,16 L139,60 Q120,68 101,60 Z', body);
+      g += P('M103,8 L135,16 L133,20 L105,12 Z', lighten(body, 0.14));
+      g += shade('M128,14 L135,16 L139,60 Q131,63 127,64 Q130,38 128,14 Z', 0.14);
+      g += light('M104,12 L109,13 Q106,36 106,60 Q103,59 102,58 Z', 0.09);
+      if (h.band) g += P('M101.4,52 Q120,60 138.6,52 L139,58 Q120,66 101,58 Z', h.band);
+      g += hatOrnament(h.ornament || 'none', h.emblem || cw.metal);
+      return g;
+    }
+
     function campaign(cw) {
       const h = cw.hat;
       if (!h) return '';
@@ -728,6 +743,7 @@
     function plume(cw) {
       const p = cw.plume;
       if (!p) return '';
+      const tip = p.accent || null;
       if (p.type === 'upright') {
         let g = P(
           'M113,12 Q107,-34 118,-64 Q121,-70 124,-64 Q133,-32 127,12 Q120,16 113,12 Z',
@@ -736,6 +752,13 @@
         g += stroke('M117,8 Q114,-30 119,-58', lighten(p.color, 0.35), 1.1, `opacity=".7"`);
         g += stroke('M122,8 Q121,-34 121,-60', lighten(p.color, 0.35), 1.1, `opacity=".55"`);
         g += stroke('M125,6 Q127,-26 123,-56', darken(p.color, 0.25), 1.1, `opacity=".5"`);
+        if (tip) {
+          g += P(
+            'M114.5,-26 Q110,-48 118,-64 Q121,-70 124,-64 Q130,-44 125.5,-24 Q120,-20 114.5,-26 Z',
+            tip
+          );
+          g += stroke('M118,-28 Q117,-46 120,-60', lighten(tip, 0.3), 1.1, 'opacity=".6"');
+        }
         g += shade('M124,-60 Q130,-30 126,10 L121,12 Q128,-28 122,-62 Z', 0.12);
         if (p.mylar) g += sequins(120, -26, 12, 72, 13, 18);
         return g;
@@ -754,10 +777,11 @@
           'M120,2 C117,-30 113,-32 112,-20',
           'M120,2 C123,-30 127,-32 128,-20',
         ];
-        for (const a of arcs) {
-          g += stroke(a, p.color, 3.8);
-          g += stroke(a, lighten(p.color, 0.28), 1.2, `opacity=".45"`);
-        }
+        arcs.forEach((a, i) => {
+          const ac = tip && i % 2 === 1 ? tip : p.color;
+          g += stroke(a, ac, 3.8);
+          g += stroke(a, lighten(ac, 0.28), 1.2, `opacity=".45"`);
+        });
         g += `<circle cx="120" cy="6" r="4.5" fill="${cw.metal}"/>`;
         return g;
       }
@@ -821,6 +845,7 @@
       if (cw.hatType === 'pith') L += pith(cw);
       if (cw.hatType === 'campaign') L += campaign(cw);
       if (cw.hatType === 'aussie') L += aussie(cw);
+      if (cw.hatType === 'contour') L += contour(cw);
       return L;
     }
     function renderFigure(cw, opts = {}) {

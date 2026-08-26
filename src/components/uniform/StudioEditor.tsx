@@ -284,7 +284,14 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
             <span className={LABEL}>Ornament</span>
             <Pills
               options={HAT_ORNAMENT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-              value={figure.hat.ornament || (figure.hatType === 'pith' ? 'disc' : 'sunburst')}
+              value={
+                figure.hat.ornament ||
+                (figure.hatType === 'pith'
+                  ? 'disc'
+                  : figure.hatType === 'contour'
+                    ? 'none'
+                    : 'sunburst')
+              }
               onSelect={(v) => setFigure({ hat: { ...figure.hat!, ornament: v } })}
             />
           </div>
@@ -309,6 +316,14 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
                     label="Plume"
                     value={figure.plume.color}
                     onChange={(v) => setFigure({ plume: { ...figure.plume!, color: v || '' } })}
+                  />
+                </div>
+                <div className="flex-1">
+                  <ChannelRow
+                    label="Plume tip"
+                    value={figure.plume.accent}
+                    onChange={(v) => setFigure({ plume: { ...figure.plume!, accent: v } })}
+                    clearable
                   />
                 </div>
                 {figure.plume.type === 'upright' && (
@@ -395,9 +410,9 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
       {/* Chest */}
       <ChestSection figure={figure} colorway={design.colorway} onPatch={setFigure} />
 
-      {/* Neck & extras */}
+      {/* Neck, shoulders & extras */}
       <section>
-        <h3 className={SECTION_LABEL}>Neck &amp; extras</h3>
+        <h3 className={SECTION_LABEL}>Neck, shoulders &amp; extras</h3>
         <Pills
           options={NECK_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
           value={neckValue}

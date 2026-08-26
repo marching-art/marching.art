@@ -54,7 +54,7 @@ export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit';
 export type ChestTreatment =
   'none' | 'braid' | 'sash' | 'baldric' | 'plastron' | 'buttons' | 'swash' | 'vinylPanel';
 
-export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | null;
+export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | null;
 
 export type PlumeType = 'upright' | 'fountain';
 
@@ -73,6 +73,8 @@ export interface HatConfig {
 export interface PlumeConfig {
   type: PlumeType;
   color: HexColor;
+  /** Two-tone: dyes the upright's tip / the fountain's alternating sprays. */
+  accent?: HexColor | null;
   /** Mylar sparkle strands (upright only). */
   mylar?: boolean;
 }
@@ -162,6 +164,14 @@ export interface FigureConfig {
   panel?: HexColor | null;
   panelTrim?: HexColor | null;
   swash?: HexColor | null;
+  /** Sequins on the modern swash (chest + leg band); ON unless false. */
+  swashSequin?: boolean;
+  /** The swash's torso part; ON unless false (leg band can stand alone). */
+  swashTop?: boolean;
+  /** The swash's leg band; ON unless false (torso part can stand alone). */
+  swashBottom?: boolean;
+  /** The swash's leg band color; null → matches the swash. */
+  swashLegColor?: HexColor | null;
 
   metal?: HexColor | null;
   collar?: HexColor | null;
