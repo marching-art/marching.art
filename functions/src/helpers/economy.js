@@ -129,6 +129,11 @@ const TRANSACTION_TYPES = {
   // wallet debit, never a Corps Budget line — the home is corps identity, not
   // an operating cost (helpers/podium/venues.relocationFee, design §5.3).
   PODIUM_HOME_RELOCATION: "podium_home_relocation",
+  // Design Exchange creator payout: a tiny faucet per unique save of a
+  // published uniform design, hard-capped per creator per day
+  // (callable/designExchange.js). Its own type so the weekly mint-vs-sink
+  // readout can watch the faucet.
+  DESIGN_EXCHANGE_SAVE: "design_exchange_save",
 };
 
 /**

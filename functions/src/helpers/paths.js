@@ -36,6 +36,15 @@ const paths = {
   // Uniform codes: world-readable design snapshots minted by mintUniformCode
   // (pure structured data — safe to serve to anyone; writes are server-only).
   uniformCode: (code) => `artifacts/${ns()}/uniform_codes/${code}`,
+  // Design Exchange: the opt-in public uniform gallery (§7.3). Entries are
+  // world-readable; likes/saves are per-user markers under each entry (owner-
+  // read); reports and the creator-payout day ledger are backend-only.
+  exchangeEntries: () => `artifacts/${ns()}/design_exchange`,
+  exchangeEntry: (entryId) => `artifacts/${ns()}/design_exchange/${entryId}`,
+  exchangeLike: (entryId, uid) => `artifacts/${ns()}/design_exchange/${entryId}/likes/${uid}`,
+  exchangeSave: (entryId, uid) => `artifacts/${ns()}/design_exchange/${entryId}/saves/${uid}`,
+  exchangeReport: (entryId, uid) => `artifacts/${ns()}/design_exchange/${entryId}/reports/${uid}`,
+  exchangePayout: (uid) => `artifacts/${ns()}/design_exchange_payouts/${uid}`,
   userNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications`,
   userLeagueNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications/leagues`,
   userEmailLog: (uid) => `artifacts/${ns()}/users/${uid}/email_log`,

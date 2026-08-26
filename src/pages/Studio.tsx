@@ -9,9 +9,20 @@
 // at field distance, which doubles as a legibility check.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Check, Copy, Eye, Loader2, Save, Share2, Shirt, Sparkles, Trash2 } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Eye,
+  Loader2,
+  Save,
+  Share2,
+  Shirt,
+  Sparkles,
+  Store,
+  Trash2,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
@@ -34,6 +45,7 @@ import {
   saveUniformDesign,
   type WardrobeDesign,
 } from '../api/uniformStudio';
+import { publishUniformDesign } from '../api/designExchange';
 import { generateCorpsAvatar } from '../api/articleAdmin';
 import { useSEO } from '../hooks/useSEO';
 import Heading from '../components/ui/Heading';
@@ -116,6 +128,39 @@ export default function Studio() {
     void refreshWardrobe();
   }, [refreshWardrobe]);
 
+  // /studio?code=MA-XXXX-XX — the /share/uniform landing path: import the
+  // shared design as a fresh draft, once, then drop the param.
+  const paramCode = searchParams.get('code');
+  useEffect(() => {
+    if (!paramCode) return;
+    let cancelled = false;
+    void (async () => {
+      const shared = await fetchUniformCode(paramCode).catch(() => null);
+      if (cancelled) return;
+      if (!shared) {
+        toast.error('No design found for that share link.');
+      } else {
+        setDraft({ ...shared.design, schema: 2, figure: withDerivedFlags(shared.design.figure) });
+        setLoadedId(null);
+        setMigrated(false);
+        savedJson.current = '';
+        toast.success(`Design by ${shared.creatorName} loaded — save it to keep it`);
+      }
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('code');
+          return next;
+        },
+        { replace: true }
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramCode]);
+
   const dirty = draft ? JSON.stringify(draft) !== savedJson.current : false;
 
   const doSave = async (asNew: boolean): Promise<string | null> => {
@@ -164,6 +209,31 @@ export default function Studio() {
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to equip design');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const doPublish = async () => {
+    if (!draft) return;
+    setBusy('publish');
+    try {
+      // publishing always works from a saved design; save first when needed
+      let id = loadedId;
+      if (!id || dirty) {
+        const saved = await saveUniformDesign({
+          designId: loadedId || undefined,
+          design: draft,
+        });
+        id = saved.data.designId;
+        setLoadedId(id);
+        savedJson.current = JSON.stringify(draft);
+        void refreshWardrobe();
+      }
+      const result = await publishUniformDesign({ designId: id! });
+      toast.success(result.data.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to publish design');
     } finally {
       setBusy(null);
     }
@@ -229,9 +299,12 @@ export default function Studio() {
       if (!id) return;
       const minted = await mintUniformCode({ designId: id });
       const code = minted.data.code;
+      // the /share link unfurls into a design card wherever it's pasted and
+      // lands humans back here with the code pre-applied
+      const shareLink = `https://marching.art/share/uniform/${code}`;
       try {
-        await navigator.clipboard.writeText(code);
-        toast.success(`Code ${code} copied — anyone can enter it in their Studio`);
+        await navigator.clipboard.writeText(`${code} — ${shareLink}`);
+        toast.success(`Code ${code} + share link copied — paste it anywhere`);
       } catch {
         toast.success(`Your uniform code: ${code}`);
       }
@@ -364,6 +437,13 @@ export default function Studio() {
             <Shirt className="w-4 h-4 text-interactive" />
             Uniform Studio
           </h1>
+          <Link
+            to="/exchange"
+            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-interactive hover:text-white"
+          >
+            <Store className="w-3 h-3" />
+            Design Exchange
+          </Link>
           <div className="flex gap-1 ml-auto overflow-x-auto">
             {corpsOptions.map((o) => (
               <button
@@ -518,6 +598,20 @@ export default function Studio() {
                       <Share2 className="w-3.5 h-3.5" />
                     )}
                     Share card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void doPublish()}
+                    disabled={busy !== null}
+                    title="Share this design in the public Design Exchange gallery"
+                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    {busy === 'publish' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Store className="w-3.5 h-3.5" />
+                    )}
+                    Publish
                   </button>
                   <button
                     type="button"

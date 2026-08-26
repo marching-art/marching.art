@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useState, useEffect } from 'react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { X, Loader2, RefreshCw, RotateCcw, ChevronRight } from 'lucide-react';
@@ -6,12 +5,29 @@ import YouTubeIcon from '../YouTubeIcon';
 import { useAuth } from '../../context/AuthContext';
 import { adminHelpers } from '../../api';
 
+/**
+ * @param {{
+ *   videoModal: {
+ *     show?: boolean,
+ *     loading?: boolean,
+ *     error?: string | null,
+ *     videoId?: string | null,
+ *     title?: string,
+ *     corpsName?: string,
+ *     year?: string | number,
+ *     searchQuery?: string,
+ *   },
+ *   onClose: () => void,
+ *   onRetry?: () => void,
+ *   onReset?: () => void,
+ * }} props
+ */
 const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
   useEscapeKey(onClose, !!videoModal.show);
 
   // Admin check gates the Reset button (UI-only; the backend re-verifies the
   // admin claim before touching the nope list).
-  const { user } = useAuth();
+  const { user } = useAuth() || {};
   const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
     if (user) {
@@ -63,7 +79,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
               <YouTubeIcon height={100} className="mb-4 opacity-40" />
               <p className="text-muted text-sm mb-4">{videoModal.error}</p>
               <a
-                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery || '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors"
@@ -110,7 +126,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
               Refresh
             </button>
             <a
-              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
+              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery || '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[10px] text-red-500 hover:text-red-400 font-bold uppercase tracking-wider transition-colors flex items-center gap-1"

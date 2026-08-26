@@ -296,6 +296,14 @@ export const paths = {
     `artifacts/${DATA_NAMESPACE}/users/${uid}/wardrobe/${designId}`,
   // Uniform codes: world-readable snapshots minted by mintUniformCode.
   uniformCode: (code: string) => `artifacts/${DATA_NAMESPACE}/uniform_codes/${code}`,
+  // Design Exchange: the public uniform gallery — entries world-readable,
+  // like/save markers owner-read (functions/src/callable/designExchange.js).
+  exchangeEntries: () => `artifacts/${DATA_NAMESPACE}/design_exchange`,
+  exchangeEntry: (entryId: string) => `artifacts/${DATA_NAMESPACE}/design_exchange/${entryId}`,
+  exchangeLike: (entryId: string, uid: string) =>
+    `artifacts/${DATA_NAMESPACE}/design_exchange/${entryId}/likes/${uid}`,
+  exchangeSave: (entryId: string, uid: string) =>
+    `artifacts/${DATA_NAMESPACE}/design_exchange/${entryId}/saves/${uid}`,
 
   // Season paths
   season: () => `game-settings/season`,

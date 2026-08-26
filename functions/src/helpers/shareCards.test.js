@@ -9,6 +9,7 @@ const {
   buildCardSvg,
   buildScoresCardSvg,
   buildChampionCardSvg,
+  buildUniformCardSvg,
   buildShareHtml,
   parseOgPath,
   parseSharePath,
@@ -163,6 +164,80 @@ describe("buildCardSvg", () => {
     const svg = buildCardSvg({ kicker: "K", title: "T", rows });
     assert.ok(svg.includes("Corps 5"));
     assert.ok(!svg.includes("Corps 6"));
+  });
+});
+
+describe("uniform share routes + card", () => {
+  test("parses /share/uniform and /api/og/uniform, case-insensitively", () => {
+    assert.deepEqual(parseSharePath("/share/uniform/MA-7K3F-Q2"), {
+      type: "uniform",
+      code: "MA-7K3F-Q2",
+    });
+    assert.deepEqual(parseSharePath("/share/uniform/ma-7k3f-q2"), {
+      type: "uniform",
+      code: "MA-7K3F-Q2",
+    });
+    assert.deepEqual(parseOgPath("/api/og/uniform/MA-7K3F-Q2.png"), {
+      type: "uniform",
+      code: "MA-7K3F-Q2",
+    });
+    // wrong shape / ambiguous charset (O, 1) never resolves
+    assert.equal(parseSharePath("/share/uniform/MA-XXXX"), null);
+    assert.equal(parseSharePath("/share/uniform/MA-O1O1-O1"), null);
+    assert.equal(parseOgPath("/api/og/uniform/../etc.png"), null);
+  });
+
+  test("uniform card carries name, creator, code, and the design's colors", () => {
+    const svg = buildUniformCardSvg({
+      code: "MA-7K3F-Q2",
+      codeDoc: {
+        designName: "Ivory Blade",
+        creatorName: "MaestroMax",
+        design: {
+          schema: 2,
+          name: "Ivory Blade",
+          colorway: { primary: "#ece2cc", secondary: "#17171a", accent: "#d9a41c", metal: "gold" },
+          figure: {
+            skin: "#e0b48e",
+            jacket: "#ece2cc",
+            chest: "baldric",
+            baldric: "#17171a",
+            hatType: "shako",
+            hat: { body: "#ece2cc", band: "#17171a" },
+            plume: { type: "fountain", color: "#f7f5f0" },
+          },
+        },
+      },
+    });
+    assert.ok(svg.includes("Ivory Blade"));
+    assert.ok(svg.includes("MaestroMax"));
+    assert.ok(svg.includes("MA-7K3F-Q2"));
+    assert.ok(svg.includes('"#ece2cc"')); // jacket/primary drives the glyph
+    assert.ok(svg.includes('"#f7f5f0"')); // plume stroke
+  });
+
+  test("uniform card escapes hostile names and rejects invalid colors", () => {
+    const svg = buildUniformCardSvg({
+      code: "MA-7K3F-Q2",
+      codeDoc: {
+        designName: `<script>alert(1)</script>`,
+        creatorName: "x",
+        design: {
+          schema: 2,
+          name: "n",
+          colorway: { primary: "url(javascript:x)", secondary: "#17171a", accent: "#d9a41c" },
+          figure: { skin: "#c9a074", jacket: 'red" onload="x' },
+        },
+      },
+    });
+    assert.ok(!svg.includes("<script>"));
+    assert.ok(!svg.includes("javascript:"));
+    assert.ok(!svg.includes("onload"));
+  });
+
+  test("uniform card is null without a design snapshot", () => {
+    assert.equal(buildUniformCardSvg({ code: "MA-7K3F-Q2", codeDoc: null }), null);
+    assert.equal(buildUniformCardSvg({ code: "MA-7K3F-Q2", codeDoc: {} }), null);
   });
 });
 

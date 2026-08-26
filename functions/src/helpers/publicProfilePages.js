@@ -22,6 +22,7 @@
 const { CLASS_LABELS } = require("./scoreDrop");
 const { SITE_URL, escapeHtml, clamp } = require("./shareCards");
 const { buildPageShell } = require("./resultsPages");
+const { colorwayStrip } = require("./uniformValidation");
 
 // Ranked classes first, SoundSport last — the same display order the profile
 // UI uses (PROFILE_CORPS_CLASS_ORDER in src/utils/corps).
@@ -97,12 +98,31 @@ function pickPublicProfile(profileData) {
 }
 
 /**
+ * The equipped Uniform Studio look, reduced to what the public page shows:
+ * the look's name (bounded string) and a validated [primary, secondary,
+ * accent] hex triple. Anything malformed drops the whole view — nothing
+ * unvalidated from the snapshot reaches the SSR page.
+ *
+ * @param {Object|undefined} equipped corps.{class}.uniform snapshot.
+ * @returns {{name: string, colors: string[]} | null}
+ */
+function pickPublicUniform(equipped) {
+  if (!equipped || typeof equipped !== "object") return null;
+  const colors = colorwayStrip(equipped.colorway);
+  if (!colors) return null;
+  const name = typeof equipped.name === "string" ? equipped.name.trim() : "";
+  return { name: name || "Equipped uniform", colors };
+}
+
+/**
  * The director's corps as [classKey, corpsName] pairs in display order.
- * Only the name and class are surfaced — lineups and scores stay off the
- * public page (same anti-lineup-harvesting posture as the results pages).
+ * Only the name, class, and equipped-uniform view are surfaced — lineups and
+ * scores stay off the public page (same anti-lineup-harvesting posture as the
+ * results pages).
  *
  * @param {Object} corps Profile corps record (class key -> corps data).
- * @returns {Array<{classKey: string, classLabel: string, corpsName: string}>}
+ * @returns {Array<{classKey: string, classLabel: string, corpsName: string,
+ *   uniform: {name: string, colors: string[]} | null}>}
  */
 function listPublicCorps(corps) {
   const record = corps || {};
@@ -121,6 +141,7 @@ function listPublicCorps(corps) {
       classKey,
       classLabel: CLASS_LABELS[classKey] || classKey,
       corpsName,
+      uniform: pickPublicUniform(record[classKey].uniform),
     });
   }
   return entries;
@@ -206,17 +227,31 @@ function buildDirectorPageHtml({ username, profile }) {
   }
 
   if (corpsEntries.length > 0) {
+    // Equipped-uniform cell: the look's name beside its colorway as three
+    // inline swatches. Colors come only from pickPublicUniform's validated
+    // triple, so nothing unescaped reaches a style attribute.
+    const uniformCell = (uniform) => {
+      if (!uniform) return '<td class="sub">—</td>';
+      const swatches = uniform.colors
+        .map(
+          (hex) =>
+            `<span style="display:inline-block;width:12px;height:12px;border:1px solid #333333;background:${hex};margin-right:2px;"></span>`
+        )
+        .join("");
+      return `<td>${swatches} ${escapeHtml(clamp(uniform.name, 40))}</td>`;
+    };
     const rows = corpsEntries
       .map(
         (entry) => `<tr>
 <td>${escapeHtml(entry.classLabel)}</td>
 <td>${escapeHtml(clamp(entry.corpsName, 60))}</td>
+${uniformCell(entry.uniform)}
 </tr>`
       )
       .join("\n");
     sections.push(`<h2>Corps</h2>
 <div class="scroll"><table>
-<thead><tr><th>Class</th><th>Corps</th></tr></thead>
+<thead><tr><th>Class</th><th>Corps</th><th>Uniform</th></tr></thead>
 <tbody>
 ${rows}
 </tbody>

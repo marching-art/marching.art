@@ -47,6 +47,7 @@ const Scores = lazyWithRetry(() => import('./pages/Scores'), 'Scores');
 const Profile = lazyWithRetry(() => import('./pages/Profile'), 'Profile');
 const Achievements = lazyWithRetry(() => import('./pages/Achievements'), 'Achievements');
 const Studio = lazyWithRetry(() => import('./pages/Studio'), 'Studio');
+const Exchange = lazyWithRetry(() => import('./pages/Exchange'), 'Exchange');
 // Settings is now integrated into Profile page
 const HallOfChampions = lazyWithRetry(() => import('./pages/HallOfChampions'), 'HallOfChampions');
 const Admin = lazyWithRetry(() => import('./pages/Admin'), 'Admin');
@@ -609,6 +610,21 @@ function App() {
                             <Suspense fallback={<GalleryPageSkeleton />}>
                               <Page name="Studio">
                                 <Studio />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/exchange"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<GalleryPageSkeleton />}>
+                              <Page name="Exchange">
+                                <Exchange />
                               </Page>
                             </Suspense>
                           </GameShell>

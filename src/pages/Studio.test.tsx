@@ -21,6 +21,9 @@ vi.mock('../api/uniformStudio', () => ({
   mintUniformCode: vi.fn(),
   fetchUniformCode: vi.fn(),
 }));
+vi.mock('../api/designExchange', () => ({
+  publishUniformDesign: vi.fn(),
+}));
 vi.mock('../api/articleAdmin', () => ({
   generateCorpsAvatar: vi.fn(),
 }));

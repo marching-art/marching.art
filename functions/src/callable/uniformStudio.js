@@ -98,6 +98,8 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
       createdAt: prior.createdAt || now,
       // keep the minted share code stable across edits (mintUniformCode owns it)
       ...(prior.shareCode ? { shareCode: prior.shareCode } : {}),
+      // keep Design Exchange attribution on a saved copy across edits
+      ...(prior.importedFrom ? { importedFrom: prior.importedFrom } : {}),
       updatedAt: now,
     });
     return { designId: ref.id, message: "Design saved." };

@@ -942,6 +942,60 @@ await check(
   )
 );
 
+// Design Exchange (artifacts/{app}/design_exchange): the public uniform
+// gallery. Entries world-readable, all writes callable-only; a viewer reads
+// only their OWN like/save marker; reports and the payout ledger are locked.
+const exchangeEntryPath = `artifacts/${APP}/design_exchange/${ALICE}_d1`;
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), exchangeEntryPath), {
+    design: { schema: 2, name: 'Gallery Look' },
+    creatorUid: ALICE,
+    likes: 0,
+  });
+  await setDoc(doc(ctx.firestore(), `${exchangeEntryPath}/likes/${ALICE}`), { likedAt: 'x' });
+  await setDoc(doc(ctx.firestore(), `${exchangeEntryPath}/reports/${ALICE}`), { reason: 'r' });
+});
+
+await check(
+  'anyone (even signed out) can browse Design Exchange entries',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), exchangeEntryPath)))
+);
+
+await check(
+  'signed-in users cannot write a gallery entry directly (callable-only)',
+  assertFails(
+    setDoc(doc(mallory(), `artifacts/${APP}/design_exchange/mallory-uid_dX`), {
+      design: { schema: 2, name: 'Forged' },
+      creatorUid: 'mallory-uid',
+    })
+  )
+);
+
+await check(
+  'a user reads their own like marker',
+  assertSucceeds(getDoc(doc(authed(), `${exchangeEntryPath}/likes/${ALICE}`)))
+);
+
+await check(
+  "a user cannot read someone else's like marker",
+  assertFails(getDoc(doc(mallory(), `${exchangeEntryPath}/likes/${ALICE}`)))
+);
+
+await check(
+  'like markers cannot be written directly (callable-only)',
+  assertFails(setDoc(doc(authed(), `${exchangeEntryPath}/likes/${ALICE}`), { likedAt: 'y' }))
+);
+
+await check(
+  'reports are unreadable even by their author',
+  assertFails(getDoc(doc(authed(), `${exchangeEntryPath}/reports/${ALICE}`)))
+);
+
+await check(
+  'the creator-payout ledger is locked (no rules match, default deny)',
+  assertFails(getDoc(doc(authed(), `artifacts/${APP}/design_exchange_payouts/${ALICE}`)))
+);
+
 // =============================================================================
 // CAPTION LEDGER — the private per-caption fantasy recap the nightly scorer
 // writes for each director's own outings. The public fantasy recap keeps
