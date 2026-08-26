@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Catalog invariants + helper behavior for the Corps Identity Shop client
 // mirror. The server validates every purchase against its own catalog
 // (functions/src/helpers/shopCatalog.js); these tests keep the display mirror
@@ -54,7 +53,7 @@ describe('SHOP_ITEMS catalog', () => {
 
   it('includes the ladder-exclusive Laureate title as grant-only', () => {
     const laureate = getShopItem('title_laureate');
-    expect(laureate).not.toBeNull();
+    if (!laureate) throw new Error('title_laureate missing from catalog');
     expect(laureate.grantOnly).toBe(true);
   });
 
@@ -62,6 +61,7 @@ describe('SHOP_ITEMS catalog', () => {
     expect(SHOP_ITEMS.map((i) => i.id).sort()).toEqual(SHOP_CATALOG.map((i) => i.id).sort());
     for (const serverItem of SHOP_CATALOG) {
       const clientItem = getShopItem(serverItem.id);
+      if (!clientItem) throw new Error(`client catalog is missing ${serverItem.id}`);
       expect(clientItem.price).toBe(serverItem.price);
       expect(clientItem.type).toBe(serverItem.type);
       expect(clientItem.grantOnly ?? undefined).toBe(serverItem.grantOnly ?? undefined);

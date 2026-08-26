@@ -153,7 +153,21 @@ export const HAT_ORNAMENT_OPTIONS = [
   { value: 'chevron', label: 'Chevrons' },
   { value: 'disc', label: 'Disc' },
   { value: 'diamond', label: 'Diamond' },
+  { value: 'rect', label: 'Rectangle' },
   { value: 'none', label: 'Bare' },
+] as const;
+
+/** Badge shapes reuse the ornament shapes, minus the bare option. */
+export const CHEST_BADGE_OPTIONS = [
+  { value: null, label: 'None' },
+  ...HAT_ORNAMENT_OPTIONS.filter((o) => o.value !== 'none'),
+] as const;
+
+/** Cut of the diagonal sash/baldric band. */
+export const CHEST_SHAPE_OPTIONS = [
+  { value: 'band', label: 'Classic band' },
+  { value: 'triangles', label: 'Triangle blade' },
+  { value: 'tapered', label: 'Tapered' },
 ] as const;
 
 export const PLUME_TYPE_OPTIONS = [
@@ -323,6 +337,28 @@ const modernSwash: FigureConfig = {
   metal: '#cfd4da',
   pants: '#101c33',
   shoe: '#f0f2f5',
+};
+
+const ivoryBlade: FigureConfig = {
+  skin: '#e0b48e',
+  hairShow: false,
+  jacket: '#ece2cc',
+  collar: '#17171a',
+  collarTrim: '#d9a41c',
+  chest: 'baldric',
+  chestShape: 'triangles',
+  baldric: '#17171a',
+  baldricCenter: '#ece2cc',
+  metal: '#d9a41c',
+  gauntlet: '#17171a',
+  glove: '#f7f5f0',
+  belt: '#17171a',
+  buckle: '#d9a41c',
+  pants: '#ece2cc',
+  shoe: '#f7f5f0',
+  hatType: 'shako',
+  hat: { body: '#ece2cc', band: '#17171a', ornament: 'diamond' },
+  plume: { type: 'fountain', color: '#f7f5f0' },
 };
 
 const millennium: FigureConfig = {
@@ -499,6 +535,13 @@ export const UNIFORM_PRESETS: UniformPreset[] = [
     era: 'classic',
     colorway: { primary: '#f0f2f5', secondary: '#2f6fd0', accent: '#101c33', metal: 'silver' },
     figure: modernSwash,
+  },
+  {
+    id: 'ivory-blade',
+    label: 'Ivory Blade',
+    era: 'classic',
+    colorway: { primary: '#ece2cc', secondary: '#17171a', accent: '#d9a41c', metal: 'gold' },
+    figure: ivoryBlade,
   },
   {
     id: 'millennium',

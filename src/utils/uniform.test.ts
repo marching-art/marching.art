@@ -267,13 +267,14 @@ describe('v1 → v2 migration', () => {
 });
 
 describe('presets and limits', () => {
-  it('ships twelve presets across both eras', () => {
-    // 11 at launch + Millennium (the 2000s bridge, added on player feedback)
-    expect(UNIFORM_PRESETS).toHaveLength(12);
-    expect(UNIFORM_PRESETS.filter((p) => p.era === 'classic')).toHaveLength(5);
+  it('ships thirteen presets across both eras', () => {
+    // 11 at launch + Millennium (the 2000s bridge) + Ivory Blade (the '93
+    // triangle-blade look), both added on player feedback
+    expect(UNIFORM_PRESETS).toHaveLength(13);
+    expect(UNIFORM_PRESETS.filter((p) => p.era === 'classic')).toHaveLength(6);
     expect(UNIFORM_PRESETS.filter((p) => p.era === 'modern')).toHaveLength(7);
     const ids = new Set(UNIFORM_PRESETS.map((p) => p.id));
-    expect(ids.size).toBe(12);
+    expect(ids.size).toBe(13);
   });
 
   it('every preset yields a design within the payload limits', () => {

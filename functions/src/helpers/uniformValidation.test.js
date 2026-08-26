@@ -178,6 +178,36 @@ describe("validateDesign", () => {
     assert.match(validateDesign(d3).join(";"), /chestFade/);
   });
 
+  test("accepts the chest badge, its flip, and the band shapes", () => {
+    const d = validDesign();
+    d.figure.chestBadge = { shape: "rect", color: "#8a1a1a", accent: "#101014", flip: true };
+    d.figure.chest = "baldric";
+    d.figure.baldric = "#17171a";
+    d.figure.chestShape = "triangles";
+    assert.deepEqual(validateDesign(d), []);
+
+    const d2 = validDesign();
+    d2.figure.chestShape = "zigzag";
+    assert.match(validateDesign(d2).join(";"), /chestShape/);
+
+    const d3 = validDesign();
+    d3.figure.chestBadge = { shape: "fleur", color: "#8a1a1a" };
+    assert.match(validateDesign(d3).join(";"), /chestBadge/);
+
+    const d4 = validDesign();
+    d4.figure.chestBadge = { shape: "star", color: "#8a1a1a", onclick: "x()" };
+    assert.match(validateDesign(d4).join(";"), /chestBadge/);
+
+    const d5 = validDesign();
+    d5.figure.chestBadge = { shape: "star", color: "#8a1a1a", flip: "yes" };
+    assert.match(validateDesign(d5).join(";"), /chestBadge/);
+
+    // 'rect' also joined the hat-ornament enum
+    const d6 = validDesign();
+    d6.figure.hat = { body: "#17171a", ornament: "rect" };
+    assert.deepEqual(validateDesign(d6), []);
+  });
+
   test("accepts printColors overrides for every procedural surface", () => {
     const d = validDesign();
     d.figure.printColors = {
