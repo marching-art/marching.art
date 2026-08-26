@@ -133,11 +133,17 @@ describe("completeDailyChallenge", () => {
     await assert.rejects(completeDailyChallenge.run(authedRequest("u1", {})), /challengeId/i);
   });
 
-  test("rejects an unknown challengeId", async () => {
-    await assert.rejects(
-      completeDailyChallenge.run(authedRequest("u1", { challengeId: "hack-the-planet" })),
-      /Unknown challenge/i
+  test("soft-fails for an unknown challengeId without throwing or writing", async () => {
+    // A retired challenge id still auto-claimed by a stale client bundle (e.g.
+    // the old "visit-scores") must be a benign no-op, NOT a thrown 400 — that
+    // is what flooded the completeDailyChallenge logs with warnings. No db is
+    // needed because the guard returns before any read.
+    const result = await completeDailyChallenge.run(
+      authedRequest("u1", { challengeId: "hack-the-planet" })
     );
+    assert.equal(result.success, false);
+    assert.equal(result.unknownChallenge, true);
+    assert.equal(result.xpAwarded, 0);
   });
 
   test("soft-fails for a real challenge not in today's rotation", async () => {
