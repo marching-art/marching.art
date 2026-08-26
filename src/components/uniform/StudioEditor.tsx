@@ -289,6 +289,13 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
                 clearable
               />
             )}
+            {figure.hatType === 'aussie' && (
+              <Toggle
+                label="Lift other side"
+                checked={Boolean(figure.hat.flip)}
+                onChange={(v) => setFigure({ hat: { ...figure.hat!, flip: v } })}
+              />
+            )}
           </div>
         )}
         {figure.hatType && figure.hatType !== 'campaign' && figure.hat && (

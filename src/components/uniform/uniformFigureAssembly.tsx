@@ -256,34 +256,44 @@ function pith(cw: NormalizedFigure): Node[] {
   return out;
 }
 
-/** Aussie slouch hat: wide brim with the off side pinned up against the crown. */
+/**
+ * Aussie slouch hat: a tall flat-top crown with the lengthwise crease, and a
+ * wide brim that sweeps up as a diagonal blade into the pinned side — the
+ * silhouette the classic corps aussies cut from the stands.
+ */
 function aussie(cw: NormalizedFigure): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
   const out: Node[] = [
-    // brim, drooping slightly on the wearer's right (viewer left)
-    p('au-br', 'M84,38 Q120,50 140,41 L140,46 Q120,56 84,44 Z', darkenHex(body, 0.08)),
-    // crown dome with a campaign-style center dent
-    p('au-cr', 'M102,40 Q100,12 120,10 Q140,12 139,40 Z', body),
-    strokeP('au-d', 'M114,13 Q114,26 115,38 M126,13 Q126,26 125,38', darkenHex(body, 0.25), 2),
-    shade('au-s', 'M130,14 Q138,22 138,39 L132,40 Q133,24 130,14 Z', 0.12),
-    // upturned brim panel pinned to the crown's off side
-    p('au-up', 'M136,14 Q150,20 149,42 Q143,45 138,41 Q141,26 136,14 Z', lightenHex(body, 0.07)),
-    shade('au-us', 'M144,20 Q148,28 147,41 L149,42 Q150,20 136,14 Z', 0.15),
+    // tall tapered crown, flat top, single lengthwise crease
+    p('au-cr', 'M102,44 L108,5 Q120,-1,132,5 L138,44 Z', body),
+    strokeP('au-d', 'M120,2 Q118,22,119,42', darkenHex(body, 0.3), 2.2),
+    shade('au-s', 'M129,4 Q135,22,137,42 L131,43 Q131,22,128,5 Z', 0.12),
+    light('au-l', 'M110,5 Q106,24,104,42 L108,43 Q109,22,113,4 Z', 0.09),
   ];
   if (h.band)
-    out.push(p('au-b', 'M102,33 Q120,41 139,33 L139,39 Q120,47 102,39 Z', safeHex(h.band)));
-  // badge rides the pinned-up side, scaled down (translate maps ornament center 120,34 → 143,29)
+    out.push(p('au-b', 'M102.9,35 L137.1,35 L138,43.4 Q120,49,102.2,43.4 Z', safeHex(h.band)));
+  out.push(
+    // the brim: one bold diagonal blade, low over the open side, rising to the pin
+    p('au-br', 'M66,38 Q102,31,137,16 L141,23 Q106,39,70,46 Z', darkenHex(body, 0.05)),
+    shade('au-brs', 'M70,42 Q104,37,139,21 L141,23 Q106,39,70,46 Z', 0.22),
+    // the fold: the brim's continuation, pinned up beside the crown
+    p('au-up', 'M131,0 Q153,5,150,32 Q142,36,136,25 Q138,9,131,0 Z', lightenHex(body, 0.12)),
+    strokeP('au-ue', 'M131,0 Q153,5,150,32', darkenHex(body, 0.32), 1.8),
+    shade('au-us', 'M145,10 Q150,20,149,31 L150,32 Q153,8,137,2 Z', 0.14)
+  );
+  // badge rides the pinned-up side (translate maps ornament center 120,34 → 142,26)
   const orn = hatOrnamentNodes(h.ornament, safeHex(h.emblem || cw.metal), 'au');
   if (orn.length > 0) {
     out.push(
-      <g key="au-badge" transform="translate(65,7.1) scale(0.65)">
+      <g key="au-badge" transform="translate(70,-2.4) scale(0.6)">
         {orn}
       </g>
     );
   }
-  return out;
+  // lift the other side instead: mirror the whole hat across the centerline
+  return h.flip ? [mirrored('au-flip', out)] : out;
 }
 
 /**
@@ -355,6 +365,34 @@ function plume(cw: NormalizedFigure): Node[] {
     out.push(shade('pu-s', 'M124,-60 Q130,-30 126,10 L121,12 Q128,-28 122,-62 Z', 0.12));
     if (pl.mylar) out.push(...sequinField('pu-m', 120, -26, 12, 72, 13, 18));
     return out;
+  }
+  if (pl.type === 'sideFeather') {
+    // A feather spray off the hat's pinned side (the classic corps-aussie
+    // look): layered blades sweeping up and out, tips dyed by the accent.
+    const blades: Array<[string, number]> = [
+      ['M140,16 C144,-12,154,-30,168,-40', 4.2],
+      ['M140,16 C150,-8,164,-20,180,-24', 3.8],
+      ['M140,16 C141,-16,147,-38,156,-50', 3.6],
+      ['M140,16 C154,-4,172,-10,184,-6', 3.2],
+      ['M140,16 C146,-20,158,-36,172,-46', 2.6],
+    ];
+    const out: Node[] = [];
+    blades.forEach(([d, w], i) => {
+      out.push(strokeP(`ps${i}`, d, c, w));
+      out.push(strokeP(`ps${i}-l`, d, lightenHex(c, 0.3), 1.2, { opacity: '.5' }));
+    });
+    if (tip) {
+      const tips = [
+        'M160,-34 C164,-38,168,-40,172,-41',
+        'M170,-20 C175,-22,180,-23,183,-24',
+        'M151,-41 C153,-45,155,-48,157,-51',
+        'M174,-10 C178,-9,182,-8,185,-7',
+        'M163,-39 C167,-42,170,-44,173,-46',
+      ];
+      tips.forEach((d, i) => out.push(strokeP(`ps-t${i}`, d, tip, 4)));
+    }
+    // the feather follows the hat's lifted side
+    return cw.hat?.flip ? [mirrored('ps-flip', out)] : out;
   }
   // fountain
   const arcs = [

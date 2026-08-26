@@ -160,6 +160,7 @@ export const PLUME_TYPE_OPTIONS = [
   { value: null, label: 'No plume' },
   { value: 'upright', label: 'French upright' },
   { value: 'fountain', label: 'Fountain' },
+  { value: 'sideFeather', label: 'Side feather' },
 ] as const;
 
 export const TORSO_STYLE_OPTIONS = [

@@ -70,7 +70,7 @@ export type ChestTreatment =
 
 export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | null;
 
-export type PlumeType = 'upright' | 'fountain';
+export type PlumeType = 'upright' | 'fountain' | 'sideFeather';
 
 /** Selectable front ornament for shako/pith (and the aussie's side badge). */
 export type HatOrnament = 'sunburst' | 'star' | 'shield' | 'chevron' | 'disc' | 'diamond' | 'none';
@@ -82,6 +82,8 @@ export interface HatConfig {
   emblem?: HexColor | null;
   /** Ornament shape; undefined keeps each hat's legacy default. */
   ornament?: HatOrnament;
+  /** Mirror the hat (the aussie's lifted side + side feather swap sides). */
+  flip?: boolean;
 }
 
 export interface PlumeConfig {

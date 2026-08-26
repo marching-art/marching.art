@@ -39,7 +39,7 @@ const HAT_ORNAMENTS = new Set([
   "diamond",
   "none",
 ]);
-const PLUMES = new Set(["upright", "fountain"]);
+const PLUMES = new Set(["upright", "fountain", "sideFeather"]);
 const ARM_TYPES = new Set(["sleeve", "bare", "half", "none"]);
 const PRINTS = new Set(["sunburst", "opart", "pinstripe"]);
 // Editable color slots per procedural surface — mirrors PRINT_COLOR_SLOT_COUNTS
@@ -327,7 +327,8 @@ function validateFigure(figure) {
           (value.band != null && !isHex(value.band)) ||
           (value.emblem != null && !isHex(value.emblem)) ||
           (value.ornament != null && !HAT_ORNAMENTS.has(value.ornament)) ||
-          Object.keys(value).some((k) => !["body", "band", "emblem", "ornament"].includes(k))
+          (value.flip != null && typeof value.flip !== "boolean") ||
+          Object.keys(value).some((k) => !["body", "band", "emblem", "ornament", "flip"].includes(k))
         ) {
           errors.push("figure.hat is invalid");
         }

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SEASON RECAP MODAL - end-of-season results and payout ceremony
 // =============================================================================
@@ -13,6 +12,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { CLASS_DISPLAY_NAMES } from '../Dashboard/sections/constants';
 import { formatSeasonName } from '../../utils/season';
 
+/** @param {number|null|undefined} placement */
 const placementLabel = (placement) => {
   if (!placement) return '—';
   if (placement === 1) return '🥇 1st';
@@ -21,6 +21,20 @@ const placementLabel = (placement) => {
   return `${placement}th`;
 };
 
+/**
+ * @param {{
+ *   recap: {
+ *     seasonName?: string,
+ *     coinAwarded?: number, totalCoin?: number, totalXP?: number,
+ *     results?: Array<{
+ *       corpsClass: string, corpsName?: string, placement?: number, score?: number,
+ *       coin?: number, coinBonus?: number, xpBonus?: number, totalInClass?: number,
+ *       newBestSeason?: boolean,
+ *     }>,
+ *   },
+ *   onClose: () => void,
+ * }} props
+ */
 const SeasonRecapModal = ({ recap, onClose }) => {
   useEscapeKey(onClose);
   const dialogRef = useRef(null);
@@ -106,10 +120,10 @@ const SeasonRecapModal = ({ recap, onClose }) => {
                     ) : null}
                   </p>
                   <div className="flex items-center justify-end gap-2">
-                    {result.coinBonus > 0 && (
+                    {(result.coinBonus ?? 0) > 0 && (
                       <span className="text-xs text-brand font-data">+{result.coinBonus} CC</span>
                     )}
-                    {result.xpBonus > 0 && (
+                    {(result.xpBonus ?? 0) > 0 && (
                       <span className="text-xs text-purple-400 font-data">
                         +{result.xpBonus} XP
                       </span>
@@ -128,14 +142,14 @@ const SeasonRecapModal = ({ recap, onClose }) => {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                {recap?.totalCoin > 0 && (
+                {(recap?.totalCoin ?? 0) > 0 && (
                   <span className="flex items-center gap-1 text-sm font-bold text-brand font-data">
-                    <Coins className="w-4 h-4" />+{recap.totalCoin.toLocaleString()}
+                    <Coins className="w-4 h-4" />+{(recap.totalCoin ?? 0).toLocaleString()}
                   </span>
                 )}
-                {recap?.totalXP > 0 && (
+                {(recap?.totalXP ?? 0) > 0 && (
                   <span className="text-sm font-bold text-purple-400 font-data">
-                    +{recap.totalXP.toLocaleString()} XP
+                    +{(recap.totalXP ?? 0).toLocaleString()} XP
                   </span>
                 )}
               </div>
