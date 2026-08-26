@@ -5,7 +5,6 @@ import {
   projectPodiumShow,
   buildShowdayModel,
   buildPicksSpotlight,
-  findMyEncore,
 } from './showday';
 import { formatDayKey } from './scheduleUtils';
 
@@ -224,7 +223,7 @@ describe('projectPodiumShow / joinPodiumShows', () => {
       podiumEncore: { uid: 'me', corps: 'Founders Corps', reason: 'host' },
     });
     expect(show.encore?.uid).toBe('me');
-    expect(findMyEncore([show], 'me')?.encore.corps).toBe('Founders Corps');
+    expect(show.encore?.corps).toBe('Founders Corps');
     // Without a podium encore the fantasy encore must NOT leak through.
     expect(
       projectPodiumShow({ ...podiumComp, encore: { uid: 'x', corps: 'X' } }).encore
@@ -293,22 +292,5 @@ describe('buildPicksSpotlight', () => {
   it('is empty with no picks or no shows today', () => {
     expect(buildPicksSpotlight([todayComp], {}, now)).toEqual([]);
     expect(buildPicksSpotlight([], { B: 'Bluecoats|2019' }, now)).toEqual([]);
-  });
-});
-
-describe('findMyEncore', () => {
-  it('finds the show where my corps performs the encore', () => {
-    const shows = [
-      { day: 1, eventName: 'A', location: '', encore: { uid: 'someone-else', corps: 'Other' } },
-      {
-        day: 2,
-        eventName: 'B',
-        location: '',
-        encore: { uid: 'me', corps: 'Star United', reason: 'host' },
-      },
-    ];
-    expect(findMyEncore(shows, 'me')?.show.eventName).toBe('B');
-    expect(findMyEncore(shows, 'nobody')).toBeNull();
-    expect(findMyEncore(shows, null)).toBeNull();
   });
 });

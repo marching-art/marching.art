@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-08-26-showday-strip-fixes",
+    "date": "2026-08-26",
+    "title": "Show Day strip: right show, right encore",
+    "category": "fix",
+    "summary": "Two fixes to the dashboard's Show Day strip. Its \"Full schedule & running order\" link now opens the running order for the show you're looking at, instead of dropping you on the top of your schedule. And the \"You're the encore\" banner now only appears when you're actually the encore at that show — it no longer showed up on any show day just because you were the encore somewhere else on your tour."
+  },
+  {
     "id": "2026-08-25-showday-strip",
     "date": "2026-08-25",
     "title": "Your show day now leads the dashboard",
