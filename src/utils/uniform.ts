@@ -326,6 +326,13 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
     chestFade: figure.chestFade
       ? ([secondary, darkenHex(secondary, 0.55)] as [string, string])
       : figure.chestFade,
+    chestBadge: figure.chestBadge
+      ? {
+          ...figure.chestBadge,
+          color: accent,
+          accent: figure.chestBadge.accent ? darkenHex(accent, 0.5) : figure.chestBadge.accent,
+        }
+      : figure.chestBadge,
     panel: figure.panel ? secondary : figure.panel,
     swash: figure.swash ? secondary : figure.swash,
     swashLegColor: figure.swashLegColor ? accent : figure.swashLegColor,

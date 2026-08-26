@@ -6,8 +6,8 @@
 // through onPatch, which the editor routes through withDerivedFlags.
 
 import React from 'react';
-import type { FigureConfig, UniformColorway } from '../../types/uniform';
-import { CHEST_OPTIONS } from '../../data/uniformCatalog';
+import type { ChestBadge, FigureConfig, UniformColorway } from '../../types/uniform';
+import { CHEST_BADGE_OPTIONS, CHEST_OPTIONS, CHEST_SHAPE_OPTIONS } from '../../data/uniformCatalog';
 import { darkenHex, safeHex } from '../../utils/uniform';
 import { ChannelRow, Pills, SECTION_LABEL, Toggle } from './StudioControls';
 
@@ -22,6 +22,11 @@ export default function ChestSection({
 }) {
   const isBand = figure.chest === 'sash' || figure.chest === 'baldric' || figure.chest === 'swash';
   const hasButtons = figure.chest === 'braid' || figure.chest === 'buttons';
+  const shapeable = figure.chest === 'sash' || figure.chest === 'baldric';
+  const bandShape = figure.chestShape || 'band';
+  const badge = figure.chestBadge || null;
+  const patchBadge = (next: Partial<ChestBadge>) =>
+    badge && onPatch({ chestBadge: { ...badge, ...next } });
   return (
     <section>
       <h3 className={SECTION_LABEL}>Chest</h3>
@@ -47,6 +52,15 @@ export default function ChestSection({
           });
         }}
       />
+      {shapeable && (
+        <div className="mt-2">
+          <Pills
+            options={CHEST_SHAPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            value={bandShape}
+            onSelect={(v) => onPatch({ chestShape: v as FigureConfig['chestShape'] })}
+          />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2 mt-2">
         {figure.chest === 'braid' && (
           <ChannelRow label="Braid" value={figure.braid} onChange={(v) => onPatch({ braid: v })} />
@@ -68,12 +82,15 @@ export default function ChestSection({
               value={figure.baldric}
               onChange={(v) => onPatch({ baldric: v })}
             />
-            <ChannelRow
-              label="Center stripe"
-              value={figure.baldricCenter}
-              onChange={(v) => onPatch({ baldricCenter: v })}
-              clearable
-            />
+            {/* colors the band's center stripe / the blade's inner triangle */}
+            {bandShape !== 'tapered' && (
+              <ChannelRow
+                label={bandShape === 'triangles' ? 'Inner triangle' : 'Center stripe'}
+                value={figure.baldricCenter}
+                onChange={(v) => onPatch({ baldricCenter: v })}
+                clearable
+              />
+            )}
             <Toggle
               label="Sequin baldric"
               checked={Boolean(figure.baldricSequin)}
@@ -172,6 +189,43 @@ export default function ChestSection({
           </>
         )}
       </div>
+      <h3 className={`${SECTION_LABEL} mt-3`}>Chest badge</h3>
+      <Pills
+        options={CHEST_BADGE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        value={badge?.shape ?? null}
+        onSelect={(v) =>
+          onPatch({
+            chestBadge: v
+              ? {
+                  shape: v as ChestBadge['shape'],
+                  color: badge?.color || colorway.accent,
+                  accent: badge?.accent ?? null,
+                  flip: badge?.flip ?? false,
+                }
+              : null,
+          })
+        }
+      />
+      {badge && (
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <ChannelRow
+            label="Badge"
+            value={badge.color}
+            onChange={(v) => v && patchBadge({ color: v })}
+          />
+          <ChannelRow
+            label="Badge detail"
+            value={badge.accent}
+            onChange={(v) => patchBadge({ accent: v })}
+            clearable
+          />
+          <Toggle
+            label="Other breast"
+            checked={Boolean(badge.flip)}
+            onChange={(v) => patchBadge({ flip: v })}
+          />
+        </div>
+      )}
     </section>
   );
 }

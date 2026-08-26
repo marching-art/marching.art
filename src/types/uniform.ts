@@ -73,7 +73,8 @@ export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | nul
 export type PlumeType = 'upright' | 'fountain' | 'sideFeather';
 
 /** Selectable front ornament for shako/pith (and the aussie's side badge). */
-export type HatOrnament = 'sunburst' | 'star' | 'shield' | 'chevron' | 'disc' | 'diamond' | 'none';
+export type HatOrnament =
+  'sunburst' | 'star' | 'shield' | 'chevron' | 'disc' | 'diamond' | 'rect' | 'none';
 
 export interface HatConfig {
   body: HexColor;
@@ -85,6 +86,22 @@ export interface HatConfig {
   /** Mirror the hat (the aussie's lifted side + side feather swap sides). */
   flip?: boolean;
 }
+
+/**
+ * A chest badge on the left breast: any ornament shape in its own colors,
+ * independent of the hat (the SCV-style patch). `accent` overrides the
+ * derived inner-detail shade for a true two-tone badge.
+ */
+export interface ChestBadge {
+  shape: HatOrnament;
+  color: HexColor;
+  accent?: HexColor | null;
+  /** Wear the badge on the other breast. */
+  flip?: boolean;
+}
+
+/** Cut of the diagonal sash/baldric band. */
+export type ChestShape = 'band' | 'triangles' | 'tapered';
 
 export interface PlumeConfig {
   type: PlumeType;
@@ -164,6 +181,10 @@ export interface FigureConfig {
   torsoSequin?: boolean;
 
   chest?: ChestTreatment;
+  /** Badge patch on the left breast; independent of the chest treatment. */
+  chestBadge?: ChestBadge | null;
+  /** Cut of the sash/baldric band; undefined → the classic solid band. */
+  chestShape?: ChestShape;
   /** Button color for braid rows and double-breasted buttons; null → metal. */
   buttonColor?: HexColor | null;
   /** Run the diagonal treatments (sash/baldric/swash) over the other shoulder. */

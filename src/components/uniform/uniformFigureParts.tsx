@@ -658,6 +658,29 @@ export function chest(cw: NormalizedFigure, uid: string): Node[] {
     }
     case 'sash': {
       const c = bandFill(cw.sash);
+      if (cw.chestShape === 'triangles') {
+        // Star-'93 blade: a curved triangle sweeping shoulder → waist point,
+        // with a nested inner triangle and a metal trim edge.
+        const out: Node[] = [
+          p('sa-tb', 'M112,99 L82,111 Q100,170 144,238 Q130,164 112,99 Z', c),
+          p(
+            'sa-ti',
+            'M107,105 L89,112 Q105,165 136,220 Q123,162 107,105 Z',
+            darkenHex(safeHex(cw.sash), 0.45)
+          ),
+          strokeP('sa-te', 'M82,111 Q100,170 144,238', m, 1.8),
+        ];
+        if (cw.sashSequin) out.push(...sequinField('sa-q', 118, 172, 26, 120, 11, 30));
+        return flip('sa-r', out);
+      }
+      if (cw.chestShape === 'tapered') {
+        const out: Node[] = [
+          p('sa', 'M82,110 L102,102 L150,233 L140,239 Z', c),
+          light('sa-l', 'M88,110 L96,107 L144,234 L140,237 Z', 0.16),
+        ];
+        if (cw.sashSequin) out.push(...sequinField('sa-q', 118, 172, 26, 120, 11, 30));
+        return flip('sa-r', out);
+      }
       const out: Node[] = [
         p('sa', 'M82,110 L102,102 L154,230 L136,242 Z', c),
         light('sa-l', 'M88,110 L96,107 L146,232 L140,236 Z', 0.16),
@@ -674,6 +697,31 @@ export function chest(cw: NormalizedFigure, uid: string): Node[] {
     }
     case 'baldric': {
       const c = bandFill(cw.baldric);
+      if (cw.chestShape === 'triangles') {
+        // Star-'93 blade; the two-tone center color drives the inner triangle.
+        const inner = cw.baldricCenter
+          ? safeHex(cw.baldricCenter)
+          : darkenHex(safeHex(cw.baldric), 0.45);
+        const out: Node[] = [
+          p('ba-tb', 'M128,99 L158,111 Q140,170 96,238 Q110,164 128,99 Z', c),
+          p('ba-ti', 'M133,105 L151,112 Q135,165 104,220 Q117,162 133,105 Z', inner),
+          strokeP('ba-te', 'M158,111 Q140,170 96,238', m, 1.8),
+        ];
+        if (cw.baldricSequin) out.push(...sequinField('ba-q', 120, 175, 30, 130, 5, 42));
+        return flip('ba-r', out);
+      }
+      if (cw.chestShape === 'tapered') {
+        const out: Node[] = [
+          p('ba', 'M134,101 L158,109 L97,250 L88,246 Z', c),
+          light('ba-l', 'M138,103 L146,106 L94,247 L90,245 Z', 0.1),
+        ];
+        if (cw.baldricSequin) out.push(...sequinField('ba-q', 120, 175, 30, 130, 5, 42));
+        out.push(
+          <circle key="ba-c" cx="144" cy="106" r="3.4" fill={m} />,
+          <circle key="ba-cl" cx="143" cy="105" r="1.1" fill={FIGURE_INK.white} opacity=".8" />
+        );
+        return flip('ba-r', out);
+      }
       const out: Node[] = [p('ba', 'M134,101 L158,109 L102,252 L82,242 Z', c)];
       if (cw.baldricCenter) {
         // Two-tone: a center stripe inset ~30% from each band edge.

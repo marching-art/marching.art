@@ -125,12 +125,15 @@ export function arms(cw: NormalizedFigure, uid: string): Node[] {
 // ---------------------------------------------------------------------------
 
 /**
- * The selectable hat ornament, centered on the shako/pith front (120,34).
- * `m` is the resolved emblem color (hat.emblem, else hardware metal).
- * 'sunburst' emits the exact legacy plate nodes so stored designs are stable.
+ * The selectable ornament, centered at (120,34) — the shako/pith front, the
+ * aussie's fold badge, and (scaled + translated) the chest badge. `m` is the
+ * resolved primary color; `inner` overrides the derived dark detail (the
+ * chest badge's two-tone accent). 'sunburst' emits the exact legacy plate
+ * nodes so stored designs are stable.
  */
-function hatOrnamentNodes(orn: string | undefined, m: string, kp: string): Node[] {
+function hatOrnamentNodes(orn: string | undefined, m: string, kp: string, inner?: string): Node[] {
   const o = orn || 'sunburst';
+  const dark = (f: number) => inner ?? darkenHex(m, f);
   if (o === 'none') return [];
   if (o === 'sunburst') {
     const rays: Node[] = [];
@@ -151,7 +154,7 @@ function hatOrnamentNodes(orn: string | undefined, m: string, kp: string): Node[
     return [
       <g key={`${kp}-plate`}>{rays}</g>,
       <circle key={`${kp}-p1`} cx="120" cy="34" r="6.5" fill={m} />,
-      <circle key={`${kp}-p2`} cx="120" cy="34" r="3.4" fill={darkenHex(m, 0.55)} />,
+      <circle key={`${kp}-p2`} cx="120" cy="34" r="3.4" fill={dark(0.55)} />,
       <circle key={`${kp}-p3`} cx="118" cy="32" r="1.2" fill={FIGURE_INK.white} opacity=".9" />,
     ];
   }
@@ -164,7 +167,7 @@ function hatOrnamentNodes(orn: string | undefined, m: string, kp: string): Node[
     }
     return [
       <polygon key={`${kp}-star`} points={pts.join(' ')} fill={m} />,
-      <circle key={`${kp}-starc`} cx="120" cy="34.8" r="2" fill={darkenHex(m, 0.5)} />,
+      <circle key={`${kp}-starc`} cx="120" cy="34.8" r="2" fill={dark(0.5)} />,
       <circle
         key={`${kp}-starg`}
         cx="118.6"
@@ -178,7 +181,7 @@ function hatOrnamentNodes(orn: string | undefined, m: string, kp: string): Node[
   if (o === 'shield') {
     return [
       p(`${kp}-sh`, 'M112,26 L128,26 L128,36 Q128,43 120,46 Q112,43 112,36 Z', m),
-      p(`${kp}-shv`, 'M112,30.5 L128,30.5 L128,34 L112,34 Z', darkenHex(m, 0.5)),
+      p(`${kp}-shv`, 'M112,30.5 L128,30.5 L128,34 L112,34 Z', dark(0.5)),
       <circle key={`${kp}-shg`} cx="117" cy="28.4" r="1" fill={FIGURE_INK.white} opacity=".9" />,
     ];
   }
@@ -186,24 +189,29 @@ function hatOrnamentNodes(orn: string | undefined, m: string, kp: string): Node[
     return [
       strokeP(`${kp}-c1`, 'M112,32 L120,26 L128,32', m, 2.6),
       strokeP(`${kp}-c2`, 'M112,39 L120,33 L128,39', m, 2.6),
-      strokeP(`${kp}-c3`, 'M112,46 L120,40 L128,46', darkenHex(m, 0.35), 2.2),
+      strokeP(`${kp}-c3`, 'M112,46 L120,40 L128,46', dark(0.35), 2.2),
     ];
   }
   if (o === 'disc') {
     return [
       <circle key={`${kp}-d1`} cx="120" cy="34" r="6.5" fill={m} />,
-      <circle key={`${kp}-d2`} cx="120" cy="34" r="3.4" fill={darkenHex(m, 0.55)} />,
+      <circle key={`${kp}-d2`} cx="120" cy="34" r="3.4" fill={dark(0.55)} />,
       <circle key={`${kp}-d3`} cx="118" cy="32" r="1.2" fill={FIGURE_INK.white} opacity=".9" />,
+    ];
+  }
+  if (o === 'rect') {
+    // badge rectangle: an outer field with an inset panel (the classic
+    // rectangle-in-rectangle corps patch)
+    return [
+      <rect key={`${kp}-r1`} x="112" y="25" width="16" height="18" fill={m} />,
+      <rect key={`${kp}-r2`} x="115" y="28" width="10" height="12" fill={dark(0.5)} />,
+      <circle key={`${kp}-rg`} cx="114" cy="27" r="0.9" fill={FIGURE_INK.white} opacity=".9" />,
     ];
   }
   // diamond
   return [
     <polygon key={`${kp}-di`} points="120,25.5 127.5,34 120,42.5 112.5,34" fill={m} />,
-    <polygon
-      key={`${kp}-di2`}
-      points="120,29.5 123.7,34 120,38.5 116.3,34"
-      fill={darkenHex(m, 0.5)}
-    />,
+    <polygon key={`${kp}-di2`} points="120,29.5 123.7,34 120,38.5 116.3,34" fill={dark(0.5)} />,
     <circle key={`${kp}-dig`} cx="118.2" cy="30.8" r="1" fill={FIGURE_INK.white} opacity=".9" />,
   ];
 }
@@ -417,6 +425,22 @@ function plume(cw: NormalizedFigure): Node[] {
   return out;
 }
 
+/**
+ * The left-breast badge patch (the SCV-style corps badge): any ornament shape
+ * in its own colors via the shared builder, scaled down from its (120,34) hat
+ * anchor onto the chest at ≈(137,130).
+ */
+function chestBadge(cw: NormalizedFigure): Node[] {
+  const b = cw.chestBadge;
+  if (!b || b.shape === 'none') return [];
+  const out: Node[] = [
+    <g key="cb-g" transform="translate(71,111.3) scale(0.55)">
+      {hatOrnamentNodes(b.shape, safeHex(b.color), 'cb', b.accent ? safeHex(b.accent) : undefined)}
+    </g>,
+  ];
+  return b.flip ? [mirrored('cb-flip', out)] : out;
+}
+
 // ---------------------------------------------------------------------------
 // assembly
 // ---------------------------------------------------------------------------
@@ -435,6 +459,7 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   if (cw.velvet) layers.push(<g key="velvet">{velvetSheen()}</g>);
   layers.push(
     <g key="chest">{chest(cw, uid)}</g>,
+    <g key="chestBadge">{chestBadge(cw)}</g>,
     <g key="glowart">{glowArt(cw, uid)}</g>,
     <g key="susp">{suspenders(cw)}</g>,
     <g key="belt">{belt(cw)}</g>,

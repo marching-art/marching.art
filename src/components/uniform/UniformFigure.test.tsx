@@ -233,6 +233,58 @@ describe('UniformFigure', () => {
     expect(control?.closest('g[transform="translate(240,0) scale(-1,1)"]')).toBeNull();
   });
 
+  it('renders the chest badge in its own colors on either breast', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#1d2f66',
+      metal: '#d9a41c',
+      chestBadge: { shape: 'rect' as const, color: '#8a1a1a', accent: '#101014' },
+    };
+    const badge = render(<UniformFigure label="badge" figure={base} />);
+    const outer = badge.container.querySelector('rect[fill="#8a1a1a"]');
+    expect(outer).not.toBeNull();
+    // the two-tone accent drives the inset panel; the badge group scales the
+    // shared ornament builder onto the breast
+    expect(badge.container.querySelector('rect[fill="#101014"]')).not.toBeNull();
+    expect(outer?.closest('g[transform="translate(71,111.3) scale(0.55)"]')).not.toBeNull();
+    expect(outer?.closest('g[transform="translate(240,0) scale(-1,1)"]')).toBeNull();
+
+    const flipped = render(
+      <UniformFigure
+        label="badge flipped"
+        figure={{ ...base, chestBadge: { ...base.chestBadge, flip: true } }}
+      />
+    );
+    const moved = flipped.container.querySelector('rect[fill="#8a1a1a"]');
+    expect(moved?.closest('g[transform="translate(240,0) scale(-1,1)"]')).not.toBeNull();
+  });
+
+  it('cuts the baldric into blade and tapered shapes via chestShape', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#ece2cc',
+      chest: 'baldric' as const,
+      baldric: '#17171a',
+      baldricCenter: '#101014',
+      metal: '#d9a41c',
+    };
+    const blade = render(
+      <UniformFigure label="blade" figure={{ ...base, chestShape: 'triangles' }} />
+    );
+    // outer blade sweep + the center color driving the nested inner triangle
+    expect(blade.container.querySelector('path[d^="M128,99"]')).not.toBeNull();
+    expect(blade.container.querySelector('path[d^="M133,105"]')?.getAttribute('fill')).toBe(
+      '#101014'
+    );
+
+    const tapered = render(
+      <UniformFigure label="tapered" figure={{ ...base, chestShape: 'tapered' }} />
+    );
+    expect(tapered.container.querySelector('path[d^="M134,101 L158,109 L97,250"]')).not.toBeNull();
+    // the classic parallel band is replaced, not layered underneath
+    expect(tapered.container.querySelector('path[d^="M134,101 L158,109 L102,252"]')).toBeNull();
+  });
+
   it('fades the chest band between the two chestFade colors', () => {
     const { container } = render(
       <UniformFigure
