@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-08-26-button-color",
+    "date": "2026-08-26",
+    "title": "Pick your button color",
+    "category": "improvement",
+    "summary": "Buttons on braid rows and double-breasted jackets no longer have to match your hardware metal — give them any color you like, or clear it to fall back to gold or silver."
+  },
+  {
+    "id": "2026-08-26-chest-direction-twotone",
+    "date": "2026-08-26",
+    "title": "Baldrics your way: either shoulder, two-tone, faded",
+    "category": "improvement",
+    "summary": "Straight from a director's wish list: sashes, baldrics, and swashes can now run over the other shoulder with one toggle, baldrics take an optional center-stripe color for that classic two-tone look, and any of the three can fade between two colors from shoulder to hip."
+  },
+  {
+    "id": "2026-08-26-fade-sleeves",
+    "date": "2026-08-26",
+    "title": "Paint your own fade sleeves",
+    "category": "improvement",
+    "summary": "Sleeves now have a Color fade option in the Studio: pick a top and bottom color and the sleeve blends between them. Fade each arm independently or keep both linked — your call, like every other piece."
+  },
+  {
+    "id": "2026-08-26-gauntlet-shape",
+    "date": "2026-08-26",
+    "title": "Gauntlets now flare the right way",
+    "category": "fix",
+    "summary": "Gauntlets on the Studio figure were drawn upside down — tight mid-arm and flaring toward the hand. They now wear like the real thing: snug at the wrist with the bell opening up the forearm."
+  },
+  {
+    "id": "2026-08-26-studio-print-colors",
+    "date": "2026-08-26",
+    "title": "Recolor every print in the Uniform Studio",
+    "category": "improvement",
+    "summary": "The Studio's printed surfaces are no longer stuck in their stock colors. Pick your own hues for the radial burst, the op-art lattice, and the pinstripe — and for plaid and foil legs too. Color pickers appear right under the print you're using, the highlights and shading re-derive to match, and your choices save and equip with the design like any other channel."
+  },
+  {
     "id": "2026-08-26-studio-mobile-scroll",
     "date": "2026-08-26",
     "title": "Uniform Studio scrolls properly on phones",

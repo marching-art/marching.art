@@ -16,13 +16,18 @@ export function ArmControls({
   arm,
   jacket,
   colorway,
+  fade,
   onPatch,
+  onFade,
 }: {
   title: string;
   arm: ArmConfig;
   jacket: string | null | undefined;
   colorway: UniformColorway;
+  /** [top, bottom] colors when this sleeve wears a director fade. */
+  fade: [string, string] | null;
   onPatch: (patch: Partial<ArmConfig>) => void;
+  onFade: (stops: [string, string] | null) => void;
 }) {
   return (
     <div className="space-y-1">
@@ -33,6 +38,32 @@ export function ArmControls({
         onSelect={(v) => onPatch({ type: v as ArmConfig['type'] })}
       />
       {arm.type !== 'bare' && (
+        <Pills
+          options={[
+            { value: 'solid', label: 'Solid' },
+            { value: 'fade', label: 'Color fade' },
+          ]}
+          value={fade ? 'fade' : 'solid'}
+          onSelect={(v) =>
+            onFade(v === 'fade' ? [arm.color || jacket || colorway.primary, colorway.accent] : null)
+          }
+        />
+      )}
+      {arm.type !== 'bare' && fade && (
+        <div className="grid grid-cols-2 gap-2">
+          <ChannelRow
+            label="Fade top"
+            value={fade[0]}
+            onChange={(v) => v && onFade([v, fade[1]])}
+          />
+          <ChannelRow
+            label="Fade bottom"
+            value={fade[1]}
+            onChange={(v) => v && onFade([fade[0], v])}
+          />
+        </div>
+      )}
+      {arm.type !== 'bare' && !fade && (
         <ChannelRow
           label="Sleeve"
           value={arm.fill?.startsWith('url:') ? null : arm.color || jacket}

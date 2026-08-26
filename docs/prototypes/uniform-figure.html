@@ -151,6 +151,10 @@
           <path d="M0,10.5 H13" stroke="#8f5f10" stroke-width="1.2"/>
         </pattern>`;
       }
+      if (cw.chestFade) {
+        d += `<linearGradient id="${uid}-fadeChest" gradientUnits="userSpaceOnUse" x1="0" y1="104" x2="0" y2="250">
+          <stop offset="0" stop-color="${cw.chestFade[0]}"/><stop offset="1" stop-color="${cw.chestFade[1]}"/></linearGradient>`;
+      }
       if (cw.foilLeg) {
         d += `<linearGradient id="${uid}-foil" gradientUnits="userSpaceOnUse" x1="80" y1="260" x2="130" y2="440">
           <stop offset="0" stop-color="#b98c2e"/><stop offset=".35" stop-color="#f2df9a"/>
@@ -464,10 +468,11 @@
       if (a.patent) g += light('M64,130 Q59,168 61,210 L64,210 Q62,168 67,132 Z', 0.24);
       if (a.gauntlet) {
         const c = a.gauntlet.color;
-        g += P('M61,212 L81,214 L84,248 Q70,255 56,247 Z', c);
-        g += stroke('M61,214 L81,216', darken(c, 0.35), 2.2);
-        g += shade('M76,215 L84,248 L78,251 L72,216 Z', 0.15);
-        if (a.gauntlet.sequin) g += sequins(70, 232, 22, 30, 3, 16);
+        // Bell opens toward the elbow, snug at the wrist (real gauntlets taper down).
+        g += P('M54,210 L86,212 L83,248 Q71,253 61,247 Z', c);
+        g += stroke('M54,212 L86,214', darken(c, 0.35), 2.2);
+        g += shade('M80,213 L83,248 L77,251 L74,214 Z', 0.15);
+        if (a.gauntlet.sequin) g += sequins(70, 230, 24, 32, 3, 16);
       }
       const handC = a.glove || cw.skin;
       g += P('M63,246 Q60,260 66,267 Q74,271 79,264 Q83,256 82,246 Q72,251 63,246 Z', handC);
@@ -509,8 +514,10 @@
       return g;
     }
 
-    function chest(cw) {
+    function chest(cw, uid) {
       const m = cw.metal;
+      const btn = cw.buttonColor || m;
+      const bandFill = (solid) => (cw.chestFade ? `url(#${uid}-fadeChest)` : solid);
       switch (cw.chest) {
         case 'braid': {
           let g = '';
@@ -521,13 +528,13 @@
             g +=
               `<circle cx="${120 - half}" cy="${y}" r="2.4" fill="${cw.braid}"/>` +
               `<circle cx="${120 + half}" cy="${y}" r="2.4" fill="${cw.braid}"/>` +
-              `<circle cx="120" cy="${y + 3.4}" r="2.7" fill="${m}"/>` +
+              `<circle cx="120" cy="${y + 3.4}" r="2.7" fill="${btn}"/>` +
               `<circle cx="119.2" cy="${y + 2.6}" r="0.9" fill="#fff" opacity=".85"/>`;
           }
           return g;
         }
         case 'sash': {
-          let g = P('M82,110 L102,102 L154,230 L136,242 Z', cw.sash);
+          let g = P('M82,110 L102,102 L154,230 L136,242 Z', bandFill(cw.sash));
           g += light('M88,110 L96,107 L146,232 L140,236 Z', 0.16);
           g += shade('M146,222 L154,230 L136,242 L131,232 Z', 0.18);
           g += stroke(
@@ -536,14 +543,18 @@
             2
           );
           if (cw.sashSequin) g += sequins(118, 172, 26, 120, 11, 30);
-          return g;
+          return cw.chestReverse ? mirror(g) : g;
         }
         case 'baldric': {
-          let g = P('M134,101 L158,109 L102,252 L82,242 Z', cw.baldric);
+          let g = P('M134,101 L158,109 L102,252 L82,242 Z', bandFill(cw.baldric));
+          if (cw.baldricCenter) {
+            // Two-tone: a center stripe inset ~30% from each band edge.
+            g += P('M141.2,103.4 L150.8,106.6 L96,249 L88,245 Z', cw.baldricCenter);
+          }
           g += light('M138,103 L146,106 L92,246 L86,243 Z', 0.1);
           if (cw.baldricSequin) g += sequins(120, 175, 30, 130, 5, 42);
           g += `<circle cx="144" cy="106" r="3.4" fill="${m}"/><circle cx="143" cy="105" r="1.1" fill="#fff" opacity=".8"/>`;
-          return g;
+          return cw.chestReverse ? mirror(g) : g;
         }
         case 'plastron': {
           let g = P('M100,103 Q120,96 140,103 L147,180 Q120,190 93,180 Z', cw.panel);
@@ -559,19 +570,19 @@
           for (let i = 0; i < 5; i++) {
             const y = 122 + i * 24;
             g +=
-              `<circle cx="108" cy="${y}" r="3" fill="${m}"/><circle cx="107" cy="${y - 1}" r="1" fill="#fff" opacity=".8"/>` +
-              `<circle cx="132" cy="${y}" r="3" fill="${m}"/><circle cx="131" cy="${y - 1}" r="1" fill="#fff" opacity=".8"/>`;
+              `<circle cx="108" cy="${y}" r="3" fill="${btn}"/><circle cx="107" cy="${y - 1}" r="1" fill="#fff" opacity=".8"/>` +
+              `<circle cx="132" cy="${y}" r="3" fill="${btn}"/><circle cx="131" cy="${y - 1}" r="1" fill="#fff" opacity=".8"/>`;
           }
           return g;
         }
         case 'swash': {
           let g = P(
             'M148,98 Q118,148 98,198 Q90,226 90,256 L110,256 Q106,220 120,180 Q136,140 162,110 L158,100 Z',
-            cw.swash
+            bandFill(cw.swash)
           );
           g += light('M150,102 Q126,140 112,180 L108,180 Q124,138 147,100 Z', 0.18);
           g += sequins(120, 180, 40, 140, 9, 40);
-          return g;
+          return cw.chestReverse ? mirror(g) : g;
         }
         case 'vinylPanel': {
           // glossy contrast chest panel (patent vinyl)
@@ -739,7 +750,7 @@
       L += torso(cw, uid);
       if (cw.satin) L += satinSheen();
       if (cw.velvet) L += velvetSheen();
-      L += chest(cw);
+      L += chest(cw, uid);
       L += glowArt(cw, uid);
       L += suspenders(cw);
       L += belt(cw);

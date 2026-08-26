@@ -5,10 +5,37 @@
 // of StudioEditor.tsx so that file stays under the max-lines guardrail.
 
 import React from 'react';
-import { NAMED_COLORS } from '../../data/uniformCatalog';
-import { safeHex } from '../../utils/uniform';
+import type { FigureConfig, PrintColorKey } from '../../types/uniform';
+import { NAMED_COLORS, PRINT_COLOR_SLOTS, UNIFORM_PRESETS } from '../../data/uniformCatalog';
+import { printColorValues, safeHex } from '../../utils/uniform';
+import UniformFigure from './UniformFigure';
 import { LABEL } from './studioTokens';
 export { LABEL, SECTION_LABEL } from './studioTokens';
+
+/**
+ * The horizontal strip of preset thumbnails. Cheap to re-render: presets are
+ * static and UniformFigure is memoized, so every thumb is a memo hit.
+ */
+export function PresetStrip({ onLoad }: { onLoad: (presetId: string) => void }) {
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-2">
+      {UNIFORM_PRESETS.map((preset) => (
+        <button
+          key={preset.id}
+          type="button"
+          onClick={() => onLoad(preset.id)}
+          className="flex-shrink-0 w-16 border border-line bg-background hover:border-interactive p-1"
+          title={`${preset.label} (${preset.era === 'classic' ? 'Heritage' : 'Show'} line)`}
+        >
+          <UniformFigure figure={preset.figure} label={`${preset.label} preset`} />
+          <span className="block text-[8px] uppercase tracking-wider text-muted truncate mt-1">
+            {preset.label}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function Pills<T extends string | null>({
   options,
@@ -107,6 +134,37 @@ export function Toggle({
       />
       <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{label}</span>
     </label>
+  );
+}
+
+/**
+ * One picker per color slot of a procedural surface (burst, op-art,
+ * pinstripe, plaid, foil). Values show the director's overrides merged over
+ * the stock palette, so editing starts from what is actually rendering.
+ */
+export function PrintColorRows({
+  figure,
+  surface,
+  onSlot,
+}: {
+  figure: FigureConfig;
+  surface: PrintColorKey;
+  onSlot: (surface: PrintColorKey, index: number, hex: string) => void;
+}) {
+  const values = printColorValues(figure, surface);
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      {PRINT_COLOR_SLOTS[surface].map((slot, i) => (
+        <ChannelRow
+          key={slot}
+          label={slot}
+          value={values[i]}
+          onChange={(v) => {
+            if (v) onSlot(surface, i, v);
+          }}
+        />
+      ))}
+    </div>
   );
 }
 

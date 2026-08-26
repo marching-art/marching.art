@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CLASS UNLOCK MODAL - DATA-TERMINAL STYLE
 // =============================================================================
@@ -30,8 +29,12 @@ const CLASS_INFO = {
   },
 };
 
+/**
+ * @param {{unlockedClass: string, onSetup: () => void, onDecline: () => void}} props
+ */
 const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
-  const classInfo = CLASS_INFO[unlockedClass] || CLASS_INFO.aClass;
+  const classInfo =
+    CLASS_INFO[/** @type {keyof typeof CLASS_INFO} */ (unlockedClass)] || CLASS_INFO.aClass;
 
   // Close on Escape key
   useEscapeKey(onDecline);

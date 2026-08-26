@@ -33,6 +33,15 @@ const HATS = new Set(["shako", "pith", "campaign"]);
 const PLUMES = new Set(["upright", "fountain"]);
 const ARM_TYPES = new Set(["sleeve", "bare", "half", "none"]);
 const PRINTS = new Set(["sunburst", "opart", "pinstripe"]);
+// Editable color slots per procedural surface — mirrors PRINT_COLOR_SLOT_COUNTS
+// in src/utils/uniform.ts; keep the two in sync.
+const PRINT_COLOR_SLOT_COUNTS = {
+  sunburst: 3,
+  opart: 3,
+  pinstripe: 2,
+  plaid: 3,
+  foil: 2,
+};
 const BUILTIN_FILL_REFS = new Set([
   "url:sun",
   "url:opart",
@@ -126,6 +135,7 @@ const FIGURE_FIELDS = {
   torsoFill: "fill",
   jacket: "hex",
   print: "print",
+  printColors: "printColors",
   plaid: "bool",
   grads: "grads",
   foilLeg: "bool",
@@ -136,10 +146,14 @@ const FIGURE_FIELDS = {
   satin: "bool",
   torsoSequin: "bool",
   chest: "chest",
+  chestReverse: "bool",
+  chestFade: "hexPair",
+  buttonColor: "hex",
   braid: "hex",
   sash: "hex",
   sashSequin: "bool",
   baldric: "hex",
+  baldricCenter: "hex",
   baldricSequin: "bool",
   panel: "hex",
   panelTrim: "hex",
@@ -248,6 +262,24 @@ function validateFigure(figure) {
       case "print":
         if (!PRINTS.has(value)) errors.push(`figure.print is invalid`);
         break;
+      case "printColors":
+        if (typeof value !== "object" || Array.isArray(value)) {
+          errors.push("figure.printColors must be an object");
+          break;
+        }
+        for (const [surface, colors] of Object.entries(value)) {
+          const want =
+            PRINT_COLOR_SLOT_COUNTS[/** @type {keyof typeof PRINT_COLOR_SLOT_COUNTS} */ (surface)];
+          if (!want) {
+            errors.push(`figure.printColors.${surface} is not a recognized print`);
+            continue;
+          }
+          if (colors == null) continue; // null clears the override
+          if (!Array.isArray(colors) || colors.length !== want || !colors.every(isHex)) {
+            errors.push(`figure.printColors.${surface} must be ${want} #rrggbb colors`);
+          }
+        }
+        break;
       case "chest":
         if (!CHESTS.has(value)) errors.push(`figure.chest is invalid`);
         break;
@@ -276,8 +308,9 @@ function validateFigure(figure) {
         }
         break;
       case "streamers":
+      case "hexPair":
         if (!Array.isArray(value) || value.length !== 2 || !value.every(isHex)) {
-          errors.push("figure.streamers must be two #rrggbb colors");
+          errors.push(`figure.${key} must be two #rrggbb colors`);
         }
         break;
       case "arm":

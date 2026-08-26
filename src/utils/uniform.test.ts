@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyColorway,
+  armFadeStops,
   darkenHex,
   designWithinLimits,
   isHexColor,
   lightenHex,
   migrateV1Design,
   normalizeFigure,
+  printColorDefaults,
+  printColorValues,
   proseColorToHex,
+  resolvePrintPalettes,
   safeHex,
+  withArmFade,
 } from './uniform';
 import { UNIFORM_PRESETS, designFromPreset, getUniformPreset } from '../data/uniformCatalog';
 import type { CorpsUniformDesign } from '../types';
@@ -66,6 +71,103 @@ describe('normalizeFigure', () => {
     expect(n.armR.fill).toBe('url:ombre');
     expect(n.legL.foil).toBe(true);
     expect(n.legR.color).toBe('#17161c');
+  });
+});
+
+describe('sleeve fades', () => {
+  it('writes per-side fade gradients and points the sleeve fills at them', () => {
+    const faded = withArmFade(
+      { skin: '#c9a074', jacket: '#1d2f66' },
+      'armL',
+      ['#1d2f66', '#e3b23c'],
+      true // linked → both sides
+    );
+    expect(faded.grads?.fadeL).toEqual([
+      ['0', '#1d2f66'],
+      ['1', '#e3b23c'],
+    ]);
+    expect(faded.grads?.fadeR).toEqual(faded.grads?.fadeL);
+    expect(faded.armL?.fill).toBe('url:fadeL');
+    expect(faded.armR?.fill).toBe('url:fadeR');
+    expect(armFadeStops(faded, 'armL')).toEqual(['#1d2f66', '#e3b23c']);
+    expect(armFadeStops(faded, 'armR')).toEqual(['#1d2f66', '#e3b23c']);
+  });
+
+  it('clears a fade and its gradient without touching other grads', () => {
+    const base = {
+      skin: '#c9a074',
+      grads: {
+        ombre: [
+          ['0', '#111111'],
+          ['1', '#222222'],
+        ] as Array<[string, string]>,
+      },
+    };
+    const on = withArmFade(base, 'armL', ['#334455', '#667788'], false);
+    expect(on.grads?.ombre).toBeDefined();
+    expect(armFadeStops(on, 'armR')).toBeNull(); // unlinked: right untouched
+    const off = withArmFade(on, 'armL', null, false);
+    expect(off.grads?.fadeL).toBeUndefined();
+    expect(off.grads?.ombre).toBeDefined();
+    expect(off.armL?.fill).toBeNull();
+    expect(armFadeStops(off, 'armL')).toBeNull();
+  });
+
+  it('sanitizes junk fade colors', () => {
+    const faded = withArmFade({ skin: '#c9a074' }, 'armR', ['garbage', '#eeeeee'], false);
+    expect(faded.grads?.fadeR?.[0][1]).toBe('#888888');
+  });
+});
+
+describe('print color resolution', () => {
+  it('returns the stock palettes byte-for-byte when nothing is overridden', () => {
+    const pal = resolvePrintPalettes({});
+    expect(pal.sunburst.stops[0]).toEqual(['0', '#f7dd7a']);
+    expect(pal.sunburst.ray).toBe('#f7dd7a');
+    expect(pal.opart.wave).toBe('#f9e8a0');
+    expect(pal.pinstripe).toEqual({ bg: '#efe3c8', stripe: '#d3bd90' });
+    expect(pal.plaid.bandC).toBe('#8f5f10');
+    expect(pal.foil.stops).toHaveLength(4);
+  });
+
+  it('rebuilds each surface, derived shades included, from overridden slots', () => {
+    const pal = resolvePrintPalettes({
+      printColors: {
+        sunburst: ['#112233', '#445566', '#778899'],
+        opart: ['#204020', '#80c080', '#103010'],
+        pinstripe: ['#101018', '#c0c0d0'],
+        plaid: ['#222a44', '#4a5a8a', '#c8d0e8'],
+        foil: ['#8a2a3a', '#f0c0c8'],
+      },
+    });
+    expect(pal.sunburst.stops.map(([, c]) => c).slice(0, 3)).toEqual([
+      '#112233',
+      '#445566',
+      '#778899',
+    ]);
+    expect(pal.sunburst.stops[3][1]).toBe(darkenHex('#778899', 0.5));
+    expect(pal.sunburst.ray).toBe('#112233');
+    expect(pal.opart).toEqual({
+      bg: '#204020',
+      dotA: '#80c080',
+      dotB: '#103010',
+      wave: lightenHex('#204020', 0.6),
+    });
+    expect(pal.pinstripe).toEqual({ bg: '#101018', stripe: '#c0c0d0' });
+    expect(pal.plaid.bandC).toBe(darkenHex('#4a5a8a', 0.25));
+    expect(pal.foil.stops[2][1]).toBe('#8a2a3a');
+    expect(pal.foil.stops[1][1]).toBe('#f0c0c8');
+  });
+
+  it('printColorValues merges overrides over defaults and sanitizes junk', () => {
+    expect(printColorValues({ skin: '#c9a074' }, 'plaid')).toEqual(printColorDefaults('plaid'));
+    const partial = printColorValues(
+      { skin: '#c9a074', printColors: { sunburst: ['#112233', 'garbage'] } },
+      'sunburst'
+    );
+    expect(partial[0]).toBe('#112233');
+    expect(partial[1]).toBe(printColorDefaults('sunburst')[1]); // junk → default
+    expect(partial[2]).toBe(printColorDefaults('sunburst')[2]); // missing → default
   });
 });
 

@@ -100,12 +100,13 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
   }
   if (a.gauntlet) {
     const c = safeHex(a.gauntlet.color);
+    // Bell opens toward the elbow, snug at the wrist (real gauntlets taper down).
     out.push(
-      p(`${kp}-ga`, 'M61,212 L81,214 L84,248 Q70,255 56,247 Z', c),
-      strokeP(`${kp}-gat`, 'M61,214 L81,216', darkenHex(c, 0.35), 2.2),
-      shade(`${kp}-gas`, 'M76,215 L84,248 L78,251 L72,216 Z', 0.15)
+      p(`${kp}-ga`, 'M54,210 L86,212 L83,248 Q71,253 61,247 Z', c),
+      strokeP(`${kp}-gat`, 'M54,212 L86,214', darkenHex(c, 0.35), 2.2),
+      shade(`${kp}-gas`, 'M80,213 L83,248 L77,251 L74,214 Z', 0.15)
     );
-    if (a.gauntlet.sequin) out.push(...sequinField(`${kp}-gaq`, 70, 232, 22, 30, 3, 16));
+    if (a.gauntlet.sequin) out.push(...sequinField(`${kp}-gaq`, 70, 230, 24, 32, 3, 16));
   }
   const handC = a.glove ? safeHex(a.glove) : safeHex(cw.skin);
   out.push(
@@ -253,7 +254,7 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   if (cw.satin) layers.push(<g key="satin">{satinSheen()}</g>);
   if (cw.velvet) layers.push(<g key="velvet">{velvetSheen()}</g>);
   layers.push(
-    <g key="chest">{chest(cw)}</g>,
+    <g key="chest">{chest(cw, uid)}</g>,
     <g key="glowart">{glowArt(cw, uid)}</g>,
     <g key="susp">{suspenders(cw)}</g>,
     <g key="belt">{belt(cw)}</g>,

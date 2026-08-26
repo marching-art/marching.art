@@ -34,6 +34,21 @@ export type FillSpec = string;
 
 export type ProceduralPrint = 'sunburst' | 'opart' | 'pinstripe';
 
+/** Every procedural surface whose colors a director can override. */
+export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil';
+
+/**
+ * Director color overrides for the figure's procedural prints. Each surface
+ * exposes its identity slots as a fixed-length hex list (lengths enforced
+ * server-side): sunburst [center, mid, outer]; opart [base, dot A, dot B];
+ * pinstripe [base, stripe]; plaid [base, band, cross band]; foil
+ * [tone, highlight]. Derived shades (the burst's dark falloff, the op-art
+ * wave, the plaid's thin band, the foil ramp) come from these in the
+ * renderer. An absent surface renders with its stock palette
+ * (PRINT_PALETTES in data/uniformRenderTheme).
+ */
+export type PrintColors = Partial<Record<PrintColorKey, HexColor[] | null>>;
+
 export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit';
 
 export type ChestTreatment =
@@ -102,6 +117,8 @@ export interface FigureConfig {
   jacket?: HexColor | null;
   /** Which procedural print this figure defines (fills reference it). */
   print?: ProceduralPrint | null;
+  /** Color overrides for procedural prints; absent surfaces use stock hues. */
+  printColors?: PrintColors | null;
   /** Define the plaid pattern (referenced as "url:plaid"). */
   plaid?: boolean;
   /** Named linear gradients, each a list of [offset, hex] stops. */
@@ -122,10 +139,18 @@ export interface FigureConfig {
   torsoSequin?: boolean;
 
   chest?: ChestTreatment;
+  /** Button color for braid rows and double-breasted buttons; null → metal. */
+  buttonColor?: HexColor | null;
+  /** Run the diagonal treatments (sash/baldric/swash) over the other shoulder. */
+  chestReverse?: boolean;
+  /** Fade the sash/baldric/swash band between two colors, top to bottom. */
+  chestFade?: [HexColor, HexColor] | null;
   braid?: HexColor | null;
   sash?: HexColor | null;
   sashSequin?: boolean;
   baldric?: HexColor | null;
+  /** Two-tone baldric: center-stripe color inside the band. */
+  baldricCenter?: HexColor | null;
   baldricSequin?: boolean;
   panel?: HexColor | null;
   panelTrim?: HexColor | null;
