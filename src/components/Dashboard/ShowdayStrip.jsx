@@ -8,7 +8,6 @@ import {
   joinPodiumShows,
   buildShowdayModel,
   buildPicksSpotlight,
-  findMyEncore,
 } from '../../utils/showday';
 import { showStartsAtDate } from '../../utils/scheduleUtils';
 import { formatCompetitionDate } from '../../utils/competitionCalendar';
@@ -139,12 +138,25 @@ const ShowdayStrip = ({
     () => (division === 'fantasy' ? buildPicksSpotlight(competitions, lineup, now) : []),
     [division, competitions, lineup, now]
   );
-  const myEncore = useMemo(() => findMyEncore(shows, myUid), [shows, myUid]);
-
   const { phase, show, mySlot, onNow, upNext } = model;
   const isShowday = phase === 'live' || phase === 'today' || phase === 'done';
   const myOnField = mySlot?.state === 'onNow';
   const classLabel = (corpsClass && CORPS_CLASS_LABELS[corpsClass]) || '';
+
+  // The encore nod belongs to the FEATURED show only. Scanning every joined show
+  // (a director can be the encore at some other night on their tour) would stamp
+  // "You're the encore" onto today's show even when this show's encore is someone
+  // else's — so read the featured show's own encore slot, matching how the show
+  // registration modal decides the same thing per show.
+  const myEncore =
+    show && myUid && show.encore?.uid === myUid ? { show, encore: show.encore } : null;
+
+  // Deep-link the schedule to THIS show so the strip's links land on its running
+  // order (the Schedule page opens the show's detail), not a bare schedule view.
+  const scheduleLink =
+    show && typeof show.day === 'number' && show.eventName
+      ? `/schedule?show=${encodeURIComponent(show.eventName)}&day=${show.day}`
+      : '/schedule';
 
   // Nothing scheduled at all: a slim nudge to the Schedule page instead of an
   // empty box — the answer to "what's my day?" is "nothing yet, go pick shows".
@@ -240,7 +252,7 @@ const ShowdayStrip = ({
       {/* WHAT + WHERE + WHEN: the event itself. Tapping it opens the Schedule
           page, where the event's full running order lives. */}
       {show && (
-        <Link to="/schedule" className="block px-4 py-3 hover:bg-white/[0.03] transition-colors">
+        <Link to={scheduleLink} className="block px-4 py-3 hover:bg-white/[0.03] transition-colors">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-sm md:text-base text-white font-bold truncate">
               {formatEventName(show.eventName)}
@@ -384,7 +396,7 @@ const ShowdayStrip = ({
 
       <div className="px-2 py-1 border-t border-line bg-surface-sunken">
         <Link
-          to="/schedule"
+          to={scheduleLink}
           className="min-h-[36px] px-2 text-xs text-interactive hover:text-interactive-hover font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded-none"
         >
           Full schedule & running order

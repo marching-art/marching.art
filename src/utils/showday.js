@@ -319,19 +319,3 @@ export function buildPicksSpotlight(competitions, lineup, now = new Date()) {
   }
   return entries.sort((a, b) => (a.performsAt?.getTime() ?? 0) - (b.performsAt?.getTime() ?? 0));
 }
-
-/**
- * Is the director's corps this show's encore? Cosmetic pride moment. Reads
- * the joined shows' projected encore slot, so each division sees its own
- * side's encore (projectPodiumShow maps podiumEncore into it).
- * @param {ShowLike[]} shows - Joined shows.
- * @param {string|null|undefined} myUid
- * @returns {{show: ShowLike, encore: {uid?: string, corps?: string, reason?: string}}|null}
- */
-export function findMyEncore(shows, myUid) {
-  if (!myUid) return null;
-  for (const show of shows || []) {
-    if (show.encore && show.encore.uid === myUid) return { show, encore: show.encore };
-  }
-  return null;
-}

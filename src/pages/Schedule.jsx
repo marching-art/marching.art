@@ -5,7 +5,8 @@
 // Browse all shows by week, register corps for competitions
 // Laws: Dense data, data-terminal aesthetic, mobile-optimized touch targets
 
-import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, Map as MapIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSeasonStore } from '../store/seasonStore';
@@ -43,6 +44,12 @@ const Schedule = () => {
   const [registrationModal, setRegistrationModal] = useState(false);
   const [tourMapOpen, setTourMapOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(null);
+
+  // Deep link from the dashboard's Show Day strip: `/schedule?show=<name>&day=<n>`
+  // jumps to that show's week and opens its detail (running order). Consumed once,
+  // then cleared so closing the modal or refreshing lands on a plain schedule.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkHandled = useRef(false);
 
   // Profile store - uses real-time listener for automatic updates after registration
   const userProfile = useProfileStore((state) => state.profile);
@@ -115,6 +122,34 @@ const Schedule = () => {
       setLoading(false);
     }
   }, [seasonLoading, scheduleLoading, profileLoading, user]);
+
+  // Consume the `?show=&day=` deep link once the shows are loaded: select the
+  // show's week and open its registration/running-order modal. Matched by
+  // eventName + day so a co-located show that shares a name can't misfire.
+  useEffect(() => {
+    if (deepLinkHandled.current || loading) return;
+    const showName = searchParams.get('show');
+    if (!showName) return;
+    deepLinkHandled.current = true;
+
+    const dayParam = searchParams.get('day');
+    const day = dayParam != null && dayParam !== '' ? Number(dayParam) : null;
+    const match = allShows.find((s) => s.eventName === showName && (day == null || s.day === day));
+    if (match) {
+      setSelectedWeek(match.week ?? Math.ceil(match.day / 7));
+      setSelectedShow(match);
+      setRegistrationModal(true);
+    } else if (day != null && !Number.isNaN(day)) {
+      // Show not in the store (e.g. a championship event) — still land on its week.
+      setSelectedWeek(Math.ceil(day / 7));
+    }
+
+    // Drop the params so the modal doesn't reopen when the user closes it.
+    const next = new URLSearchParams(searchParams);
+    next.delete('show');
+    next.delete('day');
+    setSearchParams(next, { replace: true });
+  }, [loading, allShows, searchParams, setSearchParams]);
 
   // Get actual date from day number — spring-training aware, shared with the
   // setup wizard and scores views via utils/competitionCalendar.
