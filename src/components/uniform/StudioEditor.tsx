@@ -7,17 +7,17 @@
 // print is defined, plaid/foil defs, the glow filter, hair visibility) are
 // recomputed after every edit so the stored design never carries stale defs.
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Shuffle } from 'lucide-react';
 import type {
   ArmConfig,
   FigureConfig,
   LegConfig,
+  PrintColorKey,
   UniformColorway,
   UniformDesignV2,
 } from '../../types/uniform';
 import {
-  CHEST_OPTIONS,
   HAT_TYPE_OPTIONS,
   NAMED_COLORS,
   NECK_OPTIONS,
@@ -30,14 +30,26 @@ import {
 import { FIGURE_HAIR_COLORS, FIGURE_SKIN_TONES } from '../../data/uniformRenderTheme';
 import {
   applyColorway,
+  armFadeStops,
   darkenHex,
   normalizeFigure,
+  printColorValues,
   safeHex,
+  withArmFade,
   withDerivedFlags,
 } from '../../utils/uniform';
-import UniformFigure from './UniformFigure';
-import { ChannelRow, LABEL, Pills, SECTION_LABEL, SwatchRow, Toggle } from './StudioControls';
+import {
+  ChannelRow,
+  LABEL,
+  Pills,
+  PresetStrip,
+  PrintColorRows,
+  SECTION_LABEL,
+  SwatchRow,
+  Toggle,
+} from './StudioControls';
 import { ArmControls, LegControls } from './StudioLimbControls';
+import ChestSection from './StudioChestControls';
 
 // ---------------------------------------------------------------------------
 // per-side editors
@@ -152,35 +164,19 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
     });
   };
 
-  const waistValue = figure.waistBand ? 'band' : figure.belt ? 'belt' : 'none';
+  const setPrintColor = (surface: PrintColorKey, index: number, hex: string) => {
+    const next = printColorValues(figure, surface).map((c, i) => (i === index ? safeHex(hex) : c));
+    setFigure({ printColors: { ...figure.printColors, [surface]: next } });
+  };
 
-  const presetThumbs = useMemo(
-    () =>
-      UNIFORM_PRESETS.map((preset) => (
-        <button
-          key={preset.id}
-          type="button"
-          onClick={() => loadPreset(preset.id)}
-          className="flex-shrink-0 w-16 border border-line bg-background hover:border-interactive p-1"
-          title={`${preset.label} (${preset.era === 'classic' ? 'Heritage' : 'Show'} line)`}
-        >
-          <UniformFigure figure={preset.figure} label={`${preset.label} preset`} />
-          <span className="block text-[8px] uppercase tracking-wider text-muted truncate mt-1">
-            {preset.label}
-          </span>
-        </button>
-      )),
-    // presets are static; loadPreset identity changes don't matter for display
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  const waistValue = figure.waistBand ? 'band' : figure.belt ? 'belt' : 'none';
 
   return (
     <div className="space-y-6">
       {/* Presets */}
       <section>
         <h3 className={SECTION_LABEL}>Presets — load, then swap anything</h3>
-        <div className="flex gap-2 overflow-x-auto pb-2">{presetThumbs}</div>
+        <PresetStrip onLoad={loadPreset} />
       </section>
 
       {/* Colorway */}
@@ -335,6 +331,12 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
             onSelect={(v) => setTorsoPrint(v)}
           />
         </div>
+        {figure.print && (
+          <div className="mt-2">
+            <span className={LABEL}>Print colors</span>
+            <PrintColorRows figure={figure} surface={figure.print} onSlot={setPrintColor} />
+          </div>
+        )}
         {!figure.torsoFill && (
           <ChannelRow
             label="Jacket"
@@ -372,88 +374,7 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
       </section>
 
       {/* Chest */}
-      <section>
-        <h3 className={SECTION_LABEL}>Chest</h3>
-        <Pills
-          options={CHEST_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-          value={figure.chest || 'none'}
-          onSelect={(v) => {
-            const c = design.colorway;
-            setFigure({
-              chest: v as FigureConfig['chest'],
-              braid: v === 'braid' ? figure.braid || c.secondary : figure.braid,
-              sash: v === 'sash' ? figure.sash || c.secondary : figure.sash,
-              baldric: v === 'baldric' ? figure.baldric || c.secondary : figure.baldric,
-              panel:
-                v === 'plastron' || v === 'vinylPanel' ? figure.panel || c.secondary : figure.panel,
-              panelTrim:
-                v === 'plastron' || v === 'vinylPanel'
-                  ? figure.panelTrim || darkenHex(c.secondary, 0.4)
-                  : figure.panelTrim,
-              swash: v === 'swash' ? figure.swash || c.secondary : figure.swash,
-            });
-          }}
-        />
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          {figure.chest === 'braid' && (
-            <ChannelRow
-              label="Braid"
-              value={figure.braid}
-              onChange={(v) => setFigure({ braid: v })}
-            />
-          )}
-          {figure.chest === 'sash' && (
-            <>
-              <ChannelRow
-                label="Sash"
-                value={figure.sash}
-                onChange={(v) => setFigure({ sash: v })}
-              />
-              <Toggle
-                label="Sequin sash"
-                checked={Boolean(figure.sashSequin)}
-                onChange={(v) => setFigure({ sashSequin: v })}
-              />
-            </>
-          )}
-          {figure.chest === 'baldric' && (
-            <>
-              <ChannelRow
-                label="Baldric"
-                value={figure.baldric}
-                onChange={(v) => setFigure({ baldric: v })}
-              />
-              <Toggle
-                label="Sequin baldric"
-                checked={Boolean(figure.baldricSequin)}
-                onChange={(v) => setFigure({ baldricSequin: v })}
-              />
-            </>
-          )}
-          {(figure.chest === 'plastron' || figure.chest === 'vinylPanel') && (
-            <>
-              <ChannelRow
-                label="Panel"
-                value={figure.panel}
-                onChange={(v) => setFigure({ panel: v })}
-              />
-              <ChannelRow
-                label="Panel trim"
-                value={figure.panelTrim}
-                onChange={(v) => setFigure({ panelTrim: v })}
-                clearable
-              />
-            </>
-          )}
-          {figure.chest === 'swash' && (
-            <ChannelRow
-              label="Swash"
-              value={figure.swash}
-              onChange={(v) => setFigure({ swash: v })}
-            />
-          )}
-        </div>
-      </section>
+      <ChestSection figure={figure} colorway={design.colorway} onPatch={setFigure} />
 
       {/* Neck & extras */}
       <section>
@@ -652,7 +573,9 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
             arm={armForEdit(figure, 'armL')}
             jacket={figure.jacket}
             colorway={design.colorway}
+            fade={armFadeStops(figure, 'armL')}
             onPatch={(patch) => setArm('armL', patch)}
+            onFade={(stops) => setFigure(withArmFade(figure, 'armL', stops, armsLinked))}
           />
           {!armsLinked && (
             <ArmControls
@@ -660,7 +583,9 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
               arm={armForEdit(figure, 'armR')}
               jacket={figure.jacket}
               colorway={design.colorway}
+              fade={armFadeStops(figure, 'armR')}
               onPatch={(patch) => setArm('armR', patch)}
+              onFade={(stops) => setFigure(withArmFade(figure, 'armR', stops, false))}
             />
           )}
         </div>
@@ -690,6 +615,18 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
             />
           )}
         </div>
+        {figure.plaid && (
+          <div className="mt-3">
+            <span className={LABEL}>Plaid colors</span>
+            <PrintColorRows figure={figure} surface="plaid" onSlot={setPrintColor} />
+          </div>
+        )}
+        {figure.foilLeg && (
+          <div className="mt-3">
+            <span className={LABEL}>Foil colors</span>
+            <PrintColorRows figure={figure} surface="foil" onSlot={setPrintColor} />
+          </div>
+        )}
       </section>
 
       {/* Feet & figure */}

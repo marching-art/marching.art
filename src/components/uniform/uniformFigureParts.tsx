@@ -8,9 +8,15 @@
 // for the architecture notes.
 
 import React from 'react';
-import { darkenHex, lightenHex, safeHex, type NormalizedFigure } from '../../utils/uniform';
+import {
+  darkenHex,
+  lightenHex,
+  resolvePrintPalettes,
+  safeHex,
+  type NormalizedFigure,
+} from '../../utils/uniform';
 import type { LegConfig } from '../../types/uniform';
-import { FIGURE_INK, PRINT_PALETTES } from '../../data/uniformRenderTheme';
+import { FIGURE_INK } from '../../data/uniformRenderTheme';
 
 export const FIGURE_VIEWBOX = '0 -84 240 560';
 
@@ -125,11 +131,8 @@ export function fillOf(
 // ---------------------------------------------------------------------------
 
 export function buildDefs(cw: NormalizedFigure, uid: string): React.ReactElement {
-  const sun = PRINT_PALETTES.sunburst;
-  const op = PRINT_PALETTES.opart;
-  const pin = PRINT_PALETTES.pinstripe;
-  const pl = PRINT_PALETTES.plaid;
-  const foil = PRINT_PALETTES.foil;
+  // Stock palettes, or the director's printColors overrides when set.
+  const { sunburst: sun, opart: op, pinstripe: pin, plaid: pl, foil } = resolvePrintPalettes(cw);
   return (
     <defs key="defs">
       <clipPath id={`${uid}-tclip`}>
@@ -192,6 +195,19 @@ export function buildDefs(cw: NormalizedFigure, uid: string): React.ReactElement
             ))}
           </linearGradient>
         ))}
+      {cw.chestFade && (
+        <linearGradient
+          id={`${uid}-fadeChest`}
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1="104"
+          x2="0"
+          y2="250"
+        >
+          <stop offset="0" stopColor={safeHex(cw.chestFade[0])} />
+          <stop offset="1" stopColor={safeHex(cw.chestFade[1])} />
+        </linearGradient>
+      )}
       {cw.foilLeg && (
         <linearGradient
           id={`${uid}-foil`}
@@ -377,10 +393,11 @@ export function torso(cw: NormalizedFigure, uid: string): Node[] {
       [86, 44],
       [78, 70],
     ];
+    const ray = resolvePrintPalettes(cw).sunburst.ray;
     out.push(
       <g key="to-rays" clipPath={`url(#${uid}-tclip)`}>
         {ends.map(([x, y], i) =>
-          strokeP(`ray${i}`, `M98,252 L${x},${y}`, PRINT_PALETTES.sunburst.ray, 2.4, {
+          strokeP(`ray${i}`, `M98,252 L${x},${y}`, ray, 2.4, {
             opacity: '.3',
           })
         )}
@@ -603,8 +620,17 @@ export function belt(cw: NormalizedFigure): Node[] {
   return out;
 }
 
-export function chest(cw: NormalizedFigure): Node[] {
+export function chest(cw: NormalizedFigure, uid: string): Node[] {
   const m = safeHex(cw.metal);
+  // Buttons take their own color when set; hardware metal otherwise.
+  const btn = cw.buttonColor ? safeHex(cw.buttonColor) : m;
+  // Diagonal treatments (sash/baldric/swash) can run the other shoulder:
+  // the figure centers on x=120, so the standard mirror flips the diagonal.
+  const flip = (key: string, nodes: Node[]): Node[] =>
+    cw.chestReverse ? [mirrored(key, nodes)] : nodes;
+  // Band fill: the director's chest fade when set, else the solid color.
+  const bandFill = (solid: string | null | undefined): string =>
+    cw.chestFade ? `url(#${uid}-fadeChest)` : safeHex(solid);
   switch (cw.chest) {
     case 'braid': {
       const c = safeHex(cw.braid);
@@ -616,7 +642,7 @@ export function chest(cw: NormalizedFigure): Node[] {
           strokeP(`br${i}`, `M${120 - half},${y} Q120,${y + 4} ${120 + half},${y}`, c, 2.4),
           <circle key={`br${i}-l`} cx={120 - half} cy={y} r="2.4" fill={c} />,
           <circle key={`br${i}-r`} cx={120 + half} cy={y} r="2.4" fill={c} />,
-          <circle key={`br${i}-b`} cx="120" cy={y + 3.4} r="2.7" fill={m} />,
+          <circle key={`br${i}-b`} cx="120" cy={y + 3.4} r="2.7" fill={btn} />,
           <circle
             key={`br${i}-h`}
             cx="119.2"
@@ -630,7 +656,7 @@ export function chest(cw: NormalizedFigure): Node[] {
       return out;
     }
     case 'sash': {
-      const c = safeHex(cw.sash);
+      const c = bandFill(cw.sash);
       const out: Node[] = [
         p('sa', 'M82,110 L102,102 L154,230 L136,242 Z', c),
         light('sa-l', 'M88,110 L96,107 L146,232 L140,236 Z', 0.16),
@@ -643,20 +669,24 @@ export function chest(cw: NormalizedFigure): Node[] {
         ),
       ];
       if (cw.sashSequin) out.push(...sequinField('sa-q', 118, 172, 26, 120, 11, 30));
-      return out;
+      return flip('sa-r', out);
     }
     case 'baldric': {
-      const c = safeHex(cw.baldric);
-      const out: Node[] = [
-        p('ba', 'M134,101 L158,109 L102,252 L82,242 Z', c),
-        light('ba-l', 'M138,103 L146,106 L92,246 L86,243 Z', 0.1),
-      ];
+      const c = bandFill(cw.baldric);
+      const out: Node[] = [p('ba', 'M134,101 L158,109 L102,252 L82,242 Z', c)];
+      if (cw.baldricCenter) {
+        // Two-tone: a center stripe inset ~30% from each band edge.
+        out.push(
+          p('ba-ct', 'M141.2,103.4 L150.8,106.6 L96,249 L88,245 Z', safeHex(cw.baldricCenter))
+        );
+      }
+      out.push(light('ba-l', 'M138,103 L146,106 L92,246 L86,243 Z', 0.1));
       if (cw.baldricSequin) out.push(...sequinField('ba-q', 120, 175, 30, 130, 5, 42));
       out.push(
         <circle key="ba-c" cx="144" cy="106" r="3.4" fill={m} />,
         <circle key="ba-cl" cx="143" cy="105" r="1.1" fill={FIGURE_INK.white} opacity=".8" />
       );
-      return out;
+      return flip('ba-r', out);
     }
     case 'plastron': {
       const c = safeHex(cw.panel);
@@ -678,7 +708,7 @@ export function chest(cw: NormalizedFigure): Node[] {
       for (let i = 0; i < 5; i++) {
         const y = 122 + i * 24;
         out.push(
-          <circle key={`bu-l${i}`} cx="108" cy={y} r="3" fill={m} />,
+          <circle key={`bu-l${i}`} cx="108" cy={y} r="3" fill={btn} />,
           <circle
             key={`bu-lh${i}`}
             cx="107"
@@ -687,7 +717,7 @@ export function chest(cw: NormalizedFigure): Node[] {
             fill={FIGURE_INK.white}
             opacity=".8"
           />,
-          <circle key={`bu-r${i}`} cx="132" cy={y} r="3" fill={m} />,
+          <circle key={`bu-r${i}`} cx="132" cy={y} r="3" fill={btn} />,
           <circle
             key={`bu-rh${i}`}
             cx="131"
@@ -701,8 +731,8 @@ export function chest(cw: NormalizedFigure): Node[] {
       return out;
     }
     case 'swash': {
-      const c = safeHex(cw.swash);
-      return [
+      const c = bandFill(cw.swash);
+      return flip('sw-r', [
         p(
           'sw',
           'M148,98 Q118,148 98,198 Q90,226 90,256 L110,256 Q106,220 120,180 Q136,140 162,110 L158,100 Z',
@@ -710,7 +740,7 @@ export function chest(cw: NormalizedFigure): Node[] {
         ),
         light('sw-l', 'M150,102 Q126,140 112,180 L108,180 Q124,138 147,100 Z', 0.18),
         ...sequinField('sw-q', 120, 180, 40, 140, 9, 40),
-      ];
+      ]);
     }
     case 'vinylPanel': {
       const c = safeHex(cw.panel);

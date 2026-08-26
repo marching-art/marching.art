@@ -10,11 +10,12 @@ import type {
   ArmConfig,
   FigureConfig,
   LegConfig,
+  PrintColorKey,
   UniformColorway,
   UniformDesignV2,
 } from '../types/uniform';
 import { COLOR_NAME_TO_HEX, METAL_HEX, UNIFORM_PRESETS } from '../data/uniformCatalog';
-import { FIGURE_INK } from '../data/uniformRenderTheme';
+import { FIGURE_INK, PRINT_PALETTES } from '../data/uniformRenderTheme';
 
 // =============================================================================
 // COLOR MATH
@@ -83,6 +84,177 @@ export function normalizeFigure(raw: FigureConfig): NormalizedFigure {
 }
 
 // =============================================================================
+// PRINT COLOR RESOLUTION
+// =============================================================================
+
+/** How many editable color slots each procedural surface exposes. */
+export const PRINT_COLOR_SLOT_COUNTS: Record<PrintColorKey, number> = {
+  sunburst: 3, // center, mid, outer
+  opart: 3, // base, dot A, dot B
+  pinstripe: 2, // base, stripe
+  plaid: 3, // base, band, cross band
+  foil: 2, // tone, highlight
+};
+
+/** The stock palette's editable slot values for one surface. */
+export function printColorDefaults(key: PrintColorKey): string[] {
+  const pal = PRINT_PALETTES;
+  switch (key) {
+    case 'sunburst':
+      return [pal.sunburst.stops[0][1], pal.sunburst.stops[1][1], pal.sunburst.stops[2][1]];
+    case 'opart':
+      return [pal.opart.bg, pal.opart.dotA, pal.opart.dotB];
+    case 'pinstripe':
+      return [pal.pinstripe.bg, pal.pinstripe.stripe];
+    case 'plaid':
+      return [pal.plaid.bg, pal.plaid.bandA, pal.plaid.bandB];
+    case 'foil':
+      return [pal.foil.stops[2][1], pal.foil.stops[1][1]];
+  }
+}
+
+/** The slot values the editor should show: overrides merged over defaults. */
+export function printColorValues(figure: FigureConfig, key: PrintColorKey): string[] {
+  const custom = figure.printColors?.[key];
+  return printColorDefaults(key).map((d, i) => (isHexColor(custom?.[i]) ? safeHex(custom![i]) : d));
+}
+
+export interface ResolvedPrintPalettes {
+  sunburst: { stops: Array<[string, string]>; ray: string };
+  opart: { bg: string; dotA: string; dotB: string; wave: string };
+  pinstripe: { bg: string; stripe: string };
+  plaid: { bg: string; bandA: string; bandB: string; bandC: string };
+  foil: { stops: Array<[string, string]> };
+}
+
+/**
+ * Resolve the full render palettes for every procedural surface. Surfaces
+ * without an override return the stock palette byte-for-byte; overridden ones
+ * rebuild their derived shades (falloff stops, wave line, thin plaid band,
+ * foil ramp) from the director's slot colors.
+ */
+export function resolvePrintPalettes(
+  figure: Pick<FigureConfig, 'printColors'>
+): ResolvedPrintPalettes {
+  const pc = figure.printColors || {};
+  const has = (key: PrintColorKey) => Array.isArray(pc[key]) && pc[key]!.length > 0;
+  const slots = (key: PrintColorKey) => printColorValues(figure as FigureConfig, key);
+
+  const sun = has('sunburst')
+    ? (() => {
+        const [center, mid, outer] = slots('sunburst');
+        return {
+          stops: [
+            ['0', center],
+            ['.18', mid],
+            ['.42', outer],
+            ['.7', darkenHex(outer, 0.5)],
+            ['1', darkenHex(outer, 0.75)],
+          ] as Array<[string, string]>,
+          ray: center,
+        };
+      })()
+    : { stops: [...PRINT_PALETTES.sunburst.stops], ray: PRINT_PALETTES.sunburst.ray };
+
+  const op = has('opart')
+    ? (() => {
+        const [bg, dotA, dotB] = slots('opart');
+        return { bg, dotA, dotB, wave: lightenHex(bg, 0.6) };
+      })()
+    : { ...PRINT_PALETTES.opart };
+
+  const pin = has('pinstripe')
+    ? (() => {
+        const [bg, stripe] = slots('pinstripe');
+        return { bg, stripe };
+      })()
+    : { ...PRINT_PALETTES.pinstripe };
+
+  const plaid = has('plaid')
+    ? (() => {
+        const [bg, bandA, bandB] = slots('plaid');
+        return { bg, bandA, bandB, bandC: darkenHex(bandA, 0.25) };
+      })()
+    : { ...PRINT_PALETTES.plaid };
+
+  const foil = has('foil')
+    ? (() => {
+        const [tone, highlight] = slots('foil');
+        return {
+          stops: [
+            ['0', darkenHex(tone, 0.1)],
+            ['.35', highlight],
+            ['.6', tone],
+            ['1', darkenHex(tone, 0.35)],
+          ] as Array<[string, string]>,
+        };
+      })()
+    : { stops: [...PRINT_PALETTES.foil.stops] };
+
+  return { sunburst: sun, opart: op, pinstripe: pin, plaid, foil };
+}
+
+// =============================================================================
+// SLEEVE FADES (director-authored two-stop gradients)
+// =============================================================================
+
+/** Reserved gradient ids for director-authored sleeve fades, one per side. */
+const ARM_FADE_IDS = { armL: 'fadeL', armR: 'fadeR' } as const;
+
+/** The [top, bottom] fade colors on a side's sleeve, if that side wears one. */
+export function armFadeStops(figure: FigureConfig, side: 'armL' | 'armR'): [string, string] | null {
+  const arm = normalizeFigure(figure)[side];
+  const fill = typeof arm.fill === 'string' ? arm.fill : '';
+  const gid = fill.startsWith('url:') ? fill.slice(4) : null;
+  if (gid !== ARM_FADE_IDS.armL && gid !== ARM_FADE_IDS.armR) return null;
+  const stops = figure.grads?.[gid];
+  if (!Array.isArray(stops) || stops.length < 2) return null;
+  return [safeHex(stops[0][1]), safeHex(stops[stops.length - 1][1])];
+}
+
+/**
+ * Set or clear a director-authored sleeve fade. Writes the per-side gradient
+ * (grads.fadeL / grads.fadeR) and points that sleeve's fill at it; clearing
+ * removes both without touching other gradients. Pure — run the result
+ * through withDerivedFlags (the editor's setFigure does).
+ */
+export function withArmFade(
+  figure: FigureConfig,
+  side: 'armL' | 'armR',
+  stops: [string, string] | null,
+  linked: boolean
+): FigureConfig {
+  const n = normalizeFigure(figure);
+  const sides: Array<'armL' | 'armR'> = linked ? ['armL', 'armR'] : [side];
+  const grads = { ...(figure.grads || {}) };
+  const next: FigureConfig = {
+    ...figure,
+    armL: n.armL,
+    armR: n.armR,
+    // per-side configs become authoritative, so clear the symmetric shorthands
+    sleeve: undefined,
+    gauntlet: undefined,
+    gauntletSequin: undefined,
+    glove: undefined,
+  };
+  for (const s of sides) {
+    const gid = ARM_FADE_IDS[s];
+    if (stops) {
+      grads[gid] = [
+        ['0', safeHex(stops[0])],
+        ['1', safeHex(stops[1])],
+      ];
+      next[s] = { ...n[s], fill: `url:${gid}`, color: null };
+    } else {
+      delete grads[gid];
+      next[s] = { ...n[s], fill: null };
+    }
+  }
+  next.grads = Object.keys(grads).length > 0 ? grads : null;
+  return next;
+}
+
+// =============================================================================
 // COLORWAY APPLY
 // =============================================================================
 
@@ -125,12 +297,17 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
     braid: figure.braid ? secondary : figure.braid,
     sash: figure.sash ? secondary : figure.sash,
     baldric: figure.baldric ? secondary : figure.baldric,
+    baldricCenter: figure.baldricCenter ? darkenHex(secondary, 0.55) : figure.baldricCenter,
+    chestFade: figure.chestFade
+      ? ([secondary, darkenHex(secondary, 0.55)] as [string, string])
+      : figure.chestFade,
     panel: figure.panel ? secondary : figure.panel,
     swash: figure.swash ? secondary : figure.swash,
     epaulet: figure.epaulet ? secondary : figure.epaulet,
     suspenders: figure.suspenders ? darkenHex(secondary, 0.3) : figure.suspenders,
     belt: figure.belt ? secondary : figure.belt,
     buckle: figure.buckle ? metal : figure.buckle,
+    buttonColor: figure.buttonColor ? metal : figure.buttonColor,
     waistBand: figure.waistBand ? darkenHex(primary, 0.6) : figure.waistBand,
     waistBandEdge: figure.waistBandEdge ? metal : figure.waistBandEdge,
     fringe: figure.fringe ? secondary : figure.fringe,

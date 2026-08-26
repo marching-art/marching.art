@@ -161,6 +161,15 @@ export const TORSO_PRINT_OPTIONS = [
   { value: 'pinstripe', label: 'Pinstripe print' },
 ] as const;
 
+/** Editor labels for each procedural surface's color slots (see PrintColors). */
+export const PRINT_COLOR_SLOTS: Record<import('../types/uniform').PrintColorKey, string[]> = {
+  sunburst: ['Center', 'Mid', 'Outer'],
+  opart: ['Base', 'Dot A', 'Dot B'],
+  pinstripe: ['Base', 'Stripe'],
+  plaid: ['Base', 'Band', 'Cross band'],
+  foil: ['Foil tone', 'Highlight'],
+};
+
 export const CHEST_OPTIONS = [
   { value: 'none', label: 'Plain' },
   { value: 'braid', label: 'Braid rows' },

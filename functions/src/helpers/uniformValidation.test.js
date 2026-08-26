@@ -77,6 +77,60 @@ describe("validateDesign", () => {
     assert.match(validateDesign(d).join(";"), /torsoFill/);
   });
 
+  test("accepts the chest direction flag, two-tone baldric, and chest fade", () => {
+    const d = validDesign();
+    d.figure.chest = "baldric";
+    d.figure.baldric = "#8a1a1a";
+    d.figure.baldricCenter = "#101014";
+    d.figure.chestReverse = true;
+    d.figure.chestFade = ["#8a1a1a", "#101014"];
+    d.figure.buttonColor = "#c0c0c0";
+    assert.deepEqual(validateDesign(d), []);
+
+    const d2 = validDesign();
+    d2.figure.chestReverse = "yes";
+    assert.match(validateDesign(d2).join(";"), /chestReverse/);
+
+    const d3 = validDesign();
+    d3.figure.chestFade = ["#8a1a1a"];
+    assert.match(validateDesign(d3).join(";"), /chestFade/);
+  });
+
+  test("accepts printColors overrides for every procedural surface", () => {
+    const d = validDesign();
+    d.figure.printColors = {
+      sunburst: ["#112233", "#445566", "#778899"],
+      opart: ["#204020", "#80c080", "#103010"],
+      pinstripe: ["#101018", "#c0c0d0"],
+      plaid: ["#222a44", "#4a5a8a", "#c8d0e8"],
+      foil: ["#8a2a3a", "#f0c0c8"],
+      opart2: null, // wrong key below exercises the reject path separately
+    };
+    delete d.figure.printColors.opart2;
+    assert.deepEqual(validateDesign(d), []);
+    // null clears an override
+    d.figure.printColors = { plaid: null };
+    assert.deepEqual(validateDesign(d), []);
+  });
+
+  test("rejects malformed printColors (bad key, wrong length, junk colors)", () => {
+    const d = validDesign();
+    d.figure.printColors = { paisley: ["#112233"] };
+    assert.match(validateDesign(d).join(";"), /printColors\.paisley/);
+
+    const d2 = validDesign();
+    d2.figure.printColors = { pinstripe: ["#112233"] }; // needs 2
+    assert.match(validateDesign(d2).join(";"), /printColors\.pinstripe/);
+
+    const d3 = validDesign();
+    d3.figure.printColors = { sunburst: ["#112233", "javascript:x", "#778899"] };
+    assert.match(validateDesign(d3).join(";"), /printColors\.sunburst/);
+
+    const d4 = validDesign();
+    d4.figure.printColors = ["#112233"];
+    assert.match(validateDesign(d4).join(";"), /printColors must be an object/);
+  });
+
   test("bounds the name and total payload size", () => {
     const d = validDesign();
     d.name = "x".repeat(61);
@@ -115,6 +169,13 @@ describe("sanitizeDesign", () => {
     assert.equal(clean.figure.jacket, "#6d1a26");
     clean.figure.hat.body = "#000000";
     assert.equal(d.figure.hat.body, "#17171a"); // deep copy, no aliasing
+  });
+
+  test("keeps printColors through sanitize", () => {
+    const d = validDesign();
+    d.figure.printColors = { plaid: ["#222a44", "#4a5a8a", "#c8d0e8"] };
+    const clean = sanitizeDesign(d);
+    assert.deepEqual(clean.figure.printColors.plaid, ["#222a44", "#4a5a8a", "#c8d0e8"]);
   });
 
   test("keeps aiHints only when present", () => {

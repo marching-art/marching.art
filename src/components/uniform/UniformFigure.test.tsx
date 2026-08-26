@@ -36,6 +36,121 @@ describe('UniformFigure', () => {
     expect(cadet.container.querySelector('pattern')).toBeNull();
   });
 
+  it('recolors procedural prints from printColors overrides', () => {
+    const preset = getUniformPreset('radial-burst')!;
+    const { container } = render(
+      <UniformFigure
+        label="custom burst"
+        figure={{
+          ...preset.figure,
+          printColors: { sunburst: ['#112233', '#445566', '#778899'] },
+        }}
+      />
+    );
+    // jsdom can't run descendant selectors on camelCase SVG tags — scope instead
+    const stops = container.querySelector('radialGradient')!.querySelectorAll('stop');
+    expect(stops[0].getAttribute('stop-color')).toBe('#112233');
+    expect(stops[1].getAttribute('stop-color')).toBe('#445566');
+    expect(stops[2].getAttribute('stop-color')).toBe('#778899');
+    // the burst rays take the custom center color
+    expect(container.querySelectorAll('path[stroke="#112233"]').length).toBeGreaterThan(0);
+  });
+
+  it('recolors plaid and foil legs from printColors overrides', () => {
+    const { container } = render(
+      <UniformFigure
+        label="custom legs"
+        figure={{
+          skin: '#c9a074',
+          jacket: '#1d2f66',
+          plaid: true,
+          foilLeg: true,
+          legL: { fill: 'url:plaid' },
+          legR: { fill: 'url:foil', foil: true },
+          printColors: { plaid: ['#222a44', '#4a5a8a', '#c8d0e8'], foil: ['#8a2a3a', '#f0c0c8'] },
+        }}
+      />
+    );
+    expect(container.querySelector('pattern rect')?.getAttribute('fill')).toBe('#222a44');
+    const colors = Array.from(container.querySelectorAll('stop')).map((s) =>
+      s.getAttribute('stop-color')
+    );
+    expect(colors).toContain('#8a2a3a');
+    expect(colors).toContain('#f0c0c8');
+  });
+
+  it('reverses diagonal chest pieces and renders the two-tone baldric stripe', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#1d2f66',
+      chest: 'baldric' as const,
+      baldric: '#8a1a1a',
+      baldricCenter: '#101014',
+      metal: '#d9a41c',
+    };
+    const twoTone = render(<UniformFigure label="two-tone" figure={base} />);
+    const stripe = twoTone.container.querySelector('path[fill="#101014"]');
+    expect(stripe).not.toBeNull();
+
+    const reversed = render(
+      <UniformFigure label="reversed" figure={{ ...base, chestReverse: true }} />
+    );
+    // the baldric band now sits inside a mirror transform group
+    const band = reversed.container.querySelector('path[fill="#8a1a1a"]');
+    expect(band?.closest('g[transform="translate(240,0) scale(-1,1)"]')).not.toBeNull();
+    // unreversed control: no mirror group wraps the band
+    const control = twoTone.container.querySelector('path[fill="#8a1a1a"]');
+    expect(control?.closest('g[transform="translate(240,0) scale(-1,1)"]')).toBeNull();
+  });
+
+  it('fades the chest band between the two chestFade colors', () => {
+    const { container } = render(
+      <UniformFigure
+        label="faded sash"
+        figure={{
+          skin: '#c9a074',
+          jacket: '#1d2f66',
+          chest: 'sash',
+          sash: '#8a1a1a',
+          chestFade: ['#8a1a1a', '#101014'],
+        }}
+      />
+    );
+    const stops = Array.from(container.querySelectorAll('stop')).map((s) =>
+      s.getAttribute('stop-color')
+    );
+    expect(stops).toContain('#8a1a1a');
+    expect(stops).toContain('#101014');
+    // the band path points at the chest-fade gradient, not a solid color
+    expect(container.innerHTML).toContain('-fadeChest)');
+  });
+
+  it('renders director fade sleeves through the grads pipeline', () => {
+    const { container } = render(
+      <UniformFigure
+        label="fade sleeves"
+        figure={{
+          skin: '#c9a074',
+          jacket: '#1d2f66',
+          grads: {
+            fadeL: [
+              ['0', '#1d2f66'],
+              ['1', '#e3b23c'],
+            ],
+          },
+          armL: { type: 'sleeve', fill: 'url:fadeL' },
+          armR: { type: 'sleeve', color: '#1d2f66' },
+        }}
+      />
+    );
+    const stops = Array.from(container.querySelectorAll('stop')).map((s) =>
+      s.getAttribute('stop-color')
+    );
+    expect(stops).toContain('#1d2f66');
+    expect(stops).toContain('#e3b23c');
+    expect(container.innerHTML).toContain('-fadeL)');
+  });
+
   it('renders the glow filter for glow designs', () => {
     const { container } = renderPreset('neon-circuit');
     expect(container.querySelector('filter feGaussianBlur')).not.toBeNull();
