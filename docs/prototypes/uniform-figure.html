@@ -701,16 +701,19 @@
       if (!h) return '';
       const body = h.body;
       let g = '';
-      g += P('M84,38 Q120,50 140,41 L140,46 Q120,56 84,44 Z', darken(body, 0.08));
-      g += P('M102,40 Q100,12 120,10 Q140,12 139,40 Z', body);
-      g += stroke('M114,13 Q114,26 115,38 M126,13 Q126,26 125,38', darken(body, 0.25), 2);
-      g += shade('M130,14 Q138,22 138,39 L132,40 Q133,24 130,14 Z', 0.12);
-      g += P('M136,14 Q150,20 149,42 Q143,45 138,41 Q141,26 136,14 Z', lighten(body, 0.07));
-      g += shade('M144,20 Q148,28 147,41 L149,42 Q150,20 136,14 Z', 0.15);
-      if (h.band) g += P('M102,33 Q120,41 139,33 L139,39 Q120,47 102,39 Z', h.band);
+      g += P('M102,44 L108,5 Q120,-1 132,5 L138,44 Z', body);
+      g += stroke('M120,2 Q118,22 119,42', darken(body, 0.3), 2.2);
+      g += shade('M129,4 Q135,22 137,42 L131,43 Q131,22 128,5 Z', 0.12);
+      g += light('M110,5 Q106,24 104,42 L108,43 Q109,22 113,4 Z', 0.09);
+      if (h.band) g += P('M102.9,35 L137.1,35 L138,43.4 Q120,49 102.2,43.4 Z', h.band);
+      g += P('M66,38 Q102,31 137,16 L141,23 Q106,39 70,46 Z', darken(body, 0.05));
+      g += shade('M70,42 Q104,37 139,21 L141,23 Q106,39 70,46 Z', 0.22);
+      g += P('M131,0 Q153,5 150,32 Q142,36 136,25 Q138,9 131,0 Z', lighten(body, 0.12));
+      g += stroke('M131,0 Q153,5 150,32', darken(body, 0.32), 1.8);
+      g += shade('M145,10 Q150,20 149,31 L150,32 Q153,8 137,2 Z', 0.14);
       const orn = hatOrnament(h.ornament, h.emblem || cw.metal);
-      if (orn) g += `<g transform="translate(65,7.1) scale(0.65)">${orn}</g>`;
-      return g;
+      if (orn) g += `<g transform="translate(70,-2.4) scale(0.6)">${orn}</g>`;
+      return h.flip ? mirror(g) : g;
     }
 
     function contour(cw) {
@@ -784,6 +787,31 @@
         });
         g += `<circle cx="120" cy="6" r="4.5" fill="${cw.metal}"/>`;
         return g;
+      }
+      if (p.type === 'sideFeather') {
+        const blades = [
+          ['M140,16 C144,-12 154,-30 168,-40', 4.2],
+          ['M140,16 C150,-8 164,-20 180,-24', 3.8],
+          ['M140,16 C141,-16 147,-38 156,-50', 3.6],
+          ['M140,16 C154,-4 172,-10 184,-6', 3.2],
+          ['M140,16 C146,-20 158,-36 172,-46', 2.6],
+        ];
+        let g = '';
+        for (const [d, w] of blades) {
+          g += stroke(d, p.color, w);
+          g += stroke(d, lighten(p.color, 0.3), 1.2, `opacity=".5"`);
+        }
+        if (tip) {
+          const tips = [
+            'M160,-34 C164,-38 168,-40 172,-41',
+            'M170,-20 C175,-22 180,-23 183,-24',
+            'M151,-41 C153,-45 155,-48 157,-51',
+            'M174,-10 C178,-9 182,-8 185,-7',
+            'M163,-39 C167,-42 170,-44 173,-46',
+          ];
+          for (const d of tips) g += stroke(d, tip, 4);
+        }
+        return cw.hat && cw.hat.flip ? mirror(g) : g;
       }
       return '';
     }

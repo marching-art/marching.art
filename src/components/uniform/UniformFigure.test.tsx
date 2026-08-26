@@ -125,7 +125,7 @@ describe('UniformFigure', () => {
       />
     );
     // the aussie's badge rides the pinned-up brim inside a scaled group
-    expect(slouch.container.querySelector('g[transform*="scale(0.65)"] circle')).not.toBeNull();
+    expect(slouch.container.querySelector('g[transform*="scale(0.6)"] circle')).not.toBeNull();
   });
 
   it('renders the contour shako: swept top, no visor, bare face by default', () => {
@@ -182,6 +182,31 @@ describe('UniformFigure', () => {
     expect(noSequins.container.querySelectorAll('circle').length).toBeLessThan(
       both.container.querySelectorAll('circle').length
     );
+  });
+
+  it('mirrors the aussie and its side feather when hat.flip is set', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#8a1a1a',
+      metal: '#d9a41c',
+      hatType: 'aussie' as const,
+      hat: { body: '#1c4a2a', band: '#101014' },
+      plume: { type: 'sideFeather' as const, color: '#f4f2ec', accent: '#b3121c' },
+    };
+    const stock = render(<UniformFigure label="stock" figure={base} />);
+    // the feather renders its accent-dyed tips
+    expect(stock.container.querySelectorAll('path[stroke="#b3121c"]').length).toBeGreaterThan(0);
+    // stock: hat body is not inside a mirror group
+    const stockBody = stock.container.querySelector('path[fill="#1c4a2a"]');
+    expect(stockBody?.closest('g[transform="translate(240,0) scale(-1,1)"]')).toBeNull();
+
+    const flipped = render(
+      <UniformFigure label="flipped" figure={{ ...base, hat: { ...base.hat, flip: true } }} />
+    );
+    const flippedBody = flipped.container.querySelector('path[fill="#1c4a2a"]');
+    expect(flippedBody?.closest('g[transform="translate(240,0) scale(-1,1)"]')).not.toBeNull();
+    const feather = flipped.container.querySelector('path[stroke="#f4f2ec"]');
+    expect(feather?.closest('g[transform="translate(240,0) scale(-1,1)"]')).not.toBeNull();
   });
 
   it('reverses diagonal chest pieces and renders the two-tone baldric stripe', () => {

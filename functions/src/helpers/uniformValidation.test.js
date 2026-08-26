@@ -115,6 +115,13 @@ describe("validateDesign", () => {
     const d3 = validDesign();
     d3.figure.hat = { body: "#17171a", ornament: "fleur" };
     assert.match(validateDesign(d3).join(";"), /figure\.hat/);
+
+    const d4 = validDesign();
+    d4.figure.hat = { body: "#17171a", flip: true };
+    d4.figure.plume = { type: "sideFeather", color: "#f4f2ec", accent: "#b3121c" };
+    assert.deepEqual(validateDesign(d4), []);
+    d4.figure.hat.flip = "yes";
+    assert.match(validateDesign(d4).join(";"), /figure\.hat/);
   });
 
   test("accepts the chest direction flag, two-tone baldric, and chest fade", () => {
