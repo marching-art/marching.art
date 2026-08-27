@@ -19,6 +19,71 @@ const { refreshLeagueActivity } = require("../helpers/leagueActivity");
 const { isLeagueCommissioner, isLeagueOwner } = require("../helpers/leaguePermissions");
 
 /**
+ * Who is allowed to remove `memberId` from `league`, encoded as a pure guard so
+ * the rules can be pinned without a Firestore mock. Throws the same HttpsError
+ * the callable would; returns nothing when the removal is allowed.
+ *
+ * The order matters and is part of the contract:
+ *  1. only a commissioner (or an admin) may remove anyone;
+ *  2. the owner is never removable — the league would be left with no one able
+ *     to run it (they must leave, or hand it over first);
+ *  3. a co-commissioner cannot remove a *peer* commissioner — only the owner
+ *     (or an admin) can, so two co-commissioners cannot race to remove each
+ *     other. Removing a plain member, or oneself, is still fine;
+ *  4. the target must actually be on the roster.
+ *
+ * @param {object} params
+ * @param {object} params.league       the league document data
+ * @param {string} params.actorUid     the uid making the request
+ * @param {string} params.memberId     the uid being removed
+ * @param {boolean} [params.isAdmin]    whether the actor holds the admin claim
+ */
+function assertCanRemoveMember({ league, actorUid, memberId, isAdmin = false }) {
+  if (!isLeagueCommissioner(league, actorUid) && !isAdmin) {
+    throw new HttpsError("permission-denied", "Only a commissioner can remove members.");
+  }
+  if (memberId === league.creatorId) {
+    throw new HttpsError(
+      "failed-precondition",
+      "The league owner cannot be removed. They must leave, or hand the league over first."
+    );
+  }
+  if (
+    memberId !== actorUid &&
+    isLeagueCommissioner(league, memberId) &&
+    !isLeagueOwner(league, actorUid) &&
+    !isAdmin
+  ) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the league owner can remove another commissioner."
+    );
+  }
+  if (!(league.members || []).includes(memberId)) {
+    throw new HttpsError("not-found", "That director is not a member of this league.");
+  }
+}
+
+/**
+ * The entry-fee refund owed to a removed member, in CorpsCoin.
+ *
+ * Clamped to what the prize pool actually holds so a refund can never mint coin
+ * that was never escrowed. A member whose profile document is gone (a deleted
+ * account) is paid nothing — there is no account to receive it — and their fee
+ * stays in the pool for the directors still playing for it.
+ *
+ * @param {object} league                 the league document data
+ * @param {boolean} memberProfileExists    whether the member still has a profile
+ * @returns {number} the refund amount (>= 0)
+ */
+function computeRemovalRefund(league, memberProfileExists) {
+  if (!memberProfileExists) return 0;
+  const entryFee = league.settings?.entryFee || 0;
+  const prizePool = league.settings?.prizePool || 0;
+  return Math.min(entryFee, prizePool);
+}
+
+/**
  * Commissioner control: remove a member from the league.
  *
  * The roster is otherwise append-only — a director who stops playing sits in
@@ -66,28 +131,12 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
     }
     const leagueData = leagueDoc.data();
 
-    if (!isLeagueCommissioner(leagueData, uid) && !hasAdminClaim(request)) {
-      throw new HttpsError("permission-denied", "Only a commissioner can remove members.");
-    }
-    if (memberId === leagueData.creatorId) {
-      throw new HttpsError(
-        "failed-precondition",
-        "The league owner cannot be removed. They must leave, or hand the league over first."
-      );
-    }
-    // A co-commissioner cannot remove a peer — only the owner can change who
-    // runs the league. Otherwise two co-commissioners could race to remove
-    // each other.
-    if (memberId !== uid && isLeagueCommissioner(leagueData, memberId) && !isLeagueOwner(leagueData, uid)
-        && !hasAdminClaim(request)) {
-      throw new HttpsError(
-        "permission-denied",
-        "Only the league owner can remove another commissioner."
-      );
-    }
-    if (!(leagueData.members || []).includes(memberId)) {
-      throw new HttpsError("not-found", "That director is not a member of this league.");
-    }
+    assertCanRemoveMember({
+      league: leagueData,
+      actorUid: uid,
+      memberId,
+      isAdmin: hasAdminClaim(request),
+    });
 
     const standingsDoc = await transaction.get(standingsRef);
     const memberProfileDoc = await transaction.get(memberProfileRef);
@@ -103,13 +152,9 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
     // profile write and the refund are both skipped.
     const memberProfileExists = memberProfileDoc.exists;
 
-    // Refund the entry fee out of the escrowed pool. Clamped to what the pool
-    // actually holds so a refund can never mint coin that was never escrowed.
-    // A deleted account's fee stays in the pool and is paid out to the members
-    // who are still playing for it.
-    const entryFee = leagueData.settings?.entryFee || 0;
-    const prizePool = leagueData.settings?.prizePool || 0;
-    const refundAmount = memberProfileExists ? Math.min(entryFee, prizePool) : 0;
+    // Refund the entry fee out of the escrowed pool (clamped to the pool, zero
+    // for a deleted account). See computeRemovalRefund.
+    const refundAmount = computeRemovalRefund(leagueData, memberProfileExists);
 
     transaction.update(leagueRef, {
       members: admin.firestore.FieldValue.arrayRemove(memberId),
@@ -181,3 +226,6 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
       : `${memberName} was removed from the league.`,
   };
 });
+
+module.exports.assertCanRemoveMember = assertCanRemoveMember;
+module.exports.computeRemovalRefund = computeRemovalRefund;

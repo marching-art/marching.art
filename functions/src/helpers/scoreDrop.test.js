@@ -11,6 +11,7 @@ const {
   aggregateNightlyStandings,
   buildScoreDropEmbed,
   buildScoreDropPushes,
+  buildChampionsPayload,
   postToDiscordWebhook,
   runDiscordScoreDrop,
 } = require("./scoreDrop");
@@ -158,6 +159,92 @@ describe("buildScoreDropPushes", () => {
     assert.match(soundSportPush.body, /Groove Unit's SoundSport performance is in the books/);
     assert.equal(soundSportPush.body.includes("71"), false);
     assert.equal(soundSportPush.data.corpsClass, "soundSport");
+  });
+});
+
+// The champions payload is the single biggest post of the year, built once on
+// finals night from the season_champions doc. runDiscordScoreDrop's tests cover
+// that it fires once under its own lease; these pin the embed the crowning
+// actually renders — the per-class podium, medal order, score formatting, and
+// the World Class headline.
+describe("buildChampionsPayload", () => {
+  const champions = (over = {}) => ({
+    seasonId: "s26",
+    seasonName: "Summer 2026",
+    classes: {
+      worldClass: [
+        { rank: 1, uid: "u1", username: "chris", corpsName: "Iron Cadence", score: 98.125 },
+        { rank: 2, uid: "u2", username: "alex", corpsName: "Aurora Vanguard", score: 97.4 },
+        { rank: 3, uid: "u3", username: "sam", corpsName: "Northern Lights", score: 96.05 },
+      ],
+      openClass: [{ rank: 1, uid: "u4", username: "kai", corpsName: "Riverhawks", score: 88.2 }],
+      aClass: [{ rank: 1, uid: "u5", username: "jo", corpsName: "Groove Unit", score: 77.7 }],
+    },
+    ...over,
+  });
+
+  test("titles and links the post, and headlines the World Class champion", () => {
+    const payload = buildChampionsPayload({
+      champions: champions(),
+      seasonName: "Summer 2026",
+    });
+    const embed = payload.embeds[0];
+    assert.match(embed.title, /Summer 2026 Champions/);
+    assert.match(embed.url, /\/hall-of-champions/);
+    // The World Class titlist is named in the description.
+    assert.match(embed.description, /Iron Cadence/);
+    assert.match(embed.description, /World Class title/);
+  });
+
+  test("renders one field per ranked class, in registry tier order", () => {
+    const embed = buildChampionsPayload({ champions: champions() }).embeds[0];
+    assert.deepEqual(
+      embed.fields.map((f) => f.name),
+      ["World Class", "Open Class", "A Class"]
+    );
+  });
+
+  test("shows the podium with medals, corps name, score, and director", () => {
+    const embed = buildChampionsPayload({ champions: champions() }).embeds[0];
+    const worldField = embed.fields[0].value;
+    // 🥇🥈🥉 in order, three-decimal score, and the director handle.
+    assert.match(worldField, /🥇 \*\*Iron Cadence\*\* — 98\.125 · chris/);
+    assert.match(worldField, /🥈 \*\*Aurora Vanguard\*\* — 97\.400 · alex/);
+    assert.match(worldField, /🥉 \*\*Northern Lights\*\* — 96\.050 · sam/);
+  });
+
+  test("omits classes that crowned no one, and non-ranked classes entirely", () => {
+    // SoundSport is non-competitive and never appears; an empty class is skipped.
+    const payload = buildChampionsPayload({
+      champions: champions({
+        classes: {
+          worldClass: [{ rank: 1, corpsName: "Iron Cadence", score: 98.1, username: "chris" }],
+          openClass: [],
+          soundSport: [{ rank: 1, corpsName: "Groove Unit", score: 80 }],
+        },
+      }),
+    });
+    assert.deepEqual(
+      payload.embeds[0].fields.map((f) => f.name),
+      ["World Class"]
+    );
+  });
+
+  test("returns null when no class was crowned (nothing to post)", () => {
+    assert.equal(buildChampionsPayload({ champions: { classes: {} }, seasonName: "X" }), null);
+    assert.equal(buildChampionsPayload({ champions: {}, seasonName: "X" }), null);
+    assert.equal(buildChampionsPayload({ champions: null, seasonName: "X" }), null);
+  });
+
+  test("tolerates a champion with no score or director", () => {
+    const embed = buildChampionsPayload({
+      champions: { classes: { worldClass: [{ rank: 1, corpsName: "Mystery Corps" }] } },
+      seasonName: "X",
+    }).embeds[0];
+    assert.match(embed.fields[0].value, /🥇 \*\*Mystery Corps\*\*/);
+    // No score suffix, no director suffix — just the medal and the name.
+    assert.doesNotMatch(embed.fields[0].value, / · /);
+    assert.doesNotMatch(embed.fields[0].value, /—/);
   });
 });
 

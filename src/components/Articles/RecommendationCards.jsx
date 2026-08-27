@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // RECOMMENDATION CARDS - BUY/HOLD/SELL fantasy recommendations display
 // =============================================================================
