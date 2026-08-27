@@ -267,14 +267,15 @@ describe('v1 → v2 migration', () => {
 });
 
 describe('presets and limits', () => {
-  it('ships thirteen presets across both eras', () => {
+  it('ships fourteen presets across both eras', () => {
     // 11 at launch + Millennium (the 2000s bridge) + Ivory Blade (the '93
-    // triangle-blade look), both added on player feedback
-    expect(UNIFORM_PRESETS).toHaveLength(13);
+    // triangle-blade look), both added on player feedback, + Guard Flourish
+    // (the guard-dress starter for the show look)
+    expect(UNIFORM_PRESETS).toHaveLength(14);
     expect(UNIFORM_PRESETS.filter((p) => p.era === 'classic')).toHaveLength(6);
-    expect(UNIFORM_PRESETS.filter((p) => p.era === 'modern')).toHaveLength(7);
+    expect(UNIFORM_PRESETS.filter((p) => p.era === 'modern')).toHaveLength(8);
     const ids = new Set(UNIFORM_PRESETS.map((p) => p.id));
-    expect(ids.size).toBe(13);
+    expect(ids.size).toBe(14);
   });
 
   it('every preset yields a design within the payload limits', () => {

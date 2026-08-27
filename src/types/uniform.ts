@@ -63,7 +63,7 @@ export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil';
  */
 export type PrintColors = Partial<Record<PrintColorKey, HexColor[] | null>>;
 
-export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit';
+export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit' | 'dress';
 
 export type ChestTreatment =
   'none' | 'braid' | 'sash' | 'baldric' | 'plastron' | 'buttons' | 'swash' | 'vinylPanel';
@@ -233,6 +233,9 @@ export interface FigureConfig {
   tie?: HexColor | null;
 
   epaulet?: HexColor | null;
+  /** Drum-major aiguillette cord (prestige regalia: needs the Drum Major
+   *  title to SAVE; previewing is free). Tips take the metal channel. */
+  aiguillette?: HexColor | null;
   suspenders?: HexColor | null;
 
   belt?: HexColor | null;

@@ -18,7 +18,7 @@ const MAX_DESIGN_BYTES = 8 * 1024;
 const MAX_WARDROBE_DESIGNS = 24;
 
 const METALS = new Set(["gold", "silver"]);
-const TORSO_STYLES = new Set(["jacket", "tunic", "jumpsuit"]);
+const TORSO_STYLES = new Set(["jacket", "tunic", "jumpsuit", "dress"]);
 const CHESTS = new Set([
   "none",
   "braid",
@@ -221,6 +221,9 @@ const FIGURE_FIELDS = {
   scarf: "hex",
   tie: "hex",
   epaulet: "hex",
+  // drum-major regalia (prestige: saving requires the Drum Major title,
+  // helpers/uniformEntitlements) — the cord color; tips take the metal
+  aiguillette: "hex",
   suspenders: "hex",
   belt: "hex",
   buckle: "hex",

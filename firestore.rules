@@ -129,11 +129,11 @@ function corpsClassUntouched(corpsClass) {
                // direct client write would bypass all of that.
                'avatarUrl', 'avatarSource',
                // The equipped Uniform Studio snapshots (primary + alternate
-               // look) are written only by the equipUniformDesign callable,
+               // + guard look) are written only by the equipUniformDesign callable,
                // which validates the design's shape/size server-side; a direct
                // client write could plant an oversized or malformed payload on
                // the world-readable profile.
-               'uniform', 'uniformAlt']);
+               'uniform', 'uniformAlt', 'uniformGuard']);
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
@@ -179,7 +179,9 @@ function touchesProtectedCorpsFields() {
      request.resource.data.get(['corps', 'soundSport', 'uniform'], null)
        != resource.data.get(['corps', 'soundSport', 'uniform'], null) ||
      request.resource.data.get(['corps', 'soundSport', 'uniformAlt'], null)
-       != resource.data.get(['corps', 'soundSport', 'uniformAlt'], null));
+       != resource.data.get(['corps', 'soundSport', 'uniformAlt'], null) ||
+     request.resource.data.get(['corps', 'soundSport', 'uniformGuard'], null)
+       != resource.data.get(['corps', 'soundSport', 'uniformGuard'], null));
 }
 
 // SIZE/TYPE CAPS on owner-writable free-text profile fields. profile/data is

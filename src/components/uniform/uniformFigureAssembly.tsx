@@ -523,6 +523,60 @@ function cape(cw: NormalizedFigure): Node[] {
   return cp.side === 'right' ? [mirrored('cp-r', out)] : out;
 }
 
+/**
+ * Drum-major aiguillette (prestige regalia): a braided cord pinned at the
+ * viewer-left shoulder seam, swinging in two nested loops under the arm and
+ * back up to a chest stud, with two metal ferrule tips hanging below it. The
+ * braid reads through a lighter dashed overlay on each loop.
+ */
+function aiguillette(cw: NormalizedFigure): Node[] {
+  if (!cw.aiguillette) return [];
+  const c = safeHex(cw.aiguillette);
+  const dk = darkenHex(c, 0.35);
+  const lt = lightenHex(c, 0.3);
+  const m = safeHex(cw.metal);
+  const loops = [
+    'M88,106 Q74,138 84,156 Q97,167 108,148 Q112,136 111,125',
+    'M89,109 Q79,135 87,149 Q96,157 104,143 Q108,134 108,126',
+  ];
+  const out: Node[] = [];
+  loops.forEach((d, i) => {
+    out.push(strokeP(`ag${i}-u`, d, dk, i === 0 ? 4 : 3.2));
+    out.push(strokeP(`ag${i}`, d, c, i === 0 ? 2.8 : 2.2));
+    out.push(strokeP(`ag${i}-b`, d, lt, 1.1, { strokeDasharray: '2.2 2.6', opacity: '.75' }));
+  });
+  out.push(
+    // shoulder pin + chest stud
+    <circle key="ag-p" cx="88" cy="106" r="2.4" fill={m} />,
+    <circle key="ag-st" cx="110" cy="124" r="2.6" fill={m} />,
+    <circle key="ag-stl" cx="109.2" cy="123.2" r="0.9" fill={FIGURE_INK.white} opacity=".8" />,
+    // hanging ferrule tips
+    strokeP('ag-t1c', 'M110,126 Q111,132 111.5,137', c, 1.6),
+    strokeP('ag-t2c', 'M108,127 Q107,133 106.5,138', c, 1.6),
+    <rect key="ag-t1" x="110.2" y="136" width="2.6" height="9" rx="1" fill={m} />,
+    <rect key="ag-t2" x="105.2" y="137" width="2.6" height="9" rx="1" fill={m} />,
+    <rect
+      key="ag-t1l"
+      x="110.6"
+      y="136.8"
+      width="0.9"
+      height="7"
+      fill={FIGURE_INK.white}
+      opacity=".5"
+    />,
+    <rect
+      key="ag-t2l"
+      x="105.6"
+      y="137.8"
+      width="0.9"
+      height="7"
+      fill={FIGURE_INK.white}
+      opacity=".5"
+    />
+  );
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // assembly
 // ---------------------------------------------------------------------------
@@ -552,6 +606,7 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
     <g key="arms">{arms(cw, uid)}</g>,
     <g key="epau">{epaulets(cw)}</g>,
     <g key="cape">{cape(cw)}</g>,
+    <g key="aig">{aiguillette(cw)}</g>,
     <g key="head">{headNeck(cw)}</g>
   );
   if (cw.hairShow) layers.push(<g key="hair">{hair(cw)}</g>);

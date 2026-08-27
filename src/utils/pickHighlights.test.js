@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import { describe, test, expect } from 'vitest';
 import { buildShowHighlights, parsePick, highlightLabel } from './pickHighlights';
 
@@ -31,7 +30,7 @@ describe('parsePick', () => {
 describe('buildShowHighlights', () => {
   test('full when the pick had a real result on this day', () => {
     const map = buildShowHighlights({ show, lineup: { GE1: 'Blue Devils|2009' }, poolCorps: pool });
-    expect(map.get('blue devils').tier).toBe('full'); // 12 is in [10,12,14]
+    expect(map.get('blue devils')?.tier).toBe('full'); // 12 is in [10,12,14]
   });
 
   test('dim when the brand is present but no real result this day', () => {
@@ -41,15 +40,15 @@ describe('buildShowHighlights', () => {
       lineup: { GE2: 'Carolina Crown|2012' },
       poolCorps: pool,
     });
-    expect(map.get('carolina crown').tier).toBe('dim');
+    expect(map.get('carolina crown')?.tier).toBe('dim');
     // Troopers has an empty resultDays -> also dim on any day.
     const map2 = buildShowHighlights({ show, lineup: { VP: 'Troopers|2024' }, poolCorps: pool });
-    expect(map2.get('troopers').tier).toBe('dim');
+    expect(map2.get('troopers')?.tier).toBe('dim');
   });
 
   test('degrades to full when resultDays is unavailable (live season)', () => {
     const map = buildShowHighlights({ show, lineup: { B: 'Live Corps|2025' }, poolCorps: pool });
-    expect(map.get('live corps').tier).toBe('full');
+    expect(map.get('live corps')?.tier).toBe('full');
   });
 
   test('merges multiple captions for one corps and upgrades to full', () => {
@@ -64,8 +63,8 @@ describe('buildShowHighlights', () => {
       poolCorps: poolTwo,
     });
     const entry = map.get('blue devils');
-    expect(entry.tier).toBe('full'); // any real-result pick upgrades the brand
-    expect(entry.captions.length).toBe(2);
+    expect(entry?.tier).toBe('full'); // any real-result pick upgrades the brand
+    expect(entry?.captions.length).toBe(2);
   });
 
   test('ignores empty picks', () => {

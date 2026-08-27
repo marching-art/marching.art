@@ -22,13 +22,19 @@ export default function PackAdvisoryBanner({ figure, owned }: PackAdvisoryBanner
   if (missing.length === 0) return null;
   return (
     <div className="mt-3 border border-warning/40 bg-warning/10 p-2.5 text-[11px] text-warning">
-      {missing.map((p) => (
-        <p key={p.id}>
-          Uses <span className="font-bold">{p.name}</span> by {p.house} ({p.features}).
-        </p>
-      ))}
+      {missing.map((p) =>
+        p.kind === 'prestige' ? (
+          <p key={p.id}>
+            Wears <span className="font-bold">{p.name}</span> — it comes with {p.house}.
+          </p>
+        ) : (
+          <p key={p.id}>
+            Uses <span className="font-bold">{p.name}</span> by {p.house} ({p.features}).
+          </p>
+        )
+      )}
       <p className="mt-1 text-muted">
-        Trying it on is free — own the pack to save or equip this look.{' '}
+        Trying it on is free — unlock it in the Shop to save or equip this look.{' '}
         <Link to="/shop" className="text-interactive hover:underline">
           Visit the Shop
         </Link>

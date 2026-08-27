@@ -531,6 +531,28 @@ await check(
   )
 );
 
+// The guard's show look (corps.{class}.uniformGuard) is the third
+// callable-only snapshot slot, pinned on both guard paths like the others.
+await freshSeed();
+await check(
+  'owner cannot plant a corps guard look directly (callable-only)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.worldClass.uniformGuard': { designId: 'forged', figure: { skin: '#c9a074' } },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot plant a soundSport guard look directly (callable-only)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.soundSport.uniformGuard': { designId: 'forged', figure: { skin: '#c9a074' } },
+    })
+  )
+);
+
 // seasonHistory feeds the public resume AND the lifetime Director Rating
 // leaderboard (placements-only) — a client-forged placement would mint
 // leaderboard rank. medals feed the trophy case. Both are archival-written.

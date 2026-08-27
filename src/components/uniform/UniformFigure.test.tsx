@@ -410,6 +410,53 @@ describe('UniformFigure', () => {
     expect(mirrors(right.container.innerHTML)).toBe(mirrors(left.container.innerHTML) + 1);
   });
 
+  it('renders the guard dress silhouette with prints clipped to it', () => {
+    const dress = render(
+      <UniformFigure
+        label="dress"
+        figure={{
+          skin: '#c9a074',
+          torsoStyle: 'dress',
+          jacket: '#4b2a6b',
+          armL: { type: 'bare' },
+          armR: { type: 'bare' },
+          legL: { color: '#17161c' },
+          legR: { color: '#17161c' },
+        }}
+      />
+    );
+    // the dress body renders in the jacket channel and the hem drops below
+    // the jacket's waistline (y≈260) — pick the torso path by its fill
+    const body = Array.from(dress.container.querySelectorAll('path[fill="#4b2a6b"]')).find((el) =>
+      el.getAttribute('d')?.startsWith('M78,104')
+    );
+    expect(body).toBeTruthy();
+    expect(body!.getAttribute('d')).toContain('344');
+
+    // the Guard Flourish preset ships the dress with its veil fade sleeve
+    const preset = renderPreset('guard-flourish');
+    const stops = Array.from(preset.container.querySelectorAll('stop')).map((s) =>
+      s.getAttribute('stop-color')
+    );
+    expect(stops).toContain('#c25a6e');
+  });
+
+  it('renders the drum-major aiguillette with metal ferrule tips', () => {
+    const base = { skin: '#c9a074', jacket: '#1d2f66', metal: '#cfd4da' };
+    const plain = render(<UniformFigure label="no cord" figure={{ ...base }} />);
+    const withCord = render(
+      <UniformFigure label="cord" figure={{ ...base, aiguillette: '#d9a41c' }} />
+    );
+    // the cord loops are stroked paths in the cord color
+    expect(withCord.container.querySelectorAll('path[stroke="#d9a41c"]').length).toBeGreaterThan(
+      plain.container.querySelectorAll('path[stroke="#d9a41c"]').length
+    );
+    // two metal ferrule tips hang from the chest stud
+    expect(
+      withCord.container.querySelectorAll('rect[fill="#cfd4da"]').length
+    ).toBeGreaterThanOrEqual(2);
+  });
+
   it('defines the iridescent ramp only when the finish is on', () => {
     const plain = render(
       <UniformFigure label="plain torso" figure={{ skin: '#c9a074', jacket: '#1d2f66' }} />

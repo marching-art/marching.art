@@ -81,6 +81,12 @@ export interface CorpsData {
   // primary stays the corps' identity everywhere else.
   uniformAlt?: import('./uniform').EquippedUniform;
 
+  // The color guard's show look (docs/UNIFORM_STUDIO.md §6): the SEASON's
+  // costume, not the corps' identity — reset at rollover with the show
+  // concept and archived into that season's history. Same shape and
+  // server-only write path as `uniform`.
+  uniformGuard?: import('./uniform').EquippedUniform;
+
   // Corps Avatar (AI-generated based on uniform design, preserved across seasons)
   avatarUrl?: string;
   avatarGeneratedAt?: string; // ISO timestamp of when avatar was generated

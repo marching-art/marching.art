@@ -107,7 +107,12 @@ const SeasonDetail = ({ season, detail, isSoundSportView, onClose }) => {
         </div>
 
         {/* Uniform History (docs/UNIFORM_STUDIO.md §6) */}
-        <SeasonUniformSection compact={season.uniform} snapshot={detail.uniformSnapshot} />
+        <SeasonUniformSection
+          compact={season.uniform}
+          snapshot={detail.uniformSnapshot}
+          guardCompact={season.uniformGuard}
+          guardSnapshot={detail.uniformGuardSnapshot}
+        />
 
         {/* Weekly Performance */}
         {weeks.length > 0 && (

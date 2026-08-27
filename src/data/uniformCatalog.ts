@@ -181,6 +181,7 @@ export const PLUME_TYPE_OPTIONS = [
 export const TORSO_STYLE_OPTIONS = [
   { value: 'jacket', label: 'Jacket' },
   { value: 'tunic', label: 'Tunic (asymmetric drape)' },
+  { value: 'dress', label: 'Guard dress' },
 ] as const;
 
 export const TORSO_PRINT_OPTIONS = [
@@ -501,6 +502,30 @@ const patentRiot: FigureConfig = {
   shoe: '#101013',
 };
 
+const guardFlourish: FigureConfig = {
+  skin: '#d8a97e',
+  hairShow: true,
+  hair: '#2b2119',
+  torsoStyle: 'dress',
+  jacket: '#4b2a6b',
+  satin: true,
+  metal: '#cfd4da',
+  chest: 'sash',
+  sash: '#e8c25a',
+  chestShape: 'tapered',
+  grads: {
+    veil: [
+      { o: '0', c: '#4b2a6b' },
+      { o: '1', c: '#c25a6e' },
+    ],
+  },
+  armL: { type: 'bare', glove: '#f4f2ec' },
+  armR: { type: 'sleeve', fill: 'url:veil', detached: true },
+  legL: { color: '#17161c' },
+  legR: { color: '#17161c' },
+  shoe: '#e8ded2',
+};
+
 export const UNIFORM_PRESETS: UniformPreset[] = [
   {
     id: 'classic-cadet',
@@ -592,6 +617,13 @@ export const UNIFORM_PRESETS: UniformPreset[] = [
     era: 'modern',
     colorway: { primary: '#141418', secondary: '#b3121c', accent: '#c9ced6', metal: 'silver' },
     figure: patentRiot,
+  },
+  {
+    id: 'guard-flourish',
+    label: 'Guard Flourish',
+    era: 'modern',
+    colorway: { primary: '#4b2a6b', secondary: '#e8c25a', accent: '#c25a6e', metal: 'silver' },
+    figure: guardFlourish,
   },
 ];
 

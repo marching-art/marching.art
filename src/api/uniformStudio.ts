@@ -42,11 +42,12 @@ export const saveUniformDesign = createCallable<SaveUniformDesignData, SaveUnifo
 );
 
 export interface EquipUniformDesignData {
-  /** null with slot:'alternate' clears the alternate look. */
+  /** null with slot 'alternate' or 'guard' clears that slot. */
   designId: string | null;
   corpsClass: string;
-  /** Which slot to fill: the identity uniform (default) or the alternate look. */
-  slot?: 'primary' | 'alternate';
+  /** Which slot to fill: the identity uniform (default), the alternate look,
+   *  or the color guard's per-season show look. */
+  slot?: 'primary' | 'alternate' | 'guard';
 }
 
 export interface EquipUniformDesignResult {
