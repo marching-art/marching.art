@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Celebration.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';

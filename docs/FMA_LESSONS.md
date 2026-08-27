@@ -124,6 +124,25 @@ detection, rate limits, and admin moderation tooling — _before_ it's needed.
 The substantial `firestore.rules` surface shows we take integrity seriously;
 extend that posture explicitly to social and economic abuse vectors.
 
+> **Shipped (August 2026) — the account-integrity loop (detect → surface →
+> restrict).** A full first cycle is in place, deliberately keeping the human
+> in the loop. **Detect:** a nightly detection-only job
+> (`functions/src/helpers/integrityStats.js`) computes alt-account signals from
+> data already on hand — normalized-email clusters (the Gmail dot/`+tag` alias
+> trick), signup bursts, and shared-attribute clusters — and builds a
+> **watchlist** of accounts implicated by _two or more independent_ signals,
+> the only rows worth an operator's time. **Surface:** the watchlist renders in
+> an admin **Integrity** panel (`src/components/Admin/IntegrityPanel.tsx`).
+> **Restrict:** `setAccountRestriction` (`functions/src/callable/accountModeration.js`)
+> sets a soft, reversible server-only `moderation.restricted` flag, and
+> `assertNotRestricted` (`helpers/callableGuards.js`) enforces it on exactly the
+> zero-sum surfaces — Showcase entries/votes (`showcase.js`), daily predictions
+> (`dailyPredictions.js`), and league prediction pools (`leaguePools.js`) —
+> while the account keeps every non-exploitable feature. Remaining work is
+> refinement, not foundation: more signals, and (only if volume demands it)
+> raising the strongest signal to an automatic restriction instead of a manual
+> one.
+
 ### 4. Human editorial voice beat automated content
 
 FMA's "Circuit News / Staff Writers" forum (3,157 posts) and its
@@ -211,18 +230,33 @@ keep our update cadence visible.
 2. **Player-facing changelog / roadmap** (Lesson 2) — **✅ shipped and
    automated** (the `/updates` page; the changelog now writes itself on merge —
    callout under Lesson 2). No manual upkeep.
-3. ~~**Public cross-league community feed**~~ — **decided against.** With an
-   active Discord, a generic in-app chat feed is redundant and risks
-   fragmenting the community. The durable, identity-anchored content that
-   Discord _can't_ hold (press releases, the newsroom) is already shipped; the
-   remaining move is to **bridge to Discord** (auto-post press releases /
-   champions), tracked on the public roadmap.
+3. ~~**Public cross-league community feed**~~ — **decided against**, and the
+   fallback **Discord bridge is now ✅ shipped.** Rather than a generic in-app
+   feed, the site posts its durable moments straight into the community's
+   existing Discord: published articles → `#news` and director press releases →
+   `#press-releases` (`functions/src/triggers/newsDiscord.js`), plus
+   lease-guarded `#announcements` posts for season start, lineup lock, and
+   championship week, and score-drop, fan-favorite, hosted-event, and
+   registration announcements (the `*Discord`/`*Announce` helpers under
+   `functions/src/helpers/`). The one unbuilt piece the old note named — a post
+   at the moment a **champion is crowned** (season _start_ already posts) — is
+   the only Discord follow-up left.
 4. **Credited community writers/commentators** (Lesson 4) — **✅ shipped**
    (automatic writer tiers; callout under Lesson 4).
 5. **Creative/cosmetic identity tools** (Lesson 5) — sustained, decade-long
-   demand. The next big-value build.
-6. **Anti-abuse & moderation tooling** (Lesson 3) — invest ahead of scale, in
+   demand; the standing big-value creative lane (uniform studio, design houses,
+   prestige regalia have been the recent cadence).
+6. **Anti-abuse & moderation tooling** (Lesson 3) — **✅ first cycle shipped**
+   (detect → surface → restrict; callout under Lesson 3). Keep extending it in
    step with economy growth.
+
+**Where that leaves the next build.** Of the tracks above, the two with the most
+open, high-leverage work left are **League QA hardening** (Lesson 6 is our
+strongest area, yet `leagueRoster.js`, `leagueInvitations.js`, and
+`leagueResults.js` ship with no unit tests — and invites, member visibility, and
+"remove from league" are exactly FMA's #1 bug cluster in §7) and the **creative
+identity lane** (Lesson 5). League QA is the higher-confidence, lower-risk next
+step: it protects the social spine against the failures FMA actually hit.
 
 ---
 
