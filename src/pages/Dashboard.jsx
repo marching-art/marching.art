@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
 // OPTIMIZATION #9: Lazy-load large modal components to reduce initial bundle size
-// Prioritized by file size: CaptionSelectionModal (1007 lines), UniformDesignModal (794 lines),
+// Prioritized by file size: CaptionSelectionModal (1007 lines),
 // NewsSubmissionModal (283 lines), ClassPurchaseModal (247 lines)
 //
 // These use lazyWithRetry (not raw React.lazy) so that a stale hashed chunk

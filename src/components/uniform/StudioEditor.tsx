@@ -261,8 +261,17 @@ export default function StudioEditor({ design, onChange, ownedPacks }: StudioEdi
       <section>
         <h3 className={SECTION_LABEL}>Torso</h3>
         <Pills
-          options={TORSO_STYLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-          value={figure.torsoStyle === 'tunic' ? 'tunic' : 'jacket'}
+          options={TORSO_STYLE_OPTIONS.map((o) => ({
+            value: o.value,
+            label: o.value === 'longcoat' ? packLabel(o.label, 'pack_tailors_cut') : o.label,
+          }))}
+          value={
+            figure.torsoStyle === 'tunic' ||
+            figure.torsoStyle === 'dress' ||
+            figure.torsoStyle === 'longcoat'
+              ? figure.torsoStyle
+              : 'jacket'
+          }
           onSelect={(v) => setFigure({ torsoStyle: v as FigureConfig['torsoStyle'] })}
         />
         <div className="mt-2">

@@ -42,6 +42,19 @@ describe("requiredPacksFor", () => {
     );
   });
 
+  test("the long coat needs the Tailors' Cut; premium plumes need the Plumassier", () => {
+    assert.deepEqual(requiredPacksFor({ torsoStyle: "longcoat" }), ["pack_tailors_cut"]);
+    assert.deepEqual(requiredPacksFor({ plume: { type: "fan", color: "#b3121c" } }), [
+      "pack_plumassier",
+    ]);
+    assert.deepEqual(requiredPacksFor({ plume: { type: "cascade", color: "#f4f1ea" } }), [
+      "pack_plumassier",
+    ]);
+    // free silhouettes and plumes stay free
+    assert.deepEqual(requiredPacksFor({ torsoStyle: "dress" }), []);
+    assert.deepEqual(requiredPacksFor({ plume: { type: "upright", color: "#f4f1ea" } }), []);
+  });
+
   test("the aiguillette is prestige: it needs the Drum Major title", () => {
     assert.deepEqual(requiredPacksFor({ aiguillette: "#d9a41c" }), ["title_drum_major"]);
     assert.deepEqual(

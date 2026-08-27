@@ -24,6 +24,16 @@ const UNIFORM_PACKS = {
     house: "Blackwell & Sons",
     features: "the busby and the shoulder cape",
   },
+  pack_tailors_cut: {
+    name: "The Tailors' Cut",
+    house: "Harrow & Finch",
+    features: "the long coat silhouette",
+  },
+  pack_plumassier: {
+    name: "Plumassier Collection",
+    house: "Casa Roldán",
+    features: "the quill fan and cascade willow plumes",
+  },
 };
 
 /**
@@ -50,6 +60,10 @@ function requiredPacksFor(figure) {
   const fig = figure || {};
   if (fig.iridescent || fig.lame) packs.add("pack_texture_atelier");
   if (fig.hatType === "busby" || fig.cape) packs.add("pack_military_outfitters");
+  if (fig.torsoStyle === "longcoat") packs.add("pack_tailors_cut");
+  if (fig.plume && (fig.plume.type === "fan" || fig.plume.type === "cascade")) {
+    packs.add("pack_plumassier");
+  }
   if (fig.aiguillette) packs.add("title_drum_major");
   return [...packs];
 }

@@ -219,6 +219,20 @@ describe("validateDesign", () => {
     assert.match(validateDesign(d2).join(";"), /torsoStyle/);
   });
 
+  test("accepts the long coat and the Plumassier plume types", () => {
+    const d = validDesign();
+    d.figure.torsoStyle = "longcoat";
+    d.figure.plume = { type: "fan", color: "#b3121c", accent: "#d9a41c" };
+    assert.deepEqual(validateDesign(d), []);
+
+    d.figure.plume = { type: "cascade", color: "#f4f1ea" };
+    assert.deepEqual(validateDesign(d), []);
+
+    const d2 = validDesign();
+    d2.figure.plume = { type: "peacock", color: "#f4f1ea" };
+    assert.match(validateDesign(d2).join(";"), /figure\.plume/);
+  });
+
   test("accepts the design-house pieces: busby, cape, iridescent, lamé", () => {
     const d = validDesign();
     d.figure.hatType = "busby";

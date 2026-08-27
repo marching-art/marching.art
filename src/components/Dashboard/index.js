@@ -7,7 +7,6 @@ export {
   RetireConfirmModal,
   MoveCorpsModal,
   AchievementModal,
-  UniformDesignModal,
 } from './DashboardModals';
 
 // Onboarding and quick start components

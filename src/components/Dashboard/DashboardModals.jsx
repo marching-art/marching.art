@@ -8,5 +8,4 @@ export { default as DeleteConfirmModal } from '../modals/DeleteCorpsModal';
 export { default as RetireConfirmModal } from '../modals/RetireCorpsModal';
 export { default as MoveCorpsModal } from '../modals/MoveCorpsModal';
 export { default as AchievementModal } from '../modals/AchievementModal';
-export { default as UniformDesignModal } from '../modals/UniformDesignModal';
 export { default as UsernamePromptModal } from '../modals/UsernamePromptModal';

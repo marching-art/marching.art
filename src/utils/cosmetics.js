@@ -281,6 +281,22 @@ export const SHOP_ITEMS = [
     description:
       'Blackwell & Sons — the fur busby with its colored bag, and the one-shoulder cavalry cape',
   },
+  {
+    id: 'pack_tailors_cut',
+    type: 'uniformPack',
+    name: "The Tailors' Cut",
+    price: 3000,
+    description:
+      'Harrow & Finch, est. 1893 — the mid-calf long coat with its vented skirt, cut for the corps that marches like a regiment',
+  },
+  {
+    id: 'pack_plumassier',
+    type: 'uniformPack',
+    name: 'Plumassier Collection',
+    price: 1200,
+    description:
+      'Casa Roldán — the spread quill fan and the tall cascade willow, plumes that turn a shako into a headdress',
+  },
 ];
 
 /**

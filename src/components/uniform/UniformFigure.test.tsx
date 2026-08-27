@@ -441,6 +441,54 @@ describe('UniformFigure', () => {
     expect(stops).toContain('#c25a6e');
   });
 
+  it('renders the long coat with its vented skirt', () => {
+    const { container } = render(
+      <UniformFigure
+        label="long coat"
+        figure={{ skin: '#c9a074', torsoStyle: 'longcoat', jacket: '#22355c' }}
+      />
+    );
+    const body = Array.from(container.querySelectorAll('path[fill="#22355c"]')).find((el) =>
+      el.getAttribute('d')?.startsWith('M78,104')
+    );
+    expect(body).toBeTruthy();
+    // the skirt drops past the jacket waistline and carries the vent notch
+    expect(body!.getAttribute('d')).toContain('L120,306');
+  });
+
+  it('renders the Plumassier fan and cascade plumes', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#22355c',
+      metal: '#cfd4da',
+      hatType: 'shako' as const,
+      hat: { body: '#17171a' },
+    };
+    const fan = render(
+      <UniformFigure
+        label="fan"
+        figure={{ ...base, plume: { type: 'fan', color: '#b3121c', accent: '#d9a41c' } }}
+      />
+    );
+    // nine quills, each with a dark tip dot, alternating dyed when two-tone
+    expect(fan.container.querySelectorAll('path[stroke="#b3121c"]').length).toBeGreaterThanOrEqual(
+      5
+    );
+    expect(fan.container.querySelectorAll('path[stroke="#d9a41c"]').length).toBeGreaterThanOrEqual(
+      4
+    );
+
+    const cascade = render(
+      <UniformFigure
+        label="cascade"
+        figure={{ ...base, plume: { type: 'cascade', color: '#f4f1ea' } }}
+      />
+    );
+    expect(
+      cascade.container.querySelectorAll('path[stroke="#f4f1ea"]').length
+    ).toBeGreaterThanOrEqual(8);
+  });
+
   it('renders the drum-major aiguillette with metal ferrule tips', () => {
     const base = { skin: '#c9a074', jacket: '#1d2f66', metal: '#cfd4da' };
     const plain = render(<UniformFigure label="no cord" figure={{ ...base }} />);

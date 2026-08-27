@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational pieces extracted from HallOfChampions.jsx (max-lines
 // guardrail): the SoundSport blue-ribbon icon and the champion's
 // hang-a-banner purchase modal. No data fetching lives here.
@@ -9,7 +8,10 @@ import { Flag, Coins, X, Trophy } from 'lucide-react';
 import Portal from '../components/Portal';
 import { HALL_BANNER_PRICE, HALL_BANNER_MAX_LENGTH } from '../utils/prestige';
 
-/** Empty state for a division with no crowned seasons yet. */
+/**
+ * Empty state for a division with no crowned seasons yet.
+ * @param {{ label: string }} props
+ */
 export const NoChampionsPanel = ({ label }) => (
   <div className="bg-surface-card border border-line p-10 text-center max-w-md mx-auto my-8">
     <div className="w-14 h-14 mx-auto mb-4 border border-line flex items-center justify-center">
@@ -44,6 +46,14 @@ export const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
  * The champion-only banner purchase modal (10,000 CC, one per championship).
  * Fully controlled: open/message/purchasing state and the confirm handler
  * live in HallOfChampions, which owns the callable + local-state patch.
+ * @param {{
+ *   open: boolean,
+ *   message: string,
+ *   purchasing: boolean,
+ *   onMessageChange: (value: string) => void,
+ *   onClose: () => void,
+ *   onConfirm: () => void,
+ * }} props
  */
 export const BannerModal = ({ open, message, purchasing, onMessageChange, onClose, onConfirm }) => (
   <AnimatePresence>

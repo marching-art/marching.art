@@ -38,6 +38,20 @@ export const UNIFORM_PACKS: UniformPackMeta[] = [
     features: 'the busby and the shoulder cape',
   },
   {
+    id: 'pack_tailors_cut',
+    kind: 'pack',
+    name: "The Tailors' Cut",
+    house: 'Harrow & Finch',
+    features: 'the long coat silhouette',
+  },
+  {
+    id: 'pack_plumassier',
+    kind: 'pack',
+    name: 'Plumassier Collection',
+    house: 'Casa Roldán',
+    features: 'the quill fan and cascade willow plumes',
+  },
+  {
     id: 'title_drum_major',
     kind: 'prestige',
     name: "the Drum Major's aiguillette",
@@ -56,6 +70,10 @@ export function requiredPacksFor(figure: FigureConfig | undefined | null): strin
   const fig = figure || ({} as FigureConfig);
   if (fig.iridescent || fig.lame) packs.add('pack_texture_atelier');
   if (fig.hatType === 'busby' || fig.cape) packs.add('pack_military_outfitters');
+  if (fig.torsoStyle === 'longcoat') packs.add('pack_tailors_cut');
+  if (fig.plume && (fig.plume.type === 'fan' || fig.plume.type === 'cascade')) {
+    packs.add('pack_plumassier');
+  }
   if (fig.aiguillette) packs.add('title_drum_major');
   return [...packs];
 }
