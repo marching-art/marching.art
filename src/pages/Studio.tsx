@@ -15,7 +15,7 @@ import { Eye, Loader2, Shirt, Store, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
-import { CLASS_DISPLAY } from '../components/modals/uniformDesignOptions';
+import { getClassDisplay } from '../components/Profile/directorProfileHelpers';
 import UniformFigure from '../components/uniform/UniformFigure';
 import StudioEditor from '../components/uniform/StudioEditor';
 import StudioActionGrid from '../components/uniform/StudioActionGrid';
@@ -458,10 +458,8 @@ export default function Studio() {
                 }`}
               >
                 {o.corps.corpsName}
-                <span
-                  className={`ml-1.5 ${CLASS_DISPLAY[o.classKey as keyof typeof CLASS_DISPLAY]?.color || ''}`}
-                >
-                  {CLASS_DISPLAY[o.classKey as keyof typeof CLASS_DISPLAY]?.name}
+                <span className={`ml-1.5 ${getClassDisplay(o.classKey).color}`}>
+                  {getClassDisplay(o.classKey).name}
                 </span>
               </button>
             ))}
@@ -646,9 +644,7 @@ export default function Studio() {
               ref={shareCardRef}
               design={shareCard.design}
               corpsName={activeOption.corps.corpsName}
-              classLabel={
-                CLASS_DISPLAY[activeClass as keyof typeof CLASS_DISPLAY]?.name || activeClass || ''
-              }
+              classLabel={activeClass ? getClassDisplay(activeClass).name : ''}
               code={shareCard.code}
             />
           </div>

@@ -98,8 +98,14 @@
     // Guard dress (show-look silhouette): A-line skirt, asymmetric hem
     const DRESS_D =
       'M78,104 Q120,93 162,104 L158,150 Q154,200 156,240 Q163,288 172,326 Q138,352 108,344 Q86,338 72,318 Q81,282 84,240 Q87,200 82,150 Z';
+    // Long coat (Tailors' Cut): mid-calf skirt with a center vent
+    const LONGCOAT_D =
+      'M78,104 Q120,93 162,104 L158,150 Q154,200 156,246 Q158,300 164,344 L130,352 L120,306 L110,352 L76,344 Q82,300 84,246 Q87,200 82,150 Z';
     function torsoPathOf(cw) {
-      return cw.torsoStyle === 'tunic' ? TUNIC_D : cw.torsoStyle === 'dress' ? DRESS_D : TORSO_D;
+      if (cw.torsoStyle === 'tunic') return TUNIC_D;
+      if (cw.torsoStyle === 'dress') return DRESS_D;
+      if (cw.torsoStyle === 'longcoat') return LONGCOAT_D;
+      return TORSO_D;
     }
     const LEG_D =
       'M90,254 L85,308 Q83,360 91,438 L114,438 Q112,384 113,336 Q113,306 116,284 Q119,276 120,272 L120,254 Z';
@@ -312,6 +318,12 @@
         g += shade('M130,252 Q134,296 140,340 L148,336 Q140,296 137,252 Z', 0.1);
         g += shade('M150,300 Q162,314 172,326 Q152,340 128,346 Q146,330 150,300 Z', 0.14);
         g += light('M84,254 Q80,290 74,316 Q80,326 88,332 Q88,292 92,256 Z', 0.08);
+      }
+      if (cw.torsoStyle === 'longcoat') {
+        g += stroke('M120,252 L120,306', darken(cw.jacket || '#888888', 0.35), 1.6, 'opacity=".6"');
+        g += shade('M120,306 L130,352 L124,352 L118,312 Z', 0.2);
+        g += shade('M148,250 Q151,300 156,342 L163,344 Q157,298 155,248 Z', 0.14);
+        g += light('M90,252 Q86,300 80,340 L86,342 Q91,298 96,254 Z', 0.08);
       }
       if (cw.torsoSequin)
         g += `<g clip-path="url(#${uid}-tclip)">${sequins(120, 170, 80, 130, 23, 90)}</g>`;
@@ -829,6 +841,43 @@
         }
         g += shade('M124,-60 Q130,-30 126,10 L121,12 Q128,-28 122,-62 Z', 0.12);
         if (p.mylar) g += sequins(120, -26, 12, 72, 13, 18);
+        return g;
+      }
+      if (p.type === 'fan') {
+        // Plumassier quill fan (Casa Roldan)
+        let g = '';
+        const N = 9;
+        for (let i = 0; i < N; i++) {
+          const angle = (Math.PI * (28 + (i * 124) / (N - 1))) / 180;
+          const x = (120 + Math.cos(angle) * 54).toFixed(1);
+          const y = (6 - Math.sin(angle) * 56).toFixed(1);
+          const quill = tip && i % 2 === 1 ? tip : p.color;
+          g += stroke(`M120,6 L${x},${y}`, quill, 3.4);
+          g += stroke(`M120,6 L${x},${y}`, lighten(quill, 0.3), 1.1, 'opacity=".5"');
+          g += `<circle cx="${x}" cy="${y}" r="2.6" fill="${darken(quill, 0.2)}"/>`;
+        }
+        g += `<circle cx="120" cy="8" r="5" fill="${cw.metal}"/>`;
+        return g;
+      }
+      if (p.type === 'cascade') {
+        // Plumassier cascade willow (Casa Roldan)
+        let g = '';
+        const strands = [
+          'M118,6 C110,-44 98,-60 84,-30',
+          'M119,4 C113,-54 103,-70 92,-46',
+          'M120,2 C119,-58 118,-78 112,-66',
+          'M120,2 C121,-58 123,-78 129,-66',
+          'M121,4 C127,-54 137,-70 148,-46',
+          'M122,6 C130,-44 142,-60 156,-30',
+          'M120,4 C118,-48 112,-64 102,-50',
+          'M120,4 C122,-48 128,-64 138,-50',
+        ];
+        strands.forEach((d, i) => {
+          const sc = tip && i % 2 === 1 ? tip : p.color;
+          g += stroke(d, sc, 3);
+          g += stroke(d, lighten(sc, 0.3), 1.1, 'opacity=".5"');
+        });
+        g += `<circle cx="120" cy="7" r="4.5" fill="${cw.metal}"/>`;
         return g;
       }
       if (p.type === 'fountain') {

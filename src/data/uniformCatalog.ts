@@ -81,7 +81,7 @@ export const NAMED_COLORS: NamedColor[] = [
  * lowercase; matching strips filler words first (see utils/uniform).
  */
 export const COLOR_NAME_TO_HEX: Record<string, string> = {
-  // v1 COLOR_SUGGESTIONS (uniformDesignOptions.ts), verbatim
+  // the v1 modal's COLOR_SUGGESTIONS (retired with UniformDesignModal), verbatim
   'crimson red': '#b3121c',
   'midnight blue': '#101c33',
   'emerald green': '#2e7d46',
@@ -176,12 +176,18 @@ export const PLUME_TYPE_OPTIONS = [
   { value: 'upright', label: 'French upright' },
   { value: 'fountain', label: 'Fountain' },
   { value: 'sideFeather', label: 'Side feather' },
+  // Plumassier pack (Casa Roldán) — premium; the editor marks them locked
+  // until the pack is owned, and the save callable enforces it.
+  { value: 'fan', label: 'Quill fan' },
+  { value: 'cascade', label: 'Cascade willow' },
 ] as const;
 
 export const TORSO_STYLE_OPTIONS = [
   { value: 'jacket', label: 'Jacket' },
   { value: 'tunic', label: 'Tunic (asymmetric drape)' },
   { value: 'dress', label: 'Guard dress' },
+  // Tailors' Cut pack (Harrow & Finch) — premium, locked until owned.
+  { value: 'longcoat', label: 'Long coat' },
 ] as const;
 
 export const TORSO_PRINT_OPTIONS = [

@@ -105,7 +105,13 @@ export default function HeadwearSection({
       {figure.hatType && figure.hatType !== 'campaign' && (
         <div className="mt-2 space-y-1">
           <Pills
-            options={PLUME_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            options={PLUME_TYPE_OPTIONS.map((o) => ({
+              value: o.value,
+              label:
+                o.value === 'fan' || o.value === 'cascade'
+                  ? packLabel(o.label, 'pack_plumassier')
+                  : o.label,
+            }))}
             value={figure.plume?.type ?? null}
             onSelect={(v) =>
               onPatch({

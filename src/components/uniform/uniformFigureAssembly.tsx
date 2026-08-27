@@ -463,6 +463,63 @@ function plume(cw: NormalizedFigure): Node[] {
     // the feather follows the hat's lifted side
     return cw.hat?.flip ? [mirrored('ps-flip', out)] : out;
   }
+  if (pl.type === 'fan') {
+    // Plumassier fan (Casa Roldán): straight quills spread in a half-circle
+    // from a metal boss at the crown, alternating dyed when two-tone.
+    const out: Node[] = [];
+    const N = 9;
+    for (let i = 0; i < N; i++) {
+      const angle = (Math.PI * (28 + (i * 124) / (N - 1))) / 180;
+      const x = 120 + Math.cos(angle) * 54;
+      const y = 6 - Math.sin(angle) * 56;
+      const quill = tip && i % 2 === 1 ? tip : c;
+      out.push(strokeP(`pq${i}`, `M120,6 L${x.toFixed(1)},${y.toFixed(1)}`, quill, 3.4));
+      out.push(
+        strokeP(
+          `pq${i}-l`,
+          `M120,6 L${x.toFixed(1)},${y.toFixed(1)}`,
+          lightenHex(quill, 0.3),
+          1.1,
+          {
+            opacity: '.5',
+          }
+        )
+      );
+      out.push(
+        <circle
+          key={`pq${i}-t`}
+          cx={x.toFixed(1)}
+          cy={y.toFixed(1)}
+          r="2.6"
+          fill={darkenHex(quill, 0.2)}
+        />
+      );
+    }
+    out.push(<circle key="pq-b" cx="120" cy="8" r="5" fill={safeHex(cw.metal)} />);
+    return out;
+  }
+  if (pl.type === 'cascade') {
+    // Plumassier cascade (Casa Roldán): the tall willow plume — long strands
+    // climbing well past the upright's reach, then spilling down both sides.
+    const strands: string[] = [
+      'M118,6 C110,-44 98,-60 84,-30',
+      'M119,4 C113,-54 103,-70 92,-46',
+      'M120,2 C119,-58 118,-78 112,-66',
+      'M120,2 C121,-58 123,-78 129,-66',
+      'M121,4 C127,-54 137,-70 148,-46',
+      'M122,6 C130,-44 142,-60 156,-30',
+      'M120,4 C118,-48 112,-64 102,-50',
+      'M120,4 C122,-48 128,-64 138,-50',
+    ];
+    const out: Node[] = [];
+    strands.forEach((d, i) => {
+      const strand = tip && i % 2 === 1 ? tip : c;
+      out.push(strokeP(`pc${i}`, d, strand, 3));
+      out.push(strokeP(`pc${i}-l`, d, lightenHex(strand, 0.3), 1.1, { opacity: '.5' }));
+    });
+    out.push(<circle key="pc-b" cx="120" cy="7" r="4.5" fill={safeHex(cw.metal)} />);
+    return out;
+  }
   // fountain
   const arcs = [
     'M120,4 C114,-26 102,-26 94,-4',

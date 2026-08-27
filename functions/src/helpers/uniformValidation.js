@@ -18,7 +18,7 @@ const MAX_DESIGN_BYTES = 8 * 1024;
 const MAX_WARDROBE_DESIGNS = 24;
 
 const METALS = new Set(["gold", "silver"]);
-const TORSO_STYLES = new Set(["jacket", "tunic", "jumpsuit", "dress"]);
+const TORSO_STYLES = new Set(["jacket", "tunic", "jumpsuit", "dress", "longcoat"]);
 const CHESTS = new Set([
   "none",
   "braid",
@@ -41,7 +41,7 @@ const HAT_ORNAMENTS = new Set([
   "none",
 ]);
 const CHEST_SHAPES = new Set(["band", "triangles", "tapered"]);
-const PLUMES = new Set(["upright", "fountain", "sideFeather"]);
+const PLUMES = new Set(["upright", "fountain", "sideFeather", "fan", "cascade"]);
 const ARM_TYPES = new Set(["sleeve", "bare", "half", "none"]);
 const PRINTS = new Set(["sunburst", "opart", "pinstripe"]);
 // Editable color slots per procedural surface — mirrors PRINT_COLOR_SLOT_COUNTS

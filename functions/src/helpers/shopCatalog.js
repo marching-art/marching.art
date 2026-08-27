@@ -71,6 +71,8 @@ const SHOP_CATALOG = [
   // packs only ever gate content born premium.
   { id: 'pack_texture_atelier', type: 'uniformPack', name: 'Texture Atelier', price: 1500 },
   { id: 'pack_military_outfitters', type: 'uniformPack', name: 'Military Outfitters Collection', price: 2500 },
+  { id: 'pack_tailors_cut', type: 'uniformPack', name: "The Tailors' Cut", price: 3000 },
+  { id: 'pack_plumassier', type: 'uniformPack', name: 'Plumassier Collection', price: 1200 },
 ];
 
 /** Equip slot per item type — one equipped item per slot */

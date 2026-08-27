@@ -42,10 +42,6 @@ const CaptionSelectionModal = lazyWithRetry(
   () => import('../CaptionSelection/CaptionSelectionModal'),
   'CaptionSelectionModal'
 );
-const UniformDesignModal = lazyWithRetry(
-  () => import('../modals/UniformDesignModal'),
-  'UniformDesignModal'
-);
 const ClassPurchaseModal = lazyWithRetry(
   () => import('../modals/ClassPurchaseModal'),
   'ClassPurchaseModal'
@@ -106,8 +102,6 @@ const DashboardModalHost = ({
     setShowQuickStartGuide,
     classToPurchase,
     setClassToPurchase,
-    showUniformDesign,
-    setShowUniformDesign,
     showStreakModal,
     setShowStreakModal,
     showWalletModal,
@@ -129,7 +123,6 @@ const DashboardModalHost = ({
     handleConfirmClassPurchase,
     openCaptionSelection,
     closeCaptionSelection,
-    handleUniformDesign,
   } = modals;
 
   const {
@@ -266,18 +259,6 @@ const DashboardModalHost = ({
           transferring={transferring}
           hasPendingWork={corpsHasPendingWork(activeCorps)}
         />
-      )}
-
-      {/* OPTIMIZATION #9: Lazy-loaded modals wrapped with Suspense */}
-      {showUniformDesign && activeCorps && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <UniformDesignModal
-            onClose={() => setShowUniformDesign(false)}
-            onSubmit={handleUniformDesign}
-            currentDesign={activeCorps.uniformDesign}
-            corpsName={activeCorps.corpsName || activeCorps.name}
-          />
-        </Suspense>
       )}
 
       {modalQueue.isActive('achievement') && newAchievement && (

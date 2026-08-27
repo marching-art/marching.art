@@ -52,6 +52,21 @@ describe('requiredPacksFor', () => {
     expect(requiredPacksFor({ ...FREE, aiguillette: '#d9a41c' })).toEqual(['title_drum_major']);
     expect(getUniformPack('title_drum_major')?.kind).toBe('prestige');
   });
+
+  it("maps the long coat to the Tailors' Cut and premium plumes to the Plumassier", () => {
+    expect(requiredPacksFor({ ...FREE, torsoStyle: 'longcoat' })).toEqual(['pack_tailors_cut']);
+    expect(requiredPacksFor({ ...FREE, plume: { type: 'fan', color: '#b3121c' } })).toEqual([
+      'pack_plumassier',
+    ]);
+    expect(requiredPacksFor({ ...FREE, plume: { type: 'cascade', color: '#f4f1ea' } })).toEqual([
+      'pack_plumassier',
+    ]);
+    // the free floor holds: dress and the launch plumes need nothing
+    expect(requiredPacksFor({ ...FREE, torsoStyle: 'dress' })).toEqual([]);
+    expect(requiredPacksFor({ ...FREE, plume: { type: 'fountain', color: '#f4f1ea' } })).toEqual(
+      []
+    );
+  });
 });
 
 describe('missingPacksFor', () => {
@@ -126,6 +141,9 @@ describe('server mirror', () => {
       { ...FREE, hatType: 'busby' },
       { ...FREE, cape: { color: '#22355c', lining: '#d9a41c', side: 'right' } },
       { ...FREE, aiguillette: '#d9a41c' },
+      { ...FREE, torsoStyle: 'longcoat' },
+      { ...FREE, plume: { type: 'fan', color: '#b3121c' } },
+      { ...FREE, plume: { type: 'cascade', color: '#f4f1ea', accent: '#2f6fd0' } },
       {
         ...FREE,
         iridescent: true,

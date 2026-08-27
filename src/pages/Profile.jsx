@@ -33,16 +33,11 @@ import NewsroomActions from '../components/Profile/NewsroomActions';
 import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar, setCorpsAvatarFromUrl } from '../api/functions';
-import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-// OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle.
-// lazyWithRetry (not raw React.lazy) so a stale hashed chunk after a deploy
-// self-recovers with one reload instead of crashing the page error boundary.
-const UniformDesignModal = lazyWithRetry(
-  () => import('../components/modals/UniformDesignModal'),
-  'UniformDesignModal'
-);
+// Modals are lazy-loaded via lazyWithRetry (not raw React.lazy) so a stale
+// hashed chunk after a deploy self-recovers with one reload instead of
+// crashing the page error boundary.
 const ProfileEditModal = lazyWithRetry(
   () => import('../components/modals/ProfileEditModal'),
   'ProfileEditModal'
@@ -82,7 +77,6 @@ const Profile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState('account');
-  const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCorpsCoin, setShowCorpsCoin] = useState(false);
   const [showHosting, setShowHosting] = useState(false);
@@ -173,123 +167,6 @@ const Profile = () => {
     profile?.directorInfo?.acceptingLeagueInvites !== false;
 
   // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
-
-  // Get all corps for uniform design modal. Iterate canonical class keys and
-  // resolve corps tolerating legacy short keys ('world'/'open').
-  const allCorps = React.useMemo(() => {
-    if (!profile?.corps) return [];
-    return PROFILE_CORPS_CLASS_ORDER.map((c) => ({
-      classKey: c,
-      corps: resolveCorpsForClass(profile.corps, c),
-    }))
-      .filter(({ corps }) => corps?.corpsName)
-      .map(({ classKey, corps }) => ({
-        classKey, // Must match CorpsOption interface in UniformDesignModal
-        corpsName: corps.corpsName,
-        uniformDesign: corps.uniformDesign,
-      }));
-  }, [profile?.corps]);
-
-  // Get initial corps class for uniform design (first available)
-  const initialCorpsClass = allCorps.length > 0 ? allCorps[0].classKey : 'soundSport';
-
-  // Handle uniform design save with copy-to-others support
-  const handleUniformDesign = useCallback(
-    async (design, corpsClass, copyToClasses = []) => {
-      if (!user || !corpsClass) return;
-      try {
-        // Build update object for primary corps and any copies
-        const updateData = {
-          [`corps.${corpsClass}.uniformDesign`]: design,
-          // Auto-switch profile avatar to the corps being designed
-          profileAvatarCorps: corpsClass,
-        };
-
-        // Add copy targets
-        for (const targetClass of copyToClasses) {
-          updateData[`corps.${targetClass}.uniformDesign`] = design;
-        }
-
-        // Save the uniform design first
-        await updateProfile(user.uid, updateData);
-        setShowUniformDesign(false);
-
-        // Generate avatars for all affected corps
-        const corpsToGenerate = [corpsClass, ...copyToClasses];
-        const totalCount = corpsToGenerate.length;
-
-        toast.loading(`Generating avatar${totalCount > 1 ? 's' : ''}...`, {
-          id: 'generate-avatars',
-        });
-
-        let successCount = 0;
-        let failCount = 0;
-        const avatarUpdates = {};
-
-        for (const targetClass of corpsToGenerate) {
-          try {
-            const result = await generateCorpsAvatar({ corpsClass: targetClass });
-            if (result.data.success) {
-              successCount++;
-              // Collect the new avatar URL for cache update
-              if (result.data.avatarUrl) {
-                avatarUpdates[targetClass] = result.data.avatarUrl;
-              }
-            } else {
-              failCount++;
-            }
-          } catch {
-            failCount++;
-          }
-        }
-
-        // Immediately update the cache with all new avatar URLs and profileAvatarCorps
-        if (Object.keys(avatarUpdates).length > 0) {
-          queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
-            if (!oldData) return oldData;
-            const updatedCorps = { ...oldData.corps };
-            for (const [targetClass, avatarUrl] of Object.entries(avatarUpdates)) {
-              updatedCorps[targetClass] = {
-                ...updatedCorps[targetClass],
-                avatarUrl,
-                avatarGeneratedAt: new Date().toISOString(),
-              };
-            }
-            return {
-              ...oldData,
-              corps: updatedCorps,
-              profileAvatarCorps: corpsClass, // Switch to the designed corps
-            };
-          });
-        } else if (successCount > 0) {
-          // Fallback: if no avatarUrls returned (function not deployed yet), refetch from server
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          refetch();
-        }
-
-        // Show final result
-        if (failCount === 0) {
-          toast.success(
-            totalCount > 1
-              ? `${successCount} avatar${successCount > 1 ? 's' : ''} generated!`
-              : 'Avatar generated!',
-            { id: 'generate-avatars' }
-          );
-        } else if (successCount > 0) {
-          toast.success(
-            `${successCount} avatar${successCount > 1 ? 's' : ''} generated, ${failCount} failed`,
-            { id: 'generate-avatars' }
-          );
-        } else {
-          toast.error('Failed to generate avatars', { id: 'generate-avatars' });
-        }
-      } catch (err) {
-        toast.error('Failed to save uniform design');
-        throw err;
-      }
-    },
-    [user, queryClient, refetch]
-  );
 
   // Handle profile avatar corps selection
   const handleSelectAvatarCorps = useCallback(
@@ -676,20 +553,6 @@ const Profile = () => {
         }}
         initialTab={settingsTab}
       />
-
-      {/* UNIFORM DESIGN MODAL - OPTIMIZATION #9: Lazy-loaded */}
-      {showUniformDesign && allCorps.length > 0 && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <UniformDesignModal
-            onClose={() => setShowUniformDesign(false)}
-            onSubmit={handleUniformDesign}
-            corpsName={allCorps[0]?.corpsName || 'My Corps'}
-            currentDesign={allCorps[0]?.uniformDesign}
-            allCorps={allCorps}
-            initialCorpsClass={initialCorpsClass}
-          />
-        </Suspense>
-      )}
 
       {/* PROFILE EDIT MODAL */}
       {showEditModal && isOwnProfile && profile && (

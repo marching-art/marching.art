@@ -63,14 +63,16 @@ export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil';
  */
 export type PrintColors = Partial<Record<PrintColorKey, HexColor[] | null>>;
 
-export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit' | 'dress';
+/** 'longcoat' is a Tailors' Cut premium silhouette (Harrow & Finch). */
+export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit' | 'dress' | 'longcoat';
 
 export type ChestTreatment =
   'none' | 'braid' | 'sash' | 'baldric' | 'plastron' | 'buttons' | 'swash' | 'vinylPanel';
 
 export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | 'busby' | null;
 
-export type PlumeType = 'upright' | 'fountain' | 'sideFeather';
+/** 'fan' and 'cascade' are Plumassier-pack premium types (Casa Roldán). */
+export type PlumeType = 'upright' | 'fountain' | 'sideFeather' | 'fan' | 'cascade';
 
 /** Selectable front ornament for shako/pith (and the aussie's side badge). */
 export type HatOrnament =

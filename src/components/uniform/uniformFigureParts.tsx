@@ -106,10 +106,21 @@ const TUNIC_D =
 // so the leggings read underneath.
 const DRESS_D =
   'M78,104 Q120,93 162,104 L158,150 Q154,200 156,240 Q163,288 172,326 Q138,352 108,344 Q86,338 72,318 Q81,282 84,240 Q87,200 82,150 Z';
+// Long coat (Tailors' Cut premium silhouette): the jacket top carried down to
+// a mid-calf skirt with a center vent — the inverted-V notch at the hem lets
+// the trousers read through.
+const LONGCOAT_D =
+  'M78,104 Q120,93 162,104 L158,150 Q154,200 156,246 Q158,300 164,344 L130,352 L120,306 L110,352 L76,344 Q82,300 84,246 Q87,200 82,150 Z';
 
 /** The active torso outline for fills and the print clip. */
 export function torsoPathOf(cw: NormalizedFigure): string {
-  return cw.torsoStyle === 'tunic' ? TUNIC_D : cw.torsoStyle === 'dress' ? DRESS_D : TORSO_D;
+  return cw.torsoStyle === 'tunic'
+    ? TUNIC_D
+    : cw.torsoStyle === 'dress'
+      ? DRESS_D
+      : cw.torsoStyle === 'longcoat'
+        ? LONGCOAT_D
+        : TORSO_D;
 }
 const LEG_D =
   'M90,254 L85,308 Q83,360 91,438 L114,438 Q112,384 113,336 Q113,306 116,284 Q119,276 120,272 L120,254 Z';
@@ -445,6 +456,18 @@ export function torso(cw: NormalizedFigure, uid: string): Node[] {
       shade('to-df2', 'M130,252 Q134,296 140,340 L148,336 Q140,296 137,252 Z', 0.1),
       shade('to-dh', 'M150,300 Q162,314 172,326 Q152,340 128,346 Q146,330 150,300 Z', 0.14),
       light('to-dl', 'M84,254 Q80,290 74,316 Q80,326 88,332 Q88,292 92,256 Z', 0.08)
+    );
+  }
+  if (cw.torsoStyle === 'longcoat') {
+    // coat skirt: the front-opening seam down to the vent, panel-edge
+    // shadows, and a shade inside the vent so the split reads as depth
+    out.push(
+      strokeP('to-cv', 'M120,252 L120,306', darkenHex(safeHex(cw.jacket), 0.35), 1.6, {
+        opacity: '.6',
+      }),
+      shade('to-cvs', 'M120,306 L130,352 L124,352 L118,312 Z', 0.2),
+      shade('to-cp1', 'M148,250 Q151,300 156,342 L163,344 Q157,298 155,248 Z', 0.14),
+      light('to-cp2', 'M90,252 Q86,300 80,340 L86,342 Q91,298 96,254 Z', 0.08)
     );
   }
   if (cw.torsoSequin) {

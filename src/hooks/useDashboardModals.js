@@ -9,7 +9,6 @@ import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { updateProfile } from '../api/profile';
 import {
-  generateCorpsAvatar,
   registerCorps,
   retireCorps,
   unlockClassWithCorpsCoin,
@@ -104,7 +103,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
   const [retiring, setRetiring] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(/** @type {string|null} */ (null));
-  const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
 
@@ -468,32 +466,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
   // which owns that state and its handlers now — publishing news is not a
   // daily-loop action.
 
-  /** @type {(design: any) => Promise<void>} */
-  const handleUniformDesign = useCallback(
-    async (design) => {
-      try {
-        await updateProfile(user.uid, {
-          [`corps.${activeCorpsClass}.uniformDesign`]: design,
-        });
-        toast.success('Uniform design saved!');
-        setShowUniformDesign(false);
-        refreshProfile?.();
-        // Avatar generation is invoked explicitly — there is no server-side
-        // trigger watching profile writes for design changes. The profile
-        // listener picks up the new avatarUrl when the callable finishes.
-        toast.promise(generateCorpsAvatar({ corpsClass: activeCorpsClass }), {
-          loading: 'Generating avatar...',
-          success: 'Avatar generated!',
-          error: 'Avatar generation failed — you can retry from your profile.',
-        });
-      } catch (error) {
-        toast.error('Failed to save uniform design');
-        throw error;
-      }
-    },
-    [user, activeCorpsClass, refreshProfile]
-  );
-
   return {
     modalQueue,
     // Modal state
@@ -520,8 +492,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     setShowQuickStartGuide,
     classToPurchase,
     setClassToPurchase,
-    showUniformDesign,
-    setShowUniformDesign,
     showStreakModal,
     setShowStreakModal,
     showWalletModal,
@@ -546,6 +516,5 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     handleConfirmClassPurchase,
     openCaptionSelection,
     closeCaptionSelection,
-    handleUniformDesign,
   };
 }
