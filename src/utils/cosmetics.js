@@ -72,6 +72,15 @@ export const SHOP_ITEMS = [
     textClass: 'text-rose-400',
   },
   {
+    id: 'title_showcase_champion',
+    type: 'title',
+    name: 'Showcase Champion',
+    price: null,
+    grantOnly: true,
+    description: 'Won a monthly Showcase — the community voted, this design took it',
+    textClass: 'text-pink-400',
+  },
+  {
     id: 'title_section_leader',
     type: 'title',
     name: 'Section Leader',

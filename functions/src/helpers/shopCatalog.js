@@ -32,6 +32,9 @@ const SHOP_CATALOG = [
   { id: 'title_legacy_guarantor', type: 'title', name: 'Guarantor', price: null, grantOnly: true },
   { id: 'title_legacy_cornerstone', type: 'title', name: 'Cornerstone', price: null, grantOnly: true },
   { id: 'title_legacy_founding', type: 'title', name: 'Founding Legacy', price: null, grantOnly: true },
+  // Won by taking a monthly Showcase (the community's pairwise design vote,
+  // helpers/showcase.js). Grant-only: the whole point is that it was voted.
+  { id: 'title_showcase_champion', type: 'title', name: 'Showcase Champion', price: null, grantOnly: true },
   { id: 'title_section_leader', type: 'title', name: 'Section Leader', price: 1000 },
   { id: 'title_drum_major', type: 'title', name: 'Drum Major', price: 2500 },
   { id: 'title_the_maestro', type: 'title', name: 'The Maestro', price: 5000 },

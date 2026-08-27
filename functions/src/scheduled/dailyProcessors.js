@@ -7,6 +7,7 @@ const { isDropSchedulingEnabled } = require("../helpers/features");
 const {
   runDiscordStage,
   runEasternClassicStage,
+  runShowcaseStage,
 } = require("./nightlyStages");
 const {
   discordScoresWebhookUrl,
@@ -72,6 +73,25 @@ async function runDiscordStageIsolated(db) {
   }
 }
 
+/**
+ * Finalize/announce the monthly Showcase (helpers/showcase.js). Runs BEFORE
+ * the drop-dispatcher stand-down in both nightly jobs — the Showcase follows
+ * the calendar month, not the scoring pipeline, so it must run even on nights
+ * the dispatcher owns. Everything inside is idempotent (results-doc gate,
+ * postOnce leases), so both jobs running it is harmless.
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function runShowcaseStageIsolated(db) {
+  try {
+    const result = await runShowcaseStage(db, discordAnnouncementsWebhookUrl.value());
+    if (result.finalized === "finalized" || result.announcements.length > 0) {
+      logger.info(`[showcase-stage] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[showcase-stage] failed (scoring unaffected): ${error.message}`);
+  }
+}
+
 exports.dailyOffSeasonProcessor = onSchedule({
   schedule: "every day 02:00",
   timeZone: "America/New_York",
@@ -85,6 +105,7 @@ exports.dailyOffSeasonProcessor = onSchedule({
   secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
+  await runShowcaseStageIsolated(db);
   if (await dropDispatcherOwnsTonight(db, "off-season-2am")) return;
   await processAndArchiveOffSeasonScoresLogic();
   // Podium is NOT run here — it processes and publishes at 9 PM ET year-round
@@ -154,6 +175,7 @@ exports.processDailyLiveScores = onSchedule({
   secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {
   const db = getDb();
+  await runShowcaseStageIsolated(db);
   if (await dropDispatcherOwnsTonight(db, "live-2am")) return;
   await runLiveFantasyStage(db);
   // Podium is NOT run here — it processes and publishes at 9 PM ET year-round

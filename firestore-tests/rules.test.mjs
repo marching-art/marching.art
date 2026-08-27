@@ -1022,6 +1022,46 @@ await check(
   )
 );
 
+// The Showcase (artifacts/{app}/showcases): finalized results are public;
+// entries and ballots stay locked so pairwise voting is anonymous.
+const showcaseResultsPath = `artifacts/${APP}/showcases/2026-08`;
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), showcaseResultsPath), {
+    monthId: '2026-08',
+    winners: [{ username: 'alice', designName: 'Winner Look' }],
+  });
+  await setDoc(doc(ctx.firestore(), `${showcaseResultsPath}/entries/${ALICE}`), {
+    username: 'alice',
+    wins: 3,
+  });
+  await setDoc(doc(ctx.firestore(), `${showcaseResultsPath}/votes/${ALICE}`), { count: 2 });
+});
+
+await check(
+  'anyone (even signed out) can read finalized Showcase results',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), showcaseResultsPath)))
+);
+
+await check(
+  'Showcase results cannot be written directly (nightly stage only)',
+  assertFails(setDoc(doc(mallory(), `artifacts/${APP}/showcases/2026-09`), { winners: [] }))
+);
+
+await check(
+  'Showcase entries are unreadable even by their author (voting is anonymous)',
+  assertFails(getDoc(doc(authed(), `${showcaseResultsPath}/entries/${ALICE}`)))
+);
+
+await check(
+  'Showcase ballots are unreadable even by the voter',
+  assertFails(getDoc(doc(authed(), `${showcaseResultsPath}/votes/${ALICE}`)))
+);
+
+await check(
+  'Showcase entries cannot be planted directly',
+  assertFails(setDoc(doc(mallory(), `${showcaseResultsPath}/entries/mallory-uid`), { wins: 999 }))
+);
+
 // =============================================================================
 // CAPTION LEDGER — the private per-caption fantasy recap the nightly scorer
 // writes for each director's own outings. The public fantasy recap keeps

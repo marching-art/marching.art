@@ -131,6 +131,12 @@ const {
 } = require("./src/callable/uniformStudio");
 const { getDesignBrief, submitDesignBrief } = require("./src/callable/designBrief");
 const {
+  getShowcase,
+  submitShowcaseEntry,
+  getShowcasePair,
+  castShowcaseVote,
+} = require("./src/callable/showcase");
+const {
   publishUniformDesign,
   unpublishUniformDesign,
   likeExchangeDesign,
@@ -580,6 +586,12 @@ module.exports = {
   // Weekly Design Brief
   getDesignBrief,
   submitDesignBrief,
+
+  // The Showcase (monthly pairwise-voted contest)
+  getShowcase,
+  submitShowcaseEntry,
+  getShowcasePair,
+  castShowcaseVote,
 
   // Avatar Generation
   generateCorpsAvatar,

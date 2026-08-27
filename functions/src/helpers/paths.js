@@ -49,6 +49,13 @@ const paths = {
   // written only by submitDesignBrief.
   briefEntries: (weekId) => `artifacts/${ns()}/design_briefs/${weekId}/entries`,
   briefEntry: (weekId, uid) => `artifacts/${ns()}/design_briefs/${weekId}/entries/${uid}`,
+  // The Showcase (§7.4): the month doc is the world-readable RESULTS (exists
+  // only once finalized); entries and per-voter ballots are server-only so
+  // pairwise voting stays anonymous.
+  showcaseResults: (monthId) => `artifacts/${ns()}/showcases/${monthId}`,
+  showcaseEntries: (monthId) => `artifacts/${ns()}/showcases/${monthId}/entries`,
+  showcaseEntry: (monthId, uid) => `artifacts/${ns()}/showcases/${monthId}/entries/${uid}`,
+  showcaseVote: (monthId, uid) => `artifacts/${ns()}/showcases/${monthId}/votes/${uid}`,
   userNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications`,
   userLeagueNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications/leagues`,
   userEmailLog: (uid) => `artifacts/${ns()}/users/${uid}/email_log`,
