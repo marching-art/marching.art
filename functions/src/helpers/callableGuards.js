@@ -157,6 +157,42 @@ async function assertAuthWithBudget(db, request, key, opts = {}) {
   return uid;
 }
 
+/**
+ * Block a caller whose account an admin has restricted (a moderation action).
+ * Applied to the zero-sum surfaces — Showcase entries/votes, league prediction
+ * pools, daily predictions — so a confirmed alt / abuse account can be stopped
+ * from farming payouts or colluding on pots WITHOUT a full account ban. The
+ * restriction is a server-only profile field (`moderation.restricted`) written
+ * only by the setAccountRestriction admin callable, and is fully reversible.
+ *
+ * Fails OPEN on a read error — a flaky profile read must never block a
+ * legitimate player's action — matching assertWriteBudget's posture. The
+ * restriction is a soft anti-abuse measure, not a security boundary (the
+ * economy is server-authoritative regardless), so the occasional missed block
+ * on a transient error is the right trade against blocking real directors.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} uid - The (already authenticated) caller.
+ * @throws {HttpsError} permission-denied when the account is restricted.
+ */
+async function assertNotRestricted(db, uid) {
+  const { paths } = require("./paths");
+  let restricted = false;
+  try {
+    const snap = await db.doc(paths.userProfile(uid)).get();
+    restricted = snap.exists && snap.data()?.moderation?.restricted === true;
+  } catch {
+    return; // fail open — never block on a read failure
+  }
+  if (restricted) {
+    throw new HttpsError(
+      "permission-denied",
+      "This account is restricted from competitive and social actions. " +
+        "Contact an administrator if you believe this is a mistake."
+    );
+  }
+}
+
 module.exports = {
   assertAuth,
   assertAdmin,
@@ -165,4 +201,5 @@ module.exports = {
   assertDocId,
   assertWriteBudget,
   assertAuthWithBudget,
+  assertNotRestricted,
 };

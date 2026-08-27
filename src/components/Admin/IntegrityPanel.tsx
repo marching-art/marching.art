@@ -6,14 +6,17 @@
 // The lesson is FMA's (docs/FMA_LESSONS.md §3): alt-account abuse corroded
 // trust in a game whose leagues, prediction pools, and the ~monthly voted
 // Showcase are all zero-sum. This surfaces the signals — email-alias clusters,
-// signup bursts, shared-identity clusters — for a human to judge. It is
-// detection only: nothing here suspends or flags an account. The watchlist
+// signup bursts, shared-identity clusters — for a human to judge, and lets the
+// operator ACT on a confirmed alt via the per-row Restrict control: a
+// reversible block of just the zero-sum surfaces (not a ban). The watchlist
 // (accounts hit by two or more independent signals) is the row worth a look.
 
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { doc, getDoc } from 'firebase/firestore';
-import { AlertTriangle, Users } from 'lucide-react';
+import { AlertTriangle, ShieldOff, ShieldCheck, Users } from 'lucide-react';
 import { db } from '../../api';
+import { setAccountRestriction } from '../../api/admin';
 import { SectionHeader } from './AdminUI';
 
 interface Member {
@@ -47,6 +50,7 @@ interface WatchlistRow {
   uid: string;
   username: string | null;
   signals: string[];
+  restricted?: boolean;
 }
 
 interface IntegrityStats {
@@ -100,12 +104,39 @@ const IntegrityPanel = ({ refreshKey }: { refreshKey?: number }) => {
       .catch(() => setStats(null));
   }, [refreshKey]);
 
+  // Per-uid restriction overrides applied since the (weekly) doc was computed,
+  // so a Restrict/Unrestrict click reflects immediately without a re-run.
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  const [pendingUid, setPendingUid] = useState<string | null>(null);
+
   const computedAt = stats?.computedAt?.toDate?.();
   const summary = stats?.summary || {};
   const watchlist = stats?.watchlist || [];
   const emailClusters = stats?.emailClusters || [];
   const signupBursts = stats?.signupBursts || [];
   const attributeClusters = stats?.attributeClusters || [];
+
+  const isRestricted = (row: WatchlistRow): boolean =>
+    row.uid in overrides ? overrides[row.uid] : row.restricted === true;
+
+  const handleToggleRestriction = async (row: WatchlistRow) => {
+    const next = !isRestricted(row);
+    const who = row.username ? `@${row.username}` : row.uid.slice(0, 10);
+    const msg = next
+      ? `Restrict ${who}? Blocks Showcase entries/votes, pool joins, and predictions. Reversible.`
+      : `Lift the restriction on ${who}?`;
+    if (!window.confirm(msg)) return;
+    setPendingUid(row.uid);
+    try {
+      await setAccountRestriction({ uid: row.uid, restricted: next });
+      setOverrides((m) => ({ ...m, [row.uid]: next }));
+      toast.success(`${next ? 'Restricted' : 'Unrestricted'} ${who}`);
+    } catch (err) {
+      toast.error((err as Error)?.message || 'Action failed');
+    } finally {
+      setPendingUid(null);
+    }
+  };
 
   return (
     <div className="bg-surface-card border border-line overflow-hidden">
@@ -149,19 +180,50 @@ const IntegrityPanel = ({ refreshKey }: { refreshKey?: number }) => {
                   <Users className="w-3 h-3" /> Multi-signal watchlist
                 </p>
                 <div className="space-y-0.5">
-                  {watchlist.map((row) => (
-                    <div
-                      key={row.uid}
-                      className="flex items-center justify-between text-[11px] bg-surface-sunken border border-line px-2 py-1"
-                    >
-                      <span className="font-mono text-primary truncate" title={row.uid}>
-                        {row.username ? `@${row.username}` : row.uid.slice(0, 10)}
-                      </span>
-                      <span className="text-[10px] text-muted font-mono shrink-0">
-                        {row.signals.join(' · ')}
-                      </span>
-                    </div>
-                  ))}
+                  {watchlist.map((row) => {
+                    const restricted = isRestricted(row);
+                    const busy = pendingUid === row.uid;
+                    return (
+                      <div
+                        key={row.uid}
+                        className="flex items-center gap-2 text-[11px] bg-surface-sunken border border-line px-2 py-1"
+                      >
+                        <span className="font-mono text-primary truncate" title={row.uid}>
+                          {row.username ? `@${row.username}` : row.uid.slice(0, 10)}
+                        </span>
+                        {restricted && (
+                          <span className="text-[9px] uppercase tracking-wider text-red-500 shrink-0">
+                            restricted
+                          </span>
+                        )}
+                        <span className="text-[10px] text-muted font-mono shrink-0 ml-auto">
+                          {row.signals.join(' · ')}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => handleToggleRestriction(row)}
+                          title={
+                            restricted
+                              ? 'Lift the restriction'
+                              : 'Restrict from Showcase votes, pool joins, and predictions'
+                          }
+                          className={`shrink-0 flex items-center gap-1 px-1.5 py-0.5 border text-[10px] ${
+                            restricted
+                              ? 'border-line text-muted hover:text-primary'
+                              : 'border-red-500/40 text-red-500 hover:bg-red-500/10'
+                          } disabled:opacity-50`}
+                        >
+                          {restricted ? (
+                            <ShieldCheck className="w-3 h-3" />
+                          ) : (
+                            <ShieldOff className="w-3 h-3" />
+                          )}
+                          {restricted ? 'Unrestrict' : 'Restrict'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

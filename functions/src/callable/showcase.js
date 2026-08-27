@@ -13,7 +13,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget, assertNotRestricted } = require("../helpers/callableGuards");
 const {
   addCoinHistoryEntryToTransaction,
   TRANSACTION_TYPES,
@@ -90,6 +90,7 @@ const submitShowcaseEntry = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   await assertWriteBudget(db, uid, "showcase");
+  await assertNotRestricted(db, uid);
 
   const now = showcaseNow();
   const { monthId, phase } = phaseFor(now);
@@ -218,6 +219,7 @@ const castShowcaseVote = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   await assertWriteBudget(db, uid, "showcase", { max: 120 });
+  await assertNotRestricted(db, uid);
 
   const now = showcaseNow();
   const { monthId, phase } = phaseFor(now);

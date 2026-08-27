@@ -60,7 +60,12 @@ function touchesProtectedProfileFields() {
     // Custom-avatar ban. Set only by the adminModerateCorpsAvatar callable; a
     // banned director must not be able to lift their own block by writing this
     // field, and the setCorpsAvatarFromUrl callable trusts it.
-    'customAvatarBanned'
+    'customAvatarBanned',
+    // Account restriction (moderation.restricted). Set only by the
+    // setAccountRestriction admin callable; the zero-sum callables trust it via
+    // assertNotRestricted, so a client write would let a restricted alt lift
+    // its own block and resume farming votes/pools.
+    'moderation'
   ]);
 }
 

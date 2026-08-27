@@ -339,6 +339,14 @@ await check(
   assertFails(updateDoc(doc(authed(), profilePath), { customAvatarBanned: false }))
 );
 
+// moderation.restricted gates the zero-sum callables (assertNotRestricted); a
+// restricted alt must not be able to lift its own block by writing the field.
+await freshSeed();
+await check(
+  'owner cannot clear their own account restriction',
+  assertFails(updateDoc(doc(authed(), profilePath), { moderation: { restricted: false } }))
+);
+
 // Legacy Endowments: the recurring CorpsCoin sink. `legacy.total` renders on
 // public profiles and grants milestone titles, so a client write would mint a
 // free legacy and its honors without ever spending a coin.

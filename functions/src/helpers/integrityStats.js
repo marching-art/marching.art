@@ -54,6 +54,7 @@ const PROJECTED_FIELDS = [
   "engagement.lastLogin",
   "location",
   "favoriteCorps",
+  "moderation.restricted",
 ];
 
 /**
@@ -186,6 +187,7 @@ function usernameStem(username) {
  * @property {Date|null} [createdAt]
  * @property {string} [location]
  * @property {string} [favoriteCorps]
+ * @property {boolean} [restricted]  admin moderation.restricted state
  */
 
 /** Trim a members array to the cap, keeping oldest accounts (likeliest origin). */
@@ -337,7 +339,11 @@ function findAttributeClusters(accounts, { minSize }) {
  * Accounts implicated by two or more independent signals — the rows worth a
  * human's time. Keyed by uid, with the list of signal kinds that flagged them.
  */
-function buildWatchlist({ emailClusters, signupBursts, attributeClusters }, usernameByUid) {
+function buildWatchlist(
+  { emailClusters, signupBursts, attributeClusters },
+  usernameByUid,
+  restrictedByUid = new Set()
+) {
   const hits = new Map(); // uid -> Set<signal>
   const mark = (members, signal) => {
     for (const m of members) {
@@ -355,6 +361,9 @@ function buildWatchlist({ emailClusters, signupBursts, attributeClusters }, user
     watchlist.push({
       uid,
       username: usernameByUid.get(uid) || null,
+      // Whether an admin has already restricted this account, as of this run —
+      // so the operator sees who's been actioned. The panel updates it live.
+      restricted: restrictedByUid.has(uid),
       signals: [...signals].sort(),
     });
   }
@@ -374,6 +383,7 @@ function buildWatchlist({ emailClusters, signupBursts, attributeClusters }, user
 function computeIntegritySignals(accounts, options = {}) {
   const opts = { ...DEFAULTS, ...options };
   const usernameByUid = new Map(accounts.map((a) => [a.uid, a.username]));
+  const restrictedByUid = new Set(accounts.filter((a) => a.restricted).map((a) => a.uid));
 
   const emailClusters = findEmailClusters(accounts);
   const signupBursts = findSignupBursts(accounts, {
@@ -383,7 +393,8 @@ function computeIntegritySignals(accounts, options = {}) {
   const attributeClusters = findAttributeClusters(accounts, { minSize: opts.attrMinSize });
   const watchlist = buildWatchlist(
     { emailClusters, signupBursts, attributeClusters },
-    usernameByUid
+    usernameByUid,
+    restrictedByUid
   );
 
   const withEmail = accounts.filter((a) => normalizeEmail(a.email)).length;
@@ -472,6 +483,7 @@ async function computeIntegrityStats(db, options = {}) {
       createdAt: toDate(data.createdAt),
       location: data.location,
       favoriteCorps: data.favoriteCorps,
+      restricted: data.moderation?.restricted === true,
     };
   });
 
