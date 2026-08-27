@@ -134,6 +134,16 @@ const TRANSACTION_TYPES = {
   // (callable/designExchange.js). Its own type so the weekly mint-vs-sink
   // readout can watch the faucet.
   DESIGN_EXCHANGE_SAVE: "design_exchange_save",
+  // Weekly Design Brief participation token (callable/designBrief.js): a
+  // small fixed faucet, paid once per director per week on their first scored
+  // submission.
+  DESIGN_BRIEF: "design_brief",
+  // The Showcase (helpers/showcase.js): entry token (once per month),
+  // per-ballot voting token (first few votes a month), and the zero-amount
+  // ledger line that records the champion's grant-only title.
+  SHOWCASE_ENTRY: "showcase_entry",
+  SHOWCASE_VOTE: "showcase_vote",
+  SHOWCASE_WIN: "showcase_win",
 };
 
 /**

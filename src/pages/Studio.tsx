@@ -32,6 +32,7 @@ import StudioEditor from '../components/uniform/StudioEditor';
 import UniformShareCard from '../components/uniform/UniformShareCard';
 import { designFromPreset, UNIFORM_PRESETS } from '../data/uniformCatalog';
 import { migrateV1Design, WARDROBE_LIMITS, withDerivedFlags } from '../utils/uniform';
+import PackAdvisoryBanner from '../components/uniform/PackAdvisoryBanner';
 import { designNoteFor } from '../data/designNotes';
 import { sharePoster } from '../utils/posterExport';
 import type { EquippedUniform, UniformDesignV2 } from '../types/uniform';
@@ -103,6 +104,11 @@ export default function Studio() {
   const [pressBox, setPressBox] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const savedJson = useRef<string>('');
+
+  // Design-house packs: previewing gated pieces is free everywhere; the
+  // server rejects the SAVE until the pack is owned. The advisory banner and
+  // the editor's 🔒 marks mirror that gate client-side (utils/uniformPacks).
+  const ownedPacks = profile?.cosmetics?.owned;
 
   // (Re)initialize the draft when the active corps changes.
   const initKey = `${activeClass || ''}:${Boolean(activeOption?.corps.uniform)}`;
@@ -526,6 +532,8 @@ export default function Studio() {
                   </div>
                 )}
 
+                <PackAdvisoryBanner figure={draft.figure} owned={ownedPacks} />
+
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <button
                     type="button"
@@ -732,7 +740,7 @@ export default function Studio() {
               <p className="text-[11px] italic text-muted border-l-2 border-interactive/40 pl-2 mb-4">
                 {designNoteFor(draft.figure)}
               </p>
-              <StudioEditor design={draft} onChange={setDraft} />
+              <StudioEditor design={draft} onChange={setDraft} ownedPacks={ownedPacks} />
             </div>
           </div>
         )}

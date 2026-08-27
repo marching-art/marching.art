@@ -367,6 +367,13 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
           accent: figure.plume.accent ? secondary : figure.plume.accent,
         }
       : figure.plume,
+    cape: figure.cape
+      ? {
+          ...figure.cape,
+          color: secondary,
+          lining: figure.cape.lining ? accent : figure.cape.lining,
+        }
+      : figure.cape,
     armL: recolorArm(n.armL),
     armR: recolorArm(n.armR),
     legL: recolorLeg(n.legL),

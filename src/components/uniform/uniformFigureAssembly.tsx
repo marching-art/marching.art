@@ -37,6 +37,8 @@ import {
   mockNeck,
   neckerchief,
   p,
+  iridescentSheen,
+  lameField,
   satinSheen,
   sequinField,
   shade,
@@ -331,6 +333,62 @@ function contour(cw: NormalizedFigure): Node[] {
   return out;
 }
 
+/**
+ * Busby (Military Outfitters pack): the tall fur cylinder with the colored
+ * bag draped down one side. Fur reads through vertical broken strokes; the
+ * bag takes the hat's band channel. The ornament system stays available for
+ * a front badge, and the standard plume rides above.
+ */
+function busby(cw: NormalizedFigure): Node[] {
+  const h = cw.hat;
+  if (!h) return [];
+  const body = safeHex(h.body);
+  const dk = darkenHex(body, 0.28);
+  const lt = lightenHex(body, 0.14);
+  const out: Node[] = [
+    p('bu', 'M97,58 L95,-8 Q120,-18 145,-8 L143,58 Q120,66 97,58 Z', body),
+    // fur: broken vertical strands, dark then light, across the face
+    strokeP(
+      'bu-f1',
+      'M103,-6 Q101,20 102,50 M111,-10 Q109,22 110,54 M120,-12 Q119,24 120,56 M129,-10 Q128,22 129,54 M137,-6 Q136,20 137,50',
+      dk,
+      1.4,
+      { opacity: '.5', strokeDasharray: '5 3' }
+    ),
+    strokeP(
+      'bu-f2',
+      'M107,-8 Q105,20 106,52 M115,-11 Q114,24 115,55 M124,-11 Q123,24 124,55 M133,-8 Q131,20 132,52',
+      lt,
+      1.1,
+      { opacity: '.45', strokeDasharray: '4 4' }
+    ),
+    shade('bu-s', 'M134,-9 Q140,-6 143,-4 L141,58 Q134,61 130,62 Q133,26 134,-9 Z', 0.16),
+  ];
+  if (h.band) {
+    const bag = safeHex(h.band);
+    // the bag: drapes from the crown down the viewer-right side
+    out.push(
+      p('bu-bag', 'M128,-16 Q150,-12 148,14 Q142,30 134,34 Q140,12 130,-8 Z', bag),
+      shade('bu-bags', 'M140,-10 Q148,-2 146,14 Q142,26 136,31 Q143,10 137,-8 Z', 0.2),
+      <circle key="bu-bagt" cx="135" cy="33" r="2.6" fill={darkenHex(bag, 0.3)} />
+    );
+  }
+  out.push(...hatOrnamentNodes(h.ornament || 'none', safeHex(h.emblem || cw.metal), 'bu'));
+  // chin chain: small metal links across the front bottom
+  for (let i = 0; i < 5; i++) {
+    out.push(
+      <circle
+        key={`bu-ch${i}`}
+        cx={102 + i * 9}
+        cy={60 + Math.sin((i / 4) * Math.PI) * 4}
+        r="1.4"
+        fill={safeHex(cw.metal)}
+      />
+    );
+  }
+  return out;
+}
+
 function campaign(cw: NormalizedFigure): Node[] {
   const h = cw.hat;
   if (!h) return [];
@@ -444,6 +502,27 @@ function chestBadge(cw: NormalizedFigure): Node[] {
   return b.flip ? [mirrored('cb-flip', out)] : out;
 }
 
+/**
+ * One-shoulder cavalry cape (Military Outfitters pack): drapes from the
+ * viewer-left shoulder over the arm, lining flashing at the hem, metal clasp
+ * at the collarbone. side:'right' mirrors it.
+ */
+function cape(cw: NormalizedFigure): Node[] {
+  const cp = cw.cape;
+  if (!cp) return [];
+  const c = safeHex(cp.color);
+  const lining = cp.lining ? safeHex(cp.lining) : darkenHex(c, 0.4);
+  const out: Node[] = [
+    p('cp', 'M114,97 Q90,100 82,110 L58,242 Q80,258 100,250 Q100,180 106,122 Z', c),
+    p('cp-l', 'M58,242 Q80,258 100,250 L98,234 Q80,244 62,230 Z', lining),
+    shade('cp-s', 'M108,100 Q98,104 94,112 L74,238 Q80,243 86,244 L102,124 Z', 0.14),
+    light('cp-h', 'M88,104 Q84,108 82,114 L60,238 Q63,241 67,243 L88,112 Z', 0.1),
+    <circle key="cp-c" cx="112" cy="102" r="3.2" fill={safeHex(cw.metal)} />,
+    <circle key="cp-cl" cx="111" cy="101" r="1" fill={FIGURE_INK.white} opacity=".8" />,
+  ];
+  return cp.side === 'right' ? [mirrored('cp-r', out)] : out;
+}
+
 // ---------------------------------------------------------------------------
 // assembly
 // ---------------------------------------------------------------------------
@@ -460,6 +539,8 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   layers.push(<g key="torso">{torso(cw, uid)}</g>);
   if (cw.satin) layers.push(<g key="satin">{satinSheen()}</g>);
   if (cw.velvet) layers.push(<g key="velvet">{velvetSheen()}</g>);
+  if (cw.iridescent) layers.push(<g key="irid">{iridescentSheen(uid)}</g>);
+  if (cw.lame) layers.push(<g key="lame">{lameField()}</g>);
   layers.push(
     <g key="chest">{chest(cw, uid)}</g>,
     <g key="chestBadge">{chestBadge(cw)}</g>,
@@ -470,6 +551,7 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
     <g key="fringe">{fringeHip(cw)}</g>,
     <g key="arms">{arms(cw, uid)}</g>,
     <g key="epau">{epaulets(cw)}</g>,
+    <g key="cape">{cape(cw)}</g>,
     <g key="head">{headNeck(cw)}</g>
   );
   if (cw.hairShow) layers.push(<g key="hair">{hair(cw)}</g>);
@@ -486,5 +568,6 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   if (cw.hatType === 'campaign') layers.push(<g key="hat">{campaign(cw)}</g>);
   if (cw.hatType === 'aussie') layers.push(<g key="hat">{aussie(cw)}</g>);
   if (cw.hatType === 'contour') layers.push(<g key="hat">{contour(cw)}</g>);
+  if (cw.hatType === 'busby') layers.push(<g key="hat">{busby(cw)}</g>);
   return layers;
 }

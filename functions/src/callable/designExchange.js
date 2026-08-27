@@ -33,6 +33,7 @@ const {
   validateDesign,
   sanitizeDesign,
 } = require("../helpers/uniformValidation");
+const { missingPacksFor, missingPacksMessage } = require("../helpers/uniformEntitlements");
 
 // Entry ids are `${creatorUid}_${designId}` — deterministic, so re-publishing
 // a design updates its entry instead of duplicating it.
@@ -198,6 +199,17 @@ const saveExchangeDesign = onCall({ cors: true }, async (request) => {
     throw new HttpsError("not-found", "That gallery entry no longer exists.");
   }
   const entry = entryDoc.data();
+
+  // Pack gate: a copy is a wardrobe write like any other — keeping a gated
+  // design requires its pack (helpers/uniformEntitlements).
+  if (missingPacksFor(entry.design && entry.design.figure, undefined).length > 0) {
+    const saverProfile = await db.doc(paths.userProfile(uid)).get();
+    const owned = saverProfile.exists ? saverProfile.data().cosmetics?.owned : undefined;
+    const missing = missingPacksFor(entry.design.figure, owned);
+    if (missing.length > 0) {
+      throw new HttpsError("failed-precondition", missingPacksMessage(missing));
+    }
+  }
 
   const col = db.collection(paths.userWardrobe(uid));
   const countSnap = await col.count().get();

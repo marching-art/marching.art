@@ -1,8 +1,27 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React from 'react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Activity, TrendingUp, TrendingDown, X, Play } from 'lucide-react';
 
+/**
+ * One ranked row from useLandingScores' standings computation.
+ * @typedef {Object} StandingsRow
+ * @property {number} rank
+ * @property {string|number} sourceYear
+ * @property {string} corpsName
+ * @property {number} score
+ * @property {number|null} change
+ * @property {'up'|'down'|'stable'} direction
+ */
+
+/**
+ * @param {{
+ *   show: boolean,
+ *   liveScores: StandingsRow[],
+ *   displayDay?: number|string|null,
+ *   onClose: () => void,
+ *   onYoutubeClick: (sourceYear: string|number, corpsName: string) => void,
+ * }} props
+ */
 const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick }) => {
   useEscapeKey(onClose, !!show);
 

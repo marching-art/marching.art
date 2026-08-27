@@ -1,5 +1,46 @@
 [
   {
+    "id": "2026-08-27-design-houses",
+    "date": "2026-08-27",
+    "title": "Design houses arrive: the first two Uniform Studio packs",
+    "category": "feature",
+    "summary": "The Studio's first premium collections are in the Shop, each from a fictional design house. Maison Verdier's Texture Atelier brings two new fabric finishes — an iridescent angle-shift sheen and a lamé shimmer weave — and Blackwell & Sons' Military Outfitters Collection adds the fur busby (with its colored bag and chin chain) and a one-shoulder cavalry cape with a contrast lining. Everything is free to try on in the Studio; owning the pack is what lets you save and equip the look. Every piece that was free stays free, forever, and nothing in a pack touches scores.",
+    "highlights": [
+      "Texture Atelier (Maison Verdier): iridescent and lamé finishes for any jacket, 1,500 CC.",
+      "Military Outfitters Collection (Blackwell & Sons): the busby and the shoulder cape — wearable on either shoulder — 2,500 CC.",
+      "Try on everything free in the Studio; a banner under the canvas shows what a look needs before you save.",
+      "Buy once, unlocked forever, across every design you ever save.",
+      "The free wardrobe is untouched — packs only ever add new pieces, never paywall existing ones."
+    ]
+  },
+  {
+    "id": "2026-08-27-the-showcase",
+    "date": "2026-08-27",
+    "title": "The Showcase: the community votes on the month's best design",
+    "category": "feature",
+    "summary": "The big one from the contest roadmap. Every month brings a themed Showcase: enter any saved design against the theme through the 20th, then the whole community judges anonymous head-to-heads — two looks, no names, pick one. When the month closes, the votes are tallied, the podium is published with full credit, and the champion earns the grant-only Showcase Champion title, which cannot be bought at any price. Openings, voting, and crownings are announced in the Discord.",
+    "highlights": [
+      "Enter from the Exchange page during the first 20 days; swap your entry any time before voting.",
+      "Voting is anonymous pairwise judging — designs stand on their look alone until the crowning.",
+      "Entering pays CorpsCoin once a month, and so do your first few ballots.",
+      "The champion's title is grant-only forever: the community voted, that's the only way to wear it.",
+      "Watch the Discord #announcements for the theme drop, the voting bell, and the crowning."
+    ]
+  },
+  {
+    "id": "2026-08-26-brief-and-history",
+    "date": "2026-08-26",
+    "title": "The Weekly Design Brief — and your uniforms enter the history books",
+    "category": "feature",
+    "summary": "Two additions for the long haul. Every Monday a new Design Brief lands on the Exchange: a themed styling challenge (\"Midnight Classic\", \"Thunderstorm\", \"Ghost Corps\"…) that scores any of your saved designs automatically against a visible checklist — no judges, no mystery, just a rubric to chase. Your first entry each week earns CorpsCoin, and the week's board is public. And starting with the next season rollover, the uniform you have equipped is stamped into that season's archive: your Corps History timeline now shows the look you wore each season, forever.",
+    "highlights": [
+      "Sixteen briefs rotate weekly; the checklist shows exactly which looks score and for how much.",
+      "Resubmit as often as you like — your week's best score stands, and only the first entry pays.",
+      "Season archives now carry each corps' equipped uniform: swatches on the timeline, the full figure in the season detail.",
+      "Under the hood: equipped uniforms (and alternates) now survive season rollover correctly."
+    ]
+  },
+  {
     "id": "2026-08-26-design-exchange",
     "date": "2026-08-26",
     "title": "The Design Exchange: a public gallery for your uniforms",

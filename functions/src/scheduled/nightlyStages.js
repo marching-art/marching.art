@@ -364,10 +364,33 @@ async function runEasternClassicStage(
   return { status: "ran", competitionDay, announcement };
 }
 
+/**
+ * Run the nightly Showcase stage (helpers/showcase.js): finalize last month's
+ * contest once its voting window has closed (tally + public results + the
+ * champion's grant-only title), then post whichever #announcements beats are
+ * due (submissions open / voting open / champion crowned — each lease-guarded
+ * to post at most once per month). Independent of scoring and of the season
+ * clock: the Showcase runs on the calendar month.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} webhookUrl - #announcements webhook; falsy skips Discord
+ *   but still finalizes.
+ * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @param {{now?: Date}} [options]
+ * @returns {Promise<{status: string, finalized: string, announcements: Array}>}
+ */
+async function runShowcaseStage(db, webhookUrl, fetchImpl, { now = new Date() } = {}) {
+  const showcase = require("../helpers/showcase");
+  const finalized = await showcase.finalizeShowcase(db, now);
+  const announcements = await showcase.announceShowcase(db, { webhookUrl, fetchImpl, now });
+  return { status: "ran", finalized: finalized.status, announcements };
+}
+
 module.exports = {
   runPodiumStage,
   runDiscordStage,
   runFanFavoriteStage,
   runPodiumScoreDropStage,
   runEasternClassicStage,
+  runShowcaseStage,
 };

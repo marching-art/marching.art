@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Setup file for Vitest
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
@@ -9,7 +8,7 @@ vi.mock('framer-motion', async () => {
   return {
     ...actual,
     motion: {
-      button: ({ children, ...props }) => {
+      button: (/** @type {Record<string, any>} */ { children, ...props }) => {
         const {
           whileHover: _whileHover,
           whileTap: _whileTap,
@@ -22,7 +21,7 @@ vi.mock('framer-motion', async () => {
         } = props;
         return <button {...htmlProps}>{children}</button>;
       },
-      div: ({ children, ...props }) => {
+      div: (/** @type {Record<string, any>} */ { children, ...props }) => {
         const {
           whileHover: _whileHover,
           whileTap: _whileTap,
@@ -36,7 +35,7 @@ vi.mock('framer-motion', async () => {
         } = props;
         return <div {...htmlProps}>{children}</div>;
       },
-      p: ({ children, ...props }) => {
+      p: (/** @type {Record<string, any>} */ { children, ...props }) => {
         const {
           initial: _initial,
           animate: _animate,
@@ -48,14 +47,14 @@ vi.mock('framer-motion', async () => {
         return <p {...htmlProps}>{children}</p>;
       },
     },
-    AnimatePresence: ({ children }) => children,
+    AnimatePresence: (/** @type {{children?: any}} */ { children }) => children,
   };
 });
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: (query) => ({
+  value: (/** @type {string} */ query) => ({
     matches: false,
     media: query,
     onchange: null,

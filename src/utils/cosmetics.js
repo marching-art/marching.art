@@ -72,6 +72,15 @@ export const SHOP_ITEMS = [
     textClass: 'text-rose-400',
   },
   {
+    id: 'title_showcase_champion',
+    type: 'title',
+    name: 'Showcase Champion',
+    price: null,
+    grantOnly: true,
+    description: 'Won a monthly Showcase — the community voted, this design took it',
+    textClass: 'text-pink-400',
+  },
+  {
     id: 'title_section_leader',
     type: 'title',
     name: 'Section Leader',
@@ -253,12 +262,37 @@ export const SHOP_ITEMS = [
     cardClass: 'border-sky-600 bg-gradient-to-br from-[#0a1c2e] via-[#12122e] to-[#1a1a1a]',
     swatchClass: 'bg-gradient-to-br from-sky-600 via-charcoal-500 to-indigo-800',
   },
+
+  // --- Uniform Studio packs (design houses): entitlements, not equippables ---
+  {
+    id: 'pack_texture_atelier',
+    type: 'uniformPack',
+    name: 'Texture Atelier',
+    price: 1500,
+    description:
+      'Maison Verdier — the iridescent angle-shift sheen and the lam\u00e9 shimmer weave, unlocked for every design you save',
+  },
+  {
+    id: 'pack_military_outfitters',
+    type: 'uniformPack',
+    name: 'Military Outfitters Collection',
+    price: 2500,
+    description:
+      'Blackwell & Sons — the fur busby with its colored bag, and the one-shoulder cavalry cape',
+  },
 ];
 
+/**
+ * Uniform Studio packs are ENTITLEMENTS: owning one unlocks its content in
+ * the Studio (save-time check is server-side, helpers/uniformEntitlements).
+ * They are never equipped, so the Shop shows an "In your Studio" chip once
+ * owned instead of an Equip button.
+ */
 export const SHOP_SECTIONS = [
   { type: 'title', label: 'Director Titles' },
   { type: 'frame', label: 'Profile Frames' },
   { type: 'cardTheme', label: 'Corps Card Themes' },
+  { type: 'uniformPack', label: 'Uniform Studio Packs' },
 ];
 
 /**

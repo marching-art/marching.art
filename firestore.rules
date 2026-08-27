@@ -421,6 +421,26 @@ match /artifacts/{appId}/design_exchange/{entryId} {
   }
 }
 
+// --- DESIGN BRIEFS ---
+// Weekly styling-contest leaderboard (docs/UNIFORM_STUDIO.md §7.4): public
+// bragging rights — score, username, design name, colorway strip — written
+// only by the submitDesignBrief callable, which scores server-side.
+match /artifacts/{appId}/design_briefs/{weekId}/entries/{uid} {
+  allow read: if true;
+  allow write: if false; // Backend only (submitDesignBrief)
+}
+
+// --- THE SHOWCASE ---
+// Monthly pairwise-voted contest (§7.4). The month doc is the FINALIZED
+// public results (it only exists once the nightly stage tallies the vote);
+// entries and per-voter ballots live in subcollections deliberately NOT
+// matched here — default deny keeps pairwise voting anonymous (designs are
+// served nameless by the getShowcasePair callable, never read directly).
+match /artifacts/{appId}/showcases/{monthId} {
+  allow read: if true;
+  allow write: if false; // Backend only (nightly finalizeShowcase)
+}
+
 // --- BUY ME A COFFEE SUPPORTERS ---
 // Fully locked: these docs hold PII (payer email + name) and are written only
 // by the BMAC webhook / reconcile job / supporter callables via the Admin SDK.

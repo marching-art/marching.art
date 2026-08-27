@@ -32,6 +32,9 @@ const SHOP_CATALOG = [
   { id: 'title_legacy_guarantor', type: 'title', name: 'Guarantor', price: null, grantOnly: true },
   { id: 'title_legacy_cornerstone', type: 'title', name: 'Cornerstone', price: null, grantOnly: true },
   { id: 'title_legacy_founding', type: 'title', name: 'Founding Legacy', price: null, grantOnly: true },
+  // Won by taking a monthly Showcase (the community's pairwise design vote,
+  // helpers/showcase.js). Grant-only: the whole point is that it was voted.
+  { id: 'title_showcase_champion', type: 'title', name: 'Showcase Champion', price: null, grantOnly: true },
   { id: 'title_section_leader', type: 'title', name: 'Section Leader', price: 1000 },
   { id: 'title_drum_major', type: 'title', name: 'Drum Major', price: 2500 },
   { id: 'title_the_maestro', type: 'title', name: 'The Maestro', price: 5000 },
@@ -62,6 +65,12 @@ const SHOP_CATALOG = [
   // collectible you had to be there for. Rotate this set over time.
   { id: 'theme_summer_tour', type: 'cardTheme', name: 'Summer Tour', price: 2500, seasonal: 'live-season' },
   { id: 'theme_off_circuit', type: 'cardTheme', name: 'Off-Season Circuit', price: 2500, seasonal: 'off-season' },
+  // --- Uniform Studio packs (design houses, docs/UNIFORM_STUDIO.md §8.4) ---
+  // Entitlements, not equippables: owning one unlocks its Studio content at
+  // save time (helpers/uniformEntitlements.js). The free floor is untouched —
+  // packs only ever gate content born premium.
+  { id: 'pack_texture_atelier', type: 'uniformPack', name: 'Texture Atelier', price: 1500 },
+  { id: 'pack_military_outfitters', type: 'uniformPack', name: 'Military Outfitters Collection', price: 2500 },
 ];
 
 /** Equip slot per item type — one equipped item per slot */

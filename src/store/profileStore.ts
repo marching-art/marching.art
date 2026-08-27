@@ -55,6 +55,8 @@ export interface ProfileDoc {
    */
   uid?: string;
   corps?: Record<string, unknown> | null;
+  /** Corps Identity Shop state (server-written): owned ids + equipped slots. */
+  cosmetics?: { owned?: string[]; equipped?: Record<string, string | null> } | null;
   unlockedClasses?: string[];
   createdAt?: unknown;
   challenges?: Record<string, ChallengeCompletion[]>;

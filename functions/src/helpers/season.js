@@ -13,7 +13,11 @@ const { resetLeaguesForNewSeason } = require("./leagueSeasonReset");
 const { archiveSeasonResultsLogic } = require("./leagueArchival");
 const { fetchSeasonParticipation, corpsSeason } = require("./seasonParticipation");
 const { paths } = require("./paths");
-const { seasonDetailId, splitSeasonRecord } = require("./seasonHistoryRecord");
+const {
+  seasonDetailId,
+  splitSeasonRecord,
+  compactEquippedUniform,
+} = require("./seasonHistoryRecord");
 const {
   claimSeasonRollover,
   markSeasonRolloverCompleted,
@@ -259,6 +263,17 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
           showsAttended,
           highestWeeklyScore,
           placement,
+          // Uniform History (docs/UNIFORM_STUDIO.md §6): the compact look
+          // ({designId, name, colors}) stays on the summary row for the
+          // timeline; the full renderable snapshot rides the detail doc.
+          uniform: compactEquippedUniform(corps.uniform),
+          uniformSnapshot: corps.uniform
+            ? {
+                name: corps.uniform.name || null,
+                colorway: corps.uniform.colorway || null,
+                figure: corps.uniform.figure || null,
+              }
+            : null,
           archivedAt,
         });
         seasonHistory.push(summary);
@@ -292,7 +307,15 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
         seasonHistory,
         // PRESERVE: Director-designed branding and ensemble identity across seasons
         uniformDesign: corps.uniformDesign || null,
+        // The equipped Uniform Studio looks are corps identity, not season
+        // data — without these two lines every rollover silently stripped the
+        // equipped design (and the alternate) off every corps.
+        uniform: corps.uniform || null,
+        uniformAlt: corps.uniformAlt || null,
         avatarUrl: corps.avatarUrl || null,
+        // avatarSource pairs with avatarUrl (custom vs AI) — dropping it made
+        // a director-supplied avatar look AI-generated after rollover.
+        avatarSource: corps.avatarSource || null,
         avatarGeneratedAt: corps.avatarGeneratedAt || null,
         ensembleInfo: corps.ensembleInfo || null,
         // RESET: Season-specific data (including weeklyTrades so users can set up corps)

@@ -19,6 +19,7 @@ import {
   Check,
   Snowflake,
   Shield,
+  Shirt,
   User,
   CreditCard,
   Megaphone,
@@ -43,7 +44,7 @@ import {
 } from '../utils/cosmetics';
 import { LegacySection } from '../components/LegacySection';
 
-const SECTION_ICONS = { title: Shield, frame: User, cardTheme: CreditCard };
+const SECTION_ICONS = { title: Shield, frame: User, cardTheme: CreditCard, uniformPack: Shirt };
 
 // Per-type preview rendering for an item card
 const ItemPreview = ({ item }) => {
@@ -62,6 +63,16 @@ const ItemPreview = ({ item }) => {
         >
           <User className="w-4 h-4 text-muted" />
         </div>
+      </div>
+    );
+  }
+  if (item.type === 'uniformPack') {
+    return (
+      <div className="h-14 flex items-center justify-center gap-2 bg-background border border-line-muted">
+        <Shirt className="w-5 h-5 text-interactive" />
+        <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
+          Design house
+        </span>
       </div>
     );
   }
@@ -265,6 +276,15 @@ const Shop = () => {
                           <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-emerald-600/10 border border-emerald-500/30 text-emerald-400">
                             Earned, Not Bought
                           </div>
+                        ) : owned && item.type === 'uniformPack' ? (
+                          // Packs are entitlements, not equippables — once
+                          // owned their content is live at every Studio save.
+                          <Link
+                            to="/studio"
+                            className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 bg-green-600/20 border border-green-500/40 text-green-400 hover:bg-green-600/30"
+                          >
+                            <Check className="w-3 h-3" /> In your Studio
+                          </Link>
                         ) : owned ? (
                           <button
                             onClick={() => handleEquipToggle(item, isEquipped)}

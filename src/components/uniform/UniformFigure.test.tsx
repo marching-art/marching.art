@@ -368,6 +368,77 @@ describe('UniformFigure', () => {
     expect(container.querySelectorAll('path[fill="#888888"]').length).toBeGreaterThan(0);
   });
 
+  it('renders the busby with its bag, tassel, and chin chain', () => {
+    const { container } = render(
+      <UniformFigure
+        label="busby test"
+        figure={{
+          skin: '#c9a074',
+          jacket: '#1d2f66',
+          metal: '#d9a41c',
+          hatType: 'busby',
+          hat: { body: '#17171a', band: '#8a1a1a' },
+        }}
+      />
+    );
+    // fur body + broken-strand strokes
+    expect(container.querySelectorAll('path[fill="#17171a"]').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('path[stroke-dasharray]').length).toBeGreaterThan(0);
+    // bag takes the band channel; its tassel is a darkened circle
+    expect(container.querySelectorAll('path[fill="#8a1a1a"]').length).toBeGreaterThan(0);
+    // chin chain: five metal links
+    expect(container.querySelectorAll('circle[fill="#d9a41c"]').length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('renders the cape with its lining and mirrors it to the other shoulder', () => {
+    const base = {
+      skin: '#c9a074',
+      jacket: '#1d2f66',
+      cape: { color: '#22355c', lining: '#d9a41c' },
+    } as const;
+    const left = render(<UniformFigure label="cape left" figure={{ ...base }} />);
+    expect(left.container.querySelectorAll('path[fill="#22355c"]').length).toBeGreaterThan(0);
+    expect(left.container.querySelectorAll('path[fill="#d9a41c"]').length).toBeGreaterThan(0);
+
+    const right = render(
+      <UniformFigure
+        label="cape right"
+        figure={{ ...base, cape: { ...base.cape, side: 'right' } }}
+      />
+    );
+    const mirrors = (html: string) => html.split('translate(240,0) scale(-1,1)').length - 1;
+    expect(mirrors(right.container.innerHTML)).toBe(mirrors(left.container.innerHTML) + 1);
+  });
+
+  it('defines the iridescent ramp only when the finish is on', () => {
+    const plain = render(
+      <UniformFigure label="plain torso" figure={{ skin: '#c9a074', jacket: '#1d2f66' }} />
+    );
+    expect(plain.container.innerHTML).not.toContain('-irid');
+
+    const irid = render(
+      <UniformFigure
+        label="iridescent torso"
+        figure={{ skin: '#c9a074', jacket: '#1d2f66', iridescent: true }}
+      />
+    );
+    expect(irid.container.innerHTML).toContain('-irid)');
+    const stops = Array.from(irid.container.querySelectorAll('stop')).map((s) =>
+      s.getAttribute('stop-color')
+    );
+    expect(stops).toContain('#7de8dc');
+    expect(stops).toContain('#e8d27a');
+  });
+
+  it('scatters the lamé sequin weave over the torso', () => {
+    const base = { skin: '#c9a074', jacket: '#1d2f66' };
+    const plain = render(<UniformFigure label="no lame" figure={{ ...base }} />);
+    const shiny = render(<UniformFigure label="lame" figure={{ ...base, lame: true }} />);
+    expect(shiny.container.querySelectorAll('circle').length).toBeGreaterThan(
+      plain.container.querySelectorAll('circle').length + 50
+    );
+  });
+
   it('is deterministic: identical designs produce identical markup', () => {
     const preset = getUniformPreset('streamline')!;
     const a = render(<UniformFigure figure={preset.figure} label="a" />);

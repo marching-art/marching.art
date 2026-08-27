@@ -68,7 +68,7 @@ export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit';
 export type ChestTreatment =
   'none' | 'braid' | 'sash' | 'baldric' | 'plastron' | 'buttons' | 'swash' | 'vinylPanel';
 
-export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | null;
+export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | 'busby' | null;
 
 export type PlumeType = 'upright' | 'fountain' | 'sideFeather';
 
@@ -102,6 +102,15 @@ export interface ChestBadge {
 
 /** Cut of the diagonal sash/baldric band. */
 export type ChestShape = 'band' | 'triangles' | 'tapered';
+
+/** One-shoulder cavalry cape (Military Outfitters pack). */
+export interface CapeConfig {
+  color: HexColor;
+  /** Lining flash at the hem; null → derived dark. */
+  lining?: HexColor | null;
+  /** Which shoulder it drapes from (viewer's side); default 'left'. */
+  side?: 'left' | 'right';
+}
 
 export interface PlumeConfig {
   type: PlumeType;
@@ -177,6 +186,10 @@ export interface FigureConfig {
   patent?: boolean;
   /** Satin sheen overlay on the torso. */
   satin?: boolean;
+  /** Iridescent angle-shift sheen (Texture Atelier pack). */
+  iridescent?: boolean;
+  /** Lamé micro-shimmer field (Texture Atelier pack). */
+  lame?: boolean;
   /** Sequin field across the torso (clipped to the garment). */
   torsoSequin?: boolean;
 
@@ -249,6 +262,9 @@ export interface FigureConfig {
   hatType?: HatType;
   hat?: HatConfig | null;
   plume?: PlumeConfig | null;
+
+  /** One-shoulder cape; undefined/null renders none (Military Outfitters). */
+  cape?: CapeConfig | null;
 }
 
 /** Private, prompt-only prose retained for AI imagery. Never rendered. */

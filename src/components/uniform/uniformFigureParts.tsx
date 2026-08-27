@@ -16,7 +16,7 @@ import {
   type NormalizedFigure,
 } from '../../utils/uniform';
 import type { LegConfig } from '../../types/uniform';
-import { FIGURE_INK } from '../../data/uniformRenderTheme';
+import { FIGURE_INK, IRIDESCENT_STOPS } from '../../data/uniformRenderTheme';
 
 export const FIGURE_VIEWBOX = '0 -84 240 560';
 
@@ -195,6 +195,20 @@ export function buildDefs(cw: NormalizedFigure, uid: string): React.ReactElement
             ))}
           </linearGradient>
         ))}
+      {cw.iridescent && (
+        <linearGradient
+          id={`${uid}-irid`}
+          gradientUnits="userSpaceOnUse"
+          x1="90"
+          y1="108"
+          x2="152"
+          y2="248"
+        >
+          {IRIDESCENT_STOPS.map((stop) => (
+            <stop key={stop.o} offset={stop.o} stopColor={stop.c} />
+          ))}
+        </linearGradient>
+      )}
       {cw.chestFade && (
         <linearGradient
           id={`${uid}-fadeChest`}
@@ -442,6 +456,37 @@ export function velvetSheen(): Node[] {
   return [
     light('vel1', 'M90,130 Q120,118 150,140 Q120,132 92,148 Z', 0.05),
     light('vel2', 'M92,196 Q120,186 148,204 Q120,196 94,212 Z', 0.04),
+  ];
+}
+
+/**
+ * Iridescent finish (Texture Atelier): the hue-shift ramp over the torso at
+ * low opacity, plus a hot diagonal "angle" band so the shift reads as light,
+ * not as a print.
+ */
+export function iridescentSheen(uid: string): Node[] {
+  return [
+    <path
+      key="irid"
+      d="M96,104 Q120,96 144,104 L150,244 Q120,254 90,244 Z"
+      fill={`url(#${uid}-irid)`}
+      opacity=".32"
+    />,
+    light('irid-b', 'M92,150 Q124,132 150,158 Q122,150 94,168 Z', 0.16),
+  ];
+}
+
+/**
+ * Lamé finish (Texture Atelier): a dense micro-glint field — finer and far
+ * denser than sequins — with two sheen bands so the cloth reads as woven
+ * metal rather than applied sparkle.
+ */
+export function lameField(): Node[] {
+  return [
+    ...sequinField('lam-a', 120, 150, 50, 88, 17, 70),
+    ...sequinField('lam-b', 120, 214, 54, 64, 29, 50),
+    light('lam-s1', 'M94,128 Q122,112 148,134 Q120,126 96,144 Z', 0.14),
+    light('lam-s2', 'M92,206 Q120,192 148,212 Q120,204 94,222 Z', 0.1),
   ];
 }
 
