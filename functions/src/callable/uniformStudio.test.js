@@ -9,7 +9,7 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
-const { saveUniformDesign } = require("./uniformStudio");
+const { saveUniformDesign, equipUniformDesign } = require("./uniformStudio");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
@@ -214,5 +214,72 @@ describe("saveUniformDesign pack gate", () => {
     assert.ok(result.designId);
     const saved = [...docs.entries()].find(([p]) => p.startsWith(wardrobePrefix("director")));
     assert.equal(saved[1].figure.aiguillette, "#d9a41c");
+  });
+});
+
+describe("equipUniformDesign guard slot", () => {
+  beforeEach(() => setDbForTesting(null));
+
+  /** A profile with one registered corps and one saved wardrobe design. */
+  function seededDocs() {
+    return new Map([
+      [
+        profilePath("director"),
+        { corps: { worldClass: { corpsName: "Guard Test Corps" } } },
+      ],
+      [`${wardrobePrefix("director")}d1`, { ...freeDesign(), createdAt: "2026-08-01" }],
+    ]);
+  }
+
+  test("slot 'guard' writes uniformGuard and leaves the identity fields alone", async () => {
+    const docs = seededDocs();
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await equipUniformDesign.run(
+      authedRequest("director", { designId: "d1", corpsClass: "worldClass", slot: "guard" })
+    );
+    assert.match(result.message, /Guard look equipped/);
+
+    const update = writes.find((w) => w.type === "update" && w.path === profilePath("director"));
+    const keys = Object.keys(update.data);
+    assert.deepEqual(keys, ["corps.worldClass.uniformGuard"]);
+    assert.equal(update.data["corps.worldClass.uniformGuard"].designId, "d1");
+    assert.equal(update.data["corps.worldClass.uniformGuard"].name, "Finals Look");
+  });
+
+  test("designId null with slot 'guard' clears the slot", async () => {
+    const docs = seededDocs();
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await equipUniformDesign.run(
+      authedRequest("director", { designId: null, corpsClass: "worldClass", slot: "guard" })
+    );
+    assert.match(result.message, /Guard look cleared/);
+    const update = writes.find((w) => w.type === "update" && w.path === profilePath("director"));
+    assert.deepEqual(Object.keys(update.data), ["corps.worldClass.uniformGuard"]);
+  });
+
+  test("an unknown slot is rejected; primary still writes the identity pair", async () => {
+    const docs = seededDocs();
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await assert.rejects(
+      equipUniformDesign.run(
+        authedRequest("director", { designId: "d1", corpsClass: "worldClass", slot: "drumline" })
+      ),
+      /Invalid uniform slot/
+    );
+
+    await equipUniformDesign.run(
+      authedRequest("director", { designId: "d1", corpsClass: "worldClass" })
+    );
+    const update = writes.find((w) => w.type === "update" && w.path === profilePath("director"));
+    assert.deepEqual(Object.keys(update.data).sort(), [
+      "corps.worldClass.uniform",
+      "corps.worldClass.uniformDesign",
+    ]);
   });
 });

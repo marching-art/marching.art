@@ -274,6 +274,16 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
                 figure: corps.uniform.figure || null,
               }
             : null,
+          // The guard's show look belongs to THIS season (it resets with the
+          // show concept below), so the archive is its only afterlife.
+          uniformGuard: compactEquippedUniform(corps.uniformGuard),
+          uniformGuardSnapshot: corps.uniformGuard
+            ? {
+                name: corps.uniformGuard.name || null,
+                colorway: corps.uniformGuard.colorway || null,
+                figure: corps.uniformGuard.figure || null,
+              }
+            : null,
           archivedAt,
         });
         seasonHistory.push(summary);
@@ -309,7 +319,9 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
         uniformDesign: corps.uniformDesign || null,
         // The equipped Uniform Studio looks are corps identity, not season
         // data — without these two lines every rollover silently stripped the
-        // equipped design (and the alternate) off every corps.
+        // equipped design (and the alternate) off every corps. uniformGuard is
+        // DELIBERATELY absent: the guard wears the show, not the identity, so
+        // its look resets with the show concept (archived above first).
         uniform: corps.uniform || null,
         uniformAlt: corps.uniformAlt || null,
         avatarUrl: corps.avatarUrl || null,

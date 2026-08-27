@@ -34,7 +34,15 @@ const { colorwayStrip } = require("./uniformValidation");
 // uniformSnapshot is the season's full equipped-uniform figure (the Uniform
 // History timeline renders it when a director drills into the season); the
 // compact `uniform` row ({designId, name, colors}) stays on the summary.
-const HEAVY_FIELDS = ["lineup", "selectedShows", "weeklyScores", "uniformSnapshot"];
+// uniformGuardSnapshot is the same split for the guard's show look — the
+// seasonal costume that resets at rollover, so the archive is its only home.
+const HEAVY_FIELDS = [
+  "lineup",
+  "selectedShows",
+  "weeklyScores",
+  "uniformSnapshot",
+  "uniformGuardSnapshot",
+];
 
 /**
  * The equipped uniform reduced to what the seasonHistory SUMMARY row keeps:

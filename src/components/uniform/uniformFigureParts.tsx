@@ -101,6 +101,16 @@ const TORSO_D =
   'M78,104 Q120,93 162,104 L158,150 Q153,200 153,248 L155,260 Q120,269 85,260 L87,248 Q87,200 82,150 Z';
 const TUNIC_D =
   'M78,104 Q120,93 162,104 L158,150 Q154,196 154,224 L151,270 Q143,292 131,296 L121,266 Q102,262 88,254 L87,246 Q87,198 82,150 Z';
+// Guard dress (the show-look silhouette): fitted bodice into an A-line skirt
+// with an asymmetric hem — low on the viewer-right, sweeping up on the left
+// so the leggings read underneath.
+const DRESS_D =
+  'M78,104 Q120,93 162,104 L158,150 Q154,200 156,240 Q163,288 172,326 Q138,352 108,344 Q86,338 72,318 Q81,282 84,240 Q87,200 82,150 Z';
+
+/** The active torso outline for fills and the print clip. */
+export function torsoPathOf(cw: NormalizedFigure): string {
+  return cw.torsoStyle === 'tunic' ? TUNIC_D : cw.torsoStyle === 'dress' ? DRESS_D : TORSO_D;
+}
 const LEG_D =
   'M90,254 L85,308 Q83,360 91,438 L114,438 Q112,384 113,336 Q113,306 116,284 Q119,276 120,272 L120,254 Z';
 const LEG_FLARE_D =
@@ -136,7 +146,7 @@ export function buildDefs(cw: NormalizedFigure, uid: string): React.ReactElement
   return (
     <defs key="defs">
       <clipPath id={`${uid}-tclip`}>
-        <path d={cw.torsoStyle === 'tunic' ? TUNIC_D : TORSO_D} />
+        <path d={torsoPathOf(cw)} />
       </clipPath>
       {cw.print === 'sunburst' && (
         <radialGradient id={`${uid}-sun`} gradientUnits="userSpaceOnUse" cx="98" cy="252" r="220">
@@ -394,7 +404,7 @@ export function shoes(cw: NormalizedFigure): Node[] {
 }
 
 export function torso(cw: NormalizedFigure, uid: string): Node[] {
-  const d = cw.torsoStyle === 'tunic' ? TUNIC_D : TORSO_D;
+  const d = torsoPathOf(cw);
   const fill = fillOf(cw.torsoFill, uid, cw.jacket);
   const out: Node[] = [p('to', d, fill)];
   if (cw.print === 'sunburst') {
@@ -428,6 +438,15 @@ export function torso(cw: NormalizedFigure, uid: string): Node[] {
     light('to-l', 'M87,107 Q85,170 90,250 L95,252 Q90,176 95,111 Z', 0.09),
     shade('to-c', 'M104,96 Q120,106 136,96 Q120,112 104,96 Z', 0.18)
   );
+  if (cw.torsoStyle === 'dress') {
+    // skirt: fold shadows fanning from the waist, hem shade on the low side
+    out.push(
+      shade('to-df1', 'M100,250 Q99,296 96,336 L104,338 Q104,298 106,252 Z', 0.1),
+      shade('to-df2', 'M130,252 Q134,296 140,340 L148,336 Q140,296 137,252 Z', 0.1),
+      shade('to-dh', 'M150,300 Q162,314 172,326 Q152,340 128,346 Q146,330 150,300 Z', 0.14),
+      light('to-dl', 'M84,254 Q80,290 74,316 Q80,326 88,332 Q88,292 92,256 Z', 0.08)
+    );
+  }
   if (cw.torsoSequin) {
     out.push(
       <g key="to-sq" clipPath={`url(#${uid}-tclip)`}>

@@ -18,7 +18,7 @@ const MAX_DESIGN_BYTES = 8 * 1024;
 const MAX_WARDROBE_DESIGNS = 24;
 
 const METALS = new Set(["gold", "silver"]);
-const TORSO_STYLES = new Set(["jacket", "tunic", "jumpsuit"]);
+const TORSO_STYLES = new Set(["jacket", "tunic", "jumpsuit", "dress"]);
 const CHESTS = new Set([
   "none",
   "braid",

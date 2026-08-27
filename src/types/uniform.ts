@@ -63,7 +63,7 @@ export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil';
  */
 export type PrintColors = Partial<Record<PrintColorKey, HexColor[] | null>>;
 
-export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit';
+export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit' | 'dress';
 
 export type ChestTreatment =
   'none' | 'braid' | 'sash' | 'baldric' | 'plastron' | 'buttons' | 'swash' | 'vinylPanel';

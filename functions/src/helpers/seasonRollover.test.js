@@ -331,6 +331,54 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.equal(detail.data.uniformSnapshot.name, "2026 Finals Look");
   });
 
+  test("the guard look is archived with the season and RESET at rollover", async () => {
+    const guard = {
+      designId: "g1",
+      name: "Show Costume",
+      colorway: { primary: "#4b2a6b", secondary: "#e8c25a", accent: "#c25a6e", metal: "silver" },
+      figure: { skin: "#d8a97e", torsoStyle: "dress", jacket: "#4b2a6b" },
+      equippedAt: "2026-08-01T00:00:00.000Z",
+    };
+    const { db, writes } = makeFakeDb({
+      profiles: [
+        {
+          uid: "alice",
+          data: {
+            corps: {
+              worldClass: { ...participatingCorps(90), uniformGuard: guard },
+            },
+          },
+        },
+      ],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("alice")
+    ).data;
+
+    // The guard wears the SHOW: its look does not ride into the new season...
+    assert.equal(update.corps.worldClass.uniformGuard, undefined);
+
+    // ...but the archive keeps it — compact on the summary row...
+    const summary = update.corps.worldClass.seasonHistory[0];
+    assert.deepEqual(summary.uniformGuard, {
+      designId: "g1",
+      name: "Show Costume",
+      colors: ["#4b2a6b", "#e8c25a", "#c25a6e"],
+    });
+    assert.equal(summary.uniformGuardSnapshot, undefined, "full figure stays off the summary");
+
+    // ...and the full snapshot on the seasonDetail doc.
+    const detail = writes.find(
+      (w) =>
+        w.type === "set" &&
+        w.path === `artifacts/${NS}/users/alice/seasonDetail/old-season__worldClass`
+    );
+    assert.deepEqual(detail.data.uniformGuardSnapshot.figure, guard.figure);
+    assert.equal(detail.data.uniformGuardSnapshot.name, "Show Costume");
+  });
+
   test("a profile with only a lineup-only corps earns nothing and totalSeasons stays flat", async () => {
     const { db, writes } = makeFakeDb({
       profiles: [

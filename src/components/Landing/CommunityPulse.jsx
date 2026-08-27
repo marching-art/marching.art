@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // CommunityPulse - Landing page sidebar widget showing live community activity
 // Creates social proof through real-time activity signals.
 // Data source (leagues collection) is auth-gated at the Firestore rule
@@ -12,6 +11,7 @@ import { getRecentLeagueActivity } from '../../api/community';
 import { auth } from '../../api';
 
 // Cache to avoid re-fetching on every render
+/** @type {import('../../api/community').CommunityActivityItem[] | null} */
 let activityCache = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -44,7 +44,7 @@ const CommunityPulse = memo(() => {
         cacheTimestamp = Date.now();
         setActivities(sorted);
       } catch (error) {
-        if (error?.code !== 'permission-denied') {
+        if (/** @type {{code?: string}} */ (error)?.code !== 'permission-denied') {
           console.error('CommunityPulse: Failed to fetch activity', error);
         }
       } finally {
@@ -99,7 +99,7 @@ const CommunityPulse = memo(() => {
           {activities.map((activity) => (
             <div key={activity.id} className="px-4 py-2.5 flex items-center gap-3">
               <div className="w-6 h-6 rounded-full bg-surface-raised flex items-center justify-center flex-shrink-0">
-                {iconMap[activity.icon] || iconMap.users}
+                {iconMap[/** @type {keyof typeof iconMap} */ (activity.icon)] || iconMap.users}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-secondary truncate">{activity.text}</p>

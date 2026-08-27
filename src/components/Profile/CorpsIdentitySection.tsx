@@ -49,7 +49,12 @@ export default function CorpsIdentitySection({ corps, isOwnProfile }: CorpsIdent
     const out: IdentityCard[] = [];
     for (const classKey of PROFILE_CORPS_CLASS_ORDER) {
       const entry = resolveCorpsForClass(corps, classKey) as
-        (CorpsData & { uniform?: EquippedUniform; uniformAlt?: EquippedUniform }) | undefined;
+        | (CorpsData & {
+            uniform?: EquippedUniform;
+            uniformAlt?: EquippedUniform;
+            uniformGuard?: EquippedUniform;
+          })
+        | undefined;
       if (!entry?.corpsName) continue;
       if (entry.uniform) {
         out.push({
@@ -83,6 +88,18 @@ export default function CorpsIdentitySection({ corps, isOwnProfile }: CorpsIdent
           figure: entry.uniformAlt.figure,
           colorway: entry.uniformAlt.colorway,
           lookName: `Alt · ${entry.uniformAlt.name}`,
+          isDraft: false,
+        });
+      }
+      // The guard's show look (per-season; resets with the show at rollover).
+      if (entry.uniformGuard) {
+        out.push({
+          cardKey: `${classKey}-guard`,
+          classKey,
+          corpsName: entry.corpsName,
+          figure: entry.uniformGuard.figure,
+          colorway: entry.uniformGuard.colorway,
+          lookName: `Guard · ${entry.uniformGuard.name}`,
           isDraft: false,
         });
       }

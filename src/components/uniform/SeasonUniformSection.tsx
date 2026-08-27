@@ -45,37 +45,63 @@ export function SeasonLookSwatches({ uniform }: { uniform?: SeasonUniformCompact
   );
 }
 
+function LookTile({
+  compact,
+  snapshot,
+  role,
+}: {
+  compact?: SeasonUniformCompact | null;
+  snapshot?: SeasonUniformSnapshot | null;
+  role: string;
+}) {
+  const figure = snapshot?.figure;
+  const name = snapshot?.name || compact?.name;
+  return (
+    <div className="flex-1 bg-surface-raised border border-line rounded-none p-3 text-center">
+      {figure ? (
+        <div className="max-w-[110px] mx-auto">
+          <UniformFigure figure={figure} label={`${name || 'Season'} ${role.toLowerCase()}`} />
+        </div>
+      ) : (
+        <SeasonLookSwatches uniform={compact} />
+      )}
+      <p className="text-[9px] uppercase tracking-wider text-muted mt-2">{role}</p>
+      {name && <p className="text-[10px] uppercase tracking-wider text-white truncate">{name}</p>}
+    </div>
+  );
+}
+
 /**
  * The detail-panel section: the season's full look when the detail doc
- * carries a snapshot, else the compact name + swatches, else nothing.
+ * carries a snapshot, else the compact name + swatches, else nothing. When a
+ * guard look was archived (docs/UNIFORM_STUDIO.md §6 — the show's costume,
+ * reset at rollover), it stands beside the hornline's uniform.
  */
 export default function SeasonUniformSection({
   compact,
   snapshot,
+  guardCompact,
+  guardSnapshot,
 }: {
   compact?: SeasonUniformCompact | null;
   snapshot?: SeasonUniformSnapshot | null;
+  guardCompact?: SeasonUniformCompact | null;
+  guardSnapshot?: SeasonUniformSnapshot | null;
 }) {
-  const figure = snapshot?.figure;
-  const name = snapshot?.name || compact?.name;
-  if (!figure && !compact) return null;
+  const hasUniform = Boolean(snapshot?.figure || compact);
+  const hasGuard = Boolean(guardSnapshot?.figure || guardCompact);
+  if (!hasUniform && !hasGuard) return null;
   return (
     <div>
       <h4 className="text-xs font-bold text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
         <Shirt className="w-4 h-4 text-interactive" />
         Uniform
       </h4>
-      <div className="bg-surface-raised border border-line rounded-none p-3 text-center">
-        {figure ? (
-          <div className="max-w-[110px] mx-auto">
-            <UniformFigure figure={figure} label={`${name || 'Season'} uniform`} />
-          </div>
-        ) : (
-          <SeasonLookSwatches uniform={compact} />
+      <div className="flex gap-2">
+        {hasUniform && (
+          <LookTile compact={compact} snapshot={snapshot} role={hasGuard ? 'Corps' : 'Uniform'} />
         )}
-        {name && (
-          <p className="text-[10px] uppercase tracking-wider text-muted mt-2 truncate">{name}</p>
-        )}
+        {hasGuard && <LookTile compact={guardCompact} snapshot={guardSnapshot} role="Guard" />}
       </div>
     </div>
   );

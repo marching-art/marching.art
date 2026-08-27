@@ -138,19 +138,23 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
  * the v1 prose fields the AI pipeline reads. slot:"alternate" fills the
  * optional second look at corps.{class}.uniformAlt (finals week / exhibition
  * — the home/away pattern, docs/UNIFORM_STUDIO.md §6) and leaves the primary
- * identity — including the prose fields — untouched; passing designId:null
- * with slot:"alternate" clears it. Does NOT touch avatarUrl or
- * profileAvatarCorps.
+ * identity — including the prose fields — untouched. slot:"guard" dresses
+ * the color guard at corps.{class}.uniformGuard — the SHOW's look, not the
+ * corps': it is archived with the season and reset at rollover alongside the
+ * show concept (hornline wears the identity, the guard wears the show,
+ * docs/UNIFORM_STUDIO.md §6). Passing designId:null with slot "alternate" or
+ * "guard" clears that slot. Does NOT touch avatarUrl or profileAvatarCorps.
  */
 const equipUniformDesign = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
   const { designId, corpsClass, slot } = request.data || {};
-  if (slot != null && slot !== "primary" && slot !== "alternate") {
+  if (slot != null && slot !== "primary" && slot !== "alternate" && slot !== "guard") {
     throw new HttpsError("invalid-argument", "Invalid uniform slot.");
   }
-  const alternate = slot === "alternate";
-  const clearingAlt = alternate && designId == null;
-  if (!clearingAlt && (!designId || !DESIGN_ID_RE.test(String(designId)))) {
+  const slotField =
+    slot === "alternate" ? "uniformAlt" : slot === "guard" ? "uniformGuard" : null;
+  const clearingSlot = slotField != null && designId == null;
+  if (!clearingSlot && (!designId || !DESIGN_ID_RE.test(String(designId)))) {
     throw new HttpsError("invalid-argument", "Invalid design id.");
   }
 
@@ -168,9 +172,11 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
     throw new HttpsError("failed-precondition", "You have no registered corps in that class.");
   }
 
-  if (clearingAlt) {
-    await profileRef.update({ [`corps.${storedKey}.uniformAlt`]: FieldValue.delete() });
-    return { message: "Alternate look cleared." };
+  if (clearingSlot) {
+    await profileRef.update({ [`corps.${storedKey}.${slotField}`]: FieldValue.delete() });
+    return {
+      message: slot === "guard" ? "Guard look cleared." : "Alternate look cleared.",
+    };
   }
 
   const designDoc = await db.doc(paths.userWardrobeDesign(uid, String(designId))).get();
@@ -187,9 +193,11 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
     equippedAt: new Date().toISOString(),
   };
 
-  if (alternate) {
-    await profileRef.update({ [`corps.${storedKey}.uniformAlt`]: snapshot });
-    return { message: "Alternate look equipped." };
+  if (slotField) {
+    await profileRef.update({ [`corps.${storedKey}.${slotField}`]: snapshot });
+    return {
+      message: slot === "guard" ? "Guard look equipped." : "Alternate look equipped.",
+    };
   }
 
   const v1Compat = deriveV1Compat(design, corpsMap[storedKey].uniformDesign);

@@ -11,24 +11,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import {
-  Check,
-  Copy,
-  Eye,
-  Loader2,
-  Save,
-  Share2,
-  Shirt,
-  Sparkles,
-  Store,
-  Trash2,
-} from 'lucide-react';
+import { Eye, Loader2, Shirt, Store, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { CLASS_DISPLAY } from '../components/modals/uniformDesignOptions';
 import UniformFigure from '../components/uniform/UniformFigure';
 import StudioEditor from '../components/uniform/StudioEditor';
+import StudioActionGrid from '../components/uniform/StudioActionGrid';
 import UniformShareCard from '../components/uniform/UniformShareCard';
 import { designFromPreset, UNIFORM_PRESETS } from '../data/uniformCatalog';
 import { migrateV1Design, WARDROBE_LIMITS, withDerivedFlags } from '../utils/uniform';
@@ -191,9 +181,9 @@ export default function Studio() {
     }
   };
 
-  const doEquip = async (slot: 'primary' | 'alternate' = 'primary') => {
+  const doEquip = async (slot: 'primary' | 'alternate' | 'guard' = 'primary') => {
     if (!draft || !activeClass) return;
-    setBusy(slot === 'alternate' ? 'equipAlt' : 'equip');
+    setBusy(slot === 'alternate' ? 'equipAlt' : slot === 'guard' ? 'equipGuard' : 'equip');
     try {
       // equip always works from a saved design; save first when needed
       let id = loadedId;
@@ -211,7 +201,11 @@ export default function Studio() {
       // the profile store's realtime listener picks up the new snapshot
       const corpsName = activeOption?.corps.corpsName || 'your corps';
       toast.success(
-        slot === 'alternate' ? `Alternate look set for ${corpsName}` : `Equipped on ${corpsName}`
+        slot === 'alternate'
+          ? `Alternate look set for ${corpsName}`
+          : slot === 'guard'
+            ? `Guard look set for ${corpsName}'s show`
+            : `Equipped on ${corpsName}`
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to equip design');
@@ -245,14 +239,15 @@ export default function Studio() {
     }
   };
 
-  const doClearAlt = async () => {
+  const doClearSlot = async (slot: 'alternate' | 'guard') => {
     if (!activeClass) return;
-    setBusy('clearAlt');
+    const noun = slot === 'guard' ? 'guard look' : 'alternate look';
+    setBusy(slot === 'guard' ? 'clearGuard' : 'clearAlt');
     try {
-      await equipUniformDesign({ designId: null, corpsClass: activeClass, slot: 'alternate' });
-      toast.success('Alternate look cleared');
+      await equipUniformDesign({ designId: null, corpsClass: activeClass, slot });
+      toast.success(`${noun.charAt(0).toUpperCase()}${noun.slice(1)} cleared`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to clear the alternate look');
+      toast.error(err instanceof Error ? err.message : `Failed to clear the ${noun}`);
     } finally {
       setBusy(null);
     }
@@ -534,126 +529,25 @@ export default function Studio() {
 
                 <PackAdvisoryBanner figure={draft.figure} owned={ownedPacks} />
 
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  <button
-                    type="button"
-                    onClick={() => void doSave(false)}
-                    disabled={busy !== null || !dirty}
-                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                  >
-                    {busy === 'save' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Save className="w-3.5 h-3.5" />
-                    )}
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void doEquip()}
-                    disabled={busy !== null}
-                    className="h-10 px-3 bg-interactive text-white text-[11px] font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-40 flex items-center justify-center gap-1.5"
-                  >
-                    {busy === 'equip' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Check className="w-3.5 h-3.5" />
-                    )}
-                    Equip
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void doSave(true)}
-                    disabled={busy !== null}
-                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40"
-                  >
-                    Save as new
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void doGenerateAvatar()}
-                    disabled={busy !== null}
-                    title="Optional: regenerate the AI avatar from this corps' saved design"
-                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    AI avatar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void doGetCode()}
-                    disabled={busy !== null}
-                    title="Mint a shareable code — anyone can enter it to import this design"
-                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                  >
-                    {busy === 'code' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                    Get code
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void doShareCard()}
-                    disabled={busy !== null}
-                    title="Export a field-entrance share card with your uniform code on it"
-                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                  >
-                    {busy === 'card' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Share2 className="w-3.5 h-3.5" />
-                    )}
-                    Share card
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void doPublish()}
-                    disabled={busy !== null}
-                    title="Share this design in the public Design Exchange gallery"
-                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                  >
-                    {busy === 'publish' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Store className="w-3.5 h-3.5" />
-                    )}
-                    Publish
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void doEquip('alternate')}
-                    disabled={busy !== null}
-                    title="Set this design as the corps' optional second look (finals week / exhibition)"
-                    className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                  >
-                    {busy === 'equipAlt' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Check className="w-3.5 h-3.5" />
-                    )}
-                    Equip as alt
-                  </button>
-                  {activeOption?.corps.uniformAlt && (
-                    <button
-                      type="button"
-                      onClick={() => void doClearAlt()}
-                      disabled={busy !== null}
-                      title={`Remove the alternate look (currently ${activeOption.corps.uniformAlt.name})`}
-                      className="h-10 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40 flex items-center justify-center gap-1.5"
-                    >
-                      {busy === 'clearAlt' ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : null}
-                      Clear alt
-                    </button>
-                  )}
-                </div>
+                <StudioActionGrid
+                  busy={busy}
+                  dirty={dirty}
+                  altName={activeOption?.corps.uniformAlt?.name}
+                  guardName={activeOption?.corps.uniformGuard?.name}
+                  onSave={(asNew) => void doSave(asNew)}
+                  onEquip={(slot) => void doEquip(slot)}
+                  onClearSlot={(slot) => void doClearSlot(slot)}
+                  onAvatar={() => void doGenerateAvatar()}
+                  onGetCode={() => void doGetCode()}
+                  onShareCard={() => void doShareCard()}
+                  onPublish={() => void doPublish()}
+                />
                 <p className="text-[10px] text-muted mt-2">
                   Saving stores the design in your wardrobe. Equipping puts it on{' '}
                   {activeOption?.corps.corpsName} everywhere; the alternate is an optional second
-                  look shown on your profile. The AI avatar is optional and never automatic.
+                  look shown on your profile. The guard look dresses this season&rsquo;s show — try
+                  the Guard dress silhouette — and resets with the show at rollover. The AI avatar
+                  is optional and never automatic.
                 </p>
               </div>
 

@@ -209,6 +209,16 @@ describe("validateDesign", () => {
     assert.deepEqual(validateDesign(d6), []);
   });
 
+  test("accepts the guard dress torso style and rejects unknown styles", () => {
+    const d = validDesign();
+    d.figure.torsoStyle = "dress";
+    assert.deepEqual(validateDesign(d), []);
+
+    const d2 = validDesign();
+    d2.figure.torsoStyle = "toga";
+    assert.match(validateDesign(d2).join(";"), /torsoStyle/);
+  });
+
   test("accepts the design-house pieces: busby, cape, iridescent, lamé", () => {
     const d = validDesign();
     d.figure.hatType = "busby";
