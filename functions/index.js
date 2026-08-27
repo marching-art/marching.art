@@ -225,6 +225,7 @@ const {
 } = require("./src/scheduled/lifetimeLeaderboard");
 const { economyStatsJob } = require("./src/scheduled/economyStats");
 const { retentionStatsJob } = require("./src/scheduled/retentionStats");
+const { integrityStatsJob } = require("./src/scheduled/integrityStats");
 const {
   scheduledRivalsUpdate,
   updateRivalsNow,
@@ -456,6 +457,7 @@ module.exports = {
   scheduledLifetimeLeaderboardUpdate,
   economyStatsJob,
   retentionStatsJob,
+  integrityStatsJob,
 
   // Rivals
   scheduledRivalsUpdate,

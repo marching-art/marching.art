@@ -208,6 +208,19 @@ exports.manualTrigger = onCall({
           `D7 ${pct(d7.rate)} (${d7.retained}/${d7.eligible}).`,
       };
     }
+    case "updateIntegrityStats": {
+      const { updateIntegrityStats } = require("../helpers/integrityStats");
+      const stats = await updateIntegrityStats(getDb());
+      const s = stats.summary;
+      return {
+        success: true,
+        message:
+          `Integrity refreshed: ${stats.totalAccounts} accounts, ` +
+          `${s.emailClusterCount} email clusters (largest ${s.largestEmailCluster}), ` +
+          `${s.signupBurstCount} signup bursts, ${s.attributeClusterCount} attribute clusters, ` +
+          `${s.watchlistCount} on the multi-signal watchlist.`,
+      };
+    }
     case "processAndArchiveOffSeasonScores": {
       // force=true bypasses the already-processed guard for reprocessing after
       // a data fix — it re-applies coin/league-record increments, so it is

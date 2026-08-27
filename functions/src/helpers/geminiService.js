@@ -265,10 +265,10 @@ MUST AVOID (these will make the image incorrect):
  * ensure accurate imagery, and can ground the result in real reference photos.
  *
  * @param {string} prompt - Detailed image prompt
- * @param {Object} options - Optional configuration
- * @param {string} options.model - Override the default model id
- * @param {string} options.aspectRatio - Output aspect ratio (default: '16:9')
- * @param {Array<{data: string, mimeType: string}>} options.referenceImages -
+ * @param {Object} [options] - Optional configuration
+ * @param {string} [options.model] - Override the default model id
+ * @param {string} [options.aspectRatio] - Output aspect ratio (default: '16:9')
+ * @param {Array<{data: string, mimeType: string}>} [options.referenceImages] -
  *   Optional reference images (base64 data without the data: prefix) used to
  *   ground uniform/instrumentation in real photos.
  * @returns {Promise<string>} Base64 data URL of the generated image, or null
