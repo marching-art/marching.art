@@ -34,6 +34,50 @@ const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
 const { rebuildStandingsFromMatchups } = require("../helpers/leagueStandings");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
 
+/**
+ * Input validation for overrideMatchupResult, in the order the callable fires
+ * it — required/typed fields, a well-formed league id, a known corps class, and
+ * a non-empty winner token. Pure: throws the same HttpsError the callable
+ * would, so it pins without a Firestore mock.
+ */
+function validateOverrideRequest({ leagueId, week, corpsClass, matchupIndex, winner }) {
+  if (!leagueId || !Number.isInteger(week) || !corpsClass || !Number.isInteger(matchupIndex)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "A league ID, week, corps class, and matchup index are required."
+    );
+  }
+  assertDocId(leagueId, "league ID");
+  if (!MATCHUP_CLASSES.includes(corpsClass)) {
+    throw new HttpsError("invalid-argument", "Unknown corps class.");
+  }
+  // `winner` is a participant uid, or 'tie'. Anything else would put a value
+  // into the matchup document that the standings fold cannot interpret.
+  if (typeof winner !== "string" || !winner) {
+    throw new HttpsError("invalid-argument", "A winner (a director's ID, or 'tie') is required.");
+  }
+}
+
+/**
+ * Guards the target matchup once it has been read: it must exist, must not be a
+ * bye (a bye has no opponent and no result), and the winner must be one of the
+ * two directors actually in it (or 'tie'). Pure.
+ */
+function assertValidMatchupResult({ matchup, winner }) {
+  if (!matchup) {
+    throw new HttpsError("not-found", "That matchup does not exist.");
+  }
+  if (matchup.isBye || !matchup.pair?.[1]) {
+    throw new HttpsError("failed-precondition", "A bye has no result to override.");
+  }
+  if (winner !== "tie" && !matchup.pair.includes(winner)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "The winner has to be one of the two directors in the matchup."
+    );
+  }
+}
+
 /** Read every `week-N` document and rewrite standings/current from them. */
 async function rebuildAndWriteStandings(db, leagueId, members) {
   const snapshot = await db.collection(paths.leagueMatchups(leagueId)).get();
@@ -84,21 +128,7 @@ exports.overrideMatchupResult = onCall({ cors: true }, async (request) => {
   const { leagueId, week, corpsClass, matchupIndex, winner } = request.data || {};
   const uid = request.auth.uid;
 
-  if (!leagueId || !Number.isInteger(week) || !corpsClass || !Number.isInteger(matchupIndex)) {
-    throw new HttpsError(
-      "invalid-argument",
-      "A league ID, week, corps class, and matchup index are required."
-    );
-  }
-  assertDocId(leagueId, "league ID");
-  if (!MATCHUP_CLASSES.includes(corpsClass)) {
-    throw new HttpsError("invalid-argument", "Unknown corps class.");
-  }
-  // `winner` is a participant uid, or 'tie'. Anything else would put a value
-  // into the matchup document that the standings fold cannot interpret.
-  if (typeof winner !== "string" || !winner) {
-    throw new HttpsError("invalid-argument", "A winner (a director's ID, or 'tie') is required.");
-  }
+  validateOverrideRequest({ leagueId, week, corpsClass, matchupIndex, winner });
 
   const db = getDb();
   await assertWriteBudget(db, uid, "leagueAdmin", { max: 20 });
@@ -116,18 +146,7 @@ exports.overrideMatchupResult = onCall({ cors: true }, async (request) => {
     const key = `${corpsClass}Matchups`;
     const matchups = data[key] || [];
     const matchup = matchups[matchupIndex];
-    if (!matchup) {
-      throw new HttpsError("not-found", "That matchup does not exist.");
-    }
-    if (matchup.isBye || !matchup.pair?.[1]) {
-      throw new HttpsError("failed-precondition", "A bye has no result to override.");
-    }
-    if (winner !== "tie" && !matchup.pair.includes(winner)) {
-      throw new HttpsError(
-        "invalid-argument",
-        "The winner has to be one of the two directors in the matchup."
-      );
-    }
+    assertValidMatchupResult({ matchup, winner });
 
     const updated = [...matchups];
     updated[matchupIndex] = {
@@ -166,3 +185,5 @@ exports.overrideMatchupResult = onCall({ cors: true }, async (request) => {
 });
 
 module.exports.rebuildAndWriteStandings = rebuildAndWriteStandings;
+module.exports.validateOverrideRequest = validateOverrideRequest;
+module.exports.assertValidMatchupResult = assertValidMatchupResult;

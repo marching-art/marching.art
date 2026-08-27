@@ -49,18 +49,102 @@ function isInvitationExpired(invitation, now = Date.now()) {
   return millis < now;
 }
 
-exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-
-  const { leagueId, inviteeUid, message } = request.data || {};
-  const inviterUid = request.auth.uid;
-
+/**
+ * Required-field and self-invite validation for inviteDirectorToLeague. Pure,
+ * runs before any Firestore read so a malformed call never burns budget.
+ */
+function validateInviteRequest({ leagueId, inviteeUid, inviterUid }) {
   if (!leagueId || !inviteeUid) {
     throw new HttpsError("invalid-argument", "leagueId and inviteeUid are required.");
   }
   if (inviteeUid === inviterUid) {
     throw new HttpsError("invalid-argument", "You cannot invite yourself.");
   }
+}
+
+/**
+ * The post-read guards for sending an invitation, in the order they fire.
+ * Throws the same HttpsError the callable would; returns nothing when the
+ * invite is allowed. Pure — the invitee's profile is reduced to two booleans so
+ * the rules pin without a Firestore mock.
+ *
+ *  1. only a commissioner may invite;
+ *  2. an existing member cannot be re-invited;
+ *  3. a full league (roster >= maxMembers, default 20) refuses new invites;
+ *  4. the invitee must have a profile;
+ *  5. a director who has turned invitations off cannot be invited;
+ *  6. one live pending invitation at a time — a still-valid pending offer
+ *     blocks a duplicate (an expired one does not).
+ *
+ * @param {object} params
+ * @param {object} params.league
+ * @param {string} params.inviterUid
+ * @param {string} params.inviteeUid
+ * @param {boolean} params.inviteeExists
+ * @param {boolean|undefined} params.inviteeAcceptingInvites  directorInfo.acceptingLeagueInvites
+ * @param {object|null} params.existingInvitation             the current invitation doc, if any
+ * @param {number} [params.now]
+ */
+function assertCanSendInvitation({
+  league,
+  inviterUid,
+  inviteeUid,
+  inviteeExists,
+  inviteeAcceptingInvites,
+  existingInvitation,
+  now = Date.now(),
+}) {
+  if (!isLeagueCommissioner(league, inviterUid)) {
+    throw new HttpsError("permission-denied", "Only a league commissioner can send invitations.");
+  }
+  if ((league.members || []).includes(inviteeUid)) {
+    throw new HttpsError("already-exists", "That director is already a member of this league.");
+  }
+  if ((league.members || []).length >= (league.maxMembers || 20)) {
+    throw new HttpsError("failed-precondition", "This league is full.");
+  }
+  if (!inviteeExists) {
+    throw new HttpsError("not-found", "Director profile not found.");
+  }
+  // Only an explicit opt-out (=== false) blocks; undefined means "never set it",
+  // which is still accepting.
+  if (inviteeAcceptingInvites === false) {
+    throw new HttpsError("permission-denied", "This director is not accepting league invitations.");
+  }
+  if (
+    existingInvitation &&
+    existingInvitation.status === "pending" &&
+    !isInvitationExpired(existingInvitation, now)
+  ) {
+    throw new HttpsError(
+      "already-exists",
+      "There is already a pending invitation for this director."
+    );
+  }
+}
+
+/**
+ * The invitee-side guards for accepting or declining, in order: an invitation
+ * can only be answered by its addressee, and only while it is still pending.
+ * Expiry is checked separately by the caller because an expired invitation is
+ * also *written* to 'expired' before the rejection.
+ */
+function assertCanRespondToInvitation({ invitation, uid }) {
+  if (invitation.inviteeUid !== uid) {
+    throw new HttpsError("permission-denied", "This invitation is not for you.");
+  }
+  if (invitation.status !== "pending") {
+    throw new HttpsError("failed-precondition", `Invitation already ${invitation.status}.`);
+  }
+}
+
+exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
+  assertAuth(request);
+
+  const { leagueId, inviteeUid, message } = request.data || {};
+  const inviterUid = request.auth.uid;
+
+  validateInviteRequest({ leagueId, inviteeUid, inviterUid });
   const trimmedMessage = typeof message === 'string' ? message.trim().slice(0, 280) : '';
 
   const db = getDb();
@@ -84,28 +168,17 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
   if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
   const leagueData = leagueDoc.data();
 
-  if (!isLeagueCommissioner(leagueData, inviterUid)) {
-    throw new HttpsError("permission-denied", "Only a league commissioner can send invitations.");
-  }
-  if ((leagueData.members || []).includes(inviteeUid)) {
-    throw new HttpsError("already-exists", "That director is already a member of this league.");
-  }
-  if ((leagueData.members || []).length >= (leagueData.maxMembers || 20)) {
-    throw new HttpsError("failed-precondition", "This league is full.");
-  }
-
-  if (!inviteeDoc.exists) throw new HttpsError("not-found", "Director profile not found.");
-  const inviteeData = inviteeDoc.data();
-  const accepting = inviteeData.directorInfo?.acceptingLeagueInvites;
-  if (accepting === false) {
-    throw new HttpsError("permission-denied", "This director is not accepting league invitations.");
-  }
-
   const existing = await invitationRef.get();
-  if (existing.exists && existing.data().status === 'pending'
-      && !isInvitationExpired(existing.data())) {
-    throw new HttpsError("already-exists", "There is already a pending invitation for this director.");
-  }
+  assertCanSendInvitation({
+    league: leagueData,
+    inviterUid,
+    inviteeUid,
+    inviteeExists: inviteeDoc.exists,
+    inviteeAcceptingInvites: inviteeDoc.exists
+      ? inviteeDoc.data().directorInfo?.acceptingLeagueInvites
+      : undefined,
+    existingInvitation: existing.exists ? existing.data() : null,
+  });
 
   const inviterName = inviterDoc.exists
     ? (inviterDoc.data().displayName || inviterDoc.data().username || 'A director')
@@ -163,12 +236,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   const invitationDoc = await invitationRef.get();
   if (!invitationDoc.exists) throw new HttpsError("not-found", "No invitation found.");
   const invitation = invitationDoc.data();
-  if (invitation.inviteeUid !== uid) {
-    throw new HttpsError("permission-denied", "This invitation is not for you.");
-  }
-  if (invitation.status !== 'pending') {
-    throw new HttpsError("failed-precondition", `Invitation already ${invitation.status}.`);
-  }
+  assertCanRespondToInvitation({ invitation, uid });
   if (isInvitationExpired(invitation)) {
     await invitationRef.update({
       status: 'expired',
@@ -320,3 +388,6 @@ exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
 
 module.exports.INVITATION_TTL_MS = INVITATION_TTL_MS;
 module.exports.isInvitationExpired = isInvitationExpired;
+module.exports.validateInviteRequest = validateInviteRequest;
+module.exports.assertCanSendInvitation = assertCanSendInvitation;
+module.exports.assertCanRespondToInvitation = assertCanRespondToInvitation;
