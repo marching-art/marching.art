@@ -30,6 +30,9 @@ import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
 import { getSoundSportRating } from '../utils/scoresUtils';
 import { toCanonicalClassKey } from '../utils/classUnlocks';
+import SeasonUniformSection, {
+  SeasonLookSwatches,
+} from '../components/uniform/SeasonUniformSection';
 
 // Season detail (score, weekly breakdown, lineup) for one archived season.
 // Rendered in the desktop side panel and, on mobile, inside a full-screen sheet
@@ -102,6 +105,9 @@ const SeasonDetail = ({ season, detail, isSoundSportView, onClose }) => {
             <p className="text-xl font-mono font-bold text-white">{season.showsAttended || 0}</p>
           </div>
         </div>
+
+        {/* Uniform History (docs/UNIFORM_STUDIO.md §6) */}
+        <SeasonUniformSection compact={season.uniform} snapshot={detail.uniformSnapshot} />
 
         {/* Weekly Performance */}
         {weeks.length > 0 && (
@@ -697,6 +703,7 @@ const CorpsHistory = () => {
                                 >
                                   {getClassDisplayName(season.corpsClass)}
                                 </span>
+                                <SeasonLookSwatches uniform={season.uniform} />
                               </div>
                               <div className="flex items-center gap-4 text-xs text-muted/60">
                                 <span className="flex items-center gap-1">

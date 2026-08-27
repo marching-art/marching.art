@@ -996,6 +996,32 @@ await check(
   assertFails(getDoc(doc(authed(), `artifacts/${APP}/design_exchange_payouts/${ALICE}`)))
 );
 
+// Design Briefs (artifacts/{app}/design_briefs): the weekly styling-contest
+// leaderboard — public bragging rights, callable-only writes.
+const briefEntryPath = `artifacts/${APP}/design_briefs/2026-W35/entries/${ALICE}`;
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), briefEntryPath), {
+    score: 85,
+    username: 'alice',
+    designName: 'Brief Entry',
+  });
+});
+
+await check(
+  'anyone (even signed out) can read the Design Brief leaderboard',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), briefEntryPath)))
+);
+
+await check(
+  'brief entries cannot be written directly (callable-only)',
+  assertFails(
+    setDoc(doc(mallory(), `artifacts/${APP}/design_briefs/2026-W35/entries/mallory-uid`), {
+      score: 100,
+      username: 'mallory',
+    })
+  )
+);
+
 // =============================================================================
 // CAPTION LEDGER — the private per-caption fantasy recap the nightly scorer
 // writes for each director's own outings. The public fantasy recap keeps

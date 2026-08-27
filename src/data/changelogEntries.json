@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-26-brief-and-history",
+    "date": "2026-08-26",
+    "title": "The Weekly Design Brief — and your uniforms enter the history books",
+    "category": "feature",
+    "summary": "Two additions for the long haul. Every Monday a new Design Brief lands on the Exchange: a themed styling challenge (\"Midnight Classic\", \"Thunderstorm\", \"Ghost Corps\"…) that scores any of your saved designs automatically against a visible checklist — no judges, no mystery, just a rubric to chase. Your first entry each week earns CorpsCoin, and the week's board is public. And starting with the next season rollover, the uniform you have equipped is stamped into that season's archive: your Corps History timeline now shows the look you wore each season, forever.",
+    "highlights": [
+      "Sixteen briefs rotate weekly; the checklist shows exactly which looks score and for how much.",
+      "Resubmit as often as you like — your week's best score stands, and only the first entry pays.",
+      "Season archives now carry each corps' equipped uniform: swatches on the timeline, the full figure in the season detail.",
+      "Under the hood: equipped uniforms (and alternates) now survive season rollover correctly."
+    ]
+  },
+  {
     "id": "2026-08-26-design-exchange",
     "date": "2026-08-26",
     "title": "The Design Exchange: a public gallery for your uniforms",

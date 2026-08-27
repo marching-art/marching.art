@@ -5,6 +5,9 @@ import { MemoryRouter } from 'react-router-dom';
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ user: { uid: 'viewer-uid' } }),
 }));
+// The Brief card has its own test (DesignBriefCard.test.tsx); stubbing it
+// keeps this file about the gallery.
+vi.mock('../components/uniform/DesignBriefCard', () => ({ default: () => null }));
 vi.mock('../api/designExchange', () => ({
   listExchange: vi.fn(),
   fetchMyLikes: vi.fn().mockResolvedValue(new Set()),

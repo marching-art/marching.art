@@ -25,11 +25,36 @@
  * shape is identical whether it was archived before or after this change.
  */
 
+const { colorwayStrip } = require("./uniformValidation");
+
 // The archived fields that move off the profile summary row into the detail
 // doc. weeklyScores is included even though nothing currently writes it (see
 // helpers/seasonParticipation.js) — if a writer ever populates it, that bulky
 // per-week map belongs with the other detail, not on the hot profile document.
-const HEAVY_FIELDS = ["lineup", "selectedShows", "weeklyScores"];
+// uniformSnapshot is the season's full equipped-uniform figure (the Uniform
+// History timeline renders it when a director drills into the season); the
+// compact `uniform` row ({designId, name, colors}) stays on the summary.
+const HEAVY_FIELDS = ["lineup", "selectedShows", "weeklyScores", "uniformSnapshot"];
+
+/**
+ * The equipped uniform reduced to what the seasonHistory SUMMARY row keeps:
+ * design id, look name, and a validated [primary, secondary, accent] triple
+ * (~100 bytes — the timeline list renders swatches without loading detail).
+ * Null when nothing valid is equipped, so pre-Studio seasons stay unchanged.
+ *
+ * @param {Object|undefined} equipped corps.{class}.uniform snapshot.
+ * @returns {{designId: string|null, name: string, colors: string[]} | null}
+ */
+function compactEquippedUniform(equipped) {
+  if (!equipped || typeof equipped !== "object") return null;
+  const colors = colorwayStrip(equipped.colorway);
+  if (!colors) return null;
+  return {
+    designId: typeof equipped.designId === "string" ? equipped.designId : null,
+    name: typeof equipped.name === "string" && equipped.name ? equipped.name : "Equipped uniform",
+    colors,
+  };
+}
 
 /**
  * Stable detail-doc id for a season a corps competed in. Keyed by the season
@@ -91,4 +116,4 @@ function splitSeasonRecord(record) {
   return { summary, detail: hasDetail ? detail : null };
 }
 
-module.exports = { HEAVY_FIELDS, seasonDetailId, splitSeasonRecord };
+module.exports = { HEAVY_FIELDS, seasonDetailId, splitSeasonRecord, compactEquippedUniform };

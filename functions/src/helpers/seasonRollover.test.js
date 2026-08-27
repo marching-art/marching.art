@@ -275,6 +275,62 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.deepEqual(aDetail.data.lineup, { GE1: "Phantom Regiment|2024" });
   });
 
+  test("equipped uniforms survive rollover and stamp the Uniform History", async () => {
+    const equipped = {
+      designId: "d1",
+      name: "2026 Finals Look",
+      colorway: { primary: "#101c33", secondary: "#d7dde2", accent: "#2f6fd0", metal: "silver" },
+      figure: { skin: "#c9a074", jacket: "#101c33" },
+      equippedAt: "2026-08-01T00:00:00.000Z",
+    };
+    const alt = { ...equipped, designId: "d2", name: "Exhibition Look" };
+    const { db, writes } = makeFakeDb({
+      profiles: [
+        {
+          uid: "alice",
+          data: {
+            corps: {
+              worldClass: {
+                ...participatingCorps(90),
+                uniform: equipped,
+                uniformAlt: alt,
+                avatarSource: "custom",
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("alice")
+    ).data;
+
+    // The identity uniforms ride into the new season untouched...
+    assert.deepEqual(update.corps.worldClass.uniform, equipped);
+    assert.deepEqual(update.corps.worldClass.uniformAlt, alt);
+    assert.equal(update.corps.worldClass.avatarSource, "custom");
+
+    // ...the summary row keeps only the compact look (timeline swatches)...
+    const summary = update.corps.worldClass.seasonHistory[0];
+    assert.deepEqual(summary.uniform, {
+      designId: "d1",
+      name: "2026 Finals Look",
+      colors: ["#101c33", "#d7dde2", "#2f6fd0"],
+    });
+    assert.equal(summary.uniformSnapshot, undefined, "full figure must not ride the summary");
+
+    // ...and the full renderable snapshot lands on the seasonDetail doc.
+    const detail = writes.find(
+      (w) =>
+        w.type === "set" &&
+        w.path === `artifacts/${NS}/users/alice/seasonDetail/old-season__worldClass`
+    );
+    assert.deepEqual(detail.data.uniformSnapshot.figure, equipped.figure);
+    assert.equal(detail.data.uniformSnapshot.name, "2026 Finals Look");
+  });
+
   test("a profile with only a lineup-only corps earns nothing and totalSeasons stays flat", async () => {
     const { db, writes } = makeFakeDb({
       profiles: [

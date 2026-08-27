@@ -129,6 +129,7 @@ const {
   deleteUniformDesign,
   mintUniformCode,
 } = require("./src/callable/uniformStudio");
+const { getDesignBrief, submitDesignBrief } = require("./src/callable/designBrief");
 const {
   publishUniformDesign,
   unpublishUniformDesign,
@@ -575,6 +576,10 @@ module.exports = {
   saveExchangeDesign,
   reportExchangeDesign,
   adminRemoveExchangeDesign,
+
+  // Weekly Design Brief
+  getDesignBrief,
+  submitDesignBrief,
 
   // Avatar Generation
   generateCorpsAvatar,

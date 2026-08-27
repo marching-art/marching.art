@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { Download, Flag, Heart, Loader2, Palette, Store } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UniformFigure from '../components/uniform/UniformFigure';
+import DesignBriefCard from '../components/uniform/DesignBriefCard';
 import {
   fetchMyLikes,
   likeExchangeDesign,
@@ -251,6 +252,9 @@ export default function Exchange() {
           </Link>
           .
         </p>
+
+        {/* This week's styling challenge (docs/UNIFORM_STUDIO.md §7.4) */}
+        <DesignBriefCard uid={uid} />
 
         {loading ? (
           <div className="flex justify-center py-16">

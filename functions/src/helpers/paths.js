@@ -45,6 +45,10 @@ const paths = {
   exchangeSave: (entryId, uid) => `artifacts/${ns()}/design_exchange/${entryId}/saves/${uid}`,
   exchangeReport: (entryId, uid) => `artifacts/${ns()}/design_exchange/${entryId}/reports/${uid}`,
   exchangePayout: (uid) => `artifacts/${ns()}/design_exchange_payouts/${uid}`,
+  // Weekly Design Brief (§7.4): world-readable per-week leaderboard entries,
+  // written only by submitDesignBrief.
+  briefEntries: (weekId) => `artifacts/${ns()}/design_briefs/${weekId}/entries`,
+  briefEntry: (weekId, uid) => `artifacts/${ns()}/design_briefs/${weekId}/entries/${uid}`,
   userNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications`,
   userLeagueNotifications: (uid) => `artifacts/${ns()}/users/${uid}/notifications/leagues`,
   userEmailLog: (uid) => `artifacts/${ns()}/users/${uid}/email_log`,
