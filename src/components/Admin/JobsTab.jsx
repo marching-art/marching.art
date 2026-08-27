@@ -22,6 +22,7 @@ import {
   Users,
 } from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';
+import IntegrityPanel from './IntegrityPanel';
 
 // Mint-vs-sink readout — the one dashboard the closed-loop economy needs
 // (written weekly by economyStatsJob; refresh on demand with the job below).
@@ -272,6 +273,13 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       icon: Users,
     },
     {
+      id: 'updateIntegrityStats',
+      name: 'Refresh Integrity Signals',
+      description:
+        'Recompute the alt/multi-account signals above — email-alias clusters, signup bursts, shared-identity clusters (also runs weekly, Monday 6 AM ET). Detection only; acts on nothing',
+      icon: AlertTriangle,
+    },
+    {
       id: 'processPodiumStage',
       name: 'Run Podium Stage',
       description:
@@ -320,7 +328,13 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     setLoading(jobId);
     try {
       await callAdminFunction('manualTrigger', { jobName: jobId });
-      if (jobId === 'updateEconomyStats') setStatsRefresh((n) => n + 1);
+      if (
+        jobId === 'updateEconomyStats' ||
+        jobId === 'updateRetentionStats' ||
+        jobId === 'updateIntegrityStats'
+      ) {
+        setStatsRefresh((n) => n + 1);
+      }
     } finally {
       setLoading(null);
     }
@@ -438,6 +452,9 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
 
       {/* Economy instrumentation — read before touching prices */}
       <EconomyStatsPanel refreshKey={statsRefresh} />
+
+      {/* Account-integrity signals — alt/multi-account detection for review */}
+      <IntegrityPanel refreshKey={statsRefresh} />
 
       {/* News Generation - Trigger for specific day */}
       <div className="bg-surface-card border border-line overflow-hidden">
