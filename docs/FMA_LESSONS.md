@@ -231,16 +231,18 @@ keep our update cadence visible.
    automated** (the `/updates` page; the changelog now writes itself on merge —
    callout under Lesson 2). No manual upkeep.
 3. ~~**Public cross-league community feed**~~ — **decided against**, and the
-   fallback **Discord bridge is now ✅ shipped.** Rather than a generic in-app
-   feed, the site posts its durable moments straight into the community's
+   fallback **Discord bridge is ✅ shipped and complete.** Rather than a generic
+   in-app feed, the site posts its durable moments straight into the community's
    existing Discord: published articles → `#news` and director press releases →
-   `#press-releases` (`functions/src/triggers/newsDiscord.js`), plus
-   lease-guarded `#announcements` posts for season start, lineup lock, and
-   championship week, and score-drop, fan-favorite, hosted-event, and
-   registration announcements (the `*Discord`/`*Announce` helpers under
-   `functions/src/helpers/`). The one unbuilt piece the old note named — a post
-   at the moment a **champion is crowned** (season _start_ already posts) — is
-   the only Discord follow-up left.
+   `#press-releases` (`functions/src/triggers/newsDiscord.js`), lease-guarded
+   `#announcements` posts for season start, lineup lock, championship week, and
+   registration deadlines, and — on the scores channel — the nightly score drop,
+   all-time records, the Fan Favorite ballot, hosted-event and Eastern Classic
+   lineups, and the **season champions** post on finals night
+   (`buildChampionsPayload` / `runChampionsPost` in
+   `functions/src/helpers/scoreDrop.js`, fired once per season under its own
+   lease by `runDiscordScoreDrop` on day 49). Nothing on the Discord bridge is
+   outstanding.
 4. **Credited community writers/commentators** (Lesson 4) — **✅ shipped**
    (automatic writer tiers; callout under Lesson 4).
 5. **Creative/cosmetic identity tools** (Lesson 5) — sustained, decade-long
@@ -250,13 +252,15 @@ keep our update cadence visible.
    (detect → surface → restrict; callout under Lesson 3). Keep extending it in
    step with economy growth.
 
-**Where that leaves the next build.** Of the tracks above, the two with the most
-open, high-leverage work left are **League QA hardening** (Lesson 6 is our
-strongest area, yet `leagueRoster.js`, `leagueInvitations.js`, and
-`leagueResults.js` ship with no unit tests — and invites, member visibility, and
-"remove from league" are exactly FMA's #1 bug cluster in §7) and the **creative
-identity lane** (Lesson 5). League QA is the higher-confidence, lower-risk next
-step: it protects the social spine against the failures FMA actually hit.
+**Where that leaves the next build.** With the Discord bridge and the
+anti-abuse loop both shipped, the **creative identity lane** (Lesson 5) is the
+standing big-value build, and its cadence is already visible (uniform studio,
+design houses, prestige regalia). The recently-closed lower-risk work was
+**League QA hardening**: Lesson 6 is our strongest area, yet `leagueRoster.js`,
+`leagueInvitations.js`, and `leagueResults.js` — the callables behind FMA's #1
+bug cluster (§7: invites, member visibility, "remove from league") — had shipped
+with no unit tests. Their guard and refund logic is now extracted into pure,
+tested functions.
 
 ---
 
