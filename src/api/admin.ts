@@ -16,6 +16,7 @@ import {
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db, paths } from './client';
+import { createCallable } from './callable';
 import { queryClient, queryKeys } from '../lib/queryClient';
 import {
   getCorpsValues as getCorpsValuesRef,
@@ -316,6 +317,20 @@ export async function getHistoricalScoresMap(
 export async function getHistoricalScoresForYear(year: string | number): Promise<DocumentData[]> {
   return getHistoricalScoresForYearRef(year);
 }
+
+// =============================================================================
+// ACCOUNT MODERATION
+// =============================================================================
+
+/**
+ * Restrict (or un-restrict) an account from the zero-sum surfaces — Showcase
+ * entries/votes, league prediction pools, daily predictions. Admin-only,
+ * reversible; the enforcement lives in the backend assertNotRestricted guard.
+ */
+export const setAccountRestriction = createCallable<
+  { uid: string; restricted: boolean; reason?: string },
+  { success: boolean; uid: string; restricted: boolean }
+>('setAccountRestriction');
 
 // =============================================================================
 // FANTASY RECAPS

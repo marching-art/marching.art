@@ -26,6 +26,7 @@ const {
 const { generateSeasonSummaryArticle } = require("../helpers/newsSeasonSummary");
 const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
 const { assertAdmin } = require("../helpers/callableGuards");
+const { loadHistoricalYear } = require("../helpers/historicalScores");
 const { brevoApiKey } = require("../helpers/emailService");
 
 /**
@@ -757,13 +758,7 @@ async function handleFantasyRecapNews(recapData) {
  */
 async function fetchPreviousScores(db, year) {
   try {
-    const yearDoc = await db.collection("historical_scores").doc(year.toString()).get();
-
-    if (!yearDoc.exists) {
-      return null;
-    }
-
-    const data = yearDoc.data().data || [];
+    const data = await loadHistoricalYear(db, year);
 
     if (data.length < 2) {
       return null;

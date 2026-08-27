@@ -339,6 +339,14 @@ await check(
   assertFails(updateDoc(doc(authed(), profilePath), { customAvatarBanned: false }))
 );
 
+// moderation.restricted gates the zero-sum callables (assertNotRestricted); a
+// restricted alt must not be able to lift its own block by writing the field.
+await freshSeed();
+await check(
+  'owner cannot clear their own account restriction',
+  assertFails(updateDoc(doc(authed(), profilePath), { moderation: { restricted: false } }))
+);
+
 // Legacy Endowments: the recurring CorpsCoin sink. `legacy.total` renders on
 // public profiles and grants milestone titles, so a client write would mint a
 // free legacy and its honors without ever spending a coin.
@@ -1062,6 +1070,24 @@ await testEnv.withSecurityRulesDisabled(async (ctx) => {
 await check(
   'anyone (even signed out) can read finalized Showcase results',
   assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), showcaseResultsPath)))
+);
+
+// historical_scores/{year}/events — the sharded per-event score archive. Public
+// to read like the parent year doc; written only by the backend (Admin SDK).
+const histEventPath = `historical_scores/2019/events/evt1`;
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), `historical_scores/2019`), { sharded: true });
+  await setDoc(doc(ctx.firestore(), histEventPath), { eventName: 'Finals', scores: [] });
+});
+
+await check(
+  'anyone (even signed out) can read a sharded historical_scores event',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), histEventPath)))
+);
+
+await check(
+  'sharded historical_scores events cannot be written directly (backend only)',
+  assertFails(setDoc(doc(mallory(), histEventPath), { eventName: 'Forged' }))
 );
 
 await check(

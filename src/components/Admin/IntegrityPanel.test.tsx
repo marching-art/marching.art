@@ -1,14 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import IntegrityPanel from './IntegrityPanel';
 
-// The panel reads admin-stats/integrity directly via the Firestore client.
-// Mock the api db handle and the firestore doc/getDoc so no real client loads.
+// The panel reads admin-stats/integrity directly via the Firestore client and
+// calls the setAccountRestriction admin callable. Mock both plus toast so no
+// real client / network loads.
 vi.mock('../../api', () => ({ db: {} }));
 vi.mock('firebase/firestore', () => ({ doc: vi.fn(), getDoc: vi.fn() }));
+vi.mock('../../api/admin', () => ({ setAccountRestriction: vi.fn() }));
+vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 import { getDoc } from 'firebase/firestore';
+import { setAccountRestriction } from '../../api/admin';
 
 const mockGetDoc = vi.mocked(getDoc);
+const mockSetRestriction = vi.mocked(setAccountRestriction);
 
 const snap = (data: unknown) => ({ exists: () => data !== null, data: () => data }) as never;
 
@@ -74,6 +79,32 @@ describe('IntegrityPanel', () => {
     expect(screen.getByText(/not verdicts/i)).toBeInTheDocument();
     // A member without a username falls back to a short uid.
     expect(screen.getByText('@ring2')).toBeInTheDocument();
+  });
+
+  it('restricts a watchlisted account and reflects it locally', async () => {
+    mockGetDoc.mockResolvedValue(snap(sampleStats));
+    mockSetRestriction.mockResolvedValue({
+      data: { success: true, uid: 'u1', restricted: true },
+    } as never);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<IntegrityPanel />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Restrict' }));
+
+    await waitFor(() =>
+      expect(mockSetRestriction).toHaveBeenCalledWith({ uid: 'u1', restricted: true })
+    );
+    // The row flips to restricted and the control becomes Unrestrict.
+    expect(await screen.findByText('restricted')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unrestrict' })).toBeInTheDocument();
+  });
+
+  it('does not call the callable when the confirm is cancelled', async () => {
+    mockGetDoc.mockResolvedValue(snap(sampleStats));
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<IntegrityPanel />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Restrict' }));
+    expect(mockSetRestriction).not.toHaveBeenCalled();
   });
 
   it('prompts to run the job when no doc exists yet', async () => {

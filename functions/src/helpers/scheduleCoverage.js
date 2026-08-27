@@ -3,6 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { assertAdmin } = require("./callableGuards");
 const { isAllAgeEvent, isPlaceholderEvent, MIN_FIELD } = require("./learnedSchedules");
+const { loadHistoricalYear } = require("./historicalScores");
 const { midnightUtc } = require("./offSeasonHeritage");
 
 /**
@@ -42,11 +43,10 @@ async function buildScheduleCoverageReport(db) {
   const totals = { expected: 0, matched: 0, missing: 0, scraped: 0, learned: 0, allAgeLeak: 0 };
 
   for (const year of years) {
-    const [scoresDoc, schedDoc] = await Promise.all([
-      db.doc(`historical_scores/${year}`).get(),
+    const [scoreEvents, schedDoc] = await Promise.all([
+      loadHistoricalYear(db, year),
       db.doc(`historical_schedules/${year}`).get(),
     ]);
-    const scoreEvents = scoresDoc.exists ? (scoresDoc.data().data || []) : [];
     const schedEvents = schedDoc.exists ? (schedDoc.data().data || []) : [];
 
     const schedByKey = new Map(schedEvents.map((e) => [`${e.eventName}::${midnightUtc(e.date)}`, e]));

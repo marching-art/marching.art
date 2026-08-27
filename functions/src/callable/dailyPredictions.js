@@ -5,7 +5,7 @@ const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { calculateXPUpdates, seasonBaselineStamp } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
-const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+const { assertAuth, assertWriteBudget, assertNotRestricted } = require("../helpers/callableGuards");
 const { getGameDay } = require("../helpers/dailyChallenges");
 const {
   PREDICTION_QUESTIONS,
@@ -63,6 +63,7 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
   // Abuse throttle — far above any human rate (predictions are also
   // one-per-day server-side; this just stops unthrottled hammering).
   await assertWriteBudget(db, uid, "predictions", { max: 60 });
+  await assertNotRestricted(db, uid);
   const profileRef = db.doc(paths.userProfile(uid));
 
   try {

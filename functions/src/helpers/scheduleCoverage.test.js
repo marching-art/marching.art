@@ -26,9 +26,17 @@ describe("isExpectedEvent", () => {
 });
 
 function makeDb(docs, collections) {
+  // A year doc ref supporting the sharded read path: .get() for the parent
+  // (legacy `data` array) and .collection('events').get() for the shards
+  // (empty here — these fixtures store legacy in-array events only).
+  const yearRef = (name, id) => ({
+    get: async () => ({ exists: `${name}/${id}` in docs, data: () => docs[`${name}/${id}`] }),
+    collection: () => ({ get: async () => ({ docs: [] }) }),
+  });
   return {
     doc: (p) => ({ get: async () => ({ exists: p in docs, data: () => docs[p] }) }),
     collection: (name) => ({
+      doc: (id) => yearRef(name, id),
       listDocuments: async () => (collections[name] || []).map((id) => ({ id })),
     }),
   };

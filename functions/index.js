@@ -172,6 +172,7 @@ const {
   moderateComment,
   bulkModerateComments,
 } = require("./src/callable/commentModeration");
+const { setAccountRestriction } = require("./src/callable/accountModeration");
 const {
   updateProfile,
   updateUsername,
@@ -378,6 +379,7 @@ module.exports = {
   listCommentsForModeration,
   moderateComment,
   bulkModerateComments,
+  setAccountRestriction,
   getArticleEngagement,
 
   updateProfile,

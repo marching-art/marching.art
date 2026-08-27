@@ -1,148 +1,278 @@
 const { logger } = require("firebase-functions/v2");
-const { postOpsAlert } = require("./opsAlerts");
+const crypto = require("crypto");
 
-// Firestore hard-caps documents at 1 MiB, and historical_scores/{year}
-// accretes a whole season's events into one array — a season with an unusual
-// number of events would hit the cap as a hard write failure at 2 AM. Alert
-// while there is still headroom instead. (Sharding the year into a
-// subcollection is the real fix, deliberately out of scope here.)
-const SIZE_ALERT_BYTES = 700 * 1024;
+// historical_scores used to be one document per year holding the whole season's
+// events in a single `data` array. A full season lands near Firestore's 1 MiB
+// document cap, so the nightly merge would eventually hard-fail mid-season at
+// ~1:30 AM — the exact failure this file now designs away.
+//
+// The events are sharded into a subcollection: historical_scores/{year}/events/
+// {eventDocId}, one small document per event. Writes touch a single event doc
+// (O(1), no whole-array read-modify-write, structurally immune to the 1 MiB
+// cap). Reads still get a whole-year array — no reader ever wants one event
+// without the year (confirmed across every call site) — via loadHistoricalYear,
+// which UNIONS the sharded docs with any legacy in-array events so it stays
+// correct before, during, and after the one-time migration
+// (scripts/migrateHistoricalScoresToSubcollection.js). Once migration clears a
+// year's legacy `data`, that year is served purely from the subcollection.
+//
+// The parent historical_scores/{year} document is always materialized (with a
+// { sharded: true } marker) on first write, so whole-collection readers that
+// enumerate years via .get() still see every year.
+
+const EVENTS_SUBCOLLECTION = "events";
 
 /**
- * Read the ops webhook without throwing when the secret isn't bound to the
- * calling function (mirrors dciFetch's readApiKey). Returns "" — which
- * disables postOpsAlert — so the guard degrades to its logger.error line.
- * @returns {string}
+ * Parent year document ref.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string|number} year
+ * @returns {FirebaseFirestore.DocumentReference}
  */
-function readOpsWebhookUrl() {
-  try {
-    const { discordOpsWebhookUrl } = require("./discord");
-    return discordOpsWebhookUrl.value() || "";
-  } catch {
-    return "";
-  }
+function historicalYearRef(db, year) {
+  return db.collection("historical_scores").doc(String(year));
 }
 
 /**
- * Merge one scored event into the historical_scores/{year} document, inside a
- * transaction. Shared by the DCI and live-score recap pubsub handlers, which
- * previously each carried a byte-for-byte copy of this merge logic.
+ * The per-year events subcollection ref.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string|number} year
+ * @returns {FirebaseFirestore.CollectionReference}
+ */
+function historicalEventsRef(db, year) {
+  return historicalYearRef(db, year).collection(EVENTS_SUBCOLLECTION);
+}
+
+/**
+ * The instant an event is keyed on. Events are matched by name AND date; the
+ * date is normalized to an epoch so two encodings of the same instant match.
+ * Returns NaN for an unparseable date (callers fall back to the raw string).
+ */
+function eventInstant(date) {
+  return new Date(date).getTime();
+}
+
+/**
+ * Stable, collision-resistant Firestore document id for an event, derived from
+ * (eventName, instant). Deterministic so re-scraping the same event updates the
+ * same doc rather than duplicating it. Hashed because event names contain
+ * slashes and other characters illegal in a document id.
+ */
+function eventDocId(eventName, date) {
+  const ms = eventInstant(date);
+  const basis = Number.isNaN(ms)
+    ? `name:${eventName} raw:${String(date)}`
+    : `name:${eventName} ms:${ms}`;
+  return crypto.createHash("sha256").update(basis).digest("hex").slice(0, 40);
+}
+
+/** The in-memory dedupe key mirroring eventDocId's (name, instant) identity. */
+function eventMatchKey(event) {
+  const ms = eventInstant(event.date);
+  return Number.isNaN(ms)
+    ? `${event.eventName} raw:${String(event.date)}`
+    : `${event.eventName} ${ms}`;
+}
+
+/**
+ * Union two event lists on (name, date) identity, with `subEvents` (the sharded,
+ * authoritative copy) winning over `legacyEvents` (the pre-migration in-array
+ * copy) for any event present in both.
+ */
+function mergeEventLists(legacyEvents, subEvents) {
+  const byKey = new Map();
+  for (const e of legacyEvents || []) byKey.set(eventMatchKey(e), e);
+  for (const e of subEvents || []) byKey.set(eventMatchKey(e), e);
+  return [...byKey.values()];
+}
+
+/**
+ * Merge new scores into `base.scores` following the archive's rules. Returns
+ * `{ merged, changed }`; `merged` is a fresh object (no mutation of `base`).
  *
- * Merge rules (idempotent, additive — never overwrites existing data):
- *  - No year document yet     -> create it with this event.
- *  - Event not present         -> append it.
- *  - Event already present     -> add any missing corps, and fill only
- *                                 blank/zero captions on existing corps. If
- *                                 nothing changed, skip the write.
+ *  - New corps            -> appended.
+ *  - overwrite mode       -> existing corps' total + captions replaced outright.
+ *  - default (fill) mode  -> only blank/zero captions filled; existing non-zero
+ *                            values and the existing total are never touched.
+ */
+function mergeScoresInto(base, incoming, overwrite) {
+  const merged = { ...base, scores: [...(base.scores || [])] };
+  let changed = false;
+
+  // Backfill any top-level fields the base copy is missing (e.g. a base seeded
+  // from a sparse legacy row) from the incoming event.
+  for (const field of ["eventName", "date", "location", "offSeasonDay", "headerMap"]) {
+    if (merged[field] === undefined && incoming[field] !== undefined) {
+      merged[field] = incoming[field];
+      changed = true;
+    }
+  }
+
+  for (const newScore of incoming.scores || []) {
+    const idx = merged.scores.findIndex((s) => s.corps === newScore.corps);
+    if (idx === -1) {
+      merged.scores.push(newScore);
+      changed = true;
+      continue;
+    }
+    const existing = merged.scores[idx];
+    if (overwrite) {
+      merged.scores[idx] = {
+        ...existing,
+        score: newScore.score,
+        captions: { ...newScore.captions },
+      };
+      changed = true;
+      continue;
+    }
+    const captions = { ...(existing.captions || {}) };
+    let capChanged = false;
+    for (const caption in newScore.captions) {
+      if (newScore.captions[caption] > 0 && (!captions[caption] || captions[caption] === 0)) {
+        captions[caption] = newScore.captions[caption];
+        capChanged = true;
+      }
+    }
+    if (capChanged) {
+      merged.scores[idx] = { ...existing, captions };
+      changed = true;
+    }
+  }
+
+  return { merged, changed };
+}
+
+/**
+ * Merge one scored event into historical_scores/{year}, writing a single event
+ * document in the subcollection. Shared by the DCI and live-score recap pubsub
+ * handlers. Idempotent and additive; the signature is unchanged from the
+ * pre-sharding version so callers are untouched.
  *
- * Overwrite mode (`newEventData.overwrite === true`, used only by the admin
- * day-range backfill to CORRECT bad data): an existing corps' total score and
- * every caption are REPLACED with the freshly scraped values rather than only
- * filling blanks. New corps are still appended. Never enabled by the nightly or
- * deep-scrape paths, which omit the flag.
+ * Merge rules (see mergeScoresInto): no doc yet -> create it; event absent ->
+ * create the event doc; event present -> add missing corps and fill blank/zero
+ * captions (or, with `newEventData.overwrite === true`, replace total+captions
+ * outright — used only by the admin day-range backfill to correct bad data).
+ *
+ * Transition safety: if the event is not yet sharded but exists in the parent's
+ * legacy `data` array (the window between deploy and running the migration), it
+ * is seeded from that legacy row so no corps is lost; the sharded copy then wins
+ * on every subsequent read.
  *
  * @param {FirebaseFirestore.Firestore} db
- * @param {string|number} year - Calendar year; used as the document id.
+ * @param {string|number} year - Calendar year; the parent document id.
  * @param {Object} newEventData - { eventName, date, location, scores, headerMap, offSeasonDay, overwrite? }
- * @param {Object} [options]
- * @param {typeof postOpsAlert} [options.postAlert] - Injectable for tests.
  * @returns {Promise<void>}
  */
-async function mergeEventIntoHistoricalScores(db, year, newEventData, { postAlert = postOpsAlert } = {}) {
-  const docId = year.toString();
-  const yearDocRef = db.collection("historical_scores").doc(docId);
+async function mergeEventIntoHistoricalScores(db, year, newEventData) {
+  const yearRef = historicalYearRef(db, year);
+  const eventRef = historicalEventsRef(db, year).doc(
+    eventDocId(newEventData.eventName, newEventData.date)
+  );
+  const { overwrite, ...incoming } = newEventData;
 
-  // Every branch returns the serialized size of the year's data array (as
-  // written, or as-is when nothing changed) so the size guard below can warn
-  // before Firestore's 1 MiB cap turns the nightly archive into a hard fail.
-  const approxBytes = await db.runTransaction(async (transaction) => {
-    const yearDoc = await transaction.get(yearDocRef);
+  await db.runTransaction(async (transaction) => {
+    // Firestore requires all reads before any write.
+    const eventSnap = await transaction.get(eventRef);
+    const yearSnap = await transaction.get(yearRef);
 
-    if (!yearDoc.exists) {
-      logger.info(`Creating new historical_scores document for year ${year}.`);
-      transaction.set(yearDocRef, { data: [newEventData] });
-      return JSON.stringify([newEventData]).length;
-    }
+    let base = eventSnap.exists ? eventSnap.data() : null;
+    let seededFromLegacy = false;
 
-    const existingData = yearDoc.data().data || [];
-    const eventIndex = existingData.findIndex((event) =>
-      event.eventName === newEventData.eventName &&
-      new Date(event.date).getTime() === new Date(newEventData.date).getTime()
-    );
-
-    if (eventIndex === -1) {
-      const updatedData = [...existingData, newEventData];
-      logger.info(`Appending new event to historical_scores/${year}. Total events: ${updatedData.length}`);
-      transaction.update(yearDocRef, { data: updatedData });
-      return JSON.stringify(updatedData).length;
-    }
-
-    logger.info(`Event "${newEventData.eventName}" already exists. Checking for missing scores to merge.`);
-    const eventToUpdate = existingData[eventIndex];
-    let hasBeenUpdated = false;
-
-    for (const newScore of newEventData.scores) {
-      const existingScoreIndex = eventToUpdate.scores.findIndex((s) => s.corps === newScore.corps);
-
-      if (existingScoreIndex === -1) {
-        eventToUpdate.scores.push(newScore);
-        hasBeenUpdated = true;
-        logger.info(`Adding missing corps entry for ${newScore.corps}.`);
-      } else if (newEventData.overwrite) {
-        // Backfill/correct mode: replace the existing total + captions outright.
-        const existingScore = eventToUpdate.scores[existingScoreIndex];
-        existingScore.score = newScore.score;
-        existingScore.captions = { ...newScore.captions };
-        hasBeenUpdated = true;
-        logger.info(`Overwrote score + captions for ${newScore.corps}.`);
-      } else {
-        const existingScore = eventToUpdate.scores[existingScoreIndex];
-        let captionsUpdated = false;
-        for (const caption in newScore.captions) {
-          if (newScore.captions[caption] > 0 &&
-            (!existingScore.captions[caption] || existingScore.captions[caption] === 0)) {
-            existingScore.captions[caption] = newScore.captions[caption];
-            captionsUpdated = true;
-          }
-        }
-        if (captionsUpdated) {
-          hasBeenUpdated = true;
-          logger.info(`Updated captions for ${newScore.corps}.`);
-        }
+    if (!base && yearSnap.exists) {
+      const key = eventMatchKey(incoming);
+      const legacy = (yearSnap.data().data || []).find((e) => eventMatchKey(e) === key);
+      if (legacy) {
+        base = legacy;
+        seededFromLegacy = true;
       }
     }
 
-    if (hasBeenUpdated) {
-      existingData[eventIndex] = eventToUpdate;
-      transaction.update(yearDocRef, { data: existingData });
-      logger.info(`Successfully merged new scores into event: ${newEventData.eventName}`);
-    } else {
-      logger.info(`No new scores to merge for event: ${newEventData.eventName}. Skipping.`);
+    // Materialize the parent so whole-collection readers enumerate this year.
+    if (!yearSnap.exists) {
+      transaction.set(yearRef, { createdAt: new Date(), sharded: true }, { merge: true });
     }
-    return JSON.stringify(existingData).length;
-  });
 
-  // Size guard, outside the transaction (which may retry): warn the operator
-  // while there is still headroom before the 1 MiB cap. Best-effort — the
-  // merge itself already succeeded, and postAlert never throws.
-  if (approxBytes > SIZE_ALERT_BYTES) {
-    const sizeKb = Math.round(approxBytes / 1024);
-    logger.error(
-      `[historical-scores] historical_scores/${docId} is ~${sizeKb}KB, past the ` +
-      `${Math.round(SIZE_ALERT_BYTES / 1024)}KB soft limit and approaching Firestore's 1MiB ` +
-      "document cap — the nightly archive will start hard-failing when it lands. " +
-      "Shard the year into a subcollection before that happens."
-    );
-    await postAlert(readOpsWebhookUrl(), {
-      title: `historical_scores/${docId} nearing Firestore's 1MiB document cap`,
-      source: "historical-scores",
-      severity: "warning",
-      summary:
-        `The year document is ~${sizeKb}KB. When it crosses 1MiB, every nightly archive write ` +
-        "for the year fails hard — shard the season into a subcollection before then.",
-      details: [`historical_scores/${docId}: ~${sizeKb}KB (soft limit ${Math.round(SIZE_ALERT_BYTES / 1024)}KB)`],
-    });
-  }
+    if (!base) {
+      logger.info(`historical_scores/${year}: creating event "${incoming.eventName}".`);
+      transaction.set(eventRef, incoming);
+      return;
+    }
+
+    const { merged, changed } = mergeScoresInto(base, incoming, overwrite);
+    // A legacy-seeded event is written even with no new scores, to migrate it
+    // out of the shrinking parent array into its own document.
+    if (changed || seededFromLegacy) {
+      transaction.set(eventRef, merged);
+      logger.info(`historical_scores/${year}: merged scores into "${incoming.eventName}".`);
+    } else {
+      logger.info(`historical_scores/${year}: nothing new for "${incoming.eventName}", skipping.`);
+    }
+  });
 }
 
-module.exports = { mergeEventIntoHistoricalScores, SIZE_ALERT_BYTES };
+/**
+ * Load a whole year's events as an array, unioning the sharded subcollection
+ * with any legacy in-array events (sharded wins). This is the single read path
+ * every consumer should use in place of `doc.data().data`.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string|number} year
+ * @returns {Promise<Object[]>} events (empty if the year has none)
+ */
+async function loadHistoricalYear(db, year) {
+  const yearRef = historicalYearRef(db, year);
+  const [yearSnap, eventsSnap] = await Promise.all([
+    yearRef.get(),
+    yearRef.collection(EVENTS_SUBCOLLECTION).get(),
+  ]);
+  const legacy = yearSnap.exists ? yearSnap.data().data || [] : [];
+  const sub = eventsSnap.docs.map((d) => d.data());
+  return mergeEventLists(legacy, sub);
+}
+
+/**
+ * Load several years, keyed by year id. Years with no events are omitted (the
+ * same contract the old `if (doc.exists)` reads had).
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Array<string|number>} years
+ * @returns {Promise<Record<string, Object[]>>}
+ */
+async function loadHistoricalYears(db, years) {
+  const unique = [...new Set(years.map(String))];
+  const loaded = await Promise.all(unique.map((year) => loadHistoricalYear(db, year)));
+  /** @type {Record<string, any[]>} */
+  const out = {};
+  unique.forEach((year, i) => {
+    if (loaded[i].length) out[year] = loaded[i];
+  });
+  return out;
+}
+
+/**
+ * Load every year in the collection, keyed by year id. Enumerates parent
+ * documents (always materialized) then unions each year's events.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @returns {Promise<Record<string, Object[]>>}
+ */
+async function loadAllHistoricalYears(db) {
+  const parents = await db.collection("historical_scores").get();
+  return loadHistoricalYears(
+    db,
+    parents.docs.map((d) => d.id)
+  );
+}
+
+module.exports = {
+  EVENTS_SUBCOLLECTION,
+  historicalYearRef,
+  historicalEventsRef,
+  eventDocId,
+  eventMatchKey,
+  mergeEventLists,
+  mergeScoresInto,
+  mergeEventIntoHistoricalScores,
+  loadHistoricalYear,
+  loadHistoricalYears,
+  loadAllHistoricalYears,
+};

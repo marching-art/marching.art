@@ -6,6 +6,7 @@
 
 const { logger } = require("firebase-functions/v2");
 const { cleanLocation } = require("./newsArticleShared");
+const { loadHistoricalYears } = require("./historicalScores");
 
 const CAPTIONS = {
   GE1: "General Effect 1",
@@ -35,32 +36,29 @@ async function fetchActiveCorps(db, dataDocId) {
 
 async function fetchTimeLockednScores(db, yearsToFetch, reportDay) {
   try {
-    const historicalDocs = await Promise.all(
-      yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get())
-    );
+    // Sharded read: each year's events live in a subcollection, unioned with
+    // any legacy in-array data by loadHistoricalYears.
+    const byYear = await loadHistoricalYears(db, yearsToFetch);
 
     const historicalData = {};
-    historicalDocs.forEach(doc => {
-      if (doc.exists) {
-        const allEvents = doc.data().data || [];
-        // Keep the full season UP TO the report day (time-locked — never leak
-        // future shows). Consumers that only want a specific day or the trailing
-        // form window filter further downstream; retaining the whole season here
-        // lets calculateTrendData compute true season-long aggregates (real
-        // season high/low/avg, opener-to-now arc) rather than 7-day-window ones.
-        const filteredEvents = allEvents.filter(event => event.offSeasonDay <= reportDay);
+    for (const [year, allEvents] of Object.entries(byYear)) {
+      // Keep the full season UP TO the report day (time-locked — never leak
+      // future shows). Consumers that only want a specific day or the trailing
+      // form window filter further downstream; retaining the whole season here
+      // lets calculateTrendData compute true season-long aggregates (real
+      // season high/low/avg, opener-to-now arc) rather than 7-day-window ones.
+      const filteredEvents = allEvents.filter(event => event.offSeasonDay <= reportDay);
 
-        const sanitizedEvents = filteredEvents.map(event => ({
-          ...event,
-          scores: (event.scores || []).filter(score => {
-            const total = calculateTotal(score.captions || {});
-            return total > 0;
-          }),
-        })).filter(event => event.scores.length > 0);
+      const sanitizedEvents = filteredEvents.map(event => ({
+        ...event,
+        scores: (event.scores || []).filter(score => {
+          const total = calculateTotal(score.captions || {});
+          return total > 0;
+        }),
+      })).filter(event => event.scores.length > 0);
 
-        historicalData[doc.id] = sanitizedEvents;
-      }
-    });
+      historicalData[year] = sanitizedEvents;
+    }
 
     return historicalData;
   } catch (error) {

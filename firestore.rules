@@ -60,7 +60,12 @@ function touchesProtectedProfileFields() {
     // Custom-avatar ban. Set only by the adminModerateCorpsAvatar callable; a
     // banned director must not be able to lift their own block by writing this
     // field, and the setCorpsAvatarFromUrl callable trusts it.
-    'customAvatarBanned'
+    'customAvatarBanned',
+    // Account restriction (moderation.restricted). Set only by the
+    // setAccountRestriction admin callable; the zero-sum callables trust it via
+    // assertNotRestricted, so a client write would let a restricted alt lift
+    // its own block and resume farming votes/pools.
+    'moderation'
   ]);
 }
 
@@ -616,9 +621,17 @@ match /final_rankings/{docId} {
   allow write: if isAdmin();
 }
 
-match /historical_scores/{docId} {
+match /historical_scores/{year} {
   allow read: if true;
   allow write: if false; // Backend only
+
+  // Per-event shards (historical_scores/{year}/events/{eventId}). Public-read
+  // like the parent; written only by the backend. The client unions these with
+  // any legacy in-array events (see src/api/season.ts).
+  match /events/{eventId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
 }
 
 match /historical_schedules/{docId} {

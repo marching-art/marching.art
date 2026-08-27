@@ -142,8 +142,9 @@ async function loadSeries(useFirestore) {
   const yearDocs = [];
   if (useFirestore) {
     const { getDb } = require("../config");
-    const snapshot = await getDb().collection("historical_scores").get();
-    snapshot.forEach((doc) => yearDocs.push({ year: doc.id, data: doc.data().data || [] }));
+    const { loadAllHistoricalYears } = require("../helpers/historicalScores");
+    const byYear = await loadAllHistoricalYears(getDb());
+    for (const [year, data] of Object.entries(byYear)) yearDocs.push({ year, data });
   } else {
     const files = fs
       .readdirSync(LOCAL_DATA_DIR)
