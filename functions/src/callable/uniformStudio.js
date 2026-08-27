@@ -25,6 +25,7 @@ const {
   sanitizeDesign,
   deriveV1Compat,
 } = require("../helpers/uniformValidation");
+const { missingPacksFor, missingPacksMessage } = require("../helpers/uniformEntitlements");
 
 /**
  * Resolve the stored key for a corps class on this profile, tolerating the
@@ -81,6 +82,19 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   await assertWriteBudget(db, uid, "uniformStudio");
+
+  // Pack gate (helpers/uniformEntitlements): previewing gated content is
+  // free everywhere, KEEPING it requires the pack — checked at every
+  // wardrobe write, only paying the profile read when the design is gated.
+  const requiredCheck = missingPacksFor(design.figure, undefined);
+  if (requiredCheck.length > 0) {
+    const profileDoc = await db.doc(paths.userProfile(uid)).get();
+    const owned = profileDoc.exists ? profileDoc.data().cosmetics?.owned : undefined;
+    const missing = missingPacksFor(design.figure, owned);
+    if (missing.length > 0) {
+      throw new HttpsError("failed-precondition", missingPacksMessage(missing));
+    }
+  }
 
   const clean = sanitizeDesign(design);
   const now = new Date().toISOString();

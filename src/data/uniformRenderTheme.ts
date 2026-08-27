@@ -35,6 +35,18 @@ export const FIGURE_INK = {
   calloutText: '#9a9a94',
 } as const;
 
+/**
+ * Iridescent finish (Texture Atelier pack): the translucent hue-shift ramp
+ * laid diagonally over the torso. Rendered at low opacity so the jacket color
+ * stays the read; these are the "angle" colors that play across it.
+ */
+export const IRIDESCENT_STOPS = [
+  { o: '0', c: '#7de8dc' },
+  { o: '0.35', c: '#b48ae8' },
+  { o: '0.7', c: '#e89ab4' },
+  { o: '1', c: '#e8d27a' },
+] as const;
+
 /** Procedural print palettes (recolorable in later phases; fixed at launch). */
 export const PRINT_PALETTES = {
   sunburst: {

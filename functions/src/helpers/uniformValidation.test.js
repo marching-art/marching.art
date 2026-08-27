@@ -209,6 +209,47 @@ describe("validateDesign", () => {
     assert.deepEqual(validateDesign(d6), []);
   });
 
+  test("accepts the design-house pieces: busby, cape, iridescent, lamé", () => {
+    const d = validDesign();
+    d.figure.hatType = "busby";
+    d.figure.hat = { body: "#17171a", band: "#8a1a1a", ornament: "none" };
+    d.figure.iridescent = true;
+    d.figure.lame = true;
+    d.figure.cape = { color: "#22355c", lining: "#d9a41c", side: "right" };
+    assert.deepEqual(validateDesign(d), []);
+
+    // cape needs only its color; side defaults to left
+    const d2 = validDesign();
+    d2.figure.cape = { color: "#22355c" };
+    assert.deepEqual(validateDesign(d2), []);
+  });
+
+  test("rejects malformed capes and non-boolean finishes", () => {
+    const d = validDesign();
+    d.figure.cape = { color: "navy" };
+    assert.match(validateDesign(d).join(";"), /figure\.cape/);
+
+    const d2 = validDesign();
+    d2.figure.cape = { color: "#22355c", side: "back" };
+    assert.match(validateDesign(d2).join(";"), /figure\.cape/);
+
+    const d3 = validDesign();
+    d3.figure.cape = { color: "#22355c", onclick: "x()" };
+    assert.match(validateDesign(d3).join(";"), /figure\.cape/);
+
+    const d4 = validDesign();
+    d4.figure.cape = "#22355c";
+    assert.match(validateDesign(d4).join(";"), /figure\.cape/);
+
+    const d5 = validDesign();
+    d5.figure.iridescent = "yes";
+    assert.match(validateDesign(d5).join(";"), /iridescent/);
+
+    const d6 = validDesign();
+    d6.figure.lame = 1;
+    assert.match(validateDesign(d6).join(";"), /lame/);
+  });
+
   test("colorwayStrip emits a validated hex triple or null", () => {
     assert.deepEqual(colorwayStrip({ primary: "#6D1A26", secondary: "#d9a41c", accent: "#ece2cc" }), [
       "#6d1a26",

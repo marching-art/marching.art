@@ -151,6 +151,10 @@
           <path d="M0,10.5 H13" stroke="#8f5f10" stroke-width="1.2"/>
         </pattern>`;
       }
+      if (cw.iridescent)
+        d += `<linearGradient id="${uid}-irid" gradientUnits="userSpaceOnUse" x1="90" y1="108" x2="152" y2="248">
+<stop offset="0" stop-color="#7de8dc"/><stop offset="0.35" stop-color="#b48ae8"/>
+<stop offset="0.7" stop-color="#e89ab4"/><stop offset="1" stop-color="#e8d27a"/></linearGradient>`;
       if (cw.chestFade) {
         d += `<linearGradient id="${uid}-fadeChest" gradientUnits="userSpaceOnUse" x1="0" y1="104" x2="0" y2="250">
           <stop offset="0" stop-color="${cw.chestFade[0]}"/><stop offset="1" stop-color="${cw.chestFade[1]}"/></linearGradient>`;
@@ -886,6 +890,59 @@
       return c;
     }
 
+    // Texture Atelier finishes (pack content)
+    function iridescentSheen(uid) {
+      return (
+        `<path d="M96,104 Q120,96 144,104 L150,244 Q120,254 90,244 Z" fill="url(#${uid}-irid)" opacity=".32"/>` +
+        light('M92,150 Q124,132 150,158 Q122,150 94,168 Z', 0.16)
+      );
+    }
+    function lameField() {
+      return (
+        sequins(120, 150, 50, 88, 17, 70) +
+        sequins(120, 214, 54, 64, 29, 50) +
+        light('M94,128 Q122,112 148,134 Q120,126 96,144 Z', 0.14) +
+        light('M92,206 Q120,192 148,212 Q120,204 94,222 Z', 0.1)
+      );
+    }
+
+    // Military Outfitters: one-shoulder cavalry cape
+    function cape(cw) {
+      const cp = cw.cape;
+      if (!cp) return '';
+      const c = cp.color;
+      const lining = cp.lining || darken(c, 0.4);
+      let g = P('M114,97 Q90,100 82,110 L58,242 Q80,258 100,250 Q100,180 106,122 Z', c);
+      g += P('M58,242 Q80,258 100,250 L98,234 Q80,244 62,230 Z', lining);
+      g += shade('M108,100 Q98,104 94,112 L74,238 Q80,243 86,244 L102,124 Z', 0.14);
+      g += light('M88,104 Q84,108 82,114 L60,238 Q63,241 67,243 L88,112 Z', 0.1);
+      g += `<circle cx="112" cy="102" r="3.2" fill="${cw.metal}"/><circle cx="111" cy="101" r="1" fill="#fff" opacity=".8"/>`;
+      return cp.side === 'right' ? mirror(g) : g;
+    }
+
+    // Military Outfitters: busby (tall fur hat + colored bag)
+    function busby(cw) {
+      const h = cw.hat;
+      if (!h) return '';
+      const body = h.body;
+      const dk = darken(body, 0.28);
+      const lt = lighten(body, 0.14);
+      let g = P('M97,58 L95,-8 Q120,-18 145,-8 L143,58 Q120,66 97,58 Z', body);
+      g += `<path d="M103,-6 Q101,20 102,50 M111,-10 Q109,22 110,54 M120,-12 Q119,24 120,56 M129,-10 Q128,22 129,54 M137,-6 Q136,20 137,50" fill="none" stroke="${dk}" stroke-width="1.4" stroke-linecap="round" opacity=".5" stroke-dasharray="5 3"/>`;
+      g += `<path d="M107,-8 Q105,20 106,52 M115,-11 Q114,24 115,55 M124,-11 Q123,24 124,55 M133,-8 Q131,20 132,52" fill="none" stroke="${lt}" stroke-width="1.1" stroke-linecap="round" opacity=".45" stroke-dasharray="4 4"/>`;
+      g += shade('M134,-9 Q140,-6 143,-4 L141,58 Q134,61 130,62 Q133,26 134,-9 Z', 0.16);
+      if (h.band) {
+        g += P('M128,-16 Q150,-12 148,14 Q142,30 134,34 Q140,12 130,-8 Z', h.band);
+        g += shade('M140,-10 Q148,-2 146,14 Q142,26 136,31 Q143,10 137,-8 Z', 0.2);
+        g += `<circle cx="135" cy="33" r="2.6" fill="${darken(h.band, 0.3)}"/>`;
+      }
+      g += hatOrnament(h.ornament || 'none', h.emblem || cw.metal);
+      for (let i = 0; i < 5; i++) {
+        g += `<circle cx="${102 + i * 9}" cy="${(60 + Math.sin((i / 4) * Math.PI) * 4).toFixed(1)}" r="1.4" fill="${cw.metal}"/>`;
+      }
+      return g;
+    }
+
     // ---------- assembly ----------
     let UID = 0;
     function figureLayers(raw, uid) {
@@ -902,6 +959,8 @@
       L += torso(cw, uid);
       if (cw.satin) L += satinSheen();
       if (cw.velvet) L += velvetSheen();
+      if (cw.iridescent) L += iridescentSheen(uid);
+      if (cw.lame) L += lameField();
       L += chest(cw, uid);
       L += chestBadge(cw);
       L += glowArt(cw, uid);
@@ -911,6 +970,7 @@
       L += fringeHip(cw);
       L += arms(cw, uid);
       L += epaulets(cw);
+      L += cape(cw);
       L += headNeck(cw);
       if (cw.hairShow) L += hair(cw);
       L += neckerchief(cw);
@@ -924,6 +984,7 @@
       if (cw.hatType === 'campaign') L += campaign(cw);
       if (cw.hatType === 'aussie') L += aussie(cw);
       if (cw.hatType === 'contour') L += contour(cw);
+      if (cw.hatType === 'busby') L += busby(cw);
       return L;
     }
     function renderFigure(cw, opts = {}) {

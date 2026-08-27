@@ -143,6 +143,7 @@ export const HAT_TYPE_OPTIONS = [
   { value: 'campaign', label: 'Campaign hat' },
   { value: 'aussie', label: 'Aussie slouch' },
   { value: 'contour', label: 'Contour shako' },
+  { value: 'busby', label: 'Busby' },
 ] as const;
 
 /** Ornament shapes for the shako/pith front plate and the aussie side badge. */

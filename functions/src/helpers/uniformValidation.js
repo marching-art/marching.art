@@ -29,7 +29,7 @@ const CHESTS = new Set([
   "swash",
   "vinylPanel",
 ]);
-const HATS = new Set(["shako", "pith", "campaign", "aussie", "contour"]);
+const HATS = new Set(["shako", "pith", "campaign", "aussie", "contour", "busby"]);
 const HAT_ORNAMENTS = new Set([
   "sunburst",
   "star",
@@ -190,6 +190,8 @@ const FIGURE_FIELDS = {
   velvet: "bool",
   patent: "bool",
   satin: "bool",
+  iridescent: "bool",
+  lame: "bool",
   torsoSequin: "bool",
   chest: "chest",
   chestBadge: "chestBadge",
@@ -242,6 +244,7 @@ const FIGURE_FIELDS = {
   hatType: "hatType",
   hat: "hat",
   plume: "plume",
+  cape: "cape",
 };
 
 /**
@@ -350,6 +353,18 @@ function validateFigure(figure) {
         break;
       case "chestShape":
         if (!CHEST_SHAPES.has(value)) errors.push(`figure.chestShape is invalid`);
+        break;
+      case "cape":
+        if (
+          typeof value !== "object" ||
+          Array.isArray(value) ||
+          !isHex(value.color) ||
+          (value.lining != null && !isHex(value.lining)) ||
+          (value.side != null && value.side !== "left" && value.side !== "right") ||
+          Object.keys(value).some((k) => !["color", "lining", "side"].includes(k))
+        ) {
+          errors.push("figure.cape is invalid");
+        }
         break;
       case "hatType":
         if (!HATS.has(value)) errors.push(`figure.hatType is invalid`);

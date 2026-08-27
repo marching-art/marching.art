@@ -317,6 +317,44 @@ describe("saveExchangeDesign", () => {
     assert.equal(docs.get(profilePath("creator")).corpsCoin, EXCHANGE_SAVE_REWARD);
   });
 
+  test("copying a gated design requires its pack; owning it lets the copy through", async () => {
+    const gatedEntry = {
+      ...ENTRY,
+      design: {
+        ...ENTRY.design,
+        figure: { ...ENTRY.design.figure, iridescent: true },
+      },
+    };
+    const docs = new Map([
+      [entryPath("creator_d1"), gatedEntry],
+      [profilePath("creator"), { username: "MaestroMax", corpsCoin: 100 }],
+      [profilePath("saver"), { username: "NewFan", cosmetics: { owned: [] } }],
+    ]);
+    const { db } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await assert.rejects(
+      saveExchangeDesign.run(authedRequest("saver", { entryId: "creator_d1" })),
+      /Texture Atelier/
+    );
+    assert.equal(
+      [...docs.keys()].find((p) => p.startsWith(`artifacts/${NS}/users/saver/wardrobe/`)),
+      undefined,
+      "no copy past the gate"
+    );
+
+    docs.set(profilePath("saver"), {
+      username: "NewFan",
+      cosmetics: { owned: ["pack_texture_atelier"] },
+    });
+    await saveExchangeDesign.run(authedRequest("saver", { entryId: "creator_d1" }));
+    const copy = [...docs.entries()].find(([p]) =>
+      p.startsWith(`artifacts/${NS}/users/saver/wardrobe/`)
+    );
+    assert.ok(copy, "owned pack unlocks the copy");
+    assert.equal(copy[1].figure.iridescent, true);
+  });
+
   test("saving your own entry copies but pays nothing", async () => {
     const docs = new Map([
       [entryPath("creator_d1"), { ...ENTRY }],

@@ -18,17 +18,14 @@ import type {
   UniformDesignV2,
 } from '../../types/uniform';
 import {
-  HAT_ORNAMENT_OPTIONS,
-  HAT_TYPE_OPTIONS,
   NAMED_COLORS,
   NECK_OPTIONS,
-  PLUME_TYPE_OPTIONS,
   TORSO_PRINT_OPTIONS,
   TORSO_STYLE_OPTIONS,
   UNIFORM_PRESETS,
   designFromPreset,
 } from '../../data/uniformCatalog';
-import { FIGURE_HAIR_COLORS, FIGURE_SKIN_TONES } from '../../data/uniformRenderTheme';
+import { FIGURE_SKIN_TONES } from '../../data/uniformRenderTheme';
 import {
   applyColorway,
   armFadeStops,
@@ -51,6 +48,7 @@ import {
 } from './StudioControls';
 import { ArmControls, LegControls } from './StudioLimbControls';
 import ChestSection from './StudioChestControls';
+import HeadwearSection from './StudioHeadwearControls';
 
 // ---------------------------------------------------------------------------
 // per-side editors
@@ -70,12 +68,19 @@ function legForEdit(figure: FigureConfig, side: 'legL' | 'legR'): LegConfig {
 export interface StudioEditorProps {
   design: UniformDesignV2;
   onChange: (next: UniformDesignV2) => void;
+  /** Owned shop item ids (profile cosmetics.owned) — drives the 🔒 marks on
+   *  design-house pack content. Previewing is always free; the lock only
+   *  signals "own to save" (the server enforces it at write time). */
+  ownedPacks?: string[];
 }
 
-export default function StudioEditor({ design, onChange }: StudioEditorProps) {
+export default function StudioEditor({ design, onChange, ownedPacks }: StudioEditorProps) {
   const [armsLinked, setArmsLinked] = useState(true);
   const [legsLinked, setLegsLinked] = useState(true);
   const figure = design.figure;
+
+  const packLabel = (label: string, packId: string) =>
+    (ownedPacks || []).includes(packId) ? label : `${label} 🔒`;
 
   const setFigure = (patch: Partial<FigureConfig>) =>
     onChange({ ...design, figure: withDerivedFlags({ ...figure, ...patch }) });
@@ -245,128 +250,12 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
       </section>
 
       {/* Headwear */}
-      <section>
-        <h3 className={SECTION_LABEL}>Headwear</h3>
-        <Pills
-          options={HAT_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-          value={figure.hatType ?? null}
-          onSelect={(v) =>
-            setFigure(
-              v
-                ? {
-                    hatType: v,
-                    hat: figure.hat || {
-                      body: darkenHex(design.colorway.primary, 0.55),
-                      band: design.colorway.secondary,
-                    },
-                    plume:
-                      v === 'campaign'
-                        ? null
-                        : figure.plume || { type: 'upright', color: design.colorway.accent },
-                  }
-                : { hatType: null, hat: null, plume: null }
-            )
-          }
-        />
-        {figure.hatType && figure.hat && (
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            <ChannelRow
-              label="Hat body"
-              value={figure.hat.body}
-              onChange={(v) => setFigure({ hat: { ...figure.hat!, body: v || '' } })}
-            />
-            <ChannelRow
-              label="Hat band"
-              value={figure.hat.band}
-              onChange={(v) => setFigure({ hat: { ...figure.hat!, band: v } })}
-              clearable
-            />
-            {figure.hatType !== 'campaign' && figure.hat.ornament !== 'none' && (
-              <ChannelRow
-                label="Ornament color"
-                value={figure.hat.emblem}
-                onChange={(v) => setFigure({ hat: { ...figure.hat!, emblem: v } })}
-                clearable
-              />
-            )}
-            {figure.hatType === 'aussie' && (
-              <Toggle
-                label="Lift other side"
-                checked={Boolean(figure.hat.flip)}
-                onChange={(v) => setFigure({ hat: { ...figure.hat!, flip: v } })}
-              />
-            )}
-          </div>
-        )}
-        {figure.hatType && figure.hatType !== 'campaign' && figure.hat && (
-          <div className="mt-2">
-            <span className={LABEL}>Ornament</span>
-            <Pills
-              options={HAT_ORNAMENT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-              value={
-                figure.hat.ornament ||
-                (figure.hatType === 'pith'
-                  ? 'disc'
-                  : figure.hatType === 'contour'
-                    ? 'none'
-                    : 'sunburst')
-              }
-              onSelect={(v) => setFigure({ hat: { ...figure.hat!, ornament: v } })}
-            />
-          </div>
-        )}
-        {figure.hatType && figure.hatType !== 'campaign' && (
-          <div className="mt-2 space-y-1">
-            <Pills
-              options={PLUME_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-              value={figure.plume?.type ?? null}
-              onSelect={(v) =>
-                setFigure({
-                  plume: v
-                    ? { type: v, color: figure.plume?.color || design.colorway.accent }
-                    : null,
-                })
-              }
-            />
-            {figure.plume && (
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <ChannelRow
-                    label="Plume"
-                    value={figure.plume.color}
-                    onChange={(v) => setFigure({ plume: { ...figure.plume!, color: v || '' } })}
-                  />
-                </div>
-                <div className="flex-1">
-                  <ChannelRow
-                    label="Plume tip"
-                    value={figure.plume.accent}
-                    onChange={(v) => setFigure({ plume: { ...figure.plume!, accent: v } })}
-                    clearable
-                  />
-                </div>
-                {figure.plume.type === 'upright' && (
-                  <Toggle
-                    label="Mylar sparkle"
-                    checked={Boolean(figure.plume.mylar)}
-                    onChange={(v) => setFigure({ plume: { ...figure.plume!, mylar: v } })}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        {!figure.hatType && (
-          <div className="mt-2">
-            <SwatchRow
-              label="Hair"
-              colors={FIGURE_HAIR_COLORS}
-              value={figure.hair}
-              onSelect={(hex) => setFigure({ hair: hex })}
-            />
-          </div>
-        )}
-      </section>
+      <HeadwearSection
+        figure={figure}
+        colorway={design.colorway}
+        onPatch={setFigure}
+        packLabel={packLabel}
+      />
 
       {/* Torso */}
       <section>
@@ -407,6 +296,16 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
             label="Velvet"
             checked={Boolean(figure.velvet)}
             onChange={(v) => setFigure({ velvet: v })}
+          />
+          <Toggle
+            label={packLabel('Iridescent', 'pack_texture_atelier')}
+            checked={Boolean(figure.iridescent)}
+            onChange={(v) => setFigure({ iridescent: v })}
+          />
+          <Toggle
+            label={packLabel('Lamé shimmer', 'pack_texture_atelier')}
+            checked={Boolean(figure.lame)}
+            onChange={(v) => setFigure({ lame: v })}
           />
           <Toggle
             label="Patent gloss"
@@ -491,6 +390,27 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
             checked={Boolean(figure.tie)}
             onChange={(v) => setFigure({ tie: v ? design.colorway.accent : null })}
           />
+          <Toggle
+            label={packLabel('Shoulder cape', 'pack_military_outfitters')}
+            checked={Boolean(figure.cape)}
+            onChange={(v) =>
+              setFigure({
+                cape: v
+                  ? {
+                      color: design.colorway.secondary,
+                      lining: design.colorway.accent,
+                    }
+                  : null,
+              })
+            }
+          />
+          {figure.cape && (
+            <Toggle
+              label="Other shoulder"
+              checked={figure.cape.side === 'right'}
+              onChange={(v) => setFigure({ cape: { ...figure.cape!, side: v ? 'right' : 'left' } })}
+            />
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           {figure.epaulet && (
@@ -516,6 +436,21 @@ export default function StudioEditor({ design, onChange }: StudioEditorProps) {
           )}
           {figure.tie && (
             <ChannelRow label="Tie" value={figure.tie} onChange={(v) => setFigure({ tie: v })} />
+          )}
+          {figure.cape && (
+            <>
+              <ChannelRow
+                label="Cape"
+                value={figure.cape.color}
+                onChange={(v) => setFigure({ cape: { ...figure.cape!, color: v || '' } })}
+              />
+              <ChannelRow
+                label="Cape lining"
+                value={figure.cape.lining}
+                onChange={(v) => setFigure({ cape: { ...figure.cape!, lining: v } })}
+                clearable
+              />
+            </>
           )}
         </div>
       </section>
