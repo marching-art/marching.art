@@ -411,6 +411,11 @@ export default function StudioEditor({ design, onChange, ownedPacks }: StudioEdi
               onChange={(v) => setFigure({ cape: { ...figure.cape!, side: v ? 'right' : 'left' } })}
             />
           )}
+          <Toggle
+            label={packLabel('Drum major cord', 'title_drum_major')}
+            checked={Boolean(figure.aiguillette)}
+            onChange={(v) => setFigure({ aiguillette: v ? design.colorway.accent : null })}
+          />
         </div>
         <div className="grid grid-cols-2 gap-2">
           {figure.epaulet && (
@@ -436,6 +441,13 @@ export default function StudioEditor({ design, onChange, ownedPacks }: StudioEdi
           )}
           {figure.tie && (
             <ChannelRow label="Tie" value={figure.tie} onChange={(v) => setFigure({ tie: v })} />
+          )}
+          {figure.aiguillette && (
+            <ChannelRow
+              label="Cord"
+              value={figure.aiguillette}
+              onChange={(v) => setFigure({ aiguillette: v })}
+            />
           )}
           {figure.cape && (
             <>

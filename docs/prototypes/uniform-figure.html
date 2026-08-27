@@ -920,6 +920,32 @@
       return cp.side === 'right' ? mirror(g) : g;
     }
 
+    // Drum-major prestige: braided aiguillette cord + ferrule tips
+    function aiguillette(cw) {
+      if (!cw.aiguillette) return '';
+      const c = cw.aiguillette;
+      const dk = darken(c, 0.35);
+      const lt = lighten(c, 0.3);
+      const m = cw.metal;
+      const loops = [
+        'M88,106 Q74,138 84,156 Q97,167 108,148 Q112,136 111,125',
+        'M89,109 Q79,135 87,149 Q96,157 104,143 Q108,134 108,126',
+      ];
+      let g = '';
+      loops.forEach((d, i) => {
+        g += stroke(d, dk, i === 0 ? 4 : 3.2);
+        g += stroke(d, c, i === 0 ? 2.8 : 2.2);
+        g += stroke(d, lt, 1.1, 'stroke-dasharray="2.2 2.6" opacity=".75"');
+      });
+      g += `<circle cx="88" cy="106" r="2.4" fill="${m}"/>`;
+      g += `<circle cx="110" cy="124" r="2.6" fill="${m}"/><circle cx="109.2" cy="123.2" r="0.9" fill="#fff" opacity=".8"/>`;
+      g += stroke('M110,126 Q111,132 111.5,137', c, 1.6);
+      g += stroke('M108,127 Q107,133 106.5,138', c, 1.6);
+      g += `<rect x="110.2" y="136" width="2.6" height="9" rx="1" fill="${m}"/><rect x="105.2" y="137" width="2.6" height="9" rx="1" fill="${m}"/>`;
+      g += `<rect x="110.6" y="136.8" width="0.9" height="7" fill="#fff" opacity=".5"/><rect x="105.6" y="137.8" width="0.9" height="7" fill="#fff" opacity=".5"/>`;
+      return g;
+    }
+
     // Military Outfitters: busby (tall fur hat + colored bag)
     function busby(cw) {
       const h = cw.hat;
@@ -971,6 +997,7 @@
       L += arms(cw, uid);
       L += epaulets(cw);
       L += cape(cw);
+      L += aiguillette(cw);
       L += headNeck(cw);
       if (cw.hairShow) L += hair(cw);
       L += neckerchief(cw);

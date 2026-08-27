@@ -233,6 +233,9 @@ export interface FigureConfig {
   tie?: HexColor | null;
 
   epaulet?: HexColor | null;
+  /** Drum-major aiguillette cord (prestige regalia: needs the Drum Major
+   *  title to SAVE; previewing is free). Tips take the metal channel. */
+  aiguillette?: HexColor | null;
   suspenders?: HexColor | null;
 
   belt?: HexColor | null;

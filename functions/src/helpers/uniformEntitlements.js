@@ -27,7 +27,21 @@ const UNIFORM_PACKS = {
 };
 
 /**
- * Which pack item ids a figure's features require. Pure.
+ * Prestige regalia gated on NON-pack shop items (titles). Same ownership
+ * check — cosmetics.owned holds every item kind — but a different player
+ * story: the regalia comes with the rank, not off a rack, so the missing-item
+ * message names the title rather than a design house.
+ */
+const PRESTIGE_UNLOCKS = {
+  title_drum_major: {
+    name: "the Drum Major's aiguillette",
+    requires: "the Drum Major title",
+  },
+};
+
+/**
+ * Which shop item ids (packs + prestige titles) a figure's features require.
+ * Pure.
  * @param {any} figure a validated FigureConfig.
  * @returns {string[]}
  */
@@ -36,6 +50,7 @@ function requiredPacksFor(figure) {
   const fig = figure || {};
   if (fig.iridescent || fig.lame) packs.add("pack_texture_atelier");
   if (fig.hatType === "busby" || fig.cape) packs.add("pack_military_outfitters");
+  if (fig.aiguillette) packs.add("title_drum_major");
   return [...packs];
 }
 
@@ -52,16 +67,25 @@ function missingPacksFor(figure, owned) {
 
 /**
  * Player-facing message naming what's missing.
- * @param {string[]} missing pack item ids.
+ * @param {string[]} missing pack/title item ids.
  */
 function missingPacksMessage(missing) {
   const names = missing
     .map((id) => {
       const pack = UNIFORM_PACKS[/** @type {keyof typeof UNIFORM_PACKS} */ (id)];
-      return pack ? `${pack.name} (${pack.house})` : id;
+      if (pack) return `${pack.name} (${pack.house})`;
+      const prestige = PRESTIGE_UNLOCKS[/** @type {keyof typeof PRESTIGE_UNLOCKS} */ (id)];
+      if (prestige) return `${prestige.name} (requires ${prestige.requires})`;
+      return id;
     })
     .join(", ");
-  return `This design uses ${names} — unlock the pack in the Shop to save it. Previewing in the Studio is always free.`;
+  return `This design uses ${names} — unlock ${missing.length > 1 ? "them" : "it"} in the Shop to save it. Previewing in the Studio is always free.`;
 }
 
-module.exports = { UNIFORM_PACKS, requiredPacksFor, missingPacksFor, missingPacksMessage };
+module.exports = {
+  UNIFORM_PACKS,
+  PRESTIGE_UNLOCKS,
+  requiredPacksFor,
+  missingPacksFor,
+  missingPacksMessage,
+};

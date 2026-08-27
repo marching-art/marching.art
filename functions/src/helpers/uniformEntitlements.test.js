@@ -8,6 +8,7 @@ const assert = require("node:assert/strict");
 
 const {
   UNIFORM_PACKS,
+  PRESTIGE_UNLOCKS,
   requiredPacksFor,
   missingPacksFor,
   missingPacksMessage,
@@ -40,6 +41,14 @@ describe("requiredPacksFor", () => {
       ["pack_military_outfitters", "pack_texture_atelier"]
     );
   });
+
+  test("the aiguillette is prestige: it needs the Drum Major title", () => {
+    assert.deepEqual(requiredPacksFor({ aiguillette: "#d9a41c" }), ["title_drum_major"]);
+    assert.deepEqual(
+      requiredPacksFor({ aiguillette: "#d9a41c", lame: true }).sort(),
+      ["pack_texture_atelier", "title_drum_major"]
+    );
+  });
 });
 
 describe("missingPacksFor", () => {
@@ -64,8 +73,14 @@ describe("missingPacksMessage", () => {
     const msg = missingPacksMessage(["pack_texture_atelier", "pack_military_outfitters"]);
     assert.match(msg, /Texture Atelier \(Maison Verdier\)/);
     assert.match(msg, /Military Outfitters Collection \(Blackwell & Sons\)/);
-    assert.match(msg, /unlock the pack in the Shop/);
+    assert.match(msg, /unlock them in the Shop/);
     assert.match(msg, /Previewing in the Studio is always free/);
+  });
+
+  test("a prestige unlock names the gating title, not a design house", () => {
+    const msg = missingPacksMessage(["title_drum_major"]);
+    assert.match(msg, /the Drum Major's aiguillette \(requires the Drum Major title\)/);
+    assert.match(msg, /unlock it in the Shop/);
   });
 
   test("an unknown id falls back to the raw id instead of crashing", () => {
@@ -82,6 +97,14 @@ describe("shop catalog wiring", () => {
       assert.equal(item.name, meta.name);
       assert.ok(item.price > 0, `${id} must be buyable, not grant-only`);
       assert.ok(!item.grantOnly);
+    }
+  });
+
+  test("every prestige unlock is gated on a real non-pack shop item", () => {
+    for (const id of Object.keys(PRESTIGE_UNLOCKS)) {
+      const item = getShopItem(id);
+      assert.ok(item, `${id} missing from shopCatalog`);
+      assert.notEqual(item.type, "uniformPack");
     }
   });
 });

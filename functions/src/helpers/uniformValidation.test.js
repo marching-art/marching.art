@@ -218,6 +218,13 @@ describe("validateDesign", () => {
     d.figure.cape = { color: "#22355c", lining: "#d9a41c", side: "right" };
     assert.deepEqual(validateDesign(d), []);
 
+    // drum-major regalia: the aiguillette is a plain hex channel
+    const dm = validDesign();
+    dm.figure.aiguillette = "#d9a41c";
+    assert.deepEqual(validateDesign(dm), []);
+    dm.figure.aiguillette = "gold braid";
+    assert.match(validateDesign(dm).join(";"), /aiguillette/);
+
     // cape needs only its color; side defaults to left
     const d2 = validDesign();
     d2.figure.cape = { color: "#22355c" };

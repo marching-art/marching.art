@@ -337,6 +337,7 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
     swash: figure.swash ? secondary : figure.swash,
     swashLegColor: figure.swashLegColor ? accent : figure.swashLegColor,
     epaulet: figure.epaulet ? secondary : figure.epaulet,
+    aiguillette: figure.aiguillette ? metal : figure.aiguillette,
     suspenders: figure.suspenders ? darkenHex(secondary, 0.3) : figure.suspenders,
     belt: figure.belt ? secondary : figure.belt,
     buckle: figure.buckle ? metal : figure.buckle,

@@ -410,6 +410,22 @@ describe('UniformFigure', () => {
     expect(mirrors(right.container.innerHTML)).toBe(mirrors(left.container.innerHTML) + 1);
   });
 
+  it('renders the drum-major aiguillette with metal ferrule tips', () => {
+    const base = { skin: '#c9a074', jacket: '#1d2f66', metal: '#cfd4da' };
+    const plain = render(<UniformFigure label="no cord" figure={{ ...base }} />);
+    const withCord = render(
+      <UniformFigure label="cord" figure={{ ...base, aiguillette: '#d9a41c' }} />
+    );
+    // the cord loops are stroked paths in the cord color
+    expect(withCord.container.querySelectorAll('path[stroke="#d9a41c"]').length).toBeGreaterThan(
+      plain.container.querySelectorAll('path[stroke="#d9a41c"]').length
+    );
+    // two metal ferrule tips hang from the chest stud
+    expect(
+      withCord.container.querySelectorAll('rect[fill="#cfd4da"]').length
+    ).toBeGreaterThanOrEqual(2);
+  });
+
   it('defines the iridescent ramp only when the finish is on', () => {
     const plain = render(
       <UniformFigure label="plain torso" figure={{ skin: '#c9a074', jacket: '#1d2f66' }} />

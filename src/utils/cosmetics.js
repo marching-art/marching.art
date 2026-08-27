@@ -93,7 +93,8 @@ export const SHOP_ITEMS = [
     type: 'title',
     name: 'Drum Major',
     price: 2500,
-    description: 'Flair displayed on your public profile',
+    description:
+      'Flair on your public profile — and the rank unlocks the ceremonial aiguillette cord in the Uniform Studio',
     textClass: 'text-purple-400',
   },
   {

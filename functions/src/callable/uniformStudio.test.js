@@ -192,8 +192,27 @@ describe("saveUniformDesign pack gate", () => {
 
     await assert.rejects(
       saveUniformDesign.run(authedRequest("director", { designId: "d1", design: gatedDesign() })),
-      /unlock the pack in the Shop/
+      /unlock them in the Shop/
     );
     assert.equal(docs.get(`${wardrobePrefix("director")}d1`).figure.cape, undefined);
+  });
+
+  test("the aiguillette needs the Drum Major title; the title unlocks it", async () => {
+    const design = freeDesign();
+    design.figure.aiguillette = "#d9a41c";
+    const docs = new Map([[profilePath("director"), { cosmetics: { owned: [] } }]]);
+    const { db } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await assert.rejects(
+      saveUniformDesign.run(authedRequest("director", { design })),
+      /Drum Major's aiguillette \(requires the Drum Major title\)/
+    );
+
+    docs.set(profilePath("director"), { cosmetics: { owned: ["title_drum_major"] } });
+    const result = await saveUniformDesign.run(authedRequest("director", { design }));
+    assert.ok(result.designId);
+    const saved = [...docs.entries()].find(([p]) => p.startsWith(wardrobePrefix("director")));
+    assert.equal(saved[1].figure.aiguillette, "#d9a41c");
   });
 });

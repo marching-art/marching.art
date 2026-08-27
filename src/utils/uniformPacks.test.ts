@@ -11,6 +11,7 @@ import type { FigureConfig } from '../types/uniform';
 // Backend source of truth (plain CJS, no firebase imports).
 import {
   UNIFORM_PACKS as SERVER_PACKS,
+  PRESTIGE_UNLOCKS as SERVER_PRESTIGE,
   requiredPacksFor as serverRequiredPacksFor,
 } from '../../functions/src/helpers/uniformEntitlements.js';
 
@@ -46,6 +47,11 @@ describe('requiredPacksFor', () => {
       'pack_texture_atelier',
     ]);
   });
+
+  it('maps the aiguillette to the Drum Major title (prestige, not a pack)', () => {
+    expect(requiredPacksFor({ ...FREE, aiguillette: '#d9a41c' })).toEqual(['title_drum_major']);
+    expect(getUniformPack('title_drum_major')?.kind).toBe('prestige');
+  });
 });
 
 describe('missingPacksFor', () => {
@@ -77,10 +83,12 @@ describe('missingPacksFor', () => {
 });
 
 describe('server mirror', () => {
+  const clientPacks = UNIFORM_PACKS.filter((p) => p.kind === 'pack');
+  const clientPrestige = UNIFORM_PACKS.filter((p) => p.kind === 'prestige');
+
   it('carries exactly the server pack ids with matching metadata', () => {
-    const serverIds = Object.keys(SERVER_PACKS).sort();
-    expect(UNIFORM_PACKS.map((p) => p.id).sort()).toEqual(serverIds);
-    for (const pack of UNIFORM_PACKS) {
+    expect(clientPacks.map((p) => p.id).sort()).toEqual(Object.keys(SERVER_PACKS).sort());
+    for (const pack of clientPacks) {
       const server = SERVER_PACKS[pack.id as keyof typeof SERVER_PACKS];
       expect(pack.name).toBe(server.name);
       expect(pack.house).toBe(server.house);
@@ -88,11 +96,24 @@ describe('server mirror', () => {
     }
   });
 
-  it('matches the shop catalog uniformPack items one-to-one', () => {
+  it('carries exactly the server prestige unlock ids', () => {
+    expect(clientPrestige.map((p) => p.id).sort()).toEqual(Object.keys(SERVER_PRESTIGE).sort());
+    for (const item of clientPrestige) {
+      const server = SERVER_PRESTIGE[item.id as keyof typeof SERVER_PRESTIGE];
+      expect(item.name).toBe(server.name);
+    }
+  });
+
+  it('matches the shop catalog: packs are uniformPack items, prestige ids are real items', () => {
     const shopIds = SHOP_ITEMS.filter((i) => i.type === 'uniformPack')
       .map((i) => i.id)
       .sort();
-    expect(UNIFORM_PACKS.map((p) => p.id).sort()).toEqual(shopIds);
+    expect(clientPacks.map((p) => p.id).sort()).toEqual(shopIds);
+    for (const item of clientPrestige) {
+      const shopItem = SHOP_ITEMS.find((i) => i.id === item.id);
+      expect(shopItem, `${item.id} must exist in the shop catalog`).toBeTruthy();
+      expect(shopItem?.type).not.toBe('uniformPack');
+    }
     expect(getUniformPack('pack_texture_atelier')?.house).toBe('Maison Verdier');
     expect(getUniformPack('not_a_pack')).toBeUndefined();
   });
@@ -104,7 +125,15 @@ describe('server mirror', () => {
       { ...FREE, lame: true },
       { ...FREE, hatType: 'busby' },
       { ...FREE, cape: { color: '#22355c', lining: '#d9a41c', side: 'right' } },
-      { ...FREE, iridescent: true, lame: true, hatType: 'busby', cape: { color: '#22355c' } },
+      { ...FREE, aiguillette: '#d9a41c' },
+      {
+        ...FREE,
+        iridescent: true,
+        lame: true,
+        hatType: 'busby',
+        cape: { color: '#22355c' },
+        aiguillette: '#f4f2ec',
+      },
     ];
     for (const figure of cases) {
       expect(requiredPacksFor(figure).sort()).toEqual(serverRequiredPacksFor(figure).sort());
