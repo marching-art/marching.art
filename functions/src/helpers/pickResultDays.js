@@ -1,5 +1,6 @@
 const { logger } = require("firebase-functions/v2");
 const { normalizeCorps } = require("./historicalSchedules");
+const { loadHistoricalYears } = require("./historicalScores");
 
 /**
  * The days a specific (corpsName, sourceYear) corps actually competed — the
@@ -41,11 +42,7 @@ function collectResultDays(yearData, corpsName) {
  */
 async function computeResultDaysForPool(db, pool) {
   const years = [...new Set((pool || []).map((c) => String(c.sourceYear)))];
-  const byYear = {};
-  await Promise.all(years.map(async (y) => {
-    const doc = await db.doc(`historical_scores/${y}`).get();
-    if (doc.exists) byYear[y] = doc.data().data || [];
-  }));
+  const byYear = await loadHistoricalYears(db, years);
 
   const withoutResults = [];
   let withResults = 0;

@@ -329,31 +329,51 @@ export async function getDciDataDoc(docId: string): Promise<DocumentData | null>
 }
 
 /**
- * Fetch the scraped event array for a single year from historical_scores.
- * Returns [] if the doc or array does not exist.
+ * Union a year's not-yet-migrated legacy `data` array with its sharded
+ * `events` subcollection, the sharded copy winning on an (eventName, date)
+ * conflict. Mirrors the backend's mergeEventLists so the client sees the same
+ * events regardless of migration state.
  */
-export async function getHistoricalScoresForYear(year: string | number): Promise<DocumentData[]> {
-  const scoresDoc = await getDoc(doc(db, `historical_scores/${year}`));
-  return scoresDoc.exists() ? scoresDoc.data().data || [] : [];
+function mergeHistoricalEventLists(legacy: DocumentData[], sub: DocumentData[]): DocumentData[] {
+  const keyOf = (e: DocumentData): string => {
+    const ms = new Date(e.date).getTime();
+    return Number.isNaN(ms) ? `${e.eventName} raw:${String(e.date)}` : `${e.eventName} ${ms}`;
+  };
+  const byKey = new Map<string, DocumentData>();
+  for (const e of legacy) byKey.set(keyOf(e), e);
+  for (const e of sub) byKey.set(keyOf(e), e);
+  return [...byKey.values()];
 }
 
 /**
- * Fetch historical_scores docs for a set of years, keyed by year (doc ID).
- * Years with no doc are omitted from the map; each value is the doc's `data`
- * event array (or [] if missing).
+ * Fetch the scraped event array for a single year from historical_scores.
+ * Reads the per-event `events` subcollection (the current sharded format) and
+ * unions it with any legacy in-array events. Returns [] if the year has none.
+ */
+export async function getHistoricalScoresForYear(year: string | number): Promise<DocumentData[]> {
+  const [yearSnap, eventsSnap] = await Promise.all([
+    getDoc(doc(db, `historical_scores/${year}`)),
+    getDocs(collection(db, `historical_scores/${year}/events`)),
+  ]);
+  const legacy: DocumentData[] = yearSnap.exists() ? yearSnap.data().data || [] : [];
+  const sub = eventsSnap.docs.map((d) => d.data());
+  return mergeHistoricalEventLists(legacy, sub);
+}
+
+/**
+ * Fetch historical_scores for a set of years, keyed by year. Years with no
+ * events are omitted; each value is the unioned event array.
  */
 export async function getHistoricalScoresMap(
   years: Array<string | number>
 ): Promise<Record<string, DocumentData[]>> {
-  const historicalDocs = await Promise.all(
-    years.map((year) => getDoc(doc(db, `historical_scores/${year}`)))
-  );
   const historical: Record<string, DocumentData[]> = {};
-  historicalDocs.forEach((docSnap) => {
-    if (docSnap.exists()) {
-      historical[docSnap.id] = docSnap.data().data || [];
-    }
-  });
+  await Promise.all(
+    years.map(async (year) => {
+      const events = await getHistoricalScoresForYear(year);
+      if (events.length) historical[String(year)] = events;
+    })
+  );
   return historical;
 }
 

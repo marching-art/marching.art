@@ -2,6 +2,7 @@ const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { assertAdmin } = require("./callableGuards");
+const { loadHistoricalYear } = require("./historicalScores");
 const { deriveRunningOrder } = require("./scheduleModel");
 const { resolveTimezone, zonedWallTimeToUtc } = require("./eventDetails");
 const { mergeEventRecords } = require("./historicalSchedules");
@@ -119,9 +120,8 @@ function buildLearnedScheduleEvent(scoreEvent) {
 async function buildLearnedSchedulesForYear(db, year) {
   const counts = { year, built: 0, scrapedKept: 0, skipped: 0, total: 0 };
 
-  const scoresDoc = await db.doc(`historical_scores/${year}`).get();
-  if (!scoresDoc.exists) return counts;
-  const scoreEvents = scoresDoc.data().data || [];
+  const scoreEvents = await loadHistoricalYear(db, year);
+  if (scoreEvents.length === 0) return counts;
   counts.total = scoreEvents.length;
 
   const learned = [];

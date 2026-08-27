@@ -9,6 +9,7 @@ const { logger } = require("firebase-functions/v2");
 const { getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { SHOW_PARTICIPATION_REWARDS } = require("./economy");
+const { loadHistoricalYears } = require("./historicalScores");
 const {
   clearRegressionCache,
   getCachedRegressionScore,
@@ -1113,15 +1114,9 @@ async function calculateCorpsStatisticsLogic() {
   const corpsInSeason = corpsSnap.data().corpsValues || [];
   const yearsToFetch = [...new Set(corpsInSeason.map((c) => c.sourceYear))];
 
-  // 2. Fetch all necessary historical score documents
-  const historicalPromises = yearsToFetch.map((year) => db.doc(`historical_scores/${year}`).get());
-  const historicalDocs = await Promise.all(historicalPromises);
-  const historicalData = {};
-  historicalDocs.forEach((doc) => {
-    if (doc.exists) {
-      historicalData[doc.id] = doc.data().data;
-    }
-  });
+  // 2. Fetch all necessary historical score documents (sharded into per-event
+  // subcollections; loadHistoricalYears returns the same { year: events[] } shape).
+  const historicalData = await loadHistoricalYears(db, yearsToFetch);
 
   // 3. Process the data for each corps
   // Pre-index events by corps name per year so each corps lookup is O(1) instead of O(E×S).

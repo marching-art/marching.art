@@ -5,6 +5,7 @@
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { enrichEventsWithDetails } = require("./eventDetails");
+const { loadAllHistoricalYears } = require("./historicalScores");
 const { standardizeLocation, isUnknownLocation } = require("./locationFormat");
 const {
   applyEnrichment,
@@ -169,11 +170,12 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
 async function generateOffSeasonSchedule(seasonLength, startDay) {
   logger.info(`Generating schedule for a ${seasonLength}-day season, starting on day ${startDay}.`);
   const db = getDb();
-  const scoresSnapshot = await db.collection("historical_scores").get();
+  // Events are sharded into historical_scores/{year}/events subcollections;
+  // loadAllHistoricalYears unions those with any legacy in-array events.
+  const historicalByYear = await loadAllHistoricalYears(db);
 
   const showsByDay = new Map();
-  scoresSnapshot.forEach((yearDoc) => {
-    const yearData = yearDoc.data().data || [];
+  Object.values(historicalByYear).forEach((yearData) => {
     yearData.forEach((event) => {
       // "DCI Competition - {location}" is the placeholder name given to
       // events the From The Pressbox import (2000-2012) had no title for.

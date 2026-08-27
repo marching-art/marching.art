@@ -616,9 +616,17 @@ match /final_rankings/{docId} {
   allow write: if isAdmin();
 }
 
-match /historical_scores/{docId} {
+match /historical_scores/{year} {
   allow read: if true;
   allow write: if false; // Backend only
+
+  // Per-event shards (historical_scores/{year}/events/{eventId}). Public-read
+  // like the parent; written only by the backend. The client unions these with
+  // any legacy in-array events (see src/api/season.ts).
+  match /events/{eventId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
 }
 
 match /historical_schedules/{docId} {

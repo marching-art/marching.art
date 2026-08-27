@@ -6,6 +6,7 @@
  */
 
 const { getDb } = require('../config');
+const { loadHistoricalYear } = require('./historicalScores');
 const { logger } = require('firebase-functions/v2');
 
 /**
@@ -26,8 +27,11 @@ async function getHistoricalEvents(db, sourceYear, ctx) {
   if (ctx.historicalEvents.has(sourceYear)) {
     return ctx.historicalEvents.get(sourceYear);
   }
-  const historicalDoc = await db.doc(`historical_scores/${sourceYear}`).get();
-  const events = historicalDoc.exists ? historicalDoc.data().data || [] : null;
+  // Sharded read (unions legacy + subcollection). A source year with no events
+  // maps to null — the sentinel the callers treat as "no historical data,
+  // return default analytics" (distinct from an empty-but-present result).
+  const loaded = await loadHistoricalYear(db, sourceYear);
+  const events = loaded.length ? loaded : null;
   ctx.historicalEvents.set(sourceYear, events);
   return events;
 }

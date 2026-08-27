@@ -6,6 +6,7 @@
 
 const { getDb } = require("../config");
 const { logger } = require("firebase-functions/v2");
+const { loadHistoricalYears } = require("./historicalScores");
 
 // Every DCI caption is judged out of 20. Nothing may be projected AT the
 // ceiling: a 20.000 is a flawless sheet, and no corps has ever earned one.
@@ -138,17 +139,10 @@ async function fetchHistoricalData(dataDocId, additionalYears = []) {
   // Combine corps source years with any additional years (e.g., current year for live season)
   const yearsToFetch = [...new Set([...yearsFromCorps, ...additionalYears.map(String)])];
 
-  const historicalDocs = await Promise.all(
-    yearsToFetch.map((year) => db.doc(`historical_scores/${year}`).get())
-  );
-
-  const historicalData = {};
-  historicalDocs.forEach((doc) => {
-    if (doc.exists) {
-      historicalData[doc.id] = doc.data().data;
-    }
-  });
-  return historicalData;
+  // Each year's events now live in a historical_scores/{year}/events subcollection;
+  // loadHistoricalYears unions those with any not-yet-migrated legacy array so this
+  // returns the same { year: events[] } shape the whole pipeline expects.
+  return loadHistoricalYears(db, yearsToFetch);
 }
 
 function simpleLinearRegression(data) {

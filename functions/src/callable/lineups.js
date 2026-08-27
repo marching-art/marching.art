@@ -2,6 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
+const { loadHistoricalYears } = require("../helpers/historicalScores");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
@@ -565,17 +566,9 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
     // Get the years we need to fetch
     const yearsToFetch = [...new Set(corpsList.map(c => c.sourceYear))];
 
-    // Fetch historical scores for all relevant years
-    const historicalDocs = await Promise.all(
-      yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get())
-    );
-
-    const historicalData = {};
-    historicalDocs.forEach(doc => {
-      if (doc.exists) {
-        historicalData[doc.id] = doc.data().data || [];
-      }
-    });
+    // Fetch historical scores for all relevant years (sharded per-event
+    // subcollections, unioned with any legacy in-array data).
+    const historicalData = await loadHistoricalYears(db, yearsToFetch);
 
     // OPTIMIZATION: Pre-build score index for O(1) lookups instead of O(n) .find()
     // Structure: Map<year, Map<corpsName, Map<offSeasonDay, scoreData>>>
