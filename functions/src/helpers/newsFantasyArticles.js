@@ -422,6 +422,11 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
       type: ARTICLE_TYPES.FANTASY_DAILY,
       ...content,
       featuredPerformer: topCorps?.corpsName,
+      // Persist the featured corps' equipped design (and its home city) so an
+      // admin image re-gen can reproduce a studio-accurate image without a
+      // profile lookup, instead of falling back to generic theming.
+      featuredUniform: uniformDesign || null,
+      featuredLocation: corpsLocation || null,
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,

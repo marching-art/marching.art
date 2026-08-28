@@ -363,6 +363,9 @@ exports.regenerateArticleImage = onCall(
         ARTICLE_TYPES,
       } = require("../helpers/newsGeneration");
       const { uploadFromUrl } = require("../helpers/mediaService");
+      const { fetchFantasyRecaps } = require("../helpers/newsData");
+      const { resolveCorpsUniform } = require("../helpers/newsUniforms");
+      const { paths } = require("../helpers/paths");
 
       // Always build a fresh prompt when regenerating
       // This ensures we use the latest prompt templates and uniform data
@@ -391,15 +394,44 @@ exports.regenerateArticleImage = onCall(
             metadata.showLocation,
             featured.showTitle
           );
-        } else if (articleType === ARTICLE_TYPES.FANTASY_PERFORMERS && articleData.topPerformers?.[0]) {
-          const top = articleData.topPerformers[0];
-          // The persisted article carries no equipped design (and no uid to fetch
-          // one), so this admin re-gen falls back to name/theme cues for the look.
+        } else if (
+          (articleType === ARTICLE_TYPES.FANTASY_DAILY ||
+            articleType === ARTICLE_TYPES.SEASON_SUMMARY) &&
+          articleData.featuredPerformer
+        ) {
+          // Reproduce the studio-accurate fantasy image from the featured corps'
+          // equipped design. Prefer the design persisted at generation time; for
+          // articles published before that field existed, resolve it live from
+          // that day's fantasy recap (which carries each corps' uid + class).
+          let fantasyDesign = articleData.featuredUniform || null;
+          let fantasyLocation = articleData.featuredLocation || null;
+          if (!fantasyDesign && articleData.reportDay) {
+            try {
+              const seasonDoc = await db.doc("game-settings/season").get();
+              const seasonId =
+                (seasonDoc.exists && seasonDoc.data().seasonUid) || "current_season";
+              const recaps = await fetchFantasyRecaps(db, seasonId, articleData.reportDay);
+              const results = (recaps?.current?.shows || []).flatMap((s) => s.results || []);
+              const match = results.find((r) => r.corpsName === articleData.featuredPerformer);
+              if (match?.uid && match?.corpsClass) {
+                const profileDoc = await db.doc(paths.userProfile(match.uid)).get();
+                const corpsData = profileDoc.exists
+                  ? profileDoc.data()?.corps?.[match.corpsClass]
+                  : null;
+                fantasyDesign = resolveCorpsUniform(corpsData);
+                fantasyLocation = fantasyLocation || corpsData?.location || null;
+              }
+            } catch (lookupErr) {
+              logger.warn("Fantasy re-gen: could not resolve equipped design:", lookupErr.message);
+            }
+          }
           imagePrompt = buildFantasyPerformersImagePrompt(
-            top.corpsName || "Champion Corps",
+            articleData.featuredPerformer,
             "Victory celebration",
-            top.location,
-            null
+            fantasyLocation,
+            fantasyDesign,
+            articleData.reportDay || 0,
+            articleType === ARTICLE_TYPES.SEASON_SUMMARY ? 5 : 4
           );
         } else if (articleType === ARTICLE_TYPES.FANTASY_LEAGUES) {
           imagePrompt = buildFantasyLeagueImagePrompt();

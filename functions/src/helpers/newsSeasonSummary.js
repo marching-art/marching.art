@@ -545,6 +545,10 @@ ARTICLE REQUIREMENTS
         ...content,
         seasonSummary,
         featuredPerformer: imageCorps.corpsName,
+        // Persist the featured corps' equipped design so an admin image re-gen
+        // reproduces a studio-accurate image instead of generic theming.
+        featuredUniform: imageDesign?.uniform || null,
+        featuredLocation: imageDesign?.location || imageCorps.hometown || null,
         imageUrl: imageResult.url,
         imagePrompt,
         reportDay,
