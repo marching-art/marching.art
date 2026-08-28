@@ -5,6 +5,7 @@ import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 import { Heading } from './ui';
 
 // Lazy-loaded confetti module (only loaded when celebration triggers)
+/** @type {((options?: Record<string, unknown>) => void) | null} */
 let confettiModule = null;
 
 /**
@@ -17,10 +18,13 @@ let confettiModule = null;
  * - Reduced interval frequency (500ms instead of 250ms)
  * - Fewer particles on mobile
  */
+/**
+ * @param {{ trigger?: boolean, message?: string, type?: string }} props
+ */
 const Celebration = ({ trigger, message, type = 'default' }) => {
   const [isVisible, setIsVisible] = useState(false);
   const shouldReduceMotion = useShouldReduceMotion({ includePerformanceHeuristics: true });
-  const intervalRef = useRef(null);
+  const intervalRef = useRef(/** @type {ReturnType<typeof setInterval> | null} */ (null));
 
   useEffect(() => {
     if (trigger) {
@@ -45,6 +49,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
     }
   }, [trigger, type, shouldReduceMotion]);
 
+  /** @param {string} celebrationType */
   const triggerConfetti = async (celebrationType) => {
     // Lazy-load confetti module on first use
     if (!confettiModule) {
@@ -58,6 +63,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
     }
 
     const confetti = confettiModule;
+    if (!confetti) return;
 
     // Clear any existing interval
     if (intervalRef.current) {
@@ -69,6 +75,10 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
     // Reduced ticks for better performance
     const defaults = { startVelocity: 25, spread: 360, ticks: 40, zIndex: 1000 };
 
+    /**
+     * @param {number} min
+     * @param {number} max
+     */
     function randomInRange(min, max) {
       return Math.random() * (max - min) + min;
     }
@@ -78,7 +88,9 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
       const timeLeft = animationEnd - Date.now();
 
       if (timeLeft <= 0) {
-        clearInterval(intervalRef.current);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
         intervalRef.current = null;
         return;
       }
@@ -212,14 +224,18 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
  * Place once in your app root to handle all celebrations
  */
 export const CelebrationContainer = () => {
-  const [celebration, setCelebration] = useState(null);
+  const [celebration, setCelebration] = useState(
+    /** @type {{ trigger: boolean, message: string, type: string, id: number } | null} */ (null)
+  );
 
   useEffect(() => {
+    /** @param {Event} event */
     const handleCelebration = (event) => {
+      const detail = /** @type {CustomEvent} */ (event).detail || {};
       setCelebration({
         trigger: true,
-        message: event.detail.message,
-        type: event.detail.type,
+        message: detail.message,
+        type: detail.type,
         id: Date.now(),
       });
 
