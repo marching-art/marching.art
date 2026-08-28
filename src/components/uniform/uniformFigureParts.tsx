@@ -632,19 +632,43 @@ export function mockNeck(cw: NormalizedFigure, uid: string): Node[] {
   ];
 }
 
+/**
+ * Cowl scarf: a chunky wrap that hugs the neck (top edge follows the chin
+ * curve — the neck runs x110–130 / y74–96, headNeck), drapes over the upper
+ * chest in a center-dipping fold, and hangs a tapered tail on the right.
+ * Paint order: drape → roll shadow → tail (emerges from under the roll) →
+ * roll → highlight/fold lines.
+ */
 export function cowlScarf(cw: NormalizedFigure): Node[] {
   if (!cw.cowl) return [];
   const c = safeHex(cw.cowl);
   return [
-    p('cw1', 'M98,96 Q120,84 142,96 Q145,104 142,112 Q120,124 98,112 Q95,104 98,96 Z', c),
+    // lower drape, dipping to a soft V over the chest
     p(
-      'cw2',
-      'M100,106 Q120,96 140,106 Q142,112 140,118 Q120,128 100,118 Q98,112 100,106 Z',
-      lightenHex(c, 0.12)
+      'cw-d',
+      'M100,100 Q120,112 140,100 Q144,106 141,113 Q120,130 99,113 Q96,106 100,100 Z',
+      lightenHex(c, 0.06)
     ),
-    shade('cw-s', 'M100,98 Q120,88 140,98 Q120,104 100,98 Z', 0.22),
-    p('cw3', 'M136,110 Q148,130 144,152 L133,148 Q137,128 132,114 Z', darkenHex(c, 0.15)),
-    shade('cw-t', 'M136,112 Q145,132 142,150 L139,149 Q141,130 134,114 Z', 0.15),
+    strokeP('cw-hem', 'M104,113 Q120,127 136,113', darkenHex(c, 0.35), 1.2, { opacity: '.5' }),
+    // shadow the roll casts onto the drape
+    shade(
+      'cw-sh',
+      'M100,102 Q120,114 140,102 Q141,107 138,110 Q120,123 102,110 Q99,107 100,102 Z',
+      0.18
+    ),
+    // hanging tail: fold-over notch at the top, tapered angled tip
+    p(
+      'cw-t',
+      'M122,106 Q128,108 130,116 Q134,132 133,150 L125,147 Q127,132 124,118 Q122,110 118,106 Z',
+      darkenHex(c, 0.12)
+    ),
+    shade('cw-te', 'M129,116 Q133,132 132,148 L129,147 Q131,132 126,116 Z', 0.15),
+    shade('cw-tf', 'M118,106 L128,107 L123,114 Z', 0.25),
+    // the roll wrapped around the neck — top edge hugs under the chin
+    p('cw-r', 'M104,86 Q120,94 136,86 Q142,92 140,102 Q120,114 100,102 Q98,92 104,86 Z', c),
+    light('cw-rl', 'M104,86 Q120,94 136,86 Q135,90 132,92 Q120,100 108,92 Q105,90 104,86 Z', 0.14),
+    strokeP('cw-f1', 'M103,95 Q120,105 137,95', darkenHex(c, 0.4), 1.1, { opacity: '.45' }),
+    strokeP('cw-f2', 'M105,90 Q120,98 135,90', darkenHex(c, 0.4), 1, { opacity: '.3' }),
   ];
 }
 
