@@ -14,6 +14,19 @@ const ThrowError = ({ shouldThrow = true }: { shouldThrow?: boolean }) => {
   return <div>No error</div>;
 };
 
+// Every throw a boundary catches is also dispatched by React's dev build as a
+// window `error` event, and jsdom prints any unhandled one as a full stack
+// trace in the test output. Marking the event handled keeps the run log clean.
+const handleWindowError = (event: ErrorEvent) => event.preventDefault();
+
+beforeEach(() => {
+  window.addEventListener('error', handleWindowError);
+});
+
+afterEach(() => {
+  window.removeEventListener('error', handleWindowError);
+});
+
 describe('ErrorBoundary', () => {
   // Suppress console.error for error boundary tests
   const originalError = console.error;
