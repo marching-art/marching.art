@@ -6,6 +6,7 @@ const {
   sanitizePromptValue,
   promptSafe,
   promptSafeBlock,
+  stripPromptDelimiters,
 } = require("./promptSafety");
 
 test("promptSafe wraps values in «...» delimiters", () => {
@@ -55,6 +56,43 @@ test("promptSafeBlock strips delimiters and non-newline control chars", () => {
 test("promptSafeBlock truncates to maxLength", () => {
   const out = promptSafeBlock("y".repeat(100), { maxLength: 20 });
   assert.equal(out, `«««\n${"y".repeat(19)}…\n»»»`);
+});
+
+test("stripPromptDelimiters removes «» marks the model copied into a string", () => {
+  assert.equal(
+    stripPromptDelimiters("behind «Black Gold World», based in «Lexington, KY»."),
+    "behind Black Gold World, based in Lexington, KY.",
+  );
+});
+
+test("stripPromptDelimiters preserves surrounding text and spacing", () => {
+  assert.equal(stripPromptDelimiters("«Unspecified A»"), "Unspecified A");
+});
+
+test("stripPromptDelimiters recurses through the article content object", () => {
+  const content = {
+    headline: "«Blue Devils» Post 98.2",
+    narrative: "The «Blue Devils» edged «Bluecoats».",
+    topPerformers: [
+      { rank: 1, corpsName: "«Blue Devils»", director: "«Sarah Jones»", score: 98.2 },
+    ],
+    scoreBreakdown: { winningScore: 98.2, totalEnsembles: 2 },
+  };
+  assert.deepEqual(stripPromptDelimiters(content), {
+    headline: "Blue Devils Post 98.2",
+    narrative: "The Blue Devils edged Bluecoats.",
+    topPerformers: [
+      { rank: 1, corpsName: "Blue Devils", director: "Sarah Jones", score: 98.2 },
+    ],
+    scoreBreakdown: { winningScore: 98.2, totalEnsembles: 2 },
+  });
+});
+
+test("stripPromptDelimiters leaves non-string primitives untouched", () => {
+  assert.equal(stripPromptDelimiters(42), 42);
+  assert.equal(stripPromptDelimiters(null), null);
+  assert.equal(stripPromptDelimiters(undefined), undefined);
+  assert.equal(stripPromptDelimiters(true), true);
 });
 
 test("UNTRUSTED_FIELD_RULE is a single line describing the delimiters", () => {

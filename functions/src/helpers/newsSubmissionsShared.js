@@ -15,6 +15,7 @@ const {
   UNTRUSTED_FIELD_RULE,
 } = require("./promptSafety");
 const { getActiveCompetitionDay } = require("./gameDay");
+const { resolveCorpsUniformDesign } = require("./newsUniforms");
 
 // A user graduates to auto-publish once an admin has approved this many of
 // their articles. After that, their new submissions publish automatically at
@@ -189,7 +190,9 @@ function corpsToByline(corpsClass, c) {
     corpsClass,
     corpsName: c.corpsName,
     location: typeof c.location === "string" && c.location.trim() ? c.location.trim() : null,
-    uniformDesign: c.uniformDesign || null,
+    // Prefer the equipped Uniform Studio design (accurate colors) over the lossy
+    // v1 prose compat so any imagery driven off this byline matches the studio.
+    uniformDesign: resolveCorpsUniformDesign(c),
   };
 }
 
@@ -531,7 +534,9 @@ async function generateFantasyDailyImage(submission, reportDay, authorCorps) {
   // with what the article actually describes; getFantasyUniformDetails renders
   // these as the authoritative "director-specified" uniform.
   const articlePrimary = cleanField(visual?.primaryColor);
-  let uniformDesign = authorCorps?.uniformDesign || null;
+  // Start from the author's equipped Uniform Studio design (accurate colors),
+  // not the lossy v1 prose compat, so unspecified fields carry the real look.
+  let uniformDesign = resolveCorpsUniformDesign(authorCorps);
   if (articlePrimary) {
     uniformDesign = {
       ...(uniformDesign || {}),
@@ -541,6 +546,11 @@ async function generateFantasyDailyImage(submission, reportDay, authorCorps) {
       secondaryColor: cleanField(visual?.secondaryColor) || uniformDesign?.secondaryColor || "silver",
       accentColor: cleanField(visual?.accentColor) || uniformDesign?.accentColor || null,
       additionalNotes: cleanField(visual?.uniformDescription) || uniformDesign?.additionalNotes || null,
+      // The article's stated colors win here; drop the studio's hex pins so a
+      // name and a hex from different sources can't disagree in the prompt.
+      primaryHex: undefined,
+      secondaryHex: undefined,
+      accentHex: undefined,
     };
   }
 

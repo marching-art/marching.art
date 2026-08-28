@@ -28,6 +28,7 @@ const {
 const {
   buildFantasyPerformersImagePrompt,
 } = require("./newsImagePrompts");
+const { resolveCorpsUniformDesign } = require("./newsUniforms");
 const {
   getToneGuidance,
   getWritingVariety,
@@ -392,7 +393,9 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
         if (profileDoc.exists) {
           const profileData = profileDoc.data();
           const corpsData = profileData?.corps?.[topCorps.corpsClass];
-          uniformDesign = corpsData?.uniformDesign || null;
+          // Prefer the equipped Uniform Studio design (accurate current colors)
+          // over the lossy/possibly-stale v1 prose compat.
+          uniformDesign = resolveCorpsUniformDesign(corpsData);
           corpsLocation = corpsData?.location || null;
         }
       } catch (profileError) {

@@ -68,6 +68,42 @@ function promptSafe(value, options = {}) {
 }
 
 /**
+ * Remove the «...» delimiter characters from generated model output.
+ *
+ * The delimiters are a prompt-engineering device only — they mark user-supplied
+ * fields as data inside the prompt so the model never treats them as
+ * instructions. They must NEVER surface in a published article. Despite the
+ * UNTRUSTED_FIELD_RULE telling the model to reproduce delimited values without
+ * the marks, it frequently copies «Corps Name» through verbatim (and, for an
+ * empty «» pair, even invents a filler like "Unspecified"). This strips the
+ * delimiter characters back out as a final safety net, recursively across the
+ * strings of a structured-content object so every article field is covered.
+ *
+ * Only the « and » characters are removed; the wrapped text itself is kept
+ * intact, so «Blue Devils» becomes Blue Devils with surrounding spacing
+ * unchanged.
+ *
+ * @param {*} value - A generated string, or an array/object of them.
+ * @returns {*} The same shape with «/» removed from every string.
+ */
+function stripPromptDelimiters(value) {
+  if (typeof value === "string") {
+    return value.replace(/[«»]/g, "");
+  }
+  if (Array.isArray(value)) {
+    return value.map(stripPromptDelimiters);
+  }
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [key, val] of Object.entries(value)) {
+      out[key] = stripPromptDelimiters(val);
+    }
+    return out;
+  }
+  return value;
+}
+
+/**
  * Sanitize a multi-line user-derived text (e.g. an article body) and wrap it
  * in a ««« / »»» fence. Newlines are preserved; other control characters and
  * the delimiter characters are stripped, and the text is truncated.
@@ -94,4 +130,5 @@ module.exports = {
   sanitizePromptValue,
   promptSafe,
   promptSafeBlock,
+  stripPromptDelimiters,
 };

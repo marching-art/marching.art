@@ -6,6 +6,7 @@
 const { logger } = require("firebase-functions/v2");
 
 const { DCI_UNIFORMS } = require("./dciUniforms");
+const { deriveV1Compat } = require("./uniformValidation");
 
 
 // =============================================================================
@@ -442,6 +443,53 @@ function buildShowThemeContext(showTitle) {
 }
 
 /**
+ * Resolve the uniform design that should drive a corps' AI imagery from a raw
+ * corps entry (the `corps.{class}` object on a user profile).
+ *
+ * A corps carries two representations of its look:
+ *   - `uniform`: the equipped Uniform Studio v2 snapshot — the authoritative
+ *     "what this corps looks like right now" — with the exact `colorway` (hex)
+ *     and `figure`.
+ *   - `uniformDesign`: a lossy v1 prose compat object written alongside it, and
+ *     the only shape the older image pipeline understood. It can be stale or
+ *     missing (legacy equips, designs applied before the compat existed), which
+ *     is why an image would fall back to generic name-based theming and lose the
+ *     director's real colors.
+ *
+ * When the v2 snapshot is present we re-derive the v1 prose fields from it every
+ * time (accurate colors + hat/plume), preserving any v1-only enrichments
+ * (mascot, brass/percussion/guard descriptions, avatar prefs) by merging over
+ * the existing v1 object, and we attach the exact hex channels so the prompt can
+ * name a precise color target rather than a nearest-name approximation. Falls
+ * back to the stored v1 design when there is no equipped snapshot.
+ *
+ * @param {object|null} corpsData - A raw corps entry (`corps.{class}`).
+ * @returns {object|null} A v1-shaped uniformDesign (optionally with
+ *   primaryHex/secondaryHex/accentHex), or null when nothing is on file.
+ */
+function resolveCorpsUniformDesign(corpsData) {
+  if (!corpsData || typeof corpsData !== "object") return null;
+  const v1 = corpsData.uniformDesign || null;
+  const snapshot = corpsData.uniform;
+  const colorway = snapshot && snapshot.colorway;
+  if (colorway && typeof colorway.primary === "string") {
+    try {
+      const derived = deriveV1Compat(snapshot, v1);
+      return {
+        ...derived,
+        primaryHex: colorway.primary,
+        secondaryHex: colorway.secondary,
+        accentHex: colorway.accent,
+      };
+    } catch (err) {
+      logger.warn("Could not derive uniform design from equipped snapshot:", err.message);
+      return v1;
+    }
+  }
+  return v1;
+}
+
+/**
  * Get fantasy corps uniform based on director-provided design OR name analysis
  * Priority: Director's uniformDesign > Name-based theme matching > Default colors
  *
@@ -468,9 +516,16 @@ function getFantasyUniformDetails(corpsName, location = null, uniformDesign = nu
       none: "no traditional headwear",
     };
 
+    // Name each color, and pin its exact hex when the equipped design carried
+    // one, so the image model targets the director's true shade (e.g. a deep
+    // green) instead of drifting toward a desaturated grey.
+    const named = (name, hex) => (typeof hex === "string" ? `${name} (${hex})` : name);
+    const primary = named(uniformDesign.primaryColor, uniformDesign.primaryHex);
+    const secondary = named(uniformDesign.secondaryColor, uniformDesign.secondaryHex);
+    const accent = named(uniformDesign.accentColor, uniformDesign.accentHex);
     const colors = uniformDesign.accentColor
-      ? `${uniformDesign.primaryColor} with ${uniformDesign.secondaryColor} and ${uniformDesign.accentColor}`
-      : `${uniformDesign.primaryColor} with ${uniformDesign.secondaryColor}`;
+      ? `${primary} with ${secondary} and ${accent}`
+      : `${primary} with ${secondary}`;
 
     const plumeDesc = uniformDesign.plumeDescription
       ? ` with ${uniformDesign.plumeDescription}`
@@ -581,4 +636,5 @@ module.exports = {
   interpretShowTheme,
   buildShowThemeContext,
   getFantasyUniformDetails,
+  resolveCorpsUniformDesign,
 };

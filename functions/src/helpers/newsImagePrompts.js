@@ -569,13 +569,14 @@ function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null,
 
 ${UNTRUSTED_FIELD_RULE}
 
-UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified)" : ""}:
+UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified — MATCH EXACTLY)" : ""}:
 - Colors: ${promptSafe(details.colors, { maxLength: 300 })}
 - Uniform: ${promptSafe(details.uniform, { maxLength: 300 })}
 - Headwear: ${promptSafe(details.helmet, { maxLength: 300 })}
 - Brass: ${promptSafe(details.brass, { maxLength: 300 })}
 - Guard elements: ${promptSafe(details.guard, { maxLength: 300 })}
 ${details.additionalNotes ? `- Special notes: ${promptSafe(details.additionalNotes, { maxLength: 300 })}` : ""}
+- COLOR FIDELITY IS CRITICAL: render the uniform in the EXACT colors listed above, saturated and true to any hex codes given. Do NOT substitute, mute, or default to grey, charcoal, or black unless those are the stated colors.
 
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}

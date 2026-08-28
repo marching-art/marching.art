@@ -16,6 +16,11 @@ const {
   detectUnsourcedNumbers,
   extractDataBlockNumbers,
 } = require("./newsValidation");
+// The prompt-injection guard wraps user-derived fields (corps/director/venue
+// names, concepts) in «...» delimiters so the model reads them as data. The
+// model too often copies those marks straight into the article, so strip them
+// from every generated field before the content is returned for publishing.
+const { stripPromptDelimiters } = require("./promptSafety");
 
 // Define Gemini API key secret
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
@@ -107,7 +112,7 @@ async function generateWithFactCheckGuard(prompt, schema, options = {}) {
   const firstHallucinated = detectHallucinatedCorps(firstAttempt, fieldCorpsNames);
 
   if (firstBanned.length === 0 && firstUnsourced.length === 0 && firstHallucinated.length === 0) {
-    return firstAttempt;
+    return stripPromptDelimiters(firstAttempt);
   }
 
   const issues = [];
@@ -147,7 +152,7 @@ Rewrite the entire article. Every other requirement in this prompt still applies
     if (secondHallucinated.length > 0) remaining.push(`hallucinated corps: ${secondHallucinated.join(", ")}`);
     logger.warn(`[${articleType}] issues leaked through retry — ${remaining.join(" | ")} — shipping anyway`);
   }
-  return secondAttempt;
+  return stripPromptDelimiters(secondAttempt);
 }
 
 // =============================================================================
