@@ -261,7 +261,7 @@ describe("equipUniformDesign guard slot", () => {
     assert.deepEqual(Object.keys(update.data), ["corps.worldClass.uniformGuard"]);
   });
 
-  test("an unknown slot is rejected; primary still writes the identity pair", async () => {
+  test("an unknown slot is rejected; primary equips the v2 snapshot and drops legacy v1", async () => {
     const docs = seededDocs();
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
@@ -277,9 +277,12 @@ describe("equipUniformDesign guard slot", () => {
       authedRequest("director", { designId: "d1", corpsClass: "worldClass" })
     );
     const update = writes.find((w) => w.type === "update" && w.path === profilePath("director"));
+    // Writes the equipped v2 snapshot (with an aiHints field, the single source
+    // of truth for the look) and deletes any legacy v1 prose design.
     assert.deepEqual(Object.keys(update.data).sort(), [
       "corps.worldClass.uniform",
       "corps.worldClass.uniformDesign",
     ]);
+    assert.ok("aiHints" in update.data["corps.worldClass.uniform"]);
   });
 });

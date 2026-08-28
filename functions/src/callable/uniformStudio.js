@@ -23,7 +23,6 @@ const {
   generateUniformCode,
   validateDesign,
   sanitizeDesign,
-  deriveV1Compat,
 } = require("../helpers/uniformValidation");
 const { missingPacksFor, missingPacksMessage } = require("../helpers/uniformEntitlements");
 
@@ -190,6 +189,11 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
     name: design.name,
     colorway: design.colorway,
     figure: design.figure,
+    // aiHints (mascot / theme keywords / design notes) ride along on the equipped
+    // snapshot so the news/image pipeline can read the director's intent straight
+    // from the single source of truth — the wardrobe doc is not fetched at render
+    // time. Null-coalesced so the field is always present.
+    aiHints: design.aiHints || null,
     equippedAt: new Date().toISOString(),
   };
 
@@ -200,10 +204,11 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
     };
   }
 
-  const v1Compat = deriveV1Compat(design, corpsMap[storedKey].uniformDesign);
+  // The equipped v2 snapshot is the single source of truth for the corps' look;
+  // proactively drop any legacy v1 prose design so it can never diverge from it.
   await profileRef.update({
     [`corps.${storedKey}.uniform`]: snapshot,
-    [`corps.${storedKey}.uniformDesign`]: v1Compat,
+    [`corps.${storedKey}.uniformDesign`]: FieldValue.delete(),
   });
   return { message: "Design equipped." };
 });

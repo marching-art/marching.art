@@ -30,6 +30,7 @@ const {
   PAID_IMAGE_MODEL,
 } = require("./geminiService");
 const { buildFantasyPerformersImagePrompt } = require("./newsImagePrompts");
+const { resolveCorpsUniform } = require("./newsUniforms");
 const { describeShowConcept } = require("./showConceptSynergy");
 const { paths } = require("./paths");
 
@@ -243,7 +244,7 @@ async function fetchDesignContext(db, dataDocId, targets) {
       const corpsData = profileDoc.data()?.corps?.[t.corpsClass];
       design.set(t.key, {
         concept: describeShowConcept(corpsData?.showConcept),
-        uniformDesign: corpsData?.uniformDesign || null,
+        uniform: resolveCorpsUniform(corpsData),
         location: corpsData?.location || t.hometown || null,
       });
     } catch (err) {
@@ -533,7 +534,7 @@ ARTICLE REQUIREMENTS
         imageCorps.corpsName,
         imageContext,
         imageDesign?.location || imageCorps.hometown || null,
-        imageDesign?.uniformDesign || null,
+        imageDesign?.uniform || null,
         reportDay,
         5 // articleIndex 5: Season Summary — distinct scene archetype from the daily five
       );

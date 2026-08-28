@@ -24,6 +24,7 @@ const {
   initializeGemini,
 } = require("../helpers/newsGeneration");
 const { FREE_IMAGE_MODEL } = require("../helpers/geminiService");
+const { resolveCorpsUniform } = require("../helpers/newsUniforms");
 const { uploadFromUrl, buildOptimizedUrl } = require("../helpers/mediaService");
 const {
   assertAuth,
@@ -226,7 +227,7 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
   logger.info("Generating avatar with prompt", {
     corpsName,
     location,
-    hasUniformDesign: !!uniformDesign?.primaryColor,
+    hasUniformDesign: !!uniformDesign?.colorway?.primary,
   });
 
   // Uniform/logo avatars always use the FREE-tier image model (Gemini 2.5 Flash
@@ -358,7 +359,7 @@ exports.generateCorpsAvatar = onCall(
         corpsClass,
         corpsName: corps.corpsName || corps.name,
         location: corps.location,
-        uniformDesign: corps.uniformDesign,
+        uniformDesign: resolveCorpsUniform(corps),
       });
 
       if (!avatarUrl) {
@@ -416,7 +417,8 @@ exports.regenerateAllAvatars = onCall(
 
         for (const corpsClass of CORPS_CLASSES) {
           const corps = data.corps?.[corpsClass];
-          if (!corps?.uniformDesign?.primaryColor) continue;
+          const design = resolveCorpsUniform(corps);
+          if (!design) continue;
 
           try {
             await generateAndSaveAvatar({
@@ -424,7 +426,7 @@ exports.regenerateAllAvatars = onCall(
               corpsClass,
               corpsName: corps.corpsName || corps.name,
               location: corps.location,
-              uniformDesign: corps.uniformDesign,
+              uniformDesign: design,
             });
             generated++;
           } catch (err) {

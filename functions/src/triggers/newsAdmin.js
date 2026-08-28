@@ -393,11 +393,13 @@ exports.regenerateArticleImage = onCall(
           );
         } else if (articleType === ARTICLE_TYPES.FANTASY_PERFORMERS && articleData.topPerformers?.[0]) {
           const top = articleData.topPerformers[0];
+          // The persisted article carries no equipped design (and no uid to fetch
+          // one), so this admin re-gen falls back to name/theme cues for the look.
           imagePrompt = buildFantasyPerformersImagePrompt(
             top.corpsName || "Champion Corps",
             "Victory celebration",
             top.location,
-            top.uniformDesign
+            null
           );
         } else if (articleType === ARTICLE_TYPES.FANTASY_LEAGUES) {
           imagePrompt = buildFantasyLeagueImagePrompt();

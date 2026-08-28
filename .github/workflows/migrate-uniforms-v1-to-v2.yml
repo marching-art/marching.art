@@ -1,0 +1,83 @@
+name: Migrate uniforms v1 to v2
+
+# One-off (re-runnable) data migration that retires the legacy prose
+# `corps.{class}.uniformDesign` (v1) so the equipped Uniform Studio snapshot
+# `corps.{class}.uniform` (v2) is the single source of truth for every corps'
+# look — the shape the news/image/avatar pipeline now reads.
+#
+# WHY: v1 was a lossy prose mirror of the design, written alongside the v2
+# snapshot only so the older image pipeline could read it. The pipeline now
+# reads v2 directly (exact colors, headwear, guard look), so v1 is dead weight
+# that can drift from the real design. This converts any legacy v1-only corps to
+# a real v2 design (using the SAME client converter the Studio uses) and deletes
+# every v1 field.
+#
+# SAFETY: v2-first — an equipped v2 snapshot is NEVER overwritten by v1 data, so
+# a design a director built in the new Studio is untouched (its old v1 is just
+# dropped, after folding across any aiHints the snapshot was missing). See the
+# pure planner in src/utils/uniformMigration.ts and its tests.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Migrate uniforms v1 to v2" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log reports how many profiles
+#      and corps WOULD change, without writing anything.
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes.
+#
+# Non-destructive to v2 designs and idempotent (a profile with no v1 left
+# produces no writes), so a second commit run that finds nothing is a safe
+# no-op. This job writes to Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two migration runs write the same profiles at once.
+  group: migrate-uniforms-v1-to-v2
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      # Root install gives us the client converter (src/utils/uniform.ts) plus
+      # firebase-admin and tsx (dev deps), so the script runs the exact same
+      # v1→v2 conversion the Studio uses — no server-side catalog duplication.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migration (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace; matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            npx tsx scripts/migrateUniformsV1toV2.mts --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            npx tsx scripts/migrateUniformsV1toV2.mts
+          fi
