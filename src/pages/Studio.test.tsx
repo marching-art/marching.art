@@ -39,7 +39,11 @@ function renderStudio() {
   );
 }
 
-describe('Studio page', () => {
+// Mounting the full editor tree takes ~3.5s even on a warm local run, which
+// leaves no headroom under the default 5s per-test timeout on a loaded CI
+// worker (it has timed out there). The tests are render-heavy, not hung, so
+// give the whole file a wider budget.
+describe('Studio page', { timeout: 15_000 }, () => {
   afterEach(() => {
     useProfileStore.setState({ profile: null });
   });

@@ -2,7 +2,7 @@
 // TABS COMPONENT TESTS
 // =============================================================================
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Trophy, Star } from 'lucide-react';
 import { Tabs, TabsList, TabTrigger, TabContent, SimpleTabs } from './Tabs';
@@ -334,24 +334,32 @@ describe('SimpleTabs', () => {
 });
 
 describe('Tabs context error', () => {
-  it('throws error when TabTrigger is used outside Tabs', () => {
-    // Suppress console.error for this test
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  // These renders throw on purpose. Silencing console.error is not enough:
+  // React's dev build also dispatches the throw as a window `error` event, and
+  // jsdom prints any unhandled one as a full stack trace in the test output.
+  // Marking the event handled keeps the run log clean.
+  const handleWindowError = (event: ErrorEvent) => event.preventDefault();
+  let consoleSpy: ReturnType<typeof vi.spyOn>;
 
+  beforeEach(() => {
+    window.addEventListener('error', handleWindowError);
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+    window.removeEventListener('error', handleWindowError);
+  });
+
+  it('throws error when TabTrigger is used outside Tabs', () => {
     expect(() => {
       render(<TabTrigger value="test">Test</TabTrigger>);
     }).toThrow('Tabs components must be used within a Tabs provider');
-
-    consoleSpy.mockRestore();
   });
 
   it('throws error when TabContent is used outside Tabs', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
     expect(() => {
       render(<TabContent value="test">Content</TabContent>);
     }).toThrow('Tabs components must be used within a Tabs provider');
-
-    consoleSpy.mockRestore();
   });
 });

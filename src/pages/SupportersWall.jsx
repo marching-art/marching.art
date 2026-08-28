@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Public Supporters wall — recognition for Buy Me a Coffee members.
 //
 // Data comes from the getSupportersWall callable, which redacts emails and
@@ -19,6 +18,7 @@ import {
 } from '../utils/supporterTiers';
 import { Heading } from '../components/ui';
 
+/** @param {{ entry: import('../api/functions').SupportersWallEntry }} props */
 function SupporterCard({ entry }) {
   const tier = getSupporterTier(entry.tier);
   const isAngel = entry.tier === 'corps_angel';
@@ -46,7 +46,12 @@ function SupporterCard({ entry }) {
 
 function SupportersWall() {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({ supporters: [], anonymousCount: 0 });
+  const [data, setData] = useState(
+    /** @type {{ supporters: import('../api/functions').SupportersWallEntry[], anonymousCount: number }} */ ({
+      supporters: [],
+      anonymousCount: 0,
+    })
+  );
 
   useEffect(() => {
     let active = true;
