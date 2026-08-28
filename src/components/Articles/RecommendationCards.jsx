@@ -7,7 +7,36 @@
 import React from 'react';
 import { TrendingUp, Pause, TrendingDown, ShoppingCart } from 'lucide-react';
 
+/**
+ * A single fantasy pick, optionally enriched with Fantasy Market Report metrics.
+ * @typedef {Object} Recommendation
+ * @property {string} corps
+ * @property {string} [caption]
+ * @property {number} [score]
+ * @property {number} [cost]
+ * @property {number} [value]
+ * @property {number} [tenDayGain]
+ * @property {string} [reason]
+ */
+
+/**
+ * Visual configuration for a BUY/HOLD/SELL section.
+ * @typedef {Object} RecConfig
+ * @property {string} title
+ * @property {string} subtitle
+ * @property {import('lucide-react').LucideIcon} icon
+ * @property {string} bgClass
+ * @property {string} borderClass
+ * @property {string} iconBgClass
+ * @property {string} iconClass
+ * @property {string} titleClass
+ * @property {string} cardBg
+ * @property {string} cardBorder
+ * @property {string} scoreClass
+ */
+
 // Caption abbreviation map
+/** @type {Record<string, string>} */
 const CAPTION_NAMES = {
   GE1: 'General Effect 1',
   GE2: 'General Effect 2',
@@ -20,6 +49,7 @@ const CAPTION_NAMES = {
 };
 
 // Recommendation type configuration
+/** @type {Record<string, RecConfig>} */
 const REC_CONFIG = {
   buy: {
     title: 'BUY',
@@ -63,6 +93,9 @@ const REC_CONFIG = {
 };
 
 // Compact metric chip shown under a pick: cost, value (score/point), or 10-day gain.
+/**
+ * @param {{ label: string, value: string, tone?: string }} props
+ */
 function MetricChip({ label, value, tone = 'text-secondary' }) {
   return (
     <span className="inline-flex items-baseline gap-1 px-1.5 py-0.5 bg-white/5 rounded-none">
@@ -73,15 +106,20 @@ function MetricChip({ label, value, tone = 'text-secondary' }) {
 }
 
 // Individual recommendation item
+/**
+ * @param {{ rec: Recommendation, config: RecConfig }} props
+ */
 function RecommendationItem({ rec, config }) {
-  const captionLabel = CAPTION_NAMES[rec.caption] || rec.caption;
+  const captionLabel = rec.caption ? CAPTION_NAMES[rec.caption] || rec.caption : '';
 
   // Value/cost/gain are optional enrichments from the Fantasy Market Report:
   // cost = the corps' purchase price in points, value = caption score per point,
   // gain = 10-day average daily gain. Show whichever the article provided.
-  const hasCost = Number.isFinite(rec.cost) && rec.cost > 0;
-  const hasValue = Number.isFinite(rec.value) && rec.value > 0;
-  const hasGain = Number.isFinite(rec.tenDayGain);
+  // Destructure into locals so the `has*` flags narrow the optional numbers.
+  const { cost, value, tenDayGain, score } = rec;
+  const hasCost = typeof cost === 'number' && cost > 0;
+  const hasValue = typeof value === 'number' && value > 0;
+  const hasGain = typeof tenDayGain === 'number' && Number.isFinite(tenDayGain);
   const showMetrics = hasCost || hasValue || hasGain;
 
   return (
@@ -91,23 +129,23 @@ function RecommendationItem({ rec, config }) {
           <span className="text-sm font-bold text-white block truncate">{rec.corps}</span>
           {rec.caption && <span className="text-xs text-muted">{captionLabel}</span>}
         </div>
-        {rec.score > 0 && (
+        {typeof score === 'number' && score > 0 && (
           <span
             className={`text-sm font-data font-bold ${config.scoreClass} tabular-nums whitespace-nowrap`}
           >
-            {rec.score.toFixed(2)}
+            {score.toFixed(2)}
           </span>
         )}
       </div>
       {showMetrics && (
         <div className="flex flex-wrap gap-1.5 mt-1.5">
-          {hasCost && <MetricChip label="Cost" value={`${rec.cost} pt`} />}
-          {hasValue && <MetricChip label="Value" value={`${rec.value.toFixed(2)}/pt`} />}
+          {hasCost && <MetricChip label="Cost" value={`${cost} pt`} />}
+          {hasValue && <MetricChip label="Value" value={`${value.toFixed(2)}/pt`} />}
           {hasGain && (
             <MetricChip
               label="10-Day"
-              value={`${rec.tenDayGain >= 0 ? '+' : ''}${rec.tenDayGain.toFixed(2)}/d`}
-              tone={rec.tenDayGain >= 0 ? 'text-green-400' : 'text-red-400'}
+              value={`${tenDayGain >= 0 ? '+' : ''}${tenDayGain.toFixed(2)}/d`}
+              tone={tenDayGain >= 0 ? 'text-green-400' : 'text-red-400'}
             />
           )}
         </div>
@@ -118,6 +156,9 @@ function RecommendationItem({ rec, config }) {
 }
 
 // Recommendation section (BUY, HOLD, or SELL)
+/**
+ * @param {{ type: string, items: Recommendation[] }} props
+ */
 function RecommendationSection({ type, items }) {
   const config = REC_CONFIG[type];
   if (!config || !items || items.length === 0) return null;
@@ -146,7 +187,7 @@ function RecommendationSection({ type, items }) {
 
 /**
  * RecommendationCards - Displays BUY/HOLD/SELL recommendations
- * @param {Object} recommendations - Object with buy, hold, sell arrays
+ * @param {{ recommendations?: { buy?: Recommendation[], hold?: Recommendation[], sell?: Recommendation[] } | null }} props
  */
 export default function RecommendationCards({ recommendations }) {
   if (!recommendations) return null;
