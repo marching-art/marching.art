@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * JargonTooltip Component
  *
@@ -16,10 +15,20 @@ import { JARGON_DEFINITIONS } from './jargonDefinitions';
 // TOOLTIP COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   termKey: keyof typeof JARGON_DEFINITIONS,
+ *   children: React.ReactNode,
+ *   enabled?: boolean,
+ *   className?: string,
+ * }} props
+ */
 const JargonTooltip = ({ termKey, children, enabled = true, className = '' }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
+  /** @type {React.MutableRefObject<HTMLSpanElement | null>} */
   const triggerRef = useRef(null);
+  /** @type {React.MutableRefObject<ReturnType<typeof setTimeout> | null>} */
   const timeoutRef = useRef(null);
 
   const definition = JARGON_DEFINITIONS[termKey];
@@ -69,6 +78,7 @@ const JargonTooltip = ({ termKey, children, enabled = true, className = '' }) =>
 
   // Handle touch (mobile)
   const handleTouch = useCallback(
+    /** @param {React.TouchEvent<HTMLSpanElement>} e */
     (e) => {
       e.preventDefault();
       if (isVisible) {
