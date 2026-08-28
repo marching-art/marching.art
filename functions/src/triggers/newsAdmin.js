@@ -397,14 +397,18 @@ exports.regenerateArticleImage = onCall(
         } else if (
           (articleType === ARTICLE_TYPES.FANTASY_DAILY ||
             articleType === ARTICLE_TYPES.SEASON_SUMMARY) &&
-          articleData.featuredPerformer
+          (articleData.featuredPerformer || articleData.topPerformers?.[0]?.corpsName)
         ) {
           // Reproduce the studio-accurate fantasy image from the featured corps'
-          // equipped design. Prefer the design persisted at generation time; for
-          // articles published before that field existed, resolve it live from
-          // that day's fantasy recap (which carries each corps' uid + class).
+          // equipped design — the same user-data tie-in article creation uses.
+          // Prefer the design persisted at generation time; for articles published
+          // before that field existed, resolve it live from that day's fantasy
+          // recap (which carries each corps' uid + class).
+          const featuredCorpsName =
+            articleData.featuredPerformer || articleData.topPerformers[0].corpsName;
           let fantasyDesign = articleData.featuredUniform || null;
           let fantasyLocation = articleData.featuredLocation || null;
+          let designSource = fantasyDesign ? "persisted" : "none";
           if (!fantasyDesign && articleData.reportDay) {
             try {
               const seasonDoc = await db.doc("game-settings/season").get();
@@ -412,7 +416,7 @@ exports.regenerateArticleImage = onCall(
                 (seasonDoc.exists && seasonDoc.data().seasonUid) || "current_season";
               const recaps = await fetchFantasyRecaps(db, seasonId, articleData.reportDay);
               const results = (recaps?.current?.shows || []).flatMap((s) => s.results || []);
-              const match = results.find((r) => r.corpsName === articleData.featuredPerformer);
+              const match = results.find((r) => r.corpsName === featuredCorpsName);
               if (match?.uid && match?.corpsClass) {
                 const profileDoc = await db.doc(paths.userProfile(match.uid)).get();
                 const corpsData = profileDoc.exists
@@ -420,13 +424,19 @@ exports.regenerateArticleImage = onCall(
                   : null;
                 fantasyDesign = resolveCorpsUniform(corpsData);
                 fantasyLocation = fantasyLocation || corpsData?.location || null;
+                if (fantasyDesign) designSource = "recap-live";
               }
             } catch (lookupErr) {
               logger.warn("Fantasy re-gen: could not resolve equipped design:", lookupErr.message);
             }
           }
+          logger.info("Fantasy re-gen uniform tie-in:", {
+            featuredCorps: featuredCorpsName,
+            designSource,
+            hasDistinctGuardLook: Boolean(fantasyDesign?.guard),
+          });
           imagePrompt = buildFantasyPerformersImagePrompt(
-            articleData.featuredPerformer,
+            featuredCorpsName,
             "Victory celebration",
             fantasyLocation,
             fantasyDesign,
