@@ -1,7 +1,27 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React from 'react';
 import { Activity, TrendingUp, TrendingDown, ChevronRight, Play } from 'lucide-react';
 
+/**
+ * @typedef {{
+ *   rank: number,
+ *   sourceYear: number | string,
+ *   corpsName: string,
+ *   score: number,
+ *   change: number | null,
+ *   direction: 'up' | 'down' | string,
+ * }} LiveScoreRow
+ */
+
+/**
+ * @param {{
+ *   liveScores: LiveScoreRow[],
+ *   displayDay: number | string,
+ *   loading: boolean,
+ *   hasData: boolean,
+ *   onYoutubeClick: (sourceYear: number | string, corpsName: string) => void,
+ *   onShowStandings: () => void,
+ * }} props
+ */
 const LiveScoresBox = ({
   liveScores,
   displayDay,
