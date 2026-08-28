@@ -21,22 +21,26 @@ const { promptSafe, UNTRUSTED_FIELD_RULE } = require("./promptSafety");
  *
  * @param {string} corpsName - The fantasy corps name
  * @param {string} location - The corps home location
- * @param {object} uniformDesign - Director-provided uniform customization (optional)
+ * @param {object} design - The corps' equipped Uniform Studio (v2) design
+ *   snapshot (`{ colorway, figure, aiHints }`), or null for name/theme cues.
  */
-function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null) {
-  const details = getFantasyUniformDetails(corpsName, location, uniformDesign);
-  const avatarStyle = uniformDesign?.avatarStyle || "logo";
-  const avatarSection = uniformDesign?.avatarSection || "hornline";
+function buildCorpsAvatarPrompt(corpsName, location = null, design = null) {
+  const details = getFantasyUniformDetails(corpsName, location, design);
+  // avatarStyle/avatarSection are optional composition hints (which layout to
+  // draw); they are not part of the uniform design and default to the team logo.
+  const avatarStyle = design?.avatarStyle || "logo";
+  const avatarSection = design?.avatarSection || "hornline";
 
-  // Extract colors with fallbacks
-  const primaryColor = uniformDesign?.primaryColor || details.colors.split(" ")[0] || "blue";
-  const secondaryColor = uniformDesign?.secondaryColor || details.colors.split(" with ")[1]?.split(" ")[0] || "silver";
-  const accentColor = uniformDesign?.accentColor || null;
-  const themeKeywords = uniformDesign?.themeKeywords || [];
+  // Colors come from the resolved details (v2 design → names + hex, or the
+  // name/theme fallback's color string).
+  const primaryColor = details.primaryColor || details.colors.split(" ")[0] || "blue";
+  const secondaryColor = details.secondaryColor || details.colors.split(" with ")[1]?.split(" ")[0] || "silver";
+  const accentColor = details.accentColor || null;
+  const themeKeywords = details.themeKeywords || [];
 
   // Build mascot description
-  const mascotDesc = uniformDesign?.mascotOrEmblem
-    ? promptSafe(uniformDesign.mascotOrEmblem, { maxLength: 200 })
+  const mascotDesc = details.mascotOrEmblem
+    ? promptSafe(details.mascotOrEmblem, { maxLength: 200 })
     : `bold mascot or symbol inspired by ${promptSafe(corpsName)}`;
 
   // Location string
@@ -44,7 +48,7 @@ function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null
 
   // If performer style, generate a section member image
   if (avatarStyle === "performer") {
-    return buildPerformerAvatarPrompt(corpsName, locationStr, uniformDesign, avatarSection, {
+    return buildPerformerAvatarPrompt(corpsName, locationStr, details, avatarSection, {
       primaryColor,
       secondaryColor,
       accentColor,
@@ -109,9 +113,12 @@ DO NOT INCLUDE:
 
 /**
  * Build performer-style avatar prompt featuring a specific section member
- * Uses the same unified format structure as logo avatars
+ * Uses the same unified format structure as logo avatars.
+ *
+ * @param {object} details - the resolved uniform details (from
+ *   getFantasyUniformDetails): colors/brass/percussion/guard/helmet prose.
  */
-function buildPerformerAvatarPrompt(corpsName, locationStr, uniformDesign, section, colors) {
+function buildPerformerAvatarPrompt(corpsName, locationStr, details, section, colors) {
   const { primaryColor, secondaryColor, accentColor, themeKeywords } = colors;
 
   const sectionDescriptions = {
@@ -124,16 +131,16 @@ function buildPerformerAvatarPrompt(corpsName, locationStr, uniformDesign, secti
     hornline: {
       title: "Brass Performer",
       pose: "in playing position with horn raised, powerful stance",
-      instrument: uniformDesign?.brassDescription
-        ? promptSafe(uniformDesign.brassDescription, { maxLength: 200 })
+      instrument: details?.brass
+        ? promptSafe(details.brass, { maxLength: 200 })
         : "polished brass horn with bell raised",
       details: "white gloves, determined expression, athletic posture",
     },
     drumline: {
       title: "Percussion Performer",
       pose: "with drums mounted, sticks ready, intense focus",
-      instrument: uniformDesign?.percussionDescription
-        ? promptSafe(uniformDesign.percussionDescription, { maxLength: 200 })
+      instrument: details?.percussion
+        ? promptSafe(details.percussion, { maxLength: 200 })
         : "snare drum with matching carrier",
       details: "drumsticks in motion, powerful stance, matching hardware",
     },
@@ -141,18 +148,16 @@ function buildPerformerAvatarPrompt(corpsName, locationStr, uniformDesign, secti
       title: "Color Guard Performer",
       pose: "mid-movement with equipment, graceful and dynamic",
       instrument: "silk flag or rifle",
-      details: uniformDesign?.guardDescription
-        ? promptSafe(uniformDesign.guardDescription, { maxLength: 200 })
+      details: details?.guard
+        ? promptSafe(details.guard, { maxLength: 200 })
         : "flowing costume, expressive movement, athletic grace",
     },
   };
 
   const sectionInfo = sectionDescriptions[section] || sectionDescriptions.hornline;
-  const helmetDesc = uniformDesign?.helmetStyle === "none"
-    ? "no headwear"
-    : uniformDesign?.plumeDescription
-      ? promptSafe(uniformDesign.plumeDescription, { maxLength: 200 })
-      : `${uniformDesign?.helmetStyle ? promptSafe(uniformDesign.helmetStyle) : "modern"} style headwear`;
+  const helmetDesc = details?.helmet
+    ? promptSafe(details.helmet, { maxLength: 200 })
+    : "modern style headwear";
 
   // ==========================================================================
   // MASTER PERFORMER AVATAR TEMPLATE - marching.art unified format
@@ -189,7 +194,7 @@ SUBJECT:
 UNIFORM & COLORS:
 - Primary: ${promptSafe(primaryColor)}
 - Secondary: ${promptSafe(secondaryColor)}${accentColor ? `\n- Accent: ${promptSafe(accentColor)}` : ""}
-- Style: ${uniformDesign?.style ? promptSafe(uniformDesign.style) : "contemporary"} marching arts uniform
+- Style: ${details?.style ? promptSafe(details.style) : "contemporary"} marching arts uniform
 - Headwear: ${helmetDesc}
 - White marching gloves
 - Use team colors in background gradient
@@ -569,20 +574,21 @@ function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null,
 
 ${UNTRUSTED_FIELD_RULE}
 
-UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified)" : ""}:
+UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified — MATCH EXACTLY)" : ""}:
 - Colors: ${promptSafe(details.colors, { maxLength: 300 })}
 - Uniform: ${promptSafe(details.uniform, { maxLength: 300 })}
 - Headwear: ${promptSafe(details.helmet, { maxLength: 300 })}
 - Brass: ${promptSafe(details.brass, { maxLength: 300 })}
 - Guard elements: ${promptSafe(details.guard, { maxLength: 300 })}
 ${details.additionalNotes ? `- Special notes: ${promptSafe(details.additionalNotes, { maxLength: 300 })}` : ""}
+- COLOR FIDELITY IS CRITICAL: render the uniform in the EXACT colors listed above, saturated and true to any hex codes given. Do NOT substitute, mute, or default to grey, charcoal, or black unless those are the stated colors.
+${details.hasDistinctGuardLook ? "- SECTION ACCURACY: the brass, percussion, and drum major wear the corps uniform above; the color guard wears its OWN distinct show costume as described in \"Guard elements\". If the frame features the color guard, use the guard costume colors; for brass/percussion/drum major, use the corps uniform colors. Never blend the two." : ""}
 
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
 
 Adapt this scene concept to feature ${promptSafe(topCorpsName)} performers wearing the exact uniform described above.
 Context: ${theme ? promptSafe(theme, { maxLength: 300 }) : "Championship competition performance moment"}
-${details.performanceStyle ? `Performance style: ${promptSafe(details.performanceStyle, { maxLength: 200 })}` : ""}
 
 AUTHENTICITY:
 - Uniform is creative but still clearly a marching arts uniform (not costume)

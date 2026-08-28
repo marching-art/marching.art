@@ -7,7 +7,6 @@ const assert = require("node:assert/strict");
 const {
   validateDesign,
   sanitizeDesign,
-  deriveV1Compat,
   proseColorName,
   generateUniformCode,
   MAX_WARDROBE_DESIGNS,
@@ -416,35 +415,8 @@ describe("sanitizeDesign", () => {
   });
 });
 
-describe("deriveV1Compat", () => {
-  test("maps a classic design to traditional prose the AI pipeline can read", () => {
-    const v1 = deriveV1Compat(sanitizeDesign(validDesign()), null);
-    assert.equal(v1.style, "traditional");
-    assert.equal(v1.helmetStyle, "shako");
-    assert.equal(v1.primaryColor, "maroon");
-    assert.match(v1.plumeDescription, /upright plume/);
-  });
-
-  test("preserves existing avatar preferences on merge", () => {
-    const existing = { avatarStyle: "performer", avatarSection: "drumline" };
-    const v1 = deriveV1Compat(sanitizeDesign(validDesign()), existing);
-    assert.equal(v1.avatarStyle, "performer");
-    assert.equal(v1.avatarSection, "drumline");
-  });
-
-  test("classifies modern designs and bare heads", () => {
-    const d = validDesign();
-    d.figure.hatType = null;
-    d.figure.hat = null;
-    d.figure.plume = null;
-    d.figure.streamers = ["#2b3fbf", "#5fd0e8"];
-    const v1 = deriveV1Compat(sanitizeDesign(d), null);
-    assert.equal(v1.helmetStyle, "none");
-    assert.equal(v1.style, "theatrical");
-    assert.equal(v1.plumeDescription, "");
-  });
-
-  test("proseColorName picks sensible nearest names", () => {
+describe("proseColorName", () => {
+  test("picks sensible nearest names", () => {
     assert.equal(proseColorName("#6d1a26"), "maroon");
     assert.equal(proseColorName("#f7f5f0"), "arctic white");
     assert.equal(proseColorName("not-a-color"), "blue");

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Scheduled Email Notification Functions
  * Handles automated email campaigns for user retention and engagement
@@ -490,7 +489,7 @@ exports.winBackEmailJob = onSchedule(
           const lastLogin = profile.engagement?.lastLogin?.toDate?.() ||
             (profile.engagement?.lastLogin ? new Date(profile.engagement.lastLogin) : null);
           const daysMissed = lastLogin
-            ? Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24))
+            ? Math.floor((now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24))
             : 7;
 
           // Get lost streak (from before they went inactive)

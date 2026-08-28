@@ -604,66 +604,6 @@ function proseColorName(hex) {
   return best;
 }
 
-const HAT_TO_V1 = {
-  shako: "shako",
-  campaign: "aussie",
-  aussie: "aussie",
-  pith: "modern",
-  contour: "modern",
-};
-
-/**
- * Derive the v1 prose fields from a v2 design so the existing AI avatar and
- * news-image prompt pipeline (newsUniforms.getFantasyUniformDetails) keeps
- * working without server changes. Merged over the corps' existing v1 design
- * so avatar preferences (avatarStyle/avatarSection) survive.
- * @param {any} design - a sanitized v2 design
- * @param {any} existingV1 - the corps' current uniformDesign (may be null)
- */
-function deriveV1Compat(design, existingV1) {
-  const fig = design.figure || {};
-  /** @type {string} */
-  let style = "contemporary";
-  if (fig.print || fig.glowArt || fig.foilLeg) style = "avant-garde";
-  else if (
-    fig.streamers ||
-    fig.fringe ||
-    fig.patent ||
-    (fig.legL && fig.legL.tattered) ||
-    (fig.legR && fig.legR.tattered)
-  ) {
-    style = "theatrical";
-  } else if (fig.sneaker || fig.chest === "swash") style = "athletic";
-  else if (fig.chest === "braid" || fig.chest === "buttons" || fig.chest === "plastron") {
-    style = "traditional";
-  }
-
-  const helmetStyle = fig.hatType
-    ? HAT_TO_V1[/** @type {keyof typeof HAT_TO_V1} */ (fig.hatType)] || "themed"
-    : "none";
-  const plumeDescription = fig.plume
-    ? `${fig.plume.type === "fountain" ? "fountain" : "tall upright"} plume in ${proseColorName(fig.plume.color)}`
-    : "";
-
-  return {
-    ...(existingV1 || {}),
-    primaryColor: proseColorName(design.colorway.primary),
-    secondaryColor: proseColorName(design.colorway.secondary),
-    accentColor: proseColorName(design.colorway.accent),
-    style,
-    helmetStyle,
-    plumeDescription,
-    ...(design.aiHints && design.aiHints.mascotOrEmblem
-      ? { mascotOrEmblem: design.aiHints.mascotOrEmblem }
-      : {}),
-    ...(design.aiHints && design.aiHints.themeKeywords
-      ? { themeKeywords: design.aiHints.themeKeywords }
-      : {}),
-    ...(design.aiHints && design.aiHints.additionalNotes
-      ? { additionalNotes: design.aiHints.additionalNotes }
-      : {}),
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Uniform codes (§7.1): MA-XXXX-XX from an unambiguous charset (no 0/O/1/I/L)
@@ -691,7 +631,6 @@ module.exports = {
   generateUniformCode,
   validateDesign,
   sanitizeDesign,
-  deriveV1Compat,
   proseColorName,
   colorwayStrip,
 };

@@ -15,6 +15,7 @@ const {
   UNTRUSTED_FIELD_RULE,
 } = require("./promptSafety");
 const { getActiveCompetitionDay } = require("./gameDay");
+const { resolveCorpsUniform } = require("./newsUniforms");
 
 // A user graduates to auto-publish once an admin has approved this many of
 // their articles. After that, their new submissions publish automatically at
@@ -189,7 +190,9 @@ function corpsToByline(corpsClass, c) {
     corpsClass,
     corpsName: c.corpsName,
     location: typeof c.location === "string" && c.location.trim() ? c.location.trim() : null,
-    uniformDesign: c.uniformDesign || null,
+    // The corps' equipped Uniform Studio design, so any imagery driven off this
+    // byline matches the studio.
+    uniformDesign: resolveCorpsUniform(c),
   };
 }
 
@@ -526,23 +529,13 @@ async function generateFantasyDailyImage(submission, reportDay, authorCorps) {
     cleanField(visual?.corpsName) || authorCorps?.corpsName || "Championship Corps";
   const corpsLocation = authorCorps?.location || submission.authorLocation || null;
 
-  // Uniform: article-specified colors win. Start from the author's design (so
-  // unspecified fields like style/helmet carry through) and override the colors
-  // with what the article actually describes; getFantasyUniformDetails renders
-  // these as the authoritative "director-specified" uniform.
+  // Base look: the author's equipped Uniform Studio (v2) design, so the corps
+  // renders in its real colors and headwear (and its guard look, if set). When
+  // the article text itself names specific colors, those win via the
+  // authoritative ARTICLE-ACCURATE block appended below — no need to splice them
+  // into the design here.
   const articlePrimary = cleanField(visual?.primaryColor);
-  let uniformDesign = authorCorps?.uniformDesign || null;
-  if (articlePrimary) {
-    uniformDesign = {
-      ...(uniformDesign || {}),
-      style: uniformDesign?.style || "contemporary",
-      helmetStyle: uniformDesign?.helmetStyle || "modern",
-      primaryColor: articlePrimary,
-      secondaryColor: cleanField(visual?.secondaryColor) || uniformDesign?.secondaryColor || "silver",
-      accentColor: cleanField(visual?.accentColor) || uniformDesign?.accentColor || null,
-      additionalNotes: cleanField(visual?.uniformDescription) || uniformDesign?.additionalNotes || null,
-    };
-  }
+  const uniformDesign = resolveCorpsUniform(authorCorps);
 
   // Scene: the moment the article describes > headline/summary.
   const theme =

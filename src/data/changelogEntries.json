@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-28-cleaner-news-and-true-colors",
+    "date": "2026-08-28",
+    "title": "Cleaner news copy and uniforms that match your Studio",
+    "category": "fix",
+    "summary": "Two fixes to the nightly news. Corps, director, and venue names now read cleanly in every article — the stray guillemet marks («like this») that occasionally wrapped a name are gone. And the AI image on your Fantasy Results feature now follows your equipped Studio design: it pulls your real colorway and headwear, so a green-and-gold corps shows up green and gold instead of a washed-out generic look. If you've dressed your color guard in its own show costume, the image dresses the guard in those colors too, separate from the hornline. The same accuracy applies to the images on approved news submissions.",
+    "highlights": [
+      "No more stray « » marks around names in generated articles.",
+      "Article images match your equipped uniform's actual colors and hat, not a generic stand-in.",
+      "Your color guard's own show costume is rendered in its own colors, distinct from the hornline.",
+      "Applies to the nightly Fantasy Results article and user news submissions alike."
+    ]
+  },
+  {
     "id": "2026-08-27-tailors-and-plumes",
     "date": "2026-08-27",
     "title": "Two new design houses: Harrow & Finch and Casa Roldán",

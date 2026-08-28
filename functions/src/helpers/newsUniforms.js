@@ -6,6 +6,7 @@
 const { logger } = require("firebase-functions/v2");
 
 const { DCI_UNIFORMS } = require("./dciUniforms");
+const { proseColorName } = require("./uniformValidation");
 
 
 // =============================================================================
@@ -442,53 +443,188 @@ function buildShowThemeContext(showTitle) {
 }
 
 /**
+ * Resolve the equipped Uniform Studio (v2) design that should drive a corps' AI
+ * imagery from a raw corps entry (the `corps.{class}` object on a user profile).
+ *
+ * The equipped `uniform` snapshot — `{ colorway, figure, aiHints, name }` — is
+ * the single source of truth for a corps' look (hornline, percussion, and drum
+ * major all wear this identity). When the corps also has a distinct guard look
+ * equipped (`uniformGuard` — the show's costume, which routinely differs from the
+ * corps identity), it is bundled on as `.guard` so imagery can dress the color
+ * guard in the show's own colors. Returns null when the corps has no equipped
+ * design (a fresh corps that never visited the Studio), in which case callers
+ * fall back to name/theme defaults.
+ *
+ * @param {object|null} corpsData - A raw corps entry (`corps.{class}`).
+ * @returns {object|null} The equipped v2 design snapshot (optionally with a
+ *   `.guard` sub-design), or null.
+ */
+function resolveCorpsUniform(corpsData) {
+  if (!corpsData || typeof corpsData !== "object") return null;
+  const snapshot = corpsData.uniform;
+  if (!(snapshot && snapshot.colorway && typeof snapshot.colorway.primary === "string")) {
+    return null;
+  }
+  const guard = corpsData.uniformGuard;
+  const hasGuard = guard && guard.colorway && typeof guard.colorway.primary === "string";
+  return hasGuard ? { ...snapshot, guard } : snapshot;
+}
+
+// Figure-shape → prose descriptors. These read the structured v2 `figure` the
+// Uniform Studio renders and turn it into the natural-language cues the image
+// models need, replacing the retired v1 prose fields.
+const STYLE_DESCRIPTIONS = {
+  traditional: "classic military-style with precise tailoring",
+  contemporary: "modern athletic cut with clean lines",
+  theatrical: "dramatic flowing design with stage presence",
+  athletic: "performance-focused streamlined design",
+  "avant-garde": "bold experimental design pushing boundaries",
+};
+
+const HAT_DESCRIPTIONS = {
+  shako: "traditional tall shako",
+  aussie: "aussie-style campaign hat",
+  campaign: "aussie-style campaign hat",
+  pith: "contemporary streamlined helmet",
+  contour: "contemporary streamlined helmet",
+};
+
+/**
+ * Classify a v2 figure into one of the five uniform "styles" — the same
+ * heuristic the studio's own design language uses, so the prose cue matches what
+ * the director actually built (prints/glow read avant-garde, streamers/fringe
+ * read theatrical, and so on).
+ * @param {object} fig - a v2 `figure` config
+ * @returns {keyof typeof STYLE_DESCRIPTIONS}
+ */
+function styleFromFigure(fig) {
+  if (fig.print || fig.glowArt || fig.foilLeg) return "avant-garde";
+  if (
+    fig.streamers ||
+    fig.fringe ||
+    fig.patent ||
+    (fig.legL && fig.legL.tattered) ||
+    (fig.legR && fig.legR.tattered)
+  ) {
+    return "theatrical";
+  }
+  if (fig.sneaker || fig.chest === "swash") return "athletic";
+  if (fig.chest === "braid" || fig.chest === "buttons" || fig.chest === "plastron") {
+    return "traditional";
+  }
+  return "contemporary";
+}
+
+/**
+ * Describe a color-guard costume from the guard's OWN equipped design so the
+ * guard is rendered in the show's colors, not the hornline's. The guard slot
+ * (`corps.{class}.uniformGuard`) is a full v2 design in its own right; the
+ * director dresses the guard to the season's production, which routinely differs
+ * from the corps identity the brass and percussion wear.
+ * @param {object} guard - an equipped v2 guard design snapshot.
+ * @returns {string}
+ */
+function describeGuardCostume(guard) {
+  const cw = guard.colorway || {};
+  const p = proseColorName(cw.primary);
+  const s = proseColorName(cw.secondary);
+  const a = proseColorName(cw.accent);
+  const named = (name, hex) => (typeof hex === "string" ? `${name} (${hex})` : name);
+  const isDress = (guard.figure || {}).torsoStyle === "dress";
+  return `color guard in distinct show costumes${isDress ? " (flowing A-line dresses)" : ""} of ${named(p, cw.primary)} and ${named(s, cw.secondary)} with ${named(a, cw.accent)} accents, carrying themed silks`;
+}
+
+/**
+ * Build the image/prompt "details" object for a corps from its equipped Uniform
+ * Studio (v2) design — the single source of truth. Consumes `{ colorway, figure,
+ * aiHints }` and returns the same shape every image/avatar prompt builder reads
+ * (colors, uniform, helmet, brass, guard, plus the color names, hex channels,
+ * mascot, theme keywords, and derived style the builders reference). Each color
+ * is named and pinned to its exact hex so the model targets the director's true
+ * shade rather than a nearest-name approximation.
+ *
+ * When the design carries a separate guard look (`design.guard`), the guard is
+ * described from that design so the color guard renders in the show's colors
+ * rather than the hornline's. The hornline, percussion, and drum major always
+ * wear the primary design.
+ *
+ * @param {object} design - an equipped v2 design snapshot (optionally with a
+ *   `.guard` sub-design for the color guard's show look).
+ * @param {string} corpsName - the fantasy corps name.
+ * @param {string|null} [location] - the corps home location.
+ * @returns {object} The uniform details.
+ */
+function getUniformDetailsFromDesign(design, corpsName, location = null) {
+  const cw = design.colorway || {};
+  const fig = design.figure || {};
+  const hints = design.aiHints || {};
+
+  const primaryName = proseColorName(cw.primary);
+  const secondaryName = proseColorName(cw.secondary);
+  const accentName = proseColorName(cw.accent);
+  const metal = cw.metal === "silver" ? "silver" : "gold";
+
+  const named = (name, hex) => (typeof hex === "string" ? `${name} (${hex})` : name);
+  const colors = `${named(primaryName, cw.primary)} with ${named(secondaryName, cw.secondary)} and ${named(accentName, cw.accent)}`;
+
+  const style = styleFromFigure(fig);
+  const mascot = hints.mascotOrEmblem || null;
+  const themeKeywords = Array.isArray(hints.themeKeywords) ? hints.themeKeywords : [];
+
+  const helmet = fig.hatType
+    ? `${HAT_DESCRIPTIONS[fig.hatType] || "traditional helmet"} in ${primaryName}${
+        fig.plume
+          ? ` with a ${fig.plume.type === "fountain" ? "fountain" : "tall upright"} plume in ${proseColorName(fig.plume.color)}`
+          : ""
+      }`
+    : "no traditional headwear (bareheaded)";
+
+  // The guard wears its own equipped show look when the director set one;
+  // otherwise it coordinates with the corps colors.
+  const hasGuardLook = Boolean(
+    design.guard && design.guard.colorway && typeof design.guard.colorway.primary === "string"
+  );
+  const guard = hasGuardLook
+    ? describeGuardCostume(design.guard)
+    : `coordinated ${primaryName} and ${secondaryName} costumes with themed silks`;
+
+  return {
+    colors,
+    uniform: `${STYLE_DESCRIPTIONS[style]} uniform in ${colors}${mascot ? `, featuring ${mascot} emblem` : ""}`,
+    helmet,
+    brass: `${secondaryName}-accented brass instruments with ${primaryName} valve caps and ${metal} hardware`,
+    percussion: `${primaryName} drums with ${secondaryName} hardware and corps graphics`,
+    guard,
+    hasDistinctGuardLook: hasGuardLook,
+    matchedTheme: "director-custom",
+    additionalNotes: hints.additionalNotes || null,
+    location,
+    // Fields the avatar prompt builders reference directly.
+    primaryColor: primaryName,
+    secondaryColor: secondaryName,
+    accentColor: accentName,
+    primaryHex: cw.primary,
+    secondaryHex: cw.secondary,
+    accentHex: cw.accent,
+    mascotOrEmblem: mascot,
+    themeKeywords,
+    style,
+  };
+}
+
+/**
  * Get fantasy corps uniform based on director-provided design OR name analysis
  * Priority: Director's uniformDesign > Name-based theme matching > Default colors
  *
  * @param {string} corpsName - The fantasy corps name
  * @param {string} location - The corps home location (for regional themes)
- * @param {object} uniformDesign - Director-provided uniform customization (optional)
+ * @param {object} design - The equipped Uniform Studio (v2) design snapshot
+ *   (`{ colorway, figure, aiHints }`), or null to fall back to name/theme cues.
  */
-function getFantasyUniformDetails(corpsName, location = null, uniformDesign = null) {
-  // PRIORITY 1: Use director-provided uniform design if available
-  if (uniformDesign && uniformDesign.primaryColor) {
-    const styleDescriptions = {
-      traditional: "classic military-style with precise tailoring",
-      contemporary: "modern athletic cut with clean lines",
-      theatrical: "dramatic flowing design with stage presence",
-      athletic: "performance-focused streamlined design",
-      "avant-garde": "bold experimental design pushing boundaries",
-    };
-
-    const helmetDescriptions = {
-      shako: "traditional tall shako",
-      aussie: "aussie-style campaign hat",
-      modern: "contemporary streamlined helmet",
-      themed: "custom themed headpiece",
-      none: "no traditional headwear",
-    };
-
-    const colors = uniformDesign.accentColor
-      ? `${uniformDesign.primaryColor} with ${uniformDesign.secondaryColor} and ${uniformDesign.accentColor}`
-      : `${uniformDesign.primaryColor} with ${uniformDesign.secondaryColor}`;
-
-    const plumeDesc = uniformDesign.plumeDescription
-      ? ` with ${uniformDesign.plumeDescription}`
-      : uniformDesign.helmetStyle !== "none" ? " with matching plume" : "";
-
-    return {
-      colors,
-      uniform: `${styleDescriptions[uniformDesign.style] || "professional"} uniform in ${colors}${uniformDesign.mascotOrEmblem ? `, featuring ${uniformDesign.mascotOrEmblem} emblem` : ""}`,
-      helmet: `${helmetDescriptions[uniformDesign.helmetStyle] || "traditional helmet"} in ${uniformDesign.primaryColor}${plumeDesc}`,
-      brass: uniformDesign.brassDescription || `${uniformDesign.secondaryColor}-accented brass instruments with ${uniformDesign.primaryColor} valve caps`,
-      percussion: uniformDesign.percussionDescription || `${uniformDesign.primaryColor} drums with ${uniformDesign.secondaryColor} hardware and corps graphics`,
-      guard: uniformDesign.guardDescription || `coordinated ${uniformDesign.primaryColor} and ${uniformDesign.secondaryColor} costumes with themed silks`,
-      matchedTheme: "director-custom",
-      performanceStyle: uniformDesign.performanceStyle,
-      venuePreference: uniformDesign.venuePreference,
-      additionalNotes: uniformDesign.additionalNotes,
-      location: location,
-    };
+function getFantasyUniformDetails(corpsName, location = null, design = null) {
+  // PRIORITY 1: the director's own equipped Uniform Studio design, when set.
+  if (design && design.colorway && typeof design.colorway.primary === "string") {
+    return getUniformDetailsFromDesign(design, corpsName, location);
   }
 
   // PRIORITY 2: Name-based theme matching
@@ -581,4 +717,6 @@ module.exports = {
   interpretShowTheme,
   buildShowThemeContext,
   getFantasyUniformDetails,
+  getUniformDetailsFromDesign,
+  resolveCorpsUniform,
 };

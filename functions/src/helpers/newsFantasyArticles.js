@@ -28,6 +28,7 @@ const {
 const {
   buildFantasyPerformersImagePrompt,
 } = require("./newsImagePrompts");
+const { resolveCorpsUniform } = require("./newsUniforms");
 const {
   getToneGuidance,
   getWritingVariety,
@@ -382,7 +383,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
     // reflects the actual subject of the article rather than a generic placeholder.
     const topCorps = topPerformers[0] || soundSportBestInShow || null;
 
-    // Fetch uniform design if available
+    // Fetch the corps' equipped Uniform Studio design so the image matches it.
     let uniformDesign = null;
     let corpsLocation = null;
     if (topCorps?.uid && topCorps?.corpsClass && db && dataDocId) {
@@ -392,7 +393,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
         if (profileDoc.exists) {
           const profileData = profileDoc.data();
           const corpsData = profileData?.corps?.[topCorps.corpsClass];
-          uniformDesign = corpsData?.uniformDesign || null;
+          uniformDesign = resolveCorpsUniform(corpsData);
           corpsLocation = corpsData?.location || null;
         }
       } catch (profileError) {
