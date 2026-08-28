@@ -290,6 +290,11 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     captionBreakdown: article.captionBreakdown || null,
     captionInsights: article.captionInsights || null,
     topPerformers: article.topPerformers || null,
+    // Featured corps + its equipped Uniform Studio design, so an admin image
+    // re-gen reproduces a studio-accurate image instead of a headline-only one.
+    featuredPerformer: article.featuredPerformer || null,
+    featuredUniform: article.featuredUniform || null,
+    featuredLocation: article.featuredLocation || null,
     leagueHighlights: article.leagueHighlights || null,
     insights: article.insights || null,
     // Season Summary (Article 6): per-class standings, rivalries, SoundSport /
