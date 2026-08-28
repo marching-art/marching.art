@@ -21,6 +21,7 @@ exports.processDciEvent = onMessagePublished({
   maxInstances: 3,
   timeoutSeconds: 120,
   memory: "512MiB",
+  cpu: 1,
   secrets: [scraperApiKey],
 }, async (message) => {
   let url;

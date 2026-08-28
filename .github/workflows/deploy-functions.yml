@@ -10,10 +10,11 @@ name: Deploy Cloud Functions
 
 on:
   # Auto-deploy: a push to main that touches backend code or security rules
-  # runs the full deploy path (same as deploy_target=all — `firebase deploy
-  # --only functions` covers both the default and scraper codebases). The
-  # one-off maintenance jobs stay dispatch-only: their checkbox inputs are
-  # empty (falsy) on push events.
+  # runs the deploy-all job. On push events that job diffs against the last
+  # functions-deploy/* tag and deploys only the affected functions (see the
+  # "Compute deploy targets" step); workflow_dispatch deploy_target=all always
+  # deploys everything. The one-off maintenance jobs stay dispatch-only: their
+  # checkbox inputs are empty (falsy) on push events.
   push:
     branches: [main]
     paths:
@@ -173,12 +174,18 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    # Batched function deploys are paced to stay under the Cloud Run
-    # write-per-minute quota, so a full deploy of every changed function can
-    # run ~35 min; give it headroom over the previous all-at-once budget.
+    # A full redeploy of every function can crawl: the Firebase CLI retries
+    # Cloud Run quota errors internally with 20-100s backoffs (write requests
+    # per minute; regional CPU — see the cpu note in functions/index.js), so
+    # give the job headroom over the ~10 min incremental-deploy norm.
     timeout-minutes: 60
     steps:
+      # Full history + tags: the deploy-target step below diffs HEAD against
+      # the last functions-deploy/* tag to work out which functions changed.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/setup-node@v7
         with:
@@ -279,9 +286,41 @@ jobs:
           fi
           echo "$PUSHED Discord webhook secret(s) written; the deploy below will bind them."
 
-      - name: Deploy Firestore rules + all functions
+      # Work out the smallest safe deploy. `firebase deploy --only functions`
+      # skips functions whose hash is unchanged, but that hash covers the whole
+      # codebase source archive — one edited file redeploys all ~200 services
+      # and grinds against the Cloud Run write/CPU quotas. Instead, diff HEAD
+      # against the last successful deploy (the newest functions-deploy/* tag)
+      # and walk the require graph to find the functions actually affected
+      # (scripts/changedFunctions.mjs). Anything the script can't prove safe —
+      # index.js/package.json edits, deletes, renames — falls back to a full
+      # deploy, as does every workflow_dispatch run (deploy_target=all is the
+      # manual full-redeploy hammer, and rollbacks from an old tag need it).
+      - name: Compute deploy targets
+        id: targets
+        env:
+          GCLOUD_PROJECT: marching-art
+        run: |
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo 'plan={"mode":"full"}' >> "$GITHUB_OUTPUT"
+            echo "Manual dispatch: full deploy."
+            exit 0
+          fi
+          BASE=$(git tag -l 'functions-deploy/*' | sort | tail -n 1)
+          if [ -z "$BASE" ]; then
+            echo 'plan={"mode":"full"}' >> "$GITHUB_OUTPUT"
+            echo "No functions-deploy/* tag found: full deploy."
+            exit 0
+          fi
+          echo "Diffing against last deployed tag: $BASE"
+          PLAN=$(node scripts/changedFunctions.mjs "$BASE")
+          echo "plan=$PLAN" >> "$GITHUB_OUTPUT"
+          echo "Deploy plan: $PLAN"
+
+      - name: Deploy Firestore rules + changed functions
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DEPLOY_PLAN: ${{ steps.targets.outputs.plan }}
         run: |
           # Write service account key to temp file
           echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
@@ -296,16 +335,15 @@ jobs:
           #    firestore.indexes.json.
           firebase deploy --only firestore:rules --force --project marching-art
 
-          # 2) Deploy all functions in a single operation. Firebase diffs the
-          #    source and only updates functions that actually changed, so an
-          #    incremental redeploy touches just the changed set. NOTE: a full
-          #    redeploy of every function (e.g. a runtime bump) fans out ~2
-          #    run.googleapis.com regional writes per function at once, which can
-          #    exceed the "Write requests per minute per region" quota
-          #    (INSUFFICIENT_TOKENS) and leave functions half-deployed. Cloud
-          #    Build also occasionally fails a single function with a transient
-          #    "An unexpected error occurred" build error. Both cases leave the
-          #    deploy partially done and exit non-zero.
+          # 2) Deploy the functions named by the deploy plan (see the "Compute
+          #    deploy targets" step): the changed set on a push, everything on
+          #    a manual dispatch or when the plan fell back to "full". A mass
+          #    redeploy fans out ~2 run.googleapis.com regional writes per
+          #    function at once, which can exceed the "Write requests per
+          #    minute per region" quota (INSUFFICIENT_TOKENS), and Cloud Build
+          #    occasionally fails a single function with a transient "An
+          #    unexpected error occurred" build error. Both leave the deploy
+          #    partially done and exit non-zero.
           #
           #    Retry the deploy a few times to self-heal these transient
           #    partial failures instead of requiring a manual re-run. This is
@@ -313,32 +351,48 @@ jobs:
           #    skips functions already up to date, so each retry only re-attempts
           #    whatever failed last time. Only a failure that persists across all
           #    attempts fails the job.
-          MAX_ATTEMPTS=3
-          attempt=1
-          until firebase deploy --only functions --force --project marching-art; do
-            if [ "$attempt" -ge "$MAX_ATTEMPTS" ]; then
-              echo "::error::firebase deploy --only functions failed after $MAX_ATTEMPTS attempts."
-              exit 1
-            fi
-            # Back off before retrying so any per-minute write quota refills and
-            # transient Cloud Build failures have time to clear.
-            backoff=$((attempt * 60))
-            echo "::warning::functions deploy attempt $attempt failed; retrying in ${backoff}s (already-deployed functions are skipped)..."
-            sleep "$backoff"
-            attempt=$((attempt + 1))
-          done
+          ONLY=$(printf '%s' "$DEPLOY_PLAN" | jq -r '
+            if .mode == "full" then "functions"
+            elif .mode == "some" then
+              ([.functions[] | "functions:" + .]
+                + (if .scraper then ["functions:scraper"] else [] end))
+              | join(",")
+            elif .scraper then "functions:scraper"
+            else "" end')
+          if [ -z "$ONLY" ]; then
+            echo "No function code changed since the last deploy tag; skipping the functions deploy."
+          else
+            echo "Deploying with --only $ONLY"
+            MAX_ATTEMPTS=3
+            attempt=1
+            until firebase deploy --only "$ONLY" --force --project marching-art; do
+              if [ "$attempt" -ge "$MAX_ATTEMPTS" ]; then
+                echo "::error::firebase deploy --only $ONLY failed after $MAX_ATTEMPTS attempts."
+                exit 1
+              fi
+              # Back off before retrying so any per-minute write quota refills and
+              # transient Cloud Build failures have time to clear.
+              backoff=$((attempt * 60))
+              echo "::warning::functions deploy attempt $attempt failed; retrying in ${backoff}s (already-deployed functions are skipped)..."
+              sleep "$backoff"
+              attempt=$((attempt + 1))
+            done
+          fi
 
-          echo "All functions and Firestore rules deployed successfully!"
+          echo "Firestore rules and the planned function set deployed successfully!"
 
       # Rollback affordance: tag the exact ref that just shipped so "the last
       # known-good deploy" is always discoverable. See the ROLLBACK note at
-      # the top of this file.
+      # the top of this file. The tag also advances the diff baseline for the
+      # "Compute deploy targets" step, so it must be pushed on every
+      # successful run — including a "none" plan, where deployed state already
+      # equals this ref.
       - name: Tag deployed ref
         run: |
           TAG="functions-deploy/$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Full functions deploy (run ${{ github.run_id }})"
+          git tag -a "$TAG" -m "Functions deploy (run ${{ github.run_id }}, plan: ${{ steps.targets.outputs.plan }})"
           git push origin "$TAG"
           echo "Tagged this deploy as $TAG. To roll back, re-run the workflow from the previous functions-deploy/* tag."
 

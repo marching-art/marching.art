@@ -145,6 +145,7 @@ exports.scrapeCanary = onSchedule(
     // old 120s could expire mid-audit and turn a slow proxy into a false
     // "could not fetch" alarm.
     timeoutSeconds: 300,
+    cpu: 1,
     secrets: [scraperApiKey, discordOpsWebhookUrl],
   },
   async () => {

@@ -39,6 +39,7 @@ exports.scheduledLifetimeLeaderboardUpdate = onSchedule(
     // as the player base grows. Same headroom the email/push scans use.
     timeoutSeconds: 540,
     memory: "512MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Starting scheduled lifetime leaderboard update");

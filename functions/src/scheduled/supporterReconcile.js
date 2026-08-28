@@ -47,7 +47,7 @@ async function fetchActiveMemberships(token) {
 }
 
 exports.reconcileSupporters = onSchedule(
-  { schedule: "every day 03:00", secrets: [bmacAccessToken], timeoutSeconds: 300 },
+  { schedule: "every day 03:00", secrets: [bmacAccessToken], timeoutSeconds: 300, cpu: 1 },
   async () => {
     const token = bmacAccessToken.value();
     if (!token) {

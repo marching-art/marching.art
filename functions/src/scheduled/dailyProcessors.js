@@ -99,6 +99,7 @@ exports.dailyOffSeasonProcessor = onSchedule({
   // assumes scoring jobs run with 540s timeouts — keep these in sync.
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
   // A thrown scoring error is retried by Cloud Scheduler; the scoring run
   // guard makes reruns safe (a completed day is never re-claimed).
   retryCount: 2,
@@ -171,6 +172,7 @@ exports.processDailyLiveScores = onSchedule({
   // Same config rationale as dailyOffSeasonProcessor above.
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
   retryCount: 2,
   secrets: [discordScoresWebhookUrl, discordAnnouncementsWebhookUrl],
 }, async () => {

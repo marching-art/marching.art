@@ -18,6 +18,7 @@ exports.autoPublishScheduledSubmissions = onSchedule(
     timeZone: "America/New_York",
     timeoutSeconds: 540,
     memory: "1GiB",
+    cpu: 1,
     // Same image path as the admin approve flow — publishSubmission uploads the
     // generated image, so this job needs the Cloudinary creds too.
     secrets: [geminiApiKey, ...cloudinarySecrets],

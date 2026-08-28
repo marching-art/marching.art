@@ -26,6 +26,7 @@ exports.retentionStatsJob = onSchedule(
     // lifetime-leaderboard and email/push scans.
     memory: "512MiB",
     timeoutSeconds: 540,
+    cpu: 1,
   },
   async () => {
     logger.info("Running nightly retention stats aggregation");

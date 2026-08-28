@@ -349,6 +349,7 @@ const discoverAndQueueUrls = onCall({
   cors: true,
   timeoutSeconds: 300,
   memory: "512MiB",
+  cpu: 1,
   secrets: [scraperApiKey],
 }, async (request) => {
   assertAdmin(request);
@@ -462,6 +463,7 @@ const discoverAndQueueEventUrls = onCall({
   cors: true,
   timeoutSeconds: 300,
   memory: "512MiB",
+  cpu: 1,
   secrets: [scraperApiKey],
 }, async (request) => {
   assertAdmin(request);

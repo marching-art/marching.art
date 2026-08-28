@@ -670,6 +670,7 @@ exports.approveSubmission = onCall(
     // three times 15s apart) before the upload. 120s left no headroom for that.
     timeoutSeconds: 300,
     memory: "1GiB",
+    cpu: 1,
     // Cloudinary creds are required by the image upload inside publishSubmission;
     // without them the upload falls through to the Firebase Storage fallback and
     // the article publishes with no image at all.

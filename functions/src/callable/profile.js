@@ -392,7 +392,7 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
 // Longer timeout than the default: deletion now sweeps the full recap history
 // (fantasy + podium) to anonymize this director's past results, which is bounded
 // by the game's history rather than a constant.
-exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300 }, async (request) => {
+exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, async (request) => {
   const userId = assertAuth(request);
 
   // Abuse throttle (shared profile bucket) — far above any human rate.

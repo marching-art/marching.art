@@ -107,7 +107,7 @@ async function buildScheduleCoverageReport(db) {
 /**
  * Admin-only: return the schedule-coverage report for the dashboard.
  */
-const getScheduleCoverage = onCall({ cors: true, timeoutSeconds: 120, memory: "512MiB" }, async (request) => {
+const getScheduleCoverage = onCall({ cors: true, timeoutSeconds: 120, memory: "512MiB", cpu: 1 }, async (request) => {
   assertAdmin(request);
   logger.info(`Admin ${request.auth.uid} requested schedule coverage.`);
   const report = await buildScheduleCoverageReport(getDb());

@@ -94,6 +94,7 @@ exports.getOgCardHttp = onRequest(
     timeoutSeconds: 30,
     // sharp's libvips is memory-hungrier than the default 256MiB comfortable.
     memory: "512MiB",
+    cpu: 1,
   },
   async (req, res) => {
     const route = parseOgPath(req.path);
@@ -178,6 +179,7 @@ exports.getShareHttp = onRequest(
   {
     cors: true,
     timeoutSeconds: 30,
+    cpu: 1,
   },
   async (req, res) => {
     const route = parseSharePath(req.path);

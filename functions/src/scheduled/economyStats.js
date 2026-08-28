@@ -13,6 +13,7 @@ exports.economyStatsJob = onSchedule(
     timeZone: "America/New_York",
     memory: "512MiB",
     timeoutSeconds: 540,
+    cpu: 1,
   },
   async () => {
     logger.info("Running weekly economy stats aggregation");

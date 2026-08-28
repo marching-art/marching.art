@@ -22,11 +22,29 @@ db.settings({ ignoreUndefinedProperties: true });
 // deploys unless the param has a dotenv value — a params-based flip broke
 // the deploy workflow exactly that way. A one-line literal is just as easy
 // to flip and can never fail a deploy.
-// maxInstances is a spend ceiling: 10 instances x 80 concurrent requests per
-// instance is far above real traffic, and per-function options still win where
-// a tighter cap matters (the scraper pubsub triggers set maxInstances: 3).
-// Scheduled jobs run a single instance regardless.
-setGlobalOptions({ enforceAppCheck: false, maxInstances: 10 });
+// maxInstances is a spend ceiling: 10 instances is far above real traffic, and
+// per-function options still win where a tighter cap matters (the scraper
+// pubsub triggers set maxInstances: 3). Scheduled jobs run a single instance
+// regardless.
+//
+// cpu: "gcf_gen1" is the fleet-wide default because every exported function is
+// its own Cloud Run service, and Cloud Run caps the total in-use vCPU per
+// project per region. At the gen-2 default of a full vCPU per instance, a mass
+// redeploy (runtime bump, shared-code change) starts a 1-vCPU healthcheck
+// instance per service and leaves it warm — ~200 services blew through the
+// regional quota ("Quota exceeded for total allowable CPU per project per
+// region"), and the CLI's 20-100s quota retries are what stretched full
+// deploys toward an hour. gcf_gen1 gives default-sized (256MiB) functions the
+// gen-1 fractional CPU (0.1666 vCPU) instead, cutting the fleet's in-use CPU
+// ~6x for the quick CRUD callables that dominate the count. Fractional CPU
+// also drops per-instance concurrency to 1 (a Cloud Run rule: concurrency > 1
+// needs >= 1 vCPU), so simultaneous calls to the same function fan out across
+// instances — fine at this game's traffic. Anything deliberately sized up
+// (memory >= 512MiB or timeoutSeconds >= 300 — the scoring/scraping pipeline,
+// Gemini jobs, push/email batches) and the public HTTP rewrite endpoints pin
+// `cpu: 1` locally so their runtime behavior is unchanged; keep that override
+// when adding a new heavy function.
+setGlobalOptions({ enforceAppCheck: false, maxInstances: 10, cpu: "gcf_gen1" });
 
 // Callable Functions
 const {

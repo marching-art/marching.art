@@ -23,6 +23,7 @@ exports.integrityStatsJob = onSchedule(
     // the retention and lifetime-leaderboard scans.
     memory: "512MiB",
     timeoutSeconds: 540,
+    cpu: 1,
   },
   async () => {
     logger.info("Running weekly account-integrity signal aggregation");

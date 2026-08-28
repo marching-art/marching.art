@@ -318,6 +318,7 @@ exports.generateCorpsAvatar = onCall(
   {
     timeoutSeconds: 60,
     memory: "512MiB",
+    cpu: 1,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
@@ -387,6 +388,7 @@ exports.regenerateAllAvatars = onCall(
   {
     timeoutSeconds: 300,
     memory: "1GiB",
+    cpu: 1,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
@@ -468,6 +470,7 @@ exports.setCorpsAvatarFromUrl = onCall(
   {
     timeoutSeconds: 60,
     memory: "512MiB",
+    cpu: 1,
     secrets: [cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
