@@ -273,6 +273,7 @@ exports.weeklyDigestEmailJob = onSchedule(
     // 60s timeout would cut the job off mid-scan as the user base grows. 540s
     // matches the scoring jobs (see dailyProcessors.js).
     timeoutSeconds: 540,
+    cpu: 1,
     secrets: [brevoApiKey],
   },
   async () => {
@@ -419,6 +420,7 @@ exports.winBackEmailJob = onSchedule(
     // 60s timeout would cut the job off mid-scan as the user base grows. 540s
     // matches the scoring jobs (see dailyProcessors.js).
     timeoutSeconds: 540,
+    cpu: 1,
     secrets: [brevoApiKey],
   },
   async () => {
@@ -555,6 +557,7 @@ exports.streakBrokenEmailJob = onSchedule(
     // 60s timeout would cut the job off mid-scan as the user base grows. 540s
     // matches the scoring jobs (see dailyProcessors.js).
     timeoutSeconds: 540,
+    cpu: 1,
     secrets: [brevoApiKey],
   },
   async () => {

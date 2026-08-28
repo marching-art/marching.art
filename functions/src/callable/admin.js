@@ -66,6 +66,7 @@ exports.startNewLiveSeason = onCall({
   secrets: [scraperInvokeKey, scraperApiKey],
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
 }, async (request) => {
   assertAdmin(request);
   try {
@@ -86,6 +87,7 @@ exports.manualTrigger = onCall({
   secrets: [scraperInvokeKey, scraperApiKey, discordOpsWebhookUrl, brevoApiKey],
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
 }, async (request) => {
   assertAdmin(request);
 
@@ -712,6 +714,7 @@ exports.scrapeLiveScoresNow = onCall({
   // fetch, so give the manual scrape the same headroom as the dispatcher.
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
   secrets: [scraperApiKey],
 }, async (request) => {
   assertAdmin(request);
@@ -795,6 +798,7 @@ exports.backfillLiveScoresForDayRange = onCall({
   // A multi-day range fetches many slow JS-rendered recaps; give it headroom.
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
   secrets: [scraperApiKey],
 }, async (request) => {
   assertAdmin(request);

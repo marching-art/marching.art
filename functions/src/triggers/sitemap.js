@@ -242,6 +242,7 @@ exports.getSitemapHttp = onRequest(
   {
     cors: true,
     timeoutSeconds: 30,
+    cpu: 1,
   },
   async (req, res) => {
     const db = getDb();

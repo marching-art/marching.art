@@ -381,6 +381,7 @@ exports.scheduledScheduleRunningOrder = onSchedule(
     timeZone: "America/New_York",
     timeoutSeconds: 300,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Starting scheduled running-order enrichment");
@@ -397,6 +398,7 @@ exports.scheduledScheduleRunningOrderEvening = onSchedule(
     timeZone: "America/New_York",
     timeoutSeconds: 300,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Starting evening running-order refresh");
@@ -405,7 +407,7 @@ exports.scheduledScheduleRunningOrderEvening = onSchedule(
   }
 );
 
-exports.refreshScheduleRunningOrderNow = onCall({ cors: true, timeoutSeconds: 300 }, async (request) => {
+exports.refreshScheduleRunningOrderNow = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, async (request) => {
   assertAdmin(request);
   return enrichScheduleRunningOrdersLogic(getDb());
 });

@@ -153,6 +153,7 @@ exports.scheduledScheduleWeather = onSchedule(
     timeZone: "America/New_York",
     timeoutSeconds: 300,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Starting scheduled schedule-weather enrichment");
@@ -174,6 +175,7 @@ exports.scheduledScheduleWeatherEvening = onSchedule(
     timeZone: "America/New_York",
     timeoutSeconds: 300,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Starting evening schedule-weather refresh");
@@ -182,7 +184,7 @@ exports.scheduledScheduleWeatherEvening = onSchedule(
   }
 );
 
-exports.refreshScheduleWeatherNow = onCall({ cors: true, timeoutSeconds: 300 }, async (request) => {
+exports.refreshScheduleWeatherNow = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, async (request) => {
   assertAdmin(request);
   return enrichScheduleWeatherLogic(getDb());
 });

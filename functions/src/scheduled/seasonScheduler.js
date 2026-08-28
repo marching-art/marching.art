@@ -19,6 +19,7 @@ exports.seasonScheduler = onSchedule({
   secrets: [scraperInvokeKey, scraperApiKey, discordAnnouncementsWebhookUrl],
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
 }, async () => {
   logger.info("Running daily season scheduler...");
   const now = new Date();

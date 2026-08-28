@@ -59,7 +59,7 @@ exports.detectMyDuplicateCorps = onCall({ cors: true }, async (request) => {
  * legacy backstop for collisions that predate that change or arrive through
  * other write paths (e.g. Podium corps, renames).
  */
-exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540, memory: "1GiB" }, async (request) => {
+exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540, memory: "1GiB", cpu: 1 }, async (request) => {
   assertAdmin(request);
 
   const db = getDb();

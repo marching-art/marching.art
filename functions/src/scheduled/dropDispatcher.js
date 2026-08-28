@@ -620,6 +620,7 @@ exports.scoreDropDispatcher = onSchedule({
   // 4:30 (scoringWatchdog.js findUnscoredNightProblem).
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
   // No scheduler retries: the 15-minute cadence IS the retry loop, and the
   // scoring lease makes re-entry safe.
   retryCount: 0,
@@ -655,6 +656,7 @@ exports.podiumNightly = onSchedule({
   timeZone: "America/New_York",
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
   // Errors are swallowed below (isolation contract), so scheduler retries
   // would never fire; the podium stage's own leases self-heal next night.
   retryCount: 0,

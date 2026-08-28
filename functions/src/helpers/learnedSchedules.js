@@ -200,6 +200,7 @@ const buildLearnedSchedules = onCall({
   cors: true,
   timeoutSeconds: 540,
   memory: "512MiB",
+  cpu: 1,
 }, async (request) => {
   assertAdmin(request);
   logger.info(`Admin ${request.auth.uid} kicked off a learned-schedule build.`);

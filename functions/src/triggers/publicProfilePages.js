@@ -82,6 +82,7 @@ exports.getPublicProfilePageHttp = onRequest(
   {
     cors: true,
     timeoutSeconds: 30,
+    cpu: 1,
   },
   async (req, res) => {
     const route = parseDirectorPath(req.path);

@@ -388,7 +388,7 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
   };
 });
 
-exports.migrateUserProfiles = onCall({ cors: true, timeoutSeconds: 540, memory: "512MiB" }, async (request) => {
+exports.migrateUserProfiles = onCall({ cors: true, timeoutSeconds: 540, memory: "512MiB", cpu: 1 }, async (request) => {
   assertAdmin(request);
 
   const db = getDb();
@@ -475,7 +475,7 @@ exports.migrateUserProfiles = onCall({ cors: true, timeoutSeconds: 540, memory: 
  * Fix missing profile fields for existing users
  * Admin-only function to ensure all profiles have required fields
  */
-exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "512MiB" }, async (request) => {
+exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "512MiB", cpu: 1 }, async (request) => {
   assertAdmin(request);
 
   const db = getDb();

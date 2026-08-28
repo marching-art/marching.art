@@ -102,6 +102,7 @@ exports.processNewsGeneration = onMessagePublished(
     // incrementally so partial progress survives even if we still hit the ceiling.
     timeoutSeconds: 540,
     memory: "1GiB",
+    cpu: 1,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (message) => {
@@ -446,6 +447,7 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
     // incrementally so partial progress survives even if we still hit the ceiling.
     timeoutSeconds: 540,
     memory: "1GiB",
+    cpu: 1,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret, brevoApiKey],
   },
   async (event) => {
@@ -591,6 +593,7 @@ exports.triggerDailyNews = onCall(
     // leaves completed articles visible on the feed/admin.
     timeoutSeconds: 540,
     memory: "1GiB",
+    cpu: 1,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
@@ -659,6 +662,7 @@ exports.triggerSeasonSummary = onCall(
     // Gemini text + paid image generation can take a couple of minutes.
     timeoutSeconds: 540,
     memory: "1GiB",
+    cpu: 1,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
@@ -900,6 +904,7 @@ exports.triggerNewsGeneration = onCall(
     cors: true,
     timeoutSeconds: 120,
     memory: "512MiB",
+    cpu: 1,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {

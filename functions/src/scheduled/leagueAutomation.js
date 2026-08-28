@@ -80,6 +80,7 @@ exports.generateWeeklyMatchups = onSchedule(
     // matches the scoring jobs (see dailyProcessors.js).
     timeoutSeconds: 540,
     memory: "512MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Ensuring league matchups exist for the current and next week");
@@ -275,6 +276,7 @@ exports.generateWeeklyRecaps = onSchedule(
     // matches the scoring jobs (see dailyProcessors.js).
     timeoutSeconds: 540,
     memory: "512MiB",
+    cpu: 1,
   },
   async () => {
     const db = getDb();
@@ -305,6 +307,7 @@ exports.updateLeagueRivalries = onSchedule(
     // matches the sibling league jobs above.
     timeoutSeconds: 540,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Starting league rivalry update");
@@ -520,6 +523,7 @@ exports.refreshLeagueActivityJob = onSchedule(
     timeZone: "America/New_York",
     timeoutSeconds: 540,
     memory: "512MiB",
+    cpu: 1,
   },
   async () => {
     const db = getDb();

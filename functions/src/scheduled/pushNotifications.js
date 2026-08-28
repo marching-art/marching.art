@@ -38,6 +38,7 @@ exports.showReminderPushJob = onSchedule(
     // matches the scoring jobs (see dailyProcessors.js).
     timeoutSeconds: 540,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Running show reminder push notification job");
@@ -168,6 +169,7 @@ exports.weeklyMatchupPushJob = onSchedule(
     // matches the scoring jobs (see dailyProcessors.js).
     timeoutSeconds: 540,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Running weekly matchup push notification job");
@@ -361,6 +363,7 @@ exports.scoreDropPushJob = onSchedule(
     // scaling rationale as showReminderPushJob above.
     timeoutSeconds: 540,
     memory: "256MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Running score-drop push notification job");
@@ -465,6 +468,7 @@ exports.lineupLockReminderPushJob = onSchedule(
     // as showReminderPushJob above.
     timeoutSeconds: 540,
     memory: "256MiB",
+    cpu: 1,
     // The same lock is announced once to #announcements (seasonAnnounce.js).
     secrets: [discordAnnouncementsWebhookUrl],
   },

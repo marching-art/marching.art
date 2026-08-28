@@ -301,6 +301,7 @@ exports.scheduledRivalsUpdate = onSchedule(
     // grows. Same headroom the email/push population scans use.
     timeoutSeconds: 540,
     memory: "512MiB",
+    cpu: 1,
   },
   async () => {
     logger.info("Starting scheduled rivals update");

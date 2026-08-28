@@ -559,6 +559,7 @@ exports.scrapeDciScores = onSchedule({
   timeZone: "America/New_York",
   timeoutSeconds: 300,
   memory: "512MiB",
+  cpu: 1,
   secrets: [scraperApiKey],
 }, async () => {
   try {
