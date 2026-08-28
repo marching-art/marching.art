@@ -47,7 +47,7 @@ function extractAiHints(v1: CorpsUniformDesign | undefined | null): UniformAiHin
 
 /** Build the equipped-snapshot shape from a (freshly migrated) v2 design. */
 function snapshotFromDesign(design: UniformDesignV2): Record<string, unknown> {
-  return {
+  const snapshot = {
     designId: null,
     name: design.name,
     colorway: design.colorway,
@@ -56,6 +56,11 @@ function snapshotFromDesign(design: UniformDesignV2): Record<string, unknown> {
     equippedAt: new Date().toISOString(),
     migratedFrom: 'v1',
   };
+  // The client converter leaves `undefined` on optional figure channels (e.g.
+  // armL.color), which the renderer tolerates but Firestore rejects. A JSON
+  // round-trip drops those keys — exactly what the server's sanitizeDesign does
+  // on a normal equip — so the migrated snapshot is stored in the same shape.
+  return JSON.parse(JSON.stringify(snapshot));
 }
 
 /**

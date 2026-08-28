@@ -34,6 +34,9 @@ const BATCH_LIMIT = 400;
 async function migrateUniformsV1toV2({ dryRun = false } = {}) {
   if (!admin.apps.length) admin.initializeApp();
   const db = admin.firestore();
+  // Defense in depth: the planner already drops undefined from migrated
+  // snapshots, but never let a stray undefined abort the whole run.
+  db.settings({ ignoreUndefinedProperties: true });
 
   const label = dryRun ? '[uniform-migrate:dry-run]' : '[uniform-migrate]';
   console.log(`${label} Scanning profiles under artifacts/${DATA_NAMESPACE}/users ...`);
