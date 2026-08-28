@@ -29,7 +29,10 @@ export interface UniformFigureProps {
   figure: FigureConfig;
   /** Accessible description, e.g. "Blue Stars identity uniform". */
   label: string;
-  /** CSS width; the figure scales via its viewBox. */
+  /** CSS width; the figure scales via its viewBox. Pass 'auto' to size the
+   *  figure from a style height instead (the width follows the viewBox
+   *  aspect ratio; no width attribute is emitted — "auto" is not a valid
+   *  SVG length). */
   width?: number | string;
   style?: React.CSSProperties;
 }
@@ -50,7 +53,7 @@ const UniformFigure = forwardRef<SVGSVGElement, UniformFigureProps>(function Uni
     <svg
       ref={ref}
       viewBox={FIGURE_VIEWBOX}
-      width={width}
+      width={width === 'auto' ? undefined : width}
       style={style}
       role="img"
       aria-label={label}

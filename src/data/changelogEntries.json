@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-08-28-studio-locked-workstation",
+    "date": "2026-08-28",
+    "title": "The Uniform Studio becomes a real design station",
+    "category": "improvement",
+    "summary": "No more scrolling past your own uniform: the Studio now locks to your screen like a proper game customization screen. Your corps member stands on a lit stage — grounded with a spotlight and floor shadow — and stays put while you work. On phones the stage now has a camera: open the Head section and it glides in to frame the hat; open Feet and it frames the shoes, so the part you're editing is always big enough to actually see. The controls show one section at a time on every device, switched instantly from the tabs, by tapping the figure, or with new previous/next buttons at the bottom of each section.",
+    "highlights": [
+      "The page never scrolls — only the section you're editing does, so the doll, Save, and Equip are always on screen.",
+      "On phones the camera frames the part you're editing — the hat, the shoulders, the shoes — and eases between them as you switch sections.",
+      "More room for controls on phones: the design name moved into the More menu and undo/redo now sit on the canvas itself.",
+      "Desktop gets the same section tabs as mobile: one focused panel at a time instead of one giant list, with the doll filling the full studio height beside it.",
+      "Walk the uniform head to feet with the new previous/next buttons at the bottom of every section.",
+      "The figure stands on a stage with a spotlight and floor shadow instead of floating in space.",
+      "Your wardrobe now lives in its own Wardrobe tab on every device.",
+      "Each section eases in as you switch, and switching is instant — no more smooth-scroll hunting."
+    ]
+  },
+  {
     "id": "2026-08-28-studio-paper-doll-overhaul",
     "date": "2026-08-28",
     "title": "The Uniform Studio gets a real paper-doll cockpit",

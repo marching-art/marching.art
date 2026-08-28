@@ -1,10 +1,12 @@
 // =============================================================================
-// STUDIO SECTION TABS — the mobile slot-tab strip
+// STUDIO SECTION TABS — the slot-tab strip (every breakpoint)
 // =============================================================================
-// Horizontal, scrollable tab strip under the pinned canvas: the editor's
-// sections plus the Wardrobe pseudo-tab. Roving tabindex with arrow-key
-// navigation (Left/Right/Home/End), and the active tab keeps itself scrolled
-// into view — figure taps can activate a tab that's off-screen.
+// Horizontal, scrollable tab strip heading the section panel: the editor's
+// sections plus the Wardrobe pseudo-tab. Exactly one section renders below it
+// at a time (the game-locker idiom — no scroll-through-everything stack).
+// Roving tabindex with arrow-key navigation (Left/Right/Home/End), and the
+// active tab keeps itself scrolled into view — figure taps can activate a tab
+// that's off-screen on narrow viewports.
 
 import React, { useEffect, useRef } from 'react';
 import { STUDIO_SECTIONS, type StudioTabId } from './studioSections';
@@ -27,7 +29,14 @@ export default function StudioSectionTabs({
 }: StudioSectionTabsProps) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
+  // Keep the active tab in view when it changes — but never on mount, where
+  // scrollIntoView can yank ancestor scroll containers and shift the page.
+  // Compared against the previous id (not a mount flag) so StrictMode's
+  // double-invoked effects can't sneak the mount scroll back in.
+  const prevActive = useRef(active);
   useEffect(() => {
+    if (prevActive.current === active) return;
+    prevActive.current = active;
     const i = TABS.findIndex((t) => t.id === active);
     const el = refs.current[i];
     if (el && typeof el.scrollIntoView === 'function') {
@@ -51,7 +60,7 @@ export default function StudioSectionTabs({
     <div
       role="tablist"
       aria-label="Uniform editor sections"
-      className={`flex gap-1 overflow-x-auto scroll-momentum border-b border-line bg-background ${className}`}
+      className={`flex gap-1 overflow-x-auto lg:flex-wrap lg:overflow-x-visible scroll-momentum border-b border-line ${className}`}
     >
       {TABS.map((tab, i) => {
         const selected = tab.id === active;

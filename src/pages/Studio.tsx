@@ -8,12 +8,18 @@
 // entanglements the old modal had). The press-box toggle previews the design
 // at field distance, which doubles as a legibility check.
 //
-// Layout contract (the paper-doll loop): the doll must never leave the screen
-// while editing. Desktop: sticky canvas column beside the full control stack.
-// Mobile (<lg): the canvas card + section tab strip pin to the top of the
-// page's scroll container and exactly one editor section renders below, so
-// every edit is visible the instant it lands. Tapping the figure itself jumps
-// to the matching section (FigureTapOverlay); every draft edit is undoable
+// Layout contract (the paper-doll loop): the Studio is a viewport-locked
+// workstation — the page itself never scrolls, so the doll can never leave
+// the screen (the game-locker idiom: fixed stage, fixed navigation, one
+// panel that scrolls internally). Desktop: the canvas fills the left column
+// while the controls column shows the tab strip over exactly one section.
+// Mobile (<lg): canvas card + tab strip stack above the single scrolling
+// section panel — every edit is visible the instant it lands, and nothing
+// is sticky or floating over other content. The canvas runs a framing
+// camera (StudioCanvas) so the doll region being edited fills the compact
+// stage, and the pinned chrome stays minimal: undo/redo overlay the canvas
+// and the design name lives in the More sheet. Tapping the figure jumps to
+// the matching section (FigureTapOverlay); every draft edit is undoable
 // (useDraftHistory).
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -38,7 +44,7 @@ import { WARDROBE_LIMITS, withDerivedFlags } from '../utils/uniform';
 import PackAdvisoryBanner from '../components/uniform/PackAdvisoryBanner';
 import { designNoteFor } from '../data/designNotes';
 import { sharePoster } from '../utils/posterExport';
-import { sectionAnchorId, type StudioTabId } from '../components/uniform/studioSections';
+import type { StudioTabId } from '../components/uniform/studioSections';
 import { useDraftHistory } from '../hooks/useDraftHistory';
 import { triggerHaptic } from '../hooks/useHaptic';
 import type { UniformDesignV2 } from '../types/uniform';
@@ -99,9 +105,7 @@ export default function Studio() {
   const galleryFirstRun = useRef(false);
   const gallerySeen = useRef(new Set<string>());
   const savedJson = useRef<string>('');
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const stickyRef = useRef<HTMLDivElement>(null);
-  const editorCardRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Design-house packs: previewing gated pieces is free everywhere; the
   // server rejects the SAVE until the pack is owned. The advisory banner and
@@ -200,38 +204,21 @@ export default function Studio() {
   }, [redoDraft, undoDraft]);
 
   /**
-   * Section navigation — shared by the tab strip and the figure tap overlay.
-   * Desktop scrolls the always-visible stack to the section; mobile switches
-   * the tab and normalizes the scroll position so the section starts right
-   * under the pinned canvas.
+   * Section navigation — shared by the tab strip, the figure tap overlay,
+   * and the editor's prev/next footer. Switching sections is an instant
+   * panel swap (no smooth-scrolling through a stack); the panel just starts
+   * from its top like a fresh screen.
    */
   const handleSectionSelect = useCallback((id: StudioTabId) => {
     setActiveTab(id);
     triggerHaptic('light');
-    const isDesktop =
-      typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)')?.matches;
-    if (isDesktop) {
-      if (id === 'wardrobe') return;
-      const el = document.getElementById(sectionAnchorId(id));
-      if (el && typeof el.scrollIntoView === 'function') {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const panel = panelRef.current;
+    if (panel) {
+      try {
+        panel.scrollTo({ top: 0 });
+      } catch {
+        panel.scrollTop = 0; // jsdom / older engines
       }
-      return;
-    }
-    const container = scrollRef.current;
-    const shell = stickyRef.current;
-    const editor = editorCardRef.current;
-    if (!container || !shell || !editor || typeof container.scrollTo !== 'function') return;
-    try {
-      const desired =
-        container.scrollTop +
-        (editor.getBoundingClientRect().top - container.getBoundingClientRect().top) -
-        shell.getBoundingClientRect().height;
-      if (container.scrollTop > desired) {
-        container.scrollTo({ top: Math.max(desired, 0), behavior: 'smooth' });
-      }
-    } catch {
-      // jsdom / older engines: navigation still works without the scroll assist
     }
   }, []);
 
@@ -547,13 +534,14 @@ export default function Studio() {
   };
 
   return (
-    // GameShell's <main> is fixed with overflow-hidden, so each page must own
-    // its scroll container (Shop.jsx idiom) — without this wrapper the Studio
-    // is clipped to the first viewport and can't scroll at all on mobile.
-    <div ref={scrollRef} className="h-full overflow-y-auto scroll-momentum">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-24">
+    // GameShell's <main> is fixed with overflow-hidden; the Studio fills it as
+    // a locked workstation. Desktop never page-scrolls (only the section panel
+    // and canvas column scroll internally); mobile keeps overflow-y-auto as a
+    // relief valve for very short viewports where the fixed stack can't fit.
+    <div className="h-full overflow-y-auto lg:overflow-hidden flex flex-col">
+      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 flex-1 min-h-0 flex flex-col">
         {/* Header */}
-        <div className="flex flex-wrap items-center gap-3 py-4 border-b border-line">
+        <div className="shrink-0 flex flex-wrap items-center gap-3 py-3 border-b border-line">
           <h1 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
             <Shirt className="w-4 h-4 text-interactive" />
             Uniform Studio
@@ -587,7 +575,7 @@ export default function Studio() {
         </div>
 
         {migrated && (
-          <div className="bg-interactive/10 border border-interactive/30 p-3 mt-3 text-xs text-muted">
+          <div className="shrink-0 bg-interactive/10 border border-interactive/30 p-3 mt-3 text-xs text-muted">
             <span className="text-interactive font-bold uppercase mr-2">Rebuilt in the Studio</span>
             Your written uniform description was translated into a starting design — refine it, then
             save and equip. Your current avatar is untouched.
@@ -595,160 +583,174 @@ export default function Studio() {
         )}
 
         {draft && (
-          <div className="lg:grid lg:grid-cols-[minmax(300px,380px)_1fr] lg:gap-6 lg:mt-4 lg:items-start">
-            {/* Canvas column */}
-            {/* Sticky at every breakpoint. The sticky element must live on
-                the column (not the shell inside it): a sticky child can never
-                stick past its parent's bounds, and on mobile the shell IS the
-                column's whole height. The grid wrapper spans the full page,
-                so the column has room to stick while the controls scroll. */}
-            <div className="sticky top-0 z-30 lg:top-4">
-              {/* Mobile pinned shell: canvas card + tab strip. Full-bleed
-                  background so scrolling controls disappear behind it. */}
-              <div
-                ref={stickyRef}
-                className="bg-background -mx-3 px-3 sm:-mx-4 sm:px-4 lg:mx-0 lg:px-0 pt-2 lg:pt-0"
-              >
-                <div className="bg-surface-card border border-line p-3 sm:p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={draft.name}
-                      maxLength={WARDROBE_LIMITS.maxNameLength}
-                      onChange={(e) => history.set({ ...draft, name: e.target.value })}
-                      aria-label="Design name"
-                      className="flex-1 min-w-0 h-9 px-2 bg-background border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
-                    />
-                    <button
-                      type="button"
-                      onClick={history.undo}
-                      disabled={!history.canUndo}
-                      aria-label="Undo"
-                      title="Undo (Ctrl+Z)"
-                      className={`${TOOL_INACTIVE} disabled:opacity-30`}
-                    >
-                      <Undo2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={history.redo}
-                      disabled={!history.canRedo}
-                      aria-label="Redo"
-                      title="Redo (Ctrl+Shift+Z)"
-                      className={`${TOOL_INACTIVE} disabled:opacity-30`}
-                    >
-                      <Redo2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Desktop view controls: labeled preview modes + zoom + peek */}
-                  <StudioViewTools variant="row" {...viewToolProps} />
-
-                  {displayFigure && (
-                    <>
-                      <div className="lg:hidden">
-                        <StudioCanvas
-                          mode="compact"
-                          figure={displayFigure}
-                          label={`${draft.name || 'Uniform'} preview`}
-                          pressBox={pressBox}
-                          zoom={zoom}
-                          activeSection={activeTab}
-                          onRegionSelect={handleSectionSelect}
-                          tools={<StudioViewTools variant="overlay" {...viewToolProps} />}
-                        />
-                      </div>
-                      <div className="hidden lg:block">
-                        <StudioCanvas
-                          mode="full"
-                          figure={displayFigure}
-                          label={`${draft.name || 'Uniform'} preview`}
-                          pressBox={pressBox}
-                          zoom={zoom}
-                          activeSection={activeTab}
-                          onRegionSelect={handleSectionSelect}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <PackAdvisoryBanner figure={draft.figure} owned={ownedPacks} />
-
-                  <StudioActionBar
-                    busy={busy}
-                    dirty={dirty}
-                    altName={activeOption?.corps.uniformAlt?.name}
-                    guardName={activeOption?.corps.uniformGuard?.name}
-                    onSave={(asNew) => void doSave(asNew)}
-                    onEquip={(slot) => void doEquip(slot)}
-                    onClearSlot={(slot) => void doClearSlot(slot)}
-                    onAvatar={() => void doGenerateAvatar()}
-                    onGetCode={() => void doGetCode()}
-                    onShareCard={() => void doShareCard()}
-                    onPublish={() => void doPublish()}
+          <div className="flex-1 min-h-0 flex flex-col gap-2 pt-2 pb-3 lg:pt-4 lg:pb-4 lg:grid lg:grid-cols-[minmax(300px,380px)_1fr] lg:grid-rows-[minmax(0,1fr)] lg:gap-6">
+            {/* Canvas column — the stage. Fixed in the flow (never sticky):
+                on mobile it stacks above the tab strip + panel; on desktop
+                the card stretches to the full grid row and the canvas takes
+                whatever height is left after the fixed rows. overflow-y-auto
+                is the relief valve for short desktop viewports. */}
+            <div className="shrink-0 lg:min-h-0 lg:overflow-y-auto">
+              <div className="bg-surface-card border border-line p-3 sm:p-4 lg:h-full lg:flex lg:flex-col">
+                {/* Name + undo/redo row — desktop only. On mobile the name
+                    lives in the More sheet and undo/redo overlay the canvas,
+                    so the pinned stack spends its pixels on the doll. */}
+                <div className="hidden lg:flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={draft.name}
+                    maxLength={WARDROBE_LIMITS.maxNameLength}
+                    onChange={(e) => history.set({ ...draft, name: e.target.value })}
+                    aria-label="Design name"
+                    className="flex-1 min-w-0 h-9 px-2 bg-background border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
                   />
-                  <p className="hidden lg:block text-[10px] text-muted mt-2">
-                    Saving stores the design in your wardrobe. Equipping puts it on{' '}
-                    {activeOption?.corps.corpsName} everywhere; the alternate is an optional second
-                    look shown on your profile. The guard look dresses this season&rsquo;s show —
-                    try the Guard dress silhouette — and resets with the show at rollover. The AI
-                    avatar is optional and never automatic.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={history.undo}
+                    disabled={!history.canUndo}
+                    aria-label="Undo"
+                    title="Undo (Ctrl+Z)"
+                    className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                  >
+                    <Undo2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={history.redo}
+                    disabled={!history.canRedo}
+                    aria-label="Redo"
+                    title="Redo (Ctrl+Shift+Z)"
+                    className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                  >
+                    <Redo2 className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Mobile slot tabs — pinned with the canvas */}
-                <StudioSectionTabs
-                  className="lg:hidden"
-                  active={activeTab}
-                  onSelect={handleSectionSelect}
-                />
-              </div>
+                {/* Desktop view controls: labeled preview modes + zoom + peek */}
+                <StudioViewTools variant="row" {...viewToolProps} />
 
-              {/* Desktop wardrobe: always visible under the canvas */}
-              <WardrobePanel
-                className="hidden lg:block mt-4"
-                wardrobe={wardrobe}
-                loadedId={loadedId}
-                busy={busy}
-                maxDesigns={WARDROBE_LIMITS.maxDesigns}
-                onLoad={loadFromWardrobe}
-                onDelete={(w) => void doDelete(w)}
-                onImport={doImportCode}
-              />
+                {displayFigure && (
+                  <>
+                    <div className="lg:hidden">
+                      <StudioCanvas
+                        mode="compact"
+                        figure={displayFigure}
+                        label={`${draft.name || 'Uniform'} preview`}
+                        pressBox={pressBox}
+                        zoom={zoom}
+                        activeSection={activeTab}
+                        onRegionSelect={handleSectionSelect}
+                        tools={<StudioViewTools variant="overlay" {...viewToolProps} />}
+                        toolsLeft={
+                          <>
+                            <button
+                              type="button"
+                              onClick={history.undo}
+                              disabled={!history.canUndo}
+                              aria-label="Undo"
+                              className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                            >
+                              <Undo2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={history.redo}
+                              disabled={!history.canRedo}
+                              aria-label="Redo"
+                              className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                            >
+                              <Redo2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        }
+                      />
+                    </div>
+                    {/* Desktop: the stage takes all the height the card's
+                        fixed rows leave over, so the doll fills the column. */}
+                    <div className="hidden lg:block lg:flex-1 lg:min-h-0">
+                      <StudioCanvas
+                        mode="full"
+                        figure={displayFigure}
+                        label={`${draft.name || 'Uniform'} preview`}
+                        pressBox={pressBox}
+                        zoom={zoom}
+                        activeSection={activeTab}
+                        onRegionSelect={handleSectionSelect}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <PackAdvisoryBanner figure={draft.figure} owned={ownedPacks} />
+
+                <StudioActionBar
+                  busy={busy}
+                  dirty={dirty}
+                  name={draft.name}
+                  maxNameLength={WARDROBE_LIMITS.maxNameLength}
+                  onRename={(name) => history.set({ ...draft, name })}
+                  altName={activeOption?.corps.uniformAlt?.name}
+                  guardName={activeOption?.corps.uniformGuard?.name}
+                  onSave={(asNew) => void doSave(asNew)}
+                  onEquip={(slot) => void doEquip(slot)}
+                  onClearSlot={(slot) => void doClearSlot(slot)}
+                  onAvatar={() => void doGenerateAvatar()}
+                  onGetCode={() => void doGetCode()}
+                  onShareCard={() => void doShareCard()}
+                  onPublish={() => void doPublish()}
+                />
+                <p className="hidden lg:block text-[10px] text-muted mt-2">
+                  Saving stores the design in your wardrobe. Equipping puts it on{' '}
+                  {activeOption?.corps.corpsName} everywhere; the alternate is an optional second
+                  look shown on your profile. The guard look dresses this season&rsquo;s show — try
+                  the Guard dress silhouette — and resets with the show at rollover. The AI avatar
+                  is optional and never automatic.
+                </p>
+              </div>
             </div>
 
-            {/* Controls column */}
-            <div
-              ref={editorCardRef}
-              className="bg-surface-card border border-line p-3 sm:p-4 mt-2 lg:mt-0"
-            >
-              {/* Design Note: a contextual principle from the craft (§ In-studio guidance) */}
-              <p
-                className={`text-[11px] italic text-muted border-l-2 border-interactive/40 pl-2 mb-4 ${
-                  activeTab === 'wardrobe' ? 'hidden lg:block' : ''
-                }`}
+            {/* Controls column: tab strip over exactly one section, in one
+                card. Only the panel below the tabs scrolls — switching tabs
+                swaps the panel content and resets it to the top, like a
+                screen change, on every breakpoint. */}
+            <div className="flex-1 min-h-[16rem] lg:min-h-0 min-w-0 flex flex-col bg-surface-card border border-line">
+              <StudioSectionTabs
+                className="shrink-0"
+                active={activeTab}
+                onSelect={handleSectionSelect}
+              />
+              <div
+                ref={panelRef}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-momentum p-3 sm:p-4 pb-8"
               >
-                {designNoteFor(draft.figure)}
-              </p>
-              <StudioEditor
-                design={draft}
-                onChange={history.set}
-                ownedPacks={ownedPacks}
-                activeSection={activeTab}
-                onBrowsePresets={() => setGalleryOpen(true)}
-              />
-              {/* Mobile wardrobe tab */}
-              <WardrobePanel
-                frameless
-                className={`lg:hidden ${activeTab === 'wardrobe' ? '' : 'hidden'}`}
-                wardrobe={wardrobe}
-                loadedId={loadedId}
-                busy={busy}
-                maxDesigns={WARDROBE_LIMITS.maxDesigns}
-                onLoad={loadFromWardrobe}
-                onDelete={(w) => void doDelete(w)}
-                onImport={doImportCode}
-              />
+                {/* Design Note: a contextual principle from the craft (§ In-studio guidance) */}
+                <p
+                  className={`text-[11px] italic text-muted border-l-2 border-interactive/40 pl-2 mb-4 ${
+                    activeTab === 'wardrobe' ? 'hidden' : ''
+                  }`}
+                >
+                  {designNoteFor(draft.figure)}
+                </p>
+                <StudioEditor
+                  design={draft}
+                  onChange={history.set}
+                  ownedPacks={ownedPacks}
+                  activeSection={activeTab}
+                  onSectionChange={handleSectionSelect}
+                  onBrowsePresets={() => setGalleryOpen(true)}
+                />
+                {/* The Wardrobe tab — the one home for saved designs */}
+                <WardrobePanel
+                  frameless
+                  className={activeTab === 'wardrobe' ? '' : 'hidden'}
+                  wardrobe={wardrobe}
+                  loadedId={loadedId}
+                  busy={busy}
+                  maxDesigns={WARDROBE_LIMITS.maxDesigns}
+                  onLoad={loadFromWardrobe}
+                  onDelete={(w) => void doDelete(w)}
+                  onImport={doImportCode}
+                />
+              </div>
             </div>
           </div>
         )}

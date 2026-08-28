@@ -79,6 +79,8 @@ describe('Studio page', { timeout: 15_000 }, () => {
     fireEvent.click(screen.getByRole('button', { name: /More actions/i }));
     expect(await screen.findByRole('button', { name: /Equip as alt/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Equip as guard/i })).toBeInTheDocument();
+    // the sheet carries the mobile rename input (desktop's is the inline row)
+    expect(screen.getAllByLabelText(/Design name/i)).toHaveLength(2);
   });
 
   it('exposes the paper-doll navigation surfaces: section tabs and figure tap regions', async () => {
@@ -110,11 +112,14 @@ describe('Studio page', { timeout: 15_000 }, () => {
       'true'
     );
 
-    // undo starts disabled and arms after an edit (the name input is an edit)
-    const undo = screen.getByRole('button', { name: /^Undo$/i });
-    expect(undo).toBeDisabled();
+    // undo starts disabled and arms after an edit (the name input is an
+    // edit). Undo renders twice: the desktop name row and the mobile canvas
+    // overlay cluster.
+    const undos = screen.getAllByRole('button', { name: /^Undo$/i });
+    expect(undos).toHaveLength(2);
+    for (const undo of undos) expect(undo).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/Design name/i), { target: { value: 'New Look' } });
-    expect(undo).toBeEnabled();
+    for (const undo of undos) expect(undo).toBeEnabled();
   });
 
   it('opens the first-run preset gallery for a corps with no design yet', async () => {

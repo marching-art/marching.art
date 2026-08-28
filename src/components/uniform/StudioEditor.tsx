@@ -8,7 +8,7 @@
 // recomputed after every edit so the stored design never carries stale defs.
 
 import React, { useState } from 'react';
-import { Shuffle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react';
 import type {
   ArmConfig,
   FigureConfig,
@@ -50,7 +50,12 @@ import { ArmControls, LegControls } from './StudioLimbControls';
 import ChestSection from './StudioChestControls';
 import HeadwearSection from './StudioHeadwearControls';
 import { StudioColorwayContext } from './studioColorContext';
-import { sectionAnchorId, type StudioSectionId, type StudioTabId } from './studioSections';
+import {
+  STUDIO_SECTIONS,
+  sectionAnchorId,
+  type StudioSectionId,
+  type StudioTabId,
+} from './studioSections';
 
 // ---------------------------------------------------------------------------
 // per-side editors
@@ -75,12 +80,15 @@ export interface StudioEditorProps {
    *  signals "own to save" (the server enforces it at write time). */
   ownedPacks?: string[];
   /**
-   * The tab the mobile layout is showing. Sections other than the active one
-   * hide below the lg breakpoint but stay visible on desktop (`hidden
-   * lg:block`), so one editor instance serves both form factors and per-side
-   * link state survives tab switches. Null/undefined shows everything.
+   * The tab the section panel is showing — exactly one section renders at a
+   * time on every breakpoint (the game-locker idiom; the tab strip and the
+   * figure tap overlay do the navigating). The other sections stay mounted
+   * but hidden, so per-side link state survives tab switches.
+   * Null/undefined shows everything (legacy stack, kept for tests).
    */
   activeSection?: StudioTabId | null;
+  /** Section navigation from inside the panel (the prev/next footer). */
+  onSectionChange?: (id: StudioTabId) => void;
   /** Opens the full preset gallery (the "See all" affordance). */
   onBrowsePresets?: () => void;
 }
@@ -90,6 +98,7 @@ export default function StudioEditor({
   onChange,
   ownedPacks,
   activeSection,
+  onSectionChange,
   onBrowsePresets,
 }: StudioEditorProps) {
   const [armsLinked, setArmsLinked] = useState(true);
@@ -206,23 +215,39 @@ export default function StudioEditor({
 
   const waistValue = figure.waistBand ? 'band' : figure.belt ? 'belt' : 'none';
 
-  // Section wrapper: addressable anchor + mobile tab filtering (see the
-  // activeSection prop). scroll-mt keeps desktop scroll-to-section landings
-  // clear of the card padding.
+  // Section wrapper: addressable anchor + tab filtering (see the activeSection
+  // prop). The active section re-enters with a short slide-up — toggling the
+  // animation class off (hidden) and back on restarts it on each switch.
   const sec = (id: StudioSectionId, node: React.ReactNode) => (
     <div
       key={id}
       id={sectionAnchorId(id)}
       data-section={id}
-      className={`scroll-mt-4 ${activeSection != null && activeSection !== id ? 'hidden lg:block' : ''}`}
+      className={
+        activeSection != null && activeSection !== id
+          ? 'hidden'
+          : activeSection != null
+            ? 'motion-safe:animate-slide-in-bottom'
+            : ''
+      }
     >
       {node}
     </div>
   );
 
+  // Prev/next footer — the head-to-feet walk without leaving the panel.
+  const sectionIndex = STUDIO_SECTIONS.findIndex((s) => s.id === activeSection);
+  const prevSection = sectionIndex > 0 ? STUDIO_SECTIONS[sectionIndex - 1] : null;
+  const nextSection =
+    sectionIndex >= 0 && sectionIndex < STUDIO_SECTIONS.length - 1
+      ? STUDIO_SECTIONS[sectionIndex + 1]
+      : null;
+  const stepBtn =
+    'flex items-center gap-1 px-3 py-2 min-h-touch sm:min-h-0 text-[11px] font-bold uppercase tracking-wider border border-line text-muted hover:text-white hover:border-interactive';
+
   return (
     <StudioColorwayContext.Provider value={design.colorway}>
-      <div className="space-y-6 lg:space-y-6">
+      <div className={activeSection == null ? 'space-y-6' : ''}>
         {sec(
           'presets',
           <section>
@@ -743,6 +768,33 @@ export default function StudioEditor({
               onSelect={(hex) => setFigure({ skin: hex })}
             />
           </section>
+        )}
+
+        {sectionIndex >= 0 && onSectionChange && (
+          <div className="flex items-center justify-between gap-2 border-t border-line mt-6 pt-3">
+            {prevSection ? (
+              <button
+                type="button"
+                onClick={() => onSectionChange(prevSection.id)}
+                className={stepBtn}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                {prevSection.label}
+              </button>
+            ) : (
+              <span />
+            )}
+            {nextSection && (
+              <button
+                type="button"
+                onClick={() => onSectionChange(nextSection.id)}
+                className={stepBtn}
+              >
+                {nextSection.label}
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         )}
       </div>
     </StudioColorwayContext.Provider>
