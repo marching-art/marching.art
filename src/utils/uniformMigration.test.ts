@@ -89,6 +89,22 @@ describe('planUniformMigration', () => {
     expect(plan.migratedFromV1).toBe(1);
   });
 
+  it('produces a Firestore-clean migrated snapshot (no undefined values)', () => {
+    const plan = planUniformMigration({
+      corps: { worldClass: { corpsName: 'Legacy Corps', uniformDesign: v1Design() } },
+    });
+    const snap = plan.sets['corps.worldClass.uniform'];
+    // Firestore rejects undefined anywhere in the value; a JSON round-trip in the
+    // planner must have stripped the converter's optional undefined figure keys.
+    const hasUndefined = (v: unknown): boolean => {
+      if (v === undefined) return true;
+      if (Array.isArray(v)) return v.some(hasUndefined);
+      if (v && typeof v === 'object') return Object.values(v).some(hasUndefined);
+      return false;
+    };
+    expect(hasUndefined(snap)).toBe(false);
+  });
+
   it('drops an unusable v1 (no primary color) without creating a snapshot', () => {
     const plan = planUniformMigration({
       corps: { aClass: { corpsName: 'A', uniformDesign: { style: 'contemporary' } } },
