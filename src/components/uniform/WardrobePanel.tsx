@@ -58,7 +58,7 @@ export default function WardrobePanel({
           {wardrobe.map((w) => (
             <div
               key={w.id}
-              className={`flex-shrink-0 w-24 border p-1 ${
+              className={`flex-shrink-0 w-12 border p-0.5 ${
                 w.id === loadedId ? 'border-interactive' : 'border-line'
               }`}
             >
@@ -70,8 +70,8 @@ export default function WardrobePanel({
               >
                 <UniformFigure figure={w.figure} label={`${w.name} saved design`} />
               </button>
-              <div className="flex items-center gap-1 mt-1">
-                <span className="flex-1 text-[8px] uppercase tracking-wider text-muted truncate">
+              <div className="flex items-center gap-0.5 mt-0.5">
+                <span className="flex-1 min-w-0 text-[8px] uppercase tracking-wider text-muted truncate">
                   {w.name}
                 </span>
                 <button
@@ -79,7 +79,7 @@ export default function WardrobePanel({
                   onClick={() => onDelete(w)}
                   disabled={busy !== null}
                   aria-label={`Delete ${w.name}`}
-                  className="text-muted hover:text-red-400 min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+                  className="flex-shrink-0 text-muted hover:text-red-400 flex items-center justify-center"
                 >
                   {busy === `del:${w.id}` ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
