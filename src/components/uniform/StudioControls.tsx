@@ -4,11 +4,12 @@
 // Small presentational pieces in the app's uppercase-label grammar, split out
 // of StudioEditor.tsx so that file stays under the max-lines guardrail.
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import type { FigureConfig, PrintColorKey } from '../../types/uniform';
 import { NAMED_COLORS, PRINT_COLOR_SLOTS, UNIFORM_PRESETS } from '../../data/uniformCatalog';
 import { printColorValues, safeHex } from '../../utils/uniform';
 import UniformFigure from './UniformFigure';
+import StudioColorPopover from './StudioColorPopover';
 import { LABEL } from './studioTokens';
 export { LABEL, SECTION_LABEL } from './studioTokens';
 
@@ -73,6 +74,12 @@ function nearestName(hex: string): string {
   return h;
 }
 
+/**
+ * One color channel. The trigger is a swatch + name button that opens the
+ * swatch-first popover (colorway chips → named library → free custom hue);
+ * the popover replaces the old bare native input, which on phones opened an
+ * OS dialog over the doll for every single channel.
+ */
 export function ChannelRow({
   label,
   value,
@@ -84,24 +91,42 @@ export function ChannelRow({
   onChange: (v: string | null) => void;
   clearable?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const hex = safeHex(value || undefined);
   return (
     <div className="flex items-center gap-2 py-1">
-      <input
-        type="color"
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         aria-label={`${label} color`}
-        value={hex}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-9 h-9 bg-background border border-line rounded-none cursor-pointer p-0.5"
-      />
-      <div className="flex-1 min-w-0">
-        <span className="block text-[10px] font-bold text-muted uppercase tracking-wider">
-          {label}
+        className="flex items-center gap-2 flex-1 min-w-0 text-left group min-h-touch sm:min-h-0"
+      >
+        <span
+          aria-hidden="true"
+          className="w-9 h-9 border border-line group-hover:border-interactive flex-shrink-0"
+          style={
+            value
+              ? { backgroundColor: hex }
+              : {
+                  // empty-channel crosshatch so "no color yet" reads at a glance
+                  backgroundImage:
+                    'linear-gradient(45deg, transparent 44%, rgba(128,128,128,.8) 44%, rgba(128,128,128,.8) 56%, transparent 56%)',
+                }
+          }
+        />
+        <span className="flex-1 min-w-0">
+          <span className="block text-[10px] font-bold text-muted uppercase tracking-wider">
+            {label}
+          </span>
+          <span className="block text-xs text-white truncate font-mono">
+            {value ? nearestName(value) : '—'}
+          </span>
         </span>
-        <span className="block text-xs text-white truncate font-mono">
-          {value ? nearestName(value) : '—'}
-        </span>
-      </div>
+      </button>
       {clearable && value != null && (
         <button
           type="button"
@@ -110,6 +135,16 @@ export function ChannelRow({
         >
           None
         </button>
+      )}
+      {open && (
+        <StudioColorPopover
+          label={label}
+          value={value}
+          onChange={(v) => onChange(v)}
+          onClear={clearable ? () => onChange(null) : undefined}
+          anchorRef={triggerRef}
+          onClose={() => setOpen(false)}
+        />
       )}
     </div>
   );

@@ -7,25 +7,41 @@
 // never fires AI generation and never switches the profile picture (the
 // entanglements the old modal had). The press-box toggle previews the design
 // at field distance, which doubles as a legibility check.
+//
+// Layout contract (the paper-doll loop): the doll must never leave the screen
+// while editing. Desktop: sticky canvas column beside the full control stack.
+// Mobile (<lg): the canvas card + section tab strip pin to the top of the
+// page's scroll container and exactly one editor section renders below, so
+// every edit is visible the instant it lands. Tapping the figure itself jumps
+// to the matching section (FigureTapOverlay); every draft edit is undoable
+// (useDraftHistory).
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Eye, Loader2, Shirt, Store, Trash2 } from 'lucide-react';
+import { Loader2, Redo2, Shirt, Store, Undo2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { getClassDisplay } from '../components/Profile/directorProfileHelpers';
-import UniformFigure from '../components/uniform/UniformFigure';
 import StudioEditor from '../components/uniform/StudioEditor';
-import StudioActionGrid from '../components/uniform/StudioActionGrid';
+import StudioActionBar from '../components/uniform/StudioActionBar';
+import StudioCanvas from '../components/uniform/StudioCanvas';
+import StudioSectionTabs from '../components/uniform/StudioSectionTabs';
+import PresetGallery from '../components/uniform/PresetGallery';
+import WardrobePanel from '../components/uniform/WardrobePanel';
 import UniformShareCard from '../components/uniform/UniformShareCard';
-import { designFromPreset, UNIFORM_PRESETS } from '../data/uniformCatalog';
-import { migrateV1Design, WARDROBE_LIMITS, withDerivedFlags } from '../utils/uniform';
+import StudioViewTools, { TOOL_INACTIVE } from '../components/uniform/StudioViewTools';
+import { initialDesignFor, isFreshCorps, type CorpsOption } from '../components/uniform/studioInit';
+import { designFromPreset, type UniformPreset } from '../data/uniformCatalog';
+import { WARDROBE_LIMITS, withDerivedFlags } from '../utils/uniform';
 import PackAdvisoryBanner from '../components/uniform/PackAdvisoryBanner';
 import { designNoteFor } from '../data/designNotes';
 import { sharePoster } from '../utils/posterExport';
-import type { EquippedUniform, UniformDesignV2 } from '../types/uniform';
+import { sectionAnchorId, type StudioTabId } from '../components/uniform/studioSections';
+import { useDraftHistory } from '../hooks/useDraftHistory';
+import { triggerHaptic } from '../hooks/useHaptic';
+import type { UniformDesignV2 } from '../types/uniform';
 import type { CorpsData } from '../types';
 import {
   deleteUniformDesign,
@@ -41,27 +57,7 @@ import { generateCorpsAvatar } from '../api/articleAdmin';
 import { useSEO } from '../hooks/useSEO';
 import Heading from '../components/ui/Heading';
 
-interface CorpsOption {
-  classKey: string;
-  corps: CorpsData & { uniform?: EquippedUniform };
-}
-
-function initialDesignFor(option: CorpsOption | undefined): {
-  design: UniformDesignV2;
-  migrated: boolean;
-} {
-  if (option?.corps.uniform) {
-    const { designId: _id, equippedAt: _at, ...rest } = option.corps.uniform;
-    return { design: { ...rest, schema: 2 }, migrated: false };
-  }
-  if (option?.corps.uniformDesign?.primaryColor) {
-    return {
-      design: migrateV1Design(option.corps.uniformDesign, option.corps.corpsName),
-      migrated: true,
-    };
-  }
-  return { design: designFromPreset(UNIFORM_PRESETS[0]), migrated: false };
-}
+const ZOOM_STEPS = [1, 1.5, 2];
 
 export default function Studio() {
   useSEO({
@@ -87,27 +83,45 @@ export default function Studio() {
     corpsOptions.find((o) => o.classKey === paramClass)?.classKey || corpsOptions[0]?.classKey;
   const activeOption = corpsOptions.find((o) => o.classKey === activeClass);
 
-  const [draft, setDraft] = useState<UniformDesignV2 | null>(null);
+  // The draft lives in an undo/redo history: editor changes go through
+  // history.set (undoable, coalesced), context switches through history.reset.
+  const history = useDraftHistory<UniformDesignV2>();
+  const draft = history.present;
   const [loadedId, setLoadedId] = useState<string | null>(null);
   const [migrated, setMigrated] = useState(false);
   const [wardrobe, setWardrobe] = useState<WardrobeDesign[]>([]);
   const [pressBox, setPressBox] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [peeking, setPeeking] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<StudioTabId>('presets');
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const galleryFirstRun = useRef(false);
+  const gallerySeen = useRef(new Set<string>());
   const savedJson = useRef<string>('');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const editorCardRef = useRef<HTMLDivElement>(null);
 
   // Design-house packs: previewing gated pieces is free everywhere; the
   // server rejects the SAVE until the pack is owned. The advisory banner and
   // the editor's 🔒 marks mirror that gate client-side (utils/uniformPacks).
   const ownedPacks = profile?.cosmetics?.owned;
 
-  // (Re)initialize the draft when the active corps changes.
+  // (Re)initialize the draft when the active corps changes. A corps with no
+  // design at all gets the first-run preset gallery ("pick a starting look").
   const initKey = `${activeClass || ''}:${Boolean(activeOption?.corps.uniform)}`;
   useEffect(() => {
     const { design, migrated: wasMigrated } = initialDesignFor(activeOption);
-    setDraft(design);
+    history.reset(design);
     setMigrated(wasMigrated);
     setLoadedId(activeOption?.corps.uniform?.designId || null);
     savedJson.current = JSON.stringify(design);
+    setActiveTab('presets');
+    if (isFreshCorps(activeOption) && activeClass && !gallerySeen.current.has(activeClass)) {
+      galleryFirstRun.current = true;
+      setGalleryOpen(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initKey]);
 
@@ -136,7 +150,11 @@ export default function Studio() {
       if (!shared) {
         toast.error('No design found for that share link.');
       } else {
-        setDraft({ ...shared.design, schema: 2, figure: withDerivedFlags(shared.design.figure) });
+        history.reset({
+          ...shared.design,
+          schema: 2,
+          figure: withDerivedFlags(shared.design.figure),
+        });
         setLoadedId(null);
         setMigrated(false);
         savedJson.current = '';
@@ -159,6 +177,64 @@ export default function Studio() {
 
   const dirty = draft ? JSON.stringify(draft) !== savedJson.current : false;
 
+  // Ctrl/Cmd+Z undo, +Shift redo — ignored while typing in a field.
+  const { undo: undoDraft, redo: redoDraft } = history;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.tagName === 'SELECT' ||
+          t.isContentEditable)
+      )
+        return;
+      e.preventDefault();
+      if (e.shiftKey) redoDraft();
+      else undoDraft();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [redoDraft, undoDraft]);
+
+  /**
+   * Section navigation — shared by the tab strip and the figure tap overlay.
+   * Desktop scrolls the always-visible stack to the section; mobile switches
+   * the tab and normalizes the scroll position so the section starts right
+   * under the pinned canvas.
+   */
+  const handleSectionSelect = useCallback((id: StudioTabId) => {
+    setActiveTab(id);
+    triggerHaptic('light');
+    const isDesktop =
+      typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)')?.matches;
+    if (isDesktop) {
+      if (id === 'wardrobe') return;
+      const el = document.getElementById(sectionAnchorId(id));
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
+    const container = scrollRef.current;
+    const shell = stickyRef.current;
+    const editor = editorCardRef.current;
+    if (!container || !shell || !editor || typeof container.scrollTo !== 'function') return;
+    try {
+      const desired =
+        container.scrollTop +
+        (editor.getBoundingClientRect().top - container.getBoundingClientRect().top) -
+        shell.getBoundingClientRect().height;
+      if (container.scrollTop > desired) {
+        container.scrollTo({ top: Math.max(desired, 0), behavior: 'smooth' });
+      }
+    } catch {
+      // jsdom / older engines: navigation still works without the scroll assist
+    }
+  }, []);
+
   const doSave = async (asNew: boolean): Promise<string | null> => {
     if (!draft) return null;
     const name = draft.name?.trim() || 'Untitled design';
@@ -170,6 +246,7 @@ export default function Studio() {
       });
       setLoadedId(result.data.designId);
       savedJson.current = JSON.stringify({ ...draft, name });
+      triggerHaptic('success');
       toast.success(asNew ? 'Saved as a new design' : 'Design saved');
       void refreshWardrobe();
       return result.data.designId;
@@ -200,6 +277,7 @@ export default function Studio() {
       await equipUniformDesign({ designId: id!, corpsClass: activeClass, slot });
       // the profile store's realtime listener picks up the new snapshot
       const corpsName = activeOption?.corps.corpsName || 'your corps';
+      triggerHaptic('success');
       toast.success(
         slot === 'alternate'
           ? `Alternate look set for ${corpsName}`
@@ -267,12 +345,22 @@ export default function Studio() {
     }
   };
 
+  /** Context switches replace the whole draft — confirm when work would be lost. */
+  const confirmDiscard = () => !dirty || window.confirm('Discard unsaved changes to this design?');
+
+  const switchCorps = (classKey: string) => {
+    if (classKey === activeClass) return;
+    if (!confirmDiscard()) return;
+    setSearchParams({ corps: classKey }, { replace: true });
+  };
+
   const loadFromWardrobe = (w: WardrobeDesign) => {
+    if (!confirmDiscard()) return;
     // strip doc metadata (incl. the server-owned shareCode) so the draft is a
     // pure design the save callable's whitelist accepts
     const { id, createdAt: _c, updatedAt: _u, shareCode: _sc, ...rest } = w;
     const design: UniformDesignV2 = { ...rest, schema: 2 };
-    setDraft(design);
+    history.reset(design);
     setLoadedId(id);
     setMigrated(false);
     savedJson.current = JSON.stringify(design);
@@ -316,30 +404,30 @@ export default function Studio() {
     }
   };
 
-  const [importCode, setImportCode] = useState('');
-  const doImportCode = async () => {
-    const raw = importCode.trim();
-    if (!raw) return;
+  const doImportCode = async (raw: string): Promise<boolean> => {
+    if (!raw) return false;
+    if (!confirmDiscard()) return false;
     setBusy('import');
     try {
       const shared = await fetchUniformCode(raw);
       if (!shared) {
         toast.error('No design found for that code — check it and try again.');
-        return;
+        return false;
       }
       const design: UniformDesignV2 = {
         ...shared.design,
         schema: 2,
         figure: withDerivedFlags(shared.design.figure),
       };
-      setDraft(design);
+      history.reset(design);
       setLoadedId(null); // an import is a fresh draft — saving adds it to YOUR wardrobe
       setMigrated(false);
       savedJson.current = '';
-      setImportCode('');
       toast.success(`Design by ${shared.creatorName} loaded — save it to keep it`);
+      return true;
     } catch {
       toast.error('Could not look up that code. Please try again.');
+      return false;
     } finally {
       setBusy(null);
     }
@@ -404,6 +492,21 @@ export default function Studio() {
     }
   };
 
+  const pickPreset = (preset: UniformPreset) => {
+    const fresh = designFromPreset(preset);
+    history.set({ ...fresh, figure: withDerivedFlags(fresh.figure) });
+    if (activeClass) gallerySeen.current.add(activeClass);
+    galleryFirstRun.current = false;
+    setGalleryOpen(false);
+    triggerHaptic('medium');
+  };
+
+  const closeGallery = () => {
+    if (activeClass) gallerySeen.current.add(activeClass);
+    galleryFirstRun.current = false;
+    setGalleryOpen(false);
+  };
+
   if (!profile) {
     return (
       <div className="flex items-center justify-center py-24 text-muted">
@@ -426,11 +529,28 @@ export default function Studio() {
     );
   }
 
+  const equippedFigure = activeOption?.corps.uniform?.figure || null;
+  const displayFigure = peeking && equippedFigure ? equippedFigure : draft?.figure;
+  const canPeek = Boolean(equippedFigure);
+
+  const cycleZoom = () =>
+    setZoom((z) => ZOOM_STEPS[(ZOOM_STEPS.indexOf(z) + 1) % ZOOM_STEPS.length]);
+
+  const viewToolProps = {
+    pressBox,
+    onPressBox: setPressBox,
+    zoom,
+    onCycleZoom: cycleZoom,
+    canPeek,
+    peeking,
+    onPeekChange: setPeeking,
+  };
+
   return (
     // GameShell's <main> is fixed with overflow-hidden, so each page must own
     // its scroll container (Shop.jsx idiom) — without this wrapper the Studio
     // is clipped to the first viewport and can't scroll at all on mobile.
-    <div className="h-full overflow-y-auto scroll-momentum">
+    <div ref={scrollRef} className="h-full overflow-y-auto scroll-momentum">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-24">
         {/* Header */}
         <div className="flex flex-wrap items-center gap-3 py-4 border-b border-line">
@@ -450,7 +570,7 @@ export default function Studio() {
               <button
                 key={o.classKey}
                 type="button"
-                onClick={() => setSearchParams({ corps: o.classKey }, { replace: true })}
+                onClick={() => switchCorps(o.classKey)}
                 className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border rounded-none whitespace-nowrap min-h-touch sm:min-h-0 ${
                   o.classKey === activeClass
                     ? 'bg-interactive border-interactive text-white'
@@ -475,166 +595,171 @@ export default function Studio() {
         )}
 
         {draft && (
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,380px)_1fr] gap-6 mt-4">
+          <div className="lg:grid lg:grid-cols-[minmax(300px,380px)_1fr] lg:gap-6 lg:mt-4 lg:items-start">
             {/* Canvas column */}
-            <div className="lg:sticky lg:top-4 self-start">
-              <div className="bg-surface-card border border-line p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <input
-                    type="text"
-                    value={draft.name}
-                    maxLength={WARDROBE_LIMITS.maxNameLength}
-                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                    aria-label="Design name"
-                    className="flex-1 h-9 px-2 bg-background border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPressBox((v) => !v)}
-                    title="Press-box view — does it read from the stands?"
-                    className={`ml-2 h-9 px-2.5 border rounded-none ${
-                      pressBox
-                        ? 'bg-interactive border-interactive text-white'
-                        : 'border-line text-muted hover:text-white hover:border-interactive'
-                    }`}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {pressBox ? (
-                  <div className="h-64 sm:h-80 flex items-end justify-center gap-4 bg-surface-sunken border border-line p-4">
-                    {[0, 1, 2].map((i) => (
-                      <UniformFigure
-                        key={i}
-                        figure={draft.figure}
-                        label="Press-box preview figure"
-                        width={34}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  // Sized down on phones so the canvas card (figure + actions)
-                  // stays near one screenful and the controls are a short scroll
-                  // away; full size from sm up.
-                  <div className="max-w-[210px] sm:max-w-[280px] mx-auto">
-                    <UniformFigure
-                      figure={draft.figure}
-                      label={`${draft.name || 'Uniform'} preview`}
+            {/* Sticky at every breakpoint. The sticky element must live on
+                the column (not the shell inside it): a sticky child can never
+                stick past its parent's bounds, and on mobile the shell IS the
+                column's whole height. The grid wrapper spans the full page,
+                so the column has room to stick while the controls scroll. */}
+            <div className="sticky top-0 z-30 lg:top-4">
+              {/* Mobile pinned shell: canvas card + tab strip. Full-bleed
+                  background so scrolling controls disappear behind it. */}
+              <div
+                ref={stickyRef}
+                className="bg-background -mx-3 px-3 sm:-mx-4 sm:px-4 lg:mx-0 lg:px-0 pt-2 lg:pt-0"
+              >
+                <div className="bg-surface-card border border-line p-3 sm:p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={draft.name}
+                      maxLength={WARDROBE_LIMITS.maxNameLength}
+                      onChange={(e) => history.set({ ...draft, name: e.target.value })}
+                      aria-label="Design name"
+                      className="flex-1 min-w-0 h-9 px-2 bg-background border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
                     />
+                    <button
+                      type="button"
+                      onClick={history.undo}
+                      disabled={!history.canUndo}
+                      aria-label="Undo"
+                      title="Undo (Ctrl+Z)"
+                      className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                    >
+                      <Undo2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={history.redo}
+                      disabled={!history.canRedo}
+                      aria-label="Redo"
+                      title="Redo (Ctrl+Shift+Z)"
+                      className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                    >
+                      <Redo2 className="w-4 h-4" />
+                    </button>
                   </div>
-                )}
 
-                <PackAdvisoryBanner figure={draft.figure} owned={ownedPacks} />
+                  {/* Desktop view controls: labeled preview modes + zoom + peek */}
+                  <StudioViewTools variant="row" {...viewToolProps} />
 
-                <StudioActionGrid
-                  busy={busy}
-                  dirty={dirty}
-                  altName={activeOption?.corps.uniformAlt?.name}
-                  guardName={activeOption?.corps.uniformGuard?.name}
-                  onSave={(asNew) => void doSave(asNew)}
-                  onEquip={(slot) => void doEquip(slot)}
-                  onClearSlot={(slot) => void doClearSlot(slot)}
-                  onAvatar={() => void doGenerateAvatar()}
-                  onGetCode={() => void doGetCode()}
-                  onShareCard={() => void doShareCard()}
-                  onPublish={() => void doPublish()}
-                />
-                <p className="text-[10px] text-muted mt-2">
-                  Saving stores the design in your wardrobe. Equipping puts it on{' '}
-                  {activeOption?.corps.corpsName} everywhere; the alternate is an optional second
-                  look shown on your profile. The guard look dresses this season&rsquo;s show — try
-                  the Guard dress silhouette — and resets with the show at rollover. The AI avatar
-                  is optional and never automatic.
-                </p>
-              </div>
-
-              {/* Wardrobe strip */}
-              <div className="bg-surface-card border border-line p-4 mt-4">
-                <h3 className="text-[10px] font-bold text-muted uppercase tracking-wider border-b border-line pb-1 mb-3">
-                  Wardrobe ({wardrobe.length}/{WARDROBE_LIMITS.maxDesigns})
-                </h3>
-                {wardrobe.length === 0 ? (
-                  <p className="text-xs text-muted">
-                    No saved designs yet — save your first look to start a wardrobe.
-                  </p>
-                ) : (
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {wardrobe.map((w) => (
-                      <div
-                        key={w.id}
-                        className={`flex-shrink-0 w-20 border p-1 ${
-                          w.id === loadedId ? 'border-interactive' : 'border-line'
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => loadFromWardrobe(w)}
-                          className="block w-full hover:opacity-80"
-                          title={`Load "${w.name}"`}
-                        >
-                          <UniformFigure figure={w.figure} label={`${w.name} saved design`} />
-                        </button>
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="flex-1 text-[8px] uppercase tracking-wider text-muted truncate">
-                            {w.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => void doDelete(w)}
-                            disabled={busy !== null}
-                            aria-label={`Delete ${w.name}`}
-                            className="text-muted hover:text-red-400"
-                          >
-                            {busy === `del:${w.id}` ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-3 h-3" />
-                            )}
-                          </button>
-                        </div>
+                  {displayFigure && (
+                    <>
+                      <div className="lg:hidden">
+                        <StudioCanvas
+                          mode="compact"
+                          figure={displayFigure}
+                          label={`${draft.name || 'Uniform'} preview`}
+                          pressBox={pressBox}
+                          zoom={zoom}
+                          activeSection={activeTab}
+                          onRegionSelect={handleSectionSelect}
+                          tools={<StudioViewTools variant="overlay" {...viewToolProps} />}
+                        />
                       </div>
-                    ))}
-                  </div>
-                )}
-                {/* Import a shared design by its code (§7.1) */}
-                <div className="flex gap-2 mt-3 pt-3 border-t border-line">
-                  <input
-                    type="text"
-                    value={importCode}
-                    onChange={(e) => setImportCode(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') void doImportCode();
-                    }}
-                    placeholder="Have a code? MA-XXXX-XX"
-                    aria-label="Import a uniform code"
-                    className="flex-1 h-9 px-2 bg-background border border-line rounded-none text-xs text-white font-mono uppercase placeholder:normal-case placeholder:font-sans focus:outline-none focus:border-interactive"
+                      <div className="hidden lg:block">
+                        <StudioCanvas
+                          mode="full"
+                          figure={displayFigure}
+                          label={`${draft.name || 'Uniform'} preview`}
+                          pressBox={pressBox}
+                          zoom={zoom}
+                          activeSection={activeTab}
+                          onRegionSelect={handleSectionSelect}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <PackAdvisoryBanner figure={draft.figure} owned={ownedPacks} />
+
+                  <StudioActionBar
+                    busy={busy}
+                    dirty={dirty}
+                    altName={activeOption?.corps.uniformAlt?.name}
+                    guardName={activeOption?.corps.uniformGuard?.name}
+                    onSave={(asNew) => void doSave(asNew)}
+                    onEquip={(slot) => void doEquip(slot)}
+                    onClearSlot={(slot) => void doClearSlot(slot)}
+                    onAvatar={() => void doGenerateAvatar()}
+                    onGetCode={() => void doGetCode()}
+                    onShareCard={() => void doShareCard()}
+                    onPublish={() => void doPublish()}
                   />
-                  <button
-                    type="button"
-                    onClick={() => void doImportCode()}
-                    disabled={busy !== null || !importCode.trim()}
-                    className="h-9 px-3 border border-line text-muted text-[11px] font-bold uppercase tracking-wider hover:text-white hover:border-interactive disabled:opacity-40"
-                  >
-                    {busy === 'import' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      'Import'
-                    )}
-                  </button>
+                  <p className="hidden lg:block text-[10px] text-muted mt-2">
+                    Saving stores the design in your wardrobe. Equipping puts it on{' '}
+                    {activeOption?.corps.corpsName} everywhere; the alternate is an optional second
+                    look shown on your profile. The guard look dresses this season&rsquo;s show —
+                    try the Guard dress silhouette — and resets with the show at rollover. The AI
+                    avatar is optional and never automatic.
+                  </p>
                 </div>
+
+                {/* Mobile slot tabs — pinned with the canvas */}
+                <StudioSectionTabs
+                  className="lg:hidden"
+                  active={activeTab}
+                  onSelect={handleSectionSelect}
+                />
               </div>
+
+              {/* Desktop wardrobe: always visible under the canvas */}
+              <WardrobePanel
+                className="hidden lg:block mt-4"
+                wardrobe={wardrobe}
+                loadedId={loadedId}
+                busy={busy}
+                maxDesigns={WARDROBE_LIMITS.maxDesigns}
+                onLoad={loadFromWardrobe}
+                onDelete={(w) => void doDelete(w)}
+                onImport={doImportCode}
+              />
             </div>
 
             {/* Controls column */}
-            <div className="bg-surface-card border border-line p-4">
+            <div
+              ref={editorCardRef}
+              className="bg-surface-card border border-line p-3 sm:p-4 mt-2 lg:mt-0"
+            >
               {/* Design Note: a contextual principle from the craft (§ In-studio guidance) */}
-              <p className="text-[11px] italic text-muted border-l-2 border-interactive/40 pl-2 mb-4">
+              <p
+                className={`text-[11px] italic text-muted border-l-2 border-interactive/40 pl-2 mb-4 ${
+                  activeTab === 'wardrobe' ? 'hidden lg:block' : ''
+                }`}
+              >
                 {designNoteFor(draft.figure)}
               </p>
-              <StudioEditor design={draft} onChange={setDraft} ownedPacks={ownedPacks} />
+              <StudioEditor
+                design={draft}
+                onChange={history.set}
+                ownedPacks={ownedPacks}
+                activeSection={activeTab}
+                onBrowsePresets={() => setGalleryOpen(true)}
+              />
+              {/* Mobile wardrobe tab */}
+              <WardrobePanel
+                frameless
+                className={`lg:hidden ${activeTab === 'wardrobe' ? '' : 'hidden'}`}
+                wardrobe={wardrobe}
+                loadedId={loadedId}
+                busy={busy}
+                maxDesigns={WARDROBE_LIMITS.maxDesigns}
+                onLoad={loadFromWardrobe}
+                onDelete={(w) => void doDelete(w)}
+                onImport={doImportCode}
+              />
             </div>
           </div>
+        )}
+
+        {/* Preset gallery: first run for a fresh corps, and "See all" after */}
+        {galleryOpen && draft && (
+          <PresetGallery
+            firstRun={galleryFirstRun.current}
+            onPick={pickPreset}
+            onClose={closeGallery}
+          />
         )}
 
         {/* Offscreen share card, mounted only while exporting */}
