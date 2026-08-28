@@ -26,6 +26,11 @@ import { triggerHaptic } from '../../hooks/useHaptic';
 export interface StudioActionBarProps {
   busy: string | null;
   dirty: boolean;
+  /** Draft design name + rename — surfaces in the More sheet below lg, where
+   *  the pinned canvas card has no name input (that row is desktop-only). */
+  name?: string;
+  maxNameLength?: number;
+  onRename?: (name: string) => void;
   /** Names of the currently-set optional looks; undefined hides Clear rows. */
   altName?: string;
   guardName?: string;
@@ -95,6 +100,9 @@ function SheetGroup({ label, children }: { label: string; children: React.ReactN
 export default function StudioActionBar({
   busy,
   dirty,
+  name,
+  maxNameLength,
+  onRename,
   altName,
   guardName,
   onSave,
@@ -174,6 +182,25 @@ export default function StudioActionBar({
         snapPoints={[85]}
       >
         <div className="overflow-y-auto scroll-momentum p-4 space-y-5">
+          {/* Mobile rename — desktop has the inline name row on the canvas card */}
+          {onRename && (
+            <div className="lg:hidden">
+              <label
+                htmlFor="studio-sheet-name"
+                className="block text-[10px] font-bold text-muted uppercase tracking-wider border-b border-line pb-1 mb-2"
+              >
+                Design name
+              </label>
+              <input
+                id="studio-sheet-name"
+                type="text"
+                value={name || ''}
+                maxLength={maxNameLength}
+                onChange={(e) => onRename(e.target.value)}
+                className="w-full h-10 px-2 bg-background border border-line rounded-none text-sm text-white focus:outline-none focus:border-interactive"
+              />
+            </div>
+          )}
           <SheetGroup label="This design">
             <SheetRow
               icon={<Save className="w-4 h-4" />}

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * HowItWorks Component - Educational Accordion for New Visitors
  *
@@ -86,6 +85,14 @@ const STEPS = [
 // ACCORDION ITEM COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   step: (typeof STEPS)[number],
+ *   isOpen: boolean,
+ *   onToggle: () => void,
+ *   isLast: boolean,
+ * }} props
+ */
 const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
   const Icon = step.icon;
 
@@ -147,12 +154,14 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
           >
             <div className="px-4 pb-4 pl-[72px]">
               <ul className="space-y-2">
-                {step.details.map((detail, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-muted">
-                    <span className="text-muted mt-1">•</span>
-                    <span>{detail}</span>
-                  </li>
-                ))}
+                {step.details.map(
+                  /** @param {React.ReactNode} detail @param {number} idx */ (detail, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-muted">
+                      <span className="text-muted mt-1">•</span>
+                      <span>{detail}</span>
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           </m.div>
@@ -170,6 +179,7 @@ const HowItWorks = () => {
   // All collapsed by default - users can expand if interested
   const [openSteps, setOpenSteps] = useState(new Set());
 
+  /** @param {number} stepId */
   const toggleStep = (stepId) => {
     setOpenSteps((prev) => {
       const next = new Set(prev);

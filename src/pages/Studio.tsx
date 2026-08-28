@@ -15,8 +15,11 @@
 // while the controls column shows the tab strip over exactly one section.
 // Mobile (<lg): canvas card + tab strip stack above the single scrolling
 // section panel — every edit is visible the instant it lands, and nothing
-// is sticky or floating over other content. Tapping the figure jumps to the
-// matching section (FigureTapOverlay); every draft edit is undoable
+// is sticky or floating over other content. The canvas runs a framing
+// camera (StudioCanvas) so the doll region being edited fills the compact
+// stage, and the pinned chrome stays minimal: undo/redo overlay the canvas
+// and the design name lives in the More sheet. Tapping the figure jumps to
+// the matching section (FigureTapOverlay); every draft edit is undoable
 // (useDraftHistory).
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -588,7 +591,10 @@ export default function Studio() {
                 is the relief valve for short desktop viewports. */}
             <div className="shrink-0 lg:min-h-0 lg:overflow-y-auto">
               <div className="bg-surface-card border border-line p-3 sm:p-4 lg:h-full lg:flex lg:flex-col">
-                <div className="flex items-center gap-2 mb-2">
+                {/* Name + undo/redo row — desktop only. On mobile the name
+                    lives in the More sheet and undo/redo overlay the canvas,
+                    so the pinned stack spends its pixels on the doll. */}
+                <div className="hidden lg:flex items-center gap-2 mb-2">
                   <input
                     type="text"
                     value={draft.name}
@@ -634,6 +640,28 @@ export default function Studio() {
                         activeSection={activeTab}
                         onRegionSelect={handleSectionSelect}
                         tools={<StudioViewTools variant="overlay" {...viewToolProps} />}
+                        toolsLeft={
+                          <>
+                            <button
+                              type="button"
+                              onClick={history.undo}
+                              disabled={!history.canUndo}
+                              aria-label="Undo"
+                              className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                            >
+                              <Undo2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={history.redo}
+                              disabled={!history.canRedo}
+                              aria-label="Redo"
+                              className={`${TOOL_INACTIVE} disabled:opacity-30`}
+                            >
+                              <Redo2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        }
                       />
                     </div>
                     {/* Desktop: the stage takes all the height the card's
@@ -657,6 +685,9 @@ export default function Studio() {
                 <StudioActionBar
                   busy={busy}
                   dirty={dirty}
+                  name={draft.name}
+                  maxNameLength={WARDROBE_LIMITS.maxNameLength}
+                  onRename={(name) => history.set({ ...draft, name })}
                   altName={activeOption?.corps.uniformAlt?.name}
                   guardName={activeOption?.corps.uniformGuard?.name}
                   onSave={(asNew) => void doSave(asNew)}
