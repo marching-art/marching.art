@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // News feed inline badges (trend, fantasy value, urgency, ROI, share).
 // Extracted from NewsFeed.jsx.
 
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+/** @param {{ direction?: 'up' | 'down' | string, className?: string }} props */
 function TrendingBadge({ direction, className = 'w-3 h-3' }) {
   if (direction === 'up') {
     return <TrendingUp className={`${className} text-green-500`} />;
@@ -24,6 +24,7 @@ function TrendingBadge({ direction, className = 'w-3 h-3' }) {
   return <Minus className={`${className} text-muted`} />;
 }
 
+/** @param {{ value?: string }} props */
 function FantasyValueBadge({ value }) {
   const config = {
     buy: {
@@ -40,7 +41,12 @@ function FantasyValueBadge({ value }) {
     },
     hold: { label: 'HOLD', bgClass: 'bg-warning/20', textClass: 'text-warning', icon: Minus },
   };
-  const { label, bgClass, textClass, icon: Icon } = config[value] || config.hold;
+  const {
+    label,
+    bgClass,
+    textClass,
+    icon: Icon,
+  } = config[/** @type {keyof typeof config} */ (value)] || config.hold;
 
   return (
     <span
@@ -52,6 +58,7 @@ function FantasyValueBadge({ value }) {
   );
 }
 
+/** @param {{ urgency?: { type: string, label: string } | null }} props */
 function UrgencyBadge({ urgency }) {
   if (!urgency) return null;
 
@@ -71,6 +78,9 @@ function UrgencyBadge({ urgency }) {
   );
 }
 
+/**
+ * @param {{ metrics?: { topROI?: { corps: string, caption: string, pointsGained: number, roiPercent: number } } }} props
+ */
 function FantasyROIBadge({ metrics }) {
   if (!metrics?.topROI) return null;
 
@@ -98,7 +108,9 @@ function FantasyROIBadge({ metrics }) {
   );
 }
 
+/** @param {{ story: { id: string, headline: string }, className?: string }} props */
 function ShareButton({ story, className = '' }) {
+  /** @param {React.MouseEvent} e */
   const handleShare = async (e) => {
     e.stopPropagation(); // Prevent card click navigation
 
@@ -129,7 +141,7 @@ function ShareButton({ story, className = '' }) {
       } catch (err) {
         // If user cancelled (AbortError), do nothing
         // For other errors (blocked by enterprise, etc.), fall back to clipboard
-        if (err.name !== 'AbortError') {
+        if (!(err instanceof Error) || err.name !== 'AbortError') {
           await copyToClipboard();
         }
       }

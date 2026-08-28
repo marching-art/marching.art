@@ -19,7 +19,7 @@ export { LABEL, SECTION_LABEL } from './studioTokens';
  */
 export function PresetStrip({ onLoad }: { onLoad: (presetId: string) => void }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2">
+    <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-2">
       {UNIFORM_PRESETS.map((preset) => (
         <button
           key={preset.id}

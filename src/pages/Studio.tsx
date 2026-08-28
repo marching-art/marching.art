@@ -32,6 +32,7 @@ import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps'
 import { getClassDisplay } from '../components/Profile/directorProfileHelpers';
 import StudioEditor from '../components/uniform/StudioEditor';
 import StudioActionBar from '../components/uniform/StudioActionBar';
+import StudioCorpsPicker from '../components/uniform/StudioCorpsPicker';
 import StudioCanvas from '../components/uniform/StudioCanvas';
 import StudioSectionTabs from '../components/uniform/StudioSectionTabs';
 import PresetGallery from '../components/uniform/PresetGallery';
@@ -553,24 +554,12 @@ export default function Studio() {
             <Store className="w-3 h-3" />
             Design Exchange
           </Link>
-          <div className="flex gap-1 ml-auto overflow-x-auto">
-            {corpsOptions.map((o) => (
-              <button
-                key={o.classKey}
-                type="button"
-                onClick={() => switchCorps(o.classKey)}
-                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border rounded-none whitespace-nowrap min-h-touch sm:min-h-0 ${
-                  o.classKey === activeClass
-                    ? 'bg-interactive border-interactive text-white'
-                    : 'bg-background border-line text-muted hover:border-interactive hover:text-white'
-                }`}
-              >
-                {o.corps.corpsName}
-                <span className={`ml-1.5 ${getClassDisplay(o.classKey).color}`}>
-                  {getClassDisplay(o.classKey).name}
-                </span>
-              </button>
-            ))}
+          <div className="ml-auto min-w-0">
+            <StudioCorpsPicker
+              options={corpsOptions}
+              activeClass={activeClass}
+              onSelect={switchCorps}
+            />
           </div>
         </div>
 
@@ -589,7 +578,7 @@ export default function Studio() {
                 the card stretches to the full grid row and the canvas takes
                 whatever height is left after the fixed rows. overflow-y-auto
                 is the relief valve for short desktop viewports. */}
-            <div className="shrink-0 lg:min-h-0 lg:overflow-y-auto">
+            <div className="shrink-0 lg:min-h-0 lg:overflow-y-auto scrollbar-thin">
               <div className="bg-surface-card border border-line p-3 sm:p-4 lg:h-full lg:flex lg:flex-col">
                 {/* Name + undo/redo row — desktop only. On mobile the name
                     lives in the More sheet and undo/redo overlay the canvas,
@@ -720,7 +709,7 @@ export default function Studio() {
               />
               <div
                 ref={panelRef}
-                className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-momentum p-3 sm:p-4 pb-8"
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-momentum scrollbar-thin p-3 sm:p-4 pb-8"
               >
                 {/* Design Note: a contextual principle from the craft (§ In-studio guidance) */}
                 <p
@@ -738,10 +727,26 @@ export default function Studio() {
                   onSectionChange={handleSectionSelect}
                   onBrowsePresets={() => setGalleryOpen(true)}
                 />
-                {/* The Wardrobe tab — the one home for saved designs */}
+                {/* Mobile Wardrobe tab (desktop uses the shelf below) */}
                 <WardrobePanel
                   frameless
-                  className={activeTab === 'wardrobe' ? '' : 'hidden'}
+                  className={`lg:hidden ${activeTab === 'wardrobe' ? '' : 'hidden'}`}
+                  wardrobe={wardrobe}
+                  loadedId={loadedId}
+                  busy={busy}
+                  maxDesigns={WARDROBE_LIMITS.maxDesigns}
+                  onLoad={loadFromWardrobe}
+                  onDelete={(w) => void doDelete(w)}
+                  onImport={doImportCode}
+                />
+              </div>
+
+              {/* Desktop wardrobe shelf: saved looks always one click away,
+                  pinned under the section panel (the game-loadout idiom) —
+                  which also keeps Wardrobe out of the section tab strip. */}
+              <div className="hidden lg:block shrink-0 border-t border-line p-3 sm:p-4">
+                <WardrobePanel
+                  frameless
                   wardrobe={wardrobe}
                   loadedId={loadedId}
                   busy={busy}

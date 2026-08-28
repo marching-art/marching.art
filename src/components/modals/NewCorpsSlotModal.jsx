@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // NEW CORPS SLOT MODAL
 // =============================================================================
@@ -20,6 +19,19 @@ const CLASS_NAMES = {
   worldClass: 'World Class',
 };
 
+/**
+ * @param {{
+ *   onClose: () => void,
+ *   onStartNew: () => void,
+ *   onUnretire: (retiredIndex: number) => void,
+ *   corpsClass: string,
+ *   retiredCorps?: Array<{
+ *     retiredIndex: number,
+ *     record: { corpsName: string, location?: string, totalSeasons?: number },
+ *   }>,
+ *   processing?: boolean,
+ * }} props
+ */
 const NewCorpsSlotModal = ({
   onClose,
   onStartNew,
@@ -52,7 +64,8 @@ const NewCorpsSlotModal = ({
               id="modal-title-new-slot"
               className="text-xs font-bold uppercase tracking-wider text-secondary"
             >
-              Fill {CLASS_NAMES[corpsClass] || corpsClass} Slot
+              Fill {CLASS_NAMES[/** @type {keyof typeof CLASS_NAMES} */ (corpsClass)] || corpsClass}{' '}
+              Slot
             </h2>
             <button
               onClick={onClose}
@@ -76,7 +89,8 @@ const NewCorpsSlotModal = ({
               <div className="min-w-0">
                 <p className="text-sm font-bold text-white">Start a new corps</p>
                 <p className="text-xs text-muted mt-0.5">
-                  Register a fresh corps in {CLASS_NAMES[corpsClass] || corpsClass}.
+                  Register a fresh corps in{' '}
+                  {CLASS_NAMES[/** @type {keyof typeof CLASS_NAMES} */ (corpsClass)] || corpsClass}.
                 </p>
               </div>
             </button>
