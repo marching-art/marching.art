@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-08-28-studio-paper-doll-overhaul",
+    "date": "2026-08-28",
+    "title": "The Uniform Studio gets a real paper-doll cockpit",
+    "category": "improvement",
+    "summary": "Designing on your phone no longer means scrolling away from your own uniform. The doll now stays pinned on screen while you edit, with the controls organized into section tabs beneath it — and the figure itself is tappable: touch the hat, chest, or a leg to jump straight to that section. Color picking is faster everywhere: every color channel opens a swatch panel with your corps colorway and the full named silk library one tap away (the free custom hue picker is still right there). And you can finally experiment fearlessly — every change is undoable, including Surprise Me and preset loads.",
+    "highlights": [
+      "Mobile: the canvas pins to the top with slot tabs below — every edit is visible the instant you make it.",
+      "Tap the figure to edit: head, torso, chest, shoulders, waist, arms, legs, feet.",
+      "Undo/redo on every change (Ctrl+Z / Ctrl+Shift+Z on desktop), plus a heads-up before switching corps with unsaved edits.",
+      "New color panel on every channel: corps-colorway quick picks, named silk swatches, and the free custom hue picker.",
+      "Save and Equip stay one tap away; sharing, alt/guard looks, and the AI avatar now live in a tidy More menu with plain-language descriptions.",
+      "A corps with no design yet opens to a full-screen gallery of Heritage and Show line starting looks.",
+      "New canvas tools: zoom the preview, hold to compare against your equipped look, and the press-box view now sits beside a labeled Close-up/Press box switch on desktop."
+    ]
+  },
+  {
     "id": "2026-08-28-cleaner-news-and-true-colors",
     "date": "2026-08-28",
     "title": "Cleaner news copy and uniforms that match your Studio",
