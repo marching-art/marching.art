@@ -2,18 +2,21 @@
 // STUDIO SECTION TABS — the slot-tab strip (every breakpoint)
 // =============================================================================
 // Horizontal, scrollable tab strip heading the section panel: the editor's
-// sections plus the Wardrobe pseudo-tab. Exactly one section renders below it
-// at a time (the game-locker idiom — no scroll-through-everything stack).
-// Roving tabindex with arrow-key navigation (Left/Right/Home/End), and the
-// active tab keeps itself scrolled into view — figure taps can activate a tab
-// that's off-screen on narrow viewports.
+// sections plus (below lg) the Wardrobe pseudo-tab — on desktop the wardrobe
+// is the always-visible shelf under the panel, so its tab hides there and
+// the strip stays a single clean row of sections. Exactly one section
+// renders below the strip at a time (the game-locker idiom — no
+// scroll-through-everything stack). Roving tabindex with arrow-key
+// navigation (Left/Right/Home/End), and the active tab keeps itself
+// scrolled into view (scrollbar hidden — the tabs are their own affordance)
+// — figure taps can activate a tab that's off-screen on narrow viewports.
 
 import React, { useEffect, useRef } from 'react';
 import { STUDIO_SECTIONS, type StudioTabId } from './studioSections';
 
-const TABS: ReadonlyArray<{ id: StudioTabId; label: string }> = [
+const TABS: ReadonlyArray<{ id: StudioTabId; label: string; mobileOnly?: boolean }> = [
   ...STUDIO_SECTIONS,
-  { id: 'wardrobe', label: 'Wardrobe' },
+  { id: 'wardrobe', label: 'Wardrobe', mobileOnly: true },
 ];
 
 export interface StudioSectionTabsProps {
@@ -60,7 +63,7 @@ export default function StudioSectionTabs({
     <div
       role="tablist"
       aria-label="Uniform editor sections"
-      className={`flex gap-1 overflow-x-auto lg:flex-wrap lg:overflow-x-visible scroll-momentum border-b border-line ${className}`}
+      className={`flex gap-1 overflow-x-auto scrollbar-hide lg:flex-wrap lg:overflow-x-visible scroll-momentum border-b border-line ${className}`}
     >
       {TABS.map((tab, i) => {
         const selected = tab.id === active;
@@ -77,6 +80,8 @@ export default function StudioSectionTabs({
             onClick={() => onSelect(tab.id)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={`px-3 py-2.5 min-h-touch text-[11px] font-bold uppercase tracking-wider whitespace-nowrap border-b-2 -mb-px ${
+              tab.mobileOnly ? 'lg:hidden' : ''
+            } ${
               selected
                 ? 'border-interactive text-white'
                 : 'border-transparent text-muted hover:text-white'

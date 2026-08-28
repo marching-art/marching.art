@@ -286,6 +286,30 @@
     display: none;
   }
 
+  /* Slim, low-contrast scrollbar for in-app panels — keeps the affordance
+     without the OS-chrome look of a full-width track */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(64 64 64) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(64 64 64);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgb(96 96 96);
+  }
+
   /* Aspect ratio containers for media (prevents CLS) */
   .aspect-score-card {
     aspect-ratio: 16 / 9;

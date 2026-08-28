@@ -68,8 +68,9 @@ describe('Studio page', { timeout: 15_000 }, () => {
       },
     });
     renderStudio();
-    // corps tab, migration banner, live figure, and the editor sections mount
-    expect(screen.getByRole('button', { name: /Test Corps/ })).toBeInTheDocument();
+    // corps picker label (a single corps needs no menu), migration banner,
+    // live figure, and the editor sections mount
+    expect(screen.getByText('Test Corps')).toBeInTheDocument();
     expect(await screen.findByText(/Rebuilt in the Studio/i)).toBeInTheDocument();
     expect(screen.getAllByRole('img').length).toBeGreaterThan(0);
     expect(screen.getByText(/Corps colorway/i)).toBeInTheDocument();
@@ -120,6 +121,33 @@ describe('Studio page', { timeout: 15_000 }, () => {
     for (const undo of undos) expect(undo).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/Design name/i), { target: { value: 'New Look' } });
     for (const undo of undos) expect(undo).toBeEnabled();
+  });
+
+  it('switches corps from the header dropdown', async () => {
+    useProfileStore.setState({
+      profile: {
+        uid: 'test-uid',
+        corps: {
+          worldClass: {
+            corpsName: 'Test Corps',
+            corpsClass: 'worldClass',
+            uniformDesign: { primaryColor: 'crimson red', secondaryColor: 'gold' },
+          },
+          aClass: {
+            corpsName: 'Second Corps',
+            corpsClass: 'aClass',
+            uniformDesign: { primaryColor: 'navy blue', secondaryColor: 'silver' },
+          },
+        },
+      },
+    });
+    renderStudio();
+    await screen.findByText(/Rebuilt in the Studio/i);
+    const trigger = screen.getByRole('button', { name: /Switch corps/i });
+    expect(trigger).toHaveTextContent('Test Corps');
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByRole('menuitemradio', { name: /Second Corps/i }));
+    expect(screen.getByRole('button', { name: /Switch corps/i })).toHaveTextContent('Second Corps');
   });
 
   it('opens the first-run preset gallery for a corps with no design yet', async () => {

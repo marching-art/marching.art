@@ -54,7 +54,7 @@ export default function WardrobePanel({
           No saved designs yet — save your first look to start a wardrobe.
         </p>
       ) : (
-        <div className="flex gap-2 overflow-x-auto scroll-momentum pb-1">
+        <div className="flex gap-2 overflow-x-auto scroll-momentum scrollbar-thin pb-1">
           {wardrobe.map((w) => (
             <div
               key={w.id}

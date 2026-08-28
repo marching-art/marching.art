@@ -143,7 +143,7 @@ export default function StudioCanvas({
     );
   } else {
     viewport = (
-      <div className="h-full overflow-auto overscroll-contain scroll-momentum flex">
+      <div className="h-full overflow-auto overscroll-contain scroll-momentum scrollbar-thin flex">
         {pressBox ? (
           pressStrip
         ) : (
