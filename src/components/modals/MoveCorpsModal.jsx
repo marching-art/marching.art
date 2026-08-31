@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // MOVE CORPS MODAL - DATA-TERMINAL STYLE
 // =============================================================================
@@ -16,6 +15,11 @@ const CLASS_NAMES = {
   worldClass: 'World Class',
 };
 
+/** The classes a corps can move between (long keys only — the short
+ *  'world'/'open' aliases from CorpsClass never reach this modal).
+ *  @typedef {keyof typeof CLASS_NAMES} MovableClassId */
+
+/** @type {{ id: MovableClassId, name: string, level: string }[]} */
 const AVAILABLE_CLASSES = [
   { id: 'soundSport', name: 'SoundSport', level: 'Entry' },
   { id: 'aClass', name: 'A Class', level: 'Intermediate' },
@@ -23,6 +27,17 @@ const AVAILABLE_CLASSES = [
   { id: 'worldClass', name: 'World Class', level: 'Elite' },
 ];
 
+/**
+ * @param {object} props
+ * @param {() => void} props.onClose
+ * @param {(targetClass: MovableClassId) => void} props.onMove
+ * @param {MovableClassId} props.currentClass
+ * @param {string} props.corpsName
+ * @param {string[]} props.unlockedClasses
+ * @param {Partial<Record<MovableClassId, unknown>>} props.existingCorps
+ * @param {boolean} props.transferring
+ * @param {boolean} [props.hasPendingWork]
+ */
 const MoveCorpsModal = ({
   onClose,
   onMove,
@@ -33,7 +48,7 @@ const MoveCorpsModal = ({
   transferring,
   hasPendingWork = false,
 }) => {
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedClass, setSelectedClass] = useState(/** @type {MovableClassId | ''} */ (''));
 
   // Close on Escape key
   useEscapeKey(onClose);
@@ -46,6 +61,7 @@ const MoveCorpsModal = ({
     (cls) => cls.id !== currentClass && unlockedClasses.includes(cls.id) && !existingCorps[cls.id]
   );
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedClass && !transferring) {
