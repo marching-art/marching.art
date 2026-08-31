@@ -412,15 +412,19 @@ function App() {
                         </PublicPage>
                       }
                     />
-                    {/* Living design-system reference (docs/DESIGN_SYSTEM.md) */}
-                    <Route
-                      path="/styleguide"
-                      element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
-                          <StyleGuide />
-                        </Suspense>
-                      }
-                    />
+                    {/* Living design-system reference (docs/DESIGN_SYSTEM.md).
+                        Dev-only: it's an internal reference, not a product
+                        surface — in production the path 404s like any other. */}
+                    {import.meta.env.DEV && (
+                      <Route
+                        path="/styleguide"
+                        element={
+                          <Suspense fallback={<LoadingScreen fullScreen />}>
+                            <StyleGuide />
+                          </Suspense>
+                        }
+                      />
+                    )}
 
                     {/* Guest Preview - Demo dashboard for unauthenticated users */}
                     <Route
