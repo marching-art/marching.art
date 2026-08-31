@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Dashboard/OnboardingTour.jsx
 // First-run tour of the dashboard.
 //
@@ -45,12 +44,23 @@ const ICONS = {
 
 // `variant` picks the step list: 'fantasy' (the drafted-lineup dashboard, split
 // by device) or 'podium' (the director-sim daily loop, one list either way).
+/**
+ * @param {{
+ *   isOpen: boolean,
+ *   onClose: () => void,
+ *   onComplete: () => void,
+ *   onRequestZone?: (zone: string) => void,
+ *   variant?: 'fantasy' | 'podium',
+ * }} props
+ */
 const OnboardingTour = ({ isOpen, onClose, onComplete, onRequestZone, variant = 'fantasy' }) => {
   const isMobile = useIsMobile();
   const steps = getTourSteps(variant, isMobile);
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: '50%', left: '50%' });
+  const [tooltipPosition, setTooltipPosition] = useState(
+    /** @type {{ top: string, left: string, transform?: string }} */ ({ top: '50%', left: '50%' })
+  );
 
   // Device can change mid-tour (rotation, a resized desktop window). The step
   // lists differ, so clamp rather than index past the end of the new one.
@@ -96,11 +106,16 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, onRequestZone, variant = 
     };
   }, [stepIndex, isOpen, step, isMobile]);
 
+  /**
+   * @param {DOMRect} rect
+   * @param {string | undefined} position
+   */
   const calculatePosition = (rect, position) => {
     const padding = 16;
     const tooltipWidth = 320;
     const tooltipHeight = 200;
 
+    /** @param {{ top: string, left: string }} pos */
     const clamp = (pos) => {
       if (!('top' in pos) || typeof pos.top !== 'string' || pos.top.endsWith('%')) return pos;
       const top = Math.min(
