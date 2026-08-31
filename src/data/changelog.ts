@@ -121,7 +121,21 @@ export const ROADMAP: RoadmapItem[] = [
     id: 'corps-identity',
     title: 'Deeper corps identity & cosmetics',
     description:
-      'More ways to make your corps unmistakably yours — uniform design, program pages, and cosmetic flair.',
+      'The Uniform Studio, Design Exchange, Showcase, and the first design houses have landed — next up is more ways to make your corps unmistakably yours beyond the uniform, like program pages and cosmetic flair.',
+    status: 'in_progress',
+  },
+  {
+    id: 'league-formats',
+    title: 'More ways for leagues to compete',
+    description:
+      'Caption Wars was the first alternate league format. Survivor- and pick’em-style formats are on the drawing board next.',
+    status: 'exploring',
+  },
+  {
+    id: 'mixed-class-scoring',
+    title: 'Fairer mixed-class league standings',
+    description:
+      'Ranking corps from different classes on one comparable scale, so a mixed-class league isn’t decided by who plays the higher class.',
     status: 'exploring',
   },
 ];
