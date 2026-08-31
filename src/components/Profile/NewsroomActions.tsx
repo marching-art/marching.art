@@ -15,6 +15,7 @@
 // Rendered only on a director's own profile.
 
 import React, { useMemo, useState, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { FileText, Megaphone } from 'lucide-react';
 import { ModalLoadingFallback } from '../ui';
@@ -51,6 +52,7 @@ interface NewsroomActionsProps {
 }
 
 const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
+  const queryClient = useQueryClient();
   const [showPressRelease, setShowPressRelease] = useState(false);
   const [submittingPressRelease, setSubmittingPressRelease] = useState(false);
   const [showNewsSubmission, setShowNewsSubmission] = useState(false);
@@ -84,8 +86,12 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
     try {
       const result = await publishPressRelease(payload);
       if (result.data.success) {
-        toast.success(result.data.message || 'Press release published!');
+        toast.success(result.data.message || 'Press release sent!');
         setShowPressRelease(false);
+        // A queued release lands in the Newsroom's "In review" list; a
+        // published one lands among its articles. Refresh both right away.
+        queryClient.invalidateQueries({ queryKey: ['myNewsSubmissions'] });
+        queryClient.invalidateQueries({ queryKey: ['directorArticles'] });
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to publish press release');
@@ -101,6 +107,8 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
       if (result.data.success) {
         toast.success('Article submitted for review!');
         setShowNewsSubmission(false);
+        // The submission appears in the Newsroom's "In review" list immediately.
+        queryClient.invalidateQueries({ queryKey: ['myNewsSubmissions'] });
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to submit article');

@@ -957,6 +957,7 @@ const newsSubmissions = require("./newsSubmissions");
 exports.submitNewsForApproval = newsSubmissions.submitNewsForApproval;
 exports.publishPressRelease = newsSubmissions.publishPressRelease;
 exports.deleteMyPressRelease = newsSubmissions.deleteMyPressRelease;
+exports.getMyNewsSubmissions = newsSubmissions.getMyNewsSubmissions;
 exports.listPendingSubmissions = newsSubmissions.listPendingSubmissions;
 exports.approveSubmission = newsSubmissions.approveSubmission;
 exports.rejectSubmission = newsSubmissions.rejectSubmission;
